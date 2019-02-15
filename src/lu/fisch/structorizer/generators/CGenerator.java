@@ -1008,26 +1008,41 @@ public class CGenerator extends Generator {
 		
 	}
 
-	// START KGU#653 2019-02-14: Enh. #680
+	// START KGU#653 2019-02-14: Enh. #680 - auxiliary methods for handling multi-item input instructions
+	/**
+	 * Generates a series of code lines representing a decomposed mult-item input instruction
+	 * @param _inputItems - list of input items (first the prompt string, then the lvar expressions)
+	 * @param _indent - current code indentation
+	 * @param _isDisabled - whether the containing instruction is disabled (i.e. is to be commented out)
+	 * @param _comment - the instruction comment (if not exported already)
+	 * @return true is all was done here, false if no code had been expressed
+	 */
 	private boolean generateMultipleInput(StringList _inputItems, String _indent, boolean _isDisabled, StringList _comment) {
 		boolean done = false;
 		if (_inputItems.count() > 2) {
+			String inputKey = CodeParser.getKeyword("input") + " ";
 			String prompt = _inputItems.get(0);
 			if (!prompt.isEmpty()) {
 				prompt += " ";
 			}
 			_inputItems.remove(0);
+			if (_comment != null) {
+				this.insertComment(_comment, _indent);
+			}
 			String targetList = composeInputItems(_inputItems);
 			if (targetList != null) {
 				// Multiple-item conversion available, so create a single line
 				_inputItems.clear();
 				_inputItems.add(targetList);
 			}
-			if (_comment != null) {
-				this.insertComment(_comment, _indent);
+			else if (!prompt.isEmpty()) {
+				addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, _isDisabled);
 			}
 			for (int i = 0; i < _inputItems.count(); i++) {
-				String codeLine = transform(CodeParser.getKeyword("input") + " " + prompt + _inputItems.get(i));
+				if (targetList == null) {
+					prompt = "\"" + _inputItems.get(i) + ": \" ";
+				}
+				String codeLine = transform(inputKey + prompt + _inputItems.get(i));
 				addCode(codeLine + ";", _indent, _isDisabled);
 			}
 			done = true;
@@ -1045,9 +1060,6 @@ public class CGenerator extends Generator {
 	@Override
 	protected String composeInputItems(StringList _inputVarItems)
 	{
-		//for (int i = 0; i < _inputVarItems.count(); i++) {
-		//	_inputVarItems.set(i, this.transform(_inputVarItems.get(i), false));
-		//}
 		return _inputVarItems.concatenate(", &");
 	}
 	// END KGU#653 2019-02-14

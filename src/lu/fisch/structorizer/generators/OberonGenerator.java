@@ -491,14 +491,15 @@ public class OberonGenerator extends Generator {
 					//addCode(transf, _indent, isDisabled);
 					StringList inputItems = Instruction.getInputItems(line);
 					if (inputItems.count() > 2) {
+						String inputKey = CodeParser.getKeyword("input");
 						String prompt = inputItems.get(0);
 						if (!prompt.isEmpty()) {
-							prompt += "";
+							generateTypeSpecificOutput(prompt, _indent, isDisabled, outputKey);
 						}
 						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for the respective type!", _indent);
 						for (int j = 1; j < inputItems.count(); j++) {
-							String subline = CodeParser.getKeyword("input") + " " + prompt + inputItems.get(j);
-							addCode(transform(subline), _indent, isDisabled);
+							String inputItem = inputItems.get(j);
+							addCode(transform(inputKey + " \"" + inputItem + "\" " + inputItem), _indent, isDisabled);
 						}
 					}
 					else {

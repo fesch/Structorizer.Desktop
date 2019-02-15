@@ -675,6 +675,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblInvolveSubtree = new LangTextHolder("Apply also to substructure");
 	public static final LangTextHolder lblPreserveContinuators = new LangTextHolder("Preserve existing soft line breaks");
 	// END KGU#602 2018-10-26
+	// START KGU#654 2019-02-15: Enh. #681
+	public static final LangTextHolder msgSetAsPreferredGenerator = new LangTextHolder("You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu?");
+	// END KGU#654 2019-02-15
 	
 
 	public void create()

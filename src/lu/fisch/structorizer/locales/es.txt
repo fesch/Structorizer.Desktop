@@ -422,6 +422,7 @@ Menu.lblNewMaxLineLength.text=Nuevo limite de lineas:
 Menu.lblInvolveSubtree.text=Applicar a las subestructuras también
 Menu.lblPreserveContinuators.text=Mantener saltos de línea existentes
 Menu.msgVetoClose.text=Structorizer esta terminandose. ¿Objetas?
+Menu.msgSetAsPreferredGenerator.text=Has exportado código %1 las ultimas %2 veces.\n¿Quieres eligir % como el código de exportación preferido en el menú ahora?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -962,6 +963,7 @@ ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres de archivos o modules para los quales directivas de inclusión deben ser insertadas.
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...

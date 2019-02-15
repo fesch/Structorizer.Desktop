@@ -38,42 +38,42 @@ package lu.fisch.structorizer.generators;
  *
  *      Author              Date        Description
  *      ------              ----        -----------
- *      Jan Peter Klippel   2008.04.11  First Issue
- *      Bob Fisch           2008.04.12  Added "Fields" section for generator to be used as plugin
- *      Bob Fisch           2009.01.18  Corrected the FOR-loop
- *      Bob Fisch           2011.11.07  Fixed an issue while doing replacements
- *      Kay Gürtzig         2014.12.02  Additional replacement of operator "<--" by "<-"
- *      Kay Gürtzig         2015.10.18  Indentation and comment insertion revised
- *      Kay Gürtzig         2015.11.02  Reorganisation of the transformation, input/output corrected
- *      Kay Gürtzig         2015.11.02  Variable detection and renaming introduced (KGU#62)
+ *      Jan Peter Klippel   2008-04-11  First Issue
+ *      Bob Fisch           2008-04-12  Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch           2009-01-18  Corrected the FOR-loop
+ *      Bob Fisch           2011-11-07  Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014-12-02  Additional replacement of operator "<--" by "<-"
+ *      Kay Gürtzig         2015-10-18  Indentation and comment insertion revised
+ *      Kay Gürtzig         2015-11-02  Reorganisation of the transformation, input/output corrected
+ *      Kay Gürtzig         2015-11-02  Variable detection and renaming introduced (KGU#62)
  *                                      Code generation for Case elements (KGU#15) and For
  *                                      loops (KGU#3) revised
- *      Kay Gürtzig         2015.12.12  Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
- *      Kay Gürtzig         2015.12.17  Enh. #23 (KGU#78) jump generation revised; Root generation
+ *      Kay Gürtzig         2015-12-12  Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
+ *      Kay Gürtzig         2015-12-17  Enh. #23 (KGU#78) jump generation revised; Root generation
  *                                      decomposed according to Generator.generateCode(Root, String);
  *                                      Enh. KGU#47: Dummy implementation for Parallel element
  *                                      Fixes in FOR and REPEAT export
- *      Kay Gürtzig         2015.12.21  Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig         2015.12.21  Bugfix #51 (= KGU#108) Didn't cope with empty input / output
- *      Kay Gürtzig         2016.03.22  Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
- *      Kay Gürtzig         2016.03.23  Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig         2015-12-21  Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2015-12-21  Bugfix #51 (= KGU#108) Didn't cope with empty input / output
+ *      Kay Gürtzig         2016-03-22  Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig         2016-03-23  Enh. #84: Support for FOREACH loops (KGU#61)
  *      Kay Gürtzig         2016-04-01  Enh. #144: Care for the new export option suppressing content conversion
  *      Kay Gürtzig         2016-07-20  Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig         2016.08.12  Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25  Enh. #253: CodeParser.keywordMap refactoring done. 
- *      Kay Gürtzig         2016.10.14  Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig         2016.10.15  Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig         2016.10.16  Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.12.01  Bugfix #301: More precise check for parenthesis enclosing of log. conditions
- *      Kay Gürtzig         2016.12.30  Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
- *      Kay Gürtzig         2017.01.04  Enh. #314: Approach to translate the File API
- *      Kay Gürtzig         2017.02.25  Enh. #348: Parallel sections translated with threading module
- *      Kay Gürtzig         2017.02.26  KGU#352: Variable prefixing revised w.r.t. arrays and references
- *      Kay Gürtzig         2017.02.27  Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.05.16  Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.05.24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
- *      Kay Gürtzig         2017.11.02  Issue #447: Line continuation in Case elements supported
- *      Kay Gürtzig         2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig         2016-08-12  Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016-09-25  Enh. #253: CodeParser.keywordMap refactoring done. 
+ *      Kay Gürtzig         2016-10-14  Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016-10-15  Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016-10-16  Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-12-01  Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig         2016-12-30  Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
+ *      Kay Gürtzig         2017-01-04  Enh. #314: Approach to translate the File API
+ *      Kay Gürtzig         2017-02-25  Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig         2017-02-26  KGU#352: Variable prefixing revised w.r.t. arrays and references
+ *      Kay Gürtzig         2017-02-27  Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017-05-16  Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-05-24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
+ *      Kay Gürtzig         2017-11-02  Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2019-02-15  Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -211,9 +211,9 @@ public class PerlGenerator extends Generator {
 	protected String getInputReplacer(boolean withPrompt)
 	{
 		if (withPrompt) {
-			return "print $1; $2 = <STDIN>; chomp $2";
+			return "print $1; chomp($2 = <STDIN>)";
 		}
-		return "$1 = <STDIN>; chomp $1";
+		return "chomp($1 = <STDIN>)";
 	}
 	// END KGU#281 2016-10-15
 
@@ -388,23 +388,24 @@ public class PerlGenerator extends Generator {
 			StringList lines = _inst.getUnbrokenText();
 			for(int i=0;i<lines.count();i++)
 			{
-				// START KGU#653 2019-02-14: Enh. #680 - input with several items...
 				String line = lines.get(i);
+				// START KGU#653 2019-02-15: Enh. #680 - input with several items...
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {
+					String inputKey = CodeParser.getKeyword("input");
 					String prompt = inputItems.get(0);
 					if (!prompt.isEmpty()) {
-						prompt += " ";
+						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, isDisabled);
 					}
 					for (int j = 1; j < inputItems.count(); j++) {
-						String subLine = CodeParser.getKeyword("input") + prompt + inputItems.get(j);
-						String transf = transform(subLine);
+						String item = inputItems.get(j);
+						String transf = transform(inputKey + " \"" + item + ": \" " + item);
 						if (!transf.endsWith(";")) { transf += ";"; }
 						addCode(transf, _indent, isDisabled);
 					}
 					continue;
 				}
-				// END KGU#653 219-02-14
+				// END KGU#653 219-02-15
 
 				String text = transform(line);
 				if (!text.endsWith(";")) { text += ";"; }
@@ -737,7 +738,7 @@ public class PerlGenerator extends Generator {
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
-    	String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
+		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {

@@ -530,13 +530,14 @@ public class PythonGenerator extends Generator
 				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {
+					String inputKey = CodeParser.getKeyword("input") + " ";
 					String prompt = inputItems.get(0);
 					if (!prompt.isEmpty()) {
-						prompt += " ";
+						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, isDisabled);
 					}
 					for (int j = 1; j < inputItems.count(); j++) {
-						String subLine = CodeParser.getKeyword("input") + " " + prompt + inputItems.get(j);
-						addCode(transform(subLine), _indent, isDisabled);
+						String item = inputItems.get(j);
+						addCode(transform(inputKey + "\"" + item + "\" " + item), _indent, isDisabled);
 					}
 					done = true;
 				}

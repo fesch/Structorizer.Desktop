@@ -418,6 +418,7 @@ Menu.lblNewMaxLineLength.text=New maximum line length:
 Menu.lblInvolveSubtree.text=Apply also to substructure
 Menu.lblPreserveContinuators.text=Preserve existing soft line breaks
 Menu.msgVetoClose.text=Structorizer is going to close. Veto?
+Menu.msgSetAsPreferredGenerator.text=You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu now?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
@@ -957,6 +958,7 @@ ExportOptionDialoge.jLabel1.text=Please select the options you want to activate.
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
 ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...

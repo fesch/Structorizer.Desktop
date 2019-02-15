@@ -167,7 +167,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
- *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved. 
+ *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved.
+ *      Kay Gürtzig     2019-02-15      Enh. #681 - mechanism to propose new favourite generator after repeated use
  *
  ******************************************************************************************************
  *
@@ -462,6 +463,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Flag allowing the saving methods to decide whether the application is going to close */
 	protected boolean isGoingToClose;
 	// END KGU#634 2019-01-17
+
+	// START KGU#654 2019-02-15: Enh. #681 - proposal mechanism for favourite generator
+	protected int generatorProposalTrigger = 0;
+	private String lastGeneratorName = null;
+	private int generatorUseCount = 0;
+	// END KGU#654 2019-02-15
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -5824,6 +5831,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				analyse();
 			}
 			// END KGU#456 2017-11-05
+			// START KGU#654 2019-02-15: Enh. #681
+			String prefGenName = this.getPreferredGeneratorName();
+			String thisGenName = null;
+			for (GENPlugin plugin: Menu.generatorPlugins) {
+				if (plugin.className.equals(_generatorClassName)) {
+					thisGenName = plugin.title;
+					break;
+				}
+			}
+			if (thisGenName.equals(this.lastGeneratorName)) {
+				if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
+						&& !prefGenName.equals(this.lastGeneratorName)) {
+					if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+							Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
+							Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+						this.prefGeneratorName = thisGenName;
+						Ini.getInstance().setProperty("genExportPreferred", thisGenName);
+						Ini.getInstance().save();
+						// doButtons() is assumed to be performed after his method had been called, anyway
+					}
+				}
+			}
+			else {
+				this.lastGeneratorName = thisGenName;
+				this.generatorUseCount = 1;
+			}
+			// END KGU#654 2019-02-15
 		}
 		catch(Exception ex)
 		{
@@ -6814,28 +6850,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
+            // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+            eod.spnPrefGenTrigger.setValue(generatorProposalTrigger);
+            // END KGU#654 2019-02-15
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04 
             // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
             for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
-            	GENPlugin plugin = Menu.generatorPlugins.get(i);
-            	String propertyName = "genExportIncl" + plugin.getKey();
-            	eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
-            	// START KGU#416 2017-06-20: Enh. #354,#357
-            	HashMap<String, String> optionValues = new HashMap<String, String>();
-            	for (HashMap<String, String> optionSpec: plugin.options) {
-            		String optKey = optionSpec.get("name");
-            		propertyName = plugin.getKey() + "." + optKey;
-            		optionValues.put(optKey, ini.getProperty(propertyName, ""));
-            	}
-            	eod.generatorOptions.add(optionValues);
-            	// END KGU#416 2017-06-20
+                GENPlugin plugin = Menu.generatorPlugins.get(i);
+                String propertyName = "genExportIncl" + plugin.getKey();
+                eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
+                // START KGU#416 2017-06-20: Enh. #354,#357
+                HashMap<String, String> optionValues = new HashMap<String, String>();
+                for (HashMap<String, String> optionSpec: plugin.options) {
+                    String optKey = optionSpec.get("name");
+                    propertyName = plugin.getKey() + "." + optKey;
+                    optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                }
+                eod.generatorOptions.add(optionValues);
+                // END KGU#416 2017-06-20
             }
             // END KGU#351 2017-02-26
 
             eod.setVisible(true);
-                        
+
             if(eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
@@ -6853,24 +6892,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportLicenseInfo", String.valueOf(eod.chkExportLicenseInfo.isSelected()));
                 // END KGU#363/KGU#395 2017-05-11
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
-                this.prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
+                String prefGenName = (String)eod.cbPrefGenerator.getSelectedItem();
+                // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+                if (!prefGenName.equals(this.prefGeneratorName)) {
+                    // If the preferred generator was changed then start new use counting 
+                    this.generatorUseCount = 0;
+                }
+                // END KGU#654 2019-02-15
+                this.prefGeneratorName = prefGenName;
                 ini.setProperty("genExportPreferred", this.prefGeneratorName);
                 this.NSDControl.doButtons();
                 // END KGU#170 2016-04-01
+                // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+                int generatorUseTrigger = (int)eod.spnPrefGenTrigger.getValue();
+                if (generatorUseTrigger != this.generatorProposalTrigger) {
+                    this.generatorUseCount = 0;
+                }
+                this.generatorProposalTrigger = generatorUseTrigger;
+                ini.setProperty("genExportPrefTrigger", this.prefGeneratorName);
+                // END KGU#654 2019-02-15
                 // START KGU#168 2016-04-04: Issue #149 Charset for export
                 ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
                 // END KGU#168 2016-04-04
                 // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
                 for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
-                	GENPlugin plugin = Menu.generatorPlugins.get(i);
-                	String propertyName = "genExportIncl" + plugin.getKey();
-                	ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
-                	// START KGU#416 2017-06-20: Enh. #354,#357
-                	for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
-                		propertyName = plugin.getKey() + "." + entry.getKey();
-                		ini.setProperty(propertyName, entry.getValue());
-                	}
-                	// END KGU#416 2017-06-20
+                    GENPlugin plugin = Menu.generatorPlugins.get(i);
+                    String propertyName = "genExportIncl" + plugin.getKey();
+                    ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
+                    // START KGU#416 2017-06-20: Enh. #354,#357
+                    for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
+                        propertyName = plugin.getKey() + "." + entry.getKey();
+                        ini.setProperty(propertyName, entry.getValue());
+                    }
+                    // END KGU#416 2017-06-20
                 }
                 // END KGU#351 2017-02-26
                 ini.save();
@@ -6933,12 +6987,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 iod.cbOptionPlugins.setSelectedItem(ini.getProperty("impPluginChoice", ""));
                 // END KGU#548 2018-07-09
                 for (int i = 0; i < parserPlugins.size(); i++) {
-                	GENPlugin plugin = parserPlugins.get(i);
+                    GENPlugin plugin = parserPlugins.get(i);
                     HashMap<String, String> optionValues = new HashMap<String, String>();
                     for (HashMap<String, String> optionSpec: plugin.options) {
-                    	String optKey = optionSpec.get("name");
-                    	String propertyName = plugin.getKey() + "." + optKey;
-                    	optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                        String optKey = optionSpec.get("name");
+                        String propertyName = plugin.getKey() + "." + optKey;
+                        optionValues.put(optKey, ini.getProperty(propertyName, ""));
                     }
                     iod.parserOptions.add(optionValues);
                 }
@@ -6974,11 +7028,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // END KGU#602 2018-10-25
                 // START KGU#416 2017-02-26: Enh. #354, #357
                 for (int i = 0; i < parserPlugins.size(); i++) {
-                	GENPlugin plugin = parserPlugins.get(i);
-                	for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
-                		String propertyName = plugin.getKey() + "." + entry.getKey();
-                		ini.setProperty(propertyName, entry.getValue());
-                	}
+                    GENPlugin plugin = parserPlugins.get(i);
+                    for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
+                        String propertyName = plugin.getKey() + "." + entry.getKey();
+                        ini.setProperty(propertyName, entry.getValue());
+                    }
                 }
                 // END KGU#416 2017-06-20
                 // START KGU#548 2018-07-09: Restore the last selected plugin choice
@@ -8467,6 +8521,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#602 2018-10-28: Enh. #419
 		ini.setProperty("wordWrapLimit", Integer.toString(this.lastWordWrapLimit));
 		// END KGU#602 2018-10-28
+		// START KGU#654 2019-02-15: Enh. #681
+		ini.setProperty("genExportPrefTrigger", Integer.toString(this.generatorProposalTrigger));
+		// END KGU#654 2019-02-15
 
 		if (this.findDialog != null) {
 			this.findDialog.cacheToIni(ini);
@@ -8494,6 +8551,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#602 2018-10-28: Enh. #419
 		try {
 			this.lastWordWrapLimit = Integer.parseInt(ini.getProperty("wordWrapLimit", "0"));
+			// START KGU#654 2019-02-15: Enh. #681
+			this.generatorProposalTrigger = Integer.parseInt(ini.getProperty("genExportPrefTrigger", "5"));
+			// END KGU#654 2019-02-15
 		}
 		catch (NumberFormatException ex) {}
 		// END KGU#602 2018-10-28

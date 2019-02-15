@@ -261,7 +261,7 @@ public class JavaGenerator extends CGenerator
 	{
 		// NOTE: If you modify these patterns then you must adapt transform() too!
 		if (withPrompt) {
-			return "System.out.println($1); $2 = (new Scanner(System.in)).nextLine()";
+			return "System.out.print($1); $2 = (new Scanner(System.in)).nextLine()";
 		}
 		return "$1 = (new Scanner(System.in)).nextLine()";
 	}
@@ -764,8 +764,8 @@ public class JavaGenerator extends CGenerator
 			if (itemType == null)
 			{
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
-				
+				this.insertComment("TODO: Select a more sensible item type than Object", indent);
+				this.insertComment("      and/or prepare the elements of the array.", indent);
 			}
 			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
 					indent, isDisabled);

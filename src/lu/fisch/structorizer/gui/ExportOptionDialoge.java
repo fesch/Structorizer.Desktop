@@ -45,7 +45,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls
  *      Kay Gürtzig     2017.05.11  Enh. #372: New option to export license attributes
  *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
- *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand). 
+ *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand).
+ *      Kay Gürtzig     2019-02-15  Enh. #681: New spinner for triggering a change proposal for preferred generator
  *
  ******************************************************************************************************
  *
@@ -75,6 +76,8 @@ import java.util.Vector;
 
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 import lu.fisch.structorizer.helpers.GENPlugin;
@@ -121,12 +124,12 @@ public class ExportOptionDialoge extends LangDialog
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-    	// START KGU#351 2017-02-26: Enh. #346
-    	tabbedPane = new javax.swing.JTabbedPane();
-    	contentPanel0 = new javax.swing.JPanel();
-    	contentPanel1 = new javax.swing.JPanel();
-    	buttonBar = new javax.swing.JPanel();
-    	// END KGU#351 2017-02-26
+        // START KGU#351 2017-02-26: Enh. #346
+        tabbedPane = new javax.swing.JTabbedPane();
+        contentPanel0 = new javax.swing.JPanel();
+        contentPanel1 = new javax.swing.JPanel();
+        buttonBar = new javax.swing.JPanel();
+        // END KGU#351 2017-02-26
         //jPanel1 = new javax.swing.JPanel();
         // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
         noConversionCheckBox = new javax.swing.JCheckBox();
@@ -137,10 +140,13 @@ public class ExportOptionDialoge extends LangDialog
         lineNumbersCheckBox = new javax.swing.JCheckBox();
         jButton1 = new javax.swing.JButton();
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
-        lbVoid = new javax.swing.JLabel();
+        //lbVoid = new javax.swing.JLabel();
         lbPrefGenerator = new javax.swing.JLabel();
         cbPrefGenerator = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames(false));
         // END KGU#171 2016-04-01
+        // START KGU#654 2019-02-15: Enh. #681
+        spnPrefGenTrigger = new javax.swing.JSpinner();
+        // END KGU#654 2019-02-15
         // START KGU#168 2016-04-04: Issue #149
         lbVoid1 = new javax.swing.JLabel();
         lbCharset = new javax.swing.JLabel();
@@ -191,14 +197,14 @@ public class ExportOptionDialoge extends LangDialog
         // END KGU#168 2016-04-04
 
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
-        lbVoid.setText(" ");	// FIXME: Can we replace this by insets?
-        lbVoid.setMinimumSize(
-        		new Dimension(lbVoid.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
+        //lbVoid.setText(" ");	// FIXME: Can we replace this by insets?
+        //lbVoid.setMinimumSize(
+        //        new Dimension(lbVoid.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
         lbPrefGenerator.setText("Favorite Code Export:");
         lbPrefGenerator.setMinimumSize(
-        		new Dimension(lbPrefGenerator.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
+                new Dimension(lbPrefGenerator.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
         cbPrefGenerator.setMaximumSize(
-        		new Dimension(150, cbPrefGenerator.getPreferredSize().height));
+                new Dimension(150, cbPrefGenerator.getPreferredSize().height));
         cbPrefGenerator.setMaximumRowCount(cbPrefGenerator.getItemCount());
         cbPrefGenerator.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent evt) {
@@ -206,6 +212,13 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
         // END KGU#17 2016-04-01
+        // START KGU#654 2019-02-15: Enh. #681
+        SpinnerModel spnModel = new SpinnerNumberModel(5, 0, 20, 1);
+        spnPrefGenTrigger.setModel(spnModel);
+        spnPrefGenTrigger.setMaximumSize(
+                new Dimension(chkCharsetAll.getPreferredSize().width, this.cbPrefGenerator.getPreferredSize().height));
+        spnPrefGenTrigger.setToolTipText("Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).");
+        // END KGU#654 2019-02-15
 
         // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
         noConversionCheckBox.setText("No conversion of the expression/instruction contents.");
@@ -252,10 +265,10 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#363 2017-05-11: Enh. #372
         chkExportLicenseInfo.setText("Export author and license attributes");
         chkExportLicenseInfo.addActionListener(new ActionListener() {
-			@Override
-        	public void actionPerformed(ActionEvent evt) {
-        		licenseInfoCheckBoxActionPerformed(evt);
-        	}
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                licenseInfoCheckBoxActionPerformed(evt);
+            }
         });
         // END KGU#363 2017-05-11
         
@@ -272,22 +285,22 @@ public class ExportOptionDialoge extends LangDialog
         btnPluginOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent evt) {
-            	String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
-            	// Identify the plugin by its title
-            	int pluginIndex = -1;
-            	for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
-            		GENPlugin plugin = plugins.get(i);
-            		if (pluginTitle.equals(plugin.title)) {
-            			pluginIndex = i;
-            		}
-            	}
-            	// If found then we can open the dialog
-            	if (pluginIndex >= 0) {
-            		openSpecificOptionDialog(
-            				msgOptionsForPlugin.getText(),
-            				plugins.get(pluginIndex),
-            				generatorOptions.get(pluginIndex));
-            	}
+                String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
+                // Identify the plugin by its title
+                int pluginIndex = -1;
+                for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
+                    GENPlugin plugin = plugins.get(i);
+                    if (pluginTitle.equals(plugin.title)) {
+                        pluginIndex = i;
+                    }
+                }
+                // If found then we can open the dialog
+                if (pluginIndex >= 0) {
+                    openSpecificOptionDialog(
+                            msgOptionsForPlugin.getText(),
+                            plugins.get(pluginIndex),
+                            generatorOptions.get(pluginIndex));
+                }
 			}});
         cbOptionPlugins.setMaximumSize(
                 new Dimension(cbPrefGenerator.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
@@ -329,7 +342,10 @@ public class ExportOptionDialoge extends LangDialog
                             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(chkCharsetAll)
-                                    .add(lbVoid))
+                                    // START KGU#654 2019-02-15: Enh. #681
+                                    //.add(lbVoid))
+                                    .add(spnPrefGenTrigger))
+                                    // END KGU#654 2019-02-15
                             .addContainerGap()
                             )
                     // END KGU#168 2016-04-04
@@ -369,7 +385,10 @@ public class ExportOptionDialoge extends LangDialog
                         .add(layout.createSequentialGroup()
                                 .add(chkCharsetAll)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lbVoid))
+                                // START KGU#654 2019-02-15: Enh. #681
+                                //.add(lbVoid))
+                                .add(spnPrefGenTrigger))
+                                // END KGU#654 2019-02-15
                         )
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 // END KGU#168/KGU#171 2016-04-04
@@ -402,108 +421,108 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)*/)
         );
         
-		// START KGU#351 2017-02-26: Enh. #346
-		//======== contentPanel1 ========
-		{
-			// get generator Names
-			Vector<String> generatorNames = this.getCodeGeneratorNames(false);
-			int nGenerators = generatorNames.size();
-			
-			this.targetLabels = new JLabel[nGenerators];
-			this.includeLists = new JTextField[nGenerators];
-			GridBagLayout gbl = new GridBagLayout();
-			GridBagConstraints gbc0 = new GridBagConstraints();
-			GridBagConstraints gbc1 = new GridBagConstraints();
-			contentPanel1.setBorder(new EmptyBorder(0, 5, 0, 5));
-			contentPanel1.setLayout(gbl);
-			gbc0.gridx = 1;
-			gbc0.gridy = 1;
-			gbc0.gridwidth = 1;
-			gbc0.gridheight = 1;
-			// START KGU#472 2018-01-22: Issue #484 - Left column (labels) shall not be expanded
-			gbc0.weightx = 0.0;
-			// END KGU#472 2018-01-22
-			gbc0.fill = GridBagConstraints.BOTH;
-			gbc0.insets = new Insets(0, 0, 0, 5);
-			gbc1.gridx = 2;
-			gbc1.gridy = 1;
-			gbc1.gridwidth = GridBagConstraints.REMAINDER;
-			gbc1.gridheight = 1;
-			// START KGU#472 2018-01-22: Issue #484 - Right column (text fields) are to be expanded
-			gbc1.weightx = 1.0;
-			// END KGU#472 2018-01-22
-			gbc1.fill = GridBagConstraints.BOTH;
+        // START KGU#351 2017-02-26: Enh. #346
+        //======== contentPanel1 ========
+        {
+            // get generator Names
+            Vector<String> generatorNames = this.getCodeGeneratorNames(false);
+            int nGenerators = generatorNames.size();
 
-			for (int i = 0; i < nGenerators; i++)
-			{
-				this.targetLabels[i] = new JLabel(generatorNames.get(i));
-				contentPanel1.add(targetLabels[i], gbc0);
-				this.includeLists[i] = new JTextField(INCLUDE_LIST_WIDTH);
-				//this.includeLists[i].setPreferredSize(new Dimension(100, 20));
-				this.includeLists[i].setToolTipText("Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted");
-				contentPanel1.add(includeLists[i], gbc1);
-				gbc0.gridy++; gbc1.gridy++;
-			}
-			
-		}
+            this.targetLabels = new JLabel[nGenerators];
+            this.includeLists = new JTextField[nGenerators];
+            GridBagLayout gbl = new GridBagLayout();
+            GridBagConstraints gbc0 = new GridBagConstraints();
+            GridBagConstraints gbc1 = new GridBagConstraints();
+            contentPanel1.setBorder(new EmptyBorder(0, 5, 0, 5));
+            contentPanel1.setLayout(gbl);
+            gbc0.gridx = 1;
+            gbc0.gridy = 1;
+            gbc0.gridwidth = 1;
+            gbc0.gridheight = 1;
+            // START KGU#472 2018-01-22: Issue #484 - Left column (labels) shall not be expanded
+            gbc0.weightx = 0.0;
+            // END KGU#472 2018-01-22
+            gbc0.fill = GridBagConstraints.BOTH;
+            gbc0.insets = new Insets(0, 0, 0, 5);
+            gbc1.gridx = 2;
+            gbc1.gridy = 1;
+            gbc1.gridwidth = GridBagConstraints.REMAINDER;
+            gbc1.gridheight = 1;
+            // START KGU#472 2018-01-22: Issue #484 - Right column (text fields) are to be expanded
+            gbc1.weightx = 1.0;
+            // END KGU#472 2018-01-22
+            gbc1.fill = GridBagConstraints.BOTH;
 
-		//======== buttonBar ========
-		{
-			buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
-			buttonBar.setLayout(new GridBagLayout());
-			((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-			((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+            for (int i = 0; i < nGenerators; i++)
+            {
+                this.targetLabels[i] = new JLabel(generatorNames.get(i));
+                contentPanel1.add(targetLabels[i], gbc0);
+                this.includeLists[i] = new JTextField(INCLUDE_LIST_WIDTH);
+                //this.includeLists[i].setPreferredSize(new Dimension(100, 20));
+                this.includeLists[i].setToolTipText("Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted");
+                contentPanel1.add(includeLists[i], gbc1);
+                gbc0.gridy++; gbc1.gridy++;
+            }
 
-			//---- btnOK ----
-			buttonBar.add(jButton1, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-				GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-				new Insets(0, 0, 0, 0), 0, 0));
-		}
-		
-		Container contentPane = getContentPane();
-		contentPane.setLayout(new BorderLayout());
-		contentPane.add(tabbedPane, BorderLayout.CENTER);
-		tabbedPane.addTab("General", contentPanel0);
-		tabbedPane.addTab("Includes", contentPanel1);
-		contentPane.add(buttonBar, BorderLayout.SOUTH);
-		// END KGU#351 2017-02-26
-		
-		// START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
-		KeyListener keyListener = new KeyListener()
-		{
-			public void keyPressed(KeyEvent e) 
-			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
-					setVisible(false);
-				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
-				{
-					goOn = true;
-					setVisible(false);
-				}
-			}
-			
-			public void keyReleased(KeyEvent kevt) {} 
-			public void keyTyped(KeyEvent kevt) {}
-		};
-		jButton1.addKeyListener(keyListener);
-		cbCharset.addKeyListener(keyListener);
-		chkCharsetAll.addKeyListener(keyListener);
-		noConversionCheckBox.addKeyListener(keyListener);
-		commentsCheckBox.addKeyListener(keyListener);
-		bracesCheckBox.addKeyListener(keyListener);
-		lineNumbersCheckBox.addKeyListener(keyListener);
-		chkExportSubroutines.addKeyListener(keyListener);
-		for (int i = 0; i < this.includeLists.length; i++) {
-			this.includeLists[i].addKeyListener(keyListener);
-		}
-		tabbedPane.addKeyListener(keyListener);
-		// END KGU#393 2017-05-09
-		// START KGU#416 2017-06-20: Enh. #354,#357,#400
-		btnPluginOptions.addKeyListener(keyListener);
-		cbOptionPlugins.addKeyListener(keyListener);
-		// END KGU#416 2017-06-20
+        }
+
+        //======== buttonBar ========
+        {
+        	buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+        	buttonBar.setLayout(new GridBagLayout());
+        	((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+        	((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+
+        	//---- btnOK ----
+        	buttonBar.add(jButton1, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+        			GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+        			new Insets(0, 0, 0, 0), 0, 0));
+        }
+
+        Container contentPane = getContentPane();
+        contentPane.setLayout(new BorderLayout());
+        contentPane.add(tabbedPane, BorderLayout.CENTER);
+        tabbedPane.addTab("General", contentPanel0);
+        tabbedPane.addTab("Includes", contentPanel1);
+        contentPane.add(buttonBar, BorderLayout.SOUTH);
+        // END KGU#351 2017-02-26
+
+        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+        KeyListener keyListener = new KeyListener()
+        {
+            public void keyPressed(KeyEvent e) 
+            {
+                if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+                {
+                	setVisible(false);
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+                {
+                    goOn = true;
+                    setVisible(false);
+                }
+            }
+
+            public void keyReleased(KeyEvent kevt) {} 
+            public void keyTyped(KeyEvent kevt) {}
+        };
+        jButton1.addKeyListener(keyListener);
+        cbCharset.addKeyListener(keyListener);
+        chkCharsetAll.addKeyListener(keyListener);
+        noConversionCheckBox.addKeyListener(keyListener);
+        commentsCheckBox.addKeyListener(keyListener);
+        bracesCheckBox.addKeyListener(keyListener);
+        lineNumbersCheckBox.addKeyListener(keyListener);
+        chkExportSubroutines.addKeyListener(keyListener);
+        for (int i = 0; i < this.includeLists.length; i++) {
+            this.includeLists[i].addKeyListener(keyListener);
+        }
+        tabbedPane.addKeyListener(keyListener);
+        // END KGU#393 2017-05-09
+        // START KGU#416 2017-06-20: Enh. #354,#357,#400
+        btnPluginOptions.addKeyListener(keyListener);
+        cbOptionPlugins.addKeyListener(keyListener);
+        // END KGU#416 2017-06-20
 
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);
@@ -601,22 +620,22 @@ public class ExportOptionDialoge extends LangDialog
      */
     private Vector<String> getCodeGeneratorNames(boolean withOptionsOnly)
     {
-    	if (this.plugins == null) {
-    		// read generators from file
-    		// and add them to the Vector
-    		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
-    		GENParser genp = new GENParser();
-    		this.plugins = genp.parse(buff);
-    		try { buff.close();	} catch (IOException e) {}
-    	}
-    	Vector<String> generatorNames = new Vector<String>();
-    	for(int i = 0; i < plugins.size(); i++)
-    	{
-    		if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
-    			generatorNames.add(plugins.get(i).title);
-    		}
-    	}
-    	return generatorNames;
+        if (this.plugins == null) {
+            // read generators from file
+            // and add them to the Vector
+            BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+            GENParser genp = new GENParser();
+            this.plugins = genp.parse(buff);
+            try { buff.close();	} catch (IOException e) {}
+        }
+        Vector<String> generatorNames = new Vector<String>();
+        for(int i = 0; i < plugins.size(); i++)
+        {
+            if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
+                generatorNames.add(plugins.get(i).title);
+            }
+        }
+        return generatorNames;
     }
 
 //    /**
@@ -669,23 +688,23 @@ public class ExportOptionDialoge extends LangDialog
     public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
     // END KGU#168 2016-04-04
     
-	// START KGU#351 2017-02-26: Enh. #346
-	public javax.swing.JTabbedPane tabbedPane;
-	public javax.swing.JPanel contentPanel0;
-	public javax.swing.JPanel contentPanel1;
-	protected JLabel[] targetLabels;
-	protected JTextField[] includeLists = new JTextField[1];
-	public javax.swing.JPanel buttonBar;
-	// START KGU#416 2017-06-20: Enh. #354, #357
-	//public Vector<String> generatorKeys;
-	private Vector<GENPlugin> plugins = null;
-	// In order of this.plugins there is an option value map per generator plugin
-	public Vector<HashMap<String, String>> generatorOptions = new Vector<HashMap<String, String>>();
-	public javax.swing.JButton btnPluginOptions;
-	public javax.swing.JComboBox<String> cbOptionPlugins;
-	public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Generator");
-	// END KGU#416 2017-06-20
-	// END KGU#351 2017-02-26
+    // START KGU#351 2017-02-26: Enh. #346
+    public javax.swing.JTabbedPane tabbedPane;
+    public javax.swing.JPanel contentPanel0;
+    public javax.swing.JPanel contentPanel1;
+    protected JLabel[] targetLabels;
+    protected JTextField[] includeLists = new JTextField[1];
+    public javax.swing.JPanel buttonBar;
+    // START KGU#416 2017-06-20: Enh. #354, #357
+    //public Vector<String> generatorKeys;
+    private Vector<GENPlugin> plugins = null;
+    // In order of this.plugins there is an option value map per generator plugin
+    public Vector<HashMap<String, String>> generatorOptions = new Vector<HashMap<String, String>>();
+    public javax.swing.JButton btnPluginOptions;
+    public javax.swing.JComboBox<String> cbOptionPlugins;
+    public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Generator");
+    // END KGU#416 2017-06-20
+    // END KGU#351 2017-02-26
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JCheckBox bracesCheckBox;
     public javax.swing.JCheckBox commentsCheckBox;
@@ -697,10 +716,13 @@ public class ExportOptionDialoge extends LangDialog
     public javax.swing.JCheckBox noConversionCheckBox;
     // END KGU#162 2016-03-31
     // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
-    public javax.swing.JLabel lbVoid;
+    //public javax.swing.JLabel lbVoid;
     public javax.swing.JLabel lbPrefGenerator;
     public javax.swing.JComboBox<String> cbPrefGenerator;
     // END KGU#171 2016-04-01
+    // START KGU#654 2019-02-15: Enh. #681
+    public javax.swing.JSpinner spnPrefGenTrigger;
+    // END KGU#654 2019-02-15
     // START KGU#168 2016-04-04: Issue #149
     public javax.swing.JLabel lbVoid1;
     public javax.swing.JLabel lbCharset;

@@ -207,7 +207,7 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
         lblLimit.setText("Maximum number of imported diagrams for direct display:");
         lblLimit.setBorder(new EmptyBorder(0, 0, 0, 5));
-		SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
+        SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
         spnLimit.setModel(spnModel);
 //        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
 //        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));

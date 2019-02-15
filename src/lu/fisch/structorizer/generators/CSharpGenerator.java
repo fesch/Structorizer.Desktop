@@ -607,7 +607,8 @@ public class CSharpGenerator extends CGenerator
 			}
 			else {
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+				this.insertComment("TODO: Select a more sensible item type than Object", indent);
+				this.insertComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
@@ -997,9 +998,10 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			code.add(_indent);
-			insertComment("TODO: You may have to modify input instructions,", _indent);			
-			insertComment("      possibly by enclosing Console.ReadLine() calls with Parse methods", _indent);
-			insertComment("      according to the variable type, e.g. \"i = int.Parse(Console.ReadLine());\".", _indent);			
+			insertComment("TODO: You may have to modify input instructions,", _indent);
+			insertComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
+			insertComment("      Parse methods according to the variable type, e.g.:", _indent);
+			insertComment("         i = int.Parse(Console.ReadLine());", _indent);
 		}
 		// END KGU#236 2016-12-22
 	}
