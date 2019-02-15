@@ -1115,7 +1115,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 			}
 		}
-		if (unsaved.count() > 0) {
+		if (!unsaved.isEmpty()) {
 			JOptionPane.showMessageDialog(this.getParent(), 
 					this.msgUnsavedDiagrams.getText() + "\n" + unsaved.getText() + "\n\n" + errors.getText(),
 					this.msgSaveError.getText(), JOptionPane.WARNING_MESSAGE);
@@ -4666,7 +4666,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		finally {
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
-		if (unsaved.count() > 0 && initiator != null) {
+		if (!unsaved.isEmpty() && initiator != null) {
 			allDone = JOptionPane.showConfirmDialog(initiator,
 					msgUnsavedGroups.getText() + "\n" + unsaved.concatenate(", "), 
 					this.msgSaveDialogTitle.getText(),

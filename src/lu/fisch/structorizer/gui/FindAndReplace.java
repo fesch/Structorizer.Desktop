@@ -248,7 +248,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				String description = "---";
 				StringList text = ((Element)value).getAliasText();
 				// END KGU#480 2018-01-22
-				if (text.count() > 0) {
+				if (!text.isEmpty()) {
 					description = text.get(0);
 					if (text.count() > 1) {
 						description += " ...";

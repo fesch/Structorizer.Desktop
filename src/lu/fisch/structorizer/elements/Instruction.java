@@ -555,7 +555,7 @@ public class Instruction extends Element {
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
 		//return this.text.count() == 0 || this.text.count() == 1 && Instruction.isJump(this.text.get(0));
 		StringList lines = this.getUnbrokenText();
-		return lines.count() == 0 || lines.count() == 1 && Instruction.isJump(lines.get(0));
+		return lines.isEmpty() || lines.count() == 1 && Instruction.isJump(lines.get(0));
 		// END KGU#413 2017-06-09
 	}
 	
@@ -652,7 +652,7 @@ public class Instruction extends Element {
 			tokens.remove(0, keyTokens.count());
 			tokens.removeAll(" ");
 			// Identify the prompt if any
-			if (tokens.count() == 0) {
+			if (tokens.isEmpty()) {
 				inputItems.add(""); 
 			}
 			else {
@@ -1017,7 +1017,7 @@ public class Instruction extends Element {
 		boolean isDeclared = true;
 		unifyOperators(tokens, true);
 		tokens.removeAll(" ");
-		if (tokens.count() == 0) {
+		if (tokens.isEmpty()) {
 			return;
 		}
 		String token0 = tokens.get(0).toLowerCase();
@@ -1048,7 +1048,7 @@ public class Instruction extends Element {
 			// EMD KGU#375 2017-09-20
 			StringList leftSide = tokens.subSequence(0, posAsgnmt);
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
-			isAssigned = rightSide.count() > 0;
+			isAssigned = !rightSide.isEmpty();
 			// Isolate the variable name from the left-hand side of the assignment
 			varName = getAssignedVarname(leftSide);
 			// Without const, var, or dim a declaration must be a C-style declaration

@@ -1839,12 +1839,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 		if (initiator != null) {
 			String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
-			if (duplicateRoots.count() > 0) {
+			if (!duplicateRoots.isEmpty()) {
 				message += msgAmbiguousSignatures.getText()
 						.replace("%1", Integer.toString(duplicateRoots.count()))
 						.replace("%2", duplicateRoots.concatenate("\n- "));
 			}
-			if (missingRoots.count() > 0) {
+			if (!missingRoots.isEmpty()) {
 				message += msgMissingDiagrams.getText()
 						.replace("%1", Integer.toString(missingRoots.count()))
 						.replace("%2", missingRoots.concatenate("\n- "));

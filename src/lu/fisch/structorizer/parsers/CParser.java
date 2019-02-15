@@ -1480,7 +1480,7 @@ public class CParser extends CPreParser
 					// <Base> ::= struct '{' <Struct Def> '}'
 					// We have an anonymous type here - if we didn't obtain a type name, we'll create a new one
 					{
-						if (_typeList.count() == 0) {
+						if (_typeList.isEmpty()) {
 							type = String.format("AnonStruct%1$03d", typeCount++);
 						}
 						else {

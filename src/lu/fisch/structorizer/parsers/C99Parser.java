@@ -1674,7 +1674,7 @@ public class C99Parser extends CPreParser
 			}
 			id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, pascalType, _parentNode, null);
 			expr = this.getContent_R(_reduc.get(2).asReduction(), "").trim();
-			if (pascalType != null && pascalType.count() > 0 && pascalType.get(0).contains("array")) {
+			if (pascalType != null && !pascalType.isEmpty() && pascalType.get(0).contains("array")) {
 				if (_type.equals("char") && expr.startsWith("\"") && expr.endsWith("\"")) {
 					if (_comment == null) {
 						_comment = "(original declaration: char " + content + ")";
@@ -1699,7 +1699,7 @@ public class C99Parser extends CPreParser
 			//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			StringList asPascal = new StringList();
 			id = this.getDeclarator(_reduc, null, null, asPascal, _parentNode, null);
-			if (asPascal.count() > 0) {
+			if (!asPascal.isEmpty()) {
 				_type = asPascal.getLongString() + " " + _type;
 			}
 			// END KGU#651 2019-02-13
@@ -1740,7 +1740,7 @@ public class C99Parser extends CPreParser
 				if (_comment != null) {
 					instr.setComment(_comment);
 				}
-				if (extraComments.count() > 0) {
+				if (!extraComments.isEmpty()) {
 					instr.getComment().add(extraComments.concatenate(" + "));
 				}
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
@@ -2517,7 +2517,7 @@ public class C99Parser extends CPreParser
 			}
 			// <StructDeclList> ::= <Struct Decl>
 			addProcessedCompDecl(compType, declListRed, declList, components);
-			if (declList.count() > 0) {
+			if (!declList.isEmpty()) {
 				components.add(declList.reverse().concatenate(", ") + ": " + compType + ";\\");
 			}
 		}
@@ -2552,7 +2552,7 @@ public class C99Parser extends CPreParser
 				compDecl = compDecl.substring(0, pos);
 			}
 			if (!ptrs.isEmpty() || !index.isEmpty()) {
-				if (_declList.count() > 0) {
+				if (!_declList.isEmpty()) {
 					_groupList.add(_declList.reverse().concatenate(", ") + ": " + _baseType + ";\\");
 					_declList.clear();
 				}

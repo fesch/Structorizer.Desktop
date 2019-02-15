@@ -749,13 +749,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			insertComment(commentLine, _indent);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				insertComment(commentLine, _indent);
+			}
 		}
 	}
 	
@@ -784,13 +784,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			code.add(_indent + _cont + commentLine);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				code.add(_indent + _cont + commentLine);
+			}
 		}
 		if (_end != null)
 		{
@@ -1605,21 +1605,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		// Avoid too much nonsense on indexed variables
 		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
-    	//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
-    	// END KGU#334 2017-01-30
+		//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
+		// END KGU#334 2017-01-30
 		String type = "";
 		String name = null;
 		String index = "";
 		String comp = "";
-    	String before = _lval;
-    	String after = "";
-    	int posL = _lval.indexOf("[");
-    	int posR = _lval.lastIndexOf("]");
-    	if (posL >= 0 && posR > posL) {
-    		index = _lval.substring(posL + 1, posR);
-    		before = _lval.substring(0, posL);
-    		after = _lval.substring(posR + 1);
-    	}
+		String before = _lval;
+		String after = "";
+		int posL = _lval.indexOf("[");
+		int posR = _lval.lastIndexOf("]");
+		if (posL >= 0 && posR > posL) {
+			index = _lval.substring(posL + 1, posR);
+			before = _lval.substring(0, posL);
+			after = _lval.substring(posR + 1);
+		}
 		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), ".")) {
 			comp = after;
 			name = before;
@@ -3372,30 +3372,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	public String getDescription() 
 	{
-        return getFileDescription();
-    }
-	
-    public boolean accept(File f) 
+		return getFileDescription();
+	}
+
+	public boolean accept(File f) 
 	{
-        if (f.isDirectory()) 
+		if (f.isDirectory()) 
 		{
-            return true;
-        }
-		
-        String extension = getExtension(f);
-        if (extension != null) 
-		{
-            return isOK(f.getName());
+			return true;
 		}
-		
-        return false;
-    }
-	
+
+		String extension = getExtension(f);
+		if (extension != null) 
+		{
+			return isOK(f.getName());
+		}
+
+		return false;
+	}
+
 
 	/******* Constructor ******************/
 
 	public Generator()
 	{
 	}
-	
+
 }

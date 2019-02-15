@@ -331,7 +331,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // First check if we have some cached values
         // START KGU#231 2016-08-09: Issue #220
         // Take care of a modified header
-        if (loadedLocale.cachedHeader.count() > 0)
+        if (!loadedLocale.cachedHeader.isEmpty())
         {
             headerText.setText(loadedLocale.cachedHeader.getText());
         }

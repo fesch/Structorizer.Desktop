@@ -189,7 +189,7 @@ public class Parallel extends Element
     	}
 
     	// we need at least one line
-    	if(text.count()>0)
+    	if (!text.isEmpty())
     	{
     		int count = 10;
     		try

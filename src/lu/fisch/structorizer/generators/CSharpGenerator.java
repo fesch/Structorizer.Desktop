@@ -1061,5 +1061,5 @@ public class CSharpGenerator extends CGenerator
 		}
 	}
 	// END KGU 2015-12-15
-    	
+
 }

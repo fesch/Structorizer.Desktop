@@ -1523,9 +1523,9 @@ public class Menu extends LangMenuBar implements NSDController
 			// save
 			menuFileSave.setEnabled(diagram.canSave(false));
 			// END KGU#137 2016-01-11
-		    // START KGU#373 2017-03-28: Enh. #387
+			// START KGU#373 2017-03-28: Enh. #387
 			menuFileSaveAll.setEnabled(diagram.canSave(true));
-		    // END KGU#373 2017-03-38
+			// END KGU#373 2017-03-38
 			// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
 			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
 			this.menuFileExportCodeFavorite.setText(itemText);

@@ -3678,8 +3678,8 @@ public abstract class Element {
     //public static String transformIntermediate(String _text)
     public static StringList transformIntermediate(String _text)
     {
-    	//final String regexMatchers = ".?*+[](){}\\^$";
-    	
+        //final String regexMatchers = ".?*+[](){}\\^$";
+        
         String interm = " " + _text + " ";
         // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
         interm = interm.trim();
@@ -3689,7 +3689,7 @@ public abstract class Element {
         //interm = unifyOperators(interm);
         // END KGU#93 2015-12-21
         
-		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
+        // START KGU 2015-11-30: Adopted from Root.getVarNames(): 
         // pascal: convert "inc" and "dec" procedures
         // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
         // works for all, and so we avoid trouble.

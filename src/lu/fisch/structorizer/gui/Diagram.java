@@ -7451,7 +7451,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				//ex.printStackTrace();
 				logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
 				// END KGU#484 2018-04-05
-			} 
+			}
 			catch (IOException ex)
 			{
 				// START KGU#484 2018-04-05: Issue #463
@@ -8168,7 +8168,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
     			//if (selected instanceof Repeat)
     			if (selected instanceof Repeat && !selected.isCollapsed(false))
-        		// END KGU#495 2018-02-15
+    				// END KGU#495 2018-02-15
     			{
     				// START KGU#292 2016-11-16: Bugfix #291
     				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
@@ -8187,7 +8187,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		case CMD_DOWN:
     			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
     			//if (selected instanceof ILoop && !(selected instanceof Repeat))
-        		if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+    			if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
     			// END KGU#495 2018-02-15
     			{
     				Subqueue body = ((ILoop)selected).getBody();
@@ -8202,7 +8202,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			//{
     			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			//}
-        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
     			//else if (selected instanceof IFork)
     			else if (selected instanceof IFork && !selected.isCollapsed(false))
     			// END KGU#498 2018-02-18
@@ -8210,7 +8210,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
     			}
     			// END KGU#346 2017-02-08
-        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
     			//else if (selected instanceof Parallel)
     			else if (selected instanceof Parallel && !selected.isCollapsed(false))
     			// END KGU#498 2018-02-18

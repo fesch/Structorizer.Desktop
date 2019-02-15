@@ -354,6 +354,9 @@ public class CPlusPlusGenerator extends CGenerator {
 			String threadFuncInst = threadFunc.toLowerCase();
 			StringList used = root.getUsedVarNames(sq, false, false).reverse();
 			StringList asgnd = root.getVarNames(sq, false, false).reverse();
+			// We use all occurring variables as arguments, so we need the difference of
+			// used and assigned variables to form the ordered union of both (first the
+			// merely consumed variables, then those that might get modified).
 			for (int v = 0; v < asgnd.count(); v++) {
 				used.removeAll(asgnd.get(v));
 			}

@@ -91,15 +91,15 @@ public class KSHGenerator extends BASHGenerator {
 		return exts;
 	}
 	
-    // START KGU 2015-10-18: New pseudo field
-    @Override
-    protected String commentSymbolLeft()
-    {
-    	return "#";
-    }
-    // END KGU 2015-10-18
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "#";
+	}
+	// END KGU 2015-10-18
 
-    /************ Code Generation **************/
+	/************ Code Generation **************/
 	
 //	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
 //	@Override

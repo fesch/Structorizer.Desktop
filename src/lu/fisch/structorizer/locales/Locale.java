@@ -136,13 +136,13 @@ public class Locale {
     public void parseStringList(StringList lines)
     {
        // extract & remove the header
-        while(!lines.get(0).trim().equals(endOfHEader) && lines.count()>0) 
+        while (!lines.get(0).trim().equals(endOfHEader) && lines.count() > 0) 
         {
             header.add(lines.get(0));
             lines.remove(0);
         }
         
-        if(lines.count()==0)
+        if (lines.count() == 0)
             JOptionPane.showMessageDialog(null, filename+": File is empty after removing the header ...", "Error", JOptionPane.ERROR_MESSAGE);
         
         // remove the endOfHEader marker
@@ -413,14 +413,14 @@ public class Locale {
     // START KGU#231 2016-08-09: Issue #220
     public boolean hasCachedChanges()
     {
-    	return !this.values.isEmpty() || this.cachedHeader.count() > 0;
+        return !this.values.isEmpty() || !this.cachedHeader.isEmpty();
     }
     // END KGU#231 2016-08-09
     
     // START KGU#244 2016-09-06: Allow loading from external text files
     public String getFilename()
     {
-    	return filename + "";
+        return filename + "";
     }
     // END KGU#244 2016-09-06
 }

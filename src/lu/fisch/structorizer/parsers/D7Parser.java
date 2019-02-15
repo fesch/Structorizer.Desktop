@@ -1789,7 +1789,7 @@ public class D7Parser extends CodeParser
 			for (Root includer: this.includerList) {
 				// Give the unit comment a chance to survive if there is only a single dependent
 				if (includer.removeFromIncludeList(root)
-						&& comment.count() > 0 && this.includerList.size() == 1) {
+						&& !comment.isEmpty() && this.includerList.size() == 1) {
 					includer.comment.add(comment);
 				}
 			}

@@ -999,7 +999,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 		}
 	}
-    
+	
     @Override
     public void savePreferences()
     {
@@ -1030,10 +1030,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
         		done = true;
         	}
         }
-    	// START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
+        // START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
         //if (!done) this.setTitle("Structorizer");
         if (!done) this.setTitle(this.titleString);
-		// END KGU 2016-01-10
+        // END KGU 2016-01-10
     }
 
     @Override
@@ -1061,9 +1061,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     public Mainform(boolean standalone)
     {
         super();
-    	// START KGU#326 2017-01-07: Enh. #101 improved title information
+        // START KGU#326 2017-01-07: Enh. #101 improved title information
         this.instanceNo = ++instanceCount;
-    	// END KGU#326 2017-01-07
+        // END KGU#326 2017-01-07
         this.isStandalone = standalone;
         // START KGU#484 2018-03-22: Issue #463
         logger.info("Structorizer " + this.instanceNo + " starting up.");
@@ -1123,22 +1123,22 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     	if (this.isNew) {
     		int chosen = JOptionPane.showOptionDialog(this,
-					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
-					Menu.lblHint.getText(),
-					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.getIcon(24),
-					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
-			if (chosen == JOptionPane.OK_OPTION) {
-				Root.setCheck(26, true);
-				Root.setCheck(25, true);
-				if (diagram != null) {
-					diagram.setSimplifiedGUI(true);
-				}
-				else {
-					// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
-					Element.E_REDUCED_TOOLBARS = true;
-				}
-			}
+    				Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
+    				Menu.lblHint.getText(),
+    				JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+    				IconLoader.getIcon(24),
+    				new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
+    		if (chosen == JOptionPane.OK_OPTION) {
+    			Root.setCheck(26, true);
+    			Root.setCheck(25, true);
+    			if (diagram != null) {
+    				diagram.setSimplifiedGUI(true);
+    			}
+    			else {
+    				// The essence of diagram.setSimplifiedGUI() but without immediate visibility switch
+    				Element.E_REDUCED_TOOLBARS = true;
+    			}
+    		}
     	}
     	else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     	// END KGU#456 2017-11-06
@@ -1160,14 +1160,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	else if (diagram != null) {
     		diagram.updateNSD(false);
     	}
-		// START KGU#459 2017-11-20: Enh. #459-1
+    	// START KGU#459 2017-11-20: Enh. #459-1
     	if (diagram != null) {
-			diagram.updateTutorialQueues();
-			if (diagram.getRoot().startNextTutorial(false) > -1) {
-				diagram.showTutorialHint();
-			}
+    		diagram.updateTutorialQueues();
+    		if (diagram.getRoot().startNextTutorial(false) > -1) {
+    			diagram.showTutorialHint();
+    		}
     	}
-		// END KGU#459 2017-11-20
+    	// END KGU#459 2017-11-20
     }
     // END KGU#300 2016-12-02
     
@@ -1176,7 +1176,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     	return this.isStandalone;
     }
 
-    // START KGU#305 2016-12-16: Code revision
+	// START KGU#305 2016-12-16: Code revision
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
 		if (_source instanceof Arranger && this.editor != null) {

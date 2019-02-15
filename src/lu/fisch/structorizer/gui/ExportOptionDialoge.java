@@ -588,23 +588,23 @@ public class ExportOptionDialoge extends LangDialog
         }
         else
         {
-        	boolean inNewList = false;
-        	for (int i = 0; i < standardCharsets.length; i++)
-        	{
-        		String charsetName = standardCharsets[i];
-        		if (availableCharsets.contains(charsetName))
-        		{
-        			cbCharset.addItem(charsetName);
-        			if (favouredCharset != null && favouredCharset.equals(charsetName))
-        			{
-        				inNewList = true;
-        			}
-        		}
-        	}
-        	if (favouredCharset != null && !inNewList && availableCharsets.contains(favouredCharset))
-        	{
-        		cbCharset.insertItemAt(favouredCharset,  0);
-        	}
+            boolean inNewList = false;
+            for (int i = 0; i < standardCharsets.length; i++)
+            {
+                String charsetName = standardCharsets[i];
+                if (availableCharsets.contains(charsetName))
+                {
+                    cbCharset.addItem(charsetName);
+                    if (favouredCharset != null && favouredCharset.equals(charsetName))
+                    {
+                        inNewList = true;
+                    }
+                }
+            }
+            if (favouredCharset != null && !inNewList && availableCharsets.contains(favouredCharset))
+            {
+            	cbCharset.insertItemAt(favouredCharset,  0);
+            }
         }
         if (favouredCharset != null)
         {
