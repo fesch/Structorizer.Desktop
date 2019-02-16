@@ -963,7 +963,7 @@ ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivier
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, bei der diese als beVorzugten Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...

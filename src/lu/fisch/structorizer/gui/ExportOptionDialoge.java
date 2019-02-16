@@ -75,6 +75,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.JLabel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -523,6 +524,9 @@ public class ExportOptionDialoge extends LangDialog
         btnPluginOptions.addKeyListener(keyListener);
         cbOptionPlugins.addKeyListener(keyListener);
         // END KGU#416 2017-06-20
+        // START KGU#653 2019-02-17: Enh. #681
+        ((JSpinner.DefaultEditor)spnPrefGenTrigger.getEditor()).getTextField().addKeyListener(keyListener);
+        // END KGU#653 2019-02-17
 
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);

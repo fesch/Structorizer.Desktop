@@ -168,7 +168,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved.
- *      Kay Gürtzig     2019-02-15      Enh. #681 - mechanism to propose new favourite generator after repeated use
+ *      Kay Gürtzig     2019-02-15/16   Enh. #681 - mechanism to propose new favourite generator after repeated use
  *
  ******************************************************************************************************
  *
@@ -5821,45 +5821,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#395 2017-05-11
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
-			this.lastCodeExportDir = 
+			// START KGU#654 2019-02-16: Enh. #681 Don't overwrite the last export dir in case the export failed or was cancelled
+			//this.lastCodeExportDir =
+			File exportDir =
+			// END KGU#654 2019-02-16
 					gen.exportCode(root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
 							NSDControl.getFrame());
-			// END KGU 2017-04-26
+			// START KGU#654 2019-02-16: Enh. #681
 			// START KGU#456 2017-11-05: Enh. #452
 			if (root.advanceTutorialState(26, root)) {
 				analyse();
 			}
 			// END KGU#456 2017-11-05
-			// START KGU#654 2019-02-15: Enh. #681
-			String prefGenName = this.getPreferredGeneratorName();
-			String thisGenName = null;
-			for (GENPlugin plugin: Menu.generatorPlugins) {
-				if (plugin.className.equals(_generatorClassName)) {
-					thisGenName = plugin.title;
-					break;
-				}
-			}
-			if (thisGenName.equals(this.lastGeneratorName)) {
-				if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
-						&& !prefGenName.equals(this.lastGeneratorName)) {
-					if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
-							Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
-							Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-						this.prefGeneratorName = thisGenName;
-						Ini.getInstance().setProperty("genExportPreferred", thisGenName);
-						Ini.getInstance().save();
-						// doButtons() is assumed to be performed after his method had been called, anyway
+			// START KGU#654 2019-02-15/16: Enh. #681 - count the successful exports to the target language
+			if (exportDir != null) {
+				this.lastCodeExportDir = exportDir;
+				
+				String prefGenName = this.getPreferredGeneratorName();
+				String thisGenName = null;
+				for (GENPlugin plugin: Menu.generatorPlugins) {
+					if (plugin.className.equals(_generatorClassName)) {
+						thisGenName = plugin.title;
+						break;
 					}
 				}
+				if (thisGenName.equals(this.lastGeneratorName)) {
+					if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
+							&& !prefGenName.equals(this.lastGeneratorName)) {
+						if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+								Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
+								Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+							this.prefGeneratorName = thisGenName;
+							Ini.getInstance().setProperty("genExportPreferred", thisGenName);
+							Ini.getInstance().save();
+							// doButtons() is assumed to be performed after his method had been called, anyway
+						}
+					}
+				}
+				else {
+					this.lastGeneratorName = thisGenName;
+					this.generatorUseCount = 1;
+				}
 			}
-			else {
-				this.lastGeneratorName = thisGenName;
-				this.generatorUseCount = 1;
-			}
-			// END KGU#654 2019-02-15
+			// END KGU#654 2019-02-15/16
 		}
 		catch(Exception ex)
 		{

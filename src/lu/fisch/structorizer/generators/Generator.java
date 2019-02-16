@@ -81,6 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2018-10-30      New field generatorIncludes and method insertGeneratorIncludes() to
  *                                      avoid duplicate include/import/using entries system <-> user 
  *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
  *
  ******************************************************************************************************
  *
@@ -2561,11 +2562,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
-	 * opens a file selection dialog
+	 * opens a file selection dialog, and effectuates the actual code export.
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @return the chosen target directory
+	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
@@ -2824,6 +2825,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		   	}
 		   	// END KGU#178 2016-07-20
 		} // if (file != null)
+		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
+		else {
+			exportDir = null;
+		}
+		// END KGU#654 2019-02-16
 		// START KGU 2017-04-26
 		return exportDir;
 		// END KGU 2017-04-26

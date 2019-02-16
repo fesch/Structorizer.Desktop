@@ -138,6 +138,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
  *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
  *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
+ *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
  *      
  ******************************************************************************************************
  *
@@ -2429,6 +2430,7 @@ public class Root extends Element {
 	 * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
 	 * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
 	 * HYP 3: output (?) &lt;used&gt; (?)<br/>
+	 * HYP 4: input (?)'['&lt;used&gt;']'
 	 * @param _line - the element text line to be analysed
 	 * @param _keywords the set of parser keywords (if available)
 	 * @return StringList of used variable names according to the above specification
@@ -2460,7 +2462,7 @@ public class Root extends Element {
 		// Replace all split keywords by the respective configured strings
 		// This replacement will be aware of the case sensitivity preference
 		for (int kw = 0; kw < _keywords.length; kw++)
-		{    				
+		{
 			if (_keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = splitKeywords.elementAt(kw);
@@ -2521,18 +2523,25 @@ public class Root extends Element {
 		// parse out array index
 		else if (token0.equals(CodeParser.getKeyword("input")))
 		{
-			String s = "";
-			if (tokens.indexOf("[", 1) >= 0)
-			{
-				//System.out.print("Reducing \"" + s);
-				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-				//s = r.replaceAll(s);
-				s = INDEX_PATTERN.matcher(tokens.subSequence(1, tokens.count()).concatenate()).replaceAll("$2");
-				//System.out.println("\" to \"" + s + "\"");
+			// START KGU#653 2019-02-16: Enh. #680 - with multiple variables we must decompose the list
+			StringList items = Instruction.getInputItems(_line);
+			tokens.clear();
+			for (int j = 1; j < items.count(); j++) {
+				StringList itemTokens = Element.splitLexically(items.get(j), true);
+				String s = "";
+				if (itemTokens.indexOf("[", 1) >= 0)
+				{
+					//System.out.print("Reducing \"" + s);
+					//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+					//s = r.replaceAll(s);
+					s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					//System.out.println("\" to \"" + s + "\"");
+				}
+				// Only the indices are relevant here
+				itemTokens = Element.splitLexically(s, true);
+				tokens.addIfNew(itemTokens);
 			}
-			else 
-			// Only the indices are relevant here
-			tokens = Element.splitLexically(s, true);
+			// END KGU#653 2019-02-16
 		}
 
 		tokens.removeAll(" ");
@@ -2722,7 +2731,6 @@ public class Root extends Element {
     			}
     			//String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
     			// END KGU#281 2016-10-12
-    			// FIXME: Why do we expect a list of variables here (executor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(tokens.subSequence(inpPos, tokens.count()), ",", false);
     			for (int p = 0; p < parts.count(); p++)
@@ -3076,7 +3084,7 @@ public class Root extends Element {
      */
     private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags, HashMap<String, TypeMapEntry> _types)
     {
-    	for (int i=0; i<_node.getSize(); i++)
+    	for (int i = 0; i < _node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
     		// START KGU#277 2016-10-13: Enh. #270 - disabled elements are to be handled as if they wouldn't exist
