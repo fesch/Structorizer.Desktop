@@ -612,10 +612,18 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
 	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
 	// END KGU#300 2016-12-02
-	// START KGU#456 2017-11-05: Enh. #452
-	public static final LangTextHolder msgWelcomeMessage = new LangTextHolder("Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\n"
-			+ "With this tool you may design, test, analyse, export algorithms and many things more.\n"
-			+ "It was designed for easy handling but has already gained a lot of functions.\n\n"
+	// START KGU#456 2017-11-05: Enh. #452 (KGU#655 2019-02-15: split into two texts 
+	//public static final LangTextHolder msgWelcomeMessage = new LangTextHolder("Welcome to Structorizer, your Nassi-Shneiderman diagram editor.\n"
+	//		+ "With this tool you may design, test, analyse, export algorithms and many things more.\n"
+	//		+ "It was designed for easy handling but has already gained a lot of functions.\n\n"
+	//		+ "If you are an absolute beginner then you may start with a reduced toolbar and a \"%\".\n"
+	//		+ "Do you want to start in the simplified and guided mode? (You can always switch to full mode.)");
+	public static final LangTextHolder msgWelcomeMessage1 = new LangTextHolder(
+			"Welcome to Structorizer, your easy Nassi-Shneiderman diagram editor.\n"
+			+ "With this tool you may design, test, analyse, export algorithms and many things more.\n\n"
+			+ "Please choose your initial dialog language (you may always change this later via the menu):");
+	public static final LangTextHolder msgWelcomeMessage2 = new LangTextHolder(
+			"Structorizer was designed for intuitive handling but has already gained a lot of extras.\n\n"
 			+ "If you are an absolute beginner then you may start with a reduced toolbar and a \"%\".\n"
 			+ "Do you want to start in the simplified and guided mode? (You can always switch to full mode.)");
 	public static final LangTextHolder lblReduced = new LangTextHolder("Yes, reduced mode");
@@ -1182,6 +1190,33 @@ public class Menu extends LangMenuBar implements NSDController
 		menubar.add(menuPreferences);
 		menuPreferences.setMnemonic(KeyEvent.VK_P);
 
+		menuPreferences.add(menuPreferencesLanguage);
+		menuPreferencesLanguage.setIcon(IconLoader.getIcon(81));
+
+		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
+		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
+		{
+			final String locName = Locales.LOCALES_LIST[iLoc][0];
+			String locDescription = Locales.LOCALES_LIST[iLoc][1];
+			if (locDescription != null)
+			{
+				String caption = locDescription;
+				ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
+				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
+				menuPreferencesLanguage.add(item);
+				menuPreferencesLanguageItems.put(locName, item);
+			}
+		}
+		// END KGU#242 2016-09-04
+
+		// START KGU#232 2016-08-03: Enh. #222
+		menuPreferencesLanguage.addSeparator();
+		menuPreferencesLanguage.add(menuPreferencesLanguageFromFile);
+		menuPreferencesLanguageFromFile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLangFile(); } } );
+		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
+		// END KGU#232 2016-08-03
+		
 		// START KGU#300 2016-12-02: Enh. #300
 		menuPreferences.add(menuPreferencesNotifyUpdate);
 		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
@@ -1231,32 +1266,6 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesCtrlAliases.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.controllerAliasesNSD(controllerPlugins); } } );;
 		// END KGU#480 2018-01-18
 
-		menuPreferences.add(menuPreferencesLanguage);
-		menuPreferencesLanguage.setIcon(IconLoader.getIcon(81));
-
-		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
-		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
-		{
-			final String locName = Locales.LOCALES_LIST[iLoc][0];
-			String locDescription = Locales.LOCALES_LIST[iLoc][1];
-			if (locDescription != null)
-			{
-				String caption = locDescription;
-				ImageIcon icon = IconLoader.getLocaleIconImage(locName);
-				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
-				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
-				menuPreferencesLanguage.add(item);
-				menuPreferencesLanguageItems.put(locName, item);
-			}
-		}
-		// END KGU#242 2016-09-04
-
-		// START KGU#232 206-08-03: Enh. #222
-		menuPreferencesLanguage.addSeparator();
-		menuPreferencesLanguage.add(menuPreferencesLanguageFromFile);
-		menuPreferencesLanguageFromFile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLangFile(); } } );
-		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
-                
 		// create Look & Feel Menu
 		menuPreferences.add(menuPreferencesLookAndFeel);
 		menuPreferencesLookAndFeel.setIcon(IconLoader.getIcon(78));

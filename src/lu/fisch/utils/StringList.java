@@ -47,6 +47,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
  *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
  *      Kay Gürtzig     2017.10.28      Method trim() added.
+ *      Kay Gürtzig     2019-02-15      Method isEmpty() added
  *
  ******************************************************************************************************
  *
@@ -473,7 +474,7 @@ public class StringList {
 	 */
 	public void add(StringList _stringList)
 	{
-		for(int i=0;i<_stringList.count();i++)
+		for (int i=0; i<_stringList.count(); i++)
 		{
 			strings.add(_stringList.get(i));
 		}
@@ -495,12 +496,12 @@ public class StringList {
 	public boolean addIfNew(StringList _stringList)
 	{
 		boolean someInserted = false;
-		for(int i=0;i<_stringList.count();i++)
+		for (int i=0; i<_stringList.count(); i++)
 		{
-			if(!strings.contains(_stringList.get(i)))
+			if (!strings.contains(_stringList.get(i)))
 			{
-			   strings.add(_stringList.get(i));
-			   someInserted = true;
+				strings.add(_stringList.get(i));
+				someInserted = true;
 			}
 		}
 		return someInserted;
@@ -672,7 +673,7 @@ public class StringList {
 	{
 		StringList sl = new StringList();
 
-		for(int i=0;i<strings.size();i++)
+		for (int i=0; i<strings.size(); i++)
 		{
 			sl.add(get(count()-i-1));
 		}
@@ -689,7 +690,7 @@ public class StringList {
 	 */
 	public void set(int _index, String _s)
 	{
-		if(_index<strings.size() && _index>=0)
+		if (_index < strings.size() && _index >= 0)
 		{
 			strings.remove(_index);
 			strings.insertElementAt(_s,_index);
@@ -706,7 +707,7 @@ public class StringList {
 	 */
 	public String get(int _index)
 	{
-		if(_index<strings.size() && _index>=0)
+		if (_index < strings.size() && _index >= 0)
 		{
 			return strings.get(_index);
 		}
@@ -847,6 +848,15 @@ public class StringList {
 	{
 		return strings.size();
 	}
+	
+	/**
+	 * Tests if this StringList has no components
+	 * @return {@code true} if and only if this StringList has no elements.
+	 */
+	public boolean isEmpty()
+	{
+		return strings.isEmpty();
+	}
 
 	public void setCommaText(String _input)
 	{
@@ -877,47 +887,47 @@ public class StringList {
 			String chr = Character.toString(input.charAt(i));
 			if (chr.equals("\""))
 			{
-			   if (i+1<input.length())
-			   {
-				if (!isOpen)
+				if (i+1<input.length())
 				{
-					isOpen = true;
-				}
-				else
-				{
-					String next = Character.toString(input.charAt(i+1));
-					if (next.equals("\""))
+					if (!isOpen)
 					{
-						tmp += "\"";
-						i++;
+						isOpen = true;
 					}
 					else
 					{
-						//if(!((strings.size()==0)&&(tmp.trim().equals(""))))
+						String next = Character.toString(input.charAt(i+1));
+						if (next.equals("\""))
 						{
-						   strings.add(tmp);
+							tmp += "\"";
+							i++;
 						}
-						tmp = new String();
-						isOpen = false;
+						else
+						{
+							//if(!((strings.size()==0)&&(tmp.trim().equals(""))))
+							{
+								strings.add(tmp);
+							}
+							tmp = new String();
+							isOpen = false;
+						}
 					}
 				}
-			   }
-			   else
-			   {
-				   if (!((strings.size()==0) && (tmp.trim().isEmpty())))
-				   {
-					   strings.add(tmp);
-				   }
-				   tmp = new String();
-				   isOpen = false;
-			   }
+				else
+				{
+					if (!((strings.size()==0) && (tmp.trim().isEmpty())))
+					{
+						strings.add(tmp);
+					}
+					tmp = new String();
+					isOpen = false;
+				}
 			}
 			else
 			{
-			   if (isOpen)
-			   {
-				tmp += chr;
-			   }
+				if (isOpen)
+				{
+					tmp += chr;
+				}
 			}
 		}
 		if (!(tmp.trim().isEmpty()))
@@ -947,24 +957,24 @@ public class StringList {
 
 	public void loadFromFile(String _filename)
 	{
-            try
-            {
-                StringBuffer buffer = new StringBuffer();
-                InputStreamReader isr = new InputStreamReader(new FileInputStream(new File(_filename)),"UTF-8");
-                Reader in = new BufferedReader(isr);
-                int ch;
-                while ((ch = in.read()) > -1)
-                {
-                    buffer.append((char)ch);
-                }
-                in.close();
+		try
+		{
+			StringBuffer buffer = new StringBuffer();
+			InputStreamReader isr = new InputStreamReader(new FileInputStream(new File(_filename)),"UTF-8");
+			Reader in = new BufferedReader(isr);
+			int ch;
+			while ((ch = in.read()) > -1)
+			{
+				buffer.append((char)ch);
+			}
+			in.close();
 
-                strings.clear();
-                add(StringList.explode(buffer.toString(),"\n"));
-            }
-            catch(IOException ex){}
+			strings.clear();
+			add(StringList.explode(buffer.toString(),"\n"));
+		}
+		catch(IOException ex){}
 
-/*        try
+/*		try
 		{
 			BTextfile inp = new BTextfile(_filename);
 			inp.reset();
@@ -981,7 +991,7 @@ public class StringList {
 			System.out.println(e.getMessage());
 		}
 */
-    }
+	}
 
     public void saveToFile(String _filename)
     {
@@ -1007,21 +1017,21 @@ public class StringList {
     public String copyFrom(int beginLine, int beginIndex, int endLine, int endIndex)
     {
         String ret = "";
-        for(int i=beginLine;i<=endLine;i++)
+        for (int i=beginLine; i<=endLine; i++)
         {
             String line = get(i);
             //System.err.println(i+") "+line);
-            if(i==beginLine)
+            if (i == beginLine)
             {
                 if((line.length()>beginIndex) && (beginIndex>=0)) ret+=line.substring(beginIndex);
             }
-            else if (i==endLine)
+            else if (i == endLine)
             {
-                ret+="\n"+line.substring(0, Math.min(endIndex, line.length()));
+                ret += "\n" + line.substring(0, Math.min(endIndex, line.length()));
             }
             else
             {
-                ret+="\n"+line;
+                ret += "\n" + line;
             }
         }/**/
         //System.err.println("Res = "+ret);
@@ -1030,8 +1040,8 @@ public class StringList {
 
     // START KGU 2015-11-25
     /**
-     * Returns a multi-line String composed of the sub-StringList from element
-     * _start to element _end (excluded)
+     * Returns a multi-line {@link String} composed of the sub-StringList from element
+     * {@code _start} to element {@code _end} (excluded)
      * @param _start - index of first element to include
      * @param _end - index after last element to include
      * @return a string with newlines as separator
@@ -1058,7 +1068,7 @@ public class StringList {
      */
     public String getText(int _start)
     {
-    	return getText(_start, count());
+        return getText(_start, count());
     }
     
     /**
@@ -1086,7 +1096,7 @@ public class StringList {
 //    	return nRemoved;
 //    }
     {
-    	return removeAll(_string, true);
+        return removeAll(_string, true);
     }
     
     /**
@@ -1097,21 +1107,21 @@ public class StringList {
      */
     public int removeAll(String _string, boolean _matchCase)
     {
-    	int nRemoved = 0;
-    	int i = 0;
-    	while (i < count())
-    	{
-    		if (_matchCase && strings.get(i).equals(_string) || strings.get(i).equalsIgnoreCase(_string))
-    		{
-    			strings.removeElementAt(i);
-    			nRemoved++;
-    		}
-    		else
-    		{
-        		i++;    			
-    		}
-    	}
-    	return nRemoved;
+        int nRemoved = 0;
+        int i = 0;
+        while (i < count())
+        {
+            if (_matchCase && strings.get(i).equals(_string) || strings.get(i).equalsIgnoreCase(_string))
+            {
+                strings.removeElementAt(i);
+                nRemoved++;
+            }
+            else
+            {
+                i++;    			
+            }
+        }
+        return nRemoved;
     }
     // END KGU#375 2017-04-04
     // END KGU 2015-11-25
@@ -1126,17 +1136,17 @@ public class StringList {
      */
     public int removeAll(StringList _subList, boolean _matchCase)
     {
-    	int nRemoved = 0;
-    	int pos = -1;
-    	while ((pos = this.indexOf(_subList, pos+1, _matchCase)) >= 0)
-    	{
-    		for (int i = 0; i < _subList.count(); i++)
-    		{
-    			strings.removeElementAt(pos);
-    		}
-    		nRemoved++;
-    	}
-    	return nRemoved;
+        int nRemoved = 0;
+        int pos = -1;
+        while ((pos = this.indexOf(_subList, pos+1, _matchCase)) >= 0)
+        {
+            for (int i = 0; i < _subList.count(); i++)
+            {
+                strings.removeElementAt(pos);
+            }
+            nRemoved++;
+        }
+        return nRemoved;
     }
     // END KGU 2016-04-03
     
@@ -1229,10 +1239,10 @@ public class StringList {
     // END KGU#129 2016-01-08
 
     @Override
-	public String toString()
-	{
-		return getCommaText();
-	}
+    public String toString()
+    {
+    	return getCommaText();
+    }
     
     // START KGU 2015-11-24
     public void clear()
@@ -1241,11 +1251,11 @@ public class StringList {
     }
     // END KGU 2015-11-24
 
-        
+    
     // START BOB 2016-08-01
     public String[] toArray()
     {
-    	String[] array = new String[count()];
+        String[] array = new String[count()];
         for (int i = 0; i < count(); i++) {
             String get = strings.get(i);
             array[i]=get;

@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-03 (2019-02-15)
+Current development version: 3.29-03 (2019-02-16)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -35,6 +35,7 @@ Current development version: 3.29-03 (2019-02-15)
 - 03: Bugfix #679: C import produced defective INPUT instructions <2>
 - 03: Enh. #680: INPUT instructions with multiple input items supported <2>
 - 03: Enh. #681: A Number of exports may offer to change favorite export language <2>
+- 03: Enh. #682: Improved welcome dialog, now with language selection <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
