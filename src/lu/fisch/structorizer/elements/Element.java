@@ -226,7 +226,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-03";
+	public static final String E_VERSION = "3.29-04";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -238,8 +238,8 @@ public abstract class Element {
 	" - KSH: Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - BASH: Markus Grundner <markus@praised-land.de>\n"+
 	" - Java: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
-	" - C: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
-	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - C: Praveen Kumar <praveen_sonal@yahoo.com>\n"+
+	" - C#: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+

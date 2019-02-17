@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-03 (2019-02-17)
+Current development version: 3.29-04 (2019-02-17)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -36,6 +36,7 @@ Current development version: 3.29-03 (2019-02-17)
 - 03: Enh. #680: INPUT instructions with multiple input items supported <2>
 - 03: Enh. #681: A Number of exports may offer to change favorite export language <2>
 - 03: Enh. #682: Improved welcome dialog, now with language selection <2>
+- 04: Issue #51,#137: Executor window now reflects explicit prompts of empty inputs <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
@@ -844,7 +845,7 @@ Version 3.13 (2009-05-23)
 - Analyser: the use of the "return" instruction is now allowed [FISRO]
 
 Version 3.12 (2009-01-18)
-- Added a C generator [Parveen Kumar]
+- Added a C generator [Praveen Kumar]
 - Fixed a bug for saving preferences [FISRO]
 
 Version 3.11 (2008-11-14)

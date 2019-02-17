@@ -170,6 +170,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-12-17      Bugfix #646 in tryOutput()
  *      Kay Gürtzig     2019-02-13      Issue #527: Error message improvement in evaluateExpression()
  *      Kay Gürtzig     2019-02-14      Enh. #680: INPUT instructions with multiple variables supported
+ *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
  *
  ******************************************************************************************************
  *
@@ -4945,6 +4946,11 @@ public class Executor implements Runnable
 			if (prompt.isEmpty()) {
 				prompt = control.lbAcknowledge.getText();
 			}
+			// START KGU#160 2019-02-17: Enh. #51, #137 - an explicit prompt should be passed to text window
+			else {
+				this.console.writeln(prompt, Color.YELLOW);
+			}
+			// END KGU#160 2019-02-17
 			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), prompt, control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
