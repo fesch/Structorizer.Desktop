@@ -167,7 +167,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-06      Enh. #657: Outsourcing with group context
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: Support for new saving option to store relative coordinates in arr files
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
- *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved. 
+ *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved.
+ *      Kay Gürtzig     2019-02-15/16   Enh. #681 - mechanism to propose new favourite generator after repeated use
  *
  ******************************************************************************************************
  *
@@ -462,6 +463,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Flag allowing the saving methods to decide whether the application is going to close */
 	protected boolean isGoingToClose;
 	// END KGU#634 2019-01-17
+
+	// START KGU#654 2019-02-15: Enh. #681 - proposal mechanism for favourite generator
+	protected int generatorProposalTrigger = 0;
+	private String lastGeneratorName = null;
+	private int generatorUseCount = 0;
+	// END KGU#654 2019-02-15
     
 	/*****************************************
 	 * CONSTRUCTOR
@@ -656,7 +663,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								try {
 								// END KGU#354 2017-05-03
 									// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
-									parser = parser.getClass().newInstance();
+									parser = parser.getClass().getDeclaredConstructor().newInstance();
 									// END KGU#354 2017-05-12
 									// START KGU#395 2017-07-02: Enh. #357
 									String parserClassName = parser.getClass().getSimpleName();
@@ -5222,7 +5229,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			// FIXME: For future Java versions we may need a factory here
 			Class<?> impClass = Class.forName(_className);
-			parser = (INSDImporter) impClass.newInstance();
+			parser = (INSDImporter) impClass.getDeclaredConstructor().newInstance();
 
 			dlgOpen.setDialogTitle(Menu.msgTitleNSDImport.getText().replace("%", parser.getDialogTitle()));
 			// set directory
@@ -5507,7 +5514,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU#354 2017-04-27
 				// START KGU#354 2017-05-11: Enh. #354 - we better use a new instance instead of statically sharing it
-				parser = parser.getClass().newInstance();
+				parser = parser.getClass().getDeclaredConstructor().newInstance();
 				// END KGU#354 2017-05-11
 				// START KGU#395 2017-07-02: Enh. #357
 				String parserClassName = parser.getClass().getSimpleName();
@@ -5770,7 +5777,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			final String className = plugin.className;
 			try {
 				Class<?> genClass = Class.forName(className);
-				parsers.add((CodeParser) genClass.newInstance());
+				parsers.add((CodeParser) genClass.getDeclaredConstructor().newInstance());
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
@@ -5805,7 +5812,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try
 		{
 			Class<?> genClass = Class.forName(_generatorClassName);
-			Generator gen = (Generator) genClass.newInstance();
+			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
@@ -5814,16 +5821,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#395 2017-05-11
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
-			this.lastCodeExportDir = 
+			// START KGU#654 2019-02-16: Enh. #681 Don't overwrite the last export dir in case the export failed or was cancelled
+			//this.lastCodeExportDir =
+			File exportDir =
+			// END KGU#654 2019-02-16
 					gen.exportCode(root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
 							NSDControl.getFrame());
-			// END KGU 2017-04-26
+			// START KGU#654 2019-02-16: Enh. #681
 			// START KGU#456 2017-11-05: Enh. #452
 			if (root.advanceTutorialState(26, root)) {
 				analyse();
 			}
 			// END KGU#456 2017-11-05
+			// START KGU#654 2019-02-15/16: Enh. #681 - count the successful exports to the target language
+			if (exportDir != null) {
+				this.lastCodeExportDir = exportDir;
+				
+				String prefGenName = this.getPreferredGeneratorName();
+				String thisGenName = null;
+				for (GENPlugin plugin: Menu.generatorPlugins) {
+					if (plugin.className.equals(_generatorClassName)) {
+						thisGenName = plugin.title;
+						break;
+					}
+				}
+				if (thisGenName.equals(this.lastGeneratorName)) {
+					if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
+							&& !prefGenName.equals(this.lastGeneratorName)) {
+						if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+								Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
+								Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+							this.prefGeneratorName = thisGenName;
+							Ini.getInstance().setProperty("genExportPreferred", thisGenName);
+							Ini.getInstance().save();
+							// doButtons() is assumed to be performed after his method had been called, anyway
+						}
+					}
+				}
+				else {
+					this.lastGeneratorName = thisGenName;
+					this.generatorUseCount = 1;
+				}
+			}
+			// END KGU#654 2019-02-15/16
 		}
 		catch(Exception ex)
 		{
@@ -6814,28 +6857,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
+            // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+            eod.spnPrefGenTrigger.setValue(generatorProposalTrigger);
+            // END KGU#654 2019-02-15
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04 
             // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
             for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
-            	GENPlugin plugin = Menu.generatorPlugins.get(i);
-            	String propertyName = "genExportIncl" + plugin.getKey();
-            	eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
-            	// START KGU#416 2017-06-20: Enh. #354,#357
-            	HashMap<String, String> optionValues = new HashMap<String, String>();
-            	for (HashMap<String, String> optionSpec: plugin.options) {
-            		String optKey = optionSpec.get("name");
-            		propertyName = plugin.getKey() + "." + optKey;
-            		optionValues.put(optKey, ini.getProperty(propertyName, ""));
-            	}
-            	eod.generatorOptions.add(optionValues);
-            	// END KGU#416 2017-06-20
+                GENPlugin plugin = Menu.generatorPlugins.get(i);
+                String propertyName = "genExportIncl" + plugin.getKey();
+                eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
+                // START KGU#416 2017-06-20: Enh. #354,#357
+                HashMap<String, String> optionValues = new HashMap<String, String>();
+                for (HashMap<String, String> optionSpec: plugin.options) {
+                    String optKey = optionSpec.get("name");
+                    propertyName = plugin.getKey() + "." + optKey;
+                    optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                }
+                eod.generatorOptions.add(optionValues);
+                // END KGU#416 2017-06-20
             }
             // END KGU#351 2017-02-26
 
             eod.setVisible(true);
-                        
+
             if(eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
@@ -6853,24 +6899,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportLicenseInfo", String.valueOf(eod.chkExportLicenseInfo.isSelected()));
                 // END KGU#363/KGU#395 2017-05-11
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
-                this.prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
+                String prefGenName = (String)eod.cbPrefGenerator.getSelectedItem();
+                // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+                if (!prefGenName.equals(this.prefGeneratorName)) {
+                    // If the preferred generator was changed then start new use counting 
+                    this.generatorUseCount = 0;
+                }
+                // END KGU#654 2019-02-15
+                this.prefGeneratorName = prefGenName;
                 ini.setProperty("genExportPreferred", this.prefGeneratorName);
                 this.NSDControl.doButtons();
                 // END KGU#170 2016-04-01
+                // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
+                int generatorUseTrigger = (int)eod.spnPrefGenTrigger.getValue();
+                if (generatorUseTrigger != this.generatorProposalTrigger) {
+                    this.generatorUseCount = 0;
+                }
+                this.generatorProposalTrigger = generatorUseTrigger;
+                ini.setProperty("genExportPrefTrigger", this.prefGeneratorName);
+                // END KGU#654 2019-02-15
                 // START KGU#168 2016-04-04: Issue #149 Charset for export
                 ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
                 // END KGU#168 2016-04-04
                 // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
                 for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
-                	GENPlugin plugin = Menu.generatorPlugins.get(i);
-                	String propertyName = "genExportIncl" + plugin.getKey();
-                	ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
-                	// START KGU#416 2017-06-20: Enh. #354,#357
-                	for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
-                		propertyName = plugin.getKey() + "." + entry.getKey();
-                		ini.setProperty(propertyName, entry.getValue());
-                	}
-                	// END KGU#416 2017-06-20
+                    GENPlugin plugin = Menu.generatorPlugins.get(i);
+                    String propertyName = "genExportIncl" + plugin.getKey();
+                    ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
+                    // START KGU#416 2017-06-20: Enh. #354,#357
+                    for (Map.Entry<String, String> entry: eod.generatorOptions.get(i).entrySet()) {
+                        propertyName = plugin.getKey() + "." + entry.getKey();
+                        ini.setProperty(propertyName, entry.getValue());
+                    }
+                    // END KGU#416 2017-06-20
                 }
                 // END KGU#351 2017-02-26
                 ini.save();
@@ -6933,12 +6994,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 iod.cbOptionPlugins.setSelectedItem(ini.getProperty("impPluginChoice", ""));
                 // END KGU#548 2018-07-09
                 for (int i = 0; i < parserPlugins.size(); i++) {
-                	GENPlugin plugin = parserPlugins.get(i);
+                    GENPlugin plugin = parserPlugins.get(i);
                     HashMap<String, String> optionValues = new HashMap<String, String>();
                     for (HashMap<String, String> optionSpec: plugin.options) {
-                    	String optKey = optionSpec.get("name");
-                    	String propertyName = plugin.getKey() + "." + optKey;
-                    	optionValues.put(optKey, ini.getProperty(propertyName, ""));
+                        String optKey = optionSpec.get("name");
+                        String propertyName = plugin.getKey() + "." + optKey;
+                        optionValues.put(optKey, ini.getProperty(propertyName, ""));
                     }
                     iod.parserOptions.add(optionValues);
                 }
@@ -6974,11 +7035,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // END KGU#602 2018-10-25
                 // START KGU#416 2017-02-26: Enh. #354, #357
                 for (int i = 0; i < parserPlugins.size(); i++) {
-                	GENPlugin plugin = parserPlugins.get(i);
-                	for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
-                		String propertyName = plugin.getKey() + "." + entry.getKey();
-                		ini.setProperty(propertyName, entry.getValue());
-                	}
+                    GENPlugin plugin = parserPlugins.get(i);
+                    for (Map.Entry<String, String> entry: iod.parserOptions.get(i).entrySet()) {
+                        String propertyName = plugin.getKey() + "." + entry.getKey();
+                        ini.setProperty(propertyName, entry.getValue());
+                    }
                 }
                 // END KGU#416 2017-06-20
                 // START KGU#548 2018-07-09: Restore the last selected plugin choice
@@ -7397,7 +7458,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				//ex.printStackTrace();
 				logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
 				// END KGU#484 2018-04-05
-			} 
+			}
 			catch (IOException ex)
 			{
 				// START KGU#484 2018-04-05: Issue #463
@@ -8063,7 +8124,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!className.equals("TurtleBox")) {
 				try {
 					Class<?> genClass = Class.forName(className);
-					diagramControllers.add((DiagramController) genClass.newInstance());
+					diagramControllers.add((DiagramController) genClass.getDeclaredConstructor().newInstance());
 				} catch (Exception ex) {
 					errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 				}
@@ -8114,7 +8175,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
     			//if (selected instanceof Repeat)
     			if (selected instanceof Repeat && !selected.isCollapsed(false))
-        		// END KGU#495 2018-02-15
+    				// END KGU#495 2018-02-15
     			{
     				// START KGU#292 2016-11-16: Bugfix #291
     				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
@@ -8133,7 +8194,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		case CMD_DOWN:
     			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
     			//if (selected instanceof ILoop && !(selected instanceof Repeat))
-        		if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+    			if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
     			// END KGU#495 2018-02-15
     			{
     				Subqueue body = ((ILoop)selected).getBody();
@@ -8148,7 +8209,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			//{
     			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
     			//}
-        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
     			//else if (selected instanceof IFork)
     			else if (selected instanceof IFork && !selected.isCollapsed(false))
     			// END KGU#498 2018-02-18
@@ -8156,7 +8217,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
     			}
     			// END KGU#346 2017-02-08
-        		// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
     			//else if (selected instanceof Parallel)
     			else if (selected instanceof Parallel && !selected.isCollapsed(false))
     			// END KGU#498 2018-02-18
@@ -8467,6 +8528,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#602 2018-10-28: Enh. #419
 		ini.setProperty("wordWrapLimit", Integer.toString(this.lastWordWrapLimit));
 		// END KGU#602 2018-10-28
+		// START KGU#654 2019-02-15: Enh. #681
+		ini.setProperty("genExportPrefTrigger", Integer.toString(this.generatorProposalTrigger));
+		// END KGU#654 2019-02-15
 
 		if (this.findDialog != null) {
 			this.findDialog.cacheToIni(ini);
@@ -8494,6 +8558,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#602 2018-10-28: Enh. #419
 		try {
 			this.lastWordWrapLimit = Integer.parseInt(ini.getProperty("wordWrapLimit", "0"));
+			// START KGU#654 2019-02-15: Enh. #681
+			this.generatorProposalTrigger = Integer.parseInt(ini.getProperty("genExportPrefTrigger", "5"));
+			// END KGU#654 2019-02-15
 		}
 		catch (NumberFormatException ex) {}
 		// END KGU#602 2018-10-28

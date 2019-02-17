@@ -70,6 +70,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-20      Enh. #563: support for simplified record initializers
  *      Kay Gürtzig             2018-07-21/22   Bugfix #564: array initializer trouble mended
  *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -260,7 +261,7 @@ public class JavaGenerator extends CGenerator
 	{
 		// NOTE: If you modify these patterns then you must adapt transform() too!
 		if (withPrompt) {
-			return "System.out.println($1); $2 = (new Scanner(System.in)).nextLine()";
+			return "System.out.print($1); $2 = (new Scanner(System.in)).nextLine()";
 		}
 		return "$1 = (new Scanner(System.in)).nextLine()";
 	}
@@ -278,8 +279,7 @@ public class JavaGenerator extends CGenerator
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * Method pre-processes an include file name for the #include
-	 * clause. This version surrounds a string not enclosed in angular
-	 * brackets by quotes.
+	 * clause. This version does nothing (just passes the argument through).
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the pre-processed string as to be actually inserted
 	 */
@@ -657,7 +657,21 @@ public class JavaGenerator extends CGenerator
 		return _codeLine;
 	}
 
-
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -750,8 +764,8 @@ public class JavaGenerator extends CGenerator
 			if (itemType == null)
 			{
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
-				
+				this.insertComment("TODO: Select a more sensible item type than Object", indent);
+				this.insertComment("      and/or prepare the elements of the array.", indent);
 			}
 			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
 					indent, isDisabled);

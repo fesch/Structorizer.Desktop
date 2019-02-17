@@ -70,6 +70,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-05/06   Enh. #657: Arranger index popup menu item "diagram info" added
  *      Kay Gürtzig     2019-01-07/08   Enh. #622: Group info box redesigned
  *      Kay Gürtzig     2019-01-12      Enh. #662: Arranger index stuff moved to a new class ArrangerIndex
+ *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *
  ******************************************************************************************************
  *
@@ -1441,5 +1442,24 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#626 2019-01-04
 	// END KGU#305 2016-12-12
+
+	// START KGU#646 2019-02-05: Bugfix #674 - Update popup menu L&F (isn't member of the component tree)
+	@Override
+	public void updateUI()
+	{
+		super.updateUI();
+		// Cater for the look and feel update of the popup menu.
+		for (Component comp: new Component[] {this.popup}) {
+			if (comp != null) {
+				try {
+					javax.swing.SwingUtilities.updateComponentTreeUI(comp);
+				}
+				catch (Exception ex) {
+					System.out.println("L&F problem with " + comp);
+				}
+			}
+		}
+	}
+	// END KGU#646 2019-02-05
 
 }

@@ -138,6 +138,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
  *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
  *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
+ *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
  *      
  ******************************************************************************************************
  *
@@ -800,7 +801,7 @@ public class Root extends Element {
     public void addUpdater(Updater updater)
     {
     	// START KGU#48 2015-10-17: While this.updaters is only a Vector, we must avoid multiple registration...
-        //updaters.add(updater);
+    	//updaters.add(updater);
     	if (!updaters.contains(updater))
     	{
     		updaters.add(updater);
@@ -1035,7 +1036,7 @@ public class Root extends Element {
 		// END KGU 2015-10-13
 
 		// FIXME: Drawing shouldn't modify the element
-		if (getText().count()==0)
+		if (getText().isEmpty())
 		{
 			text.add("???");
 		}
@@ -1357,8 +1358,8 @@ public class Root extends Element {
     			_rect.bottom,			// lower right bevel
     			//_rect.bottom			// closes automatically
     	}; 
-		return  new Polygon(xCoords, yCoords, xCoords.length);
-	}
+    	return  new Polygon(xCoords, yCoords, xCoords.length);
+    }
     // END KGU#376 2017-05-16
     
     // START KGU#324 2017-06-16: Enh. #415 we need an icon for the find result tree
@@ -1457,12 +1458,12 @@ public class Root extends Element {
                     // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97
-                        	_ele.parent.resetDrawingInfoUp();
-                        	// END KGU#136 2016-03-01
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-03-01: Bugfix #97
+                            _ele.parent.resetDrawingInfoUp();
+                            // END KGU#136 2016-03-01
                     }
             }
     }
@@ -1476,16 +1477,16 @@ public class Root extends Element {
                             ((Subqueue) _ele).addElement(_new);
                             _ele.selected = false;
                             _new.selected = true;
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-07-07: Bugfix #97 - now delegated to Subqueue
-                        	//_ele.resetDrawingInfoUp();
-                        	// END KGU#136 2016-07-07
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-07-07: Bugfix #97 - now delegated to Subqueue
+                            //_ele.resetDrawingInfoUp();
+                            // END KGU#136 2016-07-07
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
-                    	    // START KGU#389 2017-05-06: Bugfix #397 - wrong placement if _ele was a SelectedSequence
+                            // START KGU#389 2017-05-06: Bugfix #397 - wrong placement if _ele was a SelectedSequence
                             //int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                             Element target = _ele;
                             if (_ele instanceof IElementSequence) {
@@ -1501,12 +1502,12 @@ public class Root extends Element {
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected = false;
                             _new.selected = true;
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97 - now delegated to Subqueue
-                        	//_ele.parent.resetDrawingInfoUp();
-                        	// END KGU#136 2016-03-01
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-03-01: Bugfix #97 - now delegated to Subqueue
+                            //_ele.parent.resetDrawingInfoUp();
+                            // END KGU#136 2016-03-01
                     }
                     else
                     {
@@ -1644,7 +1645,7 @@ public class Root extends Element {
     	}
     	return this.contextSelections[_drawingContext.ordinal()];
     }
-    
+
 	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
 	{
 		if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
@@ -1669,10 +1670,10 @@ public class Root extends Element {
             // START KGU#363 2017-03-10: Enh. #372
             ele.author = this.author;
             ele.created = this.created;
-        	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
-    		if (modifiedby.trim().isEmpty()) {
-    			modifiedby = System.getProperty("user.name");
-    		}
+            this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+            if (modifiedby.trim().isEmpty()) {
+            	modifiedby = System.getProperty("user.name");
+            }
             ele.modified = new Date();
             // END KGU#363 2017-03-10
             return ele;
@@ -1696,20 +1697,20 @@ public class Root extends Element {
 	/**
 	 * Equivalence check returning one of the following similarity "levels":<br/>
 	 * 0: no resemblance<br/>
-     * 1: Identity (i. e. the Java Root elements are identical);<br/>
-     * 2: Exact equality (i. e. objects aren't identical but all attributes
-     *    and structure are recursively equal AND the file paths are equal
-     *    AND there are no unsaved changes in both diagrams);<br/>
-     * 3: Equal file path but unsaved changes in one or both diagrams (this
-     *    can occur if several Structorizer instances in the same application
-     *    loaded the same file independently);<br/>
-     * 4: Equal contents but different file paths (may occur if a file copy
-     *    is loaded or if a Structorizer instance just copied the diagram
-     *    with "Save as");<br/>
-     * 5: Equal signature (i. e. type, name and argument number) but different
-     *    content or structure.
-     * @param another - the Root to compare with
-     * @return a resemblance code according to the description above
+	 * 1: Identity (i. e. the Java Root elements are identical);<br/>
+	 * 2: Exact equality (i. e. objects aren't identical but all attributes
+	 *    and structure are recursively equal AND the file paths are equal
+	 *    AND there are no unsaved changes in both diagrams);<br/>
+	 * 3: Equal file path but unsaved changes in one or both diagrams (this
+	 *    can occur if several Structorizer instances in the same application
+	 *    loaded the same file independently);<br/>
+	 * 4: Equal contents but different file paths (may occur if a file copy
+	 *    is loaded or if a Structorizer instance just copied the diagram
+	 *    with "Save as");<br/>
+	 * 5: Equal signature (i. e. type, name and argument number) but different
+	 *    content or structure.
+	 * @param another - the Root to compare with
+	 * @return a resemblance code according to the description above
 	 */
 	public int compareTo(Root another)
 	{
@@ -1814,23 +1815,23 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
-        // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
-        this.variables = null;
-        // ENDKGU#444/KGU#618 2018-12-18
+		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+		this.variables = null;
+		// ENDKGU#444/KGU#618 2018-12-18
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
-	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+		// START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
 		// FIXME: Certain explicit declarations should remain
 		this.clearTypeInfo();
 		// END KGU#261 2017-01-26
-    	// START KGU#363 2017-03-10: Enh. #372
-    	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		// START KGU#363 2017-03-10: Enh. #372
+		this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
 		if (modifiedby.trim().isEmpty()) {
 			modifiedby = System.getProperty("user.name");
 		}
-    	this.modified = new Date();
-    	// END KGU#363 2017-03-10
+		this.modified = new Date();
+		// END KGU#363 2017-03-10
 	}
 
 	/**
@@ -1842,12 +1843,12 @@ public class Root extends Element {
 	 * @see #canRedo()
 	 */
 	public boolean canUndo()
-    {
-    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
-    	//return (undoList.size()>0);
-    	return (undoList.size() > 0) && !this.waited;
-    	// END KGU#143 2016-01-21
-    }
+	{
+		// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+		//return (undoList.size()>0);
+		return (undoList.size() > 0) && !this.waited;
+		// END KGU#143 2016-01-21
+	}
 
 	/**
 	 * Checks whether there are stacked redoable changes
@@ -1857,13 +1858,13 @@ public class Root extends Element {
 	 * @see #clearRedo()
 	 * @see #canUndo()
 	 */
-    public boolean canRedo()
-    {
-    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
-    	//return (redoList.size()>0);
-    	return (redoList.size() > 0) && !this.waited;
-    	// END KGU#143 2016-01-21
-    }
+	public boolean canRedo()
+	{
+		// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+		//return (redoList.size()>0);
+		return (redoList.size() > 0) && !this.waited;
+		// END KGU#143 2016-01-21
+	}
 
     /**
      * Removes all entries from the redo stack
@@ -1885,10 +1886,10 @@ public class Root extends Element {
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
-    		// START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+            // START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
             // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
             this.undoLevelOfLastSave = -1;
-    		// END KGU#137 2016-01-11
+            // END KGU#137 2016-01-11
     }
 
     /**
@@ -1935,9 +1936,9 @@ public class Root extends Element {
                     redoList.peek().diagramRefs = this.includeList.concatenate(",");
                 }
                 // END KGU#507 2018-03-15
-        		// START KGU#363 2018-09-12 
+                // START KGU#363 2018-09-12 
                 redoList.peek().modified = this.modified;
-        		// END KGU#363 2018-09-12
+                // END KGU#363 2018-09-12
             // START KGU#365 2017-03-19: Enh. #380
             }
             // END KGU#365 2017-03-19
@@ -1949,9 +1950,9 @@ public class Root extends Element {
             children.text.clear();
             children.comment.clear();
             // END KGU#120 2016-01-02
-        	// START KGU#363 2017-05-21: Enh. #372
-        	// If the undone action involves Root attributes then we must
-        	// cache the current attributes on the redo stack accordingly
+            // START KGU#363 2017-05-21: Enh. #372
+            // If the undone action involves Root attributes then we must
+            // cache the current attributes on the redo stack accordingly
             // and restore the attributes from the undo stack
             if (children.rootAttributes != null) {
                 if (redoable) {
@@ -1961,14 +1962,14 @@ public class Root extends Element {
                 children.rootAttributes = null;
             }
             // END KGU#363 2017-05-21
-    		// START KGU#363 2018-09-12
-        	this.modified = children.modified;	// Restore the former modification date
-        	children.modified = null;
-        	// Special action if all changes have been undone.
+            // START KGU#363 2018-09-12
+            this.modified = children.modified;	// Restore the former modification date
+            children.modified = null;
+            // Special action if all changes have been undone.
             if (undoList.empty()) {
             	this.modifiedby = this.modifiedby0;
             }
-    		// END KGU#363 2018-09-12
+            // END KGU#363 2018-09-12
             // START KGU#376 2017-07-01: Enh. #389
             if (children.diagramRefs != null) {
                 this.includeList = StringList.explode(children.diagramRefs, ",");
@@ -2001,7 +2002,7 @@ public class Root extends Element {
     		this.licenseText = attributes.licenseText;
     		this.origin = attributes.origin;
     	}
-	}
+    }
     // KGU#363 2017-05-21
     
     /**
@@ -2027,9 +2028,9 @@ public class Root extends Element {
                         undoList.peek().diagramRefs = this.includeList.concatenate(",");
                     }
                     // END KGU#507 2018-03-15
-            		// START KGU#363 2018-09-12: Enh. #372
-                	undoList.peek().modified = this.modified;	// Save the current modification date
-            		// END KGU#363 2018-09-12
+                    // START KGU#363 2018-09-12: Enh. #372
+                    undoList.peek().modified = this.modified;	// Save the current modification date
+                    // END KGU#363 2018-09-12
                     children = redoList.pop();
                     children.parent = this;
                     // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
@@ -2040,9 +2041,9 @@ public class Root extends Element {
                     // END KGU#120 2016-01-02
                     // START KGU#363 2017-05-21: Enh. #372
                     if (children.rootAttributes != null) {
-                	    undoList.peek().rootAttributes = new RootAttributes(this);
-                	    this.adoptAttributes(children.rootAttributes);
-                	    children.rootAttributes = null;
+                        undoList.peek().rootAttributes = new RootAttributes(this);
+                        this.adoptAttributes(children.rootAttributes);
+                        children.rootAttributes = null;
                     }
                     // END KGU#363 2017-05-21
                     // START KGU#363 2018-09-12: Enh. #372
@@ -2076,11 +2077,11 @@ public class Root extends Element {
      */
     public void rememberSaved()
     {
-    	this.undoLevelOfLastSave = this.undoList.size();
-    	// START KGU#137 2016-01-14: Bugfix #107
-    	this.hasChanged = false;
-    	// END KGU#137 2016-01-16
-    	// START KGU#330 2017-01-13: Enh. #305 Notify arranger index listeners
+        this.undoLevelOfLastSave = this.undoList.size();
+        // START KGU#137 2016-01-14: Bugfix #107
+        this.hasChanged = false;
+        // END KGU#137 2016-01-16
+        // START KGU#330 2017-01-13: Enh. #305 Notify arranger index listeners
         // inform updaters
         for(int u = 0; u < updaters.size(); u++)
         {
@@ -2095,14 +2096,14 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
-            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-            	if (_ele instanceof SelectedSequence)
-            	{
-            		res = ((SelectedSequence)_ele).moveDown();
-            	}
-            	else
-            	{
-            	// END KGU#144 2016-01-22
+                // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+                if (_ele instanceof SelectedSequence)
+                {
+                	res = ((SelectedSequence)_ele).moveDown();
+                }
+                else
+                {
+                	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -2120,8 +2121,8 @@ public class Root extends Element {
                             res=true;
                     }
                	// START KGU#144 2016-01-22: Bugfix #38 (continued)
-            	}
-            	// END KGU#144 2016-01-22
+                }
+                // END KGU#144 2016-01-22
             }
             return res;
     }
@@ -2131,14 +2132,14 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
-            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-            	if (_ele instanceof SelectedSequence)
-            	{
-            		res = ((SelectedSequence)_ele).moveUp();
-            	}
-            	else
-            	{
-            	// END KGU#144 2016-01-22
+                // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+                if (_ele instanceof SelectedSequence)
+                {
+                	res = ((SelectedSequence)_ele).moveUp();
+                }
+                else
+                {
+                // END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -2165,9 +2166,9 @@ public class Root extends Element {
     /**
      * Returns a File object representing the existing file this diagram is stored within
      * or proceeding from. In case this is an extracted file, it will represent the path
-     * of the containing archive. If this is not associatd to a file (e.g. never saved) or
+     * of the containing archive. If this is not associated to a file (e.g. never saved) or
      * the origin file cannot be located anymore then the result will be null.
-     * @return a File object reprsenting th existing source or archive file or null
+     * @return a File object representing the existing source or archive file or null
      */
     public File getFile()
     {
@@ -2188,12 +2189,30 @@ public class Root extends Element {
     	}
     }
 
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
+     * otherwise.
+     * If the file resides within an arrz archive, the path will be a symbolic path into the arrz archive.
+     * @return the absolute path of the nsd file (may be symbolic)
+     * @see #getPath(boolean)
+     * @see #getFile()
+     */
     public String getPath()
     // START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     {
     	return getPath(false);
     }
     
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
+     * otherwise.
+     * If the file resides within an arrz archive, the path may be a symbolic path into the arrz archive
+     * unless {@code pathOfrigin} is true, in which case it will be the archive path itself instead.
+     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the path of the mere archive
+     * will be returned.
+     * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
+     * @see #getFile()
+     */
     public String getPath(boolean pathOfOrigin)
     // END KGU#316 2016-12-28
     {
@@ -2234,14 +2253,14 @@ public class Root extends Element {
     	// (such that we ought to deliver its header for the variable detection), this doesn't
     	// hold for programs and includable diagrams.
     	// START KGU#376 2017-07-02: Enh. #389 - beware of cyclic recursion
-		//if (!this.isProgram && !_instructionsOnly)
-		//{
-		//	_lines.add(this.getText());
-		//}
-		//this.children.addFullText(_lines, _instructionsOnly);
-		HashSet<Root> implicatedRoots = new HashSet<Root>();
-		this.addFullText(_lines, _instructionsOnly, implicatedRoots);
-		// END KGU#376 2017-07-02
+    	//if (!this.isProgram && !_instructionsOnly)
+    	//{
+    	//	_lines.add(this.getText());
+    	//}
+    	//this.children.addFullText(_lines, _instructionsOnly);
+    	HashSet<Root> implicatedRoots = new HashSet<Root>();
+    	this.addFullText(_lines, _instructionsOnly, implicatedRoots);
+    	// END KGU#376 2017-07-02
     }
     // END KGU 2015-10-16
     
@@ -2253,11 +2272,11 @@ public class Root extends Element {
         		_implicatedRoots.add(this);
         		for (int i = 0; i < this.includeList.count(); i++) {
         			String name = this.includeList.get(i);
-    				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
-    				if (roots.size() == 1) {
-    					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
-    				}
-    			}		
+        			Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+        			if (roots.size() == 1) {
+        				roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
+        			}
+        		}		
         	}
         	if (this.isSubroutine() && !_instructionsOnly)
         	{
@@ -2276,43 +2295,43 @@ public class Root extends Element {
      */
     private String extractVarName(String _s)
     {
-    	//System.out.println("IN : "+_s);
-    	// START KGU#141 2016-01-16: Bugfix #112
+        //System.out.println("IN : "+_s);
+        // START KGU#141 2016-01-16: Bugfix #112
 //            if(_s.indexOf("[")>=0)
 //            {
 //                    _s=_s.substring(0,_s.indexOf("["));
 //            }
-    	while (_s.startsWith("(") && _s.endsWith(")"))
-    	{
-    		_s = _s.substring(1,  _s.length()-1).trim();
-    	}
-    	// START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
-    	// START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
-    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-    	//Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
-    	// END KGU 2016-03-29
-    	//_s = r.replaceAll(_s);
-    	_s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
-    	// END KGU#575 2018-09-17
-    	// START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
-    	if (_s.indexOf(".") >= 0)
-    	{
-    		_s = _s.substring(0, _s.indexOf("."));
-    	}
-    	// START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
-    	// In case of Pascal-typed variables we should only use the part before the separator
-    	int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
-    	if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
-    	{
-    		_s = _s.substring(0, colonPos).trim();
-    	}
-    	// In case of C-typed variables we should only use the last word (identifier)
-    	String[] tokens = _s.split(" ");
-    	if (tokens.length > 0) _s = tokens[tokens.length-1];
-    	// END KGU#109/KGU#141 2016-01-16
-    	//System.out.println("OUT : "+_s);
+        while (_s.startsWith("(") && _s.endsWith(")"))
+        {
+        	_s = _s.substring(1,  _s.length()-1).trim();
+        }
+        // START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
+        // START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
+        //Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+        //Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
+        // END KGU 2016-03-29
+        //_s = r.replaceAll(_s);
+        _s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
+        // END KGU#575 2018-09-17
+        // START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
+        if (_s.indexOf(".") >= 0)
+        {
+        	_s = _s.substring(0, _s.indexOf("."));
+        }
+        // START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
+        // In case of Pascal-typed variables we should only use the part before the separator
+        int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
+        if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
+        {
+        	_s = _s.substring(0, colonPos).trim();
+        }
+        // In case of C-typed variables we should only use the last word (identifier)
+        String[] tokens = _s.split(" ");
+        if (tokens.length > 0) _s = tokens[tokens.length-1];
+        // END KGU#109/KGU#141 2016-01-16
+        //System.out.println("OUT : "+_s);
 
-    	return _s;
+        return _s;
 
     }
 
@@ -2384,8 +2403,8 @@ public class Root extends Element {
     		}
     		//System.out.println(lines);
 
-			String[] keywords = CodeParser.getAllProperties();
-			StringList parts = new StringList();
+    		String[] keywords = CodeParser.getAllProperties();
+    		StringList parts = new StringList();
     		
     		for(int i=0; i<lines.count(); i++)
     		{
@@ -2404,22 +2423,23 @@ public class Root extends Element {
     	//varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
     	return varNames;
     }
-    
-    // START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22_24
-    /**
-     * Gathers the names of all variables that are used in text line _line in expressions:<br/>
-     * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
-     * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
-     * HYP 3: output (?) &lt;used&gt; (?)<br/>
-     * @param _line - the element text line to be analysed
-     * @param _keywords the set of parser keywords (if available)
-     * @return StringList of used variable names according to the above specification
-     */
-    private StringList getUsedVarNames(String _line, String[] _keywords)
-    {
-    	if (_keywords == null) {
-    		_keywords = CodeParser.getAllProperties();
-    	}
+
+	// START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22_24
+	/**
+	 * Gathers the names of all variables that are used in text line _line in expressions:<br/>
+	 * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
+	 * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
+	 * HYP 3: output (?) &lt;used&gt; (?)<br/>
+	 * HYP 4: input (?)'['&lt;used&gt;']'
+	 * @param _line - the element text line to be analysed
+	 * @param _keywords the set of parser keywords (if available)
+	 * @return StringList of used variable names according to the above specification
+	 */
+	private StringList getUsedVarNames(String _line, String[] _keywords)
+	{
+		if (_keywords == null) {
+			_keywords = CodeParser.getAllProperties();
+		}
 //		Regex r;
 
 		// modify "inc" and "dec" function (Pascal)
@@ -2427,12 +2447,12 @@ public class Root extends Element {
 //		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
-    	// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
+		// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
 		//_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
 		//_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
 		//_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
 		//_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
-    	_line = transform_inc_dec(_line);
+		_line = transform_inc_dec(_line);
 		// END KGU#575 2018-09-17
 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
@@ -2442,11 +2462,11 @@ public class Root extends Element {
 		// Replace all split keywords by the respective configured strings
 		// This replacement will be aware of the case sensitivity preference
 		for (int kw = 0; kw < _keywords.length; kw++)
-		{    				
+		{
 			if (_keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = splitKeywords.elementAt(kw);
-    			int keyLength = keyTokens.count();
+				int keyLength = keyTokens.count();
 				int pos = -1;
 				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
 				{
@@ -2458,7 +2478,7 @@ public class Root extends Element {
 				}
 			}
 		}
-		
+
 		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
 		if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
 		{
@@ -2503,18 +2523,25 @@ public class Root extends Element {
 		// parse out array index
 		else if (token0.equals(CodeParser.getKeyword("input")))
 		{
-			String s = "";
-			if (tokens.indexOf("[", 1) >= 0)
-			{
-				//System.out.print("Reducing \"" + s);
-				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-				//s = r.replaceAll(s);
-				s = INDEX_PATTERN.matcher(tokens.subSequence(1, tokens.count()).concatenate()).replaceAll("$2");
-				//System.out.println("\" to \"" + s + "\"");
+			// START KGU#653 2019-02-16: Enh. #680 - with multiple variables we must decompose the list
+			StringList items = Instruction.getInputItems(_line);
+			tokens.clear();
+			for (int j = 1; j < items.count(); j++) {
+				StringList itemTokens = Element.splitLexically(items.get(j), true);
+				String s = "";
+				if (itemTokens.indexOf("[", 1) >= 0)
+				{
+					//System.out.print("Reducing \"" + s);
+					//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+					//s = r.replaceAll(s);
+					s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					//System.out.println("\" to \"" + s + "\"");
+				}
+				// Only the indices are relevant here
+				itemTokens = Element.splitLexically(s, true);
+				tokens.addIfNew(itemTokens);
 			}
-			else 
-			// Only the indices are relevant here
-			tokens = Element.splitLexically(s, true);
+			// END KGU#653 2019-02-16
 		}
 
 		tokens.removeAll(" ");
@@ -2562,8 +2589,8 @@ public class Root extends Element {
 			}
 		}
 		return tokens;
-    }
-    // END KGU#375 2017-04-04
+	}
+	// END KGU#375 2017-04-04
 	// START KGU#388 2017-10-09: Enh. #423
 	/**
 	 * Recursively cuts off all irrelevant stuff of record initializers for {@link #getUsedVarNames(String, String[])}
@@ -2631,14 +2658,14 @@ public class Root extends Element {
     	{
     		String allText = lines.get(i);
     		// modify "inc" and "dec" function (Pascal)
-            // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
-            //Regex r;
+    		// START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+    		//Regex r;
     		//r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
     		allText = transform_inc_dec(allText);
-            // END KGU#575 2018-09-17
+    		// END KGU#575 2018-09-17
 
     		StringList tokens = Element.splitLexically(allText, true);
 
@@ -2704,7 +2731,6 @@ public class Root extends Element {
     			}
     			//String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
     			// END KGU#281 2016-10-12
-    			// FIXME: Why do we expect a list of variables here (executor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(tokens.subSequence(inpPos, tokens.count()), ",", false);
     			for (int p = 0; p < parts.count(); p++)
@@ -3058,7 +3084,7 @@ public class Root extends Element {
      */
     private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags, HashMap<String, TypeMapEntry> _types)
     {
-    	for (int i=0; i<_node.getSize(); i++)
+    	for (int i = 0; i < _node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
     		// START KGU#277 2016-10-13: Enh. #270 - disabled elements are to be handled as if they wouldn't exist
@@ -3092,7 +3118,7 @@ public class Root extends Element {
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
     		// CHECK #22: constant depending on non-constants or constant redefinition
-      		// CHECK #24: type definitions
+    		// CHECK #24: type definitions
     		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
@@ -3235,7 +3261,7 @@ public class Root extends Element {
     		
     			if (ele instanceof Repeat)
     			{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+    				analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
     			}
     		}
     		else if (eleClassName.equals("Parallel"))
@@ -3367,7 +3393,7 @@ public class Root extends Element {
         System.out.println("LOOP     : "+loopVars);
         /**/
 
-		if (loopVars.count()==0)
+		if (loopVars.isEmpty())
 		{
 			//error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error01_1,""), ele), 1);
@@ -3920,7 +3946,7 @@ public class Root extends Element {
 		String patternLeave = Matcher.quoteReplacement(CodeParser.ignoreCase ? preLeave.toLowerCase() : preLeave);
 		String patternExit = Matcher.quoteReplacement(CodeParser.ignoreCase ? preExit.toLowerCase() : preExit);
 
-		for(int ls=0; ls<sl.count(); ls++)
+		for (int ls=0; ls < sl.count(); ls++)
 		{
 			String line = sl.get(ls).trim().toLowerCase();
 			// START KGU#78 2015-11-25: Make sure a potential result is following a return keyword
@@ -4555,35 +4581,35 @@ public class Root extends Element {
 			strings.add(new StringList(analyserCaptions));
 			addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
 			// Define the actual guide actions here 
-	        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
-	        if (_isNameValid && this.children.getSize() == 0) {
-	        	String text = null;
-	        	switch (code) {
-	        	case 26: // hello world tour 
-	        		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-	        		addError(_errors, new DetectedError(text, this.children), 26);
-	        		break;
-	        	case 25: // first IPO guide 
-	        		switch (this.diagrType) {
-	        		case DT_INCL:
-	        			text = errorMsg(Menu.hint25_5, "");
-	        			break;
-	        		case DT_MAIN:
-	        			text = errorMsg(Menu.hint25_1, new String[]{CodeParser.getKeyword("input"), (check(5) ? "X" : "x")});
-	        			//startNextTutorial(true);
-	        			break;
-	        		case DT_SUB:
-	        			text = errorMsg(Menu.hint25_4, "");
-	        			break;
-	        		default:
-	        			break;
-	        		}
-	        		if (text != null) {
-	            		addError(_errors, new DetectedError(text, this.children), 25);
-	        		}
-	        		break;
-	        	}
-	        }
+			// START KGU#456 2017-11-04: Enh. #452 - charm initiative
+			if (_isNameValid && this.children.getSize() == 0) {
+				String text = null;
+				switch (code) {
+				case 26: // hello world tour 
+					text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
+					addError(_errors, new DetectedError(text, this.children), 26);
+					break;
+				case 25: // first IPO guide 
+					switch (this.diagrType) {
+					case DT_INCL:
+						text = errorMsg(Menu.hint25_5, "");
+						break;
+					case DT_MAIN:
+						text = errorMsg(Menu.hint25_1, new String[]{CodeParser.getKeyword("input"), (check(5) ? "X" : "x")});
+						//startNextTutorial(true);
+						break;
+					case DT_SUB:
+						text = errorMsg(Menu.hint25_4, "");
+						break;
+					default:
+						break;
+					}
+					if (text != null) {
+						addError(_errors, new DetectedError(text, this.children), 25);
+					}
+					break;
+				}
+			}
 			switch (code) {
 			case 25:
 				guide_25(_errors);
@@ -4768,8 +4794,8 @@ public class Root extends Element {
     {
     	// this.getVarNames();
     	// START KGU#2 2015-11-29
-        //StringList vars = getVarNames(this,true,false);
-        StringList vars = new StringList();
+    	//StringList vars = getVarNames(this,true,false);
+    	StringList vars = new StringList();
     	collectParameters(vars, null);
     	return vars;
     	// END KGU#2 2015-11-29 
@@ -4961,7 +4987,7 @@ public class Root extends Element {
     // END KGU#253 2016-09-22
     {
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
-    	boolean hasParamList = false;
+        boolean hasParamList = false;
         // END KGU#253 2016-09-22
         if (this.isSubroutine())
         {
@@ -4998,7 +5024,7 @@ public class Root extends Element {
         	}
         }
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
-    	return hasParamList;
+        return hasParamList;
         // START KGU#253 2016-09-22
     }
     // END KGU#78 2015-11-25
@@ -5273,10 +5299,10 @@ public class Root extends Element {
 //            }
             boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
             // END KGU#78 2015-11-25
-			// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+            // START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
             boolean doesReturn = vars.contains("§ANALYSER§RETURNS");
             boolean mayReturn = resultFlags[0];
-			// END KGU#343 2017-02-07
+            // END KGU#343 2017-02-07
             
             
             if (!setsResultCi && !setsProcNameCi && !doesReturn &&
@@ -5321,52 +5347,52 @@ public class Root extends Element {
 	private static final void initialiseKeyTables()
 	{
 		// Establish the primary lookup tables
-    	caseAwareKeywords = new Hashtable<String, StringList>();
-    	caseUnawareKeywords = new Hashtable<String, StringList>();
-    	// Now add the table entries for every generator
-    	for (GENPlugin plugin: Menu.generatorPlugins)
-    	{
-    		// The reserved words the generator will provide
-    		// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
-    		//String[] reserved = null;
-    		//boolean distinguishCase = true;
-    		String[] reserved = plugin.reservedWords/**/;
-    		// Case relevance the generator will provide
-    		boolean distinguishCase = plugin.caseMatters;
-    		if (reserved != null)
-    		{
-    			Hashtable<String, StringList> table =
-    					distinguishCase ? caseAwareKeywords : caseUnawareKeywords;
-    			for (int i = 0; i < reserved.length; i++)
-    			{
-    				String key = reserved[i];
-    				if (!distinguishCase)
-    				{
-    					key = key.toLowerCase();	// normalise key for the primary lookup
-    				}
-    				// Ensure an entry in the respective primary lookup
-    				StringList users = table.get(key);
-    				if (users == null)
-    				{
-    					// First occurrance of thís key word
-    					users = StringList.getNew(plugin.title);
-    					table.put(key, users);
-    				}
-    				else
-    				{
-    					// Other generators have already exposed this keyword
-    					users.add(plugin.title);
-    				}
-    			}
-    		}
-    	}
-    	// Now buy the GUI some time to accomplish its initialisation
-//    	try {
-//    	    Thread.sleep(500);
-//    	} catch(InterruptedException ex) {
-//    		System.out.println("Root.initialiseKeyTables(): sleep failed.");
-//    	    Thread.currentThread().interrupt();
-//    	}
+		caseAwareKeywords = new Hashtable<String, StringList>();
+		caseUnawareKeywords = new Hashtable<String, StringList>();
+		// Now add the table entries for every generator
+		for (GENPlugin plugin: Menu.generatorPlugins)
+		{
+			// The reserved words the generator will provide
+			// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
+			//String[] reserved = null;
+			//boolean distinguishCase = true;
+			String[] reserved = plugin.reservedWords/**/;
+			// Case relevance the generator will provide
+			boolean distinguishCase = plugin.caseMatters;
+			if (reserved != null)
+			{
+				Hashtable<String, StringList> table =
+						distinguishCase ? caseAwareKeywords : caseUnawareKeywords;
+				for (int i = 0; i < reserved.length; i++)
+				{
+					String key = reserved[i];
+					if (!distinguishCase)
+					{
+						key = key.toLowerCase();	// normalise key for the primary lookup
+					}
+					// Ensure an entry in the respective primary lookup
+					StringList users = table.get(key);
+					if (users == null)
+					{
+						// First occurrance of thís key word
+						users = StringList.getNew(plugin.title);
+						table.put(key, users);
+					}
+					else
+					{
+						// Other generators have already exposed this keyword
+						users.add(plugin.title);
+					}
+				}
+			}
+		}
+		// Now buy the GUI some time to accomplish its initialisation
+//		try {
+//			Thread.sleep(500);
+//		} catch(InterruptedException ex) {
+//			System.out.println("Root.initialiseKeyTables(): sleep failed.");
+//			Thread.currentThread().interrupt();
+//		}
 	}
 	// END KGU#239 2016-06-12
     
@@ -5415,7 +5441,7 @@ public class Root extends Element {
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
 	 * @return either the text or the comment
 	 */
-    @Override
+	@Override
 	public StringList getText(boolean _alwaysTrueText)
 	{
 		StringList textToShow = super.getText(_alwaysTrueText);
@@ -5522,7 +5548,7 @@ public class Root extends Element {
 					results.add(varName);
 				}
 			}
-			if (results.count() == 0 && result != null) {
+			if (results.isEmpty() && result != null) {
 				results.add(result);
 			}
 			else if (results.count() > 1 && result == null) {

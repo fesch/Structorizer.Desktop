@@ -208,7 +208,7 @@ Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión 
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
 Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión fina en los elementos seleccionados por aquellos con precisión discreta.
 Menu.menuEditBreakLines.text=(Re-)ajustar renglones ...
-Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente sus subestructuras) a un nuevo limite de longitud.  
+Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente de sus subestructuras) a un nuevo limite de longitud.  
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
@@ -384,7 +384,8 @@ Menu.lblAllowChanges.text=Permitir cambios
 Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 Menu.msgNewerVersionAvail.text=Versión más nueva % lista para descaragar.
 Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones al arrancar Structorizer\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" ► "%2".\n(Nota de privacidad: Para enviar la consulta de Html su código IP será transmitido pero no guardado.\nOtros datos personales no serán ni captados ni transmitidos ni procesados.)
-Menu.msgWelcomeMessage.text=¡Bienvenido/-a en Structorizer, su editor para diagramas Nassi-Shneiderman!\nCon este programa puedes diseñar, probar, analisar, exportar algoritms y mucho más.\nStructorizer fue hecho para el uso simple pero ha sido aumentado con muchas funcionas adicionales.\n\nSi crees tener poca experiencia con algoritmos y su desarollo puedes comenzar con menú reducido y una «%».\n¿Quieres comenzar en el modo simplificado con guía?
+Menu.msgWelcomeMessage1.text=¡Bienvenido/-a a Structorizer, tu editor confortable para diagramas Nassi-Shneiderman!\nCon este programa puedes diseñar, probar, analisar, exportar algoritmos y mucho más.\n\nPor favor, selecciona tu idioma de diálogo (puedes cambiarlo cuando quieres a través del menú):
+Menu.msgWelcomeMessage2.text=Structorizer fue hecho para el uso intuitivo pero ha sido aumentado con muchas funcionas adicionales.\nSi crees tener poca experiencia con algoritmos y su desarollo puedes comenzar con menú reducido\ny una «%».\n¿Quieres comenzar en el modo simplificado con guía?
 Menu.lblOk.text=Visto
 Menu.lblYes.text=Si
 Menu.lblNo.text=No
@@ -422,6 +423,7 @@ Menu.lblNewMaxLineLength.text=Nuevo limite de lineas:
 Menu.lblInvolveSubtree.text=Applicar a las subestructuras también
 Menu.lblPreserveContinuators.text=Mantener saltos de línea existentes
 Menu.msgVetoClose.text=Structorizer esta terminandose. ¿Objetas?
+Menu.msgSetAsPreferredGenerator.text=Has exportado código %1 las ultimas %2 veces.\n¿Quieres eligir % como el código de exportación preferido en el menú ahora?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -962,6 +964,7 @@ ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres de archivos o modules para los quales directivas de inclusión deben ser insertadas.
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...
@@ -1295,6 +1298,7 @@ Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archiv
 Control.msgUseStopButton.text=¡Una ejecución está en progreso o pausando!\nUsa el botón STOP para abortarla y cerrar.
 Control.msgConstantRedefinition.text=¡Intento ilegal de redefinir or modificar constante «%»!
 Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento «%» de un array colocando un valor!
+Control.msgInvalidRecord.text=¡«%1» no es una estructura valiente (%2)!
 Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura o variable «%2»!
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!

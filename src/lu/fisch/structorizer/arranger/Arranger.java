@@ -69,6 +69,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-16  Enh. #655: Workaround for key listener (using keybinding) created (not needed)
  *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
  *      Kay Gürtzig     2019-01-18  Enh. #657: Order of popup menu items modified
+ *      Kay Gürtzig     2019-02-05  Bugfix #674: L&F update of popup menu ensured
  *
  ******************************************************************************************************
  *
@@ -106,6 +107,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.structorizer.elements.Element;
@@ -114,6 +116,7 @@ import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.AttributeInspector;
+import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.Ini;
@@ -683,6 +686,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#624 2018-12-28
 
         this.initPopupMenu();
+        
+        GUIScaler.rescaleComponents(this.statusbar);
         
         // START KGU#117 2016-03-09: New for Enh. #77
         this.doButtons();
@@ -1834,12 +1839,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 		if (initiator != null) {
 			String message = msgSelectionExpanded.getText().replace("%", Integer.toString(nAdded));
-			if (duplicateRoots.count() > 0) {
+			if (!duplicateRoots.isEmpty()) {
 				message += msgAmbiguousSignatures.getText()
 						.replace("%1", Integer.toString(duplicateRoots.count()))
 						.replace("%2", duplicateRoots.concatenate("\n- "));
 			}
-			if (missingRoots.count() > 0) {
+			if (!missingRoots.isEmpty()) {
 				message += msgMissingDiagrams.getText()
 						.replace("%1", Integer.toString(missingRoots.count()))
 						.replace("%2", missingRoots.concatenate("\n- "));
@@ -2234,7 +2239,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		if (initiator == null) {
 			initiator = this;
 		}
-		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE) &&
+		return this.surface.saveDiagrams(initiator, null, goingToClose, goingToClose && Element.E_AUTO_SAVE_ON_CLOSE, false) &&
 				this.surface.saveGroups(initiator, goingToClose);
 		// END KGU#626 2019-01-06
 	}
@@ -2371,4 +2376,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return surface.getGroupsFromRoot(root, suppressDefaultGroup);
 	}
 
+	// START KGU#646 2019-02-05: Bugfix #674 - Update popup menu L&F (isn't member of the component tree)
+	public static void updateLookAndFeel()
+	{
+		if (mySelf != null)
+		{
+			SwingUtilities.updateComponentTreeUI(mySelf);
+			// Cater for the look and feel update of the popup menu.
+			if (popupMenu != null) {
+				try {
+					javax.swing.SwingUtilities.updateComponentTreeUI(popupMenu);
+				}
+				catch (Exception ex) {
+				}
+			}
+		}
+	}
+	// END KGU#646 2019-02-05
 }

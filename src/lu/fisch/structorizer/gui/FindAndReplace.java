@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-07-02      Bugfix KGU#540 - An element filter change didn't reset the result
  *      Kay Gürtzig     2018-11-21      Bugfix #448: Apparently forgotten part of the fix accomplished
  *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
+ *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
  *
  ******************************************************************************************************
  *
@@ -95,6 +96,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -141,6 +143,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private static final int MAX_PREVIEW_HEIGHT = 75;
 	/** little trick to achieve a sufficient text box width on packing the dialog */
 	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width for the entire dialog";
+	// START KGU#647 2019-02-07: Part of the #675 workaround
+	/** Matcher to identify Windows look&feel classes */
+	private static final Matcher WINDOWS_LaF_MATCHER = Pattern.compile(".*windows.*", Pattern.CASE_INSENSITIVE).matcher("");
+	/** GUI scale factor */
+	private static double scaleFactor = 1.0;
+	// END KGU#647 2019-02-07
 	/** Search pattern history */
 	private final LinkedList<String> searchPatterns = new LinkedList<String>();
 	/** Replacement pattern history */
@@ -211,48 +219,45 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	
 	private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
-	    public MyTreeCellRenderer() {}
+		public MyTreeCellRenderer() {}
 
-	    public Component getTreeCellRendererComponent(
-	                        JTree tree,
-	                        Object value,
-	                        boolean sel,
-	                        boolean expanded,
-	                        boolean leaf,
-	                        int row,
-	                        boolean hasFocus)
-	    {
-	    	ImageIcon icon = null;
-	    	if (value instanceof DefaultMutableTreeNode) {
-	    		value = ((DefaultMutableTreeNode)value).getUserObject();
-	    	}
-	    	Object description = value;
-	    	if (value instanceof Element) {
-	    		// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
-	    		//StringList text = ((Element)value).getText();
-	    		StringList text = ((Element)value).getAliasText();
-	    		// END KGU#480 2018-01-22
-	    		if (text.count() > 0) {
-	    			description = text.get(0);
-	    			if (text.count() > 1) {
-	    				description += " ...";
-	    			}
-	    		}
-	    		else {
-	    			description = "---";
-	    		}
-	    		icon = ((Element)value).getMiniIcon();
-	    	} 
-	        super.getTreeCellRendererComponent(
-	                        tree, description, sel,
-	                        expanded, leaf, row,
-	                        hasFocus);
-	        if (icon != null) {
-	            setIcon(icon);
-	        }
-
-	        return this;
-	    }
+		@Override
+		public Component getTreeCellRendererComponent(
+				JTree tree,
+				Object value,
+				boolean sel,
+				boolean expanded,
+				boolean leaf,
+				int row,
+				boolean hasFocus)
+		{
+			super.getTreeCellRendererComponent(
+					tree, value, sel,
+					expanded, leaf, row,
+					hasFocus);
+			if (value instanceof DefaultMutableTreeNode) {
+				value = ((DefaultMutableTreeNode)value).getUserObject();
+			}
+			if (value instanceof Element) {
+				ImageIcon icon = ((Element)value).getMiniIcon();
+				if (icon != null) {
+					setIcon(icon);
+				}
+				// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
+				//StringList text = ((Element)value).getText();
+				String description = "---";
+				StringList text = ((Element)value).getAliasText();
+				// END KGU#480 2018-01-22
+				if (!text.isEmpty()) {
+					description = text.get(0);
+					if (text.count() > 1) {
+						description += " ...";
+					}
+				}
+				this.setText(description);
+			}
+			return this;
+		}
 	};
 		
 	// Needed GUI controls
@@ -289,6 +294,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected StyledDocument docComm = null;
 	/** Presentation of the search results over a diagram forest */
 	protected JTree treResults = null;
+	protected JScrollPane scrTree;
 	
 	protected JPanel pnlOptions;
 	protected JPanel pnlMode;
@@ -322,7 +328,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
 
-		this.setIconImage(IconLoader.getIcon(0).getImage());
+		this.setIconImage(IconLoader.getIcon(73).getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();
@@ -333,7 +339,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			logger.log(Level.WARNING, "Failed to re-read preferences.", ex);
 			// END KGU#484 2018-04-05
 		}
-		double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+		scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 		int inset = (int)Math.round(5 * scaleFactor);
 
 		for (int i = 1; i <= MAX_RECENT_PATTERNS; i++) {
@@ -720,7 +726,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 						btnReplace.setEnabled(currentElement != null);
 						btnReplaceAll.setEnabled(true);
 					}
-					// START KGU#540 2018-07-02: Bugfix a filter change didn't reset the selection result
+					// START KGU#540 2018-07-02: Bugfix - a filter change didn't reset the selection result
 					// FIXME: In case it is a stronger restriction, we might perhaps just refilter the results?
 					resetResults();
 					// END KGU#540 2018-07-02
@@ -754,73 +760,53 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			pnlPreview.setLayout(new GridLayout(0, 1));
 			pnlPreview.setBorder(BorderFactory.createTitledBorder("Contents"));
 
-			// This is no good way to enforce maximum height because the layout continues
-			// to try to enlarge this on and on...
-//			ComponentAdapter textScrollListener = new ComponentAdapter() {
-//				@Override
-//				public void componentResized(ComponentEvent evt) {
-//					Component comp = evt.getComponent();
-//					int w = comp.getSize().width;
-//					int h = comp.getSize().height;
-//					int maxHeight = comp.getMaximumSize().height;
-//					System.out.println(comp + " w = " + w + ", h = " + h + ", maxh = " + maxHeight);
-//					if (h > maxHeight) {
-//						comp.setSize(new Dimension(w, maxHeight));
-//						comp.repaint();
-//						comp.revalidate();
-//					}
-//					
-//					super.componentResized(evt);
-//				}
-//			};
-			
 			txtText = new JTextPane();
 			txtText.setBorder(BorderFactory.createTitledBorder("Text"));
 			txtText.setEditable(false);
 			txtText.setEnabled(false);
 			txtText.addKeyListener(keyListener);
-	    	JScrollPane scrText = new JScrollPane(txtText);
-//	    	txtText.addComponentListener(textScrollListener);
-	    	docText = txtText.getStyledDocument();
-	    	//Style defStyle = doc.getStyle("default");
-    		Style hilStyle = docText.addStyle("highlight", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
-    		hilStyle = docText.addStyle("emphasis", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
-    		
-    		pnlPreview.add(scrText);
+			JScrollPane scrText = new JScrollPane(txtText);
+//			txtText.addComponentListener(textScrollListener);
+			docText = txtText.getStyledDocument();
+			//Style defStyle = doc.getStyle("default");
+			Style hilStyle = docText.addStyle("highlight", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle = docText.addStyle("emphasis", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
-    		txtComm = new JTextPane();
+			pnlPreview.add(scrText);
+
+			txtComm = new JTextPane();
 			txtComm.setBorder(BorderFactory.createTitledBorder("Comment"));
 			txtComm.setEditable(false);
 			txtComm.setEnabled(false);
 			txtComm.addKeyListener(keyListener);
 
 			JScrollPane scrComm = new JScrollPane(txtComm);
-//	    	txtComm.addComponentListener(textScrollListener);
-	    	docComm = txtComm.getStyledDocument();
-	    	//Style defStyle = doc.getStyle("default");
-    		hilStyle = docComm.addStyle("highlight", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
-    		hilStyle = docComm.addStyle("emphasis", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
-    		
-    		pnlPreview.add(scrComm);
-    		pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
-			
-    		Dimension dim = scrText.getMaximumSize();
-    		int maxHeight = (int)Math.floor(scaleFactor * MAX_PREVIEW_HEIGHT);
-    		if (dim != null) {
-    			scrText.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
-    			scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, maxHeight));
-    		}
-    		dim = scrComm.getMaximumSize();
-    		if (dim != null) {
-    			scrComm.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
-    			scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, maxHeight));
-    		}
+//			txtComm.addComponentListener(textScrollListener);
+			docComm = txtComm.getStyledDocument();
+			//Style defStyle = doc.getStyle("default");
+			hilStyle = docComm.addStyle("highlight", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle = docComm.addStyle("emphasis", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
-    		// --------------------------------------
+			pnlPreview.add(scrComm);
+			pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
+
+			Dimension dim = scrText.getMaximumSize();
+			int maxHeight = (int)Math.floor(scaleFactor * MAX_PREVIEW_HEIGHT);
+			if (dim != null) {
+				scrText.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+				scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, maxHeight));
+			}
+			dim = scrComm.getMaximumSize();
+			if (dim != null) {
+				scrComm.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+				scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, maxHeight));
+			}
+
+			// --------------------------------------
 			contentPane.add(pnlOptions, BorderLayout.CENTER);
 			
 		}
@@ -833,6 +819,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					TreeSelectionModel.SINGLE_TREE_SELECTION);
 			this.treResults.setExpandsSelectedPaths(true);
 			this.treResults.setRootVisible(false);
+			// START KGU#647 2019-02-07: Issue #675 Helps to avoid the tree node texts being truncated (replaced by an ellipse)
+			if (scaleFactor > 1.0) {
+				this.treResults.setLargeModel(true);
+			}
+			// END KGU#647 2019-02-07
 			// Allow to select an element in the tree
 			this.treResults.addTreeSelectionListener(new TreeSelectionListener(){
 				@Override
@@ -861,7 +852,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			this.treResults.addKeyListener(keyListener);
-			JScrollPane scrTree = new JScrollPane(this.treResults);
+			this.scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);
 		}
@@ -1087,28 +1078,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		else {
-			// START KGU#454 2017-11-03: Bugfix #448
-//			StringList matches = new StringList();
-//			String[] parts = splitText(text0, pattern, matches);
-//			nParts = parts.length;
-//			int emphPos = -1;
-//			for (int i = 0; i < nParts; i++) {
-//		    	try {
-//		    		doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
-//		    		if (i < nParts-1) {
-//		    			if (i == currPos) {
-//		    				emphPos = doc.getLength();
-//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
-//		    			}
-//		    			else {
-//		    				if (emphPos < 0) emphPos = doc.getLength();
-//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
-//		    			}
-//		    		}
-//		    	} catch (BadLocationException e) {
-//		    		e.printStackTrace();
-//		    	}
-//			}
+			// START KGU#454 2017-11-03: Bugfix #448 (obsolete code removed 2019-02-07)
 			// Once having the split parts it's extremely simple: Show the text parts
 			// alternatingly in normal and highlighted style.
 			try {
@@ -1332,133 +1302,141 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		// END KGU#4545 2017-11-03
-			// PHASE 1: Identify and set up the element traversing strategy 
-			if (scope == Scope.OPENED_DIAGRAMS) {
-				// Previous search exhausted? Then retrieve results
-				if (currentNode == null) {
+
+		// PHASE 1: Identify and set up the element traversing strategy 
+		if (scope == Scope.OPENED_DIAGRAMS) {
+			// Previous search exhausted? Then retrieve results
+			if (currentNode == null) {
+				fillResultTree();
+				// START KGU#647 2019-02-07: FIXME - Empirical workaround for issue #675 (truncated node lines)
+				if (scaleFactor > 1.0 && !WINDOWS_LaF_MATCHER.reset(UIManager.getLookAndFeel().getName()).matches()) {
+					// No idea why exactly, the lines get truncated (ends replaced by ellipse on the first) on the first attempt
 					fillResultTree();
-					gotoNext = false;
+				}
+				// ÉND KGU#647 2019-02-07
+				gotoNext = false;
+				replace = false;
+			}
+		}
+		else if (treeIterator == null) {
+			// Reinitialize iterator for incremental search
+			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
+				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+				int nMatches = checkElementMatch(diagram.getRoot()); 
+				if (nMatches > 0) {
+					setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
 					replace = false;
+					gotoNext = false;
+				}
+				treeIterator = diagram.getRoot().children.iterator(true);
+			}
+			else if (selected instanceof IElementSequence) {
+				// We are on a Subqueue level, request a deep search iterator
+				treeIterator = ((IElementSequence) selected).iterator(true);
+			}
+			else if (selected.parent != null) {
+				// We are neither on Subqueue level nor on Root level, so concoct a
+				// pseudo-sequence only comprising just the selected element and
+				// request a deep search iterator (selected might be composed)
+				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
+			}
+			else if (selected instanceof Root) {
+				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+				int nMatches = checkElementMatch(selected); 
+				if (nMatches > 0) {
+					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
+					replace = false;
+					gotoNext = false;
+				}
+				treeIterator = ((Root)selected).children.iterator(true);
+			}
+			// Go to last element if we are to go upwards (looks awkward but works)
+			if (treeIterator != null && up) {
+				while (treeIterator.hasNext()) {
+					treeIterator.next();
 				}
 			}
-			else if (treeIterator == null) {
-				// Reinitialize iterator for incremental search
-				if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
-					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-					int nMatches = checkElementMatch(diagram.getRoot()); 
-					if (nMatches > 0) {
-						setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
-						replace = false;
-						gotoNext = false;
-					}
-					treeIterator = diagram.getRoot().children.iterator(true);
+		}
+
+		// PHASE 2: Look into the currentElement (if there is one)
+		int nMatches = 0;
+		if (currentElement != null) {
+			// Get the total number of (remaining) matches in the current element's interesting texts
+			// START KGU#454 2017-11-03: Bugfix #448 - It must not be done by new matching!
+			//nMatches = checkElementMatch(currentElement);
+			nMatches = checkElementMatch();
+			// END KGU#4545 2017-11-03
+		}
+		if (replace && nMatches > 0) {
+			// Replace next match according to the current pattern
+			Root root = Element.getRoot(currentElement);
+			if (root != null) {
+				// Every single replacement is to be undoable ...
+				root.addUndo();
+			}
+			// START KGU#480 2018-01-22: Enh. #490
+			//StringList text = currentElement.getText();
+			StringList text = currentElement.getAliasText();
+			// END KGU#480 2018-01-22
+			StringList comment = currentElement.getComment();
+			// START KGU#454 2017-11-03: Bugfix #448
+//			int nMatchesComment = textMatches(comment);
+//			int nMatchesText = textMatches(text);
+			int nMatchesComment = (partsComment.count() - 1) / 2;
+			int nMatchesText = (partsText.count() - 1) / 2;
+			// END KGU#454 2017-11-03
+			// Start with the element text (prioritized if included)
+			if ((elementwise || !done) && chkInTexts.isSelected() 
+					&& nMatchesText > currentPosition) {
+				// START KGU#454 2017-11-03: Bugfix #448
+				//text = replacePattern(text, elementwise, currentPosition);
+				text = replacePattern(partsText, elementwise, currentPosition);
+				// END KGU#454 2017-11-03 
+				// START KGU#480 2018-01-22: Enh. #490
+				//currentElement.setText(text);
+				currentElement.setAliasText(text);
+				// END KGU#480 2018-01-22
+				// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
+				if (currentElement instanceof For) {
+					((For)currentElement).updateFromForClause();					
 				}
-				else if (selected instanceof IElementSequence) {
-					// We are on a Subqueue level, request a deep search iterator
-					treeIterator = ((IElementSequence) selected).iterator(true);
-				}
-				else if (selected.parent != null) {
-					// We are neither on Subqueue level nor on Root level, so concoct a
-					// pseudo-sequence only comprising just the selected element and
-					// request a deep search iterator (selected might be composed)
-					treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
-				}
-				else if (selected instanceof Root) {
-					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-					int nMatches = checkElementMatch(selected); 
-					if (nMatches > 0) {
-						setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
-						replace = false;
-						gotoNext = false;
-					}
-					treeIterator = ((Root)selected).children.iterator(true);
-				}
-				// Go to last element if we are to go upwards (looks awkward but works)
-				if (treeIterator != null && up) {
-					while (treeIterator.hasNext()) {
-						treeIterator.next();
-					}
+				// END KGU#431 2017-10-09
+				currentElement.resetDrawingInfoUp();
+				// START KGU#609 2018-11-21: Bugfix #448 accomplished
+				//this.fillPreview(text, docText, txtText, 0, true);
+				this.fillPreview(partsText, docText, txtText, 0, true);
+				// END KGU#609 2018-11-21
+				done = true;
+			}
+			// Now cater for the comment if included
+			if ((elementwise || !done) && chkInComments.isSelected()
+					&& nMatchesComment > currentPosition - nMatchesText) {
+				// START KGU#454 2017-11-03: Bugfix #448
+				//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
+				comment = replacePattern(partsComment, elementwise, currentPosition - nMatchesText);
+				// END KGU#454 2017-11-03 
+				currentElement.setComment(comment);
+				currentElement.resetDrawingInfoUp();
+				// START KGU#609 2018-11-21: Bugfix #448 accomplished
+				//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+				this.fillPreview(partsComment, docComm, txtComm, nMatchesText, true);
+				// END KGU#609 2018-11-21
+				done = true;
+			}
+			if (currentNode != null) {
+				// We better cache the current node locally lest the reload actions should reset it.
+				DefaultMutableTreeNode currNode = currentNode;
+				resultModel.reload(currentNode);	// update the element's presentation in the tree view
+				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
+				// In case we are working on a Root make sure its representing top node is also updated
+				if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
+					resultModel.reload(parent);
+					// Restore the previously cached selection
+					currentNode = currNode;
+					treResults.setSelectionPath(new TreePath(currentNode.getPath()));
 				}
 			}
 
-			// PHASE 2: Look into the currentElement (if there is one)
-			int nMatches = 0;
-			if (currentElement != null) {
-				// Get the total number of (remaining) matches in the current element's interesting texts
-				// START KGU#454 2017-11-03: Bugfix #448 - It must not be done by new matching!
-				//nMatches = checkElementMatch(currentElement);
-				nMatches = checkElementMatch();
-				// END KGU#4545 2017-11-03
-			}
-			if (replace && nMatches > 0) {
-				// Replace next match according to the current pattern
-				Root root = Element.getRoot(currentElement);
-				if (root != null) {
-					// Every single replacement is to be undoable ...
-					root.addUndo();
-				}
-				// START KGU#480 2018-01-22: Enh. #490
-				//StringList text = currentElement.getText();
-				StringList text = currentElement.getAliasText();
-				// END KGU#480 2018-01-22
-				StringList comment = currentElement.getComment();
-				// START KGU#454 2017-11-03: Bugfix #448
-//				int nMatchesComment = textMatches(comment);
-//				int nMatchesText = textMatches(text);
-				int nMatchesComment = (partsComment.count() - 1) / 2;
-				int nMatchesText = (partsText.count() - 1) / 2;
-				// END KGU#454 2017-11-03
-				// Start with the element text (prioritized if included)
-				if ((elementwise || !done) && chkInTexts.isSelected() 
-						&& nMatchesText > currentPosition) {
-					// START KGU#454 2017-11-03: Bugfix #448
-					//text = replacePattern(text, elementwise, currentPosition);
-					text = replacePattern(partsText, elementwise, currentPosition);
-					// END KGU#454 2017-11-03 
-					// START KGU#480 2018-01-22: Enh. #490
-					//currentElement.setText(text);
-					currentElement.setAliasText(text);
-					// END KGU#480 2018-01-22
-					// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
-					if (currentElement instanceof For) {
-						((For)currentElement).updateFromForClause();					
-					}
-					// END KGU#431 2017-10-09
-					currentElement.resetDrawingInfoUp();
-					// START KGU#609 2018-11-21: Bugfix #448 accomplished
-					//this.fillPreview(text, docText, txtText, 0, true);
-					this.fillPreview(partsText, docText, txtText, 0, true);
-					// END KGU#609 2018-11-21
-					done = true;
-				}
-				// Now cater for the comment if included
-				if ((elementwise || !done) && chkInComments.isSelected()
-						&& nMatchesComment > currentPosition - nMatchesText) {
-					// START KGU#454 2017-11-03: Bugfix #448
-					//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
-					comment = replacePattern(partsComment, elementwise, currentPosition - nMatchesText);
-					// END KGU#454 2017-11-03 
-					currentElement.setComment(comment);
-					currentElement.resetDrawingInfoUp();
-					// START KGU#609 2018-11-21: Bugfix #448 accomplished
-					//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
-					this.fillPreview(partsComment, docComm, txtComm, nMatchesText, true);
-					// END KGU#609 2018-11-21
-					done = true;
-				}
-				if (currentNode != null) {
-					// We better cache the current node locally lest the reload actions should reset it.
-					DefaultMutableTreeNode currNode = currentNode;
-					resultModel.reload(currentNode);	// update the element's presentation in the tree view
-					DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
-					// In case we are working on a Root make sure its representing top node is also updated
-					if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
-						resultModel.reload(parent);
-						// Restore the previously cached selection
-						currentNode = currNode;
-						treResults.setSelectionPath(new TreePath(currentNode.getPath()));
-					}
-				}
 			diagram.doButtons();
 			// Make sure the Structorizer working area is refreshed, too
 			diagram.redraw(currentElement);
@@ -1571,6 +1549,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}
 				TreePath path = new TreePath(eleNode.getPath());
 				treResults.scrollPathToVisible(path);
+				if (scrTree.getHorizontalScrollBar().isVisible()) {
+					scrTree.getHorizontalScrollBar().setValue(0);
+				}
 				treResults.setSelectionPath(path);
 				treResults.setEnabled(true);
 			}
@@ -1618,6 +1599,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		if (currentNode != null) {
 			TreePath path = new TreePath(currentNode.getPath());
 			treResults.scrollPathToVisible(path);
+			if (scrTree.getHorizontalScrollBar().isVisible()) {
+				scrTree.getHorizontalScrollBar().setValue(0);
+			}
 			treResults.setSelectionPath(path);
 			treResults.setEnabled(true);
 		}

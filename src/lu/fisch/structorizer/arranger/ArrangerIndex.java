@@ -36,6 +36,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-17      Enhancements (group nodes for external references) and corrections
  *      Kay Gürtzig     2019-01-25      Bugfix #670: Attempt to fix the scaling deficiency w.r.t. to the info trees
  *      Kay Gürtzig     2019-01-28      Issue #670: Update of the info box components on look & feel change
+ *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *
  ******************************************************************************************************
  *
@@ -139,6 +140,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
 	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
 	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group bounds", IconLoader.getIcon(17));
+	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptataion from Windows to others was defective if it hadn't been open before
+	private boolean wasPopupOpen = false;
+	// END KGU#646 2019-02-10
 
 	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
 	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
@@ -366,6 +370,12 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 					}
 					doButtonsLocal();
 					requestFocusInWindow();
+					// START KGU#646 2019-02-10: workaround for issue #674
+					if (!wasPopupOpen) {
+						javax.swing.SwingUtilities.updateComponentTreeUI(popupIndex);
+						wasPopupOpen = true;
+					}
+					// END KGU#646 4019-02-10
 					popupIndex.show(e.getComponent(), e.getX(), e.getY());
 				}
 				// END KGU#318 2017-01-05
@@ -1270,13 +1280,13 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	public void mouseExited(MouseEvent e) {
 	}
 
-	// START KGU#643 2019-01-28: Issue #670 - Update info box L&F (aren't members of the component tree)
+	// START KGU#643 2019-01-28: Issues #670, #674 - Update info box and popup menu L&F (aren't members of the component tree)
 	@Override
 	public void updateUI()
 	{
 		super.updateUI();
-		// Cater for the look and feel update of the info boxes.
-		for (Component comp: new Component[] {this.scrollInfo, this.pnlGroupInfo}) {
+		// Cater for the look and feel update of the info boxes (2019-02-04: #674 - popupIndex added).
+		for (Component comp: new Component[] {this.scrollInfo, this.pnlGroupInfo, this.popupIndex}) {
 			if (comp != null) {
 				try {
 					javax.swing.SwingUtilities.updateComponentTreeUI(comp);

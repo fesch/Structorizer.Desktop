@@ -286,6 +286,10 @@ Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Si, modo ridotto
+Menu.lblNormal.text=No, modo regolare
 
 // Error messages for analyser
 Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "%1 ► %2".

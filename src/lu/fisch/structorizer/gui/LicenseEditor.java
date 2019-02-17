@@ -31,11 +31,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.13      First Issue
- *      Kay Gürtzig     2017.05.20      Member class RootLicenseInfo refactored to global class RootAttributes
+ *      Kay Gürtzig     2017-03-13      First Issue
+ *      Kay Gürtzig     2017-05-20      Member class RootLicenseInfo refactored to global class RootAttributes
  *                                      reddish text background colour if text cannot be edited
- *      Kay Gürtzig     2018.06.06      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal),
- *                                      Issue #535: Icon and accelerator key for menu item "Save as ..." unified 
+ *      Kay Gürtzig     2018-06-06      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal),
+ *                                      Issue #535: Icon and accelerator key for menu item "Save as ..." unified
+ *      Kay Gürtzig     2019-02-06      Deprecated methods and fields replaced (as far as possible)
  *
  ******************************************************************************************************
  *
@@ -260,6 +261,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	//@SuppressWarnings("unchecked")
 	private void initComponents() {
 
+		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
+		// OS-dependent key mask for menu shortcuts
+		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+
 		panel = new JPanel();
 
 //		String licName = this.getLicenseName();
@@ -274,32 +279,32 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 
 		menuFileCommit = new JMenuItem("Commit", IconLoader.getIcon(3));
 		menuFileCommit.addActionListener(this);
-		menuFileCommit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileCommit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, menuShortcutKeyMask));
 		menuFileSave = new JMenuItem("Save to pool", IconLoader.getIcon(3));
 		menuFileSave.addActionListener(this);
-		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKeyMask));
 		menuFileSaveAs = new JMenuItem("Save as ...", IconLoader.getIcon(92));
 		menuFileSaveAs.addActionListener(this);
-		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		menuFileRename = new JMenuItem("Rename ...");
 		menuFileRename.addActionListener(this);
-		menuFileRename.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileRename.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, menuShortcutKeyMask));
 		menuFileReload = new JMenuItem("Reload/Revert", IconLoader.getIcon(25));
 		menuFileReload.addActionListener(this);
 		menuFileReload.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
 		menuFileDelete = new JMenuItem("Delete", IconLoader.getIcon(66));
 		menuFileDelete.addActionListener(this);
-		menuFileDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, menuShortcutKeyMask));
 		menuFileQuit = new JMenuItem("Quit");
 		menuFileQuit.addActionListener(this);
-		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, menuShortcutKeyMask));
 
 		menuEditUndo = new JMenuItem("Undo",IconLoader.getIcon(39));
 		menuEditUndo.addActionListener(this);
-		menuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menuShortcutKeyMask));
 		menuEditRedo = new JMenuItem("Redo",IconLoader.getIcon(38));
 		menuEditRedo.addActionListener(this);
-		menuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, menuShortcutKeyMask));
 //    	menuEditCut = new JMenuItem("Cut",IconLoader.getIcon(44));
 //    	menuEditCut.addActionListener(this);
 //    	menuEditCopy = new JMenuItem("Copy",IconLoader.getIcon(42));
@@ -308,7 +313,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 //    	menuEditPaste.addActionListener(this);
 		menuEditClear = new JMenuItem("Clear",IconLoader.getIcon(45));
 		menuEditClear.addActionListener(this);
-		menuEditClear.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditClear.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, menuShortcutKeyMask));
 
 		menuPropFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
 		menuPropFont.addActionListener(this);
@@ -786,7 +791,7 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	// START KGU#503 2018-06-06: Enh. #519 - "zooming" via font size control with ctrl + mouse wheel
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
-		if ((mwEvt.getModifiers() & MouseWheelEvent.CTRL_MASK) != 0) {
+		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
         	if (Element.E_WHEEL_REVERSE_ZOOM) {
         		rotation *= -1;

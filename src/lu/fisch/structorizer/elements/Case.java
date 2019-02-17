@@ -31,8 +31,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-12      First Issue
  *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
@@ -1087,7 +1087,7 @@ public class Case extends Element implements IFork
     public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
     {
     	String[] relevantKeywords = getRelevantParserKeys();
-    	if (text.count() > 0)
+    	if (!text.isEmpty())
     	{
     		text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
     		// START KGU#453 2017-11-02: Issue #447

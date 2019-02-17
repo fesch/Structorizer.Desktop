@@ -55,7 +55,7 @@ public interface NSDController
 	public void setLookAndFeel(String _laf);
 	public String getLookAndFeel();
 
-        public void savePreferences();
+	public void savePreferences();
 
 	public JFrame getFrame();
 

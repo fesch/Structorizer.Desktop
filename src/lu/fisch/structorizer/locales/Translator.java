@@ -33,16 +33,17 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2016.08.01      First Issue
- *      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
- *      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
- *      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
+ *      Bob Fisch       2016-08-01      First Issue
+ *      Kay Gürtzig     2016-09-05      Structural redesign of locale button generation (no from the Locales list)
+ *      Kay Gürtzig     2016-09-06      Opportunity to reload a saved language file to resume editing it
+ *      Kay Gürtzig     2016-09-09      Handling of unsaved changes improved, loadLocale() API modified,
  *                                      command line parameter "-test" introduced to re-allow full consistency check
- *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as DPI awareness workaround
- *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
- *      Kay Gürtzig     2017.11.20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
- *      Kay Gürtzig     2017.12.11/12   Enh. #425: Support for Find mechanism
- *      Kay Gürtzig     2017.12.18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
+ *      Kay Gürtzig     2016-11-02      Issue #81: Scaling as DPI awareness workaround
+ *      Kay Gürtzig     2016-11-09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
+ *      Kay Gürtzig     2017-11-20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
+ *      Kay Gürtzig     2017-12-11/12   Enh. #425: Support for Find mechanism
+ *      Kay Gürtzig     2017-12-18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
+ *      Kay Gürtzig     2019-02-05      Field NSDControl disabled (isn't actually need anymore)
  *
  ******************************************************************************************************
  *
@@ -119,7 +120,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     private static Translator instance = null;
     
-    private NSDController NSDControl = null;
+    //private NSDController NSDControl = null;
 
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
@@ -330,7 +331,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // First check if we have some cached values
         // START KGU#231 2016-08-09: Issue #220
         // Take care of a modified header
-        if (loadedLocale.cachedHeader.count() > 0)
+        if (!loadedLocale.cachedHeader.isEmpty())
         {
             headerText.setText(loadedLocale.cachedHeader.getText());
         }
@@ -1005,8 +1006,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
     
     public void setNSDControl(NSDController NSDControl) {
-        this.NSDControl = NSDControl;
-        button_preview.setVisible(true);
+        //this.NSDControl = NSDControl;
+        //button_preview.setVisible(true);
+        button_preview.setVisible(NSDControl != null);
     }
     
     

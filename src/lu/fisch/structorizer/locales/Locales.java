@@ -79,9 +79,9 @@ import lu.fisch.utils.StringList;
  */
 public class Locales {
     /**
-     * LOCALES_LIST of all locales we have and their respective English denomination
+     * LOCALES_LIST of all locales we have and their respective English denomination.<br/>
      * Locales for actually existing languages MUST have an English language name, whereas
-     * pure technical pseudo-locales MUST NOT have a denomination
+     * pure technical pseudo-locales MUST NOT have a denomination.<br/>
      * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
      */
     public static final String[][] LOCALES_LIST = {
@@ -861,7 +861,7 @@ public class Locales {
      */
     public String getLoadedLocaleName()
     {
-        if(loadedLocaleName==null) return DEFAULT_LOCALE;
+        if (loadedLocaleName==null) return DEFAULT_LOCALE;
         else return loadedLocaleName;
     }
     

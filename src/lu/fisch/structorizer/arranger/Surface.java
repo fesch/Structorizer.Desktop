@@ -97,6 +97,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-12      Enh. #662/3: New method to rearrange all diagrams by groups
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: enabled to save arrangements with relative coordinates
  *      Kay Gürtzig     2019-01-16      Enh. #662/2: Coloured group name popup
+ *      Kay Gürtzig     2019-02-02      Bugfix #672: If the saving was cancelled in FileChooser, the group must not be renamed
+ *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
+ *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
  *
  ******************************************************************************************************
  *
@@ -506,6 +509,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#497 2018-03-19
 		}
+		// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+		area.width += DEFAULT_GAP;
+		area.height += DEFAULT_GAP;
+		// END KGU#645 2019-02-03S
 		// START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
 		area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
 		area.height = Math.round(Math.min(area.height, Short.MAX_VALUE) / this.zoomFactor);
@@ -629,7 +636,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
-			File f = new File(filename);	// FIXME (KGU) Why don't we just use files[i]?
+			File f = new File(filename);
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 				// END KGU#111 2015-12-17
@@ -863,6 +870,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#385 2017-04-22
 				// END KGU#110 2016-06-29
 			}
+			// START KGU#644 2019-02-02: Bugfix #672: We must not gon on if the FileChooser was cancelled
+			else {
+				writeNow = false;
+			}
+			// END KGU#644 2019-02-02
 		// START KGU#626 2019-01-02: Enh. #657
 		}
 		else {
@@ -895,7 +907,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		 * and location. For an arrangement list, it's not so important whether or not the content
 		 * of the file is up to date, so the user will be left the choice.
 		 */
-		if (writeNow && this.saveDiagrams(initiator, toArrange, goingToClose, portable)) {
+		if (writeNow && this.saveDiagrams(initiator, toArrange, goingToClose, portable, portable)) {
 			if (group.hasChanged()) {
 				done = saveArrangement(initiator, filename, extension, portable, group);
 				if (done && group.getName().isEmpty()) {
@@ -978,6 +990,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
+			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();
@@ -986,6 +999,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
+				// START KGU#650 2019-02-11: Issue #677 save all orphaned virgin group members to the temp dir
+				savedVirginRoots = saveVirginRootsToTempDir(group, tempDir);
+				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
 				// END KGU#110 2016-06-29
@@ -1037,7 +1053,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				group.setFile(new File(outFilename), null);
 			}
 			// END KGU#626 2019-01-02
-
+			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams as reside in the archive
+			if (savedVirginRoots != null) {
+				for (Root root: savedVirginRoots) {
+					File path = root.getFile();
+					if (path != null) {
+						root.shadowFilepath = path.getAbsolutePath();
+						root.filename = outFilename + File.separator + path.getName();
+					}
+				}
+			}
+			// END KGU#650 2019-02-11
 			done = true;
 		}
 		catch (Exception ex)
@@ -1048,6 +1074,55 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return done;
 	}
 
+	// START KGU#650 2019-02-11: Issue #677 - Inconveniences on saving arrangement archives
+	/** Tries to save all unsaved group members in the given temporary directory with a unique name */
+	private LinkedList<Root> saveVirginRootsToTempDir(Group group, String tempDir) {
+		LinkedList<Root> savedRoots = new LinkedList<Root>();
+		StringList unsaved = new StringList();
+		StringList errors = new StringList();
+		for (Diagram diagr: group.getDiagrams()) {
+			if (diagr.root.getFile() == null) {
+				String filename = tempDir + File.separator + diagr.root.proposeFileName();
+				File file = new File(filename + ".nsd");
+				int count = 1;
+				while (file.exists()) {
+					file = new File(filename + "_" + count++ + ".nsd");
+				}
+				filename = file.getAbsolutePath();
+				Writer out = null;
+				try {
+					FileOutputStream fos = new FileOutputStream(filename);
+					out = new OutputStreamWriter(fos, "UTF-8");
+					XmlGenerator xmlgen = new XmlGenerator();
+					out.write(xmlgen.generateCode(diagr.root,"\t"));
+					diagr.root.filename = filename;
+					diagr.root.rememberSaved();
+					savedRoots.add(diagr.root);
+					if (diagr.mainform != null) {
+						diagr.mainform.doButtons();
+					}
+				} catch (IOException ex) {
+					unsaved.add(diagr.root.proposeFileName());
+					errors.add(ex.toString());
+				}
+				finally {
+					if (out != null) {
+						try {
+							out.close();
+						} catch (IOException e) {}
+					}
+				}
+
+			}
+		}
+		if (!unsaved.isEmpty()) {
+			JOptionPane.showMessageDialog(this.getParent(), 
+					this.msgUnsavedDiagrams.getText() + "\n" + unsaved.getText() + "\n\n" + errors.getText(),
+					this.msgSaveError.getText(), JOptionPane.WARNING_MESSAGE);
+		}
+		return savedRoots;
+	}
+	// END KGU#650 2019-02-11
 
 	/**
 	 * Creates the Arranger file with path {@code arrFilename} for all diagrams held
@@ -1517,7 +1592,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File tempFile = File.createTempFile("arr", null);
 				tempFile.delete();	// We don't need the file itself
 				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
-				tmpDirCreated = (new File(targetDir)).mkdirs();
+				if (targetDir.endsWith(".arrz")) {
+					targetDir = targetDir.substring(0, targetDir.length()-4) + "unzip";
+				}
+				File fDir = new File(targetDir);
+				if (fDir.isDirectory()) {
+					tmpDirCreated = true;
+				}
+				else {
+					tmpDirCreated = (new File(targetDir)).mkdirs();
+				}
 			} catch (IOException ex) {
 				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
 			}
@@ -1634,10 +1718,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			else {
 				rect = new Rect(getSelectionBounds(true));
-				offsetX = rect.left - 10;
-				offsetY = rect.top - 10;
-				rect.left = 10;
-				rect.top = 10;
+				offsetX = rect.left - DEFAULT_GAP;
+				offsetY = rect.top - DEFAULT_GAP;
+				rect.left = DEFAULT_GAP;
+				rect.top = DEFAULT_GAP;
 				rect.right -= offsetX;
 				rect.bottom -= offsetY;
 			}
@@ -1689,12 +1773,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Determines the union of bounds of the given {@code _diagrams} in true diagram coordinates
-	 * and updates the lower silhouette line if {@code _silhouette} is given.
+	 * and updates the lower silhouette line if {@code _silhouette} is given.<br/>
+	 * At the right-hand and bottom side, a buffer of {@link #DEFAULT_GAP} is added, if the
+	 * bounds are not empty (Issue #673).
 	 * @param _diagrams - a collection of {@link Diagram} objects.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diagrams)
 	 */
 	private Rect getDrawingRect(Collection<? extends Diagram> _diagrams, LinkedList<Point> _silhouette)
 	{
@@ -1735,6 +1821,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				// END KGU#499 2018-02-20
 			}
+			// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+			r.right += DEFAULT_GAP;
+			r.bottom += DEFAULT_GAP;
+			// END KGU#645 2019-02-03S
 		}
 		//System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
 
@@ -2646,7 +2736,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	//public void saveDiagrams()
 	public boolean saveDiagrams(Component initiator)
 	{
-		return saveDiagrams(initiator, this.diagrams, false, false);
+		return saveDiagrams(initiator, this.diagrams, false, false, false);
 	}
 
 	/**
@@ -2657,9 +2747,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * case all diagrams are saved)
 	 * @param goingToClose - whether the application is going to close
 	 * @param dontAsk - if questions are to be suppressed
+	 * @param forArchive - if true then virgin diagrams are saved to a temporary folder, a complete file
+	 * chooser won't be offered in such a case.
 	 * @return true if all was done or the user has quit the warning message about saving deficiencies.
 	 */
-	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk)
+	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk, boolean forArchive)
 	// END KGU#177 2016-04-14
 	{
 		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
@@ -2669,7 +2761,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (diagramsToCheck == null) {
 			diagramsToCheck = this.diagrams;
 		}
-		allDone = saveDiagrams(diagramsToCheck, goingToClose, dontAsk, unsaved);
+		allDone = saveDiagrams(diagramsToCheck, goingToClose, dontAsk, forArchive, unsaved);
 		// START KGU#177 2016-04-14: Enh. #158
 		if (!allDone)
 		{
@@ -2690,15 +2782,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param diagrams - the collection of {@link Diagram}s to be saved - CAUTION: must not be null!
 	 * @param goingToClose - signals whether this method was called because the application is going to shut down 
 	 * @param dontAsk - if true then the user won't be asked whether they want to save or not
-	 * @param unsaved - a {@link StringList} collecting the signatures of diagrams the saving ofwhich failed
+	 * @param forArchive - if true then diagrams never saved before won't be saved here but later
+	 * @param unsaved - a {@link StringList} collecting the signatures of diagrams the saving of which failed
 	 * @return true if all affected diagram could be saved or the user accepted the faults
 	 */
-	private boolean saveDiagrams(Collection<Diagram> diagrams, boolean goingToClose, boolean dontAsk, StringList unsaved) {
+	private boolean saveDiagrams(Collection<Diagram> diagrams, boolean goingToClose, boolean dontAsk, boolean forArchive, StringList unsaved) {
 		boolean allDone = true;
 		// START KGU#320 2017-01-04: Bugfix #321
 		HashSet<Root> handledRoots = new HashSet<Root>();
 		HashSet<Mainform> mainforms = new HashSet<Mainform>();
 		// END KGU#320 2017-01-04
+		// START KGU#650 2019-02-11: Issue #677
+		Mainform tempMainform = null;
+		Mainform someMainform = null;
+		// END KGU#650 2019-02-11
 		// START KGU#534 2018-06-27: Enh. #552
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
 		try {
@@ -2708,7 +2805,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				Diagram diagram = iter.next();
 				Mainform form = diagram.mainform;
-				if (form != null)
+				// START KGU#650 2019-02-11: Issue #677 - Ensure a Mainform if we have to archive diagrams
+				boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
+					form = someMainform = tempMainform = new Mainform(false);
+				}
+				// Postpone the saving of virgin diagrams here in case of saving to an archive (will be done later)
+				//if (form != null)
+				if (form != null && (hasFile || !forArchive)) 
+				// END KGU#650 2019-02-11
 				{
 					// START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
 					//form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
@@ -2720,15 +2825,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					{
 						break;
 					}
-					mainforms.add(form);
+					// START KGU#650 2019-02-11: Issue #677
+					if (form != tempMainform) {
+						mainforms.add(form);
+						if (someMainform == null) {
+							someMainform = form;
+						}
+					}
+					// END KGU#650 2019-02-11
 					handledRoots.add(diagram.root);
 					// END KGU#320 2017-01-04
 				}
 				// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-				else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
+				else if (!hasFile)
 				{
-					unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
-					allDone = false;
+					if (!forArchive) {
+						unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
+						allDone = false;
+					}
 				}
 				else if (diagram.root.hasChanged())
 				{
@@ -2737,6 +2851,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				// END KGU#177 2016-04-14
 			}
+			// START KGU#650 2019-02-11: Issue #677
+			if (tempMainform != null) {
+				tempMainform.dispose();
+			}
+			// END KGU#650 2019-02-11
 			// START KGU#320 2017-01-04: Bugfix #321
 			// In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
 			// chance to save their currently maintained Root even if this was not arranged here.
@@ -3405,6 +3524,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#626 2018-12-31
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 			}
+			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
+			if (source.hasChanged()) {
+				for (String groupName: diagr.getGroupNames()) {
+					Group group = this.groups.get(groupName);
+					File arrzFile = null;
+					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile()) != null) {
+						if (!source.getPath(true).equals(arrzFile.getAbsolutePath())) {
+							group.membersChanged = true;
+						}
+					}
+				}
+			}
+			// END KGU#650 2019-02-11
 		}
 		// END KGU#624 2018-12-26
 		// END KGU#330 2017-01-13
@@ -4309,7 +4441,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				if (doomedDiagrams != null) {
 					StringList unsaved = new StringList();
-					done = saveDiagrams(doomedDiagrams, false, false, unsaved);
+					done = saveDiagrams(doomedDiagrams, false, false, false, unsaved);
 					for (Diagram diagram: doomedDiagrams) {
 						removeDiagram(diagram);
 					}
@@ -4534,7 +4666,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		finally {
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
-		if (unsaved.count() > 0 && initiator != null) {
+		if (!unsaved.isEmpty() && initiator != null) {
 			allDone = JOptionPane.showConfirmDialog(initiator,
 					msgUnsavedGroups.getText() + "\n" + unsaved.concatenate(", "), 
 					this.msgSaveDialogTitle.getText(),

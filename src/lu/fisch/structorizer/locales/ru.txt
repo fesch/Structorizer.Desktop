@@ -66,6 +66,7 @@
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2018-07-27  Several missing messages added.
  *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed
+ *      Kay Gürtzig     2019-02-16  Enh. #682: Welcome message translated
  *
  ******************************************************************************************************
  *
@@ -166,7 +167,7 @@ Menu.menuDiagramAddBefore.text=Перед
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=Инструкция
 Menu.menuDiagramAddBeforeAlt.text=Разветвление @{Alternative}
-Menu.menuDiagramAddBeforeCase.text=Многократный выбор @{Case}
+Menu.menuDiagramAddBeforeCase.text=Многовариантный выбор @{Case}
 Menu.menuDiagramAddBeforeFor.text=Цикл @{For}
 Menu.menuDiagramAddBeforeWhile.text=Цикл @{While}
 Menu.menuDiagramAddBeforeRepeat.text=Цикл @{Repeat}
@@ -179,7 +180,7 @@ Menu.menuDiagramAddAfter.text=Позади
 // Submenus for adding Elements "After"
 Menu.menuDiagramAddAfterInst.text=Инструкция
 Menu.menuDiagramAddAfterAlt.text=Разветвление @{Alternative}
-Menu.menuDiagramAddAfterCase.text=Многократный выбор @{Case}
+Menu.menuDiagramAddAfterCase.text=Многовариантный выбор @{Case}
 Menu.menuDiagramAddAfterFor.text=Цикл @{For}
 Menu.menuDiagramAddAfterWhile.text=Цикл @{While}
 Menu.menuDiagramAddAfterRepeat.text=Цикл @{Repeat}
@@ -329,7 +330,8 @@ Menu.lblAllowChanges.text=
 Menu.msgReplacementsDone.text=
 Menu.msgNewerVersionAvail.text=
 Menu.msgUpdateInfoHint.text=
-Menu.msgWelcomeMessage.text=
+Menu.msgWelcomeMessage1.text=Добро пожаловать к Structorizer, вашему удобному редактору диаграмм Насси-Шнейдермана.\nС этой средой разработки можете намечать, рисовать, выполнять, испытывать, анализировать алгоритмы,\nпереводить их в разные языки программирования, и множе.\nПожалуйста выбираете язык диалога (всегда можете сменить ваш выбор через меню настройки):
+Menu.msgWelcomeMessage2.text=Structorizer был проектирован для простого использования но постепенно был пополнен к многими функциями.\nЕсли вы новичок в программировании и в алгоритмах можете начинать с упрощенным видом и\nгидом «%».\nХочете начинать с упрощенным видоми курсом? (Можете всегда переключить на полный модус.)
 Menu.lblOk.text=ОК
 Menu.lblYes.text=Да
 Menu.lblNo.text=Нет
@@ -436,7 +438,7 @@ Menu.error24_5.text=
 Menu.error24_6.text=
 Menu.error24_7.text=
 Menu.error24_8.text=
-Menu.hint07_1.text=
+Menu.hint07_1.text=Что должен сделать ваш алгоритм? Замените "???" описательным названием.
 Menu.hint25_1.text=
 Menu.hint25_2.text=
 Menu.hint25_3.text=
@@ -480,7 +482,7 @@ AnalyserPreferences.checkboxes.22.text=Проверять что постоян�
 AnalyserPreferences.checkboxes.23.text=
 AnalyserPreferences.checkboxes.24.text=
 AnalyserPreferences.checkboxes.25.text=
-AnalyserPreferences.checkboxes.26.text=
+AnalyserPreferences.checkboxes.26.text=Краткий курс "Привет, мир!"
 AnalyserPreferences.okButton.text=ОК
 
 
