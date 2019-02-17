@@ -67,6 +67,7 @@
  *      Kay Gürtzig     2018-07-27  Several missing messages added.
  *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed
  *      Kay Gürtzig     2019-02-16  Enh. #682: Welcome message translated
+ *      Kay Gürtzig     2019-02-17  Issue #684: New and missing messages for ParserPreferences added
  *
  ******************************************************************************************************
  *
@@ -846,10 +847,10 @@ ColorChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Parser Preferences
+ParserPreferences.title=Настройки парсера
 ParserPreferences.lblPre.text=Перед
 ParserPreferences.lblPre.tooltip=
-ParserPreferences.lblPost.text=После
+ParserPreferences.lblPost.text=Позади
 ParserPreferences.lblPost.tooltip=
 ParserPreferences.lblAlt.text=Разветвление @{Alternative}
 ParserPreferences.lblAlt.tooltip=
@@ -857,7 +858,7 @@ ParserPreferences.lblCase.text=Выбор @{Case}
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=Цикл @{For.COUNTER}
 ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblForStep.text=
+ParserPreferences.lblForStep.text=Шаг (инкремент)
 ParserPreferences.lblForIn.text=Цикл @{For.TRAVERSAL}
 ParserPreferences.lblForIn.tooltip=
 ParserPreferences.edtForInPre.tooltip=
@@ -871,16 +872,19 @@ ParserPreferences.lblJump.tooltip=
 ParserPreferences.lblJumpLeave.text=из цикла 
 ParserPreferences.lblJumpReturn.text=из подпрограммы
 ParserPreferences.lblJumpExit.text=из программы
+ParserPreferences.lblInputOutput.text=Ввод / Вывод
 ParserPreferences.lblInput.text=Ввод
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Вывод
 ParserPreferences.lblOutput.tooltip=
-ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.chkIgnoreCase.text=Не различать прописные/строчные буквы
 ParserPreferences.btnOK.text=ОК
 ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
-ParserPreferences.lblErrorSign.text=
-ParserPreferences.lblErrorSign2.text=
-ParserPreferences.lblInputOutput.text=Ввод / Вывод
+ParserPreferences.lblErrorSign.text=Не разрешается включать двоеточие ':' в ключевых словах!
+ParserPreferences.lblErrorSign2.text=Есть конфликты между ключевыми словами (размеченными красными)! Все они должны различаться.
+ParserPreferences.lblErrorSign3.text=% из обязательных ключевых слов (см. надпись) не заполнены!
+ParserPreferences.ttlError.text=Ошибка
+ParserPreferences.lblHeadline.text=Поля ввода текста с этим цветом обязательные.
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Предварительный просмотр

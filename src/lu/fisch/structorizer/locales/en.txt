@@ -116,6 +116,8 @@
  *      Kay Gürtzig     2018-12-16      Issue #644: New Control message msgInitializerAsArgument
  *      Kay Gürtzig     2018-12-21      Enh. #655: New Arranger messages
  *      Kay Gürtzig     2019-01-04      Enh. #657: Many new messages for Editor, Arranger, Surface
+ *      Kay Gürtzig     2019-02-16      Issue #682: Messages for redesigned welcome dialog
+ *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -917,6 +919,8 @@ ParserPreferences.lblJump.tooltip=Classifying keywords for statements to exit fr
 ParserPreferences.lblJumpLeave.text=from loop(s)
 ParserPreferences.lblJumpReturn.text=from routine
 ParserPreferences.lblJumpExit.text=from program
+ParserPreferences.lblInputOutput.text=I/O instructions
+ParserPreferences.lblInputOutput.tooltip=Classifying keywords for input and output.
 ParserPreferences.lblInput.text=Input
 ParserPreferences.lblInput.tooltip=Prefix keyword for input instructions
 ParserPreferences.lblOutput.text=Output
@@ -926,7 +930,9 @@ ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
 ParserPreferences.lblErrorSign2.text=There are name conflicts among the key words marked red - they must all differ!
-ParserPreferences.lblInputOutput.text=I/O instructions
+ParserPreferences.lblErrorSign3.text=% of the mandatory key words (see hint in the headline) aren't specified!
+ParserPreferences.ttlError.text=Error
+ParserPreferences.lblHeadline.text=Fields with this background are mandatory
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Print Preview

@@ -121,6 +121,8 @@
  *      Kay Gürtzig         2018-12-16  Issue #644: New Control message msgInitializerAsArgument
  *      Kay Gürtzig         2018-12-21  Enh. #655: New Arranger messages
  *      Kay Gürtzig         2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
+ *      Kay Gürtzig         2019-02-16  Issue #682: Messages for redesigned welcome dialog
+ *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -921,6 +923,8 @@ ParserPreferences.lblJump.tooltip=Klassifizierende Kennwörter für die @k-Arten
 ParserPreferences.lblJumpLeave.text=aus Schleifen
 ParserPreferences.lblJumpReturn.text=aus Routinen
 ParserPreferences.lblJumpExit.text=aus dem Programm
+ParserPreferences.lblInputOutput.text=E/A-Anweisungen
+ParserPreferences.lblInputOutput.tooltip=Klassifizierende Kennwörter für Eingabe/Ausgabe.
 ParserPreferences.lblInput.text=Eingabe
 ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
@@ -930,7 +934,9 @@ ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
 ParserPreferences.lblErrorSign2.text=Zwischen den rot markierten Kennworten gibt es Namenskonflikte! Sie müssen sich alle unterscheiden.
-ParserPreferences.lblInputOutput.text=E/A-Anweisungen
+ParserPreferences.lblErrorSign3.text=Bei % der Pflichtfelder (siehe Hinweis im Dialogkopf) ist nichts eingetragen!
+ParserPreferences.ttlError.text=Fehler
+ParserPreferences.lblHeadline.text=Felder mit diesem Hintergrund müssen ausgefüllt sein
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht

@@ -121,6 +121,8 @@
  *      Kay Gürtzig     2018-12-16  Issue #644: New Control message msgInitializerAsArgument
  *      Kay Gürtzig     2018-12-21  Enh. #655: New Arranger messages
  *      Kay Gürtzig     2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
+ *      Kay Gürtzig     2019-02-16  Issue #682: Messages for redesigned welcome dialog
+ *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -922,6 +924,8 @@ ParserPreferences.lblJump.tooltip=Palabras claves clasificando @ks para salir de
 ParserPreferences.lblJumpLeave.text=del bucle
 ParserPreferences.lblJumpReturn.text=de subprograma
 ParserPreferences.lblJumpExit.text=de programa
+ParserPreferences.lblInputOutput.text=Entrada/Salida
+ParserPreferences.lblInputOutput.tooltip=Palabras claves clasificando entrada/salida de valores
 ParserPreferences.lblInput.text=Entrada
 ParserPreferences.lblInput.tooltip=Palabra clave calificando una instrucción de entrada
 ParserPreferences.lblOutput.text=Salida
@@ -931,7 +935,9 @@ ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de una palabra clave!
 ParserPreferences.lblErrorSign2.text=¡Hay conflictos entre las palabras claves en rojo - todos tienen que ser desiguales!
-ParserPreferences.lblInputOutput.text=Entrada/Salida
+ParserPreferences.lblErrorSign3.text=¡% de los palabras claves obligatorias (vea nota en el título) no están especificados!
+ParserPreferences.ttlError.text=Error
+ParserPreferences.lblHeadline.text=Casillas con este color son obligatorias.
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
