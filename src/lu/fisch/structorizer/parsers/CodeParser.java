@@ -31,22 +31,23 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.04      First Issue
- *      Kay Gürtzig     2017.03.25      Fix #357: Precaution against failed file preparation
- *      Kay Gürtzig     2017.03.30      Standard colours for declarations, constant definitions and global stuff
- *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
- *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
- *      Kay Gürtzig     2017.04.27      File logging mechanism added (former debug prints)
- *      Kay Gürtzig     2017.05.22      Enh. #372: Generic support for "origin" attribute
- *      Simon Sobisch   2017.05.23      Hard line break in the parser error context display introduced
- *      Simon Sobisch   2017.06.07      Precautions for non-printable characters in the log stream
- *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
- *      Kay Gürtzig     2017.09.30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
- *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved.
- *      Kay Gürtzig     2018.06.29      Enh. #553: Listener management added
- *      Kay Gürtzig     2018.10.25      Enh. #419: Support for automatic breaking of long lines (postprocess)
- *      Kay Gürtzig     2018.10.29      Enh. #627: New field exception in order to provide stacktrace info if available
+ *      Kay Gürtzig     2017-03-04      First Issue
+ *      Kay Gürtzig     2017-03-25      Fix #357: Precaution against failed file preparation
+ *      Kay Gürtzig     2017-03-30      Standard colours for declarations, constant definitions and global stuff
+ *      Kay Gürtzig     2017-04-11      Mechanism to revert file preparator replacements in the syntax error display
+ *      Kay Gürtzig     2017-04-16      New hook method postProcess(String textToParse) for sub classes
+ *      Kay Gürtzig     2017-04-27      File logging mechanism added (former debug prints)
+ *      Kay Gürtzig     2017-05-22      Enh. #372: Generic support for "origin" attribute
+ *      Simon Sobisch   2017-05-23      Hard line break in the parser error context display introduced
+ *      Simon Sobisch   2017-06-07      Precautions for non-printable characters in the log stream
+ *      Kay Gürtzig     2017-06-22      Enh. #420: Infrastructure for comment import
+ *      Kay Gürtzig     2017-09-30      Enh. #420: Cleaning mechanism for the retrieved comments implemented
+ *      Kay Gürtzig     2018-04-12      Issue #489: Fault tolerance improved.
+ *      Kay Gürtzig     2018-06-29      Enh. #553: Listener management added
+ *      Kay Gürtzig     2018-10-25      Enh. #419: Support for automatic breaking of long lines (postprocess)
+ *      Kay Gürtzig     2018-10-29      Enh. #627: New field exception in order to provide stacktrace info if available
  *                                      Issue #630: New member class FilePreparationException
+ *      Kay Gürtzig     2019-02-19      Bugfix #684 (empty FOR-In loop keyword on loading preferences mutilated 
  *
  ******************************************************************************************************
  *
@@ -477,7 +478,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		// START KGU#537 2018-07-01: Enh. #553
 		try {
 		// END KGU#537 2018-07-01
-			// Random random = new Random();	// FIXME: for testing only
+			//Random random = new Random();	// DEBUG for testing only
 			if (_logDir != null) {
 				File logDir = new File(_logDir);
 				if (logDir.isDirectory()) {
@@ -1394,15 +1395,20 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			for (String key: keywordMap.keySet())
 			{
 				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
-                                if(defaultKeys.containsKey(propertyName))
-                                {
-                                    keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.get(propertyName)));
-                                }
-                                else
-                                {
-                                    keywordMap.put(key, ini.getProperty(propertyName, ""));
-                                }
+				if(defaultKeys.containsKey(propertyName))
+				{
+					keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.get(propertyName)));
+				}
+				else
+				{
+					keywordMap.put(key, ini.getProperty(propertyName, ""));
+				}
 			}
+			// START KGU#659 2019-02-19: Bugfix #684 - An empty FOR-IN keyword (legacy) meant equality with FOR loop keyword 
+			if (keywordMap.get("preForIn").trim().isEmpty()) {
+				keywordMap.put("preForIn", keywordMap.get("preFor"));
+			}
+			// END KGU#659 2019-02-19
 
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
 			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");

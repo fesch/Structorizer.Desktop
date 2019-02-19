@@ -9,7 +9,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-04 (2019-02-17)
+Current development version: 3.29-04 (2019-02-19)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -37,7 +37,8 @@ Current development version: 3.29-04 (2019-02-17)
 - 03: Enh. #681: A number of exports may offer to change favorite export language <2>
 - 03: Enh. #682: Improved welcome dialog, now with language selection <2>
 - 04: Issue #51,#137: Executor window now logs explicit prompts of empty inputs <2>
-- 04: Issue #684: Distinction + check of mandatory fields in Parser Preferences <2>
+- 04: Issue #684: Mark-up + check of mandatory fields in Parser Preferences <2>
+- 04: Bugfix #684: An empty FOR-IN loop keyword caused several problems <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

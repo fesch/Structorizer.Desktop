@@ -173,6 +173,9 @@ public class NSDParser extends DefaultHandler {
 						savedParserPrefs.put(key, Element.splitLexically(keyword, false));
 					}
 				}
+				if (!savedParserPrefs.containsKey("preForIn") && savedParserPrefs.containsKey("preFor")) {
+					savedParserPrefs.put("preForIn", savedParserPrefs.get("preFor"));	// it should not be necessary to derive a copy
+				}
 				if (attributes.getIndex("ignoreCase") != -1)
 				{
 					ignoreCase = attributes.getValue("ignoreCase").equals("true");

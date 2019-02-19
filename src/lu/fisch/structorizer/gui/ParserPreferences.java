@@ -231,7 +231,7 @@ public class ParserPreferences extends LangDialog {
 		lblErrorSign3 = new LangTextHolder("% of the mandatory key words (cream background) aren't specified!");
 		mandatoryFields = new JTextField[] {
 				edtForPre, edtForPost, edtForStep,
-				/*edtForInPre,*/ edtForInPost,
+				edtForInPre, edtForInPost,
 				edtJumpLeave, edtJumpReturn, edtJumpExit,
 				edtInput, edtOutput
 		};
