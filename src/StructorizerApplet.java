@@ -100,7 +100,10 @@ public class StructorizerApplet extends JApplet  implements NSDController
     
     public void setLookAndFeel(String _laf)
     {
-        laf=_laf;
+        // START KGU#661 2019-02-20: Issue #686
+        javax.swing.LookAndFeel currentLaf = UIManager.getLookAndFeel();
+        String currentLafName = currentLaf.getName();
+        // END KGU#661 2019-02-20
         UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
         for(int j = 0; j < plafs.length; ++j)
         {
@@ -109,7 +112,13 @@ public class StructorizerApplet extends JApplet  implements NSDController
                 try
                 {
                     UIManager.setLookAndFeel(plafs[j].getClassName());
+                    // START KGU#661 2019-02-20: Issue #686
+                    laf = _laf;
+                    // END KGU#661 2019-02-20
                     SwingUtilities.updateComponentTreeUI(this);
+                    // START KGU#661 2019-02-20: Issue #686
+                    return;
+                    // END KGU#661 2019-02-20
                 }
                 catch (Exception e)
                 {
@@ -119,7 +128,15 @@ public class StructorizerApplet extends JApplet  implements NSDController
                             JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                 }
             }
+            // START KGU#661 2019-02-20: Issue #686
+            else if (plafs[j].getClassName().equals(currentLaf.getClass().getName())) {
+                currentLafName = plafs[j].getName();
+            }
+            // END KGU#661 2019-02-20
         }
+        // START KGU#661 2019-02-20: Issue #686
+        laf = currentLafName;
+        // END KGU#661 2019-02-20
     }
 
     public String getLookAndFeel()

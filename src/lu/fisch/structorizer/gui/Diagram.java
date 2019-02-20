@@ -1265,7 +1265,87 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-    // START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e)
+	{
+		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
+		//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+		//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
+		// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
+		//if (selected != null)
+		if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
+			// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
+			int rotation = e.getWheelRotation();
+			int fontSize = Element.getFont().getSize();
+			if (Element.E_WHEEL_REVERSE_ZOOM) {
+				rotation *= -1;
+			}
+			if (rotation >= 1 && fontSize-1 >= 4)
+			{
+				// reduce font size
+				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
+				root.resetDrawingInfoDown();
+				redraw();
+				e.consume();
+			}
+			else if (rotation <= -1)
+			{
+				// enlarge font size
+				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
+				root.resetDrawingInfoDown();
+				redraw();
+				e.consume();
+			}
+		}
+		else if (Element.E_WHEELCOLLAPSE && selected != null)
+			// END KGU#503 2018-03-13
+		{
+			// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
+			// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
+			// In Linux, however, the rotation result will usually be -1 or +1, whereas the scroll amount is 3.
+			// So we just multiply both and will get a sensible threshold, we hope.
+			//if(e.getWheelRotation()<-1) selected.setCollapsed(true);
+			//else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
+			int rotation = e.getWheelRotation();
+			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+				rotation *= e.getScrollAmount();
+			}
+			else {
+				rotation *= 2;
+			}
+			if (rotation < -1) {
+				selected.setCollapsed(true);
+			}
+			else if (rotation > 1) {
+				selected.setCollapsed(false);
+			}
+			// END KGU#123 2016-01-04
+			// START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
+			e.consume();
+			// END KGU#503 2018-03-13
+			redraw();
+		}
+		// FIXME KGU 2016-01-0: Issue #65
+//		// Rough approach to test horizontal scrollability - only works near the left and right
+//		// borders, because the last mouseMoved position is used. Seems that we will have to
+//		// maintain a virtual scroll position here which is to be used instead of e.getX().
+//		if ((e.getModifiersEx() & MouseWheelEvent.SHIFT_DOWN_MASK) != 0)
+//		{
+//			int rotation = e.getWheelRotation();
+//			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+//				rotation *= e.getScrollAmount();
+//			}
+//			System.out.println("Horizontal scrolling by " + rotation);
+//			Rectangle r = new Rectangle(e.getX() + 50 * rotation, e.getY(), 1, 1);
+//			((JPanel)e.getSource()).scrollRectToVisible(r);
+//		}
+	}
+
+
+	// START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
     public void doButtons()
     {
     	if (NSDControl != null) NSDControl.doButtons();
@@ -7716,6 +7796,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
 
 		// get diagram
+		// FIXME KGU#660 2019-02-20: Issue #685 With Windows and java 11, conversion to JPEG doesn't cope with alpha channel
 		BufferedImage image = new BufferedImage(root.width+1,root.height+1, BufferedImage.TYPE_INT_ARGB);
 		root.draw(image.getGraphics());
 
@@ -7759,7 +7840,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.draw(c,myrect);
 			emf.endExport();
 
-			systemClipboard.setContents(new EMFSelection(myEMF),null);
+			systemClipboard.setContents(new EMFSelection(myEMF), null);
 		}
 		catch (Exception e)
 		{
@@ -7777,85 +7858,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
-	}
-
-	/* (non-Javadoc)
-	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
-	 */
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e)
-	{
-		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
-		//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
-		//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
-		// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
-		//if (selected != null)
-		if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
-			// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
-			int rotation = e.getWheelRotation();
-			int fontSize = Element.getFont().getSize();
-			if (Element.E_WHEEL_REVERSE_ZOOM) {
-				rotation *= -1;
-			}
-			if (rotation >= 1 && fontSize-1 >= 4)
-			{
-				// reduce font size
-				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
-				root.resetDrawingInfoDown();
-				redraw();
-				e.consume();
-			}
-			else if (rotation <= -1)
-			{
-				// enlarge font size
-				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
-				root.resetDrawingInfoDown();
-				redraw();
-				e.consume();
-			}
-		}
-		else if (Element.E_WHEELCOLLAPSE && selected != null)
-			// END KGU#503 2018-03-13
-		{
-			// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
-			// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
-			// In Linux, however, the rotation result will usually be -1 or +1, whereas the scroll amount is 3.
-			// So we just multiply both and will get a sensible threshold, we hope.
-			//if(e.getWheelRotation()<-1) selected.setCollapsed(true);
-			//else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
-			int rotation = e.getWheelRotation();
-			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-				rotation *= e.getScrollAmount();
-			}
-			else {
-				rotation *= 2;
-			}
-			if (rotation < -1) {
-				selected.setCollapsed(true);
-			}
-			else if (rotation > 1) {
-				selected.setCollapsed(false);
-			}
-			// END KGU#123 2016-01-04
-			// START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
-			e.consume();
-			// END KGU#503 2018-03-13
-			redraw();
-		}
-		// FIXME KGU 2016-01-0: Issue #65
-//		// Rough approach to test horizontal scrollability - only works near the left and right
-//		// borders, because the last mouseMoved position is used. Seems that we will have to
-//		// maintain a virtual scroll position here which is to be used instead of e.getX().
-//		if ((e.getModifiersEx() & MouseWheelEvent.SHIFT_DOWN_MASK) != 0)
-//		{
-//			int rotation = e.getWheelRotation();
-//			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-//				rotation *= e.getScrollAmount();
-//			}
-//			System.out.println("Horizontal scrolling by " + rotation);
-//			Rectangle r = new Rectangle(e.getX() + 50 * rotation, e.getY(), 1, 1);
-//			((JPanel)e.getSource()).scrollRectToVisible(r);
-//		}
 	}
 
 

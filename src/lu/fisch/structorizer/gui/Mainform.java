@@ -78,6 +78,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-21      Enh. #655 signature and semantics of method routinePoolChanged adapted 
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *      Kay Gürtzig     2019-02-16      Enh. #682: Extended welcome menu with language choice
+ *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
  *
  ******************************************************************************************************
  *
@@ -958,27 +959,28 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	
 	public void setLookAndFeel(String _laf)
 	{
-		if (_laf!=null)
+		if (_laf != null)
 		{
 			//System.out.println("Setting: "+_laf);
-			laf=_laf;
+			// START KGU#661 2019-02-20: Issue #686 Detect current L&F (if _laf fails)
+			//laf=_laf;
+			LookAndFeel currentLaf = UIManager.getLookAndFeel();
+			String currentLafName = currentLaf.getName();
+			// END KGU#661 2019-02-20
 			
 			UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
 			for(int j = 0; j < plafs.length; ++j)
 			{
 				//System.out.println("Listing: "+plafs[j].getName());
-				if(_laf.equals(plafs[j].getName()))
+				if (_laf.equals(plafs[j].getName()))
 				{
 					//System.out.println("Found: "+plafs[j].getName());
 					try
 					{
 						UIManager.setLookAndFeel(plafs[j].getClassName());
-//						// START KGU#287 2017-01-09: Bugfix #330 on switching back to "Nimbus", several font sizes get lost - DOESN'T WORK
-//						if (_laf.equalsIgnoreCase("nimbus")) {
-//							double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
-//							GUIScaler.scaleDefaultFontSize(scaleFactor);
-//						}
-//						// END KGU#287 2017-01-09
+						// START KGU#661 2019-02-20: Issue #686
+						laf = _laf;
+						// END KGU#661 2019-02-20
 						SwingUtilities.updateComponentTreeUI(this);
 						// START KGU#211/KGU#646 2016-07-25/2019-02-05: Issue #202, #674 - Propagation to Arranger
 						Arranger.updateLookAndFeel();
@@ -994,16 +996,27 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 							diagram.updateLookAndFeel();
 						}
 						// END KGU #324 2017-06-16
+						// START KGU#661 2019-02-20: Issue #686
+						return;
+						// END KGU#661 2019-02-20
 					}
 					catch (Exception e)
 					{
 						// show error
 						JOptionPane.showOptionDialog(null,e.getMessage(),
 													 "Error ...",
-													 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+													 JOptionPane.OK_OPTION, JOptionPane.ERROR_MESSAGE,null,null,null);
 					}
 				}
+				// START KGU#661 2019-02-20: Issue #686
+				else if (plafs[j].getClassName().equals(currentLaf.getClass().getName())) {
+					currentLafName = plafs[j].getName();
+				}
+				// END KGU#661 2019-02-20
 			}
+			// START KGU#661 2019-02-20: Issue #686
+			laf = currentLafName;
+			// END KGU#661 2019-02-20
 		}
 	}
 	

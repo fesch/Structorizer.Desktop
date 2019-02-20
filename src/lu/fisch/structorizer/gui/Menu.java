@@ -96,6 +96,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-26      Enh. #619: New menu entries and messages for line breaking
  *      Kay Gürtzig     2018-12-24      Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() calls concentrated
  *      Kay Gürtzig     2019-01-04      Enh. #657: Key bindings Ctrl-G and Ctrl-Shift-G withdrawn (too rarely used)
+ *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
  *
  ******************************************************************************************************
  *
@@ -1269,6 +1270,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// create Look & Feel Menu
 		menuPreferences.add(menuPreferencesLookAndFeel);
 		menuPreferencesLookAndFeel.setIcon(IconLoader.getIcon(78));
+		LookAndFeel thisLaF = UIManager.getLookAndFeel();
 		UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
 		for(int j = 0; j < plafs.length; ++j)
 		{
@@ -1276,7 +1278,11 @@ public class Menu extends LangMenuBar implements NSDController
 			mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { NSDControl.setLookAndFeel((((JCheckBoxMenuItem) event.getSource()).getText())); doButtons(); } } );
 			menuPreferencesLookAndFeel.add(mi);
 
-			if(mi.getText().equals(UIManager.getLookAndFeel().getName()))
+			// START KGU#661 2019-02-20 - The name comparison will not always work, particularly not with "GTK+"
+			//if(mi.getText().equals(UIManager.getLookAndFeel().getName()))
+			if (mi.getText().equals(thisLaF.getName()) ||
+					thisLaF.getClass().getName().equals(plafs[j].getClassName()))
+			// END KGU#661 2019-02-29
 			{
 				mi.setSelected(true);
 			}
@@ -1692,12 +1698,13 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());
-			for(i=0;i<menuPreferencesLookAndFeel.getMenuComponentCount();i++)
+			String lafName = NSDControl.getLookAndFeel();
+			for (i = 0; i < menuPreferencesLookAndFeel.getMenuComponentCount(); i++)
 			{
-				JCheckBoxMenuItem mi =(JCheckBoxMenuItem) menuPreferencesLookAndFeel.getMenuComponent(i);
+				JCheckBoxMenuItem mi = (JCheckBoxMenuItem)menuPreferencesLookAndFeel.getMenuComponent(i);
 
 				//System.out.println("Listing: "+mi.getText());
-				if (mi.getText().equals(NSDControl.getLookAndFeel()))
+				if (mi.getText().equals(lafName))
 				{
 					mi.setSelected(true);
 					//System.out.println("Found: "+mi.getText());

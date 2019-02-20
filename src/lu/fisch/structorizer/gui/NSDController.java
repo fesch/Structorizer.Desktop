@@ -34,9 +34,9 @@ import javax.swing.JFrame;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2007.12.28      First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007-12.28      First Issue
  *
  ******************************************************************************************************
  *
