@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-07/08   Enh. #622: Group info box redesigned
  *      Kay Gürtzig     2019-01-12      Enh. #662: Arranger index stuff moved to a new class ArrangerIndex
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
+ *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
  *
  ******************************************************************************************************
  *
@@ -257,6 +258,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
 	protected final JMenuItem popupOutsource = new JMenuItem("Outsource", IconLoader.getIcon(68));
 	// END KGU#365 2017-03-23
+	// START KGU#667 2019-02-26: Enh. #689 - summon the called subroutine for editing
+	protected final JMenuItem popupEditSub = new JMenuItem("Edit subroutine ...", IconLoader.getIcon(21));
+	// END KGU#667 2019-02-26
 	// START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
 	protected final JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.getIcon(106)); 
 	protected final JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.getIcon(107));    
@@ -907,8 +911,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		// START KGU#365 2017-03-27: Enh. #380 - conversion of sequence in a subroutine
 		popup.add(popupOutsource);
-		popupOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );;
+		popupOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );
 		// END KGU#365 2017-03-27
+
+		// START KGU#667 2019-02-26: Enh. #689 - summons the called subroutine for editing
+		popup.add(popupEditSub);
+		popupEditSub.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editSubNSD(); doButtons(); } } );
+		// END KGU#667 2019-02-26
 
 		// START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
 		popup.addSeparator();
@@ -1145,6 +1154,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
 		popupOutsource.setEnabled(diagram.canCut());
 		// END KGU#365 2017-03-27
+		// START KGU#667 2019-02-26 Enh.#689
+		popupEditSub.setEnabled(diagram.canEditSub());
+		// END KGU#667 2019-02-26
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
@@ -1315,13 +1327,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	class PopupListener extends MouseAdapter 
 	{
 		@Override
-		public void mousePressed(MouseEvent e) 
+		public void mousePressed(MouseEvent e)
 		{
 			showPopup(e);
 		}
 		
 		@Override
-		public void mouseReleased(MouseEvent e) 
+		public void mouseReleased(MouseEvent e)
 		{
 			showPopup(e);
 		}
@@ -1333,7 +1345,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				// START KGU#318 2017-01-05: Enh. #319
 				//popup.show(e.getComponent(), e.getX(), e.getY());
 				if (e.getComponent() == diagram) {
-					popup.show(e.getComponent(), e.getX(), e.getY());					
+					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
 				// END KGU#318 2017-01-05
 			}

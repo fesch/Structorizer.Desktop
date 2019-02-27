@@ -97,6 +97,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-24      Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() calls concentrated
  *      Kay Gürtzig     2019-01-04      Enh. #657: Key bindings Ctrl-G and Ctrl-Shift-G withdrawn (too rarely used)
  *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
+ *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
  *
  ******************************************************************************************************
  *
@@ -216,6 +217,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#602 2018-10-26: enh. #619
 	protected final JMenuItem menuEditBreakLines = new JMenuItem("(Re-)break text lines ...", IconLoader.getIcon(56));
 	// END KGU#602 2018-10-26
+	// START KGU#667 2019-02-26: Enh. #689 - summon the called subroutine for editing
+	protected final JMenuItem menuEditSummonSub = new JMenuItem("Edit subroutine ...", IconLoader.getIcon(21));
+	// END KGU#667 2019-02-26
 
 	protected final JMenu menuView = new JMenu("View");
 
@@ -687,6 +691,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#654 2019-02-15: Enh. #681
 	public static final LangTextHolder msgSetAsPreferredGenerator = new LangTextHolder("You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu?");
 	// END KGU#654 2019-02-15
+	// START KGU#667 2019-02-26: Enh. #689
+	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the subroutine to be edited:");
+	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new subroutine «%»?");
+	// END KGU#667 2019-02-26
 	
 
 	public void create()
@@ -923,6 +931,13 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuEdit.addSeparator();
 		
+		// START KGU#324 2017-05-30: Enh. #415
+		menuEdit.add(menuEditSummonSub);
+		menuEditSummonSub.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, menuShortcutKeyMask));
+		menuEditSummonSub.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editSubNSD(); doButtons(); } } );
+		menuEdit.addSeparator();
+		// END KGU#324 2017-05-30
+
 		// START KGU#324 2017-05-30: Enh. #415
 		menuEdit.add(menuEditFindReplace);
 		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,menuShortcutKeyMask));
@@ -1452,14 +1467,14 @@ public class Menu extends LangMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,menuShortcutKeyMask));
 
-        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
-        GUIScaler.rescaleComponents(this);
-//        if (this.getFrame() != null) {
-//        	SwingUtilities.updateComponentTreeUI(this.getFrame());
-//        }
-        // END KGU#287 2017-01-09
+		// START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+		GUIScaler.rescaleComponents(this);
+//		if (this.getFrame() != null) {
+//			SwingUtilities.updateComponentTreeUI(this.getFrame());
+//		}
+		// END KGU#287 2017-01-09
 
-        // Attempt to find out what provokes the NullPointerExceptions on start
+		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
 
@@ -1560,6 +1575,10 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditBreakLines.setEnabled(conditionAny);
 			// END KGU#602 2018-10-16
 
+			// START KGU#667 2019-02-26 Enh.#689
+			menuEditSummonSub.setEnabled(diagram.canEditSub());
+			// END KGU#667 2019-02-26
+			
 			// style / type
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());

@@ -204,6 +204,8 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
+Menu.menuEditSummonSub.text=Editar subdiagrama ...
+Menu.menuEditSummonSub.tooltip=Convocar la subrutina llamada al editor.
 Menu.menuEditFindReplace.text=Buscar/Reemplazar ...
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión discreta en los elementos seleccionados por aquellos con precisión fina real.
@@ -426,6 +428,8 @@ Menu.lblInvolveSubtree.text=Applicar a las subestructuras también
 Menu.lblPreserveContinuators.text=Mantener saltos de línea existentes
 Menu.msgVetoClose.text=Structorizer esta terminandose. ¿Objetas?
 Menu.msgSetAsPreferredGenerator.text=Has exportado código %1 las ultimas %2 veces.\n¿Quieres eligir % como el código de exportación preferido en el menú ahora?
+Menu.msgChooseSubroutine.text=Escoje la subrutina, que debe ser visitada:
+Menu.msgCreateSubroutine.text=¿Crear nueva subrutina «%»?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -642,6 +646,8 @@ Editor.popupMoveDown.text=Desplazar Abajo
 Editor.popupTransmute.text=Transmutar
 Editor.popupOutsource.text=Delegar
 Editor.popupOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
+Editor.popupEditSub.text=Editar subrutina ...
+Editor.popupEditSub.tooltip=Convocar subrutina llamada al editor para ser visitada.
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018-01-08      First Issue (on behalf of enhancement request #490)
  *      Kay Gürtzig     2018-01-22      Accomplished.
+ *      Kay Gürtzig     2019-02-26      Placed relative to owner, indentations aligned
  *
  ******************************************************************************************************
  *
@@ -115,34 +116,34 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	private Vector<GENPlugin> plugins;
 	private final ArrayList<ArrayList<String[]>> routineMaps =
 			new ArrayList<ArrayList<String[]>>();
-    private javax.swing.JTabbedPane tabs;
-    private JButton btnOK;
-    private Vector<JTable> tables = new Vector<JTable>();
-    private JLabel lblHeader;
-    private JLabel lblRemark;
-    public JCheckBox chkApplyAliases;
-    private JPanel pnlHeader;
-    private JPanel pnlContent;
-    private JPanel pnlButtons;
-    public static final LangTextHolder hlpEndEditing = new LangTextHolder("End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.");
-    public static final LangTextHolder msgIdentifierRequired = new LangTextHolder("Your alias contains illegal characters."
-    		+ "\nA routine name alias must either be empty or an identifier"
-    		+ "\n(i.e. only consist of letters, digits, and underscores)."
-    		+ "\n\nThe original text will be restored.");
-    public static final LangTextHolder ttlIllegalValues = new LangTextHolder("Illegal alias");
-    public static final LangTextHolder msgIn = new LangTextHolder("in");
-    public static final LangTextHolder msgConflictsFound = new LangTextHolder("There are signature conflicts, changes can't be committed:"
-    		+ "\n\n%\n\n"
-    		+ "You must resolve these conflicts first. (The conflicts are copied to the clipboard.)");
+	private javax.swing.JTabbedPane tabs;
+	private JButton btnOK;
+	private Vector<JTable> tables = new Vector<JTable>();
+	private JLabel lblHeader;
+	private JLabel lblRemark;
+	public JCheckBox chkApplyAliases;
+	private JPanel pnlHeader;
+	private JPanel pnlContent;
+	private JPanel pnlButtons;
+	public static final LangTextHolder hlpEndEditing = new LangTextHolder("End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.");
+	public static final LangTextHolder msgIdentifierRequired = new LangTextHolder("Your alias contains illegal characters."
+			+ "\nA routine name alias must either be empty or an identifier"
+			+ "\n(i.e. only consist of letters, digits, and underscores)."
+			+ "\n\nThe original text will be restored.");
+	public static final LangTextHolder ttlIllegalValues = new LangTextHolder("Illegal alias");
+	public static final LangTextHolder msgIn = new LangTextHolder("in");
+	public static final LangTextHolder msgConflictsFound = new LangTextHolder("There are signature conflicts, changes can't be committed:"
+			+ "\n\n%\n\n"
+			+ "You must resolve these conflicts first. (The conflicts are copied to the clipboard.)");
 
-    /** 
-     * Comparator for String triples the third element of which is a symbolic method signature
-     * to be ordered lexicographically.
-     */
+	/** 
+	 * Comparator for String triples the third element of which is a symbolic method signature
+	 * to be ordered lexicographically.
+	 */
 	private static final Comparator<String[]> SIGNATURE_ORDER =
 			new Comparator<String[]>() {
-		public int compare(String[] tuple1, String[] tuple2)
-		{
+				public int compare(String[] tuple1, String[] tuple2)
+				{
 			return tuple1[2].compareTo(tuple2[2]);
 		}
 	};
@@ -181,22 +182,22 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 			return table;
 		}
 
-        /**
-	     * This method is called from within the constructor to initialize the form.
-	     */
-	    private void initComponents() {
+		/**
+		 * This method is called from within the constructor to initialize the form.
+		 */
+		private void initComponents() {
 
-	        scrollPane = new javax.swing.JScrollPane();
-	        table = new javax.swing.JTable();
+			scrollPane = new javax.swing.JScrollPane();
+			table = new javax.swing.JTable();
 
-	        setLayout(new java.awt.BorderLayout());
+			setLayout(new java.awt.BorderLayout());
 
-	        table.setModel(new AliasTableModel());
+			table.setModel(new AliasTableModel());
 
-	        scrollPane.setViewportView(table);
+			scrollPane.setViewportView(table);
 
-	        add(scrollPane, java.awt.BorderLayout.CENTER);
-	    }
+			add(scrollPane, java.awt.BorderLayout.CENTER);
+		}
 
 	}
 
@@ -206,14 +207,14 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	 */
 	public class AliasTableModel extends DefaultTableModel {
 
-	    /* (non-Javadoc)
-	     * @see javax.swing.table.DefaultTableModel#isCellEditable(int, int)
-	     */
-	    @Override
-	    public boolean isCellEditable(int row, int column){
-	        return (column == 1);  
-	    }
-	    
+		/* (non-Javadoc)
+		 * @see javax.swing.table.DefaultTableModel#isCellEditable(int, int)
+		 */
+		@Override
+		public boolean isCellEditable(int row, int column){
+			return (column == 1);  
+		}
+
 	}
 	
 	/**
@@ -234,15 +235,15 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	
 	private void initComponents()
 	{
-        Ini ini = Ini.getInstance();
-        double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
-        if (scaleFactor < 1) scaleFactor = 1.0;
-        
-        setTitle("Controller Routine Aliases");
-        
-        Container contentPane = this.getContentPane();
-        contentPane.setLayout(new BorderLayout());
-        
+		Ini ini = Ini.getInstance();
+		double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+		if (scaleFactor < 1) scaleFactor = 1.0;
+
+		setTitle("Controller Routine Aliases");
+
+		Container contentPane = this.getContentPane();
+		contentPane.setLayout(new BorderLayout());
+
 		KeyListener keyListener = new KeyListener()
 		{
 			@Override
@@ -308,7 +309,7 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 					table.setName(plugin.title);
 					table.setGridColor(Color.LIGHT_GRAY);
 					table.setShowGrid(true);
-			        table.addKeyListener(keyListener);
+					table.addKeyListener(keyListener);
 					tables.add(table);
 					if (scaleFactor > 2.0) {
 						table.setRowHeight((int)Math.ceil(table.getRowHeight() * (scaleFactor - 1)*0.75));
@@ -317,7 +318,7 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 					for (String[] tuple: routineList) {
 						model.addRow(new String[]{tuple[0], tuple[1]});
 					}
-		            table.addPropertyChangeListener("tableCellEditor", this);
+					table.addPropertyChangeListener("tableCellEditor", this);
 				} catch (Exception ex) {
 					errors.add(plugin.title + ": " + ex.getLocalizedMessage());
 				}
@@ -325,25 +326,25 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 			pnlContent.add(tabs, BorderLayout.CENTER);
 		}
 		
-        //setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        
+		//setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
 		//======== button bar ========
 		{
 			pnlButtons = new JPanel();
 			
-	        btnOK = new JButton("OK");
-	        btnOK.addActionListener(new ActionListener() 
-	        {
+			btnOK = new JButton("OK");
+			btnOK.addActionListener(new ActionListener() 
+			{
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					okAction();
 				}
 
-	        });
-	        btnOK.addKeyListener(keyListener);
+			});
+			btnOK.addKeyListener(keyListener);
 			
-	        pnlButtons.setBorder(new EmptyBorder(10, 10, 10, 10));
-	        GridBagLayout gblButtons = new GridBagLayout(); 
+			pnlButtons.setBorder(new EmptyBorder(10, 10, 10, 10));
+			GridBagLayout gblButtons = new GridBagLayout(); 
 			pnlButtons.setLayout(gblButtons);
 			gblButtons.columnWidths = new int[] {0, 80};
 			gblButtons.columnWeights = new double[] {1.0, 0.0};
@@ -352,14 +353,15 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 														   GridBagConstraints.CENTER, GridBagConstraints.BOTH,
 														   new Insets(0, 0, 0, 0), 0, 0));
 		}
-        
-        contentPane.add(pnlHeader, BorderLayout.NORTH);
-        contentPane.add(pnlContent, BorderLayout.CENTER);
-        contentPane.add(pnlButtons, BorderLayout.SOUTH);
-        
+
+		contentPane.add(pnlHeader, BorderLayout.NORTH);
+		contentPane.add(pnlContent, BorderLayout.CENTER);
+		contentPane.add(pnlButtons, BorderLayout.SOUTH);
+
 		GUIScaler.rescaleComponents(this);
 
 		pack();
+		setLocationRelativeTo(getOwner());
 	}
 
 	/**

@@ -169,6 +169,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved.
  *      Kay Gürtzig     2019-02-15/16   Enh. #681 - mechanism to propose new favourite generator after repeated use
+ *      Kay Gürtzig     2019-02-26      Bugfix #688: canTransmute() should always return true for Call and Jump elements
+ *      Kay Gürtzig     2019-02-26      Enh. #689: Mechanism to edit the referred routine of a selected Call introduced
  *
  ******************************************************************************************************
  *
@@ -469,7 +471,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private String lastGeneratorName = null;
 	private int generatorUseCount = 0;
 	// END KGU#654 2019-02-15
-    
+
+	// STRT KGU#667 2019-02-26: Enh. #689
+	/** Additional {@link Mainform} for editing of subroutines */
+	private Mainform subForm = null;
+	// END KGU#667 2019-02-26
+
 	/*****************************************
 	 * CONSTRUCTOR
      *****************************************/
@@ -2863,7 +2870,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		boolean isConvertible = false;
 		if (selected != null && !selected.isExecuted())
 		{
-			if (selected instanceof Instruction)
+			// START KGU#666 2019-02-26: Bugfix #688 - it should always be offered to convert Calls and Jumps (to Instructions)
+			//if (selected instanceof Instruction)
+			if (selected instanceof Call || selected instanceof Jump) {
+				isConvertible = true;
+			} 
+			else if (selected instanceof Instruction)
+			// END KGU#666 2019-02-26
 			{
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
@@ -3776,6 +3789,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#365 2017-03-19
 
 	// START KGU#365 2017-04-14: Enh. #380
+	/** Retrieves all {@link Jump} elements within the span of {@code elements} trying to leave outside the span. */
 	private List<Jump> findUnsatisfiedJumps(IElementSequence elements) {
 		final class JumpFinder implements IElementVisitor {
 			
@@ -3817,6 +3831,176 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#65 2017-04-14
 
+	// START KGU#667 2019-02-26: Enh. #689
+	/**
+	 * @return true if the selected element is a {@link Call} and a called routine signature can be extracted.
+	 * @see #editSubNSD()
+	 */
+	public boolean canEditSub() {
+		boolean canEdit = false;
+		if (selected != null && selected instanceof Call) {
+			Function called = ((Call)selected).getCalledRoutine();
+			// We don't want to open an editor in case of a recursive call.
+			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false))));
+		}
+		return canEdit;
+	}
+	
+	/**
+	 * Summons the called subroutine of the selected {@link Call} into a {@link Mainfom} instance,
+	 * possibly opens a new one.
+	 * @see #canEditSub()
+	 */
+	public void editSubNSD() {
+		// TODO Auto-generated method stub
+		if (selected instanceof Call && this.canEditSub()) {
+			Call call = (Call)selected;
+			Function called = call.getCalledRoutine();
+			Root subroutine = null;
+			Collection<Group> myGroups = null;
+			// Try to find the subroutine in Arranger
+			if (Arranger.hasInstance()) {
+				Vector<Root> candidates = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+				myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				// If the finding is unambiguous, get it
+				if (candidates.size() == 1) {
+					subroutine = candidates.get(0);
+				}
+				// Otherwise we try to select the most appropriate among the conflicting ones
+				else if (candidates.size() > 1) {
+					// First try to single out a candidate sharing a group with this.root
+					for (Root cand : candidates) {
+						Collection<Group> subGroups = Arranger.getInstance().getGroupsFromRoot(cand, true);
+						for (Group grp: subGroups) {
+							if (myGroups.contains(grp)) {
+								subroutine = cand;
+								break;
+							}
+						}
+						if (subroutine != null) {
+							break;
+						}
+					}
+					// Open a choice list if the group approach wasn't successful
+					if (subroutine == null) {
+						String[] choices = new String[candidates.size()];
+						int i = 0;
+						for (Root cand: candidates) {
+							choices[i++] = cand.getSignatureString(true);
+						}
+						String input = (String) JOptionPane.showInputDialog(null, Menu.msgChooseSubroutine.getText(),
+								Menu.msgTitleQuestion.getText(),
+								JOptionPane.QUESTION_MESSAGE, null, // Use default icon
+								choices, // Array of choices
+								choices[0]); // Initial choice
+						if (input != null && !input.trim().isEmpty()) {
+							for (i = 0; i < choices.length && subroutine != null; i++) {
+								if (input.equals(choices[i])) {
+									subroutine = candidates.get(i);
+								}
+							}
+						}
+					}
+				}
+			}
+			String targetGroupName = null;	// This weill be relevan for a new subroutine
+			// Create new subroutine root if we haven't been able to selectan existing one
+			if (subroutine == null) {
+				if (JOptionPane.showConfirmDialog(NSDControl.getFrame(),
+						Menu.msgCreateSubroutine.getText().replace("%", called.getSignatureString()),
+						Menu.msgTitleQuestion.getText(),
+						JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+					return;
+				}
+				subroutine = new Root();
+				StringList params = new StringList();
+				for (int i = 0; i < called.paramCount(); i++) {
+					String param = called.getParam(i);
+					if (!Function.testIdentifier(param, null) || params.contains(param)) {
+						param = "param" + (i+1);
+					}
+					params.add(param);
+				}
+				String result = "";
+				if (((Call)selected).isFunctionCall()) {
+					String line = call.getUnbrokenText().get(0);
+					String var = call.getAssignedVarname(Element.splitLexically(line, true));
+					if (Function.testIdentifier(var, null)) {
+						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
+						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
+						if (result == null) {
+							result = "";
+						}
+					}
+					if (!result.trim().isEmpty()) {
+						result = ": " + result.trim();
+					}
+					else {
+						result = ": ???";
+					}
+				}
+				subroutine.setText(called.getName() + "(" + params.concatenate(", ") + ")" + result);
+				subroutine.setProgram(false);
+				subroutine.setChanged(false);
+				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
+				if (myGroups == null || myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
+					// If the diagram is a program then create an exclusive group named after the main diagram 
+					if (root.isProgram()) {
+						targetGroupName = root.getMethodName(true);
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame(), targetGroupName);
+						myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+					}
+					else {
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame());
+					}
+				}
+				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == myGroups.size()) {
+					// Parent diagram is arranged but not member of the default group - then its children shouldn't be either
+					targetGroupName = myGroups.iterator().next().getName();
+				}
+			}
+			if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+				subForm = new Mainform(false);
+				subForm.addWindowListener(new WindowListener() {
+					@Override
+					public void windowOpened(WindowEvent e) {}
+					@Override
+					public void windowClosing(WindowEvent e) {
+						if (subForm == e.getSource()) {
+							subForm = null;
+						}
+					}
+					@Override
+					public void windowClosed(WindowEvent e) {
+						((Mainform)(e.getSource())).removeWindowListener(this);
+					}
+					@Override
+					public void windowIconified(WindowEvent e) {}
+					@Override
+					public void windowDeiconified(WindowEvent e) {}
+					@Override
+					public void windowActivated(WindowEvent e) {}
+					@Override
+					public void windowDeactivated(WindowEvent e) {}
+					
+				});
+			}
+			subForm.setRoot(subroutine);
+			// If it is a new root then add it to Arranger
+			if (targetGroupName != null) {
+				Arranger.getInstance().addToPool(subroutine, subForm, targetGroupName);
+			}
+			if (!subForm.isVisible()) {
+				subForm.setVisible(true);
+			}
+			Point loc = NSDControl.getFrame().getLocation();
+			Point locSub = subForm.getLocation();
+			if (loc.equals(locSub)) {
+				subForm.setLocation(loc.x + 20, loc.y + 20);
+			}
+		}
+	}
+	// END KGU#667 2019-02-26
 
 	/*****************************************
 	 * transmute method(s)
@@ -8746,5 +8930,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 	// END KGU#480 2018-01-18
+	
 
 }
