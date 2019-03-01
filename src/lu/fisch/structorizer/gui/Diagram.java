@@ -171,6 +171,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-15/16   Enh. #681 - mechanism to propose new favourite generator after repeated use
  *      Kay Gürtzig     2019-02-26      Bugfix #688: canTransmute() should always return true for Call and Jump elements
  *      Kay Gürtzig     2019-02-26      Enh. #689: Mechanism to edit the referred routine of a selected Call introduced
+ *      Kay Gürtzig     2019-03-01      Bugfix #693: Missing existence check on loading recent arrangement files added
  *
  ******************************************************************************************************
  *
@@ -605,31 +606,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (int i = 0; i < files.length; i++)
 					{
 						String filename = files[i].toString();
-						String filenameLower = filename.toLowerCase();
-
-						if(filenameLower.endsWith(".nsd"))
-						{
-							/*
-							// only save if something has been changed
-							saveNSD(true);
-
-							// load the new file
-							NSDParser parser = new NSDParser();
-							root = parser.parse(filename);
-							root.filename=filename;
-							currentDirectory = new File(filename);
-							redraw();*/
-							openNSD(filename);
-						}
-						// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
-						else if (filenameLower.endsWith(".arr")
-								||
-								filenameLower.endsWith(".arrz"))
-						{
-							loadArrangement(files[i]);
-						}
-						// END KGU#289 2016-11-15
-						else {
+						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArg() instead
+						//String filenameLower = filename.toLowerCase();
+						//if(filenameLower.endsWith(".nsd"))
+						//{
+						//	openNSD(filename);
+						//}
+						//// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+						//else if (filenameLower.endsWith(".arr")
+						//		||
+						//		filenameLower.endsWith(".arrz"))
+						//{
+						//	loadArrangement(files[i]);
+						//}
+						//// END KGU#289 2016-11-15
+						//else {
+						// If openNsdOrArr() doesn't recognise the file type the it returns an empty extension string
+						if (openNsdOrArr(filename).isEmpty()) {
+						// END KGU#671 2019-03-01
 							Ini ini = Ini.getInstance();
 							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
 							// START KGU#354 2017-04-27: Enh. #354
@@ -1765,6 +1759,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
+	/**
+	 * Attempts to open (load) the file specified by {@code _filepath} as .nsd, .arr, or .arrz file.<br/>
+	 * If none of the expected file extensions match then an empty string is returned.
+	 * @param _filepath - the path of the file to be loaded
+	 * @return - the file extension
+	 */
 	public String openNsdOrArr(String _filepath)
 	{
 		String ext = ExtFileFilter.getExtension(_filepath);
@@ -1971,7 +1971,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void loadArrangement(File arrFile)
 	{
 		Arranger arr = Arranger.getInstance();
-		String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
+		// START KGU#671 2019-03-01: Bugfix #693 - common existence check
+		//String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
+		String errorMsg = "";
+		if (!arrFile.exists()) {
+			errorMsg = Menu.msgErrorNoFile.getText();
+		}
+		else {
+			errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());			
+		}
+		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + arrFile + "\": " + errorMsg, 
 					Menu.msgTitleLoadingError.getText(),

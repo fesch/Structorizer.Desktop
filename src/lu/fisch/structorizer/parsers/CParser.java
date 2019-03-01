@@ -73,6 +73,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-07-11      Enh. #558: Provisional support for enumeration types.
  *      Kay Gürtzig     2018-07-14      Grammar and table file renamed (ANSI-Cplus -> ANSI-C73, C-ANSIplus.egt -> C-ANSI73.egt)
  *      Kay Gürtzig     2019-02-13      Issue #679: Support for additional input and output functions (fgets, scanf_s etc.) added
+ *      Kay Gürtzig     2019-03-01      Bugfix #690 - workaround for struct types in function headers
  *
  ******************************************************************************************************
  *
@@ -379,7 +380,7 @@ public class CParser extends CPreParser
 		final int PROD_FUNCDECL_LPAREN_RPAREN2                      =  15;  // <Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
 		final int PROD_FUNCDECL_LPAREN_VOID_RPAREN                  =  16;  // <Func Decl> ::= <Func ID> '(' void ')' <Block>
 		final int PROD_FUNCDECL_LPAREN_RPAREN3                      =  17;  // <Func Decl> ::= <Func ID> '(' ')' <Block>
-//		final int PROD_PARAMS_COMMA                                 =  18;  // <Params> ::= <Param> ',' <Params>
+		final int PROD_PARAMS_COMMA                                 =  18;  // <Params> ::= <Param> ',' <Params>
 //		final int PROD_PARAMS                                       =  19;  // <Params> ::= <Param>
 //		final int PROD_PARAM_ID                                     =  20;  // <Param> ::= <ConstType> Id <Array>
 //		final int PROD_TYPES_COMMA                                  =  21;  // <Types> ::= <ConstType> ',' <Types>
@@ -1342,7 +1343,11 @@ public class CParser extends CPreParser
 			else {
 				content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
 			}
-			content = content.replace("const ", "");
+			// START KGU#668 2019-03-01: Workaround #690 - get rid of struct keywords in parameter list
+			//content = content.replace("const ", "");
+			content = content.replaceAll("(^|.*\\W)const (.*)", "$1$2");
+			content = content.replaceAll("(^|.*\\W)struct (.*)", "$1$2");
+			// END KGU#668 2019-03-01
 		}
 		// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
 		if (content.trim().equals("void")) {
@@ -1384,7 +1389,27 @@ public class CParser extends CPreParser
 			break;
 			// END KGU#525 2018-06-18
 		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
-			params = getContent_R(_reduction.get(2).asReduction(), "");
+			// START KGU#668 2019-03-01: Workaround #690 - get rid of struct keywords in parameter list
+			//params = getContent_R(_reduction.get(2).asReduction(), "");
+			{
+				StringList paramList = new StringList();
+				Reduction paramRed = _reduction.get(2).asReduction();
+				while (paramRed.getParent().getTableIndex() == RuleConstants.PROD_PARAMS_COMMA) {
+					String param = getContent_R(paramRed.get(0).asReduction(), "");
+					if (param.startsWith("struct ")) {
+						param = param.substring(7);
+					}
+					paramList.add(param);
+					paramRed = paramRed.get(2).asReduction();
+				}
+				String param = getContent_R(paramRed, "");
+				if (param.startsWith("struct ")) {
+					param = param.substring(7);
+				}
+				paramList.add(param);
+				params = paramList.concatenate(", ");
+			}
+			// END KGU#668 2019-03-01
 			break;
 		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
 			bodyIndex = 3;

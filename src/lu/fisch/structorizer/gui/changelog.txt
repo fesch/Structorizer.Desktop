@@ -10,7 +10,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - Copying diagrams as image to the clipboard may fail with some OS/JRE combination (#685).
 
-Current development version: 3.29-04 (2019-02-26)
+Current development version: 3.29-04 (2019-03-01)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -44,6 +44,9 @@ Current development version: 3.29-04 (2019-02-26)
 - 04: Bugfix #687: Defective breakpoint behaviour of REPEAT-UNTIL loops mended <2>
 - 04: Bugfix #688: Transmutation of any Call/Jump into an Instruction enabled <2>
 - 04: Enh. #689: New mechanism to edit the referred routine of a selected Call <2>
+- 04: Bugfix #690: 'struct' keywords in function headers on C import suppressed <2>
+- 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
+- 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
