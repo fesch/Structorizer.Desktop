@@ -45,6 +45,7 @@ Current development version: 3.29-04 (2019-03-01)
 - 04: Bugfix #688: Transmutation of any Call/Jump into an Instruction enabled <2>
 - 04: Enh. #689: New mechanism to edit the referred routine of a selected Call <2>
 - 04: Bugfix #690: 'struct' keywords in function headers on C import suppressed <2>
+- 04: Enh. #691: It is now possible to rename a group in the Arranger index <2>
 - 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
 - 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
 

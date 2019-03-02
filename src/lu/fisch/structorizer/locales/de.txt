@@ -1214,6 +1214,10 @@ Surface.msgSaveGroupChanges.text=Gruppe «%» hat ungesicherte Änderungen.\nSol
 Surface.msgUnsavedGroups.text=Folgende Gruppen konnten nicht gesichert werden:
 Surface.msgDiagram.text=Diagramm «%»
 Surface.msgGroup.text=Gruppe «%»
+Surface.msgGroupExists.text=Eine Gruppe namens «%» existiert bereits!
+Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
+Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
+Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
 
 ----[ ArrangerIndex ]----
 ArrangerIndex.popupIndexGet.text=Diagram holen
@@ -1230,6 +1234,8 @@ ArrangerIndex.popupIndexDetach.text=Aus Gruppe entfernen
 ArrangerIndex.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
 ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
+ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
+ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
 ArrangerIndex.lblSubroutines.text=Aufgerufene Unterprogramme
@@ -1252,6 +1258,7 @@ ArrangerIndex.msgMembersIncomplete.text=Gruppe ist unvollständig: Verweise auf 
 ArrangerIndex.msgMembersComplete.text=Gruppe ist vollständig: Keine Verweise nach außen
 ArrangerIndex.msgGroupMembersChanged.text=Die Menge der enthaltenen Diagramme hat sich geändert.
 ArrangerIndex.msgGroupMembersMoved.text=Die Koordinaten einiger enthaltener Diagramme wurden verändert.
+ArrangerIndex.msgNewGroupName.text=Neuer Name für die ausgewählte Gruppe:
 
 -----> Executor
 -----[ Control ]-----

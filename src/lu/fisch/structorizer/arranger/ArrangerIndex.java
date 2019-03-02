@@ -37,6 +37,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-25      Bugfix #670: Attempt to fix the scaling deficiency w.r.t. to the info trees
  *      Kay Gürtzig     2019-01-28      Issue #670: Update of the info box components on look & feel change
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
+ *      Kay Gürtzig     2019-03-01      Enh. #691: Group renaming enabled (new context menu item + accelerator)
  *
  ******************************************************************************************************
  *
@@ -140,7 +141,10 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
 	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
 	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group bounds", IconLoader.getIcon(17));
-	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptataion from Windows to others was defective if it hadn't been open before
+	// START KGU#669 2019-03-01: Enh. #691
+	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
+	// END KGU#669 2019-03-01
+	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptation from Windows to others was defective if it hadn't been open before
 	private boolean wasPopupOpen = false;
 	// END KGU#646 2019-02-10
 
@@ -194,6 +198,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	};
 	// END KGU#630 2019-01-07
 	
+	// START KGU#669 2019-03-01: Enh. #691
+	protected static final LangTextHolder msgNewGroupName = new LangTextHolder("New name for the selected group: ");
+	// END KGU#669 2019-03-01
 	// START KGU#626 2019-01-01: Enh. #657
 	public static final LangTextHolder msgDefaultGroupName = new LangTextHolder("(Default Group)");
 	protected static final LangTextHolder msgGroupsAndRootsSelected = new LangTextHolder("Both groups and diagrams selected. Removing on both levels at a time may have unexpected results.");
@@ -336,6 +343,11 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 				arrangerIndexToggleGroupVis();
 			}
 			// END KGU#630 2019-01-13
+			// START KGU#669 219-03-01: Enh. #691
+			else if (name.equals("SHIFT_ALT_R")) {
+				arrangerIndexRenameGroup();
+			}
+			// END KGU#669 2019-03-01
 		}
 	}
 	// END KGGU#305 2016-12-15
@@ -472,6 +484,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_MINUS");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK), "CTRL_PLUS");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_NUMBER_SIGN, KeyEvent.CTRL_DOWN_MASK), "CTRL_HATCH");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.SHIFT_DOWN_MASK | KeyEvent.ALT_DOWN_MASK), "SHIFT_ALT_R");
 		actMap.put("SPACE", new ArrangerIndexAction(false));
 		actMap.put("ENTER", new ArrangerIndexAction(true));
 		actMap.put("ALT_ENTER", new ArrangerIndexAction("ALT_ENTER"));
@@ -483,6 +496,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		actMap.put("CTRL_MINUS", new ArrangerIndexAction("DETACH"));
 		actMap.put("CTRL_PLUS", new ArrangerIndexAction("ATTACH"));
 		actMap.put("CTRL_HATCH", new ArrangerIndexAction("DISSOLVE"));
+		actMap.put("SHIFT_ALT_R", new ArrangerIndexAction("RENAME_GROUP"));
 		
 		if (!this.isFocusOwner()) {
 			this.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
@@ -557,7 +571,12 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		popupIndexDrawGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
 		// END KGU#630 2019-01-13
 		
-
+		// START KGU#630 2019-01-13: Enh. #662/2  - Control group visibility
+		popupIndex.add(popupIndexRenameGroup);
+		popupIndexRenameGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRenameGroup(); } });
+		popupIndexRenameGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.SHIFT_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
+		// END KGU#630 2019-01-13
+		
 		// START KGU#534 2018-06-27: Enh. #552
 		popupIndex.addSeparator();
 		popupIndex.add(popupIndexRemoveAll);
@@ -679,6 +698,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// START KGU#630 2019-01-13: Enh. #662/2
 		popupIndexDrawGroup.setEnabled(selectedGroup != null);
 		popupIndexDrawGroup.setSelected(selectedGroup != null && selectedGroup.isVisible());
+		// END KGU#630 2019-01-13
+		// START KGU#669 2019-03-01: Enh. #691
+		popupIndexRenameGroup.setEnabled(selectedGroup != null);
 		// END KGU#630 2019-01-13
 
 	}
@@ -1206,6 +1228,17 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#630 2019-01-13
+	
+	// START KGU#669 2019-03-01: Enh. #691
+	private void arrangerIndexRenameGroup()
+	{
+		Group group = this.arrangerIndexGetSelectedGroup();
+		if (group != null) {
+			String newName = JOptionPane.showInputDialog(this, msgNewGroupName.getText(), group.getName());
+			Arranger.getInstance().renameGroup(group, newName, this);
+		}		
+	}
+	// END KGU#669 2019-03-01
 	
 	/**
 	 * @return true if the index tree is empty i.e. if nor group node is present

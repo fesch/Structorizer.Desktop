@@ -70,6 +70,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-17  Enh. #657: Accelerator key (^R) for rearrange function added
  *      Kay Gürtzig     2019-01-18  Enh. #657: Order of popup menu items modified
  *      Kay Gürtzig     2019-02-05  Bugfix #674: L&F update of popup menu ensured
+ *      Kay Gürtzig     2019-03-01  Enh. #691: Façade renameGroup() introduced for exactly this purpose
  *
  ******************************************************************************************************
  *
@@ -2376,6 +2377,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return surface.getGroupsFromRoot(root, suppressDefaultGroup);
 	}
 
+	// START KGU#669 2019-03-01: Enh. #691
+	protected boolean renameGroup(Group group, String newName, Component initiator)
+	{
+		return surface.renameGroup(group, newName, initiator);
+	}
+	// END KGU#669 2019-03-01
+	
 	// START KGU#646 2019-02-05: Bugfix #674 - Update popup menu L&F (isn't member of the component tree)
 	public static void updateLookAndFeel()
 	{
@@ -2393,4 +2401,5 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#646 2019-02-05
+	
 }

@@ -36,6 +36,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-09      Enhancements for issue #662/2 (drawing capability prepared)
  *      Kay Gürtzig     2019-01-25      Issue #668: More intelligent file name proposal for default group
  *      Kay Gürtzig     2019-02-04      Colour icon revised (now double thin border like in Arranger).
+ *      Kay Gürtzig     2019-03-01      Enh. #691 Method rename() added (does only parts of what is to be done)
  *
  ******************************************************************************************************
  *
@@ -203,6 +204,12 @@ public class Group {
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		if (!_diagrams.isEmpty()) {
+			// If this group isn't temporary register the group name with the diagrams
+			if (!_name.isEmpty()) {
+				for (Diagram diagr: _diagrams) {
+					diagr.addToGroup(this);
+				}
+			}
 			this.membersChanged = true;
 		}
 	}
@@ -222,6 +229,12 @@ public class Group {
 		}
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
+		// If this group isn't temporary register the group name with the diagrams
+		if (!_name.isEmpty()) {
+			for (Diagram diagr: _diagrams) {
+				diagr.addToGroup(this);
+			}
+		}
 		this.filePath = _provenance.getAbsolutePath();
 	}
 	
@@ -233,6 +246,35 @@ public class Group {
 	{
 		return this.name;
 	}
+	
+	// START KGU#669 2019-03-01: Enh. #691 Partial support for group renaming (needs external cooperation)
+	/**
+	 * Renames this group and updates the group association of the members (if the name differs).<br/>
+	 * NOTE: This method does NOT:<ul>
+	 * <li>check for name collisions with other groups</li>
+	 * <li>modify the file path</li>
+	 * <li>update external name references</li>
+	 * </ul> (All this must all be done by the initiator.)
+	 * @param _newName - the new group name
+	 * @return true if the {@code _newName} differes from previous name.
+	 * @see #getName()
+	 * @see #setFile(File, File, boolean)
+	 */
+	protected boolean rename(String _newName)
+	{
+		boolean renamed = !_newName.equals(this.name);
+		if (renamed) {
+			for (Diagram diagr: this.diagrams) {
+				diagr.removeFromGroup(this);
+			}
+			this.name = _newName;
+			for (Diagram diagr: this.diagrams) {
+				diagr.addToGroup(this);
+			}
+		}
+		return renamed;
+	}
+	// END KGU#669 2019-03-01
 	
 	/**
 	 * @return true if the name this group equals {@link #DEFAULT_GROUP_NAME}.
@@ -281,7 +323,8 @@ public class Group {
 	/**
 	 * @return a {@link File} object with the associated absolute path of the
 	 * Arranger list file this group is associated to (stemming from or last saved to)
-	 * or null if the group had never been associated to an arrangement file. 
+	 * or null if the group had never been associated to an arrangement file.
+	 * @see #getArrzFile()
 	 */
 	public File getFile()
 	{
@@ -297,6 +340,7 @@ public class Group {
 	 * are residing in. Returns null if the group is not residing in an
 	 * arrz file.
 	 * @return either a {@link File} object for an arrz file or null
+	 * @see #getFile()
 	 */
 	public File getArrzFile()
 	{
@@ -322,12 +366,35 @@ public class Group {
 	 * As a side-effect resets the modification flag.
 	 * @param arrFile - {@link File} object referring to the arrangement list file
 	 * @param arrzFile - {@link File} object referring to the arrangement archive or null
+	 * @param adaptDiagrams - if true and {@code arrzFile} isn't null then the virtual file
+	 * paths of all diagrams matching the previous arrz path will be updated to {@code arrzFile}.
+	 * @see #getFile()
+	 * @see #getArrzFile()
+	 * @see Surface#renameGroup(Group, String, java.awt.Component)
 	 */
-	protected void setFile(File arrFile, File arrzFile)
+	protected void setFile(File arrFile, File arrzFile, boolean adaptDiagrams)
 	{
 		String arrPath = arrFile.getAbsolutePath();
 		if (arrzFile != null) {
-			arrPath = arrzFile.getAbsolutePath() + File.separator + arrFile.getName();
+			String newArrzPath = arrzFile.getAbsolutePath();
+			arrPath = newArrzPath + File.separator + arrFile.getName();
+			// START KGU#669 2019-0301: Enh. #691 - Adapt the diagram file paths if they have gone stale
+			if (adaptDiagrams) {
+				File file = this.getFile();
+				if (file != null && !file.exists() && this.filePath.toLowerCase().contains(".arrz")) {
+					file = file.getParentFile();
+					if (file.getName().toLowerCase().endsWith(".arrz") && !file.exists()) {
+						String oldArrzPath = file.getAbsolutePath();
+						int pathLen = oldArrzPath.length();
+						for (Root root: this.getSortedRoots()) {
+							if (root.filename != null && root.filename.startsWith(oldArrzPath)) {
+								root.filename = newArrzPath + root.filename.substring(pathLen);
+							}
+						}
+					}
+				}
+			}
+			// END KGU#669 2019-03-01
 		}
 		this.filePath = arrPath;
 		this.membersChanged = false;
@@ -336,22 +403,48 @@ public class Group {
 		this.iconColor = null;
 	}
 	
+	/**
+	 * @return the bounds and background colour for this Group instance
+	 * @see #setColor(Color)
+	 * @see #setVisible(boolean)
+	 * @see #isVisible()
+	 */
 	public Color getColor()
 	{
 		return this.color;
 	}
 	
+	/**
+	 * Sets the group bounds and background colour to the given {@code _color} 
+	 * @param _color - the new Color
+	 * @see #getColor()
+	 * @see #setVisible(boolean)
+	 * @see #isVisible()
+	 */
 	public void setColor(Color _color)
 	{
 		this.color = _color;
 		this.iconColor = null;
 	}
 	
+	/**
+	 * @return true if this individual group is enabled to draw its bounds
+	 * @see #setVisible(boolean)
+	 * @see #getColor()
+	 * @see #setColor(Color)
+	 */
 	public boolean isVisible()
 	{
 		return this.visible;
 	}
 	
+	/**
+	 * Enables or disables this individual group to draw it's bounds
+	 * @param show - true enables, false disables drawing
+	 * @see #isVisible()
+	 * @see #getColor()
+	 * @see #setColor(Color)
+	 */
 	public void setVisible(boolean show)
 	{
 		this.visible = show;

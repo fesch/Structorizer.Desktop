@@ -1213,6 +1213,10 @@ Surface.msgSaveGroupChanges.text=Grupo «%» tiene modificaciones no grabados.\n
 Surface.msgUnsavedGroups.text=No fue posible guardar estos diagramas:
 Surface.msgDiagram.text=diagrama «%»
 Surface.msgGroup.text=grupo «%»
+Surface.msgGroupExists.text=¡Grupo con nombre «%» ya existe!
+Surface.titleRenameGroup.text=Renombrar grupo «%1» a «%2»
+Surface.msgRenameArrFile.text=¿Renombrar archivo de colocación\n"%1"\na "%2"?
+Surface.msgRenamingFailed.text=¡No fue posible renombra el archivo de la colocación a "%"!\n¡Acción cancelada!
 
 // Arranger index
 ArrangerIndex.popupIndexGet.text=Coger diagrama
@@ -1229,6 +1233,8 @@ ArrangerIndex.popupIndexDetach.text=Retirar del grupo
 ArrangerIndex.popupIndexAttach.text=Añadir/mover a un grupo ...
 ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
 ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
+ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
+ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
 ArrangerIndex.lblSubroutines.text=Subrutinas calladas
@@ -1242,7 +1248,7 @@ ArrangerIndex.btnGroupColors.*.tooltip=Reemplaza el color del grupo por el color
 ArrangerIndex.msgDefaultGroupName.text=(Grupo de incumplimiento)
 ArrangerIndex.msgGroupsAndRootsSelected.text=Tanto grupos como diagramas seleccionados. Remover algo de ambos niveles a la vez puede resultar en efectos inesperados.
 ArrangerIndex.msgDeleteGroupMembers.text=Se van a eliminar % grupos.\n\nAquellos diagramas miembros que pertenecen también a otros grupos se quedarán.\n¿Que hacer con diagramas no compartidos con demás grupos - quitar del Arranger?\n(De otro modo serán movidos al grupo de incumplimiento.)
-ArrangerIndex.msgConfirmDeleteRoots.text=You selected % diagram(s) to be removed\n\nDo you really intend to remove it/them from all groups and Arranger?\n(Otherwise it/they would just be detached from the respective group.)
+ArrangerIndex.msgConfirmDeleteRoots.text=% diagrama(s) están destinados a ser quitados\n\n¿Cierto que quieres removerlo(s) de todos grupos y del Arranger?\n(De otro modo sería(n) sólamente segregado(s) del grupo respectivo.)
 ArrangerIndex.msgAttachOptions.0.text=Añadir al grupo
 ArrangerIndex.msgAttachOptions.1.text=Mover al grupo
 ArrangerIndex.msgAttachOptions.2.text=Cancelar
@@ -1251,6 +1257,7 @@ ArrangerIndex.msgMembersIncomplete.text=Grupo incompleto: %1 requeridos diagrama
 ArrangerIndex.msgMembersComplete.text=Grupo completo: No requeridos diagramas fuera del grupo
 ArrangerIndex.msgGroupMembersChanged.text=El conjunto de miembros se ha cambiado.
 ArrangerIndex.msgGroupMembersMoved.text=Coordenadas de algunos miembros fueron variados.
+ArrangerIndex.msgNewGroupName.text=Nuevo nombre para el grupo:
 
 -----> Executor
 -----[ Control ]-----

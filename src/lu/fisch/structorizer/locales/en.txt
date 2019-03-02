@@ -1210,6 +1210,10 @@ Surface.msgSaveGroupChanges.text=Group «%» has pending changes.\nDo you want t
 Surface.msgUnsavedGroups.text=Couldn't save these groups (arrangements):
 Surface.msgDiagram.text=diagram «%»
 Surface.msgGroup.text=group «%»
+Surface.msgGroupExists.text=Group with name «%» already exists!
+Surface.titleRenameGroup.text=Renaming Group «%1» to «%2»
+Surface.msgRenameArrFile.text=Rename arrangement file\n"%1"\nto "%2"?
+Surface.msgRenamingFailed.text=Could not rename arrangement file to "%"!\nAction cancelled!
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Get diagram
@@ -1226,6 +1230,8 @@ ArrangerIndex.popupIndexDetach.text=Detach from group
 ArrangerIndex.popupIndexAttach.text=Add/move to group ...
 ArrangerIndex.popupIndexDrawGroup.text=Show bounds of the group
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individual visibility of the selected group in Arranger
+ArrangerIndex.popupIndexRenameGroup.text=Rename group ...
+ArrangerIndex.popupIndexRenameGroup.tooltip=Allows to rename the selected group, optionally including the associated file
 ArrangerIndex.lblSelectTargetGroup.text=Select the target group:
 ArrangerIndex.lblGroups.text=Containing groups
 ArrangerIndex.lblSubroutines.text=Called @os
@@ -1248,6 +1254,7 @@ ArrangerIndex.msgMembersIncomplete.text=Group is incomplete: %1 referenced diagr
 ArrangerIndex.msgMembersComplete.text=Group is complete: No outward references
 ArrangerIndex.msgGroupMembersChanged.text=The set of member diagrams was modified.
 ArrangerIndex.msgGroupMembersMoved.text=The coordinates of some member diagrams were changed.
+ArrangerIndex.msgNewGroupName.text=New name for the selected group: 
 
 -----> Executor
 -----[ Control ]-----
