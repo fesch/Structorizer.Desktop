@@ -10,7 +10,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - Copying diagrams as image to the clipboard may fail with some OS/JRE combination (#685).
 
-Current development version: 3.29-04 (2019-03-02)
+Current development version: 3.29-05 (2019-03-02)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -48,6 +48,7 @@ Current development version: 3.29-04 (2019-03-02)
 - 04: Enh. #691: It is now possible to rename a group in the Arranger index <2>
 - 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
 - 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
+- 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

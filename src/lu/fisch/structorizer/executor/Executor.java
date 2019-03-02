@@ -172,6 +172,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-02-14      Enh. #680: INPUT instructions with multiple variables supported
  *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
  *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
+ *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
  *
  ******************************************************************************************************
  *
@@ -721,7 +722,7 @@ public class Executor implements Runnable
 	/**
 	 * Ensures there is a (singleton) instance and returns it
 	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	 * @param diagramController - facades of additionally controllable modules or devices 
+	 * @param diagramControllers - façades of additionally controllable modules or devices 
 	 * @return the sole instance of this class.
 	 */
 	public static Executor getInstance(Diagram diagram,
@@ -4921,6 +4922,15 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String trouble = "";
+		// START KGU#356 2019-03-02: Issue #366
+		DiagramController focusedController = null;
+		for (DiagramController dc: this.diagramControllers) {
+			if (dc.isFocused()) {
+				focusedController = dc;
+				break;	// There can hardly be more than one focused controller
+			}
+		}
+		// END KGU#356 2019-03-02
 		// START KGU#653 2019-02-14: Enh. #680 - revision
 		StringList inputItems = Instruction.getInputItems(cmd);
 		String prompt = inputItems.get(0);
@@ -5089,6 +5099,11 @@ public class Executor implements Runnable
 					setVarRaw(inputItems.get(i), values[i]);
 				}
 				// END KGU#69 2015-11-08
+				// START KGU#356 2019-03-02: Issue #366
+				if (focusedController != null) {
+					focusedController.requestFocus();
+				}
+				// END KGU#356 2019-03-02
 			}
 			// END KGU#84 2015-11-23
 			// START KGU#107 2015-12-13: Enh./bug #51 part 2
