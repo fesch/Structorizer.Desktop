@@ -132,12 +132,14 @@ public class Call extends Instruction {
 	/**
 	 * Provides a subclassable left offset for drawing the text
 	 */
+	@Override
 	protected int getTextDrawingOffset()
 	{
 		return (Element.E_PADDING/2);
 	}
 	// END KGU#227 2016-07-30
 
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -151,6 +153,7 @@ public class Call extends Instruction {
 		return rect0;
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		// START KGU 2016-07-30: Just delegate the basics to super
@@ -178,6 +181,7 @@ public class Call extends Instruction {
 	 * @param _right - right border x coordinate
 	 * @param _top - upper border y coordinate
 	 */
+	@Override
 	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
 	{
 		super.writeOutRuntimeInfo(_canvas, _right - (Element.E_PADDING/2), _top);
@@ -208,6 +212,7 @@ public class Call extends Instruction {
 	}
 	// END KGU 2018-06-28
 
+	@Override
 	public Element copy()
 	{
 		Element ele = new Call(this.getText().copy());
@@ -246,10 +251,9 @@ public class Call extends Instruction {
 	/**
 	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
-	 * a procedure or function call syntax as described in the user guide. If the
-	 * call text matches the syntax of an import call then the returned signature
-	 * will just be a program name. Otherwise null will be returned.
-	 * @return signature string, e.g. "factorial(1)", "globalDefs", or null
+	 * a procedure or function call syntax as described in the user guide.
+	 * Otherwise null will be returned.
+	 * @return signature string, e.g. "factorial(1)", or null
 	 */
 	public String getSignatureString()
 	{

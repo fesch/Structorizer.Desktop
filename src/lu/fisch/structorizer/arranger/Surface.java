@@ -100,6 +100,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-02      Bugfix #672: If the saving was cancelled in FileChooser, the group must not be renamed
  *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
  *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
+ *      Kay Gürtzig     2019-03-01      Enh. #691: Method renameGroup() introduced for exactly this purpose
  *
  ******************************************************************************************************
  *
@@ -347,7 +348,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
 			new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
 	};
-
 	// END KGU#312 2016-12-29
 	// START KGU#385 2017-04-22: Enh. #62
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
@@ -368,6 +368,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgDiagram = new LangTextHolder("diagram «%»");
 	public static final LangTextHolder msgGroup = new LangTextHolder("group «%»");
 	// END KGU#631 2019-01-08
+	// START KGU#669 2019-03-01: Enh. #691
+	public static final LangTextHolder msgGroupExists = new LangTextHolder("Group with name «%» already exists!");
+	public static final LangTextHolder titleRenameGroup = new LangTextHolder("Renaming Group «%1» to «%2»");
+	public static final LangTextHolder msgRenameArrFile = new LangTextHolder("Rename arrangement file \"%1\"\nto \"%2\"?");
+	public static final LangTextHolder msgRenamingFailed = new LangTextHolder("Could not rename arrangement file to \"%\"!\nAction cancelled!");
+	// END KGU#669 2019-03-01
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -689,7 +695,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 *  
 	 * @param initiator - the commanding GUI component
 	 * @param group - possibly a group defining the set of diagrams to arrange
-	 * @param goingToClose TODO
+	 * @param goingToClose - indicates whether this call was initiated because tge application is going to close
 	 * @return the resulting {@link Group} object (may not be {@code group}) if saving of the
 	 * arrangement succeeded, otherwise null.
 	 */
@@ -1038,19 +1044,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				tmpFile.renameTo(file);
 				// START KGU#626 2019-01-02: Enh. #657
 				if (portable) {
-					group.setFile(new File(arrFilename), file);
+					group.setFile(new File(arrFilename), file, false);
 				}
 				else {
-					group.setFile(new File(outFilename), null);					
+					group.setFile(new File(outFilename), null, false);					
 				}
 				// END KGU#626 2019-01-02
 			}
 			// START KGU#626 2019-01-02: Enh. #657
 			else if (portable) {
-				group.setFile(new File(arrFilename), new File(outFilename));
+				group.setFile(new File(arrFilename), new File(outFilename), false);
 			}
 			else {
-				group.setFile(new File(outFilename), null);
+				group.setFile(new File(outFilename), null, false);
 			}
 			// END KGU#626 2019-01-02
 			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams as reside in the archive
@@ -2107,13 +2113,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
 	 * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
 	 * the {@code root} (unless there is already another {@link Mainform} associated) and
-	 * {@code root} will automatically be pinned.
+	 * {@code root} will automatically be pinned.<br/>
 	 * If {@code point} is given then the diagram will be placed to that position, otherwise a free
-	 * area is looked for.
+	 * area is looked for.<br/>
+	 * If {@code owningGroup} is given then the diagram will be associated to if it is not already
+	 * a member. Otherwise the diagram will be associated to the default group (if possible).
 	 * @param root - the {@link Root} element of the diagram to be added
 	 * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
 	 * @param point - the proposed position
-	 * @param owningGroup - the diagram group {@code root} belongs to
+	 * @param owningGroup - the diagram group {@code root} belongs to or is to belong to
 	 */
 	private void addDiagram(Root root, Mainform form, Point point, Group owningGroup)
 	// END KGU#110 2015-12-20
@@ -2296,7 +2304,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (diagram.mainform == null)
 			{
 				diagram.mainform = form;
-				// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer neeeded
+				// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer needed
 				//form.updateArrangerIndex();
 				// END KGU#305 2016-12-12
 			}
@@ -4352,7 +4360,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		if (arrFileOrNull != null) {
-			group.setFile(arrFileOrNull, null);
+			group.setFile(arrFileOrNull, null, false);
 		}
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		return done ? group : null;
@@ -4759,6 +4767,74 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	@Override
 	public void windowLostFocus(WindowEvent e) {
 		pop.setVisible(false);
+	}
+
+	public boolean renameGroup(Group group, String newName, Component initiator) {
+		// TODO Auto-generated method stub
+		String oldName = group.getName();
+		if (this.hasGroup(newName)) {
+			JOptionPane.showMessageDialog(initiator,
+					msgGroupExists.getText().replace("%", newName),
+					titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),
+					JOptionPane.ERROR_MESSAGE);
+			return false;			
+		}
+		if (group.getFile() != null) {
+			String ext = ".arrz";
+			File arrFile = group.getFile();
+			File file = group.getArrzFile();
+			if (file == null) {
+				ext = ".arr";
+				file = arrFile;
+			}
+			String newFilename = newName;
+			if (!newFilename.endsWith(ext)) {
+				newFilename = newName + ext;
+			}
+			File newFile = new File(file.getParent() + File.separator + newFilename);
+			int answer = JOptionPane.showConfirmDialog(initiator,
+					msgRenameArrFile.getText().replace("%1", file.getAbsolutePath()).replace("%2", "..." + File.separator + newFilename),
+					titleRenameGroup.getText().replace("%1", oldName).replace("%2", newName),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+			if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) {
+				return false;
+			}
+			else if (answer == JOptionPane.YES_OPTION) {
+				if (newFile.exists()) {
+					answer = JOptionPane.showConfirmDialog(initiator,
+							msgOverwriteFile.getText().replace("%1", newFile.getAbsolutePath()),
+							msgConfirmOverwrite.getText(),
+							JOptionPane.YES_NO_CANCEL_OPTION);
+					if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) {
+						return false;
+					}
+					else if (answer == JOptionPane.YES_OPTION) {
+						newFile.delete();
+					}
+				}
+				if (answer == JOptionPane.YES_OPTION) {
+					if (!file.renameTo(newFile)) {
+						JOptionPane.showMessageDialog(initiator,
+								msgRenamingFailed.getText().replace("%", newFile.getAbsolutePath()),
+								titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),
+								JOptionPane.ERROR_MESSAGE);
+						return false;
+					}
+					if (ext.equals(".arr")) {
+						group.setFile(newFile, null, false);
+					}
+					else {
+						group.setFile(arrFile, newFile, true);
+					}
+				}
+			}
+		}
+		if (group.rename(newName)) {
+			this.groups.remove(oldName);
+			groups.put(newName, group);
+		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		return true;
 	}
 
 }

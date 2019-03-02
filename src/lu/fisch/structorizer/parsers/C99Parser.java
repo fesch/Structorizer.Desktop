@@ -53,6 +53,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-07-10      Precaution against incomplete FOR loops (index error on colouring parts)
  *                                      Provisional enum type import as constant definition sequence.
  *      Kay Gürtzig     2019-02-13      Bugfix #678: Array declarations hadn't been imported properly
+ *      Kay Gürtzig     2019-02-28      Bugfix #690 - workaround for struct types in function headers
+ *      Kay Gürtzig     2019-03-01      Bugfix #692 - failed constant recognition
  *
  ******************************************************************************************************
  *
@@ -1075,12 +1077,16 @@ public class C99Parser extends CPreParser
 			else {
 				// FIXME: We might need a more intelligent type analysis
 				content = getContent_R(typeToken.asReduction(), "").trim() + " ";
-				content = content.replaceAll("(^|\\.*\\W)static(\\s+.*)", "$1$2");
-				content = content.replaceAll("(^|\\.*\\W)const(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|.*\\W)static(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|.*\\W)const(\\s+.*)", "$1$2");
+				// START KGU#668 2019-02-28: Workaround #690 to get rid of struct keywords here
+				content = content.replaceAll("(^|.*\\W)struct(\\s+.*)", "$1$2");
+				// END KGU#668 2019-02-28
 			}
 			content += prefix.concatenate(" ").trim();
+			content = content.trim();
 			// Result type "void" should be suppressed
-			if (content.trim().equals("void")) {
+			if (content.equals("void")) {
 				content = "";
 			}
 			//content += funcId + "(";
@@ -1145,13 +1151,13 @@ public class C99Parser extends CPreParser
 //			}
 //			content += params + ")";
 			content += " " + funcId;
-			String params = suffix.concatenate();
-			if (params.trim().equals("(void)")) {
+			String params = suffix.concatenate().trim();
+			if (params.equals("(void)")) {
 				params = "()";
 			}
 			content += params;
 		}
-		root.setText(content);
+		root.setText(content.trim());
 		this.equipWithSourceComment(root, _reduction);
 		if (weird) {
 			root.comment.add("UNSUPPORTED SHAPE OF FUNCTION/PROCEDURE HEADER!");
@@ -1853,7 +1859,10 @@ public class C99Parser extends CPreParser
 				}
 				break;
 			case RuleConstants.PROD_DECLSPECIFIERS3:
-				if (prefix.asString().equals("const")) {
+				// START KGU#670 2019-03-01: Bugfix #692 Wrong test let const detection fail
+				//if (prefix.asString().equals("const")) {
+				if (prefix.asString().equals("[const]")) {
+				// END KGU#670 2019-03-01
 					_typeSpecs.add("const");
 				}
 				break;
@@ -2229,6 +2238,14 @@ public class C99Parser extends CPreParser
 			// no break here!
 		default: // Should be a <Parameter Decl>
 			paramList.add(getContent_R(_paramReduc, ""));
+			// START KGU#668 2019-02-28: Workaround #690 - Suppress struct keywords in parameter lists (FIXME)
+			for (int i = 0; i < paramList.count(); i++) {
+				String param = paramList.get(i);
+				if (param.startsWith("struct ")) {
+					paramList.set(i, param.substring(7));
+				}
+			}
+			// END KGU#668 2019-02-28
 			params = paramList.reverse().concatenate(", ") + ellipse;
 			break;
 		}
@@ -2336,16 +2353,16 @@ public class C99Parser extends CPreParser
 	 * {@code _typeList} is empty) or with the first element of {@code _typeList}
 	 * as name. Except in the latter case (type definition with given name created)
 	 * the name of the found type will be inserted at the beginning of
-	 * {@code _typeList}.
+	 * {@code _typeList}.<br/>
 	 * If {@code _isGlobal} is true and a type definition is to be created then
 	 * a dependency of the current {@link #root} to the global diagram is established
-	 * in {@code this.importingRoots}.
+	 * in {@code this.importingRoots}.<br/>
 	 * The trouble here is that we would like to return several things at once:
 	 * a type entry, a type description, and some flags. For a recursive application,
 	 * we would even need different resulting formats.
 	 * @param _reduction - current {@link Reduction} object
 	 * @param _ruleId - table id of the production rule
-	 * @param _subqueue - the {@link Subqueue} to which elements are to be added
+	 * @param _parentNode - the {@link Subqueue} to which elements are to be added
 	 * @param _isGlobal - whether the type / variable is a global one
 	 * @param _typeList - a container for type names, both for input and output 
 	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)

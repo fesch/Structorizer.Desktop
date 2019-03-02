@@ -170,6 +170,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-12-17      Bugfix #646 in tryOutput()
  *      Kay Gürtzig     2019-02-13      Issue #527: Error message improvement in evaluateExpression()
  *      Kay Gürtzig     2019-02-14      Enh. #680: INPUT instructions with multiple variables supported
+ *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
+ *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
  *
  ******************************************************************************************************
  *
@@ -4059,7 +4061,12 @@ public class Executor implements Runnable
 		diagram.doButtons();
 		// END KGU#143 2016-01-21
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
-		checkBreakpoint(element);
+		// START KGU#665 2019-02-26: Bugfix #687 a breakpointed Repeat loop must not pause when entered
+		//checkBreakpoint(element);
+		if (!(element instanceof Repeat)) {
+			checkBreakpoint(element);
+		}
+		// END KGU#665 2019-02-26
 		// END KGU#43 2015-10-12
 
 		// START KGU#477 2017-12-10: Enh. #487 - check continuation of 
@@ -4945,6 +4952,11 @@ public class Executor implements Runnable
 			if (prompt.isEmpty()) {
 				prompt = control.lbAcknowledge.getText();
 			}
+			// START KGU#160 2019-02-17: Enh. #51, #137 - an explicit prompt should be passed to text window
+			else {
+				this.console.writeln(prompt, Color.YELLOW);
+			}
+			// END KGU#160 2019-02-17
 			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), prompt, control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
@@ -5521,7 +5533,7 @@ public class Executor implements Runnable
 //		}
 		// END KGU#376 2017-04-11
 		else {
-			// START KGU#197 2017-06-06: Now translatable
+			// START KGU#197 2017-06-06: Now localizable
 			//trouble = "<" + cmd + "> is not a correct function!";
 			trouble = control.msgIllFunction.getText().replace("%1", cmd);
 			// END KGU#197 2017-06-06
@@ -6007,6 +6019,12 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 						// START KGU#515 2018-04-03: The following must not be done if the body failed (had erroneously resided after this if)
+						// START KGU#665 2019-02-26: Bugfix #687  breakpoint check had been misplaced (was behind the cond evaluation)
+						// delay this element
+						checkBreakpoint(element);
+						element.waited = false;
+						delay();	// Symbolizes the loop condition check time
+						// END KGU#665 2019-02-26
 						// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 						String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
 						cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
@@ -6018,12 +6036,6 @@ public class Executor implements Runnable
 							// END KGU#197 2016-07-27
 						}
 
-						// delay this element
-						// START KGU 2015-10-12: This remains an important breakpoint position
-						checkBreakpoint(element);
-						// END KGU 2015-10-12
-						element.waited = false;
-						delay();	// Symbolizes the loop condition check time
 						element.waited = true;
 
 						// START KGU#156 2016-03-11: Enh. #124

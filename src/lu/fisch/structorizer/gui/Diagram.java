@@ -169,6 +169,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *      Kay Gürtzig     2019-01-20      Issue #668: Group behaviour on outsourcing subdiagrams improved.
  *      Kay Gürtzig     2019-02-15/16   Enh. #681 - mechanism to propose new favourite generator after repeated use
+ *      Kay Gürtzig     2019-02-26      Bugfix #688: canTransmute() should always return true for Call and Jump elements
+ *      Kay Gürtzig     2019-02-26      Enh. #689: Mechanism to edit the referred routine of a selected Call introduced
+ *      Kay Gürtzig     2019-03-01      Bugfix #693: Missing existence check on loading recent arrangement files added
  *
  ******************************************************************************************************
  *
@@ -469,7 +472,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private String lastGeneratorName = null;
 	private int generatorUseCount = 0;
 	// END KGU#654 2019-02-15
-    
+
+	// STRT KGU#667 2019-02-26: Enh. #689
+	/** Additional {@link Mainform} for editing of subroutines */
+	private Mainform subForm = null;
+	// END KGU#667 2019-02-26
+
 	/*****************************************
 	 * CONSTRUCTOR
      *****************************************/
@@ -598,31 +606,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (int i = 0; i < files.length; i++)
 					{
 						String filename = files[i].toString();
-						String filenameLower = filename.toLowerCase();
-
-						if(filenameLower.endsWith(".nsd"))
-						{
-							/*
-							// only save if something has been changed
-							saveNSD(true);
-
-							// load the new file
-							NSDParser parser = new NSDParser();
-							root = parser.parse(filename);
-							root.filename=filename;
-							currentDirectory = new File(filename);
-							redraw();*/
-							openNSD(filename);
-						}
-						// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
-						else if (filenameLower.endsWith(".arr")
-								||
-								filenameLower.endsWith(".arrz"))
-						{
-							loadArrangement(files[i]);
-						}
-						// END KGU#289 2016-11-15
-						else {
+						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArg() instead
+						//String filenameLower = filename.toLowerCase();
+						//if(filenameLower.endsWith(".nsd"))
+						//{
+						//	openNSD(filename);
+						//}
+						//// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+						//else if (filenameLower.endsWith(".arr")
+						//		||
+						//		filenameLower.endsWith(".arrz"))
+						//{
+						//	loadArrangement(files[i]);
+						//}
+						//// END KGU#289 2016-11-15
+						//else {
+						// If openNsdOrArr() doesn't recognise the file type then it returns an empty extension string
+						if (openNsdOrArr(filename).isEmpty()) {
+						// END KGU#671 2019-03-01
 							Ini ini = Ini.getInstance();
 							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
 							// START KGU#354 2017-04-27: Enh. #354
@@ -1265,7 +1266,87 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-    // START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e)
+	{
+		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
+		//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+		//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
+		// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
+		//if (selected != null)
+		if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
+			// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
+			int rotation = e.getWheelRotation();
+			int fontSize = Element.getFont().getSize();
+			if (Element.E_WHEEL_REVERSE_ZOOM) {
+				rotation *= -1;
+			}
+			if (rotation >= 1 && fontSize-1 >= 4)
+			{
+				// reduce font size
+				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
+				root.resetDrawingInfoDown();
+				redraw();
+				e.consume();
+			}
+			else if (rotation <= -1)
+			{
+				// enlarge font size
+				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
+				root.resetDrawingInfoDown();
+				redraw();
+				e.consume();
+			}
+		}
+		else if (Element.E_WHEELCOLLAPSE && selected != null)
+			// END KGU#503 2018-03-13
+		{
+			// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
+			// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
+			// In Linux, however, the rotation result will usually be -1 or +1, whereas the scroll amount is 3.
+			// So we just multiply both and will get a sensible threshold, we hope.
+			//if(e.getWheelRotation()<-1) selected.setCollapsed(true);
+			//else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
+			int rotation = e.getWheelRotation();
+			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+				rotation *= e.getScrollAmount();
+			}
+			else {
+				rotation *= 2;
+			}
+			if (rotation < -1) {
+				selected.setCollapsed(true);
+			}
+			else if (rotation > 1) {
+				selected.setCollapsed(false);
+			}
+			// END KGU#123 2016-01-04
+			// START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
+			e.consume();
+			// END KGU#503 2018-03-13
+			redraw();
+		}
+		// FIXME KGU 2016-01-0: Issue #65
+//		// Rough approach to test horizontal scrollability - only works near the left and right
+//		// borders, because the last mouseMoved position is used. Seems that we will have to
+//		// maintain a virtual scroll position here which is to be used instead of e.getX().
+//		if ((e.getModifiersEx() & MouseWheelEvent.SHIFT_DOWN_MASK) != 0)
+//		{
+//			int rotation = e.getWheelRotation();
+//			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+//				rotation *= e.getScrollAmount();
+//			}
+//			System.out.println("Horizontal scrolling by " + rotation);
+//			Rectangle r = new Rectangle(e.getX() + 50 * rotation, e.getY(), 1, 1);
+//			((JPanel)e.getSource()).scrollRectToVisible(r);
+//		}
+	}
+
+
+	// START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
     public void doButtons()
     {
     	if (NSDControl != null) NSDControl.doButtons();
@@ -1678,6 +1759,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
+	/**
+	 * Attempts to open (load) the file specified by {@code _filepath} as .nsd, .arr, or .arrz file.<br/>
+	 * If none of the expected file extensions match then an empty string is returned.
+	 * @param _filepath - the path of the file to be loaded
+	 * @return - the file extension
+	 */
 	public String openNsdOrArr(String _filepath)
 	{
 		String ext = ExtFileFilter.getExtension(_filepath);
@@ -1884,7 +1971,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void loadArrangement(File arrFile)
 	{
 		Arranger arr = Arranger.getInstance();
-		String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
+		// START KGU#671 2019-03-01: Bugfix #693 - common existence check
+		//String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
+		String errorMsg = "";
+		if (!arrFile.exists()) {
+			errorMsg = Menu.msgErrorNoFile.getText();
+		}
+		else {
+			errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());			
+		}
+		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + arrFile + "\": " + errorMsg, 
 					Menu.msgTitleLoadingError.getText(),
@@ -2783,7 +2879,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		boolean isConvertible = false;
 		if (selected != null && !selected.isExecuted())
 		{
-			if (selected instanceof Instruction)
+			// START KGU#666 2019-02-26: Bugfix #688 - it should always be offered to convert Calls and Jumps (to Instructions)
+			//if (selected instanceof Instruction)
+			if (selected instanceof Call || selected instanceof Jump) {
+				isConvertible = true;
+			} 
+			else if (selected instanceof Instruction)
+			// END KGU#666 2019-02-26
 			{
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
@@ -3696,6 +3798,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#365 2017-03-19
 
 	// START KGU#365 2017-04-14: Enh. #380
+	/** Retrieves all {@link Jump} elements within the span of {@code elements} trying to leave outside the span. */
 	private List<Jump> findUnsatisfiedJumps(IElementSequence elements) {
 		final class JumpFinder implements IElementVisitor {
 			
@@ -3737,6 +3840,176 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#65 2017-04-14
 
+	// START KGU#667 2019-02-26: Enh. #689
+	/**
+	 * @return true if the selected element is a {@link Call} and a called routine signature can be extracted.
+	 * @see #editSubNSD()
+	 */
+	public boolean canEditSub() {
+		boolean canEdit = false;
+		if (selected != null && selected instanceof Call) {
+			Function called = ((Call)selected).getCalledRoutine();
+			// We don't want to open an editor in case of a recursive call.
+			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false))));
+		}
+		return canEdit;
+	}
+	
+	/**
+	 * Summons the called subroutine of the selected {@link Call} into a {@link Mainfom} instance,
+	 * possibly opens a new one.
+	 * @see #canEditSub()
+	 */
+	public void editSubNSD() {
+		// TODO Auto-generated method stub
+		if (selected instanceof Call && this.canEditSub()) {
+			Call call = (Call)selected;
+			Function called = call.getCalledRoutine();
+			Root subroutine = null;
+			Collection<Group> myGroups = null;
+			// Try to find the subroutine in Arranger
+			if (Arranger.hasInstance()) {
+				Vector<Root> candidates = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+				myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				// If the finding is unambiguous, get it
+				if (candidates.size() == 1) {
+					subroutine = candidates.get(0);
+				}
+				// Otherwise we try to select the most appropriate among the conflicting ones
+				else if (candidates.size() > 1) {
+					// First try to single out a candidate sharing a group with this.root
+					for (Root cand : candidates) {
+						Collection<Group> subGroups = Arranger.getInstance().getGroupsFromRoot(cand, true);
+						for (Group grp: subGroups) {
+							if (myGroups.contains(grp)) {
+								subroutine = cand;
+								break;
+							}
+						}
+						if (subroutine != null) {
+							break;
+						}
+					}
+					// Open a choice list if the group approach wasn't successful
+					if (subroutine == null) {
+						String[] choices = new String[candidates.size()];
+						int i = 0;
+						for (Root cand: candidates) {
+							choices[i++] = cand.getSignatureString(true);
+						}
+						String input = (String) JOptionPane.showInputDialog(null, Menu.msgChooseSubroutine.getText(),
+								Menu.msgTitleQuestion.getText(),
+								JOptionPane.QUESTION_MESSAGE, null, // Use default icon
+								choices, // Array of choices
+								choices[0]); // Initial choice
+						if (input != null && !input.trim().isEmpty()) {
+							for (i = 0; i < choices.length && subroutine != null; i++) {
+								if (input.equals(choices[i])) {
+									subroutine = candidates.get(i);
+								}
+							}
+						}
+					}
+				}
+			}
+			String targetGroupName = null;	// This weill be relevan for a new subroutine
+			// Create new subroutine root if we haven't been able to selectan existing one
+			if (subroutine == null) {
+				if (JOptionPane.showConfirmDialog(NSDControl.getFrame(),
+						Menu.msgCreateSubroutine.getText().replace("%", called.getSignatureString()),
+						Menu.msgTitleQuestion.getText(),
+						JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+					return;
+				}
+				subroutine = new Root();
+				StringList params = new StringList();
+				for (int i = 0; i < called.paramCount(); i++) {
+					String param = called.getParam(i);
+					if (!Function.testIdentifier(param, null) || params.contains(param)) {
+						param = "param" + (i+1);
+					}
+					params.add(param);
+				}
+				String result = "";
+				if (((Call)selected).isFunctionCall()) {
+					String line = call.getUnbrokenText().get(0);
+					String var = call.getAssignedVarname(Element.splitLexically(line, true));
+					if (Function.testIdentifier(var, null)) {
+						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
+						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
+						if (result == null) {
+							result = "";
+						}
+					}
+					if (!result.trim().isEmpty()) {
+						result = ": " + result.trim();
+					}
+					else {
+						result = ": ???";
+					}
+				}
+				subroutine.setText(called.getName() + "(" + params.concatenate(", ") + ")" + result);
+				subroutine.setProgram(false);
+				subroutine.setChanged(false);
+				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
+				if (myGroups == null || myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
+					// If the diagram is a program then create an exclusive group named after the main diagram 
+					if (root.isProgram()) {
+						targetGroupName = root.getMethodName(true);
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame(), targetGroupName);
+						myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+					}
+					else {
+						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame());
+					}
+				}
+				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == myGroups.size()) {
+					// Parent diagram is arranged but not member of the default group - then its children shouldn't be either
+					targetGroupName = myGroups.iterator().next().getName();
+				}
+			}
+			if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+				subForm = new Mainform(false);
+				subForm.addWindowListener(new WindowListener() {
+					@Override
+					public void windowOpened(WindowEvent e) {}
+					@Override
+					public void windowClosing(WindowEvent e) {
+						if (subForm == e.getSource()) {
+							subForm = null;
+						}
+					}
+					@Override
+					public void windowClosed(WindowEvent e) {
+						((Mainform)(e.getSource())).removeWindowListener(this);
+					}
+					@Override
+					public void windowIconified(WindowEvent e) {}
+					@Override
+					public void windowDeiconified(WindowEvent e) {}
+					@Override
+					public void windowActivated(WindowEvent e) {}
+					@Override
+					public void windowDeactivated(WindowEvent e) {}
+					
+				});
+			}
+			subForm.setRoot(subroutine);
+			// If it is a new root then add it to Arranger
+			if (targetGroupName != null) {
+				Arranger.getInstance().addToPool(subroutine, subForm, targetGroupName);
+			}
+			if (!subForm.isVisible()) {
+				subForm.setVisible(true);
+			}
+			Point loc = NSDControl.getFrame().getLocation();
+			Point locSub = subForm.getLocation();
+			if (loc.equals(locSub)) {
+				subForm.setLocation(loc.x + 20, loc.y + 20);
+			}
+		}
+	}
+	// END KGU#667 2019-02-26
 
 	/*****************************************
 	 * transmute method(s)
@@ -7716,6 +7989,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
 
 		// get diagram
+		// FIXME KGU#660 2019-02-20: Issue #685 With Windows and java 11, conversion to JPEG doesn't cope with alpha channel
 		BufferedImage image = new BufferedImage(root.width+1,root.height+1, BufferedImage.TYPE_INT_ARGB);
 		root.draw(image.getGraphics());
 
@@ -7759,7 +8033,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.draw(c,myrect);
 			emf.endExport();
 
-			systemClipboard.setContents(new EMFSelection(myEMF),null);
+			systemClipboard.setContents(new EMFSelection(myEMF), null);
 		}
 		catch (Exception e)
 		{
@@ -7777,85 +8051,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		redraw();
 		// END KGU#183 2016-04-24
-	}
-
-	/* (non-Javadoc)
-	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
-	 */
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e)
-	{
-		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
-		//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
-		//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
-		// START KGU#503 2018-03-13: Enh. #519 - The mouse wheel got a new function and is permanently listened to
-		//if (selected != null)
-		if ((e.getModifiersEx() & MouseWheelEvent.CTRL_DOWN_MASK) != 0) {
-			// Ctrl + mouse wheel is now to raise or shrink the font (thus to kind of zoom) 
-			int rotation = e.getWheelRotation();
-			int fontSize = Element.getFont().getSize();
-			if (Element.E_WHEEL_REVERSE_ZOOM) {
-				rotation *= -1;
-			}
-			if (rotation >= 1 && fontSize-1 >= 4)
-			{
-				// reduce font size
-				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize-1));
-				root.resetDrawingInfoDown();
-				redraw();
-				e.consume();
-			}
-			else if (rotation <= -1)
-			{
-				// enlarge font size
-				Element.setFont(new Font(Element.getFont().getFamily(), Font.PLAIN, fontSize+1));
-				root.resetDrawingInfoDown();
-				redraw();
-				e.consume();
-			}
-		}
-		else if (Element.E_WHEELCOLLAPSE && selected != null)
-			// END KGU#503 2018-03-13
-		{
-			// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
-			// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
-			// In Linux, however, the rotation result will usually be -1 or +1, whereas the scroll amount is 3.
-			// So we just multiply both and will get a sensible threshold, we hope.
-			//if(e.getWheelRotation()<-1) selected.setCollapsed(true);
-			//else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
-			int rotation = e.getWheelRotation();
-			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-				rotation *= e.getScrollAmount();
-			}
-			else {
-				rotation *= 2;
-			}
-			if (rotation < -1) {
-				selected.setCollapsed(true);
-			}
-			else if (rotation > 1) {
-				selected.setCollapsed(false);
-			}
-			// END KGU#123 2016-01-04
-			// START KGU#503 2018-03-13: Enh. #519 - may not work (depends on the order of listeners)
-			e.consume();
-			// END KGU#503 2018-03-13
-			redraw();
-		}
-		// FIXME KGU 2016-01-0: Issue #65
-//		// Rough approach to test horizontal scrollability - only works near the left and right
-//		// borders, because the last mouseMoved position is used. Seems that we will have to
-//		// maintain a virtual scroll position here which is to be used instead of e.getX().
-//		if ((e.getModifiersEx() & MouseWheelEvent.SHIFT_DOWN_MASK) != 0)
-//		{
-//			int rotation = e.getWheelRotation();
-//			if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-//				rotation *= e.getScrollAmount();
-//			}
-//			System.out.println("Horizontal scrolling by " + rotation);
-//			Rectangle r = new Rectangle(e.getX() + 50 * rotation, e.getY(), 1, 1);
-//			((JPanel)e.getSource()).scrollRectToVisible(r);
-//		}
 	}
 
 
@@ -8744,5 +8939,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 	// END KGU#480 2018-01-18
+	
 
 }

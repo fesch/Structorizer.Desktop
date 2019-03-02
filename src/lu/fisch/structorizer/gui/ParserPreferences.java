@@ -133,7 +133,14 @@ public class ParserPreferences extends LangDialog {
 	//protected JLabel lblErrorSign2;
 	protected LangTextHolder lblErrorSign2;
 	// END KGU#61 2016-03-21
-	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+	protected LangTextHolder lblErrorSign3;
+	private JTextField[] mandatoryFields;
+	private static final Color mandatoryBackGround = new Color(255,255,210);
+	protected static final LangTextHolder ttlError = new LangTextHolder("Error");
+	protected JPanel headPanel;
+	protected JLabel lblHeadline;
+	// END KGU#657 2019-02-17
 	
 	/*public ParserPreferences()
 	{
@@ -155,6 +162,10 @@ public class ParserPreferences extends LangDialog {
 
 	private void initComponents() {
 		dialogPane = new JPanel();
+		// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+		headPanel = new JPanel();
+		lblHeadline = new JLabel();
+		// END KGU#657 2019-02-17
 		contentPanel = new JPanel();
 		lblNothing = new JLabel();
 		lblNothing2 = new JLabel();
@@ -207,18 +218,24 @@ public class ParserPreferences extends LangDialog {
 		chkIgnoreCase = new JCheckBox();
 		// END KGU 2016-03-25
 
-		//lblErrorSign = new JLabel();
-		lblErrorSign = new LangTextHolder();
-
-		lblErrorSign.setText("Your are not allowed to use the character ':' in any parser string!");
+		lblErrorSign = new LangTextHolder("Your are not allowed to use the character ':' in any parser string!");
 		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		//lblErrorSign2 = new JLabel();
-		// START KGU#628 2018-12-28: Enh. #658 - Th text had to be generalized
+		// START KGU#628 2018-12-28: Enh. #658 - The text had to be generalized
 		//lblErrorSign2 = new LangTextHolder();
 		//lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
 		lblErrorSign2 = new LangTextHolder("There are name conflicts among the key words marked red - they must all differ!");
 		// END KGU#628 2018-12-28
 		// END KGU#61 2016-03-21
+		// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+		lblErrorSign3 = new LangTextHolder("% of the mandatory key words (cream background) aren't specified!");
+		mandatoryFields = new JTextField[] {
+				edtForPre, edtForPost, edtForStep,
+				edtForInPre, edtForInPost,
+				edtJumpLeave, edtJumpReturn, edtJumpExit,
+				edtInput, edtOutput
+		};
+		// END KGU#657 2019-02-17
 
 		//======== this ========
 		setModal(true);
@@ -232,6 +249,16 @@ public class ParserPreferences extends LangDialog {
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
 			dialogPane.setLayout(new BorderLayout());
+			
+			//======== Headline ========
+
+			// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+			lblHeadline.setText("Fields with this background are mandatory");
+			lblHeadline.setIcon(IconLoader.generateIcon(mandatoryBackGround));
+			headPanel.add(lblHeadline);
+			
+			dialogPane.add(headPanel, BorderLayout.NORTH);
+			// END KGU#657 2019-02-17
 
 			//======== contentPanel ========
 			{
@@ -329,6 +356,12 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(edtOutput);
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
+			
+			// START KGU#657 2019-02-17: Issue #684
+			for (JTextField field: mandatoryFields) {
+				field.setBackground(mandatoryBackGround);
+			}
+			// END KGU#657 2019-02-17
 
 			//======== buttonBar ========
 			{
@@ -385,15 +418,15 @@ public class ParserPreferences extends LangDialog {
 		// START KGU#3 2015-11-08: Enh. #10
 		edtForStep.addKeyListener(keyListener);
 		// END KGU#3 2015-11-08
-    	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		edtForInPre.addKeyListener(keyListener);
 		edtForInPost.addKeyListener(keyListener);
-    	// END KGU#61 2016-03-21
+		// END KGU#61 2016-03-21
 		edtWhilePre.addKeyListener(keyListener);
 		edtWhilePost.addKeyListener(keyListener);
 		edtRepeatPre.addKeyListener(keyListener);
 		edtRepeatPost.addKeyListener(keyListener);
-		// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
+		// START KGU#78 2016-03-25: Enh. #23 - Jump keyword configurability introduced
 		edtJumpLeave.addKeyListener(keyListener);
 		edtJumpReturn.addKeyListener(keyListener);
 		edtJumpExit.addKeyListener(keyListener);
@@ -412,109 +445,122 @@ public class ParserPreferences extends LangDialog {
 		};
 		btnOK.addActionListener(actionListener);
 	}
-        
-        public void done()
-        {
-        	HashSet<JTextField> conflictingFields = null;	// conflicting text fields
-            if(
-                    edtAltPre.getText().contains(":") ||
-                    edtAltPost.getText().contains(":") ||
-                    edtCasePre.getText().contains(":") ||
-                    edtCasePost.getText().contains(":") ||
-                    edtForPre.getText().contains(":") ||
-                    edtForPost.getText().contains(":") ||
-                    // START KGU#3 2015-11-08
-                    edtForStep.getText().contains(":") ||
-                    // START KGU#3 2015-11-08
-                   	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
-                    edtForInPre.getText().contains(":") ||
-                    edtForInPost.getText().contains(":") ||
-                	// END KGU#61 2016-03-21
-                    edtWhilePre.getText().contains(":") ||
-                    edtWhilePost.getText().contains(":") ||
-                    edtRepeatPre.getText().contains(":") ||
-                    edtRepeatPost.getText().contains(":") ||
-            		// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
-            		edtJumpLeave.getText().contains(":") ||
-            		edtJumpReturn.getText().contains(":") ||
-            		edtJumpExit.getText().contains(":") ||
-            		// END KGU#78 2016-03-25
-                    edtInput.getText().contains(":") ||
-                    edtOutput.getText().contains(":")
-            ) {
-                 JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(),"Error", JOptionPane.ERROR_MESSAGE);
-            }
-        	// START KGU#61/KGU#628 2018-12-29: Enh. #84, #658 - Test against duplicates 
-            else if (!(conflictingFields = this.hasConflicts()).isEmpty())
-            {
-            	Color oldColour = null;
-            	for (JTextField textField: conflictingFields) {
-            		if (oldColour == null) {
-            			oldColour = textField.getForeground();
-            		}
-            		textField.setForeground(Color.RED);
-            	}
-            	JOptionPane.showMessageDialog(null, lblErrorSign2.getText(),"Error", JOptionPane.ERROR_MESSAGE);
-            	for (JTextField textField: conflictingFields) {
-            		textField.setForeground(oldColour);
-            	}
-            }
-        	// END KGU#61/KGU#628 2018-12-28
-            else
-            {
-                setVisible(false);
-                OK=true;
-            }    
-            
-        }
-        
-        // START KGU#165 2016-03-25
-        // START KGU#628 2018-12-29: Enh. #658 - we need more independent checks
-        //private JTextField hasConflicts()
-        private HashSet<JTextField> hasConflicts()
-        // END KGU#628 2018-12-29
-        {
-        	HashSet<JTextField> conflicts = new HashSet<JTextField>();
-        	JTextField conflicting = null;
-        	boolean ignoreCase = chkIgnoreCase.isSelected();
-        	JTextField[] fieldsToCheck = {
-    				edtAltPre,		edtAltPost,
-    				edtCasePre,		edtCasePost,
-    				edtForPre,		edtForPost,		edtForStep,
-    				edtForInPre,
-    				edtWhilePre,	edtWhilePost,
-    				edtRepeatPre,	edtRepeatPost,
-    				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
-    				edtInput,
-    				edtOutput
-        	};
-        	int indexCheck2 = 12;
-        	String forInPost = edtForInPost.getText().trim();
-        	
-        	for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
-        	{
-        		if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim())
-        				&& (ignoreCase || forInPost.equals(fieldsToCheck[i].getText().trim())))
-        		{
-        			conflicting = fieldsToCheck[i];
-        		}
-        	}
-        	if (conflicting != null) {
-        		conflicts.add(edtForInPost);
-        		conflicts.add(conflicting);
-        	}
-        	for (int i = indexCheck2; i+1 < fieldsToCheck.length; i++) {
-        		String key1 = fieldsToCheck[i].getText().trim();
-        		for (int j = i+1; j < fieldsToCheck.length; j++) {
-        			String key2 = fieldsToCheck[j].getText().trim();
-        			if (key1.equalsIgnoreCase(key2) && (ignoreCase || key1.equals(key2))) {
-        				conflicts.add(fieldsToCheck[i]);
-        				conflicts.add(fieldsToCheck[j]);
-        			}
-        		}
-        	}
-        	return conflicts;
-        }
-        // END KGU#165 2016-03-25
+
+	public void done()
+	{
+		HashSet<JTextField> conflictingFields = null;	// conflicting text fields
+		// START KGU#654 2019-02-17: Issue #684 - first of all, check mandatory fields
+		//if(
+		int nEmptyMandFields = 0;
+		for (int i = 0; i < mandatoryFields.length; i++) {
+			if (mandatoryFields[i].getText().trim().isEmpty()) {
+				nEmptyMandFields++;
+			}
+		}
+		if (nEmptyMandFields > 0) {
+			JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign3.getText().replace("%", Integer.toString(nEmptyMandFields)),
+					ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+		else if (
+		// END KGU#654 2019-02-17
+				edtAltPre.getText().contains(":") ||
+				edtAltPost.getText().contains(":") ||
+				edtCasePre.getText().contains(":") ||
+				edtCasePost.getText().contains(":") ||
+				edtForPre.getText().contains(":") ||
+				edtForPost.getText().contains(":") ||
+				// START KGU#3 2015-11-08
+				edtForStep.getText().contains(":") ||
+				// START KGU#3 2015-11-08
+				// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+				edtForInPre.getText().contains(":") ||
+				edtForInPost.getText().contains(":") ||
+				// END KGU#61 2016-03-21
+				edtWhilePre.getText().contains(":") ||
+				edtWhilePost.getText().contains(":") ||
+				edtRepeatPre.getText().contains(":") ||
+				edtRepeatPost.getText().contains(":") ||
+				// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
+				edtJumpLeave.getText().contains(":") ||
+				edtJumpReturn.getText().contains(":") ||
+				edtJumpExit.getText().contains(":") ||
+				// END KGU#78 2016-03-25
+				edtInput.getText().contains(":") ||
+				edtOutput.getText().contains(":")
+				) {
+			JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(), ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+		// START KGU#61/KGU#628 2018-12-29: Enh. #84, #658 - Test against duplicates 
+		else if (!(conflictingFields = this.hasConflicts()).isEmpty())
+		{
+			Color oldColour = null;
+			for (JTextField textField: conflictingFields) {
+				if (oldColour == null) {
+					oldColour = textField.getForeground();
+				}
+				textField.setForeground(Color.RED);
+			}
+			JOptionPane.showMessageDialog(null, lblErrorSign2.getText(), ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+			for (JTextField textField: conflictingFields) {
+				textField.setForeground(oldColour);
+			}
+		}
+		// END KGU#61/KGU#628 2018-12-28
+		else
+		{
+			setVisible(false);
+			OK=true;
+		}    
+
+	}
+
+	// START KGU#165 2016-03-25
+	// START KGU#628 2018-12-29: Enh. #658 - we need more independent checks
+	//private JTextField hasConflicts()
+	private HashSet<JTextField> hasConflicts()
+	// END KGU#628 2018-12-29
+	{
+		HashSet<JTextField> conflicts = new HashSet<JTextField>();
+		JTextField conflicting = null;
+		boolean ignoreCase = chkIgnoreCase.isSelected();
+		JTextField[] fieldsToCheck = {
+				edtAltPre,		edtAltPost,
+				edtCasePre,		edtCasePost,
+				edtForPre,		edtForPost,		edtForStep,
+				edtForInPre,
+				edtWhilePre,	edtWhilePost,
+				edtRepeatPre,	edtRepeatPost,
+				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				edtInput,
+				edtOutput
+		};
+		int indexCheck2 = 12;
+		String forInPost = edtForInPost.getText().trim();
+
+		for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
+		{
+			if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim())
+					&& (ignoreCase || forInPost.equals(fieldsToCheck[i].getText().trim())))
+			{
+				conflicting = fieldsToCheck[i];
+			}
+		}
+		if (conflicting != null) {
+			conflicts.add(edtForInPost);
+			conflicts.add(conflicting);
+		}
+		for (int i = indexCheck2; i+1 < fieldsToCheck.length; i++) {
+			String key1 = fieldsToCheck[i].getText().trim();
+			for (int j = i+1; j < fieldsToCheck.length; j++) {
+				String key2 = fieldsToCheck[j].getText().trim();
+				if (key1.equalsIgnoreCase(key2) && (ignoreCase || key1.equals(key2))) {
+					conflicts.add(fieldsToCheck[i]);
+					conflicts.add(fieldsToCheck[j]);
+				}
+			}
+		}
+		return conflicts;
+	}
+	// END KGU#165 2016-03-25
 
 }

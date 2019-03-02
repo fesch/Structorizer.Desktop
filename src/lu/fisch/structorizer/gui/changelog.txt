@@ -8,8 +8,9 @@
 Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
+- Copying diagrams as image to the clipboard may fail with some OS/JRE combination (#685).
 
-Current development version: 3.29-03 (2019-02-17)
+Current development version: 3.29-04 (2019-03-02)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -34,8 +35,19 @@ Current development version: 3.29-03 (2019-02-17)
 - 03: Bugfix #678: Import of array declarations from C code didn't work. <2> 
 - 03: Bugfix #679: C import produced defective INPUT instructions <2>
 - 03: Enh. #680: INPUT instructions with multiple input items supported <2>
-- 03: Enh. #681: A Number of exports may offer to change favorite export language <2>
+- 03: Enh. #681: A number of exports may offer to change favorite export language <2>
 - 03: Enh. #682: Improved welcome dialog, now with language selection <2>
+- 04: Issue #51,#137: Executor window now logs explicit prompts of empty inputs <2>
+- 04: Issue #684: Mark-up + check of mandatory fields in Parser Preferences <2>
+- 04: Bugfix #684: An empty FOR-IN loop keyword caused several problems <2>
+- 04: Issue #686: The initial L&F detection didn't work well for Linux (GTK+) <2>
+- 04: Bugfix #687: Defective breakpoint behaviour of REPEAT-UNTIL loops mended <2>
+- 04: Bugfix #688: Transmutation of any Call/Jump into an Instruction enabled <2>
+- 04: Enh. #689: New mechanism to edit the referred routine of a selected Call <2>
+- 04: Bugfix #690: 'struct' keywords in function headers on C import suppressed <2>
+- 04: Enh. #691: It is now possible to rename a group in the Arranger index <2>
+- 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
+- 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
@@ -844,7 +856,7 @@ Version 3.13 (2009-05-23)
 - Analyser: the use of the "return" instruction is now allowed [FISRO]
 
 Version 3.12 (2009-01-18)
-- Added a C generator [Parveen Kumar]
+- Added a C generator [Praveen Kumar]
 - Fixed a bug for saving preferences [FISRO]
 
 Version 3.11 (2008-11-14)
