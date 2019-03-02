@@ -621,7 +621,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//}
 						//// END KGU#289 2016-11-15
 						//else {
-						// If openNsdOrArr() doesn't recognise the file type the it returns an empty extension string
+						// If openNsdOrArr() doesn't recognise the file type then it returns an empty extension string
 						if (openNsdOrArr(filename).isEmpty()) {
 						// END KGU#671 2019-03-01
 							Ini ini = Ini.getInstance();

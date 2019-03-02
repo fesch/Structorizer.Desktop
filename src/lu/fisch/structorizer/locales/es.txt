@@ -159,7 +159,7 @@
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
  *
- *        Must IF..etc, CASE statements be translated? No "beautiful" single word for CASE & ENDLESS.
+ *      Must IF, CASE etc. statements be translated? No "beautiful" single word for CASE & ENDLESS.
  *
  ******************************************************************************************************/
 >>>
@@ -1216,7 +1216,7 @@ Surface.msgGroup.text=grupo «%»
 Surface.msgGroupExists.text=¡Grupo con nombre «%» ya existe!
 Surface.titleRenameGroup.text=Renombrar grupo «%1» a «%2»
 Surface.msgRenameArrFile.text=¿Renombrar archivo de colocación\n"%1"\na "%2"?
-Surface.msgRenamingFailed.text=¡No fue posible renombra el archivo de la colocación a "%"!\n¡Acción cancelada!
+Surface.msgRenamingFailed.text=No fue posible renombrar el archivo de la colocación a "%".\n¡Acción cancelada!
 
 // Arranger index
 ArrangerIndex.popupIndexGet.text=Coger diagrama
@@ -1243,7 +1243,7 @@ ArrangerIndex.lblStaleReferences.text=Referencias no satisfechas
 ArrangerIndex.lblModifications.text=Modificaciones no guardados
 ArrangerIndex.lblExternSubroutines.text=Requeridas @os externas
 ArrangerIndex.lblExternIncludables.text=Requeridos @ps externos 
-ArrangerIndex.btnShowGroup.tooltip=Visibilidad individual del grupo en Arranger
+ArrangerIndex.btnShowGroup.tooltip=Activar/desactivar la visibilidad individual del grupo en Arranger
 ArrangerIndex.btnGroupColors.*.tooltip=Reemplaza el color del grupo por el color de este botón
 ArrangerIndex.msgDefaultGroupName.text=(Grupo de incumplimiento)
 ArrangerIndex.msgGroupsAndRootsSelected.text=Tanto grupos como diagramas seleccionados. Remover algo de ambos niveles a la vez puede resultar en efectos inesperados.
