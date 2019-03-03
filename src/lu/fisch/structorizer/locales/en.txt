@@ -118,6 +118,7 @@
  *      Kay Gürtzig     2019-01-04      Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig     2019-02-16      Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -914,7 +915,7 @@ ParserPreferences.lblFor.tooltip=Keystrings separating the @e loop header entrie
 ParserPreferences.lblForStep.text=Step separator
 ParserPreferences.lblForIn.text=@f loop
 ParserPreferences.lblForIn.tooltip=Keystrings separating @f loop header entries
-ParserPreferences.edtForInPre.tooltip=May be equal to that of @e loops (or remain empty - with same effect).
+ParserPreferences.edtForInPre.tooltip=May be equal to that of @e loops.
 ParserPreferences.edtForInPost.tooltip=Must differ from all other keywords configured here!
 ParserPreferences.lblWhile.text=@g loop
 ParserPreferences.lblWhile.tooltip=Keystrings around the condition in @g loop headers
@@ -932,6 +933,7 @@ ParserPreferences.lblInput.tooltip=Prefix keyword for input instructions
 ParserPreferences.lblOutput.text=Output
 ParserPreferences.lblOutput.tooltip=Prefix keyword for output instructions
 ParserPreferences.chkIgnoreCase.text=Ignore case
+ParserPreferences.btnFromLocale.text=Fetch locale-specific defaults
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
@@ -1364,3 +1366,23 @@ ElementNames.localizedNames.12.text=Diagram
 ElementNames.localizedNames.13.text=Main program
 ElementNames.localizedNames.14.text=Sub-routine
 ElementNames.localizedNames.15.text=Includable
+
+-----> Keywords
+ParserKeywords.AltPre.text=if
+ParserKeywords.AltPost.text=
+ParserKeywords.Input.text=INPUT
+ParserKeywords.Output.text=OUTPUT
+ParserKeywords.CasePre.text=case
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=for
+ParserKeywords.ForPost.text=to
+ParserKeywords.ForStep.text=step
+ParserKeywords.ForInPre.text=foreach
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=while
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=until
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=leave
+ParserKeywords.JumpReturn.text=return
+ParserKeywords.JumpExit.text=exit

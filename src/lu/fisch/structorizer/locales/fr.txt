@@ -58,6 +58,7 @@
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name placeholders introduced
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -517,7 +518,7 @@ FontChooser.btnOK.tooltip=Valider votre choix.
 Colors.title=Préférences des couleurs
 Colors.lblColors.*.text=Couleur [#]
 Colors.lblColors.*.tooltip=Votre choix pour la couleur n° [#].
-Colors.color.*.tooltip=Cliquer pour éditer ...
+Colors.colors.*.tooltip=Cliquer pour éditer ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Valider votre choix.
 
@@ -660,3 +661,23 @@ ElementNames.localizedNames.12.text=Diagramme
 ElementNames.localizedNames.13.text=Programme
 ElementNames.localizedNames.14.text=Sous programme
 ElementNames.localizedNames.15.text=Includable
+
+-----> Keywords
+ParserKeywords.AltPre.text=si
+ParserKeywords.AltPost.text=
+ParserKeywords.Input.text=lire
+ParserKeywords.Output.text=écrire
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=pour
+ParserKeywords.ForPost.text=à
+ParserKeywords.ForStep.text=, pas = 
+ParserKeywords.ForInPre.text=pour tout
+ParserKeywords.ForInPost.text=en
+ParserKeywords.WhilePre.text=tant que
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=jusqu'à
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=leave
+ParserKeywords.JumpReturn.text=return
+ParserKeywords.JumpExit.text=exit

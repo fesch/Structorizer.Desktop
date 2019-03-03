@@ -48,6 +48,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
  *      Kay Gürtzig     2017.10.28      Method trim() added.
  *      Kay Gürtzig     2019-02-15      Method isEmpty() added
+ *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
  *
  ******************************************************************************************************
  *
@@ -164,22 +165,24 @@ public class StringList {
 	 */
 	public static StringList explodeFirstOnly(String _source, String _by)
 	{
-		String[] multi = _source.split(_by);
-		StringList sl = new StringList();
-
-                String first = multi[0];
-                sl.add(first);
-                
-                if(multi.length>1)
-                {
-                    String second = multi[1];
-                    for(int i=2;i<multi.length;i++)
-                    {
-                    	second+="="+multi[i];
-                    }
-                    sl.add(second);
-                }
-
+		// START KGU 2019-03-03: Bugfix explodeFirstOnly("test=, pas =", "=") returned {"test", ", pas "} instead of {"test", ", pas ="}
+		//String[] multi = _source.split(_by);
+		//StringList sl = new StringList();
+		//
+		//String first = multi[0];
+		//sl.add(first);
+		//
+		//if(multi.length>1)
+		//{
+		//	String second = multi[1];
+		//	for(int i=2;i<multi.length;i++)
+		//	{
+		//		second+="="+multi[i];
+		//	}
+		//	sl.add(second);
+		//}
+		StringList sl = new StringList(_source.split(_by, 2));
+		// END KGU 2019-03-03
 		return sl;
 	}
 

@@ -123,6 +123,7 @@
  *      Kay Gürtzig         2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig         2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -918,7 +919,7 @@ ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im @e-Schleifenkopf.
 ParserPreferences.lblForStep.text=Schrittweite
 ParserPreferences.lblForIn.text=@f-Schleife
 ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von @f-Schleifen.
-ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein (oder leer bleiben mit gleicher Wirkung)
+ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein
 ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Kennwörtern unterscheiden!
 ParserPreferences.lblWhile.text=@g-Schleife
 ParserPreferences.lblWhile.tooltip=Kennwörter im @g-Schleifenkopf.
@@ -936,6 +937,7 @@ ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
 ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
 ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
+ParserPreferences.btnFromLocale.text=Sprachspezifische Standardwörter
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
@@ -1368,3 +1370,24 @@ ElementNames.localizedNames.12.text=Diagramm
 ElementNames.localizedNames.13.text=Hauptprogramm
 ElementNames.localizedNames.14.text=Unterprogramm
 ElementNames.localizedNames.15.text=Einbeziehbar
+
+
+-----> Keywords
+ParserKeywords.AltPre.text=wenn
+ParserKeywords.AltPost.text=
+ParserKeywords.Input.text=Eingabe
+ParserKeywords.Output.text=Ausgabe
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=für
+ParserKeywords.ForPost.text=bis
+ParserKeywords.ForStep.text=Schritt
+ParserKeywords.ForInPre.text=für alle
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=solange
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=bis
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=verlasse
+ParserKeywords.JumpReturn.text=zurück
+ParserKeywords.JumpExit.text=beende

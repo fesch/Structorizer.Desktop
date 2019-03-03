@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-01-07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017-01-09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2018-12-29      Issue #658: Configuration of leave, return, and exit keywords enabled
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New button + popup menu for locale-specific keyword sets
  *
  ******************************************************************************************************
  *
@@ -54,9 +55,12 @@ package lu.fisch.structorizer.gui;
 
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 
 import javax.swing.*;
@@ -125,6 +129,10 @@ public class ParserPreferences extends LangDialog {
 	// START KGU 2016-03-25: New general option for handling these keywords
 	protected JCheckBox chkIgnoreCase;
 	// END KGU 2016-03-25
+	// START KGU#323 2019-03-03: Enh. #327
+	protected JButton btnFromLocale;
+	protected JPopupMenu popupLocales = null;
+	// END KGU#323 2019-03-03
 	
 	// START KGU 2016-03-25: Labels replaced by light-weight objects
 	//protected JLabel lblErrorSign;
@@ -217,6 +225,9 @@ public class ParserPreferences extends LangDialog {
 		// START KGU 2016-03-25: New general option for handling these keywords
 		chkIgnoreCase = new JCheckBox();
 		// END KGU 2016-03-25
+		// START KGU#323 2019-03-03: Enh. #327  New option to load defaults from a locale
+		btnFromLocale = new JButton();
+		// END KGU323 2019-03-03
 
 		lblErrorSign = new LangTextHolder("Your are not allowed to use the character ':' in any parser string!");
 		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
@@ -354,6 +365,7 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(lblInputOutput);
 				contentPanel.add(edtInput);
 				contentPanel.add(edtOutput);
+
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 			
@@ -366,19 +378,37 @@ public class ParserPreferences extends LangDialog {
 			//======== buttonBar ========
 			{
 				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
-				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+//				buttonBar.setLayout(new GridBagLayout());
+//				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+//				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				buttonBar.setLayout(new BoxLayout(buttonBar, BoxLayout.Y_AXIS));
+				JPanel buttonRow1 = new JPanel();
+				buttonRow1.setLayout(new BoxLayout(buttonRow1, BoxLayout.X_AXIS));
+				JPanel buttonRow2 = new JPanel();
+				buttonRow2.setLayout(new BoxLayout(buttonRow2, BoxLayout.X_AXIS));
+				buttonBar.add(buttonRow1);
+				buttonBar.add(Box.createVerticalStrut(5));
+				buttonBar.add(buttonRow2);
 
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
-				buttonBar.add(chkIgnoreCase);
+//				buttonBar.add(chkIgnoreCase);
+				buttonRow1.add(chkIgnoreCase);
 				
+				//---- locale button
+				// START KGU#323 2019-03-03: Enh. #327  New option to load defaults from a locale
+				buttonRow1.add(Box.createHorizontalGlue());
+				btnFromLocale.setText("Fetch locale-specific defaults");
+				buttonRow1.add(btnFromLocale);
+				// END KGU323 2019-03-03
+
 				//---- okButton ----
 				btnOK.setText("OK");
-				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-					new Insets(0, 0, 5, 0), 0, 0));
+//				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+//					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+//					new Insets(0, 0, 5, 0), 0, 0));
+				buttonRow2.add(Box.createHorizontalGlue());
+				buttonRow2.add(btnOK);
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -434,16 +464,30 @@ public class ParserPreferences extends LangDialog {
 		edtInput.addKeyListener(keyListener);
 		edtOutput.addKeyListener(keyListener);
 		btnOK.addKeyListener(keyListener);
+		// START KGU#323 2019-03-03: Enh. #327
+		btnFromLocale.addKeyListener(keyListener);
+		// END KGU#323 2019-03-03
 		
 		// add the ACTION-listeners
 		ActionListener actionListener = new ActionListener()
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				done();
+				// START KGU#323 2019-03-03: Enh. #327
+				//done();
+				if (event.getSource() == btnOK) {
+					done();
+				}
+				else if (event.getSource() == btnFromLocale) {
+					showLocalePulldown();
+				}
+				// END KGU#323 2019-03-03
 			}
 		};
 		btnOK.addActionListener(actionListener);
+		// START KGU#323 2019-03-03: Enh. #327
+		btnFromLocale.addActionListener(actionListener);
+		// END KGU#323 2019-03-03
 	}
 
 	public void done()
@@ -508,11 +552,82 @@ public class ParserPreferences extends LangDialog {
 		// END KGU#61/KGU#628 2018-12-28
 		else
 		{
+			// START KGU#323 2019-03-03: Enh. #327
+			if (popupLocales != null) {
+				// Allow to free the memory space used for the temporarily loaded locales
+				Locales.getInstance().removeLocales(false);
+			}
+			// END KGU#323 2019-03-03
 			setVisible(false);
 			OK=true;
-		}    
+		}
 
 	}
+
+	// START KGU#323 2019-03-03: Enh. #327
+	protected void showLocalePulldown() {
+		if (popupLocales == null) {
+			Locales locales = Locales.getInstance();
+			Locale currentLocale = locales.getLocale(locales.getLoadedLocaleName());
+			popupLocales = new JPopupMenu();
+			for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
+			{
+				final String locName = Locales.LOCALES_LIST[iLoc][0];
+				String locDescription = Locales.LOCALES_LIST[iLoc][1];
+				if (locDescription != null)
+				{
+					if (hasParserKeywords(locales.getLocale(locName))) {
+						String caption = currentLocale.getValue("Structorizer", "Menu.menuPreferencesLanguageItems." + locName + ".text");
+						if (caption == null || caption.isEmpty()) {
+							caption = locDescription;
+						}
+						ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+						JMenuItem item = new JMenuItem(caption, icon);
+						item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { fetchFromLang(locName); } } );
+						popupLocales.add(item);
+					}
+					else {
+						locales.removeLocale(locName, false);
+					}
+				}
+			}
+		}
+		Point screenLoc1 = btnFromLocale.getLocationOnScreen();
+		Point screenLoc0 = this.getContentPane().getLocationOnScreen();
+		popupLocales.show(this, screenLoc1.x - screenLoc0.x + btnFromLocale.getWidth(), screenLoc1.y - screenLoc0.y);
+	}
+
+	private boolean hasParserKeywords(Locale locale) {
+		for (String key: locale.getKeys("Keywords")) {
+			if (!locale.getValue("Keywords", key).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	protected void fetchFromLang(String locName) {
+		Locale locale = Locales.getInstance().getLocale(locName);
+		for (String key: locale.getKeys("Keywords")) {
+			String keyword = locale.getValue("Keywords", key);
+			//if (!keyword.isEmpty()) {
+				String compName = key.split("\\.")[1];
+				Field field = null;
+				try {
+					field = this.getClass().getDeclaredField("edt" + compName);
+					field.setAccessible(true);
+					Object target = field.get(this);
+					if (target instanceof JTextField) {
+						((JTextField)target).setText(keyword);
+					}
+				} catch (Exception e) {
+					System.err.println(e);
+				}
+			//}
+		}
+	}
+
+	// END KGU#323 2019-03-03
 
 	// START KGU#165 2016-03-25
 	// START KGU#628 2018-12-29: Enh. #658 - we need more independent checks

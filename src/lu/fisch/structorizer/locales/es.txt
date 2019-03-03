@@ -123,6 +123,7 @@
  *      Kay Gürtzig     2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig     2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig     2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -548,7 +549,6 @@ AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mund
 AnalyserPreferences.okButton.text=Aceptar
 
 
-
 -----[ Diagram ]-----
 // Buttons
 // I/O
@@ -919,7 +919,7 @@ ParserPreferences.lblFor.tooltip=Palabras claves separando los parametros del bu
 ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblForIn.text=Bucle @f
 ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle @f.
-ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle @d (o quedar vacío - con mismo efecto).
+ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle @e.
 ParserPreferences.edtForInPost.tooltip=¡Tiene que diferir de todas las restantes palabras claves del Analizador!
 ParserPreferences.lblWhile.text=Bucle @g
 ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle @g
@@ -937,6 +937,7 @@ ParserPreferences.lblInput.tooltip=Palabra clave calificando una instrucción de
 ParserPreferences.lblOutput.text=Salida
 ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instrucción de salida
 ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
+ParserPreferences.btnFromLocale.text=Recoger palabras claves locales
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de una palabra clave!
@@ -1367,3 +1368,23 @@ ElementNames.localizedNames.12.text=Diagrama
 ElementNames.localizedNames.13.text=Programa principal
 ElementNames.localizedNames.14.text=Subrutina
 ElementNames.localizedNames.15.text=Incluíble
+
+-----> Keywords
+ParserKeywords.AltPre.text=si
+ParserKeywords.AltPost.text=
+ParserKeywords.Input.text=entrada
+ParserKeywords.Output.text=salida
+ParserKeywords.CasePre.text=caso
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=para
+ParserKeywords.ForPost.text=hasta
+ParserKeywords.ForStep.text=paso
+ParserKeywords.ForInPre.text=para cada
+ParserKeywords.ForInPost.text=en
+ParserKeywords.WhilePre.text=mientras
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=hasta que
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=salir
+ParserKeywords.JumpReturn.text=retornar
+ParserKeywords.JumpExit.text=abortar
