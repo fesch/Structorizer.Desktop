@@ -6,9 +6,9 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
+- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- Copying diagrams as image to the clipboard may fail with some OS/JRE combination (#685).
 
 Current development version: 3.29-05 (2019-03-04)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -51,6 +51,7 @@ Current development version: 3.29-05 (2019-03-04)
 - 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
 - 05: Enh. #327: Locale-specific Parser keyword sets enabled [newboerg]2
 - 05: Bugfix #631: Commas in pic clauses now preserved on COBOL import <2>
+- 05: Issue #407: Efforts to import COBOL conditions like "a = 8 or 9" <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

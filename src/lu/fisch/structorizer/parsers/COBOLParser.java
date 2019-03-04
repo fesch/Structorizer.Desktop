@@ -95,6 +95,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-12-17      Issue #631 - Implementation for all three flavours of INSPECT statement
  *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
  *      Kay Gürtzig     2019-03-04      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
+ *      Kay Gürtzig     2019-03-04      Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
  *
  ******************************************************************************************************
  *
@@ -5331,6 +5332,10 @@ public class COBOLParser extends CodeParser
 	// END KGU#614 2018-12-17
 
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
+	// START KGU#402 2019-03-04: Issue #407
+	private static final Matcher STRING_MATCHER = Pattern.compile("^([\"][^\"]*[\"]|['][^']*['])$").matcher("");
+	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[0-9]+$").matcher("");
+	// END KGU#402 2019-03-04
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
@@ -8429,7 +8434,7 @@ public class COBOLParser extends CodeParser
 	 * @throws ParserCancelled
 	 */
 	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
-		// We must resolve expressions like "expr1 = expr2 or > expr3".
+		// We must resolve expressions like "expr1 = expr2 or > expr3" or "expr1 = expr2 or expr3".
 		// Unfortunately the <condition> node is not defined as hierarchical expression
 		// tree dominated by operator nodes but as left-recursive "list".
 		// We should transform the left-recursive <expr_tokens> list into a linear
@@ -8459,6 +8464,9 @@ public class COBOLParser extends CodeParser
 		LinkedList<Token> expr_tokens = new LinkedList<Token>();
 		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
 		String cond = "";
+		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+		String lastRelOp = null;
+		// END KGU#402 2019-03-04
 		//String cond = this.getContent_R(_reduction, "").trim();
 		// Test if cond starts with a comparison operator. In this case add lastSubject...
 		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
@@ -8516,6 +8524,9 @@ public class COBOLParser extends CodeParser
 				if (checkedVar != null && checkedVar.isConditionName()) {
 					tokStr = checkedVar.getValuesAsExpression(true);
 				}
+				else if (!_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
+					lastRelOp = tokStr.trim();
+				}
 			}
 			else {
 				tokStr = tok.asString();
@@ -8533,12 +8544,28 @@ public class COBOLParser extends CodeParser
 						}
 					}
 				}
+				else if (!_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
+					lastRelOp = tokStr.trim();
+				}
 			}
 			if (!tokStr.trim().isEmpty()) {
-				if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
-					// Place the last comparison subject to accomplish the next incomplete expression
-					cond += " " + _lastSubject;
+				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+				//if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
+				//	// Place the last comparison subject to accomplish the next incomplete expression
+				//	cond += " " + _lastSubject;
+				//}
+				if (afterLogOpr) {
+					if (isComparisonOpRuleId(ruleId)) {
+						// Place the last comparison subject to accomplish the next incomplete expression
+						cond += " " + _lastSubject;
+						lastRelOp = tokStr.trim();
+					}
+					else if (lastRelOp != null && isPrimitiveLiteral(tokStr) && !_lastSubject.isEmpty()) {
+						// What we do here is pretty vague. To be more exact, we would have to analyse the next token...
+						cond += " " + _lastSubject + " " + lastRelOp;
+					}
 				}
+				// END KGU#402 2019-03-04
 				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
 				if (afterLogOpr) {
 					tokStr = tokStr.toLowerCase();
@@ -8557,6 +8584,18 @@ public class COBOLParser extends CodeParser
 //		}
 		return cond.trim();	// This is just an insufficient first default approach
 	}
+
+	// START KGU#402 2019-03-04: Issue #407 - More heuristics for abbreviated comparison like "a = 4 or 7"
+	private boolean isPrimitiveLiteral(String tokStr) {
+		return STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches();
+	}
+	
+	private boolean isComparisonOperator(String tokStr) {
+		tokStr = tokStr.trim();
+		// Apparently there is no operator symbol for unequality
+		return tokStr.equals("=") || tokStr.equals("<") || tokStr.equals(">") || tokStr.equals("<=") || tokStr.equals(">=");
+	}
+	// END KGU#402 2019-03-04
 
 	private final boolean isComparisonOpRuleId(int ruleId)
 	{
