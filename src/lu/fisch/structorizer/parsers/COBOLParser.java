@@ -96,6 +96,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
  *      Kay Gürtzig     2019-03-04      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *      Kay Gürtzig     2019-03-04      Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
+ *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
  *
  ******************************************************************************************************
  *
@@ -8524,6 +8525,7 @@ public class COBOLParser extends CodeParser
 				if (checkedVar != null && checkedVar.isConditionName()) {
 					tokStr = checkedVar.getValuesAsExpression(true);
 				}
+				// START KGU#402 2019-03-04: Issue #407 - we may have to complete conds like "a = 4 or 7"
 				else if (!_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
 					lastRelOp = tokStr.trim();
 				}
@@ -8544,9 +8546,11 @@ public class COBOLParser extends CodeParser
 						}
 					}
 				}
+				// START KGU#402 2019-03-04: Issue #407 - FIXME this patch may be superfluous
 				else if (!_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
 					lastRelOp = tokStr.trim();
 				}
+				// END KGU#402 2019-03-04
 			}
 			if (!tokStr.trim().isEmpty()) {
 				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
@@ -9366,10 +9370,17 @@ public class COBOLParser extends CodeParser
 			else {
 				localNode.addElement(instr);
 			}
-			if (var.isArray()) {
-				typeName += "[" + var.getOccursString() + "]";
-			}
+			// START KGU#674 2019-03-04: Bugfix #695? - this seemed to be misplaced - put out of the branch
+			//if (var.isArray()) {
+			//	typeName += "[" + var.getOccursString() + "]";
+			//}
+			// END KGU#674 2019-03-04
 		}
+		// START KGU#674 2019-03-04: Bugfix #695? Arrays of basic types weren't reflected
+		if (var.isArray()) {
+			typeName += "[" + var.getOccursString() + "]";
+		}
+		// END KGU#674 2019-03-04
 		return typeName;
 	}
 

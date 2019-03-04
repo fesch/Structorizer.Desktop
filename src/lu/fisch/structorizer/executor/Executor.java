@@ -173,6 +173,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
  *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
  *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
+ *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
  *
  ******************************************************************************************************
  *
@@ -2546,11 +2547,13 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		if (!delayed)
-		// END KGU#448 2017-10-28
-		{
-			delay();
-		}
+		// START KGU#675 2019-03-04: This seemed to be a relic from times when execution paused after the current element
+//		if (!delayed)
+//		// END KGU#448 2017-10-28
+//		{
+//			delay();
+//		}
+		// END KGU#675 2019-03-04
 		if (delay != 0)
 		{
 			diagram.redraw();
