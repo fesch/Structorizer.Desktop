@@ -94,6 +94,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-12-14      Issue #631 - removal of ';' and ',', first preparations for INSPECT import
  *      Kay Gürtzig     2018-12-17      Issue #631 - Implementation for all three flavours of INSPECT statement
  *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
+ *      Kay Gürtzig     2019-03-04      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *
  ******************************************************************************************************
  *
@@ -4293,11 +4294,25 @@ public class COBOLParser extends CodeParser
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ")");
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ";");
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ",");
+			// START KGU#672 2019-03-04: Bugfix #631 commas must not be eliminated within pic clauses
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " PICTURE ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " Picture ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " picture ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " PIC ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " Pic ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " pic ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " VALUE ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " Value ");
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " value ");
+			// END KGU#672 2019-03-04
 			StringList tokens = new StringList();
 			StringList literals = new StringList();
 			boolean separatorsRemoved = false;
 			int parenthLevel = 0;
 			int posDelim = -1;
+			// START KGU#672 2019-03-04: Bugfix #631 commas must not be eliminated within pic clauses
+			boolean inPic = false;
+			// END KGU#672 2019-03-04
 			for (int i = 0; i < tokens0.count(); i++) {
 				String token = tokens0.get(i);
 				if (posDelim < 0) {
@@ -4305,13 +4320,24 @@ public class COBOLParser extends CodeParser
 						posDelim = i;
 						token = null;
 					}
+					// START KGU#672 2019-03-04: Bugfix #631 commas must not be eliminated within pic clauses
+					else if (token.equalsIgnoreCase(" pic ") || token.equalsIgnoreCase(" picture ")) {
+						inPic = true;
+					}
+					else if (inPic && (token.equalsIgnoreCase(" value ") || i == tokens0.count()-1)) {
+						inPic = false;
+					}
+					// END KGU#672 2019-03-04
 					else if (token.equals("(")) {
 						parenthLevel++;
 					}
 					else if (token.equals(")") && parenthLevel > 0) {
 						parenthLevel--;
 					}
-					else if (token.equals(";") || parenthLevel == 0 && token.equals(",")) {
+					// START KGU#672 2019-03-04: Bugfix #631 commas must not be eliminated within pic clauses
+					//else if (token.equals(";") || parenthLevel == 0 && token.equals(",")) {
+					else if (token.equals(";") || parenthLevel == 0 && !inPic && token.equals(",")) {
+					// END KGU#672 2019-03-04
 						token = " ";	// Multiple spaces will be removed later
 						separatorsRemoved = true;
 					}

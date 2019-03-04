@@ -10,7 +10,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - Copying diagrams as image to the clipboard may fail with some OS/JRE combination (#685).
 
-Current development version: 3.29-05 (2019-03-03)
+Current development version: 3.29-05 (2019-03-04)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -50,6 +50,7 @@ Current development version: 3.29-05 (2019-03-03)
 - 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
 - 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
 - 05: Enh. #327: Locale-specific Parser keyword sets enabled [newboerg]2
+- 05: Bugfix #631: Commas in pic clauses now preserved on COBOL import <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
@@ -157,7 +158,7 @@ Version: 3.29 (2019-01-07)
 - 10: Bugfix #624: Translation of FOR loops into Python range() was wrong <2>
 - 11: Bugfix #626: Issues with string literals on COBOL import <Simon Sobisch>
 - 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
-- 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
+- 11: Enh. #419, #446: Import option for automatic line breaking [S. Sobisch]2
 - 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
 - 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2
 - 11: Issue #630: COBOL import now aborts on REPLACE/COPY with hint [S. Sobisch]2
