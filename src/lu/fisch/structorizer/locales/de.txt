@@ -939,6 +939,7 @@ ParserPreferences.lblOutput.text=Ausgabe
 ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
 ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
 ParserPreferences.btnFromLocale.text=Sprachspezifische Standardwörter
+ParserPreferences.btnFromLocale.tooltip=Die Schlüsselwörter sind unabhängig von der Dialogsprache. Sie können lokalisierte Schlüsselwörter jeder der bei Drücken dieser Schaltfläche angebotenen Sprachen laden.
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!

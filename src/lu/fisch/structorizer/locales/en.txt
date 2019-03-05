@@ -935,6 +935,7 @@ ParserPreferences.lblOutput.text=Output
 ParserPreferences.lblOutput.tooltip=Prefix keyword for output instructions
 ParserPreferences.chkIgnoreCase.text=Ignore case
 ParserPreferences.btnFromLocale.text=Fetch locale-specific defaults
+ParserPreferences.btnFromLocale.tooltip=The keyword set is independent from the GUI locale. You may load keywords from an arbitrary locale offered when this button is pressed.
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!

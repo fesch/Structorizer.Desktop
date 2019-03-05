@@ -576,7 +576,13 @@ public class ParserPreferences extends LangDialog {
 
 	}
 
-	// START KGU#323 2019-03-03: Enh. #327
+	// START KGU#323 2019-03-03: Enh. #327 Offer localized sets of parser keywords
+	/**
+	 * Raises a pop-up menu next to the button "fetch from locale" containing menu items for
+	 * every locale providing at least one non-empty parser keyword in section "Keywords".
+	 * If the pop-up menu hadn't been realised before then it will be built here (lazy
+	 * initialisation).
+	 */
 	protected void showLocalePulldown() {
 		if (popupLocales == null) {
 			Locales locales = Locales.getInstance();
@@ -603,14 +609,16 @@ public class ParserPreferences extends LangDialog {
 					}
 				}
 			}
-			// This is a desparate attempt to circumvent the occasional modality trap
-			this.getContentPane().add(popupLocales);
 		}
-		Point screenLoc0 = this.getContentPane().getLocationOnScreen();
-		Point screenLoc1 = btnFromLocale.getLocationOnScreen();
-		popupLocales.show(this, screenLoc1.x - screenLoc0.x + btnFromLocale.getWidth(), screenLoc1.y - screenLoc0.y);
+		popupLocales.show(btnFromLocale, btnFromLocale.getWidth(), 0);
 	}
 
+	/**
+	 * Checks if the given {@code locale} provides at least one non-empty localised value
+	 * in the "Keywords" section.
+	 * @param locale
+	 * @return true if we may expect some keyword entry from the locale 
+	 */
 	private boolean hasParserKeywords(Locale locale) {
 		for (String key: locale.getKeys("Keywords")) {
 			if (!locale.getValue("Keywords", key).isEmpty()) {
@@ -620,6 +628,11 @@ public class ParserPreferences extends LangDialog {
 		return false;
 	}
 
+	/**
+	 * Fetches all available keywords matching one of the created edt* {@link JTextField}s
+	 * from the {@link Locale} specified by {@code localeName}.
+	 * @param locName - name of the source locale (which is not necessarily the current locale)
+	 */
 	protected void fetchFromLang(String locName) {
 		Locale locale = Locales.getInstance().getLocale(locName);
 		for (String key: locale.getKeys("Keywords")) {
