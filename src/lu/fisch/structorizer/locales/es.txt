@@ -657,7 +657,6 @@ Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
 
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Por favor ingresa un texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentario
@@ -732,7 +731,9 @@ InputBoxFor.msgDiscardData.text=¡Alterando el estilo del bucle la mayoría de l
 InputBoxFor.msgAttention.text=¡CUIDADO!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Editar diagrama...
+InputBoxRoot.title[elementType:Root]=Editar @n
+InputBoxRoot.title[elementType:Function]=Editar @o
+InputBoxRoot.title[elementType:Includable]=Editar @p
 InputBoxRoot.lblIncludeList.text=Diagramas a ser incluídos:
 InputBoxRoot.txtIncludeList.tooltip=Nombres de diagramas que deben ser incluídos antes de ejecutar este diagrama (sepáralos con coma o salto de linea).
 InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
@@ -1372,15 +1373,13 @@ ElementNames.localizedNames.15.text=Incluíble
 -----> Keywords
 ParserKeywords.AltPre.text=si
 ParserKeywords.AltPost.text=
-ParserKeywords.Input.text=entrada
-ParserKeywords.Output.text=salida
-ParserKeywords.CasePre.text=caso
+ParserKeywords.CasePre.text=selección
 ParserKeywords.CasePost.text=
 ParserKeywords.ForPre.text=para
 ParserKeywords.ForPost.text=hasta
 ParserKeywords.ForStep.text=paso
 ParserKeywords.ForInPre.text=para cada
-ParserKeywords.ForInPost.text=en
+ParserKeywords.ForInPost.text=de
 ParserKeywords.WhilePre.text=mientras
 ParserKeywords.WhilePost.text=
 ParserKeywords.RepeatPre.text=hasta que
@@ -1388,3 +1387,5 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=salir
 ParserKeywords.JumpReturn.text=retornar
 ParserKeywords.JumpExit.text=abortar
+ParserKeywords.Input.text=entrada
+ParserKeywords.Output.text=salida

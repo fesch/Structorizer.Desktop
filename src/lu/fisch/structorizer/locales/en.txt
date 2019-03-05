@@ -349,7 +349,7 @@ Menu.msgBreakTriggerPrompt.text=Specify an execution count triggering a break (0
 Menu.msgBreakTriggerIgnored.text=Input ignored - must be a cardinal number.
 Menu.msgOpenLangFile.text=Open language file
 Menu.msgLangFile.text=Structorizer language file
-Menu.msgGotoHomepage.text=Go to % to look for updates<br>and news about Structorizer.
+Menu.msgGotoHomepage.text=Go to % to look for updates<br/>and news about Structorizer.
 Menu.msgTitleError.text=Error
 Menu.msgTitleWarning.text=WARNING
 Menu.msgTitleLoadingError.text=Loading Error
@@ -654,7 +654,8 @@ Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
 
 -----[ InputBox ]-----
-InputBox.title=
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Please enter a text
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comment
@@ -673,8 +674,6 @@ InputBox.lblText.text[elementType:While]=Please enter the entry condition
 InputBox.lblText.text[elementType:Repeat]=Please enter the condition to leave
 InputBox.lblText.text[elementType:Case]=Please enter the choice expression and the case constants (one per line)
 InputBox.lblText.text[elementType:Parallel]=Number of parallel threads
-InputBox.title[elementType:Root]=
-InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Add new @a ...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Add new @b statement ...
 InputBox.title[elementType:Case,getInsertionType():insert]=Add new @c statement ...
@@ -729,7 +728,9 @@ InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of
 InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=
+InputBoxRoot.title[elementType:Root]=Edit @n
+InputBoxRoot.title[elementType:Function]=Edit @o
+InputBoxRoot.title[elementType:Includable]=Edit @p
 InputBoxRoot.lblIncludeList.text=Diagrams to be included
 InputBoxRoot.txtIncludeList.tooltip=Names of diagrams to be included on execution start (separated by commas or newlines).
 InputBoxRoot.lblText.text=Diagram name / function signature
@@ -1370,8 +1371,6 @@ ElementNames.localizedNames.15.text=Includable
 -----> Keywords
 ParserKeywords.AltPre.text=if
 ParserKeywords.AltPost.text=
-ParserKeywords.Input.text=INPUT
-ParserKeywords.Output.text=OUTPUT
 ParserKeywords.CasePre.text=case
 ParserKeywords.CasePost.text=
 ParserKeywords.ForPre.text=for
@@ -1386,3 +1385,5 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=leave
 ParserKeywords.JumpReturn.text=return
 ParserKeywords.JumpExit.text=exit
+ParserKeywords.Input.text=INPUT
+ParserKeywords.Output.text=OUTPUT

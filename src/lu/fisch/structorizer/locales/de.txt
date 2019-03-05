@@ -352,7 +352,7 @@ Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Hal
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
 Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
-Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
+Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br/>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
 Menu.msgTitleWarning.text=WARNUNG
 Menu.msgTitleLoadingError.text=Fehler beim Laden
@@ -657,7 +657,6 @@ Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
 
 -----[ InputBox ]-----
-InputBox.title=Element bearbeiten
 InputBox.lblText.text=Einzugebender Text
 InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
 InputBox.lblComment.text=Einzugebender Kommentar
@@ -732,7 +731,9 @@ InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die
 InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.title[elementType:Root]=Angaben zum @n bearbeiten
+InputBoxRoot.title[elementType:Function]=Angaben zum @o bearbeiten
+InputBoxRoot.title[elementType:Includable]=Angaben zum @pen Diagramm bearbeiten
 InputBoxRoot.lblIncludeList.text=Einzubeziehende Diagramme
 InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einzubinden sind (durch Kommas oder Zeilenschaltung getrennt).
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
@@ -1375,8 +1376,6 @@ ElementNames.localizedNames.15.text=Einbeziehbar
 -----> Keywords
 ParserKeywords.AltPre.text=wenn
 ParserKeywords.AltPost.text=
-ParserKeywords.Input.text=Eingabe
-ParserKeywords.Output.text=Ausgabe
 ParserKeywords.CasePre.text=
 ParserKeywords.CasePost.text=
 ParserKeywords.ForPre.text=für
@@ -1391,3 +1390,5 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=verlasse
 ParserKeywords.JumpReturn.text=zurück
 ParserKeywords.JumpExit.text=beende
+ParserKeywords.Input.text=Eingabe
+ParserKeywords.Output.text=Ausgabe

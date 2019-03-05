@@ -94,9 +94,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-12-14      Issue #631 - removal of ';' and ',', first preparations for INSPECT import
  *      Kay Gürtzig     2018-12-17      Issue #631 - Implementation for all three flavours of INSPECT statement
  *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
- *      Kay Gürtzig     2019-03-04      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *      Kay Gürtzig     2019-03-04      Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
  *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
+ *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *
  ******************************************************************************************************
  *
@@ -4296,17 +4296,11 @@ public class COBOLParser extends CodeParser
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ")");
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ";");
 			tokens0 = StringList.explodeWithDelimiter(tokens0, ",");
-			// START KGU#672 2019-03-04: Bugfix #631 commas must not be eliminated within pic clauses
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " PICTURE ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " Picture ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " picture ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " PIC ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " Pic ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " pic ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " VALUE ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " Value ");
-			tokens0 = StringList.explodeWithDelimiter(tokens0, " value ");
-			// END KGU#672 2019-03-04
+			// START KGU#672 2019-03-05: Bugfix #631 commas must not be eliminated within pic clauses
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " PICTURE ", false);
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " PIC ", false);
+			tokens0 = StringList.explodeWithDelimiter(tokens0, " VALUE ", false);
+			// END KGU#672 2019-03-05
 			StringList tokens = new StringList();
 			StringList literals = new StringList();
 			boolean separatorsRemoved = false;
@@ -4665,7 +4659,7 @@ public class COBOLParser extends CodeParser
 				line = line.substring(0, leftOffs) + tokens.concatenate(" ");
 				// Restore temporarily substituted string literals
 				if (literals.count() > 0) {
-					tokens = StringList.explodeWithDelimiter(line, "'§STRINGLITERAL§'");
+					tokens = StringList.explodeWithDelimiter(line, "'§STRINGLITERAL§'", true);
 					for (int i = 0; i < literals.count(); i++) {
 						int nextPos = tokens.indexOf("'§STRINGLITERAL§'");
 						if (nextPos >= 0) {
@@ -9370,13 +9364,13 @@ public class COBOLParser extends CodeParser
 			else {
 				localNode.addElement(instr);
 			}
-			// START KGU#674 2019-03-04: Bugfix #695? - this seemed to be misplaced - put out of the branch
+			// START KGU#674 2019-03-04: Bugfix #695 - this seemed to be misplaced - put out of the branch
 			//if (var.isArray()) {
 			//	typeName += "[" + var.getOccursString() + "]";
 			//}
 			// END KGU#674 2019-03-04
 		}
-		// START KGU#674 2019-03-04: Bugfix #695? Arrays of basic types weren't reflected
+		// START KGU#674 2019-03-04: Bugfix #695 Arrays of basic types weren't reflected
 		if (var.isArray()) {
 			typeName += "[" + var.getOccursString() + "]";
 		}

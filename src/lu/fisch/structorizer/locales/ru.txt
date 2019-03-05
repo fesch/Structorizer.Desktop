@@ -592,15 +592,8 @@ Editor.popupDisable.text=Подавить
 // Debug
 Editor.popupBreakpoint.text=Сменить точку останова
 Editor.popupBreakTrigger.text=Счетчик точки останова
-// Arranger index
-Editor.popupIndexGet.text=Принести схему
-Editor.popupIndexAttributes.text=Показать свойства схемы ...
-Editor.popupIndexSave.text=Сохранить
-Editor.popupIndexRemove.text=Устранить
-Editor.popupIndexCovered.text=
-Editor.popupIndexRemoveAll.text=Устранить все
+
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Пожалуйста, введите текст
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Комментарий
@@ -675,7 +668,9 @@ InputBoxFor.msgDiscardData.text=
 InputBoxFor.msgAttention.text=
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Изменить сведения схемы
+InputBoxRoot.title[elementType:Root]=@n - Изменить сведения
+InputBoxRoot.title[elementType:Function]=@o - Изменить сведения
+InputBoxRoot.title[elementType:Includable]=@p - Изменить сведения
 InputBoxRoot.lblIncludeList.text=Схемы включены
 InputBoxRoot.txtIncludeList.tooltip=
 InputBoxRoot.lblText.text=Название схемы / интерфе́йс процедуры
@@ -1110,6 +1105,14 @@ Surface.msgInsertionConflict.1.text=
 Surface.msgInsertionConflict.2.text=
 Surface.msgOverwriteFile.text=Переписать существующий файл?
 Surface.msgConfirmOverwrite.text=Утвердить переписание
+
+-----[ Arranger index ]-----
+ArrangerIndex.popupIndexGet.text=Принести схему
+ArrangerIndex.popupIndexAttributes.text=Показать свойства схемы ...
+ArrangerIndex.popupIndexSave.text=Сохранить
+ArrangerIndex.popupIndexRemove.text=Устранить
+ArrangerIndex.popupIndexCovered.text=
+ArrangerIndex.popupIndexRemoveAll.text=Устранить все
 
 -----> Executor
 -----[ Control ]-----

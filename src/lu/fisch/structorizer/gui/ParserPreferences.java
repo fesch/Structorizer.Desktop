@@ -378,6 +378,7 @@ public class ParserPreferences extends LangDialog {
 			//======== buttonBar ========
 			{
 				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+				// START KGU#323 2019-03-03: Enh. #327 New button to fetch localized keywords had to be allocated
 //				buttonBar.setLayout(new GridBagLayout());
 //				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
 //				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
@@ -389,14 +390,17 @@ public class ParserPreferences extends LangDialog {
 				buttonBar.add(buttonRow1);
 				buttonBar.add(Box.createVerticalStrut(5));
 				buttonBar.add(buttonRow2);
+				// END KGU323 2019-03-03
 
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
+				// START KGU#323 2019-03-03: Enh. #327 New option to load defaults from a locale
 //				buttonBar.add(chkIgnoreCase);
 				buttonRow1.add(chkIgnoreCase);
+				// END KGU323 2019-03-03
 				
 				//---- locale button
-				// START KGU#323 2019-03-03: Enh. #327  New option to load defaults from a locale
+				// START KGU#323 2019-03-03: Enh. #327 New option to load defaults from a locale
 				buttonRow1.add(Box.createHorizontalGlue());
 				btnFromLocale.setText("Fetch locale-specific defaults");
 				buttonRow1.add(btnFromLocale);
@@ -404,11 +408,13 @@ public class ParserPreferences extends LangDialog {
 
 				//---- okButton ----
 				btnOK.setText("OK");
+				// START KGU#323 2019-03-03: Enh. #327 New button to fetch localized keywords had to be allocated
 //				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
 //					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
 //					new Insets(0, 0, 5, 0), 0, 0));
 				buttonRow2.add(Box.createHorizontalGlue());
 				buttonRow2.add(btnOK);
+				// END KGU323 2019-03-03
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -428,6 +434,12 @@ public class ParserPreferences extends LangDialog {
 			{
 				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
+					// START KGU#323 2019-03-03: Enh. #327
+					if (popupLocales != null) {
+						// Allow to free the memory space used for the temporarily loaded locales
+						Locales.getInstance().removeLocales(false);
+					}
+					// END KGU#323 2019-03-03
 					setVisible(false);
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
@@ -591,9 +603,11 @@ public class ParserPreferences extends LangDialog {
 					}
 				}
 			}
+			// This is a desparate attempt to circumvent the occasional modality trap
+			this.getContentPane().add(popupLocales);
 		}
-		Point screenLoc1 = btnFromLocale.getLocationOnScreen();
 		Point screenLoc0 = this.getContentPane().getLocationOnScreen();
+		Point screenLoc1 = btnFromLocale.getLocationOnScreen();
 		popupLocales.show(this, screenLoc1.x - screenLoc0.x + btnFromLocale.getWidth(), screenLoc1.y - screenLoc0.y);
 	}
 

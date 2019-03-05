@@ -275,7 +275,9 @@ public class Locales {
     public boolean removeLocales(boolean discardChanges)
     {
         boolean allDone = true;
-        for (String localeName: locales.keySet()) {
+        java.util.Set<String> localeKeys = locales.keySet();
+        String[] localeNames = localeKeys.toArray(new String[localeKeys.size()]);
+        for (String localeName: localeNames) {
             boolean done = localeName.equals(loadedLocaleName) || removeLocale(localeName, discardChanges);
             allDone = allDone && done;
         }

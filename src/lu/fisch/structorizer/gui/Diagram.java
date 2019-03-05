@@ -3138,7 +3138,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else
 			{
-				EditData data = new EditData(); 				data.title="Edit element ...";
+				EditData data = new EditData();
+				data.title="Edit element ...";
 				// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 				//data.text.setText(element.getText().getText());
 				data.text.setText(element.getAliasText().getText());
@@ -7865,10 +7866,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			inputbox.OK=false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control
-			if (_elementType.equals("Root") && !this.isProgram())
+			// START KGU#42 2019-03-05: Adapted to new type set
+			//if (_elementType.equals("Root") && !this.isProgram())
+			//{
+			//	_elementType = "Function";
+			//}
+			if (_elementType.equals("Root"))
 			{
-				_elementType = "Function";
+				if (this.isSubroutine()) {
+					_elementType = "Function";
+				}
+				else if (this.isInclude()) {
+					_elementType = "Includable";
+				}
 			}
+			// END KGU#42 2019-03-05
 			else if (_elementType.equals("Forever"))
 			{
 				inputbox.lblText.setVisible(false);
