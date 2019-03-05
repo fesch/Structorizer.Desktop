@@ -49,6 +49,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.10.28      Method trim() added.
  *      Kay Gürtzig     2019-02-15      Method isEmpty() added
  *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
+ *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
  *
  ******************************************************************************************************
  *
@@ -274,7 +275,7 @@ public class StringList {
 				sl.add(_source.substring(0, pos));
 				sl.add(_by);
 				_source = _source.substring(pos + lenBy, _source.length());
-				testSource = testSource.substring(pos + lenBy, _source.length());
+				testSource = testSource.substring(pos + lenBy, testSource.length());
 			}
 			else
 			{
