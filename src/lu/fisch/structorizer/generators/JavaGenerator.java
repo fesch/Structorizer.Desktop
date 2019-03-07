@@ -32,43 +32,45 @@ package lu.fisch.structorizer.generators;
  *
  *      Author                  Date            Description
  *      ------                  ----            -----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch               2009.08.10      Update I/O
- *      Bob Fisch               2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.10.22      Workarounds and Enhancements (see comment)
- *      Kay Gürtzig             2014.11.16      Several fixes and enhancements (see comment)
- *      Kay Gürtzig             2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig             2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
- *      Kay Gürtzig             2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
+ *      Bob Fisch               2008-11-17      First Issue
+ *      Gunter Schillebeeckx    2009-08-10      Java Generator starting from C Generator
+ *      Bob Fisch               2009-08-10      Update I/O
+ *      Bob Fisch               2009-08-17      Bugfixes (see comment)
+ *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-10-22      Workarounds and Enhancements (see comment)
+ *      Kay Gürtzig             2014-11-16      Several fixes and enhancements (see comment)
+ *      Kay Gürtzig             2015-10-18      Comment generation and indentation revised
+ *      Kay Gürtzig             2015-11-01      Preprocessing reorganised, FOR loop and CASE enhancements
+ *      Kay Gürtzig             2015-11-30      Inheritance changed to CGenerator (KGU#16), specific
  *                                              jump and return handling added (issue #22 = KGU#74)
- *      Kay Gürtzig             2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
- *      Kay Gürtzig             2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig             2016.04.04      transforTokens() disabled due to missing difference to super 
- *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
- *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
- *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
- *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.05.24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
- *      Kay Gürtzig             2017.09.22      Bugfix #428 Defective replacement pattern for "short" in transformType(String)
- *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
- *      Kay Gürtzig             2017.10.27      Enh. #441: Direct support for now extractable Turtleizer package
- *      Kay Gürtzig             2018.01.21      Enh. #441/#490: Improved support for TurtleBox routine export. 
- *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
- *      Kay Gürtzig             2018.07.20      Enh. #563: support for simplified record initializers
- *      Kay Gürtzig             2018.07.21/22   Bugfix #564: array initializer trouble mended
+ *      Kay Gürtzig             2015-12-12      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig             2015-12-15      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015-12-21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig             2016-03-23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016-04-04      transforTokens() disabled due to missing difference to super 
+ *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016-12-22      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017-02-01      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017-02-24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-04-12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-05-24      Bugfix: name suffix for Parallel elements now hexadecimal (could otherwise be negative)
+ *      Kay Gürtzig             2017-09-22      Bugfix #428 Defective replacement pattern for "short" in transformType(String)
+ *      Kay Gürtzig             2017-09-28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017-10-27      Enh. #441: Direct support for now extractable Turtleizer package
+ *      Kay Gürtzig             2018-01-21      Enh. #441/#490: Improved support for TurtleBox routine export. 
+ *      Kay Gürtzig             2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig             2018-07-20      Enh. #563: support for simplified record initializers
+ *      Kay Gürtzig             2018-07-21/22   Bugfix #564: array initializer trouble mended
+ *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -259,7 +261,7 @@ public class JavaGenerator extends CGenerator
 	{
 		// NOTE: If you modify these patterns then you must adapt transform() too!
 		if (withPrompt) {
-			return "System.out.println($1); $2 = (new Scanner(System.in)).nextLine()";
+			return "System.out.print($1); $2 = (new Scanner(System.in)).nextLine()";
 		}
 		return "$1 = (new Scanner(System.in)).nextLine()";
 	}
@@ -277,8 +279,7 @@ public class JavaGenerator extends CGenerator
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * Method pre-processes an include file name for the #include
-	 * clause. This version surrounds a string not enclosed in angular
-	 * brackets by quotes.
+	 * clause. This version does nothing (just passes the argument through).
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the pre-processed string as to be actually inserted
 	 */
@@ -656,7 +657,21 @@ public class JavaGenerator extends CGenerator
 		return _codeLine;
 	}
 
-
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -749,8 +764,8 @@ public class JavaGenerator extends CGenerator
 			if (itemType == null)
 			{
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
-				
+				this.insertComment("TODO: Select a more sensible item type than Object", indent);
+				this.insertComment("      and/or prepare the elements of the array.", indent);
 			}
 			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
 					indent, isDisabled);
@@ -768,6 +783,12 @@ public class JavaGenerator extends CGenerator
 			{
 				itemType = this.transformType(itemType.substring(1), "Object");	
 			}
+			// START KGU#640 2019-01-22: Bugfix #669 - we need more specific handling of strings as value list
+			else if (listType != null && listType.getCanonicalType(true, true).equalsIgnoreCase("String")) {
+				itemType = "char";
+				valueList += ".toCharArray()";
+			}
+			// END KGU#640 2019-01-22
 			else {
 				itemType = "Object";
 				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);

@@ -39,15 +39,16 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
  *      Kay Gürtzig     2016-09-23  Issue #243: Message translations, more messages
  *      Kay Gürtzig     2016-09-24  Enh. #250 Partial GUI redesign - now loop style can actively be selected
- *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
- *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
- *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes/radio buttons,
+ *      Kay Gürtzig     2016-11-02  Issue #81: Workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016-11-09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
+ *      Kay Gürtzig     2016-11-11  Issue #81: DPI-awareness workaround for checkboxes/radio buttons,
  *                                  Bugfix #288: Behaviour on clicking the selected one of the radio buttons fixed
- *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
- *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
- *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.07.01  Issue #413 FOR-IN value list check made aware of built-in split function
+ *      Kay Gürtzig     2016-11-21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2016-11-22  stepFor label mended; issue #284: Font resizing buttons added
+ *      Kay Gürtzig     2017-01-07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017-07-01  Issue #413 FOR-IN value list check made aware of built-in split function
+ *      Kay Gürtzig     2019-02-19  Bugfix #684 Fall-back FOR-IN radio button caption was wrong in case preForIn is void
  *
  ******************************************************************************************************
  *
@@ -60,7 +61,7 @@ package lu.fisch.structorizer.gui;
  *           as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed and the splitting
  *           switches (weaker syntax support), and vice versa
  *      - The user may actively switch between mode 1 and 2, usually losing most of the data, though. From mode
- *        1 to mode 2 a conversion of the number sequence to a number list is attempted.   
+ *        1 to mode 2 a conversion of the number sequence to a number list is attempted.
  *
  ******************************************************************************************************///
 
@@ -238,7 +239,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(CodeParser.getKeyword("preForIn").isEmpty() ? CodeParser.getKeyword("postFor") : CodeParser.getKeyword("preForIn"));
+		// START KGU#659 2019-02-19: Bugfix #684 - wrong default keyword 
+		//rbTraversing = new JRadioButton(CodeParser.getKeyword("preForIn").isEmpty() ? CodeParser.getKeyword("postFor") : CodeParser.getKeyword("preForIn"));
+		rbTraversing = new JRadioButton(CodeParser.getKeyword("preForIn").isEmpty() ? CodeParser.getKeyword("preFor") : CodeParser.getKeyword("preForIn"));
+		// END KGU#659 2019-02-19
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
 

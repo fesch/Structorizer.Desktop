@@ -43,15 +43,18 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.03.26      First Issue (generated with GOLDprog.exe)
- *      Kay Gürtzig     2018.04.12      RuleConstants updated to corrected grammar (version 1.1)
- *      Kay Gürtzig     2018.06.18      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
+ *      Kay Gürtzig     2018-03-26      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2018-04-12      RuleConstants updated to corrected grammar (version 1.1)
+ *      Kay Gürtzig     2018-06-18      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
- *      Kay Gürtzig     2018.06.19      File decomposed and inheritance changed
- *      Kay Gürtzig     2018.06.20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
- *      Kay Gürtzig     2018.06.23      Function definitions, struct definitions, and struct initializers
- *      Kay Gürtzig     2018.07.10      Precaution against incomplete FOR loops (index error on colouring parts)
+ *      Kay Gürtzig     2018-06-19      File decomposed and inheritance changed
+ *      Kay Gürtzig     2018-06-20      Most algorithmic structures implemented, bugfixes #545, #546 integrated
+ *      Kay Gürtzig     2018-06-23      Function definitions, struct definitions, and struct initializers
+ *      Kay Gürtzig     2018-07-10      Precaution against incomplete FOR loops (index error on colouring parts)
  *                                      Provisional enum type import as constant definition sequence.
+ *      Kay Gürtzig     2019-02-13      Bugfix #678: Array declarations hadn't been imported properly
+ *      Kay Gürtzig     2019-02-28      Bugfix #690 - workaround for struct types in function headers
+ *      Kay Gürtzig     2019-03-01      Bugfix #692 - failed constant recognition
  *
  ******************************************************************************************************
  *
@@ -88,6 +91,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.StringList;
 
 /**
@@ -648,7 +652,7 @@ public class C99Parser extends CPreParser
 					ruleId == RuleConstants.PROD_FUNCTIONDEF
 					)
 			{
-				buildFunction(_reduction);				
+				buildFunctionDecl(_reduction);				
 			}
 			else if (
 					// Procedure call?
@@ -676,13 +680,27 @@ public class C99Parser extends CPreParser
 						_parentNode.addElement(this.equipWithSourceComment(new Jump(content), _reduction));
 					}
 				}
-				else if (procName.equals("printf") || procName.equals("puts") && arguments.count() == 1)
+				else if (procName.equals("printf") || procName.equals("printf_s") || procName.equals("puts") && arguments.count() == 1)
 				{
 					buildOutput(_reduction, procName, arguments, _parentNode);
 				}
-				else if (procName.equals("scanf") || procName.equals("gets") && arguments.count() == 1){
+				else if (procName.equals("scanf") || procName.equals("scanf_s") || procName.equals("gets") && arguments.count() == 1){
 					buildInput(_reduction, procName, arguments, _parentNode);
 				}
+				// START KGU#652 2019-02-13: Issue #679 - Support more input and output functions
+				else if ((procName.equals("fprintf") || procName.equals("fprintf_s")) && arguments.count() >= 2 && arguments.get(0).equals("stdout")) {
+					buildOutput(_reduction, "printf", arguments.subSequence(1, arguments.count()), _parentNode);
+				}
+				else if ((procName.equals("fscanf") || procName.equals("fscanf_s")) && arguments.count() >= 2 && arguments.get(0).equals("stdin")){
+					buildInput(_reduction, procName.substring(1), arguments.subSequence(1, arguments.count()), _parentNode);
+				}
+				else if (procName.equals("fputs") && arguments.count() == 2 && arguments.get(1).equals("stdout")) {
+					buildOutput(_reduction, "puts", arguments.subSequence(0, 1), _parentNode);
+				}
+				else if (procName.equals("fgets") && arguments.count() == 3 && arguments.get(2).equals("stdin")) {
+					buildInput(_reduction, "gets", arguments.subSequence(0, 1), _parentNode);
+				}
+				// END KGU#652 2019-02-13
 				else if (!convertBuiltInRoutines(_reduction, procName, arguments, _parentNode)) {
 					_parentNode.addElement(this.equipWithSourceComment(new Instruction(getContent_R(_reduction, content)), _reduction));
 				}
@@ -735,7 +753,6 @@ public class C99Parser extends CPreParser
 			else if (
 					// Variable declaration with or without initialization? Might also be a typedef though!
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI
-					// FIXME: What about RuleConstants.PROD_DECLARATION_SEMI2?
 					||
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI2
 					)
@@ -1004,7 +1021,7 @@ public class C99Parser extends CPreParser
 	 * @param _reduction - the {@link Reduction} of the parser
 	 * @throws ParserCancelled 
 	 */
-	private void buildFunction(Reduction _reduction) throws ParserCancelled {
+	private void buildFunctionDecl(Reduction _reduction) throws ParserCancelled {
 		// <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
 		// Find out the name of the function
 		Reduction secReduc = _reduction.get(1).asReduction();
@@ -1060,12 +1077,16 @@ public class C99Parser extends CPreParser
 			else {
 				// FIXME: We might need a more intelligent type analysis
 				content = getContent_R(typeToken.asReduction(), "").trim() + " ";
-				content = content.replaceAll("(^|\\.*\\W)static(\\s+.*)", "$1$2");
-				content = content.replaceAll("(^|\\.*\\W)const(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|.*\\W)static(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|.*\\W)const(\\s+.*)", "$1$2");
+				// START KGU#668 2019-02-28: Workaround #690 to get rid of struct keywords here
+				content = content.replaceAll("(^|.*\\W)struct(\\s+.*)", "$1$2");
+				// END KGU#668 2019-02-28
 			}
 			content += prefix.concatenate(" ").trim();
+			content = content.trim();
 			// Result type "void" should be suppressed
-			if (content.trim().equals("void")) {
+			if (content.equals("void")) {
 				content = "";
 			}
 			//content += funcId + "(";
@@ -1130,13 +1151,13 @@ public class C99Parser extends CPreParser
 //			}
 //			content += params + ")";
 			content += " " + funcId;
-			String params = suffix.concatenate();
-			if (params.trim().equals("(void)")) {
+			String params = suffix.concatenate().trim();
+			if (params.equals("(void)")) {
 				params = "()";
 			}
 			content += params;
 		}
-		root.setText(content);
+		root.setText(content.trim());
 		this.equipWithSourceComment(root, _reduction);
 		if (weird) {
 			root.comment.add("UNSUPPORTED SHAPE OF FUNCTION/PROCEDURE HEADER!");
@@ -1650,15 +1671,44 @@ public class C99Parser extends CPreParser
 			// Initialized declaration
 			log("\ttrying <Declarator> '=' <Initializer> ...\n", false);
 			content = this.getContent_R(_reduc.get(0).asReduction(), "");	// Default
-			id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, null, _parentNode, null);
+			// START KGU#651 2019-02-13: Bugfix #678: Check for array declarations
+			//id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, null, _parentNode, null);
+			//expr = this.getContent_R(_reduc.get(2).asReduction(), "").trim();
+			StringList pascalType = null;
+			if (_type != null && content.contains("[") && content.endsWith("]")) {
+				pascalType = new StringList();
+			}
+			id = this.getDeclarator(_reduc.get(0).asReduction(), null, null, pascalType, _parentNode, null);
 			expr = this.getContent_R(_reduc.get(2).asReduction(), "").trim();
+			if (pascalType != null && !pascalType.isEmpty() && pascalType.get(0).contains("array")) {
+				if (_type.equals("char") && expr.startsWith("\"") && expr.endsWith("\"")) {
+					if (_comment == null) {
+						_comment = "(original declaration: char " + content + ")";
+					}
+					else {
+						_comment += "\n(original declaration: char " + content + ")";
+					}
+					_type = "string";
+				}
+				else {
+					_type = pascalType.getLongString() + _type;
+				}
+			}
+			// END KGU#651 2019-02-13
 			_reduc = _reduc.get(0).asReduction();
 			ruleId = _reduc.getParent().getTableIndex();
 		}
 		else {
 			// Simple declaration - if allowed then make it to a Pascal decl.
 			log("\ttrying <Declarator> ...\n", false);
-			id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
+			// START KGU#651 2019-02-13: Bugfix #678 - array declarations hadn't been imported properly
+			//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
+			StringList asPascal = new StringList();
+			id = this.getDeclarator(_reduc, null, null, asPascal, _parentNode, null);
+			if (!asPascal.isEmpty()) {
+				_type = asPascal.getLongString() + " " + _type;
+			}
+			// END KGU#651 2019-02-13
 		}
 		_forceDecl = this.optionImportVarDecl || _forceDecl;
 		TypeMapEntry typeEntry = typeMap.get(":" + _type.trim());
@@ -1696,7 +1746,7 @@ public class C99Parser extends CPreParser
 				if (_comment != null) {
 					instr.setComment(_comment);
 				}
-				if (extraComments.count() > 0) {
+				if (!extraComments.isEmpty()) {
 					instr.getComment().add(extraComments.concatenate(" + "));
 				}
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
@@ -1809,7 +1859,10 @@ public class C99Parser extends CPreParser
 				}
 				break;
 			case RuleConstants.PROD_DECLSPECIFIERS3:
-				if (prefix.asString().equals("const")) {
+				// START KGU#670 2019-03-01: Bugfix #692 Wrong test let const detection fail
+				//if (prefix.asString().equals("const")) {
+				if (prefix.asString().equals("[const]")) {
+				// END KGU#670 2019-03-01
 					_typeSpecs.add("const");
 				}
 				break;
@@ -2026,7 +2079,7 @@ public class C99Parser extends CPreParser
 	 * @param _arrays - the {@link StringList} intended for the postfix of the name (index ranges, arg lists)
 	 * @param _asPascal - a {@link StringList} intended to accumulate a Pascal-like notation
 	 * @param _parentNode - if given, the {@link Subqueue} to add required type definitions
-	 * @param _declListRed TODO
+	 * @param _declListRed - {@link Reduction} for the declarator list or null
 	 * @return the declared name (if any)
 	 * @throws ParserCancelled 
 	 */
@@ -2063,17 +2116,23 @@ public class C99Parser extends CPreParser
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_STATIC_RBRACKET2:
 		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET:
 		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_STATIC_RBRACKET2:
-			ixDim += 1;
+			ixDim += 1;	// Total: ixDim = 4
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_RBRACKET:
 		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET:
-			ixDim += 3;
+			// START KGU#651 2019-02-13: Bugfix #678
+			//ixDim += 3;
+			ixDim += 4;	// Total: ixDim = 3 (without static) or 4 (with static)
+			// END KGU#651 2019-02-13
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_TIMES_RBRACKET:
 		case RuleConstants.PROD_DIRECTDECL_LBRACKET_RBRACKET2:
 		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_TIMES_RBRACKET:
 		case RuleConstants.PROD_DIRECTABSTRDECL_LBRACKET_RBRACKET2:
 			if (ixDim > -1) {
 				Token dimToken = _reduction.get(ixDim);
-				if (dimToken.getType() != SymbolType.NON_TERMINAL) {
+				// START KGU#651 2019-02-13: Bugfix #678
+				//if (dimToken.getType() != SymbolType.NON_TERMINAL) {
+				if (dimToken.getType() == SymbolType.NON_TERMINAL) {
+				// END KGU#651 2019-02-13
 					indexRange = "[" + getContent_R(dimToken.asReduction(), "") +"]";
 				}
 				else if (dimToken.asReduction().size() == 0) {
@@ -2087,7 +2146,7 @@ public class C99Parser extends CPreParser
 				_arrays.insert((indexRange == null ? "[]" : indexRange), 0);
 			}
 			if (_asPascal != null) {
-				_asPascal.insert("array " + (indexRange == null ? "" : indexRange) + "of ", 0);
+				_asPascal.insert("array " + (indexRange == null ? "" : indexRange + " ") + "of ", 0);
 			}
 			name = getDirectDecl(_reduction.get(0).asReduction(), _pointers, _arrays, _asPascal, _parentNode, _declListRed);
 			break;
@@ -2179,6 +2238,14 @@ public class C99Parser extends CPreParser
 			// no break here!
 		default: // Should be a <Parameter Decl>
 			paramList.add(getContent_R(_paramReduc, ""));
+			// START KGU#668 2019-02-28: Workaround #690 - Suppress struct keywords in parameter lists (FIXME)
+			for (int i = 0; i < paramList.count(); i++) {
+				String param = paramList.get(i);
+				if (param.startsWith("struct ")) {
+					paramList.set(i, param.substring(7));
+				}
+			}
+			// END KGU#668 2019-02-28
 			params = paramList.reverse().concatenate(", ") + ellipse;
 			break;
 		}
@@ -2286,16 +2353,16 @@ public class C99Parser extends CPreParser
 	 * {@code _typeList} is empty) or with the first element of {@code _typeList}
 	 * as name. Except in the latter case (type definition with given name created)
 	 * the name of the found type will be inserted at the beginning of
-	 * {@code _typeList}.
+	 * {@code _typeList}.<br/>
 	 * If {@code _isGlobal} is true and a type definition is to be created then
 	 * a dependency of the current {@link #root} to the global diagram is established
-	 * in {@code this.importingRoots}.
+	 * in {@code this.importingRoots}.<br/>
 	 * The trouble here is that we would like to return several things at once:
 	 * a type entry, a type description, and some flags. For a recursive application,
 	 * we would even need different resulting formats.
 	 * @param _reduction - current {@link Reduction} object
 	 * @param _ruleId - table id of the production rule
-	 * @param _subqueue - the {@link Subqueue} to which elements are to be added
+	 * @param _parentNode - the {@link Subqueue} to which elements are to be added
 	 * @param _isGlobal - whether the type / variable is a global one
 	 * @param _typeList - a container for type names, both for input and output 
 	 * @param _declaringVars - whether this is used by a variable/constant declaration (type definition otherwise)
@@ -2467,7 +2534,7 @@ public class C99Parser extends CPreParser
 			}
 			// <StructDeclList> ::= <Struct Decl>
 			addProcessedCompDecl(compType, declListRed, declList, components);
-			if (declList.count() > 0) {
+			if (!declList.isEmpty()) {
 				components.add(declList.reverse().concatenate(", ") + ": " + compType + ";\\");
 			}
 		}
@@ -2502,7 +2569,7 @@ public class C99Parser extends CPreParser
 				compDecl = compDecl.substring(0, pos);
 			}
 			if (!ptrs.isEmpty() || !index.isEmpty()) {
-				if (_declList.count() > 0) {
+				if (!_declList.isEmpty()) {
 					_groupList.add(_declList.reverse().concatenate(", ") + ": " + _baseType + ";\\");
 					_declList.clear();
 				}
@@ -2522,12 +2589,62 @@ public class C99Parser extends CPreParser
 	 * @param arguments - list of argument strings
 	 * @param _parentNode - the {@link Subqueue} the derived instruction is to be appended to 
 	 * @return true if a specific conversion could be applied and all is done.
+	 * @throws ParserCancelled 
 	 */
 	private boolean convertBuiltInRoutines(Reduction _reduction, String procName, StringList arguments,
-			Subqueue _parentNode) {
-		// TODO Here we should convert certain known library functions to Structorizer built-in procedures
+			Subqueue _parentNode) throws ParserCancelled {
+		// Here we should convert certain known library functions to Structorizer built-in procedures
+		// START KGU#652 2019-02-13: Issue #679
+		String content = convertBuiltInRoutine(procName, arguments, false);
+		if (content != null) {
+			Instruction procCall = new Instruction(StringList.explode(content, "\n"));
+			_parentNode.addElement(this.equipWithSourceComment(procCall, _reduction));
+			return true;
+		}
+		// END KGU#652 2019-02-13
 		return false;
 	}
+
+	// START KGU#652 2019-02-13: Issue #679: Started to convert some functions
+	/**
+	 * Tries to convert the function or procedure given by name {@code funcName} and parameters {@code arguments}
+	 * into an equivalent built-in routine if available 
+	 * @param funcName - name of the function
+	 * @param arguments - arguments (as strings) of the function
+	 * @param resultNeeded - whether the routine is called within an expression (this may restrict the conversion
+	 * options due to assumed result type incompatibility)
+	 * @return either a converted call string or null (if no built-in routine was found)
+	 */
+	private String convertBuiltInRoutine(String funcName, StringList arguments, boolean resultNeeded) {
+		String builtin = null;
+		int nArgs = arguments.count();
+		if (funcName.equals("strlen") && nArgs == 1) {
+			builtin = "length(" + arguments.get(0) + ")";
+		}
+		else if (funcName.equals("strcpy") && nArgs == 2 && !resultNeeded) {
+			builtin = arguments.get(0) + " <- " + arguments.get(1);
+		}
+		else if (funcName.equals("strncpy") && nArgs == 3 && !resultNeeded) {
+			builtin = arguments.get(0) + " <- copy(" + arguments.get(1) + ", 1, " + arguments.get(2) + ")";
+		}
+		else if (funcName.equals("strcat") && nArgs == 2 && !resultNeeded) {
+			builtin = arguments.get(0) + " <- " + arguments.get(0) + " + " + arguments.get(1);
+		}
+		else if (funcName.equals("strncat") && nArgs == 3 && !resultNeeded) {
+			builtin = arguments.get(0) + " <- " + arguments.get(0) + " + copy(" + arguments.get(1) + ", 1, " + arguments.get(2) + ")";
+		}
+		else if (funcName.equals("toupper") && nArgs == 1) {
+			builtin = "uppercase(" + arguments.get(0) + ")";
+		}
+		else if (funcName.equals("tolower") && nArgs == 1) {
+			builtin = "lowercase(" + arguments.get(0) + ")";
+		}
+		else if (funcName.equals("srand") && nArgs == 1 && !resultNeeded) {
+			builtin = "randomize()";
+		}
+		return builtin;
+	}
+	// END KGU#652 2019-02-13
 
 	/**
 	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
@@ -2550,8 +2667,24 @@ public class C99Parser extends CPreParser
 	{
 		if (_reduction == null) {
 			System.err.println("STOP!");
+			return "";
 		}
-		for(int i=0; i<_reduction.size(); i++)
+		int rule_id = _reduction.getParent().getTableIndex();
+		// Function call?
+		// START KGU#652 2019-02-13: Issue #679
+		if (rule_id ==	RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN || rule_id == RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN2) {
+			String fnName = getContent_R(_reduction.get(0).asReduction(), "");
+			StringList args = new StringList();
+			if (rule_id ==	RuleConstants.PROD_POSTFIXEXP_LPAREN_RPAREN) {
+				args = this.getExpressionList(_reduction.get(2).asReduction());
+			}
+			String builtin = this.convertBuiltInRoutine(fnName,  args, true);
+			if (builtin != null) {
+				return _content + builtin;
+			}
+		}
+		// END KGU#652 2019-02-13
+		for (int i=0; i<_reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
 			/* -------- Begin code example for text retrieval and translation -------- */
@@ -2687,7 +2820,7 @@ public class C99Parser extends CPreParser
 	{
 		StringList exprList = new StringList();
 		String ruleHead = _reduc.getParent().getHead().toString();
-		if (ruleHead.equals("<Literal>") || ruleHead.equals("<Call Id>")) {
+		if (ruleHead.equals("<Literal>") || ruleHead.equals("<Call Id>") || ruleHead.equals("<Value>") || ruleHead.equals("<Postfix Exp>")) {
 			exprList.add(getContent_R(_reduc, ""));
 		}
 		else while (ruleHead.equals("<ArgExpList>") || ruleHead.equals("<IdentifierList>")) {

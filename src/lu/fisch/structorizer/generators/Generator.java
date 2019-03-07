@@ -32,54 +32,56 @@ package lu.fisch.structorizer.generators;
  *
  *      Author          Date			Description
  *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
- *      Bob Fisch       2008.04.12		Plugin Interface
- *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
- *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
- *      Kay Gürtzig     2015.11.01		transform methods re-organised (KGU#18/KGU23) using subclassing
- *      Kay Gürtzig     2015.11.30		General pre-processing for generateCode(Root, String) (KGU#47)
- *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
- *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
+ *      Bob Fisch       2007-12-27		First Issue
+ *      Bob Fisch       2008-04-12		Plugin Interface
+ *      Kay Gürtzig     2014-11-16		comment generation revised (see comment below)
+ *      Kay Gürtzig     2015-10-18		File name proposal in exportCode(Root, File, Frame) delegated to Root
+ *      Kay Gürtzig     2015-11-01		transform methods re-organised (KGU#18/KGU23) using subclassing
+ *      Kay Gürtzig     2015-11-30		General pre-processing for generateCode(Root, String) (KGU#47)
+ *      Bob Fisch       2015-12-10		Bugfix #51: when input identifier is alone, it was not converted
+ *      Kay Gürtzig     2015-12-18		Enh #66, #67: New export options
  *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
- *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
+ *      Kay Gürtzig     2015-12-22		Slight performance improvement in transform()
  *      Kay Gürtzig     2016-01-16      KGU#141: New generic method lValueToTypeNameIndex introduced for Issue #112
  *      Kay Gürtzig     2016-03-22      KGU#61/KGU#129: varNames now basic field for all subclasses
  *      Kay Gürtzig     2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig     2016-04-01      Enh. #110 - export file filter now pre-selected
  *      Kay Gürtzig     2016-04-04      Issues #149, #151 - Configurable charset / useless ExportOptionDialogs
  *      Kay Gürtzig     2016-04-28      Draft for enh. #179 - batch mode (KGU#187)
- *      Kay Gürtzig     2016.04.29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
- *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposal slightly modified (KGU#205)
- *      Kay Gürtzig     2016.07.20      Enh. #160: Support for export of involved subroutines (KGU#178)
+ *      Kay Gürtzig     2016-04-29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
+ *      Kay Gürtzig     2016-07-19      Enh. #192: File name proposal slightly modified (KGU#205)
+ *      Kay Gürtzig     2016-07-20      Enh. #160: Support for export of involved subroutines (KGU#178)
  *      Kay Gürtzig     2016-08-10      Issue #227: information gathering pass introduced to control optional
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
- *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.kewordMap refactoring done
- *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
- *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
- *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
- *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
- *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
- *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
- *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
- *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
- *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
- *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers
- *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
- *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
- *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
- *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
- *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
- *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
- *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
- *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
- *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
- *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
- *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
- *      Kay Gürtzig     2018.03.13      Modifications for bugfix #521, transformOutput() revised
- *      Kay Gürtzig     2018.10.30      New field generatorIncludes and method insertGeneratorIncludes() to
+ *      Kay Gürtzig     2016-09-25      Enh. #253: CodeParser.kewordMap refactoring done
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016-10-15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
+ *      Kay Gürtzig     2016-10-16      Bugfix #275: Defective subroutine registration for topological sort mended
+ *      Kay Gürtzig     2016-12-01      Bugfix #301: New method boolean isParenthesized(String)
+ *      Kay Gürtzig     2016-12-22      Enh. #314: Support for Structorizer File API, improvements for #227
+ *      Kay Gürtzig     2017-01-20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
+ *      Kay Gürtzig     2017-01-26      Enh. #259: Type info is now gathered for declarations support
+ *      Kay Gürtzig     2017-01-30      Bugfix #337: Mutilation of lvalues with nested index access
+ *      Kay Gürtzig     2017-02-19      KGU#348: Additions to support PythonGenerator in generating Parallel code
+ *      Kay Gürtzig     2017-02-20      Bugfix #349: Export missed to generate recursive subroutines and their callers
+ *      Kay Gürtzig     2017-02-26      Enh. #346 (mechanism to add user-configured file includes) 
+ *      Kay Gürtzig     2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig     2017-03-05      Issue #365: Support for posterior insertion of global definitions
+ *      Kay Gürtzig     2017-03-10      Issue #368: New method getExportCharset
+ *      Kay Gürtzig     2017-04-14      Bugfix #394: Jump map generation revised
+ *      Kay Gürtzig     2017-04-18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
+ *      Kay Gürtzig     2017-04-26      Signature of method exportCode() modified to return the used directory
+ *      Kay Gürtzig     2017-05-16      Enh. #372: New method insertCopyright()
+ *      Kay Gürtzig     2017-09-20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
+ *      Kay Gürtzig     2017-09-20      Enh. #388/#423: comment mapping for declarations introduced
+ *      Kay Gürtzig     2017-09-26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
+ *      Kay Gürtzig     2018-02-22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
+ *      Kay Gürtzig     2018-03-13      Modifications for bugfix #521, transformOutput() revised
+ *      Kay Gürtzig     2018-10-30      New field generatorIncludes and method insertGeneratorIncludes() to
  *                                      avoid duplicate include/import/using entries system <-> user 
+ *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
  *
  ******************************************************************************************************
  *
@@ -748,13 +750,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			insertComment(commentLine, _indent);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				insertComment(commentLine, _indent);
+			}
 		}
 	}
 	
@@ -783,13 +785,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			code.add(_indent + _cont + commentLine);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				code.add(_indent + _cont + commentLine);
+			}
 		}
 		if (_end != null)
 		{
@@ -1211,6 +1213,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#261 2017-01-26
 	
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This dummy implementation returns just null, meaning there is no such conversion in general (such that several
+	 * input instructions must be generated. Subclasses the target language of which allows multi-variable input
+	 * instructions should override this.
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
+	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
 	 * and if so replaces it according to the regex pattern provided by
@@ -1269,15 +1288,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				String subst = getInputReplacer(false);
 				// START KGU#399 2017-05-16: bugfix #51, #403
 				//_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
-				_interm = _interm.replaceFirst(pattern, subst);
+				// START KGU#653 2019-02-14: Enh. #680
+				//_interm = _interm.replaceFirst(pattern, subst);
+				_interm = subst.replace("$1", tail);
+				// END KGU#653 3019-02-14
 				// END KGU#399 2017-05-16
 			}
 			else {
 				String subst = getInputReplacer(true);
 				// START KGU#399 2017-05-16: bugfix #51, #403				
 				//_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
-				pattern = "^" + getKeywordPattern(keyword) + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
-				_interm = _interm.replaceFirst(pattern, subst);
+				// START KGU#653 2019-02-14: Enh. #680
+				//pattern = "^" + getKeywordPattern(keyword) + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
+				//_interm = _interm.replaceFirst(pattern, subst);
+				pattern = "^" + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
+				_interm = tail.replaceFirst(pattern, subst);
+				// END KGU#653 2019-02-14
 				// END KGU#399 2017-05-16
 			}
 			// END KGU#281 2016-10-15
@@ -1580,21 +1606,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		// Avoid too much nonsense on indexed variables
 		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
-    	//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
-    	// END KGU#334 2017-01-30
+		//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
+		// END KGU#334 2017-01-30
 		String type = "";
 		String name = null;
 		String index = "";
 		String comp = "";
-    	String before = _lval;
-    	String after = "";
-    	int posL = _lval.indexOf("[");
-    	int posR = _lval.lastIndexOf("]");
-    	if (posL >= 0 && posR > posL) {
-    		index = _lval.substring(posL + 1, posR);
-    		before = _lval.substring(0, posL);
-    		after = _lval.substring(posR + 1);
-    	}
+		String before = _lval;
+		String after = "";
+		int posL = _lval.indexOf("[");
+		int posR = _lval.lastIndexOf("]");
+		if (posL >= 0 && posR > posL) {
+			index = _lval.substring(posL + 1, posR);
+			before = _lval.substring(0, posL);
+			after = _lval.substring(posR + 1);
+		}
 		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), ".")) {
 			comp = after;
 			name = before;
@@ -1948,9 +1974,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
-    protected void generateCode(Instruction _inst, String _indent)
+	protected void generateCode(Instruction _inst, String _indent)
 	{
-            //
+		//
 	}
 	
 	/**
@@ -2536,11 +2562,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
-	 * opens a file selection dialog
+	 * opens a file selection dialog, and effectuates the actual code export.
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @return the chosen target directory
+	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
@@ -2799,6 +2825,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		   	}
 		   	// END KGU#178 2016-07-20
 		} // if (file != null)
+		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
+		else {
+			exportDir = null;
+		}
+		// END KGU#654 2019-02-16
 		// START KGU 2017-04-26
 		return exportDir;
 		// END KGU 2017-04-26
@@ -3347,30 +3378,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	public String getDescription() 
 	{
-        return getFileDescription();
-    }
-	
-    public boolean accept(File f) 
+		return getFileDescription();
+	}
+
+	public boolean accept(File f) 
 	{
-        if (f.isDirectory()) 
+		if (f.isDirectory()) 
 		{
-            return true;
-        }
-		
-        String extension = getExtension(f);
-        if (extension != null) 
-		{
-            return isOK(f.getName());
+			return true;
 		}
-		
-        return false;
-    }
-	
+
+		String extension = getExtension(f);
+		if (extension != null) 
+		{
+			return isOK(f.getName());
+		}
+
+		return false;
+	}
+
 
 	/******* Constructor ******************/
 
 	public Generator()
 	{
 	}
-	
+
 }

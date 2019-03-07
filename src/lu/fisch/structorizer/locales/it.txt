@@ -286,6 +286,10 @@ Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Si, modo ridotto
+Menu.lblNormal.text=No, modo regolare
 
 // Error messages for analyser
 Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "%1 ► %2".
@@ -463,7 +467,6 @@ Editor.popupBreakpoint.text=Alterna breakpoint
 Editor.popupBreakTrigger.text=
 
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Inserisci il testo
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Commento
@@ -578,26 +581,8 @@ FontChooser.cbFixPadding.text=Margine fisso (indipendente da grandezza)
 
 -----[ Colors ]-----
 Colors.title=Opzioni sui colori
-Colors.lblColors.0.text=Colore 0
-Colors.lblColors.1.text=Colore 1
-Colors.lblColors.2.text=Colore 2
-Colors.lblColors.3.text=Colore 3
-Colors.lblColors.4.text=Colore 4
-Colors.lblColors.5.text=Colore 5
-Colors.lblColors.6.text=Colore 6
-Colors.lblColors.7.text=Colore 7
-Colors.lblColors.8.text=Colore 8
-Colors.lblColors.9.text=Colore 9
-Colors.lblColors.0.tooltip=La tua scelta per il colore n° 0.
-Colors.lblColors.1.tooltip=La tua scelta per il colore n° 1.
-Colors.lblColors.2.tooltip=La tua scelta per il colore n° 2.
-Colors.lblColors.3.tooltip=La tua scelta per il colore n° 3.
-Colors.lblColors.4.tooltip=La tua scelta per il colore n° 4.
-Colors.lblColors.5.tooltip=La tua scelta per il colore n° 5.
-Colors.lblColors.6.tooltip=La tua scelta per il colore n° 6.
-Colors.lblColors.7.tooltip=La tua scelta per il colore n° 7.
-Colors.lblColors.8.tooltip=La tua scelta per il colore n° 8.
-Colors.lblColors.9.tooltip=La tua scelta per il colore n° 9.
+Colors.lblColors.*.text=Colore [#]
+Colors.lblColors.*.tooltip=La tua scelta per il colore n° [#].
 Colors.colors.*.tooltip=Clicca per editare...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Valida la tua scelta.

@@ -38,43 +38,44 @@ package lu.fisch.structorizer.generators;
  *
  *      Author				Date			Description
  *      ------				----			-----------
- *      Markus Grundner     2008.06.01		First Issue based on KSHGenerator from Jan Peter Kippel
- *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig         2014.11.16      Bugfixes in operator conversion and enhancements (see comments)
- *      Kay Gürtzig         2015.10.18      Indentation logic and comment insertion revised
+ *      Markus Grundner     2008-06-01		First Issue based on KSHGenerator from Jan Peter Kippel
+ *      Bob Fisch           2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014-11-16      Bugfixes in operator conversion and enhancements (see comments)
+ *      Kay Gürtzig         2015-10-18      Indentation logic and comment insertion revised
  *                                          generateCode(For, String) and generateCode(Root, String) modified
- *      Kay Gürtzig         2015.11.02      transform methods re-organised (KGU#18/KGU#23) using subclassing,
+ *      Kay Gürtzig         2015-11-02      transform methods re-organised (KGU#18/KGU#23) using subclassing,
  *                                          Pattern list syntax in Case Elements corrected (KGU#15).
  *                                          Bugfix KGU#60 (Repeat loop was incorrectly translated).
- *      Kay Gürtzig         2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93): String literals were spoiled
- *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KGU#114): Text transformation didn't work
- *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KGU#129): Variable names handled properly,
+ *      Kay Gürtzig         2015-12-19      Enh. #23 (KGU#78): Jump translation implemented
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KGU#93): String literals were spoiled
+ *      Kay Gürtzig         2015-12-22      Bugfix #71 (= KGU#114): Text transformation didn't work
+ *      Kay Gürtzig         2016-01-08      Bugfix #96 (= KGU#129): Variable names handled properly,
  *                                          KGU#132: Logical expressions (conditions) put into ((  )).
- *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KGU#61): Support for FOR-IN loops
- *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
- *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
+ *      Kay Gürtzig         2016-03-22      Enh. #84/#135 (= KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig         2016-03-24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
+ *      Kay Gürtzig         2016-03-29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
- *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016.04.05      Enh. #153 - Export of Parallel elements had been missing
- *      Kay Gürtzig         2016.04.05      KGU#150 - provisional support for chr and ord function
- *      Kay Gürtzig         2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
- *      Kay Gürtzig         2016.09.01      Issue #234: ord and chr function code generated only if needed and allowed
- *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
- *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
- *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
- *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.04.18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
- *      Kay Gürtzig         2017.05.05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
- *      Kay Gürtzig         2017.10.05      Enh. #423: First incomplete approach to handle record variables
- *      Kay Gürtzig         2017.10.24      Enh. #423: Record variable handling accomplished for release 3.27
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-05      Enh. #153 - Export of Parallel elements had been missing
+ *      Kay Gürtzig         2016-04-05      KGU#150 - provisional support for chr and ord function
+ *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
+ *      Kay Gürtzig         2016-09-01      Issue #234: ord and chr function code generated only if needed and allowed
+ *      Kay Gürtzig         2016-09-21      Bugfix #247: Forever loops were exported with a defective condition.
+ *      Kay Gürtzig         2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-11-06      Issue #279: Method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig         2017-01-05      Enh. #314: File API TODO comments added  
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017-04-18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
+ *      Kay Gürtzig         2017-05-05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-05-19      Issue #237: Expression transformation heuristics improved
+ *      Kay Gürtzig         2017-10-05      Enh. #423: First incomplete approach to handle record variables
+ *      Kay Gürtzig         2017-10-24      Enh. #423: Record variable handling accomplished for release 3.27
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -300,13 +301,13 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-    	// Trim the tokens at end (just for sure)
-    	int pos0 = 0;
-    	int posx = tokens.count();
-    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-    	while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
-    	tokens.remove(posx, tokens.count());
-    	tokens.remove(0, pos0);
+		// Trim the tokens at end (just for sure)
+		int pos0 = 0;
+		int posx = tokens.count();
+		while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
+		while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
+		tokens.remove(posx, tokens.count());
+		tokens.remove(0, pos0);
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
@@ -747,6 +748,25 @@ public class BASHGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);
+				// START KGU#653 2019-02-15: Enh. #680 - special treatment for mult-variable input instructions
+				StringList inputItems = Instruction.getInputItems(line);
+				if (inputItems != null && inputItems.count() > 2) {
+					String prompt = inputItems.get(0);
+					if (!prompt.isEmpty()) {
+						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, disabled);
+					}
+					for (int j = 1; j < inputItems.count(); j++) {
+						String item = transform(inputItems.get(j) + " <-");
+						int posEq = item.lastIndexOf("=");
+						if (posEq > 0) {
+							item = item.substring(0, posEq);
+						}
+						inputItems.set(j, item);
+					}
+					addCode(this.getInputReplacer(false).replace("$1", inputItems.concatenate(" ", 1)), _indent, disabled);
+					continue;
+				}
+				// END KGU#653 2019-02-15
 				// START KGU#388 2017-10-24: Enh. #423 ignore type definitions
 				if (Instruction.isTypeDefinition(line)) {
 					continue;

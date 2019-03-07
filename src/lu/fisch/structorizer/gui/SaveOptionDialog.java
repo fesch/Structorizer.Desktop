@@ -32,9 +32,10 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.12.15      First Issue for enh. #310
- *      Kay Gürtzig     2017.03.12      Enh. #372 (name attribute choosable)
- *      Kay Gürtzig     2017.03.22      Issue #463: Console output replaced by logging mechanism
+ *      Kay Gürtzig     2016-12-15      First Issue for enh. #310
+ *      Kay Gürtzig     2017-03-12      Enh. #372 (name attribute choosable)
+ *      Kay Gürtzig     2017-03-22      Issue #463: Console output replaced by logging mechanism
+ *      Kay Gürtzig     2019-01-13      Enh. #662/4: New group panel with option for arrangement files
  *
  ******************************************************************************************************
  *
@@ -78,21 +79,21 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	// START KGU#484 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(SaveOptionDialog.class.getName());
 	// END KGU#484 2018-03-22
-    public boolean goOn = false;
-    private Frame frame;
+	public boolean goOn = false;
+	private Frame frame;
 
 	public SaveOptionDialog()
 	{
-	    initComponents();
-	    setModal(true);
+		initComponents();
+		setModal(true);
 	}
 	
 	public SaveOptionDialog(Frame frame)
 	{
 		this.frame = frame;
-	    initComponents();
-	    setModal(true);
-	    setLocationRelativeTo(frame);
+		initComponents();
+		setModal(true);
+		setLocationRelativeTo(frame);
 	}
 
 	/**
@@ -102,17 +103,20 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	//@SuppressWarnings("unchecked")
 	private void initComponents() {
 
-	    pnlTop = new javax.swing.JPanel();
-	    pnlButtons = new javax.swing.JPanel();
-	    pnlOptions = new javax.swing.JPanel();
-	    pnlWrapper = new javax.swing.JPanel();
-	    pnlAutoSave = new javax.swing.JPanel();
-	    pnlBackup = new javax.swing.JPanel();
+		pnlTop = new javax.swing.JPanel();
+		pnlButtons = new javax.swing.JPanel();
+		pnlOptions = new javax.swing.JPanel();
+		pnlWrapper = new javax.swing.JPanel();
+		pnlAutoSave = new javax.swing.JPanel();
+		pnlBackup = new javax.swing.JPanel();
 		// START KGU#363 2017-03-12: Enh. #372 Author name field
 		pnlFileInfo = new javax.swing.JPanel();
 		// END KGU#363 2017-03-12
-	    lbIntro = new javax.swing.JLabel();
-	    btnOk = new javax.swing.JButton();
+		// START KGU#630 2019-01-13: Enh. #662/4
+		pnlArrFiles = new javax.swing.JPanel();
+		// END KGU#630 2019-01-13
+		lbIntro = new javax.swing.JLabel();
+		btnOk = new javax.swing.JButton();
 
 		chkAutoSaveExecute = new javax.swing.JCheckBox("Auto-save during execution?");
 		chkAutoSaveClose  = new javax.swing.JCheckBox("Auto-save when going to be closed?");
@@ -125,42 +129,45 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		cbLicenseFile = new javax.swing.JComboBox<String>();
 		cbLicenseFile.setEditable(true);
 		// END KGU#363 2017-03-12
+		// START KGU#630 2019-01-13: Enh. #662/4
+		chkRelativeCoordinates = new javax.swing.JCheckBox("Save with relative coordinates?");
+		// END KGU#630 2019-01-13
 
-	    setTitle("Preferences for Saving ...");
+		setTitle("Preferences for Saving ...");
 
-	    org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
-	    pnlTop.setLayout(jPanel1Layout);
-	    jPanel1Layout.setHorizontalGroup(
-	        jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-	        .add(0, 0, Short.MAX_VALUE)
-	    );
-	    jPanel1Layout.setVerticalGroup(
-	        jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-	        .add(0, 0, Short.MAX_VALUE)
-	    );
+		org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
+		pnlTop.setLayout(jPanel1Layout);
+		jPanel1Layout.setHorizontalGroup(
+				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+				.add(0, 0, Short.MAX_VALUE)
+				);
+		jPanel1Layout.setVerticalGroup(
+				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+				.add(0, 0, Short.MAX_VALUE)
+				);
 
 
-	    lbIntro.setText("Please select the options you want to activate ...");
+		lbIntro.setText("Please select the options you want to activate ...");
 
-	    btnOk.setText("OK");
-	    btnOk.addActionListener(this);
+		btnOk.setText("OK");
+		btnOk.addActionListener(this);
 
-	    Container content = getContentPane();
-	    content.setLayout(new BorderLayout());
-	    
-	    pnlTop.setLayout(new GridLayout(1,1,4,4));
-	    pnlTop.setBorder(new EmptyBorder(12,12,0,12));
-	    pnlTop.add(lbIntro);
-	    
-	    pnlAutoSave.setBorder(new TitledBorder("Auto-save options"));
-	    pnlAutoSave.setLayout(new GridLayout(0, 1, 0, 1));
-	    pnlAutoSave.add(this.chkAutoSaveExecute);
-	    pnlAutoSave.add(this.chkAutoSaveClose);
-	    
-	    pnlBackup.setBorder(new TitledBorder("Backup options"));
-	    pnlBackup.setLayout(new GridLayout(0, 1, 0, 1));
-	    pnlBackup.add(this.chkBackupFile);
-	    
+		Container content = getContentPane();
+		content.setLayout(new BorderLayout());
+
+		pnlTop.setLayout(new GridLayout(1,1,4,4));
+		pnlTop.setBorder(new EmptyBorder(12,12,0,12));
+		pnlTop.add(lbIntro);
+
+		pnlAutoSave.setBorder(new TitledBorder("Auto-save options"));
+		pnlAutoSave.setLayout(new GridLayout(0, 1, 0, 1));
+		pnlAutoSave.add(this.chkAutoSaveExecute);
+		pnlAutoSave.add(this.chkAutoSaveClose);
+
+		pnlBackup.setBorder(new TitledBorder("Backup options"));
+		pnlBackup.setLayout(new GridLayout(0, 1, 0, 1));
+		pnlBackup.add(this.chkBackupFile);
+
 		// START KGU#363 2017-03-12: Enh. #372 Author name field
 		pnlFileInfo.setBorder(new TitledBorder("File info defaults"));
 		pnlFileInfo.setLayout(new GridLayout(0, 2, 1, 1));
@@ -169,32 +176,41 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		pnlFileInfo.add(this.btnLicenseFile);
 		pnlFileInfo.add(this.cbLicenseFile);
 		// END KGU#363 2017-03-12
-
-	    pnlOptions.setLayout(new GridLayout(0,1,4,4));
-	    pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
-	    pnlOptions.add(pnlAutoSave, BorderLayout.CENTER);
-	    pnlOptions.add(pnlBackup, BorderLayout.CENTER);
+		
+		// START KGU#630 2019-01-13: Enh. #662/4
+		pnlArrFiles.setBorder(new TitledBorder("Arranger files"));
+		pnlArrFiles.setLayout(new GridLayout(0, 1, 0, 1));
+		pnlArrFiles.add(chkRelativeCoordinates);
+		// END KGU#630 2019-01-13
+		
+		pnlOptions.setLayout(new GridLayout(0,1,4,4));
+		pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
+		pnlOptions.add(pnlAutoSave);
+		pnlOptions.add(pnlBackup);
 		// START KGU#363 2017-03-12: Enh. #372 Author name field
-	    pnlOptions.add(pnlFileInfo, BorderLayout.CENTER);
+		pnlOptions.add(pnlFileInfo);
 		// END KGU#363 2017-03-12
-	    //pnlOptions.add(pnlPreference, BorderLayout.CENTER);
-	    
-	    pnlButtons.setLayout(new BorderLayout());
-	    pnlButtons.setBorder(new EmptyBorder(12,12,12,12));
-	    pnlButtons.add(btnOk, BorderLayout.EAST);
-	    
-	    pnlWrapper.add(pnlOptions);
-	    
-	    content.add(pnlTop, BorderLayout.NORTH);
-	    content.add(pnlWrapper, BorderLayout.CENTER);
-	    content.add(pnlButtons, BorderLayout.SOUTH);
+		// START KGU#630 2019-01-13: Enh. #662/4
+		pnlOptions.add(pnlArrFiles);
+		// END KGU#630 2019-01-13
+		//pnlOptions.add(pnlPreference, BorderLayout.CENTER);
+
+		pnlButtons.setLayout(new BorderLayout());
+		pnlButtons.setBorder(new EmptyBorder(12,12,12,12));
+		pnlButtons.add(btnOk, BorderLayout.EAST);
+
+		pnlWrapper.add(pnlOptions);
+
+		content.add(pnlTop, BorderLayout.NORTH);
+		content.add(pnlWrapper, BorderLayout.CENTER);
+		content.add(pnlButtons, BorderLayout.SOUTH);
 
 		try
 		{
 			File dir = getLicenseDirectory();
-		    File[] licFiles = dir.listFiles(new LicFilter());
-		    String prefix = LicFilter.getNamePrefix();
-		    String ext = "." + LicFilter.acceptedExtension();
+			File[] licFiles = dir.listFiles(new LicFilter());
+			String prefix = LicFilter.getNamePrefix();
+			String ext = "." + LicFilter.acceptedExtension();
 			for (File f: licFiles) {
 				String fname = f.getName();
 				this.cbLicenseFile.addItem(fname.substring(prefix.length(), fname.lastIndexOf(ext)));
@@ -232,6 +248,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		this.btnLicenseFile.addKeyListener(keyListener);
 		this.txtAuthorName.addKeyListener(keyListener);
 		// END KGU#393 2017-05-09		
+		// START KGU#630 2019-01-13: Enh. #662/4
+		this.chkRelativeCoordinates.addKeyListener(keyListener);
+		// END KGU#630 2019-01-13
 
 		pack();
 	    
@@ -306,11 +325,17 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	// START KGU#363 2017-03-12: Enh. #372 Author name field
 	public javax.swing.JPanel pnlFileInfo;
 	// END KGU#363 2017-03-12
+	// START KGU#630 2019-01-13: Enh. #662/4
+	public javax.swing.JPanel pnlArrFiles;
+	// END KGU#630 2019-01-13
 	public javax.swing.JButton btnOk;
 	public javax.swing.JLabel lbIntro;
 	public javax.swing.JCheckBox chkAutoSaveExecute;
 	public javax.swing.JCheckBox chkAutoSaveClose;
 	public javax.swing.JCheckBox chkBackupFile;
+	// START KGU#630 2019-01-13: Enh. #662/4
+	public javax.swing.JCheckBox chkRelativeCoordinates;
+	// END KGU#630 2019-01-13
 	// START KGU#363 2017-03-12: Enh. #372 Author name field
 	public javax.swing.JLabel lblAuthorName;
 	public javax.swing.JTextField txtAuthorName;

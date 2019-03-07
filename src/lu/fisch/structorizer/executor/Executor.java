@@ -152,6 +152,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-02-11      Bugfix #509: Built-in function copyArray had a defective definition
  *      Kay Gürtzig     2018-03-19      Bugfix #525: Cloning and special run data treatment of recursive calls reestablished
  *                                      Enh. #389: class ExecutionStackEntry renamed in ExecutionContext
+ *      Kay Gürtzig     2018-03-20      Issue #527: More expressive error messages on index trouble in arrays 
  *      Kay Gürtzig     2018-04-03      KGU#515: Fixed a bug in stepRepeat() (erroneous condition evaluation after a failed body)
  *      Kay Gürtzig     2018-07-02      KGU#539: Fixed the operation step counting for CALL elements 
  *      Kay Gürtzig     2018-07-20      Enh. #563 - support for simplified record initializers
@@ -167,6 +168,12 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-12-12      Bugfix #642: Unreliable splitting of comparison expressions
  *      Kay Gürtzig     2018-12-16      Bugfix #644 in tryAssignment()
  *      Kay Gürtzig     2018-12-17      Bugfix #646 in tryOutput()
+ *      Kay Gürtzig     2019-02-13      Issue #527: Error message improvement in evaluateExpression()
+ *      Kay Gürtzig     2019-02-14      Enh. #680: INPUT instructions with multiple variables supported
+ *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
+ *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
+ *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
+ *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
  *
  ******************************************************************************************************
  *
@@ -327,6 +334,7 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
+//import lu.fisch.structorizer.syntax.ExprParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import bsh.EvalError;
@@ -426,6 +434,10 @@ public class Executor implements Runnable
 			"public ArrayList split(String s, char c)"
 					+ "{ return split(s, \"\" + c); }",
 			// END KGU#410 2017-05-24
+			// START KGU#651 2019-02-13: Issue #678 C function facilitating code import
+			"public int strcmp(String s1, String s2)"
+					+ "{ return s1.compareTo(s2); }",
+			// END KGU#651 2019-02-13
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
 			// char transformation
 			"public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }",
@@ -711,7 +723,7 @@ public class Executor implements Runnable
 	/**
 	 * Ensures there is a (singleton) instance and returns it
 	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	 * @param diagramController - facades of additionally controllable modules or devices 
+	 * @param diagramControllers - façades of additionally controllable modules or devices 
 	 * @return the sole instance of this class.
 	 */
 	public static Executor getInstance(Diagram diagram,
@@ -1540,7 +1552,7 @@ public class Executor implements Runnable
 		while (iter.hasNext())
 		{
 			Updater pool = iter.next();
-			if (pool instanceof IRoutinePool && !this.routinePools.contains(pool))
+			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
 			{
 				this.routinePools.addElement((IRoutinePool)pool);
 			}
@@ -2535,11 +2547,13 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		if (!delayed)
-		// END KGU#448 2017-10-28
-		{
-			delay();
-		}
+		// START KGU#675 2019-03-04: This seemed to be a relic from times when execution paused after the current element
+//		if (!delayed)
+//		// END KGU#448 2017-10-28
+//		{
+//			delay();
+//		}
+		// END KGU#675 2019-03-04
 		if (delay != 0)
 		{
 			diagram.redraw();
@@ -3549,9 +3563,9 @@ public class Executor implements Runnable
 				}
 				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
 				else if (record == null || !(record instanceof HashMap)) {
-					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replaceAll("%2", String.valueOf(record)), null, null);
+					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
 				}
-				// END KGU#568 2018-08-01 
+				// END KGU#568 2018-08-01
 				Object comp = record;
 				for (int i = 1; i < path.count()-1; i++) {
 					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
@@ -4051,7 +4065,12 @@ public class Executor implements Runnable
 		diagram.doButtons();
 		// END KGU#143 2016-01-21
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
-		checkBreakpoint(element);
+		// START KGU#665 2019-02-26: Bugfix #687 a breakpointed Repeat loop must not pause when entered
+		//checkBreakpoint(element);
+		if (!(element instanceof Repeat)) {
+			checkBreakpoint(element);
+		}
+		// END KGU#665 2019-02-26
 		// END KGU#43 2015-10-12
 
 		// START KGU#477 2017-12-10: Enh. #487 - check continuation of 
@@ -4723,6 +4742,9 @@ public class Executor implements Runnable
 		tokens.remove(0, posAsgnOpr+1);
 		// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
 		// FIXME: this repeated tokenization is pretty ugly - we need a syntax tree...
+		// DEBUG
+		StringBuilder problems = new StringBuilder();
+		//ExprParser.getInstance().parse(tokens.concatenate(), problems);
 		tokens = Element.splitLexically(this.convertStringComparison(tokens.concatenate().trim()), true);
 		// END KGU#490 2018-02-08
 		// START KGU#388 2017-09-13: Enh. #423 support records
@@ -4903,49 +4925,52 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String trouble = "";
-		String in = cmd.substring(CodeParser.getKeyword("input").trim().length()).trim();
-		// START KGU#281: Enh. #271: Input prompt handling
-		String prompt = null;
-		if (in.startsWith("\"") || in.startsWith("\'")) {
-			StringList tokens = Element.splitLexically(in, true);
-			String delim = tokens.get(0).substring(0,1);
-			if (tokens.get(0).endsWith(delim))
-			{
-				prompt = tokens.get(0).substring(1, tokens.get(0).length()-1);
-				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
-				try {
-					String dummyVar = "prompt" + this.hashCode();
-					this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false, false);
-					Object res = context.interpreter.get(dummyVar);
-					if (res != null) {
-						prompt = res.toString();
-					}
-					context.interpreter.unset(dummyVar);
-				}
-				catch (EvalError ex) {}
-				// END KGU#285 2016-10-16
-    			// START KGU#281 2016-12-23: Enh. #271 - ignore comma between prompt and variable name
-				if (tokens.count() > 1 && tokens.get(1).equals(",")) {
-					tokens.remove(1);
-				}
-				// END KGU#281 2016-12-23
-				in = tokens.concatenate("", 1).trim();
+		// START KGU#356 2019-03-02: Issue #366
+		DiagramController focusedController = null;
+		for (DiagramController dc: this.diagramControllers) {
+			if (dc.isFocused()) {
+				focusedController = dc;
+				break;	// There can hardly be more than one focused controller
 			}
 		}
-		// END KGU#281 2016-10-12
-		// START KGU#490 2018-02-07: Bugfix #503 
-		in = this.evaluateDiagramControllerFunctions(convert(in).trim());
-		// END KGU#490 2018-02-07
-
-		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
-		if (in.isEmpty())
+		// END KGU#356 2019-03-02
+		// START KGU#653 2019-02-14: Enh. #680 - revision
+		StringList inputItems = Instruction.getInputItems(cmd);
+		String prompt = inputItems.get(0);
+		if (!prompt.isEmpty()) {
+			// Wipe off delimiters
+			prompt = prompt.substring(1, prompt.length()-1);
+			// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
+			try {
+				String dummyVar = "prompt" + this.hashCode();
+				this.evaluateExpression(dummyVar + "=\"" + prompt + "\"", false, false);
+				Object res = context.interpreter.get(dummyVar);
+				if (res != null) {
+					prompt = res.toString();
+				}
+				context.interpreter.unset(dummyVar);
+			}
+			catch (EvalError ex) {}
+			// END KGU#285 2016-10-16
+		}
+		// Empty input instruction?
+		if (inputItems.count() == 1)
+		// END KGU#653 219-02-14
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {
 					Control.lbOk.getText(),
 					Control.lbPause.getText()
 			};
-			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
+			if (prompt.isEmpty()) {
+				prompt = control.lbAcknowledge.getText();
+			}
+			// START KGU#160 2019-02-17: Enh. #51, #137 - an explicit prompt should be passed to text window
+			else {
+				this.console.writeln(prompt, Color.YELLOW);
+			}
+			// END KGU#160 2019-02-17
+			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), prompt, control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
@@ -4963,50 +4988,55 @@ public class Executor implements Runnable
 		else
 		{
 		// END KGU#107 2015-12-13
-			// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing paranetheses anymore
-			while (in.startsWith("(") && in.endsWith(")"))
-			{
-				in = in.substring(1, in.length()-1).trim();
-			}
-			// END KGU#141 2016-01-16
-			// START KGU#33 2014-12-05: We ought to show the index value
-			// if the variable is indeed an array element
-			if (in.contains("[") && in.contains("]")) {
-				try {
-					// Try to replace the index expression by its current value
-					int index = getIndexValue(in);
-					in = in.substring(0, in.indexOf('[')+1) + index
-							+ in.substring(in.indexOf(']'));
-				}
-				catch (Exception e)
+			inputItems.remove(0);
+			for (int i = 0; i < inputItems.count() && trouble.equals("") && (stop == false); i++) {
+				String var = inputItems.get(i).trim();
+				// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing parantheses anymore
+				while (var.startsWith("(") && var.endsWith(")"))
 				{
-					// START KGU#141 2016-01-16: We MUST raise the error here.
-					trouble = e.getLocalizedMessage();
-					if (trouble == null) trouble = e.getMessage();
-					// END KGU#141 2016-01-16
+					var = var.substring(1, var.length()-1).trim();
 				}
+				// END KGU#141 2016-01-16
+				// START KGU#33 2014-12-05: We ought to show the index value
+				// if the variable is indeed an array element
+				if (var.contains("[") && var.contains("]")) {
+					try {
+						// Try to replace the index expression by its current value
+						int index = getIndexValue(var);
+						var = var.substring(0, var.indexOf('[')+1) + index
+								+ var.substring(var.indexOf(']'));
+					}
+					catch (Exception e)
+					{
+						// START KGU#141 2016-01-16: We MUST raise the error here.
+						trouble = e.getLocalizedMessage();
+						if (trouble == null) trouble = e.getMessage();
+						// END KGU#141 2016-01-16
+					}
+				}
+				// END KGU#33 2014-12-05
+				// START KGU#375 2017-03-30: Enh. #388 - support of constants
+				if (this.isConstant(var)) {
+					trouble = control.msgConstantRedefinition.getText().replaceAll("%", var);
+				}
+				// END KGU#375 2017-03-30
+				// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
+				if (!trouble.isEmpty())
+				{
+					return trouble;
+				}
+				// END KGU#141 2016-01-16
+				inputItems.set(i, var);
 			}
-			// END KGU#33 2014-12-05
-			// START KGU#375 2017-03-30: Enh. #388 - support of constants
-			if (this.isConstant(in)) {
-				trouble = control.msgConstantRedefinition.getText().replaceAll("%", in);
-			}
-			// END KGU#375 2017-03-30
-			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
-			if (!trouble.isEmpty())
-			{
-				return trouble;
-			}
-			// END KGU#141 2016-01-16
 			// START KGU#89 2016-03-18: More language support 
 			//String str = JOptionPane.showInputDialog(null,
 			//		"Please enter a value for <" + in + ">", null);
 			// START KGU#281 2016-10-12: Enh. #271
 			//String msg = control.lbInputValue.getText();
 			//msg = msg.replace("%", in);
-			if (prompt == null) {
+			if (prompt.isEmpty()) {
 				prompt = control.lbInputValue.getText();				
-				prompt = prompt.replace("%", in);
+				prompt = prompt.replace("%", inputItems.concatenate(", "));
 			}
 			// END KGU#281 2016-10-12
 			// START KGU#160 2016-04-12: Enh. #137 - text window output
@@ -5016,11 +5046,22 @@ public class Executor implements Runnable
 				this.console.setVisible(true);
 			}
 			// END KGU#160 2016-04-12
-			String str = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
+			//String str = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
 			// END KGU#89 2016-03-18
+			String[] values = new String[inputItems.count()];
+			boolean goOn = true;
+			if (values.length == 1) {
+				values[0] = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
+				goOn = values[0] != null;
+			}
+			else {
+				goOn = showMultipleInputDialog(diagram.getParent(), prompt, inputItems, values);
+			}
+
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);
-			if (str == null)
+			
+			if (!goOn)
 			{
 				// Switch to step mode such that the user may enter the variable in the display and go on
 				// START KGU#197 2016-05-05: Issue #89
@@ -5038,32 +5079,98 @@ public class Executor implements Runnable
 				//control.setButtonsForPause();
 				control.setButtonsForPause(false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
-				if (!context.variables.contains(in))
-				{
-					// If the variable hasn't been used before, we must create it now
-					setVar(in, null);
+				for (int i = 0; i < inputItems.count(); i++) {
+					String var = inputItems.get(i);
+					if (!context.variables.contains(var))
+					{
+						// If the variable hasn't been used before, we must create it now
+						setVar(var, null);
+					}
 				}
 			}
-			else
+			else // goOn
 			{
 				// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-				this.console.writeln(str, Color.GREEN);
+				this.console.writeln((new StringList(values)).concatenate(", "), Color.GREEN);
 				if (isConsoleEnabled)
 				{
 					this.console.setVisible(true);
 				}
 				// END KGU#160 2016-04-12
 				// START KGU#69 2015-11-08: Use specific method for raw input
-				setVarRaw(in, str);
+				for (int i = 0; i < inputItems.count(); i++) {
+					setVarRaw(inputItems.get(i), values[i]);
+				}
 				// END KGU#69 2015-11-08
+				// START KGU#356 2019-03-02: Issue #366
+				if (focusedController != null) {
+					focusedController.requestFocus();
+				}
+				// END KGU#356 2019-03-02
 			}
 			// END KGU#84 2015-11-23
-		// START KGU#107 2015-12-13: Enh./bug #51 part 2
+			// START KGU#107 2015-12-13: Enh./bug #51 part 2
 		}
 		// END KGU#107 2015-12-13
-		
+
 		return trouble;
+
 	}
+	
+	// START KGU#653 2019-02-13: Enh. #653 - Comfortable handling of multi-variable input
+	/**
+	 * Opens a dialog with input fields for all input items given as {@code targets} and gathers the
+	 * values in array {@code values}.
+	 * @param parent - the {@link Container} this modal dialog is placed relatively to
+	 * @param prompt - the common input prompt string 
+	 * @param targets - the descriptions of the variables to be filled
+	 * @param values - array for the raw input strings per variable 
+	 * @return true if the results were committed, false otherwise (meaning to pause execution)
+	 */
+	private boolean showMultipleInputDialog(Container parent, String prompt, StringList targets, String[] values) {
+		javax.swing.JPanel pnl = new javax.swing.JPanel();
+		pnl.setLayout(new java.awt.GridBagLayout());
+		java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 2;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.anchor = java.awt.GridBagConstraints.LINE_START;
+		gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+		gbc.insets = new java.awt.Insets(1, 2, 2, 1);
+		javax.swing.JLabel lblPrompt = new javax.swing.JLabel(prompt);
+		pnl.add(lblPrompt, gbc);
+		javax.swing.JTextField[] fields = new javax.swing.JTextField[values.length];
+		
+		gbc.gridwidth = 1;
+		for (int row = 0; row < targets.count(); row++) {
+			gbc.gridy++;
+			gbc.gridx = 0;
+			gbc.weightx = 0;
+			gbc.fill = java.awt.GridBagConstraints.NONE;
+			pnl.add(new javax.swing.JLabel(targets.get(row)), gbc);
+			gbc.gridx++;
+			gbc.weightx = 1;
+			gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+			fields[row] = new javax.swing.JTextField();
+			pnl.add(fields[row], gbc);
+		}
+		
+		boolean committed = JOptionPane.showConfirmDialog(diagram.getParent(), pnl,
+				CodeParser.getKeywordOrDefault("input", "INPUT"),
+				JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION;
+		if (committed) {
+			for (int row = 0; row < targets.count(); row++) {
+				values[row] = fields[row].getText();
+			}
+		}
+		
+		return committed;
+	}
+	// END KGU#653 2019-02-14
 
 	// Submethod of stepInstruction(Instruction element), handling an output instruction
 	private String tryOutput(String cmd) throws EvalError
@@ -5444,7 +5551,7 @@ public class Executor implements Runnable
 //		}
 		// END KGU#376 2017-04-11
 		else {
-			// START KGU#197 2017-06-06: Now translatable
+			// START KGU#197 2017-06-06: Now localizable
 			//trouble = "<" + cmd + "> is not a correct function!";
 			trouble = control.msgIllFunction.getText().replace("%1", cmd);
 			// END KGU#197 2017-06-06
@@ -5930,6 +6037,12 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 						// START KGU#515 2018-04-03: The following must not be done if the body failed (had erroneously resided after this if)
+						// START KGU#665 2019-02-26: Bugfix #687  breakpoint check had been misplaced (was behind the cond evaluation)
+						// delay this element
+						checkBreakpoint(element);
+						element.waited = false;
+						delay();	// Symbolizes the loop condition check time
+						// END KGU#665 2019-02-26
 						// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated each time
 						String tempCondStr = this.evaluateDiagramControllerFunctions(condStr);
 						cond = this.evaluateExpression(convertStringComparison(tempCondStr), false, false);
@@ -5941,12 +6054,6 @@ public class Executor implements Runnable
 							// END KGU#197 2016-07-27
 						}
 
-						// delay this element
-						// START KGU 2015-10-12: This remains an important breakpoint position
-						checkBreakpoint(element);
-						// END KGU 2015-10-12
-						element.waited = false;
-						delay();	// Symbolizes the loop condition check time
 						element.waited = true;
 
 						// START KGU#156 2016-03-11: Enh. #124
@@ -6626,6 +6733,22 @@ public class Executor implements Runnable
 											replace("%2", Integer.toString(index)).
 											replace("%3", ERROR527MATCHER.group(4)));
 								}
+								// START KGU#509 2019-02-13: Issue #527 improvement
+								// In more complex expressions it may not be the first index that caused the trouble, so look for other causes
+								else {
+									Throwable ex = err;
+									String msg = null;
+									while (ex.getCause() != null) {
+										ex = ex.getCause();
+										if (ex.getMessage() != null) {
+											msg = ex.getMessage();
+										}
+									}
+									if (msg != null) {
+										err.setMessage(_expr + ":\n" + msg);
+									}
+								}
+								// END KGU#509 2019-02-13
 							}
 						}
 						catch (EvalError err1) {

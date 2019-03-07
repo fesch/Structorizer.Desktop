@@ -92,13 +92,21 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-25      Enh. #655: Dialog revisions
  *      Kay Gürtzig     2018-12-26      Two cross reference maps introduced (rootMap, nameMap), expandSelectionRecursively() impemented
  *      Kay Gürtzig     2018-12-31      Enh. #657: Group management implemented
- *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved 
+ *      Kay Gürtzig     2019-01-04      Enh. #657: Group management significantly advanced and improved
+ *      Kay Gürtzig     2019-01-09      Bugfix #515: updateSilhouette() revised (KGU#633)
+ *      Kay Gürtzig     2019-01-12      Enh. #662/3: New method to rearrange all diagrams by groups
+ *      Kay Gürtzig     2019-01-13      Enh. #662/4: enabled to save arrangements with relative coordinates
+ *      Kay Gürtzig     2019-01-16      Enh. #662/2: Coloured group name popup
+ *      Kay Gürtzig     2019-02-02      Bugfix #672: If the saving was cancelled in FileChooser, the group must not be renamed
+ *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
+ *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
+ *      Kay Gürtzig     2019-03-01      Enh. #691: Method renameGroup() introduced for exactly this purpose
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      2018-06-10 (Kay Gürtzig)
- *      - The change was made to comply with the Oracle Swing debugging guidelines
+ *      - The change (paint() -> paintComponent()) was made to comply with the Oracle Swing debugging guidelines
  *        (https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/swing002.html#BABHEADA),
  *        in particular section 13.2.8 Custom Painting and Double Buffering:
  *        "Although you can override paint and do custom painting in the override, you should instead
@@ -170,6 +178,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
@@ -207,8 +216,13 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
@@ -220,7 +234,7 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
-import lu.fisch.structorizer.gui.Editor;
+import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
@@ -231,6 +245,7 @@ import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.NSDParser;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
 
@@ -241,7 +256,7 @@ import net.iharder.dnd.FileDrop;
  * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
-public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener {
+public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner, MouseWheelListener, WindowFocusListener {
 
 	// START#484 KGU 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(Surface.class.getName());
@@ -277,6 +292,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/** The {@link Diagram}s currently selected via mouse click */
 	private final Set<Diagram> diagramsSelected = new HashSet<Diagram>();
 	// END KGU#624 2018-12-21
+	// START KGU#630 2019-01-09: Enh. #662/2
+	/** The {@link Group}s currently selected via mouse click */
+	private final Set<Group> groupsSelected = new HashSet<Group>();
+	// END KGU#630 2019-01-09
 	// START KGU#624 2018-12-23: Enh. #655 Drag a selection area
 	private Rectangle dragArea = null;
 	// END KGU#624 2018-12-23
@@ -291,11 +310,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#110 2015-12-21: Enh. #62, also supports PNG export
 	public File currentDirectory = new File(System.getProperty("user.home"));
 	// END KGU#110 2015-12-21
-	
-	// START KGU#626 2019-01-01: Enh. #657
-	/** Bounding box of the most recently highlighted group or null */
-	private Rectangle groupBounds = null;
-	// END KGU#626 2019-01-01
+	// START KGU#630 2019-01-09: Enh. #662/2 central setting to enable/disable drawing of groups
+	protected boolean drawGroups = false;
+	private boolean selectGroups = false;	// To be ignored while drawGroups == false
+	private JPopupMenu pop = new JPopupMenu();
+	private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
+	// END KGU#630 2019-01-09
 	
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
@@ -334,16 +354,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	// END KGU#385 2017-04-22
 	// START KGU#626 2018-12-27/2019-01-04: Enh. #657
-	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select this diagram (+shift: add it to the selection) and bring it up to top.");
+	public static final LangTextHolder msgTooltipSelectThis = new LangTextHolder("Select %1 (+shift: add it to the selection)%2 and bring it up to top.");
 	public static final LangTextHolder msgGroupRemovalError = new LangTextHolder("Error on removing group «%»");
 	public static final LangTextHolder msgArrangementAlreadyLoaded = new LangTextHolder("The arrangment file \"%1\" has already been loaded to group «%2».\nLoad it again with a modified group name?");
 	public static final LangTextHolder msgArrangementNotLoaded = new LangTextHolder("Arrangement loading cancelled.");
 	public static final LangTextHolder msgSaveAsNewGroup = new LangTextHolder("as new group");
 	public static final LangTextHolder msgSelectGroup = new LangTextHolder("Please decide whether to update the file of an existing group or to create a new arrangement:");
 	public static final LangTextHolder msgConfirmRemoveGroup = new LangTextHolder("Group «%» became empty. Do you want to remove it now?");
-	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes before the group is removed?");
+	public static final LangTextHolder msgSaveGroupChanges = new LangTextHolder("Group «%» has pending changes.\nDo you want to save these changes now?");
 	public static final LangTextHolder msgUnsavedGroups = new LangTextHolder("Couldn't save these groups (arrangements):");
 	// END KGU#626 2018-12-27/2019-01-04
+	// START KGU#631 2019-01-08: Issue #663
+	public static final LangTextHolder msgDiagram = new LangTextHolder("diagram «%»");
+	public static final LangTextHolder msgGroup = new LangTextHolder("group «%»");
+	// END KGU#631 2019-01-08
+	// START KGU#669 2019-03-01: Enh. #691
+	public static final LangTextHolder msgGroupExists = new LangTextHolder("Group with name «%» already exists!");
+	public static final LangTextHolder titleRenameGroup = new LangTextHolder("Renaming Group «%1» to «%2»");
+	public static final LangTextHolder msgRenameArrFile = new LangTextHolder("Rename arrangement file \"%1\"\nto \"%2\"?");
+	public static final LangTextHolder msgRenamingFailed = new LangTextHolder("Could not rename arrangement file to \"%\"!\nAction cancelled!");
+	// END KGU#669 2019-03-01
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -421,6 +451,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
 			}
 			// END KGU#497 2018-03-19
+			// START KGU#630 2019-01-09: Enh. #662/2 - preparations for group drawing
+			if (drawGroups) {
+				for (Group group: groups.values()) {
+					group.draw(g2d);
+				}
+			}
+			// END KGU#630 2019-01-19
+				
 //			System.out.println("Surface.paintComponent()");
 			for(int d=0; d<diagrams.size(); d++)
 			{
@@ -477,6 +515,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#497 2018-03-19
 		}
+		// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+		area.width += DEFAULT_GAP;
+		area.height += DEFAULT_GAP;
+		// END KGU#645 2019-02-03S
 		// START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
 		area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
 		area.height = Math.round(Math.min(area.height, Short.MAX_VALUE) / this.zoomFactor);
@@ -491,7 +533,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	private void create()
 	{
-		new  FileDrop(this, new FileDrop.Listener()
+		new FileDrop(this, new FileDrop.Listener()
 		{
 			public void  filesDropped( java.io.File[] files )
 			{
@@ -600,7 +642,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
-			File f = new File(filename);	// FIXME (KGU) Why don't we just use files[i]?
+			File f = new File(filename);
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 				// END KGU#111 2015-12-17
@@ -653,7 +695,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 *  
 	 * @param initiator - the commanding GUI component
 	 * @param group - possibly a group defining the set of diagrams to arrange
-	 * @param goingToClose TODO
+	 * @param goingToClose - indicates whether this call was initiated because tge application is going to close
 	 * @return the resulting {@link Group} object (may not be {@code group}) if saving of the
 	 * arrangement succeeded, otherwise null.
 	 */
@@ -666,12 +708,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		String extension = "arr";
 		// END KGU#110 2016-06-29
 		// Ensure the diagrams themselves have been saved
-		int answer = JOptionPane.CANCEL_OPTION;
 		// START KGU#626 2019-01-02: Enh. #657
 		Collection<Diagram> toArrange = this.diagramsSelected;
+		String sourceDescription = Integer.toString(this.diagrams.size());
 		// A selected group always overrides the selection in Arranger
 		if (group != null) {
 			toArrange = group.getDiagrams();
+			// START KGU#631 2019-01-08: More sensible message content on saving a group
+			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+			// END KGU#631 2019-01-08
 			// If the group was the default group then we will anonymize it
 			if (group.isDefaultGroup()) {
 				group = null;
@@ -728,6 +773,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//boolean writeNow = this.saveDiagrams(initiator, toArrange, goingToClose, false);
 		boolean writeNow = true;
 		if (group.getFile() == null) {
+			int answer = JOptionPane.CANCEL_OPTION;
 			// The group has never been loaded from nor saved to file
 		// END KGU#626 2019-01-02
 			// START KGU#624 2018-12-22: Enh. #655
@@ -740,7 +786,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			String saveMessage = Arranger.msgConfirmMultiple.getText().
 					replace("%1", Integer.toString(nSelected)).
-					replace("%2", Integer.toString(this.diagrams.size())).
+					replace("%2", sourceDescription).
 					replace("%3", rootNames.concatenate("\n- ")).
 					replace("%4", msgSavePortable.getText());
 			Object[] options = {lblSaveAsArrz.getText(), lblSaveAsArr.getText(), Menu.lblCancel.getText()};
@@ -815,7 +861,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File f = new File(filename + "." + extension);
 				if (f.exists())
 				{
-					writeNow = false;
 					int res = JOptionPane.showConfirmDialog(
 							initiator,
 							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
@@ -831,6 +876,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#385 2017-04-22
 				// END KGU#110 2016-06-29
 			}
+			// START KGU#644 2019-02-02: Bugfix #672: We must not gon on if the FileChooser was cancelled
+			else {
+				writeNow = false;
+			}
+			// END KGU#644 2019-02-02
 		// START KGU#626 2019-01-02: Enh. #657
 		}
 		else {
@@ -848,6 +898,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				filename = filename.substring(0, dotPos);
 			}
+			if (group.hasChanged() && writeNow && lu.fisch.structorizer.gui.Diagram.isInSerialMode()) {
+				if (!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE)){
+					int answer =lu.fisch.structorizer.gui.Diagram.requestSaveDecision(
+							msgSaveGroupChanges.getText().replace("%", group.getName()),
+							initiator, SerialDecisionAspect.SERIAL_GROUP_SAVE);
+					writeNow = answer == 0 || answer == 2;
+				}
+			}
 		}
 		/* Care for the chance to save diagram changes now (without asking for portable archives
 		 * because otherwise we might copy an obsolete file into the archive). In case of new
@@ -855,7 +913,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		 * and location. For an arrangement list, it's not so important whether or not the content
 		 * of the file is up to date, so the user will be left the choice.
 		 */
-		if (writeNow && this.saveDiagrams(initiator, toArrange, goingToClose, portable)) {
+		if (writeNow && this.saveDiagrams(initiator, toArrange, goingToClose, portable, portable)) {
 			if (group.hasChanged()) {
 				done = saveArrangement(initiator, filename, extension, portable, group);
 				if (done && group.getName().isEmpty()) {
@@ -938,6 +996,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
+			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();
@@ -946,6 +1005,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
+				// START KGU#650 2019-02-11: Issue #677 save all orphaned virgin group members to the temp dir
+				savedVirginRoots = saveVirginRootsToTempDir(group, tempDir);
+				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
 				// END KGU#110 2016-06-29
@@ -982,22 +1044,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				tmpFile.renameTo(file);
 				// START KGU#626 2019-01-02: Enh. #657
 				if (portable) {
-					group.setFile(new File(arrFilename), file);
+					group.setFile(new File(arrFilename), file, false);
 				}
 				else {
-					group.setFile(new File(outFilename), null);					
+					group.setFile(new File(outFilename), null, false);					
 				}
 				// END KGU#626 2019-01-02
 			}
 			// START KGU#626 2019-01-02: Enh. #657
 			else if (portable) {
-				group.setFile(new File(arrFilename), new File(outFilename));
+				group.setFile(new File(arrFilename), new File(outFilename), false);
 			}
 			else {
-				group.setFile(new File(outFilename), null);
+				group.setFile(new File(outFilename), null, false);
 			}
 			// END KGU#626 2019-01-02
-
+			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams as reside in the archive
+			if (savedVirginRoots != null) {
+				for (Root root: savedVirginRoots) {
+					File path = root.getFile();
+					if (path != null) {
+						root.shadowFilepath = path.getAbsolutePath();
+						root.filename = outFilename + File.separator + path.getName();
+					}
+				}
+			}
+			// END KGU#650 2019-02-11
 			done = true;
 		}
 		catch (Exception ex)
@@ -1008,6 +1080,55 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return done;
 	}
 
+	// START KGU#650 2019-02-11: Issue #677 - Inconveniences on saving arrangement archives
+	/** Tries to save all unsaved group members in the given temporary directory with a unique name */
+	private LinkedList<Root> saveVirginRootsToTempDir(Group group, String tempDir) {
+		LinkedList<Root> savedRoots = new LinkedList<Root>();
+		StringList unsaved = new StringList();
+		StringList errors = new StringList();
+		for (Diagram diagr: group.getDiagrams()) {
+			if (diagr.root.getFile() == null) {
+				String filename = tempDir + File.separator + diagr.root.proposeFileName();
+				File file = new File(filename + ".nsd");
+				int count = 1;
+				while (file.exists()) {
+					file = new File(filename + "_" + count++ + ".nsd");
+				}
+				filename = file.getAbsolutePath();
+				Writer out = null;
+				try {
+					FileOutputStream fos = new FileOutputStream(filename);
+					out = new OutputStreamWriter(fos, "UTF-8");
+					XmlGenerator xmlgen = new XmlGenerator();
+					out.write(xmlgen.generateCode(diagr.root,"\t"));
+					diagr.root.filename = filename;
+					diagr.root.rememberSaved();
+					savedRoots.add(diagr.root);
+					if (diagr.mainform != null) {
+						diagr.mainform.doButtons();
+					}
+				} catch (IOException ex) {
+					unsaved.add(diagr.root.proposeFileName());
+					errors.add(ex.toString());
+				}
+				finally {
+					if (out != null) {
+						try {
+							out.close();
+						} catch (IOException e) {}
+					}
+				}
+
+			}
+		}
+		if (!unsaved.isEmpty()) {
+			JOptionPane.showMessageDialog(this.getParent(), 
+					this.msgUnsavedDiagrams.getText() + "\n" + unsaved.getText() + "\n\n" + errors.getText(),
+					this.msgSaveError.getText(), JOptionPane.WARNING_MESSAGE);
+		}
+		return savedRoots;
+	}
+	// END KGU#650 2019-02-11
 
 	/**
 	 * Creates the Arranger file with path {@code arrFilename} for all diagrams held
@@ -1023,6 +1144,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		FileOutputStream fos = new FileOutputStream(arrFilename);
 		Writer out = new OutputStreamWriter(fos, "UTF8");
+		int offsetX = 0, offsetY = 0;
+		// START KGU#630 2019-01-13: Enh. #662/4
+		if (Arranger.A_STORE_RELATIVE_COORDS) {
+			Rectangle bounds = group.getBounds(true);
+			if (bounds != null) {	// Could happen if the group is empty
+				offsetX = DEFAULT_GAP - bounds.x;	// Will usually be negative
+				offsetY = DEFAULT_GAP - bounds.y;	// Will usually be negative
+			}
+		}
+		// END KGU#630 2019-01-13
 		// We want to preserve the original drawing order, so we must go the long way...
 		Set<Diagram> groupMembers = group.getDiagrams();
 		for (Diagram diagr: this.diagrams)
@@ -1031,8 +1162,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
 			if (groupMembers.contains(diagr) && !(path = diagr.root.getPath()).isEmpty())
 			{
-				out.write(Integer.toString(diagr.point.x) + ",");
-				out.write(Integer.toString(diagr.point.y) + ",");
+				// START KGU#630 2019-01-13: Enh. #662/4
+				out.write(Integer.toString(diagr.point.x + offsetX) + ",");
+				out.write(Integer.toString(diagr.point.y + offsetY) + ",");
+				// END KGU#630 2019-01-13
 				StringList entry = new StringList();
 				if (pureNames)
 				{
@@ -1231,7 +1364,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		int nLoaded = 0;
 		// END KGU#278 2016-10-11
 		
-		// START KGU#624 2018-12-22: Enh. #655 clear the selection such that only the loaded files wil be selected
+		// START KGU#624 2018-12-22: Enh. #655 clear the selection such that only the loaded files will be selected
 		this.unselectAll();
 		// END KGU#624 2018-12-22
 		
@@ -1465,7 +1598,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File tempFile = File.createTempFile("arr", null);
 				tempFile.delete();	// We don't need the file itself
 				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
-				tmpDirCreated = (new File(targetDir)).mkdirs();
+				if (targetDir.endsWith(".arrz")) {
+					targetDir = targetDir.substring(0, targetDir.length()-4) + "unzip";
+				}
+				File fDir = new File(targetDir);
+				if (fDir.isDirectory()) {
+					tmpDirCreated = true;
+				}
+				else {
+					tmpDirCreated = (new File(targetDir)).mkdirs();
+				}
 			} catch (IOException ex) {
 				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
 			}
@@ -1582,10 +1724,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			else {
 				rect = new Rect(getSelectionBounds(true));
-				offsetX = rect.left - 10;
-				offsetY = rect.top - 10;
-				rect.left = 10;
-				rect.top = 10;
+				offsetX = rect.left - DEFAULT_GAP;
+				offsetY = rect.top - DEFAULT_GAP;
+				rect.left = DEFAULT_GAP;
+				rect.top = DEFAULT_GAP;
 				rect.right -= offsetX;
 				rect.bottom -= offsetY;
 			}
@@ -1623,8 +1765,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	/**
-	 * Determines the union of bounds of all diagrams on this {@link Surface} and updates
-	 * the lower silhouette line if {@code _silhouette} is given.
+	 * Determines the union of bounds of all diagrams on this {@link Surface} (in true diagram
+	 * coordinates) and updates the lower silhouette line of {@code _silhouette} if it is given.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
@@ -1637,12 +1779,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Determines the union of bounds of the given {@code _diagrams} in true diagram coordinates
-	 * and updates the lower silhouette line if {@code _silhouette} is given.
+	 * and updates the lower silhouette line if {@code _silhouette} is given.<br/>
+	 * At the right-hand and bottom side, a buffer of {@link #DEFAULT_GAP} is added, if the
+	 * bounds are not empty (Issue #673).
 	 * @param _diagrams - a collection of {@link Diagram} objects.
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diagrams)
 	 */
 	private Rect getDrawingRect(Collection<? extends Diagram> _diagrams, LinkedList<Point> _silhouette)
 	{
@@ -1670,7 +1814,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//int height = Math.max(rect.bottom - rect.top, 118);
 				int height = Math.max(rect.bottom, MIN_HEIGHT);
 				// END KGU#136 2016-03-01
-				//System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
+				// DEBUG: disable this output for releases
+				//System.out.println(root.getMethodName() + ": (" + (diagram.point.x + rect.left) + ", " + (diagram.point.y + rect.top) + ", " + (diagram.point.x + rect.right) + ", " + (diagram.point.y + rect.bottom) +")");
 				r.left = Math.min(diagram.point.x, r.left);
 				r.top = Math.min(diagram.point.y, r.top);
 				r.right = Math.max(diagram.point.x + width, r.right);
@@ -1678,10 +1823,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//END KGU#85 2015-11-18
 				// START KGU#499 2018-02-20
 				if (_silhouette != null) {
-					this.updateSilhouette(_silhouette, diagram.point.x, width, diagram.point.y + height);
+					this.updateSilhouette(_silhouette, diagram.point.x, diagram.point.x + width, diagram.point.y + height);
 				}
 				// END KGU#499 2018-02-20
 			}
+			// START KGU#645 2019-02-03: Issue #673 - drawing area should exceed the group bounds a little
+			r.right += DEFAULT_GAP;
+			r.bottom += DEFAULT_GAP;
+			// END KGU#645 2019-02-03S
 		}
 		//System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
 
@@ -1695,11 +1844,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * lower silhouette of the diagrams.<br/>
 	 * At the moment, this method tends to consume O(N) time with N diagrams already processed.
 	 * @param _silhouette - List of leap points in the silhouette line from left to right
-	 * @param left - the left edge x  coordinate of the considered diagram
-	 * @param width - the widh of the considered diagram
-	 * @param bottom - the bottom value of the considered diagram
+	 * @param left - the left edge x coordinate of the considered diagram
+	 * @param right - the right edge x coordinate of the considered diagram
+	 * @param bottom - the bottom y coordinate of the considered diagram
 	 */
-	private void updateSilhouette(LinkedList<Point> _silhouette, int left, int width, int bottom) {
+	private void updateSilhouette(LinkedList<Point> _silhouette, int left, int right, int bottom) {
 		ListIterator<Point> iter = _silhouette.listIterator();
 		Point lastLeap = new Point(0, 0);	// previous leap data
 		Point leap = null;			// current leap data
@@ -1712,58 +1861,87 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			lastLeap = iter.next();
 		}
 		// Search for an overlapping between diagram and silhouette
-		while (iter.hasNext() && ((leap = iter.next()).x < left || lastLeap.y >= bottom)) {
+		while (iter.hasNext() && ((leap = iter.next()).x < left || leap.x < right && lastLeap.y >= bottom && leap.y >= bottom)) {
 			lastLeap = leap;
 		}
 		// Now if we haven't found any leap at all, then just add the two leaps for this diagram
-		Point nextLeap = new Point(left + width, lastLeap.y);
-		if (leap == null) {
-			Point leap1 = new Point(left, bottom);
+		Point leap1 = new Point(left, bottom);
+		Point nextLeap = new Point(right, lastLeap.y);
+		if (leap == null || leap.x < left) {
 			_silhouette.add(leap1);
 			_silhouette.add(nextLeap);
+			leap = null;
 		}
-		// There is nothing to do if the last leap is already beyond the diagram
-		else if (lastLeap.x < left + width) {
-			// otherwise there are two fundamental cases:
-			if (lastLeap.y >= bottom && lastLeap.x >= left) {
-				// 1. The diagram had already started but the silhouette is receding (at lastLeap)
-				//    --> update lastLeap to level bottom
-				lastLeap.y = bottom;
+		// Otherwise there are three fundamental cases:
+		else if (leap.x >= right && lastLeap.x <= left && lastLeap.y < bottom) {
+			// 1. The current leap is already beyond the diagram, the diagram had protruded the
+			// level between lastLeap and leap
+			nextLeap.y = lastLeap.y;
+			iter.previous();
+			if (lastLeap.x < left - DEFAULT_GAP) {
+				iter.add(leap1);
 			}
 			else {
-				// 2. The diagram starts here and protrudes over the silhouette
-				//    --> insert a new leap at position left (or just raise the level at lastLeap)
-				Point leap1 = new Point(left, bottom);
-				// Was there another leap beyond the last leap (or had the list been exhausted)?
-				if (leap.x != lastLeap.x) {
-					// There is another leap farther right
-					// If the distance between silhouette leap and diagram edge is small then avoid
-					// an additional leap and just move the existing leap to left
-					if (leap.x - left <= DEFAULT_GAP && leap.y > bottom && left > lastLeap.x) {
-						leap.x = left;		// Just move the leap left
+				lastLeap.y = bottom;
+			}
+			if (leap.x > right + DEFAULT_GAP) {
+				iter.add(nextLeap);
+			}
+		}
+		else if (leap.x < right) {
+			// We have a leap transition inside the stretch of the diagram. In case this is the last leap
+			// ever, we must restore the former leap (in theory, a silhouette as either none or at least two nodes...)
+			if (lastLeap == leap && iter.hasPrevious()) {
+				lastLeap = iter.previous();
+				iter.next();
+			}
+			if (lastLeap.y >= bottom) {
+				// 2. The silhouette had exceeded the diagram but is now receding --> update leap to level bottom
+				lastLeap = leap;
+				leap.y = bottom;
+			}
+			else {
+				// 3. The silhouette had not exceeded the diagram, so it's the first leap
+				// inside the diagram bounds, the level may now protrude or not
+				//    --> insert a new leap at position left (or just raise the level of leap)
+				if (leap.x > left) {
+					if (lastLeap.x == leap1.x) {
+						lastLeap.y = leap1.y;
 					}
 					else {
-						iter.previous();	// go back before current leap
-						iter.add(leap1);	// insert the new leap before it
-						iter.next();		// and go beyond the already read leap again
+						iter.previous();
+						iter.add(leap1);
+						iter.next();
 					}
+					lastLeap = leap;
+				}
+				else if (leap.y < bottom) {
+					lastLeap = leap;
+					leap.y = bottom;
 				}
 				else {
-					// List had been exhausted
-					leap = null;
-					iter.add(leap1);	// insert the new leap at end
+					lastLeap = leap;
 				}
+				nextLeap.y = lastLeap.y;
 			}
-			// Now wipe all leaps eclipsed exceeded by the diagram
-			while (leap != null && leap.x <= left+width) {
-				if (leap.y <= bottom) {
-					if (nextLeap.y <= bottom) {
-						nextLeap.y = leap.y;
-						iter.remove();
-					}
-					else {
-						nextLeap.y = leap.y;
-						leap.y = bottom;
+			// Now wipe all leaps eclipsed or exceeded by the diagram
+			boolean first = true;
+			while (leap != null && leap.x < right) {
+				if (!first) {
+					lastLeap = leap;
+				}
+				else {
+					first = false;
+				}
+				if (leap.x > left) {
+					if (leap.y <= bottom) {
+						if (nextLeap.y <= bottom) {
+							iter.previous();
+							iter.remove();
+						}
+						else if (nextLeap.y > bottom) {
+							leap.y = bottom;
+						}
 					}
 				}
 				if (iter.hasNext()) {
@@ -1772,20 +1950,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				else {
 					leap = null;
 				}
+				nextLeap.y = lastLeap.y;
 			}
-			// If there no further leap or the next leap is far, insert the prepared end leap
-			if (leap == null || (leap.x - (left+width) > DEFAULT_GAP)) {
-				if (leap != null && iter.hasPrevious()) {
-					iter.previous();
+			// If there is no further leap or the next leap is far, insert the prepared end leap
+			// START KGU#633 2019-01-08: Bugfix #515
+			if (leap == null || (leap.x > right + DEFAULT_GAP) && (nextLeap.y < bottom)) {
+			// END KGU#633 2019-01-08
+				if (leap != null && leap.y == nextLeap.y) {
+					leap.x = right;
 				}
-				iter.add(nextLeap);    			
+				else {
+					if (leap != null && iter.hasPrevious()) {
+						iter.previous();
+					}
+					iter.add(nextLeap);
+				}
 			}
 		}
 		// DEBUG: Disable this list printing after debugging
 //		iter = _silhouette.listIterator();
 //		System.out.println("Current silhouette:");
 //		while (iter.hasNext()) {
-//			Point leap1 = iter.next();
+//			leap1 = iter.next();
 //			System.out.println(leap1.x + " --> " + leap1.y);
 //		}
 	}
@@ -1793,25 +1979,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private Rect adaptLayout()
 	{
 		Rect rect = getDrawingRect(null);
-		// START KGU#85 2017-10-23: Enh. #35 - without this superfluous group layout it's all pretty simple
-		// Didn't find anything else to effectively inform the scrollbars about current extension
-//		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-//		this.setLayout(layout);
-//		layout.setHorizontalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
-//				//.add(0, rect.right, Short.MAX_VALUE)
-//				.add(0, Math.min(rect.right, Short.MAX_VALUE), Short.MAX_VALUE)
-//				// END KGU#411 2017-05-26
-//				);
-//		layout.setVerticalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				// START KGU#411 2017-05-26: With huge diagrams the bounding box could exceed the Short value range
-//				//.add(0, rect.bottom, Short.MAX_VALUE)
-//				.add(0, Math.min(rect.bottom, Short.MAX_VALUE), Short.MAX_VALUE)
-//				// END KGU#411 2017-05-26
-//				);
-		//System.out.println(rect);
+		// START KGU#85 2017-10-23: Enh. #35 - Add scrollbars
 		Dimension oldDim = this.getPreferredSize();
 		// START KGU#524 2018-06-18: Bugfix #544 for #512 (forgotten zoom consideration)
 //		if (rect.right != oldDim.width || rect.bottom != oldDim.height) {
@@ -1945,13 +2113,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
 	 * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
 	 * the {@code root} (unless there is already another {@link Mainform} associated) and
-	 * {@code root} will automatically be pinned.
+	 * {@code root} will automatically be pinned.<br/>
 	 * If {@code point} is given then the diagram will be placed to that position, otherwise a free
-	 * area is looked for.
+	 * area is looked for.<br/>
+	 * If {@code owningGroup} is given then the diagram will be associated to if it is not already
+	 * a member. Otherwise the diagram will be associated to the default group (if possible).
 	 * @param root - the {@link Root} element of the diagram to be added
 	 * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
 	 * @param point - the proposed position
-	 * @param owningGroup - the diagram group {@code root} belongs to
+	 * @param owningGroup - the diagram group {@code root} belongs to or is to belong to
 	 */
 	private void addDiagram(Root root, Mainform form, Point point, Group owningGroup)
 	// END KGU#110 2015-12-20
@@ -1967,6 +2137,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#1119 2016-01-02
 		if (diagram == null) {
 		// END KGU#2 2015-11-19
+			boolean pointGiven = point != null;
 			// START KGU#499 2018-02-22: New packing strategy (silhouette approach)
 			//Rect rect = getDrawingRect();
 			LinkedList<Point> silhouette = new LinkedList<Point>();
@@ -1990,7 +2161,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// START KGU#110 2015-12-20
 			//Point point = new Point(left,top);
-			boolean pointGiven = point != null;
 			if (!pointGiven)
 			{
 				point = new Point(left,top);
@@ -2102,6 +2272,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		if (owningGroup != null) {
 			owningGroup.addDiagram(diagram);
+			/* 
+			 * Keep the former selection only if the owningGroup is among the selected groups
+			 * or if all selected diagrams are members of the owningGroup, otherwise clear the
+			 * selection and start with a new selection set.
+			 */
+			if (!groupsSelected.isEmpty() && !groupsSelected.contains(owningGroup)) {
+				this.unselectAll();
+			}
+			else if (!diagramsSelected.isEmpty() && owningGroup != null) {
+				for (Diagram diagr: diagramsSelected) {
+					if (!this.getGroups(diagr).contains(owningGroup)) {
+						this.unselectAll();
+						break;
+					}
+				}
+			}
 		}
 		diagramsSelected.add(diagram);
 		diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
@@ -2118,7 +2304,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (diagram.mainform == null)
 			{
 				diagram.mainform = form;
-				// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer neeeded
+				// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer needed
 				//form.updateArrangerIndex();
 				// END KGU#305 2016-12-12
 			}
@@ -2474,16 +2660,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
 	private void initComponents() {
 
-//		org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-//		this.setLayout(layout);
-//		layout.setHorizontalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(0, 400, Short.MAX_VALUE)
-//			);
-//		layout.setVerticalGroup(
-//			layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//				.add(0, 300, Short.MAX_VALUE)
-//		);
+		// popup for group names
+		JPanel jp = new JPanel();
+		jp.setOpaque(true);
+		lblPop.setPreferredSize(new Dimension(30,12));
+		jp.add(lblPop);
+		pop.add(jp);
+
 		this.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
 		this.setPreferredSize(new Dimension(400, 300));
 		// START KGU#497 2018-02-17: Enh. #512
@@ -2561,7 +2744,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	//public void saveDiagrams()
 	public boolean saveDiagrams(Component initiator)
 	{
-		return saveDiagrams(initiator, this.diagrams, false, false);
+		return saveDiagrams(initiator, this.diagrams, false, false, false);
 	}
 
 	/**
@@ -2572,9 +2755,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * case all diagrams are saved)
 	 * @param goingToClose - whether the application is going to close
 	 * @param dontAsk - if questions are to be suppressed
+	 * @param forArchive - if true then virgin diagrams are saved to a temporary folder, a complete file
+	 * chooser won't be offered in such a case.
 	 * @return true if all was done or the user has quit the warning message about saving deficiencies.
 	 */
-	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk)
+	protected boolean saveDiagrams(Component initiator, Collection<Diagram> diagramsToCheck, boolean goingToClose, boolean dontAsk, boolean forArchive)
 	// END KGU#177 2016-04-14
 	{
 		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
@@ -2584,7 +2769,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (diagramsToCheck == null) {
 			diagramsToCheck = this.diagrams;
 		}
-		allDone = saveDiagrams(diagramsToCheck, goingToClose, dontAsk, unsaved);
+		allDone = saveDiagrams(diagramsToCheck, goingToClose, dontAsk, forArchive, unsaved);
 		// START KGU#177 2016-04-14: Enh. #158
 		if (!allDone)
 		{
@@ -2605,15 +2790,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param diagrams - the collection of {@link Diagram}s to be saved - CAUTION: must not be null!
 	 * @param goingToClose - signals whether this method was called because the application is going to shut down 
 	 * @param dontAsk - if true then the user won't be asked whether they want to save or not
-	 * @param unsaved - a {@link StringList} collecting the signatures of diagrams the saving ofwhich failed
+	 * @param forArchive - if true then diagrams never saved before won't be saved here but later
+	 * @param unsaved - a {@link StringList} collecting the signatures of diagrams the saving of which failed
 	 * @return true if all affected diagram could be saved or the user accepted the faults
 	 */
-	private boolean saveDiagrams(Collection<Diagram> diagrams, boolean goingToClose, boolean dontAsk, StringList unsaved) {
+	private boolean saveDiagrams(Collection<Diagram> diagrams, boolean goingToClose, boolean dontAsk, boolean forArchive, StringList unsaved) {
 		boolean allDone = true;
 		// START KGU#320 2017-01-04: Bugfix #321
 		HashSet<Root> handledRoots = new HashSet<Root>();
 		HashSet<Mainform> mainforms = new HashSet<Mainform>();
 		// END KGU#320 2017-01-04
+		// START KGU#650 2019-02-11: Issue #677
+		Mainform tempMainform = null;
+		Mainform someMainform = null;
+		// END KGU#650 2019-02-11
 		// START KGU#534 2018-06-27: Enh. #552
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
 		try {
@@ -2623,7 +2813,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				Diagram diagram = iter.next();
 				Mainform form = diagram.mainform;
-				if (form != null)
+				// START KGU#650 2019-02-11: Issue #677 - Ensure a Mainform if we have to archive diagrams
+				boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
+					form = someMainform = tempMainform = new Mainform(false);
+				}
+				// Postpone the saving of virgin diagrams here in case of saving to an archive (will be done later)
+				//if (form != null)
+				if (form != null && (hasFile || !forArchive)) 
+				// END KGU#650 2019-02-11
 				{
 					// START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
 					//form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
@@ -2635,15 +2833,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					{
 						break;
 					}
-					mainforms.add(form);
+					// START KGU#650 2019-02-11: Issue #677
+					if (form != tempMainform) {
+						mainforms.add(form);
+						if (someMainform == null) {
+							someMainform = form;
+						}
+					}
+					// END KGU#650 2019-02-11
 					handledRoots.add(diagram.root);
 					// END KGU#320 2017-01-04
 				}
 				// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-				else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
+				else if (!hasFile)
 				{
-					unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
-					allDone = false;
+					if (!forArchive) {
+						unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
+						allDone = false;
+					}
 				}
 				else if (diagram.root.hasChanged())
 				{
@@ -2652,6 +2859,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				// END KGU#177 2016-04-14
 			}
+			// START KGU#650 2019-02-11: Issue #677
+			if (tempMainform != null) {
+				tempMainform.dispose();
+			}
+			// END KGU#650 2019-02-11
 			// START KGU#320 2017-01-04: Bugfix #321
 			// In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
 			// chance to save their currently maintained Root even if this was not arranged here.
@@ -2744,6 +2956,67 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#626 2018-12-31
+	
+	// START KGU#630 2019-01-12: Enh. #662/3
+	/**
+	 * Re-arranges all diagrams group by group.
+	 */
+	protected void rearrange()
+	{
+		// Keep track of all diagrams already re-arranged (diagram my be shared among groups)
+		Set<Diagram> rearrangedDiagrams = new HashSet<Diagram>();
+
+		// First remove all diagrams from the vector (they should all be held by the groups as well)
+		diagrams.clear();
+
+		// Now traverse the groups and start a new level for every group
+		int groupOffsetY = 0;	// height offset of the current group
+		Group defaultGroup = null;	// Place the default group last
+		for (Group group: groups.values()) {
+			if (group.isDefaultGroup()) {
+				defaultGroup = group;
+				continue;
+			}
+			groupOffsetY = rearrangeGroup(group, rearrangedDiagrams, groupOffsetY);
+		}
+		if (defaultGroup != null) {
+			rearrangeGroup(defaultGroup, rearrangedDiagrams, groupOffsetY);
+		}
+		this.adaptLayout();
+		this.repaint();
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
+	}
+	// END KGU#630 2019-01-12
+
+	/**
+	 * Rearranges the diagrams of the given {@code group} not contained in set {@code rearrangedDiagrams}
+	 * below {@code groupOffsetY}, thereby adds these member diagrams both to field {@link #diagrams} again
+	 * (they must have been removed from the vector before or - if shared with an already rearranged group -
+	 * have been added to {@code rearrangedDiagrams}) and set {@code rearrangedDiagrams}.
+	 * @param group - the {@link Group} to be rearranged
+	 * @param rearrangedDiagrams - the set of already rearranged {@link Diagram}s - should contain exactly
+	 * the same diagrams as {@link #diagrams} but is more efficient to be searched.
+	 * @param groupOffsetY - the y coordinate beneath which the diagrams for this group are to be placed
+	 * @return  the bottom coordinate of the group bounds after rearrangement.
+	 */
+	private int rearrangeGroup(Group group, Set<Diagram> rearrangedDiagrams, int groupOffsetY) {
+		for (Diagram diagr: group.getDiagrams()) {
+			if (rearrangedDiagrams.contains(diagr)) {
+				continue;
+			}
+			LinkedList<Point> silhouette = new LinkedList<Point>();
+			silhouette.add(new Point(0, groupOffsetY));
+			silhouette.add(new Point(Integer.MAX_VALUE, 0));
+			this.getDrawingRect(silhouette);
+			Rect rec = diagr.root.getRect();
+			Point newPoint = this.findPreferredLocation(silhouette, rec.getRectangle());
+			diagr.setLocation(newPoint.x, newPoint.y);
+			diagrams.add(diagr);
+			rearrangedDiagrams.add(diagr);
+		}
+		groupOffsetY = getDrawingRect(null).bottom;
+		return groupOffsetY;
+	}
 
 	public void mouseClicked(MouseEvent e)
 	{
@@ -2804,17 +3077,39 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// With zooming we need the virtual mouse coordinates (Enh. #512)
 				int mouseX = Math.round(e.getX() * this.zoomFactor);
 				int mouseY = Math.round(e.getY() * this.zoomFactor);
-				Diagram diagram = getHitDiagram(mouseX, mouseY);
-				if (diagram != null)
-				{
-					Root root = diagram.root;
-					if (ctrlDown && diagramsSelected.contains(diagram)) {
-						root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
-						diagramsSelected.remove(diagram);
+				// START KGU#633 2019-01-09: Enh. #662/2
+				if (!(drawGroups && selectGroups)) {
+					Diagram diagram = getHitDiagram(mouseX, mouseY);
+					if (diagram != null)
+					{
+						Root root = diagram.root;
+						if (ctrlDown && diagramsSelected.contains(diagram)) {
+							root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.remove(diagram);
+						}
+						else {
+							root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+							diagramsSelected.add(diagram);
+						}
+					}
+				}
+				else {
+					Set<Group> hitGroups = this.getHitGroups(mouseX, mouseY);
+					if (ctrlDown) {
+						HashSet<Group> groupsToSelect = new HashSet<Group>(groupsSelected);
+						for (Group group: hitGroups) {
+							if (groupsSelected.contains(group)) {
+								groupsToSelect.remove(group);
+							}
+							else {
+								groupsToSelect.add(group);
+							}
+						}
+						this.unselectAll();
+						this.selectGroups(groupsToSelect);
 					}
 					else {
-						root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-						diagramsSelected.add(diagram);
+						this.selectGroups(hitGroups);
 					}
 				}
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
@@ -2859,6 +3154,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseExited(MouseEvent e)
 	{
+		pop.setVisible(false);
 	}
 
 	public void mouseDragged(MouseEvent e)
@@ -2914,7 +3210,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param deltaY - pixels down (or up if negative)
 	 */
 	protected void moveSelection(int deltaX, int deltaY) {
-		groupBounds = null;
 		for (Diagram diagr: this.diagramsSelected) {
 			// No diagram is allowed to be shifted outside the reachable area
 			int newX = Math.max(0, diagr.point.x + deltaX);
@@ -2927,6 +3222,37 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	public void mouseMoved(MouseEvent e)
 	{
+		if (this.drawGroups) {
+			pop.setVisible(false);
+			int x = (int)(e.getX() * this.zoomFactor);
+			int y = (int)(e.getY() * this.zoomFactor);
+			Set<Group> hitGroups = this.getHitGroups(x, y);
+			if (!hitGroups.isEmpty()) {
+				StringList groupNames = new StringList();
+				StringList htmlContent = new StringList();
+				for (Group group: hitGroups) {
+					String groupName = group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText());
+					groupNames.add(groupName);
+					htmlContent.add("<span style=\"color: #" + Integer.toHexString(group.getColor().getRGB()).substring(2) + ";\">"
+							+ BString.encodeToHtml(groupName)
+							+ "</span>");
+				}
+				lblPop.setText("<html>" + htmlContent.concatenate(", ") + "</html>");
+				lblPop.setPreferredSize(
+						new Dimension(
+								8 + lblPop.getFontMetrics(lblPop.getFont()).
+								stringWidth(groupNames.concatenate(", ")),
+								lblPop.getFontMetrics(lblPop.getFont()).getHeight()
+								)
+						);
+				x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+				y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+				pop.setLocation(x+e.getX(),
+						y+e.getY()+16);
+				pop.setVisible(true);
+			}
+			
+		}
 	}
 	
 	// START KGU#626 2018-12-23: Prepared for enh. #657
@@ -2934,27 +3260,66 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		if (e.isPopupTrigger()) 
 		{
-			List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
 			if (Arranger.popupMenu != null) {
 				Arranger.popupHitList.removeAll();
-				for (Diagram diagr: hitDiagrs) {
-					javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(diagr.root.getSignatureString(false), diagr.root.getIcon());
-					menuItem.setToolTipText(msgTooltipSelectThis.getText());
-					menuItem.addActionListener(new java.awt.event.ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent evt) {
-							if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
-								unselectAll();
-							}
-							diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
-							diagramsSelected.add(diagr);
-							if (diagrams.remove(diagr)) {
-								diagrams.add(diagr);
-							}
-							notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
-						}});
-					Arranger.popupHitList.add(menuItem);
+				// START KGU#630 2019-01-09: Enh #662/2
+				if (!(drawGroups && selectGroups)) {
+				// END KGU#630 2019-01-09
+					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					for (Diagram diagr: hitDiagrs) {
+						String description = diagr.root.getSignatureString(false);
+						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, diagr.root.getIcon());
+						menuItem.setToolTipText(msgTooltipSelectThis.getText()
+								.replace("%1", msgDiagram.getText().replace("%", description))
+								.replace("%2", ""));
+						menuItem.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent evt) {
+								if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+									unselectAll();
+								}
+								diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+								diagramsSelected.add(diagr);
+								if (diagrams.remove(diagr)) {
+									diagrams.add(diagr);
+								}
+								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+							}});
+						Arranger.popupHitList.add(menuItem);
+					}
+				// START KGU#630 2019-01-09: Enh #662/2
 				}
+				if (drawGroups) {
+					Set<Group> hitGroups = this.getHitGroups(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					String tooltipText = msgTooltipSelectThis.getText();
+					int pos2 = tooltipText.indexOf("%2");
+					if (pos2 > 0) {
+						tooltipText = tooltipText.substring(0, pos2);
+					}
+					for (Group group: hitGroups) {
+						String description = group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText());
+						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, group.getIcon(true));
+						menuItem.setToolTipText(tooltipText.replace("%1", msgGroup.getText().replace("%", description)));
+						menuItem.addActionListener(new java.awt.event.ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent evt) {
+								if ((evt.getModifiers() & ActionEvent.SHIFT_MASK) == 0) {
+									unselectAll();
+								}
+								for (Diagram diagr: group.getDiagrams()) {
+									diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
+									diagramsSelected.add(diagr);
+									if (diagrams.remove(diagr)) {
+										diagrams.add(diagr);
+									}
+								}
+								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
+							}});
+						Arranger.popupHitList.add(menuItem);
+					}
+				}
+				// END KGU#630 2019-01-09
+				pop.setVisible(false);
 				Arranger.popupMenu.show(e.getComponent(), e.getX(), e.getY());					
 			}
 		}
@@ -2995,6 +3360,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param trueY - the true Y coordinate of the diagrams (zoom compensated)
 	 * @return The list of the diagrams enclosing the mouse position.
 	 * @see #getHitDiagram(int, int)
+	 * @see #getHitGroups(int, int)
 	 */
 	private List<Diagram> getHitDiagrams(int trueX, int trueY)
 	{
@@ -3013,6 +3379,27 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		return hitDiagrams;
+	}
+	
+	/**
+	 * Returns the set of all groups under the mouse cursor.
+	 * @param trueX - the true X coordinate (zoom compensated)
+	 * @param trueY - the true Y coordinate (zoom compensated)
+	 * @return The set of the groups enclosing the mouse position.
+	 * @see #getHitDiagram(int, int)
+	 * @see #getHitDiagrams(int, int)
+	 */
+	private Set<Group> getHitGroups(int trueX, int trueY)
+	{
+		Set<Group> hitGroups = new HashSet<Group>();
+		for (Group group: this.groups.values())
+		{
+			if (group.bounds != null && group.bounds.contains(trueX, trueY))
+			{
+				hitGroups.add(group);
+			}
+		}
+		return hitGroups;
 	}
 	
 	/**
@@ -3044,7 +3431,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Unselects all available diagrams and repaints
 	 */
 	public void unselectAll() {
-		groupBounds = null;
+		// START KGU#630 2019-01-09: Enh. #622/2
+		this.groupsSelected.clear();
+		// END KGU#630 2019-01-09
 		this.diagramsSelected.clear();
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
@@ -3056,9 +3445,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	
 	/**
-	 * Selects all available diagrams and repaints
+	 * Selects all available groups or diagrams and repaints
 	 */
 	public void selectAll() {
+		// START KGU#630 2019-01-9: Enh. #622/2
+		if (this.drawGroups && this.selectGroups) {
+			this.groupsSelected.addAll(this.groups.values());
+		}
+		// END KGU#630 2019-01-09
 		this.diagramsSelected.addAll(this.diagrams);
 		for (Diagram diagr: this.diagrams) {
 			if (diagr.root != null) {
@@ -3071,7 +3465,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Selects all given diagrams and repaints
-	 * @param diagrSet - set of diagram to be added to the selection
+	 * @param diagrSet - set of diagrams to be added to the selection
 	 */
 	public void selectSet(Collection<Diagram> diagrSet) {
 		this.diagramsSelected.addAll(diagrSet);
@@ -3084,6 +3478,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		repaint();
 	}
 	// END KGU#624 2018-12-21
+	
+	// START KGU#630 2019-01-09: Enh. #662/2
+	/**
+	 * Adds all given groups as well as their member diagrams to the respective
+	 * selection sets and repaints
+	 * @param groupSet
+	 */
+	public void selectGroups(Collection<Group> groupSet)
+	{
+		this.groupsSelected.addAll(groupSet);
+		for (Group group: groupSet) {
+			selectSet(group.getDiagrams());
+		}
+	}
+	// END KGU#630 2019-01-09
 
 	/**
 	 * Repaints the given {@link Root} (which reported to have been subject to changes).
@@ -3092,9 +3501,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public void update(Root source)
 	{
-		// START KGU#626 2019-01-01: Enh. #657
-		groupBounds = null;
-		// END KGU#626 2019-01-01
 		// START KGU#85 2015-11-18
 		adaptLayout();
 		// END KGU#85 2015-11-18
@@ -3126,6 +3532,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#626 2018-12-31
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 			}
+			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
+			if (source.hasChanged()) {
+				for (String groupName: diagr.getGroupNames()) {
+					Group group = this.groups.get(groupName);
+					File arrzFile = null;
+					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile()) != null) {
+						if (!source.getPath(true).equals(arrzFile.getAbsolutePath())) {
+							group.membersChanged = true;
+						}
+					}
+				}
+			}
+			// END KGU#650 2019-02-11
 		}
 		// END KGU#624 2018-12-26
 		// END KGU#330 2017-01-13
@@ -3526,9 +3945,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param setAtTop - whether the diagram is to be drawn on top of all
 	 */
 	public void scrollToDiagram(Root aRoot, boolean setAtTop) {
-		// START KGU#626 2019-01-01: Enh. #657
-		groupBounds = null;
-		// END KGU#626 2019-01-01
 		// START KGU#312 2016-12-29: Enh. #315 - adaptation to modified signature 
 		//Diagram diagr = this.findDiagram(aRoot, true);
 		Diagram diagr = this.findDiagram(aRoot, 1);	// Check for identity here
@@ -3567,15 +3983,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * If {@code showBounds} is true then the bounding box of the group will
 	 * be drawn.
 	 * @param aGroup - the {@link Group} to be focused
-	 * @param showBounds - whether the bounding box of the group is to be drawn
 	 */
-	public void scrollToGroup(Group aGroup, boolean showBounds) {
-		groupBounds = null;
+	public void scrollToGroup(Group aGroup) {
 		Collection<Diagram> members = aGroup.getDiagrams();
 		Rect rect = this.getDrawingRect(members, null);
-		if (showBounds) {
-			groupBounds = rect.getRectangle();
-		}
 		rect = rect.scale(1/this.zoomFactor);
 		unselectAll();
 		this.selectSet(members);
@@ -3677,7 +4088,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param selectedRoots - the initial set of {@link Root} objects. CAUTION: may be expanded!
 	 * @param missingSignatures - a {@link StringList} to gather signatures of missing diagrams
 	 * @param duplicateSignatures - a {@link StringList} to gather signatures of ambiguous diagrams
-	 * @return the set of added {@link Root} objects
+	 * @return the set of added {@link Diagram} objects
 	 */
 	protected Set<Diagram> expandRootSet(Set<Root> selectedRoots, StringList missingSignatures,
 			StringList duplicateSignatures) {
@@ -3688,13 +4099,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// First look for called routines
 			Vector<Call> calls = root.collectCalls();
 			for (Call call: calls) {
-				if (call.isDisabled()) {
-					continue;
-				}
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
 					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
-					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
 			}
@@ -3703,7 +4111,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
 					Vector<Root> candidates = this.findIncludesByName(inclName);
-					handleCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
+					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
 			}
@@ -3723,7 +4131,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param signature - the signature (search pattern)
 	 * @param candidates - the vector of found {@link Root} objects matching the {@code signature}
 	 */
-	private void handleCandidates(Set<Root> rootSet, StringList missingSignatures, StringList duplicateSignatures,
+	private void handleReferenceCandidates(Set<Root> rootSet, StringList missingSignatures, StringList duplicateSignatures,
 			LinkedList<Root> rootQueue, Set<Diagram> addedDiagrams, String signature, Vector<Root> candidates) {
 		/* First check if any of the candidates is already member of the set, then we
 		 * can ignore all the others
@@ -3745,11 +4153,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				sub.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 			if (candidates.size() > 1 && duplicateSignatures != null) {
-				duplicateSignatures.add(signature);
+				duplicateSignatures.addIfNew(signature);
 			}
 		}
 		if (candidates.isEmpty() && missingSignatures != null) {
-			missingSignatures.add(signature);
+			missingSignatures.addIfNew(signature);
 		}
 	}
 
@@ -3952,7 +4360,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		if (arrFileOrNull != null) {
-			group.setFile(arrFileOrNull, null);
+			group.setFile(arrFileOrNull, null, false);
 		}
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		return done ? group : null;
@@ -3983,7 +4391,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	
 	/**
-	 * Clears) the group with the given {@code name}.
+	 * Clears the group with the given {@code name}.
 	 * The member diagrams that are not shared by other groups will be handed over
 	 * to the default group.
 	 * @param deleteDiagrams - if true then the member diagrams will also be removed if not held by
@@ -4041,7 +4449,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				if (doomedDiagrams != null) {
 					StringList unsaved = new StringList();
-					done = saveDiagrams(doomedDiagrams, false, false, unsaved);
+					done = saveDiagrams(doomedDiagrams, false, false, false, unsaved);
 					for (Diagram diagram: doomedDiagrams) {
 						removeDiagram(diagram);
 					}
@@ -4052,7 +4460,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							|| JOptionPane.showConfirmDialog(initiator == null ? this : initiator,
 									msgConfirmRemoveGroup.getText()
 									.replace("%", name.replace(Group.DEFAULT_GROUP_NAME,
-											Editor.msgDefaultGroupName.getText()))) == JOptionPane.OK_OPTION) {
+											ArrangerIndex.msgDefaultGroupName.getText()))) == JOptionPane.OK_OPTION) {
 						anythingChanged = (this.groups.remove(name) != null) || anythingChanged;
 					}
 					done = true;
@@ -4076,6 +4484,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public Collection<Group> getGroupsFromSelection(boolean congruent)
 	{
+		// START KGU#630 2019-01-09: Enh. #662/2
+		if (selectGroups) {
+			return groupsSelected;
+		}
+		// END KGU#630 2019-01-09
 		Collection<Diagram> interestingDiagrams = diagramsSelected.isEmpty() ? diagrams : diagramsSelected;
 		return getGroupsFromCollection(interestingDiagrams,congruent);
 	}
@@ -4232,21 +4645,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param unsaved - a {@link SringList} where the names of groups that couldn't be saved will be added 
 	 * @return true if all was done without serious problems.
 	 */
-	protected boolean saveGroups(Component initiator, boolean goingToClose, StringList unsaved)
+	protected boolean saveGroups(Component initiator, boolean goingToClose)
 	{
 		boolean allDone = true;
+		StringList unsaved = new StringList();
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
 		try {
-			// Trouble is that saving an arrangement may modify the map of groups, so we might miss some of them
+			// Saving an arrangement may modify the map of groups, so we get a copy first
 			Vector<Group> groupsToHandle = new Vector<Group>(this.groups.values());
 			for (Group group: groupsToHandle) {
 				/* It doesn't make sense to save the default group on window closing event
+				 * unless it contains some interdependent diagrams not shared anywhere.
 				 * (if it exists then it will always be unsaved and it's usually not a
 				 * conscious arrangement but just a dump of some diagrams e.g. used as subroutines */
-				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !group.isDefaultGroup())) {
+				if (groups.containsValue(group) && group.hasChanged() && (!goingToClose || !(group.isDefaultGroup() && !uniquelyHoldsDependents(group)))) {
 					if (this.saveArrangement(initiator, group, goingToClose) == null) {
 						allDone = false;
-						if (unsaved != null) {
+						if (group.isDefaultGroup()) {
+							unsaved.addIfNew(ArrangerIndex.msgDefaultGroupName.getText());
+						}
+						else {
 							unsaved.addIfNew(group.getName());
 						}
 					}
@@ -4256,7 +4674,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		finally {
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
-		if (unsaved != null && unsaved.count() > 1 && initiator != null) {
+		if (!unsaved.isEmpty() && initiator != null) {
 			allDone = JOptionPane.showConfirmDialog(initiator,
 					msgUnsavedGroups.getText() + "\n" + unsaved.concatenate(", "), 
 					this.msgSaveDialogTitle.getText(),
@@ -4265,5 +4683,158 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return allDone;
 	}
 	// END KGU#626 2019-01-01/05
+
+	// START KGU#631 2019-01-08: Bugfix #623
+	/**
+	 * Checks whether the given group is the only common group of a set of diagrams with
+	 * (mutual or not) dependencies.
+	 * @param group - some {@link Group}
+	 * @return true if there is at least one pair of contained 
+	 */
+	private boolean uniquelyHoldsDependents(Group group) {
+		Set<Diagram> members = group.getDiagrams();
+		for (Diagram diagr: members) {
+			StringList groupNames = new StringList(diagr.getGroupNames());
+			Vector<Call> containedCalls = diagr.root.collectCalls();
+			for (Call call: containedCalls) {
+				Function fct = call.getCalledRoutine();
+				if (fct != null && fct.isFunction()) {
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
+						return true;
+					}
+				}
+			}
+			StringList includeNames = diagr.root.includeList;
+			if (includeNames != null) {
+				for (int i = 0; i < includeNames.count(); i++) {
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i));
+					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	// END KGU#631 2019-01-08
+
+	/**
+	 * Checks if a diagram among {@code candidates}, which is not represented by {@code diagr}
+	 * but element of {@code members} is member of any group with name contained {@code groupNames}
+	 * but not equal to {@code groupName}.
+	 * @param candidates - a set of {@link Root} objects to check
+	 * @param diagr - a @{@link Diagram} representing a {@code candidates} member to be ignored  
+	 * @param members - set of member diagrams of group {@code groupName}
+	 * @param groupName - name of the owning group not counting as match
+	 * @param groupNames - names of interesting groups
+	 */
+	private boolean containsUnsharedPartner(Vector<Root> candidates, Diagram diagr, Set<Diagram> members, String groupName,
+			StringList groupNames) {
+		for (Root cand: candidates) {
+			Diagram called = this.rootMap.get(cand);
+			if (called != diagr && members.contains(called)) {
+				boolean shared = false;
+				for (String gName: called.getGroupNames()) {
+					if (groupNames.contains(gName) && !gName.equals(groupName)) {
+						shared = true;
+						break;
+					}
+				}
+				if (!shared) {
+					// So there is at least one pair uniquely residing here
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected void enableGroupDrawing(boolean selected) {
+		this.drawGroups = selected;
+		this.pop.setVisible(selected);
+		repaint();
+	}
+
+	public void enableGroupSelection(boolean selected) {
+		this.selectGroups = selected;
+	}
+
+	@Override
+	public void windowGainedFocus(WindowEvent e) {
+	}
+
+	@Override
+	public void windowLostFocus(WindowEvent e) {
+		pop.setVisible(false);
+	}
+
+	public boolean renameGroup(Group group, String newName, Component initiator) {
+		// TODO Auto-generated method stub
+		String oldName = group.getName();
+		if (this.hasGroup(newName)) {
+			JOptionPane.showMessageDialog(initiator,
+					msgGroupExists.getText().replace("%", newName),
+					titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),
+					JOptionPane.ERROR_MESSAGE);
+			return false;			
+		}
+		if (group.getFile() != null) {
+			String ext = ".arrz";
+			File arrFile = group.getFile();
+			File file = group.getArrzFile();
+			if (file == null) {
+				ext = ".arr";
+				file = arrFile;
+			}
+			String newFilename = newName;
+			if (!newFilename.endsWith(ext)) {
+				newFilename = newName + ext;
+			}
+			File newFile = new File(file.getParent() + File.separator + newFilename);
+			int answer = JOptionPane.showConfirmDialog(initiator,
+					msgRenameArrFile.getText().replace("%1", file.getAbsolutePath()).replace("%2", "..." + File.separator + newFilename),
+					titleRenameGroup.getText().replace("%1", oldName).replace("%2", newName),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+			if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) {
+				return false;
+			}
+			else if (answer == JOptionPane.YES_OPTION) {
+				if (newFile.exists()) {
+					answer = JOptionPane.showConfirmDialog(initiator,
+							msgOverwriteFile.getText().replace("%1", newFile.getAbsolutePath()),
+							msgConfirmOverwrite.getText(),
+							JOptionPane.YES_NO_CANCEL_OPTION);
+					if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) {
+						return false;
+					}
+					else if (answer == JOptionPane.YES_OPTION) {
+						newFile.delete();
+					}
+				}
+				if (answer == JOptionPane.YES_OPTION) {
+					if (!file.renameTo(newFile)) {
+						JOptionPane.showMessageDialog(initiator,
+								msgRenamingFailed.getText().replace("%", newFile.getAbsolutePath()),
+								titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),
+								JOptionPane.ERROR_MESSAGE);
+						return false;
+					}
+					if (ext.equals(".arr")) {
+						group.setFile(newFile, null, false);
+					}
+					else {
+						group.setFile(arrFile, newFile, true);
+					}
+				}
+			}
+		}
+		if (group.rename(newName)) {
+			this.groups.remove(oldName);
+			groups.put(newName, group);
+		}
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		return true;
+	}
 
 }

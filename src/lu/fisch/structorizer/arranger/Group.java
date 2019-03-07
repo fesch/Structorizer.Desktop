@@ -33,6 +33,10 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----            -----------
  *      Kay Gürtzig     2018-12-23      First Issue (on behalf of enh. #657)
  *      Kay Gürtzig     2019-01-05      Substantial tuning for enh. #657
+ *      Kay Gürtzig     2019-01-09      Enhancements for issue #662/2 (drawing capability prepared)
+ *      Kay Gürtzig     2019-01-25      Issue #668: More intelligent file name proposal for default group
+ *      Kay Gürtzig     2019-02-04      Colour icon revised (now double thin border like in Arranger).
+ *      Kay Gürtzig     2019-03-01      Enh. #691 Method rename() added (does only parts of what is to be done)
  *
  ******************************************************************************************************
  *
@@ -41,6 +45,13 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.AlphaComposite;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +61,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.swing.ImageIcon;
+
+import lu.fisch.graphics.Canvas;
+import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.gui.IconLoader;
 
 /**
  * Group of Diagram objects in Arranger
@@ -58,8 +74,21 @@ import lu.fisch.structorizer.elements.Root;
  */
 public class Group {
 
-	public static final String DEFAULT_GROUP_NAME = "%%%";
+	public static final String DEFAULT_GROUP_NAME = "!!!";
+	private static final int BUFFER = 3;
 	
+	// START KGU#630 2019-01-07: Enh. #622
+	public static final Color[] groupColors = {
+			Color.BLUE,
+			Color.RED,
+			Color.decode("0x008000"),	// dark green
+			Color.ORANGE,
+			Color.decode("0x8000FF"),	// violet
+			Color.DARK_GRAY
+	};
+	/** Is used in a modulo way to assign every new group another color */
+	private static int nextColor = 0;
+
 	/**
 	 * The Name of the group
 	 */
@@ -94,9 +123,39 @@ public class Group {
 	/**
 	 * Cache for the sorted list of referenced {@link Root}s
 	 */
-	// This redundant w.r.t. diagrams but improves performance of the Arranger index
+	// This is redundant w.r.t. diagrams but improves performance of the Arranger index
 	private final Vector<Root> routines = new Vector<Root>();
 
+	/**
+	 * Flag for drawing the {@link #bounds} according to enh. #662/2
+	 * @see #color
+	 * @see #draw(Canvas)
+	 */
+	private boolean visible = true;
+	
+	/**
+	 * The drawing color for the {@link #bounds} according to enh. #662/2
+	 * @see #visible
+	 * @see #draw(Canvas)
+	 * 
+	 */
+	private Color color = Color.BLUE;
+	
+	/**
+	 * Contains the expanded icon (with color), lazy initialization.
+	 */
+	private ImageIcon iconColor = null;
+	
+	/**
+	 * The cached bounding box for easier localisation
+	 * @see #visible
+	 * @see #color
+	 */
+	protected Rectangle bounds = null;
+	
+	/**
+	 * Comparator method for case-ignorant lexicographic sorting
+	 */
 	public static final Comparator<Group> NAME_ORDER =
 			new Comparator<Group>() {
 		public int compare(Group group1, Group group2)
@@ -110,6 +169,10 @@ public class Group {
 	 * @param _name - group name
 	 */
 	public Group(String _name) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 	}
 	
@@ -119,6 +182,10 @@ public class Group {
 	 * @param _arrPath - path to the .arr file of the source arrangement (if loaded with arrangement)
 	 */
 	public Group(String _name, String _arrPath) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.filePath = _arrPath;
 	}
@@ -130,9 +197,19 @@ public class Group {
 	 * @param _diagrams - the (initial) set of {@link Diagram}s
 	 */
 	public Group(String _name, Collection<Diagram> _diagrams) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		if (!_diagrams.isEmpty()) {
+			// If this group isn't temporary register the group name with the diagrams
+			if (!_name.isEmpty()) {
+				for (Diagram diagr: _diagrams) {
+					diagr.addToGroup(this);
+				}
+			}
 			this.membersChanged = true;
 		}
 	}
@@ -146,8 +223,18 @@ public class Group {
 	 * (may be an .arr or an .arrz file)
 	 */
 	public Group(String _name, Set<Diagram> _diagrams, File _provenance) {
+		synchronized (Group.class) {
+			this.color = groupColors[nextColor++];
+			if (nextColor >= groupColors.length) nextColor = 0;
+		}
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
+		// If this group isn't temporary register the group name with the diagrams
+		if (!_name.isEmpty()) {
+			for (Diagram diagr: _diagrams) {
+				diagr.addToGroup(this);
+			}
+		}
 		this.filePath = _provenance.getAbsolutePath();
 	}
 	
@@ -159,6 +246,35 @@ public class Group {
 	{
 		return this.name;
 	}
+	
+	// START KGU#669 2019-03-01: Enh. #691 Partial support for group renaming (needs external cooperation)
+	/**
+	 * Renames this group and updates the group association of the members (if the name differs).<br/>
+	 * NOTE: This method does NOT:<ul>
+	 * <li>check for name collisions with other groups</li>
+	 * <li>modify the file path</li>
+	 * <li>update external name references</li>
+	 * </ul> (All this must all be done by the initiator.)
+	 * @param _newName - the new group name
+	 * @return true if the {@code _newName} differes from previous name.
+	 * @see #getName()
+	 * @see #setFile(File, File, boolean)
+	 */
+	protected boolean rename(String _newName)
+	{
+		boolean renamed = !_newName.equals(this.name);
+		if (renamed) {
+			for (Diagram diagr: this.diagrams) {
+				diagr.removeFromGroup(this);
+			}
+			this.name = _newName;
+			for (Diagram diagr: this.diagrams) {
+				diagr.addToGroup(this);
+			}
+		}
+		return renamed;
+	}
+	// END KGU#669 2019-03-01
 	
 	/**
 	 * @return true if the name this group equals {@link #DEFAULT_GROUP_NAME}.
@@ -175,6 +291,26 @@ public class Group {
 	public String proposeFileName()
 	{
 		char[] canonical = this.name.toCharArray();
+		// For the default group, if it contains a unique main diagram, provide its name 
+		if (this.isDefaultGroup()) {
+			String progName = null;
+			for (Diagram diagr: this.diagrams) {
+				if (diagr.root.isProgram()) {
+					if (progName == null) {
+						// The first program diagram, retain the name for the case it remains the only one
+						progName = diagr.root.getMethodName();
+					}
+					else {
+						// There are more than one program diagrams, so give up
+						progName = null;
+						break;
+					}
+				}
+			}
+			if (progName != null) {
+				canonical = progName.toCharArray();
+			}
+		}
 		for (int i = 0; i <- canonical.length; i++) {
 			char ch = canonical[i];
 			if (!Character.isAlphabetic(ch) && !Character.isDigit(ch) && ch != '.') {
@@ -187,7 +323,8 @@ public class Group {
 	/**
 	 * @return a {@link File} object with the associated absolute path of the
 	 * Arranger list file this group is associated to (stemming from or last saved to)
-	 * or null if the group had never been associated to an arrangement file. 
+	 * or null if the group had never been associated to an arrangement file.
+	 * @see #getArrzFile()
 	 */
 	public File getFile()
 	{
@@ -203,6 +340,7 @@ public class Group {
 	 * are residing in. Returns null if the group is not residing in an
 	 * arrz file.
 	 * @return either a {@link File} object for an arrz file or null
+	 * @see #getFile()
 	 */
 	public File getArrzFile()
 	{
@@ -228,17 +366,89 @@ public class Group {
 	 * As a side-effect resets the modification flag.
 	 * @param arrFile - {@link File} object referring to the arrangement list file
 	 * @param arrzFile - {@link File} object referring to the arrangement archive or null
+	 * @param adaptDiagrams - if true and {@code arrzFile} isn't null then the virtual file
+	 * paths of all diagrams matching the previous arrz path will be updated to {@code arrzFile}.
+	 * @see #getFile()
+	 * @see #getArrzFile()
+	 * @see Surface#renameGroup(Group, String, java.awt.Component)
 	 */
-	protected void setFile(File arrFile, File arrzFile)
+	protected void setFile(File arrFile, File arrzFile, boolean adaptDiagrams)
 	{
 		String arrPath = arrFile.getAbsolutePath();
 		if (arrzFile != null) {
-			arrPath = arrzFile.getAbsolutePath() + File.separator + arrFile.getName();
+			String newArrzPath = arrzFile.getAbsolutePath();
+			arrPath = newArrzPath + File.separator + arrFile.getName();
+			// START KGU#669 2019-0301: Enh. #691 - Adapt the diagram file paths if they have gone stale
+			if (adaptDiagrams) {
+				File file = this.getFile();
+				if (file != null && !file.exists() && this.filePath.toLowerCase().contains(".arrz")) {
+					file = file.getParentFile();
+					if (file.getName().toLowerCase().endsWith(".arrz") && !file.exists()) {
+						String oldArrzPath = file.getAbsolutePath();
+						int pathLen = oldArrzPath.length();
+						for (Root root: this.getSortedRoots()) {
+							if (root.filename != null && root.filename.startsWith(oldArrzPath)) {
+								root.filename = newArrzPath + root.filename.substring(pathLen);
+							}
+						}
+					}
+				}
+			}
+			// END KGU#669 2019-03-01
 		}
 		this.filePath = arrPath;
 		this.membersChanged = false;
 		// This is the (only) chance to reset the membersMoved flag
 		this.membersMoved = this.positionsChanged();
+		this.iconColor = null;
+	}
+	
+	/**
+	 * @return the bounds and background colour for this Group instance
+	 * @see #setColor(Color)
+	 * @see #setVisible(boolean)
+	 * @see #isVisible()
+	 */
+	public Color getColor()
+	{
+		return this.color;
+	}
+	
+	/**
+	 * Sets the group bounds and background colour to the given {@code _color} 
+	 * @param _color - the new Color
+	 * @see #getColor()
+	 * @see #setVisible(boolean)
+	 * @see #isVisible()
+	 */
+	public void setColor(Color _color)
+	{
+		this.color = _color;
+		this.iconColor = null;
+	}
+	
+	/**
+	 * @return true if this individual group is enabled to draw its bounds
+	 * @see #setVisible(boolean)
+	 * @see #getColor()
+	 * @see #setColor(Color)
+	 */
+	public boolean isVisible()
+	{
+		return this.visible;
+	}
+	
+	/**
+	 * Enables or disables this individual group to draw it's bounds
+	 * @param show - true enables, false disables drawing
+	 * @see #isVisible()
+	 * @see #getColor()
+	 * @see #setColor(Color)
+	 */
+	public void setVisible(boolean show)
+	{
+		this.visible = show;
+		this.iconColor = null;
 	}
 	
 	/**
@@ -296,7 +506,7 @@ public class Group {
 
 	/**
 	 * Removes all member {@link Diagram}s without changing the path information etc.
-	 * @return true if all diagrams have been removd. 
+	 * @return true if all diagrams have been removed. 
 	 */
 	public boolean clear()
 	{
@@ -356,7 +566,10 @@ public class Group {
 	}
 
 	/**
-	 * 
+	 * Updates the sorted list of {@link Root}s that can be retrieved with
+	 * {@link #getSortedRoots()}.
+	 * @param completely - if true then {@link #routines} will be computed from scratch,
+	 * otherwise it is only re-sorted.
 	 */
 	protected void updateSortedRoots(boolean completely) {
 		if (completely) {
@@ -367,7 +580,12 @@ public class Group {
 		}
 		Collections.sort(routines, Root.SIGNATURE_ORDER);
 	}
-	
+
+	/**
+	 * Checks whether some of the associated {@link Diagram}s has changed its position
+	 * (e.g. since last saving or loading}
+	 * @return true if any position modification had been detected.
+	 */
 	private boolean positionsChanged()
 	{
 		for (Diagram diagr: this.diagrams) {
@@ -392,6 +610,104 @@ public class Group {
 		return membersChanged || this.membersMoved;
 	}
 	
+	// START KGU#6390 2019
+	public void draw(Graphics _g)
+	{
+		draw(_g, 0, 0);
+	}
+	
+	protected void draw(Graphics _g, int _offsetX, int _offsetY)
+	{
+		Canvas canvas = new Canvas((Graphics2D) _g);
+		if (this.visible) {
+			getBounds(true);
+			if (bounds != null) {
+				Rectangle drawBounds = new Rectangle(bounds);
+				if (_offsetX != 0 || _offsetY != 0) {
+					drawBounds.translate(-_offsetX, -_offsetY);
+				}
+				Rect outer = new Rect(drawBounds.x - BUFFER, drawBounds.y - BUFFER,
+						drawBounds.x + drawBounds.width + BUFFER, drawBounds.y + drawBounds.height + BUFFER);
+				Rect inner = new Rect(drawBounds);
+				canvas.setColor(color);
+				canvas.drawRect(outer);
+				canvas.drawRect(inner);
+				((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+				canvas.fillRect(inner);
+				((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+			}
+		}
+	}
+
+	/**
+	 * Returns the bounds rectangle of this group. If there hadn't been a cached bounds rectangle or {@code forceUpdate}
+	 * is true then composes the group bounds from the member diagrams and caches the result. 
+	 * @param forceUpdate - if true then a cached bound rectangle is ignored and overwritten
+	 * @return a bounding box {@link Rectangle} in true (unzoomed) diagram coordinates
+	 */
+	protected Rectangle getBounds(boolean forceUpdate) {
+		if (forceUpdate) {
+			this.bounds = null;
+		}
+		if (this.bounds == null) {
+			for (Diagram diagr: this.diagrams) {
+				Rectangle rect = diagr.root.getRect(diagr.point).getRectangle();
+				if (bounds == null) {
+					bounds = rect;
+				}
+				else {
+					bounds = bounds.union(rect);
+				}
+			}
+		}
+		return this.bounds;
+	}
+	
+	/**
+	 * Returns a group icon reflecting the file relation (none/list/archive). If {@code withColor} is true
+	 * then the icon will be augmented with a symbolic bounding box icon in the group color.
+	 * @param withColor - whether the icon is to contain a color-indicating extra symbol
+	 * @return - the {@link ImageIcon} of the group
+	 */
+	public ImageIcon getIcon(boolean withColor)
+	{
+		int iconNo = 94;
+		if (getArrzFile() != null) {
+			iconNo = 96;
+		}
+		else if (getFile() != null) {
+			iconNo = 95;
+		}
+		ImageIcon icon = IconLoader.getIcon(iconNo);
+		if (withColor && visible) {
+			if (iconColor == null) {
+				int size = icon.getIconHeight();
+				BufferedImage image = new BufferedImage(2 * size, size, BufferedImage.TYPE_INT_ARGB);
+				Graphics2D graphics = (Graphics2D) image.getGraphics();
+				graphics.drawImage(icon.getImage(), 0, 0, size, size, null);
+				int margin = 1 * size / 16;
+				int offset = 4 * size / 16;
+				graphics.setColor(color);
+				graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
+				graphics.setColor(Color.WHITE);
+				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+				graphics.setColor(color);
+				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				graphics.drawRect(size + offset + 2 + margin, 2 + margin, size - offset - 5 - 2*margin, size - 5 - 2*margin);
+				graphics.dispose();
+				iconColor = new ImageIcon(image);
+			}
+			icon = iconColor;
+		}
+		return icon;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString()
 	{
@@ -401,4 +717,5 @@ public class Group {
 		}
 		return prefix + this.getName() + ": " + this.size();
 	}
+
 }

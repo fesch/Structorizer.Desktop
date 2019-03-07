@@ -30,38 +30,39 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author         			Date			Description
- *      ------					----            -----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2010.08.07      C# Generator starting from C Generator & Java Generator
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16      Bugfixes and enhancements (see comment)
- *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation fixed, comment insertion interface modified
- *      Kay Gürtzig             2015.11.01      Inheritance changed and unnecessary overridings disabled
- *      Kay Gürtzig             2015.11.30      Sensible handling of return and exit/break instructions
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008-11-17      First Issue
+ *      Gunter Schillebeeckx    2010-08-07      C# Generator starting from C Generator & Java Generator
+ *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-11-06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014-11-16      Bugfixes and enhancements (see comment)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation fixed, comment insertion interface modified
+ *      Kay Gürtzig             2015-11-01      Inheritance changed and unnecessary overridings disabled
+ *      Kay Gürtzig             2015-11-30      Sensible handling of return and exit/break instructions
  *                                              (issue #22 = KGU#47)
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016-03-23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              brace balance in non-program files fixed  
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
- *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
- *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with System.Threading
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.04.14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
- *      Kay Gürtzig             2017.05.16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
- *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
- *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
- *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
- *      Kay Gürtzig             2018.07.21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2017-01-04      Bugfix #322: input and output code generation fixed 
+ *      Kay Gürtzig             2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017-02-24      Enh. #348: Parallel sections translated with System.Threading
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-04-14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
+ *      Kay Gürtzig             2017-05-16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-05-24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
+ *      Kay Gürtzig             2017-09-28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017-12-22      Issue #496: Autodoc comment style changed from /**... to ///...
+ *      Kay Gürtzig             2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig             2018-07-21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -97,24 +98,24 @@ package lu.fisch.structorizer.generators;
  *      - Enhancement #10 (KGU#3): FOR loops now provide themselves more reliable loop parameters 
  *      - Enhancement KGU#15: Support for the gathering of several case values in CASE instructions
  *
- *      2015.10.18 - Bugfix
+ *      2015-10-18 - Bugfix
  *      - Indentation wasn't done properly (_indent+this.getIndent() works only for single-character indents)
  *      
- *      2014.11.16 - Bugfixes / Enhancements
+ *      2014-11-16 - Bugfixes / Enhancements
  *      - conversion of comparison and logical operators had still been flawed
  *      - element comment export added
  *      
- *      2014.11.06 - Enhancement (Kay Gürtzig)
+ *      2014-11-06 - Enhancement (Kay Gürtzig)
  *      - Pascal-style logical operators "and", "or", and "not" supported 
  *      
- *      2010.09.10 - Bugfixes
+ *      2010-09-10 - Bugfixes
  *      - Code generator for the Case structure (switch) had missed to add the case keywords
  *      - Comparison and assignment operator conversion was incomplete
  *      - Missing parentheses around negated condition of "do while" added
  *      - logical flaw in the automatic addition of brackets for "if", "while", and "switch" mended
  *      - "cosmetic" changes to the block ends of "switch" and "do while" 
  *      		
- *      2010.08.07 - Bugfixes
+ *      2010-08-07 - Bugfixes
  *      - none
  *
  ******************************************************************************************************///
@@ -491,6 +492,22 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#388 2017-09-28
 
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
+
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
 	 * We try our very best to create a working loop from a FOR-IN construct
@@ -590,7 +607,8 @@ public class CSharpGenerator extends CGenerator
 			}
 			else {
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+				this.insertComment("TODO: Select a more sensible item type than Object", indent);
+				this.insertComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
@@ -980,9 +998,10 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			code.add(_indent);
-			insertComment("TODO: You may have to modify input instructions,", _indent);			
-			insertComment("      possibly by enclosing Console.ReadLine() calls with Parse methods", _indent);
-			insertComment("      according to the variable type, e.g. \"i = int.Parse(Console.ReadLine());\".", _indent);			
+			insertComment("TODO: You may have to modify input instructions,", _indent);
+			insertComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
+			insertComment("      Parse methods according to the variable type, e.g.:", _indent);
+			insertComment("         i = int.Parse(Console.ReadLine());", _indent);
 		}
 		// END KGU#236 2016-12-22
 	}
@@ -1042,5 +1061,5 @@ public class CSharpGenerator extends CGenerator
 		}
 	}
 	// END KGU 2015-12-15
-    	
+
 }

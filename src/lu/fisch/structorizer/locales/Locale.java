@@ -136,13 +136,13 @@ public class Locale {
     public void parseStringList(StringList lines)
     {
        // extract & remove the header
-        while(!lines.get(0).trim().equals(endOfHEader) && lines.count()>0) 
+        while (!lines.get(0).trim().equals(endOfHEader) && lines.count() > 0) 
         {
             header.add(lines.get(0));
             lines.remove(0);
         }
         
-        if(lines.count()==0)
+        if (lines.count() == 0)
             JOptionPane.showMessageDialog(null, filename+": File is empty after removing the header ...", "Error", JOptionPane.ERROR_MESSAGE);
         
         // remove the endOfHEader marker
@@ -266,7 +266,6 @@ public class Locale {
             if(
                     (line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
                     || line.startsWith(Locale.startOfSubSection)
-                    
               )
             {
                 keys.add(line);
@@ -313,6 +312,14 @@ public class Locale {
     }
     // END KGU#231 2016-08-08
     
+    /**
+     * Retrieves the string value for the given {@code key} in section {@code sectionName}.
+     * If there is no such key or the value isn't specified then an empty string will be
+     * returned.
+     * @param sectionName - name of the interesting section
+     * @param key - the key sequence
+     * @return a string associated to the given key or ""
+     */
     public String getValue(String sectionName, String key)
     {
         // START KGU#231 2016-08-08: Issue #220 - Reduced to new internal method
@@ -413,14 +420,14 @@ public class Locale {
     // START KGU#231 2016-08-09: Issue #220
     public boolean hasCachedChanges()
     {
-    	return !this.values.isEmpty() || this.cachedHeader.count() > 0;
+        return !this.values.isEmpty() || !this.cachedHeader.isEmpty();
     }
     // END KGU#231 2016-08-09
     
     // START KGU#244 2016-09-06: Allow loading from external text files
     public String getFilename()
     {
-    	return filename + "";
+        return filename + "";
     }
     // END KGU#244 2016-09-06
 }

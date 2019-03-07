@@ -58,6 +58,7 @@
  *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2017.12.16      Element name placeholders introduced
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -107,6 +108,7 @@ Menu.menuFileOpen.text=Ouvrir ...
 Menu.menuFileOpenRecent.text=Ouvrir fichier récent
 Menu.menuFileSave.text=Sauvegarder
 Menu.menuFileSaveAs.text=Sauvegarder sous ...
+Menu.menuFileSaveAll.text=Sauvegarder tout
 Menu.menuFileExport.text=Exporter
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Image ...
@@ -135,6 +137,13 @@ Menu.menuEditRedo.text=Annuler annuler
 Menu.menuEditCut.text=Couper
 Menu.menuEditCopy.text=Copier
 Menu.menuEditPaste.text=Insérer
+Menu.menuEditSummonSub.text=Editer sous programme ...
+Menu.menuEditSummonSub.tooltip=
+Menu.menuEditFindReplace.text=Rechercher/remplacer ...
+Menu.menuEditUpgradeTurtle.text=À graphique fin
+Menu.menuEditUpgradeTurtle.tooltip=Remplace toute instructions des entiers de tortue dans les éléments sélectionnés par les plus précises.
+Menu.menuEditDowngradeTurtle.text=À graphique des entiers
+Menu.menuEditDowngradeTurtle.tooltip=Remplace toute instructions précises de tortue dans les éléments sélectionnés par les discrètes.
 Menu.menuEditCopyDiagramPNG.text=Copier l'image (PNG)
 Menu.menuEditCopyDiagramEMF.text=Copier l'image (EMF)
 // Menu "Diagram"
@@ -191,12 +200,18 @@ Menu.menuDiagramAnalyser.text=Analyser le diagramme?
 Menu.menuPreferences.text=Préférences
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Avertir de versions nouvelles?
+Menu.menuPreferencesSimplified.text=Barre d'outils simplificée?
 Menu.menuPreferencesFont.text=Police ...
-Menu.menuPreferencesColors.text=Couleurrs ...
+Menu.menuPreferencesColors.text=Couleurs ...
 Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
+Menu.menuPreferencesElements.text=Appellations des éléments ...
+Menu.menuPreferencesCtrlAliases.text=Controller aliases ...
+Menu.menuPreferencesSaving.text=Sauvegarde ...
 Menu.menuPreferencesExport.text=Exporter ...
+Menu.menuPreferencesImport.text=Importer ...
 Menu.menuPreferencesLanguage.text=Langue
 Menu.menuPreferencesLanguageItems.en.text=Anglais
 Menu.menuPreferencesLanguageItems.de.text=Allemand
@@ -208,14 +223,15 @@ Menu.menuPreferencesLanguageItems.it.text=Italien
 Menu.menuPreferencesLanguageItems.pt_br.text=Portugais (brazilien)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Chinois (simplifié)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Chinois (traditionnel)
-Menu.menuPreferencesLanguageItems.cz.text=Czech
+Menu.menuPreferencesLanguageItems.cz.text=Tchèque
 Menu.menuPreferencesLanguageItems.ru.text=Russe
 Menu.menuPreferencesLanguageItems.pl.text=Polonais
-
+Menu.menuPreferencesLanguageFromFile.text=De fichier ...
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 Menu.menuPreferencesWheel.text=Roue de la souris
 Menu.menuPreferencesWheelCollapse.text=Utiliser pour collaber/exploser?
 Menu.menuPreferencesWheelZoom.text=Invertir le zoom au l'usage con ctrl?
+Menu.menuPreferencesScalePreset.text=GUI scaling ...
 
 Menu.menuPreferencesSave.text=Toutes les préférences ...
 Menu.menuPreferencesSaveAll.text=Sauvegarder
@@ -234,12 +250,13 @@ Menu.menuDebugExecute.text=Exécuteur ...
 Menu.menuDebugDropBrkpts.text=Suprimer les points d'arrêt
 Menu.menuDebugBreakpoint.text=Basculer le point d'arrêt
 Menu.menuDebugBreakTrigger.text=Condition d'arrêt ...
-Menu.menuDebugDisable.text=
+Menu.menuDebugDisable.text=Inactiver
 
 // Menu "Help"
 Menu.menuHelp.text=Aide
 Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
+Menu.menuHelpOnline.text=Manuel d'utilisation
 Menu.menuHelpAbout.text=À propos de ...
 Menu.menuHelpUpdate.text=Mise à jour ...
 
@@ -253,6 +270,11 @@ Menu.msgRepeatSaveAttempt.text=
 Menu.msgErrorFileSave.text=
 Menu.msgBreakTriggerPrompt.text=
 Menu.msgBreakTriggerIgnored.text=
+Menu.msgGotoHomepage.text=Confer % pour chercher mises à jour<br/>et nouvelles sur Structorizer.
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Oui, mode réduit
+Menu.lblNormal.text=Non, mode ordinaire
 
 // Error messages for analyser
 Menu.warning_1.text=
@@ -418,7 +440,6 @@ Editor.popupBreakpoint.text=Basculer le point d'arrêt
 Editor.popupBreakTrigger.text=Spécifier un point d'arrêt
 
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Entrer un texte
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Commentaire
@@ -435,8 +456,25 @@ InputBox.lblText.text[elementType:Alternative]=Veuillez entrer la condition
 InputBox.lblText.text[elementType:While]=Veuillez entrer la condition d'entrée
 InputBox.lblText.text[elementType:Repeat]=Veuillez entre la condition de sortie
 InputBox.lblText.text[elementType:Case]=Veuillez entrer l'expression de choix et les constantes y relatives (une par ligne)
-InputBox.lblText.text[elementType:Parallel]Nombre d'exétron en parallèle
-
+InputBox.lblText.text[elementType:Parallel]Nombre d'exétrons en parallèle
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Insérer @a ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Insérer @b statement ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Insérer @c statement ...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Insérer @i loop ...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Insérer @h loop ...
+InputBox.title[elementType:While,getInsertionType():insert]=Insérer @g loop ...
+InputBox.title[elementType:Call,getInsertionType():insert]=Insérer @j ...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Insérer @k ...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Insérer @l ...
+InputBox.title[elementType:Instruction,getInsertionType():update]=Editer @a ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Editer @b element ...
+InputBox.title[elementType:Case,getInsertionType():update]=Editer @c element ...
+InputBox.title[elementType:Forever,getInsertionType():update]=Editer @i loop ...
+InputBox.title[elementType:Repeat,getInsertionType():update]=Editer @h loop ...
+InputBox.title[elementType:While,getInsertionType():update]=Editer @g loop ...
+InputBox.title[elementType:Call,getInsertionType():update]=Editer @j ...
+InputBox.title[elementType:Jump,getInsertionType():update]=Editer @k ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Editer @l element ...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insérer une boucle @{For}...
@@ -457,6 +495,11 @@ InputBoxFor.btnCancel.text=Annuler
 InputBoxFor.btnCancel.tooltip=Annuler votre choix.
 InputBoxFor.chkBreakpoint.text=Point d'arrêt actif
 InputBoxFor.lblBreakTriggerText.text=Arrêter l'exécution après % itérations
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=Editer @n
+InputBoxRoot.title[elementType:Function]=Editer @o
+InputBoxRoot.title[elementType:Includable]=Editer @p
 
 -----[ Preferences ]-----
 Preferences.title=Préférences des structures
@@ -513,7 +556,7 @@ FontChooser.btnOK.tooltip=Valider votre choix.
 Colors.title=Préférences des couleurs
 Colors.lblColors.*.text=Couleur [#]
 Colors.lblColors.*.tooltip=Votre choix pour la couleur n° [#].
-Colors.color.*.tooltip=Cliquer pour éditer ...
+Colors.colors.*.tooltip=Cliquer pour éditer ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Valider votre choix.
 
@@ -547,23 +590,26 @@ ParserPreferences.lblWhile.text=Boucle @{While}
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=Boucle @{Repeat}
 ParserPreferences.lblRepeat.tooltip=
-ParserPreferences.lblJump.text=
+ParserPreferences.lblJump.text=@{Jump}
 ParserPreferences.lblJump.tooltip=
-ParserPreferences.lblJumpLeave.text=
-ParserPreferences.lblJumpReturn.text=
-ParserPreferences.lblJumpExit.text=
+ParserPreferences.lblJumpLeave.text=de boucle(s)
+ParserPreferences.lblJumpReturn.text=de sous progr.
+ParserPreferences.lblJumpExit.text=de programme
+ParserPreferences.lblInputOutput.text=Entrée / Sortie
 ParserPreferences.lblInput.text=Entrée
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Sortie
 ParserPreferences.lblOutput.tooltip=
-ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.chkIgnoreCase.text=Égaliser majusc./minusc.
+ParserPreferences.btnFromLocale.text=Poser mots-clés localisés
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Valider votre choix.
 ParserPreferences.lblErrorSign.text=Vouy ne devez pas utiliser le signe ':' dans l'une des préférences que voici!
 ParserPreferences.lblErrorSign2.text=
+ParserPreferences.lblHeadline.text=Cases con cet fond sons obligatoires
 
 -----[ PrintPreview ]-----
-PrintPreview.title=apperçu avant impression
+PrintPreview.title=aperçu avant impression
 PrintPreview.btnOrientation.text=Tourner la page
 PrintPreview.btnOrientation.tooltip=Turner la page de 90°
 PrintPreview.btnCancel.text=Annuler
@@ -642,12 +688,12 @@ Control.msgTooManyLevels.text=
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction
 ElementNames.localizedNames.1.text=ALTERNATIVE
-ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.2.text=SÉLECTION
 ElementNames.localizedNames.3.text=POUR
 ElementNames.localizedNames.4.text=POUR-À
 ElementNames.localizedNames.5.text=POUR-TOUTE
 ElementNames.localizedNames.6.text=TANT QUE
-ElementNames.localizedNames.7.text=JUSQU'A
+ElementNames.localizedNames.7.text=JUSQU'À
 ElementNames.localizedNames.8.text=SANS FIN
 ElementNames.localizedNames.9.text=APPEL
 ElementNames.localizedNames.10.text=SAUT
@@ -655,4 +701,24 @@ ElementNames.localizedNames.11.text=PARALLÈLE
 ElementNames.localizedNames.12.text=Diagramme
 ElementNames.localizedNames.13.text=Programme
 ElementNames.localizedNames.14.text=Sous programme
-ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.15.text=Inclurible
+
+-----> Keywords
+ParserKeywords.AltPre.text=si
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=sélection
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=pour
+ParserKeywords.ForPost.text=à
+ParserKeywords.ForStep.text=, pas = 
+ParserKeywords.ForInPre.text=pour tout
+ParserKeywords.ForInPost.text=en
+ParserKeywords.WhilePre.text=tant que
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=jusqu'à
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=leave
+ParserKeywords.JumpReturn.text=return
+ParserKeywords.JumpExit.text=exit
+ParserKeywords.Input.text=lire
+ParserKeywords.Output.text=écrire

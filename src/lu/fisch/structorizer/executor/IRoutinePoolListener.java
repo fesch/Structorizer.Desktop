@@ -34,6 +34,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-12-16      First Issue
  *      Kay Gürtzig     2018-12-21      Interface modified (flag values introduced and new method signature)
  *      Kay Gürtzig     2019-01-04      Enh. #657: new flag for changed positions (to be reflected in groups)
+ *      Kay Gürtzig     2019-01-12      Enh. #662/2: new flag for group colour or visibility change
  *
  ******************************************************************************************************
  *
@@ -57,6 +58,9 @@ public interface IRoutinePoolListener {
 	// START KGU#626 2019-01-04: Enh. 657 - for a low-impact refresh of arranger indices
 	public static final int RPC_POSITIONS_CHANGED = 0x4;
 	// END KGU#626 2019-01-04
+	// START KGU#630 2019-01-12: Enh. #662/2 - Notification of color or visibility changes of a group
+	public static final int RPC_GROUP_COLOR_CHANGED = 0x8;
+	// END KGU#630 2019-01-12
 	
 	/**
 	 * Notification method<br/>

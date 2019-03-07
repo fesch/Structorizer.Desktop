@@ -30,39 +30,40 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author                  Date			Description
- *      ------                  ----			-----------
- *      Bob Fisch       	    2008.11.17      First Issue
- *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
- *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch       	    2008-11-17      First Issue
+ *      Gunter Schillebeeckx    2009-08-10		Bugfixes (see comment)
+ *      Bob Fisch               2009-08-17      Bugfixes (see comment)
  *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig and Peter Ehrlich
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Rolf Schmidt            2010.09.15      1. Release of PHPGenerator
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.11      Fixed some replacement flaws (see comment)
- *      Kay Gürtzig             2014.11.16      Comment generation revised (now inherited)
- *      Kay Gürtzig             2014.12.02      Additional replacement of "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.11.02      Variable identification added, Case and
+ *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
+ *      Rolf Schmidt            2010-09-15      1. Release of PHPGenerator
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-11-11      Fixed some replacement flaws (see comment)
+ *      Kay Gürtzig             2014-11-16      Comment generation revised (now inherited)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015-11-02      Variable identification added, Case and
  *                                              For mechanisms improved (KGU#15, KGU#3)
- *      Kay Gürtzig             2015.12.19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig             2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
- *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion
- *      Kay Gürtzig             2016.07.19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
+ *      Kay Gürtzig             2015-12-19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
+ *      Kay Gürtzig             2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2016-03-22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig             2016-03-23      Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig             2016-04-01      Enh. #144: Care for new option to suppress content conversion
+ *      Kay Gürtzig             2016-07-19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done. 
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
- *      Kay Gürtzig             2016.12.30      Issues #22, #23, KGU#62 fixed (see comment)
- *      Kay Gürtzig             2017.01.03      Enh. #314: File API extension, bugfix #320 (CALL elements)
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done. 
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016-12-01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig             2016-12-30      Issues #22, #23, KGU#62 fixed (see comment)
+ *      Kay Gürtzig             2017-01-03      Enh. #314: File API extension, bugfix #320 (CALL elements)
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig             2019.02.14      Enh. #680: Support for input instructions with several variables
  *
  ******************************************************************************************************
  *
@@ -228,10 +229,10 @@ public class PHPGenerator extends Generator
 	protected String getInputReplacer(boolean withPrompt)
 	{
 		if (withPrompt) {
-			return "$2 = \\$_GET[$1];	// TODO form a sensible input opportunity";
+			return "$2 = \\$_REQUEST[$1];	// TODO form a sensible input opportunity";
 		}
 		// This is rather nonsense but ought to help to sort this out somehow
-		return "$1 = \\$_GET['$1'];	// TODO form a sensible input opportunity";
+		return "$1 = \\$_REQUEST['$1'];	// TODO form a sensible input opportunity";
 	}
 	// END KGU#281 2016-10-15
 
@@ -291,17 +292,38 @@ public class PHPGenerator extends Generator
 				// START KGU#281 2016-10-16: Enh. #271
 				//addCode(transform(_inst.getText().get(i))+";",
 				//		_indent, isDisabled);
-				String transf = transform(lines.get(i)) + ";";
-				if (transf.startsWith("= $_GET[")) {
-					transf = "dummyInputVar " + transf;
+				// START KGU#653 2019-02-14: Enh. #680 - support fr multi-var input
+				String line = lines.get(i);
+				StringList inputItems = Instruction.getInputItems(line);
+				if (inputItems != null && inputItems.count() > 1) {
+					String prompt = inputItems.get(0);;
+					// It doesn't make sense to specify the same key for all variables with same prompt
+					if (inputItems.count() > 2 || prompt.isEmpty()) {
+						prompt = null;
+					}
+					for (int j = 1; j < inputItems.count(); j++) {
+						// Let the variable name be used as default key for the retrieval
+						String key = prompt == null ? "'" + inputItems.get(j) + "'" : prompt;
+						String subLine = CodeParser.getKeyword("input") + " " + key + " " + inputItems.get(j);
+						addCode(transform(subLine) + ";", _indent, isDisabled);
+					}
 				}
-				// START KGU#284 2016-10-16: Enh. #274
-				else if (Instruction.isTurtleizerMove(lines.get(i))) {
-					transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				else {
+				// END KGU#653 2019-02-14
+					String transf = transform(line) + ";";
+					if (transf.startsWith("= $_REQUEST[")) {
+						transf = "dummyInputVar " + transf;
+					}
+					// START KGU#284 2016-10-16: Enh. #274
+					else if (Instruction.isTurtleizerMove(lines.get(i))) {
+						transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					}
+					// END KGU#284 2016-10-16
+					addCode(transf,	_indent, isDisabled);
+					// END KGU#281 2016-10-16
+				// START KGU#653 2019-02-14: Enh. #680 (part 2)
 				}
-				// END KGU#284 2016-10-16
-				addCode(transf,	_indent, isDisabled);
-				// END KGU#281 2016-10-16
+				// END KGU#653 2019-02-14
 			}
 
 		}

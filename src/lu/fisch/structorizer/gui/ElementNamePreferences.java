@@ -89,8 +89,8 @@ public class ElementNamePreferences extends LangDialog {
 	public ElementNamePreferences(Frame owner)
 	{
 		super(owner);
-        setModal(true);
-        initComponents();
+		setModal(true);
+		initComponents();
 	}
 	
 	private void initComponents()

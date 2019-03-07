@@ -6,10 +6,55 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
+- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29 (2019-01-07)
+Current development version: 3.29-05 (2019-03-07)
+- 01: Issue #657: Spanish message in German locale replaced <2>
+- 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
+- 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
+- 01: Enh. #662/3: Arranger popup menu item to rearrange diagrams by groups <2>
+- 01: Enh. #662/4: Option to save arrangements with relative coordinates <2>
+- 01: Bugfix #664: Incorrect handling of modified diagrams on closing Arranger <2>
+- 01: Bugfix #664: Disambiguated canceling in AUTO_SAVE_ON_CLOSE mode <2>
+- 01: Bugfix #515: Defective diagram positioning in Arranger mended <2>
+- 02: Bugfix #665: Import of INSPECT statements from COBOL actually works now <2>
+- 02: Bugfix #655: Arranger popup menu revised (item order, accelerator info) <2>
+- 02: Bugfix #667: Removal of diagrams from Arranger could leave remnants <2>
+- 02: Issue #668: Group association behaviour on outsourcing further improved <2>
+- 02: Bugfix #669: C export of FOR-IN loops with traversed strings was defective <2>
+- 02: Bugfix #670: Diagram/group info box of Arranger index not reliably scaled <2>
+- 02: Issue #670: Live look & feel switch failed for Diagram/group info box <2>
+- 03: Bugfix #672: Default group was named null.arr after cancelled save attempt <2>
+- 03: Issue #673: The Arranger drawing area had to be enlarged for group bounds <2>
+- 03: Issue #662/2 Group colour icon design revised (now double thin border) <2>
+- 03: Bugfix #674: Live look & feel switch hadn't worked for context menus <2>
+- 03: Issue #675: Workaround for truncated result tree lines in Find&Replace <2>
+- 03: Issue #677: Inconveniences on saving arrangement archives mended <2>
+- 03: Bugfix #678: Import of array declarations from C code didn't work. <2> 
+- 03: Bugfix #679: C import produced defective INPUT instructions <2>
+- 03: Enh. #680: INPUT instructions with multiple input items supported <2>
+- 03: Enh. #681: A number of exports may offer to change favorite export language <2>
+- 03: Enh. #682: Improved welcome dialog, now with language selection <2>
+- 04: Issue #51,#137: Executor window now logs explicit prompts of empty inputs <2>
+- 04: Issue #684: Mark-up + check of mandatory fields in Parser Preferences <2>
+- 04: Bugfix #684: An empty FOR-IN loop keyword caused several problems <2>
+- 04: Issue #686: The initial L&F detection didn't work well for Linux (GTK+) <2>
+- 04: Bugfix #687: Defective breakpoint behaviour of REPEAT-UNTIL loops mended <2>
+- 04: Bugfix #688: Transmutation of any Call/Jump into an Instruction enabled <2>
+- 04: Enh. #689: New mechanism to edit the referred routine of a selected Call <2>
+- 04: Bugfix #690: 'struct' keywords in function headers on C import suppressed <2>
+- 04: Enh. #691: It is now possible to rename a group in the Arranger index <2>
+- 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
+- 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
+- 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
+- 05: Enh. #327: Locale-specific Parser keyword sets enabled [newboerg]2
+- 05: Bugfix #631: Commas in pic clauses now preserved on COBOL import <2>
+- 05: Issue #407: Efforts to import COBOL conditions like "a = 8 or 9" <2>
+- 05: Bugfix #695: Defective COBOL import of arrays over basic types <2>
+
+Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
 - 01: Enh. #515: More intelligent aligning strategy for diagrams in Arranger <2>
 - 01: Bugfix #517: Correct export of includable declarations to Java, C++, C# <2>
@@ -115,7 +160,7 @@ Current development version: 3.29 (2019-01-07)
 - 10: Bugfix #624: Translation of FOR loops into Python range() was wrong <2>
 - 11: Bugfix #626: Issues with string literals on COBOL import <Simon Sobisch>
 - 11: Heuristic detection of preprocessed COBOL files on import <Simon Sobisch>
-- 11: Enh. #419: Option for automatic line breaking on code import [S. Sobisch]2
+- 11: Enh. #419, #446: Import option for automatic line breaking [S. Sobisch]2
 - 11: Enh. #419: New "Edit" menu item for text line breaking [Simon Sobisch]2
 - 11: Enh. #627: Clipboard copy of import errors with stack trace [S. Sobisch]2
 - 11: Issue #630: COBOL import now aborts on REPLACE/COPY with hint [S. Sobisch]2
@@ -129,7 +174,6 @@ Current development version: 3.29 (2019-01-07)
 - 12: Bugfix #642: Wrong string comparisons with unpadded Boolean operators <2>
 - 12: Enh. #643: Operator names in upper case (like OR) weren't highlighted <2>
 - 12: Bugfix #644: Initializer evaluation in subroutine arguments fixed <2>
-- 12: COBOL import: INSPECT statements (all three flavours) now supported <2>
 - 12: Bugfix #646: Output string values must not be trimmed [slytab]2
 - 13: Bugfix #648: Struktogrammeditor file import wiped off unsaved changes <2>
 - 13: Issue #649: Loading of diagrams failed to tune the scrolling units. <2>
@@ -817,7 +861,7 @@ Version 3.13 (2009-05-23)
 - Analyser: the use of the "return" instruction is now allowed [FISRO]
 
 Version 3.12 (2009-01-18)
-- Added a C generator [Parveen Kumar]
+- Added a C generator [Praveen Kumar]
 - Fixed a bug for saving preferences [FISRO]
 
 Version 3.11 (2008-11-14)

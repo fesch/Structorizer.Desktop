@@ -33,45 +33,47 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue
- *      Kay Gürtzig     2017.03.06      Bug in diagram synthesis mended (do-while, switch)
- *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
- *      Kay Gürtzig     2017.03.27      Issue #354: number literal suffixes and scanf import fixed
- *      Kay Gürtzig     2017.03.31      Enh. #388: import of constants supported
- *      Kay Gürtzig     2017.04.11      Enh. #389: Global definitions now induce import CALLs to a global program,
+ *      Kay Gürtzig     2017-03-02      First Issue
+ *      Kay Gürtzig     2017-03-06      Bug in diagram synthesis mended (do-while, switch)
+ *      Kay Gürtzig     2017-03-26      Fix #384: New temp file mechanism for the prepared text file
+ *      Kay Gürtzig     2017-03-27      Issue #354: number literal suffixes and scanf import fixed
+ *      Kay Gürtzig     2017-03-31      Enh. #388: import of constants supported
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Global definitions now induce import CALLs to a global program,
  *                                      typedef mechanism implemented, grammar enhancements 
- *      Kay Gürtzig     2017.04.16      Issues #354, #389: Grammar revisions, correction in synthesis of
+ *      Kay Gürtzig     2017-04-16      Issues #354, #389: Grammar revisions, correction in synthesis of
  *                                      function declarations, mechanism to ensure sensible naming of the global Root
- *      Kay Gürtzig     2017.04.26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them)
- *      Kay Gürtzig     2017.04.27      Enh. #354: Bugs in procedure and expression list evaluation fixed
- *      Simon Sobisch   2017.05.23      Enh. #409: File type .h added
- *      Kay Gürtzig     2017.05.23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
- *      Simon Sobisch   2017.05.24      Enh. #409: Comment-aware #define analysis, with function macro approach
+ *      Kay Gürtzig     2017-04-26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them)
+ *      Kay Gürtzig     2017-04-27      Enh. #354: Bugs in procedure and expression list evaluation fixed
+ *      Simon Sobisch   2017-05-23      Enh. #409: File type .h added
+ *      Kay Gürtzig     2017-05-23/24   Enh. #354/#411: Pre-processor workaround for typedef significantly improved
+ *      Simon Sobisch   2017-05-24      Enh. #409: Comment-aware #define analysis, with function macro approach
  *                                                 C continuation line handling
- *      Kay Gürtzig     2017.05.26      Enh. #409: #define analysis (including function macros) accomplished
- *      Kay Gürtzig     2017.05.28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
- *      Kay Gürtzig     2017.06.22      Enh. #420: Prepared for comment retrieval
- *      Simon Sobisch   2017.06.26      Enh. #409: Handling of C includes: preparse them for retrieving defines;
+ *      Kay Gürtzig     2017-05-26      Enh. #409: #define analysis (including function macros) accomplished
+ *      Kay Gürtzig     2017-05-28      Issue #409: Recursion overhead in buildNSD_R() significantly reduced. 
+ *      Kay Gürtzig     2017-06-22      Enh. #420: Prepared for comment retrieval
+ *      Simon Sobisch   2017-06-26      Enh. #409: Handling of C includes: preparse them for retrieving defines;
  *                                                 Minimized Pattern/Matcher Objects used by explicit using/reseting them
  *                                                 instead of using the implicit generation by replaceAll
- *      Kay Gürtzig     2017.07.01      Enh. #389: Include mechanism revised
- *      Kay Gürtzig     2017.09.30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
+ *      Kay Gürtzig     2017-07-01      Enh. #389: Include mechanism revised
+ *      Kay Gürtzig     2017-09-30      Enh. #411: Bugfix in typedef preparation, enh. #423: struct import done
  *                                      Enh. #420: Comment delimiter specification added
- *      Kay Gürtzig     2018.06.04      Issue #533: Import of C struct definitions hadn't been converted to Structorizer syntax
- *      Kay Gürtzig     2018.06.17      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
+ *      Kay Gürtzig     2018-06-04      Issue #533: Import of C struct definitions hadn't been converted to Structorizer syntax
+ *      Kay Gürtzig     2018-06-17      Bugfix #540: replaceDefinedEntries() could get caught in an eternal loop
  *                                      Enh. #541: New option "redundantNames" to eliminate disturbing symbols or macros
  *                                      Bugfix #542: return without expr. not supported, result type void now suppressed
- *      Kay Gürtzig     2018.06.18      KGU#525: Better support for legacy function definition syntax
- *      Kay Gürtzig     2018.06.19      Issue #533: Initializers for struct variables are now converted into record
+ *      Kay Gürtzig     2018-06-18      KGU#525: Better support for legacy function definition syntax
+ *      Kay Gürtzig     2018-06-19      Issue #533: Initializers for struct variables are now converted into record
  *                                      literals in Structorizer syntax.
- *      Kay Gürtzig     2018.06.20      Bugfixes #545, #546 (for loops with empty condition, printf format string splitting)
- *      Kay Gürtzig     2018.06.24      Bugfix #549: missing assignment operator '%=' added (grammar change),
+ *      Kay Gürtzig     2018-06-20      Bugfixes #545, #546 (for loops with empty condition, printf format string splitting)
+ *      Kay Gürtzig     2018-06-24      Bugfix #549: missing assignment operator '%=' added (grammar change),
  *                                      Bugfix #550: Defective import of switch statements without break in the 1st branch 
- *      Kay Gürtzig     2018.06.24      Inheritance changed to CPreParser, all common stuff now inherited from there
- *      Kay Gürtzig     2018.06.24      Bugfix KGU#530 (missing assignment operator '%=' added).
- *      Kay Gürtzig     2018.07.01      Enh. #553: Hooks for parser cancellation inserted
- *      Kay Gürtzig     2018.07.11      Enh. #558: Provisional support for enumeration types.
- *      Kay Gürtzig     2018.07.14      Grammar and table file renamed (ANSI-Cplus -> ANSI-C73, C-ANSIplus.egt -> C-ANSI73.egt)
+ *      Kay Gürtzig     2018-06-24      Inheritance changed to CPreParser, all common stuff now inherited from there
+ *      Kay Gürtzig     2018-06-24      Bugfix KGU#530 (missing assignment operator '%=' added).
+ *      Kay Gürtzig     2018-07-01      Enh. #553: Hooks for parser cancellation inserted
+ *      Kay Gürtzig     2018-07-11      Enh. #558: Provisional support for enumeration types.
+ *      Kay Gürtzig     2018-07-14      Grammar and table file renamed (ANSI-Cplus -> ANSI-C73, C-ANSIplus.egt -> C-ANSI73.egt)
+ *      Kay Gürtzig     2019-02-13      Issue #679: Support for additional input and output functions (fgets, scanf_s etc.) added
+ *      Kay Gürtzig     2019-03-01      Bugfix #690 - workaround for struct types in function headers
  *
  ******************************************************************************************************
  *
@@ -378,7 +380,7 @@ public class CParser extends CPreParser
 		final int PROD_FUNCDECL_LPAREN_RPAREN2                      =  15;  // <Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
 		final int PROD_FUNCDECL_LPAREN_VOID_RPAREN                  =  16;  // <Func Decl> ::= <Func ID> '(' void ')' <Block>
 		final int PROD_FUNCDECL_LPAREN_RPAREN3                      =  17;  // <Func Decl> ::= <Func ID> '(' ')' <Block>
-//		final int PROD_PARAMS_COMMA                                 =  18;  // <Params> ::= <Param> ',' <Params>
+		final int PROD_PARAMS_COMMA                                 =  18;  // <Params> ::= <Param> ',' <Params>
 //		final int PROD_PARAMS                                       =  19;  // <Params> ::= <Param>
 //		final int PROD_PARAM_ID                                     =  20;  // <Param> ::= <ConstType> Id <Array>
 //		final int PROD_TYPES_COMMA                                  =  21;  // <Types> ::= <ConstType> ',' <Types>
@@ -647,13 +649,35 @@ public class CParser extends CPreParser
 						// END KGU#407 2017-06-22
 					}
 				}
-				else if (procName.equals("printf") || procName.equals("puts") && arguments.count() == 1)
+				// START KGU#652 2019-02-13: Issue #679
+				//else if (procName.equals("printf") || procName.equals("puts") && arguments.count() == 1)
+				//{
+				//	buildOutput(_reduction, procName, arguments, _parentNode);
+				//}
+				//else if (procName.equals("scanf") || procName.equals("gets") && arguments.count() == 1){
+				//	buildInput(_reduction, procName, arguments, _parentNode);
+				//}
+				else if (procName.equals("printf") || procName.equals("printf_s") || procName.equals("puts") && arguments.count() == 1)
 				{
 					buildOutput(_reduction, procName, arguments, _parentNode);
 				}
-				else if (procName.equals("scanf") || procName.equals("gets") && arguments.count() == 1){
+				else if (procName.equals("scanf") || procName.equals("scanf_s") || procName.equals("gets") && arguments.count() == 1){
 					buildInput(_reduction, procName, arguments, _parentNode);
 				}
+				// START KGU#652 2019-02-13: Issue #679 - Support more input and output functions
+				else if ((procName.equals("fprintf") || procName.equals("fprintf_s")) && arguments.count() >= 2 && arguments.get(0).equals("stdout")) {
+					buildOutput(_reduction, "printf", arguments.subSequence(1, arguments.count()), _parentNode);
+				}
+				else if ((procName.equals("fscanf") || procName.equals("fscanf_s")) && arguments.count() >= 2 && arguments.get(0).equals("stdin")){
+					buildInput(_reduction, procName.substring(1), arguments.subSequence(1, arguments.count()), _parentNode);
+				}
+				else if (procName.equals("fputs") && arguments.count() == 2 && arguments.get(1).equals("stdout")) {
+					buildOutput(_reduction, "puts", arguments.subSequence(0, 1), _parentNode);
+				}
+				else if (procName.equals("fgets") && arguments.count() == 3 && arguments.get(2).equals("stdin")) {
+					buildInput(_reduction, "gets", arguments.subSequence(0, 1), _parentNode);
+				}
+				// END KGU#652 2019-02-13
 				else if (!convertBuiltInRoutines(_reduction, procName, arguments, _parentNode)) {
 					// START KGU#407 2017-06-20: Enh. #420 - comments already here
 					//_parentNode.addElement(new Instruction(getContent_R(_reduction, content)));
@@ -1319,7 +1343,11 @@ public class CParser extends CPreParser
 			else {
 				content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
 			}
-			content = content.replace("const ", "");
+			// START KGU#668 2019-03-01: Workaround #690 - get rid of struct keywords in parameter list
+			//content = content.replace("const ", "");
+			content = content.replaceAll("(^|.*\\W)const (.*)", "$1$2");
+			content = content.replaceAll("(^|.*\\W)struct (.*)", "$1$2");
+			// END KGU#668 2019-03-01
 		}
 		// START KGU#523 2018-06-17: Bugfix #542 - result type void should be suppressed
 		if (content.trim().equals("void")) {
@@ -1361,7 +1389,27 @@ public class CParser extends CPreParser
 			break;
 			// END KGU#525 2018-06-18
 		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
-			params = getContent_R(_reduction.get(2).asReduction(), "");
+			// START KGU#668 2019-03-01: Workaround #690 - get rid of struct keywords in parameter list
+			//params = getContent_R(_reduction.get(2).asReduction(), "");
+			{
+				StringList paramList = new StringList();
+				Reduction paramRed = _reduction.get(2).asReduction();
+				while (paramRed.getParent().getTableIndex() == RuleConstants.PROD_PARAMS_COMMA) {
+					String param = getContent_R(paramRed.get(0).asReduction(), "");
+					if (param.startsWith("struct ")) {
+						param = param.substring(7);
+					}
+					paramList.add(param);
+					paramRed = paramRed.get(2).asReduction();
+				}
+				String param = getContent_R(paramRed, "");
+				if (param.startsWith("struct ")) {
+					param = param.substring(7);
+				}
+				paramList.add(param);
+				params = paramList.concatenate(", ");
+			}
+			// END KGU#668 2019-03-01
 			break;
 		case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
 			bodyIndex = 3;
@@ -1457,7 +1505,7 @@ public class CParser extends CPreParser
 					// <Base> ::= struct '{' <Struct Def> '}'
 					// We have an anonymous type here - if we didn't obtain a type name, we'll create a new one
 					{
-						if (_typeList.count() == 0) {
+						if (_typeList.isEmpty()) {
 							type = String.format("AnonStruct%1$03d", typeCount++);
 						}
 						else {

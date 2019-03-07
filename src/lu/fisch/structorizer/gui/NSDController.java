@@ -34,9 +34,9 @@ import javax.swing.JFrame;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2007.12.28      First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007-12.28      First Issue
  *
  ******************************************************************************************************
  *
@@ -55,7 +55,7 @@ public interface NSDController
 	public void setLookAndFeel(String _laf);
 	public String getLookAndFeel();
 
-        public void savePreferences();
+	public void savePreferences();
 
 	public JFrame getFrame();
 

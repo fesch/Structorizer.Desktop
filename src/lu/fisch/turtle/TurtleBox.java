@@ -32,18 +32,19 @@ package lu.fisch.turtle;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2015.12.10      Inheritance change for enhancement request #48
- *      Kay Gürtzig     2016.10.16      Enh. #272: exact internal position (double coordinates)
- *      Kay Gürtzig     2016.12.02      Enh. #302 Additional methods to set the pen and background color
- *      Kay Gürtzig     2017.06.29/30   Enh. #424: Inheritance extension to FunctionProvidingDiagramControl
+ *      Kay Gürtzig     2015-12-10      Inheritance change for enhancement request #48
+ *      Kay Gürtzig     2016-10-16      Enh. #272: exact internal position (double coordinates)
+ *      Kay Gürtzig     2016-12-02      Enh. #302 Additional methods to set the pen and background color
+ *      Kay Gürtzig     2017-06-29/30   Enh. #424: Inheritance extension to FunctionProvidingDiagramControl
  *                                      function map introduced, functions getX(), getY(), getOrientation() added
- *      Kay Gürtzig     2017.10.28      Enh. #443: interface FunctionProvidingDiagramControl now integrated,
+ *      Kay Gürtzig     2017-10-28      Enh. #443: interface FunctionProvidingDiagramControl now integrated,
  *                                      structure of function map modified, procedure map added, execution
  *                                      mechanism fundamentally revised
  *                                      Concurrency issue fixed (KGU#449).
- *      Kay Gürtzig     2018.01.16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI
- *      Kay Gürtzig     2018.07.30      Enh. #576: New procedure clear() added to the API
- *      Kay Gürtzig     2018.10.12      Issue #622: Modification apparently helping to overcome drawing contention
+ *      Kay Gürtzig     2018-01-16      Enh. #490: Class decomposed to allow a mere API use without realising the GUI
+ *      Kay Gürtzig     2018-07-30      Enh. #576: New procedure clear() added to the API
+ *      Kay Gürtzig     2018-10-12      Issue #622: Modification apparently helping to overcome drawing contention
+ *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
  *
  ******************************************************************************************************
  *
@@ -192,10 +193,10 @@ public class TurtleBox implements DelayableDiagramController
      */
     public TurtleBox()
     {
-    	// START KGU#480 2018-01-16: Enh. #490 - This constructor no longer builds the GUI
+        // START KGU#480 2018-01-16: Enh. #490 - This constructor no longer builds the GUI
         //init(300,300);
-    	home = new Point();
-    	reinit();
+        home = new Point();
+        reinit();
         // END KGU#480 2018-01-16
     }
 
@@ -277,12 +278,12 @@ public class TurtleBox implements DelayableDiagramController
      */
     private void init(int width, int height)
     {
-    	// START KGU#480 2018-01-16: Enh. #490 - care for the existence of a frame
-    	if (frame == null) {
-    		frame = new JFrame();
-    	}
-    	// END KGU#480 2018-01-16
-    	panel = new JPanel()
+        // START KGU#480 2018-01-16: Enh. #490 - care for the existence of a frame
+        if (frame == null) {
+            frame = new JFrame();
+        }
+        // END KGU#480 2018-01-16
+        panel = new JPanel()
         {
             @Override
             public void paint(Graphics graphics)
@@ -367,11 +368,11 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setVisible(boolean visible)
     {
-    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
-    	if (visible && frame == null) {
-    		init(300, 300);
-    	}
-    	// END KGU#480 2018-01-16
+        // START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+        if (visible && frame == null) {
+            init(300, 300);
+        }
+        // END KGU#480 2018-01-16
         frame.setVisible(visible);
 // START KGU#303 2016-12-03: Issue #302 - replaced by reinit() call below
 //        elements.clear();
@@ -384,11 +385,11 @@ public class TurtleBox implements DelayableDiagramController
 //        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
 // END KGU#303 2016-12-03
         if (visible) {
-        	home = new Point(panel.getWidth()/2,panel.getHeight()/2);
-        	// START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
-        	reinit();
-        	// END KGU#303 2016-12-03
-        	frame.paint(frame.getGraphics());
+            home = new Point(panel.getWidth()/2,panel.getHeight()/2);
+            // START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
+            reinit();
+            // END KGU#303 2016-12-03
+            frame.paint(frame.getGraphics());
         }
     }
     
@@ -497,23 +498,23 @@ public class TurtleBox implements DelayableDiagramController
     // START KGU#448 2017-10-28: Enh. #443 Wrappers with color argument
     public void fd(Integer pixels, Color color)
     {
-    	this.setColorNonWhite(color);
-    	this.fd(pixels);
+        this.setColorNonWhite(color);
+        this.fd(pixels);
     }
     public void bk(Integer pixels, Color color)
     {
-    	this.setColorNonWhite(color);
-    	this.fd(-pixels);
+        this.setColorNonWhite(color);
+        this.fd(-pixels);
     }
     public void forward(Double pixels, Color color)
     {
-    	this.setColorNonWhite(color);
-    	this.forward(pixels);
+        this.setColorNonWhite(color);
+        this.forward(pixels);
     }
     public void backward(Double pixels, Color color)
     {
-    	this.setColorNonWhite(color);
-    	this.forward(-pixels);
+        this.setColorNonWhite(color);
+        this.forward(-pixels);
     }
     // END KGU#448 2017-10-28
 
@@ -544,13 +545,13 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setBackgroundColor(Color bgColor)
     {
-    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
-    	if (frame == null) {
-    		init(300, 300);
+        // START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+        if (frame == null) {
+            init(300, 300);
     	}
-    	// END KGU#480 2018-01-16
-    	backgroundColor = bgColor;
-    	panel.repaint();
+        // END KGU#480 2018-01-16
+        backgroundColor = bgColor;
+        panel.repaint();
     }
 
     /** Delayed API method to set the background colour from RGB values
@@ -560,8 +561,8 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setBackgroundColor(Integer red, Integer green, Integer blue)
     {
-    	backgroundColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
-    	delay();
+        backgroundColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
+        delay();
     }
 
     /**
@@ -571,13 +572,13 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setPenColor(Color penColor)
     {
-    	// START KGU#480 2018-01-16: Enh. #490 - lazy initialization
-    	if (frame == null) {
-    		init(300, 300);
-    	}
-    	// END KGU#480 2018-01-16
-    	defaultPenColor = penColor;
-    	panel.repaint();
+        // START KGU#480 2018-01-16: Enh. #490 - lazy initialization
+        if (frame == null) {
+            init(300, 300);
+        }
+        // END KGU#480 2018-01-16
+        defaultPenColor = penColor;
+        panel.repaint();
     }
 
     /**
@@ -589,8 +590,8 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setPenColor(Integer red, Integer green, Integer blue)
     {
-    	defaultPenColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
-    	delay();
+        defaultPenColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
+        delay();
     }
     // END KGU#303 2016-12-02
 
@@ -721,11 +722,32 @@ public class TurtleBox implements DelayableDiagramController
     // END KGU#448 2017-10-28
     {
         if (_reinit) {
-        	reinit();
+            reinit();
         }
         this.delay=delay;
     }
 
+    // START KGU#356 2019-03-02: Issue #366 - Allow focus control of he DiagramController copes with it
+    /**
+     * @return whether this TurtleBox window is focused
+     */
+    @Override
+    public boolean isFocused()
+    {
+        return this.frame != null && this.frame.isFocused();
+    }
+
+    /**
+     * Requests the focus for this TurtleBox window.
+     */
+    @Override
+    public void requestFocus()
+    {
+        if (this.frame != null) {
+            this.frame.requestFocus();
+        }
+    }
+    // END KGU#356 2019-03-02
 
     @Deprecated
     private String parseFunctionName(String str)

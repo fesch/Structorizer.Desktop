@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-01-07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017-01-09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2018-12-29      Issue #658: Configuration of leave, return, and exit keywords enabled
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New button + popup menu for locale-specific keyword sets
  *
  ******************************************************************************************************
  *
@@ -54,9 +55,12 @@ package lu.fisch.structorizer.gui;
 
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 
 import javax.swing.*;
@@ -125,6 +129,10 @@ public class ParserPreferences extends LangDialog {
 	// START KGU 2016-03-25: New general option for handling these keywords
 	protected JCheckBox chkIgnoreCase;
 	// END KGU 2016-03-25
+	// START KGU#323 2019-03-03: Enh. #327
+	protected JButton btnFromLocale;
+	protected JPopupMenu popupLocales = null;
+	// END KGU#323 2019-03-03
 	
 	// START KGU 2016-03-25: Labels replaced by light-weight objects
 	//protected JLabel lblErrorSign;
@@ -133,7 +141,14 @@ public class ParserPreferences extends LangDialog {
 	//protected JLabel lblErrorSign2;
 	protected LangTextHolder lblErrorSign2;
 	// END KGU#61 2016-03-21
-	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+	protected LangTextHolder lblErrorSign3;
+	private JTextField[] mandatoryFields;
+	private static final Color mandatoryBackGround = new Color(255,255,210);
+	protected static final LangTextHolder ttlError = new LangTextHolder("Error");
+	protected JPanel headPanel;
+	protected JLabel lblHeadline;
+	// END KGU#657 2019-02-17
 	
 	/*public ParserPreferences()
 	{
@@ -155,6 +170,10 @@ public class ParserPreferences extends LangDialog {
 
 	private void initComponents() {
 		dialogPane = new JPanel();
+		// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+		headPanel = new JPanel();
+		lblHeadline = new JLabel();
+		// END KGU#657 2019-02-17
 		contentPanel = new JPanel();
 		lblNothing = new JLabel();
 		lblNothing2 = new JLabel();
@@ -206,19 +225,28 @@ public class ParserPreferences extends LangDialog {
 		// START KGU 2016-03-25: New general option for handling these keywords
 		chkIgnoreCase = new JCheckBox();
 		// END KGU 2016-03-25
+		// START KGU#323 2019-03-03: Enh. #327  New option to load defaults from a locale
+		btnFromLocale = new JButton();
+		// END KGU323 2019-03-03
 
-		//lblErrorSign = new JLabel();
-		lblErrorSign = new LangTextHolder();
-
-		lblErrorSign.setText("Your are not allowed to use the character ':' in any parser string!");
+		lblErrorSign = new LangTextHolder("Your are not allowed to use the character ':' in any parser string!");
 		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		//lblErrorSign2 = new JLabel();
-		// START KGU#628 2018-12-28: Enh. #658 - Th text had to be generalized
+		// START KGU#628 2018-12-28: Enh. #658 - The text had to be generalized
 		//lblErrorSign2 = new LangTextHolder();
 		//lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
 		lblErrorSign2 = new LangTextHolder("There are name conflicts among the key words marked red - they must all differ!");
 		// END KGU#628 2018-12-28
 		// END KGU#61 2016-03-21
+		// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+		lblErrorSign3 = new LangTextHolder("% of the mandatory key words (cream background) aren't specified!");
+		mandatoryFields = new JTextField[] {
+				edtForPre, edtForPost, edtForStep,
+				edtForInPre, edtForInPost,
+				edtJumpLeave, edtJumpReturn, edtJumpExit,
+				edtInput, edtOutput
+		};
+		// END KGU#657 2019-02-17
 
 		//======== this ========
 		setModal(true);
@@ -232,6 +260,16 @@ public class ParserPreferences extends LangDialog {
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
 			dialogPane.setLayout(new BorderLayout());
+			
+			//======== Headline ========
+
+			// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
+			lblHeadline.setText("Fields with this background are mandatory");
+			lblHeadline.setIcon(IconLoader.generateIcon(mandatoryBackGround));
+			headPanel.add(lblHeadline);
+			
+			dialogPane.add(headPanel, BorderLayout.NORTH);
+			// END KGU#657 2019-02-17
 
 			//======== contentPanel ========
 			{
@@ -327,25 +365,56 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(lblInputOutput);
 				contentPanel.add(edtInput);
 				contentPanel.add(edtOutput);
+
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
+			
+			// START KGU#657 2019-02-17: Issue #684
+			for (JTextField field: mandatoryFields) {
+				field.setBackground(mandatoryBackGround);
+			}
+			// END KGU#657 2019-02-17
 
 			//======== buttonBar ========
 			{
 				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
-				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				// START KGU#323 2019-03-03: Enh. #327 New button to fetch localized keywords had to be allocated
+//				buttonBar.setLayout(new GridBagLayout());
+//				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+//				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				buttonBar.setLayout(new BoxLayout(buttonBar, BoxLayout.Y_AXIS));
+				JPanel buttonRow1 = new JPanel();
+				buttonRow1.setLayout(new BoxLayout(buttonRow1, BoxLayout.X_AXIS));
+				JPanel buttonRow2 = new JPanel();
+				buttonRow2.setLayout(new BoxLayout(buttonRow2, BoxLayout.X_AXIS));
+				buttonBar.add(buttonRow1);
+				buttonBar.add(Box.createVerticalStrut(5));
+				buttonBar.add(buttonRow2);
+				// END KGU323 2019-03-03
 
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
-				buttonBar.add(chkIgnoreCase);
+				// START KGU#323 2019-03-03: Enh. #327 New option to load defaults from a locale
+//				buttonBar.add(chkIgnoreCase);
+				buttonRow1.add(chkIgnoreCase);
+				// END KGU323 2019-03-03
 				
+				//---- locale button
+				// START KGU#323 2019-03-03: Enh. #327 New option to load defaults from a locale
+				buttonRow1.add(Box.createHorizontalGlue());
+				btnFromLocale.setText("Fetch locale-specific defaults");
+				buttonRow1.add(btnFromLocale);
+				// END KGU323 2019-03-03
+
 				//---- okButton ----
 				btnOK.setText("OK");
-				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-					new Insets(0, 0, 5, 0), 0, 0));
+				// START KGU#323 2019-03-03: Enh. #327 New button to fetch localized keywords had to be allocated
+//				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+//					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+//					new Insets(0, 0, 5, 0), 0, 0));
+				buttonRow2.add(Box.createHorizontalGlue());
+				buttonRow2.add(btnOK);
+				// END KGU323 2019-03-03
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -365,6 +434,12 @@ public class ParserPreferences extends LangDialog {
 			{
 				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
+					// START KGU#323 2019-03-03: Enh. #327
+					if (popupLocales != null) {
+						// Allow to free the memory space used for the temporarily loaded locales
+						Locales.getInstance().removeLocales(false);
+					}
+					// END KGU#323 2019-03-03
 					setVisible(false);
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
@@ -385,15 +460,15 @@ public class ParserPreferences extends LangDialog {
 		// START KGU#3 2015-11-08: Enh. #10
 		edtForStep.addKeyListener(keyListener);
 		// END KGU#3 2015-11-08
-    	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		edtForInPre.addKeyListener(keyListener);
 		edtForInPost.addKeyListener(keyListener);
-    	// END KGU#61 2016-03-21
+		// END KGU#61 2016-03-21
 		edtWhilePre.addKeyListener(keyListener);
 		edtWhilePost.addKeyListener(keyListener);
 		edtRepeatPre.addKeyListener(keyListener);
 		edtRepeatPost.addKeyListener(keyListener);
-		// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
+		// START KGU#78 2016-03-25: Enh. #23 - Jump keyword configurability introduced
 		edtJumpLeave.addKeyListener(keyListener);
 		edtJumpReturn.addKeyListener(keyListener);
 		edtJumpExit.addKeyListener(keyListener);
@@ -401,120 +476,233 @@ public class ParserPreferences extends LangDialog {
 		edtInput.addKeyListener(keyListener);
 		edtOutput.addKeyListener(keyListener);
 		btnOK.addKeyListener(keyListener);
+		// START KGU#323 2019-03-03: Enh. #327
+		btnFromLocale.addKeyListener(keyListener);
+		// END KGU#323 2019-03-03
 		
 		// add the ACTION-listeners
 		ActionListener actionListener = new ActionListener()
 		{
 			public void actionPerformed(ActionEvent event)
 			{
-				done();
+				// START KGU#323 2019-03-03: Enh. #327
+				//done();
+				if (event.getSource() == btnOK) {
+					done();
+				}
+				else if (event.getSource() == btnFromLocale) {
+					showLocalePulldown();
+				}
+				// END KGU#323 2019-03-03
 			}
 		};
 		btnOK.addActionListener(actionListener);
+		// START KGU#323 2019-03-03: Enh. #327
+		btnFromLocale.addActionListener(actionListener);
+		// END KGU#323 2019-03-03
 	}
-        
-        public void done()
-        {
-        	HashSet<JTextField> conflictingFields = null;	// conflicting text fields
-            if(
-                    edtAltPre.getText().contains(":") ||
-                    edtAltPost.getText().contains(":") ||
-                    edtCasePre.getText().contains(":") ||
-                    edtCasePost.getText().contains(":") ||
-                    edtForPre.getText().contains(":") ||
-                    edtForPost.getText().contains(":") ||
-                    // START KGU#3 2015-11-08
-                    edtForStep.getText().contains(":") ||
-                    // START KGU#3 2015-11-08
-                   	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
-                    edtForInPre.getText().contains(":") ||
-                    edtForInPost.getText().contains(":") ||
-                	// END KGU#61 2016-03-21
-                    edtWhilePre.getText().contains(":") ||
-                    edtWhilePost.getText().contains(":") ||
-                    edtRepeatPre.getText().contains(":") ||
-                    edtRepeatPost.getText().contains(":") ||
-            		// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
-            		edtJumpLeave.getText().contains(":") ||
-            		edtJumpReturn.getText().contains(":") ||
-            		edtJumpExit.getText().contains(":") ||
-            		// END KGU#78 2016-03-25
-                    edtInput.getText().contains(":") ||
-                    edtOutput.getText().contains(":")
-            ) {
-                 JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(),"Error", JOptionPane.ERROR_MESSAGE);
-            }
-        	// START KGU#61/KGU#628 2018-12-29: Enh. #84, #658 - Test against duplicates 
-            else if (!(conflictingFields = this.hasConflicts()).isEmpty())
-            {
-            	Color oldColour = null;
-            	for (JTextField textField: conflictingFields) {
-            		if (oldColour == null) {
-            			oldColour = textField.getForeground();
-            		}
-            		textField.setForeground(Color.RED);
-            	}
-            	JOptionPane.showMessageDialog(null, lblErrorSign2.getText(),"Error", JOptionPane.ERROR_MESSAGE);
-            	for (JTextField textField: conflictingFields) {
-            		textField.setForeground(oldColour);
-            	}
-            }
-        	// END KGU#61/KGU#628 2018-12-28
-            else
-            {
-                setVisible(false);
-                OK=true;
-            }    
-            
-        }
-        
-        // START KGU#165 2016-03-25
-        // START KGU#628 2018-12-29: Enh. #658 - we need more independent checks
-        //private JTextField hasConflicts()
-        private HashSet<JTextField> hasConflicts()
-        // END KGU#628 2018-12-29
-        {
-        	HashSet<JTextField> conflicts = new HashSet<JTextField>();
-        	JTextField conflicting = null;
-        	boolean ignoreCase = chkIgnoreCase.isSelected();
-        	JTextField[] fieldsToCheck = {
-    				edtAltPre,		edtAltPost,
-    				edtCasePre,		edtCasePost,
-    				edtForPre,		edtForPost,		edtForStep,
-    				edtForInPre,
-    				edtWhilePre,	edtWhilePost,
-    				edtRepeatPre,	edtRepeatPost,
-    				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
-    				edtInput,
-    				edtOutput
-        	};
-        	int indexCheck2 = 12;
-        	String forInPost = edtForInPost.getText().trim();
-        	
-        	for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
-        	{
-        		if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim())
-        				&& (ignoreCase || forInPost.equals(fieldsToCheck[i].getText().trim())))
-        		{
-        			conflicting = fieldsToCheck[i];
-        		}
-        	}
-        	if (conflicting != null) {
-        		conflicts.add(edtForInPost);
-        		conflicts.add(conflicting);
-        	}
-        	for (int i = indexCheck2; i+1 < fieldsToCheck.length; i++) {
-        		String key1 = fieldsToCheck[i].getText().trim();
-        		for (int j = i+1; j < fieldsToCheck.length; j++) {
-        			String key2 = fieldsToCheck[j].getText().trim();
-        			if (key1.equalsIgnoreCase(key2) && (ignoreCase || key1.equals(key2))) {
-        				conflicts.add(fieldsToCheck[i]);
-        				conflicts.add(fieldsToCheck[j]);
-        			}
-        		}
-        	}
-        	return conflicts;
-        }
-        // END KGU#165 2016-03-25
+
+	public void done()
+	{
+		HashSet<JTextField> conflictingFields = null;	// conflicting text fields
+		// START KGU#654 2019-02-17: Issue #684 - first of all, check mandatory fields
+		//if(
+		int nEmptyMandFields = 0;
+		for (int i = 0; i < mandatoryFields.length; i++) {
+			if (mandatoryFields[i].getText().trim().isEmpty()) {
+				nEmptyMandFields++;
+			}
+		}
+		if (nEmptyMandFields > 0) {
+			JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign3.getText().replace("%", Integer.toString(nEmptyMandFields)),
+					ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+		else if (
+		// END KGU#654 2019-02-17
+				edtAltPre.getText().contains(":") ||
+				edtAltPost.getText().contains(":") ||
+				edtCasePre.getText().contains(":") ||
+				edtCasePost.getText().contains(":") ||
+				edtForPre.getText().contains(":") ||
+				edtForPost.getText().contains(":") ||
+				// START KGU#3 2015-11-08
+				edtForStep.getText().contains(":") ||
+				// START KGU#3 2015-11-08
+				// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+				edtForInPre.getText().contains(":") ||
+				edtForInPost.getText().contains(":") ||
+				// END KGU#61 2016-03-21
+				edtWhilePre.getText().contains(":") ||
+				edtWhilePost.getText().contains(":") ||
+				edtRepeatPre.getText().contains(":") ||
+				edtRepeatPost.getText().contains(":") ||
+				// START KGU#78 2016-03-25: Enh. #23 - configurability introduced
+				edtJumpLeave.getText().contains(":") ||
+				edtJumpReturn.getText().contains(":") ||
+				edtJumpExit.getText().contains(":") ||
+				// END KGU#78 2016-03-25
+				edtInput.getText().contains(":") ||
+				edtOutput.getText().contains(":")
+				) {
+			JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(), ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+		// START KGU#61/KGU#628 2018-12-29: Enh. #84, #658 - Test against duplicates 
+		else if (!(conflictingFields = this.hasConflicts()).isEmpty())
+		{
+			Color oldColour = null;
+			for (JTextField textField: conflictingFields) {
+				if (oldColour == null) {
+					oldColour = textField.getForeground();
+				}
+				textField.setForeground(Color.RED);
+			}
+			JOptionPane.showMessageDialog(null, lblErrorSign2.getText(), ttlError.getText(), JOptionPane.ERROR_MESSAGE);
+			for (JTextField textField: conflictingFields) {
+				textField.setForeground(oldColour);
+			}
+		}
+		// END KGU#61/KGU#628 2018-12-28
+		else
+		{
+			// START KGU#323 2019-03-03: Enh. #327
+			if (popupLocales != null) {
+				// Allow to free the memory space used for the temporarily loaded locales
+				Locales.getInstance().removeLocales(false);
+			}
+			// END KGU#323 2019-03-03
+			setVisible(false);
+			OK=true;
+		}
+
+	}
+
+	// START KGU#323 2019-03-03: Enh. #327 Offer localized sets of parser keywords
+	/**
+	 * Raises a pop-up menu next to the button "fetch from locale" containing menu items for
+	 * every locale providing at least one non-empty parser keyword in section "Keywords".
+	 * If the pop-up menu hadn't been realised before then it will be built here (lazy
+	 * initialisation).
+	 */
+	protected void showLocalePulldown() {
+		if (popupLocales == null) {
+			Locales locales = Locales.getInstance();
+			Locale currentLocale = locales.getLocale(locales.getLoadedLocaleName());
+			popupLocales = new JPopupMenu();
+			for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
+			{
+				final String locName = Locales.LOCALES_LIST[iLoc][0];
+				String locDescription = Locales.LOCALES_LIST[iLoc][1];
+				if (locDescription != null)
+				{
+					if (hasParserKeywords(locales.getLocale(locName))) {
+						String caption = currentLocale.getValue("Structorizer", "Menu.menuPreferencesLanguageItems." + locName + ".text");
+						if (caption == null || caption.isEmpty()) {
+							caption = locDescription;
+						}
+						ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+						JMenuItem item = new JMenuItem(caption, icon);
+						item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { fetchFromLang(locName); } } );
+						popupLocales.add(item);
+					}
+					else {
+						locales.removeLocale(locName, false);
+					}
+				}
+			}
+		}
+		popupLocales.show(btnFromLocale, btnFromLocale.getWidth(), 0);
+	}
+
+	/**
+	 * Checks if the given {@code locale} provides at least one non-empty localised value
+	 * in the "Keywords" section.
+	 * @param locale
+	 * @return true if we may expect some keyword entry from the locale 
+	 */
+	private boolean hasParserKeywords(Locale locale) {
+		for (String key: locale.getKeys("Keywords")) {
+			if (!locale.getValue("Keywords", key).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Fetches all available keywords matching one of the created edt* {@link JTextField}s
+	 * from the {@link Locale} specified by {@code localeName}.
+	 * @param locName - name of the source locale (which is not necessarily the current locale)
+	 */
+	protected void fetchFromLang(String locName) {
+		Locale locale = Locales.getInstance().getLocale(locName);
+		for (String key: locale.getKeys("Keywords")) {
+			String keyword = locale.getValue("Keywords", key);
+			//if (!keyword.isEmpty()) {
+				String compName = key.split("\\.")[1];
+				Field field = null;
+				try {
+					field = this.getClass().getDeclaredField("edt" + compName);
+					field.setAccessible(true);
+					Object target = field.get(this);
+					if (target instanceof JTextField) {
+						((JTextField)target).setText(keyword);
+					}
+				} catch (Exception e) {
+					System.err.println(e);
+				}
+			//}
+		}
+	}
+
+	// END KGU#323 2019-03-03
+
+	// START KGU#165 2016-03-25
+	// START KGU#628 2018-12-29: Enh. #658 - we need more independent checks
+	//private JTextField hasConflicts()
+	private HashSet<JTextField> hasConflicts()
+	// END KGU#628 2018-12-29
+	{
+		HashSet<JTextField> conflicts = new HashSet<JTextField>();
+		JTextField conflicting = null;
+		boolean ignoreCase = chkIgnoreCase.isSelected();
+		JTextField[] fieldsToCheck = {
+				edtAltPre,		edtAltPost,
+				edtCasePre,		edtCasePost,
+				edtForPre,		edtForPost,		edtForStep,
+				edtForInPre,
+				edtWhilePre,	edtWhilePost,
+				edtRepeatPre,	edtRepeatPost,
+				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				edtInput,
+				edtOutput
+		};
+		int indexCheck2 = 12;
+		String forInPost = edtForInPost.getText().trim();
+
+		for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
+		{
+			if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim())
+					&& (ignoreCase || forInPost.equals(fieldsToCheck[i].getText().trim())))
+			{
+				conflicting = fieldsToCheck[i];
+			}
+		}
+		if (conflicting != null) {
+			conflicts.add(edtForInPost);
+			conflicts.add(conflicting);
+		}
+		for (int i = indexCheck2; i+1 < fieldsToCheck.length; i++) {
+			String key1 = fieldsToCheck[i].getText().trim();
+			for (int j = i+1; j < fieldsToCheck.length; j++) {
+				String key2 = fieldsToCheck[j].getText().trim();
+				if (key1.equalsIgnoreCase(key2) && (ignoreCase || key1.equals(key2))) {
+					conflicts.add(fieldsToCheck[i]);
+					conflicts.add(fieldsToCheck[j]);
+				}
+			}
+		}
+		return conflicts;
+	}
+	// END KGU#165 2016-03-25
 
 }

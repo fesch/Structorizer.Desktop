@@ -298,12 +298,12 @@ public class BasGenerator extends Generator
 
 	protected void placeJumpTarget(ILoop _loop, String _indent)
 	{
-        if (this.jumpTable.containsKey(_loop))
+        if (this.jumpTable.containsKey(_loop.getLoop()))
         {
         	if (this.optionCodeLineNumbering())
         	{
         		// Associate label number with line number of the following dummy comment 
-        		this.labelMap[this.jumpTable.get(_loop).intValue()] = this.lineNumber;
+        		this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
         		insertComment("Exit point from above loop.", _indent);
         	}
         	else
@@ -311,7 +311,7 @@ public class BasGenerator extends Generator
             	// START KGU#277 2016-10-13: Enh. #270
         		//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
         		//		this.commentSymbolLeft() + " Exit point from above loop.");
-        		addCode(this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
+        		addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
         				this.commentSymbolLeft() + " Exit point from above loop.",
         				_indent, _loop.isDisabled());
             	// END KGU#277 2016-10-13

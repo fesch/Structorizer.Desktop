@@ -49,23 +49,25 @@
  *      Author          Date        Description
  *      ------          ----		-----------
  *      Yura Lebedev    ?           Initial release
- *      Kay Gürtzig     2014.12.02  ExportOptionDialoge and further messages added
- *      Kay Gürtzig     2015.10.06  altPadRight added to Preferences dialog
- *      Kay Gürtzig     2015.10.14  InputBox-specific part enhanced
- *      Kay Gürtzig     2016.03.22  Enh. #84: messages related to FOR-IN loops added, several
+ *      Kay Gürtzig     2014-12-02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2015-10-06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015-10-14  InputBox-specific part enhanced
+ *      Kay Gürtzig     2016-03-22  Enh. #84: messages related to FOR-IN loops added, several
  *                                  missing messages inserted
- *      Kay Gürtzig     2016.04.24  Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
- *      Kay Gürtzig     2016.10.18  Enh. #267: Analyser check 15 reformulated.
- *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2017.12.17  Still incomplete first replacements to support #492 
- *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig     2018.07.27  Several missing messages added.
- *      Kay Gürtzig     2018.08.03  Enh. #577: OutputConsole keys renamed
+ *      Kay Gürtzig     2016-04-24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016-10-18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017-12-17  Still incomplete first replacements to support #492 
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2018-07-27  Several missing messages added.
+ *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed
+ *      Kay Gürtzig     2019-02-16  Enh. #682: Welcome message translated
+ *      Kay Gürtzig     2019-02-17  Issue #684: New and missing messages for ParserPreferences added
  *
  ******************************************************************************************************
  *
@@ -166,7 +168,7 @@ Menu.menuDiagramAddBefore.text=Перед
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=Инструкция
 Menu.menuDiagramAddBeforeAlt.text=Разветвление @{Alternative}
-Menu.menuDiagramAddBeforeCase.text=Многократный выбор @{Case}
+Menu.menuDiagramAddBeforeCase.text=Многовариантный выбор @{Case}
 Menu.menuDiagramAddBeforeFor.text=Цикл @{For}
 Menu.menuDiagramAddBeforeWhile.text=Цикл @{While}
 Menu.menuDiagramAddBeforeRepeat.text=Цикл @{Repeat}
@@ -179,7 +181,7 @@ Menu.menuDiagramAddAfter.text=Позади
 // Submenus for adding Elements "After"
 Menu.menuDiagramAddAfterInst.text=Инструкция
 Menu.menuDiagramAddAfterAlt.text=Разветвление @{Alternative}
-Menu.menuDiagramAddAfterCase.text=Многократный выбор @{Case}
+Menu.menuDiagramAddAfterCase.text=Многовариантный выбор @{Case}
 Menu.menuDiagramAddAfterFor.text=Цикл @{For}
 Menu.menuDiagramAddAfterWhile.text=Цикл @{While}
 Menu.menuDiagramAddAfterRepeat.text=Цикл @{Repeat}
@@ -329,7 +331,8 @@ Menu.lblAllowChanges.text=
 Menu.msgReplacementsDone.text=
 Menu.msgNewerVersionAvail.text=
 Menu.msgUpdateInfoHint.text=
-Menu.msgWelcomeMessage.text=
+Menu.msgWelcomeMessage1.text=Добро пожаловать к Structorizer, вашему удобному свободному редактору диаграмм Насси-Шнейдермана.\nС этой средой разработки можете намечать, рисовать, выполнять, испытывать, анализировать алгоритмы,\nпереводить их в разные языки программирования, и множе.\nПожалуйста выбираете язык диалога (всегда можете сменить ваш выбор через меню настройки):
+Menu.msgWelcomeMessage2.text=Structorizer был проектирован для простого использования но постепенно был пополнен к многими функциями.\nЕсли вы новичок в программировании и в алгоритмах можете начинать с упрощенным видом и\nгидом «%».\nХочете начинать с упрощенным видоми курсом? (Можете всегда переключить на полный модус.)
 Menu.lblOk.text=ОК
 Menu.lblYes.text=Да
 Menu.lblNo.text=Нет
@@ -436,7 +439,7 @@ Menu.error24_5.text=
 Menu.error24_6.text=
 Menu.error24_7.text=
 Menu.error24_8.text=
-Menu.hint07_1.text=
+Menu.hint07_1.text=Что должен сделать ваш алгоритм? Замените "???" описательным названием.
 Menu.hint25_1.text=
 Menu.hint25_2.text=
 Menu.hint25_3.text=
@@ -480,7 +483,7 @@ AnalyserPreferences.checkboxes.22.text=Проверять что постоян�
 AnalyserPreferences.checkboxes.23.text=
 AnalyserPreferences.checkboxes.24.text=
 AnalyserPreferences.checkboxes.25.text=
-AnalyserPreferences.checkboxes.26.text=
+AnalyserPreferences.checkboxes.26.text=Краткий курс "Привет, мир!"
 AnalyserPreferences.okButton.text=ОК
 
 
@@ -589,15 +592,8 @@ Editor.popupDisable.text=Подавить
 // Debug
 Editor.popupBreakpoint.text=Сменить точку останова
 Editor.popupBreakTrigger.text=Счетчик точки останова
-// Arranger index
-Editor.popupIndexGet.text=Принести схему
-Editor.popupIndexAttributes.text=Показать свойства схемы ...
-Editor.popupIndexSave.text=Сохранить
-Editor.popupIndexRemove.text=Устранить
-Editor.popupIndexCovered.text=
-Editor.popupIndexRemoveAll.text=Устранить все
+
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Пожалуйста, введите текст
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Комментарий
@@ -672,7 +668,9 @@ InputBoxFor.msgDiscardData.text=
 InputBoxFor.msgAttention.text=
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Изменить сведения схемы
+InputBoxRoot.title[elementType:Root]=@n - Изменить сведения
+InputBoxRoot.title[elementType:Function]=@o - Изменить сведения
+InputBoxRoot.title[elementType:Includable]=@p - Изменить сведения
 InputBoxRoot.lblIncludeList.text=Схемы включены
 InputBoxRoot.txtIncludeList.tooltip=
 InputBoxRoot.lblText.text=Название схемы / интерфе́йс процедуры
@@ -844,10 +842,10 @@ ColorChooser.btnOK.tooltip=Подтвердите свой выбор.
 
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Parser Preferences
+ParserPreferences.title=Настройки парсера
 ParserPreferences.lblPre.text=Перед
 ParserPreferences.lblPre.tooltip=
-ParserPreferences.lblPost.text=После
+ParserPreferences.lblPost.text=Позади
 ParserPreferences.lblPost.tooltip=
 ParserPreferences.lblAlt.text=Разветвление @{Alternative}
 ParserPreferences.lblAlt.tooltip=
@@ -855,7 +853,7 @@ ParserPreferences.lblCase.text=Выбор @{Case}
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=Цикл @{For.COUNTER}
 ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblForStep.text=
+ParserPreferences.lblForStep.text=Шаг (инкремент)
 ParserPreferences.lblForIn.text=Цикл @{For.TRAVERSAL}
 ParserPreferences.lblForIn.tooltip=
 ParserPreferences.edtForInPre.tooltip=
@@ -869,16 +867,19 @@ ParserPreferences.lblJump.tooltip=
 ParserPreferences.lblJumpLeave.text=из цикла 
 ParserPreferences.lblJumpReturn.text=из подпрограммы
 ParserPreferences.lblJumpExit.text=из программы
+ParserPreferences.lblInputOutput.text=Ввод / Вывод
 ParserPreferences.lblInput.text=Ввод
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Вывод
 ParserPreferences.lblOutput.tooltip=
-ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.chkIgnoreCase.text=Не различать прописные/строчные буквы
 ParserPreferences.btnOK.text=ОК
 ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
-ParserPreferences.lblErrorSign.text=
-ParserPreferences.lblErrorSign2.text=
-ParserPreferences.lblInputOutput.text=Ввод / Вывод
+ParserPreferences.lblErrorSign.text=Не разрешается включать двоеточие ':' в ключевых словах!
+ParserPreferences.lblErrorSign2.text=Есть конфликты между ключевыми словами (размеченными красными)! Все они должны различаться.
+ParserPreferences.lblErrorSign3.text=% из обязательных ключевых слов (см. надпись) не заполнены!
+ParserPreferences.ttlError.text=Ошибка
+ParserPreferences.lblHeadline.text=Поля ввода текста с этим цветом обязательные.
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Предварительный просмотр
@@ -1104,6 +1105,14 @@ Surface.msgInsertionConflict.1.text=
 Surface.msgInsertionConflict.2.text=
 Surface.msgOverwriteFile.text=Переписать существующий файл?
 Surface.msgConfirmOverwrite.text=Утвердить переписание
+
+-----[ Arranger index ]-----
+ArrangerIndex.popupIndexGet.text=Принести схему
+ArrangerIndex.popupIndexAttributes.text=Показать свойства схемы ...
+ArrangerIndex.popupIndexSave.text=Сохранить
+ArrangerIndex.popupIndexRemove.text=Устранить
+ArrangerIndex.popupIndexCovered.text=
+ArrangerIndex.popupIndexRemoveAll.text=Устранить все
 
 -----> Executor
 -----[ Control ]-----

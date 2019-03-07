@@ -173,6 +173,12 @@ Menu.menuHelp.text=說明
 Menu.menuHelpAbout.text=關於 ...
 Menu.menuHelpUpdate.text=程式更新 ...
 
+// Dialog messages
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Yes, reduced mode
+Menu.lblNormal.text=No, normal mode
+
 // Error messages for analyser
 Menu.error01_1.text=警告: 沒有迴圈的計數器變數 ...
 Menu.error01_2.text=警告: 超過一個迴圈的計數器變數: «%»
