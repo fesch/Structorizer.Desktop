@@ -94,7 +94,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-12-14      Issue #631 - removal of ';' and ',', first preparations for INSPECT import
  *      Kay Gürtzig     2018-12-17      Issue #631 - Implementation for all three flavours of INSPECT statement
  *      Kay Gürtzig     2019-01-18      Bugfix #665 (related to #631) parsing of the resource diagrams had failed.
- *      Kay Gürtzig     2019-03-04      Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
+ *      Kay Gürtzig     2019-03-04/07   Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
  *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
  *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *
@@ -5327,10 +5327,10 @@ public class COBOLParser extends CodeParser
 	// END KGU#614 2018-12-17
 
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
-	// START KGU#402 2019-03-04: Issue #407
-	private static final Matcher STRING_MATCHER = Pattern.compile("^([\"][^\"]*[\"]|['][^']*['])$").matcher("");
-	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[0-9]+$").matcher("");
-	// END KGU#402 2019-03-04
+	// START KGU#402 2019-03-07: Issue #407
+	private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
+	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
+	// END KGU#402 2019-03-07
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
@@ -8558,7 +8558,7 @@ public class COBOLParser extends CodeParser
 						cond += " " + _lastSubject;
 						lastRelOp = tokStr.trim();
 					}
-					else if (lastRelOp != null && isPrimitiveLiteral(tokStr) && !_lastSubject.isEmpty()) {
+					else if (lastRelOp != null && isNonBooleanOperand(tokStr) && !_lastSubject.isEmpty()) {
 						// What we do here is pretty vague. To be more exact, we would have to analyse the next token...
 						cond += " " + _lastSubject + " " + lastRelOp;
 					}
@@ -8584,8 +8584,23 @@ public class COBOLParser extends CodeParser
 	}
 
 	// START KGU#402 2019-03-04: Issue #407 - More heuristics for abbreviated comparison like "a = 4 or 7"
-	private boolean isPrimitiveLiteral(String tokStr) {
-		return STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches();
+	private boolean isNonBooleanOperand(String tokStr) {
+		boolean mayBeBoolean = true;
+		// First quick check for primitive literals (i.e. numbers, strings)
+		if (STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches()) {
+			mayBeBoolean = false;
+		}
+		// Now check as variables
+		else {
+			CobVar checkedVar = currentProg.getCobVar(tokStr);
+			if (checkedVar != null && !checkedVar.isConditionName()) {
+				String type = CobTools.getTypeString(checkedVar, true);
+				if (!type.isEmpty() && !type.equals(CobTools.UNKNOWN_TYPE)) {
+					mayBeBoolean = false;
+				}
+			}
+		}
+		return !mayBeBoolean;
 	}
 	
 	private boolean isComparisonOperator(String tokStr) {
@@ -9856,7 +9871,7 @@ class CobTools {
 
 	// START KGU#465 2017-12-04: Bugfix #473
 	/** A dummy string specifying an un-recognized type (neither pic nor usage) */
-	private static final String UNKNOWN_TYPE = "-unknown-type-";
+	protected static final String UNKNOWN_TYPE = "-unknown-type-";
 	// END KGU#465 2017-12-04
 
 	/**
@@ -11093,9 +11108,11 @@ class CobTools {
 	 * unless {@code withArraySize} is set!
 	 * @param CobVar - variable (or component) to return the type string for
 	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
-	 * @return Java type representation as string
+	 * @return Java type representation as string, may be {@link #UNKNOWN_TYPE} in case of an unset usage
+	 * if "string" and "long" can be excluded.
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
+	 * @see #getTypeName(CobVar, boolean)
 	 */
 	public static String getTypeString(CobVar variable, boolean withArraySize) {
 		if (variable == null) {
@@ -11201,6 +11218,21 @@ class CobTools {
 	}
 
 	// START KGU#465 2017-12-04: Bugfix #473 - For hierarchical arguments we need a type name
+	/**
+	 * Returns the Java type of a given CobVar depending on its attributes including
+	 * usage, picture and length.<br/>
+	 * Note that in case of an array only the ELEMENT TYPE String will be returned
+	 * unless {@code withArraySize} is set!<br/>
+	 * This method is nearly identical to {@link #getTypeString(CobVar, boolean)} except
+	 * that it derives a new type name from the variable name in cases the latter
+	 * would return the {@value #UNKNOWN_TYPE} string.
+	 * @param CobVar - variable (or component) to return the type string for
+	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
+	 * @return Java type representation as string
+	 * @see CobVar#isArray()
+	 * @see CobVar#getArraySize()
+	 * @see #getTypeString(CobVar, boolean)
+	 */
 	public static String getTypeName (CobVar variable, boolean withArraySize) {
 		String typeName = getTypeString(variable, withArraySize);
 		if (typeName.equals(UNKNOWN_TYPE)) {
