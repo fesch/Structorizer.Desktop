@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017-09-27      Enh. #423: Handling of struct definitions and access
  *      Kay Gürtzig     2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig     2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -103,7 +104,17 @@ public class CPlusPlusGenerator extends CGenerator {
             return exts;
     }
 
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"auto", "break", "case", "char", "const", "continue",
 //		"default", "do", "double", "else", "enum", "extern",
@@ -493,7 +504,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			insertCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#236 2016-08-10: Issue #227
-	        //code.add("#include <iostream>");
+			//code.add("#include <iostream>");
 			// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 			//if (this.hasInput && this.hasOutput)
 			if (this.hasInput() || this.hasOutput())
@@ -501,7 +512,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			{
 				this.generatorIncludes.add("<iostream>");
 			}
-	        // END KGU#236 2016-08-10
+			// END KGU#236 2016-08-10
 			// START KGU#348 2017-02-21: Enh. #348 Parallel support
 			if (this.hasParallels) {
 				this.generatorIncludes.add("<thread>");
@@ -519,9 +530,9 @@ public class CPlusPlusGenerator extends CGenerator {
 		        this.insertFileAPI("cpp", code.count(), "", 0);
 			}
 			// END KGU#311 2016-12-22
-	        subroutineInsertionLine = code.count();
-	        subroutineIndent = _indent;
-	        code.add("");
+			subroutineInsertionLine = code.count();
+			subroutineIndent = _indent;
+			code.add("");
 		}
 		else
 		{
@@ -529,21 +540,21 @@ public class CPlusPlusGenerator extends CGenerator {
 		}
 		// END KGU#178 2016-07-20
 		
-        // add comment
-    	insertComment(_root, _indent);
+		// add comment
+		insertComment(_root, _indent);
 
-        String pr = "program";
-        if (_root.isSubroutine()) {
-        	pr = "function";
-        } else if (_root.isInclude()) {
-        	pr = "includable";
-        }
-        insertComment(pr + " " + _root.getText().get(0), _indent);
-        
-        if (_root.isProgram())
-        	code.add(_indent + "int main(void)");
-        else {
-        	// Start with the result type
+		String pr = "program";
+		if (_root.isSubroutine()) {
+			pr = "function";
+		} else if (_root.isInclude()) {
+			pr = "includable";
+		}
+		insertComment(pr + " " + _root.getText().get(0), _indent);
+
+		if (_root.isProgram())
+			code.add(_indent + "int main(void)");
+		else {
+			// Start with the result type
 			String fnHeader = transformType(_resultType,
 					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
@@ -552,6 +563,9 @@ public class CPlusPlusGenerator extends CGenerator {
 				fnHeader = transformArrayDeclaration(fnHeader, "");
 			}
 			// END KGU#140 2017-01-31
+			// START KGU#371 2019-03-07: Enh. #385 Care for default values
+			StringList defaultVals = _root.getParameterDefaults();
+			// END KGU#371 2019-03-07
 			fnHeader += " " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
 				if (p > 0) { fnHeader += ", "; }
@@ -559,6 +573,12 @@ public class CPlusPlusGenerator extends CGenerator {
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
 				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// START KGU#371 2019-03-07: Enh. #385
+				String defVal = defaultVals.get(p);
+				if (defVal != null) {
+					fnHeader += " = " + transform(defVal);
+				}
+				// END KGU#371 2019-03-07
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
@@ -568,10 +588,10 @@ public class CPlusPlusGenerator extends CGenerator {
 				insertComment("      C++ may not permit to return arrays like this - find an other way to pass the result!", _indent);
 			}
 			// END KGU#140 2017-01-31
-            insertComment("TODO Revise the return type and declare the parameters!", _indent);
-            
-        	code.add(fnHeader);
-        }
+			insertComment("TODO Revise the return type and declare the parameters!", _indent);
+
+			code.add(fnHeader);
+		}
 		
 		code.add("{");
 

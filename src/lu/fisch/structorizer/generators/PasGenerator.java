@@ -177,6 +177,16 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
 
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// This might be disputable, but Delphi, FreePascal etc. support default arguments
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
 	
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
@@ -1347,9 +1357,18 @@ public class PasGenerator extends Generator
 			// Compose the function header
 			signature += "(";
 			//insertComment("TODO: declare the parameters and specify the result type!", _indent);
+			// START KGU#371 2019-03-08: Enh. #385
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			// END KGU#371 2019-03-08
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? "; " : "");
 				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
+				// START KGU#371 2019-03-08: Enh. #385
+				if (p >= minArgs) {
+					signature += " = " + transform(argDefaults.get(p));
+				}
+				// END KGU#371 2019-03-08
 			}
 			signature += ")";
 			if (_resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)

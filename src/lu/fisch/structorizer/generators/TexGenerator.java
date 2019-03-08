@@ -123,29 +123,40 @@ public class TexGenerator extends Generator {
 	}
 	// END KGU#351 2017-02-26
 
-    /************ Code Generation **************/
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// Simply pass the stuff as is...
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
-     */
-    @Override
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
+	 */
+	@Override
 	protected String getInputReplacer(boolean withPrompt)
 	{
-    	// Will not be used
+		// Will not be used
 		return "scanf(\"\", &$1);";
 	}
 
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
-     */
-    @Override
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getOutputReplacer()
+	 */
+	@Override
 	protected String getOutputReplacer()
 	{
-    	// Will not be used
+		// Will not be used
 		return "printf(\"\\n\");";
 	}
 
-    // START KGU#483 2017-12-30: Bugfix #497 - we need a more sophisticated structure here
+	// START KGU#483 2017-12-30: Bugfix #497 - we need a more sophisticated structure here
 	///**
 	// * Transforms assignments in the given intermediate-language code line.
 	// * Replaces "<-" by "\gets" here
@@ -156,9 +167,9 @@ public class TexGenerator extends Generator {
 	//{
 	//	return _interm.replace("<-", "\\gets");
 	//}
-    /** Temporary list of virtual Roots created for complex threads in Parallel elements */
-    private LinkedList<Root> tasks = new LinkedList<Root>();
-    private int taskNo = 0;
+	/** Temporary list of virtual Roots created for complex threads in Parallel elements */
+	private LinkedList<Root> tasks = new LinkedList<Root>();
+	private int taskNo = 0;
 	/**
 	 * Transforms operators and other tokens from the given intermediate
 	 * language into tokens of the target language and returns the result
@@ -173,7 +184,7 @@ public class TexGenerator extends Generator {
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
-    @Override
+	@Override
 	protected String transformTokens(StringList tokens)
 	{
 		tokens.replaceAll("{", "\\{");
@@ -247,50 +258,50 @@ public class TexGenerator extends Generator {
 
 		return _input;
 	}
-	
-    @Override
+
+	@Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-    	if (!_inst.disabled) {
-    		StringList lines = _inst.getUnbrokenText();
-    		for (int i=0; i<lines.count(); i++)
-    		{
-    			// START KGU#483 2017-12-30: Enh. #497
-    			//code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
-    			String line = lines.get(i);
-    			if (Instruction.isTypeDefinition(line)) {
-    				code.add(_indent+"\\assign{%");
-    				code.add(_indent+this.getIndent() + "\\begin{declaration}[type:]");
-    				// get the type name
-    				StringList tokens = Element.splitLexically(line, true);
-    				tokens.removeAll(" ");
-    				String typeName = tokens.get(1);
-    				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + typeName + "}{"
-    						+ transform(tokens.concatenate(" ", 3)) + "}");
-    				code.add(_indent+this.getIndent() + "\\end{declaration}");
-    				code.add(_indent + "}");
-    			}
-    			else if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
-    				code.add(_indent+"\\assign{%");
-    				code.add(_indent+this.getIndent() + "\\begin{declaration}[variable:]");
-    				// get the variable name
-    				StringList tokens = Element.splitLexically(line + "<-", true);
-    				tokens.removeAll(" ");
-    				String varName = _inst.getAssignedVarname(tokens);
-    				code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
-    						+ transform(line) + "}");
-    				code.add(_indent+this.getIndent() + "\\end{declaration}");    				
-    				code.add(_indent + "}");
-    			}
-    			else {
-    				code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
-    			}
-    			// END KGU#483 2017-12-30
-    		}
-    	}
+		if (!_inst.disabled) {
+			StringList lines = _inst.getUnbrokenText();
+			for (int i=0; i<lines.count(); i++)
+			{
+				// START KGU#483 2017-12-30: Enh. #497
+				//code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+				String line = lines.get(i);
+				if (Instruction.isTypeDefinition(line)) {
+					code.add(_indent+"\\assign{%");
+					code.add(_indent+this.getIndent() + "\\begin{declaration}[type:]");
+					// get the type name
+					StringList tokens = Element.splitLexically(line, true);
+					tokens.removeAll(" ");
+					String typeName = tokens.get(1);
+					code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + typeName + "}{"
+							+ transform(tokens.concatenate(" ", 3)) + "}");
+					code.add(_indent+this.getIndent() + "\\end{declaration}");
+					code.add(_indent + "}");
+				}
+				else if (!Instruction.isAssignment(line) && Instruction.isDeclaration(line)) {
+					code.add(_indent+"\\assign{%");
+					code.add(_indent+this.getIndent() + "\\begin{declaration}[variable:]");
+					// get the variable name
+					StringList tokens = Element.splitLexically(line + "<-", true);
+					tokens.removeAll(" ");
+					String varName = _inst.getAssignedVarname(tokens);
+					code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
+							+ transform(line) + "}");
+					code.add(_indent+this.getIndent() + "\\end{declaration}");    				
+					code.add(_indent + "}");
+				}
+				else {
+					code.add(_indent+"\\assign{\\("+transform(lines.get(i))+"\\)}");
+				}
+				// END KGU#483 2017-12-30
+			}
+		}
 	}
-	
-    @Override
+
+	@Override
 	protected void generateCode(Alternative _alt, String _indent)
 	{
 /*
@@ -304,77 +315,77 @@ public class TexGenerator extends Generator {
 		s.add(makeIndent(_indent)+'\ifend');
 */
 		
-    	if (!_alt.disabled) {
-    		// START KGU#453 2017-11-02: Issue #447 - line continuation support was inconsistent
-    		//code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
-    		String indentPlus1 = _indent + this.getIndent();
-    		StringList condLines = _alt.getCuteText();
-    		int nCondLines = condLines.count();
-       		int gradient = Math.max(1, 8 - 2 * nCondLines);
-       		// START KGU#483 2017-12-31: Issue #497 - this was too simple and inadequate - we should estimate the actual width ratio
-    		//code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
-       		int depth = Element.getNestingDepth(_alt);
-       		gradient = Math.max(1, gradient / Math.max(1, depth));
-    		int lWidth = _alt.qTrue.getRect().getRectangle().width;
-       		int rWidth = _alt.qFalse.getRect().getRectangle().width;
-       		int lRatio = Math.max(1, 2 * gradient * lWidth / (lWidth + rWidth));
-       		int rRatio = 2 * gradient - lRatio;
-       		if (gradient == 6 || depth > 2) {
-    			code.add(_indent + "% Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \\ifthenelse{3}{3}... or \\ifthenelse[10]{" + lRatio + "}{" + rRatio +"}...");
-    		}
-    		code.add(_indent + "\\ifthenelse{" + lRatio + "}{" + rRatio + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
-    		// END KGU#483 2017-12-31
-    		// END KGU#453 2017-11-02
-    		generateCode(_alt.qTrue, indentPlus1);
-    		if(_alt.qFalse.getSize() > 0)
-    		{
-    			code.add(_indent+"\\change");
-    			generateCode(_alt.qFalse, indentPlus1);
-    		}
-    		else
-    		{
-    			code.add(_indent + "\\change");
-    		}
-    		code.add(_indent + "\\ifend");
-    	}
+		if (!_alt.disabled) {
+			// START KGU#453 2017-11-02: Issue #447 - line continuation support was inconsistent
+			//code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+			String indentPlus1 = _indent + this.getIndent();
+			StringList condLines = _alt.getCuteText();
+			int nCondLines = condLines.count();
+			int gradient = Math.max(1, 8 - 2 * nCondLines);
+			// START KGU#483 2017-12-31: Issue #497 - this was too simple and inadequate - we should estimate the actual width ratio
+			//code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+			int depth = Element.getNestingDepth(_alt);
+			gradient = Math.max(1, gradient / Math.max(1, depth));
+			int lWidth = _alt.qTrue.getRect().getRectangle().width;
+			int rWidth = _alt.qFalse.getRect().getRectangle().width;
+			int lRatio = Math.max(1, 2 * gradient * lWidth / (lWidth + rWidth));
+			int rRatio = 2 * gradient - lRatio;
+			if (gradient == 6 || depth > 2) {
+				code.add(_indent + "% Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \\ifthenelse{3}{3}... or \\ifthenelse[10]{" + lRatio + "}{" + rRatio +"}...");
+			}
+			code.add(_indent + "\\ifthenelse{" + lRatio + "}{" + rRatio + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+			// END KGU#483 2017-12-31
+			// END KGU#453 2017-11-02
+			generateCode(_alt.qTrue, indentPlus1);
+			if(_alt.qFalse.getSize() > 0)
+			{
+				code.add(_indent+"\\change");
+				generateCode(_alt.qFalse, indentPlus1);
+			}
+			else
+			{
+				code.add(_indent + "\\change");
+			}
+			code.add(_indent + "\\ifend");
+		}
 	}
-	
-    @Override
+
+	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
-    	if (!_case.disabled) {
-    		// START KGU#483 2017-12-31: Issue #497 - we need a trick to activate the default branch
-    		//code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
-    		String indentPlus1 = _indent + this.getIndent();
-    		String indentPlus2 = indentPlus1 + this.getIndent();
-    		StringList caseText = _case.getUnbrokenText();
-    		int nBranches = _case.qs.size();
-    		boolean hasDefaultBranch = !caseText.get(nBranches).trim().equals("%");
-    		String macro = "\\case{6}{"+nBranches+"}";
-    		if (hasDefaultBranch) {
-    			macro = "\\case["+(nBranches * 5)+"]{5}{"+nBranches+"}";
-    		}
-    		// The first branch is integrated in the macro
-    		code.add(_indent + macro + "{\\("+transform(caseText.get(0))+"\\)}{"+transform(caseText.get(1))+"}");
-    		// END KGU#483 2017-12-31
-    		generateCode((Subqueue) _case.qs.get(0), indentPlus2);
-    		// The further branches have to be added witch switch clauses
-    		for(int i=1; i < nBranches-1; i++)
-    		{
-    			code.add(indentPlus1 + "\\switch{" + transform(caseText.get(i+1).trim()) + "}");
-    			generateCode((Subqueue) _case.qs.get(i), indentPlus2);
-    		}
+		if (!_case.disabled) {
+			// START KGU#483 2017-12-31: Issue #497 - we need a trick to activate the default branch
+			//code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
+			String indentPlus1 = _indent + this.getIndent();
+			String indentPlus2 = indentPlus1 + this.getIndent();
+			StringList caseText = _case.getUnbrokenText();
+			int nBranches = _case.qs.size();
+			boolean hasDefaultBranch = !caseText.get(nBranches).trim().equals("%");
+			String macro = "\\case{6}{"+nBranches+"}";
+			if (hasDefaultBranch) {
+				macro = "\\case["+(nBranches * 5)+"]{5}{"+nBranches+"}";
+			}
+			// The first branch is integrated in the macro
+			code.add(_indent + macro + "{\\("+transform(caseText.get(0))+"\\)}{"+transform(caseText.get(1))+"}");
+			// END KGU#483 2017-12-31
+			generateCode((Subqueue) _case.qs.get(0), indentPlus2);
+			// The further branches have to be added witch switch clauses
+			for(int i=1; i < nBranches-1; i++)
+			{
+				code.add(indentPlus1 + "\\switch{" + transform(caseText.get(i+1).trim()) + "}");
+				generateCode((Subqueue) _case.qs.get(i), indentPlus2);
+			}
 
-    		if (hasDefaultBranch)
-    		{
-    			// This selector is to be right-aligned (therefore the "[r]" argument)
-    			code.add(indentPlus1 + "\\switch[r]{" + transform(caseText.get(nBranches).trim()) + "}");
-    			generateCode((Subqueue) _case.qs.get(nBranches-1), indentPlus2);
-    		}
-    		code.add(_indent+_indent.substring(0,1)+"\\caseend");
-    	}
+			if (hasDefaultBranch)
+			{
+				// This selector is to be right-aligned (therefore the "[r]" argument)
+				code.add(indentPlus1 + "\\switch[r]{" + transform(caseText.get(nBranches).trim()) + "}");
+				generateCode((Subqueue) _case.qs.get(nBranches-1), indentPlus2);
+			}
+			code.add(_indent+_indent.substring(0,1)+"\\caseend");
+		}
 	}
-	
+
 	protected void generateCode(For _for, String _indent)
 	{
 		if (!_for.disabled) {

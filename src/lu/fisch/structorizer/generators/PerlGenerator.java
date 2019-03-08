@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-05-24  Bugfix #412: The hash codes used to generate unique identifiers could get negative
  *      Kay Gürtzig         2017-11-02  Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2019-02-15  Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig         2019-03-08  Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -151,7 +152,17 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 	
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //	private static final String[] reservedWords = new String[]{
 //		"and", "cmp", "continue", "do",
 //		"else", "elsif", "eq", "exp",
@@ -1012,9 +1023,25 @@ public class PerlGenerator extends Generator {
 		if( _root.isSubroutine() ) {
 			code.add(_indent + "sub " + _procName + " {");
 			indent = _indent + this.getIndent();
-			for (int p = 0; p < _paramNames.count(); p++) {
+			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			//for (int p = 0; p < _paramNames.count(); p++) {
+			//	code.add(indent + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
+			//}
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			for (int p = 0; p < minArgs; p++)
+			{
 				code.add(indent + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
 			}
+			for (int p = minArgs; p < _paramNames.count(); p++)
+			{
+				code.add(indent + "if (defined $_[" + p + "]) {");
+				code.add(indent + this.getIndent() + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
+				code.add(indent + "} else {");
+				code.add(indent + this.getIndent() + "my $" + _paramNames.get(p).trim() + " = " + transform(argDefaults.get(p)));
+				code.add(indent + "}");
+			}
+			// END KGU#371 2019-03-08
 		}
 	
 		code.add("");

@@ -99,6 +99,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-09-24      Bugfix #605: Handling of const modifiers in declaration lists fixed
  *      Kay Gürtzig     2018-10-05      Bugfix #619: Declaration status of function result variable fixed
  *      Kay Gürtzig     2018-10-25      Enh. #419: New method breakTextLines(...)
+ *      Kay Gürtzig     2019-03-07      Enh. #385: method extractDeclarationsFromList now also extracts default values
  *
  ******************************************************************************************************
  *
@@ -2862,27 +2863,41 @@ public abstract class Element {
 	}
 	// END KGU#101 2015-12-11
 	
-	// START KGU#388 2017-09-13: Enh. #423
+	// START KGU#388 2017-09-13: Enh. #423; KGU#371 2019-03-07: Enh. #385 - parameter declDefaults added
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or
 	 * record type definition, respectively) given by {@code declText} and adds their names
 	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
 	 * @param declText - the text of the declaration inside the parentheses or braces
-	 * @param declNames - the names of the declared parameters or record components (in order of occurrence)
-	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence)
+	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or null
+	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or null
+	 * @param declDefaults - the literals of the declared parameter/component defaults (in order of occurrence), or null
 	 */
-	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes) {
-		StringList declGroups = StringList.explode(declText,";");
+	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes, StringList declDefaults) {
+		// START KGU#371 2019-03-07: Enh. #385 - We have to face e.g. string literals in the argument list now!
+		//StringList declGroups = StringList.explode(declText,";");
+		StringList declGroups = splitExpressionList(declText, ";");
+		// END KGU#371 2019-03-07
 		for(int i = 0; i < declGroups.count(); i++)
 		{
 			// common type for parameter / component group
 			String type = null;
 			String group = declGroups.get(i);
+			// START KGU#371 2019-03-07: Enh. #385 - cope with default values
+			String defltGr = null;
+			// END KGU#371 2019-03-07
 			int posColon = group.indexOf(":");
 			if (posColon >= 0)
 			{
 				type = group.substring(posColon + 1).trim();
 				group = group.substring(0, posColon).trim();
+				// START KGU#371 2019-03-07: Enh. #385 - cope with default values
+				int posEq = type.indexOf('=');
+				if (posEq >= 0) {
+					defltGr = type.substring(posEq+1).trim();
+					type = type.substring(0, posEq).trim();
+				}
+				// END KGU#371 2019-03-07
 			}
 			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
 //			else if ((posColon = group.indexOf(" as ")) >= 0)
@@ -2891,24 +2906,56 @@ public abstract class Element {
 //				group = group.substring(0, posColon).trim();
 //			}
 			// END KGU#109 2016-01-15
-			StringList vars = StringList.explode(group,",");
+			// START KGU#371 2019-03-07: Enh. #385 - we must face complex literals here
+			//StringList vars = StringList.explode(group,",");
+			StringList vars = splitExpressionList(group, ",");
+			// END KGU#371 2019-03-07
 			for (int j=0; j < vars.count(); j++)
 			{
 				String decl = vars.get(j).trim();
 				if (!decl.isEmpty())
 				{
 					String prefix = "";	// KGU#375 2017-03-30: New for enh. #388 (constants)
+					// START KGU#371 2019-03-07: Enh. #385
+					String deflt = defltGr;
+					// END KGU#371 2019-03-07
 					// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
-					if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
-					{
-						type = decl.substring(posColon + " as ".length()).trim();
-						decl = decl.substring(0, posColon).trim();
-					}
+					// START KGU#371 2019-03-07: Enh. #385 - parameter lists getting more complex...
+					//if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
 					StringList tokens = splitLexically(decl, true);
+					if (type == null && (posColon = tokens.indexOf("as", false)) >= 0)
+					// END KGU#371 2019-03-07
+					{
+						// START KGU#371 2019-03-07: Enh. #385 Scan for default / initial values
+						//type = decl.substring(posColon + " as ".length()).trim();
+						//decl = decl.substring(0, posColon).trim();
+						type = tokens.concatenate("", posColon + 1, tokens.count()).trim();
+						decl = tokens.concatenate("", 0, posColon).trim();
+						int posEq = type.indexOf('=');
+						if (posEq >= 0) {
+							deflt = type.substring(posEq+1).trim();
+							type = type.substring(0, posEq).trim();
+							// The redundant 'optional' keyword is to be ignored 
+							if (decl.toLowerCase().startsWith("optional ")) {
+								decl = decl.substring("optional ".length());
+							}
+						}						
+						// END KGU#371 2019-03-07
+					}
+					//StringList tokens = splitLexically(decl, true);
 					tokens.removeAll(" ");
 					if (tokens.count() > 1) {
 						// Is a C or Java array type involved? 
 						if (declGroups.count() == 1 && posColon < 0 || type == null) {
+							// START KGU#371 2019-03-07: Enh. #385 Scan for default / initial values
+							int posEq = tokens.indexOf("=");
+							if (posEq >= 0) {
+								if (deflt == null) {
+									deflt = tokens.concatenate(null, posEq + 1, tokens.count());
+								}
+								tokens = tokens.subSequence(0, posEq);
+							}						
+							// END KGU#371 2019-03-07							
 							int posBrack1 = tokens.indexOf("[");
 							int posBrack2 = tokens.lastIndexOf("]");
 							if (posBrack1 > 0 && posBrack2 > posBrack1) {
@@ -2930,13 +2977,19 @@ public abstract class Element {
 								}
 							}
 							else {
+								// No brackets...
 								// START KGU#580 2018-09-24: Bugfix #605
 								if (tokens.get(0).equals("const")) {
 									prefix = "const ";
 									tokens.remove(0);
 								}
 								// END KGU#580 2018-09-24
-								type = tokens.concatenate(null, 0, tokens.count()-1);
+								// START KGU#371 2019-03-08: Issue #385 - We shouldn't return an empty string but null if there is no type
+								//type = tokens.concatenate(null, 0, tokens.count()-1);
+								if (tokens.count() > 1) {
+									type = tokens.concatenate(null, 0, tokens.count()-1);
+								}
+								// END KGU#371 2019-03-07
 								decl = tokens.get(tokens.count()-1);
 							}
 						}
@@ -2962,6 +3015,11 @@ public abstract class Element {
 						}
 					}
 					// END KGU#375 2017-03-30
+					// START KGU#371 2019-03-07: Enh. #385
+					if (declDefaults != null) {
+						declDefaults.add(deflt);
+					}
+					// END KGU#371 2019-03-07
 				}
 			}
 		}
