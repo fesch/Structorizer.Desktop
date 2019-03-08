@@ -1595,11 +1595,17 @@ public class Executor implements Runnable
 		if (root.isSubroutine() && trouble.isEmpty())
 		{
 		// END KGU#39 2015-10-16 (1/2)
-			StringList params = root.getParameterNames();
+			// START KGU#371 2019-03-07: Enh. #385 be aware of possible default values
+			//StringList params = root.getParameterNames();
 			//System.out.println("Having: "+params.getCommaText());
 			// START KGU#375 2017-03-30: Enh. #388 - support a constant concept
-			StringList pTypes = root.getParameterTypes();
+			//StringList pTypes = root.getParameterTypes();
 			// END KGU#375 2017-03-30
+			StringList params = new StringList();
+			StringList pTypes = new StringList();
+			StringList pDefaults = new StringList();
+			root.collectParameters(params, pTypes, pDefaults);
+			// END KGU#371 2019-03-07
 			// START KGU#2 2015-12-05: New mechanism of getParameterNames() made reverting wrong
 			//params=params.reverse();
 			// END KGU#2 2015-12-05
@@ -1637,7 +1643,10 @@ public class Executor implements Runnable
 					//		"Please enter a value for <" + in + ">", null);
 					String msg = control.lbInputValue.getText();
 					msg = msg.replace("%", in);
-					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
+					// START KGU#371 2019-03-07: Enh. #385 - offer a default value if available
+					//String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
+					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, pDefaults.get(i));
+					// END KGU#371 2019-03-07
 					// END KGU#89 2016-03-18
 					if (str == null)
 					{
@@ -1646,6 +1655,9 @@ public class Executor implements Runnable
 						//trouble = "Manual break!";
 						trouble = control.msgManualBreak.getText();
 						// END KGU#197 2016-07-27
+						// START KGU#371 2019-03-07: Enh. #385
+						str = pDefaults.get(i);
+						// END KGU#371 2019-03-07
 						break;
 					}
 					try
@@ -1681,12 +1693,23 @@ public class Executor implements Runnable
 					{
 						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
 						//setVar(in, arguments[i]);
+						// START KGU#371 2019-03-07: Enh. #385: Cope with default values
+						//if (isConstant) {
+						//	setVar("const " + in, arguments[i]);
+						//}
+						//else {
+						//	setVar(in, arguments[i]);
+						//}
 						if (isConstant) {
-							setVar("const " + in, arguments[i]);
+							in = "const " + in;
 						}
-						else {
+						if (i < arguments.length) {
 							setVar(in, arguments[i]);
 						}
+						else {
+							setVarRaw(in, pDefaults.get(i));
+						}
+						// END KGU#371 2019-03-07
 						// END KGU#375 2017-03-30
 					}
 					catch (EvalError ex)
@@ -2502,7 +2525,7 @@ public class Executor implements Runnable
     		for (int c = 0; c < candidates.size(); c++)
     		// END KGU#317 2016-12-29
     		{
-    	    	// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			//subroutine = candidates.get(c);
     			if (diagr == null) {
     				diagr = candidates.get(c);

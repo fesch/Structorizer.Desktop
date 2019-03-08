@@ -1090,7 +1090,7 @@ public class Instruction extends Element {
 			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
 				StringList compNames = new StringList();
 				StringList compTypes = new StringList();
-				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
+				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes, null);
 				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
 			}
 			else {
