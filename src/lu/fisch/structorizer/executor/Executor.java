@@ -174,6 +174,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
  *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
  *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
+ *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
  *
  ******************************************************************************************************
  *
@@ -976,8 +977,11 @@ public class Executor implements Runnable
 	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
 	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
 	// END KGU#388 2017-10-29
-	// START KGU#510 2018-03-20: Issue ??? Possible pattern for index problem
-	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.get").matcher("");
+	// START KGU#510 2018-03-20: Issue #527 Possible pattern for index problem
+	// START KGU#677 2019-03-09: In case of Arrays being the result of a function (e.g. copyArray()), the message looks different
+	//private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.)get").matcher("");
+	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?)\\.get\\((.*)\\)(.*?)'' : Method Invocation ((\\w+)\\.)?get").matcher("");
+	// END KGU#677 2019-03-9
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
 
@@ -4766,7 +4770,7 @@ public class Executor implements Runnable
 		// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
 		// FIXME: this repeated tokenization is pretty ugly - we need a syntax tree...
 		// DEBUG
-		StringBuilder problems = new StringBuilder();
+		//StringBuilder problems = new StringBuilder();
 		//ExprParser.getInstance().parse(tokens.concatenate(), problems);
 		tokens = Element.splitLexically(this.convertStringComparison(tokens.concatenate().trim()), true);
 		// END KGU#490 2018-02-08
@@ -6727,6 +6731,7 @@ public class Executor implements Runnable
 			// no error occurs.
 			boolean error423 = false;
 			String expr = tokens.concatenate();
+			boolean messageAugmented = false;
 			do {
 				error423 = false;
 				try {
@@ -6743,48 +6748,65 @@ public class Executor implements Runnable
 							error423 = true;
 						}
 					}
-					// START KGU#509 2018-03-20: Issue #527 - index range problem detection for more helpful message
+					// START KGU#510 2018-03-20: Issue #527 - index range problem detection for more helpful message
 					else if (ERROR527MATCHER.reset(error423message).matches()) {
 						try {
-							Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
-							Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							// START KGU#677 2019-03-09: Bugfix #527
+							//Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
+							//Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							String arrayName = ERROR527MATCHER.group(5);
+							Object potArray = null;
+							if (arrayName == null && (arrayName = ERROR527MATCHER.group(1)).contains("copyArray(")) {
+								arrayName = arrayName.replaceFirst("^copyArray\\((.*)\\)$", "$1");
+							}
+							if (arrayName != null) {
+								potArray = context.interpreter.eval(arrayName);
+							}
+							String indexExpr = ERROR527MATCHER.group(2);
+							if (indexExpr != null) {
+								indexExpr = Element.splitExpressionList(indexExpr, ",").get(0);
+							}
+							Object potIndex = context.interpreter.eval(indexExpr);
+							// END KGU#677 2019-03-09
 							if (potArray instanceof ArrayList && potIndex instanceof Integer) {
 								int index = ((Integer)potIndex).intValue();
 								if (index < 0 || index >= ((ArrayList<?>)potArray).size()) {
 									err.setMessage(control.msgIndexOutOfBounds.getText().
-											replace("%1", ERROR527MATCHER.group(2)).
+											// START KGU#677 2019-03-09: Bugfix #527
+											//replace("%1", ERROR527MATCHER.group(2)).
+											replace("%1", indexExpr).
+											// END KGU#677 2019-03-09
 											replace("%2", Integer.toString(index)).
-											replace("%3", ERROR527MATCHER.group(4)));
+											// START KGU#677 2019-03-09: Bugfix #527
+											//replace("%3", ERROR527MATCHER.group(4))
+											replace("%3", arrayName)
+											// END KGU#677 2019-03-09
+											);
 								}
-								// START KGU#509 2019-02-13: Issue #527 improvement
+								// START KGU#510 2019-02-13: Improvement for issue #527
 								// In more complex expressions it may not be the first index that caused the trouble, so look for other causes
 								else {
-									Throwable ex = err;
-									String msg = null;
-									while (ex.getCause() != null) {
-										ex = ex.getCause();
-										if (ex.getMessage() != null) {
-											msg = ex.getMessage();
-										}
-									}
-									if (msg != null) {
-										err.setMessage(_expr + ":\n" + msg);
-									}
+									messageAugmented = addCauseDescription(_expr, err);
 								}
-								// END KGU#509 2019-02-13
+								// END KGU#510 2019-02-13
 							}
 						}
 						catch (EvalError err1) {
-							
+							//System.out.println(err1);
 						}
 					}
-					// END KGU#509 2018-03-20
+					// END KGU#510 2018-03-20
 					// START KGU#615 2018-12-16: Just a simple workaround for #644 (single level initializer arguments)
 					else if (error423message.contains("Encountered \"( {\"")) {
 						throw new EvalError(error423message + "\n" + control.msgInitializerAsArgument.getText(), null, null);
 					}
 					// END KGU#615 2018-12-16
 					if (!error423) {
+						// START KGU#677 2019-03-09: This shouldn't harm, anyway
+						if (!messageAugmented) {
+							addCauseDescription(_expr, err);
+						}
+						// END KGU#677 2019-03-09
 						throw err;
 					}
 				}
@@ -6793,6 +6815,31 @@ public class Executor implements Runnable
 		return value;
 	}
 	// END KGU#388 2017-09-16
+
+	// START KGU#677 2019-03-09: Issue #527 (revision)
+	/**
+	 * Replaces the top-level EvalError message with the given expression
+	 * and a description of the originating problem, which is often more
+	 * expressive than the message of {@code err}.
+	 * @param _expr - The original expression or element text
+	 * @param err - an {@link EvalError}
+	 * @return true if the message of {@code err} had been augmented or replaced.
+	 */
+	private boolean addCauseDescription(String _expr, EvalError err) {
+		Throwable ex = err;
+		String msg = null;
+		while (ex.getCause() != null) {
+			ex = ex.getCause();
+			if (ex.getMessage() != null) {
+				msg = ex.getMessage();
+			}
+		}
+		if (msg != null) {
+			err.setMessage(_expr + ":\n" + msg);
+		}
+		return msg != null;
+	}
+	// END KGU#677 2019-03-09
 
 	// START KGU#100 2017-10-08: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
 	/**
