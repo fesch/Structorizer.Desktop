@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-05 (2019-03-07)
+Current development version: 3.29-05 (2019-03-09)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -48,8 +48,9 @@ Current development version: 3.29-05 (2019-03-07)
 - 04: Enh. #691: It is now possible to rename a group in the Arranger index <2>
 - 04: Bugfix #692: C constants weren't recognised on importing with C99 parser <2>
 - 04: Bugfix #693: Misleading error message on loading a recent .arr/.arrz file <2>
-- 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
 - 05: Enh. #327: Locale-specific Parser keyword sets enabled [newboerg]2
+- 05: Issue #366: Turtleizer regains the focus if lost for an input [newboerg]2
+- 05: Issue #527: Index range error detection for constant arrays refined <2>
 - 05: Bugfix #631: Commas in pic clauses now preserved on COBOL import <2>
 - 05: Issue #407: Efforts to import COBOL conditions like "a = 8 or 9" <2>
 - 05: Bugfix #695: Defective COBOL import of arrays over basic types <2>
