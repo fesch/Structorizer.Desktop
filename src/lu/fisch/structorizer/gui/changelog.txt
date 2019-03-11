@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-05 (2019-03-09)
+Current development version: 3.29-05 (2019-03-11)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -55,6 +55,7 @@ Current development version: 3.29-05 (2019-03-09)
 - 05: Bugfix #631: Commas in pic clauses now preserved on COBOL import <2>
 - 05: Issue #407: Efforts to import COBOL conditions like "a = 8 or 9" <2>
 - 05: Bugfix #695: Defective COBOL import of arrays over basic types <2>
+- 05: Bugfix #699: Diagrams must not be shared among archive groups <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

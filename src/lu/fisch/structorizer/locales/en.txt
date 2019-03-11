@@ -1219,6 +1219,7 @@ Surface.msgGroupExists.text=Group with name «%» already exists!
 Surface.titleRenameGroup.text=Renaming Group «%1» to «%2»
 Surface.msgRenameArrFile.text=Rename arrangement file\n"%1"\nto "%2"?
 Surface.msgRenamingFailed.text=Could not rename arrangement file to "%"!\nAction cancelled!
+Surface.msgSharedDiagrams.text=The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Get diagram

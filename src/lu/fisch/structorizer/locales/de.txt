@@ -1223,6 +1223,7 @@ Surface.msgGroupExists.text=Eine Gruppe namens «%» existiert bereits!
 Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
 Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
 Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
+Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
 
 ----[ ArrangerIndex ]----
 ArrangerIndex.popupIndexGet.text=Diagram holen
@@ -1253,7 +1254,7 @@ ArrangerIndex.btnShowGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Ar
 ArrangerIndex.btnGroupColors.*.tooltip=Setzt die Farbe dieser Schaltfläche als Farbe der Gruppe
 ArrangerIndex.msgDefaultGroupName.text=(Auffanggruppe)
 ArrangerIndex.msgGroupsAndRootsSelected.text=Sowohl Gruppen als auch Diagramme ausgewählt. Gleichzeitiges Löschen auf beiden Ebenen könnte unerwartete Ergebnisse haben.
-ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weieteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
+ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weiteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
 ArrangerIndex.msgConfirmDeleteRoots.text=Sie haben % Diagramm(e) zum Löschen ausgewählt\n\nSollen sie ggf. auch aus allen anderen Gruppen insgesamt entfernt werden?\n(Anderenfalls werden sie einfach nur aus der jeweiligen Gruppe gelöscht.)
 ArrangerIndex.msgAttachOptions.0.text=Zur Gruppe hinzufügen
 ArrangerIndex.msgAttachOptions.1.text=In die Gruppe verschieben
