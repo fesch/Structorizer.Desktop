@@ -76,6 +76,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-10-24      Enh. #423: Record variable handling accomplished for release 3.27
  *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
  *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
  *
  ******************************************************************************************************
  *
@@ -202,6 +203,16 @@ public class BASHGenerator extends Generator {
 		return ". %";
 	}
 	// END KGU#351 2017-02-26
+
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
 
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	protected StringList occurringFunctions = new StringList();
@@ -1290,10 +1301,27 @@ public class BASHGenerator extends Generator {
 			code.add(header + " {");
 			indent = indent + this.getIndent();
 			StringList paraNames = _root.getParameterNames();
-			for (int i = 0; i < paraNames.count(); i++)
+			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			//for (int i = 0; i < paraNames.count(); i++)
+			//{
+			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			//}
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			for (int i = 0; i < minArgs; i++)
 			{
 				code.add(indent + paraNames.get(i) + "=$" + (i+1));
 			}
+			for (int i = minArgs; i < paraNames.count(); i++)
+			{
+				code.add(indent + "if [ $# -lt " + (i+1) + " ]");
+				code.add(indent + "then");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				code.add(indent + "else");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+				code.add(indent + "fi");
+			}
+			// END KGU#371 2019-03-08
 			// END KGU#53 2015-10-18
 		} else {				
 			code.add("");

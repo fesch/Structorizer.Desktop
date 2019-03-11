@@ -172,6 +172,23 @@ import lu.fisch.utils.StringList;
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
+	// START KGU#371 2019-03-07: Enh. #385 - Support for default subroutine arguments
+	/**
+	 * Classifies a language w.r.t. the capability of overloading subroutine signatures. There are three levels
+	 * distinguished here:<br/>
+	 * 0. No overloading allowed: subroutines may not share the same name, not even if their argument lists differ in length.<br/>
+	 * 1. Overloading is legitimate but default arguments can only be achieved by delegating the call to another subroutine
+	 * with more arguments.<br/>
+	 * 2. Overloading and default arguments are available, such that a single definition may declare several signatures.<br/>
+	 * Note: In programming languages overloading usually also means distinction by argument types. Since declarations of variables
+	 * aren't mandatory in Structorizer, tyoe inference is weak and vague at most. So it isn't actually possible to distinguish
+	 * parameter lists by argument types in Structorizer. Hence executable diagrams won't make use of it. So, export should be
+	 * relatively safe.
+	 * @author Kay Gürtzig
+	 */
+	public enum OverloadingLevel {OL_NO_OVERLOADING, OL_DELEGATION, OL_DEFAULT_ARGUMENTS};
+	// END KGU#371 2019-03-07
+	
 	/************ Fields ***********************/
 	// START KGU#484 2018-03-22: Issue #463
 	private Logger logger = null;
@@ -420,6 +437,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected abstract String getIncludePattern();
 	// END KGU#351 2017-02-26
+	
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	protected abstract OverloadingLevel getOverloadingLevel();
+	// END KGU#371 2019-03-07
 	
 	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
 	/**
@@ -1711,7 +1735,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		Function called = _call.getCalledRoutine();
 		// START KGU#349 2017-02-20: Bugfix #349 - don't register directly recursive calls
 		//if (called != null && Arranger.hasInstance())
-		if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// START KGU#371 2019-03-08: Enh. #385 cope with optional parameters
+		//if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && Arranger.hasInstance())
+		// END KGU#371 2019-03-07
 		// END KGU#349 2017-02-20
 		{
 			Vector<Root> foundRoots = Arranger.getInstance().
@@ -1808,7 +1835,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		for (Root sub: subroutines.keySet())
 		{
 			if (sub.getMethodName().equals(fct.getName())
-					&& sub.getParameterNames().count() == fct.paramCount())
+					// START KGU#371 2019-03-08: Enh. #385 allow optional parameters
+					//&& sub.getParameterNames().count() == fct.paramCount())
+					&& sub.acceptsArgCount(fct.paramCount()) >= 0)
+					// END KGU#371 2019-03-08
 			{
 				return sub;
 			}
@@ -2380,7 +2410,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean alwaysReturns = mapJumps(_root.children);
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
-		_root.collectParameters(paramNames, paramTypes);
+		_root.collectParameters(paramNames, paramTypes, null);
 		String resultType = _root.getResultType();
 		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
 		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing

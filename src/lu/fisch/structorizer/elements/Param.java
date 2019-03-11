@@ -21,17 +21,28 @@
 package lu.fisch.structorizer.elements;
 
 /**
- *
+ * Parameter record for subroutine diagrams, contains name, type, and possibly a default value
  * @author robertfisch
  */
-
 public class Param {
     protected String name;
     protected String type;
+    // START KGU#371 2019-03-07: Enh. #385 - allow default values for parameters
+    protected String defaultValue;
+
+    public Param(String name, String type, String defaultLiteral) {
+        this.name = name;
+        this.type = type;
+        this.defaultValue = defaultLiteral;
+    }
+    // END KGU#371 2019-03-07
 
     public Param(String name, String type) {
         this.name = name;
         this.type = type;
+        // START KGU#371 2019-03-07: Enh. #385 - allow default values for parameters
+        this.defaultValue = null;
+        // END KGU#371 2019-03-07
     }
 
     public String getName() {
@@ -42,5 +53,10 @@ public class Param {
         return type;
     }
     
+    // START KGU#371 2019-03-07: Enh. #385 - allow default values for parameters
+    public String getDefault() {
+        return this.defaultValue;
+    }
+    // END KGU#371 2019-03-07
     
 }

@@ -101,6 +101,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
  *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
  *      Kay Gürtzig     2019-03-01      Enh. #691: Method renameGroup() introduced for exactly this purpose
+ *      Kay Gürtzig     2019-03-07      Enh. #385: findRoutinesBySignature(String, int) made aware of default arguments 
  *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
  *
  ******************************************************************************************************
@@ -3805,13 +3806,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		Vector<Root> functionsAny = findDiagramsByName(rootName);
 		Vector<Root> functions = new Vector<Root>();
+		// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
+		int minDefaults = Integer.MAX_VALUE;
+		// END KGU#371 2019-03-07
 		for (int i = 0; i < functionsAny.size(); i++)
 		{
 			Root root = functionsAny.get(i);
-			if (root.isSubroutine() && root.getParameterNames().count() == argCount)
-			{
-				functions.add(root);
+			// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
+			//if (root.isSubroutine() && root.getParameterNames().count() == argCount)
+			//{
+			//	functions.add(root);
+			//}
+			if (root.isSubroutine()) {
+				int nDflts = root.acceptsArgCount(argCount);
+				if (nDflts >= 0 && nDflts <= minDefaults) {
+					if (nDflts < minDefaults) {
+						functions.clear();
+						minDefaults = nDflts;
+					}
+					functions.add(root);
+				}
 			}
+			// END KGU#371 2019-03-07
 		}
 		return functions;
 	}

@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-03-13      Bugfix #259,#335,#520,#521: Mode suppressTransform enforced for declarations
  *      Kay Gürtzig             2018-07-22      Enh. #563 (simplified record initializers), bugfix #564 (array initializers)
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for optional parameters (by argument extension in the Call)
  *
  ******************************************************************************************************
  *
@@ -103,6 +104,7 @@ import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -155,7 +157,17 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //    	"ARRAY", "BEGIN", "BY", "CASE", "CONST", "DIV", "DO", "ELSE", "ELSIF", "END", "EXIT",
 //    	"FOR", "IF", "IMPORT", "IN", "IS", "LOOP", "MOD", "MODULE", "NIL", "OF", "OR",
@@ -1078,9 +1090,28 @@ public class OberonGenerator extends Generator {
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 		StringList lines = _call.getUnbrokenText();
-		for(int i=0;i<lines.count();i++)
+		for (int i = 0; i < lines.count(); i++)
 		{
-			addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
+			//addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			String line = lines.get(i);
+			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && Arranger.hasInstance() && line.endsWith(")")) {
+				Function call = _call.getCalledRoutine();
+				java.util.Vector<Root> callCandidates = Arranger.getInstance().findRoutinesBySignature(call.getName(), call.paramCount());
+				if (!callCandidates.isEmpty()) {
+					// FIXME We'll just fetch the very first one for now...
+					Root called = callCandidates.get(0);
+					StringList defaults = new StringList();
+					called.collectParameters(null, null, defaults);
+					if (defaults.count() > call.paramCount()) {
+						// We just insert the list of default values for the missing arguments
+						line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+								defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+					}
+				}
+			}
+			addCode(transform(line)+";", _indent, isDisabled);
+			// END KGU#371 2019-03-08
 		}
 	}
 	

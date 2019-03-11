@@ -9,8 +9,8 @@ This is just a little file that explains
 
 WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
 ===========================================
-Author:      Kay G�rtzig
-Last update: 2017-03-30
+Author:      Kay Gürtzig
+Last update: 2019-03-07
 
 There are two possible approaches to add a new generator to Structorizer:
 You might start from scratch or copy an existing generator for a language
@@ -75,11 +75,11 @@ and accomplish the outcome step by step, consider more export options etc.
 		marks the place where the transformed output expression (assume
 		a single expression here, see later below) is to be placed , e.g.
 		"std::cout << $1 << std::endl" for C++.
-	2.9	String[] getReservedWords()
-		Return a string array (type String[]) containing the reserved
-		words of the target language (also see isCaseSignificant()).
-		You may return an empty String array if you provide the set of
-		words in the plugin file generators.xml instead (see 7).
+	2.9	OverloadingLevel getOverloadingLevel()
+		Return the level of subroutine signature overloading this language allows:
+		OL_NO_OVERLOADING if subroutines may not share their name (e.g. C)
+		OL_DELEGATION if overloading is allowed but default arguments are not (e.g. Java)
+		OL_DEFAULT_ARGUMENTS if parameters may be given a default value (e.g. C++)
 	2.10	boolean isCaseSignificant()
 		Return true if case matters for identifying reserved words
 		(also see getReservedWords() above) in the target language 

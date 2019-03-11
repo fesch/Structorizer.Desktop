@@ -63,6 +63,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
  *      Kay Gürtzig             2018-07-21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -153,7 +154,17 @@ public class CSharpGenerator extends CGenerator
 		return exts;
 	}
 
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"abstract", "as", "base", "bool", "break", "byte",
 //		"case", "catch", "char", "checked", "class", "const", "continue",
@@ -907,6 +918,9 @@ public class CSharpGenerator extends CGenerator
 			String fnHeader = (topLevel ? "public" : "private") + " static "
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
+			// START KGU#371 2019-03-07: Enh. #385 Care for default values
+			StringList defaultVals = _root.getParameterDefaults();
+			// END KGU#371 2019-03-07
 			for (int p = 0; p < _paramNames.count(); p++) {
 				if (p > 0) { fnHeader += ", "; }
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
@@ -914,6 +928,12 @@ public class CSharpGenerator extends CGenerator
 				//		_paramNames.get(p)).trim();
 				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
+				// START KGU#371 2019-03-07: Enh. #385
+				String defVal = defaultVals.get(p);
+				if (defVal != null) {
+					fnHeader += " = " + transform(defVal);
+				}
+				// END KGU#371 2019-03-07
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader, indentPlus1);

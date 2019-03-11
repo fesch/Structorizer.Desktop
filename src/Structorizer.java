@@ -59,6 +59,7 @@
  *      Kay Gürtzig     2018-10-08      Bugfix #620: Logging path setup revised
  *      Kay Gürtzig     2018-10-25      Enh. #416: New option -l maxlen for command line parsing, signatures of
  *                                      export(...) and parse(...) modified.
+ *      Kay Gürtzig     2019-03-05      Deprecated method clazz.newInstance() replaced by clazz.getDeclaredConstructor().newInstance()
  *
  ******************************************************************************************************
  *
@@ -269,45 +270,45 @@ public class Structorizer
 		mainform.isWebStart = appPath.endsWith("webstart");
 		// END KGU#532 2018-06-25
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
-        try {
-        	EventQueue.invokeAndWait(new Runnable() {
-        		@Override
-        		public void run() {
-        // END KGU#440 2017-11-06
-        			//String s = new String();
-        			int start = 0;
-        			if (args.length > 0 && args[0].equals("-open")) {
-        				start = 1;
-        			}
-        			// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
-        			// them all ...
-    				String lastExt = "";	// Last file extension
-        			for (int i=start; i<args.length; i++)
-        			{
-        				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
-        				//s += args[i];
-        				String s = args[i].trim();
-        				if (!s.isEmpty())
-        				{
-        					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
-        						// Push the previously loaded diagram to Arranger
-        						mainform.diagram.arrangeNSD();
-        					}
-        					lastExt = mainform.diagram.openNsdOrArr(s);
-        					// START KGU#521 2018-06-08: Bugfix #536 (try)
-        					if (lastExt == "") {
-        						String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
-        						Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
-        						JOptionPane.showMessageDialog(mainform, msg,
-        								"Command line", JOptionPane.WARNING_MESSAGE);
-        					}
-        					// END KGU#521 2018-06-08
-        				}
-        				// END KGU#306 2016-12-12/2017-01-27
-        			}
-       	// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
-        		}
-        		// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
+		try {
+			EventQueue.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+		// END KGU#440 2017-11-06
+					//String s = new String();
+					int start = 0;
+					if (args.length > 0 && args[0].equals("-open")) {
+						start = 1;
+					}
+					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
+					// them all ...
+					String lastExt = "";	// Last file extension
+					for (int i=start; i<args.length; i++)
+					{
+						// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
+						//s += args[i];
+						String s = args[i].trim();
+						if (!s.isEmpty())
+						{
+							if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
+								// Push the previously loaded diagram to Arranger
+								mainform.diagram.arrangeNSD();
+							}
+							lastExt = mainform.diagram.openNsdOrArr(s);
+							// START KGU#521 2018-06-08: Bugfix #536 (try)
+							if (lastExt == "") {
+								String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
+								Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+								JOptionPane.showMessageDialog(mainform, msg,
+										"Command line", JOptionPane.WARNING_MESSAGE);
+							}
+							// END KGU#521 2018-06-08
+						}
+						// END KGU#306 2016-12-12/2017-01-27
+					}
+		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
+				}
+				// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
 //			s = s.trim();
 //			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
 //			//mainform.diagram.openNSD(s);
@@ -316,21 +317,21 @@ public class Structorizer
 //				mainform.diagram.openNSD(s);
 //			}
 //			// END KGU#111 2015-12-16
-        	// END KGU#306 2016-12-12
-        	});
-        } catch (InvocationTargetException e1) {
-        	e1.printStackTrace();
-        } catch (InterruptedException e1) {
-        	e1.printStackTrace();
-        }
-        // END KGU#440 2017-11-06
-        mainform.diagram.redraw();
+				// END KGU#306 2016-12-12
+			});
+		} catch (InvocationTargetException e1) {
+			e1.printStackTrace();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		// END KGU#440 2017-11-06
+		mainform.diagram.redraw();
 
-        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-        {
-        	// KGU 2018-09-14: Issue #537
-        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
-        }
+		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+		{
+			// KGU 2018-09-14: Issue #537
+			ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
@@ -509,7 +510,7 @@ public class Structorizer
 			try
 			{
 				Class<?> genClass = Class.forName(genClassName);
-				Generator gen = (Generator) genClass.newInstance();
+				Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
 				gen.exportCode(roots, codeFileName, _switches, charSet);
 			}
 			catch(java.lang.ClassNotFoundException ex)
@@ -517,9 +518,14 @@ public class Structorizer
 				System.err.println("*** Generator class " + ex.getMessage() + " not found!");
 				System.exit(3);
 			}
+			catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+				System.err.println("*** Error on instantiating " + _generatorName + "\n" + ex.getMessage());
+				ex.printStackTrace();
+				System.exit(3);
+			}
 			catch(Exception e)
 			{
-				System.err.println("*** Error while using " + _generatorName + "\n" + e.getMessage());
+				System.err.println("*** Error on using " + _generatorName + "\n" + e.getMessage());
 				e.printStackTrace();
 				System.exit(4);
 			}
@@ -532,7 +538,7 @@ public class Structorizer
 	}
 	// END KGU#187 2016-04-28
 	
-	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
+	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode, 2019-03-05 made public
 	/*****************************************
 	 * batch code import method
 	 * @param _parserName - name of a preferred default parser (just for the case of ambiguity)
@@ -540,7 +546,7 @@ public class Structorizer
 	 * @param _options - map of non-binary command line parameters
 	 * @param _switches - set of switches (either on or off)
 	 *****************************************/
-	private static void parse(String _parserName, Vector<String> _filenames, HashMap<String, String> _options, String _switches)
+	public static void parse(String _parserName, Vector<String> _filenames, HashMap<String, String> _options, String _switches)
 	{
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
@@ -576,7 +582,7 @@ public class Structorizer
 			try
 			{
 				Class<?> parsClass = Class.forName(className);
-				CodeParser parser = (CodeParser) parsClass.newInstance();
+				CodeParser parser = (CodeParser) parsClass.getDeclaredConstructor().newInstance();
 				parsers.put(parser, plugin);
 				usage += "\n\t";
 				for (String ext: parser.getFileExtensions()) {
@@ -845,11 +851,11 @@ public class Structorizer
 	private static CodeParser cloneWithPluginOptions(GENPlugin plugin, String _settingsFile) {
 		CodeParser parser;
 		try {
-			// START KGU#538 2018-07-01: Bugfix #554 Instantioation failed (missing path)
+			// START KGU#538 2018-07-01: Bugfix #554 Instantiation failed (missing path)
 			//parser = (CodeParser)Class.forName(plugin.getKey()).newInstance();
-			parser = (CodeParser)Class.forName(plugin.className).newInstance();
+			parser = (CodeParser)Class.forName(plugin.className).getDeclaredConstructor().newInstance();
 			// END KGU#538 2018-07-01
-		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
+		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
 			System.err.println("Structorizer.CloneWithPluginSpecificOptions("
 					+ plugin.getKey()
 					+ "): " + ex.toString() + " on creating \"" + plugin.getKey()
@@ -972,17 +978,17 @@ public class Structorizer
 	// END KGU#187 2016-05-02
 	
 	/** @return the installation path of Structorizer */
-    public static String getApplicationPath()
-    {
-        CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
-        File rootPath = null;
-        try {
-            rootPath = new File(codeSource.getLocation().toURI().getPath());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }           
-        return rootPath.getParentFile().getPath();
-    }
+	public static String getApplicationPath()
+	{
+		CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
+		File rootPath = null;
+		try {
+			rootPath = new File(codeSource.getLocation().toURI().getPath());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}           
+		return rootPath.getParentFile().getPath();
+	}
 		
 // START KGU#595 2018-10-07: Bugfix #620 - we must adapt the log pattern
 //	/**

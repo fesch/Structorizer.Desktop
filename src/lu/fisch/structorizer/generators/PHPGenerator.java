@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig             2019.02.14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -176,7 +177,17 @@ public class PHPGenerator extends Generator
 		return true;
 	}
 	// END KGU#78 2015-12-18
-    
+	
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	
+	// END KGU#371 2019-03-07
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"abstract", "and", "array", "as", "break",
@@ -690,6 +701,10 @@ public class PHPGenerator extends Generator
             else {
             	fnHeader = procName + "(";
             	StringList argNames = _root.getParameterNames();
+            	// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
+            	int minArgs = _root.getMinParameterCount();
+            	StringList argDefaults = _root.getParameterDefaults();
+            	// END KGU#371 2019-03-08
             	for (int i = 0; i < argNames.count(); i++) {
             		String argName = argNames.get(i);
             		if (!argName.startsWith("$")) {
@@ -701,6 +716,11 @@ public class PHPGenerator extends Generator
             		else {
             			fnHeader += argName;
             		}
+                	// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
+            		if (i >= minArgs) {
+            			fnHeader += " = " + transform(argDefaults.get(i));
+            		}
+                	// END KGU#371 2019-03-08
             	}
             	fnHeader += ")";
             }

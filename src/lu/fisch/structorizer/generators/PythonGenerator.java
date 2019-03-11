@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-10-17      Issue #623: Turtleizer support was defective (moves, color, new routines),
  *                                              bugfix #624 - FOR loop translation into range() fixed
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -166,7 +167,17 @@ public class PythonGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
 
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"and", "assert", "break", "class", "continue",
 //		"def", "del",
@@ -1114,7 +1125,19 @@ public class PythonGenerator extends Generator
 		else {
 			indent = _indent + this.getIndent();
 			insertComment(_root, _indent);
-			code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
+			// START KGU#371 2019-03-08: Enh. #385 deal with optional parameters
+			//code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
+			String header = _indent + "def " + _procName + "(";
+			int minArgs = _root.getMinParameterCount();
+			header += _paramNames.concatenate(", ", 0, minArgs);
+			if (minArgs < _paramNames.count()) {
+				StringList argDefaults = _root.getParameterDefaults();
+				for (int p = minArgs; p < _paramNames.count(); p++) {
+					header += (p > 0 ? ", " : "") + _paramNames.get(p) + " = " + transform(argDefaults.get(p));
+				}
+			}
+			code.add(header += ") :");
+			// END KGU#371 2019-03-08
 		}
 		// START KGU#388 2017-10-02: Enh. #423 type info will now be needed in deep contexts
 		this.typeMap = _root.getTypeInfo();
