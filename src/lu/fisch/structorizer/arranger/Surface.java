@@ -101,6 +101,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
  *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
  *      Kay Gürtzig     2019-03-01      Enh. #691: Method renameGroup() introduced for exactly this purpose
+ *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
  *
  ******************************************************************************************************
  *
@@ -374,6 +375,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgRenameArrFile = new LangTextHolder("Rename arrangement file \"%1\"\nto \"%2\"?");
 	public static final LangTextHolder msgRenamingFailed = new LangTextHolder("Could not rename arrangement file to \"%\"!\nAction cancelled!");
 	// END KGU#669 2019-03-01
+	// START KGU#680 2019-03-11: Bugfix #699
+	public static final LangTextHolder msgSharedDiagrams = new LangTextHolder("The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!");
+	// END KGU#680 2019-03-11
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -757,7 +761,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						null,
 						options,
 						options[option]);
-				if (option >= options.length-1) {
+				if (option >= options.length-1 || option == JOptionPane.CLOSED_OPTION) {
 					// Cancelled
 					return null;
 				}
@@ -778,6 +782,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#626 2019-01-02
 			// START KGU#624 2018-12-22: Enh. #655
 			// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)?
+			// Let the user confirm this action for the selected set of diagrams
 			StringList rootNames = listCollectedRoots(toArrange, false);
 			int nSelected = rootNames.count();
 			if (nSelected > Arranger.ROOT_LIST_LIMIT) {
@@ -861,6 +866,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File f = new File(filename + "." + extension);
 				if (f.exists())
 				{
+					// Ask the user whether they want to overwrite the already existing file
 					int res = JOptionPane.showConfirmDialog(
 							initiator,
 							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
@@ -996,7 +1002,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
-			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();
@@ -1005,8 +1010,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
-				// START KGU#650 2019-02-11: Issue #677 save all orphaned virgin group members to the temp dir
-				savedVirginRoots = saveVirginRootsToTempDir(group, tempDir);
+				// START KGU#650 2019-02-11: Issue #677 save all virgin group members to the temp dir
+				saveVirginRootsToTempDir(group, tempDir);
 				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
@@ -1026,7 +1031,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// Create a zip file from the nsd files and the arr file
 				// (returns the name of the zip file if it was placed in
 				// a temp directory, otherwise null).
-				tmpFilename = zipAllFiles(group, outFilename, arrFilename, tempDir);
+				tmpFilename = zipAllFiles(group, outFilename, arrFilename, tempDir);				
 			}
 
 
@@ -1059,16 +1064,61 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				group.setFile(new File(outFilename), null, false);
 			}
 			// END KGU#626 2019-01-02
-			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams as reside in the archive
-			if (savedVirginRoots != null) {
-				for (Root root: savedVirginRoots) {
-					File path = root.getFile();
-					if (path != null) {
-						root.shadowFilepath = path.getAbsolutePath();
-						root.filename = outFilename + File.separator + path.getName();
+			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams reside in the archive
+			// START KGU#680 2019-03-11: Bugfix #699 - all files in the archive must be ensured their virtual path is set properly 
+			//if (savedVirginRoots != null) {
+			//	for (Root root: savedVirginRoots) {
+			//		File path = root.getFile();
+			//		if (path != null) {
+			//			root.shadowFilepath = path.getAbsolutePath();
+			//			root.filename = outFilename + File.separator + path.getName();
+			//		}
+			//	}
+			//}
+			// START KGU#680 2019-03-11: Bugfix #699 The saved diagrams must reflect that they reside in the archive, possibly they must be copied
+			if (portable) {
+				StringList sharedDiagrams = new StringList();
+				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
+					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
+						// A diagram residing in another archive must be copied now, it cannot be shared.
+						Root copiedRoot = (Root)diagr.root.copy();
+						copiedRoot.getVarNames();	// Ensures that syntax highlighting will work
+						//diagr.point.translate(2 * DEFAULT_GAP, 2 * DEFAULT_GAP);	// The copy must have the same place (this was the archived one!)
+						Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						diagrams.add(diagram);
+						rootMap.put(copiedRoot, diagram);
+						String rootName = copiedRoot.getMethodName();
+						addToNameMap(rootName, diagram);
+						// In theory, the diagram can't get orphaned here.
+						group.removeDiagram(diagr);
+						group.addDiagram(diagram);
+						copiedRoot.addUpdater(this);
+						// FIXME: change selection?
+					}
+					// In the other cases the diagram already resides in the archive or can be shared
+					else if (diagr.root.shadowFilepath == null) {
+						StringList groupNames = new StringList(diagr.getGroupNames());
+						sharedDiagrams.add(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
 					}
 				}
+				// Ensure all new copies are saved somewhere such that they will get a virtual path later
+				this.saveVirginRootsToTempDir(group, tempDir);
+				// At this point there should not be any unsaved Roots and no Roots residing in a different archive anymore
+				for (Root root: group.getSortedRoots()) {
+					String shadowPath = root.shadowFilepath;
+					// ... so a Root without shadowPath obviously needs the virtual path inside the archive now
+					if (shadowPath == null) {
+						root.shadowFilepath = root.filename;
+						root.filename = outFilename + File.separator + root.getFile().getName();
+					}
+				}
+				if (sharedDiagrams.count() > 0) {
+					JOptionPane.showMessageDialog(initiator,
+							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ").replace("%2%", (new File(outFilename).getName()))),
+							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
+				}
 			}
+			// END KGU#680 2019-03-11
 			// END KGU#650 2019-02-11
 			done = true;
 		}

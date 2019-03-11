@@ -37,6 +37,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-25      Issue #668: More intelligent file name proposal for default group
  *      Kay Gürtzig     2019-02-04      Colour icon revised (now double thin border like in Arranger).
  *      Kay Gürtzig     2019-03-01      Enh. #691 Method rename() added (does only parts of what is to be done)
+ *      Kay Gürtzig     2019-03-11      Modification in addDiagram() for bugfix #699
  *
  ******************************************************************************************************
  *
@@ -204,7 +205,7 @@ public class Group {
 		this.name = _name;
 		this.diagrams.addAll(_diagrams);
 		if (!_diagrams.isEmpty()) {
-			// If this group isn't temporary register the group name with the diagrams
+			// If this group isn't temporary then register the group name with the diagrams
 			if (!_name.isEmpty()) {
 				for (Diagram diagr: _diagrams) {
 					diagr.addToGroup(this);
@@ -460,7 +461,13 @@ public class Group {
 	public boolean addDiagram(Diagram _diagram)
 	{
 		boolean added = this.diagrams.add(_diagram);
-		added = _diagram.addToGroup(this) || added;
+		// START KGU#680 2019-03-11: Bugfix #699
+		//added = _diagram.addToGroup(this) || added;
+		// If this group isn't temporary then register the group name with the diagrams
+		if (!name.isEmpty()) {
+			added = _diagram.addToGroup(this) || added;
+		}
+		// END KGU#680 2019-03-11
 		if (added) {
 			routines.add(_diagram.root);
 			this.updateSortedRoots(false);

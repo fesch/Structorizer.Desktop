@@ -1220,6 +1220,7 @@ Surface.msgGroupExists.text=¡Grupo con nombre «%» ya existe!
 Surface.titleRenameGroup.text=Renombrar grupo «%1» a «%2»
 Surface.msgRenameArrFile.text=¿Renombrar archivo de colocación\n"%1"\na "%2"?
 Surface.msgRenamingFailed.text=No fue posible renombrar el archivo de la colocación a "%".\n¡Acción cancelada!
+Surface.msgSharedDiagrams.text=Los siguientes diagramas serán compartidos con los grupos señalados\n - %1\n\nFíjate que cualquier modificación de ellos va a influir en todos ellos grupos\ny también en el archivo %2, ¡aun en el caso que el último ya no estase presente!
 
 // Arranger index
 ArrangerIndex.popupIndexGet.text=Coger diagrama
