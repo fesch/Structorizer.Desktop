@@ -1098,7 +1098,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
 						StringList groupNames = new StringList(diagr.getGroupNames());
-						sharedDiagrams.add(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
 					}
 				}
 				// Ensure all new copies are saved somewhere such that they will get a virtual path later
@@ -1114,7 +1114,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				if (sharedDiagrams.count() > 0) {
 					JOptionPane.showMessageDialog(initiator,
-							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ").replace("%2%", (new File(outFilename).getName()))),
+							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
 							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
 				}
 			}
