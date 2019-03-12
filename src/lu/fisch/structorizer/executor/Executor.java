@@ -174,6 +174,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
  *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
  *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
+ *      Kay Gürttig     2019-03-07      Enh. #385 - support for optional routine arguments
  *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
  *
  ******************************************************************************************************
@@ -2482,7 +2483,7 @@ public class Executor implements Runnable
      */
 	public Root findIncludableWithName(String name) throws Exception
 	{
-		return findDiagramWithSignature(name, -1);
+		return findDiagramWithSignature(name, -2);
 	}
 	
     /**
@@ -2507,6 +2508,14 @@ public class Executor implements Runnable
     	return subroutine;
     }
     
+    /**
+     * Searches all known pools for either routine diagrams with a signature compatible to {@code name(arg1, arg2, ..., arg_nArgs)}
+     * or for includable diagrams with name {@code name}
+     * @param name - diagram name
+     * @param nArgs - number of parameters of the requested function (negative fo Includable)
+     * @return a Root that matches the specification if uniquely found, null otherwise
+     * @throws Exception if there are differing matching diagrams
+     */
     private Root findDiagramWithSignature(String name, int nArgs) throws Exception
     {
     	Root diagr = null;
@@ -2538,6 +2547,8 @@ public class Executor implements Runnable
     				Root cand = candidates.get(c);
     				int similarity = diagr.compareTo(cand); 
     				if (similarity > 2 && similarity != 4) {
+    					// 3: Equal file path but unsaved changes in one or both diagrams;
+    					// 5: Equal signature (i. e. type, name and argument number) but different content or structure.
     					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
     				}
     			}
@@ -2565,12 +2576,12 @@ public class Executor implements Runnable
 		//	((DelayableDiagramController)diagramController).setAnimationDelay(delay, true);
 		//}
 		//else
-		boolean delayed = false;
+		//boolean delayed = false;
 		if (diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController) {
 					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
-					delayed = true;
+					//delayed = true;
 				}
 			}
 		}

@@ -2110,7 +2110,7 @@ public class Root extends Element {
         // inform updaters
         for(int u = 0; u < updaters.size(); u++)
         {
-        	updaters.get(u).update(this);
+            updaters.get(u).update(this);
         }
         // END KGU#330 2017-01-13
     }
@@ -2197,7 +2197,7 @@ public class Root extends Element {
      */
     public File getFile()
     {
-    	if(filename.equals(""))
+    	if (filename.equals(""))
     	{
     		return null;
     	}
@@ -2229,12 +2229,13 @@ public class Root extends Element {
     }
     
     /**
-     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
-     * otherwise.
-     * If the file resides within an arrz archive, the path may be a symbolic path into the arrz archive
-     * unless {@code pathOfrigin} is true, in which case it will be the archive path itself instead.
-     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the path of the mere archive
-     * will be returned.
+     * Returns the absolute file path as string if this diagram is associated to a file,
+     * or an empty string otherwise.
+     * If the file resides within an arrz archive, the path may be a symbolic path into
+     * the arrz archive unless {@code pathOfrigin} is true, in which case it will be the
+     * archive path itself instead.
+     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the
+     * path of the mere archive will be returned.
      * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
      * @see #getFile()
      */

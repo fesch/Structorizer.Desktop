@@ -32,15 +32,15 @@ package lu.fisch.structorizer.io;
  *
  *      Author              Date            Description
  *      ------              ----            -----------
- *      Bob Fisch           2008.05.02      First Issue
- *      GENNARO DONNARUMMA  2014.02.02      Ini in JAR support
- *      Kay Gürtzig         2016.04.26      Jar path updated
- *      Kay Gürtzig         2016.07.22      Bugfix: save() method now immediately closes the file
- *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264)
- *      Kay Gürtzig         2017.03.13      Method getIniDirectory() added to support issue #372
- *      Kay Gürtzig         2017.11.05      Issue #452: Method wasFirstStart() added.
- *      Kay Gürtzig         2018.03.21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
- *      Kay Gürtzig         2018.10.28      Flag to detect unsaved changes introduced (+ public method)
+ *      Bob Fisch           2008-05-02      First Issue
+ *      Gennaro Donnarumma  2014-02-02      Ini in JAR support
+ *      Kay Gürtzig         2016-04-26      Jar path updated
+ *      Kay Gürtzig         2016-07-22      Bugfix #200: save() method now immediately closes the file
+ *      Kay Gürtzig         2016-09-28      First comment line modified (KGU#264)
+ *      Kay Gürtzig         2017-03-13      Method getIniDirectory() added to support issue #372
+ *      Kay Gürtzig         2017-11-05      Issue #452: Method wasFirstStart() added.
+ *      Kay Gürtzig         2018-03-21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
+ *      Kay Gürtzig         2018-10-28      Flag to detect unsaved changes introduced (+ public method)
  *
  ******************************************************************************************************
  *
@@ -407,7 +407,7 @@ public class Ini
 		File f = new File(_filename);
 		if (f.length() != 0)
 		{
-			// START KGU#210 2016-07-22: Bugfix #200
+			// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 			//p.load(new FileInputStream(_filename));
 			FileInputStream fis = new FileInputStream(_filename);
 			p.load(fis);
@@ -420,7 +420,7 @@ public class Ini
 	public void loadAlternate() throws FileNotFoundException, IOException
 	{
 		// System.out.println("Trying to load INI file: "+filename);
-		// START KGU#210 2016-07-22: Bugfix #200
+		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		File f = new File(filename2);
 //		if (f.length() == 0)
 //		{
@@ -439,7 +439,7 @@ public class Ini
 	{
 		// System.out.println("Trying to load INI file: "+filename);
 		// JOptionPane.showMessageDialog(null, "Loading from => "+filename);
-		// START KGU#210 2016-07-22: Bugfix #200
+		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		File f = new File(filename);
 //		if (f.length() == 0)
 //		{
@@ -464,7 +464,7 @@ public class Ini
 	public void save(String _filename) throws FileNotFoundException,
 			IOException
 	{
-		// START KGU#210 2016-07-22: Bugfix #200
+		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		p.store(new FileOutputStream(_filename), "last updated "
 //				+ new java.util.Date());
 		FileOutputStream fos = new FileOutputStream(_filename);
@@ -479,7 +479,7 @@ public class Ini
 
 	private void saveAlternate() throws FileNotFoundException, IOException
 	{
-		// START KGU#210 2016-07-22: Bugfix #200
+		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 		//p.store(new FileOutputStream(filename2), "last updated "
 		//		+ new java.util.Date());
 		this.save(filename2);
@@ -489,7 +489,7 @@ public class Ini
 
 	private void saveRegular() throws FileNotFoundException, IOException
 	{
-		// START KGU#210 2016-07-22: Bugfix #200
+		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 		//p.store(new FileOutputStream(filename), "last updated "
 		//		+ new java.util.Date());
 		this.save(filename);

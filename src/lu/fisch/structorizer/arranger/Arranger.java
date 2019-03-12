@@ -88,6 +88,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -372,12 +373,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * arrangement.
      * 
      * @param frame - potentially an associable Mainform (Structorizer)
-     * @param filename - Name of the file to be loaded as arrangement
+     * @param arrFile - file to be loaded as arrangement
      * @return error message if something went wrong
      */
-    public String loadArrangement(Mainform form, String arrFilename)
+    public String loadArrangement(Mainform form, File arrFile)
     {
-    	return surface.loadArrFile(form, arrFilename);
+    	return surface.loadArrFile(form, arrFile);
     }
     // END KGU#259 2016-11-15
 

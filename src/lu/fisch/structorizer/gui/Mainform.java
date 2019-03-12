@@ -1318,4 +1318,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	}
 	// END KGU#631 2019-01-08
 
+	// START KGU#679 2019-03-12: Enh. #698 - we needed a way for Arranger to inform about recently loaded or saved arrangement files
+	/**
+	 * Registers the given {@code file} as recently used. Interface for other modules like
+	 * {@link Arranger} to inform about used files, e.g. arrangements.
+	 * @param file - a file interpretable for Structorizer and just loaded or saved or otherwise used
+	 */
+	public void addRecentFile(File file) {
+		if (diagram != null) {
+			diagram.addRecentFile(file.getAbsolutePath());
+		}
+	}
+
 }

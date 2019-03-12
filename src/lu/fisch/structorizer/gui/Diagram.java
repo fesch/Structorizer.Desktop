@@ -1978,7 +1978,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMsg = Menu.msgErrorNoFile.getText();
 		}
 		else {
-			errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());			
+			errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile);			
 		}
 		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
@@ -8218,7 +8218,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void addRecentFile(String _filename, boolean saveINI)
 	{
-		if(recentFiles.contains(_filename))
+		if (!recentFiles.isEmpty() && recentFiles.get(0).equals(_filename)) {
+			return;	// nothing to do
+		}
+		if (recentFiles.contains(_filename))
 		{
 			recentFiles.remove(_filename);
 		}
