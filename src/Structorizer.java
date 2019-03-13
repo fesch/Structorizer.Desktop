@@ -106,7 +106,6 @@ import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
 import lu.fisch.structorizer.archivar.ArchivePool;
 import lu.fisch.structorizer.elements.Root;
-import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;

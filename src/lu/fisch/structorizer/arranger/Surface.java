@@ -105,6 +105,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-10      Enh. #698: Refactoring/code revision: basics of loading/ saving delegated to Archivar
  *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
  *      Kay Gürtzig     2019-03-12/13   Enh. #698: New IRoutinePool mmethods added
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -1016,7 +1017,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
-			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();

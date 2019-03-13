@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
+ *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *

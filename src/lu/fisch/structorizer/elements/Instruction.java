@@ -396,7 +396,7 @@ public class Instruction extends Element {
 		if (!checkVisibility(_viewport, _top_left)) { return; }
 		// END KGU#502/KGU#524/KGU#553 2019-03-13
 
-    	// Now delegates all stuff to the static method above, which may also
+		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
 		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate

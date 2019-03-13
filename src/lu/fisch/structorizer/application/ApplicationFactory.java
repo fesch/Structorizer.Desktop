@@ -34,7 +34,8 @@ package lu.fisch.structorizer.application;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.09.14      First Issue
+ *      Kay Gürtzig     2018-09-14      First Issue
+ *      Kay Gürtzig     2019-03-13      Deprecated stuff replaced
  *
  ******************************************************************************************************
  *
@@ -43,8 +44,6 @@ package lu.fisch.structorizer.application;
  *      packages, e.g. com.apple.eawt.Application. 
  *
  ******************************************************************************************************///
-
-import java.util.HashMap;
 
 /**
  * Factory class providing OS-specific StructorizerApplication objects (dummy or not),
@@ -112,7 +111,7 @@ public class ApplicationFactory {
 		try {
 			Class<?> applClass = Class.forName(className);
 			
-			Object appObj = applClass.newInstance();
+			Object appObj = applClass.getDeclaredConstructor().newInstance();
 			if (appObj instanceof StructorizerApplication) {
 				appl = (StructorizerApplication)appObj;
 			}
@@ -126,6 +125,9 @@ public class ApplicationFactory {
 			System.err.println("*** Configurable application class " + className + " not available. Using dummy.");
 		} catch (InstantiationException | IllegalAccessException ex) {
 			System.err.println("*** Configurable application class " + className + " cannot be instantiated:\n" + ex);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		if (appl == null) {
 			appl = new StructorizerApplication();
