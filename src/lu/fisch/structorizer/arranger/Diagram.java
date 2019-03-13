@@ -148,11 +148,11 @@ public class Diagram
 	// END KGU#624 2018-12-26
 
     // START KGU#626 2018-12-28: Enh. #657 - group management
-	/**
-	 * NOTE: This method should not be called directly but from {@link Group#addDiagram(Diagram)}.
-	 * @param _group - the {@link Group} this diagram is being added to
-	 * @return true if the group had not been registered with this diagram before, false otherwise
-	 */
+    /**
+     * NOTE: This method should not be called directly but from {@link Group#addDiagram(Diagram)}.
+     * @param _group - the {@link Group} this diagram is being added to
+     * @return true if the group had not been registered with this diagram before, false otherwise
+     */
     protected boolean addToGroup(Group _group)
     {
     	if (_group == null) return false;
@@ -160,10 +160,10 @@ public class Diagram
     }
 
     /**
-	 * NOTE: This method should not be called directly but from {@link Group#removeDiagram(Diagram)}.
-	 * @param _group - the {@link Group} this diagram is being added to
-	 * @return true if the group had indeed been registered with this diagram before, false otherwise
-	 */
+     * NOTE: This method should not be called directly but from {@link Group#removeDiagram(Diagram)}.
+     * @param _group - the {@link Group} this diagram is being added to
+     * @return true if the group had indeed been registered with this diagram before, false otherwise
+     */
     protected boolean removeFromGroup(Group _group)
     {
     	if (_group == null) return false;

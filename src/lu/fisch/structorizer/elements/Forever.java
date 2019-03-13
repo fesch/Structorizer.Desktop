@@ -51,6 +51,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 
@@ -130,7 +132,7 @@ public class Forever extends Element implements ILoop {
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
-            
+		
 		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
 		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
 		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
@@ -156,7 +158,7 @@ public class Forever extends Element implements ILoop {
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		this.rect0 = rect0;
 		this.pt0Body = pt0Body;
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		// START KGU#227 2016-07-30: Has not been done by Instruction
 		isRectUpToDate = true;
 		// END KGU#227 2016-07-30
@@ -164,8 +166,12 @@ public class Forever extends Element implements ILoop {
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		if(isCollapsed(true)) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
@@ -185,7 +191,7 @@ public class Forever extends Element implements ILoop {
 		myrect.top += pt0Body.y;
 		// END KGU#227 2016-07-30
 		myrect.bottom -= E_PADDING/*+1*/;	// KGU 2016-04-24: +1 led to line of double thickness
-		q.draw(_canvas,myrect);
+		q.draw(_canvas, myrect, _viewport);
 	}
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon

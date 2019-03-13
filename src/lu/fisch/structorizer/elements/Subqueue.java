@@ -58,6 +58,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -70,6 +71,7 @@ import java.util.Vector;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -112,7 +114,7 @@ public class Subqueue extends Element implements IElementSequence {
 		if (this.isRectUpToDate) return rect0;
 		// START KGU#516 2018-04-04: Directly to work on fields was not so good an idea for re-entrance
 		//this.y0Children.clear();
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
@@ -125,7 +127,7 @@ public class Subqueue extends Element implements IElementSequence {
 		//rect0.bottom = 0;
 		Rect rect0 = new Rect();
 		Vector<Integer> y0Children = new Vector<Integer>();
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		
 		if (children.size() > 0) 
 		{
@@ -157,15 +159,19 @@ public class Subqueue extends Element implements IElementSequence {
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		this.rect0 = rect0;
 		this.y0Children = y0Children;
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		Rect myrect;
 		Rect subrect;
 		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -202,7 +208,7 @@ public class Subqueue extends Element implements IElementSequence {
 				{
 					myrect.bottom = _top_left.bottom;
 				}
-				((Element) children.get(i)).draw(_canvas, myrect);
+				((Element) children.get(i)).draw(_canvas, myrect, _viewport);
 
 				//myrect.bottom-=1;
 				myrect.top += subrect.bottom;

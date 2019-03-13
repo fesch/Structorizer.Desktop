@@ -71,6 +71,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-18  Enh. #657: Order of popup menu items modified
  *      Kay Gürtzig     2019-02-05  Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-03-01  Enh. #691: Façade renameGroup() introduced for exactly this purpose
+ *      Kay Gürtzig     2019-03-13  Issue #655: status bar coordinate computation changed
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 
+import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.RootAttributes;
@@ -808,13 +810,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	protected void updateStatusSize() {
 		scrollarea.getLocation(scrollareaOrigin);
 		java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
-		/* To compute the unzoomed sizes from the vRect looks bad due to rounding jitter.
-		 * Alternatively we would have to ask for the diagram bounds but these don't
-		 * reflect a larger window.
+		// START KGU#624 2019-03-13: Issue #655
+		/* To compute the unzoomed sizes from the vRect looks provokes rounding jitter.
+		 * But to show the values as returned from the GUI components directly doesn't
+		 * make any sense (is counter-intuitive).
 		 */
-		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
-		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
-				vRect.y + ".." + (vRect.y + vRect.height));
+//		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
+//		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
+//				vRect.y + ".." + (vRect.y + vRect.height));
+		double width = surface.getWidth() * surface.getZoom();
+		double height = surface.getHeight() * surface.getZoom();
+		Rect visRect = (new Rect(vRect)).scale(surface.getZoom());
+		statusSize.setText((int)width + " x " + (int)height);
+		statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
+				visRect.top + ".." + visRect.bottom);
+		// END KGU#624 2019-03-13
 		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
 	}
 	

@@ -140,6 +140,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
  *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
  *      Kay Gürtzig     2019-03-07      Enh. #385: Support for default values in argument lists
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      
  ******************************************************************************************************
  *
@@ -201,6 +202,7 @@ import java.awt.Font;
 import java.awt.image.*;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -1038,7 +1040,7 @@ public class Root extends Element {
 		_canvas = new Canvas(bufferGraphics);
 
 
-		draw(_canvas, _top_left);
+		draw(_canvas, _top_left, null);
 
 		// draw buffer to output canvas
 		origCanvas.draw(bufferImg,0,0);
@@ -1048,13 +1050,17 @@ public class Root extends Element {
 		System.gc();
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
-		draw(_canvas, _top_left, DrawingContext.DC_STRUCTORIZER);
+		draw(_canvas, _top_left, _viewport, DrawingContext.DC_STRUCTORIZER);
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, DrawingContext _context)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, DrawingContext _context)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
 		Color drawColor = getFillColor(_context);
@@ -1177,7 +1183,7 @@ public class Root extends Element {
 			bodyRect.bottom -= E_PADDING/2;
 		}
 		
-		children.draw(_canvas, bodyRect);
+		children.draw(_canvas, bodyRect, _viewport);
 		// END KGU#227 2016-07-31
 
 		// draw box around
@@ -1590,11 +1596,12 @@ public class Root extends Element {
      * stack overflow due to endless recursion).
      * @param _g - the target graphics environment
      * @param _point - the target position
+     * @param _viewport - visible area of the viewport
      * @param _prohibitedUpdater - if given an updater not to be informed
      * @param _drawingContext - the context e.g. for selection highlighting 
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater, DrawingContext _drawingContext)
+    public Rect draw(Graphics _g, Point _point, Rectangle _viewport, Updater _prohibitedUpdater, DrawingContext _drawingContext)
     {
         setDrawPoint(_point);
 
@@ -1633,19 +1640,19 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect, _drawingContext);
+        this.draw(canvas, myrect, _viewport, _drawingContext);
 
         return myrect;
     }
 
-    public Rect draw(Graphics _g, Point _point)
-    {
-        return draw(_g, _point, null, DrawingContext.DC_STRUCTORIZER);
-    }
+//    public Rect draw(Graphics _g, Point _point)
+//    {
+//        return draw(_g, _point, null, null, DrawingContext.DC_STRUCTORIZER);
+//    }
 
-    public Rect draw(Graphics _g)
+    public Rect draw(Graphics _g, Rectangle _viewport)
     {
-        return draw(_g, new Point(0,0), null, DrawingContext.DC_STRUCTORIZER);
+        return draw(_g, new Point(0,0), _viewport, null, DrawingContext.DC_STRUCTORIZER);
 
         /*
         // inform updaters

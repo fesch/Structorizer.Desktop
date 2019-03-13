@@ -172,6 +172,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-26      Bugfix #688: canTransmute() should always return true for Call and Jump elements
  *      Kay Gürtzig     2019-02-26      Enh. #689: Mechanism to edit the referred routine of a selected Call introduced
  *      Kay Gürtzig     2019-03-01      Bugfix #693: Missing existence check on loading recent arrangement files added
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -1440,7 +1441,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
 		//if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-		root.draw(_g);
+		root.draw(_g, ((JViewport)this.getParent()).getViewRect());
 		
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
@@ -1460,7 +1461,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			rect.right  = rect.left + w;
 			rect.bottom = rect.top + h;
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-			selectedDown.draw(canvas, rect);
+			selectedDown.draw(canvas, rect, ((JViewport)this.getParent()).getViewRect());
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 			// START KGU#136 2016-03-01: Bugfix #97 - this is no longer necessary
 			//selectedDown.rect = copyRect;
@@ -1641,7 +1642,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				g2d.scale(sca,sca);
 			}*/
 
-			root.draw(g);
+			root.draw(g, null);
 
 			return (PAGE_EXISTS);
 		}
@@ -5143,7 +5144,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect);
+					root.draw(c,myrect, null);
 					emf.endExport();
 				}
 				catch (Exception e)
@@ -5237,7 +5238,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect);
+					root.draw(c,myrect, null);
 					svg.endExport();
 
 					// re-read the file ...
@@ -5354,7 +5355,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect);
+					root.draw(c,myrect, null);
 					svg.endExport();
 				}
 				catch (Exception e)
@@ -5449,7 +5450,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect);
+					root.draw(c,myrect, null);
 					svg.endExport();
 				}
 				catch (Exception e)
@@ -8003,7 +8004,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// get diagram
 		// FIXME KGU#660 2019-02-20: Issue #685 With Windows and java 11, conversion to JPEG doesn't cope with alpha channel
 		BufferedImage image = new BufferedImage(root.width+1,root.height+1, BufferedImage.TYPE_INT_ARGB);
-		root.draw(image.getGraphics());
+		root.draw(image.getGraphics(), null);
 
 		// put image to clipboard
 		ImageSelection imageSelection = new ImageSelection(image);
@@ -8042,7 +8043,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			emf.startExport();
 			lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(emf);
 			lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-			root.draw(c,myrect);
+			root.draw(c,myrect, null);
 			emf.endExport();
 
 			systemClipboard.setContents(new EMFSelection(myEMF), null);

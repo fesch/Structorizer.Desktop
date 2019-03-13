@@ -38,6 +38,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-04      Colour icon revised (now double thin border like in Arranger).
  *      Kay Gürtzig     2019-03-01      Enh. #691 Method rename() added (does only parts of what is to be done)
  *      Kay Gürtzig     2019-03-11      Modification in addDiagram() for bugfix #699
+ *      Kay Gürtzig     2019-03-19      Issues #518, #544, #557: Drawing depends on visible rect now.
  *
  ******************************************************************************************************
  *
@@ -130,14 +131,14 @@ public class Group {
 	/**
 	 * Flag for drawing the {@link #bounds} according to enh. #662/2
 	 * @see #color
-	 * @see #draw(Canvas)
+	 * @see #draw(Canvas, Rectangle)
 	 */
 	private boolean visible = true;
 	
 	/**
 	 * The drawing color for the {@link #bounds} according to enh. #662/2
 	 * @see #visible
-	 * @see #draw(Canvas)
+	 * @see #draw(Canvas, Rectangle)
 	 * 
 	 */
 	private Color color = Color.BLUE;
@@ -617,13 +618,12 @@ public class Group {
 		return membersChanged || this.membersMoved;
 	}
 	
-	// START KGU#6390 2019
-	public void draw(Graphics _g)
+	public void draw(Graphics _g, Rectangle _viewport)
 	{
-		draw(_g, 0, 0);
+		draw(_g, 0, 0, _viewport);
 	}
 	
-	protected void draw(Graphics _g, int _offsetX, int _offsetY)
+	protected void draw(Graphics _g, int _offsetX, int _offsetY, Rectangle _viewport)
 	{
 		Canvas canvas = new Canvas((Graphics2D) _g);
 		if (this.visible) {
@@ -633,8 +633,18 @@ public class Group {
 				if (_offsetX != 0 || _offsetY != 0) {
 					drawBounds.translate(-_offsetX, -_offsetY);
 				}
+				
 				Rect outer = new Rect(drawBounds.x - BUFFER, drawBounds.y - BUFFER,
 						drawBounds.x + drawBounds.width + BUFFER, drawBounds.y + drawBounds.height + BUFFER);
+
+				// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+				if (_viewport != null && !_viewport.intersects(outer.getRectangle()))
+				{
+					// Outside the visible area
+					return; 
+				}
+				// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 				Rect inner = new Rect(drawBounds);
 				canvas.setColor(color);
 				canvas.drawRect(outer);
