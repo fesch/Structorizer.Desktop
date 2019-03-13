@@ -55,6 +55,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -64,6 +65,7 @@ package lu.fisch.structorizer.elements;
 
 import java.util.Vector;
 import java.awt.Color;
+import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -307,8 +309,8 @@ public class Parallel extends Element
             // Unless some of the comment modes requires this, the upper stripe remains empty
             if ((Element.E_COMMENTSPLUSTEXT || this.isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
             {
-            	// In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
-            	// Otherwise ("switch text/comments") the comment will be added as text in normal font.
+                // In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
+                // Otherwise ("switch text/comments") the comment will be added as text in normal font.
                 StringList headerText = new StringList();	// No text in general
                 if (!Element.E_COMMENTSPLUSTEXT)
                 {
@@ -335,7 +337,7 @@ public class Parallel extends Element
             		x0Branches.addElement(fullWidth);
             		// END KGU#136 2016-03-01
             		Rect rtt = qs.get(i).prepareDraw(_canvas);
-                	// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+            		// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
             		//fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
             		fullWidth += Math.max(rtt.right, E_PADDING / 2);
             		// END KGU#151 2016-03-01
@@ -354,14 +356,18 @@ public class Parallel extends Element
             this.x0Branches = x0Branches;
             this.y0Branches = y0Branches;
             // END KGU#516 2018-04-04
-    		// START KGU#136 2016-03-01: Bugfix #97
-    		isRectUpToDate = true;
-    		// END KGU#136 2016-03-01
+            // START KGU#136 2016-03-01: Bugfix #97
+            isRectUpToDate = true;
+            // END KGU#136 2016-03-01
             return rect0;
     }
 
-    public void draw(Canvas _canvas, Rect _top_left)
+    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
     {
+           // START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+           if (!checkVisibility(_viewport, _top_left)) { return; }
+           // END KGU#502/KGU#524/KGU#553 2019-03-13
+
             if(isCollapsed(true)) 
             {
                 Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
@@ -458,7 +464,7 @@ public class Parallel extends Element
                             }
 
                             // draw child
-                            qs.get(i).draw(_canvas,myrect);
+                            qs.get(i).draw(_canvas, myrect, _viewport);
 
                             // draw bottom up line
                             /*

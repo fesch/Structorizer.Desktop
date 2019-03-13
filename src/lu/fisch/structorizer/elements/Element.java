@@ -100,6 +100,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-05      Bugfix #619: Declaration status of function result variable fixed
  *      Kay Gürtzig     2018-10-25      Enh. #419: New method breakTextLines(...)
  *      Kay Gürtzig     2019-03-07      Enh. #385: method extractDeclarationsFromList now also extracts default values
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -197,6 +198,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -714,6 +716,14 @@ public abstract class Element {
 	}
 	// END KGU#238 2016-08-11
 	// END KGU#64 2015-11-03
+	
+	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+	protected boolean checkVisibility(Rectangle _viewport, Rect _topLeft)
+	{
+		Rectangle rctgl = new Rectangle(_topLeft.left, _topLeft.top, rect0.right, rect0.bottom);
+		return !this.isRectUpToDate || _viewport == null || rctgl.intersects(_viewport);
+	}
+	// END KGU#502/KGU#524/KGU#553 2019-03-13
 
 	// abstract things
 	/**
@@ -731,8 +741,9 @@ public abstract class Element {
 	 * stores the the actually drawn bounds in attribute rect.
 	 * @param _canvas - the drawing canvas where the drawing is to be done in 
 	 * @param _top_left - conveyes the upper-left corner for the placement
+	 * @param _viewport TODO
 	 */
-	public abstract void draw(Canvas _canvas, Rect _top_left);
+	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport);
 	
 	public abstract Element copy();
 	

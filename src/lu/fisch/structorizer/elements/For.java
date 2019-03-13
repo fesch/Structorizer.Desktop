@@ -65,6 +65,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.07.12      Separator bug in For(String,String,String,int) fixed.
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -75,6 +76,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -265,15 +267,18 @@ public class For extends Element implements ILoop {
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		this.rect0 = rect0;
 		this.pt0Body = pt0Body;
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
 
 		if (isCollapsed(true)) 
 		{
@@ -297,7 +302,7 @@ public class For extends Element implements ILoop {
 		{
 			myrect.bottom = myrect.bottom-E_PADDING+1;
 		}
-		q.draw(_canvas,myrect);
+		q.draw(_canvas, myrect, _viewport);
 		// END KGU 2015-10-12
 	}
 	

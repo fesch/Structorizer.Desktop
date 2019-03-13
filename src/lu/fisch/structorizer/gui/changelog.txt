@@ -58,6 +58,7 @@ Current development version: 3.29-05 (2019-03-13)
 - 05: Enh. #696: Batch export can now process arrangement files (.arr/.arrz) <2>
 - 05: Enh. #698: Basic archiving outsourced from Arranger to Archivar <2>
 - 05: Bugfix #699: Diagrams must not be shared among archive groups <2>
+- 05: Issues #518, #544, #557: Drawing accelerated by confining to visible area <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

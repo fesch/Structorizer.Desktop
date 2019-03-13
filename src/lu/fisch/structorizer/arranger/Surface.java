@@ -214,6 +214,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
@@ -417,7 +418,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			Graphics2D g2d = (Graphics2D) g;
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
-			for(int d=0; d<diagrams.size(); d++)
+			for(int d = 0; d < diagrams.size(); d++)
 			{
 				// START KGU#624 2018-12.24: Enh. #655
 				//diagrams.get(d).root.prepareDraw(g2d);
@@ -450,14 +451,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
 			}
 			// END KGU#497 2018-03-19
+
+			// START KGU#502/KGU#524/KGU#553 2019-03-13: Issues #518, #544, #557 - reduce drawing contention
+			Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
+			visRect = visRect.scale(zoomFactor);
+			Rectangle visibleRect = visRect.getRectangle();
+			// END KGU#502/KGU#524/KGU#557
+				
 			// START KGU#630 2019-01-09: Enh. #662/2 - preparations for group drawing
 			if (drawGroups) {
 				for (Group group: groups.values()) {
-					group.draw(g2d);
+					group.draw(g2d, null);
 				}
 			}
 			// END KGU#630 2019-01-19
-				
+			
 //			System.out.println("Surface.paintComponent()");
 			for(int d=0; d<diagrams.size(); d++)
 			{
@@ -478,7 +486,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#624 2018-12-24
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
-				Rect rect = root.draw(g2d, point, this, Element.DrawingContext.DC_ARRANGER);
+				Rect rect = root.draw(g2d, point, visibleRect, this, Element.DrawingContext.DC_ARRANGER);
 				if (diagram.isPinned)
 				{
 					if (pinIcon == null)
@@ -1008,6 +1016,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
+			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();
