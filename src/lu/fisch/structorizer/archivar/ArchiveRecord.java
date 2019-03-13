@@ -50,7 +50,7 @@ import lu.fisch.structorizer.elements.Root;
  */
 public class ArchiveRecord
 {
-	/** The diagram */
+	/** The diagram (should not be null, usually) */
 	public Root root = null;
 	/** The graphical top-left location of the diagram */
 	public Point point = null;
@@ -73,13 +73,22 @@ public class ArchiveRecord
 		this.point = _point;
 	}
 	
+	/**
+	 * Creates a new archive record from {@code other} sharing the {@link Root} but
+	 * copying the {@link Point}.
+	 * @param other - another ArchiveRecord
+	 */
+	public ArchiveRecord(ArchiveRecord other) {
+		this(other.root, new Point(other.point));
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(" + this.point + ", " + this.root + ")";
+		return "(" + this.point + ", " + this.root + ")";
 	}
 
 }

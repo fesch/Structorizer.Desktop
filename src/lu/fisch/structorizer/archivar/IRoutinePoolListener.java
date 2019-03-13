@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package lu.fisch.structorizer.executor;
+package lu.fisch.structorizer.archivar;
 
 /******************************************************************************************************
  *
@@ -35,6 +35,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-12-21      Interface modified (flag values introduced and new method signature)
  *      Kay Gürtzig     2019-01-04      Enh. #657: new flag for changed positions (to be reflected in groups)
  *      Kay Gürtzig     2019-01-12      Enh. #662/2: new flag for group colour or visibility change
+ *      Kay Gürtzig     2019-03-13      Enh. #698: Moved from executor to archivar package
  *
  ******************************************************************************************************
  *

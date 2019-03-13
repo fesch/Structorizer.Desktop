@@ -82,6 +82,8 @@ package lu.fisch.structorizer.generators;
  *                                      avoid duplicate include/import/using entries system <-> user 
  *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
+ *      Kay Gürtzig     2019-03-13      Enh. #696: All references to Arranger replaced by routinePool,
+ *                                      subroutine retrieval enabled in the batch version of exportCode
  *
  ******************************************************************************************************
  *
@@ -142,7 +144,7 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -212,6 +214,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#395 2017-05-11: Enh. #357 - generator-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
 	// END KGU#395 2017-05-11
+	// START KGU#676 2019-03-13: Enh. #696 Explicit routine pool instead of direct Arranger access
+	protected IRoutinePool routinePool = null;
+	// END KGU#676 2019-03-13
 
 	protected StringList code = new StringList();
 	
@@ -1737,12 +1742,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//if (called != null && Arranger.hasInstance())
 		// START KGU#371 2019-03-08: Enh. #385 cope with optional parameters
 		//if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
-		if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && Arranger.hasInstance())
+		// START KGU#676 2019-03-13: Enh. #696 Routine pool may now stem from an archive 
+		//if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && Arranger.hasInstance())
+		if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && routinePool != null)
+		// END KGU#676 2019-03-13
 		// END KGU#371 2019-03-07
 		// END KGU#349 2017-02-20
 		{
-			Vector<Root> foundRoots = Arranger.getInstance().
+			// START KGU#676 2019-03-13: Enh. #696 Routine pool may now stem from an archive 
+			//Vector<Root> foundRoots = Arranger.getInstance().
+			//		findRoutinesBySignature(called.getName(), called.paramCount());
+			Vector<Root> foundRoots = routinePool.
 					findRoutinesBySignature(called.getName(), called.paramCount());
+			// END KGU#676 2019-03-13
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
@@ -1850,12 +1862,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#376 2017-09-20: Enh. #389
 	private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
 	{
-		if (_root.includeList != null && Arranger.hasInstance()) {
+		if (_root.includeList != null && (routinePool != null)) {
 			for (int i = 0; i < _root.includeList.count(); i++)
 			{
 				Root newIncl = null;
 				String includeName = _root.includeList.get(i);
-				Vector<Root> candidates = Arranger.getInstance().findIncludesByName(includeName);
+				Vector<Root> candidates = routinePool.findIncludesByName(includeName);
 				if (!candidates.isEmpty()) {
 					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
@@ -2596,16 +2608,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
+	 * @param _routinePool TODO
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
-	public File exportCode(Root _root, File _proposedDirectory, Frame _frame)
+	// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
+	public File exportCode(Root _root, File _proposedDirectory, Frame _frame, IRoutinePool _routinePool)
+	// END KGU#676 2019-03-13
 	// END KGU 2017-04-26
 	{
 		// START KGU 2017-04-26
 		File exportDir = _proposedDirectory;
 		// END KGU 2017-04-26
+		// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
+		routinePool = _routinePool;
+		// END KGU#676 2019-03-13
 		//=============== Get export options ======================
 		try
 		{
@@ -2846,14 +2864,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
-		   	// START KGU#178 2016-07-20: Enh. #160
-		   	if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
-		   	{
+			// START KGU#178 2016-07-20: Enh. #160
+			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+			{
 				JOptionPane.showMessageDialog(null,
 						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
-		   	}
-		   	// END KGU#178 2016-07-20
+			}
+			// END KGU#178 2016-07-20
 		} // if (file != null)
 		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
 		else {
@@ -2867,9 +2885,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**
-	 * Routine is called from {@link #exportCode(Root, File, Frame)} after the top-level
-	 * diagram code has been created and generates and inserts the code sequences of the
-	 * called subroutines of {@code _root}in topologically sorted order.
+	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
+	 * the top-level diagram code has been created and generates and inserts the code
+	 * sequences of the called subroutines of {@code _root}in topologically sorted order.
 	 * @param _root - the top-level diagram root.
 	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
 	 * @see #sortTopologically(Hashtable)
@@ -3171,9 +3189,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _targetFile - path of the target text file for the code export.
 	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
+	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
 	 */
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
+	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, IRoutinePool _routinePool)
+	// END KGU#676 2019-03-13
 	{
+		// START KGU#676 2019-03-13: Enh. #696
+		routinePool = _routinePool;
+		this.exportSubroutines = _routinePool != null;
+		this.pureFilename = "";
+		this.hasParallels = false;
+		this.usesFileAPI = false;
+		this.hasInput = false;
+		this.hasEmptyInput = false;
+		this.hasOutput = false;
+		this.code.clear();
+		// END KGU#676 2019-03-13
 		// START KGU#311 2016-12-27: Enh. #314
 		boolean someRootUsesFileAPI = false;
 		// END KGU#311 2016-12-27
@@ -3279,29 +3312,105 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 
 		boolean firstExport = true;
+		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+		this.subroutines.clear();
+		this.includedRoots.clear();
+		this.includeMap.clear();
+		if (this.optionExportSubroutines()) {
+			if (routinePool.getName() != null) {
+				this.pureFilename = routinePool.getName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			}
+		}
+		// END KGU#676 2019-03-13
 		for (Root root : _roots)
 		{
-			if (firstExport)
+			if (firstExport || routinePool != null)
 			{
 				firstExport = false;
 			}
 			else
 			{
 				code.add("");
-				this.insertComment("============================================================", "");
+				this.insertComment("=======8<=====================================================", "");
 				code.add("");
 			}
-			// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
-			this.hasParallels = false;
-			// START KGU#348 2017-09-25
-			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
-			this.usesFileAPI = false;
+
+			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+			if (this.optionExportSubroutines()) {
+				boolean wasAdded = false;
+				// Precaution for recursive top-level routine
+				if (!root.isProgram() && !subroutines.containsKey(root))
+				{
+					subroutines.put(root, new SubTopoSortEntry(null));
+					wasAdded = true;
+				}
+				registerCalledSubroutines(root);
+				if (wasAdded)
+				{
+					subroutines.remove(root);
+				}
+				if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			}
+			else {
+			// END KGU#676 2019-03-13
+				// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
+				this.hasParallels = false;
+				// START KGU#348 2017-09-25
+				// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+				this.usesFileAPI = false;
+			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+			}
+			// END KGU#676 2019-03-13
 			gatherElementInformationRoot(root);
 			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
-			this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			if (this.pureFilename.isEmpty()) {
+				this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			}
 			// END KGU#311 2016-12-27
-			generateCode(root, "");
+
+			// START KGU#676 2019-03-13: Enh. #696 Postpone this until we have all subroutine information
+			//generateCode(root, "");
+			if (!this.optionExportSubroutines()) {
+				generateCode(root, "");
+			}
+			// END KGU#678 2019-03-13
+			
 		}
+		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+		if (this.optionExportSubroutines()) {
+			for (Root sub: subroutines.keySet())
+			{
+				gatherElementInformationRoot(sub);
+			}
+			includedRoots = sortTopologically(includeMap);
+			for (Root incl: includedRoots.toArray(new Root[]{})) {
+				gatherElementInformationRoot(incl);
+			}
+			int subroutineLine = code.count();
+			firstExport = true;
+			for (Root root: _roots) {
+				if (!subroutines.containsKey(root) && !includedRoots.contains(root)) {
+					if (!firstExport) {
+						code.add("");
+						this.insertComment("=======8<=====================================================", "");
+						code.add("");
+					}
+					generateCode(root, "");
+					if (firstExport) {
+						subroutineLine = this.subroutineInsertionLine;
+						firstExport = false;
+					}
+				}
+			}
+			this.subroutineInsertionLine = subroutineLine;
+			if (!firstExport && !subroutines.isEmpty()) {
+				code.insert("", subroutineLine);
+				code.insert(this.commentSymbolLeft() + " = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = =" + this.commentSymbolRight(), subroutineLine);
+				code.insert("", subroutineLine);
+			}
+			generateSubroutineCode(null);
+		}
+		// END KGU#676 2019-03-13
 
 		// Did the user want the code directed to standard output?
 		if (_options.indexOf('-') >= 0)

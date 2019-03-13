@@ -104,6 +104,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-07      Enh. #385: findRoutinesBySignature(String, int) made aware of default arguments
  *      Kay Gürtzig     2019-03-10      Enh. #698: Refactoring/code revision: basics of loading/ saving delegated to Archivar
  *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
+ *      Kay Gürtzig     2019-03-12/13   Enh. #698: New IRoutinePool mmethods added
  *
  ******************************************************************************************************
  *
@@ -220,13 +221,13 @@ import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
 import lu.fisch.structorizer.archivar.ArchiveRecord;
+import lu.fisch.structorizer.archivar.IRoutinePool;
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -2135,6 +2136,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#444 2017-10-23
+
+	// START KGU#679 2019-03-12: Enh. #698
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.executor.IRoutinePool#addArchive(java.io.File, boolean)
+	 */
+	@Override
+	public boolean addArchive(File arrangementArchive, boolean lazy) {
+		// TODO we should actually think about lazy mode in order to reduce drawing contention
+		String errors = this.loadFile(arrangementArchive);
+		return !errors.isEmpty();
+	}
+	// END KGU#679 2019-03-12
 
 	/**
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
@@ -5039,4 +5053,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return true;
 	}
 
+	// START KGU#679 2019-03-13: Enh. #698
+	/**
+	 * @return the name of this pool if it has got one, otherwise null
+	 */
+	@Override
+	public String getName()
+	{
+		return this.getClass().getSimpleName();
+	}
+	// END KGU#679 2019-03-13
 }

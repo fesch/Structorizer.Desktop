@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-22      Enh. #563 (simplified record initializers), bugfix #564 (array initializers)
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for optional parameters (by argument extension in the Call)
+ *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *
  ******************************************************************************************************
  *
@@ -104,7 +105,6 @@ import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -1095,9 +1095,9 @@ public class OberonGenerator extends Generator {
 			// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 			//addCode(transform(lines.get(i))+";", _indent, isDisabled);
 			String line = lines.get(i);
-			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && Arranger.hasInstance() && line.endsWith(")")) {
+			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 				Function call = _call.getCalledRoutine();
-				java.util.Vector<Root> callCandidates = Arranger.getInstance().findRoutinesBySignature(call.getName(), call.paramCount());
+				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
 				if (!callCandidates.isEmpty()) {
 					// FIXME We'll just fetch the very first one for now...
 					Root called = callCandidates.get(0);

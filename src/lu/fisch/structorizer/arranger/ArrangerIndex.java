@@ -92,9 +92,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
-import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.ColorButton;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.GUIScaler;

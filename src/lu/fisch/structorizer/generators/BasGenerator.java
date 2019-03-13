@@ -32,33 +32,34 @@ package lu.fisch.structorizer.generators;
  *
  *      Author              Date            Description
  *      ------              ----            -----------
- *      Jacek Dzieniewicz   2013.03.02      First Issue
- *      Kay Gürtzig         2015.10.18      Comment generation revised
- *      Kay Gürtzig         2015.11.02      Case generation was defective (KGU#58), comments exported,
+ *      Jacek Dzieniewicz   2013-03-02      First Issue
+ *      Kay Gürtzig         2015-10-18      Comment generation revised
+ *      Kay Gürtzig         2015-11-02      Case generation was defective (KGU#58), comments exported,
  *                                          transformation reorganised, FOR loop mended (KGU#3)
- *      Kay Gürtzig         2015.12.18      Enh. #9 (KGU#2) Call mechanisms had to be refined,
+ *      Kay Gürtzig         2015-12-18      Enh. #9 (KGU#2) Call mechanisms had to be refined,
  *                                          Enh. #23 (KGU#78) Jump mechanism implemented
  *                                          Root generation decomposed and fundamentally revised
  *                                          Enh. #67 (KGU#113) Line number generation considered
- *      Kay Gürtzig         2015.12.19      Bugfix #51 (KGU#108) empty input instruction
+ *      Kay Gürtzig         2015-12-19      Bugfix #51 (KGU#108) empty input instruction
  *                                          Enh. #54 (KGU#101) multiple expressions on output
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2016-01-22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
- *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
- *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done
+ *      Kay Gürtzig         2016-10-13      Enh. #270: Handling of disabled elements added.
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-11-20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Formal adaptation
+ *      Kay Gürtzig         2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *
  ******************************************************************************************************
  *
@@ -77,7 +78,6 @@ package lu.fisch.structorizer.generators;
 
 import java.util.regex.Matcher;
 
-import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -852,9 +852,9 @@ public class BasGenerator extends Generator
 				// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 				//String line = transform(_call.getText().get(i));
 				String line = _call.getUnbrokenText().get(i);
-				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && Arranger.hasInstance() && line.endsWith(")")) {
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = Arranger.getInstance().findRoutinesBySignature(call.getName(), call.paramCount());
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);

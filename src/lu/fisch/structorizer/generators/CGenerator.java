@@ -85,6 +85,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-01-21      Bugfix #669: Export of some FOR-In loops produced structurally defective code
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-07      Enh. #385: Support for optional parameters (by argument extension in the Call)
+ *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *
  ******************************************************************************************************
  *
@@ -161,7 +162,6 @@ import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 
@@ -1479,9 +1479,9 @@ public class CGenerator extends Generator {
 //				else
 //				// END KGU#376 2017-04-13
 				// START KGU#371 2019-03-07: Enh. #385 Support for declared optional arguments
-				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && Arranger.hasInstance() && line.endsWith(")")) {
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = Arranger.getInstance().findRoutinesBySignature(call.getName(), call.paramCount());
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);

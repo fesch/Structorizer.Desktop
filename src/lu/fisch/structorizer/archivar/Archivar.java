@@ -57,6 +57,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -86,45 +87,43 @@ public class Archivar {
 	
 	private Logger logger;
 	
-	public class ArchiveIndexEntry {
-		public ArchiveRecord record;	// the root itself (or null) and the point
-		public String path;				// the true file path
-		public String virtPath = null;	// the virtual path (if inside an archive)
-		public String name = null;		// diagram name
-		public int minArgs = -1;		// minimum number of routine arguments, or -1 for a program, or -2 for an includable
-		public int maxArgs = -1;		// maximum number of routine arguments, or -1 for a program, or -2 for an includable
+	public class ArchiveIndexEntry extends ArchiveRecord {
+		public String path;					// the true file path
+		public String virtPath = null;		// the virtual path (if inside an archive)
+		public String name = null;			// diagram name
+		public int minArgs = -1;			// minimum number of routine arguments, or -1 for a program, or -2 for an includable
+		public int maxArgs = -1;			// maximum number of routine arguments, or -1 for a program, or -2 for an includable
 		
-		/** Derives an entry from an {@link ArchiveRecord} */
+		/** Derives an entry from an {@link ArchiveRecord}</br>
+		 * @param archiveRecord - the root component must not be null!
+		 */
 		public ArchiveIndexEntry(ArchiveRecord archiveRecord)
 		{
-			this.record = archiveRecord;
-			this.path = archiveRecord.root.shadowFilepath;
-			if (this.path == null) {
-				this.path = archiveRecord.root.getPath();
-			}
-			else {
-				this.virtPath = archiveRecord.root.getPath();
-			}
-			this.name = archiveRecord.root.getMethodName();
-			if (archiveRecord.root.isInclude()) {
-				this.minArgs = this.maxArgs = -2;
-			}
-			else if (archiveRecord.root.isSubroutine()) {
-				this.minArgs = archiveRecord.root.getMinParameterCount();
-				this.maxArgs = archiveRecord.root.getParameterNames().count();
-			}
+			super(archiveRecord);
+			setRoot(this.root);
 		}
 		
-		/** Derives an entry from a {@link Root} and its graphical location {@code point}. */
+		/** Derives an entry from a {@link Root} and its graphical location {@code point}.
+		 * @param root - The diagram (must not be null!)
+		 * @param point - the graphical location (may be null)
+		 */
 		public ArchiveIndexEntry(Root root, Point point)
 		{
 			this(new ArchiveRecord(root, point));
 		}
 		
-		/** Builds an entry from explicitly given values. */
+		/** Builds an entry from explicitly given values.<br/>
+		 * Important: At least one of {@code _path} or {@code _virtulalPath} must be given!
+		 * @param _point - graphical location (may be null)
+		 * @param _path - actual file path of the nsd file
+		 * @param _virtPath - virtual file path inside the source archive
+		 * @param _diagramName - name of the diagram (signature part)
+		 * @param _minArgs - minimum argument number (-1 for main, -2 for includable)
+		 * @param _minArgs - maximum argument number (-1 for main, -2 for includable)
+		 */
 		public ArchiveIndexEntry(Point _point, String _path, String _virtualPath, String _diagramName, int _minArgs, int _maxArgs)
 		{
-			this.record = new ArchiveRecord(null, _point);
+			super(null, _point);
 			this.path = _path;
 			this.virtPath = _virtualPath;
 			this.name = _diagramName;
@@ -132,14 +131,18 @@ public class Archivar {
 			this.maxArgs = _maxArgs;
 		}
 		
-		/** Derives an entry from an arranger list file line. */
+		/** Derives an entry from an arranger list file line.
+		 * @param arrangementLine - line of an arrangement file
+		 * @param _fromArchive - originating arrangement archive
+		 * @param _extractDir - extraction directory (for signature retrieval if info isn't part of the line)
+		 */
 		public ArchiveIndexEntry(String arrangementLine, File _fromArchive, File _extractDir)
 		{
+			super(null, null);
 			StringList fields = StringList.explode(arrangementLine, ",");	// FIXME what if a path or the name contains a comma?
 			if (fields.count() >= 3)
 			{
-				Point point = new Point(Integer.parseInt(fields.get(0)), Integer.parseInt(fields.get(1)));
-				this.record = new ArchiveRecord(null, point);
+				this.point = new Point(Integer.parseInt(fields.get(0)), Integer.parseInt(fields.get(1)));
 				String nsdFileName = fields.get(2);
 				if (nsdFileName.startsWith("\""))
 					nsdFileName = nsdFileName.substring(1);
@@ -164,7 +167,74 @@ public class Archivar {
 				this.maxArgs = Integer.parseInt(fields.get(5));
 			}
 		}
+
+		/**
+		 * @return the stored {@link Root}.
+		 * @see #getRoot(Archivar)
+		 * @see #getFile()
+		 */
+		public Root getRoot() {
+			return this.root;
+		}
+
+		/** 
+		 * Returns the stored {@link Root}. If the {@link Root} hadn't been stored and an
+		 * {@code archivar} is given then the diagram is retrieved and, if successful, 
+		 * cached in this entry.
+		 * @param archivar - optionally an {@link Archivar} for {@link Root} retrieval
+		 * @return the {@link Root} object if already loaded or after having been retrieved.
+		 * @throws Exception if something goes wrong on retrieval
+		 * @see #getRoot()
+		 * @see #getFile()
+		 */
+		public Root getRoot(Archivar archivar) throws Exception
+		{
+			if (this.root == null && archivar != null) {
+				if (this.path != null) {
+					File arrzFile = null;
+					if (this.virtPath != null) {
+						arrzFile = (new File(this.virtPath)).getParentFile();
+					}
+					this.setRoot(archivar.loadNSDFile(this.getFile(), arrzFile, null));
+				}
+			}
+			return this.root;
+		}
 		
+		/**
+		 * Sets the given {@link Root} object if it hadn't been set already and the updates
+		 * all related information
+		 * @param root - the diagram to be set
+		 * @return true if the {@code root} was accepted
+		 */
+		protected boolean setRoot(Root root)
+		{
+			if (root == null || this.root != null) {
+				return false;
+			}
+			this.root = root;
+			this.path = root.shadowFilepath;
+			if (this.path == null) {
+				this.path = root.getPath();
+			}
+			else {
+				this.virtPath = root.getPath();
+			}
+			this.name = root.getMethodName();
+			if (root.isInclude()) {
+				this.minArgs = this.maxArgs = -2;
+			}
+			else if (root.isSubroutine()) {
+				this.minArgs = root.getMinParameterCount();
+				this.maxArgs = root.getParameterNames().count();
+			}
+			return true;
+		}
+		
+		/**
+		 * @return either the actual nsd file path or the virtual path within the source archive
+		 * @see #getFile()
+		 */
 		public String getPath()
 		{
 			if (this.path == null) {
@@ -173,29 +243,56 @@ public class Archivar {
 			return this.path;
 		}
 		
+		/**
+		 * @return the source file - may be an actual nsd file or a virtual file path inside an archive
+		 * @see #getPath()
+		 */
 		public File getFile()
 		{
 			File file = null;
 			String path = getPath();
-			if (path == null) {
+			if (path != null) {
 				file = new File(path);
 			}
 			return file;
 		}
 		
+		/**
+		 * @return the routine signature string as {@code name(minArgs-maxArgs)} or just the diagram name (or null)
+		 */
 		public String getSignature()
 		{
 			String signature = null;
 			if (this.name != null) {
 				signature = this.name;
 				if (this.minArgs >= 0 && this.maxArgs >= 0) {
-					signature += "(" + this.minArgs + "-" + this.maxArgs + ")";
+					
+					signature += "(" + this.minArgs + (this.maxArgs > this.minArgs ? "-" + this.maxArgs : "") + ")";
 				}
 			}
-			else if (this.record.root != null) {
-				signature = this.record.root.getSignatureString(false);
+			else if (this.root != null) {
+				signature = this.root.getSignatureString(false);
 			}
 			return signature;
+		}
+		
+		/**
+		 * Compares this entry with other and checks whether the {@link Root} objects or
+		 * the files are equivalent. Signatures are not significant here.
+		 * @param other - another index entry
+		 * @return true if and only if both entries are equivalent
+		 */
+		public boolean equals(ArchiveIndexEntry other)
+		{
+			boolean equivalent = false;
+			File file = this.getFile();
+			if (this.root != null && this.root == other.root) {
+				equivalent = true;
+			}
+			else if (file != null && file.equals(other.getFile())) {
+				equivalent = true;
+			}
+			return equivalent;
 		}
 		
 		@Override
@@ -205,16 +302,28 @@ public class Archivar {
 			if (this.minArgs >= 0 && this.maxArgs >= 0) {
 				signature += "(" + this.minArgs + "-" + this.maxArgs + ")";
 			}
-			return getClass().getSimpleName() + "(" + this.record.toString() + ", " + signature + ": " + this.getPath() + ")";
+			return getClass().getSimpleName() + "(" + super.toString() + ", " + signature + ": " + this.getPath() + ")";
 		}
+
 	}
 	
+	/**
+	 * Effectively a list of {@link ArchiveIndexEntry} objects, also holding the
+	 * corresponding arrangement list file if the index hasn't beem merged wth another.
+	 * @author Kay Gürtzig
+	 */
 	public class ArchiveIndex
 	{
+		/** The extracted arrangement list */
 		public File arrFile;
 		public List<ArchiveIndexEntry> entries;
 		
-		public ArchiveIndex(File _arrFile, List<ArchiveIndexEntry> _entries)
+		private ArchiveIndex() {
+			this.arrFile = null;
+			this.entries = new LinkedList<ArchiveIndexEntry>();
+		}
+
+		public ArchiveIndex(File _arrFile, List<ArchiveIndexEntry> _entries, File _arrzFile)
 		{
 			arrFile = _arrFile;
 			entries = _entries;
@@ -225,7 +334,7 @@ public class Archivar {
 					in = new Scanner(_arrFile, "UTF8");
 					while (in.hasNextLine())
 					{
-						entries.add(new ArchiveIndexEntry(in.nextLine(), null, null));
+						entries.add(new ArchiveIndexEntry(in.nextLine(), _arrzFile, _arrFile.getParentFile()));
 					}
 					in.close();
 				} catch (FileNotFoundException e) {
@@ -236,6 +345,77 @@ public class Archivar {
 			}
 		}
 		
+		/**
+		 * Appends the given {@code entry} to this index, if {@code checkDuplicate}
+		 * is false or there is no equivalent entry.
+		 * @param entry - the {@link ArchiveIndexEntry} to be added
+		 * @param checkDuplicate - if true then root object or path is compared
+		 * @return true if anything changed (i.e. {@code entry} has been added) 
+		 */
+		public boolean add(ArchiveIndexEntry entry, boolean checkDuplicate)
+		{
+			boolean added = false;
+			if (!checkDuplicate || !this.entries.contains(entry)) {
+				added = this.entries.add(entry);
+			}
+			return added;
+		}
+		
+		/**
+		 * Appends all of the entries in the specified collection to the end of this list,
+		 * in the order that they are returned by the specified collection's iterator.
+		 * @param entries - collection of {@link ArchiveIndexEntry}
+		 * @param checkDuplicates - if true then root objects or paths are compared
+		 * @return true if anything changed (i.e. {@code entries} wasn't empty) 
+		 */
+		public boolean addAll(Collection<? extends ArchiveIndexEntry> entries, boolean checkDuplicates)
+		{
+			boolean added = false;
+			if (checkDuplicates) {
+				for (ArchiveIndexEntry entry: entries) {
+					if (!this.entries.contains(entry)) {
+						added = this.entries.add(entry) || added;
+					}
+				}
+			}
+			else {
+				added = this.entries.addAll(entries);
+			}
+			return added;
+		}
+		
+		/**
+		 * Appends all of the entries from the other ArchiveIndex which had no equivalent
+		 * in this archive index. If both arrFiles differ then arrFile entry gets cleared.
+		 * @param other - collection of {@link ArchiveIndexEntry}
+		 * @return true if anything changed 
+		 */
+		public boolean addAll(ArchiveIndex other)
+		{
+			boolean changed = this.addAll(other.entries, true);
+			if (changed && this.arrFile != null && !this.arrFile.equals(other.arrFile)) {
+				this.arrFile = null;
+			}
+			return changed;
+		}
+		
+		/**
+		 * Adds a new {@link ArchiveIndexEntry} for the given {@link Root} {@code root}
+		 * and {@code point}.
+		 * @param root - The diagram to be added, should ideally have a file representation
+		 * @param point - graphical location (arrangement), may be null
+		 * @return true if the addition worked
+		 */
+		public boolean addEntryFor(Root root, Point point)
+		{
+			boolean added = false;
+			ArchiveIndexEntry entry = new ArchiveIndexEntry(root, point);
+			if (!entries.contains(entry)) {
+				added = this.entries.add(entry);
+			}
+			return added;
+		}
+
 		/* (non-Javadoc)
 		 * @see java.lang.Object#toString()
 		 */
@@ -243,6 +423,29 @@ public class Archivar {
 		public String toString()
 		{
 			return this.getClass().getName() + "(" + this.arrFile + ": " + this.entries.size() + ")";
+		}
+
+		/** @return true if there is no entry in this index */
+		public boolean isEmpty() {
+			return this.entries == null || this.entries.isEmpty();
+		}
+		
+		/** @return the number of entries in this archive index */
+		public int size()
+		{
+			int size = 0;
+			if (this.entries != null) {
+				size = this.entries.size();
+			}
+			return size;
+		}
+		
+		/**
+		 * @return an iterator for the contained {@link ArchiveIndexEntry} elements, or possibly null!
+		 */
+		public Iterator<ArchiveIndexEntry> iterator()
+		{
+			return this.entries.iterator();
 		}
 		
 	}
@@ -580,12 +783,15 @@ public class Archivar {
 	}
 	
 	/**
-	 * 
-	 * @param _arrFile
-	 * @param _fromArchive
-	 * @param _tempDir
-	 * @param _troubles
-	 * @return
+	 * Loads the arrangement described in {@code _arrFile} and returns the diagrams and their locations
+	 * at least. If necessary and either {@code _arrFile} is given or the listed path is a virtual path
+	 * into an archive tries to extract the files, eithe into {@code _tempDir} is given or into a new
+	 * temporary folder.
+	 * @param _arrFile - the arrangement list file containing the names or paths of the diagram files
+	 * @param _fromArchive - the arrangement archive file if the arangement originates in the archive (for extraction)
+	 * @param _tempDir - the temporary directory where to read the diagram files from if the paths aren't absolute.
+	 * @param _troubles - {@link StringList} to which occurring error messages will be added
+	 * @return a list of {@link ArchiveRecord}s containing a {@link Root} and an arrangement location at least
 	 */
 	public List<ArchiveRecord> loadArrangement(File _arrFile, File _fromArchive, File _tempDir, StringList _troubles)
 	{
@@ -635,6 +841,9 @@ public class Archivar {
 		} catch (FileNotFoundException e) {
 			_troubles.add(_arrFile.getAbsolutePath() + ": " + e.toString());
 			logger.log(Level.SEVERE, "Missing arrangement file: " + _arrFile.getAbsolutePath(), e);
+		} catch (Exception ex) {
+			_troubles.add(_arrFile.getAbsolutePath() + ": " + ex.toString());
+			logger.log(Level.WARNING, "Trouble on loading arrangement: " + _arrFile.getAbsolutePath(), ex);
 		}
 
 		return items;
@@ -649,10 +858,11 @@ public class Archivar {
 	 * @param _fromArchive - the archive file {@code _nsdFile} was extracted from, or null.
 	 * @param _troubles - a {@link StringList} error messages may be added to.
 	 * @return the loaded {@link Root} or null (in case loading failed for some reason)
+	 * @throws Exception if some problem occurs and {@code _troubles} is null
 	 * @see #extractNSDFrom(File, String, File, StringList)
 	 * @see #unzipArrangement(File, File)
 	 */
-	private Root loadNSDFile(File _nsdFile, File _fromArchive, StringList _troubles) {
+	private Root loadNSDFile(File _nsdFile, File _fromArchive, StringList _troubles) throws Exception {
 		Root root = null;
 		// open an existing file
 		NSDParser parser = new NSDParser();
@@ -673,7 +883,12 @@ public class Archivar {
 			if (errorMessage == null && (errorMessage = ex.getMessage()) == null) {
 				errorMessage = ex.toString();
 			}
-			_troubles.add(_nsdFile.getAbsolutePath() + ": " + errorMessage);
+			if (_troubles != null) {
+				_troubles.add(_nsdFile.getAbsolutePath() + ": " + errorMessage);
+			}
+			else {
+				throw ex;
+			}
 		}
 		return root;
 	}
@@ -756,7 +971,7 @@ public class Archivar {
 	{
 		ArchiveIndex archiveIndex = null;
 		final int BUFSIZE = 2048;
-		String arrFilename = null;
+		File arrFile = null;
 		if (_targetDir == null)
 		{
 			String dirName = _arrzFile.getName().toLowerCase();
@@ -773,12 +988,12 @@ public class Archivar {
 			Enumeration<? extends ZipEntry> entries = zipfile.entries();
 			while(entries.hasMoreElements()) {
 				entry = (ZipEntry) entries.nextElement();
-				String targetName = _targetDir + File.separator + entry.getName();
+				File targetFile = new File(_targetDir + File.separator + entry.getName());
 				bistr = new BufferedInputStream
 						(zipfile.getInputStream(entry));
 				int count;
 				byte buffer[] = new byte[BUFSIZE];
-				FileOutputStream fostr = new FileOutputStream(targetName);
+				FileOutputStream fostr = new FileOutputStream(targetFile);
 				dest = new BufferedOutputStream(fostr, BUFSIZE);
 				while ((count = bistr.read(buffer, 0, BUFSIZE))	!= -1)
 				{
@@ -788,21 +1003,21 @@ public class Archivar {
 				dest.close();
 				bistr.close();
 				// Preserve at least the modification time if possible
-				Path destPath = (new File(targetName)).toPath();
+				Path destPath = (targetFile).toPath();
 				try {
 					Files.setLastModifiedTime(destPath, entry.getLastModifiedTime());
 				} catch (IOException e) {}
 				if (ArrFilter.isArr(entry.getName()))
 				{
-					arrFilename = targetName;
+					arrFile = targetFile;
 				}
 			}
 			zipfile.close();
 		} catch(Exception ex) {
 			logger.log(Level.WARNING, "Failed to unzip the arrangement archive " + _arrzFile, ex);
 		}
-		if (arrFilename != null) {
-			archiveIndex = new ArchiveIndex(new File(arrFilename), null);
+		if (arrFile != null) {
+			archiveIndex = new ArchiveIndex(arrFile, null, _arrzFile);
 		}
 		return archiveIndex;
 	}
@@ -815,7 +1030,8 @@ public class Archivar {
 	 * of the contained diagrams.
 	 * @param _arrzFile - the archive file to be inspected
 	 * @param _targetDir - an extraction directory: if not null and the arranger list doesn't
-	 * contain the signaturs then arranger list file and the NSD files will be extracted there.
+	 * contain the signatures then the arranger list file and the NSD files will be extracted
+	 * there.
 	 * @return the content overview
 	 */
 	public ArchiveIndex getArrangementArchiveContent(File _arrzFile, File _targetDir)
@@ -869,15 +1085,21 @@ public class Archivar {
 				ArchiveIndexEntry entry = new ArchiveIndexEntry(arrContents.get(i), _arrzFile, null);
 				if (entry.getSignature() == null) {
 					StringList troubles = new StringList();
-					Root root = extractNSDFrom(_arrzFile, entry.getPath(), _targetDir, troubles);
-					if (root != null) {
-						entry = new ArchiveIndexEntry(root, entry.record.point);
-					}
+					entry.root = extractNSDFrom(_arrzFile, entry.getPath(), _targetDir, troubles);
 				}
 				entries.add(new ArchiveIndexEntry(arrContents.get(i), _arrzFile, null));
 			}
-			archiveIndex = new ArchiveIndex(new File(arrFileName), entries);
+			archiveIndex = new ArchiveIndex(new File(arrFileName), entries, null);
 		}
 		return archiveIndex;
+	}
+	
+	public ArchiveIndex makeNewIndexFor(File _arrFile)
+	{
+		return new ArchiveIndex(_arrFile, null, null);
+	}
+	
+	public ArchiveIndex makeEmptyIndex() {
+		return new ArchiveIndex();
 	}
 }

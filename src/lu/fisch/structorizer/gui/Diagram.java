@@ -6101,7 +6101,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#654 2019-02-16
 					gen.exportCode(root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
-							NSDControl.getFrame());
+							// START KGU#676/KGU#679 2019-03-13: Enh. #696,#698 Specify the routine pool expicitly
+							//NSDControl.getFrame());
+							NSDControl.getFrame(),
+							(Arranger.hasInstance() ? Arranger.getInstance() : null));
+							// END KGU#676 2019-03-13
 			// START KGU#654 2019-02-16: Enh. #681
 			// START KGU#456 2017-11-05: Enh. #452
 			if (root.advanceTutorialState(26, root)) {

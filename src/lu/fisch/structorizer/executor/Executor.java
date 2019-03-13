@@ -331,6 +331,7 @@ import javax.swing.SwingUtilities;
 
 import lu.fisch.diagrcontrol.*;
 import lu.fisch.diagrcontrol.DiagramController.FunctionException;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
@@ -982,7 +983,7 @@ public class Executor implements Runnable
 	// START KGU#677 2019-03-09: In case of Arrays being the result of a function (e.g. copyArray()), the message looks different
 	//private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.)get").matcher("");
 	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?)\\.get\\((.*)\\)(.*?)'' : Method Invocation ((\\w+)\\.)?get").matcher("");
-	// END KGU#677 2019-03-9
+	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
 
