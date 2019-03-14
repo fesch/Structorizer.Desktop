@@ -61,6 +61,7 @@ Current development version: 3.29-06 (2019-03-15)
 - 05: Issues #518, #544, #557: Drawing accelerated by confining to visible area <2>
 - 06: Issues #518, #544, #557: Bug in visibility detection fixed; workaround for
       heavy contention in Arranger: highlighting temporarily switched off <2>
+- 06: Issue #702: Size detection for imported or dropped diagrams in Arranger <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
