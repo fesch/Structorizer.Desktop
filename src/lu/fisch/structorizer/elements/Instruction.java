@@ -66,6 +66,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2018-09-08      Issue #508: Reducing top padding from E_PADDING/2 to E_PADDING/3
  *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -76,6 +77,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -211,7 +213,9 @@ public class Instruction extends Element {
 		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
 		if (this != this.getDrawingSurrogate(false)) {
 			rect0 = new Rect(0, 0, 0, 0);
+			// START KGU#136 2016-03-01: Bugfix #97
 			isRectUpToDate = true;
+			// END KGU#136 2016-03-01
 			return rect0;
 		}
 		// END KGU#477 2017-12-06
@@ -386,8 +390,12 @@ public class Instruction extends Element {
 		}
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
@@ -1090,7 +1098,7 @@ public class Instruction extends Element {
 			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
 				StringList compNames = new StringList();
 				StringList compTypes = new StringList();
-				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
+				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes, null);
 				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
 			}
 			else {

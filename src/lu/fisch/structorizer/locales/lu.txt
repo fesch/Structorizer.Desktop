@@ -500,4 +500,4 @@ ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
 
 -----[ ImportOptionDialog ]-----
-ExportOptionDialog.title=Astellunge fir de Datei-Import
+ImportOptionDialog.title=Astellunge fir de Datei-Import

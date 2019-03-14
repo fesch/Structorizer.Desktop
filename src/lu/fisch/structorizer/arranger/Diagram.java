@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.arranger;
 
-/*
- *****************************************************************************************************
+/******************************************************************************************************
  *
  *      Author: Bob Fisch
  *
@@ -39,15 +38,17 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017-01-13  Issue #305 (KGU#330) additional information added to trigger notification
  *      Kay Gürtzig     2018-12-26  Enh. #655 method getName() introduced
  *      Kay Gürtzig     2019-01-20  Bugfix #667 in method getName().
+ *      Kay Gürtzig     2019-03-10  Issue #698: Inheritance changed to ArchiveRecord, indentations aligned
  *
  ******************************************************************************************************
  *
  * Comment:	/
  *
- *****************************************************************************************************
- *///
+ ******************************************************************************************************///
 
 import java.awt.Point;
+
+import lu.fisch.structorizer.archivar.ArchiveRecord;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.utils.StringList;
@@ -56,38 +57,35 @@ import lu.fisch.utils.StringList;
  *
  * @author robertfisch
  */
-public class Diagram
+public class Diagram extends ArchiveRecord
 {
-    Root root = null;
-    Point point = null;
-    Mainform mainform = null;
-    // START KGU#88 2015-11-24
-    boolean isPinned = false;
-    // END KGU#88 2015-11-24
-    // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-    private String signature = null;
-    // END KGU#330 2017-01-13
-    // START KGU#626 2018-12-28: Enh. #657 - group management
-    private final StringList groupNames = new StringList(); 
-    /**
-     * Indicates that the diagram had been moved. Is to be reset when an arrangement containing this diagram
-     * is saved. Therefore all groups must cache the disjunction of all wasMoved values of all their diagrams
-     * because otherwise they might seem "clean" if all contained diagrams were saved with some totally different
-     * arrangement.
-     */
-    boolean wasMoved = false;
-    // END KGU#626 2018-12-28
+	Mainform mainform = null;
+	// START KGU#88 2015-11-24
+	boolean isPinned = false;
+	// END KGU#88 2015-11-24
+	// START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
+	private String signature = null;
+	// END KGU#330 2017-01-13
+	// START KGU#626 2018-12-28: Enh. #657 - group management
+	private final StringList groupNames = new StringList(); 
+	/**
+	 * Indicates that the diagram had been moved. Is to be reset when an arrangement containing this diagram
+	 * is saved. Therefore all groups must cache the disjunction of all wasMoved values of all their diagrams
+	 * because otherwise they might seem "clean" if all contained diagrams were saved with some totally different
+	 * arrangement.
+	 */
+	boolean wasMoved = false;
+	// END KGU#626 2018-12-28
 
-    public Diagram(Root root, Point point)
-    {
-        this.root = root;
-        this.point = point;
-        // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-        signature = root.getSignatureString(true);
-        // END KGU#330 2017-01-13
-    }
+	public Diagram(Root root, Point point)
+	{
+		super(root,  point);
+		// START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
+		signature = root.getSignatureString(true);
+		// END KGU#330 2017-01-13
+	}
 
-    // START KGU#155 2016-03-08: Bugfix #97 extension
+	// START KGU#155 2016-03-08: Bugfix #97 extension
 	/**
 	 * Invalidates the cached prepareDraw info of all diagrams residing here
 	 * (to be called on events with heavy impact on the size or shape of some
@@ -110,7 +108,7 @@ public class Diagram
 	}
 	// END KGU#155 2016-03-08
 	
-    // START KGU#330 2017-01-13: Enh. #305
+	// START KGU#330 2017-01-13: Enh. #305
 	/**
 	 * Identifies notification-relevant changes (and updates the cached info). This includes
 	 * @return true iff the signature string for the Arranger index has changed
@@ -121,7 +119,7 @@ public class Diagram
 		this.signature = this.root.getSignatureString(true);
 		return !this.signature.equals(oldSignature);
 	}
-    // END KGU#330 2017-01-13
+	// END KGU#330 2017-01-13
 	
 	// START KGU#624 2018-12-26: Enh. #655
 	/** @return the pure diagram name (extracted from the cached signature) */
@@ -136,71 +134,71 @@ public class Diagram
 			if ((pos1 = name.indexOf('(')) > 0) {
 				name = name.substring(0, pos1);
 			}
-	        // START KGU#639 2019-01-20: Bugfix #667 - we must not return a name with leading asterisk
-	        if (name.startsWith("*")) {
-	            // Remove the change marker!
-	            name = name.substring(1);
-	        }
-	        // END KGU#639 2019-01-20
+			// START KGU#639 2019-01-20: Bugfix #667 - we must not return a name with leading asterisk
+			if (name.startsWith("*")) {
+				// Remove the change marker!
+				name = name.substring(1);
+			}
+			// END KGU#639 2019-01-20
 		}
 		return name;
 	}
 	// END KGU#624 2018-12-26
 
-    // START KGU#626 2018-12-28: Enh. #657 - group management
-	/**
-	 * NOTE: This method should not be called directly but from {@link Group#addDiagram(Diagram)}.
-	 * @param _group - the {@link Group} this diagram is being added to
-	 * @return true if the group had not been registered with this diagram before, false otherwise
-	 */
-    protected boolean addToGroup(Group _group)
-    {
-    	if (_group == null) return false;
-    	return this.groupNames.addIfNew(_group.getName());
-    }
+	// START KGU#626 2018-12-28: Enh. #657 - group management
+    /**
+     * NOTE: This method should not be called directly but from {@link Group#addDiagram(Diagram)}.
+     * @param _group - the {@link Group} this diagram is being added to
+     * @return true if the group had not been registered with this diagram before, false otherwise
+     */
+	protected boolean addToGroup(Group _group)
+	{
+		if (_group == null) return false;
+		return this.groupNames.addIfNew(_group.getName());
+	}
 
-    /**
-	 * NOTE: This method should not be called directly but from {@link Group#removeDiagram(Diagram)}.
-	 * @param _group - the {@link Group} this diagram is being added to
-	 * @return true if the group had indeed been registered with this diagram before, false otherwise
+	/**
+     * NOTE: This method should not be called directly but from {@link Group#removeDiagram(Diagram)}.
+     * @param _group - the {@link Group} this diagram is being added to
+     * @return true if the group had indeed been registered with this diagram before, false otherwise
+     */
+	protected boolean removeFromGroup(Group _group)
+	{
+		if (_group == null) return false;
+		return this.groupNames.removeAll(_group.getName()) > 0;
+	}
+	// END KGU#626 2018-12-28
+
+	// START KGU#626 2018-12-30: Enh. #657
+	/**
+	 * @return the array of the group names this diagran is member of.
+	 * @see #addToGroup(Group)
+	 * @see #removeFromGroup(Group)
 	 */
-    protected boolean removeFromGroup(Group _group)
-    {
-    	if (_group == null) return false;
-    	return this.groupNames.removeAll(_group.getName()) > 0;
-    }
-    // END KGU#626 2018-12-28
-    
-    // START KGU#626 2018-12-30: Enh. #657
-    /**
-     * @return the array of the group names this diagran is member of.
-     * @see #addToGroup(Group)
-     * @see #removeFromGroup(Group)
-     */
-    public String[] getGroupNames()
-    {
-    	return this.groupNames.toArray();
-    }
-    
-    /**
-     * Moves the diagram's reference point to the new coordinates and registers the movement
-     * @param newX
-     * @param newY
-     */
-    public void setLocation(int newX, int newY)
-    {
-    	boolean differs = this.point.x != newX || this.point.y != newY;
-    	this.point.setLocation(newX, newY);
-    	this.wasMoved = differs;
-    }
-    // END KGU#626 2018-12-30
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString()
-    {
-    	return this.getClass().getSimpleName() + "(" + this.point + ", " + this.root + ")";
-    }
+	public String[] getGroupNames()
+	{
+		return this.groupNames.toArray();
+	}
+
+	/**
+	 * Moves the diagram's reference point to the new coordinates and registers the movement
+	 * @param newX
+	 * @param newY
+	 */
+	public void setLocation(int newX, int newY)
+	{
+		boolean differs = this.point.x != newX || this.point.y != newY;
+		this.point.setLocation(newX, newY);
+		this.wasMoved = differs;
+	}
+	// END KGU#626 2018-12-30
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return this.getClass().getSimpleName() + "(" + this.point + ", " + this.root + ")";
+	}
 }

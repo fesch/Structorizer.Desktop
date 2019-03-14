@@ -20,6 +20,7 @@
 
 package lu.fisch.graphics;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 
 /******************************************************************************************************
@@ -35,9 +36,10 @@ import java.awt.Rectangle;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.11.24      Conversions to and from java.awt.Rectangle
- *      Kay Gürtzig     2018.02.17      Method to generate a scaled copy added (to facilitate enh. #512)
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Kay Gürtzig     2015-11-24      Conversions to and from java.awt.Rectangle
+ *      Kay Gürtzig     2018-02-17      Method to generate a scaled copy added (to facilitate enh. #512)
+ *      Kay Gürtzig     2019-03-11      2 methods add(...) added to translate a given Rect instance
  *
  ******************************************************************************************************
  *
@@ -55,18 +57,18 @@ public class Rect{
 	
 	public Rect(int _left, int _top, int _right, int _bottom)
 	{
-		this.left=_left;
-		this.top=_top;
-		this.bottom=_bottom;
-		this.right=_right;
+		this.left = _left;
+		this.top = _top;
+		this.bottom = _bottom;
+		this.right = _right;
 	}
 	
 	public Rect()
 	{		
-		this.left=0;
-		this.top=0;
-		this.bottom=0;
-		this.right=0;
+		this.left = 0;
+		this.top = 0;
+		this.bottom = 0;
+		this.right = 0;
 	}
 	
 	/**
@@ -90,7 +92,7 @@ public class Rect{
 	 * Creates a scaled copy of this with scale factor {@code factor}
 	 * related to the coordinate origin.
 	 * @param factor - the scale factor to be applied.
-	 * @return an equivalent java.awt.Rectangle
+	 * @return the scaled copy
 	 */
 	public Rect scale(double factor)
 	{
@@ -111,6 +113,31 @@ public class Rect{
 		return scaledRect;
 	}
 	// END KGU 2018-02-17
+	
+	// START KGU 2019-03-11
+	/**
+	 * Translates this Rect instance by the given delta values for x and y.
+	 * @param deltaX - horizontal displacement
+	 * @param deltaY - vertical displacement
+	 */
+	public void add(int deltaX, int deltaY)
+	{
+		this.left += deltaX;
+		this.top += deltaY;
+		this.right += deltaX;
+		this.bottom += deltaY;
+	}
+
+	/**
+	 * Translates this Rect instance by the given {@link Point} {@code delta}.
+	 * @param delta - the displacement
+	 * @see #add(int, int)
+	 */
+	public void add(Point delta)
+	{
+		add(delta.x, delta.y);
+	}	
+	// END KGU 2019-03-11
 
 	/**
 	 * Convert myself into a java.awt.Rectangle

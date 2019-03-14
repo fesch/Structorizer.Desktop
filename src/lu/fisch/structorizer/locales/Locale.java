@@ -266,7 +266,6 @@ public class Locale {
             if(
                     (line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
                     || line.startsWith(Locale.startOfSubSection)
-                    
               )
             {
                 keys.add(line);
@@ -313,6 +312,14 @@ public class Locale {
     }
     // END KGU#231 2016-08-08
     
+    /**
+     * Retrieves the string value for the given {@code key} in section {@code sectionName}.
+     * If there is no such key or the value isn't specified then an empty string will be
+     * returned.
+     * @param sectionName - name of the interesting section
+     * @param key - the key sequence
+     * @return a string associated to the given key or ""
+     */
     public String getValue(String sectionName, String key)
     {
         // START KGU#231 2016-08-08: Issue #220 - Reduced to new internal method

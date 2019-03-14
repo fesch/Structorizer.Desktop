@@ -98,6 +98,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-04      Enh. #657: Key bindings Ctrl-G and Ctrl-Shift-G withdrawn (too rarely used)
  *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
+ *      Kay Gürtzig     2019-03-07      Enh. #385: New message error20_2, error20 renamed in error20_1
  *
  ******************************************************************************************************
  *
@@ -474,7 +475,11 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error19_2 = new LangTextHolder("Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!");
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
-	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// START KGU#371 2019-03-07: Enh. #385 - default parameter check added
+	//public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	public static final LangTextHolder error20_1 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	public static final LangTextHolder error20_2 = new LangTextHolder("Parameters with default must be placed contiguously at the parameter list end.");
+	// END KGU#371 2019-03-07
 	// END KGU#253 2016-09-21
 	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
 	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
@@ -580,7 +585,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorUsingParser = new LangTextHolder("Error while using % parser");
 	// END KGU#354 2017-03-04
 	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
-	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
+	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates<br/>and news about Structorizer.");
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17

@@ -32,32 +32,35 @@ package lu.fisch.structorizer.generators;
  *
  *      Author              Date            Description
  *      ------              ----            -----------
- *      Jacek Dzieniewicz   2013.03.02      First Issue
- *      Kay Gürtzig         2015.10.18      Comment generation revised
- *      Kay Gürtzig         2015.11.02      Case generation was defective (KGU#58), comments exported,
+ *      Jacek Dzieniewicz   2013-03-02      First Issue
+ *      Kay Gürtzig         2015-10-18      Comment generation revised
+ *      Kay Gürtzig         2015-11-02      Case generation was defective (KGU#58), comments exported,
  *                                          transformation reorganised, FOR loop mended (KGU#3)
- *      Kay Gürtzig         2015.12.18      Enh. #9 (KGU#2) Call mechanisms had to be refined,
+ *      Kay Gürtzig         2015-12-18      Enh. #9 (KGU#2) Call mechanisms had to be refined,
  *                                          Enh. #23 (KGU#78) Jump mechanism implemented
  *                                          Root generation decomposed and fundamentally revised
  *                                          Enh. #67 (KGU#113) Line number generation considered
- *      Kay Gürtzig         2015.12.19      Bugfix #51 (KGU#108) empty input instruction
+ *      Kay Gürtzig         2015-12-19      Bugfix #51 (KGU#108) empty input instruction
  *                                          Enh. #54 (KGU#101) multiple expressions on output
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2016-01-22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
- *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
- *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done
+ *      Kay Gürtzig         2016-10-13      Enh. #270: Handling of disabled elements added.
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-11-20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Formal adaptation
+ *      Kay Gürtzig         2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
+ *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -90,6 +93,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
@@ -140,7 +144,23 @@ public class BasGenerator extends Generator
     }
     // END KGU 2015-10-18
 
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    // START KGU#371 2019-03-07: Enh. #385
+    /**
+     * @return The level of subroutine overloading support in the target language
+     */
+    @Override
+    protected OverloadingLevel getOverloadingLevel() {
+        if(this.optionCodeLineNumbering()) {
+            // Well, with GOSUB n, this is not even an issue...
+            return OverloadingLevel.OL_NO_OVERLOADING;
+        }
+        else {
+            return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+        }
+    }
+    // END KGU#371 2019-03-07
+
+	//	// START KGU 2016-08-12: Enh. #231 - information for analyser
 //    private static final String[] reservedWords = new String[]{
 //		"FUNCTION", "SUB",
 //		"REM", "LET", "AS", "DIM",
@@ -826,18 +846,35 @@ public class BasGenerator extends Generator
 			// START KGU 2014-11-16
 			insertComment(_call, _indent);
 			// END KGU 2014-11-16
-			for(int i=0; i<_call.getText().count(); i++)
+			for (int i=0; i<_call.getUnbrokenText().count(); i++)
 			{
 				// START KGU#2 2015-12-18: Enh. #9 This may require a CALL command prefix
 				//code.add(_indent+transform(_call.getText().get(i)));
-				String line = transform(_call.getText().get(i));
+				// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
+				//String line = transform(_call.getText().get(i));
+				String line = _call.getUnbrokenText().get(i);
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
+					Function call = _call.getCalledRoutine();
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+					if (!callCandidates.isEmpty()) {
+						// FIXME We'll just fetch the very first one for now...
+						Root called = callCandidates.get(0);
+						StringList defaults = called.getParameterDefaults();
+						if (defaults.count() > call.paramCount()) {
+							// We just insert the list of default values for the missing arguments
+							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+						}
+					}
+				}
+				// END KGU#371 2019-03-08
 				if (!line.startsWith("LET") || line.indexOf(" = ") < 0)
 				{
 					line = "CALL " + line;
 				}
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(this.getLineNumber() + _indent + line);
-				addCode(line, _indent, _call.isDisabled());
+				addCode(transform(line), _indent, _call.isDisabled());
 				// END KGU#277 2016-10-13
 				// END KGU#2 2015-12-18
 			}
@@ -999,44 +1036,48 @@ public class BasGenerator extends Generator
 	{
 		String furtherIndent = _indent;
 		this.labelMap = new int[this.labelCount];
-        String pr = this.commentSymbolLeft() + " program";
-        this.procName = _procName;	// Needed for value return mechanisms
+		String pr = this.commentSymbolLeft() + " program";
+		this.procName = _procName;	// Needed for value return mechanisms
 
-        // START KGU#178 206-07-20: Enh. #160 - option to involve called subroutines
-        //insertComment(_root, _indent);
-    	//insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
-        if (topLevel)
-        {
-            insertComment(_root, _indent);
-        	insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+		// START KGU#178 206-07-20: Enh. #160 - option to involve called subroutines
+		//insertComment(_root, _indent);
+		//insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+		if (topLevel)
+		{
+			insertComment(_root, _indent);
+			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
 			insertCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-        	subroutineInsertionLine = code.count();	// (this will be revised in line nmbering mode)
-        	insertComment("", _indent);
-        }
-        else
-        {
-        	insertComment("", _indent);
-            insertComment(_root, _indent);
-        }
-        // END KGU#178 2016-07-20
-        
-        String signature = _root.getMethodName();
-        if (_root.isSubroutine()) {
-        	boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
-        	pr = isFunction ? "FUNCTION" : "SUB";
-        		
+			subroutineInsertionLine = code.count();	// (this will be revised in line nmbering mode)
+			insertComment("", _indent);
+		}
+		else
+		{
+			insertComment("", _indent);
+			insertComment(_root, _indent);
+		}
+		// END KGU#178 2016-07-20
+
+		String signature = _root.getMethodName();
+		if (_root.isSubroutine()) {
+			boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
+			pr = isFunction ? "FUNCTION" : "SUB";
+
 			// Compose the function header
-        	signature += "(";
-        	if (this.optionCodeLineNumbering())
-        	{
-        		insertComment("TODO: Add type-specific suffixes where necessary!", _indent);
-        	}
-        	else
-        	{
-        		insertComment("TODO: Check (and specify if needed) the argument and result types!", _indent);        		
-        	}
+			signature += "(";
+			if (this.optionCodeLineNumbering())
+			{
+				insertComment("TODO: Add type-specific suffixes where necessary!", _indent);
+			}
+			else
+			{
+				insertComment("TODO: Check (and specify if needed) the argument and result types!", _indent);        		
+			}
+			// START KGU#371 2019-03-08: Enh. #385 Deal with optional arguments#
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			// END KGU#371 2019-03-08
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? ", " : "");
 				signature += (_paramNames.get(p)).trim();
@@ -1048,6 +1089,11 @@ public class BasGenerator extends Generator
 						signature += " AS " + type;
 					}
 				}
+				// START KGU#371 2019-03-08: Enh. #385 Deal with optional arguments#
+				if (p >= minArgs && this.getOverloadingLevel() == OverloadingLevel.OL_DEFAULT_ARGUMENTS) {
+					signature += " = " + transform(argDefaults.get(p));
+				}
+				// END KGU#371 2019-03-08
 			}
 			signature += ")";
 			if (_resultType != null)

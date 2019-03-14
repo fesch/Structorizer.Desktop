@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017-03-03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
  *      Kay Gürtzig     2017-04-14      Issues #23,#380,#394: new jump analysis helper methods
  *      Kay Gürtzig     2017-06-09      Enh. #416: Adaptations for execution line continuation
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,7 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -175,10 +177,14 @@ public class Jump extends Instruction {
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// START KGU 2016-07-30: Just delegate the basics to super
-		super.draw(_canvas, _top_left);
+		super.draw(_canvas, _top_left, _viewport);
 		// END KGU 2016-07-30: Just delegate the basics to super
 
 		_canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.

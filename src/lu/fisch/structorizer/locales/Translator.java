@@ -219,8 +219,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             ArrayList<String> keys = locales.getDefaultLocale().getKeyValues(sectionName);
             for (int j = 0; j < keys.size(); j++) {
                 String key = keys.get(j);
-                StringList parts = StringList.explodeFirstOnly(key.trim(),"=");
-                model.addRow(parts.toArray());
+                model.addRow(key.trim().split("=", 2));
             }
         }
         

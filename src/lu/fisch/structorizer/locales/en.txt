@@ -118,6 +118,7 @@
  *      Kay Gürtzig     2019-01-04      Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig     2019-02-16      Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -348,7 +349,7 @@ Menu.msgBreakTriggerPrompt.text=Specify an execution count triggering a break (0
 Menu.msgBreakTriggerIgnored.text=Input ignored - must be a cardinal number.
 Menu.msgOpenLangFile.text=Open language file
 Menu.msgLangFile.text=Structorizer language file
-Menu.msgGotoHomepage.text=Go to % to look for updates<br>and news about Structorizer.
+Menu.msgGotoHomepage.text=Go to % to look for updates<br/>and news about Structorizer.
 Menu.msgTitleError.text=Error
 Menu.msgTitleWarning.text=WARNING
 Menu.msgTitleLoadingError.text=Loading Error
@@ -477,7 +478,8 @@ Menu.error17.text=Consistency risk due to concurrent access to variable «%» by
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
 Menu.error19_1.text=Variable name «%1» may collide with reserved names in languages like %2!
 Menu.error19_2.text=Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!
-Menu.error20.text=A @o header must have a (possibly empty) parameter list within parentheses.
+Menu.error20_1.text=A @o header must have a (possibly empty) parameter list within parentheses.
+Menu.error20_2.text=Parameters with default must be placed contiguously at the parameter list end.
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
 Menu.error22_1.text=Constant «%1» depends on apparently non-constant value(s): «%2».
 Menu.error22_2.text=Attempt to modify the value of constant «%»!
@@ -653,7 +655,8 @@ Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
 
 -----[ InputBox ]-----
-InputBox.title=
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Please enter a text
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comment
@@ -672,8 +675,6 @@ InputBox.lblText.text[elementType:While]=Please enter the entry condition
 InputBox.lblText.text[elementType:Repeat]=Please enter the condition to leave
 InputBox.lblText.text[elementType:Case]=Please enter the choice expression and the case constants (one per line)
 InputBox.lblText.text[elementType:Parallel]=Number of parallel threads
-InputBox.title[elementType:Root]=
-InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Add new @a ...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Add new @b statement ...
 InputBox.title[elementType:Case,getInsertionType():insert]=Add new @c statement ...
@@ -728,7 +729,9 @@ InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of
 InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=
+InputBoxRoot.title[elementType:Root]=Edit @n
+InputBoxRoot.title[elementType:Function]=Edit @o
+InputBoxRoot.title[elementType:Includable]=Edit @p
 InputBoxRoot.lblIncludeList.text=Diagrams to be included
 InputBoxRoot.txtIncludeList.tooltip=Names of diagrams to be included on execution start (separated by commas or newlines).
 InputBoxRoot.lblText.text=Diagram name / function signature
@@ -914,7 +917,7 @@ ParserPreferences.lblFor.tooltip=Keystrings separating the @e loop header entrie
 ParserPreferences.lblForStep.text=Step separator
 ParserPreferences.lblForIn.text=@f loop
 ParserPreferences.lblForIn.tooltip=Keystrings separating @f loop header entries
-ParserPreferences.edtForInPre.tooltip=May be equal to that of @e loops (or remain empty - with same effect).
+ParserPreferences.edtForInPre.tooltip=May be equal to that of @e loops.
 ParserPreferences.edtForInPost.tooltip=Must differ from all other keywords configured here!
 ParserPreferences.lblWhile.text=@g loop
 ParserPreferences.lblWhile.tooltip=Keystrings around the condition in @g loop headers
@@ -932,6 +935,8 @@ ParserPreferences.lblInput.tooltip=Prefix keyword for input instructions
 ParserPreferences.lblOutput.text=Output
 ParserPreferences.lblOutput.tooltip=Prefix keyword for output instructions
 ParserPreferences.chkIgnoreCase.text=Ignore case
+ParserPreferences.btnFromLocale.text=Fetch locale-specific defaults
+ParserPreferences.btnFromLocale.tooltip=The keyword set is independent from the GUI locale. You may load keywords from an arbitrary locale offered when this button is pressed.
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
@@ -1214,6 +1219,7 @@ Surface.msgGroupExists.text=Group with name «%» already exists!
 Surface.titleRenameGroup.text=Renaming Group «%1» to «%2»
 Surface.msgRenameArrFile.text=Rename arrangement file\n"%1"\nto "%2"?
 Surface.msgRenamingFailed.text=Could not rename arrangement file to "%"!\nAction cancelled!
+Surface.msgSharedDiagrams.text=The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Get diagram
@@ -1364,3 +1370,23 @@ ElementNames.localizedNames.12.text=Diagram
 ElementNames.localizedNames.13.text=Main program
 ElementNames.localizedNames.14.text=Sub-routine
 ElementNames.localizedNames.15.text=Includable
+
+-----> Keywords
+ParserKeywords.AltPre.text=if
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=case
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=for
+ParserKeywords.ForPost.text=to
+ParserKeywords.ForStep.text=step
+ParserKeywords.ForInPre.text=foreach
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=while
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=until
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=leave
+ParserKeywords.JumpReturn.text=return
+ParserKeywords.JumpExit.text=exit
+ParserKeywords.Input.text=INPUT
+ParserKeywords.Output.text=OUTPUT

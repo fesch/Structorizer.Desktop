@@ -48,6 +48,8 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
  *      Kay Gürtzig     2017.10.28      Method trim() added.
  *      Kay Gürtzig     2019-02-15      Method isEmpty() added
+ *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
+ *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
  *
  ******************************************************************************************************
  *
@@ -125,7 +127,7 @@ public class StringList {
 	 * </table>
 	 * @see #explodeFirstOnly(String, String)
 	 * @see #explode(StringList, String)
-	 * @see #explodeWithDelimiter(String, String)
+	 * @see #explodeWithDelimiter(String, String, boolean)
 	 * @param _source - the string to be split
 	 * @param _by - the splitting regular expression
 	 * @return the StringLits containing all splitting shards
@@ -157,29 +159,31 @@ public class StringList {
 	 * </table>
 	 * @see #explode(String, String)
 	 * @see #explode(StringList, String)
-	 * @see #explodeWithDelimiter(String, String)
+	 * @see #explodeWithDelimiter(String, String, boolean)
 	 * @param _source - the string to be split
 	 * @param _by - the splitting regular expression
 	 * @return the StringLits containing all splitting shards
 	 */
 	public static StringList explodeFirstOnly(String _source, String _by)
 	{
-		String[] multi = _source.split(_by);
-		StringList sl = new StringList();
-
-                String first = multi[0];
-                sl.add(first);
-                
-                if(multi.length>1)
-                {
-                    String second = multi[1];
-                    for(int i=2;i<multi.length;i++)
-                    {
-                    	second+="="+multi[i];
-                    }
-                    sl.add(second);
-                }
-
+		// START KGU 2019-03-03: Bugfix explodeFirstOnly("test=, pas =", "=") returned {"test", ", pas "} instead of {"test", ", pas ="}
+		//String[] multi = _source.split(_by);
+		//StringList sl = new StringList();
+		//
+		//String first = multi[0];
+		//sl.add(first);
+		//
+		//if(multi.length>1)
+		//{
+		//	String second = multi[1];
+		//	for(int i=2;i<multi.length;i++)
+		//	{
+		//		second+="="+multi[i];
+		//	}
+		//	sl.add(second);
+		//}
+		StringList sl = new StringList(_source.split(_by, 2));
+		// END KGU 2019-03-03
 		return sl;
 	}
 
@@ -189,7 +193,7 @@ public class StringList {
 	 * Trailing empty strings are not included in the resulting StringList.
 	 * @see #explode(String, String)
 	 * @see #explodeFirstOnly(String, String)
-	 * @see #explodeWithDelimiter(StringList, String)
+	 * @see #explodeWithDelimiter(StringList, String, boolean)
 	 * @param _source - the StringList further to be split
 	 * @param _by - the separator (delimiter) pattern (regex!)
 	 * @return The split results as StringList
@@ -222,6 +226,21 @@ public class StringList {
 	 */
 	public static StringList explodeWithDelimiter(String _source, String _by)
 	{
+		return explodeWithDelimiter(_source, _by, true);
+	}
+
+	/**
+	 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
+	 * and returns a new StringList consisting of the split parts and the separating
+	 * delimiters in order of occurrence.<br/>
+	 * Note that the resulting StringList may be empty!
+	 * @param _source - the string to be split
+	 * @param _by - the separating string (plain string, no regex!)
+	 * @param _matchCase - if false then splitting will be case-ignorant
+	 * @return the split result
+	 */
+	public static StringList explodeWithDelimiter(String _source, String _by, boolean _matchCase)
+	{
 		// START KGU 2017-06-18: Bugfix - this (unused) version was defective ("ate" delimiters)
 //		//String[] multi = _source.split(_by);
 //		String[] multi = _source.split(Pattern.quote(_by), -1);	// We must not suppress empty parts!
@@ -242,14 +261,21 @@ public class StringList {
 		// The following is the (optimized) alternative solution copied from BString  
 		StringList sl = new StringList();
 		int lenBy = _by.length();
+		String testSource = _source;
+		String testBy = _by;
+		if (!_matchCase) {
+			testSource = _source.toLowerCase();
+			testBy = testBy.toLowerCase();
+		}
 		while (!_source.isEmpty())
 		{
-			int pos = _source.indexOf(_by);
+			int pos = testSource.indexOf(testBy);
 			if (pos >= 0)
 			{
-				sl.add(_source.substring(0,pos));
+				sl.add(_source.substring(0, pos));
 				sl.add(_by);
-				_source=_source.substring(pos + lenBy, _source.length());
+				_source = _source.substring(pos + lenBy, _source.length());
+				testSource = testSource.substring(pos + lenBy, testSource.length());
 			}
 			else
 			{
@@ -270,13 +296,27 @@ public class StringList {
 	 */
 	public static StringList explodeWithDelimiter(StringList _source, String _by)
 	{
+		return explodeWithDelimiter(_source, _by, true);
+	}
+
+	/**
+	 * Splits the elements of StringList {@code _source} around occurrences of delimiter string {@code _by}
+	 * and returns a new StringList consisting of all the split parts and the separating
+	 * delimiters in order of occurrence.<br/>
+	 * @param _source - the string to be split
+	 * @param _by - the separating string (plain string, no regex!)
+	 * @param _matchCase - if false then splitting will be case-ignorant
+	 * @return the split result
+	 */
+	public static StringList explodeWithDelimiter(StringList _source, String _by, boolean _matchCase)
+	{
 		StringList sl = new StringList();
 
-		for(int s=0;s<_source.count();s++)
+		for (int s = 0; s < _source.count(); s++)
 		{
 			// START KGU 2017-06-18: We should rely on our own method
 			//StringList multi = BString.explodeWithDelimiter(_source.get(s),_by);
-			StringList multi = explodeWithDelimiter(_source.get(s),_by);
+			StringList multi = explodeWithDelimiter(_source.get(s),_by, _matchCase);
 			// END KGU 2017-06-18
 			sl.add(multi);
 		}

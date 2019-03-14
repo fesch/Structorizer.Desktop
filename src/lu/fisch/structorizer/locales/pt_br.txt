@@ -155,7 +155,7 @@ Menu.menuDiagramAdd.text=Inserir
 Menu.menuDiagramAddBefore.text=Antes
 
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instrução
+Menu.menuDiagramAddBeforeInst.text=@{Instruction}
 Menu.menuDiagramAddBeforeAlt.text=alternativa (@{Alternative})
 Menu.menuDiagramAddBeforeCase.text=alternativa @{Case}
 Menu.menuDiagramAddBeforeFor.text=repetição @{For}
@@ -170,7 +170,7 @@ Menu.menuDiagramAddBeforePara.text=@{Parallel}
 Menu.menuDiagramAddAfter.text=Depois
 
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instrução
+Menu.menuDiagramAddAfterInst.text=@{Instruction}
 Menu.menuDiagramAddAfterAlt.text=alternativa (@{Alternative})
 Menu.menuDiagramAddAfterCase.text=alternativa @{Case}
 Menu.menuDiagramAddAfterFor.text=repetição @{For}
@@ -334,8 +334,8 @@ Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
 
-// InsertAfter (+shif: Before)
-Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o (+shift: antes do) elemento selecionado.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Inserir uma nova @{Instruction} após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (@{Alternative}) após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterFor.tooltip=Inserir uma nova repetição @{For} após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterWhile.tooltip=Inserir uma nova repetição @{While} após o (+shift: antes do) elemento selecionado.
@@ -441,7 +441,8 @@ Editor.popupExpand.text=Expandir
 Editor.popupBreakpoint.text=Alternar breakpoint
 
 -----[ InputBox ]-----
-InputBox.title=
+InputBox.title[getInsertionType():insert]=Inserir elemento...
+InputBox.title[getInsertionType():update]=Editar elemento...
 InputBox.lblText.text=Favor inserir texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentário
@@ -458,6 +459,24 @@ InputBox.lblText.text[elementType:While]=Favor inserir a condição para entrar
 InputBox.lblText.text[elementType:Repeat]=Favor inserir a condição para sair
 InputBox.lblText.text[elementType:Case]=Favor inserir a expressão para escolha e as constantes  para cada caso (uma por linha)
 InputBox.lblText.text[elementType:Parallel]=Número de threads paralelas
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Inserir elemento @a ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Inserir elemento @b ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Inserir elemento @c ...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Inserir elemento @i ...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Inserir elemento @h ...
+InputBox.title[elementType:While,getInsertionType():insert]=Inserir elemento @g ...
+InputBox.title[elementType:Call,getInsertionType():insert]=Inserir elemento @j ...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Inserir elemento @k ...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Inserir elemento @l ...
+InputBox.title[elementType:Instruction,getInsertionType():update]=Editar elemento @a ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Editar elemento @b ...
+InputBox.title[elementType:Case,getInsertionType():update]=Editar elemento @c ...
+InputBox.title[elementType:Forever,getInsertionType():update]=Editar elemento @i ...
+InputBox.title[elementType:Repeat,getInsertionType():update]=Editar elemento @h ...
+InputBox.title[elementType:While,getInsertionType():update]=Editar elemento @g ...
+InputBox.title[elementType:Call,getInsertionType():update]=Editar elemento @j ...
+InputBox.title[elementType:Jump,getInsertionType():update]=Editar elemento @k ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Editar elemento @l ...
 
 
 -----[ InputBox For ]----- 
@@ -478,6 +497,11 @@ InputBoxFor.btnOK.tooltip=
 InputBoxFor.btnCancel.text= 
 InputBoxFor.btnCancel.tooltip= 
 InputBoxFor.chkBreakpoint.text= 
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=Editar @n
+InputBoxRoot.title[elementType:Function]=Editar @o
+InputBoxRoot.title[elementType:Includable]=Editar @p
 
 -----[ Preferences ]-----
 Preferences.title=Preferências de estruturas

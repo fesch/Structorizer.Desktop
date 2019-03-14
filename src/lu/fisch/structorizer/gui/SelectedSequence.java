@@ -23,7 +23,7 @@ package lu.fisch.structorizer.gui;
 /*
  ******************************************************************************************************
  *
- *      Author:         Kay Guertzig
+ *      Author:         Kay Gürtzig
  *
  *      Description:    This class is a kind of proxy for a selected subsequence of a Subqueue.
  *                      It meets some editing purposes and contains mere references.
@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
  *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
  *      Kay Gürtzig     2018.10.26      Enh. #619: New method getMaxLineLength(boolean) implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,7 @@ package lu.fisch.structorizer.gui;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
@@ -182,7 +184,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 			rect0.bottom = fm.getHeight() + 2* (Element.E_PADDING/2);
 		}
 		
-		this.isRectUpToDate = true;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
 		return rect0;
 	}
 
@@ -190,7 +194,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#draw(lu.fisch.graphics.Canvas, lu.fisch.graphics.Rect)
 	 */
 	@Override
-	public void draw(Canvas _canvas, Rect _top_left) {
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport) {
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
 		Rect myrect;
 		Rect subrect;
 		Color drawColor = getFillColor();
@@ -219,7 +226,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 				{
 					myrect.bottom = _top_left.bottom;
 				}
-				((Subqueue) parent).getElement(i).draw(_canvas, myrect);
+				((Subqueue) parent).getElement(i).draw(_canvas, myrect, null);
 
 				//myrect.bottom-=1;
 				myrect.top += subrect.bottom;

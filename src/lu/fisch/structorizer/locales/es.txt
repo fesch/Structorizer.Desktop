@@ -123,6 +123,7 @@
  *      Kay Gürtzig     2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig     2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig     2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -481,7 +482,8 @@ Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la varia
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
 Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
 Menu.error19_2.text=¡El nombre «%1» está reservado en Structorizer y puede provocar problemas on ejecución!
-Menu.error20.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
+Menu.error20_1.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
+Menu.error20_2.text=Parámetros con valores de incumplimiento tenien que estar puestos anéxamente al fin de la lista.
 Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
 Menu.error22_1.text=Constante «%1» depende de valor(es) «%2» que no aparece(n) constante(s).
 Menu.error22_2.text=¡Modificar el valor de constante «%» no es permitido!
@@ -546,7 +548,6 @@ AnalyserPreferences.checkboxes.24.text=Combrobar las definiciones y el uso de ti
 AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instrucciones 
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.okButton.text=Aceptar
-
 
 
 -----[ Diagram ]-----
@@ -657,7 +658,6 @@ Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
 
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Por favor ingresa un texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentario
@@ -732,7 +732,9 @@ InputBoxFor.msgDiscardData.text=¡Alterando el estilo del bucle la mayoría de l
 InputBoxFor.msgAttention.text=¡CUIDADO!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Editar diagrama...
+InputBoxRoot.title[elementType:Root]=Editar @n
+InputBoxRoot.title[elementType:Function]=Editar @o
+InputBoxRoot.title[elementType:Includable]=Editar @p
 InputBoxRoot.lblIncludeList.text=Diagramas a ser incluídos:
 InputBoxRoot.txtIncludeList.tooltip=Nombres de diagramas que deben ser incluídos antes de ejecutar este diagrama (sepáralos con coma o salto de linea).
 InputBoxRoot.lblText.text=Nombre de diagrama / signatura de función
@@ -919,7 +921,7 @@ ParserPreferences.lblFor.tooltip=Palabras claves separando los parametros del bu
 ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblForIn.text=Bucle @f
 ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle @f.
-ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle @d (o quedar vacío - con mismo efecto).
+ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle @e.
 ParserPreferences.edtForInPost.tooltip=¡Tiene que diferir de todas las restantes palabras claves del Analizador!
 ParserPreferences.lblWhile.text=Bucle @g
 ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle @g
@@ -937,6 +939,8 @@ ParserPreferences.lblInput.tooltip=Palabra clave calificando una instrucción de
 ParserPreferences.lblOutput.text=Salida
 ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instrucción de salida
 ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
+ParserPreferences.btnFromLocale.text=Recoger palabras claves locales
+ParserPreferences.btnFromLocale.tooltip=Las palabras claves son independientes del idioma del diálogo. Puedes recoger un conjunto de cualquier idioma ofrecido cuando apretas este botón.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de una palabra clave!
@@ -1217,6 +1221,7 @@ Surface.msgGroupExists.text=¡Grupo con nombre «%» ya existe!
 Surface.titleRenameGroup.text=Renombrar grupo «%1» a «%2»
 Surface.msgRenameArrFile.text=¿Renombrar archivo de colocación\n"%1"\na "%2"?
 Surface.msgRenamingFailed.text=No fue posible renombrar el archivo de la colocación a "%".\n¡Acción cancelada!
+Surface.msgSharedDiagrams.text=Los siguientes diagramas serán compartidos con los grupos señalados\n - %1\n\nFíjate que cualquier modificación de ellos va a influir en todos ellos grupos\ny también en el archivo %2, ¡aun en el caso que el último ya no estase presente!
 
 // Arranger index
 ArrangerIndex.popupIndexGet.text=Coger diagrama
@@ -1367,3 +1372,23 @@ ElementNames.localizedNames.12.text=Diagrama
 ElementNames.localizedNames.13.text=Programa principal
 ElementNames.localizedNames.14.text=Subrutina
 ElementNames.localizedNames.15.text=Incluíble
+
+-----> Keywords
+ParserKeywords.AltPre.text=si
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=selección
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=para
+ParserKeywords.ForPost.text=hasta
+ParserKeywords.ForStep.text=paso
+ParserKeywords.ForInPre.text=para cada
+ParserKeywords.ForInPost.text=de
+ParserKeywords.WhilePre.text=mientras
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=hasta que
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=salir
+ParserKeywords.JumpReturn.text=retornar
+ParserKeywords.JumpExit.text=abortar
+ParserKeywords.Input.text=entrada
+ParserKeywords.Output.text=salida

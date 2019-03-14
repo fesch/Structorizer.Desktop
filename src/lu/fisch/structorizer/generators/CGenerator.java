@@ -84,6 +84,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-10-30      bool type no longer converted to int, instead #include <stdbool.h> generated
  *      Kay Gürtzig             2019-01-21      Bugfix #669: Export of some FOR-In loops produced structurally defective code
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-07      Enh. #385: Support for optional parameters (by argument extension in the Call)
+ *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *
  ******************************************************************************************************
  *
@@ -193,8 +195,19 @@ public class CGenerator extends Generator {
 		// In ANSI C99, line comments are already allowed
 		return "//";
 	}
-
 	// END KGU 2015-10-18
+	
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
+	
+
 
 // START KGU#16 2015-12-18: Moved to Generator.java	and made an ExportOptionDialoge option
 //	// START KGU#16 2015-11-29: Code style option for opening brace placement
@@ -1456,15 +1469,32 @@ public class CGenerator extends Generator {
 			boolean isDisabled = _call.isDisabled();
 			insertComment(_call, _indent);
 			// In theory, here should be only one line, but we better be prepared...
-			StringList lines = _call.getText();
+			StringList lines = _call.getUnbrokenText();
 			for (int i = 0; i < lines.count(); i++) {
-				String line = lines.get(i);
+				String line = lines.get(i).trim();
 //				// START KGU#376 2017-04-13: Enh. #389 handle import calls - withdrawn here
 //				if (!isDisabled && Call.isImportCall(lines.get(i))) {
 //					generateImportCode(_call, line, _indent);
 //				}
 //				else
 //				// END KGU#376 2017-04-13
+				// START KGU#371 2019-03-07: Enh. #385 Support for declared optional arguments
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
+					Function call = _call.getCalledRoutine();
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+					if (!callCandidates.isEmpty()) {
+						// FIXME We'll just fetch the very first one for now...
+						Root called = callCandidates.get(0);
+						StringList defaults = new StringList();
+						called.collectParameters(null, null, defaults);
+						if (defaults.count() > call.paramCount()) {
+							// We just insert the list of default values for the missing arguments
+							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+						}
+					}
+				}
+				// END KGU#371 2019-03-07
 				// Input or Output should not occur here
 				addCode(transform(line, false) + ";", _indent, isDisabled);
 			}

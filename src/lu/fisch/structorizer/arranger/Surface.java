@@ -101,6 +101,11 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-03      Issue #673: The dimensions were to be enlarged by a DEFAULT_GAP size
  *      Kay Gürtzig     2019-02-11      Issue #677: Inconveniences on saving arrangement archives mended
  *      Kay Gürtzig     2019-03-01      Enh. #691: Method renameGroup() introduced for exactly this purpose
+ *      Kay Gürtzig     2019-03-07      Enh. #385: findRoutinesBySignature(String, int) made aware of default arguments
+ *      Kay Gürtzig     2019-03-10      Enh. #698: Refactoring/code revision: basics of loading/ saving delegated to Archivar
+ *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
+ *      Kay Gürtzig     2019-03-12/13   Enh. #698: New IRoutinePool mmethods added
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -181,24 +186,16 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -206,14 +203,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
@@ -222,17 +215,21 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
+import lu.fisch.structorizer.archivar.Archivar;
+import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
+import lu.fisch.structorizer.archivar.ArchiveRecord;
+import lu.fisch.structorizer.archivar.IRoutinePool;
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -242,6 +239,7 @@ import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.PNGFilter;
+import lu.fisch.structorizer.io.StructogramFilter;
 import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.NSDParser;
@@ -374,6 +372,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public static final LangTextHolder msgRenameArrFile = new LangTextHolder("Rename arrangement file \"%1\"\nto \"%2\"?");
 	public static final LangTextHolder msgRenamingFailed = new LangTextHolder("Could not rename arrangement file to \"%\"!\nAction cancelled!");
 	// END KGU#669 2019-03-01
+	// START KGU#680 2019-03-11: Bugfix #699
+	public static final LangTextHolder msgSharedDiagrams = new LangTextHolder("The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!");
+	// END KGU#680 2019-03-11
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -418,7 +419,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			Graphics2D g2d = (Graphics2D) g;
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
-			for(int d=0; d<diagrams.size(); d++)
+			for(int d = 0; d < diagrams.size(); d++)
 			{
 				// START KGU#624 2018-12.24: Enh. #655
 				//diagrams.get(d).root.prepareDraw(g2d);
@@ -451,14 +452,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				g2d.scale(1/zoomFactor, 1/zoomFactor);
 			}
 			// END KGU#497 2018-03-19
+
+			// START KGU#502/KGU#524/KGU#553 2019-03-13: Issues #518, #544, #557 - reduce drawing contention
+			Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
+			visRect = visRect.scale(zoomFactor);
+			Rectangle visibleRect = visRect.getRectangle();
+			// END KGU#502/KGU#524/KGU#557
+				
 			// START KGU#630 2019-01-09: Enh. #662/2 - preparations for group drawing
 			if (drawGroups) {
 				for (Group group: groups.values()) {
-					group.draw(g2d);
+					group.draw(g2d, null);
 				}
 			}
 			// END KGU#630 2019-01-19
-				
+			
 //			System.out.println("Surface.paintComponent()");
 			for(int d=0; d<diagrams.size(); d++)
 			{
@@ -479,7 +487,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#624 2018-12-24
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
-				Rect rect = root.draw(g2d, point, this, Element.DrawingContext.DC_ARRANGER);
+				Rect rect = root.draw(g2d, point, visibleRect, this, Element.DrawingContext.DC_ARRANGER);
 				if (diagram.isPinned)
 				{
 					if (pinIcon == null)
@@ -563,7 +571,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param files - array of File objects associated to NSD file names 
 	 * @return number of successfully loaded files.
 	 */
-	public int loadFiles(java.io.File[] files)
+	public int loadFiles(File[] files)
 	{
 		// START KGU#624 2018-12-22: Enh. #655 - Clear the selection before
 		this.unselectAll();
@@ -573,8 +581,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		String troubles = "";
 		for (int i = 0; i < files.length; i++)
 		{
-			String filename = files[i].toString();
-			String errorMessage = loadFile(filename);
+			//String filename = files[i].toString();
+			String errorMessage = loadFile(files[i]);
 			// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
 			//if (!troubles.isEmpty()) { troubles += "\n"; }
 			//troubles += "\"" + filename + "\": " + errorMessage;
@@ -582,7 +590,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (!errorMessage.isEmpty())
 			{
 				if (!troubles.isEmpty()) { troubles += "\n"; }
-				String trouble = "\"" + filename + "\": " + errorMessage;
+				String trouble = "\"" + files[i].getAbsolutePath() + "\": " + errorMessage;
 				troubles += trouble;
 				logger.log(Level.INFO, "Arranger failed to load " + trouble);	
 			}
@@ -607,42 +615,43 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return nLoaded;
 	}
 	
-	private String loadFile(String filename)
+	private String loadFile(File file)
 	{
-		return loadFile(filename, null);
-	}
+		// START KGU#679 2019-03-12: Enh. #698 several overloaded versions are no longer used.
+//		return loadFile(file, null);
+//	}
 
-	private String loadFile(String filename, Point point)
-	// START KGU#289 2016-11-15: Enh. #290 (load arrangements from Structorizer)
-	{
-		// START KGU#316 2016-12-28: Enh. #318
-		//return loadFile(null, filename, point);
-		return loadFile(null, filename, point, null, null);
-		// END KGU#316 2016-12-28
-	}
-
-	// START KGU#316 2016-12-28: Enh. #318 signature enhanced to keep track of unzipped files 
-	//private String loadFile(Mainform form, String filename, Point point)
-	// START KGU#626 2018-12-28: New argument group
-	//private String loadFile(Mainform form, String filename, Point point, String unzippedFrom)
-	private String loadFile(Mainform form, String filename, Point point, String unzippedFrom, Group group)
-	// END KGU#626 2018-12-28
-	// END KGU#316 2016-12-28
-	// END KGU#289 2016-11-15
-	{
-		// START KGU#363 2018-09-11: Improvement for temporary legacy nsd files extracted from arrz files
+//	private String loadFile(File file, Point point)
+//	// START KGU#289 2016-11-15: Enh. #290 (load arrangements from Structorizer)
+//	{
+//		// START KGU#316 2016-12-28: Enh. #318
+//		//return loadFile(null, filename, point);
+//		return loadFile(null, file, point, null, null);
+//		// END KGU#316 2016-12-28
+//	}
+//
+//	// START KGU#316 2016-12-28: Enh. #318 signature enhanced to keep track of unzipped files 
+//	//private String loadFile(Mainform form, String filename, Point point)
+//	// START KGU#626 2018-12-28: New argument group
+//	//private String loadFile(Mainform form, String filename, Point point, String unzippedFrom)
+//	// FIXME - there is no longer a constellation in which this can be called with form, zipFile, or group
+//	private String loadFile(Mainform form, File file, Point point, File zipFile, Group group)
+//	// END KGU#626 2018-12-28
+//	// END KGU#316 2016-12-28
+//	// END KGU#289 2016-11-15
+//	{
+		// FIXME: These variables just temporarily substitute the obsolete arguments
+		Mainform form = null;
+		Point point = null;
 		File zipFile = null;
-		if (unzippedFrom != null) {
-			zipFile = new File(unzippedFrom);
-		}
-		// END KGU#363 2018-09-11
+		Group group= null;
+// END KGU#679 2019-03-12
 		String errorMessage = "";
-		String ext = filename.substring(Math.max(filename.lastIndexOf("."),0));
-		if (ext.equalsIgnoreCase(".nsd"))
+		String filename = file.getName();
+		if (StructogramFilter.isNSD(filename))
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
-			File f = new File(filename);
 			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			try {
 				// END KGU#111 2015-12-17
@@ -650,23 +659,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//Root root = parser.parse(f.toURI().toString());
 				// START KGU#363 2018-09-11: Improvement for temporary legacy nsd files extracted from arrz files
 				//Root root = parser.parse(f);
-				Root root = parser.parse(f, zipFile);
+				Root root = parser.parse(file, zipFile);
 				// END KGU#363 2018-09-11
 				// END KGU#363 2017-05-21
 
-				root.filename = filename;
-				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
-				if (unzippedFrom != null) {
-					root.filename = unzippedFrom + File.separator + (new File(filename)).getName();
-					root.shadowFilepath = filename;
-				}
-				// END KGU#316 2016-12-28
+				root.filename = file.getAbsolutePath();
+// START KGU#679 2019-03-12: Enh. #698 - became dead code
+//				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
+//				if (zipFile != null) {
+//					root.filename = zipFile.getAbsolutePath() + File.separator + file.getName();
+//					root.shadowFilepath = file.getAbsolutePath();
+//				}
+//				// END KGU#316 2016-12-28
+// END KGU#679 2019-03-12
 				// START KGU#382 2017-04-15: Ensure highlighting mode has effect
 				//root.highlightVars = Element.E_VARHIGHLIGHT;
 				root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 				// END KGU#382 2017-04-15
 				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
 				//addDiagram(root, point);
+				// FIXME (2019-03-12): three of the four arguments are dead
 				addDiagram(root, form, point, group);
 				// END KGU#289 2016-11-15
 				// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
@@ -677,9 +689,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#111 2015-12-17
 		}
 		// START KGU#289 2016-11-14: Enh. #289
-		else if (ext.equalsIgnoreCase(".arr") || ext.equalsIgnoreCase(".arrz"))
+		else if (ArrFilter.isArr(filename) || ArrZipFilter.isArr(filename))
 		{
-			errorMessage = loadArrFile(form, filename);
+			// FIXME KGU#679 2019-03-12: The first argument became superfluous
+			errorMessage = loadArrFile(form, file);
 		}
 		// END KGU#289 2016-11-14
 		return errorMessage;
@@ -757,7 +770,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						null,
 						options,
 						options[option]);
-				if (option >= options.length-1) {
+				if (option >= options.length-1 || option == JOptionPane.CLOSED_OPTION) {
 					// Cancelled
 					return null;
 				}
@@ -778,6 +791,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#626 2019-01-02
 			// START KGU#624 2018-12-22: Enh. #655
 			// TODO Provide a choice table with checkboxes for every diagram (selected ones already checked)?
+			// Let the user confirm this action for the selected set of diagrams
 			StringList rootNames = listCollectedRoots(toArrange, false);
 			int nSelected = rootNames.count();
 			if (nSelected > Arranger.ROOT_LIST_LIMIT) {
@@ -861,6 +875,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				File f = new File(filename + "." + extension);
 				if (f.exists())
 				{
+					// Ask the user whether they want to overwrite the already existing file
 					int res = JOptionPane.showConfirmDialog(
 							initiator,
 							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
@@ -876,7 +891,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#385 2017-04-22
 				// END KGU#110 2016-06-29
 			}
-			// START KGU#644 2019-02-02: Bugfix #672: We must not gon on if the FileChooser was cancelled
+			// START KGU#644 2019-02-02: Bugfix #672: We must not go on if the FileChooser was cancelled
 			else {
 				writeNow = false;
 			}
@@ -928,6 +943,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		// END KGU#626 2019-01-02
+		// START KGU#679 2019-03-12: Enh. #698 - Inform associated Mainforms about the new file
+		File file = group.getArrzFile();
+		if (done && !goingToClose && (file != null || (file = group.getFile()) != null)) {
+			for (Diagram diagr: group.getDiagrams()) {
+				if (diagr.mainform != null) {
+					diagr.mainform.addRecentFile(file);
+				}
+			}
+		}
+		// END KGU#679 2019-03-13
 		return done ? group : null;
 	}
 
@@ -962,7 +987,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 *
 	 * @param initiator - the commanding GUI component
 	 * @param filename - the base path of the selected file (without extension)
-	 * @param extension - the file extension
+	 * @param extension - the file name extension
 	 * @param portable - whether a portable zip file is to be created
 	 * @param group - the group this arrangement is to be associated to
 	 * @return status flag (true iff the saving succeeded without error) 
@@ -977,17 +1002,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		String tmpFilename = null;
 
 		// Find a suited temporary directory to store the output file(s) if needed
-		String tempDir = findTempDir();
-		if ((tempDir == null || tempDir.isEmpty()))
+		File tempDir = findTempDir();
+		if (tempDir == null)
 		{
 			File dir = new File(".");
 			if (dir.isFile())
 			{
-				tempDir = dir.getParent();
-			}
-			else
-			{
-				tempDir = dir.getAbsolutePath();
+				tempDir = dir.getParentFile();
 			}
 		}
 
@@ -996,7 +1017,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// Prepare to save the arr file (if portable is false then this is the outfile)
 			String arrFilename = outFilename;
 			File file = new File(outFilename);
-			LinkedList<Root> savedVirginRoots = null;
 			// START KGU#110 2016-06-29: Enh. #62
 			// Check whether the target file already exists
 			//boolean fileExisted = file.exits();
@@ -1005,30 +1025,52 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
-				// START KGU#650 2019-02-11: Issue #677 save all orphaned virgin group members to the temp dir
-				savedVirginRoots = saveVirginRootsToTempDir(group, tempDir);
+				// START KGU#650 2019-02-11: Issue #677 save all virgin group members to the temp dir
+				saveVirginRootsToTempDir(group, tempDir);
 				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
-				// END KGU#110 2016-06-29
+			// END KGU#110 2016-06-29
 			{
 				// name for a temporary arr file
 				arrFilename = tempDir + File.separator + "Temp." + extension;
 				tmpFilename = arrFilename;
 			}
-			// Now actually save the arr file
-			saveArrFile(group, arrFilename, portable);
-
-			// START KGU#110 2016-06-29: Enh. #62
-			// Now zip all files together if a portable file is requested
-			if (portable)
+			
+			// START KGU#679 2019-03-11: Issue #698 Delegated to Archivar
+//			// Now actually save the arr file
+//			saveArrFile(group, arrFilename, portable);
+//
+//			// START KGU#110 2016-06-29: Enh. #62
+//			// Now zip all files together if a portable file is requested
+//			if (portable)
+//			{
+//				// Create a zip file from the nsd files and the arr file
+//				// (returns the name of the zip file if it was placed in
+//				// a temp directory, otherwise null).
+//				tmpFilename = zipAllFiles(group, outFilename, arrFilename, tempDir);				
+//			}
+			// We want to preserve the original drawing order, so we must go the long way...
+			Set<Diagram> groupMembers = group.getDiagrams();
+			List<ArchiveRecord> itemsToSave = new LinkedList<ArchiveRecord>();
+			for (Diagram diagr: this.diagrams)
 			{
-				// Create a zip file from the nsd files and the arr file
-				// (returns the name of the zip file if it was placed in
-				// a temp directory, otherwise null).
-				tmpFilename = zipAllFiles(group, outFilename, arrFilename, tempDir);
+				if (groupMembers.contains(diagr))
+				{
+					itemsToSave.add(diagr);
+				}
 			}
-
+			// Enh. #662/4
+			Point offset = null;
+			if (Arranger.A_STORE_RELATIVE_COORDS) {
+				Rectangle bounds = group.getBounds(true);
+				if (bounds != null) {	// Could happen if the group is empty
+					offset = new Point(bounds.x - DEFAULT_GAP, bounds.y - DEFAULT_GAP);
+				}
+			}
+			Archivar archivar = new Archivar();
+			tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			// END KGU#679 2019-03-11
 
 			// If the target file had existed then replace it by the output file after having created a backup
 			if (tmpFilename != null)
@@ -1059,22 +1101,74 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				group.setFile(new File(outFilename), null, false);
 			}
 			// END KGU#626 2019-01-02
-			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams as reside in the archive
-			if (savedVirginRoots != null) {
-				for (Root root: savedVirginRoots) {
-					File path = root.getFile();
-					if (path != null) {
-						root.shadowFilepath = path.getAbsolutePath();
-						root.filename = outFilename + File.separator + path.getName();
+			// START KGU#650 2019-02-11: Issue #677 - let the archived virgin diagrams reside in the archive
+			// START KGU#680 2019-03-11: Bugfix #699 - all files in the archive must be ensured their virtual path is set properly 
+			//if (savedVirginRoots != null) {
+			//	for (Root root: savedVirginRoots) {
+			//		File path = root.getFile();
+			//		if (path != null) {
+			//			root.shadowFilepath = path.getAbsolutePath();
+			//			root.filename = outFilename + File.separator + path.getName();
+			//		}
+			//	}
+			//}
+			// START KGU#680 2019-03-11: Bugfix #699 The saved diagrams must reflect that they reside in the archive, possibly they must be copied
+			if (portable) {
+				StringList sharedDiagrams = new StringList();
+				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
+					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
+						// A diagram residing in another archive must be copied now, it cannot be shared.
+						Root copiedRoot = (Root)diagr.root.copy();
+						copiedRoot.getVarNames();	// Ensures that syntax highlighting will work
+						//diagr.point.translate(2 * DEFAULT_GAP, 2 * DEFAULT_GAP);	// The copy must have the same place (this was the archived one!)
+						Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						diagrams.add(diagram);
+						rootMap.put(copiedRoot, diagram);
+						String rootName = copiedRoot.getMethodName();
+						addToNameMap(rootName, diagram);
+						// In theory, the diagram can't get orphaned here.
+						group.removeDiagram(diagr);
+						group.addDiagram(diagram);
+						copiedRoot.addUpdater(this);
+						// FIXME: change selection?
+					}
+					// In the other cases the diagram already resides in the archive or can be shared
+					else if (diagr.root.shadowFilepath == null) {
+						StringList groupNames = new StringList(diagr.getGroupNames());
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
 					}
 				}
+				// Ensure all new copies are saved somewhere such that they will get a virtual path later
+				this.saveVirginRootsToTempDir(group, tempDir);
+				// At this point there should not be any unsaved Roots and no Roots residing in a different archive anymore
+				for (Root root: group.getSortedRoots()) {
+					String shadowPath = root.shadowFilepath;
+					// ... so a Root without shadowPath obviously needs the virtual path inside the archive now
+					if (shadowPath == null) {
+						root.shadowFilepath = root.filename;
+						root.filename = outFilename + File.separator + root.getFile().getName();
+					}
+				}
+				if (sharedDiagrams.count() > 0) {
+					JOptionPane.showMessageDialog(initiator,
+							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
+							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
+				}
 			}
+			// END KGU#680 2019-03-11
 			// END KGU#650 2019-02-11
 			done = true;
 		}
 		catch (Exception ex)
 		{
-			JOptionPane.showMessageDialog(initiator, msgSaveError.getText() + " " + ex.getMessage() + "!",
+			StringList causes = new StringList();
+			Throwable cause = ex.getCause();
+			while (cause != null) {
+				causes.add(cause.getMessage());
+				cause = cause.getCause();
+			}
+			
+			JOptionPane.showMessageDialog(initiator, msgSaveError.getText() + " " + ex.getMessage() + "!" + (!causes.isEmpty() ? "\n" + causes.getText() : ""),
 					"Error", JOptionPane.ERROR_MESSAGE, null);
 		}
 		return done;
@@ -1082,13 +1176,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	// START KGU#650 2019-02-11: Issue #677 - Inconveniences on saving arrangement archives
 	/** Tries to save all unsaved group members in the given temporary directory with a unique name */
-	private LinkedList<Root> saveVirginRootsToTempDir(Group group, String tempDir) {
+	private LinkedList<Root> saveVirginRootsToTempDir(Group group, File tempDir) {
 		LinkedList<Root> savedRoots = new LinkedList<Root>();
 		StringList unsaved = new StringList();
 		StringList errors = new StringList();
 		for (Diagram diagr: group.getDiagrams()) {
 			if (diagr.root.getFile() == null) {
-				String filename = tempDir + File.separator + diagr.root.proposeFileName();
+				String filename = tempDir.getAbsolutePath() + File.separator + diagr.root.proposeFileName();
 				File file = new File(filename + ".nsd");
 				int count = 1;
 				while (file.exists()) {
@@ -1130,142 +1224,143 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#650 2019-02-11
 
-	/**
-	 * Creates the Arranger file with path {@code arrFilename} for all diagrams held
-	 * by {@code group}. If the Arranger file is used for an arrangement archive then
-	 * the paths are to be shortened to the pure names.
-	 * @param group - the {@link Group} holding the diagrams belonging to the arrangement
-	 * @param arrFilename - target path of the Arranger file
-	 * @param pureNames - if true then only the pure file names (instead of the entire
-	 * paths) will be listed in the arr file.
-	 * @throws IOException
-	 */
-	private void saveArrFile(Group group, String arrFilename, boolean pureNames) throws IOException
-	{
-		FileOutputStream fos = new FileOutputStream(arrFilename);
-		Writer out = new OutputStreamWriter(fos, "UTF8");
-		int offsetX = 0, offsetY = 0;
-		// START KGU#630 2019-01-13: Enh. #662/4
-		if (Arranger.A_STORE_RELATIVE_COORDS) {
-			Rectangle bounds = group.getBounds(true);
-			if (bounds != null) {	// Could happen if the group is empty
-				offsetX = DEFAULT_GAP - bounds.x;	// Will usually be negative
-				offsetY = DEFAULT_GAP - bounds.y;	// Will usually be negative
-			}
-		}
-		// END KGU#630 2019-01-13
-		// We want to preserve the original drawing order, so we must go the long way...
-		Set<Diagram> groupMembers = group.getDiagrams();
-		for (Diagram diagr: this.diagrams)
-		{
-			String path = "";
-			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
-			if (groupMembers.contains(diagr) && !(path = diagr.root.getPath()).isEmpty())
-			{
-				// START KGU#630 2019-01-13: Enh. #662/4
-				out.write(Integer.toString(diagr.point.x + offsetX) + ",");
-				out.write(Integer.toString(diagr.point.y + offsetY) + ",");
-				// END KGU#630 2019-01-13
-				StringList entry = new StringList();
-				if (pureNames)
-				{
-					File nsdFile = new File(path);
-					path = nsdFile.getName();	// Only last part of path
-				}
-				entry.add(path);
-				out.write(entry.getCommaText()+'\n');
-				// START KGU#626 2019-01-05: Enh. #657 - reset the moved flag
-				diagr.wasMoved = false;
-				// END KGU#626 2019-01-05
-			}
-		}
-
-		out.close();
-	}
-
-	/**
-	 * Compresses the diagrams of the given {@link Group} {@code group} and the describing
-	 * arr file ({@code arrFilename}) into file {@code zipFilename} (which is essentially an ordinary
-	 * zip file but named as given).
-	 * @param group - the {@link Group} defining what diagrams are members of the arrangement
-	 * @param zipFilename - path of the arrz file (zip file) to be created
-	 * @param arrFilename - path of the existing arr file holding the positions
-	 * @param tmpPath - path of a temporary directory for the case the target
-	 * file already exists
-	 * @return the path of the created temporary file if the target file `zipFilename´ had
-	 * existed (otherwise null)
-	 */
-	private String zipAllFiles(Group group, String zipFilename, String arrFilename, String tmpPath) throws IOException
-	{
-		final int BUFSIZE = 2048;
-
-		String tmpFilename = zipFilename + "";
-		// set up the file (and check whether it has existed already)
-		File file = new File(zipFilename);
-		boolean fileExisted = file.exists(); 
-		if (fileExisted)
-		{
-			tmpFilename = tmpPath + File.separator + "Arranger.zip";
-		}
-
-		BufferedInputStream origin = null;
-		FileOutputStream dest = new	FileOutputStream(tmpFilename);
-		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-		//out.setMethod(ZipOutputStream.DEFLATED);
-		byte buffer[] = new byte[BUFSIZE];
-		StringList filePaths = new StringList();
-		// Add the diagram file names
-		for (Diagram diagr: group.getDiagrams())
-		{
-			// START KGU#316 2017-04-22: Enh. #318: Files might be zipped
-			//String path = diagr.root.getPath();
-			String path = diagr.root.shadowFilepath;
-			if (path == null) {
-				path = diagr.root.getPath();
-			}
-			// END KGU#316 2017-04-22
-			if (!path.isEmpty())
-			{
-				filePaths.add(path);
-			}
-		}
-		filePaths.add(arrFilename);
-
-		int count;
-		for (int i = 0; i < filePaths.count(); i++)
-		{
-			FileInputStream fis = new FileInputStream(filePaths.get(i));
-			origin = new BufferedInputStream(fis, BUFSIZE);
-			ZipEntry entry = new ZipEntry(new File(filePaths.get(i)).getName());
-			// START KGU 2018-09-12: Preserve time attributes if possible
-			Path srcPath = (new File(filePaths.get(i))).toPath();
-			try {
-				BasicFileAttributes attrs = Files.readAttributes(srcPath, BasicFileAttributes.class);
-				FileTime modTime = attrs.lastModifiedTime();
-				FileTime creTime = attrs.creationTime();
-				if (modTime.toMillis() > 0) {
-					entry.setLastModifiedTime(modTime);
-				}
-				if (creTime.toMillis() > 0) {
-					entry.setCreationTime(creTime);
-				}
-			} catch (IOException e) {}
-			// END KGU 2018-09-12
-			out.putNextEntry(entry);
-			while((count = origin.read(buffer, 0, BUFSIZE)) != -1)
-			{
-				out.write(buffer, 0, count);
-			}
-			origin.close();
-		}
-
-		out.close();
-		if (!fileExisted)
-		{
-			tmpFilename = null;
-		}
-		return tmpFilename;
-	}
+// START KGU#679 2019-03-13: Issue #698 - methods have been replaced by Archivar
+//	/**
+//	 * Creates the Arranger file with path {@code arrFilename} for all diagrams held
+//	 * by {@code group}. If the Arranger file is used for an arrangement archive then
+//	 * the paths are to be shortened to the pure names.
+//	 * @param group - the {@link Group} holding the diagrams belonging to the arrangement
+//	 * @param arrFilename - target path of the Arranger file
+//	 * @param pureNames - if true then only the pure file names (instead of the entire
+//	 * paths) will be listed in the arr file.
+//	 * @throws IOException
+//	 */
+//	private void saveArrFile(Group group, String arrFilename, boolean pureNames) throws IOException
+//	{
+//		int offsetX = 0, offsetY = 0;
+//		// START KGU#630 2019-01-13: Enh. #662/4
+//		if (Arranger.A_STORE_RELATIVE_COORDS) {
+//			Rectangle bounds = group.getBounds(true);
+//			if (bounds != null) {	// Could happen if the group is empty
+//				offsetX = DEFAULT_GAP - bounds.x;	// Will usually be negative
+//				offsetY = DEFAULT_GAP - bounds.y;	// Will usually be negative
+//			}
+//		}
+//		// END KGU#630 2019-01-13
+//		// We want to preserve the original drawing order, so we must go the long way...
+//		Set<Diagram> groupMembers = group.getDiagrams();
+//		FileOutputStream fos = new FileOutputStream(arrFilename);
+//		Writer out = new OutputStreamWriter(fos, "UTF8");
+//		for (Diagram diagr: this.diagrams)
+//		{
+//			String path = "";
+//			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
+//			if (groupMembers.contains(diagr) && !(path = diagr.root.getPath()).isEmpty())
+//			{
+//				// START KGU#630 2019-01-13: Enh. #662/4
+//				out.write(Integer.toString(diagr.point.x + offsetX) + ",");
+//				out.write(Integer.toString(diagr.point.y + offsetY) + ",");
+//				// END KGU#630 2019-01-13
+//				StringList entry = new StringList();
+//				if (pureNames)
+//				{
+//					File nsdFile = new File(path);
+//					path = nsdFile.getName();	// Only last part of path
+//				}
+//				entry.add(path);
+//				out.write(entry.getCommaText()+'\n');
+//				// START KGU#626 2019-01-05: Enh. #657 - reset the moved flag
+//				diagr.wasMoved = false;
+//				// END KGU#626 2019-01-05
+//			}
+//		}
+//
+//		out.close();
+//	}
+//
+//	/**
+//	 * Compresses the diagrams of the given {@link Group} {@code group} and the describing
+//	 * arr file ({@code arrFilename}) into file {@code zipFilename} (which is essentially an ordinary
+//	 * zip file but named as given).
+//	 * @param group - the {@link Group} defining what diagrams are members of the arrangement
+//	 * @param zipFilename - path of the arrz file (zip file) to be created
+//	 * @param arrFilename - path of the existing arr file holding the positions
+//	 * @param tmpDir - a temporary directory for the case the target file already exists
+//	 * @return the path of the created temporary file if the target file {@code zipFilename} had
+//	 * existed (otherwise null)
+//	 */
+//	private String zipAllFiles(Group group, String zipFilename, String arrFilename, File tmpDir) throws IOException
+//	{
+//		final int BUFSIZE = 2048;
+//
+//		String tmpFilename = zipFilename + "";
+//		// set up the file (and check whether it has existed already)
+//		File file = new File(zipFilename);
+//		boolean fileExisted = file.exists(); 
+//		if (fileExisted)
+//		{
+//			tmpFilename = tmpDir.getAbsolutePath() + File.separator + "Arranger.zip";
+//		}
+//
+//		BufferedInputStream origin = null;
+//		FileOutputStream dest = new	FileOutputStream(tmpFilename);
+//		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+//		//out.setMethod(ZipOutputStream.DEFLATED);
+//		byte buffer[] = new byte[BUFSIZE];
+//		StringList filePaths = new StringList();
+//		// Add the diagram file names
+//		for (Diagram diagr: group.getDiagrams())
+//		{
+//			// START KGU#316 2017-04-22: Enh. #318: Files might be zipped
+//			//String path = diagr.root.getPath();
+//			String path = diagr.root.shadowFilepath;
+//			if (path == null) {
+//				path = diagr.root.getPath();
+//			}
+//			// END KGU#316 2017-04-22
+//			if (!path.isEmpty())
+//			{
+//				filePaths.add(path);
+//			}
+//		}
+//		filePaths.add(arrFilename);
+//
+//		int count;
+//		for (int i = 0; i < filePaths.count(); i++)
+//		{
+//			FileInputStream fis = new FileInputStream(filePaths.get(i));
+//			origin = new BufferedInputStream(fis, BUFSIZE);
+//			ZipEntry entry = new ZipEntry(new File(filePaths.get(i)).getName());
+//			// START KGU 2018-09-12: Preserve time attributes if possible
+//			Path srcPath = (new File(filePaths.get(i))).toPath();
+//			try {
+//				BasicFileAttributes attrs = Files.readAttributes(srcPath, BasicFileAttributes.class);
+//				FileTime modTime = attrs.lastModifiedTime();
+//				FileTime creTime = attrs.creationTime();
+//				if (modTime.toMillis() > 0) {
+//					entry.setLastModifiedTime(modTime);
+//				}
+//				if (creTime.toMillis() > 0) {
+//					entry.setCreationTime(creTime);
+//				}
+//			} catch (IOException e) {}
+//			// END KGU 2018-09-12
+//			out.putNextEntry(entry);
+//			while((count = origin.read(buffer, 0, BUFSIZE)) != -1)
+//			{
+//				out.write(buffer, 0, count);
+//			}
+//			origin.close();
+//		}
+//
+//		out.close();
+//		if (!fileExisted)
+//		{
+//			tmpFilename = null;
+//		}
+//		return tmpFilename;
+//	}
+// END KGU#679 2019-03-12
 
 	/**
 	 * Action method for the "Load List" button of the Arranger: Attempts to load the
@@ -1304,15 +1399,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				File oldCurrDir = currentDirectory;
 				// correct the filename if necessary
-				String filename = dlgOpen.getSelectedFile().getAbsolutePath();
+				File file = dlgOpen.getSelectedFile();
 
 				// START KGU#316 2016-12-28: Enh. #318
-				String unzippedFrom = null;
+				File unzippedFrom = null;
 				// END KGU#316 2016-12-28
 				// START KGU#110 2016-07-01: Enh. # 62 - unpack a zip file first
-				if (ArrZipFilter.isArr(filename))
+				if (ArrZipFilter.isArr(file.getName()))
 				{
-					String extractTo = null;
+					File extractTo = null;
 					dlgOpen.setDialogTitle(msgExtractDialogTitle.getText());
 					dlgOpen.resetChoosableFileFilters();
 					dlgOpen.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1320,15 +1415,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					if (dlgOpen.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION)
 					{
 						//extractTo = dlgOpen.getCurrentDirectory().getAbsolutePath();
-						extractTo = dlgOpen.getSelectedFile().getAbsolutePath();
+						extractTo = dlgOpen.getSelectedFile();
 					}
 					else {
-						unzippedFrom = filename;
+						unzippedFrom = file;
 					}
-					filename = unzipArrangement(filename, extractTo);
-					if (filename != null)
+					file = unzipArrangement(file, extractTo);
+					if (file != null)
 					{
-						currentDirectory = new File(filename);
+						currentDirectory = file;
 						while (currentDirectory != null && !currentDirectory.isDirectory())
 						{
 							currentDirectory = currentDirectory.getParentFile();
@@ -1338,9 +1433,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#110 2016-07-01
 				// START KGU#316 2016-12-28: Enh. #318
 				//done = loadArrangement(frame, filename);
-				done = loadArrangement(frame, filename, unzippedFrom);
+				done = loadArrangement(frame, file, unzippedFrom);
 				// END KGU#316 2016-12-28
 				currentDirectory = oldCurrDir;
+				// START KGU#679 2019-03-12: Enh. #698 Ensure that loaded arrangements occur in the recent file lists
+				if (done) {
+					for (Mainform form: this.activeMainforms()) {
+						form.addRecentFile(file);
+					}
+				}
+				// END KGU#679 2019-03-12
 			}
 		}
 		return done;
@@ -1350,13 +1452,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Restores the diagram arrangement stored in arr file `filename´ if possible
 	 * (i.e. given the referred nsd file paths exist and the nsd files may be parsed)
 	 * @param frame - owning frame component
-	 * @param filename - path of the arr file to be reloaded
-	 * @param unzippedFrom - path of the arrz file if shadowed to temporary directory, null otherwise
+	 * @param arrFile - the arrangement list file to be reloaded
+	 * @param unzippedFrom - the arrangement archive file if shadowed to temporary directory, null otherwise
 	 * @return true if at lest some of the referred diagrams could be arranged again.
 	 */
 	// START KGU#316 2016-12-28: Enh. #318 API change to support shadow paths in unzipped Roots
 	//public boolean loadArrangement(Frame frame, String filename)
-	public boolean loadArrangement(Frame frame, String filename, String unzippedFrom)
+	public boolean loadArrangement(Frame frame, File arrFile, File unzippedFrom)
 	// END KGU#316 2016-12-28
 	{
 		boolean done = false;
@@ -1373,25 +1475,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#626 2018-12-28 
 
 		String errorMessage = null;
+		// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+		String prevCurDirPath = this.currentDirectory.getAbsolutePath();
+		// END KGU#316 2016-12-28
 		try
 		{
-			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
-			String prevCurDirPath = this.currentDirectory.getAbsolutePath();
-			// END KGU#316 2016-12-28
 			// set up the file
-			File arrFile = new File(filename);
 			
 			// START KGU#626 2018-12-28: Enh. #657 - group management
-			File arrzFile = null;
 			String groupName = arrFile.getName();
 			if (unzippedFrom != null) {
-				arrzFile = new File(unzippedFrom);
-				groupName = arrzFile.getName();
+				groupName = unzippedFrom.getName();
 			}
 			if (groups.containsKey(groupName)) {
+				// Warn and ask for confirmation if this group has already been loaded
 				Group oldGroup = groups.get(groupName);
 				File oldFile = null;
-				if ((oldFile = oldGroup.getArrzFile()) != null && arrzFile != null && oldFile.compareTo(arrzFile) == 0 ||
+				if ((oldFile = oldGroup.getArrzFile()) != null && unzippedFrom != null && oldFile.compareTo(unzippedFrom) == 0 ||
 						(oldFile = oldGroup.getFile()) != null && oldFile.compareTo(arrFile) == 0) {
 					if (JOptionPane.showConfirmDialog(frame,
 							msgArrangementAlreadyLoaded.getText()
@@ -1404,95 +1504,110 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					};
 				}
 				int trial = 1;
+				// We care a unique group name by appending a parenthesised number
 				while (groups.containsKey(groupName + "(" + trial +")")) trial++;
 				groupName = groupName + "(" + trial +")";
 			}
-			group = new Group(groupName, unzippedFrom == null ? filename : unzippedFrom + File.separator + arrFile.getName());
+			// Now we prepare the group context before the actual diagrams are loaded
+			group = new Group(groupName, unzippedFrom == null ? arrFile.getAbsolutePath() : unzippedFrom.getAbsolutePath() + File.separator + arrFile.getName());
 			groups.put(groupName, group);
 			// END KGU#626 2018-12-28
+		
+// START KGU#679 2019-03-10: Enh. #698 Decomposition 
+//			Scanner in = new Scanner(arrFile, "UTF8");
+//			while (in.hasNextLine())
+//			{
+//				String line = in.nextLine();
+//				StringList fields = StringList.explode(line, ",");
+//				if (fields.count() >= 3)
+//				{
+//					Point point = new Point();
+//					point.x = Integer.parseInt(fields.get(0));
+//					point.y = Integer.parseInt(fields.get(1));
+//					String nsdFileName = fields.get(2);
+//					if (nsdFileName.startsWith("\""))
+//						nsdFileName = nsdFileName.substring(1);
+//					if (nsdFileName.endsWith("\""))
+//						nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
+//					File nsdFile = new File(nsdFileName);
+//					if (!nsdFile.exists() && !nsdFile.isAbsolute())
+//					{
+//						// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+//						//nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
+//						nsdFile = new File(prevCurDirPath + File.separator + nsdFileName);
+//						// END KGU#316 2016-12-28
+//					}
+//					// START KGU#289 2016-11-15: Enh. #290 (Arrangements loaded from Mainform)
+//					//String trouble = loadFile(nsdFileName, point);
+//					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null,
+//							nsdFile, point, unzippedFrom, group);
+//					// END KGU#289 2016-11-15
+//					// START KGU#625 2018-12-22: Bugfix #656 - It might be that the arr file refers to virtual arrz paths
+//					if (!trouble.isEmpty() && !nsdFile.exists() && unzippedFrom == null && nsdFileName.contains(".arrz")) {
+//						try {
+//							// Might be a path into an arrz file from which the referred diagram had originally been loaded
+//							File arrzFile = nsdFile.getParentFile();
+//							String pureName = nsdFile.getName();
+//							if (arrzFile.exists()) {
+//								File extractedArrFile = unzipArrangement(arrzFile, null);
+//								if (extractedArrFile != null) {
+//									File targetDir = extractedArrFile.getParentFile(); 
+//									if (targetDir.exists() && (nsdFile = new File(targetDir.getAbsolutePath() + File.separator + pureName)).exists()) {
+//										// Now let's try again
+//										String newTrouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null,
+//												nsdFile, point, arrzFile, group);
+//										if (newTrouble.isEmpty()) {
+//											trouble = "";
+//										}
+//										else {
+//											trouble += "\n   " + newTrouble;
+//										}
+//									}
+//								}
+//							}
+//						}
+//						catch (Exception ex) {
+//							trouble += "\n    " + ex.toString();
+//						}
+//					}
+//					// END KGU#625 2018-12-22
+//					if (!trouble.isEmpty())
+//					{
+//						if (errorMessage != null)
+//						{
+//							errorMessage += "\n" + trouble;
+//						}
+//						else {
+//							errorMessage = trouble;
+//						}
+//					}
+//					// START KGU#278 2016-10-11: Enh. #267
+//					else {
+//						nLoaded++;
+//					}
+//					// END KGU#278 2016-10-11
+//				}
+//			}
+//
+//			in.close();
 			
-			Scanner in = new Scanner(arrFile, "UTF8");
-			while (in.hasNextLine())
-			{
-				String line = in.nextLine();
-				StringList fields = StringList.explode(line, ",");
-				if (fields.count() >= 3)
-				{
-					Point point = new Point();
-					point.x = Integer.parseInt(fields.get(0));
-					point.y = Integer.parseInt(fields.get(1));
-					String nsdFileName = fields.get(2);
-					if (nsdFileName.startsWith("\""))
-						nsdFileName = nsdFileName.substring(1);
-					if (nsdFileName.endsWith("\""))
-						nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
-					File nsd = new File(nsdFileName);
-					if (!nsd.exists() && !nsd.isAbsolute())
-					{
-						// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
-						//nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
-						nsdFileName = prevCurDirPath + File.separator + nsdFileName;
-						// END KGU#316 2016-12-28
-					}
-					// START KGU#289 2016-11-15: Enh. #290 (Arrangements loaded from Mainform)
-					//String trouble = loadFile(nsdFileName, point);
-					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null,
-							nsdFileName, point, unzippedFrom, group);
-					// END KGU#289 2016-11-15
-					// START KGU#625 2018-12-22: Bugfix #656 - It might be that the arr file refers to virtual arrz paths
-					if (!trouble.isEmpty() && !nsd.exists() && unzippedFrom == null && nsdFileName.contains(".arrz")) {
-						try {
-							// Might be a path into an arrz file from which the referred diagram had originally been loaded
-							arrzFile = nsd.getParentFile();
-							String pureName = nsd.getName();
-							if (arrzFile.exists()) {
-								String extractedArrPath = unzipArrangement(arrzFile.getAbsolutePath(), null);
-								if (extractedArrPath != null) {
-									File targetDir = (new File(extractedArrPath)).getParentFile(); 
-									if (targetDir.exists() && (nsd = new File(targetDir.getAbsolutePath() + File.separator + pureName)).exists()) {
-										// Now let's try again
-										String newTrouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null,
-												nsd.getAbsolutePath(), point, arrzFile.getAbsolutePath(), group);
-										if (newTrouble.isEmpty()) {
-											trouble = "";
-										}
-										else {
-											trouble += "\n   " + newTrouble;
-										}
-									}
-								}
-							}
-						}
-						catch (Exception ex) {
-							trouble += "\n    " + ex.toString();
-						}
-					}
-					// END KGU#625 2018-12-22
-					if (!trouble.isEmpty())
-					{
-						if (errorMessage != null)
-						{
-							errorMessage += "\n" + trouble;
-						}
-						else {
-							errorMessage = trouble;
-						}
-					}
-					// START KGU#278 2016-10-11: Enh. #267
-					else {
-						nLoaded++;
-					}
-					// END KGU#278 2016-10-11
-				}
+			StringList problems = new StringList();
+			List<ArchiveRecord> records = (new Archivar()).loadArrangement(arrFile, unzippedFrom, currentDirectory, problems);
+			if (!problems.isEmpty()) {
+				errorMessage = problems.getText();
 			}
-
-			in.close();
+			Mainform form = (frame instanceof Mainform) ? (Mainform)frame : null;
+			for (ArchiveRecord record: records) {
+				addDiagram(record.root, form, record.point, group);
+				nLoaded++;
+			}
+// END KGU#679 2019-03-10
 
 			done = true;
 		}
 		catch (Exception ex)
 		{
-			if (filename == null)
+			if (arrFile == null)
 			{
 				errorMessage = msgNoArrFile.getText();
 			}
@@ -1506,6 +1621,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		finally {
+			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+			this.currentDirectory = new File(prevCurDirPath);
+			// END KGU#316 2016-12-28
 			if (group != null) {
 				if (group.isEmpty()) {
 					groups.remove(group.getName());
@@ -1538,28 +1656,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param filename - path of the arrangement file to be loaded
 	 * @return A rough error message if something went wrong.
 	 */
-	public String loadArrFile(Mainform form, String filename)
+	public String loadArrFile(Mainform form, File file)
 	{
 		String errorMessage = "";
 		File oldCurrDir = currentDirectory;
 		// START KGU#316 2016-12-28: Enh. #318 Keep track of the original arrz path
-		String arrzPath = null;
+		File arrzFile = null;
 		// END KGU#316 2016-12-28
-		if (filename.toLowerCase().endsWith(".arrz")) {
-			arrzPath = filename;
-			filename = unzipArrangement(filename, null);
+		if (ArrZipFilter.isArr(file.getName())) {
+			arrzFile = file;
+			file = unzipArrangement(arrzFile, null);
 		}
-		if (filename != null)
+		if (file != null)
 		{
 			try {
-				currentDirectory = new File(filename);
+				currentDirectory = file;
 				while (currentDirectory != null && !currentDirectory.isDirectory())
 				{
 					currentDirectory = currentDirectory.getParentFile();
 				}
 				// START KGU#316 2016-12-28: Enh. #318
 				//if (!loadArrangement(form, filename)) {
-				if (!loadArrangement(form, filename, arrzPath)) {
+				if (!loadArrangement(form, file, arrzFile)) {
 					// END KGU#316 2016-12-28
 					errorMessage = msgDefectiveArr.getText();
 				}
@@ -1580,98 +1698,96 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Extracts the files contained in the zip file given by `filename´ into the
 	 * directory `targetDir´ or a temporary directory (if not given).
-	 * @param filename - path of the arrz file
-	 * @param targetDir - target directory path for the unzipping (may be null)
-	 * @return the path of the arr file found in the extracted archive (or otherwise null) 
+	 * @param arrzFile - path of the arrz file
+	 * @param targetDir - target directory for the unzipping (may be null)
+	 * @return the arr file found in the extracted archive (or otherwise null) 
 	 */
-	private String unzipArrangement(String filename, String targetDir)
+	private File unzipArrangement(File arrzFile, File targetDir)
 	{
-		final int BUFSIZE = 2048;
-		String arrFilename = null;
-		if (targetDir == null)
-		{
-			// START KGU#316 2016-12-28: Enh. #318
-			//targetDir = findTempDir();
-			boolean tmpDirCreated = false;
-			try {
-				// We just force the existence of the folder hierarchy in the temp directory
-				File tempFile = File.createTempFile("arr", null);
-				tempFile.delete();	// We don't need the file itself
-				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
-				if (targetDir.endsWith(".arrz")) {
-					targetDir = targetDir.substring(0, targetDir.length()-4) + "unzip";
-				}
-				File fDir = new File(targetDir);
-				if (fDir.isDirectory()) {
-					tmpDirCreated = true;
-				}
-				else {
-					tmpDirCreated = (new File(targetDir)).mkdirs();
-				}
-			} catch (IOException ex) {
-				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
-			}
-			if (!tmpDirCreated) {
-				targetDir = findTempDir();
-			}
-			// END KGU#316 2016-12-28
-		}
-		try {
-			BufferedOutputStream dest = null;
-			BufferedInputStream bistr = null;
-			ZipEntry entry;
-			ZipFile zipfile = new ZipFile(filename);
-			Enumeration<? extends ZipEntry> entries = zipfile.entries();
-			while(entries.hasMoreElements()) {
-				entry = (ZipEntry) entries.nextElement();
-				String targetName = targetDir + File.separator + entry.getName();
-				bistr = new BufferedInputStream
-						(zipfile.getInputStream(entry));
-				int count;
-				byte buffer[] = new byte[BUFSIZE];
-				FileOutputStream fostr = new FileOutputStream(targetName);
-				dest = new BufferedOutputStream(fostr, BUFSIZE);
-				while ((count = bistr.read(buffer, 0, BUFSIZE))	!= -1)
-				{
-					dest.write(buffer, 0, count);
-				}
-				dest.flush();
-				dest.close();
-				bistr.close();
-				// START KGU 2018-09-12: Preserve at least the modification time if possible
-				Path destPath = (new File(targetName)).toPath();
-				try {
-					Files.setLastModifiedTime(destPath, entry.getLastModifiedTime());
-				} catch (IOException e) {}
-				// END KGU 2018-09-12
-				if (ArrFilter.isArr(entry.getName()))
-				{
-					arrFilename = targetName;
-				}
-			}
-			zipfile.close();
-		} catch(Exception ex) {
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			logger.log(Level.WARNING, "Failed to unzip the arrangement archive " + filename, ex);
-			// END KGU#484 2018-04-05
-		}
-		return arrFilename;
+		// START KGU#698
+//		final int BUFSIZE = 2048;
+//		File arrFile = null;
+//		if (targetDir == null)
+//		{
+//			// START KGU#316 2016-12-28: Enh. #318
+//			//targetDir = findTempDir();
+//			boolean tmpDirCreated = false;
+//			try {
+//				// We just force the existence of the folder hierarchy in the temp directory
+//				File tempFile = File.createTempFile("arr", null);
+//				tempFile.delete();	// We don't need the file itself
+//				String targetDirPath = tempFile.getParent() + File.separator + arrzFile.getName();
+//				if (targetDirPath.endsWith(".arrz")) {
+//					targetDirPath = targetDirPath.substring(0, targetDirPath.length()-4) + "unzip";
+//				}
+//				targetDir = new File(targetDirPath);
+//				if (targetDir.isDirectory()) {
+//					tmpDirCreated = true;
+//				}
+//				else {
+//					tmpDirCreated = targetDir.mkdirs();
+//				}
+//			} catch (IOException ex) {
+//				logger.log(Level.WARNING, "Failed to unzip the arrangement archive: {0}", ex.getLocalizedMessage());
+//			}
+//			if (!tmpDirCreated) {
+//				targetDir = findTempDir();
+//			}
+//			// END KGU#316 2016-12-28
+//		}
+//		try {
+//			BufferedOutputStream dest = null;
+//			BufferedInputStream bistr = null;
+//			ZipEntry entry;
+//			ZipFile zipfile = new ZipFile(arrzFile);
+//			Enumeration<? extends ZipEntry> entries = zipfile.entries();
+//			while(entries.hasMoreElements()) {
+//				entry = (ZipEntry) entries.nextElement();
+//				File targetFile = new File(targetDir.getAbsolutePath() + File.separator + entry.getName());
+//				bistr = new BufferedInputStream
+//						(zipfile.getInputStream(entry));
+//				int count;
+//				byte buffer[] = new byte[BUFSIZE];
+//				FileOutputStream fostr = new FileOutputStream(targetFile);
+//				dest = new BufferedOutputStream(fostr, BUFSIZE);
+//				while ((count = bistr.read(buffer, 0, BUFSIZE))	!= -1)
+//				{
+//					dest.write(buffer, 0, count);
+//				}
+//				dest.flush();
+//				dest.close();
+//				bistr.close();
+//				// START KGU 2018-09-12: Preserve at least the modification time if possible
+//				Path destPath = targetFile.toPath();
+//				try {
+//					Files.setLastModifiedTime(destPath, entry.getLastModifiedTime());
+//				} catch (IOException e) {}
+//				// END KGU 2018-09-12
+//				if (ArrFilter.isArr(entry.getName()))
+//				{
+//					arrFile = targetFile;
+//				}
+//			}
+//			zipfile.close();
+//		} catch(Exception ex) {
+//			// START KGU#484 2018-04-05: Issue #463
+//			//ex.printStackTrace();
+//			logger.log(Level.WARNING, "Failed to unzip the arrangement archive " + arrzFile.getAbsolutePath(), ex);
+//			// END KGU#484 2018-04-05
+//		}
+//		return arrFile;
+		Archivar archivar = new Archivar();
+		ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, null);
+		return archiveIndex.arrFile;
 	}
 
 	/**
 	 * Finds a directory for temporary files (trying different OS standard environment variables)
 	 * @return path of a temp directory
 	 */
-	private static String findTempDir()
+	private static File findTempDir()
 	{
-		String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
-		String tempDir = "";
-		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
-		{
-			tempDir = System.getenv(EnvVariablesToCheck[i]);
-		}
-		return tempDir;
+		return Archivar.findTempDir();
 	}
 	// END KGU#110 2016-07-01
 
@@ -1770,7 +1886,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param _silhouette - a list of pairs {x,y} representing the lower silhouette line
 	 * (where the x coordinate represents a leap position and the y coordinate is the new
 	 * level from x to the next leap eastwards) or null
-	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diaras
+	 * @return the bounding box as {@link Rect} (an empty Rect at (0,0) if there are no diagrams)=
 	 */
 	public Rect getDrawingRect(LinkedList<Point> _silhouette)
 	{
@@ -2030,6 +2146,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#444 2017-10-23
 
+	// START KGU#679 2019-03-12: Enh. #698
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.executor.IRoutinePool#addArchive(java.io.File, boolean)
+	 */
+	@Override
+	public boolean addArchive(File arrangementArchive, boolean lazy) {
+		// TODO we should actually think about lazy mode in order to reduce drawing contention
+		String errors = this.loadFile(arrangementArchive);
+		return !errors.isEmpty();
+	}
+	// END KGU#679 2019-03-12
+
 	/**
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
 	 * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
@@ -2137,10 +2266,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#1119 2016-01-02
 		if (diagram == null) {
 		// END KGU#2 2015-11-19
-			boolean pointGiven = point != null;
+			boolean pointGiven = point != null && point.x >= 0 && point.y >= 0;
 			// START KGU#499 2018-02-22: New packing strategy (silhouette approach)
 			//Rect rect = getDrawingRect();
 			LinkedList<Point> silhouette = new LinkedList<Point>();
+			/* The bounds of the computed silhouette as a first rough approach
+			 * (hardly better than getDrawingRect(), the major aim is the computation
+			 * of the silhouette */
 			Rect rect = getDrawingRect(silhouette);
 			// END KGU#499 2018-02-22
 
@@ -2163,7 +2295,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//Point point = new Point(left,top);
 			if (!pointGiven)
 			{
-				point = new Point(left,top);
+				point = new Point(left, top);
 			}
 			// END KGU#110 2015-12-20
 			// START KGU 2016-03-14: Enh. #62
@@ -2193,14 +2325,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
+			// START KGU 2019-03-11: It doesn't make sense to initiate a prepareDraw() here, because the nex diagram won't know...
 			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
 			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
+			//Rect draftRec = null;
+			//if (rec.right == rec.left && rec.top == rec.bottom) {
+			//	// Can never have been drawn, so try it now...
+			//	Graphics2D graphics2d = (Graphics2D) this.getGraphics();
+			//	draftRec = root.prepareDraw(graphics2d);
+			//	(rec = draftRec.copy()).add(point);
+			//}
+			// END KGU 2019-03-11
+			
 			// START KGU#499 2018-02-21: Enh. #515 - better area management
 			// Improve the placement if possible (for more compact arrangement)
 			if (!pointGiven) {
 				point = findPreferredLocation(silhouette, rec.getRectangle());
 				diagram.point = point;
+				// START KGU 2019-03-11
 				rec = root.getRect(point);
+				//if (draftRec != null) {
+				//	(rec = draftRec.copy()).add(point);
+				//}
+				//else {
+				//	rec = root.getRect(point);
+				//}
+				// END KGU 2019-03-11
 			}
 			// END KGU#499 2018-02-21
 			// START KGU#85 2015-11-18
@@ -2216,7 +2366,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagram.isPinned = true;
 			}
 			// END KGU#88 2015-12-20
-			// START KGU#626 2019-01-01: Enh. #657 Moved after the alternative (to be done in both branches)
+			// START KGU#626 2019-01-01: Enh. #657 Moved behind the alternative (to be done in both branches)
 //			// START KGU#278 2016-10-11: Enh. #267
 //			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 //			// END KGU#278 2016-10-11
@@ -2503,11 +2653,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					);
 			// END KGU#624 2018-12-21
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			clipboard.setContents(toClip, this);					
+			clipboard.setContents(toClip, this);
 		}
 		return okay;
 	}
 
+	/**
+	 * Checks the system clipbard and pasts the content as diagram if it is the text content
+	 * of an nsd file (as used to be copied there by {@link #copyDiagram()}).
+	 * If successful, then the diagram will be added to the default group. 
+	 */
 	public void pasteDiagram()
 	{
 		// See http://www.javapractices.com/topic/TopicAction.do?Id=82
@@ -2543,6 +2698,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#177 2016-04-14
 
 	// START KGU#88 2015-11-24: Provide a possibility to protect diagrams against replacement
+	/**
+	 * Toggles the "pinned" status of the selected diagrams. If the "pinned" flag
+	 * of the selected diagrams differs then all diagrams will be set to pinned.
+	 */
 	public void togglePinned()
 	{
 		// START KGU#624 2018-12-21: Enh. #655 - converted t multiple selection 
@@ -2568,6 +2727,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#88 2015-11-24
 
 	// START KGU#117 2016-03-09: Provide a possibility to mark diagrams as test-covered
+	/**
+	 * Toggles the "covered" status of the subroutine or includable diagrams among the
+	 * selected diagrams.<br/>
+	 * If the "covered" flag the selected diagrams differs then all diagrams will be set
+	 * "covered". Before unsetting the "covered" flag a confirmation dialog will pop up.
+	 * @param frame - the owner for the dialog box.
+	 */
 	public void setCovered(Frame frame)
 	{
 		if (this.maySetCovered())
@@ -2623,6 +2789,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	/**
+	 * Checks whether the action to toggle the "covered" flag is currently available.
+	 * This requires that the run-time analysis mode is switched on and that at least
+	 * one subroutine diagram is selected.
+	 * @return true if it is sensible to siwtch the "covered" flag of some selected
+	 * diagram on or off.
+	 */
 	public boolean maySetCovered()
 	{
 		// START KGU#624 2018-12-21: Enh. #655 - For multiple selection, this gets more complicated
@@ -2636,6 +2809,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Diagram diagr: this.diagramsSelected) {
 				if (diagr.root != null && !diagr.root.isProgram()) {
 					canDo = true;
+					break;
 				}
 			}
 		}
@@ -2644,17 +2818,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#117 2016-03-09
 
-	/** Creates new form Surface */
+	/** Creates a new Arranger Surface */
 	public Surface()
 	{
 		initComponents();
 		create();
 	}
 
-	/** This method is called from within the constructor to
+	/**
+	 * This method is called from within the constructor to
 	 * initialize the form.
-	 * WARNING: Do NOT modify this code. The content of this method is
-	 * always regenerated by the Form Editor.
 	 */
 	//@SuppressWarnings("unchecked")
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -2679,25 +2852,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#497 2018-02-17
 	}// </editor-fold>//GEN-END:initComponents
 
-	/**
-	 * @return the vector of {@link Diagram}s
-	 */
-	@Deprecated
-	protected Vector<Diagram> getDiagrams()
-	{
-		// FIXME should be deleted
-		return diagrams;
-	}
-
-	/**
-	 * @param diagrams - the vector of {@link Diagram}s to set
-	 */
-	@Deprecated
-	protected void setDiagrams(Vector<Diagram> diagrams)
-	{
-		// FIXME: Method should be deleted
-		this.diagrams = diagrams;
-	}
+//	/**
+//	 * @return the vector of {@link Diagram}s
+//	 */
+//	@Deprecated
+//	protected Vector<Diagram> getDiagrams()
+//	{
+//		// FIXME should be deleted
+//		return diagrams;
+//	}
+//
+//	/**
+//	 * @param diagrams - the vector of {@link Diagram}s to set
+//	 */
+//	@Deprecated
+//	protected void setDiagrams(Vector<Diagram> diagrams)
+//	{
+//		// FIXME: Method should be deleted
+//		this.diagrams = diagrams;
+//	}
 	
 	// START KGU#624 2018-12-25: Enh. #655
 	/**
@@ -3018,6 +3191,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return groupOffsetY;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		Diagram diagr1 = null;
@@ -3118,6 +3295,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 		/* The interesting things happen in mouseClicked() and mouseDragged() */
@@ -3126,6 +3307,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#626 2018-12-23
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 		// We must reset the last drag information lest mouseDragged() should run havoc
@@ -3148,15 +3333,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#626 2018-12-23
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 		pop.setVisible(false);
 	}
 
+	@Override
 	public void mouseDragged(MouseEvent e)
 	{
 		int mouseX = e.getX();
@@ -3220,6 +3408,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		repaint();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	@Override
 	public void mouseMoved(MouseEvent e)
 	{
 		if (this.drawGroups) {
@@ -3755,13 +3947,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		Vector<Root> functionsAny = findDiagramsByName(rootName);
 		Vector<Root> functions = new Vector<Root>();
+		// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
+		int minDefaults = Integer.MAX_VALUE;
+		// END KGU#371 2019-03-07
 		for (int i = 0; i < functionsAny.size(); i++)
 		{
 			Root root = functionsAny.get(i);
-			if (root.isSubroutine() && root.getParameterNames().count() == argCount)
-			{
-				functions.add(root);
+			// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
+			//if (root.isSubroutine() && root.getParameterNames().count() == argCount)
+			//{
+			//	functions.add(root);
+			//}
+			if (root.isSubroutine()) {
+				int nDflts = root.acceptsArgCount(argCount);
+				if (nDflts >= 0 && nDflts <= minDefaults) {
+					if (nDflts < minDefaults) {
+						functions.clear();
+						minDefaults = nDflts;
+					}
+					functions.add(root);
+				}
 			}
+			// END KGU#371 2019-03-07
 		}
 		return functions;
 	}
@@ -3873,12 +4080,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#305 2016-12-16	
 
-	// Windows listener for the mainform
-	// I need this to unregister the updater
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
+	 */
+	@Override
 	public void windowOpened(WindowEvent e)
 	{
 	}
 
+	/**
+	 * Windows listener method for the {@link Mainform}.<br/>
+	 * Needed to unregister the updaters.
+	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
+	 */
+	@Override
 	public void windowClosing(WindowEvent e)
 	{
 		if (e.getSource() instanceof Mainform)
@@ -3906,6 +4121,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	/**
+	 * Windows listener method for the {@link Mainform}.<br/>
+	 * Needed to remove the {@link Mainforms} as change listeners.
+	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
+	 */
+	@Override
 	public void windowClosed(WindowEvent e)
 	{
 		// START KGU#305 2016-12-16
@@ -3915,18 +4136,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#305 2016-12-16
 	}
 
+	@Override
 	public void windowIconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowActivated(WindowEvent e)
 	{
 	}
 
+	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
 	}
@@ -4721,7 +4946,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Checks if a diagram among {@code candidates}, which is not represented by {@code diagr}
-	 * but element of {@code members} is member of any group with name contained {@code groupNames}
+	 * but element of {@code members} is member of any group with name contained in {@code groupNames}
 	 * but not equal to {@code groupName}.
 	 * @param candidates - a set of {@link Root} objects to check
 	 * @param diagr - a @{@link Diagram} representing a {@code candidates} member to be ignored  
@@ -4837,4 +5062,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return true;
 	}
 
+	// START KGU#679 2019-03-13: Enh. #698
+	/**
+	 * @return the name of this pool if it has got one, otherwise null
+	 */
+	@Override
+	public String getName()
+	{
+		return this.getClass().getSimpleName();
+	}
+	// END KGU#679 2019-03-13
 }

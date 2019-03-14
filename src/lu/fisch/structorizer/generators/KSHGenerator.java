@@ -44,12 +44,13 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.02      Inheritance changed (because the code was nearly
  *                                              identical to BASHGenerator - so why do it twice?)
  *                                              Function argument handling improved
- *      Kay Gürtzig             2016.01.08      Bugfix #96 (= KG#129): Variable names fetched
+ *      Kay Gürtzig             2016-01-08      Bugfix #96 (= KG#129): Variable names fetched
  *      Kay Gürtzig             2016-07-20      Enh. #160 (option to involve referred subroutines)
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2017.01.05      Enh. #314: File API TODO comments added, issue #234 chr/ord support
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2017-01-05      Enh. #314: File API TODO comments added, issue #234 chr/ord support
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Optional function arguments with defaults
  *
  ******************************************************************************************************
  *
@@ -195,10 +196,27 @@ public class KSHGenerator extends BASHGenerator {
 			code.add(header + " {");
 			indent = indent + this.getIndent();
 			StringList paraNames = _root.getParameterNames();
-			for (int i = 0; i < paraNames.count(); i++)
+			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			//for (int i = 0; i < paraNames.count(); i++)
+			//{
+			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			//}
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			for (int i = 0; i < minArgs; i++)
 			{
 				code.add(indent + paraNames.get(i) + "=$" + (i+1));
 			}
+			for (int i = minArgs; i < paraNames.count(); i++)
+			{
+				code.add(indent + "if [ ${#} -lt " + (i+1) + " ]");
+				code.add(indent + "then");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				code.add(indent + "else");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+				code.add(indent + "fi");
+			}
+			// END KGU#371 2019-03-08
 			// END KGU#53 2015-11-02
 		}
 		

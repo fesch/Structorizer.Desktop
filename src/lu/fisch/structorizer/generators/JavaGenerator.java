@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-21/22   Bugfix #564: array initializer trouble mended
  *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *
  ******************************************************************************************************
  *
@@ -162,7 +163,17 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU 2015-10-18
 
-// START KGU#16 2015-12-18: Now inherited and depending on export option	
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DELEGATION;
+	}
+	// END KGU#371 2019-03-07
+
+	// START KGU#16 2015-12-18: Now inherited and depending on export option	
 //	// START KGU#16 2015-11-29: Code style option for opening brace placement
 //	protected boolean optionBlockBraceNextLine() {
 //		return false;
@@ -1055,11 +1066,13 @@ public class JavaGenerator extends CGenerator
 			// START KGU#446 2018-01-21: Enh. #441
 			this.includeInsertionLine = code.count();
 			// END KGU#446 2018-01-21
-			insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
-			insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
+			// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			boolean docResult = false;
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				code.add(indentPlus1 + " * @return ");
+				docResult = true;
 				_resultType = transformType(_resultType, "int");
 				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
 				_resultType = this.transformArrayDeclaration(_resultType, "");
@@ -1068,22 +1081,45 @@ public class JavaGenerator extends CGenerator
 			else {
 				_resultType = "void";		        	
 			}
-			code.add(indentPlus1 + " */");
-			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
-			//String fnHeader = "public static " + _resultType + " " + _procName + "(";
-			String fnHeader = (topLevel ? "public" : "private") + " static "
-					+ _resultType + " " + _procName + "(";
-			// END KGU#178 2016-07-20
-			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0) { fnHeader += ", "; }
-				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
-				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
-				// END KGU#140 2017-02-01
+			while (minArgs <= _paramNames.count()) {
+			// END KGU#371 2019-03-07
+				insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
+				// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
+				//insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
+				insertBlockComment(_paramNames.subSequence(0, minArgs), indentPlus1, null, " * @param ", null);
+				// END KGU#371 2019-03-07
+				if (docResult) {
+					code.add(indentPlus1 + " * @return ");
+				}
+				code.add(indentPlus1 + " */");
+				// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
+				//String fnHeader = "public static " + _resultType + " " + _procName + "(";
+				String fnHeader = (topLevel ? "public" : "private") + " static "
+						+ _resultType + " " + _procName + "(";
+				// END KGU#178 2016-07-20
+				// START KGU#371 2019-03-08: Enh. #385 - create the next delegate
+				//for (int p = 0; p < _paramNames.count(); p++) {
+				for (int p = 0; p < minArgs; p++) {
+					// END KGU#371 2019-03-08
+					if (p > 0) { fnHeader += ", "; }
+					// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+					//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+					//		_paramNames.get(p)).trim();
+					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+					// END KGU#140 2017-02-01
+				}
+				fnHeader += ")";
+				insertBlockHeading(_root, fnHeader,  indentPlus1);
+			// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
+				if (minArgs < _paramNames.count()) {
+						addCode("return " + _procName + "(" + _paramNames.concatenate(", ", 0, minArgs) +
+								(minArgs > 0 ? ", " : "") + transform(argDefaults.get(minArgs)) + ");", indentPlus2, false);
+					code.add(indentPlus1 + "}");
+					code.add(indentPlus1);
+				}
+				minArgs++;
 			}
-			fnHeader += ")";
-			insertBlockHeading(_root, fnHeader,  indentPlus1);
+			// END KGU#371 2019-03-97
 		}
 
 		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables

@@ -118,11 +118,11 @@ import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.turtle.TurtleBox;
 import lu.fisch.diagrcontrol.DiagramController;
+import lu.fisch.structorizer.archivar.IRoutinePool;
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
@@ -1317,5 +1317,17 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		return isStandalone;
 	}
 	// END KGU#631 2019-01-08
+
+	// START KGU#679 2019-03-12: Enh. #698 - we needed a way for Arranger to inform about recently loaded or saved arrangement files
+	/**
+	 * Registers the given {@code file} as recently used. Interface for other modules like
+	 * {@link Arranger} to inform about used files, e.g. arrangements.
+	 * @param file - a file interpretable for Structorizer and just loaded or saved or otherwise used
+	 */
+	public void addRecentFile(File file) {
+		if (diagram != null) {
+			diagram.addRecentFile(file.getAbsolutePath());
+		}
+	}
 
 }

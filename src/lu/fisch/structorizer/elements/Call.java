@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -90,6 +91,7 @@ package lu.fisch.structorizer.elements;
  *****************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -154,10 +156,13 @@ public class Call extends Instruction {
 	}
 	
 	@Override
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
 		// START KGU 2016-07-30: Just delegate the basics to super
-		super.draw(_canvas, _top_left);
+		super.draw(_canvas, _top_left, _viewport);
 		// END KGU 2016-07-30: Just delegate the basics to super
 		
 		// Now draw the Call-specific lines

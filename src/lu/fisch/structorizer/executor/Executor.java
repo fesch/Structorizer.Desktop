@@ -172,6 +172,11 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-02-14      Enh. #680: INPUT instructions with multiple variables supported
  *      Kay Gürtzig     2019-02-17      Issues #51,#137: Write prompts of empty input instructions to output window
  *      Kay Gürtzig     2019-02-26      Bugfix #687: Breakpoint behaviour was flawed for Repeat loops
+ *      Kay Gürtzig     2019-03-02      Issue #366: Return the focus to a DiagramController that had it before tryInput()
+ *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
+ *      Kay Gürttig     2019-03-07      Enh. #385 - support for optional routine arguments
+ *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
+ *      Kay Gürtzig     2019-03-14      Issue #366 - Mainform, Arranger, and Control now also under focus watch
  *
  ******************************************************************************************************
  *
@@ -327,6 +332,7 @@ import javax.swing.SwingUtilities;
 
 import lu.fisch.diagrcontrol.*;
 import lu.fisch.diagrcontrol.DiagramController.FunctionException;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
@@ -721,7 +727,7 @@ public class Executor implements Runnable
 	/**
 	 * Ensures there is a (singleton) instance and returns it
 	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	 * @param diagramController - facades of additionally controllable modules or devices 
+	 * @param diagramControllers - façades of additionally controllable modules or devices 
 	 * @return the sole instance of this class.
 	 */
 	public static Executor getInstance(Diagram diagram,
@@ -974,8 +980,11 @@ public class Executor implements Runnable
 	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
 	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
 	// END KGU#388 2017-10-29
-	// START KGU#510 2018-03-20: Issue ??? Possible pattern for index problem
-	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.get").matcher("");
+	// START KGU#510 2018-03-20: Issue #527 Possible pattern for index problem
+	// START KGU#677 2019-03-09: In case of Arrays being the result of a function (e.g. copyArray()), the message looks different
+	//private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.)get").matcher("");
+	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?)\\.get\\((.*)\\)(.*?)'' : Method Invocation ((\\w+)\\.)?get").matcher("");
+	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
 
@@ -1593,11 +1602,17 @@ public class Executor implements Runnable
 		if (root.isSubroutine() && trouble.isEmpty())
 		{
 		// END KGU#39 2015-10-16 (1/2)
-			StringList params = root.getParameterNames();
+			// START KGU#371 2019-03-07: Enh. #385 be aware of possible default values
+			//StringList params = root.getParameterNames();
 			//System.out.println("Having: "+params.getCommaText());
 			// START KGU#375 2017-03-30: Enh. #388 - support a constant concept
-			StringList pTypes = root.getParameterTypes();
+			//StringList pTypes = root.getParameterTypes();
 			// END KGU#375 2017-03-30
+			StringList params = new StringList();
+			StringList pTypes = new StringList();
+			StringList pDefaults = new StringList();
+			root.collectParameters(params, pTypes, pDefaults);
+			// END KGU#371 2019-03-07
 			// START KGU#2 2015-12-05: New mechanism of getParameterNames() made reverting wrong
 			//params=params.reverse();
 			// END KGU#2 2015-12-05
@@ -1635,7 +1650,10 @@ public class Executor implements Runnable
 					//		"Please enter a value for <" + in + ">", null);
 					String msg = control.lbInputValue.getText();
 					msg = msg.replace("%", in);
-					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
+					// START KGU#371 2019-03-07: Enh. #385 - offer a default value if available
+					//String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
+					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, pDefaults.get(i));
+					// END KGU#371 2019-03-07
 					// END KGU#89 2016-03-18
 					if (str == null)
 					{
@@ -1644,6 +1662,9 @@ public class Executor implements Runnable
 						//trouble = "Manual break!";
 						trouble = control.msgManualBreak.getText();
 						// END KGU#197 2016-07-27
+						// START KGU#371 2019-03-07: Enh. #385
+						str = pDefaults.get(i);
+						// END KGU#371 2019-03-07
 						break;
 					}
 					try
@@ -1679,12 +1700,23 @@ public class Executor implements Runnable
 					{
 						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
 						//setVar(in, arguments[i]);
+						// START KGU#371 2019-03-07: Enh. #385: Cope with default values
+						//if (isConstant) {
+						//	setVar("const " + in, arguments[i]);
+						//}
+						//else {
+						//	setVar(in, arguments[i]);
+						//}
 						if (isConstant) {
-							setVar("const " + in, arguments[i]);
+							in = "const " + in;
 						}
-						else {
+						if (i < arguments.length) {
 							setVar(in, arguments[i]);
 						}
+						else {
+							setVarRaw(in, pDefaults.get(i));
+						}
+						// END KGU#371 2019-03-07
 						// END KGU#375 2017-03-30
 					}
 					catch (EvalError ex)
@@ -2453,7 +2485,7 @@ public class Executor implements Runnable
      */
 	public Root findIncludableWithName(String name) throws Exception
 	{
-		return findDiagramWithSignature(name, -1);
+		return findDiagramWithSignature(name, -2);
 	}
 	
     /**
@@ -2478,6 +2510,14 @@ public class Executor implements Runnable
     	return subroutine;
     }
     
+    /**
+     * Searches all known pools for either routine diagrams with a signature compatible to {@code name(arg1, arg2, ..., arg_nArgs)}
+     * or for includable diagrams with name {@code name}
+     * @param name - diagram name
+     * @param nArgs - number of parameters of the requested function (negative fo Includable)
+     * @return a Root that matches the specification if uniquely found, null otherwise
+     * @throws Exception if there are differing matching diagrams
+     */
     private Root findDiagramWithSignature(String name, int nArgs) throws Exception
     {
     	Root diagr = null;
@@ -2500,7 +2540,7 @@ public class Executor implements Runnable
     		for (int c = 0; c < candidates.size(); c++)
     		// END KGU#317 2016-12-29
     		{
-    	    	// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			//subroutine = candidates.get(c);
     			if (diagr == null) {
     				diagr = candidates.get(c);
@@ -2509,6 +2549,8 @@ public class Executor implements Runnable
     				Root cand = candidates.get(c);
     				int similarity = diagr.compareTo(cand); 
     				if (similarity > 2 && similarity != 4) {
+    					// 3: Equal file path but unsaved changes in one or both diagrams;
+    					// 5: Equal signature (i. e. type, name and argument number) but different content or structure.
     					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
     				}
     			}
@@ -2536,20 +2578,22 @@ public class Executor implements Runnable
 		//	((DelayableDiagramController)diagramController).setAnimationDelay(delay, true);
 		//}
 		//else
-		boolean delayed = false;
+		//boolean delayed = false;
 		if (diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController) {
 					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
-					delayed = true;
+					//delayed = true;
 				}
 			}
 		}
-		if (!delayed)
-		// END KGU#448 2017-10-28
-		{
-			delay();
-		}
+		// START KGU#675 2019-03-04: This seemed to be a relic from times when execution paused after the current element
+//		if (!delayed)
+//		// END KGU#448 2017-10-28
+//		{
+//			delay();
+//		}
+		// END KGU#675 2019-03-04
 		if (delay != 0)
 		{
 			diagram.redraw();
@@ -4739,7 +4783,7 @@ public class Executor implements Runnable
 		// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
 		// FIXME: this repeated tokenization is pretty ugly - we need a syntax tree...
 		// DEBUG
-		StringBuilder problems = new StringBuilder();
+		//StringBuilder problems = new StringBuilder();
 		//ExprParser.getInstance().parse(tokens.concatenate(), problems);
 		tokens = Element.splitLexically(this.convertStringComparison(tokens.concatenate().trim()), true);
 		// END KGU#490 2018-02-08
@@ -4921,6 +4965,29 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String trouble = "";
+		// START KGU#356 2019-03-02: Issue #366
+		DiagramController focusedController = null;
+		for (DiagramController dc: this.diagramControllers) {
+			if (dc.isFocused()) {
+				focusedController = dc;
+				break;	// There can hardly be more than one focused controller
+			}
+		}
+		// END KGU#356 2019-03-02
+		// START KGU#356 2019-03-14: Enh. #366
+		JFrame focusedFrame = null;
+		if (focusedController == null) {
+			if (diagram.getFrame().isFocused()) {
+				focusedFrame = diagram.getFrame();
+			}
+			else if (control.isFocused()) {
+				focusedFrame = control;
+			}
+			else if (Arranger.hasInstance() && Arranger.getInstance().isFocused()) {
+				focusedFrame = Arranger.getInstance();
+			}
+		}
+		// END KGU#356 2019-03-14
 		// START KGU#653 2019-02-14: Enh. #680 - revision
 		StringList inputItems = Instruction.getInputItems(cmd);
 		String prompt = inputItems.get(0);
@@ -5089,6 +5156,16 @@ public class Executor implements Runnable
 					setVarRaw(inputItems.get(i), values[i]);
 				}
 				// END KGU#69 2015-11-08
+				// START KGU#356 2019-03-02: Issue #366
+				if (focusedController != null) {
+					focusedController.requestFocus();
+				}
+				// END KGU#356 2019-03-02
+				// START KGU#356 2019-03-14: Enh. #366
+				else if (focusedFrame != null) {
+					focusedFrame.requestFocus();
+				}
+				// END KGU#356 2019-03-14
 			}
 			// END KGU#84 2015-11-23
 			// START KGU#107 2015-12-13: Enh./bug #51 part 2
@@ -6686,6 +6763,7 @@ public class Executor implements Runnable
 			// no error occurs.
 			boolean error423 = false;
 			String expr = tokens.concatenate();
+			boolean messageAugmented = false;
 			do {
 				error423 = false;
 				try {
@@ -6702,48 +6780,65 @@ public class Executor implements Runnable
 							error423 = true;
 						}
 					}
-					// START KGU#509 2018-03-20: Issue #527 - index range problem detection for more helpful message
+					// START KGU#510 2018-03-20: Issue #527 - index range problem detection for more helpful message
 					else if (ERROR527MATCHER.reset(error423message).matches()) {
 						try {
-							Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
-							Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							// START KGU#677 2019-03-09: Bugfix #527
+							//Object potArray = context.interpreter.eval(ERROR527MATCHER.group(4));
+							//Object potIndex = context.interpreter.eval(ERROR527MATCHER.group(2));
+							String arrayName = ERROR527MATCHER.group(5);
+							Object potArray = null;
+							if (arrayName == null && (arrayName = ERROR527MATCHER.group(1)).contains("copyArray(")) {
+								arrayName = arrayName.replaceFirst("^copyArray\\((.*)\\)$", "$1");
+							}
+							if (arrayName != null) {
+								potArray = context.interpreter.eval(arrayName);
+							}
+							String indexExpr = ERROR527MATCHER.group(2);
+							if (indexExpr != null) {
+								indexExpr = Element.splitExpressionList(indexExpr, ",").get(0);
+							}
+							Object potIndex = context.interpreter.eval(indexExpr);
+							// END KGU#677 2019-03-09
 							if (potArray instanceof ArrayList && potIndex instanceof Integer) {
 								int index = ((Integer)potIndex).intValue();
 								if (index < 0 || index >= ((ArrayList<?>)potArray).size()) {
 									err.setMessage(control.msgIndexOutOfBounds.getText().
-											replace("%1", ERROR527MATCHER.group(2)).
+											// START KGU#677 2019-03-09: Bugfix #527
+											//replace("%1", ERROR527MATCHER.group(2)).
+											replace("%1", indexExpr).
+											// END KGU#677 2019-03-09
 											replace("%2", Integer.toString(index)).
-											replace("%3", ERROR527MATCHER.group(4)));
+											// START KGU#677 2019-03-09: Bugfix #527
+											//replace("%3", ERROR527MATCHER.group(4))
+											replace("%3", arrayName)
+											// END KGU#677 2019-03-09
+											);
 								}
-								// START KGU#509 2019-02-13: Issue #527 improvement
+								// START KGU#510 2019-02-13: Improvement for issue #527
 								// In more complex expressions it may not be the first index that caused the trouble, so look for other causes
 								else {
-									Throwable ex = err;
-									String msg = null;
-									while (ex.getCause() != null) {
-										ex = ex.getCause();
-										if (ex.getMessage() != null) {
-											msg = ex.getMessage();
-										}
-									}
-									if (msg != null) {
-										err.setMessage(_expr + ":\n" + msg);
-									}
+									messageAugmented = addCauseDescription(_expr, err);
 								}
-								// END KGU#509 2019-02-13
+								// END KGU#510 2019-02-13
 							}
 						}
 						catch (EvalError err1) {
-							
+							//System.out.println(err1);
 						}
 					}
-					// END KGU#509 2018-03-20
+					// END KGU#510 2018-03-20
 					// START KGU#615 2018-12-16: Just a simple workaround for #644 (single level initializer arguments)
 					else if (error423message.contains("Encountered \"( {\"")) {
 						throw new EvalError(error423message + "\n" + control.msgInitializerAsArgument.getText(), null, null);
 					}
 					// END KGU#615 2018-12-16
 					if (!error423) {
+						// START KGU#677 2019-03-09: This shouldn't harm, anyway
+						if (!messageAugmented) {
+							addCauseDescription(_expr, err);
+						}
+						// END KGU#677 2019-03-09
 						throw err;
 					}
 				}
@@ -6752,6 +6847,31 @@ public class Executor implements Runnable
 		return value;
 	}
 	// END KGU#388 2017-09-16
+
+	// START KGU#677 2019-03-09: Issue #527 (revision)
+	/**
+	 * Replaces the top-level EvalError message with the given expression
+	 * and a description of the originating problem, which is often more
+	 * expressive than the message of {@code err}.
+	 * @param _expr - The original expression or element text
+	 * @param err - an {@link EvalError}
+	 * @return true if the message of {@code err} had been augmented or replaced.
+	 */
+	private boolean addCauseDescription(String _expr, EvalError err) {
+		Throwable ex = err;
+		String msg = null;
+		while (ex.getCause() != null) {
+			ex = ex.getCause();
+			if (ex.getMessage() != null) {
+				msg = ex.getMessage();
+			}
+		}
+		if (msg != null) {
+			err.setMessage(_expr + ":\n" + msg);
+		}
+		return msg != null;
+	}
+	// END KGU#677 2019-03-09
 
 	// START KGU#100 2017-10-08: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
 	/**

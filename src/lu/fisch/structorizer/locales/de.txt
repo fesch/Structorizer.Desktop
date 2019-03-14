@@ -123,6 +123,7 @@
  *      Kay Gürtzig         2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
  *      Kay Gürtzig         2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -351,7 +352,7 @@ Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Hal
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
 Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
-Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
+Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br/>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
 Menu.msgTitleWarning.text=WARNUNG
 Menu.msgTitleLoadingError.text=Fehler beim Laden
@@ -480,7 +481,8 @@ Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable �
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
-Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 Menu.error22_1.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
 Menu.error22_2.text=Unzulässiger Versuch, die Konstante «%» zu ändern bzw. neu zu setzen.
@@ -656,7 +658,6 @@ Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
 
 -----[ InputBox ]-----
-InputBox.title=Element bearbeiten
 InputBox.lblText.text=Einzugebender Text
 InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
 InputBox.lblComment.text=Einzugebender Kommentar
@@ -731,7 +732,9 @@ InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die
 InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.title[elementType:Root]=Angaben zum @n bearbeiten
+InputBoxRoot.title[elementType:Function]=Angaben zum @o bearbeiten
+InputBoxRoot.title[elementType:Includable]=Angaben zum @pen Diagramm bearbeiten
 InputBoxRoot.lblIncludeList.text=Einzubeziehende Diagramme
 InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einzubinden sind (durch Kommas oder Zeilenschaltung getrennt).
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
@@ -918,7 +921,7 @@ ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im @e-Schleifenkopf.
 ParserPreferences.lblForStep.text=Schrittweite
 ParserPreferences.lblForIn.text=@f-Schleife
 ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von @f-Schleifen.
-ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein (oder leer bleiben mit gleicher Wirkung)
+ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein
 ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Kennwörtern unterscheiden!
 ParserPreferences.lblWhile.text=@g-Schleife
 ParserPreferences.lblWhile.tooltip=Kennwörter im @g-Schleifenkopf.
@@ -936,6 +939,8 @@ ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
 ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
 ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
+ParserPreferences.btnFromLocale.text=Sprachspezifische Standardwörter
+ParserPreferences.btnFromLocale.tooltip=Die Schlüsselwörter sind unabhängig von der Dialogsprache. Sie können lokalisierte Schlüsselwörter jeder der bei Drücken dieser Schaltfläche angebotenen Sprachen laden.
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
@@ -1218,6 +1223,7 @@ Surface.msgGroupExists.text=Eine Gruppe namens «%» existiert bereits!
 Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
 Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
 Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
+Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
 
 ----[ ArrangerIndex ]----
 ArrangerIndex.popupIndexGet.text=Diagram holen
@@ -1248,7 +1254,7 @@ ArrangerIndex.btnShowGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Ar
 ArrangerIndex.btnGroupColors.*.tooltip=Setzt die Farbe dieser Schaltfläche als Farbe der Gruppe
 ArrangerIndex.msgDefaultGroupName.text=(Auffanggruppe)
 ArrangerIndex.msgGroupsAndRootsSelected.text=Sowohl Gruppen als auch Diagramme ausgewählt. Gleichzeitiges Löschen auf beiden Ebenen könnte unerwartete Ergebnisse haben.
-ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weieteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
+ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weiteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
 ArrangerIndex.msgConfirmDeleteRoots.text=Sie haben % Diagramm(e) zum Löschen ausgewählt\n\nSollen sie ggf. auch aus allen anderen Gruppen insgesamt entfernt werden?\n(Anderenfalls werden sie einfach nur aus der jeweiligen Gruppe gelöscht.)
 ArrangerIndex.msgAttachOptions.0.text=Zur Gruppe hinzufügen
 ArrangerIndex.msgAttachOptions.1.text=In die Gruppe verschieben
@@ -1368,3 +1374,24 @@ ElementNames.localizedNames.12.text=Diagramm
 ElementNames.localizedNames.13.text=Hauptprogramm
 ElementNames.localizedNames.14.text=Unterprogramm
 ElementNames.localizedNames.15.text=Einbeziehbar
+
+
+-----> Keywords
+ParserKeywords.AltPre.text=wenn
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=für
+ParserKeywords.ForPost.text=bis
+ParserKeywords.ForStep.text=Schritt
+ParserKeywords.ForInPre.text=für alle
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=solange
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=bis
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=verlasse
+ParserKeywords.JumpReturn.text=zurück
+ParserKeywords.JumpExit.text=beende
+ParserKeywords.Input.text=Eingabe
+ParserKeywords.Output.text=Ausgabe

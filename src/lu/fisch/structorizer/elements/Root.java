@@ -139,16 +139,21 @@ package lu.fisch.structorizer.elements;
  *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
  *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
  *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
+ *      Kay Gürtzig     2019-03-07      Enh. #385: Support for default values in argument lists
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
- *      2016.03.25 (KGU#163)
+ *      2019-03-07 (KGU#371)
+ *      - Parameter list analysis has become still more complex, so it seemed sensible to cache the
+ *        parameter list while the text doesn't change.
+ *      2016-03-25 (KGU#163)
  *      - Detection of un-initialised variables (analyser check #3) only worked for variables with
  *        initialisation after use. Variables nowhere initialised weren't found at all! This was now
  *        eventually mended.
- *      2016.01.11 (KGU#137)
+ *      2016-01-11 (KGU#137)
  *      - When changes are undone back to the moment of last file saving, the hasChanged is to be reset
  *      - Therefore, we now track the undo stack size when saving. As soon as an undo action returns to
  *        the recorded stack size, the hasChanged flag will be reset. Undoing more steps sets the
@@ -197,6 +202,7 @@ import java.awt.Font;
 import java.awt.image.*;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -312,6 +318,11 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	
+	// START KGU#371 2019-03-07: Enh. #385 for performance reasons, we cache the parameter list here
+	/** Cached parameter list, each entry is composed of name, type, and default, each as Strings (defaults may be null) */
+	private ArrayList<Param> parameterList = null;
+	// END KGU#371 2019-03-07
 	
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	/** List of the names of the diagrams to be included by this Root (may be null!) */
@@ -798,6 +809,22 @@ public class Root extends Element {
 		// END KGU#363 2017-03-14
 	}
 	
+	// START KGU#371 2019-03-07: Enh. #385 - clear parameter list cache
+	@Override
+	public void setText(String _text)
+	{
+		text.setText(_text);
+		parameterList = null;
+	}
+
+	@Override
+	public void setText(StringList _text)
+	{
+		text = _text;
+		parameterList = null;
+	}
+	// END KGU#371 2019-03-07
+
     public void addUpdater(Updater updater)
     {
     	// START KGU#48 2015-10-17: While this.updaters is only a Vector, we must avoid multiple registration...
@@ -1013,7 +1040,7 @@ public class Root extends Element {
 		_canvas = new Canvas(bufferGraphics);
 
 
-		draw(_canvas, _top_left);
+		draw(_canvas, _top_left, null);
 
 		// draw buffer to output canvas
 		origCanvas.draw(bufferImg,0,0);
@@ -1023,13 +1050,17 @@ public class Root extends Element {
 		System.gc();
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
 	{
-		draw(_canvas, _top_left, DrawingContext.DC_STRUCTORIZER);
+		draw(_canvas, _top_left, _viewport, DrawingContext.DC_STRUCTORIZER);
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, DrawingContext _context)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, DrawingContext _context)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
 		Color drawColor = getFillColor(_context);
@@ -1152,7 +1183,7 @@ public class Root extends Element {
 			bodyRect.bottom -= E_PADDING/2;
 		}
 		
-		children.draw(_canvas, bodyRect);
+		children.draw(_canvas, bodyRect, _viewport);
 		// END KGU#227 2016-07-31
 
 		// draw box around
@@ -1565,11 +1596,12 @@ public class Root extends Element {
      * stack overflow due to endless recursion).
      * @param _g - the target graphics environment
      * @param _point - the target position
+     * @param _viewport - visible area of the viewport
      * @param _prohibitedUpdater - if given an updater not to be informed
      * @param _drawingContext - the context e.g. for selection highlighting 
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater, DrawingContext _drawingContext)
+    public Rect draw(Graphics _g, Point _point, Rectangle _viewport, Updater _prohibitedUpdater, DrawingContext _drawingContext)
     {
         setDrawPoint(_point);
 
@@ -1608,19 +1640,19 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect, _drawingContext);
+        this.draw(canvas, myrect, _viewport, _drawingContext);
 
         return myrect;
     }
 
-    public Rect draw(Graphics _g, Point _point)
-    {
-        return draw(_g, _point, null, DrawingContext.DC_STRUCTORIZER);
-    }
+//    public Rect draw(Graphics _g, Point _point)
+//    {
+//        return draw(_g, _point, null, null, DrawingContext.DC_STRUCTORIZER);
+//    }
 
-    public Rect draw(Graphics _g)
+    public Rect draw(Graphics _g, Rectangle _viewport)
     {
-        return draw(_g, new Point(0,0), null, DrawingContext.DC_STRUCTORIZER);
+        return draw(_g, new Point(0,0), _viewport, null, DrawingContext.DC_STRUCTORIZER);
 
         /*
         // inform updaters
@@ -2085,7 +2117,7 @@ public class Root extends Element {
         // inform updaters
         for(int u = 0; u < updaters.size(); u++)
         {
-        	updaters.get(u).update(this);
+            updaters.get(u).update(this);
         }
         // END KGU#330 2017-01-13
     }
@@ -2172,7 +2204,7 @@ public class Root extends Element {
      */
     public File getFile()
     {
-    	if(filename.equals(""))
+    	if (filename.equals(""))
     	{
     		return null;
     	}
@@ -2204,12 +2236,13 @@ public class Root extends Element {
     }
     
     /**
-     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
-     * otherwise.
-     * If the file resides within an arrz archive, the path may be a symbolic path into the arrz archive
-     * unless {@code pathOfrigin} is true, in which case it will be the archive path itself instead.
-     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the path of the mere archive
-     * will be returned.
+     * Returns the absolute file path as string if this diagram is associated to a file,
+     * or an empty string otherwise.
+     * If the file resides within an arrz archive, the path may be a symbolic path into
+     * the arrz archive unless {@code pathOfrigin} is true, in which case it will be the
+     * archive path itself instead.
+     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the
+     * path of the mere archive will be returned.
      * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
      * @see #getFile()
      */
@@ -2808,7 +2841,7 @@ public class Root extends Element {
             // KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isSubroutine() && _ele==this && !_onlyBody)
             {
-            	collectParameters(varNames, argTypes);
+            	collectParameters(varNames, argTypes, null);
             	for (int i = 0; i < varNames.count(); i++) {
             		String type = argTypes.get(i); 
             		if (type != null && (type.trim() + " ").startsWith("const")) {
@@ -2959,92 +2992,36 @@ public class Root extends Element {
     
     // START BFI 2015-12-10
     /**
-     * Obsolete method to get a type description of the result type of this (if being a
-     * function), or null, if not available.
-     * Use getResultType() instead!
-     * @return informal type description or null
-     */
-    @Deprecated
-    public String getReturnType()
-    {
-        try 
-        {
-            // stop and return null if this is not a function
-            if(!this.isSubroutine()) return null;
-            // get the root text
-            String rootText = this.getText().getText(); 
-            // stop if there is no closing parenthesis
-            if(rootText.indexOf(")")<0) return null;
-            // get part after closing parenthesis
-            rootText = rootText.substring(rootText.indexOf(")")+1);
-            // replace eventually ":"
-            rootText = rootText.replaceAll(":", "");
-            
-            return rootText.trim();
-        }
-        catch(Exception e)
-        {
-            return null;
-        }
-    }
-    
-    /*
-    // test getReturnType()
-    public static void main(String[] args)
-    {
-        StringList sl = new StringList();
-        sl.add("test(a,b:integer; c:real): string");
-        Root root = new Root(sl);
-        root.isProgram=false;
-
-        System.out.println("Starting ...");
-        System.out.println(root.getReturnType());
-        System.out.println("- end -");
-    }
-    */
-            
-    /**
-     * Identifies parameter names and types of the routine and returns an array list
-     * of Param objects being name-type pairs.
-     * This is just a different aggregation of the same results getParameterNames() and
-     * getParameterTypes() would provide.
+     * Identifies parameter names, types, and default values of the routine and returns an array list
+     * of Param objects being name-type-default triples.
+     * This is just a different aggregation of the same results {@link #getParameterNames()},
+     * {@link #getParameterTypes()}, and {@link #getParameterDefaults()} would provide.
      * @return the list of the declared parameters
      */
     public ArrayList<Param> getParams()
     {
-            ArrayList<Param> resultVars = new ArrayList<Param>();
+        // START KGU#371 2019-03-07: Enh. #385 Now we cache this list for beter performance
+        //ArrayList<Param> resultVars = new ArrayList<Param>();
+ 
+        //StringList names = new StringList();
+        //StringList types = new StringList();
+        //collectParameters(names, types);
+        //for (int i = 0; i < names.count(); i++)
+        //{
+        //    resultVars.add(new Param(names.get(i), types.get(i)));
+        //}
 
-            StringList names = new StringList();
-            StringList types = new StringList();
-            
-            collectParameters(names, types);
-            
-            for (int i = 0; i < names.count(); i++)
-            {
-            	resultVars.add(new Param(names.get(i), types.get(i)));
-            }
-            
-            return resultVars;
-    }    
-    
-    /*
-    // test getParams()
-    public static void main(String[] args)
-    {
-        StringList sl = new StringList();
-        sl.add("a,b:integer; c:real");
-        Root root = new Root(sl);
-        root.isProgram=false;
-
-        System.out.println("Starting ...");
-        ArrayList<Param> vars = root.getParams();
-        for(int i=0; i<vars.size(); i++)
-        {
-           System.out.println(i+") "+vars.get(i).name+" = "+vars.get(i).type);
+        //return resultVars;
+        if (parameterList == null) {
+            // Method fills parameterList
+            collectParameters(null, null, null);
         }
-        System.out.println("- end -");
-    }
-    /**/
+        if (parameterList == null) {
+        	return new ArrayList<Param>();
+        }
+        return parameterList;
+        // END KGU#371 2019-03-07
+    }    
     // END BFI 2015-12-10
     
     // START KGU 2016-03-25: JLabel replaced by new class LangTextHolder
@@ -4170,11 +4147,26 @@ public class Root extends Element {
 	private void analyse_20(Vector<DetectedError> _errors)
 	{
 		StringList paramNames = new StringList();
-		StringList paramTypes = new StringList();
-		if (this.isSubroutine() && !this.collectParameters(paramNames, paramTypes))
+		// START KGU#371 2019-03-07: Enh. #385 - check default value contiguousness
+		//StringList paramTypes = new StringList();
+		//if (this.isSubroutine() && !this.collectParameters(paramNames, paramTypes, null))
+		StringList paramDefaults = new StringList();
+		if (this.isSubroutine() && !this.collectParameters(paramNames, null, paramDefaults))
+		// END KGU#371 2019-03-07
 		{
 			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
-			addError(_errors, new DetectedError(errorMsg(Menu.error20, ""), this), 20);								
+			addError(_errors, new DetectedError(errorMsg(Menu.error20_1, ""), this), 20);								
+		}
+		boolean hasDefaults = false;
+		for (int i = 0; i < paramDefaults.count(); i++) {
+			String deflt = paramDefaults.get(i);
+			if (!hasDefaults && deflt != null) {
+				hasDefaults = true;
+			}
+			else if (hasDefaults && deflt == null) {
+				// error "Parameters with default must be placed contiguously at the parameter list end."
+				addError(_errors, new DetectedError(errorMsg(Menu.error20_2, ""), this), 20);								
+			}
 		}
 	}
 	// END KGU#253 2016-09-22
@@ -4244,7 +4236,7 @@ public class Root extends Element {
 							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
+						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
 						for (int j = 0; j < compNames.count(); j++) {
 							String compName = compNames.get(j);
 							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
@@ -4796,7 +4788,7 @@ public class Root extends Element {
     	// START KGU#2 2015-11-29
     	//StringList vars = getVarNames(this,true,false);
     	StringList vars = new StringList();
-    	collectParameters(vars, null);
+    	collectParameters(vars, null, null);
     	return vars;
     	// END KGU#2 2015-11-29 
     }
@@ -4805,10 +4797,63 @@ public class Root extends Element {
     public StringList getParameterTypes()
     {
     	StringList types = new StringList();
-    	collectParameters(null, types);
+    	collectParameters(null, types, null);
     	return types;
     }
     // END KGU 2015-11-29
+    
+    // START KGU#371 2019-03-07: Enh. #385 - Allow parameter defaults
+    public StringList getParameterDefaults()
+    {
+    	StringList defaults = new StringList();
+    	collectParameters(null, null, defaults);
+    	return defaults;
+    }
+    
+    /**
+     * @return the minimum number of arguments this subroutine must obtain to be called.
+     */
+    public int getMinParameterCount()
+    {
+    	StringList params = new StringList();
+    	StringList defaults = new StringList();
+    	collectParameters(params, null, defaults);
+    	int minParams = params.count();
+    	while (minParams > 0) {
+    		if (defaults.get(minParams-1) != null) {
+    			minParams--;
+    		}
+    		else {
+    			break;
+    		}
+    	}
+    	return minParams;
+    }
+    
+    /**
+     * Checks whether a call with {@code nArgs} arguments may use this routine diagram. If so,
+     * returns the number of default values needed to fill all parameters (0 in case o an exact
+     * match), otherwise returns a negative number.
+     * @param nArgs - the number of given argument values
+     * @return number of available defaults to be used in order to satisfy all parameters or a negative number
+     */
+    public int acceptsArgCount(int nArgs)
+    {
+    	StringList params = new StringList();
+    	StringList defaults = new StringList();
+    	collectParameters(params, null, defaults);
+    	int nDefaults = params.count() - nArgs;
+    	for (int i = nArgs; nDefaults > 0 && i < defaults.count(); i++) {
+    		if (defaults.get(i) != null) {
+    			nDefaults--;
+    		}
+    		else {
+    			nDefaults = -1;
+    		}
+    	}
+    	return nDefaults;
+    }
+    // END KGU 2019-03-07
     
     /**
      * Extracts the diagram name from the Root text. Contained blanks are replaced with underscores.
@@ -4972,7 +5017,8 @@ public class Root extends Element {
      *  Extracts parameter names and types from the parenthesis content of the Root text
      *  and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
      * @param paramNames - {@link StringList} to be expanded by the found parameter names
-     * @param paramTypes - {@link StringList} to be expanded by the found parameter types
+     * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
+     * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
      * @return true iff the text contains a parameter list at all
      * @see #getParameterNames()
      * @see #getParameterTypes()
@@ -4983,7 +5029,10 @@ public class Root extends Element {
      */
     // START KGU#253 2016-09-22: Enh. #249 - Find out whether there is a parameter list
     //public void collectParameters(StringList paramNames, StringList paramTypes)
-    public boolean collectParameters(StringList paramNames, StringList paramTypes)
+    // START KGU#371 2019-03-07: Enh. #381 - Allow default parameters
+    //public boolean collectParameters(StringList paramNames, StringList paramTypes)
+    public boolean collectParameters(StringList paramNames, StringList paramTypes, StringList paramDefaults)
+    // END KGU#371 2019-03-07
     // END KGU#253 2016-09-22
     {
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
@@ -4991,6 +5040,35 @@ public class Root extends Element {
         // END KGU#253 2016-09-22
         if (this.isSubroutine())
         {
+        	// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        	if (parameterList != null) {
+        		synchronized(this) {
+        			for (Param param: parameterList) {
+        				if (paramNames != null) {
+        					paramNames.add(param.name);
+        				}
+        				if (paramTypes != null) {
+        					paramTypes.add(param.type);
+        				}
+        				if (paramDefaults != null) {
+        					paramDefaults.add(param.defaultValue);
+        				}
+        			}
+        		}
+        		// Nothing more to do here
+        		return true;
+        	}
+        	// Compute the parameter list from scratch, make sure all three lists exist
+        	if (paramNames == null) {
+        		paramNames = new StringList();
+        	}
+        	if (paramTypes == null) {
+        		paramTypes = new StringList();
+        	}
+        	if (paramDefaults == null) {
+        		paramDefaults = new StringList();
+        	}
+        	// END KGU#371 2019-03-07
         	try
         	{
         		String rootText = this.getText().getText();
@@ -5001,13 +5079,14 @@ public class Root extends Element {
         			rootText = varMatcher.replaceAll("$1$2");
         		}
         		// END KGU#580
-        		if(rootText.indexOf("(")>=0)
+        		if (rootText.indexOf("(") >= 0)
         		{
-        			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-        			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-        	        // START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
+        			// FIXME: This is getting too simple now!
+        			rootText = rootText.substring(rootText.indexOf("(")+1).trim();
+        			rootText = rootText.substring(0,rootText.lastIndexOf(")")).trim();
+        			// START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
         			hasParamList = true;
-        		    // END KGU#253 2016-09-22
+        			// END KGU#253 2016-09-22
         		}
         		// START KGU#222 2016-07-28: If there is no parenthesis then we shouldn't add anything...
         		else
@@ -5016,7 +5095,15 @@ public class Root extends Element {
         		}
         		// END KGU#222 2016-07-28
 
-        		extractDeclarationsFromList(rootText, paramNames, paramTypes);
+        		extractDeclarationsFromList(rootText, paramNames, paramTypes, paramDefaults);
+        		// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        		parameterList = new ArrayList<Param>(paramNames.count());
+        		synchronized(this) {
+        			for (int i = 0; i < paramNames.count(); i++) {
+        				parameterList.add(new Param(paramNames.get(i), paramTypes.get(i), paramDefaults.get(i)));
+        			}
+        		}
+        		// END KGU#371 2019-03-07
         	}
         	catch (Exception ex)
         	{
@@ -5044,7 +5131,12 @@ public class Root extends Element {
     public String getSignatureString(boolean _addPath) {
     	String presentation = this.getMethodName();
     	if (this.isSubroutine()) {
-    		presentation += "(" + this.getParameterNames().count() + ")";
+    		// START KGU#371 2019-03-07: Enh. #385: Default parameter values supported
+    		//presentation += "(" + this.getParameterNames().count() + ")";
+    		int maxArgs = this.getParameterNames().count();
+    		int minArgs = this.getMinParameterCount();
+    		presentation += "(" + ((minArgs < maxArgs) ? minArgs + "-" : "" ) + maxArgs + ")";
+    		// END KGU#371 2019-03-07
     	}
     	if (_addPath) {
     		// START KGU 2016-12-29: Show changed status
@@ -5075,7 +5167,15 @@ public class Root extends Element {
     	String fname = this.getMethodName();
     	if (this.isSubroutine())
     	{
-    		fname += "-" + this.getParameterNames().count();
+    		// START KGU#371 2019-03-07: Enh. #385 argument count range
+    		//fname += "-" + this.getParameterNames().count();
+    		int minArgs = this.getMinParameterCount();
+    		int maxArgs = this.getParameterNames().count();
+    		fname += "-" + minArgs;
+    		if (maxArgs > minArgs) {
+    			fname += "-" + maxArgs;
+    		}
+    		// END KGU#371 2019-03-07
     	}
     	return fname;
     }
