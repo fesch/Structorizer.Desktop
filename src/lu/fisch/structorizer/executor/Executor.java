@@ -176,6 +176,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-03-04      KGU#675 Initial delay with wait removed from stepRoot()
  *      Kay Gürttig     2019-03-07      Enh. #385 - support for optional routine arguments
  *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
+ *      Kay Gürtzig     2019-03-14      Issue #366 - Mainform, Arranger, and Control now also under focus watch
  *
  ******************************************************************************************************
  *
@@ -4973,6 +4974,20 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#356 2019-03-02
+		// START KGU#356 2019-03-14: Enh. #366
+		JFrame focusedFrame = null;
+		if (focusedController == null) {
+			if (diagram.getFrame().isFocused()) {
+				focusedFrame = diagram.getFrame();
+			}
+			else if (control.isFocused()) {
+				focusedFrame = control;
+			}
+			else if (Arranger.hasInstance() && Arranger.getInstance().isFocused()) {
+				focusedFrame = Arranger.getInstance();
+			}
+		}
+		// END KGU#356 2019-03-14
 		// START KGU#653 2019-02-14: Enh. #680 - revision
 		StringList inputItems = Instruction.getInputItems(cmd);
 		String prompt = inputItems.get(0);
@@ -5146,6 +5161,11 @@ public class Executor implements Runnable
 					focusedController.requestFocus();
 				}
 				// END KGU#356 2019-03-02
+				// START KGU#356 2019-03-14: Enh. #366
+				else if (focusedFrame != null) {
+					focusedFrame.requestFocus();
+				}
+				// END KGU#356 2019-03-14
 			}
 			// END KGU#84 2015-11-23
 			// START KGU#107 2015-12-13: Enh./bug #51 part 2

@@ -8960,5 +8960,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#480 2018-01-18
 	
+	// START KGU#356 2019-03-14: Issue #366
+	/** @return the owning @{@link JFrame} (actually the {@link Mainform}) */
+	public JFrame getFrame()
+	{
+		return this.NSDControl.getFrame();
+	}
+	// END KGU#356 2019-03-14
 
 }
