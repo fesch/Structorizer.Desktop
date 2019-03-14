@@ -234,7 +234,7 @@ public class Case extends Element implements IFork
     public Rect prepareDraw(Canvas _canvas)
     {
             // START KGU#136 2016-03-01: Bugfix #97
-            if (this.isRectUpToDate) return rect0;
+            if (this.isRect0UpToDate) return rect0;
             
             // START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
             //this.x0Branches.clear();
@@ -247,7 +247,7 @@ public class Case extends Element implements IFork
             {
                 rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
                 // START KGU#136 2016-03-01: Bugfix #97
-                isRectUpToDate = true;
+                isRect0UpToDate = true;
                 // END KGU#136 2016-03-01
                 return rect0;
             }
@@ -442,19 +442,22 @@ public class Case extends Element implements IFork
             this.fullWidth = fullWidth;
             // END KGU#516 2018-04-04
             // START KGU#136 2016-03-01: Bugfix #97  --> draw()
-            isRectUpToDate = true;
+            isRect0UpToDate = true;
             // END KGU#136 2016-03-01
             return rect0;
     }
 
-    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
     	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
     	if (!checkVisibility(_viewport, _top_left)) { return; }
     	// END KGU#502/KGU#524/KGU#553 2019-03-13
     	if(isCollapsed(true)) 
     	{
-    		Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+    		Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+    		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+    		wasDrawn = true;
+    		// END KGU#502/KGU#524/KGU#553 2019-03-14
     		return;
     	}
     	// START KGU#172 2016-04-01: Bugfix #145
@@ -614,7 +617,8 @@ public class Case extends Element implements IFork
     					//myrect.top + E_PADDING / 3 + (ln + 1) * fontHeight,
     					myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fontHeight,
     					// END KGU#227 2016-07-31
-    					text.get(ln), this
+    					text.get(ln), this,
+    					_inContention
     					);
 
     		}
@@ -631,6 +635,9 @@ public class Case extends Element implements IFork
     		// END KGU#435 2017-10-22
     		// END KGU#156 2016-03-11
 
+    		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+    		wasDrawn = true;
+    		// END KGU#502/KGU#524/KGU#553 2019-03-14
     	}
 
 
@@ -763,7 +770,7 @@ public class Case extends Element implements IFork
     			}
 
     			// draw child
-    			((Subqueue) qs.get(i)).draw(_canvas, myrect, _viewport);
+    			((Subqueue) qs.get(i)).draw(_canvas, myrect, _viewport, _inContention);
 
     			// draw criterion text (selector)
 				// START KGU#453 2017-11-01: Cached textwidths contained padding
@@ -786,7 +793,8 @@ public class Case extends Element implements IFork
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
     						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fontHeight,
-    						brokenLine[j], this);
+    						brokenLine[j], this,
+    						_inContention);
     			}
     			// END KGU#354 2017-11-01
 

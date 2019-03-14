@@ -207,14 +207,14 @@ public class Instruction extends Element {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
 		if (this != this.getDrawingSurrogate(false)) {
 			rect0 = new Rect(0, 0, 0, 0);
 			// START KGU#136 2016-03-01: Bugfix #97
-			isRectUpToDate = true;
+			isRect0UpToDate = true;
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
@@ -236,12 +236,23 @@ public class Instruction extends Element {
 		// END KGU#124 2016-01-03
 
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 	}
 
-	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
+	/**
+	 * Draws {@code _element} like an Instruction in the bounds of @{@link Rect} {@code _top_left}
+	 * with the given {@code _text} on the {@code _canvas}.<br/>
+	 * Sets {@link Element#rect} and {@link Element#topLeft} on {@code _element}, obeys the flags
+	 * {@link Element#rotated} and {@code Element#disabled}.
+	 * @param _canvas - The drawing {@link Canvas}
+	 * @param _top_left - the given shape and position
+	 * @param _text - the text to be written into the element area
+	 * @param _element - the originating {@link Element}.
+	 * @param _inContention - whether this drawing is done under heavy contention
+	 */
+	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element, boolean _inContention)
 	{
 		// Within the method we may reuse the matcher, as it is local
 		Matcher indentMatcher = INDENT_PATTERN.matcher("");
@@ -348,7 +359,8 @@ public class Instruction extends Element {
 					yTextline += fontHeight,
 					// END KGU#227 2016-07-30
 					text,
-					_element
+					_element,
+					_inContention
 					);  	
 
 		}
@@ -390,7 +402,7 @@ public class Instruction extends Element {
 		}
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
@@ -402,6 +414,9 @@ public class Instruction extends Element {
 		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate
 		if (E_HIDE_DECL && this != this.getDrawingSurrogate(false)) {
 			rect = new Rect(0,0,0,0);
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+			wasDrawn = true;
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			return;
 		}
 		// END KGU#477 2017-12-06
@@ -413,13 +428,16 @@ public class Instruction extends Element {
 		if (isCollapsed(true) && getText(false).count() > 2)
 			// END KGU#477 2017-12-06
 		{
-			draw(_canvas, _top_left, getCollapsedText(), this);
+			draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
 		}
 		else
 		{
-			draw(_canvas, _top_left, getText(false), this);
+			draw(_canvas, _top_left, getText(false), this, _inContention);
 		}
 		// END KGU#124 2016-01-03
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#477 2017-12-06: Enh. #487

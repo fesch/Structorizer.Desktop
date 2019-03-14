@@ -126,14 +126,14 @@ public class Alternative extends Element implements IFork {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 		//  KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		if(isCollapsed(true)) 
 		{
 			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
 			// START KGU#136 2016-03-01: Bugfix 97
-			isRectUpToDate = true;
+			isRect0UpToDate = true;
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
@@ -333,13 +333,13 @@ public class Alternative extends Element implements IFork {
 		this.pt0Parting = pt0Parting;
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
@@ -347,7 +347,10 @@ public class Alternative extends Element implements IFork {
 		//logger.debug("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
 		if(isCollapsed(true)) 
 		{
-			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+			Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+			wasDrawn = true;
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			return;
 		}
 		
@@ -471,7 +474,7 @@ public class Alternative extends Element implements IFork {
 					//_top_left.top + (E_PADDING / 3) + (i+1)*fontHeight,
 					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fontHeight,
 					// END KGU#227 2016-07-31
-					myLine, this
+					myLine, this, _inContention
 					);
 
 			/*
@@ -551,16 +554,19 @@ public class Alternative extends Element implements IFork {
 		// END KGU#207 2016-07-21
 		myrect.right = myrect.left + rTrue.right-1 + remain;
 		
-		qTrue.draw(_canvas, myrect, _viewport);
+		qTrue.draw(_canvas, myrect, _viewport, _inContention);
 		
 		myrect.left = myrect.right;
 		myrect.right = _top_left.right;
-		qFalse.draw(_canvas, myrect, _viewport);
+		qFalse.draw(_canvas, myrect, _viewport, _inContention);
 		
 		
 		myrect = _top_left.copy();
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(myrect);
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon

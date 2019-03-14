@@ -931,7 +931,7 @@ public class Root extends Element {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0.copy();
+		if (this.isRect0UpToDate) return rect0.copy();
 		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
 		//pt0Sub.x = 0;
 		// END KGU#516 2018-04-04
@@ -1025,7 +1025,7 @@ public class Root extends Element {
 		this.pt0Sub = pt0Sub;
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0.copy();
 	}
@@ -1040,7 +1040,7 @@ public class Root extends Element {
 		_canvas = new Canvas(bufferGraphics);
 
 
-		draw(_canvas, _top_left, null);
+		draw(_canvas, _top_left, null, false);
 
 		// draw buffer to output canvas
 		origCanvas.draw(bufferImg,0,0);
@@ -1050,12 +1050,12 @@ public class Root extends Element {
 		System.gc();
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
-		draw(_canvas, _top_left, _viewport, DrawingContext.DC_STRUCTORIZER);
+		draw(_canvas, _top_left, _viewport, false, DrawingContext.DC_STRUCTORIZER);
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, DrawingContext _context)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention, DrawingContext _context)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
@@ -1077,7 +1077,7 @@ public class Root extends Element {
 			text.insert("???",0);
 		}
 
-		rect = _top_left.copy();
+		Rect myRect = _top_left.copy();
 
 		// draw background
 
@@ -1150,20 +1150,21 @@ public class Root extends Element {
 
 		// draw text
 		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here had been wrong
-		for(int i=0; i<getText(false).count(); i++)
+		for (int i = 0; i < getText(false).count(); i++)
 		{
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  rect.left + textPadding,
+							  myRect.left + textPadding,
 							  // START KGU#227 2016-07-31: Enh. #128
 							  //rect.top + (i+1)*fm.getHeight() + textPadding,
-							  rect.top + (i+1)*fm.getHeight() + textPadding + commentHeight,
+							  myRect.top + (i+1)*fm.getHeight() + textPadding + commentHeight,
 							  // END KGU#227 2016-07-31
 							  (String)getText(false).get(i),
-							  this);
+							  this,
+							  _inContention);
 		}
 		// write the run-time info if enabled (Enh. #124)
-		this.writeOutRuntimeInfo(canvas, rect.right - textPadding, rect.top);
+		this.writeOutRuntimeInfo(canvas, myRect.right - textPadding, myRect.top);
 		// END KGU#216 2016-07-25
 		
 		canvas.setFont(Element.font);
@@ -1183,7 +1184,7 @@ public class Root extends Element {
 			bodyRect.bottom -= E_PADDING/2;
 		}
 		
-		children.draw(_canvas, bodyRect, _viewport);
+		children.draw(_canvas, bodyRect, _viewport, _inContention);
 		// END KGU#227 2016-07-31
 
 		// draw box around
@@ -1198,7 +1199,7 @@ public class Root extends Element {
 
 
 		// draw thick line
-		if (isBoxed==false)
+		if (isBoxed == false)
 		{
 			Rect sepRect = bodyRect.copy();
 			sepRect.bottom = sepRect.top--;
@@ -1228,14 +1229,14 @@ public class Root extends Element {
 //			}
 			// END KGU#221 2016-07-27
 			canvas.setColor(Color.BLACK);
-			rect = _top_left.copy();
+			myRect = _top_left.copy();
 			// START KGU#376 2017-05-16: Enh. #389
 			//canvas.roundRect(rect);
 			if (isSubroutine()) {
-				canvas.roundRect(rect, R_CORNER);
+				canvas.roundRect(myRect, R_CORNER);
 			}
 			else {
-				canvas.drawPoly(this.makeBevelledRect(rect, bevel));
+				canvas.drawPoly(this.makeBevelledRect(myRect, bevel));
 			}
 			// END KGU#376 2017-05-16
 		}
@@ -1247,6 +1248,9 @@ public class Root extends Element {
 		this.topLeft.x = _top_left.left - this.drawPoint.x;
 		this.topLeft.y = _top_left.top - this.drawPoint.y;
 		// END KGU#136 2016-03-01
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#376 2017-07-01: Enh. #389
@@ -1466,6 +1470,34 @@ public class Root extends Element {
 		return sel;
 	}
 	// END KGU#183 2016-04-24
+	
+	// START KGU 2019-03-14 Helps to place imported Roots more sensibly in Arranger
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect()
+	 */
+	@Override
+	public Rect getRect()
+	{
+		if (!wasDrawn && isRect0UpToDate) {
+			return rect0.copy();
+		}
+		return super.getRect();
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect(java.awt.Point)
+	 */
+	@Override
+	public Rect getRect(Point relativeTo)
+	{
+		Rect myRect = rect;
+		if (!wasDrawn && isRect0UpToDate) {
+			myRect = rect0;
+		}
+		return new Rect(myRect.left + relativeTo.x, myRect.top + relativeTo.y,
+				myRect.right + relativeTo.x, myRect.bottom + relativeTo.y);		
+	}
+	// END KGU 2019-03-14
 
     public void removeElement(Element _ele)
     {
@@ -1599,9 +1631,10 @@ public class Root extends Element {
      * @param _viewport - visible area of the viewport
      * @param _prohibitedUpdater - if given an updater not to be informed
      * @param _drawingContext - the context e.g. for selection highlighting 
+     * @param _inContention TODO
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Rectangle _viewport, Updater _prohibitedUpdater, DrawingContext _drawingContext)
+    public Rect draw(Graphics _g, Point _point, Rectangle _viewport, Updater _prohibitedUpdater, DrawingContext _drawingContext, boolean _inContention)
     {
         setDrawPoint(_point);
 
@@ -1640,7 +1673,7 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect, _viewport, _drawingContext);
+        this.draw(canvas, myrect, _viewport, _inContention, _drawingContext);
 
         return myrect;
     }
@@ -1652,7 +1685,7 @@ public class Root extends Element {
 
     public Rect draw(Graphics _g, Rectangle _viewport)
     {
-        return draw(_g, new Point(0,0), _viewport, null, DrawingContext.DC_STRUCTORIZER);
+        return draw(_g, new Point(0,0), _viewport, null, DrawingContext.DC_STRUCTORIZER, false);
 
         /*
         // inform updaters

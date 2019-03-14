@@ -229,7 +229,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-05";
+	public static final String E_VERSION = "3.29-06";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -621,9 +621,13 @@ public abstract class Element {
 	/** upper left corner coordinate offset wrt drawPoint */
 	protected Point topLeft = new Point(0, 0);
 	// END KGU#136 2016-03-01
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/** Will be set and used by prepareDraw() (avoids repeated evaluation) - to be reset on changes */
-	protected boolean isRectUpToDate = false;
+	/** Will be set and used by prepareDraw() (validity of {@link rect0}, avoids repeated evaluation) - to be reset on changes */
+	protected boolean isRect0UpToDate = false;
+	// START KGU#502/KGU#524/KGU#553 2019-03-14: We need a second flag for correct drawing confinement
+	/** Will be set after the first complete drawing of the element (validity of {@link rect} - to be reset on changes */
+	protected boolean wasDrawn = false;
+	// END KGU#502/KGU#524/KGU#553 2019-03-14
+
 	/** Strings to be highlighted in the element text (lazy initialisation) */
 	private static StringList specialSigns = null;
 
@@ -642,19 +646,6 @@ public abstract class Element {
 		return id;
 	}
 
-//	public Element()
-//	{
-//	}
-//
-//	public Element(String _string)
-//	{
-//		setText(_string);
-//	}
-//
-//	public Element(StringList _strings)
-//	{
-//		setText(_strings);
-//	}
 	public Element()
 	{
 		makeNewId();
@@ -679,7 +670,10 @@ public abstract class Element {
 	 */
 	protected final void resetDrawingInfo()
 	{
-		this.isRectUpToDate = false;
+		this.isRect0UpToDate = false;
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518,#544,#557
+		this.wasDrawn = false;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 		// START KGU#401 2017-05-17: Issue #405
 		this.rotated = false;
 		// END KGU#401 2017-05-17
@@ -715,13 +709,16 @@ public abstract class Element {
 		});
 	}
 	// END KGU#238 2016-08-11
-	// END KGU#64 2015-11-03
 	
 	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 	protected boolean checkVisibility(Rectangle _viewport, Rect _topLeft)
 	{
-		Rectangle rctgl = new Rectangle(_topLeft.left, _topLeft.top, rect0.right, rect0.bottom);
-		return !this.isRectUpToDate || _viewport == null || rctgl.intersects(_viewport);
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518,#544,#557 - we must refer to the eventual record
+		//Rectangle rctgl = new Rectangle(_topLeft.left, _topLeft.top, rect0.right, rect0.bottom);
+		//return !this.isRect0UpToDate || _viewport == null || rctgl.intersects(_viewport);
+		Rectangle rctgl = new Rectangle(_topLeft.left - E_PADDING/2, _topLeft.top - E_PADDING/2, rect.right - rect.left + E_PADDING, rect.bottom - rect.top + E_PADDING);
+		return !this.wasDrawn || _viewport == null || rctgl.intersects(_viewport);
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	// END KGU#502/KGU#524/KGU#553 2019-03-13
 
@@ -741,9 +738,10 @@ public abstract class Element {
 	 * stores the the actually drawn bounds in attribute rect.
 	 * @param _canvas - the drawing canvas where the drawing is to be done in 
 	 * @param _top_left - conveyes the upper-left corner for the placement
-	 * @param _viewport TODO
+	 * @param _viewport - the visible area
+	 * @param _inContention - whether there is a massive drawing event contention
 	 */
-	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport);
+	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention);
 	
 	public abstract Element copy();
 	
@@ -2175,13 +2173,13 @@ public abstract class Element {
 	 */
 	public Rect getRect()
 	{
-		return new Rect(rect.left, rect.top, rect.right, rect.bottom);
+		return rect.copy();
 	}
 
 	// START KGU#136 2016-03-01: Bugfix #97
 	/**
-	 * Returns the bounding rectangle translated to point relativeTo 
-	 * @return a rectangle starting at relativeTo 
+	 * Returns the bounding rectangle translated to point {@code relativeTo}
+	 * @return a rectangle having {@code relativeTo} as its upper left corner.
 	 */
 	public Rect getRect(Point relativeTo)
 	{
@@ -2207,7 +2205,7 @@ public abstract class Element {
 	public static void setFont(Font _font)
 	{
 		font = _font;
-        // START KGU#572 2018-09-10: Issue #508
+		// START KGU#572 2018-09-10: Issue #508
 		if (!E_PADDING_FIX) {
 			// set the padding relative to the used font size
 			// by using a padding of 20 px as reference with a default font of 12 pt
@@ -2217,7 +2215,7 @@ public abstract class Element {
 			// Adhere to the old 
 			E_PADDING = 20;
 		}
-        // END KGU#572 2018-09-10: Issue #508
+		// END KGU#572 2018-09-10: Issue #508
 	}
 	
 	// START KGU#494 2018-09-11: Bundle the font height retrieval strewn over several subclasss and methods
@@ -3182,15 +3180,15 @@ public abstract class Element {
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
 	public static int getWidthOutVariables(Canvas _canvas, String _text, Element _this)
 	{
-		return writeOutVariables(_canvas, 0, 0, _text, _this, false);
+		return writeOutVariables(_canvas, 0, 0, _text, _this, false, false);
 	}
 
-	public static void writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this)
+	public static void writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _inContention)
 	{
-		writeOutVariables(_canvas, _x, _y, _text, _this, true);
+		writeOutVariables(_canvas, _x, _y, _text, _this, true, _inContention);
 	}
 	
-	private static int writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _actuallyDraw)
+	private static int writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _actuallyDraw, boolean _inContention)
 	// END KGU#63 2015-11-03
 	{
 		// init total
@@ -3202,7 +3200,10 @@ public abstract class Element {
 		{
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
-			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557 - No syntax highlighting in high contention
+			//if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
+			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode() && !_inContention)
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
