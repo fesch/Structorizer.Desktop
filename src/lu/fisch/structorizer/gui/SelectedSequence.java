@@ -160,7 +160,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	@Override
 	public Rect prepareDraw(Canvas _canvas) {
 		// START KGU#136 2016-03-01: Bugfix #97
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 		
 		rect0.left = rect0.right = rect0.top = rect0.bottom = 0;
@@ -185,7 +185,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 		
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 	}
@@ -194,7 +194,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#draw(lu.fisch.graphics.Canvas, lu.fisch.graphics.Rect)
 	 */
 	@Override
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport) {
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention) {
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
 		// END KGU#502/KGU#524/KGU#553 2019-03-13
@@ -226,7 +226,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 				{
 					myrect.bottom = _top_left.bottom;
 				}
-				((Subqueue) parent).getElement(i).draw(_canvas, myrect, null);
+				((Subqueue) parent).getElement(i).draw(_canvas, myrect, null, _inContention);
 
 				//myrect.bottom-=1;
 				myrect.top += subrect.bottom;
@@ -251,6 +251,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 
 			canvas.drawRect(_top_left);
 		}
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 
 	// START KGU#206 2016-07-21: Bugfix #197 for enh. #158 (cursor move didn't work due to wrong coordinates)
@@ -342,10 +345,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		// START KGU#207 2016-07-21: Method will hardly ever be used. But if so then it should at least work
-		if (!this.isRectUpToDate)
+		if (!this.isRect0UpToDate)
 		{
 			rect = this.getRect();
-			this.isRectUpToDate = true;
+			this.isRect0UpToDate = true;
 		}
 		// END KGU#207 2016-07-21
 		Element res = super.getElementByCoord(_x, _y, _forSelection);		
