@@ -57,6 +57,12 @@ import lu.fisch.utils.StringList;
  */
 public class COBOLGenerator extends Generator {
 
+    @Override
+    protected OverloadingLevel getOverloadingLevel() {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return null;
+    }
+
 	public enum CodePart {
 
 		WORKING_STORAGE("WS"), LINKAGE("LI"), PROCEDURE_DIVISION("PD");
