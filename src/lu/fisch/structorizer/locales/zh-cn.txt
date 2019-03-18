@@ -57,7 +57,40 @@
  *
  ******************************************************************************************************
  *
- *      Comment:	
+ *      Comment:
+ *
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
+ *
+ *      The texts may contain three kinds of place holders that should be preserved at
+ *      appropriate positions in the translations:
+ *      - "%", "%1", "%2" etc. for message-specific replacements;
+ *      - "[#]" to be substituted by the current index for array targets;
+ *      - "@a", "@b", ... "@p", or "@{Instruction}", @{For}" etc. for localized
+ *        element names. The localized element names are defined in (and retrieved
+ *        from) section / tab "Elements" with the following convention, where the
+ *        respective short and long place holders are equivalent (the short one is
+ *        more performant, the long one more readable):
+ *  
+ *        short long                    referenced key sequence
+ *        @a  = @{Instruction}      ->  ElementNames.localizedNames.0.text
+ *        @b  = @{Alternative}      ->  ElementNames.localizedNames.1.text
+ *        @c  = @{Case}             ->  ElementNames.localizedNames.2.text
+ *        @d  = @{For}              ->  ElementNames.localizedNames.3.text
+ *        @e  = @{For.COUNTER}      ->  ElementNames.localizedNames.4.text
+ *        @f  = @{For.TRAVERSAL}    ->  ElementNames.localizedNames.5.text
+ *        @g  = @{While}            ->  ElementNames.localizedNames.6.text
+ *        @h  = @{Repeat}           ->  ElementNames.localizedNames.7.text
+ *        @i  = @{Forever}          ->  ElementNames.localizedNames.8.text
+ *        @j  = @{Call}             ->  ElementNames.localizedNames.9.text
+ *        @k  = @{Jump}             ->  ElementNames.localizedNames.10.text
+ *        @l  = @{Parallel}         ->  ElementNames.localizedNames.11.text
+ *        @m  = @{Root}             ->  ElementNames.localizedNames.12.text
+ *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
+ *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
+ *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>

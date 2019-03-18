@@ -1074,6 +1074,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#569 2018-08-09: New messages for issue #577
     public static final LangTextHolder msgGUISyncFault = new LangTextHolder("Possible GUI synchronisation fault on executing «%».\nTry to resume execution?");
     // END KGU#569 2018-08-09
+	// START KGU#686 2019-03-17: Enh. #56 Try-Catch element introduced
+	public static final LangTextHolder msgErrorInSubroutine = new LangTextHolder("Caught error on executing «%1» at level %2:\n\t%3!");
+	// END KGU#686 2019-03-17
 
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

@@ -59,6 +59,7 @@
  *      Kay Gürtzig     2017.12.16      Element name placeholders introduced
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
  *
  ******************************************************************************************************
  *
@@ -94,6 +95,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -164,6 +166,7 @@ Menu.menuDiagramAddBeforeForever.text=Boucle @{Forever}
 Menu.menuDiagramAddBeforeCall.text=@{Call}
 Menu.menuDiagramAddBeforeJump.text=@{Jump}
 Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=@{Try}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Derrnière
 // Submenus for adding Elements "After"
@@ -177,6 +180,7 @@ Menu.menuDiagramAddAfterForever.text=Boucle @{Forever}
 Menu.menuDiagramAddAfterCall.text=@{Call}
 Menu.menuDiagramAddAfterJump.text=@{Jump}
 Menu.menuDiagramAddAfterPara.text=@{Parallel}
+Menu.menuDiagramAddAfterTry.text=@{Try}
 Menu.menuDiagramEdit.text=Editer
 Menu.menuDiagramDelete.text=Supprimer
 Menu.menuDiagramMoveUp.text=Déplacer vers le haut
@@ -361,6 +365,7 @@ Editor.btnAfterCall.tooltip=Insérer un APPEL derrière (+shift: devant) l'élé
 Editor.btnAfterJump.tooltip=Insérer un SAUT derrière (+shift: devant) l'élément sélectionné.
 Editor.btnAfterCase.tooltip=Insérer une structure @{Case} derrière (+shift: devant) l'élément sélectionné.
 Editor.btnAfterPara.tooltip=Insérer une instruction parallèle derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterPara.tooltip=Insérer un bloque @{Try} derrière (+shift: devant) l'élément sélectionné.
 // undo & redo
 Editor.btnUndo.tooltip=Annuler la dernière action.
 Editor.btnRedo.tooltip=Annuler l'annulation de la dernière action.
@@ -413,6 +418,7 @@ Editor.popupAddBeforeForever.text=Boucle @{Forever}
 Editor.popupAddBeforeCall.text=@{Call}
 Editor.popupAddBeforeJump.text=@{Jump}
 Editor.popupAddBeforePara.text=@{Parallel}
+Editor.popupAddBeforeTry.text=@{Try}
 // After
 Editor.popupAddAfter.text=derrière
 // Submenus of "Add -> After"
@@ -426,6 +432,7 @@ Editor.popupAddAfterForever.text=Boucle @{Forever}
 Editor.popupAddAfterCall.text=@{Call}
 Editor.popupAddAfterJump.text=@{Jump}
 Editor.popupAddAfterPara.text=@{Parallel}
+Editor.popupAddAfterTry.text=@{Try}
 // Edit
 Editor.popupEdit.text=Editer
 Editor.popupDelete.text=Supprimer
@@ -457,24 +464,27 @@ InputBox.lblText.text[elementType:While]=Veuillez entrer la condition d'entrée
 InputBox.lblText.text[elementType:Repeat]=Veuillez entre la condition de sortie
 InputBox.lblText.text[elementType:Case]=Veuillez entrer l'expression de choix et les constantes y relatives (une par ligne)
 InputBox.lblText.text[elementType:Parallel]Nombre d'exétrons en parallèle
+InputBox.lblText.text[elementType:Try]Nom de la variable de l'exception
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Insérer @a ...
-InputBox.title[elementType:Alternative,getInsertionType():insert]=Insérer @b statement ...
-InputBox.title[elementType:Case,getInsertionType():insert]=Insérer @c statement ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Insérer @b branchement ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Insérer @c branchement ...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Insérer @i loop ...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Insérer @h loop ...
 InputBox.title[elementType:While,getInsertionType():insert]=Insérer @g loop ...
 InputBox.title[elementType:Call,getInsertionType():insert]=Insérer @j ...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Insérer @k ...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Insérer @l ...
+InputBox.title[elementType:Try,getInsertionType():insert]=Insérer @q ...
 InputBox.title[elementType:Instruction,getInsertionType():update]=Editer @a ...
-InputBox.title[elementType:Alternative,getInsertionType():update]=Editer @b element ...
-InputBox.title[elementType:Case,getInsertionType():update]=Editer @c element ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Editer @b élément ...
+InputBox.title[elementType:Case,getInsertionType():update]=Editer @c élément ...
 InputBox.title[elementType:Forever,getInsertionType():update]=Editer @i loop ...
 InputBox.title[elementType:Repeat,getInsertionType():update]=Editer @h loop ...
 InputBox.title[elementType:While,getInsertionType():update]=Editer @g loop ...
 InputBox.title[elementType:Call,getInsertionType():update]=Editer @j ...
 InputBox.title[elementType:Jump,getInsertionType():update]=Editer @k ...
-InputBox.title[elementType:Parallel,getInsertionType():update]=Editer @l element ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Editer @l élément ...
+InputBox.title[elementType:Try,getInsertionType():update]=Editer @q élément ...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insérer une boucle @{For}...
@@ -702,6 +712,7 @@ ElementNames.localizedNames.12.text=Diagramme
 ElementNames.localizedNames.13.text=Programme
 ElementNames.localizedNames.14.text=Sous programme
 ElementNames.localizedNames.15.text=Inclurible
+ElementNames.localizedNames.16.text=TRY
 
 -----> Keywords
 ParserKeywords.AltPre.text=si

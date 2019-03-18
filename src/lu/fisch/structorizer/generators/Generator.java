@@ -84,6 +84,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
  *      Kay Gürtzig     2019-03-13      Enh. #696: All references to Arranger replaced by routinePool,
  *                                      subroutine retrieval enabled in the batch version of exportCode
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
  *
  ******************************************************************************************************
  *
@@ -159,6 +160,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Control;
@@ -2007,6 +2009,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
@@ -2037,6 +2040,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2069,6 +2073,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2104,6 +2109,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2134,6 +2140,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2164,6 +2171,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2194,6 +2202,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2222,6 +2231,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2247,6 +2257,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2274,6 +2285,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2292,6 +2304,40 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		// code.add(_indent+"");
 	}
+	
+	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
+	/**
+	 * This method is responsible for generating the code of an {@code Instruction} element.
+	 * This dummy version is to be overridden by each inheriting generator class.
+	 * It should make use of available helper methods {@link #transform(String)} etc. and
+	 * be aware of the several export options.
+	 * @see #generateCode(Instruction, String)
+	 * @see #generateCode(Alternative, String)
+	 * @see #generateCode(Case, String)
+	 * @see #generateCode(For, String)
+	 * @see #generateCode(While, String)
+	 * @see #generateCode(Repeat, String)
+	 * @see #generateCode(Forever, String)
+	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Jump, String)
+	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Root, String)
+	 * @see #getIndent()
+	 * @see #optionCodeLineNumbering()
+	 * @param _try - the {@link lu.fisch.structorizer.elements.Try}
+	 * @param _indent - the indentation string valid for the given Instruction
+	 */
+	protected void generateCode(Try _try, String _indent)
+	{
+		// code.add(_indent + "try");
+		generateCode(_try.qTry, _indent + this.getIndent());
+		// code.add(_indent + "catch " + _try.getExceptionVarName());
+		generateCode(_try.qCatch, _indent + this.getIndent() + this.getIndent());
+		// code.add(_indent + "finally");
+		generateCode(_try.qFinally, _indent + this.getIndent());
+		// code.add(_indent + "end try");
+	}
+	// END KGU#686 2019-03-17
 
 	/**
 	 * This method does not generate anything itself, it is just a formal
@@ -2349,6 +2395,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			generateCode((Forever) _ele,_indent);
 		}
+		// START KGU#686 2019-03-17: Enh. #56
+		else if(_ele.getClass().getSimpleName().equals("Try"))
+		{
+			generateCode((Try) _ele,_indent);
+		}
+		// END KGU#686 2019-03-17
 		else if(_ele.getClass().getSimpleName().equals("Call"))
 		{
 			generateCode((Call) _ele,_indent);
@@ -2428,7 +2480,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
 		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
 		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
-		this.varNames = _root.getVarNames();
+		this.varNames = _root.retrieveVarNames();
 		for (int p = 0; p < paramNames.count(); p++) {
 			this.varNames.removeAll(paramNames.get(p));
 		}
@@ -2531,7 +2583,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean thisDone = false;
 		code.add("");
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-			insertDefinitions(incl, _indent, incl.getVarNames(), _force);
+			insertDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
 			}

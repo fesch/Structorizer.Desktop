@@ -1559,7 +1559,7 @@ public class OberonGenerator extends Generator {
 		introPlaced = false;	// Has the TYPE keyword already been written?
 		for (Root incl: includes) {
 			if (incl != _root) {
-				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
+				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), _complexConsts, introPlaced);
 			}
 		}
 		// START KGU#504 2018-03-13: Bugfix #520, #521

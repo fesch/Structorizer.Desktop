@@ -167,7 +167,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, false), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -322,7 +322,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -1134,7 +1134,8 @@ public class Instruction extends Element {
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
-	public String getAssignedVarname(StringList tokens) {
+	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
+	public static String getAssignedVarname(StringList tokens) {
 		String varName = null;
 		int posAsgn = tokens.indexOf("<-");
 		if (posAsgn > 0) {

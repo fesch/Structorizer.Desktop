@@ -637,7 +637,7 @@ public class PHPGenerator extends Generator
     public String generateCode(Root _root, String _indent)
     {
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-        varNames = _root.getVarNames();
+        varNames = _root.retrieveVarNames();
         // END KGU 2015-11-02
         String procName = _root.getMethodName();
         // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now

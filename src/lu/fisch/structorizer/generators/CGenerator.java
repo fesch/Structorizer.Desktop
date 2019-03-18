@@ -549,7 +549,7 @@ public class CGenerator extends Generator {
 		String decl = "";
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
 			String canonType = typeInfo.getTypes().get(0);
 			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
 		}
@@ -800,7 +800,7 @@ public class CGenerator extends Generator {
 					pureExprTokens = pureTokens.subSequence(pureTokens.indexOf("<-")+1, pureTokens.count());
 				}
 				String codeLine = null;
-				String varName = _inst.getAssignedVarname(pureTokens);
+				String varName = Instruction.getAssignedVarname(pureTokens);
 				boolean isDecl = Instruction.isDeclaration(line);
 				//exprTokens.removeAll(" ");
 				if (!this.suppressTransformation && (isDecl || exprTokens != null)) {
@@ -1900,7 +1900,7 @@ public class CGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
 			}
 		}
 		// END KGU#375 2017-04-12

@@ -1407,7 +1407,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		try {
     			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
     			//root.getVarNames();
-    			root.getCachedVarNames();
+    			root.getVarNames();
     			// END KGU#444/KGU#618 2018-12-18
     		}
     		catch (Exception ex) {
@@ -1813,7 +1813,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#363 2017-05-21
 				//root.highlightVars = hil;
 				if (Element.E_VARHIGHLIGHT) {
-					root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+					root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 				}
 				root.filename = _filename;
 				currentDirectory = new File(root.filename);
@@ -2874,6 +2874,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#143 2016-11-17
 
+	// START KGU#686 2019-03-17: Enh. #56
+	public boolean canSetBreakpoint()
+	{
+		return canCopyNoRoot() && !(selected instanceof Forever || selected instanceof Try);
+	}
+	// END KGU#686 2019-03-17
+	
 	// START KGU#199 2016-07-06: Enh. #188: Element conversions
 	public boolean canTransmute()
 	{
@@ -3702,7 +3709,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					sub.isBoxed = root.isBoxed;
 					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 					//sub.getVarNames();	// just to prepare proper drawing.
-					StringList subVars = sub.getVarNames();
+					StringList subVars = sub.retrieveVarNames();
 					HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
 					for (int i = 0; i < subVars.count(); i++) {
 						String varName = subVars.get(i);
@@ -3935,7 +3942,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String result = "";
 				if (((Call)selected).isFunctionCall()) {
 					String line = call.getUnbrokenText().get(0);
-					String var = call.getAssignedVarname(Element.splitLexically(line, true));
+					String var = Call.getAssignedVarname(Element.splitLexically(line, true));
 					if (Function.testIdentifier(var, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
@@ -5523,7 +5530,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
 				//root.highlightVars = hil;
 				if (Element.E_VARHIGHLIGHT) {
-					root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+					root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 				}
 				currentDirectory = dlgOpen.getSelectedFile();
 				redraw();
@@ -5871,7 +5878,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						root = iter.next();
 						//root.highlightVars = hil;
 						if (Element.E_VARHIGHLIGHT) {
-							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+							root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 						}
 						// The Root must be marked for saving
 						root.setChanged(false);
@@ -5887,7 +5894,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// END KGU#194 2016-05-08
 						//root.highlightVars = hil;
 						if (Element.E_VARHIGHLIGHT) {
-							root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+							root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 						}
 						// START KGU#183 2016-04-24: Enh. #169
 						selected = root;
@@ -7853,6 +7860,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			boolean notRoot = getSelected() != root;
 			inputbox.chkBreakpoint.setVisible(notRoot);
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
+			// START KGU#686 2019-03-17: Enh. #56 - Introduction of Try
+			if (_elementType.equals("Try") || _elementType.equals("Forever")) {
+				inputbox.chkBreakpoint.setEnabled(false);
+				inputbox.chkBreakpoint.setSelected(false);
+			}
+			// END KGU#686 2019-03-17
 			// END KGU#43 2015-10-12
 			// START KGU#213 2016-08-01: Enh. #215
 			// START KGU#246 2016-09-13: Bugfix #241)

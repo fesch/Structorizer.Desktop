@@ -312,7 +312,7 @@ public class PasGenerator extends Generator
 	{
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
 			_typeDescr = transformTypeFromEntry(typeInfo, null);
 		}
 		return _typeDescr;
@@ -1585,7 +1585,7 @@ public class PasGenerator extends Generator
 		introPlaced = false;	// Has the TYPE keyword already been written?
 		for (Root incl: includes) {
 			if (incl != _root) {
-				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
+				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), _complexConsts, introPlaced);
 			}
 		}
 		// START KGU#504 2018-03-13: Bugfix #520, #521

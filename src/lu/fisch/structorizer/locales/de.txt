@@ -124,6 +124,7 @@
  *      Kay Gürtzig         2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
+ *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
  *
  ******************************************************************************************************
  *
@@ -159,6 +160,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -233,6 +235,7 @@ Menu.menuDiagramAddBeforeForever.text=@i-Schleife
 Menu.menuDiagramAddBeforeCall.text=@j-Anweisung
 Menu.menuDiagramAddBeforeJump.text=@k-Anweisung
 Menu.menuDiagramAddBeforePara.text=@l-Abschnitt
+Menu.menuDiagramAddBeforeTry.text=@q-Block
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Danach
 // Submenus for adding Elements "After"
@@ -246,6 +249,7 @@ Menu.menuDiagramAddAfterForever.text=@i-Schleife
 Menu.menuDiagramAddAfterCall.text=@j-Anweisung
 Menu.menuDiagramAddAfterJump.text=@k-Anweisung
 Menu.menuDiagramAddAfterPara.text=@l-Abschnitt
+Menu.menuDiagramAddAfterTry.text=@q-Block
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
@@ -568,6 +572,7 @@ Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach (+Umschalt: 
 Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterTry.tooltip=Einfügen eines neuen @q-Blocks nach (+Umschalt: vor) dem ausgewählten Element.
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
@@ -626,6 +631,7 @@ Editor.popupAddBeforeForever.text=@i-Schleife
 Editor.popupAddBeforeCall.text=@j-Anweisung
 Editor.popupAddBeforeJump.text=@k-Anweisung
 Editor.popupAddBeforePara.text=@l-Abschnitt
+Editor.popupAddBeforeTry.text=@q-Block
 // After
 Editor.popupAddAfter.text=Danach
 // Submenus of "Add -> After"
@@ -639,6 +645,7 @@ Editor.popupAddAfterForever.text=@i-Schleife
 Editor.popupAddAfterCall.text=@j-Anweisung
 Editor.popupAddAfterJump.text=@k-Anweisung
 Editor.popupAddAfterPara.text=@l-Abschnitt
+Editor.popupAddAfterTry.text=@q-Block
 // Edit
 Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
@@ -676,6 +683,7 @@ InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung
 InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
 InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
+InputBox.lblText.text[elementType:Try]=Name der Ausnahme-Variablen
 InputBox.title[elementType:Root]=
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue @a hinzufügen...
@@ -687,6 +695,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Neue @g-Schleife hin
 InputBox.title[elementType:Call,getInsertionType():insert]=@o-@j hinzufügen...
 InputBox.title[elementType:Jump,getInsertionType():insert]=@k-Anweisung hinzufügen...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Neues @l-Element hinzufügen...
+InputBox.title[elementType:Try,getInsertionType():insert]=Neuen @q-Block hinzufügen...
 InputBox.title[elementType:Instruction,getInsertionType():update]=@a bearbeiten...
 InputBox.title[elementType:Alternative,getInsertionType():update]=@b-Anweisung bearbeiten...
 InputBox.title[elementType:Case,getInsertionType():update]=@c bearbeiten...
@@ -696,6 +705,7 @@ InputBox.title[elementType:While,getInsertionType():update]=@g-Schleife bearbeit
 InputBox.title[elementType:Call,getInsertionType():update]=@o-@j bearbeiten...
 InputBox.title[elementType:Jump,getInsertionType():update]=@k-Anweisung bearbeiten...
 InputBox.title[elementType:Parallel,getInsertionType():update]=@l-Element bearbeiten...
+InputBox.title[elementType:Try,getInsertionType():update]=@q-Block bearbeiten...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Neue @d-Schleife hinzufügen...
@@ -1339,6 +1349,7 @@ Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %
 Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
 Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
 Control.msgGUISyncFault.text=Synchronisationsprobleme im Ausgabefenster bei Ausführung von «%».\nAbarbeitung versuchsweise fortsetzen?
+Control.msgErrorInSubroutine.text=Gefangener Fehler bei der Ausführung von «%1» in Tiefe %2:\n	%3!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 
@@ -1374,6 +1385,7 @@ ElementNames.localizedNames.12.text=Diagramm
 ElementNames.localizedNames.13.text=Hauptprogramm
 ElementNames.localizedNames.14.text=Unterprogramm
 ElementNames.localizedNames.15.text=Einbeziehbar
+ElementNames.localizedNames.16.text=TRY
 
 
 -----> Keywords

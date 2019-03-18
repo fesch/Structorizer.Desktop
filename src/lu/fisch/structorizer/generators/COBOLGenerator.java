@@ -48,7 +48,6 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Function;
-
 import lu.fisch.utils.StringList;
 
 /**
@@ -56,12 +55,6 @@ import lu.fisch.utils.StringList;
  *
  */
 public class COBOLGenerator extends Generator {
-
-    @Override
-    protected OverloadingLevel getOverloadingLevel() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        return null;
-    }
 
 	public enum CodePart {
 
@@ -229,6 +222,17 @@ public class COBOLGenerator extends Generator {
 		//insertUserIncludes(CodePart.WORKING_STORAGE);
 		return this.getLineStart(false) + "COPY %.";
 	}
+
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// FIXME: No idea whether subroutine overloading is a sensible concept in COBOl at all.
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
 
 	// include / import / uses config
 	/*
@@ -405,7 +409,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be

@@ -446,6 +446,11 @@ public abstract class Element {
 	// START KGU#376 2017-07-01: Enh #389 - Configurable caption for the includes box of Root
 	public static String preImport = "Included diagrams:";
 	// END KGU#376 2017-07-01
+	// START KGU#686 2019-03-15: Enh. #56 - configurable captions for the TRY block
+	public static String preTry = "try";
+	public static String preCatch = "catch";
+	public static String preFinally = "finally";
+	// END KGU#686 2019-03-15
 	
 	// START KGU#480 2018-01-19: Enh. #490 controller API alias mechanism
 	/**
@@ -914,19 +919,19 @@ public abstract class Element {
 	public StringList getText(boolean _alwaysTrueText)
 	// END KGU#91 2015-12-01
 	{
-        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
-        {
-        	// START KGU#199 2016-07-07: Enh. #188
-        	// Had to be altered since the combination of instructions may produce
-        	// multi-line string elements which would compromise drawing
-        	//return comment;
-        	return StringList.explode(comment, "\n");
-        	// END KGU#199 2016-07-07
-        }
-        else
-        {
-        	return text;
-        }
+		if (!_alwaysTrueText & isSwitchTextCommentMode())
+		{
+			// START KGU#199 2016-07-07: Enh. #188
+			// Had to be altered since the combination of instructions may produce
+			// multi-line string elements which would compromise drawing
+			//return comment;
+			return StringList.explode(comment, "\n");
+			// END KGU#199 2016-07-07
+		}
+		else
+		{
+			return text;
+		}
 	}
 
 	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representation of broken lines in some cases
@@ -969,16 +974,16 @@ public abstract class Element {
 	 */
 	protected StringList getCuteText(boolean _alwaysTrueText)
 	{
-        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
-        {
-        	// START KGU#199 2016-07-07: Enh. #188
-        	// Had to be altered since the combination of instructions may produce
-        	// multi-line string elements which would compromise drawing
-        	//return comment;
-        	return StringList.explode(comment, "\n");
-        	// END KGU#199 2016-07-07
-        }
-        return getCuteText();
+		if (!_alwaysTrueText && isSwitchTextCommentMode())
+		{
+			// START KGU#199 2016-07-07: Enh. #188
+			// Had to be altered since the combination of instructions may produce
+			// multi-line string elements which would compromise drawing
+			//return comment;
+			return StringList.explode(comment, "\n");
+			// END KGU#199 2016-07-07
+		}
+		return getCuteText();
 	}
 	// END KGU#453 2017-11-01
 
@@ -994,7 +999,7 @@ public abstract class Element {
 		//if (getText(false).count()>0) sl.add(getText(false).get(0));
 		if (getText(false).count() > 0) {
 			StringList myText = getText(false);
-			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 			}
 			sl.add(myText.get(0));
@@ -1269,10 +1274,7 @@ public abstract class Element {
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-		// START KGU#227 2016-07-30: Enh. #128 - Comments plus text mode ovverrides all
-		//if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
-		if (!_alwaysTrueComment && !Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
-		// END KGU#227 2016-07-30
+		if (!_alwaysTrueComment && isSwitchTextCommentMode())
 		{
 			return text;
 		}
@@ -1282,15 +1284,19 @@ public abstract class Element {
 		}
 	}
 	
-	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
+	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information, 2019-03-16 made static
 	/**
 	 * Checks whether texts and comments are to be swapped for display.
-	 * @return true iff a Root is associated and its swichTextAndComments flag is on
+	 * @return true iff the swichTextAndComments flag is on and commentsPlusText mode is not
 	 */
-	protected boolean isSwitchTextCommentMode()
+	protected static boolean isSwitchTextCommentMode()
 	{
-		Root root = getRoot(this);
-		return (root != null && root.isSwitchTextAndComments());
+//		Root root = getRoot(this);
+//		return (root != null && root.isSwitchTextAndComments());
+    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
+    	//return Element.E_TOGGLETC;
+    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
+    	// END KGU#227 2016-07-31
 	}
 	// END KGU#172 2916-04-01
 
@@ -1933,7 +1939,7 @@ public abstract class Element {
 			{
 				return true;
 			}
-				});		
+		});
 	}
 	
 	private void intClearExecutionStatus()
@@ -3195,14 +3201,18 @@ public abstract class Element {
 		int total = 0;
 
 		Root root = getRoot(_this);
-
+		
 		if (root != null)
 		{
+			// START KGU#686 2019-03-16: Enh. #56
+			Set<String> variableSet = _this.getVariableSetFor(_this);
+			// END KGU#686 2019-03-16
+
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
 			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557 - No syntax highlighting in high contention
 			//if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
-			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode() && !_inContention)
+			if (Element.E_VARHIGHLIGHT && !isSwitchTextCommentMode() && !_inContention)
 			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			// END KGU#226 2016-07-29
 			{
@@ -3352,7 +3362,7 @@ public abstract class Element {
 					if (!display.equals(""))
 					{
 						// if this part has to be colored
-						if(root.getVariables().contains(display))
+						if(variableSet.contains(display))
 						{
 							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));
@@ -3439,14 +3449,26 @@ public abstract class Element {
 					_canvas.writeOut(_x + total, _y, _text);
 				}
 
-                // add to the total
-                total += _canvas.stringWidth(_text);
+				// add to the total
+				total += _canvas.stringWidth(_text);
 
 			}
 		}
 		
 		return total;
 	}
+	
+	// START KGU#686 2019-03-16: Enh. #56 introduction of Try elements
+	/**
+	 * @return the set of cached variable names for the element context of Element {@code _child}
+	 */
+	protected Set<String> getVariableSetFor(Element _child) {
+		if (this.parent == null) {
+			return new HashSet<String>();
+		}
+		return this.parent.getVariableSetFor(this);
+	}
+	// END KGU#686 2019-03-16
 	
 	// START KGU#227 2016-07-29: Enh. #128
 	/**
@@ -4076,7 +4098,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, explicitly, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly, isCStyle));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
@@ -4114,6 +4136,7 @@ public abstract class Element {
 			if (entry == null) {
 				// Add a new entry to the type map
 				boolean isRecursive = false;
+				// FIXME KGU#687 2019-03-16: Issue #408, #56 - shall we replace this by compTypes now?
 				LinkedHashMap<String, TypeMapEntry> components = new LinkedHashMap<String, TypeMapEntry>();
 				for (int i = 0; i < compNames.count(); i++) {
 					TypeMapEntry compEntry = null; 
@@ -4130,13 +4153,14 @@ public abstract class Element {
 									}
 									else {
 										// Create a named dummy entry
-										compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true, false);
 									}
 								}
 							}
+							// FIXME KGU#687 2019-03-16: Issue #408 - no longer needed?
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);
+								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true, false);
 							}
 						}
 					}
@@ -4144,7 +4168,7 @@ public abstract class Element {
 					if (compEntry == null) compEntry = TypeMapEntry.getDummy();
 					components.put(compNames.get(i), compEntry);
 				}
-				entry = new TypeMapEntry(typeSpec, typeName, components, this, lineNo);
+				entry = new TypeMapEntry(typeSpec, typeName, typeMap, components, this, lineNo);
 				// In case of self-references map the respective component names to the created TypeMapEntry 
 				if (isRecursive) {
 					for (int i = 0; i < compNames.count(); i++) {

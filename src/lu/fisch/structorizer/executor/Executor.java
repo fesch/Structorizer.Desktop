@@ -917,18 +917,27 @@ public class Executor implements Runnable
 	private boolean stop = false;
 	// START KGU#78 2015-11-25: JUMP enhancement (#35)
 	//private int loopDepth = 0;	// Level of nested loops KGU#384 207-04-22 -> context
-	private int leave = 0;		// Number of loop levels to unwind
+	/** Number of loop levels to unwind */
+	private int leave = 0;
 	// END KGU#78 2015-11-25
 	//private StringList variables = new StringList();	// KGU#384 2017-04-22 -> context
 	// START KGU#375 2017-03-30: Enh. #388 Support the concept of variables
 	//private HashMap<String, Object> constants = new HashMap<String, Object>();	// KGU#384 2017-04-22 -> context
 	// END KGU#375 2017-03-30
 	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
+	/** Had a lower call level already reported an error? */
 	private boolean isErrorReported = false;
+	// START KGU#686 2019-03-17: Enh. #56 implementation of a try element
+	/** This is to convey an error message from a subroutine if called within a try block */
+	private String subroutineTrouble = null;
+	/** Indicates whether the current execution is done within a try block */
+	private boolean withinTryBlock = false;
+	// END KGU#686 2019-03-17
 	private StringList stackTrace = new StringList();
 	// END KGU#2 2015-11-22
-	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against a reopen attempts by different Structorizer instances
-	private Diagram reopenFor = null;	// A Structorizer instance that tried to open Control while still running
+	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against reopen attempts by different Structorizer instances
+	/** A Structorizer instance that tried to open Control while still running */
+	private Diagram reopenFor = null;
 	// END KGU#2 2016-03-16
 	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
 	private final Vector<Closeable> openFiles = new Vector<Closeable>();
@@ -1482,6 +1491,10 @@ public class Executor implements Runnable
 		}
 		this.isErrorReported = false;
 		root.isCalling = false;
+		// START KGU#686 2019-03-17: Enh. #56
+		this.withinTryBlock = false;
+		this.subroutineTrouble = null;
+		// END KGU#686 2019-03-17
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window
 		// START KGU#569 2018-08-08: Issue #577: Replace the console if it has become inconsistent
 		//this.console.clear();
@@ -1536,9 +1549,12 @@ public class Executor implements Runnable
 	}
 	
 	/**
-	 * Executes the current diagram held by this.diagram, applicable for main or sub routines 
+	 * Executes the current diagram held by this.diagram, applicable for main or sub routines.<br/>
+	 * If called within a Try execution (@link #withinTryBlock} then a possible error message will
+	 * be put into {@link #subroutineTrouble}, otherwise the error message will be popped up as
+	 * message box. Flag {@link #isErrorReported} will be set in both cases.
 	 * @param arguments - list of interpreted argument values or null (if main program)
-	 * @return the result value of the algorithm (if not being a program)
+	 * @return whether the call was successful
 	 */
 	private boolean execute(Object[] arguments)
 	{
@@ -1772,8 +1788,8 @@ public class Executor implements Runnable
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
 			
 			String modifiedResult = trouble;
-			// FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
-			// ... and after having replaced actual arrays by ArrayLists we may no longer obtain this type of message
+			/* FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
+			 * ... and after having replaced actual arrays by ArrayLists we may no longer obtain this type of message */
 			if (trouble.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
@@ -1787,29 +1803,49 @@ public class Executor implements Runnable
 			// START KGU#2 2015-11-22: If we are on a subroutine level, then we must stop the show
 			//JOptionPane.showMessageDialog(diagram, trouble, "Error",
 			//		JOptionPane.ERROR_MESSAGE);
-			if (!isErrorReported)
-			{
-				JOptionPane.showMessageDialog(diagram.getParent(), trouble, control.msgTitleError.getText(),
-						JOptionPane.ERROR_MESSAGE);
-				// START KGU#160 2016-07-27: Issue #137 - also log the trouble to the console
-				this.console.writeln("*** " + trouble, Color.RED);
-				// END KGU#160 2016-07-27
-				isErrorReported = true;
+
+			// START KGU#686 2019-03-17: Enh. #56: don't panic if we are within a try block
+			if (!this.withinTryBlock && !stop) {
+			// END KGU#686 2019-03-17
+		
+				if (!isErrorReported)
+				{
+					JOptionPane.showMessageDialog(diagram.getParent(), trouble, control.msgTitleError.getText(),
+							JOptionPane.ERROR_MESSAGE);
+					// START KGU#160 2016-07-27: Issue #137 - also log the trouble to the console
+					this.console.writeln("*** " + trouble, Color.RED);
+					// END KGU#160 2016-07-27
+					isErrorReported = true;
+				}
+				if (!this.callers.isEmpty())
+				{
+					stop = true;
+					paus = false;
+					step = false;
+				}
+				else if (isErrorReported && stackTrace.count() > 1)
+				{
+					// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, so there is no need anymore
+					//addToStackTrace(root, arguments);
+					// END KGU#159 2016-03-17
+					showStackTrace();
+				}
+			
+			// START KGU#686 2019-03-17: Enh. #56: don't panic if we are within a try block
 			}
-			if (!this.callers.isEmpty())
-			{
-				stop = true;
-				paus = false;
-				step = false;
+			else {
+				if (!this.isErrorReported && this.console.logMeta()) {
+					this.console.writeln("*** " + Control.msgErrorInSubroutine.getText().
+							replace("%1", this.stackTrace.get(this.stackTrace.count()-1)).
+							replace("%2", Integer.toString(this.stackTrace.count()-1)).
+							replace("%3", trouble), Color.RED);
+				}
+				this.subroutineTrouble = trouble;
+				this.isErrorReported = true;
 			}
-			else if (isErrorReported && stackTrace.count() > 1)
-			{
-				// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, so there is no need anymore
-				//addToStackTrace(root, arguments);
-				// END KGU#159 2016-03-17
-				showStackTrace();
-			}
-			// END KGU#2 2015-11-24	
+			// END KGU#686 2019-03-17
+			
+			// END KGU#2 2015-11-24
 		} else
 		{
 			if (root.isSubroutine() && (context.returned == false))
@@ -1940,7 +1976,10 @@ public class Executor implements Runnable
 		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
 
-		if (successful)
+		// START KGU#686 2019-03-17: Enh. #56 - do the stack unwinding also in case of a tried execution
+		//if (successful)
+		if (successful || this.withinTryBlock)
+		// END KGU#686 2019-03-56
 		{
 			dropFromStackTrace();
 		}
@@ -1972,7 +2011,7 @@ public class Executor implements Runnable
 					if (this.importMap.containsKey(imp)) {
 						ImportInfo impInfo = this.importMap.get(imp);
 						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-								imp.getVariables(), imp.constants.keySet(), false);
+								imp.getCachedVarNames(), imp.constants.keySet(), false);
 						// START KGU#388 2017-09-18: Enh. #423
 						// Adopt the imported typedefs if any
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
@@ -2005,6 +2044,12 @@ public class Executor implements Runnable
 					else {
 						// END KGU#376 2017-04-21
 						executeCall(imp, null, null);
+						// START KGU#686 2019-03-17: Enh. #56 might have caused a caught trouble
+						if (subroutineTrouble != null) {
+							errorString = subroutineTrouble;
+							subroutineTrouble = null;
+						}
+						// END KGU#686 2019-03-17
 					}
 					context.importList.addIfNew(diagrName);
 				}
@@ -2266,7 +2311,7 @@ public class Executor implements Runnable
 		// END KGU#156 2016-03-11
 		
 		/////////////////////////////////////////////////////////
-		this.execute(arguments);	// Actual execution of the subroutine or import
+		boolean ok = this.execute(arguments);	// Actual execution of the subroutine or import
 		/////////////////////////////////////////////////////////
 		
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
@@ -2275,7 +2320,10 @@ public class Executor implements Runnable
 			//caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore + 1, true);
 			// END KGU#539 2018-07-02
-			if (cloned || root.isTestCovered(true))	
+			// START KGU#686 2019-03-17: Enh. #56 could be in a try context, so don't honour unsuccessful execution 
+			//if (cloned || root.isTestCovered(true))	
+			if (ok && (cloned || root.isTestCovered(true)))	
+			// END KGU#686 2019-03-17
 			{
 				caller.deeplyCovered = true;
 			}
@@ -2288,6 +2336,10 @@ public class Executor implements Runnable
 //			addToStackTrace(root, arguments);
 //		}
 		// END KGU#2 2015-11-24
+		
+		//---------------------------------------------------------
+		// Integrate the called context into the caller context
+		//---------------------------------------------------------
 		
 		// START KGU#117 2016-03-07: Enh. #77
 		// For recursive calls the coverage must be combined
@@ -2359,17 +2411,28 @@ public class Executor implements Runnable
 //		this.forLoopVars = entry.forLoopVars;
 		// END KGU#384 2017-08-22
 		
+		//---------------------------------------------------------
+		// Restore the caller now
+		//---------------------------------------------------------
+		
 		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delay 0
 		//this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
 		// END KGU#430 2017-10-12
 		entry.root.isCalling = false;
 
-		// START KGU#376 2017-04-21: Enh. #389
-		// The called subroutine will certainly have returned a value...
-		resultObject = this.context.returnedValue;
-		// ... but definitively not THIS calling routine!
-		// FIXME: Shouldn't we have cached the previous values in entry?
+		// START KGU#686 2019-03-17: Enh. #56 Don't fetch the result if failed
+		if (ok) {
+		// END KGU#686 2019-03-17
+			// START KGU#376 2017-04-21: Enh. #389
+			// The called subroutine will certainly have returned a value...
+			resultObject = this.context.returnedValue;
+			// ... but definitively not THIS calling routine!
+			// FIXME: Shouldn't we have cached the previous values in entry?
+		// START KGU#686 2019-03-17: Enh. #56 Don't fetch the result if failed
+		}
+		// END KGU#686 2019-03-17
+		
 		
 		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
 		//this.returned = false; 
@@ -4132,6 +4195,11 @@ public class Executor implements Runnable
 		{
 			trouble = stepRepeat((Repeat)element);
 		}
+		// START KGU#686 2019-03-16: Enh. #56
+		else if (element instanceof Try) {
+			trouble = stepTry((Try)element);
+		}
+		// END KGU#686 2019-03-16
 		else 
 		{
 			// Delay or wait (in case of step mode or breakpoint) before
@@ -4837,7 +4905,14 @@ public class Executor implements Runnable
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
+					// START KGU#686 2019-03-17: Enh. #56 might have caused a caught trouble
+					//if (Element.E_COLLECTRUNTIMEDATA)
+					if (subroutineTrouble != null) {
+						trouble = subroutineTrouble;
+						subroutineTrouble = null;
+					}
+					else if (Element.E_COLLECTRUNTIMEDATA)
+					// END KGU#686 2019-03-17
 					{
 						instr.simplyCovered = true;
 					}
@@ -4927,13 +5002,13 @@ public class Executor implements Runnable
 			//instr.updateTypeMapFromLine(context.dynTypeMap, cmd, lineNo);
 			if (!leftSide.contains(".") && !leftSide.contains("[")) {
 				TypeMapEntry oldEntry = null;
-				String target = instr.getAssignedVarname(Element.splitLexically(leftSide, true)) + "";
+				String target = Instruction.getAssignedVarname(Element.splitLexically(leftSide, true)) + "";
 				if (!context.dynTypeMap.containsKey(target) || !(oldEntry = context.dynTypeMap.get(target)).isDeclared) {
 					String typeDescr = Instruction.identifyExprType(context.dynTypeMap, expression, true);
 					if (oldEntry == null) {
 						TypeMapEntry typeEntry = null;
 						if (typeDescr != null && (typeEntry = context.dynTypeMap.get(":" + typeDescr)) == null) {
-							typeEntry = new TypeMapEntry(typeDescr, null, instr, lineNo, true, false, false);
+							typeEntry = new TypeMapEntry(typeDescr, null, null, instr, lineNo, true, false, false);
 						}
 						context.dynTypeMap.put(target, typeEntry);
 					}
@@ -5486,7 +5561,14 @@ public class Executor implements Runnable
 				{
 					executeCall(sub, args, (Call)element);
 					// START KGU#117 2016-03-10: Enh. #77
-					if (Element.E_COLLECTRUNTIMEDATA)
+					// START KGU#686 2019-03-17: Enh. #56 might have caused a caught trouble
+					//if (Element.E_COLLECTRUNTIMEDATA)
+					if (subroutineTrouble != null) {
+						trouble = subroutineTrouble;
+						subroutineTrouble = null;
+					}
+					else if (Element.E_COLLECTRUNTIMEDATA)
+					// END KGU#686 2019-03-17
 					{
 						element.simplyCovered = true;
 					}
@@ -6170,7 +6252,7 @@ public class Executor implements Runnable
 		{
 			// START KGU#3 2015-10-31: Now it's time for the new intrinsic mechanism
 //			String str = element.getText().getText();
-//            
+//
 //			String pas = "1";
 //			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
 //			{
@@ -6186,7 +6268,7 @@ public class Executor implements Runnable
 //			// To solve 2 and 3 we provide the Integer conversion once in advance
 			int sval = element.getStepConst();
 			// END KGU#3 2015-10-31
-                            
+			
 			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
 //			// cut off the start of the expression
 //			if (!CodeParser.preFor.equals(""))
@@ -6316,7 +6398,7 @@ public class Executor implements Runnable
 					trouble = stepSubqueue(element.getBody(), true);
 				}
 				// END KGU#117 2016-03-07
-                
+
 				// START KGU#156 2016-03-11: Enh. #124
 				element.addToExecTotalCount(1, true);	// For the condition test and increment
 				//END KGU#156 2016-03-11
@@ -6651,7 +6733,7 @@ public class Executor implements Runnable
 						// END KGU#247 2016-09-17
 					}
 					// END KGU#78 2015-11-25
-				}                
+				}
 			}
 			context.loopDepth = outerLoopDepth;	// Restore the original context
 			if (trouble.equals(""))
@@ -6666,7 +6748,83 @@ public class Executor implements Runnable
 		return trouble;
 	}
 
+	// START KGU#686 2019-03-16: Enh. #56 Introdcution of TRY CATCH FINALLY
+	private String stepTry(Try element)
+	{
+		String trouble = new String();
+		element.executed = false;
+		element.waited = true;
+		
+		// Start executing the try block
+		
+		boolean wasWithinTry = this.withinTryBlock;
+		this.withinTryBlock = true;
+		
+		trouble = stepSubqueue(element.qTry, true);
+		
+		this.withinTryBlock = wasWithinTry;
+		
+		// In case of trouble exceute the catch block
+		if (!trouble.isEmpty()) {
+			try {
+				this.updateVariableDisplay();
+				String varName = element.getExceptionVarName();
+				Object priorValue = null;
+				boolean hadVariable = false;
+				if (varName != null) {
+					if ((hadVariable = context.variables.contains(varName))) {
+					priorValue = context.interpreter.get(varName);
+					}
+					setVar(varName, trouble);
+				}
+				/* Normally the catch block will clear the trouble, but if it causes
+				 * trouble itself (e.g. by rethrowing) than this will be the new
+				 * trouble */
+				trouble = stepSubqueue(element.qCatch, true);
+				
+				element.qTry.clearExecutionStatus();
+				if (hadVariable) {
+					setVar(varName, priorValue);
+				}
+				else if (varName != null) {
+					context.interpreter.unset(varName);
+					context.variables.removeAll(varName);
+				}
+			} catch (EvalError e) {
+				trouble = e.toString();
+			}
+		}
+		
+		try {
+			this.updateVariableDisplay();
+			// Execute the finally block
+			String finalTrouble = stepSubqueue(element.qFinally, true);
+			if (!finalTrouble.isEmpty()) {
+				// An error out of the finally block overrides a possible previous trouble
+				trouble = finalTrouble;
+			}
+		} catch (EvalError ex) {
+			if ((trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
+				trouble = ex.toString();
+			}
+		}
+		
+		if (trouble.isEmpty()) {
+			element.waited = false;
+			element.executed = false;
+		}
+		
+		return trouble;
+	}
+	// END KGU#686 2019-03-16
+	
 	// START KGU#117 2016-03-07: Enh. #77 - to track test coverage a consistent subqueue handling is necessary
+	/**
+	 * 
+	 * @param sq
+	 * @param checkLeave
+	 * @return
+	 */
 	String stepSubqueue(Subqueue sq, boolean checkLeave)
 	{
 		String trouble = "";

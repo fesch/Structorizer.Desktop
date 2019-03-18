@@ -1329,7 +1329,7 @@ public class BASHGenerator extends Generator {
 		
 		code.add("");
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
-		varNames = _root.getVarNames();
+		varNames = _root.retrieveVarNames();
 		insertComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		code.add("");
 		// END KGU#129 2016-01-08

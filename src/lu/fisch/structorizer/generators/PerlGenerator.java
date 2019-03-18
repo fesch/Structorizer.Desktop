@@ -1071,7 +1071,7 @@ public class PerlGenerator extends Generator {
 		// END KGU#352 2017-02-26
 		code.add(_indent);
 		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
-		varNames = _root.getVarNames(); // in contrast to super we need the parameter names included again.
+		varNames = _root.retrieveVarNames(); // in contrast to super we need the parameter names included again.
 		// END KGU 2015-11-02
 		return _indent;
 	}

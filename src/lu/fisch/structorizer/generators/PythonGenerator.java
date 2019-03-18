@@ -1049,7 +1049,7 @@ public class PythonGenerator extends Generator
 						}
 					}
 					// Now add the variables (including constants)
-					StringList names = incl.getVarNames();
+					StringList names = incl.retrieveVarNames();
 					for (int i = 0; i < names.count(); i++)
 					{
 						String name = names.get(i);

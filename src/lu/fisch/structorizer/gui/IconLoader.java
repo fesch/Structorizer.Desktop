@@ -220,7 +220,9 @@ public class IconLoader {
 			"116_groupAttach.png",
 			"117_groupExpand.png",
 			"118_info.png",
-			"119_rearrange.png"
+			"119_rearrange.png",
+			"120_elem_try.png",
+			"121_mini_try.png"
 	};
 	
 	private static final int[] ICON_SIZES = {

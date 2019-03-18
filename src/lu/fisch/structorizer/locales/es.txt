@@ -124,6 +124,7 @@
  *      Kay Gürtzig     2019-02-16  Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03  Enh. #327: New section Keywords for ParserPreferences
+ *      Kay Gürtzig     2019-03-17  Enh. #56: Messages for the new Element class Try
  *
  ******************************************************************************************************
  *
@@ -159,6 +160,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  *      Must IF, CASE etc. statements be translated? No "beautiful" single word for CASE & ENDLESS.
  *
@@ -234,6 +236,7 @@ Menu.menuDiagramAddBeforeForever.text=bucle @i
 Menu.menuDiagramAddBeforeCall.text=@j
 Menu.menuDiagramAddBeforeJump.text=@k
 Menu.menuDiagramAddBeforePara.text=sección @l
+Menu.menuDiagramAddBeforeTry.text=bloque @q
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Después
 // Submenus for adding Elements "After"
@@ -247,6 +250,7 @@ Menu.menuDiagramAddAfterForever.text=bucle @i
 Menu.menuDiagramAddAfterCall.text=@j
 Menu.menuDiagramAddAfterJump.text=@k
 Menu.menuDiagramAddAfterPara.text=sección @l
+Menu.menuDiagramAddAfterTry.text=bloque @q
 Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
@@ -568,6 +572,7 @@ Editor.btnAfterCall.tooltip=Insertar nueva @j después (con tecla de mayúsculas
 Editor.btnAfterJump.tooltip=Insertar nuevo @k después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterCase.tooltip=Insertar nueva instrucción @c después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterPara.tooltip=Insertar nueva sección @l después (con tecla de mayúsculas: antes) del elemento seleccionado.
+Editor.btnAfterTry.tooltip=Insertar nuevo bloque @q después (con tecla de mayúsculas: antes) del elemento seleccionado.
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.
@@ -626,6 +631,7 @@ Editor.popupAddBeforeForever.text=bucle @i
 Editor.popupAddBeforeCall.text=@j
 Editor.popupAddBeforeJump.text=@k
 Editor.popupAddBeforePara.text=sección @l
+Editor.popupAddBeforeTry.text=bloque @q
 // After
 Editor.popupAddAfter.text=Después
 // Submenus of "Add -> After"
@@ -639,6 +645,7 @@ Editor.popupAddAfterForever.text=bucle @i
 Editor.popupAddAfterCall.text=@j
 Editor.popupAddAfterJump.text=@k
 Editor.popupAddAfterPara.text=sección @l
+Editor.popupAddAfterTry.text=sección @q
 // Edit
 Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Borrar
@@ -676,6 +683,7 @@ InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para en
 InputBox.lblText.text[elementType:Repeat]=Por favor ingresa la condición para salir
 InputBox.lblText.text[elementType:Case]=Ingresa la expresión y las constantes de selección (cada en nueva linea)
 InputBox.lblText.text[elementType:Parallel]=Número de brazos paralelos
+InputBox.lblText.text[elementType:Try]=Nombre de la variable de excepción
 InputBox.title[elementType:Root]=Editar nombre de programa...
 InputBox.title[elementType:Function]=Editar signatura de función...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Insertar instrucciones...
@@ -687,6 +695,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Insertar bucle @g...
 InputBox.title[elementType:Call,getInsertionType():insert]=Insertar @j...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Insertar @k...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Insertar sección @l...
+InputBox.title[elementType:Try,getInsertionType():insert]=Insertar bloque @q...
 InputBox.title[elementType:Instruction,getInsertionType():update]=Editar @a...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Editar ramificación @b...
 InputBox.title[elementType:Case,getInsertionType():update]=Editar ramificación @c...
@@ -696,6 +705,7 @@ InputBox.title[elementType:While,getInsertionType():update]=Editar bucle @g...
 InputBox.title[elementType:Call,getInsertionType():update]=Editar @j...
 InputBox.title[elementType:Jump,getInsertionType():update]=Editar @k...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Editar sección @l...
+InputBox.title[elementType:Try,getInsertionType():update]=Editar bloque @q...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insertar bucle @d...
@@ -1337,6 +1347,7 @@ Control.msgFunctionConflict.text=\nFunción «%1(%2)» de %3 aplastada por %4
 Control.msgProcedureConflict.text=\nProcedura «%1(%2)» de %3 aplastada por %4
 Control.msgSignatureConflicts.text=Hay conflictos en el API entre los elegidos módulos de mando:%
 Control.msgGUISyncFault.text=Problemas con la sincronización de la ventana ejecutando «%».\n¿Tratar de continuar ejecución?
+Control.msgErrorInSubroutine.text=¡Error atrapado ejecutando «%1» en nivel %2:\n	%3!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 
@@ -1372,6 +1383,7 @@ ElementNames.localizedNames.12.text=Diagrama
 ElementNames.localizedNames.13.text=Programa principal
 ElementNames.localizedNames.14.text=Subrutina
 ElementNames.localizedNames.15.text=Incluíble
+ElementNames.localizedNames.16.text=TRY
 
 -----> Keywords
 ParserKeywords.AltPre.text=si
