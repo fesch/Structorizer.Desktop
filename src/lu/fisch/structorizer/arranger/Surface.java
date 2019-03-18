@@ -106,6 +106,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-11      Bugfix #699: On saving diagrams from an archive to another archive they must be copied
  *      Kay Gürtzig     2019-03-12/13   Enh. #698: New IRoutinePool mmethods added
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-14      Issues #518, #544, #557: Measures against drawing contention revised and extended.
+ *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
+ *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group
  *
  ******************************************************************************************************
  *
@@ -163,6 +166,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -314,6 +318,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private JPopupMenu pop = new JPopupMenu();
 	private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
 	// END KGU#630 2019-01-09
+	private boolean wasContented = false;
 	
 	// START KGU#202 2016-07-03
 	public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
@@ -410,7 +415,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-24
 	// END KGU#497 2018-03-19
 	{
-		//System.out.println("Surface: " + System.currentTimeMillis());
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518, #544, #557 - Workaround for heavy drawing contention
+		// We will simply tell the Roots about the contention, so they may decide what to do (e.g. switch off highlighting)
+		boolean fullRepaint = false;
+		if (EventQueue.isDispatchThread()) {
+			EventQueue evtqu = Toolkit.getDefaultToolkit().getSystemEventQueue();
+			long contention = System.currentTimeMillis() - EventQueue.getMostRecentEventTime();
+			//System.out.println("Contention: " + contention);
+			if (contention > 500 && evtqu.peekEvent(MouseWheelEvent.MOUSE_WHEEL) != null && !wasContented) {
+				fullRepaint = true;
+				wasContented = true;
+			}
+			else if (contention <= 10 && wasContented) {
+				fullRepaint = true;
+				wasContented = false;
+			}
+		}
+		// END KGU#502/KGU#524/KGU#553 2019-03-13: Issues #518, #544, #557 - reduce drawing contention
+		
 		// Region occupied by diagrams
 		Dimension area = new Dimension(0, 0);
 		super.paintComponent(g);
@@ -454,9 +476,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#497 2018-03-19
 
 			// START KGU#502/KGU#524/KGU#553 2019-03-13: Issues #518, #544, #557 - reduce drawing contention
-			Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
-			visRect = visRect.scale(zoomFactor);
-			Rectangle visibleRect = visRect.getRectangle();
+			Rectangle visibleRect = null;
+			// In need of full repaint, we don't provide the actual visibility bounds
+			if (!fullRepaint) {
+				Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
+				visRect = visRect.scale(zoomFactor);
+				visibleRect = visRect.getRectangle();
+			}
 			// END KGU#502/KGU#524/KGU#557
 				
 			// START KGU#630 2019-01-09: Enh. #662/2 - preparations for group drawing
@@ -487,7 +513,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#624 2018-12-24
 				// START KGU#88 2015-11-24
 				//root.draw(g, point, this);
-				Rect rect = root.draw(g2d, point, visibleRect, this, Element.DrawingContext.DC_ARRANGER);
+				Rect rect = root.draw(g2d, point, visibleRect, this, Element.DrawingContext.DC_ARRANGER, wasContented);
 				if (diagram.isPinned)
 				{
 					if (pinIcon == null)
@@ -1072,6 +1098,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
 			// END KGU#679 2019-03-11
 
+			// START KGU#682 2019-03-15: Bugfix #703 - group change status must get a chance to be reset.
+			for (Diagram diagr: groupMembers) {
+				diagr.wasMoved = false;
+			}
+			// END KGU#682 2019-03-15
 			// If the target file had existed then replace it by the output file after having created a backup
 			if (tmpFilename != null)
 			{
@@ -1116,6 +1147,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (portable) {
 				StringList sharedDiagrams = new StringList();
 				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
+					// START KGU#683 2019-03-15: Bugfix #699 - No measures for diagrams that aren't shared by other groups
+					if (diagr.getGroupNames().length <= 1) {
+						continue;
+					}
+					// END KGU#683 2019-03-15
 					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
 						// A diagram residing in another archive must be copied now, it cannot be shared.
 						Root copiedRoot = (Root)diagr.root.copy();
@@ -1154,6 +1190,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
 							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
 				}
+				// START KGU#682 2019-03-15: Issue #704 grop change status must be reset.
+				group.membersChanged = false;
+				// END KGU#682 2019-03-15
 			}
 			// END KGU#680 2019-03-11
 			// END KGU#650 2019-02-11
@@ -2325,17 +2364,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			// START KGU 2019-03-11: It doesn't make sense to initiate a prepareDraw() here, because the nex diagram won't know...
+			// START KGU 2019-03-14: It doesn't make sense to initiate a prepareDraw() here, because the next diagram won't know...
+			if (rec.right == rec.left && rec.top == rec.bottom) {
+				// Can never have been drawn, so try it now...
+				Graphics2D graphics2d = (Graphics2D) this.getGraphics();
+				rec = root.prepareDraw(graphics2d);
+			}
+			// END KGU 2019-03-14
 			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
 			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
-			//Rect draftRec = null;
-			//if (rec.right == rec.left && rec.top == rec.bottom) {
-			//	// Can never have been drawn, so try it now...
-			//	Graphics2D graphics2d = (Graphics2D) this.getGraphics();
-			//	draftRec = root.prepareDraw(graphics2d);
-			//	(rec = draftRec.copy()).add(point);
-			//}
-			// END KGU 2019-03-11
 			
 			// START KGU#499 2018-02-21: Enh. #515 - better area management
 			// Improve the placement if possible (for more compact arrangement)
@@ -2631,7 +2668,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#278 2016-10-11		
 	}
 	// END KGU#385 2016-12-17
-
+	
 	// END KGU#177 2016-04-14: Enh. #158: Allow to copy diagrams via clipboard (as XML)
 	/**
 	 * Copies the currently selected diagram (single selection provided) to the clipboard.

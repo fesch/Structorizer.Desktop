@@ -1461,7 +1461,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			rect.right  = rect.left + w;
 			rect.bottom = rect.top + h;
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-			selectedDown.draw(canvas, rect, ((JViewport)this.getParent()).getViewRect());
+			selectedDown.draw(canvas, rect, ((JViewport)this.getParent()).getViewRect(), false);
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 			// START KGU#136 2016-03-01: Bugfix #97 - this is no longer necessary
 			//selectedDown.rect = copyRect;
@@ -5144,7 +5144,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect, null);
+					root.draw(c,myrect, null, false);
 					emf.endExport();
 				}
 				catch (Exception e)
@@ -5238,7 +5238,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect, null);
+					root.draw(c,myrect, null, false);
 					svg.endExport();
 
 					// re-read the file ...
@@ -5355,7 +5355,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect, null);
+					root.draw(c,myrect, null, false);
 					svg.endExport();
 				}
 				catch (Exception e)
@@ -5450,7 +5450,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
 					myrect.left+=6;
 					myrect.top+=6;
-					root.draw(c,myrect, null);
+					root.draw(c,myrect, null, false);
 					svg.endExport();
 				}
 				catch (Exception e)
@@ -8047,7 +8047,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			emf.startExport();
 			lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(emf);
 			lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-			root.draw(c,myrect, null);
+			root.draw(c,myrect, null, false);
 			emf.endExport();
 
 			systemClipboard.setContents(new EMFSelection(myEMF), null);

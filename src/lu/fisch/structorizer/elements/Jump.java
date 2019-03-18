@@ -167,7 +167,7 @@ public class Jump extends Instruction {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
@@ -177,14 +177,14 @@ public class Jump extends Instruction {
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
 		// END KGU#502/KGU#524/KGU#553 2019-03-13
 
 		// START KGU 2016-07-30: Just delegate the basics to super
-		super.draw(_canvas, _top_left, _viewport);
+		super.draw(_canvas, _top_left, _viewport, _inContention);
 		// END KGU 2016-07-30: Just delegate the basics to super
 
 		_canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.

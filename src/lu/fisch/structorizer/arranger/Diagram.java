@@ -74,7 +74,7 @@ public class Diagram extends ArchiveRecord
 	 * because otherwise they might seem "clean" if all contained diagrams were saved with some totally different
 	 * arrangement.
 	 */
-	boolean wasMoved = false;
+	protected boolean wasMoved = false;
 	// END KGU#626 2018-12-28
 
 	public Diagram(Root root, Point point)
