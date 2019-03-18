@@ -137,7 +137,7 @@ public class Repeat extends Element implements ILoop {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
@@ -145,7 +145,7 @@ public class Repeat extends Element implements ILoop {
 		{
 			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
 			// START KGU#136 2016-03-01: Bugfix #97
-			isRectUpToDate = true;
+			isRect0UpToDate = true;
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
@@ -179,13 +179,13 @@ public class Repeat extends Element implements ILoop {
 		this.pt0Body = pt0Body;
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 		// END KGU#136 2016-02-27
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
 		if (!checkVisibility(_viewport, _top_left)) { return; }
@@ -193,7 +193,10 @@ public class Repeat extends Element implements ILoop {
 
 		if(isCollapsed(true)) 
 		{
-			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+			Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+			wasDrawn = true;
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			return;
 		}
 
@@ -214,7 +217,7 @@ public class Repeat extends Element implements ILoop {
 		myrect.top = myrect.bottom - pt0Body.y;
 		// START KGU#453 2017-11-01: Bugfix #447 - no need to show possible backslashes at end
 		//Instruction.draw(_canvas, myrect, this.getText(false), this);
-		Instruction.draw(_canvas, myrect, this.getCuteText(false), this);
+		Instruction.draw(_canvas, myrect, this.getCuteText(false), this, _inContention);
 		// END KGU#453 2017-11-01
 		// START KGU#277 2016-10-13: Enh. #270
 		if (this.disabled) {
@@ -241,8 +244,11 @@ public class Repeat extends Element implements ILoop {
 		myrect.bottom -= pt0Body.y;
 		// END KGU#227 2016-07-30
 				
-		q.draw(_canvas, myrect, _viewport);
+		q.draw(_canvas, myrect, _viewport, _inContention);
 		
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon

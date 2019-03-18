@@ -20,12 +20,6 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.NoSuchElementException;
-import java.util.Stack;
-import java.util.Vector;
-
-//import lu.fisch.structorizer.gui.SelectedSequence;
-
 /******************************************************************************************************
 *
 *      Author:         Kay Guertzig
@@ -41,12 +35,19 @@ import java.util.Vector;
 *      Kay Gürtzig      2015.11.23      First issue (KGU#87).
 *      Kay Gürtzig      2016.10.13      Enh. #277: Method setDisabled(boolean) added
 *      Kay Gürtzig      2017.05.30      Enh. #415: Equipped with a tree-capable Iterator class
+*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *
 ******************************************************************************************************
 *
 *      Comment:		/
 *
 ******************************************************************************************************///
+
+import java.util.NoSuchElementException;
+import java.util.Stack;
+import java.util.Vector;
+
+//import lu.fisch.structorizer.gui.SelectedSequence;
 
 /**
  * @author Kay Gürtzig
@@ -83,7 +84,7 @@ public interface IElementSequence {
 		public Element next() {
 			Element next = this.getNext(true);
 			if (next == null) {
-				throw new NoSuchElementException("Diagram subtree exhauseted");
+				throw new NoSuchElementException("Diagram subtree exhausted");
 			}
 			return next;
 		}
@@ -95,7 +96,7 @@ public interface IElementSequence {
 		public Element previous() {
 			Element prev = this.getPrevious(true);
 			if (prev == null) {
-				throw new NoSuchElementException("Diagram subtree exhauseted");
+				throw new NoSuchElementException("Diagram subtree exhausted");
 			}
 			return prev;
 		}
@@ -174,7 +175,7 @@ public interface IElementSequence {
 					Vector<Subqueue> subqueues = (el instanceof Case) ? ((Case)el).qs : ((Parallel)el).qs;
 					// First identify the current subqueue
 					boolean found = false;
-					for (int i = 0; next != null && i < subqueues.size(); i++) {
+					for (int i = 0; next == null && i < subqueues.size(); i++) {
 						if (!found && seq == subqueues.get(i)) {
 							found = true;
 						}
@@ -369,7 +370,7 @@ public interface IElementSequence {
 	
 	// START KGU#324 2017-05-30: Enh. #373, #415
 	/**
-	 * Provides an iterator for the scope this IElementSequence is establishng.
+	 * Provides an iterator for the scope this IElementSequence is establishing.
 	 * @param _subtree - specifies whether the iterator is to traverse in deep or shallow mode 
 	 * @return the provided iterator
 	 */

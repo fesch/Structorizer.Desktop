@@ -255,9 +255,9 @@ public class Parallel extends Element
    public Rect prepareDraw(Canvas _canvas)
     {
             // START KGU#136 2016-03-01: Bugfix #97
-            if (this.isRectUpToDate) return rect0;
+            if (this.isRect0UpToDate) return rect0;
             
-    		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
             //this.x0Branches.clear();
             //this.y0Branches = 0;
             // END KGU#516 2018-04-04
@@ -268,12 +268,12 @@ public class Parallel extends Element
             {
                 rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
                 // START KGU#136 2016-03-01: Bugfix #97
-                isRectUpToDate = true;
+                isRect0UpToDate = true;
                 // END KGU#136 2016-03-01
                 return rect0;
             }
 
-    		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
             //rect0.top = 0;
             //rect0.left = 0;
             Rect rect0 = new Rect();
@@ -351,18 +351,18 @@ public class Parallel extends Element
             rect0.right = Math.max(rect0.right, fullWidth)+1;
             rect0.bottom = rect0.bottom + maxHeight;
 
-    		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+            // START KGU#516 2018-04-04: Issue #529 - reduced critical section
             this.rect0 = rect0;
             this.x0Branches = x0Branches;
             this.y0Branches = y0Branches;
             // END KGU#516 2018-04-04
             // START KGU#136 2016-03-01: Bugfix #97
-            isRectUpToDate = true;
+            isRect0UpToDate = true;
             // END KGU#136 2016-03-01
             return rect0;
     }
 
-    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport)
+    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
            // START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
            if (!checkVisibility(_viewport, _top_left)) { return; }
@@ -370,7 +370,10 @@ public class Parallel extends Element
 
             if(isCollapsed(true)) 
             {
-                Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+                Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+                // START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+                wasDrawn = true;
+                // END KGU#502/KGU#524/KGU#553 2019-03-14
                 return;
             }
                 
@@ -383,7 +386,7 @@ public class Parallel extends Element
             {
             	headerText = this.getComment();
             }
-            Instruction.draw(_canvas, _top_left, headerText, this);
+            Instruction.draw(_canvas, _top_left, headerText, this, _inContention);
             // END KGU227 2016-07-30
             
             // draw shape
@@ -464,7 +467,7 @@ public class Parallel extends Element
                             }
 
                             // draw child
-                            qs.get(i).draw(_canvas, myrect, _viewport);
+                            qs.get(i).draw(_canvas, myrect, _viewport, _inContention);
 
                             // draw bottom up line
                             /*
@@ -487,6 +490,9 @@ public class Parallel extends Element
 
             _canvas.setColor(Color.BLACK);
             _canvas.drawRect(_top_left);
+            // START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+            wasDrawn = true;
+            // END KGU#502/KGU#524/KGU#553 2019-03-14
     }
 
 	// START KGU 2016-07-30: Adapt the runtime info position

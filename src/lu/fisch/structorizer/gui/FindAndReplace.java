@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-11-21      Bugfix #448: Apparently forgotten part of the fix accomplished
  *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
+ *      Kay Gürtzig     2019-03-17      Layout of the Element type options revised
  *
  ******************************************************************************************************
  *
@@ -699,9 +700,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			JPanel pnlOptionsEast = new JPanel();
 			pnlOptionsEast.setLayout(new BoxLayout(pnlOptionsEast, BoxLayout.Y_AXIS));
 
-			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
-			pnlElements.setLayout(new GridLayout(0, 1));
 			pnlElements.setBorder(new TitledBorder("Element Types"));
+			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
+
+
 			
 			btnAll = new JButton("All");
 			btnAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent arg0) { selectAllElementTypes(true); }});
@@ -713,6 +715,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			pnlSelectButtons.setLayout(new BoxLayout(pnlSelectButtons, BoxLayout.X_AXIS));
 			pnlSelectButtons.add(btnAll);
 			pnlSelectButtons.add(btnNone);
+			pnlSelectButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			
 			pnlElements.add(pnlSelectButtons);
 			
@@ -741,18 +744,21 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				chkElementTypes[i].setSelected(sel);
 				chkElementTypes[i].addItemListener(elementTypeListener);
 				chkElementTypes[i].addKeyListener(keyListener);
+				chkElementTypes[i].setAlignmentX(Component.LEFT_ALIGNMENT);
 				pnlElements.add(chkElementTypes[i]);
 			}
-//			pnlOptions.add(pnlElements, BorderLayout.EAST);
-			pnlOptionsEast.add(pnlElements);
 
-			JPanel pnlDisabled = new JPanel();
+			pnlElements.add(new JSeparator(SwingConstants.HORIZONTAL));
+
+
 			chkDisabled = new JCheckBox("Disabled elements");
 			chkDisabled.setSelected(ini.getProperty("findDisabledElements", "0").equals("1"));
 			chkDisabled.addKeyListener(keyListener);
-			pnlDisabled.add(chkDisabled);
-			pnlOptionsEast.add(pnlDisabled);
-			
+			chkDisabled.setAlignmentX(Component.LEFT_ALIGNMENT);
+			pnlElements.add(chkDisabled);
+
+			pnlOptionsEast.add(pnlElements);
+
 			pnlOptions.add(pnlOptionsEast, BorderLayout.EAST);
 			
 			// -------------- Text View ---------------
