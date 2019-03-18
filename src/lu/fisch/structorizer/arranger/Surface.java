@@ -107,6 +107,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-12/13   Enh. #698: New IRoutinePool mmethods added
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-14      Issues #518, #544, #557: Measures against drawing contention revised and extended.
+ *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
+ *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group
  *
  ******************************************************************************************************
  *
@@ -1096,6 +1098,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
 			// END KGU#679 2019-03-11
 
+			// START KGU#682 2019-03-15: Bugfix #703 - group change status must get a chance to be reset.
+			for (Diagram diagr: groupMembers) {
+				diagr.wasMoved = false;
+			}
+			// END KGU#682 2019-03-15
 			// If the target file had existed then replace it by the output file after having created a backup
 			if (tmpFilename != null)
 			{
@@ -1140,6 +1147,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (portable) {
 				StringList sharedDiagrams = new StringList();
 				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
+					// START KGU#683 2019-03-15: Bugfix #699 - No measures for diagrams that aren't shared by other groups
+					if (diagr.getGroupNames().length <= 1) {
+						continue;
+					}
+					// END KGU#683 2019-03-15
 					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
 						// A diagram residing in another archive must be copied now, it cannot be shared.
 						Root copiedRoot = (Root)diagr.root.copy();
@@ -1178,6 +1190,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
 							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
 				}
+				// START KGU#682 2019-03-15: Issue #704 grop change status must be reset.
+				group.membersChanged = false;
+				// END KGU#682 2019-03-15
 			}
 			// END KGU#680 2019-03-11
 			// END KGU#650 2019-02-11

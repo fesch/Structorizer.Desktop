@@ -32,6 +32,7 @@ package lu.fisch.structorizer.archivar;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-10      First Issue
+ *      Kay Gürtzig     2019-03-14      Enh. #697: New method deriveArrangementList()
  *
  ******************************************************************************************************
  *
@@ -446,6 +447,49 @@ public class Archivar {
 		public Iterator<ArchiveIndexEntry> iterator()
 		{
 			return this.entries.iterator();
+		}
+		
+		public StringList deriveArrangementList(boolean preferArchivePaths)
+		{
+			StringList arr = new StringList();
+			for (ArchiveIndexEntry entry: entries) {
+				StringList line = new StringList();
+				if (entry.point != null) {
+					line.add(Integer.toString(entry.point.x));
+					line.add(Integer.toString(entry.point.y));
+				}
+				else {
+					line.add("-1");
+					line.add("-1");
+				}
+				StringList pathName = new StringList();
+				if ((preferArchivePaths || entry.path == null) && entry.virtPath != null) {
+					pathName.add(entry.virtPath);
+				}
+				else if (entry.path != null) {
+					pathName.add(entry.path);
+				}
+				else if (entry.root != null) {
+					pathName.add(entry.root.getPath());
+				}
+				else {
+					pathName.add("");
+				}
+				if (entry.name != null) {
+					pathName.add(entry.name);
+				}
+				else if (entry.root != null) {
+					pathName.add(entry.root.getMethodName());
+				}
+				else {
+					pathName.add("");
+				}
+				line.add(pathName.getCommaText());
+				line.add(Integer.toString(entry.minArgs));
+				line.add(Integer.toString(entry.maxArgs));
+				arr.add(line.concatenate(","));
+			}
+			return arr;
 		}
 		
 	}
