@@ -85,32 +85,40 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-13      Enh. #696: All references to Arranger replaced by routinePool,
  *                                      subroutine retrieval enabled in the batch version of exportCode
  *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
+ *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
+ *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      2016.12.22 - Enhancement #314: Structorizer file API support.
+ *      2019-03-21 - Issue #707 (elemhsb / Kay Gürtzig)
+ *      - It was requested that the proposed export file name should primarily follow the nsd file name if
+ *        that has already existed.
+ *      - For Python export in particular there shouldn't be hyphens in the file name. So if the user decides
+ *        to export a subroutine diagram to some language wth file name peculiarities, the inheriting generator
+ *        now gets a chance to intervene (i.e. to modify the file name proposal).
+ *      2016-12-22 - Enhancement #314: Structorizer file API support.
  *      - This is in the most cases done by copying a set of implementing functions for the target language
  *        into the resulting file. Generator provides two methods insertFileAPI() for this purpose.
  *      - Generator supports this by an extended information scanning to decide whether the file API is used.
- *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
+ *      2016-10-15 - Enhancement #271: Input instruction with integrated prompt string
  *      - For input instructions with prompt string (enh. #271), different inputReplacer patterns are needed
  *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
  *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
  *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
  *      	
- *      2016.07.20 - Enhancement #160 - option to include called subroutines
+ *      2016-07-20 - Enhancement #160 - option to include called subroutines
  *      - there is no sufficient way to export a called subroutine when its call is generated, because
  *        duplicate exports must be avoided and usually a topological sorting is necessary.
  *        For a topologically sorted duplication-free export, however, all called subroutines must be known
  *        in advance. Therefore, we must analyse the subroutines as well in advance 
  *      	
- *      2015.11.30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
+ *      2015-11-30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
  *      - parameter names and types as well as function name and type are preprocessed
  *      - result mechanisms are also analysed
  *
- *      2014.11.16 - Enhancement
+ *      2014-11-16 - Enhancement
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
  *      
@@ -2524,7 +2532,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
 		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
 		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
-		this.varNames = _root.retrieveVarNames();
+		// START KGU#691 2019-03-21: Bugfix - the variable highlighting and detection was inflicted
+		//this.varNames = _root.getVarNames();
+		this.varNames = _root.retrieveVarNames().copy();
+		// END KGU#691 2019-03-21
 		for (int p = 0; p < paramNames.count(); p++) {
 			this.varNames.removeAll(paramNames.get(p));
 		}
@@ -2791,7 +2802,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//		nsdName.replace(':', '_');
 		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = _root.proposeFileName();
+		// START KGU#690 2019-03-21: Issue #707 We prefer the base name of the diagram file if already saved
+		//String nsdName = _root.proposeFileName();
+		String nsdName = _root.getPath();
+		if (nsdName.isEmpty()) {
+			nsdName = _root.proposeFileName();
+		}
+		else {
+			nsdName = (new File(nsdName)).getName();
+			int dotPos = nsdName.lastIndexOf('.');
+			if (dotPos > 1) {
+				nsdName = nsdName.substring(0, dotPos);
+			}
+		}
+		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
+		nsdName = this.ensureFilenameConformity(nsdName);
+		// END KGU#690 2019-03-21
 		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2940,6 +2966,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				outp.rewrite(exportCharset);
 				// END KGU#168 2016-04-04
 				outp.write(code);
+				// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+				if (!code.isEmpty()) {
+					outp.write("\n");
+				}
+				// END KGU#689 2019-03-21
 				outp.close();
 				
 				if (this.usesFileAPI) {
@@ -2978,6 +3009,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return exportDir;
 		// END KGU 2017-04-26
 	}
+	
+	// START KGU#690 2019-03-121: Enh. #707
+	/**
+	 * This method allows the subclass to modify the automatically generated file name proposal
+	 * to ensure conformity with file name conventions of the target language.
+	 * This should concentrate on the base name rather than the extension (which will typically
+	 * not be included in the argument string).<br/>
+	 * The base method just passes the argument through.
+	 * @param proposedFilename - a base fle name according to the proposal rules for NSD file names.
+	 * @return the possibly modified name
+	 */
+	protected String ensureFilenameConformity(String proposedFilename) {
+		return proposedFilename;
+	}
+	// END KGU#690 2019-03-21
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**
@@ -3522,6 +3568,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			outp.rewrite(exportCharset);
 
 			outp.write(code.getText());
+			// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+			if (!code.isEmpty()) {
+				outp.write("\n");
+			}
+			// END KGU#689 2019-03-21
 			outp.close();
 			
 			// START KGU#311 2016-12-27: Enh. #314 Allow the subclass to copy necessary resource files

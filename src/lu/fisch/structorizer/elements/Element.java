@@ -102,6 +102,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-07      Enh. #385: method extractDeclarationsFromList now also extracts default values
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-18      Enh. #56: Handling and highlighting of the throw keyword.
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *
  ******************************************************************************************************
  *
@@ -388,6 +389,10 @@ public abstract class Element {
     public static boolean E_AUTO_SAVE_ON_CLOSE = false;
     public static boolean E_MAKE_BACKUPS = true;
     // END KGU#309 20161-12-15
+    // START KGU#690 2019-03-21: Issue #707 - new saving options
+    public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
+    public static char E_FILENAME_SIG_SEPARATOR = '-';
+    // END KGU#690 2019-03-21
     // START KGU#287 2017-01-11: Issue #81 (workaround)
     /** GUI scaling factor prepared for the next session */
     public static double E_NEXT_SCALE_FACTOR;
@@ -2879,6 +2884,45 @@ public abstract class Element {
 	}
 	// END KGU#101 2015-12-11
 	
+	// START KGU#689 2019-03-21 Issue #706
+	/**
+	 * Coagulates all token sequences starting with some kind of brackets, parenthesis,
+	 * or brace and ending with its pendant (or with a level underflow).
+	 * @param tokens - lexically split tokens.
+	 * @return a sequence of level 0 lexical tokens and coagulated sub expressions
+	 * @see #splitLexically(String, boolean)
+	 * @see #splitExpressionList(String, String)
+	 * @see #splitExpressionList(String, String, boolean)
+	 * @see #splitExpressionList(StringList, String, boolean)
+	 */
+	public static StringList coagulateSubexpressions(StringList tokens) {
+		final StringList starters = StringList.explode("(,[,{", ",");
+		final StringList stoppers = StringList.explode("),],}", ",");
+		int ix = 0;
+		int ixLastStart = -1;
+		int level = 0;
+		while (ix < tokens.count()) {
+			String token = tokens.get(ix);
+			if (starters.contains(token)) {
+				if (level == 0) {
+					ixLastStart = ix;
+				}
+				level++;
+			}
+			else if (stoppers.contains(token)) {
+				level--;
+				if (level == 0) {
+					tokens.set(ixLastStart, tokens.concatenate("", ixLastStart, ix + 1));
+					tokens.remove(ixLastStart + 1, ix+1);
+				}
+				ix = ixLastStart;
+			}
+			ix++;
+		}
+		return tokens;
+	}
+	// END KGU#689 2019-03-21
+
 	// START KGU#388 2017-09-13: Enh. #423; KGU#371 2019-03-07: Enh. #385 - parameter declDefaults added
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or

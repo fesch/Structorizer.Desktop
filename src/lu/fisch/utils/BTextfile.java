@@ -144,7 +144,7 @@ public class BTextfile
   */
   public void write(String mystring) throws IOException
   {
-   myfile_out.write(mystring,0,mystring.length());
+   myfile_out.write(mystring, 0, mystring.length());
   }
 
  /**
@@ -153,7 +153,7 @@ public class BTextfile
   */
   public void writeln(String mystring) throws IOException
   {
-   myfile_out.write(mystring+"\r\n",0,mystring.length()+2);
+   myfile_out.write(mystring+"\r\n", 0, mystring.length()+2);
   }
 
  /**
