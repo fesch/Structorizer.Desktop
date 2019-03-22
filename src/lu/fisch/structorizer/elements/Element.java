@@ -101,6 +101,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-25      Enh. #419: New method breakTextLines(...)
  *      Kay Gürtzig     2019-03-07      Enh. #385: method extractDeclarationsFromList now also extracts default values
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: Handling and highlighting of the throw keyword.
  *
  ******************************************************************************************************
  *
@@ -3330,6 +3331,9 @@ public abstract class Element {
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
+				// START KGU#686 2019-03-18: Enh. #56
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
+				// END KGU#686 2019-03-18
 				// END KGU#116 2015-12-23
 
 				// START KGU#377 2017-03-30: Bugfix #333

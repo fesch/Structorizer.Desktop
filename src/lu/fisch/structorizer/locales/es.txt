@@ -1347,7 +1347,8 @@ Control.msgFunctionConflict.text=\nFunción «%1(%2)» de %3 aplastada por %4
 Control.msgProcedureConflict.text=\nProcedura «%1(%2)» de %3 aplastada por %4
 Control.msgSignatureConflicts.text=Hay conflictos en el API entre los elegidos módulos de mando:%
 Control.msgGUISyncFault.text=Problemas con la sincronización de la ventana ejecutando «%».\n¿Tratar de continuar ejecución?
-Control.msgErrorInSubroutine.text=¡Error atrapado ejecutando «%1» en nivel %2:\n	%3!
+Control.msgErrorInSubroutine.text=Error atrapado ejecutando «%1» en nivel %2:\n	%3
+Control.msgThrown.text=Excepción desatada dentro de «%1» en nivel %2: %3
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 

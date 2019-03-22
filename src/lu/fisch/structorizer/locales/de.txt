@@ -1349,7 +1349,8 @@ Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %
 Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
 Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
 Control.msgGUISyncFault.text=Synchronisationsprobleme im Ausgabefenster bei Ausführung von «%».\nAbarbeitung versuchsweise fortsetzen?
-Control.msgErrorInSubroutine.text=Gefangener Fehler bei der Ausführung von «%1» in Tiefe %2:\n	%3!
+Control.msgErrorInSubroutine.text=Gefangener Fehler bei der Ausführung von «%1» in Tiefe %2:\n	%3
+Control.msgThrown.text=Ausnahme ausgelöst in «%1» in Tiefe %2: %3
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 

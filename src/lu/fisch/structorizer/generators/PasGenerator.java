@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2018.07.20      Enh. #563: support for simplified record initializers
  *      Kay Gürtzig         2018.07.22      Bugfix #564: defects with nested record/array initializers mended
  *      Kay Gürtzig         2018.10.05      Bugfix #619: Undue declaration of function result variable dropped
+ *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
  *
  ******************************************************************************************************
  *
@@ -118,6 +119,7 @@ import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 
 public class PasGenerator extends Generator 
@@ -188,6 +190,18 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#371 2019-03-07
 	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"and", "array", "begin",
@@ -1198,8 +1212,7 @@ public class PasGenerator extends Generator
 			// END KGU#142 2016-01-17
 				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 				String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
-				String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
-				String preExitMatch = getKeywordPattern(preExit)+"([\\W].*|$)";
+				String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 				for (int i = 0; isEmpty && i < lines.count(); i++) {
 					String line = transform(lines.get(i)).trim();
 					if (!line.isEmpty())
@@ -1208,7 +1221,7 @@ public class PasGenerator extends Generator
 					}
 					// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 					//code.add(_indent + line + ";");
-					if (line.matches(preReturnMatch))
+					if (Jump.isReturn(line))
 					{
 						String argument = line.substring(preReturn.length()).trim();
 						if (!argument.isEmpty())
@@ -1223,12 +1236,18 @@ public class PasGenerator extends Generator
 						}
 						// END KGU 2016-01-17
 					}
-					else if (line.matches(preExitMatch))
+					else if (Jump.isExit(line))
 					{
 						String argument = line.substring(preExit.length()).trim();
 						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
 						addCode("halt" + argument + ";", _indent, isDisabled);
 					}
+					// START KGU#686 2019-03-20: Enh. #56
+					else if (Jump.isThrow(line)) {
+						String what = line.substring(preThrow.length()).trim();
+						addCode("raise Exception.Create(" + what + ");", _indent, isDisabled);
+					}
+					// END KGU#686 2019-03-20
 					else if (!isEmpty)
 					{
 						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
@@ -1280,6 +1299,60 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#47 2015-11-30
 
+	// START KGU#686 2019-03-20: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+		boolean isDisabled = _try.isDisabled();
+		
+		insertComment(_try, _indent);
+
+		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
+		String indent0 = _indent;
+		
+		this.addCode("try", _indent, isDisabled);
+
+		if (_try.qFinally.getSize() > 0) {
+			indent0 += this.getIndent();
+			// Inner try instruction
+			this.addCode("try", indent0, isDisabled);
+		}
+		String indent1 = indent0 + this.getIndent();
+		
+		this.generateCode(_try.qTry, indent1);
+		
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("finally", indent0, isDisabled);
+			
+			this.generateCode(_try.qFinally, indent1);
+
+			this.addCode("end;", indent0, isDisabled);
+		}
+
+		indent1 = _indent + this.getIndent();
+		this.addCode("except", _indent, isDisabled);
+		String exName = _try.getExceptionVarName();
+		if (exName != null && !exName.isEmpty()) {
+			this.addCode("on Ex : Exception do", indent1, isDisabled);
+		}
+		else {
+			this.addCode("on Exception do", indent1, isDisabled);			
+		}
+		this.addCode("begin", indent1, isDisabled);
+		String indent2 = indent1 + this.getIndent();
+		if (exName != null && !exName.isEmpty()) {
+			this.insertComment("FIXME: Ensure a declaration for variable " + exName + " (String) in the VAR block!", indent2);
+			this.addCode(exName + " := Ex.Message;", indent2, isDisabled);
+		}
+		generateCode(_try.qCatch, indent2);
+		this.addCode("end;", indent1, isDisabled);
+		
+		this.addCode("end;", _indent, isDisabled);	// Close the (outer) try block 
+	}
+	// END KGU#686 2019-03-20
 
 	// START KGU#74 2015-11-30 
 	/* (non-Javadoc)

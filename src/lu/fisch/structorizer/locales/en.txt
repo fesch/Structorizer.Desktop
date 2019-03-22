@@ -476,7 +476,7 @@ Menu.error16_3.text=A %1 or %2 instruction is only allowed as @k element!
 Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
 Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
 Menu.error16_6.text=Illegal argument for a «%» @k (must be an integer constant)!
-Menu.error16_7.text=Instruction isn't reachable after a @k!
+Menu.error16_7.text=Instruction isn't reachable after a(n) @k!
 Menu.error16_8.text=The argument for this «%» @k might be unsuited (should be an integer value).
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
@@ -1346,6 +1346,7 @@ Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
 Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
 Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
 Control.msgErrorInSubroutine.text=Caught error on executing «%1» at level %2:\n	%3!
+Control.msgThrown.text=Exception thrown in «%1» at level %2: %3
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 

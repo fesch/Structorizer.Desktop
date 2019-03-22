@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
  *
  ******************************************************************************************************
  *
@@ -572,6 +573,9 @@ public class Instruction extends Element {
 		// FIXME: These tests might be too simple if the keywords don't comply with identifier syntax
 		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0 ||
 				tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0 ||
+				// START KGU#686 2019-03-18: Enh. #56 new flavour, for try/catch
+				tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0 ||
+				// END KGU#686 2019-03-18
 				tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0
 				);
 	}

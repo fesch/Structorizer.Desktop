@@ -141,6 +141,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
  *      Kay Gürtzig     2019-03-07      Enh. #385: Support for default values in argument lists
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-20      Bugfix #706: analyse_15 hardened against inconsistent Call contents
  *      
  ******************************************************************************************************
  *
@@ -3797,6 +3798,12 @@ public class Root extends Element {
 			//Function subroutine = new Function(text);
 			Function subroutine = ele.getCalledRoutine();
 			// END KGU 2017-04-11
+			// START KGU#689 2019-03-20: Bugfix #706 - subroutine may be null here
+			if (subroutine == null) {
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_1, ""), ele), 15);
+				return;
+			}
+			// END KGU#689 2019-03-20
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
 			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
@@ -3832,7 +3839,11 @@ public class Root extends Element {
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		// START KGU#686 2019-03-18: Enh. #56
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		String preThrow = CodeParser.getKeywordOrDefault("preThrow", "throw");
+		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "», «" + preThrow + "»";
+		// END KGU#686 2019-03-18
 		String line = sl.get(0).trim();
 		String lineComp = line;
 
@@ -3841,11 +3852,17 @@ public class Root extends Element {
 			preReturn = preReturn.toLowerCase();
 			preLeave = preLeave.toLowerCase();
 			preExit = preExit.toLowerCase();
+			//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+			preThrow = preThrow.toLowerCase();
+			// END KGU#686 2019-03-18
 			lineComp = line.toLowerCase();
 		}
 		boolean isReturn = ele.isReturn();
 		boolean isLeave = ele.isLeave();
 		boolean isExit = ele.isExit();
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		boolean isThrow = ele.isThrow();
+		// END KGU#686 2019-03-18
 		boolean isJump = isLeave || isExit ||
 				lineComp.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 				lineComp.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3865,7 +3882,7 @@ public class Root extends Element {
 		boolean insideParallel = false;
 		
 		// CHECK: Incorrect Jump syntax?
-		if (sl.count() > 1 || !(isJump || isReturn || line.isEmpty()))
+		if (sl.count() > 1 || !(isJump || isReturn || isThrow || line.isEmpty()))
 		{
 			//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error16_1, jumpKeywords), ele), 16);

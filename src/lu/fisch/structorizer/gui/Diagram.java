@@ -6662,6 +6662,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.edtJumpReturn.setText(CodeParser.getKeyword("preReturn"));
 		parserPreferences.edtJumpExit.setText(CodeParser.getKeyword("preExit"));
 		// END KGU#78 2016-03-25
+		// START KGU#686 2019-03-18: Enh. #56 - Try / Carch / Throw mechanism implemented
+		parserPreferences.edtJumpThrow.setText(CodeParser.getKeyword("preThrow"));
+		// END KGU#686 2019-03-18
 		parserPreferences.edtInput.setText(CodeParser.getKeyword("input"));
 		parserPreferences.edtOutput.setText(CodeParser.getKeyword("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
@@ -6720,6 +6723,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			CodeParser.setKeyword("preReturn", parserPreferences.edtJumpReturn.getText());
 			CodeParser.setKeyword("preExit", parserPreferences.edtJumpExit.getText());
 			// END KGU#78 2016-03-25
+			// START KGU#686 2019-03-18: Enh. #56 - Try / Carch / Throw mechanism implemented
+			CodeParser.setKeyword("preThrow", parserPreferences.edtJumpThrow.getText());
+			// END KGU#686 2019-03-18
 			CodeParser.setKeyword("input", parserPreferences.edtInput.getText());
 			CodeParser.setKeyword("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here

@@ -177,6 +177,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürttig     2019-03-07      Enh. #385 - support for optional routine arguments
  *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
  *      Kay Gürtzig     2019-03-14      Issue #366 - Mainform, Arranger, and Control now also under focus watch
+ *      Kay Gürtzig     2019-03-17/18   Enh. #56 - Implementation of try/catch/finally and throw
  *
  ******************************************************************************************************
  *
@@ -932,6 +933,10 @@ public class Executor implements Runnable
 	private String subroutineTrouble = null;
 	/** Indicates whether the current execution is done within a try block */
 	private boolean withinTryBlock = false;
+	/** Specific message allowing a catch block to recognise a throw without arguments */
+	private static final String RETHROW_MESSAGE = "unspecified throw";
+	/** Is set on an exit instruction, which is not supposed to be catchable */
+	private boolean isExited = false;
 	// END KGU#686 2019-03-17
 	private StringList stackTrace = new StringList();
 	// END KGU#2 2015-11-22
@@ -1494,6 +1499,7 @@ public class Executor implements Runnable
 		// START KGU#686 2019-03-17: Enh. #56
 		this.withinTryBlock = false;
 		this.subroutineTrouble = null;
+		this.isExited = false;
 		// END KGU#686 2019-03-17
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window
 		// START KGU#569 2018-08-08: Issue #577: Replace the console if it has become inconsistent
@@ -4691,6 +4697,8 @@ public class Executor implements Runnable
 					trouble = control.msgWrongExit.getText().replace("%1",
 							"<" + (n == null ? expr : n.toString()) + ">");
 					// END KGU#197 2016-07-27
+					// START KGU#686 2019-03-18: Enh. #56 must not be caught
+					// END KGU#686 2019-03-18
 				}
 			}
 			catch (EvalError ex)
@@ -4715,6 +4723,38 @@ public class Executor implements Runnable
 			}
 			done = true;
 		}
+		// START KGU#686 2019-03-18: Enh. #56 throw instructions introduced
+		else if (element.isThrow()) {
+			try {
+				String expr = sl.get(0).trim().substring(CodeParser.getKeyword("preThrow").length()).trim();
+				if (expr.isEmpty()) {
+					trouble = RETHROW_MESSAGE;
+				}
+				else {
+					expr = this.evaluateDiagramControllerFunctions(expr);
+					Object argVal = this.evaluateExpression(expr, expr.contains("{"), false);
+					if (argVal != null) {
+						trouble = argVal.toString();
+					}
+					else {
+						trouble = expr;
+					}
+				}
+				if (console.logMeta()) {
+					console.writeln("*** " + Control.msgThrown.getText().
+							replace("%1", this.stackTrace.get(this.stackTrace.count()-1)).
+							replace("%2", Integer.toString(this.stackTrace.count()-1)).
+							replace("%3", trouble), Color.RED);
+				}
+			}
+			catch (Exception ex)
+			{
+				if ((trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.trim().isEmpty()) {
+					trouble = ex.toString();
+				}
+			}
+		}
+		// END KGU#686 2019-03-18
 		// Anything else is an error
 		else
 		{
@@ -6764,8 +6804,9 @@ public class Executor implements Runnable
 		
 		this.withinTryBlock = wasWithinTry;
 		
-		// In case of trouble exceute the catch block
-		if (!trouble.isEmpty()) {
+		// In case of trouble (other than exit) exceute the catch block
+		if (!trouble.isEmpty() && !isExited) {
+			String origTrouble = trouble;	// For the case of a rethrow
 			try {
 				this.updateVariableDisplay();
 				String varName = element.getExceptionVarName();
@@ -6790,21 +6831,27 @@ public class Executor implements Runnable
 					context.interpreter.unset(varName);
 					context.variables.removeAll(varName);
 				}
+				if (trouble.equals(RETHROW_MESSAGE)) {
+					// Obviously a rethrow, so restore the original error message
+					trouble = origTrouble;
+				}
 			} catch (EvalError e) {
 				trouble = e.toString();
 			}
+			// FIXME: We should eliminate all variables introduced within the catch block!
 		}
 		
+		// Execute the finally block (even in case of exit - but don't overwrite the exit text then)
 		try {
 			this.updateVariableDisplay();
 			// Execute the finally block
 			String finalTrouble = stepSubqueue(element.qFinally, true);
-			if (!finalTrouble.isEmpty()) {
+			if (!finalTrouble.isEmpty() && !isExited) {
 				// An error out of the finally block overrides a possible previous trouble
 				trouble = finalTrouble;
 			}
 		} catch (EvalError ex) {
-			if ((trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
+			if (!isExited && (trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
 				trouble = ex.toString();
 			}
 		}

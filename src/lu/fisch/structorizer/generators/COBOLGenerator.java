@@ -46,8 +46,10 @@ import java.util.HashSet;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.utils.StringList;
 
 /**
@@ -87,6 +89,18 @@ public class COBOLGenerator extends Generator {
 	private final String[] ext = { "cob", "cbl" };
 	private final HashMap<Root, HashSet<String>> subMap = new HashMap<Root, HashSet<String>>();
 	private HashMap<String, TypeMapEntry> typeMap; 
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	/**
 	 * get start for COBOL source or comment line with correct length depending
@@ -468,6 +482,14 @@ public class COBOLGenerator extends Generator {
 
 	/************ Code Generation **************/
 	
+	protected void generateCode(Try _try, String _indent)
+	{
+		/* FIXME this should somehow be converted to a "declarative procedure" declaration,
+		 * something like:
+		 * USE AFTER STANDARD EXCEPTION PROCEDURE ON ??? <PARAGR_NAME>
+		 * */
+		super.generateCode(_try, _indent);
+	}
 	
 	/**
 	 * Composes the heading for the program or function according to the

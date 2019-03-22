@@ -107,6 +107,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 public class OberonGenerator extends Generator {
 	
@@ -167,7 +168,19 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#371 2019-03-07
 
-	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
+
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //    	"ARRAY", "BEGIN", "BY", "CASE", "CONST", "DIV", "DO", "ELSE", "ELSIF", "END", "EXIT",
 //    	"FOR", "IF", "IMPORT", "IN", "IS", "LOOP", "MOD", "MODULE", "NIL", "OF", "OR",

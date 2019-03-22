@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-11-02  Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2019-02-15  Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig         2019-03-08  Enh. #385: Support for parameter default values
+ *      Kay Gürtzig         2019-03-21  Enh. #56: Export of Try elements implemented
  *
  ******************************************************************************************************
  *
@@ -99,8 +100,10 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
@@ -161,6 +164,19 @@ public class PerlGenerator extends Generator {
 		return OverloadingLevel.OL_NO_OVERLOADING;
 	}
 	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
+	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH;
+	}
+	// END KGU#686 2019-03-18
 
 	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //	private static final String[] reservedWords = new String[]{
@@ -830,6 +846,9 @@ public class PerlGenerator extends Generator {
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
+			// START KGU#686 2019-03-21: Enh. #56
+			String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
+			// END KGU#686 2019-03-21
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -838,16 +857,23 @@ public class PerlGenerator extends Generator {
 				}
 				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 				//code.add(_indent + line + ";");
-				if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
+				if (Jump.isReturn(line))
 				{
 					addCode("return " + line.substring(preReturn.length()).trim() + ";",
 							_indent, isDisabled);
 				}
-				else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
+				else if (Jump.isExit(line))
 				{
 					addCode("exit(" + line.substring(preExit.length()).trim() + ");",
 							_indent, isDisabled);
 				}
+				// START KGU#686 2019-03-21: Enh. #56
+				else if (Jump.isThrow(line))
+				{
+					addCode("die " + line.substring(preThrow.length()).trim() + ";",
+					_indent, isDisabled);
+				}
+				// END KGU#686 2019-03-21
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
 				{
@@ -960,6 +986,33 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU#47 2015-12-17
 	
+	// START KGU#686 2019-03-21: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+		String indent1 = _indent + this.getIndent();
+		boolean isDisabled = _try.isDisabled();
+		this.insertAsComment(_try, _indent);
+		this.addCode("eval {", _indent, isDisabled);
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("my $final" + Integer.toHexString(_try.hashCode()) + " = finally {", indent1, isDisabled);
+			this.generateCode(_try.qFinally, indent1 + this.getIndent());
+			this.addCode("};", indent1, isDisabled);
+		}
+		this.generateCode(_try.qTry, indent1);
+		this.addCode("};", _indent, isDisabled);
+		String exName = _try.getExceptionVarName();
+		if (exName != null && !exName.isEmpty()) {
+			exName = "ex" + Integer.toHexString(_try.hashCode());
+		}
+		this.addCode("if (my $" + exName + " = $@) {", _indent, isDisabled);
+		this.generateCode(_try.qCatch, indent1);
+		this.addCode("};", _indent, isDisabled);
+	}
+	// END KGU#686 2019-03-21
 	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -987,19 +1040,21 @@ public class PerlGenerator extends Generator {
 			insertCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			//if (_root.isProgram) {
-			code.add("");
-			code.add(_indent + "use strict;");
-			code.add(_indent + "use warnings;");
+			generatorIncludes.add("strict");
+			generatorIncludes.add("warnings");
 			//}
-			// STARTB KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(_indent);
-			// END KGU#351 2017-02-26
 			// START KGU#348 2017-02-25: Enh. #348: Support for Parallel elements
 			if (this.hasParallels) {
-				code.add(_indent + "use threads;");
-				code.add(_indent + "use threads::shared;");
+				generatorIncludes.add("threads");
+				generatorIncludes.add("threads::shared");
 			}
 			// END KGU#348 2017-02-25
+			code.add("");
+			this.insertGeneratorIncludes(_indent, false);
+			// END KGU#686 2019-03-21
+			// START KGU#351 2017-02-26: Enh. #346
+			this.insertUserIncludes(_indent);
+			// END KGU#351 2017-02-26
 			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
 			if (this.usesFileAPI) {
 				code.add(_indent);
@@ -1011,6 +1066,13 @@ public class PerlGenerator extends Generator {
 				code.add(_indent);
 			}
 			// END KGU#311 2017-01-04
+			// START KGU#686 2019-03-21: Enh. #56 We better prepare for finally actions
+			if (this.hasTryBlocks) {
+				// This approach was taken from http://wiki.c2.com/?ExceptionHandlingInPerl
+				// see addFinallyPackage(String)
+				addCode("sub finally (&) { Finally->new(@_) }", _indent, false);
+			}
+			// END KGU#66 2019-03-21
 			subroutineInsertionLine = code.count();
 		}
 		else
@@ -1133,7 +1195,34 @@ public class PerlGenerator extends Generator {
 	protected void generateFooter(Root _root, String _indent)
 	{
 		if (_root.isSubroutine()) code.add(_indent + "}");		
+		// START KGU#686 2019-03-21: Enh. #56 We better prepare for finally actions
+		if (this.topLevel && this.hasTryBlocks) {
+			this.addFinallyPackage(_indent);
+		}
+		// END KGU#66 2019-03-21
 	}
 	// END KGU#78 2015-12-17
 	
+	// START KGU#686 2019-03-21: Enh. #56
+	/**
+	 * This defines a "Finally" package to allow sensible export of {@code finally} blocks
+	 * using RAII.<br/>
+	 * Source for this solution: <a href="http://wiki.c2.com/?ExceptionHandlingInPerl">
+	 * http://wiki.c2.com/?ExceptionHandlingInPerl</a>
+	 * @param _indent - current indentation
+	 */
+	private void addFinallyPackage(String _indent)
+	{
+		code.add("");
+		insertComment("----------------------------------------------------------------------", _indent);
+		insertComment(" Finally class, introduced to handle finally blocks via RAII", _indent);
+		insertComment("----------------------------------------------------------------------", _indent);
+		addCode("package Finally;", _indent, false);
+		addCode("sub new {", _indent, false);
+		addCode("my ($class, $code) = @_;", _indent + this.getIndent(), false);
+		addCode("bless {code => $code}, $class;", _indent + this.getIndent(), false);
+		addCode("}", _indent, false);
+		addCode("sub DESTROY { my ($self) = @_; $self->{code}->() }", _indent, false);
+	}
+	// END KGU#686 2019-03-21
 }

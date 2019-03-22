@@ -86,6 +86,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-07      Enh. #385: Support for optional parameters (by argument extension in the Call)
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
+ *      Kay Gürtzig             2019-03-18      Enh. #56: Export of try-catch-finally blocks
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,7 @@ import lu.fisch.structorizer.executor.Function;
 
 public class CGenerator extends Generator {
 
+	
 	/************ Fields ***********************/
 	@Override
 	protected String getDialogTitle() {
@@ -287,6 +289,22 @@ public class CGenerator extends Generator {
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
+	
+	// START KGU#686 2019-03-18: Enh. #56
+	/** Contains the declaration or name of the caught exception of the closest surrounding try block */
+	protected String caughtException = null;
+	
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 * @see #insertCatchHeading(Try, String)
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	// START KGU#560 2018-07-22 Bugfix #564
 	/** @return whether the element number is to be given in array type specifiers */
@@ -1590,6 +1608,12 @@ public class CGenerator extends Generator {
 				{
 					insertExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 				}
+				// START KGU#686 2019-03-20: Enh. #56 Throw has to be implemented
+				else if (_jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
+					this.generateThrowWith(line.substring(
+							CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim(), _indent, isDisabled);
+				}
+				// END KGU#686 2019-03-20
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
 				{
@@ -1628,6 +1652,19 @@ public class CGenerator extends Generator {
 		// END KGU#380 207-04-14
 	}
 
+	/**
+	 * This method is to be overridden by the subclasses to append a suited throw
+	 * instruction from string {@code _thrown} as taken from the Jump element text
+	 * line (after the "preThrow" keyword).<br/>
+	 * If the throw occurs with in a catch block then field {@link #caughtException}
+	 * will contain the exception to be rethrown if {@code _thrown} is empty.
+	 * @param _thrown - the text line tail after the "preThrow" keyword.
+	 * @param _indent - the current indentation
+	 * @param _asComment - whether the throw instruction is to be exported as comment
+	 */
+	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
+	}
+
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
@@ -1660,7 +1697,74 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#47 2015-11-30
 	
+	// START KGU#686 2019-03-18: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
 
+		boolean isDisabled = _try.isDisabled();
+		insertComment(_try, _indent);
+	
+		TryCatchSupportLevel trySupport = this.getTryCatchLevel();
+		if (trySupport == TryCatchSupportLevel.TC_NO_TRY) {
+			this.insertComment("TODO: Find an equivalent for this non-supported try / catch block!", _indent);
+		}
+		_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
+		try {
+			this.insertBlockHeading(_try, "try", _indent);
+			_try.disabled = isDisabled;
+
+			generateCode(_try.qTry, _indent + this.getIndent());
+
+			_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
+			this.insertBlockTail(_try, null, _indent);
+			String caught = this.caughtException;
+			this.insertCatchHeading(_try, _indent);
+
+			// If try/catch isn't supported then the entire catch block is to be disabled
+			generateCode(_try.qCatch, _indent + this.getIndent());
+
+			this.caughtException = caught;
+			this.insertBlockTail(_try, null, _indent);
+			if (_try.qFinally.getSize() > 0) {
+				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+				this.insertBlockHeading(_try, "finally", _indent);
+				_try.disabled = isDisabled;
+
+				generateCode(_try.qFinally, _indent + this.getIndent());
+
+				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+				this.insertBlockTail(_try, null, _indent);
+			}
+		}
+		finally {
+			_try.disabled = isDisabled;
+		}
+	}
+
+	/**
+	 * Generates the catch block header with the language-specific variable
+	 * declarations etc.<br/>
+	 * This base method just generates a header with a char array variable
+	 * declaration, to be subclassed therefore.<br/>
+	 * Whether the header gets exported uncommented depends on the current
+	 * value of {@code _try.disabled}.
+	 * @param _try - the {@link Try} element
+	 * @param _indent - the current indentation (outside the block)
+	 * @see #getTryCatchLevel()
+	 */
+	protected void insertCatchHeading(Try _try, String _indent) {
+		String varName = _try.getExceptionVarName();
+		String head = "catch (...)";
+		if (varName != null && !varName.isEmpty()) {
+			head = "catch(char " + varName + "[])";
+		}
+		this.insertBlockHeading(_try, head, _indent);
+	}
+	// END KGU#686 2019-03-18
 
 	/**
 	 * Composes the heading for the program or function according to the
@@ -1715,7 +1819,7 @@ public class CGenerator extends Generator {
 			// START KGU#607 2018-10-30: Issue 346
 			this.generatorIncludes.add("<stdbool.h>");
 			// END KGU#607 2018-10-30
-			this.insertGeneratorIncludes("", true);
+			this.insertGeneratorIncludes("", false);
 			code.add("");
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.insertUserIncludes("");

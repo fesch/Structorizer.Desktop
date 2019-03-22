@@ -61,6 +61,7 @@ import java.util.LinkedList;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 public class TexGenerator extends Generator {
@@ -133,6 +134,18 @@ public class TexGenerator extends Generator {
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
 	}
 	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

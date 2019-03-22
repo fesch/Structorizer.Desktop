@@ -137,6 +137,7 @@ import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
@@ -174,13 +175,13 @@ public class BASHGenerator extends Generator {
 		return exts;
 	}
 	
-    // START KGU 2015-10-18: New pseudo field
-    @Override
-    protected String commentSymbolLeft()
-    {
-    	return "#";
-    }
-    // END KGU 2015-10-18
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "#";
+	}
+	// END KGU 2015-10-18
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
 	/* (non-Javadoc)
@@ -213,6 +214,22 @@ public class BASHGenerator extends Generator {
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
 	}
 	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
+	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		/* The only theoretical approach coming near an exception handling
+		 * would require to entangle the tried commands with && but this
+		 * doesn't work recursively. */
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	protected StringList occurringFunctions = new StringList();
@@ -1215,6 +1232,20 @@ public class BASHGenerator extends Generator {
 		insertComment("==========================================================", _indent);
 	}
 	// END KGU#174 2016-04-05
+	
+//	public void generateCode(Try _try, String _indent)
+//	{
+//		// TODO
+//		// That is what we might achieve
+//		{ # try
+//
+//		    command1 &&
+//		    #save your output
+//
+//		} || { # catch
+//		    # save log for exception 
+//		}
+//	}
 
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {

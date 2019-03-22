@@ -71,6 +71,7 @@ import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -153,6 +154,18 @@ public class XmlGenerator extends Generator
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
 	}
 	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
 
 	/************ Code Generation **************/
 	
