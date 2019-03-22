@@ -141,6 +141,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
  *      Kay Gürtzig     2019-03-07      Enh. #385: Support for default values in argument lists
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-20      Bugfix #706: analyse_15 hardened against inconsistent Call contents
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Configuration for file name proposals
  *      
  ******************************************************************************************************
  *
@@ -3783,6 +3785,12 @@ public class Root extends Element {
 			//Function subroutine = new Function(text);
 			Function subroutine = ele.getCalledRoutine();
 			// END KGU 2017-04-11
+			// START KGU#689 2019-03-20: Bugfix #706 - subroutine may be null here
+			if (subroutine == null) {
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_1, ""), ele), 15);
+				return;
+			}
+			// END KGU#689 2019-03-20
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
 			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
@@ -5198,15 +5206,24 @@ public class Root extends Element {
     public String proposeFileName()
     {
     	String fname = this.getMethodName();
-    	if (this.isSubroutine())
+    	// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    	//if (this.isSubroutine())
+    	if (E_FILENAME_WITH_ARGNUMBERS && this.isSubroutine())
+    	// END KGU#690 2019-03-21
     	{
     		// START KGU#371 2019-03-07: Enh. #385 argument count range
     		//fname += "-" + this.getParameterNames().count();
     		int minArgs = this.getMinParameterCount();
     		int maxArgs = this.getParameterNames().count();
-    		fname += "-" + minArgs;
+    		// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    		//fname += "-" + minArgs;
+    		fname += Character.toString(E_FILENAME_SIG_SEPARATOR) + minArgs;
+    		// END KGU#690 2019-03-21
     		if (maxArgs > minArgs) {
-    			fname += "-" + maxArgs;
+    			// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    			//fname += "-" + maxArgs;
+    			fname += Character.toString(E_FILENAME_SIG_SEPARATOR) + maxArgs;
+    			// END KGU#690 2019-03-21
     		}
     		// END KGU#371 2019-03-07
     	}

@@ -68,6 +68,8 @@ package lu.fisch.structorizer.generators;
  *                                              bugfix #624 - FOR loop translation into range() fixed
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-21      Issue #706: Export of Calls with explicit argument assignments enabled
+ *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
  *
  ******************************************************************************************************
  *
@@ -147,6 +149,17 @@ public class PythonGenerator extends Generator
 		String[] exts = {"py"};
 		return exts;
 	}
+
+	// START KGU#690 2019-03-21: Enh. #707 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#ensureFilenameConformity(java.lang.String)
+	 */
+	@Override
+	protected String ensureFilenameConformity(String proposedFilename) {
+		// Python file names must not contain hyphens, since the file name is the module name
+		return proposedFilename.replace('-', '_');
+	}
+	// END KGU#690 2019-03-21
 
 	// START KGU 2015-10-18: New pseudo field
 	@Override
@@ -451,12 +464,21 @@ public class PythonGenerator extends Generator
 			// START KGU#109 2016-01-17: Bugfix #61 - Remove type specifiers
 			// Could we also do it by replacing all inventable type names by empty strings
 			// in transformType()? Rather not.
-			_input = Element.unifyOperators(_input);
-			int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
-			if (asgnPos > 0)
+			// START KGU#689 2019-03-21: Bugfix #706
+			//_input = Element.unifyOperators(_input);
+			//int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
+			//if (asgnPos > 0)
+			//{
+			//	String lval = _input.substring(0, asgnPos).trim();
+			//	String expr = _input.substring(asgnPos + "<-".length()).trim();
+			if (Instruction.isAssignment(_input))
 			{
-				String lval = _input.substring(0, asgnPos).trim();
-				String expr = _input.substring(asgnPos + "<-".length()).trim();
+				StringList tokens = Element.splitLexically(_input, true);
+				tokens = Element.coagulateSubexpressions(tokens);
+				int asgnPos = tokens.indexOf("<-");
+				String lval = tokens.concatenate("", 0, asgnPos).trim();
+				String expr = tokens.concatenate("", asgnPos + 1).trim();
+			// END KGU#689 2019-03-21
 				String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
 				String index = typeNameIndex[2];
 				if (!index.isEmpty()) index = "[" + index + "]";
@@ -470,9 +492,7 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#162 2016-04-01
 
-		_input = super.transform(_input);
-
-		String s = _input;
+		String s = super.transform(_input);
 
 //		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
 //		_input=BString.replace(_input,"!="," <> ");
@@ -946,7 +966,7 @@ public class PythonGenerator extends Generator
 					continue;
 				}
 				// Variables assigned here will be made global
-				StringList setVars = _root.getVarNames(sq, false);
+				StringList setVars = _root.getVarNames(sq, false).copy();
 				// Variables used here without being assigned will be made arguments
 				StringList usedVars = _root.getUsedVarNames(sq, false, false);
 				for (int v = 0; v < setVars.count(); v++) {

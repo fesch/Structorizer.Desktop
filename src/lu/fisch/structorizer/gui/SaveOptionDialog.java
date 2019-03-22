@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-03-12      Enh. #372 (name attribute choosable)
  *      Kay Gürtzig     2017-03-22      Issue #463: Console output replaced by logging mechanism
  *      Kay Gürtzig     2019-01-13      Enh. #662/4: New group panel with option for arrangement files
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Filename proposal preferences introduced
  *
  ******************************************************************************************************
  *
@@ -59,9 +60,12 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
@@ -75,6 +79,8 @@ import lu.fisch.structorizer.locales.LangTextHolder;
  */
 @SuppressWarnings("serial")
 public class SaveOptionDialog extends LangDialog implements ActionListener, WindowListener {
+	
+	private static final char[] ACCEPTABLE_SEPARATORS = {'-', '_', '.', '!', '°', '#', '$', '&', '+', '='};
 	
 	// START KGU#484 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(SaveOptionDialog.class.getName());
@@ -112,6 +118,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		// START KGU#363 2017-03-12: Enh. #372 Author name field
 		pnlFileInfo = new javax.swing.JPanel();
 		// END KGU#363 2017-03-12
+		// START KGU#690 2019-03-21: Enh. #707
+		pnlFileNames = new javax.swing.JPanel();
+		// END KGU#690 2019-03-21
 		// START KGU#630 2019-01-13: Enh. #662/4
 		pnlArrFiles = new javax.swing.JPanel();
 		// END KGU#630 2019-01-13
@@ -129,22 +138,27 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		cbLicenseFile = new javax.swing.JComboBox<String>();
 		cbLicenseFile.setEditable(true);
 		// END KGU#363 2017-03-12
+		// START KGU#690 2019-03-21: Enh. #707
+		chkArgNumbers = new javax.swing.JCheckBox("Append argument numbers?");
+		lblSeparator = new javax.swing.JLabel("Separator character");
+		cbSeparator = new javax.swing.JComboBox<Character>();
+		// END KGU#690 2019-03-21
 		// START KGU#630 2019-01-13: Enh. #662/4
 		chkRelativeCoordinates = new javax.swing.JCheckBox("Save with relative coordinates?");
 		// END KGU#630 2019-01-13
 
 		setTitle("Preferences for Saving ...");
 
-		org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
-		pnlTop.setLayout(jPanel1Layout);
-		jPanel1Layout.setHorizontalGroup(
-				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-				.add(0, 0, Short.MAX_VALUE)
-				);
-		jPanel1Layout.setVerticalGroup(
-				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-				.add(0, 0, Short.MAX_VALUE)
-				);
+//		org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
+//		pnlTop.setLayout(jPanel1Layout);
+//		jPanel1Layout.setHorizontalGroup(
+//				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//				.add(0, 0, Short.MAX_VALUE)
+//				);
+//		jPanel1Layout.setVerticalGroup(
+//				jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//				.add(0, 0, Short.MAX_VALUE)
+//				);
 
 
 		lbIntro.setText("Please select the options you want to activate ...");
@@ -177,19 +191,41 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		pnlFileInfo.add(this.cbLicenseFile);
 		// END KGU#363 2017-03-12
 		
+		// START KGU#690 2019-03-21: Enh. #707
+		pnlFileNames.setBorder(new TitledBorder("File name proposals"));
+		pnlFileNames.setLayout(new GridLayout(2, 1, 1, 1));
+		pnlFileNames.add(chkArgNumbers);
+		javax.swing.JPanel pnlSepa = new javax.swing.JPanel();
+		pnlSepa.setLayout(new GridLayout(1, 2, 5, 0));
+		for (char sepa: ACCEPTABLE_SEPARATORS) {
+			cbSeparator.addItem(sepa);
+		}
+		pnlSepa.add(lblSeparator);
+		pnlSepa.add(cbSeparator);
+		lblSeparator.setLabelFor(cbSeparator);	// Whatever benefit this may bring...
+		chkArgNumbers.addActionListener(this);
+		pnlFileNames.add(pnlSepa);
+		// END KGU#690 2019-03-21
+
 		// START KGU#630 2019-01-13: Enh. #662/4
 		pnlArrFiles.setBorder(new TitledBorder("Arranger files"));
 		pnlArrFiles.setLayout(new GridLayout(0, 1, 0, 1));
 		pnlArrFiles.add(chkRelativeCoordinates);
 		// END KGU#630 2019-01-13
 		
-		pnlOptions.setLayout(new GridLayout(0,1,4,4));
+		// START KGU#690 2019-03-21: Enh. #707
+		//pnlOptions.setLayout(new GridLayout(0,1,4,4));
+		pnlOptions.setLayout(new BoxLayout(pnlOptions, BoxLayout.Y_AXIS));
+		// END KGU#690 2019-03-21
 		pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
 		pnlOptions.add(pnlAutoSave);
 		pnlOptions.add(pnlBackup);
 		// START KGU#363 2017-03-12: Enh. #372 Author name field
 		pnlOptions.add(pnlFileInfo);
 		// END KGU#363 2017-03-12
+		// START KGU#690 2019-03-21: Enh. #707 file name proposals
+		pnlOptions.add(pnlFileNames);
+		// END KGU#690 2019-03-21
 		// START KGU#630 2019-01-13: Enh. #662/4
 		pnlOptions.add(pnlArrFiles);
 		// END KGU#630 2019-01-13
@@ -221,14 +257,20 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 			logger.log(Level.WARNING, "Searching for license files: {0}", e.getMessage());
 		}
 
-        // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
+		// START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
 		KeyListener keyListener = new KeyListener()
 		{
 			public void keyPressed(KeyEvent e) 
 			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				Object comp = e.getSource();
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
-					setVisible(false);
+					// START KGU#393 2019-03-21: Issue #400 - Esc and ctrl/shift-Enter hadn't worked on the editable combobox
+					//setVisible(false);
+					if (comp != cbLicenseFile.getEditor().getEditorComponent() || !cbLicenseFile.isPopupVisible()) {
+						setVisible(false);
+					}
+					// END KGU#393 2019-03-21
 				}
 				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
 				{
@@ -244,17 +286,22 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 		this.chkBackupFile.addKeyListener(keyListener);
 		this.chkAutoSaveClose.addKeyListener(keyListener);
 		this.chkAutoSaveExecute.addKeyListener(keyListener);
-		this.cbLicenseFile.addKeyListener(keyListener);
+		// START KGU#393 2019-03-21: Issue #400 - Esc and ctrl/shift-Enter hadn't worked on the editable combobox
+		//this.cbLicenseFile.addKeyListener(keyListener);
+		this.cbLicenseFile.getEditor().getEditorComponent().addKeyListener(keyListener);
+		// END KGU#393 2019-03-21
 		this.btnLicenseFile.addKeyListener(keyListener);
 		this.txtAuthorName.addKeyListener(keyListener);
 		// END KGU#393 2017-05-09		
 		// START KGU#630 2019-01-13: Enh. #662/4
 		this.chkRelativeCoordinates.addKeyListener(keyListener);
 		// END KGU#630 2019-01-13
+		// START KGU#690 2019-03-21: Enh. #707 file name proposals
+		this.chkArgNumbers.addKeyListener(keyListener);
+		this.cbSeparator.addKeyListener(keyListener);
+		// END KGU#690 2019-03-21
 
 		pack();
-	    
-	    
 	}
 	
 	/**
@@ -325,6 +372,9 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	// START KGU#363 2017-03-12: Enh. #372 Author name field
 	public javax.swing.JPanel pnlFileInfo;
 	// END KGU#363 2017-03-12
+	// START KGU#690 2019-03-21: Enh. #707
+	public javax.swing.JPanel pnlFileNames;
+	// END KGU#690 2019-03-21
 	// START KGU#630 2019-01-13: Enh. #662/4
 	public javax.swing.JPanel pnlArrFiles;
 	// END KGU#630 2019-01-13
@@ -341,9 +391,15 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	public javax.swing.JTextField txtAuthorName;
 	public javax.swing.JButton btnLicenseFile;
 	public javax.swing.JComboBox<String> cbLicenseFile;
-	public static LangTextHolder msgNoFile = new LangTextHolder("No file name selected or entered!");
-	public static LangTextHolder msgCantEdit = new LangTextHolder("Cannot open an editor for the selected file!");
+	public static final LangTextHolder msgNoFile = new LangTextHolder("No file name selected or entered!");
+	public static final LangTextHolder msgCantEdit = new LangTextHolder("Cannot open an editor for the selected file!");
 	// END KGU#363 2017-03-12
+	// START KGU#690 2019-03-21: Enh. #707
+	public javax.swing.JCheckBox chkArgNumbers;
+	public javax.swing.JLabel lblSeparator;
+	public javax.swing.JComboBox<Character> cbSeparator;
+	public static final LangTextHolder msgRiskOfNameClash = new LangTextHolder("If you disable this option, you raise the risk of file name clashes on overloaded routines!");
+	// END KGU#690 2019-03-21
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {
@@ -367,9 +423,20 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 			editor.setVisible(true);
 		}
 		else if (evt.getSource() == this.btnOk) {
-	        goOn = true;
-	        this.setVisible(false);
+			goOn = true;
+			this.setVisible(false);
 		}
+		// START KGU#690 2019-03-21: Enh. #707
+		else if (evt.getSource() == chkArgNumbers) {
+			boolean wasSelected = cbSeparator.isEnabled();
+			lblSeparator.setEnabled(chkArgNumbers.isSelected());
+			cbSeparator.setEnabled(chkArgNumbers.isSelected());
+			if (isVisible() && wasSelected && !chkArgNumbers.isSelected()) {
+				JOptionPane.showMessageDialog(SaveOptionDialog.this, msgRiskOfNameClash.getText(),
+						((TitledBorder)pnlFileNames.getBorder()).getTitle(), JOptionPane.WARNING_MESSAGE);
+			}
+		}
+		// END KGU#690 2019-03-21
 	}
 
 	@Override

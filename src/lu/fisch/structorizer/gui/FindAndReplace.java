@@ -95,8 +95,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
@@ -749,7 +751,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 
 			pnlElements.add(new JSeparator(SwingConstants.HORIZONTAL));
-
 
 			chkDisabled = new JCheckBox("Disabled elements");
 			chkDisabled.setSelected(ini.getProperty("findDisabledElements", "0").equals("1"));

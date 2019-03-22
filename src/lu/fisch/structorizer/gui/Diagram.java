@@ -7360,9 +7360,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		// START KGU#630 2019-01-13: Enh. #662/4
     		sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
     		// END KGU#630 2019-01-13
+    		// START KGU#690 2019-03-21: Enh. #707
+    		sod.chkArgNumbers.setSelected(Element.E_FILENAME_WITH_ARGNUMBERS);
+    		sod.cbSeparator.setSelectedItem(Element.E_FILENAME_SIG_SEPARATOR);
+    		// END KGU#690 2019-03-21
     		sod.setVisible(true);
 
-    		if(sod.goOn==true)
+    		if (sod.goOn==true)
     		{
     			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
     			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
@@ -7370,6 +7374,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			// START KGU#630 2019-01-13: Enh. #662/4
     			Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
     			// END KGU#630 2019-01-13
+    			// START KGU#690 2019-03-21: Enh. #707
+    			Element.E_FILENAME_WITH_ARGNUMBERS = sod.chkArgNumbers.isSelected();
+    			Element.E_FILENAME_SIG_SEPARATOR = (Character)sod.cbSeparator.getSelectedItem();
+    			// END KGU#690 2019-03-21
     			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
     			ini.setProperty("authorName", sod.txtAuthorName.getText());
     			String licName = (String)sod.cbLicenseFile.getSelectedItem();
