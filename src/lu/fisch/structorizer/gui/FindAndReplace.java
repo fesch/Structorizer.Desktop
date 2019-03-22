@@ -46,7 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-11-21      Bugfix #448: Apparently forgotten part of the fix accomplished
  *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
- *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integerated, element panel layout revised
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integrated, element panel layout revised
  *
  ******************************************************************************************************
  *

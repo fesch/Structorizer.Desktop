@@ -217,6 +217,13 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
+/**
+ * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
+ * i.e. the basic algorithmic structure blocks.
+ * Provides primitives and utilities for drawing, syntax analysis, preferences,
+ * and traversal.
+ * @author Bob Fisch
+ */
 public abstract class Element {
 	
 	/** This enumeration type distinguishes drawing contexts for selection display */
@@ -2268,9 +2275,9 @@ public abstract class Element {
 			//E_PADDING = Math.round((float)(E_PADDING_BASE * Double.parseDouble(ini.getProperty("scaleFactor", "1.0"))));
 			// END KGU#494 2018-01-14
 			// START KGU 2017-01-06: Issue #327: Default changed to English
-			preAltT=ini.getProperty("IfTrue","T");
-			preAltF=ini.getProperty("IfFalse","F");
-			preAlt=ini.getProperty("If","(?)");
+			preAltT = ini.getProperty("IfTrue", "T");
+			preAltF = ini.getProperty("IfFalse", "F");
+			preAlt  = ini.getProperty("If", "(?)");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
 			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
@@ -2281,10 +2288,15 @@ public abstract class Element {
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
-			preFor=ini.getProperty("For","for ? <- ? to ?");
-			preWhile=ini.getProperty("While","while (?)");
-			preRepeat=ini.getProperty("Repeat","until (?)");
+			preFor    = ini.getProperty("For", "for ? <- ? to ?");
+			preWhile  = ini.getProperty("While", "while (?)");
+			preRepeat = ini.getProperty("Repeat", "until (?)");
 			// END KGU 2017-01-06 #327
+			// START KGU#686 2019-03-22: Enh. #56
+			preTry    = ini.getProperty("Try", "try");
+			preCatch  = ini.getProperty("Catch", "catch");
+			preFinally= ini.getProperty("Finally", "finally");
+			// END KGU#686 2019-03-22
 			// START KGU#376 2017-07-02: Enh. #389
 			preImport = ini.getProperty("Import", "Included diagrams:");
 			// END KGU#376 2017-07-02
@@ -2323,30 +2335,35 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			ini.setProperty("IfTrue",preAltT);
-			ini.setProperty("IfFalse",preAltF);
-			ini.setProperty("If",preAlt);
+			ini.setProperty("IfTrue", preAltT);
+			ini.setProperty("IfFalse", preAltF);
+			ini.setProperty("If", preAlt);
 			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
 			ini.setProperty("altPadRight", String.valueOf(altPadRight));
 			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
-			ini.setProperty("Case",sl.getCommaText());
+			ini.setProperty("Case", sl.getCommaText());
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
 			// END KGU#401 2017-05-18
-			ini.setProperty("For",preFor);
-			ini.setProperty("While",preWhile);
-			ini.setProperty("Repeat",preRepeat);
+			ini.setProperty("For", preFor);
+			ini.setProperty("While", preWhile);
+			ini.setProperty("Repeat", preRepeat);
+			// START KGU#686 2019-03-22: Enh. #56
+			ini.setProperty("Try", preTry);
+			ini.setProperty("Catch", preCatch);
+			ini.setProperty("Finally", preFinally);
+			//END KGU#686 2019-03-22
 			// START KGU#376 2017-07-02: Enh. #389
 			ini.setProperty("Import", preImport);
 			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: font name property renamed 
 			//ini.setProperty("Name",getFont().getFamily());
-			ini.setProperty("Font",getFont().getFamily());
+			ini.setProperty("Font", getFont().getFamily());
 			// END KGU#264 2016-09-28
-			ini.setProperty("Size",Integer.toString(getFont().getSize()));
+			ini.setProperty("Size", Integer.toString(getFont().getSize()));
 			// colors
 			// START KGU#245 2018-07-02
 //			ini.setProperty("color0", getHexColor(color0));

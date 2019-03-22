@@ -68,12 +68,8 @@ package lu.fisch.structorizer.generators;
  *                                              bugfix #624 - FOR loop translation into range() fixed
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
-<<<<<<< HEAD
- *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw Jumps
-=======
  *      Kay Gürtzig             2019-03-21      Issue #706: Export of Calls with explicit argument assignments enabled
  *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
->>>>>>> master
  *
  ******************************************************************************************************
  *

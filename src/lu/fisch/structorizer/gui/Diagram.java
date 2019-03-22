@@ -6575,7 +6575,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		preferences.edtFor.setText(Element.preFor);
 		preferences.edtWhile.setText(Element.preWhile);
 		preferences.edtRepeat.setText(Element.preRepeat);
-                
+		
 		preferences.altPadRight.setSelected(Element.altPadRight);
 		
 		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
@@ -6584,6 +6584,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#376 2017-07-02: Enh. #389
 		preferences.edtRoot.setText(Element.preImport);
 		// END KGU#376 2017-07-02
+		
+		// START KGU#686 2019-03-22: Enh. #56
+		preferences.edtTry.setText(Element.preTry);
+		preferences.edtCatch.setText(Element.preCatch);
+		preferences.edtFinal.setText(Element.preFinally);
+		// END KGU#686 2019-03-22
 
 		preferences.pack();
 		preferences.setVisible(true);
@@ -6605,6 +6611,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.preWhile    = preferences.edtWhile.getText();
 			Element.preRepeat   = preferences.edtRepeat.getText();
 			Element.altPadRight = preferences.altPadRight.isSelected();
+			// START KGU#686 2019-03-22: Enh. #56
+			Element.preTry      = preferences.edtTry.getText();
+			Element.preCatch    = preferences.edtCatch.getText();
+			Element.preFinally  = preferences.edtFinal.getText();
+			// END KGU#686 2019-03-22
 			// START KGU#376 2017-07-02: Enh. #389
 			String newImportCaption = preferences.edtRoot.getText();
 			// END KGU#376 2017-07-02

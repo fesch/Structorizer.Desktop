@@ -10,11 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-<<<<<<< HEAD
-Current development version: 3.29-07 (2019-03-21)
-=======
 Current development version: 3.29-07 (2019-03-22)
->>>>>>> master
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -70,15 +66,12 @@ Current development version: 3.29-07 (2019-03-22)
 - 07: Issue #699: Superfluous measures on unshared diagrams skipped. <2>
 - 07: Bugfix #705: Find&Replace tool failed to search CASE/PARALLEL branches <2>
 - 07: Bugfix #706: NullPointerException from Analyser on faulty CALL elements <2>
-<<<<<<< HEAD
 - 07: Enh. #56: New element type TRY-CATCH-FINALLY introduced <2>
-=======
 - 07: Issue #706: Created nsd and code files should end with a newline [elemhsb]2
 - 07: Enh. #707: Savings preferences for file name proposals [elemhsb]2
 - 07: Bugfix #708: Code export compromised cached variable lists (highlighting)<2>
 - 07: Enh. #452: Several menu items made hidden on simplified mode now <2>
 
->>>>>>> master
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

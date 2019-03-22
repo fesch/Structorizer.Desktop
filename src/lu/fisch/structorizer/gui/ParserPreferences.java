@@ -371,7 +371,7 @@ public class ParserPreferences extends LangDialog {
 				// START KGU#686 2019-03-18: Enh. #56 
 				contentPanel.add(lblNothing7);
 				contentPanel.add(edtJumpThrow);
-				lblJumpThrow.setText("from error");
+				lblJumpThrow.setText("on error");
 				contentPanel.add(lblJumpThrow);
 				// END KGU#686 2019-03-18
 

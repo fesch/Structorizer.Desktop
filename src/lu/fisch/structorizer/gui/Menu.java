@@ -99,14 +99,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
  *      Kay Gürtzig     2019-03-07      Enh. #385: New message error20_2, error20 renamed in error20_1
-<<<<<<< HEAD
  *      Kay Gürtzig     2019-03-16      Enh. #56: New menu items to add TRY-CATCH elements *
  *      Kay Gürtzig     2019-03-17      Issue #56: breakpoint items disabled for Forever and Try elements.
  *                                      
-=======
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *
->>>>>>> master
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -1653,20 +1650,18 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramAddAfterCall.setEnabled(condition);
 			menuDiagramAddAfterJump.setEnabled(condition);
 			menuDiagramAddAfterPara.setEnabled(condition);
-<<<<<<< HEAD
 			// START KGU#686 2019-03-16: Enh. #56
 			menuDiagramAddAfterTry.setEnabled(condition);
 			// END KGU#686 2019-03-16
-
-=======
 			
 			menuDiagramAddBeforeForever.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramAddBeforeJump.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramAddBeforePara.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddBeforeTry.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramAddAfterForever.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramAddAfterJump.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramAddAfterPara.setVisible(!Element.E_REDUCED_TOOLBARS);
->>>>>>> master
+			menuDiagramAddAfterTry.setVisible(!Element.E_REDUCED_TOOLBARS);
 
 			// editing
 			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
@@ -1723,15 +1718,11 @@ public class Menu extends LangMenuBar implements NSDController
 			// END KGU#177 2016-07-06
 			// END KGU#143 2016-01-21
 			// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
-<<<<<<< HEAD
 			// START KGU#686 2019-03-17: Enh. #56 It doesn't make sense to place breakpoints on endless loops or try elements
 			//menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
 			menuDebugBreakTrigger.setEnabled(diagram.canSetBreakpoint() && !diagram.selectedIsMultiple());
 			// END KGU#686 2019-03-17
-=======
-			menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
 			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
->>>>>>> master
 			// END KGU#213 2016-08-02
 
 			// copy & paste

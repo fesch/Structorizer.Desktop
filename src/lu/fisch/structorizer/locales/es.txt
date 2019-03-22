@@ -871,6 +871,10 @@ Preferences.pnlRepeat.border=Bucle @h
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Contenido por defecto
 Preferences.lblRepeat.tooltip=El contenido por defecto de un bucle @h
+Preferences.pnlTry.border=Bloque @q etiquetas
+Preferences.lblTry.tooltip=Etiqueta para el bloque principal de ejecución en elementos @q
+Preferences.lblCatch.tooltip=Etiqueta para el bloque de manejo de excepción en elementos @q
+Preferences.lblFinal.tooltip=Etiqueta para el bloque de limpieza en elementos @q
 Preferences.btnOK.text=Aceptar
 Preferences.btnOK.tooltip=Aceptar los cambios.
 
@@ -942,6 +946,7 @@ ParserPreferences.lblJump.tooltip=Palabras claves clasificando @ks para salir de
 ParserPreferences.lblJumpLeave.text=del bucle
 ParserPreferences.lblJumpReturn.text=de subprograma
 ParserPreferences.lblJumpExit.text=de programa
+ParserPreferences.lblJumpThrow.text=por error
 ParserPreferences.lblInputOutput.text=Entrada/Salida
 ParserPreferences.lblInputOutput.tooltip=Palabras claves clasificando entrada/salida de valores
 ParserPreferences.lblInput.text=Entrada
@@ -1392,7 +1397,7 @@ ElementNames.localizedNames.12.text=Diagrama
 ElementNames.localizedNames.13.text=Programa principal
 ElementNames.localizedNames.14.text=Subrutina
 ElementNames.localizedNames.15.text=Incluíble
-ElementNames.localizedNames.16.text=TRY
+ElementNames.localizedNames.16.text=INTENTAR
 
 -----> Keywords
 ParserKeywords.AltPre.text=si
@@ -1411,5 +1416,6 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=salir
 ParserKeywords.JumpReturn.text=retornar
 ParserKeywords.JumpExit.text=abortar
+ParserKeywords.JumpThrow.text=lanzar
 ParserKeywords.Input.text=entrada
 ParserKeywords.Output.text=salida
