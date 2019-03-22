@@ -78,7 +78,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-21      Enh. #655 signature and semantics of method routinePoolChanged adapted 
  *      Kay Gürtzig     2019-01-17      Issue #664: Workaround for ambiguous canceling in AUTO_SAVE_ON_CLOSE mode
  *      Kay Gürtzig     2019-02-16      Enh. #682: Extended welcome menu with language choice
- *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
+ *      Kay Gürtzig     2019-02-20      Issue #686: Improved the detection of the current Look and Feel
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *
  ******************************************************************************************************
  *
@@ -757,6 +758,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_AUTO_SAVE_ON_CLOSE = ini.getProperty("autoSaveOnClose", "0").equals("1");
 			Element.E_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
 			// END KGU#309 20161-12-15
+			// START KGU#690 2019-03-21: Issue #707 - new saving options
+			Element.E_FILENAME_WITH_ARGNUMBERS = !ini.getProperty("filenameWithArgNos", "1").equals("0");
+			String filenameSepa = ini.getProperty("filenameSigSeparator", "-");
+			Element.E_FILENAME_SIG_SEPARATOR = filenameSepa.isEmpty() ? '-' : filenameSepa.charAt(0);
+			// END KGU#690 2019-03-21
 			
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
@@ -867,6 +873,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
 			ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
 			// END KGU#309 20161-12-15
+			// START KGU#690 2019-03-21: Issue #707 - new saving options
+			ini.setProperty("filenameWithArgNos", (Element.E_FILENAME_WITH_ARGNUMBERS ? "1" : "0"));
+			ini.setProperty("filenameSigSeparator", Character.toString(Element.E_FILENAME_SIG_SEPARATOR));
+			// END KGU#690 2019-03-21
 
 			// START KGU#456 2017-11-05: Issue #452
 			ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));

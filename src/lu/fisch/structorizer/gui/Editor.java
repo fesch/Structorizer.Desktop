@@ -72,6 +72,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-12      Enh. #662: Arranger index stuff moved to a new class ArrangerIndex
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
+ *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *
  ******************************************************************************************************
  *
@@ -1099,6 +1100,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddAfterJump.setEnabled(condition);
 		popupAddAfterPara.setEnabled(condition);
 		
+		popupAddBeforeForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddBeforeJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddBeforePara.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterPara.setVisible(!Element.E_REDUCED_TOOLBARS);
+
+		
 		// colors
 		// START KGU#245 2018-07-02: Serial buttons converted to array
 		for (int i = 0; i < Element.colors.length; i++) {
@@ -1157,6 +1166,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#667 2019-02-26 Enh.#689
 		popupEditSub.setEnabled(diagram.canEditSub());
 		// END KGU#667 2019-02-26
+		popupTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupEditSub.setVisible(!Element.E_REDUCED_TOOLBARS);
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
@@ -1166,6 +1178,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#277 2016-10-13: Enh. #270
 		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
 		// END KGU#277 2016-01-13
+		popupCollapse.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupExpand.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupDisable.setVisible(!Element.E_REDUCED_TOOLBARS);
 
 		// executor
 		// START KGU#143 2016-01-21: Bugfix #114 - breakpoints need a more generous enabling policy
@@ -1178,6 +1193,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
 		popupBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
 		// END KGU#213 2016-08-02
+		popupBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 		
 		// copy & paste
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
