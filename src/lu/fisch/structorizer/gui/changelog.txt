@@ -74,6 +74,7 @@ Current development version: 3.29-08 (2019-03-24)
 - 07: Enh. #452: Several menu items made hidden on simplified mode now <2>
 - 08: Bugfix #711: Endless loop on element text parsing - SEVERE! <2>
 - 08: Issue #712: Translator ought to remember its last saving directory <2>
+- 08: Enh. #56: Some updates and additions to the Russian locale <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
