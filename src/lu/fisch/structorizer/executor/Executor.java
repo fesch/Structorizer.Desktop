@@ -4731,8 +4731,12 @@ public class Executor implements Runnable
 					trouble = RETHROW_MESSAGE;
 				}
 				else {
-					expr = this.evaluateDiagramControllerFunctions(expr);
-					Object argVal = this.evaluateExpression(expr, expr.contains("{"), false);
+					Object argVal = null;
+					try {
+						String temp = this.evaluateDiagramControllerFunctions(convert(expr));
+						argVal = this.evaluateExpression(temp, temp.contains("{"), false);
+					}
+					catch (Exception ex) {}
 					if (argVal != null) {
 						trouble = argVal.toString();
 					}

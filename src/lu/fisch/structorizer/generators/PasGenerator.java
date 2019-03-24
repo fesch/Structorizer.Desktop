@@ -32,59 +32,59 @@ package lu.fisch.structorizer.generators;
  *
  *      Author              Date            Description
  *      ------              ----            -----------
- *      Bob Fisch           2007.12.27      First Issue
- *      Bob Fisch           2008.04.12      Added "Fields" section for generator to be used as plugin
- *      Bob Fisch           2008.11.17      Added Freepascal extensions
- *      Bob Fisch           2009.08.17      Bugfixes (see comment)
- *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
- *      Dirk Wilhelmi       2012.10.11      Added comments export
- *      Kay Gürtzig         2014.11.10      Conversion of C-like logical operators
- *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
- *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig         2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig         2015.11.30      Enh. #23: Jump generation modified, KGU#47: Parallel generation
+ *      Bob Fisch           2007-12-27      First Issue
+ *      Bob Fisch           2008-04-12      Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch           2008-11-17      Added Freepascal extensions
+ *      Bob Fisch           2009-08-17      Bugfixes (see comment)
+ *      Bob Fisch           2011-11-07      Fixed an issue while doing replacements
+ *      Dirk Wilhelmi       2012-10-11      Added comments export
+ *      Kay Gürtzig         2014-11-10      Conversion of C-like logical operators
+ *      Kay Gürtzig         2014-11-16      Conversion of C-like comparison operator, comment export
+ *      Kay Gürtzig         2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig         2015-10-18      Comment generation and indentation revised
+ *      Kay Gürtzig         2015-11-30      Enh. #23: Jump generation modified, KGU#47: Parallel generation
  *                                          added, Root generation fundamentally redesigned (decomposed)  
- *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
- *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
+ *      Bob Fisch           2015-12-10      Bugfix #50 --> grep & export function parameter types
+ *      Kay Gürtzig         2015-12-20      Bugfix #22 (KGU#74): Correct return mechanisms even with
  *                                          return instructions not placed in Jump elements
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig         2016.01.14      Enh. #84: array initialisation expressions decomposed (= KG#100)
- *      Kay Gürtzig         2016.01.17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig         2016-01-14      Enh. #84: array initialisation expressions decomposed (= KG#100)
+ *      Kay Gürtzig         2016-01-17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
  *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
- *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016.04.30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
- *      Kay Gürtzig         2016.05.05      Bugfix #51 - empty writeln instruction must not have parentheses 
- *      Kay Gürtzig         2016.07.20      Enh. #160 - optional export of called subroutines implemented
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
- *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
- *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
+ *      Kay Gürtzig         2016-03-16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
+ *      Kay Gürtzig         2016-05-05      Bugfix #51 - empty writeln instruction must not have parentheses 
+ *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done 
+ *      Kay Gürtzig         2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-12-26      Enh. #314: Makeshift additions to support the File API
+ *      Kay Gürtzig         2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support
  *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
- *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
- *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed
- *      Kay Gürtzig         2017.04.12      Enh. #388: Support for export of constant definitions added 
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.09.19      Enh. #423: Export of record types
- *      Kay Gürtzig         2017.09.21      Enh. #388, #389: Export strategy for Includables and structured constants
- *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
- *      Kay Gürtzig         2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
- *      Kay Gürtzig         2018.07.20      Enh. #563: support for simplified record initializers
- *      Kay Gürtzig         2018.07.22      Bugfix #564: defects with nested record/array initializers mended
- *      Kay Gürtzig         2018.10.05      Bugfix #619: Undue declaration of function result variable dropped
+ *      Kay Gürtzig         2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig         2017-02-01      Enh. #84: indexBase constant mechanism for array initializers disabled
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed
+ *      Kay Gürtzig         2017-04-12      Enh. #388: Support for export of constant definitions added 
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-09-19      Enh. #423: Export of record types
+ *      Kay Gürtzig         2017-09-21      Enh. #388, #389: Export strategy for Includables and structured constants
+ *      Kay Gürtzig         2017-09-25      Enh. #388, #423: Positioning of declaration comments revised
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2018-03-13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig         2018-07-20      Enh. #563: support for simplified record initializers
+ *      Kay Gürtzig         2018-07-22      Bugfix #564: defects with nested record/array initializers mended
+ *      Kay Gürtzig         2018-10-05      Bugfix #619: Undue declaration of function result variable dropped
  *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
  *
  ******************************************************************************************************
  *
  *      Comments:
  *      
- *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
  *      
@@ -92,19 +92,19 @@ package lu.fisch.structorizer.generators;
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
  *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters detection  
  *
- *      2015.10.18
+ *      2015-10-18
  *      - Indentation increment with +_indent.substring(0,1) worked only for single-character indentation units
  *      - Interface of comment insertion methods modified
  *
- *      2014.11.16 - Bugfix / Enhancement
+ *      2014-11-16 - Bugfix / Enhancement
  *      - Conversion of C-style unequality operator had to be added
  *      - Comments are now exported, too
  *       
- *      2014.11.10 - Enhancement
+ *      2014-11-10 - Enhancement
  *      - Conversion of C-style logical operators to the Pascal-like ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
- *      2009.08.17 - Bugfixes
+ *      2009-08-17 - Bugfixes
  *      - added automatic brackets for "while", "switch", "repeat" & "if"
  *
  ******************************************************************************************************///
@@ -1324,16 +1324,8 @@ public class PasGenerator extends Generator
 		
 		this.generateCode(_try.qTry, indent1);
 		
-		if (_try.qFinally.getSize() > 0) {
-			this.addCode("finally", indent0, isDisabled);
-			
-			this.generateCode(_try.qFinally, indent1);
-
-			this.addCode("end;", indent0, isDisabled);
-		}
-
-		indent1 = _indent + this.getIndent();
-		this.addCode("except", _indent, isDisabled);
+		//indent1 = _indent + this.getIndent();
+		this.addCode("except", indent0, isDisabled);
 		String exName = _try.getExceptionVarName();
 		if (exName != null && !exName.isEmpty()) {
 			this.addCode("on Ex : Exception do", indent1, isDisabled);
@@ -1350,6 +1342,14 @@ public class PasGenerator extends Generator
 		generateCode(_try.qCatch, indent2);
 		this.addCode("end;", indent1, isDisabled);
 		
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("end;", indent0, isDisabled);
+
+			this.addCode("finally", _indent, isDisabled);
+			
+			this.generateCode(_try.qFinally, indent0);
+		}
+
 		this.addCode("end;", _indent, isDisabled);	// Close the (outer) try block 
 	}
 	// END KGU#686 2019-03-20

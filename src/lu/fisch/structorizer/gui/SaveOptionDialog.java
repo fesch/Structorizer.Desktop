@@ -80,7 +80,7 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 @SuppressWarnings("serial")
 public class SaveOptionDialog extends LangDialog implements ActionListener, WindowListener {
 	
-	private static final char[] ACCEPTABLE_SEPARATORS = {'-', '_', '.', '!', '°', '#', '$', '&', '+', '='};
+	private static final char[] ACCEPTABLE_SEPARATORS = {'-', '_', '.', '!', '°', '#', '$', '&', '+', '=', '@', 'x'};
 	
 	// START KGU#484 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(SaveOptionDialog.class.getName());

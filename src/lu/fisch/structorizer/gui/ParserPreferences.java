@@ -493,6 +493,9 @@ public class ParserPreferences extends LangDialog {
 		edtJumpReturn.addKeyListener(keyListener);
 		edtJumpExit.addKeyListener(keyListener);
 		// END KGU#78 2016-03-25
+		// START KGU#686 2019-03-24: Enh. #56
+		edtJumpThrow.addKeyListener(keyListener);
+		// END KGU#686 2019-03-23
 		edtInput.addKeyListener(keyListener);
 		edtOutput.addKeyListener(keyListener);
 		btnOK.addKeyListener(keyListener);
@@ -561,6 +564,9 @@ public class ParserPreferences extends LangDialog {
 				edtJumpReturn.getText().contains(":") ||
 				edtJumpExit.getText().contains(":") ||
 				// END KGU#78 2016-03-25
+				// START KGU#686 2019-03-24: Enh. #56
+				edtJumpThrow.getText().contains(":") ||
+				// END KGU#686 2019-03-24
 				edtInput.getText().contains(":") ||
 				edtOutput.getText().contains(":")
 				) {
@@ -692,7 +698,10 @@ public class ParserPreferences extends LangDialog {
 				edtForInPre,
 				edtWhilePre,	edtWhilePost,
 				edtRepeatPre,	edtRepeatPost,
-				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				// START KGU#686 2019-03-24: Enh. #56
+				//edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				edtJumpLeave,	edtJumpReturn,	edtJumpExit, edtJumpThrow,
+				// END KGU#686 2019-0324
 				edtInput,
 				edtOutput
 		};

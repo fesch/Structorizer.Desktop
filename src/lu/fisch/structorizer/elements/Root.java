@@ -5935,12 +5935,16 @@ public class Root extends Element {
 	 * 7. Calls<br/>
 	 * 8. Jumps<br/>
 	 * 9. Parallel sections<br/>
+	 * 10. Try blocks<br/>
 	 * @return an integer array with element counts according to the index map above 
 	 * @see #getElementCount()
 	 */
 	public Integer[] getElementCounts()
 	{
-		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		// START KGU#686 2019-03-24: Enh. #56
+		//final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0,0};
+		// END KGU#686 2019-03-24
 		
 		IElementVisitor counter = new IElementVisitor() {
 
@@ -5976,7 +5980,12 @@ public class Root extends Element {
 				}
 				else if (_ele instanceof Parallel) {
 					counts[9]++;
-				}	
+				}
+				// START KGU#686 2019-03-24: Enh. #56
+				else if (_ele instanceof Try) {
+					counts[10]++;
+				}
+				// END KGU#686 2019-03-24
 				return true;
 			}
 
