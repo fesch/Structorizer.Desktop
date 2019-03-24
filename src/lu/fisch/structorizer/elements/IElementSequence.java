@@ -32,9 +32,11 @@ package lu.fisch.structorizer.elements;
 *
 *      Author           Date            Description
 *      ------           ----            -----------
-*      Kay Gürtzig      2015.11.23      First issue (KGU#87).
-*      Kay Gürtzig      2016.10.13      Enh. #277: Method setDisabled(boolean) added
-*      Kay Gürtzig      2017.05.30      Enh. #415: Equipped with a tree-capable Iterator class
+*      Kay Gürtzig      2015-11-23      First issue (KGU#87).
+*      Kay Gürtzig      2016-10-13      Enh. #277: Method setDisabled(boolean) added
+*      Kay Gürtzig      2017-05-30      Enh. #415: Equipped with a tree-capable Iterator class
+*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
+*      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *
 ******************************************************************************************************
@@ -50,8 +52,10 @@ import java.util.Vector;
 //import lu.fisch.structorizer.gui.SelectedSequence;
 
 /**
+ * Interface for linear NSD element sequences (e.g. subsequences of {@link Subqueue}s).
+ * Provides typical method signatures for collections and a fully implemented specific
+ * NSD tree iterator.
  * @author Kay Gürtzig
- *
  */
 public interface IElementSequence {
 
@@ -101,6 +105,10 @@ public interface IElementSequence {
 			return prev;
 		}
 		
+		/**
+		 * @param move - if true then actually moves forward, otherwise only "peeks".
+		 * @return the next element in the iteration or null
+		 */
 		private Element getNext(boolean move) {
 			Element next = null;
 			//IElementSequence seq = current;
@@ -142,6 +150,19 @@ public interface IElementSequence {
 						}
 					}
 				}
+				// START KGU#686 2019-03-17: Enh. #56 New element class Try
+				else if (el instanceof Try) {
+					if (((Try)el).qTry.getSize() > 0) {
+						next = ((Try)el).qTry.getElement(0);
+					}
+					else if (((Try)el).qCatch.getSize() > 0) {
+						next = ((Try)el).qCatch.getElement(0);
+					}
+					else if (((Try)el).qFinally.getSize() > 0) {
+						next = ((Try)el).qFinally.getElement(0);
+					}
+				}
+				// END KGU#686 2019-03-17
 			}
 			if (next != null && move) {
 				current = (Subqueue)next.parent;
@@ -192,6 +213,29 @@ public interface IElementSequence {
 						}
 					}
 				}
+				// START KGU#686 2019-03-17: Enh. #56 new element class Try
+				else if (el instanceof Try) {
+					Subqueue[] subqueues = new Subqueue[] {((Try)el).qTry, ((Try)el).qCatch, ((Try)el).qFinally};
+					boolean found = false;	// Current child subqueue identified?
+					for (int i = 0; next == null && i < subqueues.length; i++) {
+						if (!found && seq == subqueues[i]) {
+							found = true;	// Yes, so fetch the next non-empty sister subqueue in the next cycle
+						}
+						else if (found && subqueues[i].getSize() > 0) {
+							seq = subqueues[i];
+							next = current.getElement(0);
+							if (move) {
+								while (positions.size() > level) {
+									positions.pop();
+								}
+								current = seq;
+								positions.push(0);
+							}
+						}
+					}
+				}
+				// END KGU#686 2019-03-17
+				
 				if (next == null) {
 					// Entire subqueue level up
 					seq = (Subqueue)((Subqueue)seq).parent.parent;
@@ -253,6 +297,20 @@ public interface IElementSequence {
 							}
 						}
 					}
+					// START KGU#686 2019-03-17: Enh. #56 new element class Try
+					else if (el instanceof Try) {
+						boolean found = false;
+						Subqueue[] subqueues = {((Try)el).qTry, ((Try)el).qCatch, ((Try)el).qFinally};
+						for (int i = subqueues.length-1; prev == null && i >= 0; i--) {
+							if (seq == subqueues[i]) {
+								found = true;
+							}
+							else if (found && subqueues[i].getSize() > 0) {
+								prev = getLastInSubtree(subqueues[i], subqueues[i].getSize()-1, move);
+							}
+						}
+					}
+					// END KGU#686 2019-03-17
 					// Nothing found on the half stage? Then get an entire subqueue level up
 					if (prev == null) {
 						seq = (Subqueue)((Subqueue)seq).parent.parent;
@@ -308,6 +366,17 @@ public interface IElementSequence {
 						if (subqueues.get(i).getSize() > 0) {
 							el = getLastInSubtree(subqueues.get(i), subqueues.get(i).getSize()-1, move);
 						}
+					}
+				}
+				else if (el instanceof Try) {
+					if (((Try)el).qFinally.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qFinally, ((Try)el).qFinally.getSize()-1, move);
+					}
+					else if (((Try)el).qCatch.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qCatch, ((Try)el).qCatch.getSize()-1, move);
+					}
+					else if (((Try)el).qTry.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qTry, ((Try)el).qTry.getSize()-1, move);
 					}
 				}
 			}

@@ -920,7 +920,7 @@ public class Archivar {
 				root.filename = _fromArchive.getAbsolutePath() + File.separator + _nsdFile.getName();
 				root.shadowFilepath = _nsdFile.getAbsolutePath();
 			}
-			root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+			root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 		}
 		catch (Exception ex) {
 			String errorMessage = ex.getLocalizedMessage();

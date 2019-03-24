@@ -93,6 +93,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -667,3 +668,5 @@ ElementNames.localizedNames.10.text=Skok
 ElementNames.localizedNames.11.text=Paralelní
 ElementNames.localizedNames.13.text=Hlavní program
 ElementNames.localizedNames.14.text=Podprogram
+ElementNames.localizedNames.15.text=
+ElementNames.localizedNames.16.text=TRY

@@ -562,7 +562,7 @@ public class Root extends Element {
 
 	/**
 	 * Names of variables defined within this diagram (may be null after changes!)
-	 * @see #getVariables()
+	 * @see #getCachedVarNames()
 	 */
 	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
 	//public StringList variables = new StringList();
@@ -570,10 +570,12 @@ public class Root extends Element {
 	
 	/**
 	 * @return Cached names of the variables defined within this diagram (may be empty after changes).
+	 * Will not retrieve variables.
 	 * @see #variables
+	 * @see #retrieveVarNames()
 	 * @see #getVarNames()
 	 */
-	public StringList getVariables()
+	public StringList getCachedVarNames()
 	{
 		if (variables != null) {
 			return variables;
@@ -581,6 +583,20 @@ public class Root extends Element {
 		return new StringList();
 	}
 	// END KGU#444/KGU#618 2018-12-18
+	
+	// START KGU#686 2019-03-16: Enh. #56 (introduction of Try blocks)
+	@Override
+	protected Set<String> getVariableSetFor(Element _element)
+	{
+		Set<String> varNames = new HashSet<String>();
+		StringList vars = getCachedVarNames();
+		for (int i = 0; i < vars.count(); i++) {
+			varNames.add(vars.get(i));
+		}
+		return varNames;
+	}
+	// END KGU#686 2019-03-16
+	
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
 	 * Names and cached value expressions of detected constants among the {@link #variables} 
@@ -2437,7 +2453,10 @@ public class Root extends Element {
     					}
     				}
     			}
-    			else {
+    			// START KGU#686 2019-03-16: Enh. #56 the text of the catch clause is kind of declaration, not use
+    			//else {
+    			else if (!(_ele instanceof Try)) {
+    			// END KGU#686 2019-03-16
     				lines.add(unbrokenLines);
     			}
     			// END KGU#413 2017-09-13
@@ -2487,7 +2506,7 @@ public class Root extends Element {
 
     	}
 
-    	varNames = varNames.reverse();
+    	varNames = varNames.reverse();	// Why is it reversed?
     	//varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
     	return varNames;
     }
@@ -2637,7 +2656,7 @@ public class Root extends Element {
 			//if((Function.testIdentifier(token, null)
 			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
 			//		|| this.variables.contains(token)))
-			if((Function.testIdentifier(token, null) || this.getVariables().contains(token))
+			if((Function.testIdentifier(token, null) || this.getCachedVarNames().contains(token))
 					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
 			// END KGU#588 2018-10-04
 			{
@@ -2818,22 +2837,22 @@ public class Root extends Element {
      * Extract all variable names of the entire program and store them in
      * this.variables.
      * @return list of variable names
-     * @see #getCachedVarNames()
+     * @see #getVarNames()
      */
-    public StringList getVarNames()
+    public StringList retrieveVarNames()
     {
             //System.out.println("getVarNames() called...");
             return getVarNames(this, false, false, true);
     }
 
     /**
-     * Provides all variable names of the entire program if cached, otherwise extracts and
+     * Provides all variable names of the entire program if cached, otherwise retrieves and
      * stores them in this.variables.
      * @return list of variable names
-     * @see #getVarNames()
+     * @see #retrieveVarNames()
      */
-    public StringList getCachedVarNames() {
-    	//System.out.println("getCachedVarNames() called...");
+    public StringList getVarNames() {
+    	//System.out.println("getVarNames() called...");
     	if (this.variables != null) {
     		return this.variables;
     	}
@@ -2887,10 +2906,7 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-//            // START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
             if(_onlyEle && !_onlyBody)
-//            if(_onlyEle && !_onlyBody && !(_ele instanceof Call && ((Call)_ele).isImportCall()))
-//            // END KGU#376 2017-04-11
             {
                     // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
                     //lines = _ele.getText().copy();
@@ -2923,13 +2939,11 @@ public class Root extends Element {
                     // START KGU#39 2015-10-16
             }
             
-            // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
-            // if (!(this instanceof Root))
             varNames.add(getVarNames(lines, this.constants));
 
-            varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
+            varNames = varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
-                    this.variables=varNames;
+                    this.variables = varNames;
             }
             //System.out.println(varNames.getCommaText());
             return varNames;
@@ -3826,7 +3840,11 @@ public class Root extends Element {
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		// START KGU#686 2019-03-18: Enh. #56
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		String preThrow = CodeParser.getKeywordOrDefault("preThrow", "throw");
+		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "», «" + preThrow + "»";
+		// END KGU#686 2019-03-18
 		String line = sl.get(0).trim();
 		String lineComp = line;
 
@@ -3835,11 +3853,17 @@ public class Root extends Element {
 			preReturn = preReturn.toLowerCase();
 			preLeave = preLeave.toLowerCase();
 			preExit = preExit.toLowerCase();
+			//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+			preThrow = preThrow.toLowerCase();
+			// END KGU#686 2019-03-18
 			lineComp = line.toLowerCase();
 		}
 		boolean isReturn = ele.isReturn();
 		boolean isLeave = ele.isLeave();
 		boolean isExit = ele.isExit();
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		boolean isThrow = ele.isThrow();
+		// END KGU#686 2019-03-18
 		boolean isJump = isLeave || isExit ||
 				lineComp.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 				lineComp.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3859,7 +3883,7 @@ public class Root extends Element {
 		boolean insideParallel = false;
 		
 		// CHECK: Incorrect Jump syntax?
-		if (sl.count() > 1 || !(isJump || isReturn || line.isEmpty()))
+		if (sl.count() > 1 || !(isJump || isReturn || isThrow || line.isEmpty()))
 		{
 			//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error16_1, jumpKeywords), ele), 16);
@@ -5239,7 +5263,7 @@ public class Root extends Element {
             structorizerKeywords.add(keyword);
         }
 
-        this.getVarNames();	// also fills this.constants if not already done
+        this.retrieveVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
 
         Vector<DetectedError> errors = new Vector<DetectedError>();
@@ -5268,7 +5292,7 @@ public class Root extends Element {
 
         // START KGU#220 2016-07-27: Enh. #207
         // Warn in case of switched text/comments as first report
-        if (this.isSwitchTextAndComments())
+        if (isSwitchTextCommentMode())
         {
             String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
             String[] defaultNames = {"Diagram", "Switch text/comments?"};
@@ -5411,7 +5435,7 @@ public class Root extends Element {
         // END KGU#78 2015-11-25
 
         // CHECK: var = programname (#9)
-        if (!haveFunction && getVariables().contains(programName))
+        if (!haveFunction && getCachedVarNames().contains(programName))
         {
             //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
             error  = new DetectedError(errorMsg(Menu.error09,programName),this);
@@ -5567,17 +5591,6 @@ public class Root extends Element {
         }
     }
 
-
-    public boolean isSwitchTextAndComments()
-    {
-    	// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
-    	//return switchTextAndComments;
-    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
-    	//return Element.E_TOGGLETC;
-    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
-    	// END KGU#227
-    	// END KGU#91 2015-12-04
-    }
 
 // START KGU#91 2015-12-04: No longer needed
 //  public void setSwitchTextAndComments(boolean switchTextAndComments) {
@@ -5922,12 +5935,16 @@ public class Root extends Element {
 	 * 7. Calls<br/>
 	 * 8. Jumps<br/>
 	 * 9. Parallel sections<br/>
+	 * 10. Try blocks<br/>
 	 * @return an integer array with element counts according to the index map above 
 	 * @see #getElementCount()
 	 */
 	public Integer[] getElementCounts()
 	{
-		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		// START KGU#686 2019-03-24: Enh. #56
+		//final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0,0};
+		// END KGU#686 2019-03-24
 		
 		IElementVisitor counter = new IElementVisitor() {
 
@@ -5963,7 +5980,12 @@ public class Root extends Element {
 				}
 				else if (_ele instanceof Parallel) {
 					counts[9]++;
-				}	
+				}
+				// START KGU#686 2019-03-24: Enh. #56
+				else if (_ele instanceof Try) {
+					counts[10]++;
+				}
+				// END KGU#686 2019-03-24
 				return true;
 			}
 

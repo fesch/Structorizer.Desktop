@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.elements;
 
+import java.util.HashMap;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -102,6 +104,10 @@ public class TypeMapEntry {
 	private static final Pattern ARRAY_PATTERN5 = Pattern.compile("(.*?)\\[.*?\\]$");
 	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
+	
+	// START KGU#686 2019-03-16: Enh. #56 - facilitate type retrieval by a backlink to the type map
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#686 2019-03-16
 	
 	/**
 	 * Internal declaration list node of TypeMapEntry. Don't manipulate this directly
@@ -333,17 +339,21 @@ public class TypeMapEntry {
 	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition, null otherwise (enh. #423, 2017-07-12)
+	 * @param _owningMap TODO
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
 	 * @param _initialized - whether the variable is initialized or assigned here
 	 * @param _explicit - whether this is an explicit variable declaration (or just derived from value)
 	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 */
-	public TypeMapEntry(String _descriptor, String _typeName, Element _element, int _lineNo, boolean _initialized, boolean _explicit, boolean _cStyle)
+	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap, Element _element, int _lineNo, boolean _initialized, boolean _explicit, boolean _cStyle)
 	{
 		// START KGU#388 2017-07-12: Enh. #423
 		this.typeName = _typeName;
 		// END KGU#388 2017-07-12
+		// START KGU#687 2019-03-16: Issue #408
+		this.typeMap = _owningMap;
+		// END KGU#687 2019-03-16
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
 		if (_initialized) {
 			modifiers.add(_element);
@@ -357,18 +367,26 @@ public class TypeMapEntry {
 	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition (mandatory!)
-	 * @param _components - the component type map
+	 * @param _owningMap - the type map this entry is going to be put to
+	 * @param _components - the component type map - FIXME - may we replace this by a simple type name list now?
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
 	 */
-	public TypeMapEntry(String _descriptor, String _typeName, LinkedHashMap<String, TypeMapEntry> _components,
-			Element _element, int _lineNo)
+	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap,
+			LinkedHashMap<String, TypeMapEntry> _components, Element _element, int _lineNo)
 	{
 		this.typeName = _typeName;
+		// START KGU#687 2019-03-16: Enh. #408
+		this.typeMap = _owningMap;
+		// END KGU#687 2019-03-16
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _components));
 		this.isDeclared = true;
 	}
 	
+	// FIXME KGU#687 2019-0316: Issue #408 - may we eliminate this (having the typeMap back link now)?
+	/**
+	 * @return a unique and universal dummy type map entry
+	 */
 	public static TypeMapEntry getDummy()
 	{
 		if (dummy == null) {
@@ -377,6 +395,16 @@ public class TypeMapEntry {
 		return dummy;
 	}
 	// END KGU#388 2017-07-12
+	
+	// START KGU#686 2019-03-16: Enh. #56 facilitate retrieval
+	/**
+	 * @return the owning type map or null
+	 */
+	public HashMap<String, TypeMapEntry> getTypeMap()
+	{
+		return this.typeMap;
+	}
+	// END KGU#6868 2019-03-16
 	
 	/**
 	 * Returns a type string with canonicalized structure information and - if

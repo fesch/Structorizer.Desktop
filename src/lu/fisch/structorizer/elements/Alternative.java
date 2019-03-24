@@ -142,7 +142,7 @@ public class Alternative extends Element implements IFork {
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, false), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -330,7 +330,7 @@ public class Alternative extends Element implements IFork {
 		this.commentRect = commentRect;
 		this.rFalse = rFalse;
 		this.rTrue = rTrue;
-		this.pt0Parting = pt0Parting;
+		this.pt0Parting = pt0Parting;	// Why don't we simply move rFalse by pt0Parting to right?
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRect0UpToDate = true;
@@ -372,7 +372,7 @@ public class Alternative extends Element implements IFork {
 		//int nLines = getText(false).count();
 		StringList myText = getCuteText(false);
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -669,10 +669,10 @@ public class Alternative extends Element implements IFork {
 	{
 		Alternative ele = new Alternative(this.getText().copy());
 		copyDetails(ele, true);
-		ele.qTrue=(Subqueue) this.qTrue.copy();
-		ele.qFalse=(Subqueue) this.qFalse.copy();
-		ele.qTrue.parent=ele;
-		ele.qFalse.parent=ele;
+		ele.qTrue  = (Subqueue)this.qTrue.copy();
+		ele.qFalse = (Subqueue)this.qFalse.copy();
+		ele.qTrue.parent  = ele;
+		ele.qFalse.parent = ele;
 		return ele;
 	}
 	
@@ -758,8 +758,8 @@ public class Alternative extends Element implements IFork {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
 				// START KGU#453 2017-11-01: Bugfix 447 Someone might have placed line continuation backslashes...
@@ -770,8 +770,8 @@ public class Alternative extends Element implements IFork {
 			this.qTrue.addFullText(_lines, _instructionsOnly);
 			this.qFalse.addFullText(_lines, _instructionsOnly);
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 	
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
