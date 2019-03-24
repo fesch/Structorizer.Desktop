@@ -44,6 +44,9 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2017-12-11/12   Enh. #425: Support for Find mechanism
  *      Kay Gürtzig     2017-12-18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
  *      Kay Gürtzig     2019-02-05      Field NSDControl disabled (isn't actually need anymore)
+ *      Kay Gürtzig     2019-03-24      Issue #712: We should at least cache the last saving folder, then we
+ *                                      ought to have look whether Local filed cachedFilename might be set on
+ *                                      saving.
  *
  ******************************************************************************************************
  *
@@ -110,6 +113,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     private String loadedLocaleName = null;
     public static Locale loadedLocale = null;
+    // START KGU#694 2019-03-24: Issue #712
+    private File currentDirectory = null;
+    // END KGU#694 2019-03-24
     
     // START KGU 2016-08-04: Issue #220
     // Button colour for saved but still cached modifications
@@ -927,6 +933,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             proposedFilename = loadedLocaleName+".txt";
         }
+        // START KGU#693 2019-03-24: Issue #712
+        if (this.currentDirectory != null && this.currentDirectory.isDirectory()) {
+            fileChooser.setCurrentDirectory(this.currentDirectory);
+        }
+        // END KGU#693 2019-3-24
         fileChooser.setSelectedFile(new File(proposedFilename));
         int userSelection = fileChooser.showSaveDialog(this);
 
@@ -936,7 +947,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             
             boolean save = true;
             
-            if(fileToSave.exists() && !fileToSave.isDirectory() && !fileToSave.getAbsolutePath().equals(loadedLocale.cachedFilename)) { 
+            if (fileToSave.exists() && !fileToSave.isDirectory() && !fileToSave.getAbsolutePath().equals(loadedLocale.cachedFilename)) { 
                 if (JOptionPane.showConfirmDialog(this, 
                     "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
                     JOptionPane.YES_NO_OPTION,
@@ -962,6 +973,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 cacheUnsavedData();
                 loadedLocale.hasUnsavedChanges = false;
                 // END KGU 2016-08-04
+                // START KGU#693 2019-03-24: Issue #712
+                this.currentDirectory = fileToSave.getParentFile();
+                // END KGU#693 2019-3-24
             }
             catch (IOException e)
             {
