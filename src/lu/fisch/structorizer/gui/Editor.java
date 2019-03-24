@@ -72,6 +72,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-12      Enh. #662: Arranger index stuff moved to a new class ArrangerIndex
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
+ *      Kay Gürtzig     2019-03-15/17   Issue #56: new menu items for Try elements, breakpoint items disabled
+ *                                      for Forever and Try elements.
+ *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *
  ******************************************************************************************************
  *
@@ -147,6 +150,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JButton btnAfterForever = new JButton(IconLoader.getIcon(61));
 	protected final JButton btnAfterPara = new JButton(IconLoader.getIcon(91));
 	// END KGU#493 2018-02-12
+	// START KGU#686 2019-03-16: Enh. #56
+	protected final JButton btnAfterTry = new JButton(IconLoader.getIcon(120));
+	// END KGU#686 2019-03-16
 	// undo & redo
 	protected final JButton btnUndo = new JButton(IconLoader.getIcon(39)); 
 	protected final JButton btnRedo = new JButton(IconLoader.getIcon(38));
@@ -231,6 +237,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(/*49*/58));
 	protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
 	protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
+	// START KGU#686 2019-03-16: Enh. #56
+	protected final JMenuItem popupAddBeforeTry = new JMenuItem("Try-Catch",IconLoader.getIcon(120));
+	// END KGU#686 2019-03-16
 
 	protected final JMenu popupAddAfter = new JMenu("After");
 	// Submenus of "Add -> After"
@@ -247,6 +256,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
 	protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.getIcon(/*14*/61));
 	protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
+	// START KGU#686 2019-03-16: Enh. #56
+	protected final JMenuItem popupAddAfterTry = new JMenuItem("Try-Catch",IconLoader.getIcon(120));
+	// END KGU#686 2019-03-16
 
 	protected final JMenuItem popupEdit = new JMenuItem("Edit",IconLoader.getIcon(6));
 	protected final JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.getIcon(5));
@@ -716,6 +728,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAfterPara.setFocusable(false);
 		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
 		// END KGU#493 2018-02-12
+		// START KGU#686 2019-03-16: Enh. #56
+		toolbar.add(btnAfterTry, false);
+		btnAfterTry.setFocusable(false);
+		btnAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try ...","", (event.getModifiers() & ActionEvent.SHIFT_MASK) == 0); doButtons(); } } );
+		// END KGU#686 2019-03-16
 		
 		toolbar = newToolBar("Colors ...", false);
 
@@ -857,6 +874,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddBefore.add(popupAddBeforePara);
 		popupAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 
+		// START KGU#686 2019-03-16: Enh. #56
+		popupAddBefore.add(popupAddBeforeTry);
+		popupAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",false); doButtons(); } } );
+		// END KGU#686 2019-03-16
+
 		popupAdd.add(popupAddAfter);
 		popupAddAfter.setIcon(IconLoader.getIcon(20));
 
@@ -889,6 +911,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		popupAddAfter.add(popupAddAfterPara);
 		popupAddAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
+
+		// START KGU#686 2019-03-16: Enh. #56
+		popupAddAfter.add(popupAddAfterTry);
+		popupAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
+		// END KGU#686 2019-03-16
 
 		popup.add(popupEdit);
 		popupEdit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editNSD(); doButtons(); } } );
@@ -1073,6 +1100,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAfterCall.setEnabled(condition);
 		btnAfterJump.setEnabled(condition);
 		btnAfterPara.setEnabled(condition);
+		// START KGU#686 2019-03-16: Enh. #56
+		btnAfterTry.setEnabled(condition);
+		// END KGU#686 2019-03-16
 
 		// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
 		popupAdd.setEnabled(condition);
@@ -1087,6 +1117,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddBeforeCall.setEnabled(condition);
 		popupAddBeforeJump.setEnabled(condition);
 		popupAddBeforePara.setEnabled(condition);
+		// START KGU#686 2019-03-16: Enh. #56
+		popupAddBeforeTry.setEnabled(condition);
+		// END KGU#686 2019-03-16
 
 		popupAddAfterInst.setEnabled(condition);
 		popupAddAfterAlt.setEnabled(condition);
@@ -1098,6 +1131,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddAfterCall.setEnabled(condition);
 		popupAddAfterJump.setEnabled(condition);
 		popupAddAfterPara.setEnabled(condition);
+		// START KGU#686 2019-03-16: Enh. #56
+		popupAddAfterTry.setEnabled(condition);
+		// END KGU#686 2019-03-16
+		
+		popupAddBeforeForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddBeforeJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddBeforePara.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupAddAfterPara.setVisible(!Element.E_REDUCED_TOOLBARS);
+
 		
 		// colors
 		// START KGU#245 2018-07-02: Serial buttons converted to array
@@ -1157,6 +1201,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#667 2019-02-26 Enh.#689
 		popupEditSub.setEnabled(diagram.canEditSub());
 		// END KGU#667 2019-02-26
+		popupTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupEditSub.setVisible(!Element.E_REDUCED_TOOLBARS);
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
@@ -1166,18 +1213,28 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#277 2016-10-13: Enh. #270
 		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
 		// END KGU#277 2016-01-13
+		popupCollapse.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupExpand.setVisible(!Element.E_REDUCED_TOOLBARS);
+		popupDisable.setVisible(!Element.E_REDUCED_TOOLBARS);
 
 		// executor
 		// START KGU#143 2016-01-21: Bugfix #114 - breakpoints need a more generous enabling policy
 		//popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
 		// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended
 		//popupBreakpoint.setEnabled(diagram.canCopy());
-		popupBreakpoint.setEnabled(diagram.canCopyNoRoot());
+		// START KGU#686 2019-03-17: Enh. #56 It doesn't make sense to place breakpoints on endless loops or try elements
+		//popupBreakpoint.setEnabled(diagram.canCopyNoRoot());
+		popupBreakpoint.setEnabled(diagram.canSetBreakpoint());
+		// END KGU#686 2019-03-17
 		// END KGU#177 2016-07-06
 		// END KGU#143 2016-01-21
 		// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
-		popupBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+		// START KGU#686 2019-03-17: Enh. #56 It doesn't make sense to place breakpoints on endless loops or try elements
+		//popupBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+		popupBreakTrigger.setEnabled(diagram.canSetBreakpoint() && !diagram.selectedIsMultiple());
+		// END KGU#686 2019-03-17
 		// END KGU#213 2016-08-02
+		popupBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 		
 		// copy & paste
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy

@@ -152,6 +152,17 @@ elementFormDefault="qualified">
     <xs:attribute name="color" type="nsd:color" default="ffffff"/>
     <xs:attribute name="disabled" type="xs:boolean" default="0"/>
   </xs:complexType>
+  <xs:complexType name="try">
+    <xs:sequence>
+      <xs:element name="qTry" type="nsd:subqueue" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="qCatch" type="nsd:subqueue" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="qFinally" type="nsd:subqueue" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+    <xs:attribute name="text" type="xs:string"></xs:attribute>
+    <xs:attribute name="comment" type="xs:string"></xs:attribute>
+    <xs:attribute name="color" type="nsd:color" default="ffffff"></xs:attribute>
+    <xs:attribute name="disabled" type="xs:boolean"></xs:attribute>
+  </xs:complexType>
   <xs:simpleType name="color">
     <xs:restriction base="xs:string">
       <xs:pattern value="[0-9a-f]{6}"/>

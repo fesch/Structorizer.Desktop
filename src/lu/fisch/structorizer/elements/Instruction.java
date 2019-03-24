@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
  *
  ******************************************************************************************************
  *
@@ -167,7 +168,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, false), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -322,7 +323,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -553,8 +554,19 @@ public class Instruction extends Element {
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		unifyOperators(tokens, true);
-		return tokens.contains("<-");
+		// START KGU#689 2019-03-21: Issue #706 we should better cope with named parameter assignment
+		//return tokens.contains("<-");
+		boolean isAsgnmt = tokens.contains("<-");
+		if (isAsgnmt) {
+			// First eliminate all index expressions, function arguments etc.
+			tokens = coagulateSubexpressions(tokens);
+			// Now try again
+			isAsgnmt = tokens.contains("<-");
+		}
+		return isAsgnmt;
+		// END KGU#689 2019-03-21
 	}
+	
 	/** @return true if this element consists of exactly one instruction line and the line complies to {@link #isAssignment(String)} */
 	public boolean isAssignment()
 	{
@@ -572,6 +584,9 @@ public class Instruction extends Element {
 		// FIXME: These tests might be too simple if the keywords don't comply with identifier syntax
 		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0 ||
 				tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0 ||
+				// START KGU#686 2019-03-18: Enh. #56 new flavour, for try/catch
+				tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0 ||
+				// END KGU#686 2019-03-18
 				tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0
 				);
 	}
@@ -1134,17 +1149,23 @@ public class Instruction extends Element {
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
-	public String getAssignedVarname(StringList tokens) {
+	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
+	public static String getAssignedVarname(StringList tokens) {
 		String varName = null;
+		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
+		tokens = coagulateSubexpressions(tokens);		
+		// END KGU689 2019-03-21
 		int posAsgn = tokens.indexOf("<-");
 		if (posAsgn > 0) {
 			tokens = tokens.subSequence(0, posAsgn);
 		}
-		int posLBracket = tokens.indexOf("[");
-		if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
-			// If it's an array element access then cut of the index expression
-			tokens = tokens.subSequence(0, posLBracket);
-		}
+		// START KGU#689 2019-03-21: Issue #706 can no longer happen in this form due to coagulation
+		//int posLBracket = tokens.indexOf("[");
+		//if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
+		//	// If it's an array element access then cut off the index expression
+		//	tokens = tokens.subSequence(0, posLBracket);
+		//}
+		// END KGU#689 2019-03-21
 		// START KGU#388 2017-09-15: Enh. #423 avoid accidental return of type information
 		int posColon = tokens.indexOf(":");
 		if (posColon > 0 || (posColon = tokens.indexOf("as", false)) > 0) {

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
  *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" added.
  *      Kay Gürtuig     2017.06.30      Enh. #389: New attribute "includeList" added.
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Method generateCode(Try, String) implemented.
  *
  ******************************************************************************************************
  *
@@ -70,6 +71,7 @@ import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -152,6 +154,18 @@ public class XmlGenerator extends Generator
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
 	}
 	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
 
 	/************ Code Generation **************/
 	
@@ -343,7 +357,7 @@ public class XmlGenerator extends Generator
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		code.add(_indent+"<forever text=\""+BString.encodeToHtml(_forever.getText().getCommaText())+"\" comment=\""+
+		code.add(_indent+"<forever comment=\""+
 				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
 				 _forever.getHexColor()+"\" disabled=\""+(_forever.disabled ? "1" : "0") + "\">");
 		// START KGU 2016-12-21: Bugfix #317
@@ -371,6 +385,20 @@ public class XmlGenerator extends Generator
 				 _jump.getHexColor()+"\" disabled=\""+(_jump.disabled ? "1" : "0") + "\"></jump>");
 	}
 	
+	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+		code.add(_indent+"<try text=\""+BString.encodeToHtml(_try.getText().getCommaText())+"\" comment=\""+
+				 BString.encodeToHtml(_try.getComment().getCommaText())+"\" color=\""+
+				 _try.getHexColor()+"\" disabled=\""+(_try.disabled ? "1" : "0") + "\">");
+		generateCode(_try.qTry, _indent + this.getIndent(), "qTry");
+		generateCode(_try.qCatch, _indent + this.getIndent(), "qCatch");
+		generateCode(_try.qFinally, _indent + this.getIndent(), "qFinally");
+		code.add(_indent+"</try>");
+	}
+	// END KGU#686 2019-03-17
+
 	// START KGU 2016-12-21: Bugfix #315 - preserve the element colour of empty subqueues
 	protected void generateCode(Subqueue _subqueue, String _indent, String tagName)
 	{

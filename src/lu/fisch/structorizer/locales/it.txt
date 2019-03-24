@@ -104,6 +104,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -485,8 +486,6 @@ InputBox.lblText.text[elementType:While]=Inserisci la condicione para entrar y q
 InputBox.lblText.text[elementType:Repeat]=Inserisci la conditione para salir
 InputBox.lblText.text[elementType:Case]=Inserisci l'espressione e le costanti della @{Alternative}
 InputBox.lblText.text[elementType:Parallel]=Nummero dei rami paralleli
-InputBox.title[elementType:Root]=
-InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Inseriscire istruzioni...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Inseriscire nuova @{Alternative}...
 InputBox.title[elementType:Case,getInsertionType():insert]=Inseriscire nuova @{Case}...

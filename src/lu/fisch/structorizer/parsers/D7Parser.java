@@ -64,6 +64,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.09.28      Bugfix #613: Include relations with empty includables should be eliminated;
  *                                      Bugfix #614: Redundant result assignments in function diagrams removed
  *                                      Workaround #615: Replace comment delimiters (* *) with { } in preparation phase
+ *      Kay Gürtzig     2019-03-23      Enh. #56: Import of Try and Raise instructions implemented.
  *
  ******************************************************************************************************
  *
@@ -89,9 +90,11 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -397,7 +400,7 @@ public class D7Parser extends CodeParser
 //       final int PROD_RECFIELD1_COLON                             = 213;  // <RecField1> ::= <IdList> ':' <GenericType> <OptPortDirectives>
 //       final int PROD_RECFIELD2_COLON                             = 214;  // <RecField2> ::= <IdList> ':' <CallType>
 //       final int PROD_RECVARIANT_COLON_LPAREN_RPAREN              = 215;  // <RecVariant> ::= <ConstExprList> ':' '(' <RecFieldList> ')'
-//       final int PROD_SELECTOR_COLON                              = 216;  // <Selector> ::= <RefId> ':' <TypeName>
+       final int PROD_SELECTOR_COLON                              = 216;  // <Selector> ::= <RefId> ':' <TypeName>
 //       final int PROD_SELECTOR                                    = 217;  // <Selector> ::= <TypeName>
 //       final int PROD_SETTYPE_SET_OF                              = 218;  // <SetType> ::= <OptPacked> SET OF <OrdinalType>
 //       final int PROD_FILETYPE_FILE_OF                            = 219;  // <FileType> ::= <OptPacked> FILE OF <TypeRef>
@@ -634,11 +637,11 @@ public class D7Parser extends CodeParser
        final int PROD_RAISESTMT_RAISE_SYNERROR                    = 450;  // <RaiseStmt> ::= RAISE SynError
        final int PROD_RAISESTMT_RAISE                             = 451;  // <RaiseStmt> ::= RAISE <OptExceptInstance>
        final int PROD_RAISESTMT_RAISE_AT                          = 452;  // <RaiseStmt> ::= RAISE <OptExceptInstance> AT <Address>
-//       final int PROD_TRYFINALLYSTMT_TRY_FINALLY_END              = 453;  // <TryFinallyStmt> ::= TRY <StmtList> FINALLY <StmtList> END
-//       final int PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END                = 454;  // <TryExceptStmt> ::= TRY <StmtList> EXCEPT <ExceptionBlock> <OptExceptionElse> END
+       final int PROD_TRYFINALLYSTMT_TRY_FINALLY_END              = 453;  // <TryFinallyStmt> ::= TRY <StmtList> FINALLY <StmtList> END
+       final int PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END                = 454;  // <TryExceptStmt> ::= TRY <StmtList> EXCEPT <ExceptionBlock> <OptExceptionElse> END
 //       final int PROD_EXCEPTIONBLOCK                              = 455;  // <ExceptionBlock> ::= <ExceptionStmt>
-//       final int PROD_EXCEPTIONBLOCK_SEMI                         = 456;  // <ExceptionBlock> ::= <ExceptionBlock> ';' <ExceptionStmt>
-//       final int PROD_EXCEPTIONSTMT_ON_DO                         = 457;  // <ExceptionStmt> ::= ON <Selector> DO <Statement>
+       final int PROD_EXCEPTIONBLOCK_SEMI                         = 456;  // <ExceptionBlock> ::= <ExceptionBlock> ';' <ExceptionStmt>
+       final int PROD_EXCEPTIONSTMT_ON_DO                         = 457;  // <ExceptionStmt> ::= ON <Selector> DO <Statement>
 //       final int PROD_EXCEPTIONSTMT                               = 458;  // <ExceptionStmt> ::= <Statement>
        final int PROD_OPTEXCEPTIONELSE_ELSE                       = 459;  // <OptExceptionElse> ::= ELSE <StmtList>
 //       final int PROD_OPTEXCEPTIONELSE                            = 460;  // <OptExceptionElse> ::= 
@@ -1320,7 +1323,7 @@ public class D7Parser extends CodeParser
 					)
 			{
 				Root prevRoot = root;	// Push the original root
-				// If root this is top level and a program diagram then there may only have been declarations
+				// If this root is top level and a program diagram then there may only have been declarations
 				// so far. And these may be global. So transfer them to a new includable diagram and act as if
 				// it were a unit.
 				if (unitName == null && this.getSubRootCount() == 0 && prevRoot.isProgram()) {
@@ -1532,8 +1535,8 @@ public class D7Parser extends CodeParser
 					 ruleHead.equals("<CaseStatement>")
 					 )
 			{
-				content = new String();
-				content = getKeyword("preCase")+getContent_R(_reduction.get(1).asReduction(),content)+getKeyword("postCase");
+				content = "";
+				content = getKeyword("preCase") + getContent_R(_reduction.get(1).asReduction(), content) + getKeyword("postCase");
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
@@ -1561,7 +1564,7 @@ public class D7Parser extends CodeParser
 				}
 
 				Case ele = new Case(translateContent(content));
-				ele.setText(translateContent(content));
+				//ele.setText(translateContent(content));	// What was this good for? It had just been done!
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -1611,6 +1614,88 @@ public class D7Parser extends CodeParser
 				 end;
 				 */
 			}
+			// START KGU#686 2019-03-22: Enh. #56
+			else if (ruleHead.equals("<RaiseStmt>")) {
+//				switch (ruleId) {
+//				case RuleConstants.PROD_RAISESTMT_RAISE_SYNERROR:	// <RaiseStmt> ::= RAISE SynError
+//				case RuleConstants.PROD_RAISESTMT_RAISE:			// <RaiseStmt> ::= RAISE <OptExceptInstance>
+//				case RuleConstants.PROD_RAISESTMT_RAISE_AT:			// <RaiseStmt> ::= RAISE <OptExceptInstance> AT <Address>
+//				}
+				Jump raise = new Jump(this.getContent_R(_reduction.get(1).asReduction(), getKeywordOrDefault("preThrow", "throw")));
+				_parentNode.addElement(this.equipWithSourceComment(raise, _reduction));
+			}
+			else if (
+					ruleId == RuleConstants.PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END
+					||
+					ruleId == RuleConstants.PROD_TRYFINALLYSTMT_TRY_FINALLY_END
+					)
+			{
+				Reduction secReduc = _reduction.get(1).asReduction();	// try block
+				Try ele = new Try("");
+				buildNSD_R(secReduc, ele.qTry);
+				secReduc = _reduction.get(3).asReduction();
+				int secRuleId = secReduc.getParent().getTableIndex();
+				switch (ruleId) {
+				case RuleConstants.PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END: {
+					// <TryExceptStmt> ::= TRY <StmtList> EXCEPT <ExceptionBlock> <OptExceptionElse> END
+					String exVarName = null;	// exception variable
+					Reduction elseReduc = _reduction.get(4).asReduction();
+					int elseRuleId = elseReduc.getParent().getTableIndex();
+					if (secRuleId == RuleConstants.PROD_EXCEPTIONBLOCK_SEMI
+							|| elseRuleId == RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE) {
+						// Create a case structure with minimum content
+						Case select = new Case((getKeyword("preCase") + " ??? " + getKeyword("postCase")).trim() + "\n!!\nelse");
+						select.setComment("FIXME: This case selection just reflects the exception type discrimination\nIt won't be executable in this form.");
+						while (secRuleId == RuleConstants.PROD_EXCEPTIONBLOCK_SEMI) {
+							exVarName = insertExceptionBlock(select, secReduc.get(2).asReduction(), exVarName);
+							secReduc = secReduc.get(0).asReduction();
+							secRuleId = secReduc.getParent().getTableIndex();
+						}
+						exVarName = insertExceptionBlock(select, secReduc, exVarName);
+						if (elseRuleId == RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE) {
+							// <OptExceptionElse> ::= ELSE <StmtList>
+							buildNSD_R(elseReduc, select.qs.lastElement());
+						}
+						else {
+							select.qs.lastElement().addElement(new Jump(getKeyword("preThrow")));
+						}
+						ele.qCatch.addElement(select);
+						if (exVarName != null) {
+							select.getText().set(0, select.getText().get(0).replace("???", exVarName));
+						}
+					}
+					else {
+						// Can only be a single exception block
+						if (secRuleId == RuleConstants.PROD_EXCEPTIONSTMT_ON_DO) {
+							// <ExceptionStmt> ::= ON <Selector> DO <Statement>
+							if (secReduc.get(1).getType() == SymbolType.NON_TERMINAL
+									&& secReduc.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_SELECTOR_COLON) {
+								exVarName = getContent_R(secReduc.get(1).asReduction().get(0).asReduction(), "");
+							}
+							buildNSD_R(secReduc.get(3).asReduction(), ele.qCatch);
+						}
+					}
+					if (exVarName != null) {
+						ele.setText(exVarName);
+					}
+				}
+				break;
+				case RuleConstants.PROD_TRYFINALLYSTMT_TRY_FINALLY_END: {
+					// <TryFinallyStmt> ::= TRY <StmtList> FINALLY <StmtList> END
+					// Possibly we may combine this Try element with an encapsulated one
+					Try encapsulated = null;
+					if (ele.qTry.getSize() == 1 && ele.qTry.getElement(0) instanceof Try && (encapsulated = (Try)ele.qTry.getElement(0)).qFinally.getSize() == 0) {
+						ele = encapsulated;
+					}
+					else {
+						ele.qCatch.addElement(new Jump(getKeyword("preThrow")));
+					}
+					buildNSD_R(secReduc, ele.qFinally);					
+				}
+				}
+				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
+			}
+			// END KGU#686 2019-03-22
 			else
 			{
 				if (_reduction.size() > 0)
@@ -1628,6 +1713,74 @@ public class D7Parser extends CodeParser
 		}
 	}
 	
+	/**
+	 * Inserts a new exception block from {@code _exStmtReduction} at first free
+	 * branch position in {@link Case} element {@code _case}.<br/>
+	 * If {@code _varName} hadn't been set (i.e. is null) and the exception block
+	 * has an own variable name specified then this name will be returned, otherwise
+	 * null.<br/>
+	 * The exception type will be converted into a string and used as selector
+	 * expression.
+	 * @param _case - the exception selection
+	 * @param _exStmtReduction - a reduction of type {@code <ExceptionStmt>}
+	 * @param _varName - a possible former exception variable name
+	 * @return then new exception variable name if {@code _varName} was null and the
+	 * exception statement header declared a variable.
+	 * @throws ParserCancelled if the user cancelled the import meanwhile
+	 */
+	private String insertExceptionBlock(Case _case, Reduction _exStmtReduction, String _varName) throws ParserCancelled {
+		if (_exStmtReduction.size() == 0) return null;
+		String exVarName = null;
+		int ixStmtList = 0;
+		String type = "";
+		if (_exStmtReduction.getParent().getTableIndex() == RuleConstants.PROD_EXCEPTIONSTMT_ON_DO) {
+			// <ExceptionStmt> ::= ON <Selector> DO <Statement>
+			ixStmtList = 3;
+			if (_exStmtReduction.get(1).getType() == SymbolType.NON_TERMINAL) {
+				// The selector is composed
+				int ixType = 0;	// Index of the type specification
+				Reduction selReduc = _exStmtReduction.get(1).asReduction();
+				if (selReduc.getParent().getTableIndex() == RuleConstants.PROD_SELECTOR_COLON) {
+					exVarName = getContent_R(selReduc.get(0).asReduction(), "");
+					ixType = 2;					
+				}
+				if (selReduc.get(ixType).getType() == SymbolType.NON_TERMINAL) {
+					type = getContent_R(selReduc.get(ixType).asReduction(), "");
+				}
+				else {
+					type = selReduc.get(ixType).asString();
+				}
+			}
+			else {
+				type = _exStmtReduction.get(1).asString();
+			}
+		}
+		if (!(type.startsWith("\"") && type.endsWith("\"") || type.startsWith("'") && type.endsWith("'"))) {
+			type = "\"" + type + "\"";
+		}
+		// Now extract the statements
+		int branchNo = _case.getText().indexOf("!!") - 1;
+		Subqueue branch;
+		if (branchNo < 0) {
+			_case.qs.insertElementAt(new Subqueue(), 0);
+			branchNo = 0;
+			(branch = _case.qs.get(0)).parent = _case;
+			_case.getText().insert(type, 1);
+		}
+		else {
+			_case.getText().set(branchNo+1, type);
+			branch = _case.qs.get(branchNo);
+		}
+		if (exVarName != null && _varName != null && !exVarName.equals(_varName)) {
+			branch.addElement(new Instruction(exVarName + " <- " + _varName));
+		}
+		buildNSD_R(_exStmtReduction.get(ixStmtList).asReduction(), branch);
+		if (_varName != null) {
+			exVarName = null;
+		}
+		return exVarName;
+	}
+
 	// START KGU#542 2018-07-11: Enh. #558 - provisional enum type support
 	private String importEnumType(Reduction redEnumL, String typeName) throws ParserCancelled {
 		StringList names = new StringList();
@@ -1716,7 +1869,7 @@ public class D7Parser extends CodeParser
 		// START KGU#537 2018-07-01: Enh. #553
 		checkCancelled();
 		// END KGU#537 2018-07-01
-		for(int i=0;i<_reduction.size();i++)
+		for(int i = 0; i < _reduction.size(); i++)
 		{
 			switch (_reduction.get(i).getType()) 
 			{

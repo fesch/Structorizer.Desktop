@@ -132,7 +132,7 @@ public class Case extends Element implements IFork
 	{
     	// START KGU#172 2016-04-01: Bugfix #145
 		//return getComment();
-        if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+        if (!_alwaysTrueComment && isSwitchTextCommentMode())
         {
         	return StringList.getNew(text.get(0));
         }
@@ -295,7 +295,7 @@ public class Case extends Element implements IFork
                 discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
                 // END KGU#453 2017-11-01
             }
-            if (this.isSwitchTextCommentMode())
+            if (isSwitchTextCommentMode())
             {
                 discrLines = this.getComment();
             }
@@ -461,7 +461,7 @@ public class Case extends Element implements IFork
     		return;
     	}
     	// START KGU#172 2016-04-01: Bugfix #145
-    	boolean isSwitchMode = this.isSwitchTextCommentMode();
+    	boolean isSwitchMode = isSwitchTextCommentMode();
     	// END KGU#172 2016-04-01
     	//boolean isHighlight = Element.getRoot(this).highlight;
 

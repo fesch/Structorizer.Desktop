@@ -46,9 +46,10 @@ import java.util.HashSet;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Function;
-
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.utils.StringList;
 
 /**
@@ -56,12 +57,6 @@ import lu.fisch.utils.StringList;
  *
  */
 public class COBOLGenerator extends Generator {
-
-    @Override
-    protected OverloadingLevel getOverloadingLevel() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        return null;
-    }
 
 	public enum CodePart {
 
@@ -94,6 +89,18 @@ public class COBOLGenerator extends Generator {
 	private final String[] ext = { "cob", "cbl" };
 	private final HashMap<Root, HashSet<String>> subMap = new HashMap<Root, HashSet<String>>();
 	private HashMap<String, TypeMapEntry> typeMap; 
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	/**
 	 * get start for COBOL source or comment line with correct length depending
@@ -229,6 +236,17 @@ public class COBOLGenerator extends Generator {
 		//insertUserIncludes(CodePart.WORKING_STORAGE);
 		return this.getLineStart(false) + "COPY %.";
 	}
+
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// FIXME: No idea whether subroutine overloading is a sensible concept in COBOl at all.
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
 
 	// include / import / uses config
 	/*
@@ -405,7 +423,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be
@@ -464,6 +482,14 @@ public class COBOLGenerator extends Generator {
 
 	/************ Code Generation **************/
 	
+	protected void generateCode(Try _try, String _indent)
+	{
+		/* FIXME this should somehow be converted to a "declarative procedure" declaration,
+		 * something like:
+		 * USE AFTER STANDARD EXCEPTION PROCEDURE ON ??? <PARAGR_NAME>
+		 * */
+		super.generateCode(_try, _indent);
+	}
 	
 	/**
 	 * Composes the heading for the program or function according to the

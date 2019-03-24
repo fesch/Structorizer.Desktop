@@ -54,6 +54,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.03.22      Issue #463: Direct console output replaced with logging
  *      Kay Gürtzig     2018.07.17      Bugfix #562: Attribute "origin" must be set (overwritten) in any case
  *      Kay Gürtzig     2018.09.11      Refines #372: More sensible attributes for Roots from an arrz file.
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Import of new Try element implemented
  *
  ******************************************************************************************************
  *
@@ -98,10 +99,15 @@ public class NSDParser extends DefaultHandler {
 	private Stack<Subqueue> qStack  = new Stack<Subqueue>();
 	private Stack<Case>     cStack  = new Stack<Case>();
 	private Stack<Parallel> pStack  = new Stack<Parallel>();
+	// START KGU#686 2019-03-17: Enh. #56
+	private Stack<Try> tryStack = new Stack<Try>();
+	// EN KGU#686 2019-03-17
 	
 	//private boolean multi = false;
 	
+	/** current {@link Subqueue} Elements are to be added to */
 	private Subqueue lastQ = null;
+	/** Current {@link Element} being parsed */
 	private Element lastE = null;
 	
 	private String fileVersion = "";
@@ -139,6 +145,13 @@ public class NSDParser extends DefaultHandler {
 	@Override
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
 	{
+//		System.out.println("start " + qualifiedName + " entry");
+//		System.out.println("stack:\t" + stack.size());
+//		System.out.println("ifStack:\t" + ifStack.size());
+//		System.out.println("tryStack:\t" + tryStack.size());
+//		System.out.println("qStack:\t" + qStack.size());
+//		System.out.println("pStack:\t" + pStack.size());
+//		System.out.println("cStack:\t" + cStack.size() + "\n");
 		// --- ELEMENTS ---
 		if (qualifiedName.equals("root"))
 		{
@@ -287,7 +300,7 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#258 2016-09-25
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -313,7 +326,7 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#258 2016-09-25
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -358,7 +371,7 @@ public class NSDParser extends DefaultHandler {
 			// START KGU#258 2016-09-25: Enh. #253
 			if (this.refactorKeywords)
 			{
-				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);	// FIXME does this make sense for an alternative?
 			}
 			// END KGU#258 2016-09-25
 			
@@ -367,7 +380,7 @@ public class NSDParser extends DefaultHandler {
 			ele.qFalse.setColor(ele.getColor());
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -545,7 +558,7 @@ public class NSDParser extends DefaultHandler {
 			ele.q.setColor(ele.getColor());
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -657,6 +670,34 @@ public class NSDParser extends DefaultHandler {
 			((Parallel) pStack.peek()).qs.addElement(lastQ);
 			qStack.push(lastQ);
 		}
+		// START KGU#686 2019-03-17: Enh. #56
+		else if (qualifiedName.equals("try"))
+		{
+			// create element
+			Try ele = new Try(StringList.getNew("???"));
+			
+			// read attributes
+			if (attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if (attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			// END KGU#277 2016-10-13
+			
+			// Enh. #253 No keyword refactoring necessary
+			
+			// set children colour (???)
+			ele.qTry.setColor(ele.getColor());
+			ele.qCatch.setColor(ele.getColor());
+			ele.qFinally.setColor(ele.getColor());
+			
+			// place stack
+			lastE = ele;
+			stack.push(ele);
+			lastQ.addElement(ele);
+			tryStack.push(ele);
+		}
+		// END KGU#686 2019-03-17: Enh. #56
 		else if (qualifiedName.equals("children"))
 		{
 			// handle stacks
@@ -672,7 +713,7 @@ public class NSDParser extends DefaultHandler {
 		{
 			// create new queue
 			lastQ = ((Alternative) lastE).qTrue;
-			// START KGU 2106-12-21: Bugfix #317
+			// START KGU 2016-12-21: Bugfix #317
 			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
 				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
 			}
@@ -735,25 +776,66 @@ public class NSDParser extends DefaultHandler {
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
-		// START KGU #2016-12-21: obsolete Bugfix #317 - restore color of empty subqueues
-//		else if (qualifiedName.equals("subqueue"))
-//		{
-//			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals(""))
-//			{
-//				qStack.peek().setColor(Color.decode("0x"+attributes.getValue("color")));
-//			} 
-//		}
-		// END KGU #2016-12-21
+		// START KGU#686 2019-03-17: Enh. #56
+		else if (qualifiedName.equals("qTry"))
+		{
+			// create new queue
+			lastQ = tryStack.peek().qTry;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
+			qStack.push(lastQ);
+		}
+		else if (qualifiedName.equals("qCatch"))
+		{
+			lastQ = tryStack.peek().qCatch;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
+			qStack.push(lastQ);
+		}
+		else if (qualifiedName.equals("qFinally"))
+		{
+			lastQ = tryStack.peek().qFinally;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
+			qStack.push(lastQ);
+		}
+		// END KGU#686 2019-03-17: Enh. #56
+//		System.out.println("start " + qualifiedName + " EXIT");
+//		System.out.println("stack:\t" + stack.size());
+//		System.out.println("ifStack:\t" + ifStack.size());
+//		System.out.println("tryStack:\t" + tryStack.size());
+//		System.out.println("qStack:\t" + qStack.size());
+//		System.out.println("pStack:\t" + pStack.size());
+//		System.out.println("cStack:\t" + cStack.size() + "\n");
 	}
 	
-    @Override
+	@Override
 	public void endElement(String namespaceUri, String localName, String qualifiedName) throws SAXException 
 	{
+//		System.out.println("end " + qualifiedName + " entry");
+//		System.out.println("stack:\t" + stack.size());
+//		System.out.println("ifStack:\t" + ifStack.size());
+//		System.out.println("tryStack:\t" + tryStack.size());
+//		System.out.println("qStack:\t" + qStack.size());
+//		System.out.println("pStack:\t" + pStack.size());
+//		System.out.println("cStack:\t" + cStack.size() + "\n");
 		// --- STRUCTURES ---
 		if(qualifiedName.equals("root") ||
 		   qualifiedName.equals("call") ||
 		   qualifiedName.equals("jump") ||
 		   qualifiedName.equals("instruction") ||
+		   // START KGU#686 2019-03-17: Had aoparently been forgotten -> left an uneven stack balance
+		   qualifiedName.equals("alternative") ||
+		   // END KGU#686 2019-03-17
 		   qualifiedName.equals("while") ||
 		   qualifiedName.equals("repeat") ||
 		   qualifiedName.equals("forever") ||
@@ -772,6 +854,11 @@ public class NSDParser extends DefaultHandler {
 			lastE = stack.pop();
 			cStack.pop();
 		}
+		else if (qualifiedName.equals("try"))
+		{
+			lastE = stack.pop();
+			tryStack.pop();			
+		}
 		// -- QUEUES ---
 		else if(qualifiedName.equals("qCase") ||
 				qualifiedName.equals("qPara") ||
@@ -779,60 +866,75 @@ public class NSDParser extends DefaultHandler {
 				qualifiedName.equals("qForever") ||
 				qualifiedName.equals("qWhile") ||
 				qualifiedName.equals("qRepeat") ||
+				// START KGU#686 2019-03-17: Enh. #56
+				qualifiedName.equals("qTry") ||
+				qualifiedName.equals("qCatch") ||
+				qualifiedName.equals("qFinally") ||
+				// END KGU#686 2019-03-17
 				qualifiedName.equals("qTrue") ||
 				qualifiedName.equals("qFalse")
 				)
 		{
-			lastQ = qStack.pop();	// What's this assignment good for
+			qStack.pop();
 			lastQ = qStack.peek();
 		}
 		else if(qualifiedName.equals("children"))
 		{
 			lastQ = qStack.pop();
 		}
-		else if (qualifiedName.equals("qTrue"))
-		{
-			lastQ = qStack.pop();
-		}
+		// START KGU 2019-03-17: Was dead code ("qTrue" had already been handled above...)
+		//else if (qualifiedName.equals("qTrue"))
+		//{
+		//	lastQ = qStack.pop();
+		//}
+		// END KGU 2019-03-17
+//		System.out.println("end " + qualifiedName + " EXIT");
+//		System.out.println("stack:\t" + stack.size());
+//		System.out.println("ifStack:\t" + ifStack.size());
+//		System.out.println("tryStack:\t" + tryStack.size());
+//		System.out.println("qStack:\t" + qStack.size());
+//		System.out.println("pStack:\t" + pStack.size());
+//		System.out.println("cStack:\t" + cStack.size() + "\n");
 	}
 	
-    @Override
+	@Override
 	public void characters(char[] chars, int startIndex, int endIndex) 
 	{
 		//String dataString =	new String(chars, startIndex, endIndex).trim();
 	}
-    
-    // START KGU#363 2017-05-21: Issue #372 It was sensible to change this signature
-//    /**
-//     * Parses the NSD file specified by the URI (!) {@code _filename} and returns the composed Root if possible
-//     * @param _filename a URI specifying the file path. CAUTION: This string is not expected to be usable for e.g.
-//     * {@code new File(_filename)}. It may be derived e.g. from a {@code File} object f by {@code f.toURI().toString()}.  
-//     * @return the built diagram
-//     * @throws SAXException
-//     * @throws IOException
-//     */
+	
+	// START KGU#363 2017-05-21: Issue #372 It was sensible to change this signature
+//	/**
+//	 * Parses the NSD file specified by the URI (!) {@code _filename} and returns the composed Root if possible
+//	 * @param _filename a URI specifying the file path. CAUTION: This string is not expected to be usable for e.g.
+//	 * {@code new File(_filename)}. It may be derived e.g. from a {@code File} object f by {@code f.toURI().toString()}.  
+//	 * @return the built diagram
+//	 * @throws SAXException
+//	 * @throws IOException
+//	 */
 //	public Root parse(String _filename) throws SAXException, IOException
-    /**
-     * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
-     * composed {@link Root} (if possible), otherwise raises exceptions. 
-     * @param _file - a {@code File} object representing the NSD file to be parsed.  
-     * @return the built diagram
-     * @throws SAXException
-     * @throws IOException
-     */
+	/**
+	 * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
+	 * composed {@link Root} (if possible), otherwise raises exceptions. 
+	 * @param _file - a {@code File} object representing the NSD file to be parsed.  
+	 * @return the built diagram
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public Root parse(File _file) throws SAXException, IOException
 	{
 		return parse(_file, null);
 	}
-    /**
-     * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
-     * composed {@link Root} (if possible), otherwise raises exceptions. 
-     * @param _file - a {@code File} object representing the NSD file to be parsed.  
-     * @param _zipFile - the arrz file if {@code _file} is a temporary file unzipped from it, null otherwise
-     * @return the built diagram
-     * @throws SAXException
-     * @throws IOException
-     */
+	
+	/**
+	 * Parses the NSD file specified by the given {@code File} object {@code _file} and returns the
+	 * composed {@link Root} (if possible), otherwise raises exceptions. 
+	 * @param _file - a {@code File} object representing the NSD file to be parsed.  
+	 * @param _zipFile - the arrz file if {@code _file} is a temporary file unzipped from it, null otherwise
+	 * @return the built diagram
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public Root parse(File _file, File _zipFile) throws SAXException, IOException
 	// END KGU#363 2017-05-21
 	{
@@ -852,6 +954,9 @@ public class NSDParser extends DefaultHandler {
 		qStack.clear();
 		cStack.clear();
 		pStack.clear();
+		// START KGU#686 2019-03-17: Enh. #56
+		tryStack.clear();
+		// END KGU#686 2019-03-17
 				
 		// START KGU#258 2016-09-26: Enhancement #253
 		Ini ini = Ini.getInstance();
@@ -919,6 +1024,9 @@ public class NSDParser extends DefaultHandler {
 		qStack.clear();
 		cStack.clear();
 		pStack.clear();
+		// START KGU#686 2019-03-17: Enh. #56
+		tryStack.clear();
+		// END KGU#686 2019-03-17
 		
 		// START KGU#258 2016-09-26: Enh. #253
 		Ini ini = Ini.getInstance();

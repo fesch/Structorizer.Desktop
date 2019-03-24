@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-17      Issue #56: Accordng to the user guide, Forever may not have a breakpoint
  *
  ******************************************************************************************************
  *
@@ -291,6 +292,14 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#43/KGU#686 2019-03-17: Issue #56 Breakpoint support denied
+	@Override
+	public void toggleBreakpoint()
+	{
+		// Forever itself may never have a breakpoint!
+		breakpoint = false;
+	}
+
 	// START KGU#117 2016-03-07: Enh. #77
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)

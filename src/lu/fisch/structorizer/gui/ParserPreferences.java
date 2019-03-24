@@ -124,6 +124,11 @@ public class ParserPreferences extends LangDialog {
 	protected JLabel lblJumpReturn;
 	protected JLabel lblJumpExit;
 	// END KGU#78 2016-03-25
+	// START KGU#686 2019-03-18: Enh. #56 
+	protected JLabel lblNothing7;
+	protected JTextField edtJumpThrow;
+	protected JLabel lblJumpThrow;
+	// END KGU#686 2019-03-18
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// START KGU 2016-03-25: New general option for handling these keywords
@@ -149,7 +154,7 @@ public class ParserPreferences extends LangDialog {
 	protected JPanel headPanel;
 	protected JLabel lblHeadline;
 	// END KGU#657 2019-02-17
-	
+
 	/*public ParserPreferences()
 	{
 		super();
@@ -218,6 +223,11 @@ public class ParserPreferences extends LangDialog {
 		lblJumpReturn = new JLabel();
 		lblJumpExit = new JLabel();
 		// END KGU#78 2016-03-25
+		// START KGU#686 2019-03-18: Enh. #56 
+		lblNothing7 = new JLabel();
+		edtJumpThrow = new JTextField();
+		lblJumpThrow = new JLabel();
+		// END KGU#686 2019-03-18
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 		edtInput = new JTextField();
@@ -243,7 +253,7 @@ public class ParserPreferences extends LangDialog {
 		mandatoryFields = new JTextField[] {
 				edtForPre, edtForPost, edtForStep,
 				edtForInPre, edtForInPost,
-				edtJumpLeave, edtJumpReturn, edtJumpExit,
+				edtJumpLeave, edtJumpReturn, edtJumpExit, edtJumpThrow,
 				edtInput, edtOutput
 		};
 		// END KGU#657 2019-02-17
@@ -279,7 +289,10 @@ public class ParserPreferences extends LangDialog {
 				//contentPanel.setLayout(new GridLayout(9, 3, 8, 8));
 				// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
 				//contentPanel.setLayout(new GridLayout(10, 3, 8, 8));
-				contentPanel.setLayout(new GridLayout(13, 3, 8, 8));
+				// START KGU#686 2019-3-18: Enh. #56 - Throw flavour of Jump statement
+				//contentPanel.setLayout(new GridLayout(13, 3, 8, 8));
+				contentPanel.setLayout(new GridLayout(14, 3, 8, 8));
+				// END KGU#686 2019-03-18
 				// END KGU#78 2016-03-25
 				// END KGU#61 2016-03-21
 				// END KGU#3 2015-11-08
@@ -354,6 +367,13 @@ public class ParserPreferences extends LangDialog {
 				lblJumpExit.setText("from program");
 				contentPanel.add(lblJumpExit);
 				// END KGU#78 2016-03-26
+
+				// START KGU#686 2019-03-18: Enh. #56 
+				contentPanel.add(lblNothing7);
+				contentPanel.add(edtJumpThrow);
+				lblJumpThrow.setText("on error");
+				contentPanel.add(lblJumpThrow);
+				// END KGU#686 2019-03-18
 
 				//---- Input / Output ----
 				contentPanel.add(lblNothing2);
@@ -473,6 +493,9 @@ public class ParserPreferences extends LangDialog {
 		edtJumpReturn.addKeyListener(keyListener);
 		edtJumpExit.addKeyListener(keyListener);
 		// END KGU#78 2016-03-25
+		// START KGU#686 2019-03-24: Enh. #56
+		edtJumpThrow.addKeyListener(keyListener);
+		// END KGU#686 2019-03-23
 		edtInput.addKeyListener(keyListener);
 		edtOutput.addKeyListener(keyListener);
 		btnOK.addKeyListener(keyListener);
@@ -541,6 +564,9 @@ public class ParserPreferences extends LangDialog {
 				edtJumpReturn.getText().contains(":") ||
 				edtJumpExit.getText().contains(":") ||
 				// END KGU#78 2016-03-25
+				// START KGU#686 2019-03-24: Enh. #56
+				edtJumpThrow.getText().contains(":") ||
+				// END KGU#686 2019-03-24
 				edtInput.getText().contains(":") ||
 				edtOutput.getText().contains(":")
 				) {
@@ -672,7 +698,10 @@ public class ParserPreferences extends LangDialog {
 				edtForInPre,
 				edtWhilePre,	edtWhilePost,
 				edtRepeatPre,	edtRepeatPost,
-				edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				// START KGU#686 2019-03-24: Enh. #56
+				//edtJumpLeave,	edtJumpReturn,	edtJumpExit,
+				edtJumpLeave,	edtJumpReturn,	edtJumpExit, edtJumpThrow,
+				// END KGU#686 2019-0324
 				edtInput,
 				edtOutput
 		};

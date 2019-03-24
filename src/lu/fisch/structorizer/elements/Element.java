@@ -101,6 +101,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-25      Enh. #419: New method breakTextLines(...)
  *      Kay Gürtzig     2019-03-07      Enh. #385: method extractDeclarationsFromList now also extracts default values
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: Handling and highlighting of the throw keyword.
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *
  ******************************************************************************************************
  *
@@ -215,6 +217,13 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
+/**
+ * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
+ * i.e. the basic algorithmic structure blocks.
+ * Provides primitives and utilities for drawing, syntax analysis, preferences,
+ * and traversal.
+ * @author Bob Fisch
+ */
 public abstract class Element {
 	
 	/** This enumeration type distinguishes drawing contexts for selection display */
@@ -229,7 +238,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-06";
+	public static final String E_VERSION = "3.29-07";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -387,6 +396,10 @@ public abstract class Element {
     public static boolean E_AUTO_SAVE_ON_CLOSE = false;
     public static boolean E_MAKE_BACKUPS = true;
     // END KGU#309 20161-12-15
+    // START KGU#690 2019-03-21: Issue #707 - new saving options
+    public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
+    public static char E_FILENAME_SIG_SEPARATOR = '-';
+    // END KGU#690 2019-03-21
     // START KGU#287 2017-01-11: Issue #81 (workaround)
     /** GUI scaling factor prepared for the next session */
     public static double E_NEXT_SCALE_FACTOR;
@@ -446,6 +459,11 @@ public abstract class Element {
 	// START KGU#376 2017-07-01: Enh #389 - Configurable caption for the includes box of Root
 	public static String preImport = "Included diagrams:";
 	// END KGU#376 2017-07-01
+	// START KGU#686 2019-03-15: Enh. #56 - configurable captions for the TRY block
+	public static String preTry = "try";
+	public static String preCatch = "catch";
+	public static String preFinally = "finally";
+	// END KGU#686 2019-03-15
 	
 	// START KGU#480 2018-01-19: Enh. #490 controller API alias mechanism
 	/**
@@ -914,19 +932,19 @@ public abstract class Element {
 	public StringList getText(boolean _alwaysTrueText)
 	// END KGU#91 2015-12-01
 	{
-        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
-        {
-        	// START KGU#199 2016-07-07: Enh. #188
-        	// Had to be altered since the combination of instructions may produce
-        	// multi-line string elements which would compromise drawing
-        	//return comment;
-        	return StringList.explode(comment, "\n");
-        	// END KGU#199 2016-07-07
-        }
-        else
-        {
-        	return text;
-        }
+		if (!_alwaysTrueText & isSwitchTextCommentMode())
+		{
+			// START KGU#199 2016-07-07: Enh. #188
+			// Had to be altered since the combination of instructions may produce
+			// multi-line string elements which would compromise drawing
+			//return comment;
+			return StringList.explode(comment, "\n");
+			// END KGU#199 2016-07-07
+		}
+		else
+		{
+			return text;
+		}
 	}
 
 	// START KGU#453 2017-11-01: Bugfix #447 - we need a cute representation of broken lines in some cases
@@ -969,16 +987,16 @@ public abstract class Element {
 	 */
 	protected StringList getCuteText(boolean _alwaysTrueText)
 	{
-        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
-        {
-        	// START KGU#199 2016-07-07: Enh. #188
-        	// Had to be altered since the combination of instructions may produce
-        	// multi-line string elements which would compromise drawing
-        	//return comment;
-        	return StringList.explode(comment, "\n");
-        	// END KGU#199 2016-07-07
-        }
-        return getCuteText();
+		if (!_alwaysTrueText && isSwitchTextCommentMode())
+		{
+			// START KGU#199 2016-07-07: Enh. #188
+			// Had to be altered since the combination of instructions may produce
+			// multi-line string elements which would compromise drawing
+			//return comment;
+			return StringList.explode(comment, "\n");
+			// END KGU#199 2016-07-07
+		}
+		return getCuteText();
 	}
 	// END KGU#453 2017-11-01
 
@@ -994,7 +1012,7 @@ public abstract class Element {
 		//if (getText(false).count()>0) sl.add(getText(false).get(0));
 		if (getText(false).count() > 0) {
 			StringList myText = getText(false);
-			if (Element.E_APPLY_ALIASES && !this.isSwitchTextCommentMode()) {
+			if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 				myText = StringList.explode(Element.replaceControllerAliases(myText.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 			}
 			sl.add(myText.get(0));
@@ -1269,10 +1287,7 @@ public abstract class Element {
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-		// START KGU#227 2016-07-30: Enh. #128 - Comments plus text mode ovverrides all
-		//if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
-		if (!_alwaysTrueComment && !Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
-		// END KGU#227 2016-07-30
+		if (!_alwaysTrueComment && isSwitchTextCommentMode())
 		{
 			return text;
 		}
@@ -1282,15 +1297,19 @@ public abstract class Element {
 		}
 	}
 	
-	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
+	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information, 2019-03-16 made static
 	/**
 	 * Checks whether texts and comments are to be swapped for display.
-	 * @return true iff a Root is associated and its swichTextAndComments flag is on
+	 * @return true iff the swichTextAndComments flag is on and commentsPlusText mode is not
 	 */
-	protected boolean isSwitchTextCommentMode()
+	protected static boolean isSwitchTextCommentMode()
 	{
-		Root root = getRoot(this);
-		return (root != null && root.isSwitchTextAndComments());
+//		Root root = getRoot(this);
+//		return (root != null && root.isSwitchTextAndComments());
+    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
+    	//return Element.E_TOGGLETC;
+    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
+    	// END KGU#227 2016-07-31
 	}
 	// END KGU#172 2916-04-01
 
@@ -1933,7 +1952,7 @@ public abstract class Element {
 			{
 				return true;
 			}
-				});		
+		});
 	}
 	
 	private void intClearExecutionStatus()
@@ -2256,9 +2275,9 @@ public abstract class Element {
 			//E_PADDING = Math.round((float)(E_PADDING_BASE * Double.parseDouble(ini.getProperty("scaleFactor", "1.0"))));
 			// END KGU#494 2018-01-14
 			// START KGU 2017-01-06: Issue #327: Default changed to English
-			preAltT=ini.getProperty("IfTrue","T");
-			preAltF=ini.getProperty("IfFalse","F");
-			preAlt=ini.getProperty("If","(?)");
+			preAltT = ini.getProperty("IfTrue", "T");
+			preAltF = ini.getProperty("IfFalse", "F");
+			preAlt  = ini.getProperty("If", "(?)");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
 			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
@@ -2269,10 +2288,15 @@ public abstract class Element {
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
-			preFor=ini.getProperty("For","for ? <- ? to ?");
-			preWhile=ini.getProperty("While","while (?)");
-			preRepeat=ini.getProperty("Repeat","until (?)");
+			preFor    = ini.getProperty("For", "for ? <- ? to ?");
+			preWhile  = ini.getProperty("While", "while (?)");
+			preRepeat = ini.getProperty("Repeat", "until (?)");
 			// END KGU 2017-01-06 #327
+			// START KGU#686 2019-03-22: Enh. #56
+			preTry    = ini.getProperty("Try", "try");
+			preCatch  = ini.getProperty("Catch", "catch");
+			preFinally= ini.getProperty("Finally", "finally");
+			// END KGU#686 2019-03-22
 			// START KGU#376 2017-07-02: Enh. #389
 			preImport = ini.getProperty("Import", "Included diagrams:");
 			// END KGU#376 2017-07-02
@@ -2311,30 +2335,35 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			ini.setProperty("IfTrue",preAltT);
-			ini.setProperty("IfFalse",preAltF);
-			ini.setProperty("If",preAlt);
+			ini.setProperty("IfTrue", preAltT);
+			ini.setProperty("IfFalse", preAltF);
+			ini.setProperty("If", preAlt);
 			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
 			ini.setProperty("altPadRight", String.valueOf(altPadRight));
 			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
-			ini.setProperty("Case",sl.getCommaText());
+			ini.setProperty("Case", sl.getCommaText());
 			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
 			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
 			// END KGU#401 2017-05-18
-			ini.setProperty("For",preFor);
-			ini.setProperty("While",preWhile);
-			ini.setProperty("Repeat",preRepeat);
+			ini.setProperty("For", preFor);
+			ini.setProperty("While", preWhile);
+			ini.setProperty("Repeat", preRepeat);
+			// START KGU#686 2019-03-22: Enh. #56
+			ini.setProperty("Try", preTry);
+			ini.setProperty("Catch", preCatch);
+			ini.setProperty("Finally", preFinally);
+			//END KGU#686 2019-03-22
 			// START KGU#376 2017-07-02: Enh. #389
 			ini.setProperty("Import", preImport);
 			// END KGU#376 2017-07-02
 			// font
 			// START KGU#264 2016-09-28: font name property renamed 
 			//ini.setProperty("Name",getFont().getFamily());
-			ini.setProperty("Font",getFont().getFamily());
+			ini.setProperty("Font", getFont().getFamily());
 			// END KGU#264 2016-09-28
-			ini.setProperty("Size",Integer.toString(getFont().getSize()));
+			ini.setProperty("Size", Integer.toString(getFont().getSize()));
 			// colors
 			// START KGU#245 2018-07-02
 //			ini.setProperty("color0", getHexColor(color0));
@@ -2872,6 +2901,45 @@ public abstract class Element {
 	}
 	// END KGU#101 2015-12-11
 	
+	// START KGU#689 2019-03-21 Issue #706
+	/**
+	 * Coagulates all token sequences starting with some kind of brackets, parenthesis,
+	 * or brace and ending with its pendant (or with a level underflow).
+	 * @param tokens - lexically split tokens.
+	 * @return a sequence of level 0 lexical tokens and coagulated sub expressions
+	 * @see #splitLexically(String, boolean)
+	 * @see #splitExpressionList(String, String)
+	 * @see #splitExpressionList(String, String, boolean)
+	 * @see #splitExpressionList(StringList, String, boolean)
+	 */
+	public static StringList coagulateSubexpressions(StringList tokens) {
+		final StringList starters = StringList.explode("(,[,{", ",");
+		final StringList stoppers = StringList.explode("),],}", ",");
+		int ix = 0;
+		int ixLastStart = -1;
+		int level = 0;
+		while (ix < tokens.count()) {
+			String token = tokens.get(ix);
+			if (starters.contains(token)) {
+				if (level == 0) {
+					ixLastStart = ix;
+				}
+				level++;
+			}
+			else if (stoppers.contains(token)) {
+				level--;
+				if (level == 0) {
+					tokens.set(ixLastStart, tokens.concatenate("", ixLastStart, ix + 1));
+					tokens.remove(ixLastStart + 1, ix+1);
+				}
+				ix = ixLastStart;
+			}
+			ix++;
+		}
+		return tokens;
+	}
+	// END KGU#689 2019-03-21
+
 	// START KGU#388 2017-09-13: Enh. #423; KGU#371 2019-03-07: Enh. #385 - parameter declDefaults added
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or
@@ -3195,14 +3263,18 @@ public abstract class Element {
 		int total = 0;
 
 		Root root = getRoot(_this);
-
+		
 		if (root != null)
 		{
+			// START KGU#686 2019-03-16: Enh. #56
+			Set<String> variableSet = _this.getVariableSetFor(_this);
+			// END KGU#686 2019-03-16
+
 			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
 			//if (root.hightlightVars==true)
 			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557 - No syntax highlighting in high contention
 			//if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode())
-			if (Element.E_VARHIGHLIGHT && !root.isSwitchTextCommentMode() && !_inContention)
+			if (Element.E_VARHIGHLIGHT && !isSwitchTextCommentMode() && !_inContention)
 			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			// END KGU#226 2016-07-29
 			{
@@ -3320,6 +3392,9 @@ public abstract class Element {
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
+				// START KGU#686 2019-03-18: Enh. #56
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
+				// END KGU#686 2019-03-18
 				// END KGU#116 2015-12-23
 
 				// START KGU#377 2017-03-30: Bugfix #333
@@ -3352,7 +3427,7 @@ public abstract class Element {
 					if (!display.equals(""))
 					{
 						// if this part has to be colored
-						if(root.getVariables().contains(display))
+						if(variableSet.contains(display))
 						{
 							// dark blue, bold
 							_canvas.setColor(Color.decode("0x000099"));
@@ -3439,14 +3514,26 @@ public abstract class Element {
 					_canvas.writeOut(_x + total, _y, _text);
 				}
 
-                // add to the total
-                total += _canvas.stringWidth(_text);
+				// add to the total
+				total += _canvas.stringWidth(_text);
 
 			}
 		}
 		
 		return total;
 	}
+	
+	// START KGU#686 2019-03-16: Enh. #56 introduction of Try elements
+	/**
+	 * @return the set of cached variable names for the element context of Element {@code _child}
+	 */
+	protected Set<String> getVariableSetFor(Element _child) {
+		if (this.parent == null) {
+			return new HashSet<String>();
+		}
+		return this.parent.getVariableSetFor(this);
+	}
+	// END KGU#686 2019-03-16
 	
 	// START KGU#227 2016-07-29: Enh. #128
 	/**
@@ -4076,7 +4163,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, this, lineNo, isAssigned, explicitly, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly, isCStyle));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
@@ -4114,6 +4201,7 @@ public abstract class Element {
 			if (entry == null) {
 				// Add a new entry to the type map
 				boolean isRecursive = false;
+				// FIXME KGU#687 2019-03-16: Issue #408, #56 - shall we replace this by compTypes now?
 				LinkedHashMap<String, TypeMapEntry> components = new LinkedHashMap<String, TypeMapEntry>();
 				for (int i = 0; i < compNames.count(); i++) {
 					TypeMapEntry compEntry = null; 
@@ -4130,13 +4218,14 @@ public abstract class Element {
 									}
 									else {
 										// Create a named dummy entry
-										compEntry = new TypeMapEntry(type, type, this, lineNo, false, true, false);
+										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true, false);
 									}
 								}
 							}
+							// FIXME KGU#687 2019-03-16: Issue #408 - no longer needed?
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, this, lineNo, false, true, false);
+								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true, false);
 							}
 						}
 					}
@@ -4144,7 +4233,7 @@ public abstract class Element {
 					if (compEntry == null) compEntry = TypeMapEntry.getDummy();
 					components.put(compNames.get(i), compEntry);
 				}
-				entry = new TypeMapEntry(typeSpec, typeName, components, this, lineNo);
+				entry = new TypeMapEntry(typeSpec, typeName, typeMap, components, this, lineNo);
 				// In case of self-references map the respective component names to the created TypeMapEntry 
 				if (isRecursive) {
 					for (int i = 0; i < compNames.count(); i++) {

@@ -99,6 +99,10 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2919-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-02-26      Enh. #689: New menu item to edit the sub diagram referred by a CALL
  *      Kay Gürtzig     2019-03-07      Enh. #385: New message error20_2, error20 renamed in error20_1
+ *      Kay Gürtzig     2019-03-16      Enh. #56: New menu items to add TRY-CATCH elements *
+ *      Kay Gürtzig     2019-03-17      Issue #56: breakpoint items disabled for Forever and Try elements.
+ *                                      
+ *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *
  ******************************************************************************************************
  *
@@ -244,6 +248,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddBeforeCall = new JMenuItem("Call",IconLoader.getIcon(/*49*/58));
 	protected final JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
 	protected final JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
+	// START KGU#686 2019-03-16: Enh. #56
+	protected final JMenuItem menuDiagramAddBeforeTry = new JMenuItem("Try",IconLoader.getIcon(120));
+	// END KGU#686 2019-03-16
 
 	// Submenu "Diagram -> Add -> After"
 	protected final JMenu menuDiagramAddAfter = new JMenu("After");
@@ -261,6 +268,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddAfterCall = new JMenuItem("Call",IconLoader.getIcon(/*50*/58));
 	protected final JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
 	protected final JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
+	// START KGU#686 2019-03-16: Enh. #56
+	protected final JMenuItem menuDiagramAddAfterTry = new JMenuItem("Try",IconLoader.getIcon(120));
+	// END KGU#686 2019-03-16
 
 	protected final JMenuItem menuDiagramEdit = new JMenuItem("Edit",IconLoader.getIcon(6));
 	protected final JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.getIcon(5));
@@ -1039,6 +1049,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#169 2016-04-01
 
+		// START KGU#686 2019-03-16: Enh. #56
+		menuDiagramAddBefore.add(menuDiagramAddBeforeTry);
+		menuDiagramAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new try-catch ...","",true); doButtons(); } } );
+		// END KGU#686 2019-03-16
+
 		menuDiagramAdd.add(menuDiagramAddAfter);
 		menuDiagramAddAfter.setIcon(IconLoader.getIcon(20));
 
@@ -1080,6 +1095,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramAddAfter.add(menuDiagramAddAfterPara);
 		menuDiagramAddAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13,0));
+
+		// START KGU#686 2019-03-16: Enh. #56
+		menuDiagramAddAfter.add(menuDiagramAddAfterTry);
+		menuDiagramAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new try-catch ...","",true); doButtons(); } } );
+		// END KGU#686 2019-03-16
 
 		menuDiagram.add(menuDiagramEdit);
 		// START KGU#177 2016-04-06: Enh. #158
@@ -1503,25 +1523,25 @@ public class Menu extends LangMenuBar implements NSDController
 	{
 		if (diagram!=null)
 		{
-                        /*
-                        // remove all submenus from "view"
-                        menuView.removeAll();
-                        // add submenus to "view"
-                        for(int i=0;i<diagram.toolbars.size();i++)
-                        {
-                          final MyToolbar tb = diagram.toolbars.get(i);
+			/*
+			// remove all submenus from "view"
+			menuView.removeAll();
+			// add submenus to "view"
+			for(int i=0;i<diagram.toolbars.size();i++)
+			{
+				final MyToolbar tb = diagram.toolbars.get(i);
 
-                          JCheckBoxMenuItem menuToolbar = new JCheckBoxMenuItem(tb.getName(),IconLoader.getIcon(23));
-                	  menuToolbar.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { tb.setVisible(!tb.isVisible()); doButtons(); } } );
+				JCheckBoxMenuItem menuToolbar = new JCheckBoxMenuItem(tb.getName(),IconLoader.getIcon(23));
+				menuToolbar.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { tb.setVisible(!tb.isVisible()); doButtons(); } } );
 
-                          if (tb.isVisible())
-                          {
-                                menuToolbar.setSelected(true);
-                          }
-                          menuView.add(menuToolbar);
-                          //System.out.println(entry.getKey() + "-->" + entry.getValue());
-                        }
-                        */
+				if (tb.isVisible())
+				{
+					menuToolbar.setSelected(true);
+				}
+				menuView.add(menuToolbar);
+				//System.out.println(entry.getKey() + "-->" + entry.getValue());
+			}
+			*/
 
 			// conditions
 			// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
@@ -1565,6 +1585,10 @@ public class Menu extends LangMenuBar implements NSDController
 			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
 			this.menuFileExportCodeFavorite.setText(itemText);
 			// END KGU#170 2016-04-01
+
+			menuFileArrange.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuFileAttributes.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuFileTranslator.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			
 			// undo & redo
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
@@ -1574,14 +1598,18 @@ public class Menu extends LangMenuBar implements NSDController
 			// START KGU#282 2016-10-16: Issue #272
 			menuEditUpgradeTurtle.setEnabled(conditionAny);
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
+			menuEditUpgradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuEditDowngradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#282 2016-10-16
 			
 			// START KGU#602 2018-10-26: Enh. #619
 			menuEditBreakLines.setEnabled(conditionAny);
+			menuEditBreakLines.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#602 2018-10-16
 
 			// START KGU#667 2019-02-26 Enh.#689
 			menuEditSummonSub.setEnabled(diagram.canEditSub());
+			menuEditSummonSub.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#667 2019-02-26
 			
 			// style / type
@@ -1608,6 +1636,9 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramAddBeforeCall.setEnabled(condition);
 			menuDiagramAddBeforeJump.setEnabled(condition);
 			menuDiagramAddBeforePara.setEnabled(condition);
+			// START KGU#686 2019-03-16: Enh. #56
+			menuDiagramAddBeforeTry.setEnabled(condition);
+			// END KGU#686 2019-03-16
 
 			menuDiagramAddAfterInst.setEnabled(condition);
 			menuDiagramAddAfterAlt.setEnabled(condition);
@@ -1619,7 +1650,18 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramAddAfterCall.setEnabled(condition);
 			menuDiagramAddAfterJump.setEnabled(condition);
 			menuDiagramAddAfterPara.setEnabled(condition);
-
+			// START KGU#686 2019-03-16: Enh. #56
+			menuDiagramAddAfterTry.setEnabled(condition);
+			// END KGU#686 2019-03-16
+			
+			menuDiagramAddBeforeForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddBeforeJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddBeforePara.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddBeforeTry.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddAfterForever.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddAfterJump.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddAfterPara.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramAddAfterTry.setVisible(!Element.E_REDUCED_TOOLBARS);
 
 			// editing
 			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
@@ -1637,9 +1679,11 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
 			// START KGU#199 2016-07-07: Enh. #188 - We allow instruction conversion
 			menuDiagramTransmute.setEnabled(diagram.canTransmute());
+			menuDiagramTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#199 2016-07-07
 			// START KGU#365 2017-03-26: Enh. #380 - We allow subroutine generation
 			menuDiagramOutsource.setEnabled(diagram.canCut());
+			menuDiagramOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#365 2017-03-26
 			
 			
@@ -1647,19 +1691,38 @@ public class Menu extends LangMenuBar implements NSDController
 			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
 			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
 			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
+			menuDiagramCollapse.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDiagramExpand.setVisible(!Element.E_REDUCED_TOOLBARS);			
+
+			menuDiagramHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);	
+			
+			menuPreferencesColors.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuPreferencesElements.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuPreferencesCtrlAliases.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuPreferencesWheel.setVisible(!Element.E_REDUCED_TOOLBARS);
+
+			
 			// END KGU#123 2016-01-03
 			// START KGU#277 2016-10-13: Enh. #270
 			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+			menuDebugDisable.setVisible(!Element.E_REDUCED_TOOLBARS);			
 			// END KGU#277 2016-01-13
-
+			
 			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
 			// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended
 			//menuDiagramBreakpoint.setEnabled(diagram.canCopy());
-			menuDebugBreakpoint.setEnabled(diagram.canCopyNoRoot());
+			// START KGU#686 2019-03-17: Enh. #56 It doesn't make sense to place breakpoints on endless loops or try elements
+			//menuDebugBreakpoint.setEnabled(diagram.canCopyNoRoot());
+			menuDebugBreakpoint.setEnabled(diagram.canSetBreakpoint());
+			// END KGU#686 2019-03-17
 			// END KGU#177 2016-07-06
 			// END KGU#143 2016-01-21
 			// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
-			menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+			// START KGU#686 2019-03-17: Enh. #56 It doesn't make sense to place breakpoints on endless loops or try elements
+			//menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+			menuDebugBreakTrigger.setEnabled(diagram.canSetBreakpoint() && !diagram.selectedIsMultiple());
+			// END KGU#686 2019-03-17
+			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#213 2016-08-02
 
 			// copy & paste

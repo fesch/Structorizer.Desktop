@@ -122,7 +122,7 @@ public class Parallel extends Element
     		{
     			return StringList.getNew(this.getGenericText());
     		}
-    		else if (!this.isSwitchTextCommentMode())
+    		else if (!isSwitchTextCommentMode())
     		{
     			return this.getComment();
     		}
@@ -156,7 +156,7 @@ public class Parallel extends Element
 		//sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
 		StringList sl = StringList.getNew(this.getGenericText());
 		sl.add(COLLAPSED);
-    	if (this.isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
+    	if (isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
     	{
     		sl.set(0, this.getGenericText() + " - " + this.getComment().get(0));
     	}
@@ -307,7 +307,7 @@ public class Parallel extends Element
 //            // END KGU#172 2016-04-01
             
             // Unless some of the comment modes requires this, the upper stripe remains empty
-            if ((Element.E_COMMENTSPLUSTEXT || this.isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
+            if ((Element.E_COMMENTSPLUSTEXT || isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
             {
                 // In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
                 // Otherwise ("switch text/comments") the comment will be added as text in normal font.
@@ -382,7 +382,7 @@ public class Parallel extends Element
 
             // START KGU#227 2016-07-30: Enh. #128 - delegate as much as possible to Instruction
             StringList headerText = new StringList();
-            if (!Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
+            if (!Element.E_COMMENTSPLUSTEXT && isSwitchTextCommentMode())
             {
             	headerText = this.getComment();
             }
