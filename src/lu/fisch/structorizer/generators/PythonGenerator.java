@@ -123,6 +123,7 @@ import lu.fisch.turtle.TurtleBox;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 
 public class PythonGenerator extends Generator 
@@ -190,7 +191,19 @@ public class PythonGenerator extends Generator
 	}
 	// END KGU#371 2019-03-07
 
-	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"and", "assert", "break", "class", "continue",
 //		"def", "del",
@@ -832,20 +845,19 @@ public class PythonGenerator extends Generator
 			StringList lines = _jump.getUnbrokenText();
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
-			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
-			String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
+			String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
 				{
 					isEmpty = false;
 				}
-				if (line.matches(preReturnMatch))
+				if (Jump.isReturn(line))
 				{
 					addCode("return " + line.substring(preReturn.length()).trim(),
 							_indent, isDisabled);
 				}
-				else if (line.matches(preLeaveMatch))
+				else if (Jump.isLeave(line))
 				{
 					// We may only allow one-level breaks, i. e. there must not be an argument
 					// or the argument must be 1 and a legal label must be associated.
@@ -862,6 +874,11 @@ public class PythonGenerator extends Generator
 								_indent, isDisabled);
 					}
 				}
+				// START KGU#686 2019-03-21: Enh. #56
+				else if (Jump.isThrow(line)) {
+					this.addCode("raise Exception(" + line.substring(preThrow.length()) + ")", _indent, isDisabled);
+				}
+				// END KGU#686 2019-03-21
 				else if (!isEmpty)
 				{
 					insertComment("FIXME: unsupported jump/exit instruction!", _indent);
@@ -994,6 +1011,44 @@ public class PythonGenerator extends Generator
 		}
 	}
 	// END KGU#47/KGU#348 2017-02-19
+	
+	// START KGU#686 2019-03-21: Enh. #56
+	protected void generateCode(Try _try, String _indent)
+	{
+		boolean isDisabled = _try.isDisabled();
+		this.insertComment(_try, _indent);
+		
+		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
+		String indent0 = _indent;
+		
+		this.addCode("try:", _indent, isDisabled);
+
+		if (_try.qFinally.getSize() > 0) {
+			indent0 += this.getIndent();
+			// Inner try instruction
+			this.addCode("try:", indent0, isDisabled);
+		}
+		String indent1 = indent0 + this.getIndent();
+		
+		this.generateCode(_try.qTry, indent1);
+		
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("finally:", indent0, isDisabled);			
+			this.generateCode(_try.qFinally, indent1);
+		}
+
+		indent1 = _indent + this.getIndent();
+		String exName = _try.getExceptionVarName();
+		if (exName != null && !exName.isEmpty()) {
+			this.addCode("except Exception, " + exName + ":", _indent, isDisabled);
+		}
+		else {
+			this.addCode("except Exception:", _indent, isDisabled);
+		}
+		generateCode(_try.qCatch, indent1);
+		addCode("", _indent, false);
+	}
+	// END KGU#686 2019-03-21
 
 	// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
 	/**
@@ -1069,7 +1124,7 @@ public class PythonGenerator extends Generator
 						}
 					}
 					// Now add the variables (including constants)
-					StringList names = incl.getVarNames();
+					StringList names = incl.retrieveVarNames();
 					for (int i = 0; i < names.count(); i++)
 					{
 						String name = names.get(i);

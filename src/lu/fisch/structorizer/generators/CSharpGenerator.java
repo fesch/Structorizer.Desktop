@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and support of throw Jumps
  *
  ******************************************************************************************************
  *
@@ -131,6 +132,7 @@ import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 
@@ -164,8 +166,21 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#371 2019-03-07
 
-	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
-//    private static final String[] reservedWords = new String[]{
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 * @see #insertCatchHeading(Try, String)
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+//	private static final String[] reservedWords = new String[]{
 //		"abstract", "as", "base", "bool", "break", "byte",
 //		"case", "catch", "char", "checked", "class", "const", "continue",
 //		"decimal", "default", "delegate", "do", "double",
@@ -809,6 +824,51 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#47/KGU#348 2017-02-24
 
+	// START KGU#686 2019-03-18: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeExceptionFrom(java.lang.String)
+	 */
+	@Override
+	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
+		// If it isn't a rethrow then fake some text (a rethrow doesn't require an argument)
+		boolean warn = false;
+		if (_thrown.isEmpty() && this.caughtException == null) {
+			_thrown = "new System.Exception(\"unspecified error\")";
+			warn = true;
+		}
+		else if (!_thrown.isEmpty()) {
+			// _thrown is supposed to be a string expression...
+			_thrown = "new System.Exception(" + _thrown + ")";
+			warn = true;
+		}
+		if (warn) {
+			insertComment("FIXME: You should replace System.Exception by an own subclass!", _indent);
+		}
+		// In case of an empty argument with non-null caughtException we assume a rethrow
+		addCode(("throw " + _thrown).trim() + ";", _indent, _asComment);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void insertCatchHeading(Try _try, String _indent) {
+		
+		boolean isDisabled = _try.isDisabled();
+		String varName = _try.getExceptionVarName();
+		String head = "catch ()";
+		String exName = "ex" + Integer.toHexString(_try.hashCode());
+		if (varName != null && !varName.isEmpty()) {
+			head = "catch(Exception " + exName + ")";
+		}
+		this.insertBlockHeading(_try, head, _indent);
+		if (exName != null) {
+			this.addCode("string " + varName + " = " + exName + ".ToString()", _indent + this.getIndent(), isDisabled);
+		}
+		this.caughtException = exName;
+	}
+	// END KGU#686 2019-03-18
+
 	/**
 	 * Composes the heading for the program or function according to the
 	 * C language specification.
@@ -855,7 +915,7 @@ public class CSharpGenerator extends CGenerator
 				this.generatorIncludes.add("System.Threading");
 			}
 			// END KGU#348 2017-02-24
-			this.insertGeneratorIncludes(_indent, true);
+			this.insertGeneratorIncludes(_indent, false);
 			code.add(_indent);
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes(_indent);

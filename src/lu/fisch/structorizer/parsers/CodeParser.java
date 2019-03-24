@@ -1363,6 +1363,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		keywordMap.put("preLeave",   "leave");
 		keywordMap.put("preReturn",  "return");
 		keywordMap.put("preExit",    "exit");
+		// START KGU#686 2019-03-18: Enh. #56
+		keywordMap.put("preThrow",   "throw");
+		// END KGU#686 2019-03-18
 		keywordMap.put("input",      "INPUT");
 		keywordMap.put("output",     "OUTPUT");
 	}
@@ -1384,9 +1387,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		defaultKeys.put("ParserInput", "INPUT");
 		defaultKeys.put("ParserOutput", "OUTPUT");
 		// END KGU 2017-01-06 #327
-		// START KGU#376 017-04-11: Enh. #389
+		// START KGU#376 2017-04-11: Enh. #389
 		defaultKeys.put("ParserPreImport", "include");
 		// END KGU#376 2017-04-11
+		// START KGU#686 2019-03-18: Enh. #56
+		defaultKeys.put("ParserPreThrow", "throw");
+		// END KGU#686 2019-03-18
 		try
 		{
 			Ini ini = Ini.getInstance();

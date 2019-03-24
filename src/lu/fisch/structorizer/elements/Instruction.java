@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
  *
  ******************************************************************************************************
  *
@@ -167,7 +168,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, false), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -322,7 +323,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -583,6 +584,9 @@ public class Instruction extends Element {
 		// FIXME: These tests might be too simple if the keywords don't comply with identifier syntax
 		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0 ||
 				tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0 ||
+				// START KGU#686 2019-03-18: Enh. #56 new flavour, for try/catch
+				tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0 ||
+				// END KGU#686 2019-03-18
 				tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0
 				);
 	}
@@ -1145,7 +1149,8 @@ public class Instruction extends Element {
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
-	public String getAssignedVarname(StringList tokens) {
+	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
+	public static String getAssignedVarname(StringList tokens) {
 		String varName = null;
 		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
 		tokens = coagulateSubexpressions(tokens);		

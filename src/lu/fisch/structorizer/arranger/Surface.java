@@ -700,7 +700,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 // END KGU#679 2019-03-12
 				// START KGU#382 2017-04-15: Ensure highlighting mode has effect
 				//root.highlightVars = Element.E_VARHIGHLIGHT;
-				root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+				root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 				// END KGU#382 2017-04-15
 				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
 				//addDiagram(root, point);
@@ -1155,7 +1155,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
 						// A diagram residing in another archive must be copied now, it cannot be shared.
 						Root copiedRoot = (Root)diagr.root.copy();
-						copiedRoot.getVarNames();	// Ensures that syntax highlighting will work
+						copiedRoot.retrieveVarNames();	// Ensures that syntax highlighting will work
 						//diagr.point.translate(2 * DEFAULT_GAP, 2 * DEFAULT_GAP);	// The copy must have the same place (this was the archived one!)
 						Diagram diagram = new Diagram(copiedRoot, diagr.point);
 						diagrams.add(diagram);
@@ -4686,7 +4686,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			int option = 0;	// means ok to save
 			if (deleteGroup && group.hasChanged()) {
 				// FIXME: consider serial action
-				String question = msgSaveGroupChanges.getText().replace("%", group.getName());
+				String question = msgSaveGroupChanges.getText().replace("%", group.getName().
+						replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 				option = lu.fisch.structorizer.gui.Diagram.requestSaveDecision(question, initiator,
 						lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect.SERIAL_GROUP_SAVE);
 				if (option == 0) {

@@ -119,6 +119,7 @@
  *      Kay Gürtzig     2019-02-16      Issue #682: Messages for redesigned welcome dialog
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
  *
  ******************************************************************************************************
  *
@@ -155,6 +156,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -230,6 +232,7 @@ Menu.menuDiagramAddBeforeForever.text=@i loop
 Menu.menuDiagramAddBeforeCall.text=@j
 Menu.menuDiagramAddBeforeJump.text=@k
 Menu.menuDiagramAddBeforePara.text=@l
+Menu.menuDiagramAddBeforeTry.text=@q
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=After
 // Submenus for adding Elements "After"
@@ -243,6 +246,7 @@ Menu.menuDiagramAddAfterForever.text=@i loop
 Menu.menuDiagramAddAfterCall.text=@j
 Menu.menuDiagramAddAfterJump.text=@k
 Menu.menuDiagramAddAfterPara.text=@l
+Menu.menuDiagramAddAfterTry.text=@q
 Menu.menuDiagramEdit.text=Edit
 Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
@@ -472,7 +476,7 @@ Menu.error16_3.text=A %1 or %2 instruction is only allowed as @k element!
 Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
 Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
 Menu.error16_6.text=Illegal argument for a «%» @k (must be an integer constant)!
-Menu.error16_7.text=Instruction isn't reachable after a @k!
+Menu.error16_7.text=Instruction isn't reachable after a(n) @k!
 Menu.error16_8.text=The argument for this «%» @k might be unsuited (should be an integer value).
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
@@ -565,6 +569,7 @@ Editor.btnAfterCall.tooltip=Insert a new @j after (+shift: before) the selected 
 Editor.btnAfterJump.tooltip=Insert a new @k after (+shift: before) the selected element.
 Editor.btnAfterCase.tooltip=Insert a new @c statement after (+shift: before) the selected element.
 Editor.btnAfterPara.tooltip=Insert a new @l statement after (+shift: before) the selected element.
+Editor.btnAfterTry.tooltip=Insert a new @q statement after (+shift: before) the selected element.
 // undo & redo
 Editor.btnUndo.tooltip=Undo the last action.
 Editor.btnRedo.tooltip=Redo the last action.
@@ -623,6 +628,7 @@ Editor.popupAddBeforeForever.text=@i loop
 Editor.popupAddBeforeCall.text=@j
 Editor.popupAddBeforeJump.text=@k
 Editor.popupAddBeforePara.text=@l
+Editor.popupAddBeforeTry.text=@q
 // After
 Editor.popupAddAfter.text=After
 // Submenus of "Add -> After"
@@ -636,6 +642,7 @@ Editor.popupAddAfterForever.text=@i loop
 Editor.popupAddAfterCall.text=@j
 Editor.popupAddAfterJump.text=@k
 Editor.popupAddAfterPara.text=@l
+Editor.popupAddAfterTry.text=@q
 // Edit	
 Editor.popupEdit.text=Edit
 Editor.popupDelete.text=Delete
@@ -675,6 +682,7 @@ InputBox.lblText.text[elementType:While]=Please enter the entry condition
 InputBox.lblText.text[elementType:Repeat]=Please enter the condition to leave
 InputBox.lblText.text[elementType:Case]=Please enter the choice expression and the case constants (one per line)
 InputBox.lblText.text[elementType:Parallel]=Number of parallel threads
+InputBox.lblText.text[elementType:Try]=Name of the exception variable
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Add new @a ...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Add new @b statement ...
 InputBox.title[elementType:Case,getInsertionType():insert]=Add new @c statement ...
@@ -684,6 +692,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Add new @g loop ...
 InputBox.title[elementType:Call,getInsertionType():insert]=Add new @j ...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Add new @k ...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Add new @l ...
+InputBox.title[elementType:Try,getInsertionType():insert]=Add new @q ...
 InputBox.title[elementType:Instruction,getInsertionType():update]=Edit @a ...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Edit @b element ...
 InputBox.title[elementType:Case,getInsertionType():update]=Edit @c element ...
@@ -693,6 +702,7 @@ InputBox.title[elementType:While,getInsertionType():update]=Edit @g loop ...
 InputBox.title[elementType:Call,getInsertionType():update]=Edit @j ...
 InputBox.title[elementType:Jump,getInsertionType():update]=Edit @k ...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Edit @l element ...
+InputBox.title[elementType:Try,getInsertionType():update]=Edit @q element ...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insert new @d loop ...
@@ -768,6 +778,7 @@ AttributeInspector.lblForevers.tooltip=@i loops
 AttributeInspector.lblCalls.tooltip=@js
 AttributeInspector.lblJumps.tooltip=@ks
 AttributeInspector.lblPars.tooltip=@l sections
+AttributeInspector.lblTries.tooltip=@q blocks
 AttributeInspector.btnShowLicense.text=License text
 AttributeInspector.btnShowLicense.tooltip=Press this button to open edit or review the text for the selected license.
 AttributeInspector.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
@@ -779,6 +790,10 @@ AttributeInspector.lblPrefsWhile.text=@g loop
 AttributeInspector.lblPrefsRepeat.text=@h loop
 AttributeInspector.lblPrefsIO.text=Input/Output
 AttributeInspector.lblPrefsJump.text=@k (Exit)
+AttributeInspector.lblPrefsLeave.text=...loop
+AttributeInspector.lblPrefsReturn.text=...routine
+AttributeInspector.lblPrefsExit.text=...program
+AttributeInspector.lblPrefsThrow.text=on error
 AttributeInspector.lblPrefsPre.text=Pre
 AttributeInspector.lblPrefsPost.text=Post
 AttributeInspector.lblPrefsMore.text=(More)
@@ -858,6 +873,10 @@ Preferences.pnlRepeat.border=@h loop
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Default content
 Preferences.lblRepeat.tooltip=The default content of a @h loop.
+Preferences.pnlTry.border=@q block labels
+Preferences.lblTry.tooltip=Label for the main execution block in a @q element
+Preferences.lblCatch.tooltip=Label for the exception block in a @ element
+Preferences.lblFinal.tooltip=Label for the cleanup block in a @q element
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Validate your choice.
 
@@ -928,6 +947,7 @@ ParserPreferences.lblJump.tooltip=Classifying keywords for statements to exit fr
 ParserPreferences.lblJumpLeave.text=from loop(s)
 ParserPreferences.lblJumpReturn.text=from routine
 ParserPreferences.lblJumpExit.text=from program
+ParserPreferences.lblJumpThrow.text=on error
 ParserPreferences.lblInputOutput.text=I/O instructions
 ParserPreferences.lblInputOutput.tooltip=Classifying keywords for input and output.
 ParserPreferences.lblInput.text=Input
@@ -1343,6 +1363,8 @@ Control.msgFunctionConflict.text=\nFunction «%1(%2)» of %3 overridden by %4
 Control.msgProcedureConflict.text=\nProcedure «%1(%2)» of %3 overridden by %4
 Control.msgSignatureConflicts.text=There are API conflicts among the chosen controller plugins:%
 Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
+Control.msgErrorInSubroutine.text=Caught error on executing «%1» at level %2:\n	%3!
+Control.msgThrown.text=Exception thrown in «%1» at level %2: %3
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 
@@ -1378,6 +1400,7 @@ ElementNames.localizedNames.12.text=Diagram
 ElementNames.localizedNames.13.text=Main program
 ElementNames.localizedNames.14.text=Sub-routine
 ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.16.text=TRY
 
 -----> Keywords
 ParserKeywords.AltPre.text=if
@@ -1396,5 +1419,6 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=leave
 ParserKeywords.JumpReturn.text=return
 ParserKeywords.JumpExit.text=exit
+ParserKeywords.JumpThrow.text=throw
 ParserKeywords.Input.text=INPUT
 ParserKeywords.Output.text=OUTPUT

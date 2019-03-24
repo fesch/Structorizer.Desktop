@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation in Case elements supported
  *      Kay Gürtzig             2019.02.14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw-flavour Jumps
  *
  ******************************************************************************************************
  *
@@ -126,6 +127,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 // FIXME (KGU 2014-11-11): Variable names will have to be accomplished by a '$' prefix - this requires
 // sound lexic preprocessing (as do a lot more of the rather lavish mechanisms here)
@@ -186,8 +188,20 @@ public class PHPGenerator extends Generator
 	protected OverloadingLevel getOverloadingLevel() {
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
 	}
-	
 	// END KGU#371 2019-03-07
+	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"abstract", "and", "array", "as", "break",
@@ -582,20 +596,20 @@ public class PHPGenerator extends Generator
 		StringList lines = _jump.getUnbrokenText();
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
-		String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
-		String preLeaveMatch  = Matcher.quoteReplacement(CodeParser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
+		String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
+			// FIXME: That the line is transformed prior to the detection is a potential risk
 			String line = transform(lines.get(i)).trim();
 			if (!line.isEmpty())
 			{
 				isEmpty = false;
 			}
-			if (line.matches(preReturnMatch))
+			if (Jump.isReturn(line))
 			{
 				addCode("return " + line.substring(preReturn.length()).trim() + ";", _indent, isDisabled);
 			}
-			else if (line.matches(preExitMatch))
+			else if (Jump.isExit(line))
 			{
 				addCode("exit(" + line.substring(preExit.length()).trim() + ");", _indent, isDisabled);
 			}
@@ -613,7 +627,12 @@ public class PHPGenerator extends Generator
 				}
 				addCode("goto " + label + ";", _indent, isDisabled);
 			}
-			else if (line.matches(preLeaveMatch))
+			// START KGU#686 2019-03-21: Enh. #56
+			else if (Jump.isThrow(line)) {
+				addCode("throw new Exception(" + line.substring(preThrow.length()).trim() + ");", _indent, isDisabled);
+			}
+			// END KGU#686 2019-03-21
+			else if (Jump.isLeave(line))
 			{
 				// Strange case: neither matched nor rejected - how can this happen?
 				// Try with an ordinary break instruction and a funny comment
@@ -632,12 +651,37 @@ public class PHPGenerator extends Generator
 		}
 		// END KGU#78 2015-12-18
 	}
+	
+	// START KGU#686 2019-03-21: Enh. #56
+	protected void generateCode(Try _try, String _indent)
+	{
+		boolean isDisabled = _try.isDisabled();
+		String indentPlus1 = _indent + this.getIndent();
+		String varName = _try.getExceptionVarName();
+		String exName = "ex" + Integer.toHexString(_try.hashCode());
+		
+		this.insertComment(_try, _indent);
+		
+		this.addCode("try {", _indent, isDisabled);
+		this.generateCode(_try.qTry, indentPlus1);
+		this.addCode("} catch (Exception $e" + exName + ") {", _indent, isDisabled);
+		if (varName != null && !varName.isEmpty()) {
+			this.addCode("$" + varName + " = $" + exName + "->getMessage();", indentPlus1, isDisabled);
+		}
+		this.generateCode(_try.qCatch, indentPlus1);
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("} finally {", _indent, isDisabled);
+			this.generateCode(_try.qFinally, indentPlus1);
+		}
+		this.addCode("}", _indent, isDisabled);
+	}
+	// END KGU#686 2019-03-21
 
     @Override
     public String generateCode(Root _root, String _indent)
     {
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-        varNames = _root.getVarNames();
+        varNames = _root.retrieveVarNames();
         // END KGU 2015-11-02
         String procName = _root.getMethodName();
         // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
@@ -659,12 +703,12 @@ public class PHPGenerator extends Generator
         {
             code.add("<?php");
             insertComment(pr+" "+ procName + " (generated by Structorizer " + Element.E_VERSION + ")", _indent);
-			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
-			// END KGU#363 2017-05-16
-			// START KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes("");
-			// END KGU#351 2017-02-26
+            // START KGU#363 2017-05-16: Enh. #372
+            insertCopyright(_root, _indent, true);
+            // END KGU#363 2017-05-16
+            // START KGU#351 2017-02-26: Enh. #346
+            this.insertUserIncludes("");
+            // END KGU#351 2017-02-26
             subroutineInsertionLine = code.count();
             // START KGU#311 2017-01-03: Enh. #314 File API support
             if (this.usesFileAPI) {
@@ -716,11 +760,11 @@ public class PHPGenerator extends Generator
             		else {
             			fnHeader += argName;
             		}
-                	// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
+            		// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
             		if (i >= minArgs) {
             			fnHeader += " = " + transform(argDefaults.get(i));
             		}
-                	// END KGU#371 2019-03-08
+            		// END KGU#371 2019-03-08
             	}
             	fnHeader += ")";
             }

@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017-04-14      Issues #23,#380,#394: new jump analysis helper methods
  *      Kay Gürtzig     2017-06-09      Enh. #416: Adaptations for execution line continuation
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Issue #56: New throw flavour implemented
  *
  ******************************************************************************************************
  *
@@ -127,7 +128,10 @@ import lu.fisch.structorizer.parsers.CodeParser;
 public class Jump extends Instruction {
 
 	// START KGU#258 2016-09-26: Enh. #253
-	private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn"};
+	// START KGU#686 2019-03-18: Enh. #56
+	//private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn"};
+	private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn", "preThrow"};
+	// END KGU#686 2019-03-18
 	// END KGU#258 2016-09-25
 	
 	public Jump()
@@ -330,6 +334,28 @@ public class Jump extends Instruction {
 	}
 	// END KGU#354 2017-03-03
 	
+	// START KGU#686 2019-03-18: Enh. #56 Support for try / catch / throw
+	/**
+	 * Checks whether this line contains a throw statement
+	 * @param line the text line to be analysed
+	 * @return true if the given line matches the exit syntax 
+	 */
+	public static boolean isThrow(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0);
+	}
+	/**
+	 * Checks whether this element contains an exit statement
+	 * @return true if this has one line and matches the exit syntax 
+	 */
+	public boolean isThrow()
+	{
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && isThrow(lines.get(0));
+	}
+	// END KGU#686 2019-03-18
+
 	// START KGU#78/KGU#365 3017-04-14: Enh. #23, #380: leave analyses unified here
 	/**
 	 * In case of a leave jump returns the specified number of loop levels to leave,

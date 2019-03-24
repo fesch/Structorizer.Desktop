@@ -71,7 +71,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2018-07-21/22   Bugfix #564: array initializer trouble mended
  *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
- *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and Jump element of throw flavour
+ *
  *
  ******************************************************************************************************
  *
@@ -125,6 +126,7 @@ import java.util.Map.Entry;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 
 // START KGU#16 2015-11-30: Strong similarities made it sensible to reduce this class to the differences
@@ -173,7 +175,20 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#371 2019-03-07
 
-	// START KGU#16 2015-12-18: Now inherited and depending on export option	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 * @see #insertCatchHeading(Try, String)
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
+// START KGU#16 2015-12-18: Now inherited and depending on export option	
 //	// START KGU#16 2015-11-29: Code style option for opening brace placement
 //	protected boolean optionBlockBraceNextLine() {
 //		return false;
@@ -986,6 +1001,44 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#348 2017-02-25
 
+	// START KGU#686 2019-03-18: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeExceptionFrom(java.lang.String)
+	 */
+	@Override
+	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
+		// If it isn't a rethrow then fake some text
+		if (_thrown.isEmpty()) {
+			if (this.caughtException == null) {
+				_thrown = "new Exception(\"unspecified error\")";
+			}
+			else {
+				_thrown = this.caughtException;
+			}
+		}
+		addCode (("throw " + _thrown).trim() + ";", _indent, _asComment);
+	}
+
+	// END KGU#686 2019-03-18
+	// START KGU#686 2019-03-2: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void insertCatchHeading(Try _try, String _indent) {
+		
+		boolean isDisabled = _try.isDisabled();
+		String varName = _try.getExceptionVarName();
+		String exName = "ex" + Integer.toHexString(_try.hashCode());;
+		String head = "catch (Exception " + exName + ")";
+		this.insertBlockHeading(_try, head, _indent);
+		if (varName != null && !varName.isEmpty()) {
+			this.addCode("String " + varName + " = " + exName + ".getMessage()", _indent + this.getIndent(), isDisabled);
+		}
+		this.caughtException = exName;
+	}
+	// END KGU#686 2019-03-20
+
 	/**
 	 * Composes the heading for the program or function according to the
 	 * C language specification.
@@ -1036,7 +1089,7 @@ public class JavaGenerator extends CGenerator
 					this.generatorIncludes.add("java.util.concurrent.Executors");
 					this.generatorIncludes.add("java.util.concurrent.Future");
 				}
-				if (this.insertGeneratorIncludes(_indent, true) > 0) {
+				if (this.insertGeneratorIncludes(_indent, false) > 0) {
 					code.add("");
 				}
 				// END KGU#348 2017-02-24#

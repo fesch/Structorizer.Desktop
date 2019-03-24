@@ -32,20 +32,29 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.31      First Issue
- *      Kay Gürtzig     2016.11.01      Issue #81 (CPI awareness): Proper scaling of all explicit sizes
- *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes/radio buttons
- *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2017.05.18      Issue #405: New option spnCaseRot introduced
- *      Kay Gürtzig     2017.06.08      Issue #405: dimension tuning for Nimbus L&F
+ *      Bob Fisch       2007-12-31      First Issue
+ *      Kay Gürtzig     2016-11-01      Issue #81 (CPI awareness): Proper scaling of all explicit sizes
+ *      Kay Gürtzig     2016-11-11      Issue #81: DPI-awareness workaround for checkboxes/radio buttons
+ *      Kay Gürtzig     2017-01-07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2017-05-18      Issue #405: New option spnCaseRot introduced
+ *      Kay Gürtzig     2017-06-08      Issue #405: dimension tuning for Nimbus L&F
+ *      Kay Gürtzig     2019-03-22      Enh. #56: Preferences for Try blocks added, Layout revised
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to design this window graphically.
+ *      Comment:
+ *      2019-03-20 Kay Gürtzig
+ *      - Inappropriate BorderLayouts replaced by BoxLayout or GridLayout, explicit size control reduced or disabled
+ *      2016-11-01 Kay Gürtzig
+ *      - Many aspects manually modified, Layout no longer compatible with JFormDesigner
+ *      2007-12-31 Bob Fisch
+ *      - I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************///
+
+import lu.fisch.structorizer.elements.Element;
 
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
@@ -55,13 +64,11 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-/*
- * Created by JFormDesigner on Mon Dec 31 09:04:29 CET 2007
- */
-
-
 
 /**
+ * Structure preferences dialog, allows to configure default contents for the
+ * different kinds of {@link Element}.
+ * Originally created via JFormDesigner on Mon Dec 31 09:04:29 CET 2007
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -71,7 +78,6 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	public boolean OK = false;
 	// END KGU#393 2017-05-09
 	
-	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
 	protected JPanel contentPanel;
@@ -116,6 +122,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JLabel lblCaseRot;
 	protected JSpinner spnCaseRot;
 	// END KGU#401 2017-05-18
+	// START KGU#686 2019-03-22: Enh. #56 (Try elements)
+	protected JPanel pnlTry;
+	protected JLabel lblTry;
+	protected JLabel lblCatch;
+	protected JLabel lblFinal;
+	protected JTextField edtTry;
+	protected JTextField edtCatch;
+	protected JTextField edtFinal;
+	// END KGU#686 2019-03-22
 	
 	/*public Preferences() {
 		super();
@@ -135,8 +150,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	}*/
 
 	private void initComponents() {
-		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
-		// Generated using JFormDesigner Evaluation license - Robert Fisch
+		// Originally generated using JFormDesigner Evaluation license - Robert Fisch
 		dialogPane = new JPanel();
 		contentPanel = new JPanel();
 		pnlLeft = new JPanel();
@@ -179,6 +193,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		lblCaseRot = new JLabel();
 		spnCaseRot = new JSpinner();
 		// END KGU#401 2017-05-18
+		// START KGU#686 2019-03-22: Enh. #56 (Try elements)
+		pnlTry = new JPanel();
+		lblTry = new JLabel();
+		lblCatch = new JLabel();
+		lblFinal = new JLabel();
+		edtTry = new JTextField();
+		edtCatch = new JTextField();
+		edtFinal = new JTextField();
+		// END KGU#686 2019-03-22
 
 		//======== this ========
 		setTitle("Structures Preferences");
@@ -189,47 +212,33 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		{
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 			//dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-			//dialogPane.setPreferredSize(new Dimension(429, 320));
 			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
 			int border = (int)(12 * scaleFactor);
 			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
 			// START KGU#401 2017-06-08: Enh. #405 We need more space for Nimbus L&F
-			//dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
 			double nimbusFactor = 1.0;
 			if (UIManager.getLookAndFeel().getName().equals("Nimbus")) {
 				nimbusFactor = 1.25;				
 			}
-			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor*nimbusFactor), (int)(320*scaleFactor*nimbusFactor)));
 			// END KGU#401 2017-06-08
 			// END KGU#287 2016-11-01
 			dialogPane.setRequestFocusEnabled(false);
 
-			// JFormDesigner evaluation mark
-			/*dialogPane.setBorder(new javax.swing.border.CompoundBorder(
-				new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
-					"JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
-					javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
-					java.awt.Color.red), dialogPane.getBorder())); dialogPane.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
-			 */
 			dialogPane.setLayout(new BorderLayout());
 
 			//======== contentPanel ========
 			{
-				// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+				// START KGU#287 2019-03-22: Issue #81 (DPI awareness)
 				//contentPanel.setLayout(new BorderLayout(5, 5));
 				border = (int)(5 * scaleFactor);
-				//contentPanel.setLayout(new BorderLayout(border, border));
-				contentPanel.setLayout(new GridLayout(1, 0));
-				contentPanel.setBorder(new EmptyBorder(border, border, border, border));
-				// END KGU#287 2016-11-01
+				contentPanel.setLayout(new GridLayout(1, 0, border, 0));
+				// END KGU#287 2019-03-22
 
 				//======== pnlLeft ========
 				{
 					pnlLeft.setMaximumSize(new Dimension(2147483647, 2147483647));
 					// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-					//pnlLeft.setPreferredSize(new Dimension(200, 185));
 					border = (int)(8 * scaleFactor);
-					//pnlLeft.setPreferredSize(new Dimension((int)(210*scaleFactor), (int)(200*scaleFactor)));	// has no effect
 					// END KGU#287 2016-11-01
 					pnlLeft.setFocusCycleRoot(true);
 					pnlLeft.setLayout(new BorderLayout(border, border));
@@ -241,14 +250,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 						//======== pnlCases ========
 						{
-							//pnlCases.setLayout(new BorderLayout(border, border));
 							pnlCases.setLayout(new GridLayout(1, 0, border, border));
 							int width = (int)(95 * scaleFactor * nimbusFactor);
-							int height = (int)(44*scaleFactor);
 
 							//======== pnlAltLeft ========
 							{
-								pnlAltLeft.setPreferredSize(new Dimension(width, height));
 								pnlAltLeft.setLayout(new BorderLayout(border, border-1));
 
 								//---- lblAltTF ----
@@ -256,12 +262,13 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 								lblAltT.setHorizontalAlignment(SwingConstants.LEFT);
 								pnlAltLeft.add(lblAltT, BorderLayout.NORTH);
 								pnlAltLeft.add(edtAltT, BorderLayout.CENTER);
+								pnlAltLeft.setPreferredSize(new Dimension(width,
+										pnlAltLeft.getPreferredSize().height));
 							}
-							pnlCases.add(pnlAltLeft/*, BorderLayout.WEST*/);
+							pnlCases.add(pnlAltLeft);
 
 							//======== pnlAltRight ========
 							{
-								pnlAltRight.setPreferredSize(new Dimension(width, height));
 								pnlAltRight.setLayout(new BorderLayout(border, border));
 
 								//---- lblAltF ----
@@ -269,8 +276,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 								lblAltF.setHorizontalAlignment(SwingConstants.RIGHT);
 								pnlAltRight.add(lblAltF, BorderLayout.NORTH);
 								pnlAltRight.add(edtAltF, BorderLayout.CENTER);
+								pnlAltRight.setPreferredSize(new Dimension(width,
+										pnlAltRight.getPreferredSize().height));
 							}
-							pnlCases.add(pnlAltRight/*, BorderLayout.CENTER*/);
+							pnlCases.add(pnlAltRight);
 						}
 						pnlAlt.add(pnlCases, BorderLayout.NORTH);
 
@@ -320,80 +329,86 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 				//======== pnlRight ========
 				{
 					border = (int)(8 * scaleFactor);
-					pnlRight.setMaximumSize(new Dimension(2147483647, 2147483647));
-					//pnlRight.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(226*scaleFactor)));
-					pnlRight.setLayout(new BorderLayout(border, border));
+					pnlRight.setLayout(new BoxLayout(pnlRight, BoxLayout.Y_AXIS));
 
 					// START KGU#376 2017-07-01: Enh. #389
 					//======== pnlRoot ========
 					{
 						pnlRoot.setBorder(new TitledBorder("Diagram header"));
-						pnlRoot.setLayout(new BorderLayout(border, border));
+						pnlRoot.setLayout(new GridLayout(0, 1, 1, 1));
 
 						//---- lblFor ----
 						lblRoot.setText("Include list caption");
-						pnlRoot.add(lblRoot, BorderLayout.NORTH);
-						pnlRoot.add(edtRoot, BorderLayout.CENTER);
+						pnlRoot.add(lblRoot);
+						pnlRoot.add(edtRoot);
 					}
-					pnlRight.add(pnlRoot, BorderLayout.NORTH);
+					pnlRight.add(pnlRoot);
 					// END KGU#376 2017-07-01
 
+					pnlRight.add(Box.createVerticalStrut(border));
+					
 					//======== pnlFor ========
 					{
 						pnlFor.setBorder(new TitledBorder("FOR loop"));
-						pnlFor.setLayout(new BorderLayout(border, border));
+						pnlFor.setLayout(new GridLayout(0, 1, 1, 1));
 
 						//---- lblFor ----
 						lblFor.setText("Default content");
-						pnlFor.add(lblFor, BorderLayout.NORTH);
-						pnlFor.add(edtFor, BorderLayout.CENTER);
+						pnlFor.add(lblFor);
+						pnlFor.add(edtFor);
 					}
-					// START KGU#376 2017-07-01: Enh. #389
-					//pnlRight.add(pnlFor, BorderLayout.NORTH);
-					pnlRight.add(pnlFor, BorderLayout.CENTER);
-					// END KGU#376 2017-07-01
+					pnlRight.add(pnlFor);
 
-					// START KGU#376 2017-07-01: Enh. #389
-					//======== pnlLowerRight ========
-					{
-						pnlLowerRight.setLayout(new BorderLayout(border, border));
-					// END KGU#376 2017-07-01
-
+					pnlRight.add(Box.createVerticalStrut(border));
 
 					//======== pnlRepeat ========
 					{
 						pnlRepeat.setBorder(new TitledBorder("REPEAT loop"));
-						pnlRepeat.setLayout(new BorderLayout(border, border));
+						pnlRepeat.setLayout(new GridLayout(0, 1, 1, 1));
 
 						//---- lblRepeat ----
 						lblRepeat.setText("Default content");
-						pnlRepeat.add(lblRepeat, BorderLayout.NORTH);
-						pnlRepeat.add(edtRepeat, BorderLayout.CENTER);
+						pnlRepeat.add(lblRepeat);
+						pnlRepeat.add(edtRepeat);
 					}
-					// START KGU#376 2017-07-01: Enh. #389
-					//pnlRight.add(pnlRepeat, BorderLayout.SOUTH);
-					pnlLowerRight.add(pnlRepeat, BorderLayout.SOUTH);
-					// END KGU#376 2017-07-01
+					pnlRight.add(pnlRepeat);
+
+					pnlRight.add(Box.createVerticalStrut(border));
 
 					//======== pnlWhile ========
 					{
 						pnlWhile.setBorder(new TitledBorder("WHILE loop"));
-						pnlWhile.setAutoscrolls(true);
-						pnlWhile.setLayout(new BorderLayout(border, border));
+						pnlWhile.setLayout(new GridLayout(0, 1, 1, 1));
 
 						//---- lblWhile ----
 						lblWhile.setText("Default content");
-						pnlWhile.add(lblWhile, BorderLayout.NORTH);
-						pnlWhile.add(edtWhile, BorderLayout.CENTER);
+						pnlWhile.add(lblWhile);
+						pnlWhile.add(edtWhile);
 					}
-					// START KGU#376 2017-07-01: Enh. #389 
-					//pnlRight.add(pnlWhile, BorderLayout.CENTER);
-					pnlLowerRight.add(pnlWhile, BorderLayout.NORTH);
+					pnlRight.add(pnlWhile);
+
+					pnlRight.add(Box.createVerticalStrut(border));
+
+					// START KGU#686 2019-03-22: Enh. #56
+					//======== pnlTry ========
+					{
+						pnlTry.setBorder(new TitledBorder("TRY block labels"));
+						pnlTry.setLayout(new GridLayout(2, 3, 1, 1));
+						lblTry.setText("Try");
+						lblCatch.setText("Catch");
+						lblFinal.setText("Finally");
+						pnlTry.add(lblTry);
+						pnlTry.add(lblCatch);
+						pnlTry.add(lblFinal);
+						pnlTry.add(edtTry);
+						pnlTry.add(edtCatch);
+						pnlTry.add(edtFinal);
 					}
-					pnlRight.add(pnlLowerRight, BorderLayout.SOUTH);
-					// END KGU#376 2017-07-01
+					pnlRight.add(pnlTry);
+					// END KGU#686 2019-03-22
+					
 				}
-				contentPanel.add(pnlRight/*, BorderLayout.EAST*/);
+				contentPanel.add(pnlRight);
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 
@@ -411,9 +426,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					new Insets(0, 0, 0, 0), 0, 0));
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
-			dialogPane.setMinimumSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
-			dialogPane.setPreferredSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
-			dialogPane.setSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			// START KGU#686 2019-03-22: All works way better now without this attempt to control the size
+			//dialogPane.setMinimumSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			//dialogPane.setPreferredSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			//dialogPane.setSize(new Dimension((int)(scaleFactor * 600), (int)(scaleFactor * nimbusFactor * 400)));
+			// END KGU#686 2019-03-22
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
 		
@@ -423,9 +440,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		
 		pack();
 		setLocationRelativeTo(getOwner());
-		// JFormDesigner - End of component initialization  //GEN-END:initComponents
 		
-		// Bob things
 		btnOK.addActionListener(this);
 		btnOK.addKeyListener(this);
 		edtAltT.addKeyListener(this);
@@ -441,6 +456,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		// START KGU#394/KGU#376 2017-07-01: Enh. #389, #401
 		edtRoot.addKeyListener(this);
 		// END KGU#376 2017-07-01
+		// START KGU#686 2019-03-22: Enh. #56
+		edtTry.addKeyListener(this);
+		edtCatch.addKeyListener(this);
+		edtFinal.addKeyListener(this);
+		// END KGU#686 2019-03-22
 		addKeyListener(this);
 		
 	}

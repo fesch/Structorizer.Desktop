@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig         2019-03-18      Enh. ä56: Export of Try blocks implemented
  *
  ******************************************************************************************************
  *
@@ -77,8 +78,6 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
-import java.util.regex.Matcher;
-
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -92,8 +91,10 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
@@ -160,6 +161,18 @@ public class BasGenerator extends Generator
     }
     // END KGU#371 2019-03-07
 
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return (this.optionCodeLineNumbering() ? TryCatchSupportLevel.TC_NO_TRY : TryCatchSupportLevel.TC_TRY_CATCH_FINALLY);
+	}
+	// END KGU#686 2019-03-18
+	
 	//	// START KGU 2016-08-12: Enh. #231 - information for analyser
 //    private static final String[] reservedWords = new String[]{
 //		"FUNCTION", "SUB",
@@ -304,41 +317,47 @@ public class BasGenerator extends Generator
 	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
 	
-	// START KGU#113 2015-12-18: Enh. #67: Provide a current line number if required
+	// START KGU#113 2015-12-18: Enh. #67: 
+	/**
+	 * Provides a current line number string plus blank as line prefix if required.</br>
+	 * NOTE: This call increments the line number by {@link #lineIncrement} in line
+	 * numbering mode! You may inspect field {@link #lineNumber} instead if you don't
+	 * want to manipulate its value.
+	 */
 	protected String getLineNumber()
 	{
 		String prefix = "";
 		if (this.optionCodeLineNumbering())
 		{
-			prefix += this.lineNumber + " ";
+			prefix = this.lineNumber + " ";
 			this.lineNumber += this.lineIncrement;
 		}
 		return prefix;
 	}
 
-	protected void placeJumpTarget(ILoop _loop, String _indent)
-	{
+    protected void placeJumpTarget(ILoop _loop, String _indent)
+    {
         if (this.jumpTable.containsKey(_loop.getLoop()))
         {
-        	if (this.optionCodeLineNumbering())
-        	{
-        		// Associate label number with line number of the following dummy comment 
-        		this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
-        		insertComment("Exit point from above loop.", _indent);
-        	}
-        	else
-        	{
+            if (this.optionCodeLineNumbering())
+            {
+            	// Associate label number with line number of the following dummy comment 
+            	this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
+            	insertComment("Exit point from above loop.", _indent);
+            }
+            else
+            {
             	// START KGU#277 2016-10-13: Enh. #270
-        		//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
-        		//		this.commentSymbolLeft() + " Exit point from above loop.");
-        		addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
-        				this.commentSymbolLeft() + " Exit point from above loop.",
-        				_indent, _loop.isDisabled());
+            	//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
+            	//		this.commentSymbolLeft() + " Exit point from above loop.");
+            	addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
+            			this.commentSymbolLeft() + " Exit point from above loop.",
+            			_indent, _loop.isDisabled());
             	// END KGU#277 2016-10-13
-        	}
+            }
         }
-		
-	}
+
+    }
 	
 	// We need an overridden fundamental comment method here to be able to insert line numbers.
 	/* (non-Javadoc)
@@ -409,7 +428,7 @@ public class BasGenerator extends Generator
 		// END KGU#108 2015-12-19
 
 		return interm.trim();
-    }
+	}
 	// END KGU#18/KGU#23 2015-11-02
 	
 	// START KGU#16 2015-12-19
@@ -445,9 +464,9 @@ public class BasGenerator extends Generator
 	}
 	// END KGU#277 2016-10-13
 
-    @Override
-    protected void generateCode(Instruction _inst, String _indent)
-    {
+	@Override
+	protected void generateCode(Instruction _inst, String _indent)
+	{
 
 		if(!insertAsComment(_inst, _indent)) {
 			// START KGU#277 2016-10-13: Enh. #270
@@ -520,7 +539,7 @@ public class BasGenerator extends Generator
 				// END KGU#100 2016-01-22				
 			}
 		}
-    }
+	}
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
@@ -556,53 +575,53 @@ public class BasGenerator extends Generator
     @Override
     protected void generateCode(Case _case, String _indent)
     {
-    	// START KGU#453 2017-11-02: Issue #447 - consider line continuation now
-    	//String discriminator = transform(_case.getText().get(0));
-    	StringList unbrokenText = _case.getUnbrokenText();
-    	String discriminator = transform(unbrokenText.get(0));
-    	// END KGU #453 2017-11-02
+        // START KGU#453 2017-11-02: Issue #447 - consider line continuation now
+        //String discriminator = transform(_case.getText().get(0));
+        StringList unbrokenText = _case.getUnbrokenText();
+        String discriminator = transform(unbrokenText.get(0));
+        // END KGU #453 2017-11-02
         String indentPlusOne = _indent + this.getIndent();
         String indentPlusTwo = indentPlusOne + this.getIndent();
 
-    	// START KGU 2015-11-02
-    	insertComment(_case, _indent);
-    	// END KGU 2015-11-02
+        // START KGU 2015-11-02
+        insertComment(_case, _indent);
+        // END KGU 2015-11-02
 
-    	// START KGU#277 2016-10-13: Enh. #270
-    	//code.add(this.getLineNumber() + _indent + "SELECT CASE " + selection);
-    	boolean disabled =_case.isDisabled(); 
-    	addCode("SELECT CASE " + discriminator, _indent, disabled);
-    	// END KGU#277 2016-10-13
+        // START KGU#277 2016-10-13: Enh. #270
+        //code.add(this.getLineNumber() + _indent + "SELECT CASE " + selection);
+        boolean disabled =_case.isDisabled(); 
+        addCode("SELECT CASE " + discriminator, _indent, disabled);
+        // END KGU#277 2016-10-13
 
-    	for (int i=0; i<_case.qs.size()-1; i++)
-    	{
+        for (int i=0; i<_case.qs.size()-1; i++)
+        {
         	// START KGU#277 2016-10-13: Enh. #270
-    		//code.add(this.getLineNumber() + indentPlusOne + "CASE " + _case.getText().get(i+1).trim());
-    		// START KGU#453 2017-11-02: Issue #447
-    		//addCode("CASE " + _case.getText().get(i+1).trim(), indentPlusOne, disabled);
-    		addCode("CASE " + unbrokenText.get(i+1).trim(), indentPlusOne, disabled);
-    		// END KGU#453 2017-11-02
-    		// END KGU#277 2016-10-13
-    		//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
-    		generateCode((Subqueue) _case.qs.get(i), indentPlusTwo);
-    		//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
-    	}
+        	//code.add(this.getLineNumber() + indentPlusOne + "CASE " + _case.getText().get(i+1).trim());
+        	// START KGU#453 2017-11-02: Issue #447
+        	//addCode("CASE " + _case.getText().get(i+1).trim(), indentPlusOne, disabled);
+        	addCode("CASE " + unbrokenText.get(i+1).trim(), indentPlusOne, disabled);
+        	// END KGU#453 2017-11-02
+        	// END KGU#277 2016-10-13
+        	//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
+        	generateCode((Subqueue) _case.qs.get(i), indentPlusTwo);
+        	//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
+        }
 
-		// START KGU#453 2017-11-02: Issue #447
-    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-    	if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
-    	// END KGU#453 2017-11-02
-    	{
+        // START KGU#453 2017-11-02: Issue #447
+        //if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+        if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+        // END KGU#453 2017-11-02
+        {
         	// START KGU#277 2016-10-13: Enh. #270
-    		//code.add(this.getLineNumber() + indentPlusOne + "CASE ELSE");
-    		addCode("CASE ELSE", indentPlusOne, disabled);
-    		// END KGU#277 2016-10-13
-    		generateCode((Subqueue)_case.qs.get(_case.qs.size()-1), indentPlusTwo);
-    	}
-    	// START KGU#277 2016-10-13: Enh. #270
-    	//code.add(this.getLineNumber() + _indent + "END SELECT");
-    	addCode("END SELECT", _indent, disabled);
-    	// END KGU#277 2016-10-13
+        	//code.add(this.getLineNumber() + indentPlusOne + "CASE ELSE");
+        	addCode("CASE ELSE", indentPlusOne, disabled);
+        	// END KGU#277 2016-10-13
+        	generateCode((Subqueue)_case.qs.get(_case.qs.size()-1), indentPlusTwo);
+        }
+        // START KGU#277 2016-10-13: Enh. #270
+        //code.add(this.getLineNumber() + _indent + "END SELECT");
+        addCode("END SELECT", _indent, disabled);
+        // END KGU#277 2016-10-13
     }
 
     @Override
@@ -769,25 +788,25 @@ public class BasGenerator extends Generator
 
             String condition = transform(_while.getText().getLongString(), false).trim();
 
-        	// START KGU 2015-11-02
-        	insertComment(_while, _indent);
-        	// END KGU 2015-11-02
+            // START KGU 2015-11-02
+            insertComment(_while, _indent);
+            // END KGU 2015-11-02
 
-        	// The traditional BASIC while loop looks like WHILE condition ... WEND
-        	// START KGU#2772 2016-10-13: Enh. #270
+            // The traditional BASIC while loop looks like WHILE condition ... WEND
+            // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "DO WHILE " + condition);
-        	boolean disabled = _while.isDisabled();
+            boolean disabled = _while.isDisabled();
             addCode("DO WHILE " + condition, _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_while.q, _indent+this.getIndent());
-        	// START KGU#2772 2016-10-13: Enh. #270
+            // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP");
             addCode("LOOP", _indent, disabled);
             // END KGU#277 2016-10-13
-            
-        	// START KGU#78 2015-12-18: Enh. #23
-        	this.placeJumpTarget(_while, _indent);
-        	// END KGU#78 2915-12-18
+
+            // START KGU#78 2015-12-18: Enh. #23
+            this.placeJumpTarget(_while, _indent);
+            // END KGU#78 2915-12-18
     }
 
     @Override
@@ -796,52 +815,52 @@ public class BasGenerator extends Generator
 
             String condition = transform(_repeat.getText().getLongString()).trim();
 
-        	// START KGU 2015-11-02
-        	insertComment(_repeat, _indent);
-        	// END KGU 2015-11-02
+            // START KGU 2015-11-02
+            insertComment(_repeat, _indent);
+            // END KGU 2015-11-02
 
-        	// START KGU#277 2016-10-13: Enh. #270
-        	//code.add(this.getLineNumber() + _indent + "DO");
-        	boolean disabled = _repeat.isDisabled();
+            // START KGU#277 2016-10-13: Enh. #270
+            //code.add(this.getLineNumber() + _indent + "DO");
+            boolean disabled = _repeat.isDisabled();
             addCode("DO", _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_repeat.q, _indent + this.getIndent());
-        	// START KGU#277 2016-10-13: Enh. #270
+            // START KGU#277 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP UNTIL " + condition);
             addCode("LOOP UNTIL " + condition, _indent, disabled);
             // END KGU#277 2016-10-13
 
             // START KGU#78 2015-12-18: Enh. #23
-        	this.placeJumpTarget(_repeat, _indent);
-        	// END KGU#78 2915-12-18
+            this.placeJumpTarget(_repeat, _indent);
+            // END KGU#78 2915-12-18
     }
 
     @Override
     protected void generateCode(Forever _forever, String _indent)
     {
-    	// START KGU 2015-11-02
-    	insertComment(_forever, _indent);
-    	// END KGU 2015-11-02
+        // START KGU 2015-11-02
+        insertComment(_forever, _indent);
+        // END KGU 2015-11-02
 
-    	// START KGU#277 2016-10-13: Enh. #270
-    	//code.add(this.getLineNumber() + _indent + "DO");
-    	boolean disabled = _forever.isDisabled();
+        // START KGU#277 2016-10-13: Enh. #270
+        //code.add(this.getLineNumber() + _indent + "DO");
+        boolean disabled = _forever.isDisabled();
         addCode("DO", _indent, disabled);
         // END KGU#277 2016-10-13
-    	generateCode(_forever.q, _indent+this.getIndent());
-    	// START KGU#277 2016-10-13: Enh. #270
+        generateCode(_forever.q, _indent+this.getIndent());
+        // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "LOOP");
         addCode("LOOP", _indent, disabled);
         // END KGU#277 2016-10-13
 
-    	// START KGU#78 2015-12-18: Enh. #23
-    	this.placeJumpTarget(_forever, _indent);
-    	// END KGU#78 2915-12-18
+        // START KGU#78 2015-12-18: Enh. #23
+        this.placeJumpTarget(_forever, _indent);
+        // END KGU#78 2915-12-18
     }
 	
-    @Override
-    protected void generateCode(Call _call, String _indent)
-    {
+	@Override
+	protected void generateCode(Call _call, String _indent)
+	{
 		if(!insertAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
 			insertComment(_call, _indent);
@@ -879,31 +898,29 @@ public class BasGenerator extends Generator
 				// END KGU#2 2015-12-18
 			}
 		}
-    }
+	}
 
-    @Override
-    protected void generateCode(Jump _jump, String _indent)
-    {
-    	if(!insertAsComment(_jump, _indent)) {
-    		// START #277 2016-10-13: Enh. #270
-    		boolean disabled = _jump.isDisabled();
-    		// END KGU#277 2016-10-13
-    		// START KGU 2014-11-16
-    		insertComment(_jump, _indent);
-    		// END KGU 2014-11-16
-    		
-    		// START KGU#78 2015-12-18: Enh. #23 Generate sensible goto instructions
-    		//for(int i=0;i<_jump.getText().count();i++)
-    		//{
-    		//	code.add(_indent+transform(_jump.getText().get(i)));
-    		//}
+	@Override
+	protected void generateCode(Jump _jump, String _indent)
+	{
+		if(!insertAsComment(_jump, _indent)) {
+			// START #277 2016-10-13: Enh. #270
+			boolean disabled = _jump.isDisabled();
+			// END KGU#277 2016-10-13
+			// START KGU 2014-11-16
+			insertComment(_jump, _indent);
+			// END KGU 2014-11-16
+
+			// START KGU#78 2015-12-18: Enh. #23 Generate sensible goto instructions
+			//for(int i=0;i<_jump.getText().count();i++)
+			//{
+			//	code.add(_indent+transform(_jump.getText().get(i)));
+			//}
 			boolean isEmpty = true;
-			
+
 			StringList lines = _jump.getText();
 			String preReturn  = CodeParser.getKeywordOrDefault("preReturn", "return");
-			String preExit    = CodeParser.getKeywordOrDefault("preExit", "exit");
-			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
-			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
+			String preThrow   = CodeParser.getKeywordOrDefault("preThrow", "throw");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -912,7 +929,7 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 				//code.add(_indent + line + ";");
-				if (line.matches(preReturnMatch))
+				if (Jump.isReturn(line))
 				{
 					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
@@ -924,13 +941,24 @@ public class BasGenerator extends Generator
 						// END KGU#277 2016-10-13
 					}
 				}
-				else if (line.matches(preExitMatch))
+				else if (Jump.isExit(line))
 				{
 					// START KGU#277 2016-10-13: Enh. #270
 					//code.add(this.getLineNumber() + _indent + "STOP");
 					addCode("STOP", _indent, disabled);
 					// END KGU#277 2016-10-13
 				}
+				// START KGU#686 2019-03-18: Enh. #56
+				else if (Jump.isThrow(line)) {
+					if (this.optionCodeLineNumbering()) {
+						insertComment("FIXME: Only a number is allowed as parameter:", _indent);
+						addCode("ERROR " + line.substring(preThrow.length()).trim(), _indent, disabled);
+					}
+					else {
+						addCode("Throw New Exception(" + line.substring(preThrow.length()).trim() + ")", _indent, disabled);
+					}
+				}
+				// END KGU#686 2019-03-18
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
 				{
@@ -971,8 +999,8 @@ public class BasGenerator extends Generator
 				isEmpty = false;	// Leave the above loop now 
 			}
 			// END KGU#78 2015-12-18
-    	}
-    }
+		}
+	}
 
 	// START KGU#47 2015-12-18: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
@@ -1017,8 +1045,74 @@ public class BasGenerator extends Generator
 		// END KGU#277 2016-10-13
 	}
 	// END KGU#47 2015-12-18
-    
-	
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+
+		boolean isDisabled = _try.isDisabled();
+		insertComment(_try, _indent);
+
+		String indent1 = _indent + this.getIndent();
+		String varName = _try.getExceptionVarName();
+		boolean supportsTry = this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY;
+		if (supportsTry) {
+			// Modern code (~ VisualBasic)
+			this.addCode("Try", _indent, isDisabled);
+
+			generateCode(_try.qTry, indent1);
+
+			if (varName != null && !varName.isEmpty()) {
+				String exName = "ex" + Integer.toHexString(_try.hashCode());
+				this.addCode("Catch " + exName + " As Exception", _indent, isDisabled);
+				this.addCode("Dim " + varName + " As String = " + exName + ".ToString()", indent1, isDisabled);
+			}
+			else {
+				this.addCode("Catch", _indent, isDisabled);
+			}
+
+			generateCode(_try.qCatch, indent1);
+
+			if (_try.qFinally.getSize() > 0) {
+				this.addCode("Finally", _indent, isDisabled);
+
+				generateCode(_try.qFinally, indent1);
+			}
+			
+			this.addCode("End Try", _indent, isDisabled);
+		}
+		else {
+			// Vintage Basic
+
+			// There is at least the ON ERROR GOTO construct...
+			int ixOnGoto = this.code.count();
+			this.addCode("ON ERROR GOTO §§§", _indent, isDisabled);
+
+			generateCode(_try.qTry, _indent);
+
+			int ixGotoFinal = this.code.count();
+			this.addCode("GOTO §§§", _indent, isDisabled);
+			this.insertComment("Start of error handler, FIXME: variable '" + varName + "' should conatain error info ...", _indent);
+			this.code.set(ixOnGoto, this.code.get(ixOnGoto).replace("§§§", Integer.toString(this.lineNumber)));
+		
+			generateCode(_try.qCatch, indent1);
+		
+			this.insertComment("End of error handler, resume here ...", _indent);
+			this.code.set(ixGotoFinal, this.code.get(ixGotoFinal).replace("§§§", Integer.toString(this.lineNumber)));
+		
+			this.addCode("ON ERROR GOTO 0", _indent, isDisabled);
+			if (_try.qFinally.getSize() > 0) {
+
+				generateCode(_try.qFinally, _indent);
+
+			}
+		}
+	}
+
+
 // START KGU#74 2015-12-18: Decomposed and fine-tuned 
 	/**
 	 * Composes the heading for the program or function according to the
@@ -1160,17 +1254,17 @@ public class BasGenerator extends Generator
 	protected void generateFooter(Root _root, String _indent)
 	{
 		String endPhrase = "END";
-        if (_root.isSubroutine())
-        {
-        	if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet)
-        	{
-        		endPhrase += " FUNCTION";
-        	}
-        	else
-        	{
-        		endPhrase += " SUB";
-        	}
-        }
+		if (_root.isSubroutine())
+		{
+			if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			{
+				endPhrase += " FUNCTION";
+			}
+			else
+			{
+				endPhrase += " SUB";
+			}
+		}
 		code.add(_indent + this.getLineNumber() + endPhrase);
 		
 		if (this.optionCodeLineNumbering())

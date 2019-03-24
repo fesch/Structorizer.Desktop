@@ -31,8 +31,9 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.12.14      First Issue on behalf of enhancement request #492
- *      Kay Gürtzig     2018.03.21      All direct console output replaced with logging
+ *      Kay Gürtzig     2017-12-14      First Issue on behalf of enhancement request #492
+ *      Kay Gürtzig     2018-03-21      All direct console output replaced with logging
+ *      Kay Gürtzig     2019-03-17      Enh. #56 New entries for new Element class Try added
  *
  ******************************************************************************************************
  *
@@ -75,6 +76,7 @@ import lu.fisch.structorizer.locales.LangTextHolder;
  * n - Main (Root type)<br/>
  * o - Sub (Root type)<br/>
  * p - Includable (Root type)<br/>
+ * q - Try<br/>
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -104,6 +106,9 @@ public class ElementNames extends Component {
 		classNameLookUp.put("Root.DT_MAIN", 13);
 		classNameLookUp.put("Root.DT_SUB", 14);
 		classNameLookUp.put("Root.DT_INCL", 15);
+		// START KGU#686 2019-03-17: Enh. #86
+		classNameLookUp.put("Try", 16);
+		// END KGU#686 2019-03-17
 	}
 	public static boolean useConfiguredNames = true;
 	/**
@@ -127,6 +132,9 @@ public class ElementNames extends Component {
 			null,	// Main (Root)
 			null,	// Sub (Root)
 			null,	// Includable (Root)
+			// START KGU#686 2019-03-17: Enh. #86
+			null,	// Try
+			// END KGU#686 2019-03-17
 	};
 	/**
 	 * Array of locale-defined names for element types and flavours.<br/>
@@ -149,6 +157,9 @@ public class ElementNames extends Component {
 			new LangTextHolder("Main program"),
 			new LangTextHolder("Sub-routine"),	
 			new LangTextHolder("Includable"),	
+			// START KGU#686 2019-03-17: Enh. #86
+			new LangTextHolder("TRY"),
+			// END KGU#686 2019-03-17
 	};
 
 	public static ElementNames getInstance()

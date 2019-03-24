@@ -84,6 +84,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
  *      Kay Gürtzig     2019-03-13      Enh. #696: All references to Arranger replaced by routinePool,
  *                                      subroutine retrieval enabled in the batch version of exportCode
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
  *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
  *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
  *
@@ -167,6 +168,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Control;
@@ -198,6 +200,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	public enum OverloadingLevel {OL_NO_OVERLOADING, OL_DELEGATION, OL_DEFAULT_ARGUMENTS};
 	// END KGU#371 2019-03-07
+	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Type represents possible levels of exception support, i.e. whether or not
+	 * and which parts of a try-catch-finally block are supported.(It is assumed
+	 * that a {@code throw} mechanism is available if try/catch is supported.)
+	 * <ul>
+	 * <li>{@link #TC_NO_TRY} means no {@code try/catch/throw} at all;</li>
+	 * <li>{@link #TC_TRY_CATCH} means {@code try/catch} and {@code throw} but no {@code finally} clause.</li>
+	 * <li>{@link #TC_TRY_CATCH_FINALLY} means full exception support, {@code finally} included.</li>
+	 * </ul>
+	 * @see #getTryCatchLevel()
+	 * @author Kay Gürtzig
+	 */
+	public enum TryCatchSupportLevel {TC_NO_TRY, TC_TRY_CATCH, TC_TRY_CATCH_FINALLY};
+	// END KGU#686 2019-03-18
+
 	
 	/************ Fields ***********************/
 	// START KGU#484 2018-03-22: Issue #463
@@ -291,6 +310,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Flag to indicate whether the diagram contains Parallel elements */
 	protected boolean hasParallels = false;
 	// END KGU#348 2017-02-19
+	// START KGU#686 2019-03-21: Enh. #56
+	protected boolean hasTryBlocks = false;
+	// END KGU#686 2019-03-21
 	// START KGU#424 2017-09-25: We introduce a source mapping for declaration comments
 	/** Maps declared names (variable, constants, types) per Root to originating Elements */
 	protected HashMap<Root, HashMap<String, Instruction>> declarationCommentMap = new HashMap<Root, HashMap<String, Instruction>>();
@@ -458,6 +480,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract OverloadingLevel getOverloadingLevel();
 	// END KGU#371 2019-03-07
 	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Specifies the degree of availability of a try-catch-finally construction
+	 * and the corresponding throw mechanism in the target language.
+	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
+	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
+	 */
+	protected abstract TryCatchSupportLevel getTryCatchLevel();
+	// END KGU#686 2019-0318
+
 	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
 	/**
 	 * Returns the currently configured character set name for the file export
@@ -842,16 +874,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This is a service method inheriting generators may call at the appropriate
 	 * position in order to insert include (or import or uses etc.) directives
 	 * the generator regards as necessary and had enqueued in {@link #generatorIncludes}.<br/>
-	 * User-configured include items may be skipped here if {@code skipUserIncludes}
-	 * if these happen to have already been inserted in the code. Otherwise the
-	 * argument should be set false lest they should be skipped by both this method
-	 * and {@link #insertUserIncludes(String)}.<br/>
+	 * If user-configured include items have already been inserted in the code then
+	 * argument {@code skipUserIncludes} should be set true in oder to skip them here.
+	 * Otherwise the argument should be set false lest items of the itersection of both
+	 * sets should be omitted by both this method and {@link #insertUserIncludes(String)}.<br/>
 	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
-	 * (empty at {@link CodeGnerator} level) for every item configured before the
+	 * (empty at {@link Generator} level) for every configured item before the
 	 * insertion takes place - if some pre-processing of the items is necessary
-	 * then the generator subclass may override this method.<br/>
+	 * then the generator subclass ought to override the preparation method.<br/>
 	 * @param _indent - current indentation string
-	 * @param skipUserIncludes - if user includes have alrady been added to the code
+	 * @param skipUserIncludes - if user includes have already been added to the code
 	 * and are not to be repeated inadvertently here.
 	 * @return number of inserted lines
 	 * @see #getIncludePattern()
@@ -1559,6 +1591,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					// After an unconditional leave further instructions at this level are redundant  
 					return surelyReturns;
 				}
+				// START KGU#686 2019-03-18: Enh. #56 support for try / catch /throw
+				else if (jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
+					// Doesn't return a regular result but we won't get to the end, so a default return is
+					// not required, we handle this as if a result would have been returned.
+					return true;
+				}
+				// END KGU#686 2019-03-18
 				else	// No recognized jump type
 // END KGU#380 2017-04-14
 				{
@@ -1986,6 +2025,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			hasParallels = true;
 		}
 		// END KGU#348 2017-02-19
+		// START KGU#686 2019-03-21: Enh. #56 - For Perl, try-catch is an extra module
+		else if (_ele instanceof Try) {
+			hasTryBlocks = true;
+		}
+		// END KGU#686 2019-03-21
 		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
 		if (!usesFileAPI && _ele.getText().getText().contains("file"))
 		{
@@ -2002,7 +2046,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#236 2016-08-10
  	
 	/**
-	 * This method is responsible for generating the code of an {@code Instruction} element.
+	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
 	 * be aware of the several export options.
@@ -2015,6 +2059,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
@@ -2031,7 +2076,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * This method is responsible for generating the code of an {@code Alternative}
-	 * element i.e. an IF construction.
+	 * element i.e. an IF construction.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2045,6 +2090,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2063,7 +2109,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Case}
-	 * element i.e. a multiple selection.
+	 * element i.e. a multiple selection.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2077,6 +2123,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2098,7 +2145,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code For} loop
-	 * element, either of counting or enumerating style.
+	 * element, either of counting or enumerating style.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2112,6 +2159,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2128,7 +2176,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code While} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2142,6 +2190,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2158,7 +2207,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Repeat} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2172,6 +2221,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2188,7 +2238,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Forever} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2202,6 +2252,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2217,7 +2268,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * This method is responsible for generating the code of a {@code Call} element.
+	 * This method is responsible for generating the code of a {@code Call} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
 	 * be aware of the several export options.
@@ -2230,6 +2281,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2241,6 +2293,71 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// code.add(_indent+"");
 	}
 
+	/**
+	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator class.
+	 * It should make use of available helper methods {@link #transform(String)} etc. and
+	 * be aware of the several export options.
+	 * @see #generateCode(Instruction, String)
+	 * @see #generateCode(Alternative, String)
+	 * @see #generateCode(Case, String)
+	 * @see #generateCode(For, String)
+	 * @see #generateCode(While, String)
+	 * @see #generateCode(Repeat, String)
+	 * @see #generateCode(Forever, String)
+	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
+	 * @see #generateCode(Root, String)
+	 * @see #getIndent()
+	 * @see #optionCodeLineNumbering()
+	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
+	 * @param _indent - the indentation string valid for the given Instruction
+	 */
+	protected void generateCode(Jump _jump, String _indent)
+	{
+		// code.add(_indent+"");
+	}
+
+	/**
+	 * This method is responsible for generating the code of a {@code Parallel} section
+	 * element.<br/>
+	 * This dummy version just concatenates the threads sequentially and should therefore
+	 * be overridden by each inheriting generator class that knows to orchestrate
+	 * parallelism
+	 * (you may have a look at its code to see how the recursive descending is done).
+	 * It should make use of available helper methods {@link #transform(String)} etc. and
+	 * be aware of the several export options.
+	 * @see #generateCode(Instruction, String)
+	 * @see #generateCode(Alternative, String)
+	 * @see #generateCode(Case, String)
+	 * @see #generateCode(For, String)
+	 * @see #generateCode(While, String)
+	 * @see #generateCode(Repeat, String)
+	 * @see #generateCode(Forever, String)
+	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Jump, String)
+	 * @see #generateCode(Try, String)
+	 * @see #generateCode(Root, String)
+	 * @see #getIndent()
+	 * @see #optionCodeLineNumbering()
+	 * @see #optionBlockBraceNextLine()
+	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
+	 * @param _indent - the indentation string valid for the given Instruction
+	 */
+	protected void generateCode(Parallel _para, String _indent)
+	{
+		// code.add(_indent+"");
+		for(int i = 0; i < _para.qs.size(); i++)
+		{
+			// code.add(_indent+"");
+			generateCode((Subqueue) _para.qs.get(i), _indent+this.getIndent());
+			// code.add(_indent+"");
+		}
+		// code.add(_indent+"");
+	}
+	
+	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
 	/**
 	 * This method is responsible for generating the code of an {@code Instruction} element.
 	 * This dummy version is to be overridden by each inheriting generator class.
@@ -2254,52 +2371,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Repeat, String)
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
-	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
+	 * @param _try - the {@link lu.fisch.structorizer.elements.Try}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
-	protected void generateCode(Jump _jump, String _indent)
+	protected void generateCode(Try _try, String _indent)
 	{
-		// code.add(_indent+"");
+		insertComment("try (FIXME!)", _indent);
+		generateCode(_try.qTry, _indent + this.getIndent());
+		insertComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
+		generateCode(_try.qCatch, _indent + this.getIndent());
+		insertComment("fimally (FIXME!)", _indent);
+		generateCode(_try.qFinally, _indent + this.getIndent());
+		insertComment("end try (FIXME!)", _indent);
 	}
-
-	/**
-	 * This method is responsible for generating the code of a {@code Parallel} loop
-	 * element.
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
-	 * @see #generateCode(Instruction, String)
-	 * @see #generateCode(Alternative, String)
-	 * @see #generateCode(Case, String)
-	 * @see #generateCode(For, String)
-	 * @see #generateCode(While, String)
-	 * @see #generateCode(Repeat, String)
-	 * @see #generateCode(Forever, String)
-	 * @see #generateCode(Call, String)
-	 * @see #generateCode(Jump, String)
-	 * @see #generateCode(Root, String)
-	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
-	 * @see #optionBlockBraceNextLine()
-	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
-	 * @param _indent - the indentation string valid for the given Instruction
-	 */
-	protected void generateCode(Parallel _para, String _indent)
-	{
-		// code.add(_indent+"");
-		for(int i=0; i < _para.qs.size(); i++)
-		{
-			// code.add(_indent+"");
-			generateCode((Subqueue) _para.qs.get(i), _indent+this.getIndent());
-			// code.add(_indent+"");
-		}
-		// code.add(_indent+"");
-	}
+	// END KGU#686 2019-03-17
 
 	/**
 	 * This method does not generate anything itself, it is just a formal
@@ -2357,6 +2447,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			generateCode((Forever) _ele,_indent);
 		}
+		// START KGU#686 2019-03-17: Enh. #56
+		else if(_ele.getClass().getSimpleName().equals("Try"))
+		{
+			generateCode((Try) _ele,_indent);
+		}
+		// END KGU#686 2019-03-17
 		else if(_ele.getClass().getSimpleName().equals("Call"))
 		{
 			generateCode((Call) _ele,_indent);
@@ -2438,7 +2534,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
 		// START KGU#691 2019-03-21: Bugfix - the variable highlighting and detection was inflicted
 		//this.varNames = _root.getVarNames();
-		this.varNames = _root.getVarNames().copy();
+		this.varNames = _root.retrieveVarNames().copy();
 		// END KGU#691 2019-03-21
 		for (int p = 0; p < paramNames.count(); p++) {
 			this.varNames.removeAll(paramNames.get(p));
@@ -2542,7 +2638,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean thisDone = false;
 		code.add("");
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-			insertDefinitions(incl, _indent, incl.getVarNames(), _force);
+			insertDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
 			}

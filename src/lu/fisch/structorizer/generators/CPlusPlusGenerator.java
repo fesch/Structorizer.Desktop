@@ -79,8 +79,10 @@ import lu.fisch.structorizer.elements.IElementVisitor;
 import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -114,7 +116,20 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#371 2019-03-07
 
-	//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 * @see #insertCatchHeading(Try, String)
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH;
+	}
+	// END KGU#686 2019-03-18
+
+//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"auto", "break", "case", "char", "const", "continue",
 //		"default", "do", "double", "else", "enum", "extern",
@@ -473,6 +488,35 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#47/KGU#348 2017-02-21
 	
+	// START KGU#686 2019-03-18: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeExceptionFrom(java.lang.String)
+	 */
+	@Override
+	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
+		// If it isn't a rethrow then fake some text
+		if (_thrown.isEmpty() && this.caughtException == null) {
+			_thrown = "new std::string(\"unspecified error\")";
+		}
+		addCode(("throw " + _thrown).trim() + ";", _indent, _asComment);
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void insertCatchHeading(Try _try, String _indent) {
+		String varName = _try.getExceptionVarName();
+		String head = "catch (...)";
+		if (varName != null && !varName.isEmpty()) {
+			head = "catch(std::string " + varName + ")";
+		}
+		this.insertBlockHeading(_try, head, _indent);
+		this.caughtException = head;	// No matter what is contains but it must not be null
+	}
+	// END KGU#686 2019-03-18
+
+	
 // KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
 //    @Override
 //    public String generateCode(Root _root, String _indent)
@@ -517,7 +561,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			if (this.hasParallels) {
 				this.generatorIncludes.add("<thread>");
 			}
-			this.insertGeneratorIncludes("", true);
+			this.insertGeneratorIncludes("", false);
 			// END KGU#348 2017-02-21
 			// START KGU#351 2017-02-26: Enh. #346
 			this.insertUserIncludes("");
