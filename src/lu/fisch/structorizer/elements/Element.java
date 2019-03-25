@@ -103,6 +103,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-18      Enh. #56: Handling and highlighting of the throw keyword.
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
+ *      Kay Gürtzig     2019-03-24      Bugfix #711: Eternal loop on parsing an instruction line
  *
  ******************************************************************************************************
  *
@@ -238,7 +239,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-07";
+	public static final String E_VERSION = "3.29-08";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2931,8 +2932,13 @@ public abstract class Element {
 				if (level == 0) {
 					tokens.set(ixLastStart, tokens.concatenate("", ixLastStart, ix + 1));
 					tokens.remove(ixLastStart + 1, ix+1);
+					// START KGU#693 2019-03-24: Bugfix #711
+					ix = ixLastStart;
+					// START KGU#693 2019-03-24
 				}
-				ix = ixLastStart;
+				// START KGU#693 2019-03-24: Bugfix #711 misplaced instruction, caused an eternal loop
+				//ix = ixLastStart;
+				// START KGU#693 2019-03-24
 			}
 			ix++;
 		}
