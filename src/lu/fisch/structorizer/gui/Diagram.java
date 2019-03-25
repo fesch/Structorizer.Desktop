@@ -173,6 +173,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-26      Enh. #689: Mechanism to edit the referred routine of a selected Call introduced
  *      Kay Gürtzig     2019-03-01      Bugfix #693: Missing existence check on loading recent arrangement files added
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-25      Issue #685: Workaround for exception stack traces on copying to windows clipboard 
  *
  ******************************************************************************************************
  *
@@ -8044,8 +8045,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
 
 		// get diagram
-		// FIXME KGU#660 2019-02-20: Issue #685 With Windows and java 11, conversion to JPEG doesn't cope with alpha channel
-		BufferedImage image = new BufferedImage(root.width+1,root.height+1, BufferedImage.TYPE_INT_ARGB);
+		// START KGU#660 2019-03-25: Issue #685
+		//BufferedImage image = new BufferedImage(root.width+1,root.height+1, BufferedImage.TYPE_INT_ARGB);
+		int imageType = BufferedImage.TYPE_INT_ARGB;
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			/* Windows always converts to JPEG instead of PNG, so it doesn't cope
+			 * with alpha channel. In Java 11, this will produce exception stack
+			 * traces, so we just circumvent it now. 
+			 */
+			imageType = BufferedImage.TYPE_INT_RGB;
+		}
+		BufferedImage image = new BufferedImage(root.width+1, root.height+1, imageType);
+		// END KGU#660 2019-03-25
 		root.draw(image.getGraphics(), null);
 
 		// put image to clipboard
