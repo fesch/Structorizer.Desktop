@@ -310,6 +310,7 @@ Menu.menuPreferencesLanguageFromFile.tooltip=Sie können mit dem 'Übersetzer' i
 Menu.menuPreferencesWheel.text=Mausrad
 Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
 Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
+Menu.menuPreferencesWheelUnit.text=Mausrad-Scroll-Einheit ...
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
@@ -437,6 +438,7 @@ Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
+Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".

@@ -174,6 +174,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-01      Bugfix #693: Missing existence check on loading recent arrangement files added
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-25      Issue #685: Workaround for exception stack traces on copying to windows clipboard 
+ *      Kay Gürtzig     2019-03-27      Enh. #717: Configuration of scroll increment (Element.E_WHEEL_SCROLL_UNIT)
  *
  ******************************************************************************************************
  *
@@ -1523,8 +1524,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-			scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
-			scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+			// START KGU#699 2019-03-27: Issue #717
+			//scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
+			//scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+			scroll.getHorizontalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + widthFactor - 1);
+			scroll.getVerticalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + heightFactor - 1);
+			// START KGU#699 2019-03-27
 		}
 	}
 	// END KGU#444 2017-10-23
@@ -7751,7 +7756,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
 	}
-		// END KGU#503 2018-03-14
+	// END KGU#503 2018-03-14
+	
+	// START KGU#699 2019-03-27: Issue #717 scrolling "speed" ought to be configurable
+	/**
+	 * Opens a little dialog offering to configure the default scrolling increment
+	 * for the mouse wheel via a spinner 
+	 */
+	public void configureWheelUnit()
+	{
+		JSpinner spnUnit = new JSpinner();
+		spnUnit.setModel(new SpinnerNumberModel(Element.E_WHEEL_SCROLL_UNIT, 1, 20, 1));
+		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+				spnUnit,
+				Menu.ttlMouseScrollUnit.getText(),
+				JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				IconLoader.getIcon(9)) == JOptionPane.OK_OPTION) {
+			Element.E_WHEEL_SCROLL_UNIT = (Integer)spnUnit.getModel().getValue();
+			this.adaptScrollUnits();
+			if (Arranger.hasInstance()) {
+				Arranger.getInstance().adaptScrollUnits();
+			}
+		}
+	}
+	// END KGU#699 2019-03-27
 
 	// START KGU#170 2016-04-01: Enh. #144: Maintain a preferred export generator
 	public String getPreferredGeneratorName()

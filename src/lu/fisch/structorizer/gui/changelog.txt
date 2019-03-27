@@ -79,6 +79,7 @@ Current development version: 3.29-09 (2019-03-27)
 - 09: Enh. #697: Batch code import to assignments / assignment archives <2>
 - 09: Bugfix #715: Console dialog in batch import failed after first time <2>
 - 09: Bugfix #716: Defective assignment export to Python code [elemhsb]2
+- 09: Issue #717: Mouse wheel scroll unit now configurable [elemhsb]2
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

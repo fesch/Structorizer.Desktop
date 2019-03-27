@@ -2138,7 +2138,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //		}
 	}
 
-	private Rect adaptLayout()
+	// START KGU#699 2019-03-27: Issue #717 - made protected to allow access from Arranger
+	//private Rect adaptLayout()
+	protected Rect adaptLayout()
+	// END KGU#699 2019-03-17
 	{
 		Rect rect = getDrawingRect(null);
 		// START KGU#85 2017-10-23: Enh. #35 - Add scrollbars
@@ -2186,8 +2189,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-			scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
-			scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+			// START KGU#699 2ß19-03-27: Issue #717 - make base increment configurable
+			//scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
+			//scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+			scroll.getHorizontalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsHorizontal - 1);
+			scroll.getVerticalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsVertical - 1);
+			// END KGU#699 2019-03-27
 		}
 	}
 	// END KGU#444 2017-10-23

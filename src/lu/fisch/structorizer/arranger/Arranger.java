@@ -2129,5 +2129,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#646 2019-02-05
+
+	// START KGU#699 2019-03-27: Issue #717
+	/**
+	 * Allows immediately to react to changes of the basic mouse wheel unit
+	 */
+	public void adaptScrollUnits() {
+		surface.adaptLayout();
+	}
+	// END KGU#699 2019-03-27
 	
 }

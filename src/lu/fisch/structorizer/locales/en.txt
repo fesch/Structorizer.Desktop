@@ -308,6 +308,7 @@ Menu.menuPreferencesLookAndFeel.text=Look & Feel
 Menu.menuPreferencesWheel.text=Mouse wheel
 Menu.menuPreferencesWheelCollapse.text=Mouse wheel for collapsing?
 Menu.menuPreferencesWheelZoom.text=Reverse zoom with ctrl + wheel?
+Menu.menuPreferencesWheelUnit.text=Mouse wheel scrolling unit ...
 Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 
 Menu.menuPreferencesSave.text=All preferences ...
@@ -434,6 +435,7 @@ Menu.msgCreateSubroutine.text=Create a new subroutine «%»?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
+Menu.ttlMouseScrollUnit.text=Mouse wheel scrolling unit
 
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".

@@ -313,6 +313,7 @@ Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 Menu.menuPreferencesWheel.text=Rueda
 Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
 Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
+Menu.menuPreferencesWheelUnit.text=Unidad de desplazamiento ...
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
 Menu.menuPreferencesSaveAll.text=Guardar/Importar
@@ -438,6 +439,7 @@ Menu.msgCreateSubroutine.text=¿Crear nueva subrutina «%»?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
+Menu.ttlMouseScrollUnit.text=Unidad de decplazamiento (rueda del ratón)
 
 // Error messages for analyser
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".

@@ -392,24 +392,27 @@ public abstract class Element {
 	/** Whether ctrl + wheel up is to zoom in (otherwise zoom out) */
 	public static boolean E_WHEEL_REVERSE_ZOOM = false;
 	// END KGU#503 2018-03-14
-    // START KGU#309 2016-12-15: Enh. #310 new saving options
-    public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
-    public static boolean E_AUTO_SAVE_ON_CLOSE = false;
-    public static boolean E_MAKE_BACKUPS = true;
-    // END KGU#309 20161-12-15
-    // START KGU#690 2019-03-21: Issue #707 - new saving options
-    public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
-    public static char E_FILENAME_SIG_SEPARATOR = '-';
-    // END KGU#690 2019-03-21
-    // START KGU#287 2017-01-11: Issue #81 (workaround)
-    /** GUI scaling factor prepared for the next session */
-    public static double E_NEXT_SCALE_FACTOR;
-    // END KGU#287 2017-01-15
-    // START KGU#331 2017-01-13:
-    public static boolean E_SHOW_UNICODE_OPERATORS = true;
-    // END KGU#331 2017-01-13
+	// START KGU#699 2019-03-27: Issue #717
+	public static int E_WHEEL_SCROLL_UNIT = 1;
+	// END KGU#699 2019-03-27
+	// START KGU#309 2016-12-15: Enh. #310 new saving options
+	public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
+	public static boolean E_AUTO_SAVE_ON_CLOSE = false;
+	public static boolean E_MAKE_BACKUPS = true;
+	// END KGU#309 20161-12-15
+	// START KGU#690 2019-03-21: Issue #707 - new saving options
+	public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
+	public static char E_FILENAME_SIG_SEPARATOR = '-';
+	// END KGU#690 2019-03-21
+	// START KGU#287 2017-01-11: Issue #81 (workaround)
+	/** GUI scaling factor prepared for the next session */
+	public static double E_NEXT_SCALE_FACTOR;
+	// END KGU#287 2017-01-15
+	// START KGU#331 2017-01-13:
+	public static boolean E_SHOW_UNICODE_OPERATORS = true;
+	// END KGU#331 2017-01-13
 	// START KGU#456 2017-11-05: Enh. #452
-    /** Shall only the most important toolbar buttons be presented (beginners' mode?*/
+	/** Shall only the most important toolbar buttons be presented (beginners' mode?*/
 	public static boolean E_REDUCED_TOOLBARS = false;
 	// END KGU#456 2017-11-05
 	// START KGU#480 2018-01-21: Enh. #490
