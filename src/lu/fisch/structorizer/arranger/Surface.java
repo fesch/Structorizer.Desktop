@@ -108,7 +108,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-14      Issues #518, #544, #557: Measures against drawing contention revised and extended.
  *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
- *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group
+ *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group.
+ *                                      KGU#697: Bugfix in updateSilhouette(), at least partially
  *
  ******************************************************************************************************
  *
@@ -2017,7 +2018,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// Search for an overlapping between diagram and silhouette
 		while (iter.hasNext() && ((leap = iter.next()).x < left || leap.x < right && lastLeap.y >= bottom && leap.y >= bottom)) {
-			lastLeap = leap;
+			lastLeap = leap;	// FIXME: clone?
 		}
 		// Now if we haven't found any leap at all, then just add the two leaps for this diagram
 		Point leap1 = new Point(left, bottom);
@@ -2052,7 +2053,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			if (lastLeap.y >= bottom) {
 				// 2. The silhouette had exceeded the diagram but is now receding --> update leap to level bottom
-				lastLeap = leap;
+				// START KGU#697 2019-03-26: Bugfix - leap must be cloned!
+				//lastLeap = leap;
+				lastLeap = (Point)leap.clone();
+				// END KGU#697 2019-03-26
 				leap.y = bottom;
 			}
 			else {
@@ -2071,11 +2075,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					lastLeap = leap;
 				}
 				else if (leap.y < bottom) {
-					lastLeap = leap;
+					// START KGU#697 2019-03-26: Bugfix - leap must be cloned!
+					//lastLeap = leap;	// FIXME! clone!
+					lastLeap = (Point)leap.clone();
+					// END KGU#697 2019-03-26
 					leap.y = bottom;
 				}
 				else {
-					lastLeap = leap;
+					lastLeap = leap;	// FIXME! clone?
 				}
 				nextLeap.y = lastLeap.y;
 			}
@@ -2083,7 +2090,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			boolean first = true;
 			while (leap != null && leap.x < right) {
 				if (!first) {
-					lastLeap = leap;
+					lastLeap = leap;	// FIXME! clone?
 				}
 				else {
 					first = false;
@@ -2364,11 +2371,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			// START KGU 2019-03-14: It doesn't make sense to initiate a prepareDraw() here, because the next diagram won't know...
+			// START KGU 2019-03-14: Check if the diagram has dimensions
 			if (rec.right == rec.left && rec.top == rec.bottom) {
 				// Can never have been drawn, so try it now...
 				Graphics2D graphics2d = (Graphics2D) this.getGraphics();
 				rec = root.prepareDraw(graphics2d);
+				// START KGU 2019-03-26 Now we must move the record to the proposed position
+				rec.add(point);
+				// END KGU 2019-03-26
 			}
 			// END KGU 2019-03-14
 			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
@@ -2504,7 +2514,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#499 2018-02-21: Enh. #515 - More intelligent area management
 	/**
 	 * Scans the given silhouette line given by the {@link Point} list {@code silhouette}
-	 * for the uppermost breach wide enough to accomodate a diagram of width {@code rec.width}. 
+	 * for the uppermost breach wide enough to accommodate a diagram of width {@code rec.width}. 
 	 * @param silhouette - linked {@link Point} list symbolizing the lower bound of the diagrams
 	 * @param rec - the proposed {@link Rectangle} of a diagram (possibly to be relocated)
 	 * @return the preferrable new anchor position (top left) for the diagram
@@ -2536,14 +2546,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					iter1.remove();
 				}
 			}
-			// Here a better entry might start
-			if (optimum == null || leap.y < optimum.y) {
+			// Here a better entry might start (though leap(0,0) isn't needed, see first candidate) 
+			if ((optimum == null || leap.y < optimum.y)/* && !(leap.x == 0 && leap.y == 0)*/) {
 				candidates.add(new Point(leap));
 			}
 		}
 		// If we didn't find anything better, then we will just adhere to the bounds approach result
 		// But first have a look whether some incompletely analysed breaches (those remaining open at
-		// end) are wide enough to be accepted. We will allow a diagram if fits at least by half.
+		// end) are wide enough to be accepted. We will allow a diagram if it fits at least by half.
 		float windowWidth = this.getWidth() * this.zoomFactor - rec.width/2; 
 		for (Point cand: candidates) {
 			if (cand.x < windowWidth && (optimum == null || cand.y < optimum.y)) {

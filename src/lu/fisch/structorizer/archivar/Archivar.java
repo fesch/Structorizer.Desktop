@@ -33,6 +33,7 @@ package lu.fisch.structorizer.archivar;
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-10      First Issue
  *      Kay Gürtzig     2019-03-14      Enh. #697: New method deriveArrangementList()
+ *      Kay Gürtzig     2019-03-26      Enh. #697: Bugfixes in zipArrangement(), saveArrangement()
  *
  ******************************************************************************************************
  *
@@ -449,6 +450,12 @@ public class Archivar {
 			return this.entries.iterator();
 		}
 		
+		/**
+		 * Composes the lines of an arrangement file reflecting the cotents of this ArchiveIndex.
+		 * @param preferArchivePaths - whether virtual paths of the contained diagrams are to
+		 * preferred (or otherwise the "real" or shadow paths)
+		 * @return a {@link StringList} of the lines the corresponding arrangement list file would contain
+		 */
 		public StringList deriveArrangementList(boolean preferArchivePaths)
 		{
 			StringList arr = new StringList();
@@ -462,7 +469,9 @@ public class Archivar {
 					line.add("-1");
 					line.add("-1");
 				}
+				// The columns of path and name are generated together
 				StringList pathName = new StringList();
+				// Derive the file path
 				if ((preferArchivePaths || entry.path == null) && entry.virtPath != null) {
 					pathName.add(entry.virtPath);
 				}
@@ -475,6 +484,7 @@ public class Archivar {
 				else {
 					pathName.add("");
 				}
+				// Now add the diagram name
 				if (entry.name != null) {
 					pathName.add(entry.name);
 				}
@@ -572,7 +582,12 @@ public class Archivar {
 				items.add(new ArchiveRecord(root));
 			}
 		}
-		return saveArrangement(items, findTempDir().getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"), _archive, null, null, _troubles);
+		// START KGU#678 2019-03-26: Enh. #697 we need that virgin diagrams get saved
+		//return saveArrangement(items, findTempDir().getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"), _archive, null, null, _troubles);
+		File tempDir = findTempDir();
+		return saveArrangement(items, tempDir.getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"),
+				_archive, tempDir, null, _troubles);
+		// END KGU#678 2019-03-26
 	}
 
 	/**
@@ -597,7 +612,7 @@ public class Archivar {
 	/**
 	 * Creates an arrangement list with path {@code _arrFilePath}, and possibly an archive {@code _targetFile},
 	 * from the {@link ArchiveRecord}s given in {@code _items}.<br/>
-	 * If the creation of an archive is intended (i.e. {@code _archive} is given then the arranger
+	 * If the creation of an archive is intended (i.e. {@code _archive} is given) then the arranger
 	 * list file will only contain the pure file names (without absolute path) of the nsd files
 	 * of the archive items.
 	 * @param _items - collection of @ArchiveRecord items to form the arrangement list from it
@@ -633,6 +648,9 @@ public class Archivar {
 						if (_virginTargetDir == null || !saveVirginNSD(item.root, _virginTargetDir)) {
 							continue;
 						}
+						// START KGU#678 2019-03-26: Bugfix on occasion of enh. #697
+						path = item.root.getPath();
+						// END KGU#678 2019-03-26
 					}
 					if (item.point != null) {
 						out.write(Integer.toString(Math.max(item.point.x - offsetX, 0)) + ",");

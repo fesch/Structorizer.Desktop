@@ -70,6 +70,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig             2019-03-21      Issue #706: Export of Calls with explicit argument assignments enabled
  *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
+ *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
  *
  ******************************************************************************************************
  *
@@ -487,6 +488,9 @@ public class PythonGenerator extends Generator
 			if (Instruction.isAssignment(_input))
 			{
 				StringList tokens = Element.splitLexically(_input, true);
+				// START KGU#698 2019-03-26: Bugfix #716
+				Element.unifyOperators(tokens, false);
+				// END KGU#698 2019-03-26
 				tokens = Element.coagulateSubexpressions(tokens);
 				int asgnPos = tokens.indexOf("<-");
 				String lval = tokens.concatenate("", 0, asgnPos).trim();
