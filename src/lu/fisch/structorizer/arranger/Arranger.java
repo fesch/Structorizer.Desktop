@@ -73,6 +73,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-01  Enh. #691: Façade renameGroup() introduced for exactly this purpose
  *      Kay Gürtzig     2019-03-13  Issue #655: status bar coordinate computation changed
  *      Kay Gürtzig     2019-03-13  Enh. #698: Methods getName(), addDiagram() and addArchive() added
+ *      Kay Gürtzig     2019-03-27  Issue #717: Configurable base scroll unit (adaptScrollUnits())
  *
  ******************************************************************************************************
  *
