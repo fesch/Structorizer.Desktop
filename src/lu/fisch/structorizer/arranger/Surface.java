@@ -110,6 +110,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
  *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group.
  *                                      KGU#697: Bugfix in updateSilhouette(), at least partially
+ *      Kay Gürtzig     2019-03-27/28   Issue #717: Configurable base scroll unit (adaptScrollUnits(Rect))
  *
  ******************************************************************************************************
  *
@@ -2189,9 +2190,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-			// START KGU#699 2ß19-03-27: Issue #717 - make base increment configurable
+			// START KGU#699 2019-03-27: Issue #717 - make base increment configurable
 			//scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
 			//scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+			if (Element.E_WHEEL_SCROLL_UNIT <= 0) {
+				// The very first time Structorizer is used, we fetch the original unit increment
+				Element.E_WHEEL_SCROLL_UNIT = scroll.getVerticalScrollBar().getUnitIncrement();
+			}
 			scroll.getHorizontalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsHorizontal - 1);
 			scroll.getVerticalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsVertical - 1);
 			// END KGU#699 2019-03-27

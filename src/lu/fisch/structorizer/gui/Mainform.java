@@ -627,7 +627,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
 			// END KGU#503 2018-03-14
 			// START KGU#699 2019-03-27: Enh. #717
-			Element.E_WHEEL_SCROLL_UNIT = Integer.parseInt(ini.getProperty("wheelScrollUnit", "1"));
+			Element.E_WHEEL_SCROLL_UNIT = Integer.parseInt(ini.getProperty("wheelScrollUnit", "0"));
 			// END KGU#699 2019-03-27
 			// START KGU#494 2018-09-10: Issue #508
 			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");

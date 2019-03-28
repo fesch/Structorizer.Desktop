@@ -1275,6 +1275,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e)
 	{
+		// START KGU#699 2019-03-27: Enh. #717 This is for convenience in configureWheelUnit()
+		if (e.getSource() instanceof JSpinner) {
+			SpinnerNumberModel model = (SpinnerNumberModel)((JSpinner)e.getSource()).getModel();
+			int rotation = e.getWheelRotation();
+			Object value = null;
+			if (rotation < 0 && (value = model.getNextValue()) != null) {
+				model.setValue(value);
+			}
+			else if (rotation > 0 && (value = model.getPreviousValue()) != null) {
+				model.setValue(value);
+			}
+			return;
+		}
+		// END KGU#699 2019-03-27
 		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
 		//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
 		//		((e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
@@ -1527,6 +1541,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#699 2019-03-27: Issue #717
 			//scroll.getHorizontalScrollBar().setUnitIncrement(widthFactor);
 			//scroll.getVerticalScrollBar().setUnitIncrement(heightFactor);
+			if (Element.E_WHEEL_SCROLL_UNIT <= 0) {
+				// The very first time Structorizer is used, we fetch the original unit increment
+				Element.E_WHEEL_SCROLL_UNIT = scroll.getVerticalScrollBar().getUnitIncrement();
+			}
 			scroll.getHorizontalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + widthFactor - 1);
 			scroll.getVerticalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + heightFactor - 1);
 			// START KGU#699 2019-03-27
@@ -7766,7 +7784,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void configureWheelUnit()
 	{
 		JSpinner spnUnit = new JSpinner();
-		spnUnit.setModel(new SpinnerNumberModel(Element.E_WHEEL_SCROLL_UNIT, 1, 20, 1));
+		spnUnit.setModel(new SpinnerNumberModel(Math.max(1, Element.E_WHEEL_SCROLL_UNIT), 1, 20, 1));
+		spnUnit.addMouseWheelListener(this);
 		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
 				spnUnit,
 				Menu.ttlMouseScrollUnit.getText(),

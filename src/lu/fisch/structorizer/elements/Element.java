@@ -305,8 +305,8 @@ public abstract class Element {
 	"File dropper class by\n"+
 	" - Robert W. Harder <robertharder@mac.com>\n"+
 	"\n"+
-	"Pascal parser (GOLDParser) engine by\n"+
-	" - Matthew Hawkins <hawkini@barclays.net>\n"+
+	"GOLDParser Java engine by\n"+
+	" - Ralph Iden <http://www.creativewidgetworks.com>\n"+
 	"\n"+
 	"Delphi grammar by\n"+
 	" - Rob F.M. van den Brink <R.F.M.vandenBrink@hccnet.nl>\n"+
@@ -393,7 +393,7 @@ public abstract class Element {
 	public static boolean E_WHEEL_REVERSE_ZOOM = false;
 	// END KGU#503 2018-03-14
 	// START KGU#699 2019-03-27: Issue #717
-	public static int E_WHEEL_SCROLL_UNIT = 1;
+	public static int E_WHEEL_SCROLL_UNIT = 0;	// dummy value for OS adaptation on first scrolling ever.
 	// END KGU#699 2019-03-27
 	// START KGU#309 2016-12-15: Enh. #310 new saving options
 	public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
