@@ -55,6 +55,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-02-13      Bugfix #678: Array declarations hadn't been imported properly
  *      Kay Gürtzig     2019-02-28      Bugfix #690 - workaround for struct types in function headers
  *      Kay Gürtzig     2019-03-01      Bugfix #692 - failed constant recognition
+ *      Kay Gürtzig     2019-03-29      KGU#702: Index range exception in method getPointers() fixed.
  *
  ******************************************************************************************************
  *
@@ -2301,7 +2302,10 @@ public class C99Parser extends CPreParser
 						// In Pascal this cannot sensibly be expressed. 
 						qualToken = null;
 					}
-					else if (qualToken.asReduction().get(1).asString().equals("const")) {
+					// START KGU#702 2019-03-29: Against appearance, qualToken may be a <TypeQualList> but contain only 1 element!
+					//else if (qualToken.asReduction().get(1).asString().equals("const")) {
+					else if (qualToken.asReduction().size() > 1 && qualToken.asReduction().get(1).asString().equals("const")) {
+					// END KGU#702 2019-03-29
 						if (_pointers != null) {
 							_pointers.add("const");
 						}

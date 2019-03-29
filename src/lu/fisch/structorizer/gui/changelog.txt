@@ -75,7 +75,7 @@ Current development version: 3.29-09 (2019-03-29)
 - 08: Bugfix #711: Endless loop on element text parsing - SEVERE! <2>
 - 08: Issue #712: Translator ought to remember its last saving directory <2>
 - 08: Enh. #56: Some updates and additions to the Russian locale <2>
-- 09: Issues #518, #544, #557 Further slight drawing speed improvements <2>
+- 09: Issues #518, #544, #557 Further general drawing speed improvements <2>
 - 09: Issue #657: Subroutine/includable search disambiguated by groups (tried) <2>
 - 09: Issue #685: Precaution against exception traces on copying to clipboard <2>
 - 09: Enh. #697: Batch code import to assignments / assignment archives <2>
@@ -84,6 +84,7 @@ Current development version: 3.29-09 (2019-03-29)
 - 09: Bugfix #715: Console dialog in batch import failed after first time <2>
 - 09: Bugfix #716: Defective assignment export to Python code [elemhsb]2
 - 09: Issue #717: Mouse wheel scroll unit now configurable [elemhsb]2
+- 09: Issue #718: Ultimate acceleration of syntax highlighting <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

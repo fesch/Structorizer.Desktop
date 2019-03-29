@@ -2399,16 +2399,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			// START KGU 2019-03-14: Check if the diagram has dimensions
+			// START KGU#627 2019-03-14: Check if the diagram has dimensions
 			if (rec.right == rec.left && rec.top == rec.bottom) {
 				// Can never have been drawn, so try it now...
 				Graphics2D graphics2d = (Graphics2D) this.getGraphics();
 				rec = root.prepareDraw(graphics2d);
-				// START KGU 2019-03-26 Now we must move the record to the proposed position
+				// START KGU#627 2019-03-26 Now we must move the record to the proposed position
 				rec.add(point);
-				// END KGU 2019-03-26
+				// END KGU#627 2019-03-26
 			}
-			// END KGU 2019-03-14
+			// END KGU#627 2019-03-14
 			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
 			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
 			

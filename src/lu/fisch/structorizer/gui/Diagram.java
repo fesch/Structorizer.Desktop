@@ -7299,8 +7299,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
             iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
             // END KGU#354 2017-03-08
-            // START KGU#553 2018-07-13: Issue #557
-            iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "20")));
+            // START KGU#553 2018-07-13: Issue #557 - KGU#701 2019-03-29: Issue #718 raised from 20 to 50
+            iod.spnLimit.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxRootsForDisplay", "50")));
             // END KGU#354 2018-07-13
             // START KGU#602 2018-10-25: Issue #419
             iod.spnMaxLen.setValue(Integer.parseUnsignedInt(ini.getProperty("impMaxLineLength", "0")));
