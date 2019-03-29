@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-09 (2019-03-28)
+Current development version: 3.29-09 (2019-03-29)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -75,8 +75,11 @@ Current development version: 3.29-09 (2019-03-28)
 - 08: Bugfix #711: Endless loop on element text parsing - SEVERE! <2>
 - 08: Issue #712: Translator ought to remember its last saving directory <2>
 - 08: Enh. #56: Some updates and additions to the Russian locale <2>
+- 09: Issues #518, #544, #557 Further slight drawing speed improvements <2>
+- 09: Issue #657: Subroutine/includable search disambiguated by groups (tried) <2>
 - 09: Issue #685: Precaution against exception traces on copying to clipboard <2>
 - 09: Enh. #697: Batch code import to assignments / assignment archives <2>
+- 09: Bugfix #699: The fix from 3.29-08 for the archive unsharing was wrong <2>
 - 09: Issue #712: Further usability improvements for Translator <2>
 - 09: Bugfix #715: Console dialog in batch import failed after first time <2>
 - 09: Bugfix #716: Defective assignment export to Python code [elemhsb]2

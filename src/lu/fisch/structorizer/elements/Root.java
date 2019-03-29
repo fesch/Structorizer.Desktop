@@ -143,6 +143,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-20      Bugfix #706: analyse_15 hardened against inconsistent Call contents
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configuration for file name proposals
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      
  ******************************************************************************************************
  *
@@ -2352,21 +2353,21 @@ public class Root extends Element {
     protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
     	if (!_implicatedRoots.contains(this)) {
-        	if (this.includeList != null && Arranger.hasInstance()) {
-        		_implicatedRoots.add(this);
-        		for (int i = 0; i < this.includeList.count(); i++) {
-        			String name = this.includeList.get(i);
-        			Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
-        			if (roots.size() == 1) {
-        				roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
-        			}
-        		}		
-        	}
-        	if (this.isSubroutine() && !_instructionsOnly)
-        	{
-        		_lines.add(this.getText());
-        	}
-        	this.children.addFullText(_lines, _instructionsOnly);
+    		if (this.includeList != null && Arranger.hasInstance()) {
+    			_implicatedRoots.add(this);
+    			for (int i = 0; i < this.includeList.count(); i++) {
+    				String name = this.includeList.get(i);
+    				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
+    				if (roots.size() == 1) {
+    					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
+    				}
+    			}		
+    		}
+    		if (this.isSubroutine() && !_instructionsOnly)
+    		{
+    			_lines.add(this.getText());
+    		}
+    		this.children.addFullText(_lines, _instructionsOnly);
     	}
     }
     // END KGU#376 2017-07-02
@@ -2971,7 +2972,7 @@ public class Root extends Element {
     			for (int i = 0; i < this.includeList.count(); i++) {
     				String inclName = this.includeList.get(i);
     				if (Arranger.hasInstance()) {
-    					for (Root incl: Arranger.getInstance().findIncludesByName(inclName)) {
+    					for (Root incl: Arranger.getInstance().findIncludesByName(inclName, this)) {
     						typeMap.putAll(incl.getTypeInfo());
     					}
     				}
@@ -3811,7 +3812,7 @@ public class Root extends Element {
 			{
 				int count = 0;	// Number of matching routines
 				if (Arranger.hasInstance()) {
-					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount).size();
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this).size();
 				}
 				if (count == 0) {
 					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
@@ -4502,7 +4503,7 @@ public class Root extends Element {
 			String name = includeList.get(i);
 			int count = 0;	// Number of matching routines
 			if (Arranger.hasInstance()) {
-				count = Arranger.getInstance().findIncludesByName(name).size();
+				count = Arranger.getInstance().findIncludesByName(name, this).size();
 			}
 			if (count == 0) {
 				//error  = new DetectedError("An includable diagram «<diagram_name>» is currently not available.", this);
@@ -4526,7 +4527,7 @@ public class Root extends Element {
 				addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), this), 23);    									
 			}
 			else if (Arranger.hasInstance()) {
-				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
 				if (roots.size() == 1) {
 					Root importedRoot = roots.get(0);
 					Vector<DetectedError> impErrors = new Vector<DetectedError>();

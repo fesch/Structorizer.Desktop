@@ -175,6 +175,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-25      Issue #685: Workaround for exception stack traces on copying to windows clipboard 
  *      Kay Gürtzig     2019-03-27      Enh. #717: Configuration of scroll increment (Element.E_WHEEL_SCROLL_UNIT)
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
  *
  ******************************************************************************************************
  *
@@ -1457,7 +1459,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
 		//if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-		root.draw(_g, ((JViewport)this.getParent()).getViewRect());
+		// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557 drawing speed
+		//root.draw(_g, ((JViewport)this.getParent()).getViewRect());
+		Rectangle clipRect = _g.getClipBounds();
+		root.draw(_g, clipRect);
+		// END KGU#502/KGU#524/KGU#553
 		
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
@@ -1477,7 +1483,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			rect.right  = rect.left + w;
 			rect.bottom = rect.top + h;
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-			selectedDown.draw(canvas, rect, ((JViewport)this.getParent()).getViewRect(), false);
+			// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557 drawing speed
+			//selectedDown.draw(canvas, rect, ((JViewport)this.getParent()).getViewRect(), false);
+			selectedDown.draw(canvas, rect, clipRect, false);
+			// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557
 			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 			// START KGU#136 2016-03-01: Bugfix #97 - this is no longer necessary
 			//selectedDown.rect = copyRect;
@@ -3761,7 +3770,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						} while (includableName == null || !Function.testIdentifier(includableName, null));
 						Root incl = null;
 						if (Arranger.hasInstance()) {
-							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName);
+							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
 							if (!includes.isEmpty()) {
 								incl = includes.firstElement();
 								incl.addUndo();
@@ -3899,54 +3908,37 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Call call = (Call)selected;
 			Function called = call.getCalledRoutine();
 			Root subroutine = null;
-			Collection<Group> myGroups = null;
 			// Try to find the subroutine in Arranger
 			if (Arranger.hasInstance()) {
-				Vector<Root> candidates = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
-				myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				Vector<Root> candidates = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), root);
 				// If the finding is unambiguous, get it
 				if (candidates.size() == 1) {
 					subroutine = candidates.get(0);
 				}
 				// Otherwise we try to select the most appropriate among the conflicting ones
 				else if (candidates.size() > 1) {
-					// First try to single out a candidate sharing a group with this.root
-					for (Root cand : candidates) {
-						Collection<Group> subGroups = Arranger.getInstance().getGroupsFromRoot(cand, true);
-						for (Group grp: subGroups) {
-							if (myGroups.contains(grp)) {
-								subroutine = cand;
-								break;
-							}
-						}
-						if (subroutine != null) {
-							break;
-						}
-					}
 					// Open a choice list if the group approach wasn't successful
-					if (subroutine == null) {
-						String[] choices = new String[candidates.size()];
-						int i = 0;
-						for (Root cand: candidates) {
-							choices[i++] = cand.getSignatureString(true);
-						}
-						String input = (String) JOptionPane.showInputDialog(null, Menu.msgChooseSubroutine.getText(),
-								Menu.msgTitleQuestion.getText(),
-								JOptionPane.QUESTION_MESSAGE, null, // Use default icon
-								choices, // Array of choices
-								choices[0]); // Initial choice
-						if (input != null && !input.trim().isEmpty()) {
-							for (i = 0; i < choices.length && subroutine != null; i++) {
-								if (input.equals(choices[i])) {
-									subroutine = candidates.get(i);
-								}
+					String[] choices = new String[candidates.size()];
+					int i = 0;
+					for (Root cand: candidates) {
+						choices[i++] = cand.getSignatureString(true);
+					}
+					String input = (String) JOptionPane.showInputDialog(null, Menu.msgChooseSubroutine.getText(),
+							Menu.msgTitleQuestion.getText(),
+							JOptionPane.QUESTION_MESSAGE, null, // Use default icon
+							choices, // Array of choices
+							choices[0]); // Initial choice
+					if (input != null && !input.trim().isEmpty()) {
+						for (i = 0; i < choices.length && subroutine != null; i++) {
+							if (input.equals(choices[i])) {
+								subroutine = candidates.get(i);
 							}
 						}
 					}
 				}
 			}
-			String targetGroupName = null;	// This weill be relevan for a new subroutine
-			// Create new subroutine root if we haven't been able to selectan existing one
+			String targetGroupName = null;	// This will be relevant for a new subroutine
+			// Create new subroutine root if we haven't been able to select an existing one
 			if (subroutine == null) {
 				if (JOptionPane.showConfirmDialog(NSDControl.getFrame(),
 						Menu.msgCreateSubroutine.getText().replace("%", called.getSignatureString()),
@@ -3985,7 +3977,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				subroutine.setProgram(false);
 				subroutine.setChanged(false);
 				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
-				if (myGroups == null || myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
+				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
 					// If the diagram is a program then create an exclusive group named after the main diagram 
 					if (root.isProgram()) {
 						targetGroupName = root.getMethodName(true);

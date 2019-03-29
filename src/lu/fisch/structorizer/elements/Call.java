@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
  *
  ******************************************************************************************************
  *
@@ -326,7 +327,7 @@ public class Call extends Instruction {
 				typeSpec = myRoot.getResultType();
 			}
 			else if (Arranger.hasInstance()) {
-				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();
 				}

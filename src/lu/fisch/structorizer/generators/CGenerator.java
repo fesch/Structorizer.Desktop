@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-07      Enh. #385: Support for optional parameters (by argument extension in the Call)
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig             2019-03-18      Enh. #56: Export of try-catch-finally blocks
+ *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *
  ******************************************************************************************************
  *
@@ -1488,6 +1489,7 @@ public class CGenerator extends Generator {
 			insertComment(_call, _indent);
 			// In theory, here should be only one line, but we better be prepared...
 			StringList lines = _call.getUnbrokenText();
+			Root owningRoot = Element.getRoot(_call);
 			for (int i = 0; i < lines.count(); i++) {
 				String line = lines.get(i).trim();
 //				// START KGU#376 2017-04-13: Enh. #389 handle import calls - withdrawn here
@@ -1499,7 +1501,7 @@ public class CGenerator extends Generator {
 				// START KGU#371 2019-03-07: Enh. #385 Support for declared optional arguments
 				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);

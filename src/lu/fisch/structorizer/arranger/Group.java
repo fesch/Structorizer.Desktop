@@ -561,7 +561,7 @@ public class Group {
 	}
 	
 	/**
-	 * Returns a sorted list of {@link Roots} held by Arranger.
+	 * Returns a sorted list of {@link Roots} being comprised by this group.
 	 * @return vector of {@link Roots}, sorted by {@link Root#SIGNATURE_ORDER}
 	 */
 	public Vector<Root> getSortedRoots()

@@ -74,6 +74,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-13  Issue #655: status bar coordinate computation changed
  *      Kay Gürtzig     2019-03-13  Enh. #698: Methods getName(), addDiagram() and addArchive() added
  *      Kay Gürtzig     2019-03-27  Issue #717: Configurable base scroll unit (adaptScrollUnits())
+ *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
  *
  ******************************************************************************************************
  *
@@ -1704,20 +1705,20 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#376 2017-04-11: Enh. #389
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String, Root)
      */
     @Override
-    public Vector<Root> findIncludesByName(String rootName) {
-        return surface.findIncludesByName(rootName);
+    public Vector<Root> findIncludesByName(String rootName, Root includer) {
+        return surface.findIncludesByName(rootName, includer);
     }
     // END KGU#376 2017-04-11
 
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int, Root)
      */
     @Override
-    public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
-        return surface.findRoutinesBySignature(rootName, argCount);
+    public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller) {
+        return surface.findRoutinesBySignature(rootName, argCount, caller);
     }
     // END KGU#2 2015-11-24
     

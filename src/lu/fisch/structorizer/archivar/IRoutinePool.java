@@ -41,10 +41,12 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2016-05-16      Enh. #389: Method signature change: findProgramsByName -> findIncludesByName
  *      Kay Gürtzig     2019-03-12      Enh. #698: Methods addDiagram and getName added.
  *      Kay Gürtzig     2019-03-13      Enh. #698: Moved from executor to archivar package
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Argument added to findIncludesByName() and findRoitinesBySignature()
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:
+ *      2019-03-28 / KGU
  *      
  *      The interface facilitates the retrieval of callable subroutines for execution mode
  *
@@ -59,9 +61,11 @@ import java.util.Vector;
 import lu.fisch.structorizer.elements.Root;
 
 /**
-* Implementing classes may provide diagram {@link Root}s by routine signature
-* @author Kay Gürtzig
-*/
+ * The interface facilitates the collection and retrieval of diagrams for e.g. execution,
+ * import or export purposes.
+ * Implementing classes provide diagram {@link Root}s by name or routine signature
+ * @author Kay Gürtzig
+ */
 public interface IRoutinePool {
 
 	// START KGU#679 2019-03-12: Enh. #698
@@ -93,35 +97,39 @@ public interface IRoutinePool {
 	 * Gathers all diagrams responding to the name passed in. 
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as method name
 	 * @return a collection of {@link Root} objects having the passed-in name as diagram or routine name.
-	 * @see #findIncludesByName(String)
-	 * @see #findRoutinesBySignature(String, int)
+	 * @see #findIncludesByName(String, Root)
+	 * @see #findRoutinesBySignature(String, int, Root)
 	 * @see #getAllRoots()
 	 */
 	public Vector<Root> findDiagramsByName(String rootName);
 
 	/**
-	 * Gathers all includable diagrams responding to the name passed in. 
+	 * Gathers all includable diagrams responding to the name passed in. The search result may be disambiguated
+	 * in an implementor-specific way according to some relation with {@code includer} if given.
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as diagram name
-	 * @return a collection of {@link Root} objects of type Includable having the passed-in name
+	 * @param includer - the interested {@link Root} object (potentially restricting search), may be null
+	 * @return a collection of {@link Root} objects of type Includable having the passed-in name.
 	 * @see #findDiagramsByName(String)
-	 * @see #findRoutinesBySignature(String, int)
+	 * @see #findRoutinesBySignature(String, int, Root)
 	 */
-	public Vector<Root> findIncludesByName(String rootName);
+	public Vector<Root> findIncludesByName(String rootName, Root includer);
 
 	/**
 	 * Gathers all subroutine diagrams responding to the name passed in and accepting most
-	 * closely the number of arguments given by {@code argCount}. 
+	 * closely the number of arguments given by {@code argCount}. The search may be disambiguated
+	 * in an implementor-specific way according to some relation with {@code caller} if given.
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as method name
 	 * @param argCount - number of parameters required
-	 * @return a collection of Root objects meeting the specified signature
+	 * @param caller - the interested {@link Root} object (potentially restricting search), may be null
+	 * @return a collection of Root objects meeting the specified signature.
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String)
+	 * @see #findIncludesByName(String, Root)
 	 */
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount);
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller);
 	
     // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
     /**
-     * Retrieves a set of all {@link Root} objects parked in th this diagram pool
+     * Retrieves a set of all {@link Root} objects parked in this diagram pool.
      * @return the {@link Root} set
      * @see #findDiagramsByName(String)
      */

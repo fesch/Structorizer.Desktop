@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for optional parameters (by argument extension in the Call)
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
+ *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for called subroutines now with group filter
  *
  ******************************************************************************************************
  *
@@ -1102,6 +1103,7 @@ public class OberonGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
+		Root owningRoot = Element.getRoot(_call);
 		StringList lines = _call.getUnbrokenText();
 		for (int i = 0; i < lines.count(); i++)
 		{
@@ -1110,7 +1112,7 @@ public class OberonGenerator extends Generator {
 			String line = lines.get(i);
 			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 				Function call = _call.getCalledRoutine();
-				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 				if (!callCandidates.isEmpty()) {
 					// FIXME We'll just fetch the very first one for now...
 					Root called = callCandidates.get(0);

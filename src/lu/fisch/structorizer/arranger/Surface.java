@@ -111,6 +111,9 @@ package lu.fisch.structorizer.arranger;
  *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group.
  *                                      KGU#697: Bugfix in updateSilhouette(), at least partially
  *      Kay Gürtzig     2019-03-27/28   Issue #717: Configurable base scroll unit (adaptScrollUnits(Rect))
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for includables/subroutines now with group filter,
+ *                                      fixed the fix for the fix #699 again.
+ *                                      Further drawing acceleration - clip bounds instead of viewport rect
  *
  ******************************************************************************************************
  *
@@ -417,6 +420,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-24
 	// END KGU#497 2018-03-19
 	{
+		
 		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518, #544, #557 - Workaround for heavy drawing contention
 		// We will simply tell the Roots about the contention, so they may decide what to do (e.g. switch off highlighting)
 		boolean fullRepaint = false;
@@ -481,9 +485,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Rectangle visibleRect = null;
 			// In need of full repaint, we don't provide the actual visibility bounds
 			if (!fullRepaint) {
-				Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
-				visRect = visRect.scale(zoomFactor);
-				visibleRect = visRect.getRectangle();
+				// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557
+				/* The clip bounds of the graphics object are usually smaller than the entire
+				 * viewport, due to window bit blit */
+				//Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
+				//visRect = visRect.scale(zoomFactor);
+				//visibleRect = visRect.getRectangle();
+				Rect clipRect = new Rect(g.getClipBounds());
+				visibleRect = clipRect.getRectangle();
+				// END KGU#502/KGU#524/KGU#553: 2019-03-29
 			}
 			// END KGU#502/KGU#524/KGU#557
 				
@@ -1149,11 +1159,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (portable) {
 				StringList sharedDiagrams = new StringList();
 				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
-					// START KGU#683 2019-03-15: Bugfix #699 - No measures for diagrams that aren't shared by other groups
-					if (diagr.getGroupNames().length <= 1) {
+					// START KGU#683 2019-03-29: Bugfix #699 - No measures for diagrams that aren't shared by other groups
+					/* Caution: A temporary group (empty name) is not listed among the
+					 * group names of a diagram! So a mere group counting approach
+					 * goes wrong. Only in case the name of the group to be saved is
+					 * the name of the actual and only group of the diagram we may be
+					 * sure to deal with the sole owning group.
+					 */
+					StringList groupNames = new StringList(diagr.getGroupNames());
+					if (groupNames.count() <= 1 && groupNames.contains(group.getName())) {
 						continue;
 					}
-					// END KGU#683 2019-03-15
+					// END KGU#683 2019-03-29
 					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
 						// A diagram residing in another archive must be copied now, it cannot be shared.
 						Root copiedRoot = (Root)diagr.root.copy();
@@ -1172,7 +1189,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
-						StringList groupNames = new StringList(diagr.getGroupNames());
 						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
 					}
 				}
@@ -3834,7 +3850,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int, boolean)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String)
+	 * @see #findIncludesByName(String, Root)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
@@ -3849,7 +3865,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String)
+	 * @see #findIncludesByName(String, Root)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
@@ -3858,9 +3874,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Diagram owner = null;
 		Vector<Diagram> diagramList = this.diagrams;
 		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
-		if (equalityLevel == 1) {
-			return this.rootMap.get(root);
+		// START KGU#700 2019-03-28: Enh. #657 - This didn't make sense
+		/* If we find the root itself then it shouldn't matter whether there are similar ones */
+		//if (equalityLevel == 1) {
+		//	return this.rootMap.get(root);
+		//}
+		owner = this.rootMap.get(root);
+		if (owner != null || equalityLevel == 1) {
+			return owner;
 		}
+		// END KGU#700 2019-03-28
 		else if (equalityLevel == 2 || equalityLevel == 5) {
 			// We try to reduce the number of diagrams to be searched  
 			diagramList = this.nameMap.get(root.getMethodName());
@@ -3985,14 +4008,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
 	 */
 	@Override
-	public Vector<Root> findIncludesByName(String rootName)
+	public Vector<Root> findIncludesByName(String rootName, Root includer)
 	{
+		/* The most efficient strategy for group-aware retrieval is supposed to
+		 * be first to fetch all matching Roots (in most cases the result will
+		 * be unique anyway) and only to check group membership if the result
+		 * consists of more than one Root.
+		 */
 		Vector<Root> incls = new Vector<Root>();
 		for (Root root: this.findDiagramsByName(rootName)) {
 			if (root.isInclude()) {
 				incls.add(root);
 			}
 		}
+		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
+		if (incls.size() > 0 && includer != null) {
+			incls = filterRootsByGroups(includer, incls);
+		}
+		// END KGU#700 2019-03-28
 		return incls;
 	}
 	// END KGU#376 2017-04-11
@@ -4002,8 +4035,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
 	 */
 	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount)
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller)
 	{
+		/* The most efficient strategy for group-aware retrieval is supposed to
+		 * be first to fetch all matching Roots (in most cases the result will
+		 * be unique anyway) and only to check group membership if the result
+		 * consists of more than one Root.
+		 */
 		Vector<Root> functionsAny = findDiagramsByName(rootName);
 		Vector<Root> functions = new Vector<Root>();
 		// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
@@ -4029,6 +4067,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#371 2019-03-07
 		}
+		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
+		if (functions.size() > 0 && caller != null) {
+			functions = filterRootsByGroups(caller, functions);
+		}
+		// END KGU#700 2019-03-28
 		return functions;
 	}
 	// END KGU#2 2015-11-24
@@ -4114,6 +4157,30 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#117 2016-03-08
+
+	// START KGU#700 2019-03-28: Enh. #657
+	/**
+	 * Returns a {@link Vector} of only those elements of {@code roots} that
+	 * share at least one group with {@code discriminator}.
+	 * @param discriminator - a {@link Root} object the associated groups of which decide membership
+	 * @param roots - collection of candidate {@link Root} objects
+	 */
+	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots) {
+		Vector<Root> filteredRoots = new Vector<Root>();
+		Collection<Group> wantedGroups = this.getGroupsFromRoot(discriminator, false);
+		for (int i = 0; i < roots.size(); i++) {
+			Root root = roots.get(i);
+			Diagram diagr = this.rootMap.get(root);
+			for (Group grp: wantedGroups) {
+				if (grp.containsDiagram(diagr)) {
+					filteredRoots.add(root);
+					break;
+				}
+			}
+		}
+		return filteredRoots;
+	}
+	// END KGU#700 2019-03-28
 
 	// START KGU#305 2016-12-16
 	/**
@@ -4385,7 +4452,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: calls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
@@ -4394,7 +4461,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (root.includeList != null) {
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
-					Vector<Root> candidates = this.findIncludesByName(inclName);
+					Vector<Root> candidates = this.findIncludesByName(inclName, null);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
@@ -4984,7 +5051,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: containedCalls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null && fct.isFunction()) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
@@ -4993,7 +5060,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList includeNames = diagr.root.includeList;
 			if (includeNames != null) {
 				for (int i = 0; i < includeNames.count(); i++) {
-					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i));
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
