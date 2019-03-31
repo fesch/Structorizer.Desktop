@@ -4490,7 +4490,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (root.includeList != null) {
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
-					Vector<Root> candidates = this.findIncludesByName(inclName, null);
+					Vector<Root> candidates = this.findIncludesByName(inclName, root);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
