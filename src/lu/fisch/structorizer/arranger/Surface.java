@@ -110,10 +110,11 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
  *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group.
  *                                      KGU#697: Bugfix in updateSilhouette(), at least partially
- *      Kay Gürtzig     2019-03-27/28   Issue #717: Configurable base scroll unit (adaptScrollUnits(Rect))
+ *      Kay Gürtzig     2019-03-27      Issue #717: Configurable base scroll unit (adaptScrollUnits(Rect))
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for includables/subroutines now with group filter,
  *                                      fixed the fix for the fix #699 again.
  *                                      Further drawing acceleration - clip bounds instead of viewport rect
+ *      Kay Gürtzig     2019-03-30      Issues #699, #720: Several fixes and fine-tuning
  *
  ******************************************************************************************************
  *
@@ -224,7 +225,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
@@ -766,7 +766,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (group != null) {
 			toArrange = group.getDiagrams();
 			// START KGU#631 2019-01-08: More sensible message content on saving a group
-			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+			sourceDescription = msgGroup.getText().replace("%", 
+					group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 			// END KGU#631 2019-01-08
 			// If the group was the default group then we will anonymize it
 			if (group.isDefaultGroup()) {
@@ -1163,11 +1164,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					/* Caution: A temporary group (empty name) is not listed among the
 					 * group names of a diagram! So a mere group counting approach
 					 * goes wrong. Only in case the name of the group to be saved is
-					 * the name of the actual and only group of the diagram we may be
-					 * sure to deal with the sole owning group.
+					 * the name of the actual and only group of the diagram or if the diagram
+					 * is only member of the default group and the group to be saved is a
+					 * temporary group (empty name, in this case the diagram will simply be
+					 * moved from the default group to the new group in makeGroup()) we may
+					 * be sure to deal with the sole owning group.
 					 */
 					StringList groupNames = new StringList(diagr.getGroupNames());
-					if (groupNames.count() <= 1 && groupNames.contains(group.getName())) {
+					if (groupNames.count() <= 1 && (groupNames.contains(group.getName()) ||
+							groupNames.contains(Group.DEFAULT_GROUP_NAME) && group.getName().isEmpty())) {
 						continue;
 					}
 					// END KGU#683 2019-03-29
@@ -1189,7 +1194,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
-						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
+								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 					}
 				}
 				// Ensure all new copies are saved somewhere such that they will get a virtual path later
@@ -2517,6 +2523,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		diagramsSelected.add(diagram);
 		diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 		// END KGU 2016-12-12
+		// START KGU#701 2019-03-30: Issue #718
+		if (root.isInclude()) {
+			for (Root ref: this.findIncludingRoots(root.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701 2019-03-30
 		// START KGU#624 2018-12-21: Enh. #655
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#624 2018-12-21
@@ -2691,6 +2704,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#626 2018-12-30
 		diagrams.remove(diagr);
+		// START KGU#701 2019-03-30: Issue #718
+		if (diagr.root.isInclude()) {
+			for (Root ref: this.findIncludingRoots(diagr.root.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701 2019-03-30
 		adaptLayout();
 		repaint();
 		// START KGU#278 2016-10-11: Enh. #267
@@ -4023,7 +4043,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
 		if (incls.size() > 0 && includer != null) {
-			incls = filterRootsByGroups(includer, incls);
+			incls = filterRootsByGroups(includer, incls, false);
 		}
 		// END KGU#700 2019-03-28
 		return incls;
@@ -4069,7 +4089,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
 		if (functions.size() > 0 && caller != null) {
-			functions = filterRootsByGroups(caller, functions);
+			functions = filterRootsByGroups(caller, functions, false);
 		}
 		// END KGU#700 2019-03-28
 		return functions;
@@ -4161,22 +4181,31 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#700 2019-03-28: Enh. #657
 	/**
 	 * Returns a {@link Vector} of only those elements of {@code roots} that
-	 * share at least one group with {@code discriminator}.
+	 * share at least one group with {@code discriminator} if {@code discriminator}
+	 * is member of at least one group. If {@code strictly} is false, then in case of
+	 * an empy intersection the original set of roots will be returned (unfiltered).
 	 * @param discriminator - a {@link Root} object the associated groups of which decide membership
 	 * @param roots - collection of candidate {@link Root} objects
+	 * @param strictly - if true then an empy vector is returned if none of the roots shares a group
+	 * with discriminator, otherwise all given roots will be returned in case te filtered set became empty
 	 */
-	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots) {
+	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots, boolean strictly) {
 		Vector<Root> filteredRoots = new Vector<Root>();
 		Collection<Group> wantedGroups = this.getGroupsFromRoot(discriminator, false);
-		for (int i = 0; i < roots.size(); i++) {
-			Root root = roots.get(i);
-			Diagram diagr = this.rootMap.get(root);
-			for (Group grp: wantedGroups) {
-				if (grp.containsDiagram(diagr)) {
-					filteredRoots.add(root);
-					break;
+		if (!wantedGroups.isEmpty()) {
+			for (int i = 0; i < roots.size(); i++) {
+				Root root = roots.get(i);
+				Diagram diagr = this.rootMap.get(root);
+				for (Group grp: wantedGroups) {
+					if (grp.containsDiagram(diagr)) {
+						filteredRoots.add(root);
+						break;
+					}
 				}
 			}
+		}
+		if (filteredRoots.isEmpty() && !strictly) {
+			filteredRoots.addAll(roots);
 		}
 		return filteredRoots;
 	}
@@ -4452,7 +4481,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: calls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}

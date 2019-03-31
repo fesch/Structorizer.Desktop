@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig             2019-03-18      Enh. #56: Export of try-catch-finally blocks
  *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -728,7 +729,10 @@ public class CGenerator extends Generator {
 	 * @param _indent - current indentation level (as String)
 	 */
 	protected void generateTypeDefs(Root _root, String _indent) {
-		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+		// END KGU#676 2019-03-30
 			String typeKey = typeEntry.getKey();
 			if (typeKey.startsWith(":")) {
 				generateTypeDef(_root, typeKey.substring(1), typeEntry.getValue(), _indent, false);
@@ -1851,7 +1855,10 @@ public class CGenerator extends Generator {
 			code.add("int main(void)");
 		else {
 			// Compose the function header
-			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
+			// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+			//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
+			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+			// END KGU#676 2019-03-30
 			String fnHeader = transformTypeWithLookup(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
@@ -1926,7 +1933,10 @@ public class CGenerator extends Generator {
 		int lastLine = code.count();
 		// START KGU#375 2017-04-12: Enh. #388 - we want to add new information but this is not to have an impact on _root 
 		//this.typeMap = _root.getTypeInfo();
-		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
+		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#676 2019-03-30
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants

@@ -3467,6 +3467,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU#676 2019-03-13
 		for (Root root : _roots)
 		{
+			// START KGU#676 2019-03-31: Isse #696
+			root.specialRoutinePool = routinePool;
+			// END KGU#676 2019-03-31
 			if (firstExport || routinePool != null)
 			{
 				firstExport = false;

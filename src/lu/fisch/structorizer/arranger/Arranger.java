@@ -1722,6 +1722,18 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#2 2015-11-24
     
+	// START KGU#703 2019-03-30: Issue #720 - Needed a convenient retrieval for Roots referring to an Includable
+    /* (non-Javadoc)
+     * Just delegates to surface (making it more efficient than having it done by the default implementation here)
+     * @see lu.fisch.structorizer.archivar.IRoutinePool#findIncludingRoots(java.lang.String, boolean)
+     */
+    @Override
+    public Set<Root> findIncludingRoots(String includableName, boolean recursively)
+    {
+        return surface.findIncludingRoots(includableName, recursively);
+    }
+    // END KGU#703 2019-03-30
+
     // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.executor.IRoutinePool#getAllRoots()

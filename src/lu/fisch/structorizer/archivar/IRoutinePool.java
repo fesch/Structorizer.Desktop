@@ -42,6 +42,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-12      Enh. #698: Methods addDiagram and getName added.
  *      Kay Gürtzig     2019-03-13      Enh. #698: Moved from executor to archivar package
  *      Kay Gürtzig     2019-03-28      Enh. #657: Argument added to findIncludesByName() and findRoitinesBySignature()
+ *      Kay Gürtzig     2019-03-30      Issue #720: Method findIncludingRoots(String, boolean) added.
  *
  ******************************************************************************************************
  *
@@ -54,11 +55,12 @@ package lu.fisch.structorizer.archivar;
  */
 
 import java.io.File;
-
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.utils.StringList;
 
 /**
  * The interface facilitates the collection and retrieval of diagrams for e.g. execution,
@@ -111,6 +113,7 @@ public interface IRoutinePool {
 	 * @return a collection of {@link Root} objects of type Includable having the passed-in name.
 	 * @see #findDiagramsByName(String)
 	 * @see #findRoutinesBySignature(String, int, Root)
+	 * @see #findIncludingRoots(String, boolean)
 	 */
 	public Vector<Root> findIncludesByName(String rootName, Root includer);
 
@@ -124,17 +127,55 @@ public interface IRoutinePool {
 	 * @return a collection of Root objects meeting the specified signature.
 	 * @see #findDiagramsByName(String)
 	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludingRoots(String, boolean)
 	 */
 	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller);
 	
-    // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
-    /**
-     * Retrieves a set of all {@link Root} objects parked in this diagram pool.
-     * @return the {@link Root} set
-     * @see #findDiagramsByName(String)
-     */
-    public Set<Root> getAllRoots();
-    // END KGU#258 2016-09-26
+	// START KGU#703 2019-03-30: Issue #720 - Needed a convenient retrieval for Roots referring to an Includable
+	/**
+	 * Gathers all {@link Root} objects of the pool that refer to an Includable with
+	 * name {@code includableName}. If {@code recursively} is false then the result
+	 * will only contain diagrams directly listing the Includable, otherwise indirect
+	 * references will also be contained.
+	 * @param includableName - name of an includable diagram (existence is not checked)
+	 * @param recursively - whether to involve indirect references
+	 * @return the vector of found roots
+	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludingRoots(Root, boolean)
+	 */
+	public default Set<Root> findIncludingRoots(String includableName, boolean recursively)
+	{
+		Set<Root> references = new HashSet<Root>();
+		Set<Root> roots = this.getAllRoots();
+		StringList includeNames = StringList.getNew(includableName);
+		int iStart = 0, iEnd = 0;
+		do {
+			iEnd = includeNames.count();
+			for (Root root: roots) {
+				for (int i = iStart; i < iEnd; i++) {
+					if (root.includeList != null && root.includeList.contains(includeNames.get(i))) {
+						references.add(root);
+						if (recursively && root.isInclude()) {
+							includeNames.addIfNew(root.getMethodName());
+						}
+					}
+				}
+			}
+			iStart = iEnd;
+		} while (iEnd < includeNames.count());
+		return references;
+	}
+	// END KGU#703 2019-03-30
+	
+	// START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
+	/**
+	 * Retrieves a set of all {@link Root} objects parked in this diagram pool.
+	 * @return the {@link Root} set
+	 * @see #findDiagramsByName(String)
+	 * @see #findIncludingRoots(String, boolean)
+	 */
+	public Set<Root> getAllRoots();
+	// END KGU#258 2016-09-26
 
 	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
 	/**

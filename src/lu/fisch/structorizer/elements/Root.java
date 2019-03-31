@@ -144,6 +144,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-20      Bugfix #706: analyse_15 hardened against inconsistent Call contents
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configuration for file name proposals
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
+ *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
  *      
  ******************************************************************************************************
  *
@@ -216,6 +218,7 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
@@ -289,6 +292,11 @@ public class Root extends Element {
 	/** selection flags for different drawing contexts. Index 0 is unused (instead field {@link #selected} is used) */ 
 	private boolean[] contextSelections = new boolean[DrawingContext.values().length];
 	// END KGU#624 2018-12-22
+	
+	// START KGU#676 2019-03-31: Enh. #696 - We need pool access for batch export
+	/** A routine to be used for retrieval of includables and subroutines instead of Arranger if not null */
+	public IRoutinePool specialRoutinePool = null;
+	// END KGU#676 2019-03-31
 	
 	public Subqueue children = new Subqueue();
 
@@ -567,7 +575,10 @@ public class Root extends Element {
 	 */
 	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
 	//public StringList variables = new StringList();
-	public StringList variables = null;
+	// START KGU#701 2019-03-30: Issue #718 - This should better not be accessible directly - we need to be aware of changes
+	//public StringList variables = null;
+	private StringList variables = null;
+	// END KGU#701 2ß19-03-30
 	
 	/**
 	 * @return Cached names of the variables defined within this diagram (may be empty after changes).
@@ -590,7 +601,10 @@ public class Root extends Element {
 	protected Set<String> getVariableSetFor(Element _element)
 	{
 		Set<String> varNames = new HashSet<String>();
-		StringList vars = getCachedVarNames();
+		// START KGU#701 2019-03-30: Issue #718 - we must react to changes
+		//StringList vars = getCachedVarNames();
+		StringList vars = getVarNames();
+		// END KGU#701 2019-03-30
 		for (int i = 0; i < vars.count(); i++) {
 			varNames.add(vars.get(i));
 		}
@@ -1751,6 +1765,11 @@ public class Root extends Element {
             ele.children.parent = ele;
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
+            // START KGU#704 2019-03-30: Bugfix #699 - we must not forget to clone the includeList
+            if (this.includeList != null) {
+                ele.includeList = this.includeList.copy();
+            }
+            // END KGU#704 2019-03-30
             // START KGU#363 2017-03-10: Enh. #372
             ele.author = this.author;
             ele.created = this.created;
@@ -1899,16 +1918,19 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
-		// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
-		this.variables = null;
-		// ENDKGU#444/KGU#618 2018-12-18
+		// START KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30: Issues #259, #417, #649, #718
+		this.clearVarAndTypeInfo(true);
+		// END KGU#261/KGU#444/KGU#618/KGU#701 2018-12-18
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
-		// START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-		// FIXME: Certain explicit declarations should remain
-		this.clearTypeInfo();
-		// END KGU#261 2017-01-26
+		// START KGU#701/KGU#703 2019-03-30: Issue #718
+		if (this.isInclude() && Arranger.hasInstance()) {
+			for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701/KGU#703 2019-03-30
 		// START KGU#363 2017-03-10: Enh. #372
 		this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
 		if (modifiedby.trim().isEmpty()) {
@@ -1958,7 +1980,7 @@ public class Root extends Element {
      */
     public void clearRedo()
     {
-            redoList = new Stack<Subqueue>();
+        redoList = new Stack<Subqueue>();
     }
 
     /**
@@ -1969,11 +1991,11 @@ public class Root extends Element {
      */
     public void clearUndo()
     {
-            undoList = new Stack<Subqueue>();
-            // START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
-            // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
-            this.undoLevelOfLastSave = -1;
-            // END KGU#137 2016-01-11
+        undoList = new Stack<Subqueue>();
+        // START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+        // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
+        this.undoLevelOfLastSave = -1;
+        // END KGU#137 2016-01-11
     }
 
     /**
@@ -2065,16 +2087,16 @@ public class Root extends Element {
                 this.includeList = null;
             }
             // END KGU507 2018-03-15
-            // START KGU#444/KGU#618 2018-12-18: Issue #417, #649
-            this.variables = null;
-            // ENDKGU#444/KGU#618 2018-12-18
-            // START KGU#136 2016-03-01: Bugfix #97
-            this.resetDrawingInfoDown();
-            // END KGU#136 2016-03-01
-            // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-            // FIXME: Certain explicit declarations should remain
-            this.clearTypeInfo();
-            // END KGU#261 2017-01-26
+            // START KGU#136/KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30: Issues #97, #259, #417, #649, #718
+            this.clearVarAndTypeInfo(true);
+            // END KGU#136/KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30
+            // START KGU#703 2019-03-30: Issue #718
+            if (this.isInclude() && Arranger.hasInstance()) {
+                for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+                    ref.clearVarAndTypeInfo(false);
+                }
+            }
+            // END KGU#703 2019-03-30
         }
     }
 
@@ -2097,60 +2119,63 @@ public class Root extends Element {
      */
     public void redo()
     {
-            if (redoList.size()>0)
-            {
-                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
-                    //this.hasChanged=true;
-                    // END KGU#137 2016-01-11
-                    undoList.add((Subqueue)children.copy());
-                    // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
-                    undoList.peek().setText(this.text.copy());
-                    undoList.peek().setComment(this.comment.copy());
-                    // END KGU#120 2016-01-02
-                    // START KGU#507 2018-03-15: Bugfix #523
-                    if (this.includeList != null) {
-                        undoList.peek().diagramRefs = this.includeList.concatenate(",");
-                    }
-                    // END KGU#507 2018-03-15
-                    // START KGU#363 2018-09-12: Enh. #372
-                    undoList.peek().modified = this.modified;	// Save the current modification date
-                    // END KGU#363 2018-09-12
-                    children = redoList.pop();
-                    children.parent = this;
-                    // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
-                    this.setText(children.getText().copy());
-                    this.setComment(children.getComment().copy());
-                    children.text.clear();
-                    children.comment.clear();
-                    // END KGU#120 2016-01-02
-                    // START KGU#363 2017-05-21: Enh. #372
-                    if (children.rootAttributes != null) {
-                        undoList.peek().rootAttributes = new RootAttributes(this);
-                        this.adoptAttributes(children.rootAttributes);
-                        children.rootAttributes = null;
-                    }
-                    // END KGU#363 2017-05-21
-                    // START KGU#363 2018-09-12: Enh. #372
-                    this.modified = children.modified;
-                    children.modified = null;
-                    // END KGU#363 2018-09-12
-                    // START KGU#507 2018-03-15: Bugfix #523
-                    if (children.diagramRefs != null) {
-                        this.includeList = StringList.explode(children.diagramRefs, ",");
-                        children.diagramRefs = null;
-                    }
-                    else {
-                        this.includeList = null;
-                    }
-                    // END KGU#507 2018-03-15
-                    // START KGU#136 2016-03-01: Bugfix #97
-                    this.resetDrawingInfoDown();
-                    // END KGU#136 2016-03-01
-                    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-                    // FIXME: Certain explicit declarations should remain
-                    this.clearTypeInfo();
-                    // END KGU#261 2017-01-26
+        if (redoList.size()>0)
+        {
+            // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+            //this.hasChanged=true;
+            // END KGU#137 2016-01-11
+            undoList.add((Subqueue)children.copy());
+            // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
+            undoList.peek().setText(this.text.copy());
+            undoList.peek().setComment(this.comment.copy());
+            // END KGU#120 2016-01-02
+            // START KGU#507 2018-03-15: Bugfix #523
+            if (this.includeList != null) {
+                undoList.peek().diagramRefs = this.includeList.concatenate(",");
             }
+            // END KGU#507 2018-03-15
+            // START KGU#363 2018-09-12: Enh. #372
+            undoList.peek().modified = this.modified;	// Save the current modification date
+            // END KGU#363 2018-09-12
+            children = redoList.pop();
+            children.parent = this;
+            // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
+            this.setText(children.getText().copy());
+            this.setComment(children.getComment().copy());
+            children.text.clear();
+            children.comment.clear();
+            // END KGU#120 2016-01-02
+            // START KGU#363 2017-05-21: Enh. #372
+            if (children.rootAttributes != null) {
+                undoList.peek().rootAttributes = new RootAttributes(this);
+                this.adoptAttributes(children.rootAttributes);
+                children.rootAttributes = null;
+            }
+            // END KGU#363 2017-05-21
+            // START KGU#363 2018-09-12: Enh. #372
+            this.modified = children.modified;
+            children.modified = null;
+            // END KGU#363 2018-09-12
+            // START KGU#507 2018-03-15: Bugfix #523
+            if (children.diagramRefs != null) {
+                this.includeList = StringList.explode(children.diagramRefs, ",");
+                children.diagramRefs = null;
+            }
+            else {
+                this.includeList = null;
+            }
+            // END KGU#507 2018-03-15
+            // START KGU#136/KGU#261/KGU#701 2019-03-30: Bugfix #97, enh. #259, #718
+            this.clearVarAndTypeInfo(true);
+            // END KGU#136/KGU#261 2019-03-20
+            // START KGU#703 2019-03-30: Issue #720
+            if (this.isInclude() && Arranger.hasInstance()) {
+                for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+                    ref.clearVarAndTypeInfo(false);
+                }
+            }
+            // END KGU#703 2019-03-30
+        }
     }
 
     // START KGU#137 2016-01-11: Bugfix #103 - Synchronize saving with undo / redo stacks
@@ -2353,11 +2378,21 @@ public class Root extends Element {
     protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
     	if (!_implicatedRoots.contains(this)) {
-    		if (this.includeList != null && Arranger.hasInstance()) {
+    		// START KGU#676 2019-03-31: Enh. #696
+    		//if (this.includeList != null && Arranger.hasInstance()) {
+    		IRoutinePool pool = specialRoutinePool;
+    		if (this.includeList != null && (pool != null || Arranger.hasInstance())) {
+    			if (pool == null) {
+    				pool = Arranger.getInstance();
+    			}
+    		// END KGU#676 2019-03-31
     			_implicatedRoots.add(this);
     			for (int i = 0; i < this.includeList.count(); i++) {
     				String name = this.includeList.get(i);
-    				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
+    				// START KGU#676 2019-03-31: Enh. #696
+    				//Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
+    				Vector<Root> roots = pool.findIncludesByName(name, this);
+    				// END KGU#676 2019-03-31
     				if (roots.size() == 1) {
     					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
     				}
@@ -2960,6 +2995,22 @@ public class Root extends Element {
      * respective defined or declared TypeMapEntries with structural information.
      */
     public HashMap<String, TypeMapEntry> getTypeInfo()
+    // START KGU#678 2019-03-30: Enh. #696: For batch export mode, we must provide an alternative pool for includes
+    {
+        return getTypeInfo(null);
+    }
+    
+    /**
+     * Creates (if not already cached), caches, and returns the static overall type map
+     * for this diagram and its included definition providers retrieved from {@code routinePool}
+     * if given, otherwise from {@link Arranger} if available.<br/>
+     * Every change to this diagram clears the cache and hence leads to an info refresh.
+     * @param routinePool - a diagram pool to search for includables (default: {@link Arranger} instance)
+     * @return the type table mapping prefixed type names and variable names to their
+     * respective defined or declared TypeMapEntries with structural information.
+     */
+    public HashMap<String, TypeMapEntry> getTypeInfo(IRoutinePool routinePool)    
+    // END KGU#678 2019-03-30
     {
     	// START KGU#502 2018-03-12: Bugfix #518 - Avoid repeated traversal in case of lacking type and var info
     	//if (this.typeMap.isEmpty()) {
@@ -2971,11 +3022,22 @@ public class Root extends Element {
     		if (this.includeList != null) {
     			for (int i = 0; i < this.includeList.count(); i++) {
     				String inclName = this.includeList.get(i);
-    				if (Arranger.hasInstance()) {
-    					for (Root incl: Arranger.getInstance().findIncludesByName(inclName, this)) {
+    				// START KGU#66 2019-03-30: Enh.#696 consider alternative routine pool
+    				//if (Arranger.hasInstance()) {
+    				//	for (Root incl: Arranger.getInstance().findIncludesByName(inclName, this)) {
+    				//		typeMap.putAll(incl.getTypeInfo());
+    				//	}
+    				//}
+    				IRoutinePool pool = routinePool;
+    				if (pool == null && (pool = specialRoutinePool) == null && Arranger.hasInstance()) {
+    					pool = Arranger.getInstance();
+    				}
+    				if (pool != null) {
+    					for (Root incl: pool.findIncludesByName(inclName, this)) {
     						typeMap.putAll(incl.getTypeInfo());
     					}
     				}
+    				// END KGU#676 2019-03-30
     			}
     		}
     		// END KGU#388 2017-09-18
@@ -3000,6 +3062,7 @@ public class Root extends Element {
     	return this.typeMap;
     }
     
+    /** Also consider clearVarAndTypeInfo() */
     private void clearTypeInfo()
     {
     	// START KGU#502 2018-03-12: Bugfix #518
@@ -3008,7 +3071,26 @@ public class Root extends Element {
     	// END KGU#502 2018-03-12
     }
     // END KGU#261 2017-01-20
-    
+
+	// START KGU#701/KGU#703 2019-03-30: Issue #718, #720
+	/**
+	 * Clears (invalidates) all cached variable names and type information.
+	 * Also resets the drawing information recursively if {@link Element#E_VARHIGHLIGHT}
+	 * is true.
+	 * @param clearDrawInfo - if true then drawing info will also be reset (otherwise only
+	 * in case of {@link Element#E_VARHIGHLIGHT}).
+	 */
+	public void clearVarAndTypeInfo(boolean clearDrawInfo)
+	{
+		this.variables = null;
+		this.constants.clear();
+		this.clearTypeInfo();
+		if (clearDrawInfo || E_VARHIGHLIGHT) {
+			this.resetDrawingInfoDown();
+		}
+	}
+	// END KGU#701/KGU#703 2019-03-30
+
 	// START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
 	/**
 	 * Adds all parameter declarations to the given map (varname -> typeinfo).

@@ -1272,6 +1272,7 @@ ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
 ArrangerIndex.lblSubroutines.text=Subrutinas calladas
 ArrangerIndex.lblIncludables.text=Incluíbles requeridos
+ArrangerIndex.lblDependingDiagrams.text=Diagramas dependientes
 ArrangerIndex.lblStaleReferences.text=Referencias no satisfechas
 ArrangerIndex.lblModifications.text=Modificaciones no guardados
 ArrangerIndex.lblExternSubroutines.text=Requeridas @os externas

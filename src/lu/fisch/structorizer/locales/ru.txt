@@ -1219,6 +1219,7 @@ ArrangerIndex.lblSelectTargetGroup.text=
 ArrangerIndex.lblGroups.text=
 ArrangerIndex.lblSubroutines.text=
 ArrangerIndex.lblIncludables.text=
+ArrangerIndex.lblDependingDiagrams.text=Зависимые схемы
 ArrangerIndex.lblStaleReferences.text=
 ArrangerIndex.lblModifications.text=
 ArrangerIndex.lblExternSubroutines.text=

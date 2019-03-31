@@ -1274,6 +1274,7 @@ ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
 ArrangerIndex.lblSubroutines.text=Aufgerufene Unterprogramme
 ArrangerIndex.lblIncludables.text=Einbezogene Diagramme
+ArrangerIndex.lblDependingDiagrams.text=Abhängige Diagramme
 ArrangerIndex.lblStaleReferences.text=Unaufgelöste Diagrammverweise
 ArrangerIndex.lblModifications.text=Ungesicherte Änderungen
 ArrangerIndex.lblExternSubroutines.text=Verweise auf externe @oe

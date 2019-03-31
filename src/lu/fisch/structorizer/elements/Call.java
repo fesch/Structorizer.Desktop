@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
+ *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
  *
  ******************************************************************************************************
  *
@@ -100,6 +101,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.FindAndReplace;
@@ -326,8 +328,14 @@ public class Call extends Instruction {
 			if (myRoot.getSignatureString(false).equals(signature)) {
 				typeSpec = myRoot.getResultType();
 			}
-			else if (Arranger.hasInstance()) {
-				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+			// START KGU#676 219-03-31: Issue #696 batch export
+			//else if (Arranger.hasInstance()) {
+			//	Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
+				IRoutinePool pool = myRoot.specialRoutinePool;
+				if (pool == null) { pool = Arranger.getInstance(); }
+				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+			// END KGU#676 2019.03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();
 				}

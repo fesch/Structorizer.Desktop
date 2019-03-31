@@ -3483,7 +3483,7 @@ public abstract class Element {
 					StringBuilder normalText = new StringBuilder();
 					boolean lastWasNormal = false;
 					// END KGU#701 2019-03-29
-					for(int i = 0; i < parts.count(); i++)
+					for (int i = 0; i < parts.count(); i++)
 					{
 						String display = parts.get(i);
 

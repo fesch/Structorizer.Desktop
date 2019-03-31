@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-21      Issue #706: Export of Calls with explicit argument assignments enabled
  *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
  *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -1099,7 +1100,10 @@ public class PythonGenerator extends Generator
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 				insertComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
-				typeMap = incl.getTypeInfo();	// This line is the difference to Generator!
+				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+				//typeMap = incl.getTypeInfo();
+				typeMap = incl.getTypeInfo(routinePool);	// This line is the difference to Generator!
+				// END KGU#676 2019-03-30
 				generateCode(incl.children, _indent);
 				insertComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
@@ -1121,7 +1125,10 @@ public class PythonGenerator extends Generator
 			for (Root incl: this.includedRoots) {
 				if (_root.includeList.contains(incl.getMethodName())) {
 					// Start with the types
-					for (String name: incl.getTypeInfo().keySet()) {
+					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+					//for (String name: incl.getTypeInfo().keySet()) {
+					for (String name: incl.getTypeInfo(routinePool).keySet()) {
+					// END KGU#676 2019-03-30
 						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
 							addCode("global " + name, _indent, false);
 							declared.add(name);								
@@ -1219,7 +1226,10 @@ public class PythonGenerator extends Generator
 			// END KGU#371 2019-03-08
 		}
 		// START KGU#388 2017-10-02: Enh. #423 type info will now be needed in deep contexts
-		this.typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = _root.getTypeInfo();
+		this.typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#388 2017-10-02
 		return indent;
 	}

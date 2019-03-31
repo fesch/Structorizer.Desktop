@@ -1272,6 +1272,7 @@ ArrangerIndex.lblSelectTargetGroup.text=Select the target group:
 ArrangerIndex.lblGroups.text=Containing groups
 ArrangerIndex.lblSubroutines.text=Called @os
 ArrangerIndex.lblIncludables.text=Referenced @ps
+ArrangerIndex.lblDependingDiagrams.text=Dependent diagrams
 ArrangerIndex.lblStaleReferences.text=Stale diagram references
 ArrangerIndex.lblModifications.text=Unsaved modifications
 ArrangerIndex.lblExternSubroutines.text=Referenced external @os

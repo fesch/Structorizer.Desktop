@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-09 (2019-03-29)
+Current development version: 3.29-09 (2019-03-31)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -78,6 +78,7 @@ Current development version: 3.29-09 (2019-03-29)
 - 09: Issues #518, #544, #557 Further general drawing speed improvements <2>
 - 09: Issue #657: Subroutine/includable search disambiguated by groups (tried) <2>
 - 09: Issue #685: Precaution against exception traces on copying to clipboard <2>
+- 09: Enh. #696: Deficient type retrieval in batch code export fixed <2>
 - 09: Enh. #697: Batch code import to assignments / assignment archives <2>
 - 09: Bugfix #699: The fix from 3.29-08 for the archive unsharing was wrong <2>
 - 09: Issue #712: Further usability improvements for Translator <2>
@@ -85,6 +86,7 @@ Current development version: 3.29-09 (2019-03-29)
 - 09: Bugfix #716: Defective assignment export to Python code [elemhsb]2
 - 09: Issue #717: Mouse wheel scroll unit now configurable [elemhsb]2
 - 09: Issue #718: Ultimate acceleration of syntax highlighting <2>
+- 09: Issue #720: Changes to includable diagrams now reflect on their clients <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

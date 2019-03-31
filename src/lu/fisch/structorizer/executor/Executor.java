@@ -4935,7 +4935,11 @@ public class Executor implements Runnable
 				try {
 					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				} catch (Exception ex) {
-					return ex.getMessage();	// Ambiguous call!
+					// Ambiguous call!
+					if ((trouble = ex.getMessage()) == null) {
+						trouble = ex.toString();
+					}
+					return trouble;
 				}
 				// END KGU#317 2016-12-29
 				if (sub != null)

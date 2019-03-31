@@ -874,9 +874,11 @@ public class BasGenerator extends Generator
 				// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 				//String line = transform(_call.getText().get(i));
 				String line = _call.getUnbrokenText().get(i);
-				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null)
+						&& line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+					java.util.Vector<Root> callCandidates = 
+							routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);

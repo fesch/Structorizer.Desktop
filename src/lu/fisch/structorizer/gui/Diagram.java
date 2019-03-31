@@ -177,6 +177,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-27      Enh. #717: Configuration of scroll increment (Element.E_WHEEL_SCROLL_UNIT)
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
+ *      Kay Gürtzig     2019-03-20      Bugfix #720: Proper reflection of includable changes ensured
  *
  ******************************************************************************************************
  *
@@ -1366,94 +1367,114 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	// START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
-    public void doButtons()
-    {
-    	if (NSDControl != null) NSDControl.doButtons();
-    }
-    // END KGU#143 2016-01-21
+	public void doButtons()
+	{
+		if (NSDControl != null) NSDControl.doButtons();
+	}
+	// END KGU#143 2016-01-21
 
-    // START KGU#276 2016-10-09: Issue #269
-    /**
-     * Scroll to the given element and redraw the current diagram
-     * @param element - the element to gain the focus
-     */
-    public void redraw(Element element)
-    {
-    	Rectangle rect = element.getRectOffDrawPoint().getRectangle();
-    	Rectangle visibleRect = new Rectangle();
-    	this.computeVisibleRect(visibleRect);
-    	// START KGU#276 2016-11-19: Issue #269 Ensure wide elements be shown left-bound
-    	if (rect.width > visibleRect.width &&
-    			!(element instanceof Alternative || element instanceof Case))
-    	{
-    		rect.width = visibleRect.width;
-    	}
-    	// END KGU#276 2016-11-19
-    	// START KGU#276 2016-11-21: Issue #269 Ensure high elements be shown top-bound
-    	if (rect.height > visibleRect.height &&
-    			!(element instanceof Instruction || element instanceof Parallel || element instanceof Forever))
-    	{
-    		// ... except for REPEAT loops, which are to be shown bottom-aligned
-    		if (element instanceof Repeat)	{
-    			rect.y += rect.height - visibleRect.height;
-    		}
-    		rect.height = visibleRect.height;
-    	}
-    	// END KGU#276 2016-11-21
-    	try {
-    		scrollRectToVisible(rect);
-    	}
-    	catch (Exception ex) {
-    		logger.warning(ex.toString());
-    	}
-    	redraw();	// This is to make sure the drawing rectangles are correct
-    }
-    // END KGU#276 2016-10-09
-    
-    public void redraw()
-    {
-    	// START KGU#440 2017-11-06: Bugfix #455 - suppress drawing unless Structorizer is fully initialized
-    	if (!this.isInitialized) {
-    		return;
-    	}
-    	// END KGU#440 2017-11-06
-    	boolean wasHighLight = Element.E_VARHIGHLIGHT; 
-    	if (wasHighLight)
-    	{
-    		// START KGU#430 2017-10-10: Issue #432
-    		//root.getVarNames();
-    		try {
-    			// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
-    			//root.getVarNames();
-    			root.getVarNames();
-    			// END KGU#444/KGU#618 2018-12-18
-    		}
-    		catch (Exception ex) {
-    			logger.log(Level.WARNING, "*** Possible sync problem:", ex);
-    			// Avoid trouble (highlighting would require variable retrieval)
-    			Element.E_VARHIGHLIGHT = false;
-    		}
-    		// END KGU#430 2017-10-10
-    	}
+	// START KGU#276 2016-10-09: Issue #269
+	/**
+	 * Scroll to the given element and redraw the current diagram
+	 * @param element - the element to gain the focus
+	 */
+	public void redraw(Element element)
+	{
+		Rectangle rect = element.getRectOffDrawPoint().getRectangle();
+		Rectangle visibleRect = new Rectangle();
+		this.computeVisibleRect(visibleRect);
+		// START KGU#276 2016-11-19: Issue #269 Ensure wide elements be shown left-bound
+		if (rect.width > visibleRect.width &&
+				!(element instanceof Alternative || element instanceof Case))
+		{
+			rect.width = visibleRect.width;
+		}
+		// END KGU#276 2016-11-19
+		// START KGU#276 2016-11-21: Issue #269 Ensure high elements be shown top-bound
+		if (rect.height > visibleRect.height &&
+				!(element instanceof Instruction || element instanceof Parallel || element instanceof Forever))
+		{
+			// ... except for REPEAT loops, which are to be shown bottom-aligned
+			if (element instanceof Repeat)	{
+				rect.y += rect.height - visibleRect.height;
+			}
+			rect.height = visibleRect.height;
+		}
+		// END KGU#276 2016-11-21
+		try {
+			scrollRectToVisible(rect);
+		}
+		catch (Exception ex) {
+			logger.warning(ex.toString());
+		}
+		redraw();	// This is to make sure the drawing rectangles are correct
+	}
+	// END KGU#276 2016-10-09
 
-    	Rect rect = root.prepareDraw(this.getGraphics());
-    	Dimension d = new Dimension(rect.right-rect.left, rect.bottom-rect.top);
-    	this.setPreferredSize(d);
-    	//this.setSize(d);
-    	this.setMaximumSize(d);
-    	this.setMinimumSize(d);
-    	//this.setSize(new Dimension(rect.right-rect.left,rect.bottom-rect.top));
-    	//this.validate();
-    	
-    	((JViewport) this.getParent()).revalidate();
+	public void redraw()
+	{
+		// START KGU#440 2017-11-06: Bugfix #455 - suppress drawing unless Structorizer is fully initialized
+		if (!this.isInitialized) {
+			return;
+		}
+		// END KGU#440 2017-11-06
+		boolean wasHighLight = Element.E_VARHIGHLIGHT; 
+		if (wasHighLight)
+		{
+			// START KGU#430 2017-10-10: Issue #432
+			//root.getVarNames();
+			try {
+				// START KGU#444/KGU#618 2018-12-18: Issue #417, #649
+				//root.getVarNames();
+				root.getVarNames();
+				// END KGU#444/KGU#618 2018-12-18
+			}
+			catch (Exception ex) {
+				logger.log(Level.WARNING, "*** Possible sync problem:", ex);
+				// Avoid trouble (highlighting would require variable retrieval)
+				Element.E_VARHIGHLIGHT = false;
+			}
+			// END KGU#430 2017-10-10
+		}
 
-    	//redraw(this.getGraphics());
-    	this.repaint();
-    	
-    	// START KGU#430 2017-10-10: Issue #432
-    	Element.E_VARHIGHLIGHT = wasHighLight;
-    	// END KGU#430 2017-10-10
-    }
+		Rect rect = root.prepareDraw(this.getGraphics());
+		Dimension d = new Dimension(rect.right-rect.left, rect.bottom-rect.top);
+		this.setPreferredSize(d);
+		//this.setSize(d);
+		this.setMaximumSize(d);
+		this.setMinimumSize(d);
+		//this.setSize(new Dimension(rect.right-rect.left,rect.bottom-rect.top));
+		//this.validate();
+
+		((JViewport) this.getParent()).revalidate();
+
+		//redraw(this.getGraphics());
+		this.repaint();
+
+		// START KGU#430 2017-10-10: Issue #432
+		Element.E_VARHIGHLIGHT = wasHighLight;
+		// END KGU#430 2017-10-10
+	}
+
+	// START KGU#703 219-03-30: Issue #718, #720
+	/**
+	 * Resets cached variable and type information, the drawing information including the
+	 * highlight cache after routine pool changes and redraws the managed diagram.
+	 * The clearing of variables, types etc. is not done if the {@link Root} is under
+	 * execution.
+	 */
+	public void invalidateAndRedraw()
+	{
+		// During execution it is no good idea to rest variable, constants, and type informaion.
+		// Anyway the pool changes will usually only be a pseudo addition in order to get ownership
+		// of executed subroutines, so better ignore it. Otherwise of course, we should react to
+		// a possible insertion or removal of some referred includable.
+		if (!root.isExecuted()) {
+			root.clearVarAndTypeInfo(false);
+		}
+		redraw();
+	}
+	// END KGU#703 2019-03-30
 
 	public void redraw(Graphics _g)
 	{
@@ -3021,7 +3042,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//eCopy = selected.copy();
 			if (selected instanceof Root)
 			{
-	        	XmlGenerator xmlgen = new XmlGenerator();
+				XmlGenerator xmlgen = new XmlGenerator();
 				StringSelection toClip = new StringSelection(xmlgen.generateCode(root,"\t"));
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(toClip, this);
@@ -3039,7 +3060,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void cutNSD()
 	{
-		if (selected != null)
+		if (selected != null && selected != root)
 		{
 			eCopy = selected.copy();
 			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
@@ -7611,6 +7632,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.resetDrawingInfoUp();
 		}
 		// END KGU#221 2016-07-28
+		// START KGU#703 2019-03-30: Issue #720
+		boolean poolModified = false;
+		if (root.isInclude() && Arranger.hasInstance()) {
+			for (Root root: Arranger.getInstance().findIncludingRoots(root.getMethodName(), true)) {
+				root.clearVarAndTypeInfo(false);
+				poolModified = true;
+			}
+		}
+		// END KGU#703 2019-03-30
 		root.setProgram(true);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -7620,6 +7650,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 		// END KGU#253 2016-09-22
 		redraw();
+		// START KGU#701 2019-03-30: Issue #720
+		if (poolModified) {
+			Arranger.getInstance().redraw();
+		}
+		// END KGU#701 2019-03-30
 	}
 
 	// START KGU#376 2017-05-16: Enh. #389
@@ -7631,11 +7666,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.resetDrawingInfoUp();
 		}
 		root.setInclude();
+		// START KGU#703 2019-03-30: Issue #720
+		boolean poolModified = false;
+		if (Arranger.hasInstance()) {
+			for (Root root: Arranger.getInstance().findIncludingRoots(root.getMethodName(), true)) {
+				root.clearVarAndTypeInfo(false);
+				poolModified = true;
+			}
+		}
+		// END KGU#703 2019-03-30
 		// Record this change in addition to the undoable ones
 		root.setChanged(true);
 		// check absense of parameter list
 		analyse();
 		redraw();
+		// START KGU#701 2019-03-30: Issue #720
+		if (poolModified) {
+			Arranger.getInstance().redraw();
+		}
+		// END KGU#701 2019-03-30
 	}
 	// END KGU #376 2017-05-16
 
