@@ -33,6 +33,7 @@ package lu.fisch.structorizer.generators;
  *      Author                  Date            Description
  *      ------                  ----            -----------
  *      Simon Sobisch           2017.04.14      First Issue
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      
  ******************************************************************************************************
  *
@@ -561,7 +562,10 @@ public class COBOLGenerator extends Generator {
 		addCode("DATA DIVISION.", _indent, false);
 		addCode("WORKING-STORAGE SECTION.", _indent, false);
 		insertComment("TODO: Check and accomplish variable declarations:", _indent);
-		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo().clone();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = (HashMap<String, TypeMapEntry>)_root.getTypeInfo().clone();
+		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo(routinePool).clone();
+		// END KGU#676 2019-03-30
 		// special treatment of constants
 		for (String constName: _root.constants.keySet()) {
 			insertDeclaration(_root, constName, _indent);			

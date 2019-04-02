@@ -108,7 +108,13 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Root and Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-14      Issues #518, #544, #557: Measures against drawing contention revised and extended.
  *      Kay Gürtzig     2019-03-15      Bugfix #703: isMoved status of diagrams wasn't reset on saving a containing arrangement
- *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group
+ *                                      Measures for bugfix #699 skipped on diagrams that are only members of the saved group.
+ *                                      KGU#697: Bugfix in updateSilhouette(), at least partially
+ *      Kay Gürtzig     2019-03-27      Issue #717: Configurable base scroll unit (adaptScrollUnits(Rect))
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for includables/subroutines now with group filter,
+ *                                      fixed the fix for the fix #699 again.
+ *                                      Further drawing acceleration - clip bounds instead of viewport rect
+ *      Kay Gürtzig     2019-03-30      Issues #699, #720: Several fixes and fine-tuning
  *
  ******************************************************************************************************
  *
@@ -219,7 +225,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
@@ -415,6 +420,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-24
 	// END KGU#497 2018-03-19
 	{
+		
 		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518, #544, #557 - Workaround for heavy drawing contention
 		// We will simply tell the Roots about the contention, so they may decide what to do (e.g. switch off highlighting)
 		boolean fullRepaint = false;
@@ -479,9 +485,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			Rectangle visibleRect = null;
 			// In need of full repaint, we don't provide the actual visibility bounds
 			if (!fullRepaint) {
-				Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
-				visRect = visRect.scale(zoomFactor);
-				visibleRect = visRect.getRectangle();
+				// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557
+				/* The clip bounds of the graphics object are usually smaller than the entire
+				 * viewport, due to window bit blit */
+				//Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
+				//visRect = visRect.scale(zoomFactor);
+				//visibleRect = visRect.getRectangle();
+				Rect clipRect = new Rect(g.getClipBounds());
+				visibleRect = clipRect.getRectangle();
+				// END KGU#502/KGU#524/KGU#553: 2019-03-29
 			}
 			// END KGU#502/KGU#524/KGU#557
 				
@@ -754,7 +766,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (group != null) {
 			toArrange = group.getDiagrams();
 			// START KGU#631 2019-01-08: More sensible message content on saving a group
-			sourceDescription = msgGroup.getText().replace("%", group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+			sourceDescription = msgGroup.getText().replace("%", 
+					group.getName().replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 			// END KGU#631 2019-01-08
 			// If the group was the default group then we will anonymize it
 			if (group.isDefaultGroup()) {
@@ -1147,11 +1160,22 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (portable) {
 				StringList sharedDiagrams = new StringList();
 				for (Diagram diagr: group.getDiagrams().toArray(new Diagram[group.size()])) {
-					// START KGU#683 2019-03-15: Bugfix #699 - No measures for diagrams that aren't shared by other groups
-					if (diagr.getGroupNames().length <= 1) {
+					// START KGU#683 2019-03-29: Bugfix #699 - No measures for diagrams that aren't shared by other groups
+					/* Caution: A temporary group (empty name) is not listed among the
+					 * group names of a diagram! So a mere group counting approach
+					 * goes wrong. Only in case the name of the group to be saved is
+					 * the name of the actual and only group of the diagram or if the diagram
+					 * is only member of the default group and the group to be saved is a
+					 * temporary group (empty name, in this case the diagram will simply be
+					 * moved from the default group to the new group in makeGroup()) we may
+					 * be sure to deal with the sole owning group.
+					 */
+					StringList groupNames = new StringList(diagr.getGroupNames());
+					if (groupNames.count() <= 1 && (groupNames.contains(group.getName()) ||
+							groupNames.contains(Group.DEFAULT_GROUP_NAME) && group.getName().isEmpty())) {
 						continue;
 					}
-					// END KGU#683 2019-03-15
+					// END KGU#683 2019-03-29
 					if (diagr.root.shadowFilepath != null && !diagr.root.getFile().getAbsolutePath().equals(outFilename)) {
 						// A diagram residing in another archive must be copied now, it cannot be shared.
 						Root copiedRoot = (Root)diagr.root.copy();
@@ -1170,8 +1194,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
-						StringList groupNames = new StringList(diagr.getGroupNames());
-						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " + groupNames.concatenate(", "));
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
+								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 					}
 				}
 				// Ensure all new copies are saved somewhere such that they will get a virtual path later
@@ -2017,7 +2041,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// Search for an overlapping between diagram and silhouette
 		while (iter.hasNext() && ((leap = iter.next()).x < left || leap.x < right && lastLeap.y >= bottom && leap.y >= bottom)) {
-			lastLeap = leap;
+			lastLeap = leap;	// FIXME: clone?
 		}
 		// Now if we haven't found any leap at all, then just add the two leaps for this diagram
 		Point leap1 = new Point(left, bottom);
@@ -2052,7 +2076,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			if (lastLeap.y >= bottom) {
 				// 2. The silhouette had exceeded the diagram but is now receding --> update leap to level bottom
-				lastLeap = leap;
+				// START KGU#697 2019-03-26: Bugfix - leap must be cloned!
+				//lastLeap = leap;
+				lastLeap = (Point)leap.clone();
+				// END KGU#697 2019-03-26
 				leap.y = bottom;
 			}
 			else {
@@ -2071,11 +2098,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					lastLeap = leap;
 				}
 				else if (leap.y < bottom) {
-					lastLeap = leap;
+					// START KGU#697 2019-03-26: Bugfix - leap must be cloned!
+					//lastLeap = leap;	// FIXME! clone!
+					lastLeap = (Point)leap.clone();
+					// END KGU#697 2019-03-26
 					leap.y = bottom;
 				}
 				else {
-					lastLeap = leap;
+					lastLeap = leap;	// FIXME! clone?
 				}
 				nextLeap.y = lastLeap.y;
 			}
@@ -2083,7 +2113,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			boolean first = true;
 			while (leap != null && leap.x < right) {
 				if (!first) {
-					lastLeap = leap;
+					lastLeap = leap;	// FIXME! clone?
 				}
 				else {
 					first = false;
@@ -2131,7 +2161,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //		}
 	}
 
-	private Rect adaptLayout()
+	// START KGU#699 2019-03-27: Issue #717 - made protected to allow access from Arranger
+	//private Rect adaptLayout()
+	protected Rect adaptLayout()
+	// END KGU#699 2019-03-17
 	{
 		Rect rect = getDrawingRect(null);
 		// START KGU#85 2017-10-23: Enh. #35 - Add scrollbars
@@ -2179,8 +2212,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#444 2017-11-03
 			//System.out.println("unit factors: " + widthFactor + " / " + heightFactor);
-			scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
-			scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+			// START KGU#699 2019-03-27: Issue #717 - make base increment configurable
+			//scroll.getHorizontalScrollBar().setUnitIncrement(unitsHorizontal);
+			//scroll.getVerticalScrollBar().setUnitIncrement(unitsVertical);
+			if (Element.E_WHEEL_SCROLL_UNIT <= 0) {
+				// The very first time Structorizer is used, we fetch the original unit increment
+				Element.E_WHEEL_SCROLL_UNIT = scroll.getVerticalScrollBar().getUnitIncrement();
+			}
+			scroll.getHorizontalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsHorizontal - 1);
+			scroll.getVerticalScrollBar().setUnitIncrement(Element.E_WHEEL_SCROLL_UNIT + unitsVertical - 1);
+			// END KGU#699 2019-03-27
 		}
 	}
 	// END KGU#444 2017-10-23
@@ -2364,13 +2405,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			//rec.setLocation(left, top);
 			Rect rec = root.getRect(point);
 			// END KGU#136 2016-03-01
-			// START KGU 2019-03-14: It doesn't make sense to initiate a prepareDraw() here, because the next diagram won't know...
+			// START KGU#627 2019-03-14: Check if the diagram has dimensions
 			if (rec.right == rec.left && rec.top == rec.bottom) {
 				// Can never have been drawn, so try it now...
 				Graphics2D graphics2d = (Graphics2D) this.getGraphics();
 				rec = root.prepareDraw(graphics2d);
+				// START KGU#627 2019-03-26 Now we must move the record to the proposed position
+				rec.add(point);
+				// END KGU#627 2019-03-26
 			}
-			// END KGU 2019-03-14
+			// END KGU#627 2019-03-14
 			if (rec.right == rec.left) rec.right += DEFAULT_WIDTH;
 			if (rec.bottom == rec.top) rec.bottom += DEFAULT_HEIGHT;
 			
@@ -2479,6 +2523,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		diagramsSelected.add(diagram);
 		diagram.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 		// END KGU 2016-12-12
+		// START KGU#701 2019-03-30: Issue #718
+		if (root.isInclude()) {
+			for (Root ref: this.findIncludingRoots(root.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701 2019-03-30
 		// START KGU#624 2018-12-21: Enh. #655
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#624 2018-12-21
@@ -2504,7 +2555,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#499 2018-02-21: Enh. #515 - More intelligent area management
 	/**
 	 * Scans the given silhouette line given by the {@link Point} list {@code silhouette}
-	 * for the uppermost breach wide enough to accomodate a diagram of width {@code rec.width}. 
+	 * for the uppermost breach wide enough to accommodate a diagram of width {@code rec.width}. 
 	 * @param silhouette - linked {@link Point} list symbolizing the lower bound of the diagrams
 	 * @param rec - the proposed {@link Rectangle} of a diagram (possibly to be relocated)
 	 * @return the preferrable new anchor position (top left) for the diagram
@@ -2536,14 +2587,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					iter1.remove();
 				}
 			}
-			// Here a better entry might start
-			if (optimum == null || leap.y < optimum.y) {
+			// Here a better entry might start (though leap(0,0) isn't needed, see first candidate) 
+			if ((optimum == null || leap.y < optimum.y)/* && !(leap.x == 0 && leap.y == 0)*/) {
 				candidates.add(new Point(leap));
 			}
 		}
 		// If we didn't find anything better, then we will just adhere to the bounds approach result
 		// But first have a look whether some incompletely analysed breaches (those remaining open at
-		// end) are wide enough to be accepted. We will allow a diagram if fits at least by half.
+		// end) are wide enough to be accepted. We will allow a diagram if it fits at least by half.
 		float windowWidth = this.getWidth() * this.zoomFactor - rec.width/2; 
 		for (Point cand: candidates) {
 			if (cand.x < windowWidth && (optimum == null || cand.y < optimum.y)) {
@@ -2653,6 +2704,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#626 2018-12-30
 		diagrams.remove(diagr);
+		// START KGU#701 2019-03-30: Issue #718
+		if (diagr.root.isInclude()) {
+			for (Root ref: this.findIncludingRoots(diagr.root.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701 2019-03-30
 		adaptLayout();
 		repaint();
 		// START KGU#278 2016-10-11: Enh. #267
@@ -3812,7 +3870,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int, boolean)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String)
+	 * @see #findIncludesByName(String, Root)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
@@ -3827,7 +3885,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String)
+	 * @see #findIncludesByName(String, Root)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
@@ -3836,9 +3894,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Diagram owner = null;
 		Vector<Diagram> diagramList = this.diagrams;
 		// START KGU#624 2018-12-26: Enh. #655 - Attempt to make search faster
-		if (equalityLevel == 1) {
-			return this.rootMap.get(root);
+		// START KGU#700 2019-03-28: Enh. #657 - This didn't make sense
+		/* If we find the root itself then it shouldn't matter whether there are similar ones */
+		//if (equalityLevel == 1) {
+		//	return this.rootMap.get(root);
+		//}
+		owner = this.rootMap.get(root);
+		if (owner != null || equalityLevel == 1) {
+			return owner;
 		}
+		// END KGU#700 2019-03-28
 		else if (equalityLevel == 2 || equalityLevel == 5) {
 			// We try to reduce the number of diagrams to be searched  
 			diagramList = this.nameMap.get(root.getMethodName());
@@ -3963,14 +4028,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
 	 */
 	@Override
-	public Vector<Root> findIncludesByName(String rootName)
+	public Vector<Root> findIncludesByName(String rootName, Root includer)
 	{
+		/* The most efficient strategy for group-aware retrieval is supposed to
+		 * be first to fetch all matching Roots (in most cases the result will
+		 * be unique anyway) and only to check group membership if the result
+		 * consists of more than one Root.
+		 */
 		Vector<Root> incls = new Vector<Root>();
 		for (Root root: this.findDiagramsByName(rootName)) {
 			if (root.isInclude()) {
 				incls.add(root);
 			}
 		}
+		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
+		if (incls.size() > 0 && includer != null) {
+			incls = filterRootsByGroups(includer, incls, false);
+		}
+		// END KGU#700 2019-03-28
 		return incls;
 	}
 	// END KGU#376 2017-04-11
@@ -3980,8 +4055,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
 	 */
 	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount)
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller)
 	{
+		/* The most efficient strategy for group-aware retrieval is supposed to
+		 * be first to fetch all matching Roots (in most cases the result will
+		 * be unique anyway) and only to check group membership if the result
+		 * consists of more than one Root.
+		 */
 		Vector<Root> functionsAny = findDiagramsByName(rootName);
 		Vector<Root> functions = new Vector<Root>();
 		// START KGU#371 2019-03-07: Enh. #385 - In a second attempt look for closest matching routines with defaults
@@ -4007,6 +4087,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#371 2019-03-07
 		}
+		// START KGU#700 2019-03-28: Enh. #657 Check for group membership?
+		if (functions.size() > 0 && caller != null) {
+			functions = filterRootsByGroups(caller, functions, false);
+		}
+		// END KGU#700 2019-03-28
 		return functions;
 	}
 	// END KGU#2 2015-11-24
@@ -4092,6 +4177,39 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 	// END KGU#117 2016-03-08
+
+	// START KGU#700 2019-03-28: Enh. #657
+	/**
+	 * Returns a {@link Vector} of only those elements of {@code roots} that
+	 * share at least one group with {@code discriminator} if {@code discriminator}
+	 * is member of at least one group. If {@code strictly} is false, then in case of
+	 * an empy intersection the original set of roots will be returned (unfiltered).
+	 * @param discriminator - a {@link Root} object the associated groups of which decide membership
+	 * @param roots - collection of candidate {@link Root} objects
+	 * @param strictly - if true then an empy vector is returned if none of the roots shares a group
+	 * with discriminator, otherwise all given roots will be returned in case te filtered set became empty
+	 */
+	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots, boolean strictly) {
+		Vector<Root> filteredRoots = new Vector<Root>();
+		Collection<Group> wantedGroups = this.getGroupsFromRoot(discriminator, false);
+		if (!wantedGroups.isEmpty()) {
+			for (int i = 0; i < roots.size(); i++) {
+				Root root = roots.get(i);
+				Diagram diagr = this.rootMap.get(root);
+				for (Group grp: wantedGroups) {
+					if (grp.containsDiagram(diagr)) {
+						filteredRoots.add(root);
+						break;
+					}
+				}
+			}
+		}
+		if (filteredRoots.isEmpty() && !strictly) {
+			filteredRoots.addAll(roots);
+		}
+		return filteredRoots;
+	}
+	// END KGU#700 2019-03-28
 
 	// START KGU#305 2016-12-16
 	/**
@@ -4363,7 +4481,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: calls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
@@ -4372,7 +4490,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (root.includeList != null) {
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
-					Vector<Root> candidates = this.findIncludesByName(inclName);
+					Vector<Root> candidates = this.findIncludesByName(inclName, root);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
@@ -4962,7 +5080,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: containedCalls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null && fct.isFunction()) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount());
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
@@ -4971,7 +5089,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList includeNames = diagr.root.includeList;
 			if (includeNames != null) {
 				for (int i = 0; i < includeNames.count(); i++) {
-					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i));
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}

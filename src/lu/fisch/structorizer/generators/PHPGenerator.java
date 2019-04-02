@@ -121,8 +121,6 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
-import java.util.regex.Matcher;
-
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
@@ -596,7 +594,7 @@ public class PHPGenerator extends Generator
 		StringList lines = _jump.getUnbrokenText();
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		//String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
 			// FIXME: That the line is transformed prior to the detection is a potential risk

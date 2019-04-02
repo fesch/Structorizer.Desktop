@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2018-07-22      Bugfix #564: defects with nested record/array initializers mended
  *      Kay Gürtzig         2018-10-05      Bugfix #619: Undue declaration of function result variable dropped
  *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
+ *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -1520,8 +1521,11 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-        // START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
-		typeMap = _root.getTypeInfo();
+		// START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//typeMap = _root.getTypeInfo();
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#261 2017-01-30
 		// START KGU#388 2017-09-20: Enh. #423
 		StringList complexConsts = new StringList();
@@ -1532,7 +1536,7 @@ public class PasGenerator extends Generator
 		// END KGU#376 2017-09-21
 		
 		code.add("");
-        
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		// START KGU#376 2017-09-21: Enh. #389: Special care for an Includable at top level
 		//if (topLevel && _root.isProgram() && this.optionExportSubroutines())
@@ -1554,13 +1558,13 @@ public class PasGenerator extends Generator
 		//code.add(_indent + "begin");
 		if (!_root.isInclude()) {
 			code.add(_indent + "begin");
-    		// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
+			// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
 			if (_root.isProgram()) {
-        		for (Root incl: includes) {
-        			generateCode(incl.children, _indent + this.getIndent());
-        		}
+				for (Root incl: includes) {
+					generateCode(incl.children, _indent + this.getIndent());
+				}
 			}
-    		// END KGU#376 2017-09-21
+			// END KGU#376 2017-09-21
 		}
 		else {
 			code.add(_indent + "BEGIN");

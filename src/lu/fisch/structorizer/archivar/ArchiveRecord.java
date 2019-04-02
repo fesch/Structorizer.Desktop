@@ -36,6 +36,7 @@ import lu.fisch.structorizer.elements.Root;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-09      First Issue
+ *      Kay Gürtzig     2019-03-26      Bugfix #697: ArchiveRecord copy constructor caused an error with point = null
  *
  ******************************************************************************************************
  *
@@ -79,7 +80,7 @@ public class ArchiveRecord
 	 * @param other - another ArchiveRecord
 	 */
 	public ArchiveRecord(ArchiveRecord other) {
-		this(other.root, new Point(other.point));
+		this(other.root, (other.point != null ? new Point(other.point) : null));
 	}
 	
 	/* (non-Javadoc)

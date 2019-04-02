@@ -80,6 +80,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-16      Enh. #682: Extended welcome menu with language choice
  *      Kay Gürtzig     2019-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
+ *      Kay Gürtzig     2019-03-27      Enh. #717: Loading/saving of Element.E_WHEEL_SCROLL_UNIT
  *
  ******************************************************************************************************
  *
@@ -625,6 +626,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
 			// END KGU#503 2018-03-14
+			// START KGU#699 2019-03-27: Enh. #717
+			Element.E_WHEEL_SCROLL_UNIT = Integer.parseInt(ini.getProperty("wheelScrollUnit", "0"));
+			// END KGU#699 2019-03-27
 			// START KGU#494 2018-09-10: Issue #508
 			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
 			// END KGU#494 2018-09-10
@@ -864,6 +868,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			ini.setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 			// END KGU#503 2018-03-14
+			// START KGU#699 2019-03-27: Enh. #717
+			ini.setProperty("wheelScrollUnit", Integer.toString(Element.E_WHEEL_SCROLL_UNIT));
+			// END KGU#699 2019-03-27
 			// START KGU#494 2018-09-10: Issue #508
 			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
 			// END KGU#494 2018-09-10
@@ -1310,6 +1317,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED | IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
 				this.editor.repaintArrangerIndex();
 			}
+			// START KGU#701 2019-03-30: Issue #718
+			diagram.invalidateAndRedraw();
+			// END KGU#701 2019-03-30
 		}
 		updateAnalysis();
 	}

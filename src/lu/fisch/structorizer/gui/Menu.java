@@ -101,8 +101,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-07      Enh. #385: New message error20_2, error20 renamed in error20_1
  *      Kay Gürtzig     2019-03-16      Enh. #56: New menu items to add TRY-CATCH elements *
  *      Kay Gürtzig     2019-03-17      Issue #56: breakpoint items disabled for Forever and Try elements.
- *                                      
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
+ *      Kay Gürtzig     2019-03-27      Enh. #717: New menu entry menuPreferencesWheelUnit
  *
  ******************************************************************************************************
  *
@@ -365,6 +365,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// FIXME: Define new icon
 	protected final JCheckBoxMenuItem menuPreferencesWheelZoom = new JCheckBoxMenuItem("Reverse zoom with ctr + wheel", IconLoader.getIcon(7));
 	// END KGU#503 2018-03-14
+	// START KGU#699 2019-03-27: Issue #717
+	protected final JMenuItem menuPreferencesWheelUnit = new JMenuItem("Mouse wheel scrolling unit ...", IconLoader.getIcon(9));
+	// END KGU#699 2019-03-27
 	// START KGU#287 2017-01-11: Issue #81/#330
 	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.getIcon(51));
 	// END KGU#287 2017-01-11
@@ -710,7 +713,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the subroutine to be edited:");
 	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new subroutine «%»?");
 	// END KGU#667 2019-02-26
-	
+	// START KGU#699 2019-03-27: Issue #717
+	public static final LangTextHolder ttlMouseScrollUnit = new LangTextHolder("Mouse wheel scrolling unit");
+	// END KGU#699 2019-03-27
 
 	public void create()
 	{
@@ -1340,6 +1345,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesWheelZoom.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleCtrlWheelMode(); doButtons(); } });
 		// END KGU#503 2018-03-14
 
+		// START KGU#699 2019-03-27: Issue #717
+		menuPreferencesWheel.add(menuPreferencesWheelUnit);
+		menuPreferencesWheelUnit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.configureWheelUnit(); doButtons(); } });
+		// END KGU#699 2019-03-27
+		
 		// START KGU#287 2017-01-11: Issue #81/#330
 		menuPreferences.add(menuPreferencesScalePreset);
 		menuPreferencesScalePreset.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { new GUIScaleChooser().setVisible(true); } } );
@@ -1679,11 +1689,11 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
 			// START KGU#199 2016-07-07: Enh. #188 - We allow instruction conversion
 			menuDiagramTransmute.setEnabled(diagram.canTransmute());
-			menuDiagramTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuDiagramTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#199 2016-07-07
 			// START KGU#365 2017-03-26: Enh. #380 - We allow subroutine generation
 			menuDiagramOutsource.setEnabled(diagram.canCut());
-			menuDiagramOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuDiagramOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#365 2017-03-26
 			
 			
@@ -1692,20 +1702,20 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
 			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 			menuDiagramCollapse.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuDiagramExpand.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuDiagramExpand.setVisible(!Element.E_REDUCED_TOOLBARS);
 
-			menuDiagramHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);	
+			menuDiagramHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);
 			
 			menuPreferencesColors.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuPreferencesElements.setVisible(!Element.E_REDUCED_TOOLBARS);			
-			menuPreferencesCtrlAliases.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuPreferencesElements.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuPreferencesCtrlAliases.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuPreferencesWheel.setVisible(!Element.E_REDUCED_TOOLBARS);
 
 			
 			// END KGU#123 2016-01-03
 			// START KGU#277 2016-10-13: Enh. #270
 			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
-			menuDebugDisable.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuDebugDisable.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#277 2016-01-13
 			
 			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
@@ -1722,6 +1732,8 @@ public class Menu extends LangMenuBar implements NSDController
 			//menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
 			menuDebugBreakTrigger.setEnabled(diagram.canSetBreakpoint() && !diagram.selectedIsMultiple());
 			// END KGU#686 2019-03-17
+			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#213 2016-08-02
 

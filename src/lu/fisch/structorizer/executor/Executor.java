@@ -178,6 +178,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-03-09      Issue #527 - Refinement of index range error detection (for array copies)
  *      Kay Gürtzig     2019-03-14      Issue #366 - Mainform, Arranger, and Control now also under focus watch
  *      Kay Gürtzig     2019-03-17/18   Enh. #56 - Implementation of try/catch/finally and throw
+ *      Kay Gürtzig     2019-03-28      Enh. #657 - Retrieval for subroutines now with group filter
  *
  ******************************************************************************************************
  *
@@ -2583,7 +2584,7 @@ public class Executor implements Runnable
      * Searches all known pools for either routine diagrams with a signature compatible to {@code name(arg1, arg2, ..., arg_nArgs)}
      * or for includable diagrams with name {@code name}
      * @param name - diagram name
-     * @param nArgs - number of parameters of the requested function (negative fo Includable)
+     * @param nArgs - number of parameters of the requested function (negative for Includable)
      * @return a Root that matches the specification if uniquely found, null otherwise
      * @throws Exception if there are differing matching diagrams
      */
@@ -2596,11 +2597,11 @@ public class Executor implements Runnable
     		IRoutinePool pool = iter.next();
     		Vector<Root> candidates = null;
     		if (nArgs >= 0) {
-    			candidates = pool.findRoutinesBySignature(name, nArgs);
+    			candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
     		}
     		else {
     			candidates = new Vector<Root>();
-    			for (Root cand: pool.findIncludesByName(name)) {
+    			for (Root cand: pool.findIncludesByName(name, context.root)) {
     				candidates.add(cand);
     			}
     		}
@@ -4934,7 +4935,11 @@ public class Executor implements Runnable
 				try {
 					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				} catch (Exception ex) {
-					return ex.getMessage();	// Ambiguous call!
+					// Ambiguous call!
+					if ((trouble = ex.getMessage()) == null) {
+						trouble = ex.toString();
+					}
+					return trouble;
 				}
 				// END KGU#317 2016-12-29
 				if (sub != null)

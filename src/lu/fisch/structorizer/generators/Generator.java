@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
  *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
  *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *
  ******************************************************************************************************
  *
@@ -1800,7 +1801,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			//Vector<Root> foundRoots = Arranger.getInstance().
 			//		findRoutinesBySignature(called.getName(), called.paramCount());
 			Vector<Root> foundRoots = routinePool.
-					findRoutinesBySignature(called.getName(), called.paramCount());
+					findRoutinesBySignature(called.getName(), called.paramCount(), _caller);
 			// END KGU#676 2019-03-13
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
@@ -1914,7 +1915,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				Root newIncl = null;
 				String includeName = _root.includeList.get(i);
-				Vector<Root> candidates = routinePool.findIncludesByName(includeName);
+				Vector<Root> candidates = routinePool.findIncludesByName(includeName, _root);
 				if (!candidates.isEmpty()) {
 					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
@@ -3466,6 +3467,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU#676 2019-03-13
 		for (Root root : _roots)
 		{
+			// START KGU#676 2019-03-31: Isse #696
+			root.specialRoutinePool = routinePool;
+			// END KGU#676 2019-03-31
 			if (firstExport || routinePool != null)
 			{
 				firstExport = false;

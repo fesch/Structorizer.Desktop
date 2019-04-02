@@ -61,6 +61,9 @@
  *                                      export(...) and parse(...) modified.
  *      Kay Gürtzig     2019-03-05      Deprecated method clazz.newInstance() replaced by clazz.getDeclaredConstructor().newInstance()
  *      Kay Gürtzig     2019-03-13      Enh. #696: Batch code export for arrangement files (.arr/.arrz) implemented
+ *      Kay Gürtzig     2019-03-26      Enh. #697: Batch code parsing now produces arrangements for multi-routine sources
+ *                                      (file overwriting bug fixed on this occasion);
+ *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
  *
  ******************************************************************************************************
  *
@@ -80,7 +83,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
@@ -104,7 +106,9 @@ import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
+import lu.fisch.structorizer.archivar.ArchivarException;
 import lu.fisch.structorizer.archivar.ArchivePool;
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
@@ -425,8 +429,9 @@ public class Structorizer
 	private static final String[] synopsis = {
 		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]...",
 		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
-		"Structorizer -p [PARSER] [-f] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
-		"Structorizer -h"
+		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -h",
+		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
 	};
 	// END KGU#187 2016-05-02
 	
@@ -593,12 +598,13 @@ public class Structorizer
 	 * Tries to form an {@link ArchivePool} from arrangement file {@code aFile} and
 	 * to identify the pool roots for export from the signature list {@code arrSpec}
 	 * or (if empty) all program roots form the pool.
-	 * @param pools
-	 * @param archivar
-	 * @param arrSpec
-	 * @param f
-	 * @param isArrz
-	 * @throws Exception
+	 * @param pools - a map from {@link ArchivePool}s to start diagram sets - this is where the
+	 * {@link ArchivePool} derived from {@code aFile} will be added to.
+	 * @param archivar - the employed {@link Archivar}
+	 * @param arrSpec - the arrangement specification
+	 * @param f - the arrangement file (may be an archive - .arrz- or just a list - .arr -)
+	 * @param isArrz - indicates whether file {@code f} is a compressed arrangement archive
+	 * @throws Exception - if something goes wrong
 	 */
 	private static boolean addExportPool(HashMap<ArchivePool, Vector<Root>> pools, Archivar archivar, StringList arrSpec,
 			File f, boolean isArrz) throws Exception {
@@ -682,7 +688,6 @@ public class Structorizer
 		String _logDir = _options.get("logDir");
 
 		Vector<GENPlugin> plugins = null;
-		String fileExt = null;
 		// START KGU#354 2017-03-10: Enh. #354 configurable parser plugins
 		// Initialize the mapping file extensions -> CodeParser
 		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
@@ -746,12 +751,18 @@ public class Structorizer
 		boolean overwrite = _switches.indexOf("f") >= 0 && 
 				!(outFile != null && !outFile.isEmpty() && _filenames.size() > 1);
 		// END KGU#193 2016-05-09
+		// START KGU#678 2019-03-26: Enh. #697 - Allow to put results in arrangement archives
+		boolean asArchive = _switches.indexOf("z") >= 0;
+		// END KGU#678 2019-03-26
 		
 		// START KGU#354 2017-03-03: Enh. #354 - support several parser plugins
 		// While there was only one input language candidate, a single Parser instance had been enough
 		//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 		// END KGU#354 2017-03-04
 
+		// START KGU#696 2019-03-26: Bugfix #715 - standard input stream had accidently been closed
+		Scanner scnr = new Scanner(System.in);
+		// END KGU#696 2019-03-26
 		// START KGU#538 2018-07-01: Bugfix #554 - for the case there are alternatives
 		Vector<CodeParser> suitedParsers = new Vector<CodeParser>();
 		// END KGU#538 2018-07-01
@@ -792,7 +803,10 @@ public class Structorizer
 				}
 				// START KGU#538 2018-07-01: Bugfix #554
 				if (parser == null) {
-					parser = disambiguateParser(suitedParsers, filename);
+					// START KGU#696 2019-03-26: Bugfix #715 - standard input scanner shall not be closed
+					//parser = disambiguateParser(suitedParsers, filename);
+					parser = disambiguateParser(suitedParsers, filename, scnr);
+					// END KGU#696 2019-03-26
 				}
 				// END KGU#538 2018-07-01
 				// END KGU#416 2017-07-02
@@ -806,6 +820,9 @@ public class Structorizer
 			System.out.println("--- Processing file \"" + filename + "\" with " + parser.getClass().getSimpleName() + " ...");
 			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
 			parser = cloneWithPluginOptions(parsers.get(parser), settingsFileName);
+			// START KGU#678 2019-03-26: fileExt had always remained null
+			StringList fileExts = new StringList(parser.getFileExtensions());
+			// END KGU#678 2019-03-26
 			// END KGU#538 2018-07-01
 			// START KGU#602 2018-10-25: Issue #416
 			if (_options.containsKey("maxLineLength")) {
@@ -838,8 +855,26 @@ public class Structorizer
 				filename = outFile;
 			}
 			// END KGU#193 2016-05-09
-			overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
+			// START KGU#678 2019-03-26: Enh. #697 Create an arrangement archive for multiple roots
+			// Moreover, the feedback of the overwrite variable seems to have been a refactoring defect
+			//overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
+			if (newRoots.size() > 1 && asArchive) {
+				writeRootsToArchive(newRoots, filename, fileExts, overwrite);
+			}
+			else {
+				writeRootsToFiles(newRoots, filename, fileExts, overwrite);
+			}
+			/* If there are several source files and an out file name was given then we may
+			 * not of course allow that subsequent results overwrite the former ones.
+			 */
+			if (outFile != null && !outFile.isEmpty()) {
+				overwrite = false;
+			}
+			// END KGU#678 2019-03 26
 		}
+		// START KGU#696 2019-03-26: Bugfix #715 - Now the input scanner may be closed
+		scnr.close();
+		// END KGU#696 2019-03-26
 	}
 	// END KGU#187 2016-04-29
 
@@ -847,29 +882,27 @@ public class Structorizer
 	/**
 	 * Generates the nsd files from the given list of {@link Root}s
 	 * @param newRoots - list of generated {@link Root}s
-	 * @param filename - the base file name for the resulting nsd files
-	 * @param fileExt - the file name extension to be used.
-	 * @param overwrite
-	 * @return
+	 * @param filename - the base file name for the resulting nsd files (may be
+	 * the source file name or a specified out file name)
+	 * @param fileExts - file name extensions to be replaced (typical extensions of the source file).
+	 * @param overwrite - whether existing files are to be overwritten - otherwise a number
+	 * will be appended to avoid name clashes.
 	 */
-	private static boolean writeRootsToFiles(List<Root> newRoots, String filename, String fileExt, boolean overwrite)
+	private static void writeRootsToFiles(List<Root> newRoots, String filename, StringList fileExts, boolean overwrite)
 	{
 		// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
 		//if (rootNew != null)
 		boolean multipleRoots = newRoots.size() > 1;
+		// START KGU#678 2019-03-26: Enh #697
+		Archivar.ArchiveIndex index = null;
+		if (multipleRoots) {
+			index = (new Archivar()).makeEmptyIndex();
+		}
+		// END KGU#678 2019-03-26
 		for (Root rootNew : newRoots)
 		// END KGU#194 2016-05-08
 		{
-			StringList nameParts = StringList.explode(filename, "[.]");
-			String ext = nameParts.get(nameParts.count()-1).toLowerCase();
-			if (ext.equals(fileExt))
-			{
-				nameParts.set(nameParts.count()-1, "nsd");
-			}
-			else if (!ext.equals("nsd"))
-			{
-				nameParts.add("nsd");
-			}
+			StringList nameParts = ensureFileExtension(filename, fileExts, "nsd");
 			// In case of multiple roots (subroutines) insert the routine's proposed file name
 			if (multipleRoots && !rootNew.isProgram())
 			{
@@ -878,24 +911,7 @@ public class Structorizer
 			//System.out.println("File name raw: " + nameParts);
 			if (!overwrite)
 			{
-				int count = 0;
-				do {
-					File file = new File(nameParts.concatenate("."));
-					if (file.exists())
-					{
-						if (count == 0) {
-							nameParts.insert(Integer.toString(count), nameParts.count()-1);
-						}
-						else {
-							nameParts.set(nameParts.count()-2, Integer.toString(count));
-						}
-						count++;
-					}
-					else
-					{
-						overwrite = true;
-					}
-				} while (!overwrite);
+				makeUniqueFilename(nameParts);
 			}
 			String filenameToUse = nameParts.concatenate(".");
 			//System.out.println("Writing to " + filename);
@@ -910,26 +926,130 @@ public class Structorizer
 				finally {
 					out.close();
 				}
-			}
-			catch (UnsupportedEncodingException e) {
-				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
+				// START KGU#678 2019-03-26: Enh #697
+				if (index != null) {
+					rootNew.filename = filenameToUse;
+					index.addEntryFor(rootNew, null);
+				}
+				// END KGU#678 2019-03-26
 			}
 			catch (IOException e) {
 				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 		}
-		return overwrite;
+		// START KGU#678 2019-03-26: Enh. #697 - write an arrangement list for multiple results
+		if (index != null) {
+			StringList lines = index.deriveArrangementList(false);
+			StringList nameParts = ensureFileExtension(filename, fileExts, "arr");
+			if (!overwrite)
+			{
+				makeUniqueFilename(nameParts);
+			}
+			try {
+				FileOutputStream fos = new FileOutputStream(nameParts.concatenate("."));
+				Writer out = null;
+				out = new OutputStreamWriter(fos, "UTF8");
+				try {
+					out.write(lines.getText());
+					out.write('\n');	// Issue #706
+				}
+				finally {
+					out.close();
+				}
+			}
+			catch (IOException e) {
+				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		}
+		// END KGU#678 2019-03-26
+	}
+
+	// START KGU#678 2019-03-26: Enh. #697
+	private static void writeRootsToArchive(List<Root> roots, String filename, StringList fileExts, boolean overwrite) {
+		StringList nameParts = ensureFileExtension(filename, fileExts, "arrz");
+		if (!overwrite)
+		{
+			makeUniqueFilename(nameParts);
+		}
+		Archivar archivar = new Archivar();
+		filename = nameParts.concatenate(".");
+		StringList troubles = new StringList();
+		try {
+			archivar.zipArrangement(new File(filename), roots, false, troubles);
+			for (int i = 0; i < troubles.count(); i++) {
+				System.err.println("*** " + troubles.get(i));
+			}
+		} catch (ArchivarException e) {
+			System.err.println("*** Error on creating archive " + filename + ": " + e.toString());
+		}
+	}
+
+	/**
+	 * @param nameParts
+	 */
+	private static void makeUniqueFilename(StringList nameParts) {
+		boolean fileNameUnique = false;
+		int count = 0;
+		do {
+			File file = new File(nameParts.concatenate("."));
+			if (file.exists())
+			{
+				if (count == 0) {
+					nameParts.insert(Integer.toString(count), nameParts.count()-1);
+				}
+				else {
+					nameParts.set(nameParts.count()-2, Integer.toString(count));
+				}
+				count++;
+			}
+			else
+			{
+				fileNameUnique = true;
+			}
+		} while (!fileNameUnique);
 	}
 	
+	/**
+	 * Split the given file path at all dots and ensure a file name extension
+	 * {@code newExt} (as last name part of the resulting {@link StringList}.
+	 * If {@code filename} had ended with one of the old file extensions given
+	 * in {@code oldFileExts} then this extension will be eliminated before. 
+	 * @param filename - the file path or name to be prepared.
+	 * @param oldExts - a list of unwanted file name extensions (without dots!)
+	 * @param newExt - the new file name extension to be ensured (without dot!)
+	 * @return the split file name (should be concatenated with "." separator).
+	 * Last part will always be {@code newExt}.
+	 */
+	private static StringList ensureFileExtension(String filename, StringList oldExts, String newExt) {
+		StringList nameParts = StringList.explode(filename, "[.]");
+		String ext = nameParts.get(nameParts.count()-1).toLowerCase();
+		// START KGU#687 2019-03-26: Extended to an array of file extensions
+		//if (ext.equals(fileExt))
+		if (oldExts.contains(ext))
+		// END KGU#687 2019-03-26
+		{
+			// Replace the given source code file name extension by the extension newExt
+			nameParts.set(nameParts.count()-1, newExt);
+		}
+		else if (!ext.equals(newExt))
+		{
+			// Otherwise append extension newExt if this hasn't already been the extension
+			nameParts.add(newExt);
+		}
+		return nameParts;
+	}
+	// END KGU#678 2019-03-26
+
 	/**
 	 * Chooses the parser to be used among the {@code suitedParsers}. If there are many
 	 * then the user will be asked interactively.<br/>
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
+	 * @param scnr TODO
 	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
-	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
+	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename, Scanner scnr)
 	{
 		CodeParser parser = null;
 		if (suitedParsers.size() == 1) {
@@ -941,7 +1061,9 @@ public class Structorizer
 				System.out.println((i+1) + ": " + suitedParsers.get(i).getDialogTitle());
 			}
 			int chosen = -1;
-			Scanner scnr = new Scanner(System.in);
+			// START KGU#696 2019-03-26: Bugfix #715 We used the wrong method - didn't wait for user input
+			//Scanner scnr = new Scanner(System.in);
+			// END KGU#696 2019-03-26
 			try {
 				while (chosen < 0) {
 					System.out.print("Please select the number of your favourite (0 = skip file): ");
@@ -958,16 +1080,23 @@ public class Structorizer
 					}
 				}
 			}
-			finally {
-				scnr.close();
+			// START KGU#696 2019-03-26: Bugfix #715 We must not close input stream here but catch errors
+			//finally {
+			//	scnr.close();
+			//}
+			catch (Exception ex) {
+				ex.printStackTrace();
+				chosen = 1;
+				System.err.println("*** Option 1 set.");				
 			}
+			// END KGU#696 2019-03-26
 			if (chosen != 0) {
 				parser = suitedParsers.get(chosen-1);
 			}
 		}
 		return parser;
 	}
-	// END KGUä538 2018-07-01
+	// END KGU#538 2018-07-01
 	
 	// START KGU#416 2017-07-03: Enh. #354, #409
 	private static CodeParser cloneWithPluginOptions(GENPlugin plugin, String _settingsFile) {

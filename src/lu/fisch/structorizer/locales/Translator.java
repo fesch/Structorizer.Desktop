@@ -47,6 +47,8 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-03-24      Issue #712: We should at least cache the last saving folder, then we
  *                                      ought to have look whether Local filed cachedFilename might be set on
  *                                      saving.
+ *      Kay Gürtzig     2019-03-28      Issue #712: Further usability improvements (current directory also
+ *                                      used for loading, save button coloured together with locale button)
  *
  ******************************************************************************************************
  *
@@ -289,8 +291,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         
         headerText.getDocument().removeDocumentListener(this);
 
-        // backup actual loadedLocale
-        if(loadedLocale != null && loadedLocaleName != null)
+        // backup current loadedLocale
+        if (loadedLocale != null && loadedLocaleName != null)
         {
             // Check if user wants to discard changes
             if (loadedLocaleName.equals(localeName)
@@ -341,7 +343,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             headerText.setText(loadedLocale.cachedHeader.getText());
         }
         // END KGU#231 2016-08-09
-        if(loadedLocale.values.size()!=0)
+        if (loadedLocale.values.size() > 0)
         {
             // Present a different column header if the locale data were from file
             String column2Header = localeName;
@@ -406,6 +408,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         // enable the buttons
         button_save.setEnabled(true);
+        // START KGU#694 2019-03-28: Issue #712 - save button should have same attention as locale button
+        if (loadedLocale.hasUnsavedChanges) {
+            button_save.setBackground(Color.GREEN);
+        } else {
+            button_save.setBackground(this.stdBackgroundColor);
+        }
+        // END KGU#694 2019-03-28
         tabs.setEnabled(true);
         headerText.setEditable(true);
         
@@ -870,7 +879,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         JFileChooser dlgOpen = new JFileChooser();
         dlgOpen.setDialogTitle("Load saved translations for <"+localeName+"> from...");
         // set directory
-        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // START KGU#694 2019-03-28: Enh. #712 - we ought to consider the last used directory
+        //dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        if (currentDirectory != null) {
+            dlgOpen.setCurrentDirectory(currentDirectory);
+        }
+        else {
+            dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        }
+        // END KGU#694 2019-03-28
         // config dialogue
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer language file", "txt");
         dlgOpen.addChoosableFileFilter(filter);
@@ -882,6 +899,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
             // Create a new Locale from it
             extLocale = (new Locale(filename));
+            // START KGU#694 2019-03-28: Enh. #712 - we ought to remember the last used directory
+            currentDirectory = dlgOpen.getSelectedFile().getParentFile();
+            // END KGU#694 2019-03-28
         }
         return extLocale;
     }
@@ -933,11 +953,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             proposedFilename = loadedLocaleName+".txt";
         }
-        // START KGU#693 2019-03-24: Issue #712
+        // START KGU#694 2019-03-24: Issue #712
         if (this.currentDirectory != null && this.currentDirectory.isDirectory()) {
             fileChooser.setCurrentDirectory(this.currentDirectory);
         }
-        // END KGU#693 2019-3-24
+        // END KGU#694 2019-03-24
         fileChooser.setSelectedFile(new File(proposedFilename));
         int userSelection = fileChooser.showSaveDialog(this);
 
@@ -957,7 +977,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
             }
             
-            if(save) try
+            if (save) try
             {
                 FileOutputStream fos = new FileOutputStream(fileToSave);
                 Writer out = new OutputStreamWriter(fos, "UTF8");
@@ -973,13 +993,34 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 cacheUnsavedData();
                 loadedLocale.hasUnsavedChanges = false;
                 // END KGU 2016-08-04
-                // START KGU#693 2019-03-24: Issue #712
+                // START KGU#694 2019-03-24/28: Issue #712
+                this.button_save.setBackground(stdBackgroundColor);
                 this.currentDirectory = fileToSave.getParentFile();
-                // END KGU#693 2019-3-24
+                boolean updateTableHeader = loadedLocale.cachedFilename == null;
+                loadedLocale.cachedFilename = fileToSave.getAbsolutePath();
+                String column2Header = loadedLocaleName + " (" + loadedLocale.cachedFilename + ")";
+                if (updateTableHeader) {
+                    for (String sectionName: locales.getSectionNames()) {
+                        // fetch the corresponding table
+                        JTable table = tables.get(sectionName);
+                        // No need to trigger property change events here, we know what we do
+                        table.removePropertyChangeListener(this);
+
+                        // put the label on the column
+                        table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+                        table.getTableHeader().repaint();
+
+                        // Table header modified, from now on react to user manipulations again
+                        table.addPropertyChangeListener(this);
+                    }
+                }
+                // END KGU#694 2019-03-24/28
             }
             catch (IOException e)
             {
-                JOptionPane.showMessageDialog(this, "Error while saving language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Error while saving language file\n" + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }     
     }//GEN-LAST:event_button_saveActionPerformed
@@ -1059,6 +1100,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             button.setBackground(Color.green);
         }
+        // START KGU#694 2019-03-28: Issue #712
+        // The save button needs at least as much attention as the locale butto now
+        button_save.setBackground(Color.GREEN);
+        // END KGU#694 2019 2019-03-28
     }
     // END KGU#231 2016-08-09
 

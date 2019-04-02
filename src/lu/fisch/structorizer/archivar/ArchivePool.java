@@ -194,7 +194,7 @@ public class ArchivePool implements IRoutinePool {
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
 	 */
 	@Override
-	public Vector<Root> findIncludesByName(String rootName) {
+	public Vector<Root> findIncludesByName(String rootName, Root includer) {
 		Vector<Root> roots = new Vector<Root>();
 		ArchiveIndex index = this.nameMap.get(rootName);
 		if (index != null && !index.isEmpty()) {
@@ -221,7 +221,7 @@ public class ArchivePool implements IRoutinePool {
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
 	 */
 	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller) {
 		Vector<Root> roots = new Vector<Root>();
 		ArchiveIndex index = this.nameMap.get(rootName);
 		if (index != null && !index.isEmpty()) {
