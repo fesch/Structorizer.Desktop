@@ -197,7 +197,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -495,12 +494,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//visibleRect = visRect.getRectangle();
 				// START KGU#706 2019-05-14: Bugfix #722 This failed with the graphics object of a buffered image
 				//Rect clipRect = new Rect(g.getClipBounds());
-				//Rect clipRect = new Rect(g.getClipBounds());
 				//visibleRect = clipRect.getRectangle();
 				Rectangle clipBounds = g.getClipBounds();
 				if (clipBounds != null) {
-					Rect clipRect = new Rect(g.getClipBounds());
-					visibleRect = clipRect.getRectangle();
+					visibleRect = new Rectangle(clipBounds);
 				}
 				// END KGU#706 2019-05-14
 				// END KGU#502/KGU#524/KGU#553: 2019-03-29
