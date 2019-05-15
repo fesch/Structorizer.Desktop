@@ -115,6 +115,7 @@ package lu.fisch.structorizer.arranger;
  *                                      fixed the fix for the fix #699 again.
  *                                      Further drawing acceleration - clip bounds instead of viewport rect
  *      Kay Gürtzig     2019-03-30      Issues #699, #720: Several fixes and fine-tuning
+ *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
  *
  ******************************************************************************************************
  *
@@ -491,8 +492,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				//Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
 				//visRect = visRect.scale(zoomFactor);
 				//visibleRect = visRect.getRectangle();
-				Rect clipRect = new Rect(g.getClipBounds());
-				visibleRect = clipRect.getRectangle();
+				// START KGU#706 2019-05-14: Bugfix #722 This failed with the graphics object of a buffered image
+				//Rect clipRect = new Rect(g.getClipBounds());
+				//visibleRect = clipRect.getRectangle();
+				Rectangle clipBounds = g.getClipBounds();
+				if (clipBounds != null) {
+					visibleRect = new Rectangle(clipBounds);
+				}
+				// END KGU#706 2019-05-14
 				// END KGU#502/KGU#524/KGU#553: 2019-03-29
 			}
 			// END KGU#502/KGU#524/KGU#557
