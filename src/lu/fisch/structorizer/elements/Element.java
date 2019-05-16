@@ -105,6 +105,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *      Kay Gürtzig     2019-03-24      Bugfix #711: Eternal loop on parsing an instruction line
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
+ *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *
  ******************************************************************************************************
  *
@@ -258,7 +259,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-10";
+	public static final String E_VERSION = "3.29-11";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3641,7 +3642,11 @@ public abstract class Element {
 				}
 				// This is now the pure drawing
 				for (HighlightUnit unit: hlUnits) {
-					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+					// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
+					// (This workaround will still only affect the standard font and have no impact on derived fonts)
+					//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
+					// END KGU#707 2019-05-15
 					_canvas.setColor(unit.textColor);
 					if (_actuallyDraw)
 					{

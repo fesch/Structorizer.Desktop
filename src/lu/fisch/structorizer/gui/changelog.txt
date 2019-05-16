@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-10 (2019-05-14)
+Current development version: 3.29-11 (2019-05-15)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -88,6 +88,7 @@ Current development version: 3.29-10 (2019-05-14)
 - 09: Issue #718: Ultimate acceleration of syntax highlighting <2>
 - 09: Issue #720: Changes to includable diagrams now reflect on their clients <2>
 - 10: Bugfix #722: PNG export from Arranger failed with version 3.29-09 <2>
+- 11: Bugfix #724: Diagram titles weren't bold anymore since 3.29-09 <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
