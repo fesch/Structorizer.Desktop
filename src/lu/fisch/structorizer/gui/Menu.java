@@ -1733,8 +1733,6 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDebugBreakTrigger.setEnabled(diagram.canSetBreakpoint() && !diagram.selectedIsMultiple());
 			// END KGU#686 2019-03-17
 			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#213 2016-08-02
 
 			// copy & paste

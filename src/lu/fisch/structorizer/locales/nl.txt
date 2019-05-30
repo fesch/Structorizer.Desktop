@@ -49,12 +49,13 @@
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Jerone          ???             First Issue
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
+ *      Jaap Woldringh  2019-05-30      Substantial updates
  *
  ******************************************************************************************************
  *
@@ -96,23 +97,37 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Bestand
 Menu.menuFile.mnemonic=b
 // Submenus of "File"
 Menu.menuFileNew.text=Nieuw
 Menu.menuFileOpen.text=Openen ...
+Menu.menuFileOpenRecent.text=Recent bestand openen
 Menu.menuFileSave.text=Opslaan
 Menu.menuFileSaveAs.text=Opslaan als ...
+Menu.menuFileSaveAll.text=Alles opslaan
 Menu.menuFileExport.text=Exporteren
 // Submenu of "File -> Export"
-Menu.menuFileExportCode.text=Code ...
 Menu.menuFileExportPicture.text=Afbeelding ...
+Menu.menuFileExportCode.text=Code ...
+Menu.menuFileExportPicturePNG.text=PNG
+Menu.menuFileExportPicturePNGmulti.text=PNG (meerdere)
+Menu.menuFileExportPictureEMF.text=EMF
+Menu.menuFileExportPictureSWF.text=SWF
+Menu.menuFileExportPicturePDF.text=PDF
+Menu.menuFileExportPictureSVG.text=SVG
+Menu.lbFileExportCodeFavorite.text=
+Menu.menuFileExportCodeFavorite.tooltip=U kunt de doeltaal wijzigen in de exportinstellingen
 Menu.menuFileImport.text=Importeren
 // Submenu of "File -> Import"
-Menu.menuFileImportCode.text=Code ...
+Menu.menuFileImportCode.text=Broncode ...
 Menu.menuFilePrint.text=Afdrukken ...
+Menu.menuFileArrange.text=Rangschikken
+Menu.menuFileAttributes.text=Attributen bekijken ...
+Menu.menuFileTranslator.text=Vertaler
 Menu.menuFileQuit.text=Afsluiten
+
 // Menu "Edit"
 Menu.menuEdit.text=Bewerken
 Menu.menuEdit.mnemonic=w
@@ -122,6 +137,15 @@ Menu.menuEditRedo.text=Herhalen
 Menu.menuEditCut.text=Knippen
 Menu.menuEditCopy.text=Kopiëren
 Menu.menuEditPaste.text=Plakken
+Menu.menuEditSummonSub.text=Subroutine bewerken
+Menu.menuEditSummonSub.tooltip=De aangeroepen subroutine ophalen voor bewerking.
+Menu.menuEditFindReplace.text=Zoek/Vervang ...
+Menu.menuEditUpgradeTurtle.text=Naar fijntekenen
+Menu.menuEditUpgradeTurtle.tooltip=Vervangt Turtleopdrachten in hele getallen door nauwkeuriger opdracht
+Menu.menuEditDowngradeTurtle.text=Naar tekenen met hele getallen
+Menu.menuEditDowngradeTurtle.tooltip=Vervangt alle Turtleopdrachte in kommagetallen door minder nauwkeurige in hele getallen
+Menu.menuEditBreakLines.text=
+Menu.menuEditBreakLines.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Afbeelding als PNG kopiëren
 Menu.menuEditCopyDiagramEMF.text=Afbeelding als EMF kopiëren
 // Menu "Diagram"
@@ -132,64 +156,111 @@ Menu.menuDiagramAdd.text=Toevoegen
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Ervoor
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instruction
+Menu.menuDiagramAddBeforeInst.text=@a
 Menu.menuDiagramAddBeforeAlt.text=IF statement
 Menu.menuDiagramAddBeforeCase.text=CASE statement
 Menu.menuDiagramAddBeforeFor.text=FOR loop
 Menu.menuDiagramAddBeforeWhile.text=WHILE loop
 Menu.menuDiagramAddBeforeRepeat.text=REPEAT loop
 Menu.menuDiagramAddBeforeForever.text=ENDLESS loop
-Menu.menuDiagramAddBeforeCall.text=Call
-Menu.menuDiagramAddBeforeJump.text=Jump
+Menu.menuDiagramAddBeforeCall.text=@j
+Menu.menuDiagramAddBeforeJump.text=@k
+Menu.menuDiagramAddBeforePara.text=
+Menu.menuDiagramAddBeforeTry.text=
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Erna
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instruction
+Menu.menuDiagramAddAfterInst.text=@a
 Menu.menuDiagramAddAfterAlt.text=IF statement
 Menu.menuDiagramAddAfterCase.text=CASE statement
 Menu.menuDiagramAddAfterFor.text=FOR loop
 Menu.menuDiagramAddAfterWhile.text=WHILE loop
 Menu.menuDiagramAddAfterRepeat.text=REPEAT loop
 Menu.menuDiagramAddAfterForever.text=ENDLESS loop
-Menu.menuDiagramAddAfterCall.text=Call
-Menu.menuDiagramAddAfterJump.text=Jump
+Menu.menuDiagramAddAfterCall.text=@j
+Menu.menuDiagramAddAfterJump.text=@k
+Menu.menuDiagramAddAfterPara.text=
+Menu.menuDiagramAddAfterTry.text=
 Menu.menuDiagramEdit.text=Bewerken
 Menu.menuDiagramDelete.text=Verwijderen
 Menu.menuDiagramMoveUp.text=Naar boven verplaatsen
 Menu.menuDiagramMoveDown.text=Naar beneden verplaatsen
+Menu.menuDiagramTransmute.text=
+Menu.menuDiagramOutsource.text=
+Menu.menuDiagramOutsource.tooltip=
+Menu.menuDiagramCollapse.text=Invouwen
+Menu.menuDiagramExpand.text=Uitvouwen
+// Diagram Appearance
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Programma
 Menu.menuDiagramTypeFunction.text=Subroutine
-Menu.menuDiagramUnboxed.text=Unboxed diagram?
+Menu.menuDiagramTypeInclude.text=
+Menu.menuDiagramUnboxed.text=Diagram zonder rand?
 Menu.menuDiagramComment.text=Opmerkingen weergeven?
+Menu.menuDiagramSwitchComments.text=Tekst/commentaar wisselen
+Menu.menuDiagramCommentsPlusText.text=Commentaar plus teksten?
+Menu.menuDiagramSwitchTCTooltip.text=Deselecteer "%1" om dit uit te schakelen
+Menu.menuDiagramHideDeclarations.text=Enkel declaraties verbergen?
 Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Structogram analyseren?
+Menu.menuDiagramIndex.text=
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
 Menu.menuPreferences.mnemonic=i
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Nieuwe versies melden?
+Menu.menuPreferencesNotifyUpdate.tooltip=Structorizer toestaan info over een nieuwe versie op te halen van de thuispagina, en nieuwe uitgaves te melden.
+Menu.menuPreferencesSimplified.text=Eenvoudige taakbalken?
 Menu.menuPreferencesFont.text=Lettertype ...
 Menu.menuPreferencesColors.text=Kleuren ...
 Menu.menuPreferencesOptions.text=Structuren ...
 Menu.menuPreferencesParser.text=Parser ...
-Menu.menuPreferencesLanguage.text=Talen
+Menu.menuPreferencesElements.text=Namen van elementen ...
+Menu.menuPreferencesCtrlAliases.text=
+Menu.menuPreferencesAnalyser.text=Analyseren ...
+Menu.menuPreferencesSaving.text=Opslaan ...
+Menu.menuPreferencesExport.text=Exporteren ...
+Menu.menuPreferencesImport.text=Importeren ...
+Menu.menuPreferencesLanguage.text=Taal
 Menu.menuPreferencesLanguageItems.en.text=Engels
 Menu.menuPreferencesLanguageItems.de.text=Duits
 Menu.menuPreferencesLanguageItems.fr.text=Frans
 Menu.menuPreferencesLanguageItems.nl.text=Nederlands
 Menu.menuPreferencesLanguageItems.lu.text=Luxemburgs
-Menu.menuPreferencesLanguageItems.it.text=Italian
+Menu.menuPreferencesLanguageItems.es.text=Spaans
+Menu.menuPreferencesLanguageItems.it.text=Italiaans
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugees Braziliaans
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinees (vereenvoudigd)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinees (traditioneel)
+Menu.menuPreferencesLanguageItems.cz.text=Tsjechisch
+Menu.menuPreferencesLanguageItems.ru.text=Russisch
+Menu.menuPreferencesLanguageItems.pl.text=Pools
+Menu.menuPreferencesLanguageFromFile.text=Uit bestand ...
+Menu.menuPreferencesLanguageFromFile.tooltip=U kunt vertaalde bestanden maken in het hulpmiddel voor vertalen in het bestandsmenu.
 Menu.menuPreferencesLookAndFeel.text=Uiterlijk
-Menu.menuPreferencesSave.text=Alle instellingen nu opslaan
+Menu.menuPreferencesWheel.text=Muiswiel
+Menu.menuPreferencesWheelCollapse.text=Invouwen met muiswiel?
+Menu.menuPreferencesWheelZoom.text=Omgekeerd zoomen met ctrl + muiswiel?
+Menu.menuPreferencesWheelUnit.text=Scroll-eenheid voor muiswiel...
+Menu.menuPreferencesScalePreset.text=GUI--schaal ...
+
+Menu.menuPreferencesSave.text=Alle instellingen ...
+Menu.menuPreferencesSaveAll.text=Opslaan
+Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
+Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
+
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
 
 // Menu "Debug"
-Menu.menuDebug.text=Debug
-Menu.menuDebug.mnemonic=g
+Menu.menuDebug.text=Debuggen
+Menu.menuDebug.mnemonic=d
 // Submenu of "Debug"
-Menu.menuDebugTurtle.text=Turtleizer ...
-Menu.menuDebugExecute.text=Debugger ...
-Menu.menuDebugDropBrkpts.text=Clear breakpoints
-Menu.menuDebugBreakpoint.text=Toggle breakpoint
+Menu.menuDebugTurtle.text=Turtle ...
+Menu.menuDebugExecute.text=Uitvoeren ...
+Menu.menuDebugDropBrkpts.text=Breakpoints wissen
+Menu.menuDebugBreakpoint.text=Breakpoint aan/uit
 Menu.menuDebugBreakTrigger.text=Specify break trigger ...
 Menu.menuDebugDisable.text=Disable/enable
 
@@ -197,16 +268,112 @@ Menu.menuDebugDisable.text=Disable/enable
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=
+Menu.menuHelpOnline.tooltip=
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
 
 // Dialog messages
+Menu.msgDialogExpCols.text=
+Menu.msgDialogExpRows.text=
+Menu.msgOverwriteFile.text=
+Menu.msgOverwriteFiles.text=
+Menu.msgOverwriteFile1.text=
+Menu.msgCancelAll.text=
+Menu.btnConfirmOverwrite.text=
+Menu.msgRepeatSaveAttempt.text=
+Menu.msgErrorFileSave.text=
+Menu.msgErrorFileRename.text=
+Menu.msgBreakTriggerPrompt.text=
+Menu.msgBreakTriggerIgnored.text=
+Menu.msgOpenLangFile.text=
+Menu.msgLangFile.text=
+Menu.msgGotoHomepage.text=
+Menu.msgTitleError.text=
+Menu.msgTitleWarning.text=
+Menu.msgTitleLoadingError.text=
+Menu.msgTitleParserError.text=
+Menu.msgTitleURLError.text=
+Menu.msgTitleQuestion.text=
+Menu.msgTitleOpen.text=
+Menu.msgTitleSave.text=
+Menu.msgTitleSaveAs.text=
+Menu.msgTitleImport.text=
+Menu.msgTitleNSDImport.text=
+Menu.msgTitleWrongInput.text=
+Menu.msgSaveChanges.text=
+Menu.msgErrorImageSave.text=
+Menu.msgErrorUsingGenerator.text=
+Menu.msgErrorNoFile.text=
+Menu.msgBrowseFailed.text=
+Menu.msgRefactoringOffer.text=
+Menu.lblRefactorNone.text=
+Menu.lblRefactorCurrent.text=
+Menu.lblRefactorAll.text=
+Menu.msgDiscardParserPrefs.text=
+Menu.msgAdaptStructPrefs.text=
+Menu.msgKeywordsDiffer.text=
+Menu.msgRefactorNow.text=
+Menu.msgAdoptPreferences.text=
+Menu.msgLeaveAsIs.text=
+Menu.msgAllowChanges.text=
+Menu.lblRefactorNow.text=
+Menu.lblAdoptPreferences.text=
+Menu.lblLeaveAsIs.text=
+Menu.lblAllowChanges.text=
+Menu.msgReplacementsDone.text=
+Menu.msgNewerVersionAvail.text=
+Menu.msgUpdateInfoHint.text=
 Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
 Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblOk.text=
+Menu.lblYes.text=
+Menu.lblNo.text=
+Menu.lblContinue.text=
+Menu.lblCancel.text=
+Menu.lblSkip.text=
+Menu.lblModify.text=
+Menu.lblYesToAll.text=
+Menu.lblNoToAll.text=
+Menu.lblSuppressUpdateHint.text=
+Menu.lblHint.text=
+Menu.lblCopyToClipBoard.text=
 Menu.lblReduced.text=Yes, reduced mode
 Menu.lblNormal.text=No, normal mode
+Menu.ttlCodeImport.text=
+Menu.msgSelectParser.text=
+Menu.msgImportCancelled.text=
+Menu.msgSubroutineName.text=
+Menu.msgIncludableName.text=
+Menu.msgMustBeIdentifier.text=
+Menu.msgJumpsOutwardsScope.text=
+Menu.msgImportTooltip.text=
+Menu.msgImportFileReadError.text=
+Menu.msgUnsupportedFileFormat.text=
+Menu.msgGuidedTours.text=
+Menu.msgGuidedTourDone.text=
+Menu.msgGuidedTourNext.text=
+Menu.ttlGuidedTours.text=
+Menu.msgTooManyDiagrams.text=
+Menu.lblAcceptProposedNames.text=
+Menu.ttlBreakTextLines.text=
+Menu.msgMaxLineLengthSelected.text=
+Menu.msgMaxLineLengthSubstructure.text=
+Menu.lblNewMaxLineLength.text=
+Menu.lblInvolveSubtree.text=
+Menu.lblPreserveContinuators.text=
+Menu.msgVetoClose.text=
+Menu.msgSetAsPreferredGenerator.text=
+Menu.msgChooseSubroutine.text=
+Menu.msgCreateSubroutine.text=
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=
+Menu.msgTabHdrAlias.text=
+Menu.ttlMouseScrollUnit.text=
 
 // Error messages for analyser
+Menu.warning_1.text=
+Menu.warning_2.text=
 Menu.error01_1.text=WAARSCHUWING: Geen loop variabele gevonden ...
 Menu.error01_2.text=WAARSCHUWING: Meer dan één variabele gevonden: «%»
 Menu.error01_3.text=Het is niet toegestaan om de loop variabele «%» te bewerken in de loop!
@@ -219,6 +386,7 @@ Menu.error06.text=Het programmanaam «%» moet in hoofdletters geschreven zijn!
 Menu.error07_1.text=«%» is geen geldige naam voor een programma of functie!
 Menu.error07_2.text=«%» is geen geldige naam voor een parameter!
 Menu.error07_3.text=«%» is geen geldige naam voor een variabele of constante!
+Menu.error07_4.text=
 Menu.error08.text=Het is niet toegestaan een assignment te maken in een conditie.
 Menu.error09.text=Uw programma («%») mag niet dezelfde naam hebben als een variabele of parameter!
 Menu.error10_1.text=Een enkele instructie element kan geen input/output instructies en assignments bevatten!
@@ -226,13 +394,69 @@ Menu.error10_2.text=Een enkele instructie element kan geen input en output instr
 Menu.error10_3.text=Een enkele instructie element kan geen input instructies en assignments bevatten!
 Menu.error10_4.text=Een enkele instructie element kan geen output instructies en assignments bevatten!
 Menu.error10_5.text=Een enkele element kan geen constant definitie en andere instructies bevatten!
+Menu.error10_6.text=
 Menu.error11.text=U heeft waarschijnlijk een assignment fout gemaakt. Controleer a.u.b. deze instructie!
 Menu.error12.text=De parameter «%» moet starten met de letter "p" gevolgd door alleen hoofdletters!
 Menu.error13_1.text=Uw functie geeft geen enkel resultaat!
 Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat!
-Menu.errorLineReference.text= (regel %)
+Menu.error13_3.text=
+Menu.error14_1.text=
+Menu.error14_2.text=
+Menu.error14_3.text=
+Menu.error15_1.text=
+Menu.error15_2.text=
+Menu.error15_3.text=
+Menu.error16_1.text=
+Menu.error16_2.text=
+Menu.error16_3.text=
+Menu.error16_4.text=
+Menu.error16_5.text=
+Menu.error16_6.text=
+Menu.error16_7.text=
+Menu.error16_8.text=
+Menu.error17.text=
+Menu.error18.text=
+Menu.error19_1.text=
+Menu.error19_2.text=
+Menu.error20_1.text=
+Menu.error20_2.text=
+Menu.error21.text=
+Menu.error22_1.text=
+Menu.error22_2.text=
+Menu.error23_1.text=
+Menu.error23_2.text=
+Menu.error23_3.text=
+Menu.error23_4.text=
+Menu.error23_5.text=
+Menu.error23_6.text=
+Menu.error23_7.text=
+Menu.error24_1.text=
+Menu.error24_2.text=
+Menu.error24_3.text=
+Menu.error24_4.text=
+Menu.error24_5.text=
+Menu.error24_6.text=
+Menu.error24_7.text=
+Menu.error24_8.text=
+Menu.hint07_1.text=
+Menu.hint25_1.text=
+Menu.hint25_2.text=
+Menu.hint25_3.text=
+Menu.hint25_4.text=
+Menu.hint25_5.text=
+Menu.hint25_6.text=
+Menu.hint26.0.text=
+Menu.hint26.1.text=
+Menu.hint26.2.text=
+Menu.hint26.3.text=
+Menu.hint26.4.text=
+Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=
+AnalyserPreferences.contentPanel.tab.0=
+AnalyserPreferences.contentPanel.tab.1=
+AnalyserPreferences.contentPanel.tab.2=
 AnalyserPreferences.checkboxes.1.text=Controle voor gewijzigde loop variabele.
 AnalyserPreferences.checkboxes.2.text=Controle voor eindeloze loop (zover mogelijk!)
 AnalyserPreferences.checkboxes.3.text=Controle voor niet geinitialiseerde variabelen.
@@ -246,7 +470,21 @@ AnalyserPreferences.checkboxes.10.text=Controle voor instructies met inputs en o
 AnalyserPreferences.checkboxes.11.text=Controle voor assignment fouten.
 AnalyserPreferences.checkboxes.12.text=Controle voor gestandaardiseerde parameter naam. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Controle die controleerd dat, in geval van een functie, het een resultaat terug geeft.
+AnalyserPreferences.checkboxes.14.text=
+AnalyserPreferences.checkboxes.15.text=
+AnalyserPreferences.checkboxes.16.text=
+AnalyserPreferences.checkboxes.17.text=
+AnalyserPreferences.checkboxes.18.text=
+AnalyserPreferences.checkboxes.19.text=
+AnalyserPreferences.checkboxes.20.text=
+AnalyserPreferences.checkboxes.21.text=
+AnalyserPreferences.checkboxes.22.text=
+AnalyserPreferences.checkboxes.23.text=
+AnalyserPreferences.checkboxes.24.text=
+AnalyserPreferences.checkboxes.25.text=
+AnalyserPreferences.checkboxes.26.text=
 AnalyserPreferences.okButton.text=OK
+
 
 
 -----[ Diagram ]-----
@@ -255,41 +493,59 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Maak een nieuw leeg diagram.
 Editor.btnOpen.tooltip=Open een bestaand diagram.
 Editor.btnSave.tooltip=Het huidige diagram opslaan.
-// InsertAfter (+shift: Before)
-Editor.btnAfterInst.tooltip=Een nieuwe instruction na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnSaveAll.tooltip=
+// InsertAfter (+shift: before)
+Editor.btnAfterInst.tooltip=Een nieuwe instructie na (+shift: voor) het geselecteerde element toevoegen.
 Editor.btnAfterAlt.tooltip=Een nieuwe IF statement na (+shift: voor) het geselecteerde element toevoegen.
 Editor.btnAfterFor.tooltip=Een nieuwe FOR loop na (+shift: voor) het geselecteerde element toevoegen.
 Editor.btnAfterWhile.tooltip=Een nieuwe WHILE loop na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterRepeat.tooltip=Een nieuwe REPEAT loop na (+shift: voor) het geselecteerde element toevoegen. 
-Editor.btnAfterCall.tooltip=Een nieuwe CALL na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterRepeat.tooltip=Een nieuwe REPEAT loop na (+shift: voor) het geselecteerde element toevoegen.
 Editor.btnAfterForever.tooltip=Een nieuwe ENDLESS loop na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterJump.tooltip=Een nieuwe JUMP na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterCall.tooltip=Een nieuwe @j na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterJump.tooltip=Een nieuwe @k na (+shift: voor) het geselecteerde element toevoegen.
 Editor.btnAfterCase.tooltip=Een nieuwe CASE statement na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterPara.tooltip=
+Editor.btnAfterTry.tooltip=
 // undo & redo
 Editor.btnUndo.tooltip=De laatste actie ongedaan maken.
 Editor.btnRedo.tooltip=De laatste actie herhalen.
+// find & replace
+Editor.btnFindReplace.tooltip=
 // copy & paste
 Editor.btnCut.tooltip=Het geselecteerde element knippen.
 Editor.btnCopy.tooltip=Het geselecteerde element kopiëren.
 Editor.btnPaste.tooltip=Het geknipte of gekopieerde element na het geselecteerde element plakken.
-// style 
+// style
 Editor.btnUnboxed.tooltip=De visuele stijl van het diagram wisselen.
 Editor.btnFunction.tooltip=Subroutine diagram (ronde hoeken).
 Editor.btnProgram.tooltip=Programma diagram (rechte hoeken).
+Editor.btnInclude.tooltip=
 // editing
 Editor.btnEdit.tooltip=Het geselecteerde element bewerken.
 Editor.btnDelete.tooltip=Het geselecteerde element verwijderen.
 Editor.btnMoveUp.tooltip=Het geselecteerde element één positie omhoog verplaatsen.
-Editor.btnMoveDown.tooltip= Het geselecteerde element één positie omlaag verplaatsen.
+Editor.btnMoveDown.tooltip=Het geselecteerde element één positie omlaag verplaatsen.
+Editor.btnTransmute.tooltip=
+Editor.btnOutsource.tooltip=
 //printing
 Editor.btnPrint.tooltip=Het diagram afdrukken.
+Editor.btnArrange.tooltip=
 // font
 Editor.btnFontUp.tooltip=Lettertype vergroten.
 Editor.btnFontDown.tooltip=Lettertype verkleinen.
-// copyright 
+// copyright & help
 Editor.btnAbout.tooltip=Het informatie bericht over Structorizer weergeven.
+Editor.btnHelp.tooltip=
 // colors
 Editor.btnColors.*.tooltip=Het geselecteerde element deze kleur geven.
+// collapsing
+Editor.btnCollapse.tooltip=
+Editor.btnExpand.tooltip=
+// debug
+Editor.btnTurtle.tooltip=
+Editor.btnMake.tooltip=
+Editor.btnDropBrk.tooltip=
+Editor.btnDisable.tooltip=
 // Popup menu
 Editor.popupCut.text=Knippen
 Editor.popupCopy.text=Kopiëren
@@ -298,35 +554,52 @@ Editor.popupAdd.text=Toevoegen
 // Submenu of "Add"
 Editor.popupAddBefore.text=Ervoor
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Instruction
+Editor.popupAddBeforeInst.text=@a
 Editor.popupAddBeforeAlt.text=IF statement
 Editor.popupAddBeforeCase.text=CASE statement
 Editor.popupAddBeforeFor.text=FOR loop
 Editor.popupAddBeforeWhile.text=WHILE loop
 Editor.popupAddBeforeRepeat.text=REPEAT loop
 Editor.popupAddBeforeForever.text=ENDLESS loop
-Editor.popupAddBeforeCall.text=Call
-Editor.popupAddBeforeJump.text=Jump
+Editor.popupAddBeforeCall.text=@j
+Editor.popupAddBeforeJump.text=@k
+Editor.popupAddBeforePara.text=
+Editor.popupAddBeforeTry.text=
 // After
 Editor.popupAddAfter.text=Erna
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instruction
+Editor.popupAddAfterInst.text=@a
 Editor.popupAddAfterAlt.text=IF statement
 Editor.popupAddAfterCase.text=CASE statement
 Editor.popupAddAfterFor.text=FOR loop
 Editor.popupAddAfterWhile.text=WHILE loop
 Editor.popupAddAfterRepeat.text=REPEAT loop
 Editor.popupAddAfterForever.text=ENDLESS loop
-Editor.popupAddAfterCall.text=Call
-Editor.popupAddAfterJump.text=Jump
-// Edxit	
+Editor.popupAddAfterCall.text=@j
+Editor.popupAddAfterJump.text=@k
+Editor.popupAddAfterPara.text=
+Editor.popupAddAfterTry.text=
+// Edit
 Editor.popupEdit.text=Bewerken
 Editor.popupDelete.text=Verwijderen
 Editor.popupMoveUp.text=Naar boven verplaatsen
 Editor.popupMoveDown.text=Naar beneden verplaatsen
-
+Editor.popupTransmute.text=
+Editor.popupOutsource.text=
+Editor.popupOutsource.tooltip=
+Editor.popupEditSub.text=
+Editor.popupEditSub.tooltip=
+// Collapsing
+Editor.popupCollapse.text=
+Editor.popupExpand.text=
+Editor.popupDisable.text=
+// Debug
+Editor.popupBreakpoint.text=
+Editor.popupBreakTrigger.text=
 
 -----[ InputBox ]-----
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Vul een tekst in
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Opmerking
@@ -337,7 +610,172 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Uw keuze valideren.
 InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
+InputBox.chkDisabled.text=
+InputBox.chkBreakpoint.text=
+InputBox.lblBreakTriggerText.text=
+InputBox.lblText.text[elementType:Alternative]=
+InputBox.lblText.text[elementType:While]=
+InputBox.lblText.text[elementType:Repeat]=
+InputBox.lblText.text[elementType:Case]=
+InputBox.lblText.text[elementType:Parallel]=
+InputBox.lblText.text[elementType:Try]=
+InputBox.title[elementType:Instruction,getInsertionType():insert]=
+InputBox.title[elementType:Alternative,getInsertionType():insert]=
+InputBox.title[elementType:Case,getInsertionType():insert]=
+InputBox.title[elementType:Forever,getInsertionType():insert]=
+InputBox.title[elementType:Repeat,getInsertionType():insert]=
+InputBox.title[elementType:While,getInsertionType():insert]=
+InputBox.title[elementType:Call,getInsertionType():insert]=
+InputBox.title[elementType:Jump,getInsertionType():insert]=
+InputBox.title[elementType:Parallel,getInsertionType():insert]=
+InputBox.title[elementType:Try,getInsertionType():insert]=
+InputBox.title[elementType:Instruction,getInsertionType():update]=
+InputBox.title[elementType:Alternative,getInsertionType():update]=
+InputBox.title[elementType:Case,getInsertionType():update]=
+InputBox.title[elementType:Forever,getInsertionType():update]=
+InputBox.title[elementType:Repeat,getInsertionType():update]=
+InputBox.title[elementType:While,getInsertionType():update]=
+InputBox.title[elementType:Call,getInsertionType():update]=
+InputBox.title[elementType:Jump,getInsertionType():update]=
+InputBox.title[elementType:Parallel,getInsertionType():update]=
+InputBox.title[elementType:Try,getInsertionType():update]=
 
+-----[ InputBox For ]-----
+InputBoxFor.title[getInsertionType():insert]=
+InputBoxFor.title[getInsertionType():update]=
+InputBoxFor.rbCounting.tooltip=
+InputBoxFor.rbTraversing.tooltip=
+InputBoxFor.lblVariable.text=
+InputBoxFor.lblStartVal.text=
+InputBoxFor.lblEndVal.text=
+InputBoxFor.lblIncr.text=
+InputBoxFor.lblTraversingVariable.text=
+InputBoxFor.lblValueList.text=
+InputBoxFor.chkTextInput.text=
+InputBoxFor.chkTextInput.tooltip=
+InputBoxFor.lblComment.text=
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=
+InputBoxFor.txtComment.tooltip=
+InputBoxFor.btnOK.text=
+InputBoxFor.btnOK.tooltip=
+InputBoxFor.btnCancel.text=
+InputBoxFor.btnCancel.tooltip=
+InputBoxFor.chkDisabled.text=
+InputBoxFor.chkBreakpoint.text=
+InputBoxFor.lblBreakTriggerText.text=
+InputBoxFor.msgInvalidIncrement.text=
+InputBoxFor.msgMissingBrace1.text=
+InputBoxFor.msgMissingBrace2.text=
+InputBoxFor.msgSeparateWithComma.text=
+InputBoxFor.msgEnsureReturnedArray.text=
+InputBoxFor.msgEnsureVariableIsArray.text=
+InputBoxFor.msgEnterValueList.text=
+InputBoxFor.msgDiscardData.text=
+InputBoxFor.msgAttention.text=
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=
+InputBoxRoot.title[elementType:Function]=
+InputBoxRoot.title[elementType:Includable]=
+InputBoxRoot.lblIncludeList.text=
+InputBoxRoot.txtIncludeList.tooltip=
+InputBoxRoot.lblText.text=
+InputBoxRoot.txtText.tooltip=
+InputBoxRoot.lblComment.text=
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=Annuleren
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.btnAttributes.text=
+InputBoxRoot.btnAttributes.tooltip=
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=
+AttributeInspector.lblCreatedBy.text=
+AttributeInspector.lblCreatedOn.text=
+AttributeInspector.lblModifiedBy.text=
+AttributeInspector.lblModifiedOn.text=
+AttributeInspector.lblFilePath.text=
+AttributeInspector.lblShadowPath.text=
+AttributeInspector.txtShadowPath.tooltip=
+AttributeInspector.lblOrigin.text=
+AttributeInspector.btnClearOrigin.text=
+AttributeInspector.btnClearOrigin.tooltip=
+AttributeInspector.lblElements.tooltip=
+AttributeInspector.lblInstrs.tooltip=
+AttributeInspector.lblAlts.tooltip=
+AttributeInspector.lblCases.tooltip=
+AttributeInspector.lblFors.tooltip=
+AttributeInspector.lblWhiles.tooltip=
+AttributeInspector.lblRepeats.tooltip=
+AttributeInspector.lblForevers.tooltip=
+AttributeInspector.lblCalls.tooltip=
+AttributeInspector.lblJumps.tooltip=
+AttributeInspector.lblPars.tooltip=
+AttributeInspector.lblTries.tooltip=
+AttributeInspector.btnShowLicense.text=
+AttributeInspector.btnShowLicense.tooltip=
+AttributeInspector.cbLicenseName.tooltip=
+AttributeInspector.lblPrefsAlt.text=
+AttributeInspector.lblPrefsCase.text=
+AttributeInspector.lblPrefsFor.text=
+AttributeInspector.lblPrefsForIn.text=
+AttributeInspector.lblPrefsWhile.text=
+AttributeInspector.lblPrefsRepeat.text=
+AttributeInspector.lblPrefsIO.text=
+AttributeInspector.lblPrefsJump.text=
+AttributeInspector.lblPrefsLeave.text=
+AttributeInspector.lblPrefsReturn.text=
+AttributeInspector.lblPrefsExit.text=
+AttributeInspector.lblPrefsThrow.text=
+AttributeInspector.lblPrefsPre.text=
+AttributeInspector.lblPrefsPost.text=
+AttributeInspector.lblPrefsMore.text=
+AttributeInspector.btnParserPrefs.text=
+AttributeInspector.btnOk.text=
+AttributeInspector.btnOk.tooltip=
+AttributeInspector.btnCancel.text=
+AttributeInspector.btnCancel.tooltip=
+AttributeInspector.lblMain.text=
+AttributeInspector.lblSub.text=
+AttributeInspector.lblIncl.text=
+AttributeInspector.pnCopyrights.border=
+AttributeInspector.pnStatistics.border=
+AttributeInspector.pnKeywordSet.border=
+AttributeInspector.msgOverrideLicense.text=
+AttributeInspector.msgLicenseChange.text=
+AttributeInspector.msgLicenseLoadError.text=
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=
+LicenseEditor.menuFile.text=
+LicenseEditor.menuFile.mnemonic=
+LicenseEditor.menuEdit.text=
+LicenseEditor.menuEdit.mnemonic=
+LicenseEditor.menuProp.text=
+LicenseEditor.menuProp.mnemonic=
+LicenseEditor.menuFileCommit.text=
+LicenseEditor.menuFileSave.text=
+LicenseEditor.menuFileSaveAs.text=
+LicenseEditor.menuFileRename.text=
+LicenseEditor.menuFileReload.text=
+LicenseEditor.menuFileDelete.text=
+LicenseEditor.menuFileQuit.text=
+LicenseEditor.menuEditUndo.text=
+LicenseEditor.menuEditRedo.text=
+LicenseEditor.menuEditClear.text=
+LicenseEditor.menuPropFont.text=
+LicenseEditor.menuPropFontUp.text=
+LicenseEditor.menuPropFontDown.text=
+LicenseEditor.msgNewLicName.text=
+LicenseEditor.msgCouldntWriteLicense.text=
+LicenseEditor.msgCouldntRenameLicense.text=
+LicenseEditor.msgSureToDelete.text=
+LicenseEditor.msgSureToDiscard.text=
+LicenseEditor.msgPendingChanges.text=
+LicenseEditor.msgOverwriteExisting.text=
 
 -----[ Preferences ]-----
 Preferences.title=Structuur instellingen
@@ -349,10 +787,16 @@ Preferences.lblAltF.text=Label FALSE
 Preferences.lblAltF.tooltip=De label voor de rechterkant.
 Preferences.lblAltContent.text=Standaard inhoud
 Preferences.lblAltContent.tooltip=De standaard inhoud van een IF statement.
+Preferences.altPadRight.text=
 Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Standaard inhoud
 Preferences.lblCase.tooltip=De standaard inhoud van een CASE statement.
+Preferences.lblCaseRot.text=
+Preferences.lblCaseRot.tooltip=
+Preferences.pnlRoot.border=
+Preferences.lblRoot.text=
+Preferences.lblRoot.tooltip=
 Preferences.pnlFor.border=FOR loop
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Standaard inhoud
@@ -365,6 +809,10 @@ Preferences.pnlRepeat.border=REPEAT loop
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Standaard inhoud
 Preferences.lblRepeat.tooltip=De standaard inhoud van een REPEAT loop.
+Preferences.pnlTry.border=
+Preferences.lblTry.tooltip=
+Preferences.lblCatch.tooltip=
+Preferences.lblFinal.tooltip=
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Uw keuze valideren.
 
@@ -373,20 +821,23 @@ Preferences.btnOK.tooltip=Uw keuze valideren.
 About.title=Over
 About.pnlTabbed.tab.0=Betrokken personen
 About.pnlTabbed.tab.1=Changelog
+About.pnlTabbed.tab.2=
+About.pnlTabbed.tab.3=
+About.msgPaths.text=
 About.btnOK.text=OK
 About.btnOK.tooltip=Uw keuze valideren.
 
 
 -----[ FontChooser ]-----
 FontChooser.title=Lettertype
-FontChooser.lblTest.tooltip=Een test string, zodat u kunt zien hoe het in de editor eruit ziet. 
+FontChooser.lblTest.tooltip=Een test string, zodat u kunt zien hoe het in de editor eruit ziet.
 FontChooser.lblName.text=Naam
 FontChooser.lblName.tooltip=De naam van de selecteerbare lettertypes.
 FontChooser.lblSize.text=Grootte
 FontChooser.lblSize.tooltip=De grootte van de selecteerbare lettertypes.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=Uw keuze valideren.
-
+FontChooser.cbFixPadding.text=
 
 -----[ Colors ]-----
 Colors.title=Kleur instellingen
@@ -395,7 +846,8 @@ Colors.lblColors.*.tooltip=Uw keuze voor kleur n° [#].
 Colors.colors.*.tooltip=Klik om te bewerken ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Uw keuze valideren.
-
+Colors.btnReset.text=
+Colors.btnReset.tooltip=
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Kleuren
@@ -417,23 +869,494 @@ ParserPreferences.lblCase.text=CASE statement
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=FOR loop
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=WHILE loop
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=REPEAT loop
 ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblJump.text=@k
+ParserPreferences.lblJump.tooltip=
+ParserPreferences.lblJumpLeave.text=
+ParserPreferences.lblJumpReturn.text=
+ParserPreferences.lblJumpExit.text=
+ParserPreferences.lblJumpThrow.text=
+ParserPreferences.lblInputOutput.text=
+ParserPreferences.lblInputOutput.tooltip=
 ParserPreferences.lblInput.text=Invoer
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Uitvoer
 ParserPreferences.lblOutput.tooltip=
+ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.btnFromLocale.text=
+ParserPreferences.btnFromLocale.tooltip=
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Uw keuze valideren.
-
+ParserPreferences.lblErrorSign.text=
+ParserPreferences.lblErrorSign2.text=
+ParserPreferences.lblErrorSign3.text=
+ParserPreferences.ttlError.text=
+ParserPreferences.lblHeadline.text=
 
 -----[ PrintPreview ]-----
-PrintPreview.title=Afdrukvoorbeeld 
-PrintPreview.btnOrientation.text=Ligging wisselen 
-PrintPreview.btnOrientation.tooltip=De pagina 90° draaien. 
-PrintPreview.btnCancel.text=Annuleren 
-PrintPreview.btnCancel.tooltip=Printen annuleren. 
-PrintPreview.btnOK.text=Printen 
+PrintPreview.title=Afdrukvoorbeeld
+PrintPreview.btnOrientation.text=Ligging wisselen
+PrintPreview.btnOrientation.tooltip=De pagina 90° draaien.
+PrintPreview.btnCancel.text=Annuleren
+PrintPreview.btnCancel.tooltip=Printen annuleren.
+PrintPreview.btnOK.text=Printen
 PrintPreview.btnOK.tooltip=De diagram printen.
+PrintPreview.lblMarginX.text=
+PrintPreview.lblMarginY.text=
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=
+ExportOptionDialoge.tabbedPane.tab.0=
+ExportOptionDialoge.tabbedPane.tab.1=
+ExportOptionDialoge.noConversionCheckBox.text=
+ExportOptionDialoge.noConversionCheckBox.tooltip=
+ExportOptionDialoge.commentsCheckBox.text=
+ExportOptionDialoge.bracesCheckBox.text=
+ExportOptionDialoge.lineNumbersCheckBox.text=
+ExportOptionDialoge.chkExportSubroutines.text=
+ExportOptionDialoge.chkExportLicenseInfo.text=
+ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbCharset.text=
+ExportOptionDialoge.chkCharsetAll.text=
+ExportOptionDialoge.btnPluginOptions.text=
+ExportOptionDialoge.msgOptionsForPlugin.text=
+ExportOptionDialoge.jLabel1.text=
+ExportOptionDialoge.jButton1.text=
+ExportOptionDialoge.jButton1.tooltip=
+ExportOptionDialoge.includeLists.*.tooltip=
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=
+
+-----[ ImportOptionDialog ]-----
+ImportOptionDialog.title=
+ImportOptionDialog.lbIntro.text=
+ImportOptionDialog.pnlCode.border=
+ImportOptionDialog.pnlNSD.border=
+ImportOptionDialog.pnlPreference.border=
+ImportOptionDialog.lbCharset.text=
+ImportOptionDialog.chkCharsetAll.text=
+ImportOptionDialog.chkRefactorOnLoading.text=
+ImportOptionDialog.chkRefactorOnLoading.tooltip=
+ImportOptionDialog.chkVarDeclarations.text=
+ImportOptionDialog.chkVarDeclarations.tooltip=
+ImportOptionDialog.chkCommentImport.text=
+ImportOptionDialog.chkSaveParseTree.text=
+ImportOptionDialog.chkSaveParseTree.tooltip=
+ImportOptionDialog.chkLogDir.text=
+ImportOptionDialog.chkLogDir.tooltip=
+ImportOptionDialog.txtLogDir.tooltip=
+ImportOptionDialog.btnLogDir.tooltip=
+ImportOptionDialog.lblMaxLen.text=
+ImportOptionDialog.spnMaxLen.tooltip=
+ImportOptionDialog.lblLimit.text=
+ImportOptionDialog.btnPluginOptions.text=
+ImportOptionDialog.msgOptionsForPlugin.text=
+ImportOptionDialog.btnOk.text=
+ImportOptionDialog.btnOk.tooltip=
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=
+SaveOptionDialog.lbIntro.text=
+SaveOptionDialog.pnlAutoSave.border=
+SaveOptionDialog.pnlBackup.border=
+SaveOptionDialog.pnlFileInfo.border=
+SaveOptionDialog.pnlFileNames.border=
+SaveOptionDialog.pnlArrFiles.border=
+SaveOptionDialog.chkAutoSaveExecute.text=
+SaveOptionDialog.chkAutoSaveClose.text=
+SaveOptionDialog.chkBackupFile.text=
+SaveOptionDialog.chkRelativeCoordinates.text=
+SaveOptionDialog.chkRelativeCoordinates.tooltip=
+SaveOptionDialog.lblAuthorName.text=
+SaveOptionDialog.btnLicenseFile.text=
+SaveOptionDialog.btnLicenseFile.tooltip=
+SaveOptionDialog.chkArgNumbers.text=
+SaveOptionDialog.chkArgNumbers.tooltip=
+SaveOptionDialog.lblSeparator.text=
+SaveOptionDialog.lblSeparator.tooltip=
+SaveOptionDialog.msgNoFile.text=
+SaveOptionDialog.msgCantEdit.text=
+SaveOptionDialog.msgRiskOfNameClash.text=
+SaveOptionDialog.btnOk.text=
+SaveOptionDialog.btnOk.tooltip=
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=
+PluginOptionDialog.msgNoValidUnsigned.text=
+PluginOptionDialog.msgNoValidCharacter.text=
+PluginOptionDialog.msgNoValidDouble.text=
+PluginOptionDialog.msgVerificationError.text=
+PluginOptionDialog.btnOk.text=
+PluginOptionDialog.btnCancel.text=
+
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=
+ElementNamePreferences.lblExplanation.text=
+ElementNamePreferences.chkUseConfNames.text=
+ElementNamePreferences.lblLocalized.text=
+ElementNamePreferences.lblIndividual.text=
+ElementNamePreferences.btnOK.text=
+ElementNamePreferences.btnOK.tooltip=
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
+DiagramControllerAliases.title=
+DiagramControllerAliases.lblHeader.text=
+DiagramControllerAliases.lblRemark.text=
+DiagramControllerAliases.chkApplyAliases.text=
+DiagramControllerAliases.btnOK.text=
+DiagramControllerAliases.hlpEndEditing.text=
+DiagramControllerAliases.msgIdentifierRequired.text=
+DiagramControllerAliases.ttlIllegalValues.text=
+DiagramControllerAliases.msgIn.text=
+DiagramControllerAliases.msgConflictsFound.text=
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=
+GUIScaleChooser.txtComment.text=
+GUIScaleChooser.lblSpinner.text=
+GUIScaleChooser.pnlTest.border=
+GUIScaleChooser.lblTest.text=
+GUIScaleChooser.lblIcon.text=
+GUIScaleChooser.chkTest.text=
+GUIScaleChooser.btnOK.text=
+GUIScaleChooser.btnOK.tooltip=
+
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=
+CodeImportMonitor.phaseLabels.0.text=
+CodeImportMonitor.phaseLabels.1.text=
+CodeImportMonitor.phaseLabels.2.text=
+CodeImportMonitor.phaseLabels.3.text=
+CodeImportMonitor.btnOk.text=
+CodeImportMonitor.btnCancel.text=
+CodeImportMonitor.lblRoots.text=
+CodeImportMonitor.lblErrors.text=
+CodeImportMonitor.msgInterrupted.text=
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=
+FindAndReplace.lblSearchPattern.text=
+FindAndReplace.lblReplacePattern.text=
+FindAndReplace.pnlMode.border=
+FindAndReplace.chkCaseSensitive.text=
+FindAndReplace.chkWholeWord.text=
+FindAndReplace.chkRegEx.text=
+FindAndReplace.rbDown.text=
+FindAndReplace.rbUp.text=
+FindAndReplace.pnlScope.border=
+FindAndReplace.cmbScope.item.0=
+FindAndReplace.cmbScope.item.1=
+FindAndReplace.cmbScope.item.2=
+FindAndReplace.pnlRootTypes.border=
+FindAndReplace.chkRootTypes.0.text=
+FindAndReplace.chkRootTypes.1.text=
+FindAndReplace.chkRootTypes.2.text=
+FindAndReplace.chkInTexts.text=
+FindAndReplace.chkInComments.text=
+FindAndReplace.pnlElements.border=
+FindAndReplace.btnAll.text=
+FindAndReplace.btnNone.text=
+FindAndReplace.chkDisabled.text=
+FindAndReplace.pnlPreview.border=
+FindAndReplace.txtText.border=
+FindAndReplace.txtComm.border=
+FindAndReplace.chkElementwise.text=
+FindAndReplace.btnFind.text=
+FindAndReplace.btnReplace.text=
+FindAndReplace.btnReplaceFind.text=
+FindAndReplace.btnReplaceAll.text=
+FindAndReplace.btnClose.text=
+FindAndReplace.msgRegexCorrupt.text=
+FindAndReplace.ttlSearchError.text=
+
+-----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=
+Arranger.btnRemoveDiagram.text=
+Arranger.btnRemoveDiagrams.text=
+Arranger.btnRemoveAllDiagrams.text=
+Arranger.btnExportPNG.text=
+Arranger.btnSaveArr.text=
+Arranger.btnLoadArr.text=
+Arranger.btnAddDiagram.tooltip=
+Arranger.btnPinDiagram.text=
+Arranger.btnSetCovered.text=
+Arranger.btnZoom.text=
+Arranger.btnSaveArr.tooltip=
+Arranger.btnLoadArr.tooltip=
+Arranger.btnExportPNG.tooltip=
+Arranger.btnPinDiagram.tooltip=
+Arranger.btnSetCovered.tooltip=
+Arranger.btnRemoveDiagram.tooltip=
+Arranger.btnZoom.tooltip=
+Arranger.chkDrawGroups.text=
+Arranger.chkSelectGroups.text=
+Arranger.popupHitList.text=
+Arranger.popupRemove.text=
+Arranger.popupRemoveAll.text=
+Arranger.popupExpandSelection.text=
+Arranger.popupExpandSelection.tooltip=
+Arranger.popupGroup.text=
+Arranger.popupExpandGroup.text=
+Arranger.popupAttributes.text=
+Arranger.popupAttributes.tooltip=
+Arranger.popupHelp.text=
+Arranger.popupHelp.tooltip=
+Arranger.popupKeyBindings.text=
+Arranger.popupKeyBindings.tooltip=
+Arranger.popupRearrange.text=
+Arranger.msgConfirmRemoveAll.text=
+Arranger.msgTitleWarning.text=
+Arranger.msgTitleIllegal.text=
+Arranger.msgActionDelete.text=
+Arranger.msgActionCut.text=
+Arranger.msgActionCopy.text=
+Arranger.msgConfirmRemove.text=
+Arranger.msgConfirmMultiple.text=
+Arranger.msgReadyToExport.text=
+Arranger.msgCantDoWithMultipleRoots.text=
+Arranger.msgDiagramsSelected.text=
+Arranger.msgBrowseFailed.text=
+Arranger.msgTitleURLError.text=
+Arranger.msgSelectionExpanded.text=
+Arranger.msgMissingDiagrams.text=
+Arranger.msgAmbiguousSignatures.text=
+Arranger.msgEmptySelection.text=
+Arranger.msgActionGroup.text=
+Arranger.msgGroupName.text=
+Arranger.msgGroupNameRejected.text=
+Arranger.msgGroupExists.text=
+Arranger.msgGroupingOptions.0.text=
+Arranger.msgGroupingOptions.1.text=
+Arranger.msgGroupingOptions.2.text=
+Arranger.msgGroupingOptions.3.text=
+Arranger.msgCongruentGroups.text=
+Arranger.msgDoCreateGroup.text=
+
+-----[ Surface ]-----
+Surface.msgFileLoadError.text=
+Surface.msgSavePortable.text=
+Surface.lblSaveAsArrz.text=
+Surface.lblSaveAsArr.text=
+Surface.msgSaveDialogTitle.text=
+Surface.msgSaveError.text=
+Surface.msgLoadDialogTitle.text=
+Surface.msgExtractDialogTitle.text=
+Surface.msgArrLoadError.text=
+Surface.msgExportDialogTitle.text=
+Surface.msgExportError.text=
+Surface.msgParseError.text=
+Surface.msgResetCovered.text=
+Surface.msgCoverageError.text=
+Surface.msgUnsavedDiagrams.text=
+Surface.msgUnsavedHint.text=
+Surface.msgUnsavedContinue.text=
+Surface.msgNoArrFile.text=
+Surface.msgDefectiveArr.text=
+Surface.msgDefectiveArrz.text=
+Surface.titleDiagramConflict.text=
+Surface.msgInsertionConflict.0.text=
+Surface.msgInsertionConflict.1.text=
+Surface.msgInsertionConflict.2.text=
+Surface.msgOverwriteFile.text=
+Surface.msgConfirmOverwrite.text=
+Surface.msgTooltipSelectThis.text=
+Surface.msgGroupRemovalError.text=
+Surface.msgArrangementAlreadyLoaded.text=
+Surface.msgArrangementNotLoaded.text=
+Surface.msgSaveAsNewGroup.text=
+Surface.msgSelectGroup.text=
+Surface.msgConfirmRemoveGroup.text=
+Surface.msgSaveGroupChanges.text=
+Surface.msgUnsavedGroups.text=
+Surface.msgDiagram.text=
+Surface.msgGroup.text=
+Surface.msgGroupExists.text=
+Surface.titleRenameGroup.text=
+Surface.msgRenameArrFile.text=
+Surface.msgRenamingFailed.text=
+Surface.msgSharedDiagrams.text=
+
+-----[ ArrangerIndex ]-----
+ArrangerIndex.popupIndexGet.text=
+ArrangerIndex.popupIndexAttributes.text=
+ArrangerIndex.popupIndexInfo.text=
+ArrangerIndex.popupIndexSave.text=
+ArrangerIndex.popupIndexRemove.text=
+ArrangerIndex.popupIndexCovered.text=
+ArrangerIndex.popupIndexRemoveAll.text=
+ArrangerIndex.popupIndexGroup.text=
+ArrangerIndex.popupIndexExpandGroup.text=
+ArrangerIndex.popupIndexDissolve.text=
+ArrangerIndex.popupIndexDetach.text=
+ArrangerIndex.popupIndexAttach.text=
+ArrangerIndex.popupIndexDrawGroup.text=
+ArrangerIndex.popupIndexDrawGroup.tooltip=
+ArrangerIndex.popupIndexRenameGroup.text=
+ArrangerIndex.popupIndexRenameGroup.tooltip=
+ArrangerIndex.lblSelectTargetGroup.text=
+ArrangerIndex.lblGroups.text=
+ArrangerIndex.lblSubroutines.text=
+ArrangerIndex.lblIncludables.text=
+ArrangerIndex.lblDependingDiagrams.text=
+ArrangerIndex.lblStaleReferences.text=
+ArrangerIndex.lblModifications.text=
+ArrangerIndex.lblExternSubroutines.text=
+ArrangerIndex.lblExternIncludables.text=
+ArrangerIndex.btnShowGroup.tooltip=
+ArrangerIndex.btnGroupColors.*.tooltip=
+ArrangerIndex.msgDefaultGroupName.text=
+ArrangerIndex.msgGroupsAndRootsSelected.text=
+ArrangerIndex.msgDeleteGroupMembers.text=
+ArrangerIndex.msgConfirmDeleteRoots.text=
+ArrangerIndex.msgAttachOptions.0.text=
+ArrangerIndex.msgAttachOptions.1.text=
+ArrangerIndex.msgAttachOptions.2.text=
+ArrangerIndex.msgNumberOfSharedMembers.text=
+ArrangerIndex.msgMembersIncomplete.text=
+ArrangerIndex.msgMembersComplete.text=
+ArrangerIndex.msgGroupMembersChanged.text=
+ArrangerIndex.msgGroupMembersMoved.text=
+ArrangerIndex.msgNewGroupName.text=
+
+-----> Executor
+-----[ Control ]-----
+Control.title=
+Control.lblSpeed.text=
+Control.btnCallStack.text=
+Control.lblCallLevel.text=
+Control.chkCollectRuntimeData.text=
+Control.cbRunDataDisplay.item.0=
+Control.cbRunDataDisplay.item.1=
+Control.cbRunDataDisplay.item.2=
+Control.cbRunDataDisplay.item.3=
+Control.cbRunDataDisplay.item.4=
+Control.cbRunDataDisplay.item.5=
+Control.cbRunDataDisplay.item.6=
+Control.cbRunDataDisplay.item.7=
+Control.chkOutputToTextWindow.text=
+Control.lbStopRunningProc.text=
+Control.lbInputValue.text=
+Control.lbInputPaused.text=
+Control.lbInputCancelled.text=
+Control.lbManuallySet.text=
+Control.lbEmptyLine.text=
+Control.lbReturnedResult.text=
+Control.lbOutput.text=
+Control.lbInput.text=
+Control.lbAcknowledge.text=
+Control.lbOk.text=
+Control.lbPause.text=
+Control.lbCommit.text=
+Control.lbDiscard.text=
+Control.ttlCompName.text=
+Control.ttlIndex.text=
+Control.ttlContent.text=
+Control.msgTitleError.text=
+Control.msgTitleQuestion.text=
+Control.msgTitleParallel.text=
+Control.msgNoSubroutine.text=
+Control.msgNoInclDiagram.text=
+Control.msgAmbiguousCall.text=
+Control.msgInvalidExpr.text=
+Control.msgInvalidBool.text=
+Control.msgIllFunction.text=
+Control.msgManualBreak.text=
+Control.msgIllegalLeave.text=
+Control.msgWrongExit.text=
+Control.msgExitCode.text=
+Control.msgIllegalJump.text=
+Control.msgTooManyLevels.text=
+Control.msgJumpOutParallel.text=
+Control.msgForLoopManipulation.text=
+Control.msgInvalidFileNumberRead.text=
+Control.msgInvalidFileNumberWrite.text=
+Control.msgNoIntLiteralOnFile.text=
+Control.msgNoDoubleLiteralOnFile.text=
+Control.msgEndOfFile.text=
+Control.msgUseStopButton.text=
+Control.msgConstantRedefinition.text=
+Control.msgConstantArrayElement.text=
+Control.msgInvalidRecord.text=
+Control.msgInvalidComponent.text=
+Control.msgConstantRecordComponent.text=
+Control.msgTypeMismatch.text=
+Control.msgBadValueList.text=
+Control.msgBadValueListDetails.text=
+Control.msgIndexOutOfBounds.text=
+Control.msgInitializerAsArgument.text=
+Control.msgVarUpdateErrors.text=
+Control.msgVarUpdatesFailed.text=
+Control.msgEndEditing.text=
+Control.msgFunctionConflict.text=
+Control.msgProcedureConflict.text=
+Control.msgSignatureConflicts.text=
+Control.msgGUISyncFault.text=
+Control.msgErrorInSubroutine.text=
+Control.msgThrown.text=
+Control.tblVar.header.0=
+Control.tblVar.header.2=
+
+-----[ OutputConsole ]-----
+OutputConsole.title=
+OutputConsole.menuProp.text=
+OutputConsole.menuPropFont.text=
+OutputConsole.menuPropFontUp.text=
+OutputConsole.menuPropFontDown.text=
+OutputConsole.menuContent.text=
+OutputConsole.menuContentLogCalls.text=
+OutputConsole.menuContentLogMeta.text=
+OutputConsole.menuContentLogMeta.tooltip=
+OutputConsole.menuContentSave.text=
+OutputConsole.msgOverwriteFile.text=
+OutputConsole.msgErrorFileSave.text=
+OutputConsole.msgTitleError.text=
+
+-----> Elements
+ElementNames.localizedNames.0.text=Instructie
+ElementNames.localizedNames.1.text=
+ElementNames.localizedNames.2.text=
+ElementNames.localizedNames.3.text=
+ElementNames.localizedNames.4.text=
+ElementNames.localizedNames.5.text=
+ElementNames.localizedNames.6.text=
+ElementNames.localizedNames.7.text=
+ElementNames.localizedNames.8.text=
+ElementNames.localizedNames.9.text=Aanroep
+ElementNames.localizedNames.10.text=Sprong
+ElementNames.localizedNames.11.text=
+ElementNames.localizedNames.12.text=
+ElementNames.localizedNames.13.text=
+ElementNames.localizedNames.14.text=
+ElementNames.localizedNames.15.text=
+ElementNames.localizedNames.16.text=
+
+-----> Keywords
+ParserKeywords.AltPre.text=
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=
+ParserKeywords.ForPost.text=
+ParserKeywords.ForStep.text=
+ParserKeywords.ForInPre.text=
+ParserKeywords.ForInPost.text=
+ParserKeywords.WhilePre.text=
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=
+ParserKeywords.JumpReturn.text=
+ParserKeywords.JumpExit.text=
+ParserKeywords.JumpThrow.text=
+ParserKeywords.Input.text=
+ParserKeywords.Output.text=
+

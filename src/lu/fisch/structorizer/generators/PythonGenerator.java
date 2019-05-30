@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
  *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
  *
  ******************************************************************************************************
  *
@@ -370,7 +371,9 @@ public class PythonGenerator extends Generator
 		tokens.replaceAll("!"," not ");
 		tokens.replaceAll("xor","^");            
 		// END KGU 2014-11-16
-		tokens.replaceAll("div", "/");
+		// START KGU#708 2019-05-28: Issue #725 - special operator symbol for int division
+		tokens.replaceAll("div", "//");
+		// END KGU#708 2019-05-28
 		tokens.replaceAll("<-", "=");
 		// START KGU#388 2017-10-02: Enh. #423 - convert Structorizer record initializers to Python
 		transformRecordInitializers(tokens);
