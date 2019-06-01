@@ -258,26 +258,26 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 				}
 			}
 		}
-        // START KGU#443 2017-10-16: Enh. #439 - pulldown buttons near compound values
+		// START KGU#443 2017-10-16: Enh. #439 - pulldown buttons near compound values
 		ImageIcon pulldownIcon = IconLoader.getIcon(80);
-        for (int i = 0; i < tm.getRowCount(); i++) {
-        	String value = (String)tm.getValueAt(i, 2);
-            String name = (String)tm.getValueAt(i, 0);
-            if (value.endsWith("}")) {
-            	JButton pulldown = new JButton();
-            	pulldown.setName(name);
-            	pulldown.setIcon(pulldownIcon);
-            	pulldown.addActionListener(this.pulldownActionListener);
-            	tm.setValueAt(pulldown, i, 1);
-            }
-        }
-        // END KGU#443 2017-10-16
-        // START KGU#443 2017-10-16: Enh. #439
-        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
-        tblFields.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
-        tblFields.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
-        tblFields.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
-        // END KGU#443 2017-10-16
+		for (int i = 0; i < tm.getRowCount(); i++) {
+			String value = (String)tm.getValueAt(i, 2);
+			String name = (String)tm.getValueAt(i, 0);
+			if (value.endsWith("}")) {
+				JButton pulldown = new JButton();
+				pulldown.setName(name);
+				pulldown.setIcon(pulldownIcon);
+				pulldown.addActionListener(this.pulldownActionListener);
+				tm.setValueAt(pulldown, i, 1);
+			}
+		}
+		// END KGU#443 2017-10-16
+		// START KGU#443 2017-10-16: Enh. #439
+		int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
+		tblFields.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
+		tblFields.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
+		tblFields.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
+		// END KGU#443 2017-10-16
 		optimizeColumnWidth(tblFields, 0);
 		tblFields.addPropertyChangeListener("tableCellEditor", this);
 		tblFields.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -301,8 +301,8 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		this.getContentPane().add(pnlTable, BorderLayout.CENTER);
 		this.getContentPane().add(pnlButtons, BorderLayout.SOUTH);
 		this.addWindowListener(this);
-        // We must do this as late as possible, otherwise "Nimbus" tends to ignore this
-        tblFields.setDefaultRenderer(Object.class, new MyCellRenderer());
+		// We must do this as late as possible, otherwise "Nimbus" tends to ignore this
+		tblFields.setDefaultRenderer(Object.class, new MyCellRenderer());
 		pack();
 	}
 	
@@ -386,30 +386,30 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		}
 	}
 
-    /**
-     * Opens a dialog with editable JTable for the given complex value {@code val},
-     * representing either an array (as {@link ArrayList} or a record (as {@link HashMap}.
-     * If something therein was modified, then the modified value will be returned.
-     * @param _varName - name of the compound variable 
-     * @param _value - either an {@link ArayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
-     * @param _editable - whether the component values may be edited
-     * @param _refComponent - the originating button 
-     * @return the modified value if the change was committed.
-     */
-    private Object editCompoundValue(String _title, Object _value, boolean _editable, Component _refComponent) {
-    	ValuePresenter valueEditor = new ValuePresenter(_title, _value, _editable, null);
-    	valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    	valueEditor.setLocationRelativeTo(_refComponent);
-    	valueEditor.setModal(true);
-    	valueEditor.setVisible(true);
-    	if (valueEditor.wasModified()) {
-    		return valueEditor.getValue();
-    	}
-    	return null;
-    }
-    // END KGU#443 2017-10-31
+	/**
+	 * Opens a dialog with editable JTable for the given complex value {@code val},
+	 * representing either an array (as {@link ArrayList} or a record (as {@link HashMap}.
+	 * If something therein was modified, then the modified value will be returned.
+	 * @param _varName - name of the compound variable 
+	 * @param _value - either an {@link ArayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
+	 * @param _editable - whether the component values may be edited
+	 * @param _refComponent - the originating button 
+	 * @return the modified value if the change was committed.
+	 */
+	private Object editCompoundValue(String _title, Object _value, boolean _editable, Component _refComponent) {
+		ValuePresenter valueEditor = new ValuePresenter(_title, _value, _editable, null);
+		valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		valueEditor.setLocationRelativeTo(_refComponent);
+		valueEditor.setModal(true);
+		valueEditor.setVisible(true);
+		if (valueEditor.wasModified()) {
+			return valueEditor.getValue();
+		}
+		return null;
+	}
+	// END KGU#443 2017-10-31
 
-    @Override
+	@Override
 	public void actionPerformed(ActionEvent evt) {
 		if (evt.getSource() == btnDiscard) {
 			this.editedLines.clear();

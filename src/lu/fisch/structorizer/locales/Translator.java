@@ -1309,7 +1309,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 			}
 			else {
 				JOptionPane.showMessageDialog(this,
-						"No further occurrance of \"" + _pattern + "\" found.",
+						"No further occurrence of \"" + _pattern + "\" found.",
 						"Find failed", JOptionPane.INFORMATION_MESSAGE);
 			}
 		}

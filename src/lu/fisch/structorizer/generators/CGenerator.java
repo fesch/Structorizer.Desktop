@@ -1639,7 +1639,7 @@ public class CGenerator extends Generator {
 					// START KGU 2017-02-06: The "funny comment" was irritating and dubious itself
 					// Seems to be an ordinary one-level break without need to concoct a jump statement
 					// (Are there also strange cases - neither matched nor rejected? And how could this happen?)
-					//addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
+					//addCode("break;\t// FIXME: Dubious occurrence of break instruction!", _indent, isDisabled);
 					addCode("break;", _indent, isDisabled);
 					// END KGU 2017-02-06
 				}

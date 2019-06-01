@@ -892,7 +892,7 @@ public class PerlGenerator extends Generator {
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment
-					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!",
+					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrence of 'last' instruction!",
 							_indent, isDisabled);
 				}
 				else if (!isEmpty)

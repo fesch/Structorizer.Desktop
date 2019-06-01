@@ -356,7 +356,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             @Override
             public boolean isCellEditable(int row, int column){
             	// START KGU#443 2017-10-31: Enh. #439
-                //return (column>=1);  
+            	//return (column>=1);  
             	if (column == 1) {
             		return true;	// Pulldown button always enabled if there is one
             	}
@@ -769,7 +769,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#210 2016-07-25
     // END KGU#159 2016-03-17
-    
+
 	// START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
 	private void btnPullDownActionPerformed(java.awt.event.ActionEvent evt)
 	{
