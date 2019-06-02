@@ -1,4 +1,4 @@
-/*
+﻿/*
     Structorizer 
     A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
