@@ -3899,10 +3899,12 @@ public abstract class Element {
     /**
      * Converts the operator symbols accepted by Structorizer into intermediate operators
      * (mostly Java operators):
-     * - Assignment:		"<-"
-     * - Comparison*:		"==", "<", ">", "<=", ">=", "!="
-     * - Logic*:			"&&", "||", "!", "^"
-     * - Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")
+     * <ul>
+     * <li>Assignment:		"<-"</li>
+     * <li>Comparison*:		"==", "<", ">", "<=", ">=", "!="</li>
+     * <li>Logic*:			"&&", "||", "!", "^"</li>
+     * <li>Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")</li>
+     * </ul>
      * @param _tokens - a tokenised line of an Element's text (in practically unknown syntax)
      * @param _assignmentOnly - if true then only assignment operator will be unified
      * @return total number of deletions / replacements
@@ -3933,19 +3935,22 @@ public abstract class Element {
     /**
      * Returns a (hopefully) lossless representation of the stored text as a
      * StringList in a common intermediate language (code generation phase 1).
-     * This allows the language-specific Generator subclasses to concentrate on the translation
-     * into their respective target languages (code generation phase 2).
-     * Conventions of the intermediate language:
+     * This allows the language-specific Generator subclasses to concentrate
+     * on the translation into their respective target languages (code generation
+     * phase 2).<br/>
+     * Conventions of the intermediate language:<br/>
      * Operators (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
-     * - Logic:				" && ", " || ", " §NOT§ ", " ^ "
-     * - Arithmetics:		usual Java operators without padding
-     * - Control key words:
-     * -	If, Case:		none (wiped off)
-     * -	While, Repeat:	none (wiped off)
-     * -	For:			unchanged
-     * -	Forever:		none (wiped off)
+     * <ul>
+     * <li>Assignment:		" <- "
+     * <li>Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
+     * <li>Logic:				" && ", " || ", " §NOT§ ", " ^ "
+     * <li>Arithmetics:		usual Java operators without padding
+     * <li>Control key words:<br/>
+     * -	If, Case:		none (wiped off)<br/>
+     * -	While, Repeat:	none (wiped off)<br/>
+     * -	For:			unchanged<br/>
+     * -	Forever:		none (wiped off)</li>
+     * </ul>
      * 
      * @return a padded intermediate language equivalent of the stored text
      */
@@ -3981,18 +3986,19 @@ public abstract class Element {
      * tokens list of a common intermediate language (code generation phase 1).
      * This allows the language-specific Generator subclasses to concentrate
      * on the translation into their target language (code generation phase 2).
-     * Conventions of the intermediate language:
+     * Conventions of the intermediate language:<br/>
      * Operators (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		"<-"
-     * - Comparison:		"=", "<", ">", "<=", ">=", "<>"
-     * - Logic:				"&&", "||", "!", "^"
-     * - Arithmetics:		usual Java operators
-     * - Control key words:
-     * -	If, Case:		none (wiped off)
-     * -	While, Repeat:	none (wiped off)
-     * -	For:			unchanged
-     * -	Forever:		none (wiped off)
-     * 
+     * <ul>
+     * <li>Assignment:		"<-"</li>
+     * <li>Comparison:		"=", "<", ">", "<=", ">=", "<>"</li>
+     * <li>Logic:				"&&", "||", "!", "^"</li>
+     * <li>Arithmetics:		usual Java operators</li>
+     * <li>Control key words:<br/>
+     * -	If, Case:		none (wiped off)<br/>
+     * -	While, Repeat:	none (wiped off)<br/>
+     * -	For:			unchanged<br/>
+     * -	Forever:		none (wiped off)</li>
+     * </ul>
      * @param _text - a line of the Structorizer element
      * //@return a padded intermediate language equivalent of the stored text
      * @return a StringList consisting of tokens translated into a unified intermediate language
