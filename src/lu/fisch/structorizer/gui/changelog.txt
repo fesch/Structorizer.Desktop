@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-11 (2019-06-02)
+Current development version: 3.29-11 (2019-06-10)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -91,6 +91,7 @@ Current development version: 3.29-11 (2019-06-02)
 - 11: Bugfix #724: Diagram titles weren't bold anymore since 3.29-09 <2>
 - 11: Issue #725: Division operator export to Python improved <2>
 - 11: Issue #206: Dutch locale substantially updated <Jaap Woldringh>
+- 11: Enh. #726: Translator usability improved [Jaap Woldringh]2
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

@@ -631,7 +631,7 @@ public class Locales {
                     // START KGU#263 2016-09-28: Generally replace any found "\n" by a real newline
                     // START #479 2017-12-15: Enh. #492 - replace element names
                     //parts.set(1, parts.get(1).replace("\\n", "\n"));
-                    parts.set(1, ElementNames.resolveElementNames(parts.get(1).replace("\\n", "\n")));
+                    parts.set(1, ElementNames.resolveElementNames(parts.get(1).replace("\\n", "\n"), null));
                     // END KGU#479 2017-12-15
                     // END KGU#263 2016-09-28
 

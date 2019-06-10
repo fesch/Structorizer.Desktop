@@ -23,7 +23,7 @@ package lu.fisch.structorizer.executor;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Abstract class for all Elements.
+ *      Description:    Table-based dialog for the inspection and modification of structured data
  *
  ******************************************************************************************************
  *
@@ -58,7 +58,6 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import javax.swing.AbstractCellEditor;
-import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -98,15 +97,15 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 	private String[] oldValStrings = null;
 	private HashMap<Integer, String> editedLines = new HashMap<Integer, String>();
 	private boolean editable = false;
-    // START KGU#443 2017-10-31: Enh. #439 Apply this recursively
+	// START KGU#443 2017-10-31: Enh. #439 Apply this recursively
 	private AbstractCellEditor activeBtnEditor; 
-    private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
-    	@Override
-    	public void actionPerformed(ActionEvent evt) {
-    		btnPullDownActionPerformed(evt);
-    	}
-    };
-    // END KGU#443 2017-10-31
+	private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			btnPullDownActionPerformed(evt);
+		}
+	};
+	// END KGU#443 2017-10-31
 
     private class MyCellRenderer extends DefaultTableCellRenderer {
 
@@ -120,50 +119,6 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
             // END KGU#443 2017-10-16
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
-    }
-    
-    // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
-    /**
-     * Specific table cell editor for the pulldown buttons in the variable display
-     * @author Kay Gürtzig
-     */
-    public class ButtonEditor extends DefaultCellEditor {
-    	protected JButton button;
-    	private JTable table;
-
-    	public ButtonEditor() {
-    		super(new javax.swing.JCheckBox());
-    	}
-
-    	public Component getTableCellEditorComponent(JTable _table, Object _value,
-    			boolean _isSelected, int _row, int _column) {
-    		if (_value instanceof JButton) {
-    			table = _table;
-    			button = (JButton)_value;
-    			button.setForeground(table.getSelectionForeground());
-    			button.setBackground(table.getSelectionBackground());
-    		}
-    		else {
-    			button = null;
-    		}
-    		return button;
-    	}
-
-    	public Object getCellEditorValue() {
-    		return button;
-    	}
-
-    	public boolean stopCellEditing() {
-    		if (button != null && table != null) {
-    			button.setForeground(table.getForeground());
-    			button.setBackground(table.getBackground());
-    		}
-    		return super.stopCellEditing();
-    	}
-
-    	protected void fireEditingStopped() {
-    		super.fireEditingStopped();
-    	}
     }
 
 	
@@ -243,7 +198,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			{
 				Object[] rowData = {"[" + i + "]", null,
 						oldValStrings[i] = Executor.prepareValueForDisplay(array.get(i), null)};
-				tm.addRow(rowData);    				
+				tm.addRow(rowData);
 			}
 		}
 		else if (record != null) {
@@ -421,6 +376,10 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		}
 	}
 
+	/**
+	 * Composes the structured value this instance is representing from the (edited) lines
+	 * of the component table.
+	 */
 	private void updateValueFromTable() {
 		DefaultTableModel tm = (DefaultTableModel)tblFields.getModel();
 		Executor executor = Executor.getInstance();
