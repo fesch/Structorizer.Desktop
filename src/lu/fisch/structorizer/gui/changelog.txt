@@ -92,6 +92,7 @@ Current development version: 3.29-11 (2019-06-10)
 - 11: Issue #725: Division operator export to Python improved <2>
 - 11: Issue #206: Dutch locale substantially updated <Jaap Woldringh>
 - 11: Enh. #726: Translator usability improved [Jaap Woldringh]2
+- 11: Issue #727: TRY Field position in Element Name Preferences mended <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

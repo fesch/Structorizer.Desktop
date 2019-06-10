@@ -54,8 +54,9 @@ import lu.fisch.structorizer.locales.LangDialog;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.12.14      First Issue for #492
- *      Kay Gürtzig     2018.01.20      Layout improved (row distance reduced)
+ *      Kay Gürtzig     2017-12-14      First Issue for #492
+ *      Kay Gürtzig     2018-01-20      Layout improved (row distance reduced)
+ *      Kay Gürtzig     2019-06-10      Issue #727: The placement of the TRY field had to be tweaked
  *
  ******************************************************************************************************
  *
@@ -136,15 +137,27 @@ public class ElementNamePreferences extends LangDialog {
 				configPanel.add(lblLocalized);
 				configPanel.add(lblIndividual);
 
+				// Index of the "Diagram" and the FOR field (we simply know)
+				final int IxDIAGRAM = 12, IxFOR = 3;
 				for (int i = 0; i < ElementNames.configuredNames.length; i++) {
-					String descr = ElementNames.localizedNames[i].getText();
-					if (i == 4 || i == 5 || i > 12) {
+					int j = i;
+					// START KGU#710 2019-06-10: Issue #727 - TRY label without indentation and before diagram
+					//String descr = ElementNames.localizedNames[j].getText();
+					//if (i == 4 || i == 5 || i > 12) {
+					//	descr = "    " + descr;
+					//}
+					// We do some index re-mapping to give TRY an appropriate place
+					if (i == IxDIAGRAM) j = ElementNames.ELEMENT_KEYS.length - 1;
+					else if (i > IxDIAGRAM) j = i - 1;
+					String descr = ElementNames.localizedNames[j].getText();
+					if (j == IxFOR+1 || j == IxFOR+2 || j > IxDIAGRAM && j < ElementNames.ELEMENT_KEYS.length - 1) {
 						descr = "    " + descr;
 					}
-					lblElements[i] = new JLabel(descr);
-					txtElements[i] = new JTextField();
-					configPanel.add(lblElements[i]);
-					configPanel.add(txtElements[i]);
+					// END KGU##710 2019-06-10
+					lblElements[j] = new JLabel(descr);
+					txtElements[j] = new JTextField();
+					configPanel.add(lblElements[j]);
+					configPanel.add(txtElements[j]);
 				}
 			}
 			dialogPane.add(configPanel, BorderLayout.CENTER);

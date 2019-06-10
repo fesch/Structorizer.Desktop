@@ -98,6 +98,8 @@ public class ElementNames extends Component {
 			"Alternative",
 			"Case",
 			"For",
+			"For.COUNTER",
+			"For.TRAVERSAL",
 			"While",
 			"Repeat",
 			"Forever",
@@ -105,12 +107,10 @@ public class ElementNames extends Component {
 			"Jump",
 			"Parallel",
 			"Root",
-			"For.COUNTER",
-			"For.TRAVERSAL",
 			"Root.DT_MAIN",
 			"Root.DT_SUB",
 			"Root.DT_INCL",
-			// START KGU#686 2019-03-17: Enh. #86
+			// START KGU#686 2019-03-17: Enh. #56
 			"Try"
 			// END KGU#686 2019-03-17
 	};
@@ -150,7 +150,7 @@ public class ElementNames extends Component {
 			null,	// Main (Root)
 			null,	// Sub (Root)
 			null,	// Includable (Root)
-			// START KGU#686 2019-03-17: Enh. #86
+			// START KGU#686 2019-03-17: Enh. #56
 			null,	// Try
 			// END KGU#686 2019-03-17
 	};
@@ -176,7 +176,7 @@ public class ElementNames extends Component {
 			new LangTextHolder("Main program"),
 			new LangTextHolder("Sub-routine"),	
 			new LangTextHolder("Includable"),	
-			// START KGU#686 2019-03-17: Enh. #86
+			// START KGU#686 2019-03-17: Enh. #56
 			new LangTextHolder("TRY"),
 			// END KGU#686 2019-03-17
 	};
