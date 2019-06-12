@@ -19,13 +19,37 @@
  */
 package lu.fisch.structorizer.gui;
 
+/******************************************************************************************************
+ *
+ *      Author:         kay
+ *
+ *      Description:    Preferences dialog class to allow users to specify names for all Element types.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2017-12-14      First Issue for #492
+ *      Kay Gürtzig     2018-01-20      Layout improved (row distance reduced)
+ *      Kay Gürtzig     2019-06-10/11   Issue #727: The placement of the TRY field had to be tweaked,
+ *                                      a new button "English Standards" was introduced.
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      
+ *
+ ******************************************************************************************************///
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+//import java.awt.GridBagConstraints;
+//import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
+//import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -41,29 +65,8 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import lu.fisch.structorizer.locales.LangDialog;
-
-/******************************************************************************************************
- *
- *      Author:         kay
- *
- *      Description:    Preferences dialog class to allow users to specify names for all Element types.
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Kay Gürtzig     2017-12-14      First Issue for #492
- *      Kay Gürtzig     2018-01-20      Layout improved (row distance reduced)
- *      Kay Gürtzig     2019-06-10      Issue #727: The placement of the TRY field had to be tweaked
- *
- ******************************************************************************************************
- *
- *      Comment:
- *      
- *
- ******************************************************************************************************///
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 
 /**
  * Preferences dialog allowing to introduce user-declared (and locale-independent) Element name aliases
@@ -81,6 +84,9 @@ public class ElementNamePreferences extends LangDialog {
 	private JLabel[] lblElements;
 	public JTextField[] txtElements;
 	private JButton btnOK;
+	// START KGU#710 2019-06-11: Issue #727
+	private JButton btnEnglishStd;
+	// END KGU#710 2019-06-11
 	
 	private JPanel dialogPane;
 	private JPanel configPanel;
@@ -107,9 +113,12 @@ public class ElementNamePreferences extends LangDialog {
 		chkUseConfNames = new JCheckBox("Enable the configured labels");
 		lblLocalized = new JLabel("Localized label");
 		lblIndividual = new JLabel("Configured label");
-		lblElements = new JLabel[ElementNames.configuredNames.length];
-		txtElements = new JTextField[ElementNames.configuredNames.length];
+		lblElements = new JLabel[ElementNames.ELEMENT_KEYS.length];
+		txtElements = new JTextField[ElementNames.ELEMENT_KEYS.length];
 		btnOK = new JButton("OK");
+		// START KGU#710 2019-06-11: Issue #727
+		btnEnglishStd = new JButton("English Standard");
+		// END KGU#710 2019-06-11
 
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
@@ -137,9 +146,9 @@ public class ElementNamePreferences extends LangDialog {
 				configPanel.add(lblLocalized);
 				configPanel.add(lblIndividual);
 
-				// Index of the "Diagram" and the FOR field (we simply know)
-				final int IxDIAGRAM = 12, IxFOR = 3;
-				for (int i = 0; i < ElementNames.configuredNames.length; i++) {
+				// Index of the "Diagram" field (we simply know)
+				final int IxDIAGRAM = 12;
+				for (int i = 0; i < ElementNames.ELEMENT_KEYS.length; i++) {
 					int j = i;
 					// START KGU#710 2019-06-10: Issue #727 - TRY label without indentation and before diagram
 					//String descr = ElementNames.localizedNames[j].getText();
@@ -150,7 +159,7 @@ public class ElementNamePreferences extends LangDialog {
 					if (i == IxDIAGRAM) j = ElementNames.ELEMENT_KEYS.length - 1;
 					else if (i > IxDIAGRAM) j = i - 1;
 					String descr = ElementNames.localizedNames[j].getText();
-					if (j == IxFOR+1 || j == IxFOR+2 || j > IxDIAGRAM && j < ElementNames.ELEMENT_KEYS.length - 1) {
+					if (ElementNames.ELEMENT_KEYS[j].indexOf('.') >= 0) {
 						descr = "    " + descr;
 					}
 					// END KGU##710 2019-06-10
@@ -164,16 +173,45 @@ public class ElementNamePreferences extends LangDialog {
 
 			//======== buttonBar ========
 			{
-				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
-				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				buttonBar.setBorder(new EmptyBorder(12, 0, 5, 0));
+				// START KGU#710 2019-06-11: Issue #727
+//				buttonBar.setLayout(new GridBagLayout());
+//				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+//				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				buttonBar.setLayout(new GridLayout(1, 2));
 
+				//---- okEnglishStd ----
+				btnEnglishStd.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent evt) {
+						Locale enLoc = Locales.getInstance().getDefaultLocale();
+						for (int i = 0; i < ElementNames.ELEMENT_KEYS.length; i++) {
+							txtElements[i].setText(enLoc.getValue("Elements", "ElementNames.localizedNames." + i + ".text"));
+						}
+						if (!chkUseConfNames.isSelected()) {
+							chkUseConfNames.doClick();
+						}
+					}
+				});
+				btnEnglishStd.setToolTipText("Adopt the English standard element names as user-specific names (for all languages).");
+				// END KGU#710 2019-06-11
+				
 				//---- okButton ----
-				btnOK.setText("OK");
-				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-					new Insets(0, 0, 5, 0), 0, 0));
+				btnOK.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent evt) {
+						 OK = true; setVisible(false);
+						 }
+					});
+				
+				// START KGU#710 2019-06-11: Issue #727
+				//buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+				//	GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+				//	new Insets(0, 0, 5, 0), 0, 0));
+				
+				buttonBar.add(btnEnglishStd);
+				buttonBar.add(btnOK);
+				// END KGU#710 2019-06-11
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -226,12 +264,9 @@ public class ElementNamePreferences extends LangDialog {
 		for (int i = 0; i < txtElements.length; i++) {
 			txtElements[i].addKeyListener(keyListener);
 		}
+		// START KGU#710 2019-06-11: Issue #727
+		btnEnglishStd.addKeyListener(keyListener);
+		// END KGU#710 2019-06-11
 		btnOK.addKeyListener(keyListener);
-		btnOK.addActionListener(new ActionListener() {
-		@Override
-		public void actionPerformed(ActionEvent arg0) {
-			 OK = true; setVisible(false);
-			 }
-		}); 
 	}
 }

@@ -122,8 +122,8 @@ Menu.menuFileSaveAs.text=Сохранить как ...
 Menu.menuFileSaveAll.text=Сохранить все
 Menu.menuFileExport.text=Экспорт
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Изображение ...
-Menu.menuFileExportCode.text=Язык (код) ...
+Menu.menuFileExportPicture.text=Изображение
+Menu.menuFileExportCode.text=Язык (код)
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (кафелями)
 Menu.menuFileExportPictureEMF.text=

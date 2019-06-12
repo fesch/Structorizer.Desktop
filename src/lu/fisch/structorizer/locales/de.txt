@@ -178,8 +178,8 @@ Menu.menuFileSaveAs.text=Speichern unter ...
 Menu.menuFileSaveAll.text=Alle speichern
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Bild ...
-Menu.menuFileExportCode.text=Quellcode ...
+Menu.menuFileExportPicture.text=Bild
+Menu.menuFileExportCode.text=Quellcode
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
 Menu.menuFileExportPictureEMF.text=
@@ -194,7 +194,7 @@ Menu.menuFileImportCode.text=Quell-Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileAttributes.text=Eigenschaften anzeigen ...
-Menu.menuFileTranslator.text=Übersetzer
+Menu.menuFileTranslator.text=Übersetzer ...
 Menu.menuFileQuit.text=Beenden
 
 // Menu "Edit"
@@ -801,6 +801,7 @@ AttributeInspector.lblPrefsPre.text=Vor
 AttributeInspector.lblPrefsPost.text=Nach
 AttributeInspector.lblPrefsMore.text=(Zusatz)
 AttributeInspector.btnParserPrefs.text=Parser-Einstellungen
+AttributeInspector.btnParserPrefs.tooltip=Aktuelle Parser-Schlüsselwörter zum Vergleich anzeigen.
 AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Eventuelle Änderungen übernehmen und Dialog schließen.
 AttributeInspector.btnCancel.text=Abbruch
@@ -1070,6 +1071,8 @@ ElementNamePreferences.lblExplanation.text=Elementtypen für Anzeige umbezeichne
 ElementNamePreferences.chkUseConfNames.text=Individuelle Bezeichnungen erlauben
 ElementNamePreferences.lblLocalized.text=Lokalisierter Name
 ElementNamePreferences.lblIndividual.text=Individueller Name
+ElementNamePreferences.btnEnglishStd.text=Englisch (Standard)
+ElementNamePreferences.btnEnglishStd.tooltip=Die englischen Standardbezeichnungen der Elemente als individuelle Namen für alle Sprachen setzen.
 ElementNamePreferences.btnOK.text=Speichern
 ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen.
 

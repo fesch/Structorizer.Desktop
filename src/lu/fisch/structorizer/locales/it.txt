@@ -121,8 +121,8 @@ Menu.menuFileSave.text=Salva
 Menu.menuFileSaveAs.text=Salva con nome...
 Menu.menuFileExport.text=Esporta
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Immagine ...
-Menu.menuFileExportCode.text=Codice ...
+Menu.menuFileExportPicture.text=Immagine
+Menu.menuFileExportCode.text=Codice
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=
 Menu.menuFileExportPictureEMF.text=
@@ -136,7 +136,7 @@ Menu.menuFileImport.text=Importa
 Menu.menuFileImportCode.text=Codice ...
 Menu.menuFilePrint.text=Stampa ...
 Menu.menuFileArrange.text=Collocare in Arranger
-Menu.menuFileTranslator.text=
+Menu.menuFileTranslator.text=Traduttore ...
 Menu.menuFileQuit.text=Esci
 // Menu "Edit"
 Menu.menuEdit.text=Modifica

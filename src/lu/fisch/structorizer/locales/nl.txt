@@ -55,7 +55,7 @@
  *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
- *      Jaap Woldringh  2019-06-10      Translation updated and (nearly) accomplished
+ *      Jaap Woldringh  2019-06-10      Translation updated and accomplished
  *
  ******************************************************************************************************
  *
@@ -110,10 +110,10 @@ Menu.menuFileSaveAs.text=Opslaan als ...
 Menu.menuFileSaveAll.text=Alles opslaan
 Menu.menuFileExport.text=Exporteren
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Afbeelding ...
-Menu.menuFileExportCode.text=Code ...
-Menu.menuFileExportPicturePNG.text=PNG
-Menu.menuFileExportPicturePNGmulti.text=PNG (meerdere)
+Menu.menuFileExportPicture.text=Afbeelding
+Menu.menuFileExportCode.text=Code
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (meerdere) ...
 Menu.menuFileExportPictureEMF.text=
 Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
@@ -126,7 +126,7 @@ Menu.menuFileImportCode.text=Broncode ...
 Menu.menuFilePrint.text=Afdrukken ...
 Menu.menuFileArrange.text=Rangschikken
 Menu.menuFileAttributes.text=Attributen bekijken ...
-Menu.menuFileTranslator.text=Vertaler
+Menu.menuFileTranslator.text=Vertaler ...
 Menu.menuFileQuit.text=Afsluiten
 
 // Menu "Edit"
@@ -147,8 +147,8 @@ Menu.menuEditDowngradeTurtle.text=Naar tekenen met hele getallen
 Menu.menuEditDowngradeTurtle.tooltip=Vervangt bij alle Turtleopdrachten in de geselecteerde elementen kommagetallen door minder nauwkeurige gehele getallen
 Menu.menuEditBreakLines.text=Tekstregels (opnieuw) afbreken
 Menu.menuEditBreakLines.tooltip=Maakt het mogelijk dat tekstregels van geselecteerde elementen (en optioneel hun substructuur) op de volgende regel worden voortgezet tot een nieuwe grens aan hun lengte.
-Menu.menuEditCopyDiagramPNG.text=Als PNG-afbeelding kopiëren
-Menu.menuEditCopyDiagramEMF.text=Als EMF-afbeelding kopiëren
+Menu.menuEditCopyDiagramPNG.text=PNG-afbeelding kopiëren
+Menu.menuEditCopyDiagramEMF.text=EMF-afbeelding kopiëren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagram
 Menu.menuDiagram.mnemonic=d
@@ -530,7 +530,7 @@ Editor.btnTransmute.tooltip=Omzetten van bijvoorbeeld instructies naar @js of @k
 Editor.btnOutsource.tooltip=De geselecteerde elementenrij overbrengen naar een nieuwe subroutine
 //printing
 Editor.btnPrint.tooltip=Het diagram afdrukken.
-Editor.btnArrange.tooltip=Het diagram toevoegen aann het paneel van de Arranger
+Editor.btnArrange.tooltip=Het diagram toevoegen aan het paneel van de Arranger
 // font
 Editor.btnFontUp.tooltip=Lettertype vergroten.
 Editor.btnFontDown.tooltip=Lettertype verkleinen.
@@ -646,22 +646,22 @@ InputBoxFor.title[getInsertionType():insert]=Nieuwe @d-lus invoegen ...
 InputBoxFor.title[getInsertionType():update]=@d-lus bewerken ...
 InputBoxFor.rbCounting.tooltip=Selecteer dit als u tussen een aantal getallen wilt tellen.
 InputBoxFor.rbTraversing.tooltip=Selecteer dit als u langs alle leden wilt gaan van een collectie.
-InputBoxFor.lblVariable.text=
-InputBoxFor.lblStartVal.text=
-InputBoxFor.lblEndVal.text=
-InputBoxFor.lblIncr.text=
-InputBoxFor.lblTraversingVariable.text=
-InputBoxFor.lblValueList.text=
-InputBoxFor.chkTextInput.text=
-InputBoxFor.chkTextInput.tooltip=
-InputBoxFor.lblComment.text=
+InputBoxFor.lblVariable.text=Tellervariabele
+InputBoxFor.lblStartVal.text=Startwaarde
+InputBoxFor.lblEndVal.text=Eindwaarde
+InputBoxFor.lblIncr.text=Increment
+InputBoxFor.lblTraversingVariable.text=Elementvariabele
+InputBoxFor.lblValueList.text=Waardenlijst of array
+InputBoxFor.chkTextInput.text=Tekst direct bewerken
+InputBoxFor.chkTextInput.tooltip=Indien aangezet, wordt de inhoud van bovenstaande velden uit de tekst gehaald, en anders wordt de tekst hieruit samengesteld.
+InputBoxFor.lblComment.text=Commentaar
 InputBoxFor.lblComment.tooltip=
-InputBoxFor.txtText.tooltip=
-InputBoxFor.txtComment.tooltip=
-InputBoxFor.btnOK.text=
-InputBoxFor.btnOK.tooltip=
-InputBoxFor.btnCancel.text=
-InputBoxFor.btnCancel.tooltip=
+InputBoxFor.txtText.tooltip=Header FOR-lus als tekstregel
+InputBoxFor.txtComment.tooltip=Voer hier het commentaar in van het element
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Bevestig uw keuze (en sluit de dialoog af).
+InputBoxFor.btnCancel.text=Annuleren
+InputBoxFor.btnCancel.tooltip=Sluit de dialoog af, zonder uw invoer/wijzigingen op te slaan.
 InputBoxFor.chkDisabled.text=Uitgeschakeld (uitvoeren en exporteren)
 InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
@@ -734,7 +734,8 @@ AttributeInspector.lblPrefsThrow.text=bij fout
 AttributeInspector.lblPrefsPre.text=Voor
 AttributeInspector.lblPrefsPost.text=Na
 AttributeInspector.lblPrefsMore.text=(Meer)
-AttributeInspector.btnParserPrefs.text=
+AttributeInspector.btnParserPrefs.text=Parser-sleutelw. vgl.
+AttributeInspector.btnParserPrefs.tooltip=Parser-sleutelwoorden vergelijken
 AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Veranderingen vastleggen en dialoog sluiten.
 AttributeInspector.btnCancel.text=Annuleren
@@ -1000,9 +1001,11 @@ PluginOptionDialog.btnCancel.text=Annuleren
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Voorkeuren voor elementnamen
 ElementNamePreferences.lblExplanation.text=Te tonen elementtypen hernoemen
-ElementNamePreferences.chkUseConfNames.text=De ingesteld labels aanzetten
+ElementNamePreferences.chkUseConfNames.text=De ingestelde labels aanzetten
 ElementNamePreferences.lblLocalized.text=Label in ingestelde taal
 ElementNamePreferences.lblIndividual.text=Ingestelde label
+ElementNamePreferences.btnEnglishStd.text=English (standaard)
+ElementNamePreferences.btnEnglishStd.tooltip=De Engelse standaard namen gebruiken voor elementnamen als ingestelde labels voor alle talen.
 ElementNamePreferences.btnOK.text=OK
 ElementNamePreferences.btnOK.tooltip=Deze instellingen accepteren.
 

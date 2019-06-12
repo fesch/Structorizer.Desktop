@@ -175,8 +175,8 @@ Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileSaveAll.text=Save All
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Picture ...
-Menu.menuFileExportCode.text=Code ...
+Menu.menuFileExportPicture.text=Picture
+Menu.menuFileExportCode.text=Code
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
@@ -191,7 +191,7 @@ Menu.menuFileImportCode.text=Source Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
 Menu.menuFileAttributes.text=Inspect attributes ...
-Menu.menuFileTranslator.text=Translator
+Menu.menuFileTranslator.text=Translator ...
 Menu.menuFileQuit.text=Quit
 
 // Menu "Edit"
@@ -800,6 +800,7 @@ AttributeInspector.lblPrefsPre.text=Pre
 AttributeInspector.lblPrefsPost.text=Post
 AttributeInspector.lblPrefsMore.text=(More)
 AttributeInspector.btnParserPrefs.text=Compare parser keys
+AttributeInspector.btnParserPrefs.tooltip=Show the current parser preferences for comparison.
 AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Commit changes and close dialog.
 AttributeInspector.btnCancel.text=Cancel
@@ -1068,6 +1069,8 @@ ElementNamePreferences.lblExplanation.text=Re-label the Element types for displa
 ElementNamePreferences.chkUseConfNames.text=Enable the configured labels
 ElementNamePreferences.lblLocalized.text=Localized label
 ElementNamePreferences.lblIndividual.text=Configured label
+ElementNamePreferences.btnEnglishStd.text=English Standard
+ElementNamePreferences.btnEnglishStd.tooltip=Adopt the English standard element names as configured labels for all languages.
 ElementNamePreferences.btnOK.text=OK
 ElementNamePreferences.btnOK.tooltip=Accept these settings.
 

@@ -110,8 +110,8 @@ Menu.menuFileSave.text=Uložit
 Menu.menuFileSaveAs.text=Uložit jako ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Obrázek ...
-Menu.menuFileExportCode.text=Programovací jazyk ...
+Menu.menuFileExportPicture.text=Obrázek
+Menu.menuFileExportCode.text=Programovací jazyk
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=
 Menu.menuFileExportPictureEMF.text=
@@ -125,7 +125,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportCode.text=Programovací Kod ...
 Menu.menuFilePrint.text=Tisk ...
 Menu.menuFileArrange.text=
-Menu.menuFileTranslator.text=
+Menu.menuFileTranslator.text=Překladatel ...
 Menu.menuFileQuit.text=Konec
 // Menu "Edit"
 Menu.menuEdit.text=Úpravy

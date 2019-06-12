@@ -291,8 +291,8 @@ public abstract class Element {
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Translations initially provided by\n"+
-	" - NL: Jerone <jeronevw@hotmail.com>\n"+
+	"Translations initially provided or substantially updated by\n"+
+	" - NL: Jerone <jeronevw@hotmail.com>, Jaap Woldringh\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
