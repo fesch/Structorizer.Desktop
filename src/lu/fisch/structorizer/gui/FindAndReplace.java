@@ -49,7 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integrated, element panel layout revised
  *      Kay Gürtzig     2019-06-12      Bugfix #728 - flaws on traversing and replacement tackled
  *      Kay Gürtzig     2019-06-13      Bugfix #728 - IRoutinePoolListener inheritance added, now reacts on diagram changes
- *                                      A matching selected Root element wasn't presented in the result tree (Current Selection scope)
+ *                                      Retrieval and traversal strategies unified (now tree is always completely shown)
  *
  ******************************************************************************************************
  *
@@ -167,11 +167,11 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/** Replacement action flag (is to avoid result tree wiping during replacement) */
 	private boolean replacing = false;
 	// END KGU#684 2019-06-13
-	/**
-	 * treeIterator is only used with single-Root scope, traversing the diagram without prediction of matching elements
-	 * @see #currentNode
-	 */
-	private IElementSequence.Iterator treeIterator = null;
+//	/**
+//	 * treeIterator is only used with single-Root scope, traversing the diagram without prediction of matching elements
+//	 * @see #currentNode
+//	 */
+//	private IElementSequence.Iterator treeIterator = null;
 	/** Currently focused diagram {@link Element} (caches the current position of {@link #treeIterator}) */
 	private Element currentElement = null;
 	// START KGU#454 2017-11-03: Bugfix #448
@@ -191,8 +191,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/** Fixed invisible top node of the tree view, root of the apparent search result forest */
 	private final DefaultMutableTreeNode resultTop = new DefaultMutableTreeNode("Search Results");
 	/**
-	 * currentNode is used with multi-Root scope to navigate in the pre-retrieved tree of matching elements
-	 * @see #treeIterator
+	 * currentNode is used to navigate in the pre-retrieved tree of matching elements
 	 */
 	private DefaultMutableTreeNode currentNode = null;
 	private DefaultTreeModel resultModel = null;
@@ -845,7 +844,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			this.treResults.addTreeSelectionListener(new TreeSelectionListener(){
 				@Override
 				public void valueChanged(TreeSelectionEvent evt) {
-					if (cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
+					//if (cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
 						currentNode = (DefaultMutableTreeNode)treResults.getLastSelectedPathComponent();
 						if (currentNode != null) {
 							Object ele = currentNode.getUserObject();
@@ -861,11 +860,11 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 								}
 								setCurrentElement((Element)ele, pos);
 							}
-							if (ele instanceof Root) {
+							if (ele instanceof Root && cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
 								Arranger.scrollToDiagram((Root)ele, true);
 							}
 						}
-					}
+					//}
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			this.treResults.addKeyListener(keyListener);
@@ -977,12 +976,16 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * unselects the element in the diagram (if selected).
 	 */
 	protected void clearCurrentElement() {
-		Element selected = diagram.getSelected();
 		if (currentElement != null) {
+			Element selected = diagram.getSelected();
 			if (selected == null ||
+					this.cmbScope.getSelectedItem() != Scope.CURRENT_SELECTION ||
 					selected instanceof IElementSequence && ((IElementSequence)selected).getIndexOf(currentElement) >= 0 ||
 					!(selected instanceof IElementSequence) && currentElement != selected) {
 				currentElement.setSelected(false);
+				if (Element.getRoot(currentElement) == diagram.getRoot()) {
+					diagram.redraw(currentElement);
+				}
 			}
 			currentElement = null;
 			// START KGU#454 2017-11-03: Bugfix #448
@@ -1041,7 +1044,9 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		// END KGU#454 2017-11-03
 		currentPosition = positionInElement;
 		ele.setSelected(true);
-		diagram.redraw(ele);
+		if (Element.getRoot(ele) == diagram.getRoot()) {
+			diagram.redraw(ele);
+		}
 		//System.out.println(ele);
 		int nMatches = 0;
 		boolean enable = false;
@@ -1264,7 +1269,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			return;
 		}
 		// END KGU#684 2019-06-13
-		treeIterator = null;
+//		treeIterator = null;
 		resultTop.removeAllChildren();
 		currentNode = null;
 		clearCurrentElement();
@@ -1306,9 +1311,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * Action method for find event {@code evt}. Performs a single action step, i.e.
 	 * jumps to the next matching position (if {@code gotoNext} is true) after having
 	 * possibly done a single replacement at the current matching position (if {@code replace} is true).
-	 * In case there is no {@link #currentNode} (with scope {@link #OPENED_DIAGRAMS})
-	 * or the {@link #treeIterator} is exhausted (other scopes), the result tree will be
-	 * refreshed according to the current criteria.
+	 * In case there is no {@link #currentNode}, the result tree will be refreshed
+	 * according to the current criteria.
 	 * @param evt - the triggering {@link ActionEvent}
 	 * @param replace - are replacements to be performed?
 	 * @param gotoNext - is the position to be moved to the next matching hit?
@@ -1318,8 +1322,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		boolean replacementsDone = false;
 		boolean up = rbUp.isSelected();
 		boolean elementwise = chkElementwise.isSelected();
-		Element selected = diagram.getSelected();
-		Scope scope = (Scope)cmbScope.getSelectedItem();
+		// START KGU#712 2019-06-13: CR
+		//Element selected = diagram.getSelected();
+		//Scope scope = (Scope)cmbScope.getSelectedItem();
+		// EN KGU#712 2019-06-13
 		// START KGU#454 2017-11-03: Bugfix #448 Check regex patterns in advance
 		if (this.chkRegEx.isSelected()) {
 			String patternString = (String)this.cmbSearchPattern.getEditor().getItem();
@@ -1337,89 +1343,93 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		}
 		// END KGU#4545 2017-11-03
 
-		// PHASE 1: Identify and set up the element traversing strategy 
-		if (scope == Scope.OPENED_DIAGRAMS) {
-			// Previous search exhausted? Then retrieve results
-			if (currentNode == null) {
+		// PHASE 1: Identify and set up the element traversing strategy
+		// START KGU#712 2019-06-13: CR one single strategy is enough
+		//if (scope == Scope.OPENED_DIAGRAMS) {
+		// END KGU#712 2019-06-13
+		// Previous search exhausted? Then retrieve results
+		if (currentNode == null) {
+			fillResultTree();
+			// START KGU#647 2019-02-07: FIXME - Empirical workaround for issue #675 (truncated node lines)
+			if (scaleFactor > 1.0 && !WINDOWS_LaF_MATCHER.reset(UIManager.getLookAndFeel().getName()).matches()) {
+				// No idea why exactly, the lines get truncated (ends replaced by ellipse on the first) on the first attempt
 				fillResultTree();
-				// START KGU#647 2019-02-07: FIXME - Empirical workaround for issue #675 (truncated node lines)
-				if (scaleFactor > 1.0 && !WINDOWS_LaF_MATCHER.reset(UIManager.getLookAndFeel().getName()).matches()) {
-					// No idea why exactly, the lines get truncated (ends replaced by ellipse on the first) on the first attempt
-					fillResultTree();
-				}
-				// ÉND KGU#647 2019-02-07
-				gotoNext = false;
-				replace = false;
 			}
+			// ÉND KGU#647 2019-02-07
+			gotoNext = false;
+			replace = false;
 		}
-		else if (treeIterator == null) {
-			// Reinitialize iterator for incremental search
-			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
-				// START KGU#684 2019-06-12: Bugfix #728 - old strategy was not correct for upwards search
-				//// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				//int nMatches = checkElementMatch(diagram.getRoot()); 
-				//if (nMatches > 0) {
-				//	setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
-				//	replace = false;
-				//	gotoNext = false;
-				//}
-				// Set up the children iterator in any case
-				treeIterator = diagram.getRoot().children.iterator(true);
-				Element el = null;
-				if (up) {
-					// Fetch the last element of the tree in case of upward direction
-					while (treeIterator.hasNext()) {
-						el = treeIterator.next();
-					}
-				}
-				if (el == null) {
-					// In downward direction or with empty diagram fetch the Root element
-					el = diagram.getRoot();
-				}
-				int nMatches = checkElementMatch(el);
-				if (nMatches > 0) {
-					setCurrentElement(el, elementwise ? -1 : (up ? nMatches - 1 : 0));
-					replace = false;	// With the first find don't replace immediately 
-					gotoNext = false;	// position is already okay.
-					updateResultTree();
-				}
-				// END KGU#684 2019-06-12
-			}
-			// All following branches address "selected elements" scope
-			else if (selected instanceof IElementSequence) {
-				// We are on a Subqueue level, request a deep search iterator
-				treeIterator = ((IElementSequence) selected).iterator(true);
-			}
-			else if (selected.parent != null) {
-				// We are neither on Subqueue level nor on Root level, so concoct a
-				// pseudo-sequence only comprising just the selected element and
-				// request a deep search iterator (selected might be composed)
-				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
-			}
-			else if (selected instanceof Root) {
-				// START KGU#684 2019-06-13: Bugfix #728 tree iterator has to be set before updateResultTree()
-				treeIterator = ((Root)selected).children.iterator(true);
-				// END KGU#684 20189-06-13
-				// Now this is to ensure a matching Root isn't ignored
-				int nMatches = checkElementMatch(selected); 
-				if (nMatches > 0) {
-					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
-					// START KGU#684 2019-06-13: Bugfix #728 Root is to be shown in the result tree if matching!
-					updateResultTree();
-					// END KGU#684 2019-06-12
-					replace = false;
-					gotoNext = false;
-				}
-			}
-			// START KGU#684 2019-06-12: Bugfix #728 was nonsense at this place
-			//// Go to last element if we are to go upwards (looks awkward but works)
-			//if (treeIterator != null && up) {
-			//	while (treeIterator.hasNext()) {
-			//		treeIterator.next();
-			//	}
-			//}
-			// END KGU#684 2019-06-12
-		}
+		// START KGU#712 2019-06-13: CR
+//		}
+//		else if (treeIterator == null) {
+//			// Reinitialize iterator for incremental search
+//			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
+//				// START KGU#684 2019-06-12: Bugfix #728 - old strategy was not correct for upwards search
+//				//// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+//				//int nMatches = checkElementMatch(diagram.getRoot()); 
+//				//if (nMatches > 0) {
+//				//	setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+//				//	replace = false;
+//				//	gotoNext = false;
+//				//}
+//				// Set up the children iterator in any case
+//				treeIterator = diagram.getRoot().children.iterator(true);
+//				Element el = null;
+//				if (up) {
+//					// Fetch the last element of the tree in case of upward direction
+//					while (treeIterator.hasNext()) {
+//						el = treeIterator.next();
+//					}
+//				}
+//				if (el == null) {
+//					// In downward direction or with empty diagram fetch the Root element
+//					el = diagram.getRoot();
+//				}
+//				int nMatches = checkElementMatch(el);
+//				if (nMatches > 0) {
+//					setCurrentElement(el, elementwise ? -1 : (up ? nMatches - 1 : 0));
+//					replace = false;	// With the first find don't replace immediately 
+//					gotoNext = false;	// position is already okay.
+//					updateResultTree();
+//				}
+//				// END KGU#684 2019-06-12
+//			}
+//			// All following branches address "selected elements" scope
+//			else if (selected instanceof IElementSequence) {
+//				// We are on a Subqueue level, request a deep search iterator
+//				treeIterator = ((IElementSequence) selected).iterator(true);
+//			}
+//			else if (selected.parent != null) {
+//				// We are neither on Subqueue level nor on Root level, so concoct a
+//				// pseudo-sequence only comprising just the selected element and
+//				// request a deep search iterator (selected might be composed)
+//				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
+//			}
+//			else if (selected instanceof Root) {
+//				// START KGU#684 2019-06-13: Bugfix #728 tree iterator has to be set before updateResultTree()
+//				treeIterator = ((Root)selected).children.iterator(true);
+//				// END KGU#684 20189-06-13
+//				// Now this is to ensure a matching Root isn't ignored
+//				int nMatches = checkElementMatch(selected); 
+//				if (nMatches > 0) {
+//					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
+//					// START KGU#684 2019-06-13: Bugfix #728 Root is to be shown in the result tree if matching!
+//					updateResultTree();
+//					// END KGU#684 2019-06-12
+//					replace = false;
+//					gotoNext = false;
+//				}
+//			}
+//			// START KGU#684 2019-06-12: Bugfix #728 was nonsense at this place
+//			//// Go to last element if we are to go upwards (looks awkward but works)
+//			//if (treeIterator != null && up) {
+//			//	while (treeIterator.hasNext()) {
+//			//		treeIterator.next();
+//			//	}
+//			//}
+//			// END KGU#684 2019-06-12
+//		}
+		// END KGU#712 2019-06-13
 
 		// PHASE 2: Look into the currentElement (if there is one) and care for replacements
 		int nMatches = 0;
@@ -1433,6 +1443,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		if (replace && nMatches > 0) {
 			// START KGU#684 2019-06-13: Bugfix #728 - avoid interference from element modifications
 			replacing = true;
+			System.out.println("replacing set true...");
 			try {
 			// END KGU#684 2019-06-13
 				// Replace next match according to the current pattern
@@ -1506,6 +1517,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			}
 			finally {
 				replacing = false;
+				System.out.println("replacing resset to false...");
 			}
 
 			diagram.doButtons();
@@ -1549,70 +1561,72 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			}
 			setCurrentElement(currentElement, currentPosition);
 		}
-		else if (gotoNext && treeIterator != null) {
-			// no, single-Root scope: find the next matching element within the current diagram
-			boolean found = false;
-			// START KGU#684 2019-02-12: Bugfix #728 the current element will still be needed for a distinction
-			//clearCurrentElement();
-			// END KGU#684 2019-06-12
-			if (up) {
-				while (!found && treeIterator.hasPrevious()) {
-					Element ele = treeIterator.previous();
-					nMatches = checkElementMatch(ele);
-					if (found = nMatches > 0) {
-						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
-						updateResultTree();
-						// START KGU#684 2019-06-12: Bugfix #728 - was wrong and caused endless loops on ReplaceAll
-						//replacementsDone = true;
-						// END KGU#684 2019-06-12
-					}
-				}
-				if (!found && scope != Scope.CURRENT_SELECTION) {
-					// START KGU#684 2019-06-12: Bugfix #728: We must clear the result when we exhausted the Root
-//					nMatches = checkElementMatch(diagram.getRoot()); 
+		// START KGU#712 2019-06-13: CR
+//		else if (gotoNext && treeIterator != null) {
+//			// no, single-Root scope: find the next matching element within the current diagram
+//			boolean found = false;
+//			// START KGU#684 2019-02-12: Bugfix #728 the current element will still be needed for a distinction
+//			//clearCurrentElement();
+//			// END KGU#684 2019-06-12
+//			if (up) {
+//				while (!found && treeIterator.hasPrevious()) {
+//					Element ele = treeIterator.previous();
+//					nMatches = checkElementMatch(ele);
 //					if (found = nMatches > 0) {
-//						setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+//						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
 //						updateResultTree();
-//						treeIterator = null;
-//						done = true;
-//					}					
-					Root root = diagram.getRoot();
-					nMatches = checkElementMatch(root); 
-					if (currentPosition == 0) {	// Can hardly have been different from 0, can't it?
-						// if element was a child then try the Root now (upwards direction!)
-						if (currentElement != root && (found = nMatches > 0)) {
-							setCurrentElement(root, elementwise ? -1 : nMatches - 1);
-							gotoNext = false;	// position is already set
-							updateResultTree();
-						}
-					}
-					// END KGU#684 2019-06-12
-				}
-			}
-			else {	// down
-				while (!found && treeIterator.hasNext()) {
-					Element ele = treeIterator.next();
-					nMatches = checkElementMatch(ele);
-					if (found = nMatches > 0) {
-						setCurrentElement(ele, elementwise ? -1 : 0);
-						updateResultTree();
-						// START KGU#684 201906-12: Bugfix #728 - this led to an eternal loop in replaceAllActionPerformed
-						//replacementsDone = true;
-						// END KGU684 2019-06-12
-					}
-				}
-			}
-			
-			if (!found) {
-				// Iterator exhausted - drop it
-				// START KGU#684 2019-02-12: Bugfix #728 the current element is no longer needed now
-				clearCurrentElement();
-				// END KGU#684 2019-06-12
-				treeIterator = null;
-				updateResultTree();
-			}
-		}
-		// Opened diagrams scope?
+//						// START KGU#684 2019-06-12: Bugfix #728 - was wrong and caused endless loops on ReplaceAll
+//						//replacementsDone = true;
+//						// END KGU#684 2019-06-12
+//					}
+//				}
+//				if (!found && scope != Scope.CURRENT_SELECTION) {
+//					// START KGU#684 2019-06-12: Bugfix #728: We must clear the result when we exhausted the Root
+//					//nMatches = checkElementMatch(diagram.getRoot()); 
+//					//if (found = nMatches > 0) {
+//					//	setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+//					//	updateResultTree();
+//					//	treeIterator = null;
+//					//	done = true;
+//					//}					
+//					Root root = diagram.getRoot();
+//					nMatches = checkElementMatch(root); 
+//					if (currentPosition == 0) {	// Can hardly have been different from 0, can't it?
+//						// if element was a child then try the Root now (upwards direction!)
+//						if (currentElement != root && (found = nMatches > 0)) {
+//							setCurrentElement(root, elementwise ? -1 : nMatches - 1);
+//							gotoNext = false;	// position is already set
+//							updateResultTree();
+//						}
+//					}
+//					// END KGU#684 2019-06-12
+//				}
+//			}
+//			else {	// down
+//				while (!found && treeIterator.hasNext()) {
+//					Element ele = treeIterator.next();
+//					nMatches = checkElementMatch(ele);
+//					if (found = nMatches > 0) {
+//						setCurrentElement(ele, elementwise ? -1 : 0);
+//						updateResultTree();
+//						// START KGU#684 201906-12: Bugfix #728 - this led to an eternal loop in replaceAllActionPerformed
+//						//replacementsDone = true;
+//						// END KGU684 2019-06-12
+//					}
+//				}
+//			}
+//			
+//			if (!found) {
+//				// Iterator exhausted - drop it
+//				// START KGU#684 2019-02-12: Bugfix #728 the current element is no longer needed now
+//				clearCurrentElement();
+//				// END KGU#684 2019-06-12
+//				treeIterator = null;
+//				updateResultTree();
+//			}
+//		}
+//		// Opened diagrams scope?
+		// END KGU#712 2019-06-13
 		else if (gotoNext && currentNode != null) {
 			// go to the next element within in the search result tree
 			if (rbUp.isSelected()) {
@@ -1640,45 +1654,45 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		return replacementsDone;
 	}
 	
-	/**
-	 * Does nothing in case of an active multi-Root search (scope OPENED_DIAGRAMS). Otherwise
-	 * (i.e. in single-Root scope), the result tree is updated around the {@link #currentElement},
-	 * i.e. with dummy nodes before and/or after the node representing the current element. 
-	 * @see #fillResultTree()
-	 */
-	private void updateResultTree() {
-		if (currentNode == null) {
-			this.resultTop.removeAllChildren();
-			this.resultModel.reload();
-			if (currentElement != null && treeIterator != null) {
-				// START KGU#684 2019-06-13: Bugfix #728 since a new iterator tends to wrap around we stop it with a Root
-				//if (treeIterator.hasPrevious()) {
-				boolean isDiagrScope = this.cmbScope.getSelectedItem() == Scope.CURRENT_DIAGRAM;
-				if (!(currentElement instanceof Root) && (isDiagrScope || treeIterator.hasPrevious())) {
-				// END KGU#684 2019-06-13
-					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
-				}
-				DefaultMutableTreeNode eleNode = new DefaultMutableTreeNode(currentElement); 
-				this.resultModel.insertNodeInto(eleNode, resultTop, resultTop.getChildCount());
-				if (treeIterator.hasNext()) {
-					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
-				}
-				TreePath path = new TreePath(eleNode.getPath());
-				treResults.scrollPathToVisible(path);
-				if (scrTree.getHorizontalScrollBar().isVisible()) {
-					scrTree.getHorizontalScrollBar().setValue(0);
-				}
-				treResults.setSelectionPath(path);
-				treResults.setEnabled(true);
-			}
-			else {
-				treResults.setEnabled(false);
-			}
-		}
-	}
+//	/**
+//	 * Does nothing in case of an active multi-Root search (scope OPENED_DIAGRAMS). Otherwise
+//	 * (i.e. in single-Root scope), the result tree is updated around the {@link #currentElement},
+//	 * i.e. with dummy nodes before and/or after the node representing the current element. 
+//	 * @see #fillResultTree()
+//	 */
+//	private void updateResultTree() {
+//		if (currentNode == null) {
+//			this.resultTop.removeAllChildren();
+//			this.resultModel.reload();
+//			if (currentElement != null && treeIterator != null) {
+//				// START KGU#684 2019-06-13: Bugfix #728 since a new iterator tends to wrap around we stop it with a Root
+//				//if (treeIterator.hasPrevious()) {
+//				boolean isDiagrScope = this.cmbScope.getSelectedItem() == Scope.CURRENT_DIAGRAM;
+//				if (!(currentElement instanceof Root) && (isDiagrScope || treeIterator.hasPrevious())) {
+//				// END KGU#684 2019-06-13
+//					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
+//				}
+//				DefaultMutableTreeNode eleNode = new DefaultMutableTreeNode(currentElement); 
+//				this.resultModel.insertNodeInto(eleNode, resultTop, resultTop.getChildCount());
+//				if (treeIterator.hasNext()) {
+//					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
+//				}
+//				TreePath path = new TreePath(eleNode.getPath());
+//				treResults.scrollPathToVisible(path);
+//				if (scrTree.getHorizontalScrollBar().isVisible()) {
+//					scrTree.getHorizontalScrollBar().setValue(0);
+//				}
+//				treResults.setSelectionPath(path);
+//				treResults.setEnabled(true);
+//			}
+//			else {
+//				treResults.setEnabled(false);
+//			}
+//		}
+//	}
 
 	/**
-	 * Initializes the result tree for scope OPENED_DIAGRAMS and sets {@link #currentNode} (if possible)
+	 * Initializes the result tree and sets {@link #currentNode} (if possible)
 	 * @see #updateResultTree()
 	 */
 	private void fillResultTree() {
@@ -1686,7 +1700,17 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		resultModel.reload();
 		clearCurrentElement();
 		DefaultMutableTreeNode lastNode = null;
-		Vector<Root> roots = Arranger.getSortedRoots();
+		// START KGU#712 2019-06-13 CR
+		//Vector<Root> roots = Arranger.getSortedRoots();
+		Scope scope = (Scope)this.cmbScope.getSelectedItem();
+		Vector<Root> roots;
+		if (scope == Scope.OPENED_DIAGRAMS) {
+			roots = Arranger.getSortedRoots();
+		}
+		else {
+			roots = new Vector<Root>();
+		}
+		// END KGU#712 2019-06-13
 		if (!roots.isEmpty()) {
 			Arranger.addToChangeListeners(this);
 		}
@@ -1694,10 +1718,32 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			roots.add(0, diagram.getRoot());
 		}
 		for (Root root: roots) {
-			LinkedList<Element> elements = this.findElements(root.children, true);
-			if (checkElementMatch(root) > 0) {
+			// START KGU#712 2019-06-13: CR
+			//LinkedList<Element> elements = this.findElements(root.children, true);
+			//if (checkElementMatch(root) > 0) {
+			//	elements.addFirst(root);
+			//}
+			IElementSequence range = null;
+			Element selected = diagram.getSelected();
+			if (scope == Scope.CURRENT_SELECTION && root == diagram.getRoot()) {
+				if (selected == null || selected == root) {
+					range = root.children;
+				}
+				else if (selected instanceof IElementSequence) {
+					range = (IElementSequence)selected;
+				}
+				else {
+					range = new SelectedSequence(selected, selected);
+				}
+			}
+			else {
+				range = root.children;
+			}
+			LinkedList<Element> elements = this.findElements(range, true);
+			if ((scope != Scope.CURRENT_SELECTION || selected == root) && checkElementMatch(root) > 0) {
 				elements.addFirst(root);
 			}
+			// END KGU#712 2019-06-13
 			if (!elements.isEmpty()) {
 				DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(root);
 				//this.resultTop.add(rootNode);
@@ -1738,7 +1784,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	protected void replaceAllActionPerformed(ActionEvent evt) {
 		// START KGU#684 2019-06-12: Bugfix #728
 		// If the search hasn't been initialised then find the first match
-		if (currentNode == null && treeIterator == null) {
+		if (currentNode == null /*&& treeIterator == null*/) {
 			findActionPerformed(evt, false, false);
 		}
 		// END KGU#684 2019-06-12
