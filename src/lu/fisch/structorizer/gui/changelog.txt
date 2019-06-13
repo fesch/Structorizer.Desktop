@@ -94,7 +94,7 @@ Current development version: 3.29-11 (2019-06-13)
 - 11: Enh. #726: Translator usability improved [Jaap Woldringh]2
 - 11: Issue #727: TRY Field position in Element Name Preferences mended <2>
 - 11: Bugfix #728: Endless loops and other flaws in Find&Replace tackled <2>
-- 11: Search result presentation strategy in Find&Replace unified <2>
+- 11: Find&Replace: Search result presentation strategy unified <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
