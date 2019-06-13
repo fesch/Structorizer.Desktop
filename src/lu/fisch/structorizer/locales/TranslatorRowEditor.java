@@ -415,7 +415,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		int [] colWidths = new int[] {5, 5, 5, 5, 5};
 		String[] header = new String [] {
 				"Short key",
-				"Long Key",
+				"Long key",
 				Locales.DEFAULT_LOCALE,
 				this.lang,
 				locales.get(cmbLanguage.getSelectedItem())

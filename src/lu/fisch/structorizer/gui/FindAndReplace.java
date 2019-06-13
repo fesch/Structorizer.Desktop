@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
  *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integrated, element panel layout revised
+ *      Kay Gürtzig     2019-06-12      Bugfix #728 (flaws on travering and replacement); flaw in #718 fixed
  *
  ******************************************************************************************************
  *
@@ -1057,7 +1058,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	/**
 	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
 	 * for the original {@link StringList} {@code txtLines}. 
-	 * @param txtParts - source text split to matches and surrounding parts
+	 * @param textParts - source text split to matches and surrounding parts
 	 * @param doc - the target {@link StyledDocument} 
 	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
 	 * @param posOffset - the index of the current match
@@ -1289,7 +1290,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * @return indicates whether a requested replacement could be performed 
 	 */
 	protected boolean findActionPerformed(ActionEvent evt, boolean replace, boolean gotoNext) {
-		boolean done = false;
+		boolean replacementsDone = false;
 		boolean up = rbUp.isSelected();
 		boolean elementwise = chkElementwise.isSelected();
 		Element selected = diagram.getSelected();
@@ -1329,15 +1330,39 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		else if (treeIterator == null) {
 			// Reinitialize iterator for incremental search
 			if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
-				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-				int nMatches = checkElementMatch(diagram.getRoot()); 
-				if (nMatches > 0) {
-					setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
-					replace = false;
-					gotoNext = false;
-				}
+				// START KGU#684 2019-06-12: Bugfix #728 - old strategy was not correct for upwards search
+				//// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+				//int nMatches = checkElementMatch(diagram.getRoot()); 
+				//if (nMatches > 0) {
+				//	setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+				//	replace = false;
+				//	gotoNext = false;
+				//}
+				// Set up the children iterator in any case
 				treeIterator = diagram.getRoot().children.iterator(true);
+				Element el = null;
+				if (up) {
+					// Fetch the last element of the tree in case of upward direction
+					treeIterator = diagram.getRoot().children.iterator(true);
+					while (treeIterator.hasNext()) {
+						el = treeIterator.next();
+					}
+				}
+				if (el == null) {
+					// In downward direction or with empty diagram fetch the Root element
+					el = diagram.getRoot();
+					treeIterator = ((Root)el).children.iterator(true);
+				}
+				int nMatches = checkElementMatch(el);
+				if (nMatches > 0) {
+					setCurrentElement(el, elementwise ? -1 : (up ? nMatches - 1 : 0));
+					replace = false;	// With the first find don't replace immediately 
+					gotoNext = false;	// position is already okay.
+					updateResultTree();
+				}
+				// END KGU#684 2019-06-12
 			}
+			// All following branches address "selected elements" scope
 			else if (selected instanceof IElementSequence) {
 				// We are on a Subqueue level, request a deep search iterator
 				treeIterator = ((IElementSequence) selected).iterator(true);
@@ -1349,7 +1374,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
 			}
 			else if (selected instanceof Root) {
-				// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
+				// Now this is to ensure a matching Root isn't ignored
 				int nMatches = checkElementMatch(selected); 
 				if (nMatches > 0) {
 					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
@@ -1358,15 +1383,17 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				}
 				treeIterator = ((Root)selected).children.iterator(true);
 			}
-			// Go to last element if we are to go upwards (looks awkward but works)
-			if (treeIterator != null && up) {
-				while (treeIterator.hasNext()) {
-					treeIterator.next();
-				}
-			}
+			// START KGU#684 2019-06-12: Bugfix #728 was nonsense at this place
+			//// Go to last element if we are to go upwards (looks awkward but works)
+			//if (treeIterator != null && up) {
+			//	while (treeIterator.hasNext()) {
+			//		treeIterator.next();
+			//	}
+			//}
+			// END KGU#684 2019-06-12
 		}
 
-		// PHASE 2: Look into the currentElement (if there is one)
+		// PHASE 2: Look into the currentElement (if there is one) and care for replacements
 		int nMatches = 0;
 		if (currentElement != null) {
 			// Get the total number of (remaining) matches in the current element's interesting texts
@@ -1394,7 +1421,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			int nMatchesText = (partsText.count() - 1) / 2;
 			// END KGU#454 2017-11-03
 			// Start with the element text (prioritized if included)
-			if ((elementwise || !done) && chkInTexts.isSelected() 
+			if ((elementwise || !replacementsDone) && chkInTexts.isSelected() 
 					&& nMatchesText > currentPosition) {
 				// START KGU#454 2017-11-03: Bugfix #448
 				//text = replacePattern(text, elementwise, currentPosition);
@@ -1412,12 +1439,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				currentElement.resetDrawingInfoUp();
 				// START KGU#609 2018-11-21: Bugfix #448 accomplished
 				//this.fillPreview(text, docText, txtText, 0, true);
-				this.fillPreview(partsText, docText, txtText, 0, true);
+				this.fillPreview(partsText, docText, txtText, (replace && up) ? 1 : 0, true);
 				// END KGU#609 2018-11-21
-				done = true;
+				replacementsDone = true;
 			}
 			// Now cater for the comment if included
-			if ((elementwise || !done) && chkInComments.isSelected()
+			if ((elementwise || !replacementsDone) && chkInComments.isSelected()
 					&& nMatchesComment > currentPosition - nMatchesText) {
 				// START KGU#454 2017-11-03: Bugfix #448
 				//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
@@ -1427,9 +1454,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				currentElement.resetDrawingInfoUp();
 				// START KGU#609 2018-11-21: Bugfix #448 accomplished
 				//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
-				this.fillPreview(partsComment, docComm, txtComm, nMatchesText, true);
+				this.fillPreview(partsComment, docComm, txtComm, nMatchesText + ((replace && up) ? 1 : 0), true);
 				// END KGU#609 2018-11-21
-				done = true;
+				replacementsDone = true;
 			}
 			if (currentNode != null) {
 				// We better cache the current node locally lest the reload actions should reset it.
@@ -1448,7 +1475,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			diagram.doButtons();
 			// Make sure the Structorizer working area is refreshed, too
 			diagram.redraw(currentElement);
-			if (done) {
+			if (replacementsDone) {
 				if (elementwise) {
 					// after an elementwise replacement there can't be matches left (unless the
 					// replacement hasn't accidently induced new matches, which should NOT be
@@ -1462,13 +1489,18 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					nMatches--;
 					// Avoid a node change while the current node isn't exhausted (note that on
 					// downward search the currentPosition must not be incremented after the match
-					// having been replaced).
-					if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
+					// having been replaced). On upward search the move will be done in phase 3.
+					// START KGU#684 2019-06-12: Bugfix #728
+					//if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
+					if (!up && currentPosition < nMatches) {
+					// END KGU#684 2019-06-12
 						gotoNext = false;
 					}
 				}
 			}
 		}
+		
+		// PHASE 3: traverse to next position (if stlll requested)
 		// Is there another matching position within this element? (We might have come here in non-replacing mode!)
 		// Remember that "up" in the tree means backward in the text and "down" means forward in the text here
 		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
@@ -1484,33 +1516,67 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		else if (gotoNext && treeIterator != null) {
 			// no, single-Root scope: find the next matching element within the current diagram
 			boolean found = false;
-			clearCurrentElement();
-			if (rbUp.isSelected()) 
+			// START KGU#684 2019-02-12: Bugfix #728 the current element will still be needed for a distinction
+			//clearCurrentElement();
+			// END KGU#684 2019-06-12
+			if (up) {
 				while (!found && treeIterator.hasPrevious()) {
 					Element ele = treeIterator.previous();
 					nMatches = checkElementMatch(ele);
 					if (found = nMatches > 0) {
 						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
 						updateResultTree();
-						done = true;
+						// START KGU#684 2019-06-12: Bugfix #728 - was wrong and caused endless loops on ReplaceAll
+						//replacementsDone = true;
+						// END KGU#684 2019-06-12
 					}
 				}
-			else 
+				if (!found && scope != Scope.CURRENT_SELECTION) {
+					// START KGU#684 2019-06-12: Bugfix #728: We must clear the result when we exhausted the Root
+//					nMatches = checkElementMatch(diagram.getRoot()); 
+//					if (found = nMatches > 0) {
+//						setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
+//						updateResultTree();
+//						treeIterator = null;
+//						done = true;
+//					}					
+					Root root = diagram.getRoot();
+					nMatches = checkElementMatch(root); 
+					if (currentPosition == 0) {	// Can hardly have been different from 0, can't it?
+						// if element was a child then try the Root now (upwards direction!)
+						if (currentElement != root && (found = nMatches > 0)) {
+							setCurrentElement(root, elementwise ? -1 : nMatches - 1);
+							gotoNext = false;	// position is already set
+							updateResultTree();
+						}
+					}
+					// END KGU#684 2019-06-12
+				}
+			}
+			else {	// down
 				while (!found && treeIterator.hasNext()) {
 					Element ele = treeIterator.next();
 					nMatches = checkElementMatch(ele);
 					if (found = nMatches > 0) {
-						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
+						setCurrentElement(ele, elementwise ? -1 : 0);
 						updateResultTree();
-						done = true;
+						// START KGU#684 201906-12: Bugfix #728 - this led to an eternal loop in replaceAllActionPerformed
+						//replacementsDone = true;
+						// END KGU684 2019-06-12
 					}
 				}
+			}
+			
 			if (!found) {
 				// Iterator exhausted - drop it
+				// START KGU#684 2019-02-12: Bugfix #728 the current element is no longer needed now
+				clearCurrentElement();
+				// END KGU#684 2019-06-12
 				treeIterator = null;
 				updateResultTree();
 			}
 		}
+		// Opened diagrams scope?
 		else if (gotoNext && currentNode != null) {
 			// go to the next element within in the search result tree
 			if (rbUp.isSelected()) {
@@ -1526,14 +1592,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				TreePath path = new TreePath(currentNode.getPath());
 				treResults.setSelectionPath(path);
 				treResults.scrollPathToVisible(path);
-				done = true;
+				// START KGU#684 2019-06-12: Bugfix #728 - cannot have been correct -> endless loop
+				//replacementsDone = true;
+				// END KGU#684 2019-06-12
 			}
 			else {
 				clearCurrentElement();
 				treResults.clearSelection();
 			}
 		}
-		return done;
+		return replacementsDone;
 	}
 	
 	/**
@@ -1625,7 +1693,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * @param evt - the inducing event
 	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
+		// If the search hasn't been initialised then find the first match
+		if (currentNode == null && treeIterator == null) {
+			findActionPerformed(evt, false, false);
+		}
 		while (findActionPerformed(evt, true, true));
+		
 	}
 
 	// START KGU#454 2017-11-03: Bugfix #448 signature meaning changed, implementation revised
