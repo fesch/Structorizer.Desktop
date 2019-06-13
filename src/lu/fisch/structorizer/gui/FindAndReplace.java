@@ -47,15 +47,17 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
  *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
  *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integrated, element panel layout revised
- *      Kay Gürtzig     2019-06-12      Bugfix #728 (flaws on travering and replacement); flaw in #718 fixed
+ *      Kay Gürtzig     2019-06-12      Bugfix #728 - flaws on traversing and replacement tackled
+ *      Kay Gürtzig     2019-06-13      Bugfix #728 - IRoutinePoolListener inheritance added, now reacts on diagram changes
+ *                                      A matching selected Root element wasn't presented in the result tree (Current Selection scope)
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      TODO / FIXME:
  *      - Matching / Replacement with regular expressions ok?
- *      - Update or clear this dialog on heavy changes to the set of available open diagrams
  *      - Place element icons next to the element type checkboxes (and analogously to the Root type checkboxes)?
+ *      - Possibly the precomputed result tree is always better than the iterator strategy.
  *
  ******************************************************************************************************///
 
@@ -116,6 +118,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import lu.fisch.structorizer.archivar.IRoutinePool;
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -135,7 +139,7 @@ import lu.fisch.utils.StringList;
  * patterns with the opportunity to replace the text parts by other patterns
  */
 @SuppressWarnings("serial")
-public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
+public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*implements WindowListener*/ {
 
 	// START KGU#484 2018-04-05: Info #463
 	public static final Logger logger = Logger.getLogger(FindAndReplace.class.getName());
@@ -159,6 +163,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private final LinkedList<String> replacePatterns = new LinkedList<String>();
 	/** recursion-stopping flag for the choice list update of pattern comboboxes */
 	private boolean fillingComboBox = false;
+	// START KGU#684 2019-06-13: Bugfix #728
+	/** Replacement action flag (is to avoid result tree wiping during replacement) */
+	private boolean replacing = false;
+	// END KGU#684 2019-06-13
 	/**
 	 * treeIterator is only used with single-Root scope, traversing the diagram without prediction of matching elements
 	 * @see #currentNode
@@ -1244,11 +1252,18 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	// END KGU#454 2017-11-03
 
 	/**
-	 * Empties the result tree and unsets all navigation data ({@link #currentElement}, {@link #treeIterator},
-	 * {@link #currentNode}, {@link #currentPosition}). (part of the ItemListener for the scope choice, the StateChangeListener of the pattern combo boxes)
+	 * Empties the result tree and unsets all navigation data ({@link #currentElement},
+	 * {@link #treeIterator}, {@link #currentNode}, {@link #currentPosition}). (Part of
+	 * the ItemListener for the scope choice and the StateChangeListener of the pattern
+	 * combo boxes, but may also be called externally.)
 	 */
-	private void resetResults()
+	public void resetResults()
 	{
+		// START KGU#684 2019-06-13: Bugfix #728 - Should not be triggered during replacement
+		if (replacing) {
+			return;
+		}
+		// END KGU#684 2019-06-13
 		treeIterator = null;
 		resultTop.removeAllChildren();
 		currentNode = null;
@@ -1258,6 +1273,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			treResults.setEnabled(false);
 		}
 	}
+	
+	// START KGU#684 2019-06-13: Bugfix #728
+	@Override
+	public void routinePoolChanged(IRoutinePool _source, int _flags) {
+		if ((_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0
+				&& this.cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
+			this.resetResults();
+		}
+	}
+	// END KGU#684 2019-06-13
 
 	/**
 	 * Enables or disables all element types (selects or unselects the corresponding
@@ -1343,7 +1368,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				Element el = null;
 				if (up) {
 					// Fetch the last element of the tree in case of upward direction
-					treeIterator = diagram.getRoot().children.iterator(true);
 					while (treeIterator.hasNext()) {
 						el = treeIterator.next();
 					}
@@ -1351,7 +1375,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				if (el == null) {
 					// In downward direction or with empty diagram fetch the Root element
 					el = diagram.getRoot();
-					treeIterator = ((Root)el).children.iterator(true);
 				}
 				int nMatches = checkElementMatch(el);
 				if (nMatches > 0) {
@@ -1374,14 +1397,19 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
 			}
 			else if (selected instanceof Root) {
+				// START KGU#684 2019-06-13: Bugfix #728 tree iterator has to be set before updateResultTree()
+				treeIterator = ((Root)selected).children.iterator(true);
+				// END KGU#684 20189-06-13
 				// Now this is to ensure a matching Root isn't ignored
 				int nMatches = checkElementMatch(selected); 
 				if (nMatches > 0) {
 					setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
+					// START KGU#684 2019-06-13: Bugfix #728 Root is to be shown in the result tree if matching!
+					updateResultTree();
+					// END KGU#684 2019-06-12
 					replace = false;
 					gotoNext = false;
 				}
-				treeIterator = ((Root)selected).children.iterator(true);
 			}
 			// START KGU#684 2019-06-12: Bugfix #728 was nonsense at this place
 			//// Go to last element if we are to go upwards (looks awkward but works)
@@ -1403,73 +1431,81 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			// END KGU#4545 2017-11-03
 		}
 		if (replace && nMatches > 0) {
-			// Replace next match according to the current pattern
-			Root root = Element.getRoot(currentElement);
-			if (root != null) {
-				// Every single replacement is to be undoable ...
-				root.addUndo();
-			}
-			// START KGU#480 2018-01-22: Enh. #490
-			//StringList text = currentElement.getText();
-			StringList text = currentElement.getAliasText();
-			// END KGU#480 2018-01-22
-			StringList comment = currentElement.getComment();
-			// START KGU#454 2017-11-03: Bugfix #448
-//			int nMatchesComment = textMatches(comment);
-//			int nMatchesText = textMatches(text);
-			int nMatchesComment = (partsComment.count() - 1) / 2;
-			int nMatchesText = (partsText.count() - 1) / 2;
-			// END KGU#454 2017-11-03
-			// Start with the element text (prioritized if included)
-			if ((elementwise || !replacementsDone) && chkInTexts.isSelected() 
-					&& nMatchesText > currentPosition) {
-				// START KGU#454 2017-11-03: Bugfix #448
-				//text = replacePattern(text, elementwise, currentPosition);
-				text = replacePattern(partsText, elementwise, currentPosition);
-				// END KGU#454 2017-11-03 
+			// START KGU#684 2019-06-13: Bugfix #728 - avoid interference from element modifications
+			replacing = true;
+			try {
+			// END KGU#684 2019-06-13
+				// Replace next match according to the current pattern
+				Root root = Element.getRoot(currentElement);
+				if (root != null) {
+					// Every single replacement is to be undoable ...
+					root.addUndo();
+				}
 				// START KGU#480 2018-01-22: Enh. #490
-				//currentElement.setText(text);
-				currentElement.setAliasText(text);
+				//StringList text = currentElement.getText();
+				StringList text = currentElement.getAliasText();
 				// END KGU#480 2018-01-22
-				// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
-				if (currentElement instanceof For) {
-					((For)currentElement).updateFromForClause();					
-				}
-				// END KGU#431 2017-10-09
-				currentElement.resetDrawingInfoUp();
-				// START KGU#609 2018-11-21: Bugfix #448 accomplished
-				//this.fillPreview(text, docText, txtText, 0, true);
-				this.fillPreview(partsText, docText, txtText, (replace && up) ? 1 : 0, true);
-				// END KGU#609 2018-11-21
-				replacementsDone = true;
-			}
-			// Now cater for the comment if included
-			if ((elementwise || !replacementsDone) && chkInComments.isSelected()
-					&& nMatchesComment > currentPosition - nMatchesText) {
+				StringList comment = currentElement.getComment();
 				// START KGU#454 2017-11-03: Bugfix #448
-				//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
-				comment = replacePattern(partsComment, elementwise, currentPosition - nMatchesText);
-				// END KGU#454 2017-11-03 
-				currentElement.setComment(comment);
-				currentElement.resetDrawingInfoUp();
-				// START KGU#609 2018-11-21: Bugfix #448 accomplished
-				//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
-				this.fillPreview(partsComment, docComm, txtComm, nMatchesText + ((replace && up) ? 1 : 0), true);
-				// END KGU#609 2018-11-21
-				replacementsDone = true;
-			}
-			if (currentNode != null) {
-				// We better cache the current node locally lest the reload actions should reset it.
-				DefaultMutableTreeNode currNode = currentNode;
-				resultModel.reload(currentNode);	// update the element's presentation in the tree view
-				DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
-				// In case we are working on a Root make sure its representing top node is also updated
-				if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
-					resultModel.reload(parent);
-					// Restore the previously cached selection
-					currentNode = currNode;
-					treResults.setSelectionPath(new TreePath(currentNode.getPath()));
+				//int nMatchesComment = textMatches(comment);
+				//int nMatchesText = textMatches(text);
+				int nMatchesComment = (partsComment.count() - 1) / 2;
+				int nMatchesText = (partsText.count() - 1) / 2;
+				// END KGU#454 2017-11-03
+				// Start with the element text (prioritized if included)
+				if ((elementwise || !replacementsDone) && chkInTexts.isSelected() 
+						&& nMatchesText > currentPosition) {
+					// START KGU#454 2017-11-03: Bugfix #448
+					//text = replacePattern(text, elementwise, currentPosition);
+					text = replacePattern(partsText, elementwise, currentPosition);
+					// END KGU#454 2017-11-03 
+					// START KGU#480 2018-01-22: Enh. #490
+					//currentElement.setText(text);
+					currentElement.setAliasText(text);
+					// END KGU#480 2018-01-22
+					// START KGU#431 2017-10-09: We must handle the structured fields of For elements				
+					if (currentElement instanceof For) {
+						((For)currentElement).updateFromForClause();					
+					}
+					// END KGU#431 2017-10-09
+					currentElement.resetDrawingInfoUp();
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(text, docText, txtText, 0, true);
+					this.fillPreview(partsText, docText, txtText, (replace && up) ? 1 : 0, true);
+					// END KGU#609 2018-11-21
+					replacementsDone = true;
 				}
+				// Now cater for the comment if included
+				if ((elementwise || !replacementsDone) && chkInComments.isSelected()
+						&& nMatchesComment > currentPosition - nMatchesText) {
+					// START KGU#454 2017-11-03: Bugfix #448
+					//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
+					comment = replacePattern(partsComment, elementwise, currentPosition - nMatchesText);
+					// END KGU#454 2017-11-03 
+					currentElement.setComment(comment);
+					currentElement.resetDrawingInfoUp();
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+					this.fillPreview(partsComment, docComm, txtComm, nMatchesText + ((replace && up) ? 1 : 0), true);
+					// END KGU#609 2018-11-21
+					replacementsDone = true;
+				}
+				if (currentNode != null) {
+					// We better cache the current node locally lest the reload actions should reset it.
+					DefaultMutableTreeNode currNode = currentNode;
+					resultModel.reload(currentNode);	// update the element's presentation in the tree view
+					DefaultMutableTreeNode parent = (DefaultMutableTreeNode) currNode.getParent();
+					// In case we are working on a Root make sure its representing top node is also updated
+					if (parent != null && parent.getUserObject() == currNode.getUserObject()) {
+						resultModel.reload(parent);
+						// Restore the previously cached selection
+						currentNode = currNode;
+						treResults.setSelectionPath(new TreePath(currentNode.getPath()));
+					}
+				}
+			}
+			finally {
+				replacing = false;
 			}
 
 			diagram.doButtons();
@@ -1615,7 +1651,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			this.resultTop.removeAllChildren();
 			this.resultModel.reload();
 			if (currentElement != null && treeIterator != null) {
-				if (treeIterator.hasPrevious()) {
+				// START KGU#684 2019-06-13: Bugfix #728 since a new iterator tends to wrap around we stop it with a Root
+				//if (treeIterator.hasPrevious()) {
+				boolean isDiagrScope = this.cmbScope.getSelectedItem() == Scope.CURRENT_DIAGRAM;
+				if (!(currentElement instanceof Root) && (isDiagrScope || treeIterator.hasPrevious())) {
+				// END KGU#684 2019-06-13
 					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
 				}
 				DefaultMutableTreeNode eleNode = new DefaultMutableTreeNode(currentElement); 
@@ -1647,6 +1687,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		clearCurrentElement();
 		DefaultMutableTreeNode lastNode = null;
 		Vector<Root> roots = Arranger.getSortedRoots();
+		if (!roots.isEmpty()) {
+			Arranger.addToChangeListeners(this);
+		}
 		if (!roots.contains(diagram.getRoot())) {
 			roots.add(0, diagram.getRoot());
 		}
@@ -1693,10 +1736,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * @param evt - the inducing event
 	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
+		// START KGU#684 2019-06-12: Bugfix #728
 		// If the search hasn't been initialised then find the first match
 		if (currentNode == null && treeIterator == null) {
 			findActionPerformed(evt, false, false);
 		}
+		// END KGU#684 2019-06-12
 		while (findActionPerformed(evt, true, true));
 		
 	}

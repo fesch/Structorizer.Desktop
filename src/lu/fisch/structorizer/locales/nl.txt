@@ -1341,7 +1341,7 @@ ElementNames.localizedNames.12.text=Diagram
 ElementNames.localizedNames.13.text=Hoofdprogramma
 ElementNames.localizedNames.14.text=Subroutine
 ElementNames.localizedNames.15.text=Insluitbaar
-ElementNames.localizedNames.16.text=PROBEER
+ElementNames.localizedNames.16.text=TRY
 
 -----> Keywords
 ParserKeywords.AltPre.text=als
@@ -1360,6 +1360,6 @@ ParserKeywords.RepeatPost.text=
 ParserKeywords.JumpLeave.text=verlaten
 ParserKeywords.JumpReturn.text=teruggeven
 ParserKeywords.JumpExit.text=exit
-ParserKeywords.JumpThrow.text=foutmelden
+ParserKeywords.JumpThrow.text=throw
 ParserKeywords.Input.text=INVOER
 ParserKeywords.Output.text=UITVOER

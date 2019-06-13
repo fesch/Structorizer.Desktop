@@ -38,6 +38,8 @@ package lu.fisch.structorizer.elements;
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
+*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
+*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *
 ******************************************************************************************************
 *
@@ -266,6 +268,7 @@ public interface IElementSequence {
 			int level = positions.size() - 1;
 			int at = (level >= 0) ? positions.peek() : -1;
 			if (at < 0 && top.getSize() > 0) {
+				// Wrap around if in virgin state
 				return getLastInSubtree(top, top.getSize()-1, move);
 			}
 			IElementSequence seq = current;

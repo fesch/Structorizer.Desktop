@@ -178,6 +178,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
  *      Kay Gürtzig     2019-03-20      Bugfix #720: Proper reflection of includable changes ensured
+ *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
  *
  ******************************************************************************************************
  *
@@ -1106,7 +1107,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						{
 							//root.addUndo();
 							try {
-								addUndoNSD();
+								addUndoNSD(false);
 							} catch (CancelledException ex) {
 								return;
 							}
@@ -2783,18 +2784,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Creates an undo entry on .root, if the action wasn't cancelled. (Otherwise
 	 * a CancelledException is thrown.)
+	 * @param _isRoot - if the Root itself is to be changed (such that attributes are to be cached)
 	 * @throws CancelledException 
 	 */
-	public void addUndoNSD() throws CancelledException
+	public void addUndoNSD(boolean _isRoot) throws CancelledException
 	{
-		if (root.storedParserPrefs != null) {
+		if (!_isRoot && root.storedParserPrefs != null) {
 			// This is an un-refactored Root!
 			// So care for consistency
 			if (!this.handleKeywordDifferences(true)) {
 				throw new CancelledException();
 			}
 		}
-		root.addUndo();
+		root.addUndo(_isRoot);
+		// START KGU#684 2019-06-13: Bugfix #728
+		if (this.findDialog != null) {
+			this.findDialog.resetResults();
+		}
+		// END KGU#684 2019-06-13
 	}
 
 	/*****************************************
@@ -2802,6 +2809,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void undoNSD()
 	{
+		// START KGU#684 2019-06-13: Bugfix #728
+		if (this.findDialog != null) {
+			this.findDialog.resetResults();
+		}
+		// END KGU#684 2019-06-13
 		root.undo();
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = null;
@@ -2832,6 +2844,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void redoNSD()
 	{
+		// START KGU#684 2019-06-13: Bugfix #728
+		if (this.findDialog != null) {
+			this.findDialog.resetResults();
+		}
+		// END KGU#684 2019-06-13
 		root.redo();
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = null;
@@ -3015,7 +3032,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
 			//root.addUndo();
 			try {
-				addUndoNSD();
+				addUndoNSD(false);
 			} catch (CancelledException e) {
 				return;
 			}
@@ -3069,7 +3086,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			eCopy.setSelected(false);
 			//root.addUndo();
 			try {
-				addUndoNSD();
+				addUndoNSD(false);
 			} catch (CancelledException e) {
 				return;
 			}
@@ -3105,7 +3122,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			//root.addUndo();
 			try {
-				addUndoNSD();
+				addUndoNSD(false);
 			} catch (CancelledException e) {
 				return;
 			}
@@ -3178,12 +3195,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#277 2016-10-13: Enh. #270
 					ele.disabled = data.disabled;
 					// END KGU#277 2016-10-13
-					// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
+					// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
 					//root.addUndo();
 					try {
-						addUndoNSD();
+						addUndoNSD(false);
 					} catch (CancelledException e) {
 						return;
 					}
@@ -3251,7 +3268,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#363 2017-05-21: Enh. #372:
 					// Also cache root attributes if the edited element is a Root
 					//root.addUndo();
-					root.addUndo(element instanceof Root);
+					// START KGU#684 2019-06-13: Bugfix #728 - we have to check more here
+					//root.addUndo(element instanceof Root);
+					try {
+						this.addUndoNSD(element instanceof Root);
+					} catch (CancelledException e) {
+						return;
+					}
+					// END KGU#684 2019-06-13
 					// END KGU#363 2017-05-21
 					if (!(element instanceof Forever))
 					{
@@ -3384,7 +3408,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		//root.addUndo();
 		try {
-			addUndoNSD();
+			addUndoNSD(false);
 		} catch (CancelledException e) {
 			return;
 		}
@@ -3400,7 +3424,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		//root.addUndo();
 		try {
-			addUndoNSD();
+			addUndoNSD(false);
 		} catch (CancelledException e) {
 			return;
 		}
@@ -3416,7 +3440,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		//root.addUndo();
 		try {
-			addUndoNSD();
+			addUndoNSD(false);
 		} catch (CancelledException e) {
 			return;
 		}
@@ -3542,7 +3566,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		boolean allDisabled = true;
 		//root.addUndo();
 		try {
-			addUndoNSD();
+			addUndoNSD(false);
 		} catch (CancelledException e) {
 			return;
 		}
@@ -3633,7 +3657,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#3 2015-10-25
 				//root.addUndo();
 				try {
-					addUndoNSD();
+					addUndoNSD(false);
 				} catch (CancelledException e) {
 					return;
 				}
@@ -3722,7 +3746,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
 			if (subroutineName != null) {
 				try {
-					addUndoNSD();
+					addUndoNSD(false);
 				} catch (CancelledException e) {
 					return;
 				}
@@ -4069,7 +4093,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			//root.addUndo();
 			try {
-				addUndoNSD();
+				addUndoNSD(false);
 			} catch (CancelledException e) {
 				return;
 			}
@@ -4536,7 +4560,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// There will be substitutions, so get dangerous.
 			//root.addUndo();
 			try {
-				addUndoNSD();
+				addUndoNSD(false);
 			} catch (CancelledException e) {
 				return;
 			}
