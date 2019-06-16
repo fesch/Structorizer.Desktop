@@ -1135,6 +1135,18 @@ FindAndReplace.chkInComments.text=En comentarios
 FindAndReplace.pnlElements.border=Tipos de elemente
 FindAndReplace.btnAll.text=Todos
 FindAndReplace.btnNone.text=Ningunos
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
 FindAndReplace.chkDisabled.text=Elementos inactivos
 FindAndReplace.pnlPreview.border=Contenido
 FindAndReplace.txtText.border=Texto
@@ -1144,6 +1156,7 @@ FindAndReplace.btnFind.text=Buscar
 FindAndReplace.btnReplace.text=Reemplazar
 FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
 FindAndReplace.btnReplaceAll.text=Reemplazar todos
+FindAndReplace.btnReplaceAll.tooltip=Reemplaza todas aparencias restantes del texto de búsqueda a partir de la posición actual en la puesta dirección.
 FindAndReplace.btnClose.text=Cerrar
 
 -----> Arranger

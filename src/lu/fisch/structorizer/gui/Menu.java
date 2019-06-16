@@ -249,7 +249,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.getIcon(/*56*/59));
 	protected final JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.getIcon(/*90*/91));
 	// START KGU#686 2019-03-16: Enh. #56
-	protected final JMenuItem menuDiagramAddBeforeTry = new JMenuItem("Try",IconLoader.getIcon(120));
+	protected final JMenuItem menuDiagramAddBeforeTry = new JMenuItem("Try-Catch",IconLoader.getIcon(120));
 	// END KGU#686 2019-03-16
 
 	// Submenu "Diagram -> Add -> After"
@@ -269,7 +269,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.getIcon(/*55*/59));
 	protected final JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.getIcon(/*89*/91));
 	// START KGU#686 2019-03-16: Enh. #56
-	protected final JMenuItem menuDiagramAddAfterTry = new JMenuItem("Try",IconLoader.getIcon(120));
+	protected final JMenuItem menuDiagramAddAfterTry = new JMenuItem("Try-Catch",IconLoader.getIcon(120));
 	// END KGU#686 2019-03-16
 
 	protected final JMenuItem menuDiagramEdit = new JMenuItem("Edit",IconLoader.getIcon(6));

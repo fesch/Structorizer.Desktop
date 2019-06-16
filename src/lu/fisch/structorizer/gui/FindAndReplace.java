@@ -583,7 +583,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			
 			JPanel pnlDirection = new JPanel();
 			pnlDirection.setLayout(new GridLayout(1, 0));
-			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_D);
+			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_O);
 			this.rbDown.addKeyListener(keyListener);
 			pnlDirection.add(rbDown);
 			this.rbUp.setMnemonic(java.awt.event.KeyEvent.VK_U);

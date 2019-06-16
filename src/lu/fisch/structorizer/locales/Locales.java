@@ -47,6 +47,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2018-07-02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target
  *      Kay Gürtzig     2019-01-18  Issue #346: Precaution against uninitialized arrays in setLocale()
  *      Kay Gürtzig     2019-03-03  Enh. #327: New methods removeLocale(String, boolean), removeLocales(boolean)
+ *      Kay Gürtzig     2019-06-14  Issue #728: Mechanism for setting mnemonics enhanced
  *
  ******************************************************************************************************
  *
@@ -875,6 +876,13 @@ public class Locales {
                 int keyCode = KeyEvent.getExtendedKeyCodeForChar(_text.toLowerCase().charAt(0));
                 if (keyCode != KeyEvent.VK_UNDEFINED) {
                     method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
+                    // START KGU#713 2019-06-14: Issue #728 Allow to position the mnemonic in the caption
+                    String pos = _text.substring(1);	// an index may follow, e.g in "g12"
+                    if (!pos.isEmpty()) {
+                        method = _fieldClass.getMethod("setDisplayedMnemonicIndex", new Class[]{int.class});
+                        method.invoke(_target, new Object[]{Integer.valueOf(pos)});
+                    }
+                    // END KGU#713 2019-06-14
                 }
             } catch (NoSuchMethodError ex) {
             	logger.warning("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
