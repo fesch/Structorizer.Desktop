@@ -37,9 +37,6 @@ package lu.fisch.structorizer.elements;
 *      Kay Gürtzig      2017-05-30      Enh. #415: Equipped with a tree-capable Iterator class
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
-*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
-*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
-*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *
 ******************************************************************************************************
 *

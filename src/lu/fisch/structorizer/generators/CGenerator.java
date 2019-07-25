@@ -1817,7 +1817,7 @@ public class CGenerator extends Generator {
 				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
 				this.generatorIncludes.add("<stdio.h>");
 				if (this.usesFileAPI) {
-					this.generatorIncludes.add("<stlib.h>");
+					this.generatorIncludes.add("<stdlib.h>");
 					this.generatorIncludes.add("<string.h>");
 					this.generatorIncludes.add("<errno.h>");
 				}
