@@ -49,6 +49,8 @@ package lu.fisch.structorizer.locales;
  *                                      saving.
  *      Kay Gürtzig     2019-03-28      Issue #712: Further usability improvements (current directory also
  *                                      used for loading, save button coloured together with locale button)
+ *      Kay Gürtzig     2019-06-07/08   Enh. #726: Pull-down buttons opening new TranslatorRowEditor added
+ *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
  *
  ******************************************************************************************************
  *
@@ -74,12 +76,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
@@ -94,13 +105,15 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.gui.ElementNames;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
 /**
- *
+ * Localization tool for Structorizer
  * @author robertfisch
  */
 @SuppressWarnings("serial")
@@ -192,6 +205,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         headerText.setEditable(false);
         // END KGU 2016-08-04
 
+        // START KGU#709 219-06-06: Issue #726 - Improved editing of long messages
+        ImageIcon pulldownIcon = IconLoader.getIcon(80);
+        ActionListener pulldownListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                launchRowEditor(event.getSource());
+            }};
+        // END KGU#709 2019-06-06
         // loop through all sections
         ArrayList<String> sectionNames = locales.getSectionNames();
         for (int i = 0; i < sectionNames.size(); i++) {
@@ -227,7 +248,21 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             ArrayList<String> keys = locales.getDefaultLocale().getKeyValues(sectionName);
             for (int j = 0; j < keys.size(); j++) {
                 String key = keys.get(j);
-                model.addRow(key.trim().split("=", 2));
+                // START KGU#709 2019-06-06: Issue #726 - improved editing of long messages 
+                //model.addRow(key.trim().split("=", 2));
+                String[] parts = key.trim().split("=", 2);
+                //model.addRow(parts);
+                if (parts.length > 1) {
+                    JButton pulldown = new JButton();
+                    pulldown.setName(sectionName + ":" + parts[0]);
+                    pulldown.setIcon(pulldownIcon);
+                    pulldown.addActionListener(pulldownListener);
+                    model.addRow(new Object[] {parts[0], parts[1], null, pulldown});
+                }
+                else {
+                    model.addRow(parts);
+                }
+                // END KGU#709 2019-06-06
             }
         }
         
@@ -284,7 +319,31 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     }
     
-    public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
+    // START KGU#709 2019-06-07: Issue #726 - usability improvement, particularly for long lines
+    /**
+     * Action listener method for the pulldown buttons
+     * @param source
+     */
+    protected void launchRowEditor(Object source) {
+        if (source instanceof JButton) {
+            String[] nameParts = ((JButton)source).getName().split(":", 3);
+            JTable table = tables.get(nameParts[0]);
+            int row = table.getSelectedRow();
+            TranslatorRowEditor editor = new TranslatorRowEditor(
+                    this,
+                    (JButton)source, 
+                    this.loadedLocaleName,
+                    (String)table.getValueAt(row, 2));
+            editor.setLocationRelativeTo((JButton)source);
+            editor.setVisible(true);
+            if (editor.isCommitted()) {
+                table.setValueAt(editor.getText(), row, 2);
+            }
+        }
+    }
+    // END KGU#709 2019-06-07
+
+	public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
     {
         ((JButton)evt.getSource()).setName(localeName);
         //((JButton)evt.getSource()).setToolTipText(localeName);
@@ -461,6 +520,51 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }
     }
     // END KGU#231 2016-08-09
+    
+    // START KGU#709 2019-06-10: Issue #726
+    /**
+     * Retrieves the arrays of current (possibly modified) Element name translations
+     * for the current locale 
+     * @param _localeName - name of the interesting locale (null = loadedLocale)
+     * @param _preferCached - whether cached (modified) values are to be preferred
+     * @return the array of the retrieved translations
+     */
+    public String[] provideCurrentElementNames(String _localeName, boolean _preferCached)
+    {
+        String[] elementNames = new String[ElementNames.ELEMENT_KEYS.length];
+        Locale locale = null;
+        // fetch the "Elements" table
+        JTable table = tables.get("Elements");
+        // get a reference to the model
+        DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+        if (_preferCached && (_localeName == null || _localeName.equals(this.loadedLocaleName))) {
+            // get the strings and put them into the result array
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the value
+                elementNames[r] = ((String) model.getValueAt(r, 2)).trim();
+            }
+        }
+        else if (_preferCached && (locale = locales.getLocale(_localeName)) != null && locale.hasCachedChanges()) {
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // get the value
+                elementNames[r] = locale.values.get("Elements").get(key);
+            }
+        }
+        else if ((locale = locales.getLocale(_localeName)) != null) {
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // get the value
+                elementNames[r] = locale.getValue("Elements", key);
+            }
+        }
+        
+        return elementNames;
+    }
+    // END KGU#709 2019-06-10
     
     // START KGU#244 2016-06-09: Allow to reload a translation file
     private boolean presentLocale(Locale locale)
@@ -664,6 +768,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         }
                     }
                 }
+                break;
                 case KeyEvent.VK_F:
                 {
                     if (evt.isControlDown()) {
@@ -674,8 +779,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     }
                 }
                 break;
+                // START KGU709 2019-06-10: Issue #726 - show the Help page
+                case KeyEvent.VK_F1:
+                {
+                    helpTranslator();
+                }
+                break;
+                // END KGU#709 2019-06-10
                 }
             }
+
 
             @Override
             public void keyTyped(KeyEvent evt) {}
@@ -836,15 +949,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         tabs.addTab("Header", jPanel2);
         // START KGU#418 2017-12-18: Issue #425 - we needed a key binding on the tabs
         tabs.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-        		KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
         tabs.getActionMap().put("openFindDialog", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-        		if (searchDialog == null) {
-        			searchDialog = new TranslatorFindDialog(Translator.this);
-        		}
-        		searchDialog.setVisible(true);
-			}
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (searchDialog == null) {
+                    searchDialog = new TranslatorFindDialog(Translator.this);
+                }
+                searchDialog.setVisible(true);
+            }
         });
         // END KGU#418 2017-12-18
 
@@ -853,6 +966,57 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    // START KGU#709 2019-06-10: Issue #726 - Usability improvements
+    /**
+     * Opens the User Guide page for Translator in the browser if possible
+     */
+    private void helpTranslator() {
+    	String query = "?menu=115";
+        Logger logger = Logger.getLogger(Translator.class.getName());
+        String help = Element.E_HELP_PAGE + query;
+        boolean isLaunched = false;
+        try {
+        	isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
+        } catch (URISyntaxException ex) {
+        	logger.log(Level.WARNING, "Can't browse Translator help URL.", ex);
+        }
+        // The isLaunched mechanism above does not signal an unavailable help page.
+        // With the following code we can find out whether the help page was available...
+        // TODO In this case we might offer to download the PDF for offline use,
+        // otherwise we could try to open a possibly previously downloaded PDF ...
+        URL url;
+        HttpsURLConnection con = null;
+        try {
+        	isLaunched = false;
+        	url = new URL(help);
+        	con = (HttpsURLConnection)url.openConnection();
+        	if (con != null) {
+        		con.connect();
+        	}
+        	isLaunched = true;
+        } catch (SocketTimeoutException ex) {
+        	logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
+        } catch (MalformedURLException e1) {
+        	logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+        } catch (IOException e) {
+        	logger.log(Level.WARNING, "Failed Access to " + help, e);
+        }
+        finally {
+        	if (con != null) {
+        		con.disconnect();
+        	}
+        }
+        if (!isLaunched)
+        {
+            String message = "Failed to show % in browser".replace("%", help);
+            JOptionPane.showMessageDialog(this,
+                    message,
+                    "URL Error",
+                    JOptionPane.ERROR_MESSAGE);
+            // TODO We might look for a downloaded PDF version and offer to open this instead...
+        }
+    }
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {
@@ -1254,7 +1418,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 		if (table != null) {
 			DefaultTableModel tableModel = (DefaultTableModel)table.getModel();
 			int nRows = table.getRowCount();
-			int nCols = table.getColumnCount();
+			// START KGU#709 2019-06-08: Issue #726 - there is an additional button column now...
+			//int nCols = table.getColumnCount();
+			int nCols = table.getColumnCount() - 1;
+			// END KGU#709 2019-06-08
 			int currRowIx = table.getSelectedRow();
 			boolean found = false;
 			int row = currRowIx;
@@ -1309,7 +1476,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 			}
 			else {
 				JOptionPane.showMessageDialog(this,
-						"No further occurrance of \"" + _pattern + "\" found.",
+						"No further occurrence of \"" + _pattern + "\" found.",
 						"Find failed", JOptionPane.INFORMATION_MESSAGE);
 			}
 		}

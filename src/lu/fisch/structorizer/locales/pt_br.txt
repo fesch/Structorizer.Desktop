@@ -113,8 +113,8 @@ Menu.menuFileSaveAs.text=Salvar como ...
 Menu.menuFileExport.text=Exportar
 
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Figura ...
-Menu.menuFileExportCode.text=Código ...
+Menu.menuFileExportPicture.text=Figura
+Menu.menuFileExportCode.text=Código
 Menu.menuFileExportPicturePNG.text= 
 Menu.menuFileExportPicturePNGmulti.text= 
 Menu.menuFileExportPictureEMF.text= 
@@ -130,6 +130,7 @@ Menu.menuFileImportCode.text=Código ...
 
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Organizar
+Menu.menuFileTranslator.text=Tradutor ...
 Menu.menuFileQuit.text=Sair
 
 // Menu "Edit"
@@ -628,6 +629,25 @@ ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
 
+-----[ FindAndReplace ]-----
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instrução

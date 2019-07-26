@@ -105,6 +105,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *      Kay Gürtzig     2019-03-24      Bugfix #711: Eternal loop on parsing an instruction line
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
+ *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *
  ******************************************************************************************************
  *
@@ -258,7 +259,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-10";
+	public static final String E_VERSION = "3.29-11";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -290,8 +291,8 @@ public abstract class Element {
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Translations initially provided by\n"+
-	" - NL: Jerone <jeronevw@hotmail.com>\n"+
+	"Translations initially provided or substantially updated by\n"+
+	" - NL: Jerone <jeronevw@hotmail.com>, Jaap Woldringh\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
@@ -3641,7 +3642,11 @@ public abstract class Element {
 				}
 				// This is now the pure drawing
 				for (HighlightUnit unit: hlUnits) {
-					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+					// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
+					// (This workaround will still only affect the standard font and have no impact on derived fonts)
+					//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
+					// END KGU#707 2019-05-15
 					_canvas.setColor(unit.textColor);
 					if (_actuallyDraw)
 					{
@@ -3894,10 +3899,12 @@ public abstract class Element {
     /**
      * Converts the operator symbols accepted by Structorizer into intermediate operators
      * (mostly Java operators):
-     * - Assignment:		"<-"
-     * - Comparison*:		"==", "<", ">", "<=", ">=", "!="
-     * - Logic*:			"&&", "||", "!", "^"
-     * - Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")
+     * <ul>
+     * <li>Assignment:		"<-"</li>
+     * <li>Comparison*:		"==", "<", ">", "<=", ">=", "!="</li>
+     * <li>Logic*:			"&&", "||", "!", "^"</li>
+     * <li>Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")</li>
+     * </ul>
      * @param _tokens - a tokenised line of an Element's text (in practically unknown syntax)
      * @param _assignmentOnly - if true then only assignment operator will be unified
      * @return total number of deletions / replacements
@@ -3928,19 +3935,22 @@ public abstract class Element {
     /**
      * Returns a (hopefully) lossless representation of the stored text as a
      * StringList in a common intermediate language (code generation phase 1).
-     * This allows the language-specific Generator subclasses to concentrate on the translation
-     * into their respective target languages (code generation phase 2).
-     * Conventions of the intermediate language:
+     * This allows the language-specific Generator subclasses to concentrate
+     * on the translation into their respective target languages (code generation
+     * phase 2).<br/>
+     * Conventions of the intermediate language:<br/>
      * Operators (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
-     * - Logic:				" && ", " || ", " §NOT§ ", " ^ "
-     * - Arithmetics:		usual Java operators without padding
-     * - Control key words:
-     * -	If, Case:		none (wiped off)
-     * -	While, Repeat:	none (wiped off)
-     * -	For:			unchanged
-     * -	Forever:		none (wiped off)
+     * <ul>
+     * <li>Assignment:		" <- "
+     * <li>Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
+     * <li>Logic:				" && ", " || ", " §NOT§ ", " ^ "
+     * <li>Arithmetics:		usual Java operators without padding
+     * <li>Control key words:<br/>
+     * -	If, Case:		none (wiped off)<br/>
+     * -	While, Repeat:	none (wiped off)<br/>
+     * -	For:			unchanged<br/>
+     * -	Forever:		none (wiped off)</li>
+     * </ul>
      * 
      * @return a padded intermediate language equivalent of the stored text
      */
@@ -3976,18 +3986,19 @@ public abstract class Element {
      * tokens list of a common intermediate language (code generation phase 1).
      * This allows the language-specific Generator subclasses to concentrate
      * on the translation into their target language (code generation phase 2).
-     * Conventions of the intermediate language:
+     * Conventions of the intermediate language:<br/>
      * Operators (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		"<-"
-     * - Comparison:		"=", "<", ">", "<=", ">=", "<>"
-     * - Logic:				"&&", "||", "!", "^"
-     * - Arithmetics:		usual Java operators
-     * - Control key words:
-     * -	If, Case:		none (wiped off)
-     * -	While, Repeat:	none (wiped off)
-     * -	For:			unchanged
-     * -	Forever:		none (wiped off)
-     * 
+     * <ul>
+     * <li>Assignment:		"<-"</li>
+     * <li>Comparison:		"=", "<", ">", "<=", ">=", "<>"</li>
+     * <li>Logic:				"&&", "||", "!", "^"</li>
+     * <li>Arithmetics:		usual Java operators</li>
+     * <li>Control key words:<br/>
+     * -	If, Case:		none (wiped off)<br/>
+     * -	While, Repeat:	none (wiped off)<br/>
+     * -	For:			unchanged<br/>
+     * -	Forever:		none (wiped off)</li>
+     * </ul>
      * @param _text - a line of the Structorizer element
      * //@return a padded intermediate language equivalent of the stored text
      * @return a StringList consisting of tokens translated into a unified intermediate language

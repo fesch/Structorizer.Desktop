@@ -219,9 +219,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtIncr.addKeyListener(this);
 		chkTextInput.setSelected(false); 
 		chkTextInput.addItemListener(this);
+		chkTextInput.setToolTipText("If enabled then the content for the above fields will be extracted from the text, otherwise the text will be composed from the field contents.");
 		txtText.addKeyListener(this);
 		
-        // START KGU#294 2016-11-21: Issue #284
+		// START KGU#294 2016-11-21: Issue #284
 		scalableComponents.addElement(txtVariable);
 		scalableComponents.addElement(txtStartVal);
 		scalableComponents.addElement(txtEndVal);
@@ -232,7 +233,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		scalableComponents.addElement(lblPostFor);
 		scalableComponents.addElement(lblStepFor);
 		scalableComponents.addElement(lblpostForIn);		
-        // END KGU#294 2016-11-21
+		// END KGU#294 2016-11-21
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
 		rbCounting = new JRadioButton(CodeParser.getKeyword("preFor"));

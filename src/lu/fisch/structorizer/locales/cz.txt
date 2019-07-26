@@ -110,8 +110,8 @@ Menu.menuFileSave.text=Uložit
 Menu.menuFileSaveAs.text=Uložit jako ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Obrázek ...
-Menu.menuFileExportCode.text=Programovací jazyk ...
+Menu.menuFileExportPicture.text=Obrázek
+Menu.menuFileExportCode.text=Programovací jazyk
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=
 Menu.menuFileExportPictureEMF.text=
@@ -125,7 +125,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportCode.text=Programovací Kod ...
 Menu.menuFilePrint.text=Tisk ...
 Menu.menuFileArrange.text=
-Menu.menuFileTranslator.text=
+Menu.menuFileTranslator.text=Překladatel ...
 Menu.menuFileQuit.text=Konec
 // Menu "Edit"
 Menu.menuEdit.text=Úpravy
@@ -598,6 +598,26 @@ ExportOptionDialoge.jLabel1.text=
 ExportOptionDialoge.jButton1.text=
 ExportOptionDialoge.jButton1.tooltip=
 
+-----[ FindAndReplace ]-----
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+
 -----> Arranger
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=
@@ -668,5 +688,5 @@ ElementNames.localizedNames.10.text=Skok
 ElementNames.localizedNames.11.text=Paralelní
 ElementNames.localizedNames.13.text=Hlavní program
 ElementNames.localizedNames.14.text=Podprogram
-ElementNames.localizedNames.15.text=
+ElementNames.localizedNames.15.text=Includable
 ElementNames.localizedNames.16.text=TRY

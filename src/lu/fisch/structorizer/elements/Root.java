@@ -5631,7 +5631,7 @@ public class Root extends Element {
 					StringList users = table.get(key);
 					if (users == null)
 					{
-						// First occurrance of thís key word
+						// First occurrence of thís key word
 						users = StringList.getNew(plugin.title);
 						table.put(key, users);
 					}
