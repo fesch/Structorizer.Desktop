@@ -81,6 +81,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
  *      Kay Gürtzig     2019-03-27      Enh. #717: Loading/saving of Element.E_WHEEL_SCROLL_UNIT
+ *      Kay Gürtzig     2019-07-28      Issue KGU#715: isWebStart renamed to isAutoUpdating
  *
  ******************************************************************************************************
  *
@@ -166,7 +167,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	boolean isNew = false;
 	// END KGU#456 2017-11-05
 	// START KGU#532 2018-06-25: To be able to suppress version hints on webstart (doesn't make sense)
-	public boolean isWebStart = false;
+	public boolean isAutoUpdating = false;
 	// END KGU#532 2018-06-25
 	
 	// START KGU#655 2019-02-16: Enhanced welcome menu
@@ -1239,7 +1240,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense
 			//if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
-			if (!isWebStart && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
+			if (!isAutoUpdating && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
 				// END KGU#532 2018-06-25
 				int chosen = JOptionPane.showOptionDialog(this,
 						Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),

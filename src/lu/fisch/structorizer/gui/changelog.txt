@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-11 (2019-06-16)
+Current development version: 3.29-12 (2019-07-28)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -95,6 +95,8 @@ Current development version: 3.29-11 (2019-06-16)
 - 11: Issue #727: TRY Field position in Element Name Preferences mended <2>
 - 11: Bugfix #728: Endless loops and other flaws in Find&Replace tackled <2>
 - 11: Find&Replace: Search result presentation strategy unified <2>
+- 11: Issue #729: Modified German button caption in element editor [K.-P. Reimers]2
+- 12: Issue #551: No version check mode hint in the wake of Windows installer <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

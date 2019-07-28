@@ -64,6 +64,7 @@
  *      Kay Gürtzig     2019-03-26      Enh. #697: Batch code parsing now produces arrangements for multi-routine sources
  *                                      (file overwriting bug fixed on this occasion);
  *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
+ *      Kay Gürtzig     2019-07-28      Issue #551 / KGU#715: No hint about version check option on Windows installer either
  *
  ******************************************************************************************************
  *
@@ -281,7 +282,11 @@ public class Structorizer
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
 		String appPath = getApplicationPath();
-		mainform.isWebStart = appPath.endsWith("webstart");
+		// START KGU#715 2019-07-28: 
+		//mainform.isAutoUpdating = appPath.endsWith("webstart");
+		File uplaFile = new File(appPath + File.separator + "upla.jar");
+		mainform.isAutoUpdating = appPath.endsWith("webstart") || uplaFile.exists();
+		// END KGU#715 2019-07-28
 		// END KGU#532 2018-06-25
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
 		try {
