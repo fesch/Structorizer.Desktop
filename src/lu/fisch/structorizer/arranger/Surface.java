@@ -117,6 +117,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-30      Issues #699, #720: Several fixes and fine-tuning
  *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
  *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
+ *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
  *
  ******************************************************************************************************
  *
@@ -1195,7 +1196,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						Root copiedRoot = (Root)diagr.root.copy();
 						copiedRoot.retrieveVarNames();	// Ensures that syntax highlighting will work
 						//diagr.point.translate(2 * DEFAULT_GAP, 2 * DEFAULT_GAP);	// The copy must have the same place (this was the archived one!)
-						Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						// START KGU#718 2019-07-31: Bugfix #732: we must not share the point!
+						//Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						Diagram diagram = new Diagram(copiedRoot, new Point(diagr.point));
+						// END KGU#718 2019-07-31
 						diagrams.add(diagram);
 						rootMap.put(copiedRoot, diagram);
 						String rootName = copiedRoot.getMethodName();

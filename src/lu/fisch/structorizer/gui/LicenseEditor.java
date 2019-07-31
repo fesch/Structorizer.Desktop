@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-06-06      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal),
  *                                      Issue #535: Icon and accelerator key for menu item "Save as ..." unified
  *      Kay Gürtzig     2019-02-06      Deprecated methods and fields replaced (as far as possible)
+ *      Kay Gürtzig     2019.07-31      Issue #731: Precaution against faulty license file renaming
  *
  ******************************************************************************************************
  *
