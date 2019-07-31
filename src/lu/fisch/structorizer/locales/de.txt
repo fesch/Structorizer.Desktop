@@ -1237,7 +1237,7 @@ Arranger.msgGroupingOptions.0.text=Diagramme hinzufügen
 Arranger.msgGroupingOptions.1.text=Gruppe überschreiben
 Arranger.msgGroupingOptions.2.text=Gruppennamen neu eingeben
 Arranger.msgGroupingOptions.3.text=Abbrechen
-Arranger.msgCongruentGroups.text=Der Satz der %1 ausgewählten Diagramme ist kongruent mit %2 existierenden Grouppe(n):\n- %3\n\n%4
+Arranger.msgCongruentGroups.text=Der Satz der %1 ausgewählten Diagramme ist kongruent mit %2 existierenden Gruppe(n):\n- %3\n\n%4
 Arranger.msgDoCreateGroup.text=Möchten Sie dennoch eine weitere Gruppe hinzufügen?
 
 -----[ Surface ]-----

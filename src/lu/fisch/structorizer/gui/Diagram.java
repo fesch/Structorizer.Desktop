@@ -179,6 +179,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
  *      Kay Gürtzig     2019-03-20      Bugfix #720: Proper reflection of includable changes ensured
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
+ *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bufix #731
  *
  ******************************************************************************************************
  *
@@ -247,6 +248,7 @@ import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
+import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
@@ -2598,15 +2600,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					backUp.delete();
 				}
-				f.renameTo(backUp);
+				// START KGU#717 2019-07-31: Bugfix #526, #731
+				//f.renameTo(backUp);
+				boolean moved = Archivar.renameTo(f, backUp);
+				// END KGU#717 2019-07-31
 				f = new File(root.filename);
 				File tmpFile = new File(filename);
-				tmpFile.renameTo(f);
+				// START KGU#717 2019-07-31: Bugfix #526, #731
+				//tmpFile.renameTo(f);
+				moved = moved && Archivar.renameTo(tmpFile, f);
+				// END KGU#717 2019-07-31
 				// START KGU#509 2018-03-20: Bugfix #526 renameTo may have failed, so better check
-				if (!f.exists() && tmpFile.canRead()) {
+				if (!moved || !f.exists() && tmpFile.canRead()) {
 					logger.log(Level.WARNING, "Failed to rename \"{0}\" to \"{1}\"; trying a workaround...",
 							new Object[]{filename, f.getAbsolutePath()});
-					String errors = renameFile(tmpFile, f, true);
+					String errors = Archivar.copyFile(tmpFile, f, true);
 					if (!errors.isEmpty()) {
 						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 								Menu.msgErrorFileRename.getText().replace("%1", errors).replace("%2", tmpFile.getAbsolutePath()),
@@ -2645,57 +2653,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return done;
 	}
 	
-	// START KGU#509 2018-03-20: Bugfix #526 workaround for a failing renameTo() operation
-	/**
-	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
-	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
-	 * target file exists after the copy the source file will be removed
-	 * @param sourceFile
-	 * @param targetFile
-	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
-	 * copy
-	 * @return in case of errors, a string describing them.
-	 */
-	private String renameFile(File sourceFile, File targetFile, boolean removeSource) {
-		String problems = "";
-		final int BLOCKSIZE = 512;
-		byte[] buffer = new byte[BLOCKSIZE];
-		FileOutputStream fos = null;
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(sourceFile.getAbsolutePath());
-			fos = new FileOutputStream(targetFile.getAbsolutePath());
-			int readBytes = 0;
-			do {
-				readBytes = fis.read(buffer);
-				if (readBytes > 0) {
-					fos.write(buffer, 0, readBytes);
-				}
-			} while (readBytes > 0);
-		} catch (FileNotFoundException e) {
-			problems += e + "\n";
-		} catch (IOException e) {
-			problems += e + "\n";
-		}
-		finally {
-			if (fos != null) {
-				try {
-					fos.close();
-				} catch (IOException e) {}
-			}
-			if (fis != null) {
-				try {
-					fis.close();
-					if (removeSource && targetFile.exists()) {
-						sourceFile.delete();
-					}
-				} catch (IOException e) {}
-			}
-		}
-		return problems;
-	}
-	// END KGU#509 2018-03-20
-
 	// END KGU#94 2015-12-04
 	
 	// START KGU#316 2016-12-28: Enh. #318
@@ -2756,8 +2713,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (bakFile.exists()) {
 					bakFile.delete();
 				}
-				boolean bakOk = arrzFile.renameTo(bakFile);
-				boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
+				// START KGU#717 2019-07-31: Bugfix #526/#731
+				//boolean bakOk = arrzFile.renameTo(bakFile);
+				//boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
+				boolean bakOk = Archivar.renameTo(arrzFile, bakFile);
+				boolean zipOk = Archivar.renameTo(tmpZipFile, new File(zipPath));
+				// END KGU#717 2019-07-31
 				if (bakOk && zipOk && !Element.E_MAKE_BACKUPS) {
 					bakFile.delete();
 				}
