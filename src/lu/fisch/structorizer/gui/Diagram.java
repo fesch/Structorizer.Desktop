@@ -179,7 +179,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
  *      Kay Gürtzig     2019-03-20      Bugfix #720: Proper reflection of includable changes ensured
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
- *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bufix #731
+ *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bugfix #731
+ *      Kay Gürtzig     2019-08-01      KGU#719: Refactoring dialog redesigned to show a JTable of key pairs
  *
  ******************************************************************************************************
  *
@@ -233,6 +234,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultFormatter;
 
 import org.freehep.graphicsio.emf.*;
@@ -6825,7 +6827,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (refactoringData == null) return false;
 		
 		// Otherwise we look for differences between old and new parser preferences
-		StringList replacements = new StringList();
+		// START KGU#719 2019-08-01: New layout for the refactoring dialog
+		//StringList replacements = new StringList();
+		List<String[]>replacements = new LinkedList<String[]>();
+		// END KGU#719 2019-08-1
 		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
 		{
 			String oldValue = entry.getValue().concatenate();
@@ -6835,17 +6840,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#288 2016-11-06
 			if (!oldValue.equals(newValue))
 			{
-				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+				// START KGU#719 2019-08-01: New layout for the refactoring dialog
+				//replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+				replacements.add(new String[]{entry.getKey(), "\"" + oldValue + "\"", "\"" + newValue + "\""});
+				// END KGU#719 2019-08-01
 			}
 		}
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
-		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
+		// START KGU#719 2019-08-01
+		if (!replacements.isEmpty() && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
+		// END KGU#719 2019-08-01
 		{
 			String[] options = {
 					Menu.lblRefactorNone.getText(),
 					Menu.lblRefactorCurrent.getText(),
 					Menu.lblRefactorAll.getText()
 			};
+			// START KGU#719 2019-08-01: New layout
+			JTable replTable = new JTable(0, 3);
+			for (String[] tupel: replacements) {
+				((DefaultTableModel)replTable.getModel()).addRow(tupel);
+			}
+			for (int col = 0; col < Math.min(replTable.getColumnCount(), Menu.hdrRefactoringTable.length); col++) {
+				replTable.getColumnModel().getColumn(col).setHeaderValue(Menu.hdrRefactoringTable[col].getText());
+			}
+			Box box = Box.createVerticalBox();
+			Box box1 = Box.createHorizontalBox();
+			Box box2 = Box.createHorizontalBox();
+			box1.add(new JLabel(Menu.msgRefactoringOffer1.getText()));
+			box1.add(Box.createHorizontalGlue());
+			box2.add(new JLabel(Menu.msgRefactoringOffer2.getText()));
+			box2.add(Box.createHorizontalGlue());
+			box.add(box1);
+			box.add(Box.createVerticalStrut(5));
+			box.add(replTable.getTableHeader());
+			box.add(replTable);
+			box.add(Box.createVerticalStrut(10));
+			box.add(box2);
+			replTable.setEnabled(false);
+			replTable.setRowHeight((int)(replTable.getRowHeight() * Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"))));
+			// END KGU#719 2019-08-01
 			// START KGU#362 2017-03-28: Issue #370: Restore old settings if user backed off
 			//int answer = JOptionPane.showOptionDialog(this,
 			//		Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
@@ -6857,7 +6891,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			int answer = JOptionPane.CLOSED_OPTION;
 			do {
 				answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
-						Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+						// START KGU#719 2019-08-01
+						//Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+						box,
+						// END KGU#719 2019-08-01
 						Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
 						JOptionPane.QUESTION_MESSAGE,
 						null,

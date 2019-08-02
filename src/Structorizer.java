@@ -65,6 +65,7 @@
  *                                      (file overwriting bug fixed on this occasion);
  *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
  *      Kay Gürtzig     2019-07-28      Issue #551 / KGU#715: No hint about version check option on Windows installer either
+ *      Kay Gürtzig     2019-08-01      Issues #551, #733 - corrected directory retrieval
  *
  ******************************************************************************************************
  *
@@ -281,11 +282,11 @@ public class Structorizer
 		final Mainform mainform = new Mainform();
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
-		String appPath = getApplicationPath();
+		File appDir = Ini.getInstallDirectory();
 		// START KGU#715 2019-07-28: 
 		//mainform.isAutoUpdating = appPath.endsWith("webstart");
-		File uplaFile = new File(appPath + File.separator + "upla.jar");
-		mainform.isAutoUpdating = appPath.endsWith("webstart") || uplaFile.exists();
+		File uplaFile = new File(appDir.getAbsolutePath() + File.separator + "upla.jar");
+		mainform.isAutoUpdating = getApplicationPath().endsWith("webstart") || uplaFile.exists();
 		// END KGU#715 2019-07-28
 		// END KGU#532 2018-06-25
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
@@ -1234,16 +1235,18 @@ public class Structorizer
 	}
 	// END KGU#187 2016-05-02
 	
-	/** @return the installation path of Structorizer */
+	/** @return the installation path of Structorizer (for webstart test) */
 	public static String getApplicationPath()
 	{
+		// FIXME Can all this be replaced by Ini.getInstallDirectory().getParent(); ?
 		CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
 		File rootPath = null;
 		try {
 			rootPath = new File(codeSource.getLocation().toURI().getPath());
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
-		}           
+			return "";
+		}
 		return rootPath.getParentFile().getPath();
 	}
 		

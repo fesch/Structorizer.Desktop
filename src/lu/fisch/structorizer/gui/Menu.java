@@ -603,7 +603,16 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17
 	// START KGU#258 2016-10-03: Enh. #253: Diagram keyword refactoring
-	public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
+	// START KGU#718 2019-08-01: Modified layout for the refactoring proposal
+	//public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
+	public static final LangTextHolder[] hdrRefactoringTable = new LangTextHolder[] {
+			new LangTextHolder("Reference"),
+			new LangTextHolder("Old keyword"),
+			new LangTextHolder("New keyword")
+			};
+	public static final LangTextHolder msgRefactoringOffer1 = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:");
+	public static final LangTextHolder msgRefactoringOffer2 = new LangTextHolder("Are loaded diagrams to be refactored accordingly?");
+	// START KGU#718 2019-08-01
 	public static final LangTextHolder lblRefactorNone = new LangTextHolder("no");
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
