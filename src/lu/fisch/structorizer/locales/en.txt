@@ -311,8 +311,8 @@ Menu.menuPreferencesWheelZoom.text=Reverse zoom with ctrl + wheel?
 Menu.menuPreferencesWheelUnit.text=Mouse wheel scrolling unit ...
 Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 
-Menu.menuPreferencesSave.text=All preferences ...
-Menu.menuPreferencesSaveAll.text=Save
+Menu.menuPreferencesSave.text=Save or load preferences
+Menu.menuPreferencesSaveAll.text=Save now
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
 
@@ -440,6 +440,11 @@ Menu.msgCreateSubroutine.text=Create a new subroutine «%»?
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
 Menu.ttlMouseScrollUnit.text=Mouse wheel scrolling unit
+Menu.msgSelectPreferences.text=Preferences to be exported (categories)
+Menu.msgAllPreferences.text=All preferences
+Menu.msgInvertSelection.text=Invert selection
+Menu.ttDiagramMenuSettings.text=Settings from menu "%"
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".

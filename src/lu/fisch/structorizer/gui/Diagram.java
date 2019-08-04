@@ -181,6 +181,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
  *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bugfix #731
  *      Kay Gürtzig     2019-08-01      KGU#719: Refactoring dialog redesigned to show a JTable of key pairs
+ *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
  *
  ******************************************************************************************************
  *
@@ -6074,11 +6075,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parsers = new Vector<CodeParser>();
 		String errors = "";
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-		GENParser genp = new GENParser();
-		parserPlugins = genp.parse(buff);
-		try { buff.close(); } catch (IOException e1) {}
-		for (int i = 0; i < parserPlugins.size(); i++)
+		try (BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"))) {
+			GENParser genp = new GENParser();
+			parserPlugins = genp.parse(buff);			
+		} catch (IOException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Couldn't close parser plugin definition file.", e);
+			// END KGU#484 2018-04-05
+		}
+		for (int i = 0; parserPlugins != null && i < parserPlugins.size(); i++)
 		{
 			GENPlugin plugin = parserPlugins.get(i);
 			final String className = plugin.className;
@@ -6088,14 +6094,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
-		}
-		try {
-			buff.close();
-		} catch (IOException e) {
-			// START KGU#484 2018-04-05: Issue #463
-			//e.printStackTrace();
-			logger.log(Level.WARNING, "Couldn't close parser plugin definition file.", e);
-			// END KGU#484 2018-04-05
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
@@ -9128,5 +9126,87 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return this.NSDControl.getFrame();
 	}
 	// END KGU#356 2019-03-14
+	
+	// START KGU#720 2019-08-03: Issue #733 - Selective preferences export
+	/**
+	 * Opens a dialog allowing to elect preference categories for saving.
+	 * Composes a set of ini property keys to be stored from the user selection.
+	 * If the user opts for complete export then the returns set will be empty, if
+	 * the user cancels then the result will be null.
+	 * @param title - dialog title
+	 * @param preferenceKeys - maps preference menu item names to arrays of key patterns
+	 * @return the set of key patterns for filtering the preference export. may be empty or {@code null}.
+	 */
+	public Set<String> selectPreferencesToExport(String title, HashMap<String, String[]> preferenceKeys) {
+		lu.fisch.structorizer.locales.Locale locale0 = Locales.getInstance().getDefaultLocale();
+		lu.fisch.structorizer.locales.Locale locale = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
+		Set<String> keys = null;
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridLayout(0,1));
+		JCheckBox chkAll = new JCheckBox(Menu.msgAllPreferences.getText(), true);
+		JCheckBox[] chkCategories = new JCheckBox[preferenceKeys.size()];
+		JButton btnInvert = new JButton(Menu.msgInvertSelection.getText());
+		int i = 0;
+		for (String category: preferenceKeys.keySet()) {
+			String msgKey = "Menu." + category + ".text";
+			String caption = locale.getValue("Structorizer", msgKey);
+			if (caption == null || caption.isEmpty()) {
+				caption = locale0.getValue("Structorizer", msgKey);
+			}
+			int posEllipse = caption.indexOf("...");
+			if (posEllipse > 0) {
+				caption = caption.substring(0, posEllipse).trim();
+			}
+			JCheckBox chk = new JCheckBox(caption);
+			(chkCategories[i++] = chk).setEnabled(false);
+			if (category.equals("menuDiagram")) {
+				chk.setToolTipText(Menu.ttDiagramMenuSettings.getText().replace("%", caption));
+			}
+		}
+		btnInvert.setEnabled(false);
+		chkAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				boolean sel = chkAll.isSelected();
+				for (int i = 0; i < chkCategories.length; i++) {
+					chkCategories[i].setEnabled(!sel);
+				}
+				btnInvert.setEnabled(!sel);
+			}});
+		btnInvert.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for (int i = 0; i < chkCategories.length; i++) {
+					chkCategories[i].setSelected(!chkCategories[i].isSelected());
+				}
+			}
+		});
+		panel.add(chkAll);
+		panel.add(new JSeparator(SwingConstants.HORIZONTAL));
+		for (JCheckBox chk: chkCategories) {
+			panel.add(chk);
+		}
+		panel.add(btnInvert);
+		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), panel, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+			keys = new HashSet<String>();
+			if (!chkAll.isSelected()) {
+				i = 0;
+				for (String[] patterns: preferenceKeys.values()) {
+					if (chkCategories[i++].isSelected()) {
+						for (String pattern: patterns) {
+							keys.add(pattern);
+						}
+					}
+				}
+				if (keys.isEmpty()) {
+					// If nothing  is selected then it doesn't make sense to save anything
+					// (and to return an empty here set would mean to save all)
+					keys = null;
+				}
+			}
+		}
+		return keys;
+	}
+	// END KGU#720 2019-08-03
 
 }

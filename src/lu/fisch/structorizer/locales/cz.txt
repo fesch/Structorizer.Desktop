@@ -216,9 +216,9 @@ Menu.menuPreferencesLanguageItems.pl.text=Polština
 Menu.menuPreferencesLookAndFeel.text=Vzhled
 
 Menu.menuPreferencesSave.text=Uložit nyní všechna nastavení
-Menu.menuPreferencesSaveAll.text=
-Menu.menuPreferencesSaveDump.text=
-Menu.menuPreferencesSaveLoad.text=
+Menu.menuPreferencesSaveAll.text=Uložit
+Menu.menuPreferencesSaveDump.text=Uložit jako ...
+Menu.menuPreferencesSaveLoad.text=Všechna ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=

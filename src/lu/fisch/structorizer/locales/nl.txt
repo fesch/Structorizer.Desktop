@@ -246,8 +246,8 @@ Menu.menuPreferencesWheelZoom.text=Omgekeerd zoomen met ctrl + wiel?
 Menu.menuPreferencesWheelUnit.text=Scroll-eenheid voor muiswiel...
 Menu.menuPreferencesScalePreset.text=GUI-schaal ...
 
-Menu.menuPreferencesSave.text=Alle instellingen ...
-Menu.menuPreferencesSaveAll.text=Opslaan
+Menu.menuPreferencesSave.text=Opslaan of inlezen ...
+Menu.menuPreferencesSaveAll.text=Nu opslaan
 Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
 Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
 
@@ -375,6 +375,11 @@ Menu.msgCreateSubroutine.text=Een nieuwe subroutine «%» aanmaken?
 Menu.msgTabHdrSignature.text=Besturingsopdracht
 Menu.msgTabHdrAlias.text=Alias
 Menu.ttlMouseScrollUnit.text=Eenheid voor scrollen met muiswiel
+Menu.msgSelectPreferences.text=Te exporterende instellingen (categorieën)
+Menu.msgAllPreferences.text=Alle instellingen
+Menu.msgInvertSelection.text=Selectie omkeren
+Menu.ttDiagramMenuSettings.text=Instellingen van het menu "%"
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=WAARSCHUWING: TEKST EN COMMENTAAR ZIJN OP HET SCHERM VERWISSELD! → Menu "%1 ► %2".

@@ -103,6 +103,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-17      Issue #56: breakpoint items disabled for Forever and Try elements.
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *      Kay Gürtzig     2019-03-27      Enh. #717: New menu entry menuPreferencesWheelUnit
+ *      Kay Gürtzig     2019-08-02/03   Issue #733 Selective property export mechanism implemented.
  *
  ******************************************************************************************************
  *
@@ -321,6 +322,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#305 2016-12-14
 
 	// Menu "Preferences"
+	// START KGU#720 2019-08-02: Issue #733 - prepare a selective preferences export, lazy initialisation
+	private static final HashMap<String, String[]> preferenceKeys = new LinkedHashMap<String, String[]>();
+	// END KGU#720 2019-08-02
+	
 	protected final JMenu menuPreferences = new JMenu("Preferences");
 	// Submenu of "Preferences"
 	// START KGU#300 2016-12-02: Enh. #300
@@ -725,6 +730,13 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#699 2019-03-27: Issue #717
 	public static final LangTextHolder ttlMouseScrollUnit = new LangTextHolder("Mouse wheel scrolling unit");
 	// END KGU#699 2019-03-27
+	// START KGU#720 2019-08-03: Issue #733
+	public static final LangTextHolder msgSelectPreferences = new LangTextHolder("Preference Categories To Be Exported");
+	public static final LangTextHolder msgAllPreferences = new LangTextHolder("All preferences");
+	public static final LangTextHolder msgInvertSelection = new LangTextHolder("Invert selection");
+	public static final LangTextHolder ttDiagramMenuSettings = new LangTextHolder("Settings from menu \"%\"");
+	public static final LangTextHolder prefsArranger = new LangTextHolder("Arranger");
+	// END KGU#720 2019-08-03
 
 	public void create()
 	{
@@ -1205,6 +1217,8 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagram.add(menuDiagramUnboxed);
 		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); } } );
 
+		menuDiagram.addSeparator();
+
 		menuDiagram.add(menuDiagramComment);
 		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
 
@@ -1244,7 +1258,7 @@ public class Menu extends LangMenuBar implements NSDController
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
 		menuPreferences.setMnemonic(KeyEvent.VK_P);
-
+		
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.getIcon(81));
 
@@ -1365,6 +1379,59 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#287 2017-01-11
 
 		menuPreferences.addSeparator();
+		
+		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
+		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4));
+		// END KGU#448 2018-01-04
+
+		// START KGU#720 2019-08.02: Issue #733 - allows selective preferences export
+		if (preferenceKeys.isEmpty()) {
+			Vector<GENPlugin> parserPlugins = null;
+			try (BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"))) {
+				GENParser genp = new GENParser();
+				parserPlugins = genp.parse(buff);
+			} catch (IOException e) {}
+			if (parserPlugins == null) {
+				parserPlugins = new Vector<GENPlugin>();
+			}
+			preferenceKeys.put("menuDiagram", Mainform.getPreferenceKeys("diagram"));
+			preferenceKeys.put("menuPreferencesLanguage", new String[] {"Lang"});
+			preferenceKeys.put("menuPreferencesNotifyUpdate", Mainform.getPreferenceKeys("update"));
+			preferenceKeys.put("menuPreferencesSimplified", new String[] {"userSkillLevel"});
+			preferenceKeys.put("menuPreferencesFont", new String[] {"Font", "Size", "editorFontSize", "fixPadding", "unicodeCompOps"});
+			preferenceKeys.put("menuPreferencesColors", Element.getPreferenceKeys("color"));
+			preferenceKeys.put("menuPreferencesOptions", Element.getPreferenceKeys("structure"));
+			preferenceKeys.put("menuPreferencesParser", CodeParser.getPreferenceKeys());
+			preferenceKeys.put("menuPreferencesAnalyser", Root.getPreferenceKeys());
+			preferenceKeys.put("menuPreferencesSaving", Mainform.getPreferenceKeys("saving"));
+			String[] exportKeys = new String[generatorPlugins.size()+1];
+			exportKeys[0] = "genExport*";
+			for (int i = 0; i < generatorPlugins.size(); i++) {
+				GENPlugin plugin = generatorPlugins.get(i);
+				exportKeys[i+1] = plugin.getKey() + ".*";
+			}
+			preferenceKeys.put("menuPreferencesExport", exportKeys);
+			String[] importKeys = new String[parserPlugins == null ? 1 : parserPlugins.size()+1];
+			importKeys[0] = "imp*";
+			for (int i = 0; i < parserPlugins.size(); i++) {
+				GENPlugin plugin = parserPlugins.get(i);
+				importKeys[i+1] = plugin.getKey() + ".*";
+			}
+			preferenceKeys.put("menuPreferencesImport", importKeys);
+			preferenceKeys.put("menuPreferencesElements", ElementNames.getPreferenceKeys());
+			String[] controllerKeys = new String[controllerPlugins.size()+1];
+			controllerKeys[0] = "applyAliases";
+			for (int i = 0; i < controllerPlugins.size(); i++) {
+				controllerKeys[i+1] = controllerPlugins.get(i).className + ".*";
+			}
+			preferenceKeys.put("menuPreferencesCtrlAliases", controllerKeys);
+			preferenceKeys.put("menuPreferencesLookAndFeel", new String[] {"laf"});
+			preferenceKeys.put("menuPreferencesWheel", Mainform.getPreferenceKeys("wheel"));
+			preferenceKeys.put("menuPreferencesScalePreset", new String[] {"scaleFactor"});
+			preferenceKeys.put("prefsArranger", new String[] {"arranger*"});
+			preferenceKeys.put("menuEditFindReplace", new String[] {"find*", "search*"});
+		}
+		// END KGU#720 2019-08-02
 
 		menuPreferences.add(menuPreferencesSave);
 		menuPreferencesSave.add(menuPreferencesSaveAll);
@@ -1373,10 +1440,17 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesSaveDump.addActionListener(new ActionListener() { 
 			public void actionPerformed(ActionEvent event) 
 			{ 
-				NSDControl.savePreferences(); 
+				// START KGU#720 2019-08-03: Issue #733 - this was obviously misplaced (would be overridden by ini.load()
+				//NSDControl.savePreferences();
+				Set<String> prefPatterns = diagram.selectPreferencesToExport(msgSelectPreferences.getText(), preferenceKeys);
+				if (prefPatterns == null) {
+					// Cancelled
+					return;
+				}
+				// END KGU#720 2019-08-03
 				JFileChooser fc = new JFileChooser();
 				fc.setFileFilter(new INIFilter());
-				if(fc.showSaveDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
+				if (fc.showSaveDialog(NSDControl.getFrame()) == JFileChooser.APPROVE_OPTION)
 				{
 					// save some data from the INI file
 					Ini ini = Ini.getInstance();
@@ -1384,8 +1458,17 @@ public class Menu extends LangMenuBar implements NSDController
 					{
 						ini.load();
 						String fn = fc.getSelectedFile().toString();
-						if(fn.toLowerCase().indexOf(".ini")==-1) fn+=".ini";
-						ini.save(fn);
+						if (!fn.toLowerCase().endsWith(".ini")) fn += ".ini";
+						// START KGU#720 2019-08-03: Issue #733 - Update the ini properties from the cached settings
+						//ini.save(fn);
+						NSDControl.savePreferences();
+						if (prefPatterns.isEmpty()) {
+							ini.save(fn);
+						}
+						else {
+							ini.save(fn, prefPatterns);
+						}
+						// END KGU#720 2019-08-03
 					}
 					catch (Exception ex)
 					{
@@ -1449,7 +1532,8 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 		} );
 
-        // START KGU#310 2016-12-14: New Debug menu
+		
+		// START KGU#310 2016-12-14: New Debug menu
 		menubar.add(menuDebug);
 		menuDebug.setMnemonic(KeyEvent.VK_B);
 		
@@ -1465,10 +1549,6 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, menuShortcutKeyMask));
 		// START KGU#463 2017-11-2
 		
-		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
-		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4));
-		// END KGU#448 2018-01-04
-
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
 

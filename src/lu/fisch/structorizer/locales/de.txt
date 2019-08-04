@@ -218,7 +218,7 @@ Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der a
 Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
-Menu.menuDiagram.text=Diagramme
+Menu.menuDiagram.text=Diagramm
 Menu.menuDiagram.mnemonic=g
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Hinzufügen
@@ -314,10 +314,10 @@ Menu.menuPreferencesWheelUnit.text=Mausrad-Scroll-Einheit ...
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
-Menu.menuPreferencesSave.text=Alle Einstellungen ...
-Menu.menuPreferencesSaveAll.text=Abspeichern
+Menu.menuPreferencesSave.text=Einstellungen sichern/laden
+Menu.menuPreferencesSaveAll.text=Jetzt abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
-Menu.menuPreferencesSaveLoad.text=Laden ...
+Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -443,6 +443,10 @@ Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
+Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
+Menu.msgAllPreferences.text=Alle Einstellungen
+Menu.msgInvertSelection.text=Auswahl umkehren
+Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".

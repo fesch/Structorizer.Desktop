@@ -42,6 +42,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2018-03-21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
  *      Kay Gürtzig         2018-10-28      Flag to detect unsaved changes introduced (+ public method)
  *      Kay Gürtzig         2019-08-02      Issue #733 New strategy for a central ini file in the installation dir
+ *      Kay Gürtzig         2019-08-03      Issue #733 Selective property export mechanism implemented.
  *
  ******************************************************************************************************
  *
@@ -62,6 +63,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -92,7 +95,7 @@ public class Ini
 	 * @return the path of an OS-specific application data subdirectory for Structorizer as string
 	 * @see #getIniDirectory()
 	 */
-	public static String getApplDataDirname()
+	public static String getAppDataDirname()
 	{
 		String os_name = System.getProperty("os.name").toLowerCase();
 		String home = System.getProperty("user.home");
@@ -173,7 +176,7 @@ public class Ini
 						+ System.getProperty("file.separator") + ".structorizer";
 				if (useAppData)
 				{
-					dirName = Ini.getApplDataDirname();
+					dirName = Ini.getAppDataDirname();
 				}
 				iniDir = new File(dirName);
 
@@ -522,8 +525,50 @@ public class Ini
 		saveRegular();
 	}
 
-	public void save(String _filename) throws FileNotFoundException,
-			IOException
+	/**
+	 * Saves all preferences to the file with path {@code _filename}
+	 * @param _filename - target file path
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void save(String _filename) throws FileNotFoundException, IOException
+	// START KGU#720 2019-08-02: Enh. #733
+	{
+		save(_filename, p);
+	}
+
+	public void save(String _filename, Set<String> preferenceKeys) throws FileNotFoundException,	IOException
+	{
+		Properties p1 = new Properties();
+		ArrayList<String> starts = new ArrayList<String>();
+		for (String pattern: preferenceKeys) {
+			if (!pattern.endsWith("*")) {
+				String value = p.getProperty(pattern);
+				if (value != null) {
+					p1.setProperty(pattern, value);
+				}
+			}
+			else {
+				starts.add(pattern.substring(0, pattern.length()-1));
+			}
+		}
+		if (!starts.isEmpty()) {
+			// This is awfully slow but it's hard to thing of a better version
+			for (Map.Entry<Object, Object> entry: p.entrySet()) {
+				String key = ((String)entry.getKey());
+				for (String start: starts) {
+					if (key.startsWith(start)) {
+						p1.setProperty(key, (String)entry.getValue());
+					}
+				}
+			}
+
+		}
+		save(_filename, p1);
+	}
+	
+	private void save(String _filename, Properties props) throws FileNotFoundException,	IOException
+	// END KGU#720 2019-08-02
 	{
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		p.store(new FileOutputStream(_filename), "last updated "
@@ -531,12 +576,17 @@ public class Ini
 		FileOutputStream fos = new FileOutputStream(_filename);
 		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so better write the version
 		//p.store(fos, "last updated " + new java.util.Date());
-		p.store(fos, "version " + Element.E_VERSION);
+		// START KGU#720 2019-08-03: Issue #733 - indicate a property selection
+		//p.store(fos, "version " + Element.E_VERSION);
+		props.store(fos, "Structorizer version " + Element.E_VERSION + (p != props ? "\n(Preferences subset)" : ""));
+		// END KGU#720 2019-08-03
 		// END KGU#264 2016-09-28
 		fos.close();
 		// END KGU#210 2016-07-22
 		this.wasChanged = false;
 	}
+	
+
 
 	// START KGU#720 2019-08-01: Issue #733 - Not only superfluous, but even dangerous
 	//private void saveAlternate() throws FileNotFoundException, IOException

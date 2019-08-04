@@ -146,6 +146,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
  *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      
  ******************************************************************************************************
  *
@@ -5652,6 +5653,17 @@ public class Root extends Element {
 //		}
 	}
 	// END KGU#239 2016-06-12
+	
+	// START KGU#720 2019-08-02: Issue #733
+	public static String[] getPreferenceKeys()
+	{
+		String[] prefKeys = new String[analyserChecks.length];
+		for (int i = 0; i < prefKeys.length; i++) {
+			prefKeys[i] = "check" + (i+1);
+		}
+		return prefKeys;
+	}
+	// END KGU#720 2019-08-02
     
     public static void saveToINI()
     {

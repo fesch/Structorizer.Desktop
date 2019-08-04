@@ -106,6 +106,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-24      Bugfix #711: Eternal loop on parsing an instruction line
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *
  ******************************************************************************************************
  *
@@ -2390,6 +2391,24 @@ public abstract class Element {
 		}
 	}
 
+	// START KGU#720 2019-08-02: Issue #733 - selective preferences export
+	public static String[] getPreferenceKeys(String category)
+	{
+		if (category.equals("structure")) {
+			return new String[] {"IfTrue", "IfFalse", "If", "altPadRight",
+					"Case", "CaseShrinkRot", "For", "While", "Repeat", "Try", "Catch", "Finally", "Import"};
+		}
+		else if (category.equals("color")) {
+			String[] colKeys = new String[defaultColors.length];
+			for (int i = 0; i < colKeys.length; i++) {
+				colKeys[i] = "color" + i;
+			}
+			return colKeys;
+		}
+		return new String[]{};
+	}
+	// END KGU#720 2019-08-02
+	
 	public static void saveToINI()
 	{
 		try

@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-17      Enh. #56 New entries for new Element class Try added
  *      Kay Gürtzig     2019-06-07      Issue #726: array ELEMENT_KEYS introduced
  *      Kay Gürtzig     2019-06-10      Issue #726: All resolution methods equipped with an optional translations argument
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *
  ******************************************************************************************************
  *
@@ -369,4 +370,10 @@ public class ElementNames extends Component {
 			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
+	// START KGU#720 2019-08-02: Issue #733 - Support selective preference export
+	public static String[] getPreferenceKeys()
+	{
+		return new String[] {"ElementNames.*"};
+	}
+	// END KGU#720 2019-08-02
 }

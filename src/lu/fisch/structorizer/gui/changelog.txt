@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-12 (2019-08-02)
+Current development version: 3.29-12 (2019-08-04)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -101,6 +101,7 @@ Current development version: 3.29-12 (2019-08-02)
 - 12: Bugfix #732: Cloning groups could end up in shared (glued) positions <2>
 - 12: Design of refactoring dialog improved (text -> keyword table) <2>
 - 12: Issue #733: New handling of a user-independent start configuration file <2>
+- 12: Issue #733: Possibility of selective preferences export to ini files <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

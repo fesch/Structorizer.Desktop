@@ -315,9 +315,9 @@ Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
 Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
 Menu.menuPreferencesWheelUnit.text=Unidad de desplazamiento ...
 
-Menu.menuPreferencesSave.text=Todas las preferencias ...
-Menu.menuPreferencesSaveAll.text=Guardar/Importar
-Menu.menuPreferencesSaveDump.text=Guardar como ...
+Menu.menuPreferencesSave.text=Guardar o importar
+Menu.menuPreferencesSaveAll.text=Guardar ahora
+Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
 
 // Menu "View" (not in use right now!)
@@ -444,6 +444,10 @@ Menu.msgCreateSubroutine.text=¿Crear nueva subrutina «%»?
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
 Menu.ttlMouseScrollUnit.text=Unidad de decplazamiento (rueda del ratón)
+Menu.msgSelectPreferences.text=Preferencias a ser exportados (categorías)
+Menu.msgAllPreferences.text=Todas preferencias
+Menu.msgInvertSelection.text=Invertar selección
+Menu.ttDiagramMenuSettings.text=Opciones del menú "%"
 
 // Error messages for analyser
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".
