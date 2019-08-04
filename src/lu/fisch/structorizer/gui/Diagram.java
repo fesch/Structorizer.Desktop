@@ -9128,6 +9128,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#356 2019-03-14
 	
 	// START KGU#720 2019-08-03: Issue #733 - Selective preferences export
+	/** Caches the last used selection pattern in the preference category dialog */
+	private static Vector<Boolean> prefCategorySelection = new Vector<Boolean>();
 	/**
 	 * Opens a dialog allowing to elect preference categories for saving.
 	 * Composes a set of ini property keys to be stored from the user selection.
@@ -9140,9 +9142,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public Set<String> selectPreferencesToExport(String title, HashMap<String, String[]> preferenceKeys) {
 		lu.fisch.structorizer.locales.Locale locale0 = Locales.getInstance().getDefaultLocale();
 		lu.fisch.structorizer.locales.Locale locale = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
+		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		// Fill the selection vector to the necessary size
+		for (int j = prefCategorySelection.size(); j < preferenceKeys.size(); j++) {
+			prefCategorySelection.add(false);
+		}
 		Set<String> keys = null;
 		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(0,1));
+		JPanel panel1 = new JPanel();
+		JPanel panel2 = new JPanel();
+		panel1.setLayout(new GridLayout(0,1));
+		panel2.setLayout(new GridLayout(0,2, (int)(5 * scale),0));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		JCheckBox chkAll = new JCheckBox(Menu.msgAllPreferences.getText(), true);
 		JCheckBox[] chkCategories = new JCheckBox[preferenceKeys.size()];
 		JButton btnInvert = new JButton(Menu.msgInvertSelection.getText());
@@ -9157,7 +9168,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (posEllipse > 0) {
 				caption = caption.substring(0, posEllipse).trim();
 			}
-			JCheckBox chk = new JCheckBox(caption);
+			if (caption.endsWith("?")) {
+				caption = caption.substring((caption.startsWith("¿") ? 1 : 0), caption.length()-1);
+			}
+			JCheckBox chk = new JCheckBox(caption, prefCategorySelection.get(i));
 			(chkCategories[i++] = chk).setEnabled(false);
 			if (category.equals("menuDiagram")) {
 				chk.setToolTipText(Menu.ttDiagramMenuSettings.getText().replace("%", caption));
@@ -9181,22 +9195,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		});
-		panel.add(chkAll);
-		panel.add(new JSeparator(SwingConstants.HORIZONTAL));
-		for (JCheckBox chk: chkCategories) {
-			panel.add(chk);
+		panel1.add(chkAll);
+		//for (JCheckBox chk: chkCategories) {
+		//	panel2.add(chk);
+		//}
+		int offset = (chkCategories.length + 1)/2;
+		for (int j = 0; j < offset; j++) {
+			panel2.add(chkCategories[j]);
+			if (j+offset < chkCategories.length) {
+				panel2.add(chkCategories[j+offset]);
+			}
 		}
-		panel.add(btnInvert);
+		panel2.add(btnInvert);
+		panel.add(panel1);
+		panel.add(new JSeparator(SwingConstants.HORIZONTAL));
+		panel.add(panel2);
+		GUIScaler.rescaleComponents(panel);
 		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), panel, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 			keys = new HashSet<String>();
 			if (!chkAll.isSelected()) {
 				i = 0;
 				for (String[] patterns: preferenceKeys.values()) {
-					if (chkCategories[i++].isSelected()) {
+					if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
 						for (String pattern: patterns) {
 							keys.add(pattern);
 						}
 					}
+					i++;
 				}
 				if (keys.isEmpty()) {
 					// If nothing  is selected then it doesn't make sense to save anything

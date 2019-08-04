@@ -364,10 +364,8 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#503 2018-03-14: Enh. #519
 	protected final JMenu menuPreferencesWheel = new JMenu("Mouse Wheel");
 	// START KGU#123 2016-01-04: Enh. #87
-	// FIXME: Rename this
 	protected final JCheckBoxMenuItem menuPreferencesWheelCollapse = new JCheckBoxMenuItem("Mouse wheel for collapsing?", IconLoader.getIcon(108));
 	// END KGU#123 2016-01-04
-	// FIXME: Define new icon
 	protected final JCheckBoxMenuItem menuPreferencesWheelZoom = new JCheckBoxMenuItem("Reverse zoom with ctr + wheel", IconLoader.getIcon(7));
 	// END KGU#503 2018-03-14
 	// START KGU#699 2019-03-27: Issue #717
@@ -1004,7 +1002,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuEdit.add(menuEditBreakLines);
 		menuEditBreakLines.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.rebreakLines(); doButtons(); } } );
-		// TODO
+
 		menuEdit.addSeparator();
 		
 		menuEdit.add(menuEditCopyDiagramPNG);
@@ -1360,7 +1358,6 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.add(menuPreferencesWheel);
 		menuPreferencesWheel.setIcon(IconLoader.getIcon(9));
 		// START KGU#123 2016-01-04: Enh. #87 
-		// FIXME: Move this to menuPreferencesWheel
 		menuPreferencesWheel.add(menuPreferencesWheelCollapse);
 		menuPreferencesWheelCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); } } );
 		// END KGU#123 2016-01-04
