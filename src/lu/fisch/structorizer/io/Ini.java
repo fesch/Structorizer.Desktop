@@ -41,10 +41,17 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2017-11-05      Issue #452: Method wasFirstStart() added.
  *      Kay Gürtzig         2018-03-21      Issue #463 Logger introduced, two file reading sequences extracted to method readTextFile()
  *      Kay Gürtzig         2018-10-28      Flag to detect unsaved changes introduced (+ public method)
+ *      Kay Gürtzig         2019-08-02      Issue #733 New strategy for a central ini file in the installation dir
+ *      Kay Gürtzig         2019-08-03      Issue #733 Selective property export mechanism implemented.
  *
  ******************************************************************************************************
  *
- *      Comment:		
+ *      Comment:
+ *      2019-08-02 - Kay Gürtzig 
+ *      - The new strategy is that we save preferences only in the regular ini directory. In the
+ *        installation directory, however, there may a (restricted) alternative ini file that
+ *        contains certain subset of the preferences always to be imposed on starting a session. 
+ *      - 
  *
  ******************************************************************************************************///
 
@@ -53,8 +60,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -81,14 +91,18 @@ public class Ini
 	public static final Logger logger = Logger.getLogger(Ini.class.getName());
 	// END KGU 2018-03-21
 
-	public static String getDirname()
+	/**
+	 * @return the path of an OS-specific application data subdirectory for Structorizer as string
+	 * @see #getIniDirectory()
+	 */
+	public static String getAppDataDirname()
 	{
 		String os_name = System.getProperty("os.name").toLowerCase();
+		String home = System.getProperty("user.home");
 		// mac
 		if (os_name.indexOf("mac") >= 0)
 		{
-			return System.getProperty("user.home")
-					+ "/Library/Application Support/Structorizer";
+			return home	+ "/Library/Application Support/Structorizer";
 		}
 		// windows
 		else if (os_name.indexOf("win") >= 0)
@@ -98,12 +112,10 @@ public class Ini
 			{
 				return appData + "\\Structorizer";
 			}
-			return System.getProperty("user.home")
-					+ "\\Application Data\\Structorizer";
+			return home + "\\Application Data\\Structorizer";
 		} else
 		{
-			return System.getProperty("user.home")
-					+ System.getProperty("file.separator") + ".unimozer";
+			return home + System.getProperty("file.separator") + ".unimozer";
 		}
 	}
 
@@ -152,33 +164,59 @@ public class Ini
 	}
 	
 	// START KGU#363 2017-03-13: Enh. #372 We use the ini directory for the licenses as well
+	/**
+	 * @return the path of the directory for the ini file as string
+	 */
 	public static File getIniDirectory() {
-	    File iniDir = null;
-		try
-		{
-			String dirName = System.getProperty("user.home")
-					+ System.getProperty("file.separator") + ".structorizer";
-			if (useAppData)
+		File iniDir = null;
+		if (ini == null || ini.filename == null || ini.filename.isEmpty() || !(new File(ini.filename)).exists()) {
+			try
 			{
-				dirName = Ini.getDirname();
+				String dirName = System.getProperty("user.home")
+						+ System.getProperty("file.separator") + ".structorizer";
+				if (useAppData)
+				{
+					dirName = Ini.getAppDataDirname();
+				}
+				iniDir = new File(dirName);
+
+			} catch (Error e)
+			{
+				logger.severe(e.getMessage());
+			} catch (Exception e)
+			{
+				logger.severe(e.getMessage());
 			}
-			iniDir = new File(dirName);
-			
-		} catch (Error e)
-		{
-			logger.severe(e.getMessage());
-		} catch (Exception e)
-		{
-			logger.severe(e.getMessage());
+		}
+		else {
+			iniDir = (new File(ini.filename)).getParentFile();
 		}
 		return iniDir;
-		
 	}
 	// END KGU#363 2017-03-13
-
-	private boolean alternateExists = false;
-	private File dir = null;
-	private File file = null;
+	
+	// START KGU#466 2019-08-01: Enh. #733: New ini retrieval mechanism
+	/**
+	 * @return the installation directory (may be the one where Structorizer.jar or the exe resides.
+	 */
+	public static File getInstallDirectory()
+	{
+		File instDir = null;
+		URL mySource = Ini.class.getProtectionDomain().getCodeSource()
+				.getLocation();
+		String myPath = mySource.getPath();
+		try {
+			myPath = URLDecoder.decode(myPath, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			logger.warning("Identifying the installation dir... " + e.getMessage());
+		}
+		instDir = new File(myPath);
+		if ("Structorizer.jar".equals(instDir.getName())) {
+			instDir = instDir.getParentFile();
+		}
+		return instDir;
+	}
+	// END KGU#466 2019-08-01
 
 	private String filename = "";
 
@@ -188,7 +226,6 @@ public class Ini
 
 	private Properties p = new Properties();
 
-	private boolean regularExists = false;
 
 	// START KGU#603 2018-10-28: We should be able to tell whether there are unsaved changes
 	private boolean wasChanged = false;
@@ -202,6 +239,11 @@ public class Ini
 
 	private Ini() throws FileNotFoundException, IOException
 	{
+		boolean regularExists = false;
+		boolean alternateExists = false;
+		File dir = null;
+		File file = null;
+
 		String dirname = "";
 		String dirname2 = "";
 
@@ -210,49 +252,45 @@ public class Ini
 		{
 			dirname = getIniDirectory().getPath();
 			filename = dirname + System.getProperty("file.separator") + ininame;
-		} catch (Error e)
-		{
-			logger.warning("probing regular ini directory " + e.getMessage());
 		} catch (Exception e)
 		{
 			logger.warning("probing regular ini directory " + e.getMessage());
 		}
 
-		// does the regular file exists?
+		// does the regular file exist?
 		try
 		{
 			file = new File(filename);
 			regularExists = file.exists();
-		} catch (Error e)
-		{
-			logger.warning("testing existence of the regular file... " + e.getMessage());
 		} catch (Exception e)
 		{
 			logger.warning("testing existence of the regular file... " + e.getMessage());
 		}
 
-		// alternate INI file
+		// template INI file
 		try
 		{
-			URL mySource = Ini.class.getProtectionDomain().getCodeSource()
-					.getLocation();
-			File sourceFile = new File(mySource.getPath());
+			File sourceFile = getInstallDirectory();
 			dirname2 = sourceFile.getAbsolutePath();
 
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED SUPPORT SETTINGSFILE IN
 			// JAR-PATH OR STRUCTORIZER.exe-PATH
-			filename2 = dirname2 + "structorizer.ini";
+			// START KGU#466 2019-08-01: Issue #733 The separator had been missing here
+			//filename2 = dirname2 + "structorizer.ini";
+			filename2 = dirname2 + File.separator + ininame;
+			// END KGU#466 2019-08-01
 
 			File fileInJarPath = new File(filename2);
 			// JOptionPane.showMessageDialog(null, filename2);
 
 			if (!fileInJarPath.exists())
 			{
-
-				filename2 = dirname2 + System.getProperty("file.separator")
-						+ ininame;
-				filename2 = filename2.replaceFirst("Structorizer.jar\\"
-						+ System.getProperty("file.separator"), "");
+				// START KGU#466 2019-08-01: Issue #733 - this was redundant
+				//filename2 = dirname2 + System.getProperty("file.separator")
+				//		+ ininame;
+				//filename2 = filename2.replaceFirst("Structorizer.jar\\"
+				//		+ System.getProperty("file.separator"), "");
+				// END KGU#466 2019-08-01
 				filename2 = filename2
 						.replaceFirst(
 								"\\" + System.getProperty("file.separator")
@@ -265,11 +303,8 @@ public class Ini
 										+ "Java", "");
 				// filename2 = filename2.replaceFirst("\\\\Structorizer.app",
 				// "");
-				filename2 = URLDecoder.decode(filename2, "UTF-8");
+				//filename2 = URLDecoder.decode(filename2, "UTF-8");
 			}
-		} catch (Error e)
-		{
-			logger.warning("probing for an alternative ini file... " + e.getMessage());
 		} catch (Exception e)
 		{
 			logger.warning("probing for an alternative ini file... " + e.getMessage());
@@ -280,9 +315,6 @@ public class Ini
 		{
 			file = new File(filename2);
 			alternateExists = file.exists();
-		} catch (Error e)
-		{
-			logger.warning("looking for alternative ini " + e.getMessage());
 		} catch (Exception e)
 		{
 			logger.warning("looking for alternative ini " + e.getMessage());
@@ -322,18 +354,52 @@ public class Ini
 				}
 
 				regularExists = true;
-			} catch (Error e)
-			{
-				logger.severe(e.getMessage());
 			} catch (Exception e)
 			{
 				logger.severe(e.getMessage());
 			}
 		} else if (alternateExists)
 		{
+			// START KGU#466 2019-08-02: Issue #733 - New strategy w.r.t. to central default ini file
 			// This means: the alternate path has preference before the regular one!
-			filename = filename2;
-			alternateExists = false;
+			//filename = filename2;
+			//alternateExists = false;
+			/* Now we want that the first time preferences are loaded they be obtained from the
+			 * central ini file if it exists. The contents are to be saved to the regular ini file
+			 * and further on only the regular file is to be consulted within the session.
+			 */
+			if (regularExists) {
+				try
+				{
+					// Load all existing individual preferences
+					loadRegular();
+					// Override the set of central preferences 
+					loadAlternate();
+					// Save the combination
+					saveRegular();
+				} catch (Exception e)
+				{
+					logger.log(Level.WARNING, "combining alternate with regular file ", e);
+				}
+			}
+			else {
+				try {
+					dir = new File(dirname);
+					if (!dir.exists())
+					{
+						dir.mkdir();
+					}
+					// Get the central preferences
+					loadAlternate();
+					// and save them as start for the regular in file
+					saveRegular();
+					this.iniFileCreated = true;				
+				} catch (Exception e)
+				{
+					logger.log(Level.WARNING, "creating a regular file with central presets", e);
+				}
+			}
+			// END KGU#466 2019-08-02
 		}
 
 		// load the file once!
@@ -456,13 +522,53 @@ public class Ini
 
 	public void save() throws FileNotFoundException, IOException
 	{
-		// if(regularExists) saveRegular();
-		// if(alternateExists) saveAlternate();
 		saveRegular();
 	}
 
-	public void save(String _filename) throws FileNotFoundException,
-			IOException
+	/**
+	 * Saves all preferences to the file with path {@code _filename}
+	 * @param _filename - target file path
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void save(String _filename) throws FileNotFoundException, IOException
+	// START KGU#466 2019-08-02: Enh. #733
+	{
+		save(_filename, p);
+	}
+
+	public void save(String _filename, Set<String> preferenceKeys) throws FileNotFoundException,	IOException
+	{
+		Properties p1 = new Properties();
+		ArrayList<String> starts = new ArrayList<String>();
+		for (String pattern: preferenceKeys) {
+			if (!pattern.endsWith("*")) {
+				String value = p.getProperty(pattern);
+				if (value != null) {
+					p1.setProperty(pattern, value);
+				}
+			}
+			else {
+				starts.add(pattern.substring(0, pattern.length()-1));
+			}
+		}
+		if (!starts.isEmpty()) {
+			// This is awfully slow but it's hard to thing of a better version
+			for (Map.Entry<Object, Object> entry: p.entrySet()) {
+				String key = ((String)entry.getKey());
+				for (String start: starts) {
+					if (key.startsWith(start)) {
+						p1.setProperty(key, (String)entry.getValue());
+					}
+				}
+			}
+
+		}
+		save(_filename, p1);
+	}
+	
+	private void save(String _filename, Properties props) throws FileNotFoundException,	IOException
+	// END KGU#466 2019-08-02
 	{
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		p.store(new FileOutputStream(_filename), "last updated "
@@ -470,22 +576,29 @@ public class Ini
 		FileOutputStream fos = new FileOutputStream(_filename);
 		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so better write the version
 		//p.store(fos, "last updated " + new java.util.Date());
-		p.store(fos, "version " + Element.E_VERSION);
+		// START KGU#466 2019-08-03: Issue #733 - indicate a property selection
+		//p.store(fos, "version " + Element.E_VERSION);
+		props.store(fos, "Structorizer version " + Element.E_VERSION + (p != props ? "\n(Preferences subset)" : ""));
+		// END KGU#466 2019-08-03
 		// END KGU#264 2016-09-28
 		fos.close();
 		// END KGU#210 2016-07-22
 		this.wasChanged = false;
 	}
+	
 
-	private void saveAlternate() throws FileNotFoundException, IOException
-	{
-		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
-		//p.store(new FileOutputStream(filename2), "last updated "
-		//		+ new java.util.Date());
-		this.save(filename2);
-		// END KGU#210 2016-07-22
-		// JOptionPane.showMessageDialog(null, "Alternate saved => "+filename2);
-	}
+
+	// START KGU#466 2019-08-01: Issue #733 - Not only superfluous, but even dangerous
+	//private void saveAlternate() throws FileNotFoundException, IOException
+	//{
+	//	// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
+	//	//p.store(new FileOutputStream(filename2), "last updated "
+	//	//		+ new java.util.Date());
+	//	this.save(filename2);
+	//	// END KGU#210 2016-07-22
+	//	// JOptionPane.showMessageDialog(null, "Alternate saved => "+filename2);
+	//}
+	// END KGU#466 2019-08-01
 
 	private void saveRegular() throws FileNotFoundException, IOException
 	{

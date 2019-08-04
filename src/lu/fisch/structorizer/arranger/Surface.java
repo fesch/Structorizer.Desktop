@@ -116,6 +116,8 @@ package lu.fisch.structorizer.arranger;
  *                                      Further drawing acceleration - clip bounds instead of viewport rect
  *      Kay Gürtzig     2019-03-30      Issues #699, #720: Several fixes and fine-tuning
  *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
+ *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
+ *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
  *
  ******************************************************************************************************
  *
@@ -1131,10 +1133,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				{
 					backUp.delete();
 				}
-				file.renameTo(backUp);
+				// START KGU#717 2019-7-31: Bugfix #731 - didn't cope among different file systems (Linux)
+				//file.renameTo(backUp);
+				boolean moved = Archivar.renameTo(file, backUp);
+				// END KGU#717 2019-07-31
 				file = new File(outFilename);
 				File tmpFile = new File(tmpFilename);
-				tmpFile.renameTo(file);
+				// START KGU#717 2019-7-31: Bugfix #731 - didn't cope among different file systems (Linux)
+				//tmpFile.renameTo(file);
+				moved = moved && Archivar.renameTo(tmpFile, file);
+				// END KGU#717 2019-07-31
 				// START KGU#626 2019-01-02: Enh. #657
 				if (portable) {
 					group.setFile(new File(arrFilename), file, false);
@@ -1188,7 +1196,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						Root copiedRoot = (Root)diagr.root.copy();
 						copiedRoot.retrieveVarNames();	// Ensures that syntax highlighting will work
 						//diagr.point.translate(2 * DEFAULT_GAP, 2 * DEFAULT_GAP);	// The copy must have the same place (this was the archived one!)
-						Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						// START KGU#718 2019-07-31: Bugfix #732: we must not share the point!
+						//Diagram diagram = new Diagram(copiedRoot, diagr.point);
+						Diagram diagram = new Diagram(copiedRoot, new Point(diagr.point));
+						// END KGU#718 2019-07-31
 						diagrams.add(diagram);
 						rootMap.put(copiedRoot, diagram);
 						String rootName = copiedRoot.getMethodName();
@@ -5157,8 +5168,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		pop.setVisible(false);
 	}
 
+	/**
+	 * Renames the given arrangement {@code group} to {@code newName} including the possibly
+	 * associated arrangement [archive] file. Tries interactively to resolve detected problems
+	 * like name collision with other groups or existing files.
+	 * @param group - the {@link Group} to be renamed;
+	 * @param newName - the new name for the group;
+	 * @param initiator - the {@link Component} owning the control that initiated the renaming
+	 * (to associate dialogs to).
+	 * @return true if the renaming worked apparently.
+	 */
 	public boolean renameGroup(Group group, String newName, Component initiator) {
-		// TODO Auto-generated method stub
 		String oldName = group.getName();
 		if (this.hasGroup(newName)) {
 			JOptionPane.showMessageDialog(initiator,
@@ -5201,6 +5221,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 				}
 				if (answer == JOptionPane.YES_OPTION) {
+					// KGU#717 - this should always happen within the same folder, so this simple method should suffice
 					if (!file.renameTo(newFile)) {
 						JOptionPane.showMessageDialog(initiator,
 								msgRenamingFailed.getText().replace("%", newFile.getAbsolutePath()),

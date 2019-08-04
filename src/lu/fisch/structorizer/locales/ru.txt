@@ -258,7 +258,7 @@ Menu.menuPreferencesWheelZoom.text=Обратить влияние на лупу
 Menu.menuPreferencesWheelUnit.text=Шаг прокруткы с колесой ...
 Menu.menuPreferencesScalePreset.text=Увеличить ГИП...
 
-Menu.menuPreferencesSave.text=Bсе настройки ...
+Menu.menuPreferencesSave.text=Сохранить/ввезти настройки
 Menu.menuPreferencesSaveAll.text=Сохранить
 Menu.menuPreferencesSaveDump.text=Сохранить как ...
 Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
@@ -319,7 +319,8 @@ Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
-Menu.msgRefactoringOffer.text=
+Menu.msgRefactoringOffer1.text=
+Menu.msgRefactoringOffer2.text=
 Menu.lblRefactorNone.text=
 Menu.lblRefactorCurrent.text=
 Menu.lblRefactorAll.text=
@@ -383,6 +384,11 @@ Menu.msgCreateSubroutine.text=
 Menu.msgTabHdrSignature.text=
 Menu.msgTabHdrAlias.text=
 Menu.ttlMouseScrollUnit.text=Шаг прокруткы с колесой
+Menu.msgSelectPreferences.text=Вывозимые настройки (категории)
+Menu.msgAllPreferences.text=Все настройки
+Menu.msgInvertSelection.text=Повернуть выбор
+Menu.ttDiagramMenuSettings.text=Настройки из меню "%"
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=ВНИМАНИЕ: ТЕКСТЫ ОБМЕНЕНЫ С КОММЕНТАРИЯМИ! → меню "%1 ► %2"

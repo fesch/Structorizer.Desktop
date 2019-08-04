@@ -34,6 +34,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-10      First Issue
  *      Kay Gürtzig     2019-03-14      Enh. #697: New method deriveArrangementList()
  *      Kay Gürtzig     2019-03-26      Enh. #697: Bugfixes in zipArrangement(), saveArrangement()
+ *      Kay Gürtzig     2019-07-31      Bugfix #731 (also comprising #526): new static methods renameTo, copyFile
  *
  ******************************************************************************************************
  *
@@ -1164,4 +1165,84 @@ public class Archivar {
 	public ArchiveIndex makeEmptyIndex() {
 		return new ArchiveIndex();
 	}
+	
+	// START KGU#509/KGU#717 2019-07-31: Bugfix #526, #731 - workarounds for a failing File.renameTo() operation
+	/**
+	 * Moves/renames file {@code f1} to file {@code f2} in a operating-system-independent way.
+	 * This is a replacement for {@link File#renameTo(File)} and a wrapper for
+	 * {@link Files#move(Path, Path, java.nio.file.CopyOption...)}.
+	 * @param f1 - source {@link File}
+	 * @param f2 - {@link File} representing the target path.
+	 * @return true if and only if no error occurred, the target file exists and the source file
+	 * no longer exists at its original place.
+	 * @see #copyFile(File, File, boolean)
+	 */
+	public static boolean renameTo(File f1, File f2)
+	{
+		boolean done = false;
+		Path p1 = f1.toPath();
+		Path p2 = f2.toPath();
+		try {
+			Files.move(p1, p2, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			// Let's be a little paranoid...
+			done =  f2.exists() && (!f1.exists() || f1.getAbsolutePath().equals(f2.getAbsolutePath()));
+		}
+		catch (Exception ex) {
+			Logger.getLogger(Archivar.class.getName()).log(Level.WARNING, "Failed to move \"" + f1 + "\" to \"" + f2 + "\"", ex);
+		}
+		return done;
+	}
+	
+	/**
+	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
+	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
+	 * target file exists after the copy the source file will be removed.<br/>
+	 * Note: Consider {@link #renameTo(File, File)} instead if {@code removeSource is true.}
+	 * @param sourceFile
+	 * @param targetFile
+	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
+	 * copy
+	 * @return in case of errors, a string describing them.
+	 * @see #renameTo(File, File)
+	 */
+	public static String copyFile(File sourceFile, File targetFile, boolean removeSource) {
+		String problems = "";
+		final int BLOCKSIZE = 512;
+		byte[] buffer = new byte[BLOCKSIZE];
+		FileOutputStream fos = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(sourceFile.getAbsolutePath());
+			fos = new FileOutputStream(targetFile.getAbsolutePath());
+			int readBytes = 0;
+			do {
+				readBytes = fis.read(buffer);
+				if (readBytes > 0) {
+					fos.write(buffer, 0, readBytes);
+				}
+			} while (readBytes > 0);
+		} catch (FileNotFoundException e) {
+			problems += e + "\n";
+		} catch (IOException e) {
+			problems += e + "\n";
+		}
+		finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {}
+			}
+			if (fis != null) {
+				try {
+					fis.close();
+					if (removeSource && targetFile.exists()) {
+						sourceFile.delete();
+					}
+				} catch (IOException e) {}
+			}
+		}
+		return problems;
+	}
+	// END KGU#509/KGU#717 2019-07-31
+
 }

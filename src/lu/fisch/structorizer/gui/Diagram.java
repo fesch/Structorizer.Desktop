@@ -179,6 +179,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-29      Issues #518, #544, #557 drawing speed improved by redraw area reduction
  *      Kay Gürtzig     2019-03-20      Bugfix #720: Proper reflection of includable changes ensured
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
+ *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bugfix #731
+ *      Kay Gürtzig     2019-08-01      KGU#719: Refactoring dialog redesigned to show a JTable of key pairs
+ *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
  *
  ******************************************************************************************************
  *
@@ -232,6 +235,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultFormatter;
 
 import org.freehep.graphicsio.emf.*;
@@ -247,6 +251,7 @@ import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
+import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
@@ -2598,15 +2603,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					backUp.delete();
 				}
-				f.renameTo(backUp);
+				// START KGU#717 2019-07-31: Bugfix #526, #731
+				//f.renameTo(backUp);
+				boolean moved = Archivar.renameTo(f, backUp);
+				// END KGU#717 2019-07-31
 				f = new File(root.filename);
 				File tmpFile = new File(filename);
-				tmpFile.renameTo(f);
+				// START KGU#717 2019-07-31: Bugfix #526, #731
+				//tmpFile.renameTo(f);
+				moved = moved && Archivar.renameTo(tmpFile, f);
+				// END KGU#717 2019-07-31
 				// START KGU#509 2018-03-20: Bugfix #526 renameTo may have failed, so better check
-				if (!f.exists() && tmpFile.canRead()) {
+				if (!moved || !f.exists() && tmpFile.canRead()) {
 					logger.log(Level.WARNING, "Failed to rename \"{0}\" to \"{1}\"; trying a workaround...",
 							new Object[]{filename, f.getAbsolutePath()});
-					String errors = renameFile(tmpFile, f, true);
+					String errors = Archivar.copyFile(tmpFile, f, true);
 					if (!errors.isEmpty()) {
 						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 								Menu.msgErrorFileRename.getText().replace("%1", errors).replace("%2", tmpFile.getAbsolutePath()),
@@ -2645,57 +2656,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return done;
 	}
 	
-	// START KGU#509 2018-03-20: Bugfix #526 workaround for a failing renameTo() operation
-	/**
-	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
-	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
-	 * target file exists after the copy the source file will be removed
-	 * @param sourceFile
-	 * @param targetFile
-	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
-	 * copy
-	 * @return in case of errors, a string describing them.
-	 */
-	private String renameFile(File sourceFile, File targetFile, boolean removeSource) {
-		String problems = "";
-		final int BLOCKSIZE = 512;
-		byte[] buffer = new byte[BLOCKSIZE];
-		FileOutputStream fos = null;
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(sourceFile.getAbsolutePath());
-			fos = new FileOutputStream(targetFile.getAbsolutePath());
-			int readBytes = 0;
-			do {
-				readBytes = fis.read(buffer);
-				if (readBytes > 0) {
-					fos.write(buffer, 0, readBytes);
-				}
-			} while (readBytes > 0);
-		} catch (FileNotFoundException e) {
-			problems += e + "\n";
-		} catch (IOException e) {
-			problems += e + "\n";
-		}
-		finally {
-			if (fos != null) {
-				try {
-					fos.close();
-				} catch (IOException e) {}
-			}
-			if (fis != null) {
-				try {
-					fis.close();
-					if (removeSource && targetFile.exists()) {
-						sourceFile.delete();
-					}
-				} catch (IOException e) {}
-			}
-		}
-		return problems;
-	}
-	// END KGU#509 2018-03-20
-
 	// END KGU#94 2015-12-04
 	
 	// START KGU#316 2016-12-28: Enh. #318
@@ -2756,8 +2716,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (bakFile.exists()) {
 					bakFile.delete();
 				}
-				boolean bakOk = arrzFile.renameTo(bakFile);
-				boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
+				// START KGU#717 2019-07-31: Bugfix #526/#731
+				//boolean bakOk = arrzFile.renameTo(bakFile);
+				//boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
+				boolean bakOk = Archivar.renameTo(arrzFile, bakFile);
+				boolean zipOk = Archivar.renameTo(tmpZipFile, new File(zipPath));
+				// END KGU#717 2019-07-31
 				if (bakOk && zipOk && !Element.E_MAKE_BACKUPS) {
 					bakFile.delete();
 				}
@@ -6111,11 +6075,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parsers = new Vector<CodeParser>();
 		String errors = "";
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-		GENParser genp = new GENParser();
-		parserPlugins = genp.parse(buff);
-		try { buff.close(); } catch (IOException e1) {}
-		for (int i = 0; i < parserPlugins.size(); i++)
+		try (BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"))) {
+			GENParser genp = new GENParser();
+			parserPlugins = genp.parse(buff);			
+		} catch (IOException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Couldn't close parser plugin definition file.", e);
+			// END KGU#484 2018-04-05
+		}
+		for (int i = 0; parserPlugins != null && i < parserPlugins.size(); i++)
 		{
 			GENPlugin plugin = parserPlugins.get(i);
 			final String className = plugin.className;
@@ -6125,14 +6094,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} catch (Exception ex) {
 				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 			}
-		}
-		try {
-			buff.close();
-		} catch (IOException e) {
-			// START KGU#484 2018-04-05: Issue #463
-			//e.printStackTrace();
-			logger.log(Level.WARNING, "Couldn't close parser plugin definition file.", e);
-			// END KGU#484 2018-04-05
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
@@ -6864,7 +6825,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (refactoringData == null) return false;
 		
 		// Otherwise we look for differences between old and new parser preferences
-		StringList replacements = new StringList();
+		// START KGU#719 2019-08-01: New layout for the refactoring dialog
+		//StringList replacements = new StringList();
+		List<String[]>replacements = new LinkedList<String[]>();
+		// END KGU#719 2019-08-1
 		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
 		{
 			String oldValue = entry.getValue().concatenate();
@@ -6874,17 +6838,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#288 2016-11-06
 			if (!oldValue.equals(newValue))
 			{
-				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+				// START KGU#719 2019-08-01: New layout for the refactoring dialog
+				//replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+				replacements.add(new String[]{entry.getKey(), "\"" + oldValue + "\"", "\"" + newValue + "\""});
+				// END KGU#719 2019-08-01
 			}
 		}
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
-		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
+		// START KGU#719 2019-08-01
+		if (!replacements.isEmpty() && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
+		// END KGU#719 2019-08-01
 		{
 			String[] options = {
 					Menu.lblRefactorNone.getText(),
 					Menu.lblRefactorCurrent.getText(),
 					Menu.lblRefactorAll.getText()
 			};
+			// START KGU#719 2019-08-01: New layout
+			JTable replTable = new JTable(0, 3);
+			for (String[] tupel: replacements) {
+				((DefaultTableModel)replTable.getModel()).addRow(tupel);
+			}
+			for (int col = 0; col < Math.min(replTable.getColumnCount(), Menu.hdrRefactoringTable.length); col++) {
+				replTable.getColumnModel().getColumn(col).setHeaderValue(Menu.hdrRefactoringTable[col].getText());
+			}
+			Box box = Box.createVerticalBox();
+			Box box1 = Box.createHorizontalBox();
+			Box box2 = Box.createHorizontalBox();
+			box1.add(new JLabel(Menu.msgRefactoringOffer1.getText()));
+			box1.add(Box.createHorizontalGlue());
+			box2.add(new JLabel(Menu.msgRefactoringOffer2.getText()));
+			box2.add(Box.createHorizontalGlue());
+			box.add(box1);
+			box.add(Box.createVerticalStrut(5));
+			box.add(replTable.getTableHeader());
+			box.add(replTable);
+			box.add(Box.createVerticalStrut(10));
+			box.add(box2);
+			replTable.setEnabled(false);
+			replTable.setRowHeight((int)(replTable.getRowHeight() * Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"))));
+			// END KGU#719 2019-08-01
 			// START KGU#362 2017-03-28: Issue #370: Restore old settings if user backed off
 			//int answer = JOptionPane.showOptionDialog(this,
 			//		Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
@@ -6896,7 +6889,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			int answer = JOptionPane.CLOSED_OPTION;
 			do {
 				answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
-						Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+						// START KGU#719 2019-08-01
+						//Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+						box,
+						// END KGU#719 2019-08-01
 						Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
 						JOptionPane.QUESTION_MESSAGE,
 						null,
@@ -9130,5 +9126,112 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return this.NSDControl.getFrame();
 	}
 	// END KGU#356 2019-03-14
+	
+	// START KGU#466 2019-08-03: Issue #733 - Selective preferences export
+	/** Caches the last used selection pattern in the preference category dialog */
+	private static Vector<Boolean> prefCategorySelection = new Vector<Boolean>();
+	/**
+	 * Opens a dialog allowing to elect preference categories for saving.
+	 * Composes a set of ini property keys to be stored from the user selection.
+	 * If the user opts for complete export then the returns set will be empty, if
+	 * the user cancels then the result will be null.
+	 * @param title - dialog title
+	 * @param preferenceKeys - maps preference menu item names to arrays of key patterns
+	 * @return the set of key patterns for filtering the preference export. may be empty or {@code null}.
+	 */
+	public Set<String> selectPreferencesToExport(String title, HashMap<String, String[]> preferenceKeys) {
+		lu.fisch.structorizer.locales.Locale locale0 = Locales.getInstance().getDefaultLocale();
+		lu.fisch.structorizer.locales.Locale locale = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
+		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		// Fill the selection vector to the necessary size
+		for (int j = prefCategorySelection.size(); j < preferenceKeys.size(); j++) {
+			prefCategorySelection.add(false);
+		}
+		Set<String> keys = null;
+		JPanel panel = new JPanel();
+		JPanel panel1 = new JPanel();
+		JPanel panel2 = new JPanel();
+		panel1.setLayout(new GridLayout(0,1));
+		panel2.setLayout(new GridLayout(0,2, (int)(5 * scale),0));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		JCheckBox chkAll = new JCheckBox(Menu.msgAllPreferences.getText(), true);
+		JCheckBox[] chkCategories = new JCheckBox[preferenceKeys.size()];
+		JButton btnInvert = new JButton(Menu.msgInvertSelection.getText());
+		int i = 0;
+		for (String category: preferenceKeys.keySet()) {
+			String msgKey = "Menu." + category + ".text";
+			String caption = locale.getValue("Structorizer", msgKey);
+			if (caption == null || caption.isEmpty()) {
+				caption = locale0.getValue("Structorizer", msgKey);
+			}
+			int posEllipse = caption.indexOf("...");
+			if (posEllipse > 0) {
+				caption = caption.substring(0, posEllipse).trim();
+			}
+			if (caption.endsWith("?")) {
+				caption = caption.substring((caption.startsWith("¿") ? 1 : 0), caption.length()-1);
+			}
+			JCheckBox chk = new JCheckBox(caption, prefCategorySelection.get(i));
+			(chkCategories[i++] = chk).setEnabled(false);
+			if (category.equals("menuDiagram")) {
+				chk.setToolTipText(Menu.ttDiagramMenuSettings.getText().replace("%", caption));
+			}
+		}
+		btnInvert.setEnabled(false);
+		chkAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				boolean sel = chkAll.isSelected();
+				for (int i = 0; i < chkCategories.length; i++) {
+					chkCategories[i].setEnabled(!sel);
+				}
+				btnInvert.setEnabled(!sel);
+			}});
+		btnInvert.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for (int i = 0; i < chkCategories.length; i++) {
+					chkCategories[i].setSelected(!chkCategories[i].isSelected());
+				}
+			}
+		});
+		panel1.add(chkAll);
+		//for (JCheckBox chk: chkCategories) {
+		//	panel2.add(chk);
+		//}
+		int offset = (chkCategories.length + 1)/2;
+		for (int j = 0; j < offset; j++) {
+			panel2.add(chkCategories[j]);
+			if (j+offset < chkCategories.length) {
+				panel2.add(chkCategories[j+offset]);
+			}
+		}
+		panel2.add(btnInvert);
+		panel.add(panel1);
+		panel.add(new JSeparator(SwingConstants.HORIZONTAL));
+		panel.add(panel2);
+		GUIScaler.rescaleComponents(panel);
+		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), panel, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+			keys = new HashSet<String>();
+			if (!chkAll.isSelected()) {
+				i = 0;
+				for (String[] patterns: preferenceKeys.values()) {
+					if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
+						for (String pattern: patterns) {
+							keys.add(pattern);
+						}
+					}
+					i++;
+				}
+				if (keys.isEmpty()) {
+					// If nothing  is selected then it doesn't make sense to save anything
+					// (and to return an empty here set would mean to save all)
+					keys = null;
+				}
+			}
+		}
+		return keys;
+	}
+	// END KGU#466 2019-08-03
 
 }

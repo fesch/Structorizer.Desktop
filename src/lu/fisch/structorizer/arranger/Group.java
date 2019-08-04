@@ -193,7 +193,7 @@ public class Group {
 	}
 	
 	/**
-	 * Creates a new empty group with the given {@code _name} name and containing
+	 * Creates a new group with the given {@code _name} name and containing
 	 * the given {@code _diagrams}.
 	 * @param _name - group name
 	 * @param _diagrams - the (initial) set of {@link Diagram}s

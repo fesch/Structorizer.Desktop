@@ -237,8 +237,8 @@ Menu.menuPreferencesWheel.text=Rotella del mouse
 Menu.menuPreferencesWheelCollapse.text=Usa la rotella del mouse per collassare
 Menu.menuPreferencesWheelZoom.text=Invertire lo zoom a utilizzare ctrl + rotella
 
-Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
-Menu.menuPreferencesSaveAll.text=Salva
+Menu.menuPreferencesSave.text=Salva o carica ...
+Menu.menuPreferencesSaveAll.text=Salva adesso
 Menu.menuPreferencesSaveDump.text=Salva su file ...
 Menu.menuPreferencesSaveLoad.text=Carica da file ...
 

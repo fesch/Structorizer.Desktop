@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-06-06      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal),
  *                                      Issue #535: Icon and accelerator key for menu item "Save as ..." unified
  *      Kay Gürtzig     2019-02-06      Deprecated methods and fields replaced (as far as possible)
+ *      Kay Gürtzig     2019.07-31      Issue #731: Precaution against faulty license file renaming
  *
  ******************************************************************************************************
  *
@@ -87,6 +88,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
+import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.structorizer.io.Ini;
@@ -630,7 +632,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		if (!newLicName.equalsIgnoreCase(this.getLicenseName(true))) {
 			String fileName = LicFilter.getNamePrefix() + newLicName + "." + LicFilter.acceptedExtension();
 			File newLicFile = new File(this.licenseFile.getParent() + File.separator + fileName);
-			if (!newLicFile.exists() && this.licenseFile.renameTo(newLicFile)) {
+			// START KGU#717 2019-07-31: Bugfix #731 - we better replace all File.renameTo occurrences...
+			//if (!newLicFile.exists() && this.licenseFile.renameTo(newLicFile)) {
+			if (!newLicFile.exists() && Archivar.renameTo(this.licenseFile, newLicFile)) {
+			// END KGU#717 219-07-31
 				this.licenseFile = newLicFile;
 			}
 			else {
