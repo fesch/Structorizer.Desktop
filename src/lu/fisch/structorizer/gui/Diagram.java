@@ -9127,7 +9127,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#356 2019-03-14
 	
-	// START KGU#720 2019-08-03: Issue #733 - Selective preferences export
+	// START KGU#466 2019-08-03: Issue #733 - Selective preferences export
 	/** Caches the last used selection pattern in the preference category dialog */
 	private static Vector<Boolean> prefCategorySelection = new Vector<Boolean>();
 	/**
@@ -9232,6 +9232,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		return keys;
 	}
-	// END KGU#720 2019-08-03
+	// END KGU#466 2019-08-03
 
 }

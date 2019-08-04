@@ -322,9 +322,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#305 2016-12-14
 
 	// Menu "Preferences"
-	// START KGU#720 2019-08-02: Issue #733 - prepare a selective preferences export, lazy initialisation
+	// START KGU#466 2019-08-02: Issue #733 - prepare a selective preferences export, lazy initialisation
 	private static final HashMap<String, String[]> preferenceKeys = new LinkedHashMap<String, String[]>();
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
 	
 	protected final JMenu menuPreferences = new JMenu("Preferences");
 	// Submenu of "Preferences"
@@ -728,13 +728,13 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#699 2019-03-27: Issue #717
 	public static final LangTextHolder ttlMouseScrollUnit = new LangTextHolder("Mouse wheel scrolling unit");
 	// END KGU#699 2019-03-27
-	// START KGU#720 2019-08-03: Issue #733
+	// START KGU#466 2019-08-03: Issue #733
 	public static final LangTextHolder msgSelectPreferences = new LangTextHolder("Preference Categories To Be Exported");
 	public static final LangTextHolder msgAllPreferences = new LangTextHolder("All preferences");
 	public static final LangTextHolder msgInvertSelection = new LangTextHolder("Invert selection");
 	public static final LangTextHolder ttDiagramMenuSettings = new LangTextHolder("Settings from menu \"%\"");
 	public static final LangTextHolder prefsArranger = new LangTextHolder("Arranger");
-	// END KGU#720 2019-08-03
+	// END KGU#466 2019-08-03
 
 	public void create()
 	{
@@ -1381,7 +1381,7 @@ public class Menu extends LangMenuBar implements NSDController
 		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4));
 		// END KGU#448 2018-01-04
 
-		// START KGU#720 2019-08.02: Issue #733 - allows selective preferences export
+		// START KGU#466 2019-08.02: Issue #733 - allows selective preferences export
 		if (preferenceKeys.isEmpty()) {
 			Vector<GENPlugin> parserPlugins = null;
 			try (BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"))) {
@@ -1428,7 +1428,7 @@ public class Menu extends LangMenuBar implements NSDController
 			preferenceKeys.put("prefsArranger", new String[] {"arranger*"});
 			preferenceKeys.put("menuEditFindReplace", new String[] {"find*", "search*"});
 		}
-		// END KGU#720 2019-08-02
+		// END KGU#466 2019-08-02
 
 		menuPreferences.add(menuPreferencesSave);
 		menuPreferencesSave.add(menuPreferencesSaveAll);
@@ -1437,14 +1437,14 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesSaveDump.addActionListener(new ActionListener() { 
 			public void actionPerformed(ActionEvent event) 
 			{ 
-				// START KGU#720 2019-08-03: Issue #733 - this was obviously misplaced (would be overridden by ini.load()
+				// START KGU#466 2019-08-03: Issue #733 - this was obviously misplaced (would be overridden by ini.load()
 				//NSDControl.savePreferences();
 				Set<String> prefPatterns = diagram.selectPreferencesToExport(msgSelectPreferences.getText(), preferenceKeys);
 				if (prefPatterns == null) {
 					// Cancelled
 					return;
 				}
-				// END KGU#720 2019-08-03
+				// END KGU#466 2019-08-03
 				JFileChooser fc = new JFileChooser();
 				fc.setFileFilter(new INIFilter());
 				if (fc.showSaveDialog(NSDControl.getFrame()) == JFileChooser.APPROVE_OPTION)
@@ -1456,7 +1456,7 @@ public class Menu extends LangMenuBar implements NSDController
 						ini.load();
 						String fn = fc.getSelectedFile().toString();
 						if (!fn.toLowerCase().endsWith(".ini")) fn += ".ini";
-						// START KGU#720 2019-08-03: Issue #733 - Update the ini properties from the cached settings
+						// START KGU#466 2019-08-03: Issue #733 - Update the ini properties from the cached settings
 						//ini.save(fn);
 						NSDControl.savePreferences();
 						if (prefPatterns.isEmpty()) {
@@ -1465,7 +1465,7 @@ public class Menu extends LangMenuBar implements NSDController
 						else {
 							ini.save(fn, prefPatterns);
 						}
-						// END KGU#720 2019-08-03
+						// END KGU#466 2019-08-03
 					}
 					catch (Exception ex)
 					{

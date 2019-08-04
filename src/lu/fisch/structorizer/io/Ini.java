@@ -195,7 +195,7 @@ public class Ini
 	}
 	// END KGU#363 2017-03-13
 	
-	// START KGU#720 2019-08-01: Enh. #733: New ini retrieval mechanism
+	// START KGU#466 2019-08-01: Enh. #733: New ini retrieval mechanism
 	/**
 	 * @return the installation directory (may be the one where Structorizer.jar or the exe resides.
 	 */
@@ -216,7 +216,7 @@ public class Ini
 		}
 		return instDir;
 	}
-	// END KGU#720 2019-08-01
+	// END KGU#466 2019-08-01
 
 	private String filename = "";
 
@@ -275,22 +275,22 @@ public class Ini
 
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED SUPPORT SETTINGSFILE IN
 			// JAR-PATH OR STRUCTORIZER.exe-PATH
-			// START KGU#720 2019-08-01: Issue #733 The separator had been missing here
+			// START KGU#466 2019-08-01: Issue #733 The separator had been missing here
 			//filename2 = dirname2 + "structorizer.ini";
 			filename2 = dirname2 + File.separator + ininame;
-			// END KGU#720 2019-08-01
+			// END KGU#466 2019-08-01
 
 			File fileInJarPath = new File(filename2);
 			// JOptionPane.showMessageDialog(null, filename2);
 
 			if (!fileInJarPath.exists())
 			{
-				// START KGU#720 2019-08-01: Issue #733 - this was redundant
+				// START KGU#466 2019-08-01: Issue #733 - this was redundant
 				//filename2 = dirname2 + System.getProperty("file.separator")
 				//		+ ininame;
 				//filename2 = filename2.replaceFirst("Structorizer.jar\\"
 				//		+ System.getProperty("file.separator"), "");
-				// END KGU#720 2019-08-01
+				// END KGU#466 2019-08-01
 				filename2 = filename2
 						.replaceFirst(
 								"\\" + System.getProperty("file.separator")
@@ -360,7 +360,7 @@ public class Ini
 			}
 		} else if (alternateExists)
 		{
-			// START KGU#720 2019-08-02: Issue #733 - New strategy w.r.t. to central default ini file
+			// START KGU#466 2019-08-02: Issue #733 - New strategy w.r.t. to central default ini file
 			// This means: the alternate path has preference before the regular one!
 			//filename = filename2;
 			//alternateExists = false;
@@ -399,7 +399,7 @@ public class Ini
 					logger.log(Level.WARNING, "creating a regular file with central presets", e);
 				}
 			}
-			// END KGU#720 2019-08-02
+			// END KGU#466 2019-08-02
 		}
 
 		// load the file once!
@@ -532,7 +532,7 @@ public class Ini
 	 * @throws IOException
 	 */
 	public void save(String _filename) throws FileNotFoundException, IOException
-	// START KGU#720 2019-08-02: Enh. #733
+	// START KGU#466 2019-08-02: Enh. #733
 	{
 		save(_filename, p);
 	}
@@ -568,7 +568,7 @@ public class Ini
 	}
 	
 	private void save(String _filename, Properties props) throws FileNotFoundException,	IOException
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
 	{
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		p.store(new FileOutputStream(_filename), "last updated "
@@ -576,10 +576,10 @@ public class Ini
 		FileOutputStream fos = new FileOutputStream(_filename);
 		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so better write the version
 		//p.store(fos, "last updated " + new java.util.Date());
-		// START KGU#720 2019-08-03: Issue #733 - indicate a property selection
+		// START KGU#466 2019-08-03: Issue #733 - indicate a property selection
 		//p.store(fos, "version " + Element.E_VERSION);
 		props.store(fos, "Structorizer version " + Element.E_VERSION + (p != props ? "\n(Preferences subset)" : ""));
-		// END KGU#720 2019-08-03
+		// END KGU#466 2019-08-03
 		// END KGU#264 2016-09-28
 		fos.close();
 		// END KGU#210 2016-07-22
@@ -588,7 +588,7 @@ public class Ini
 	
 
 
-	// START KGU#720 2019-08-01: Issue #733 - Not only superfluous, but even dangerous
+	// START KGU#466 2019-08-01: Issue #733 - Not only superfluous, but even dangerous
 	//private void saveAlternate() throws FileNotFoundException, IOException
 	//{
 	//	// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
@@ -598,7 +598,7 @@ public class Ini
 	//	// END KGU#210 2016-07-22
 	//	// JOptionPane.showMessageDialog(null, "Alternate saved => "+filename2);
 	//}
-	// END KGU#720 2019-08-01
+	// END KGU#466 2019-08-01
 
 	private void saveRegular() throws FileNotFoundException, IOException
 	{

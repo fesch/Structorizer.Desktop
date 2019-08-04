@@ -539,7 +539,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/******************************
 	 * Load & save INI-file
 	 ******************************/
-	// START KGU#720 2019-08-02: Issue #733 - selective preferences export
+	// START KGU#466 2019-08-02: Issue #733 - selective preferences export
 	/**
 	 * Returns the preference keys used in the ini file for the given {@code category}
 	 * (if class {@code Mainform} is responsible for the saving and loading of the properties
@@ -572,7 +572,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		return new String[]{};
 	}
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
 	
 	public void loadFromINI()
 	{

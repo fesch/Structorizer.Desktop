@@ -5654,7 +5654,7 @@ public class Root extends Element {
 	}
 	// END KGU#239 2016-06-12
 	
-	// START KGU#720 2019-08-02: Issue #733
+	// START KGU#466 2019-08-02: Issue #733
 	public static String[] getPreferenceKeys()
 	{
 		String[] prefKeys = new String[analyserChecks.length];
@@ -5663,7 +5663,7 @@ public class Root extends Element {
 		}
 		return prefKeys;
 	}
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
     
     public static void saveToINI()
     {

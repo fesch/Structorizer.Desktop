@@ -2391,7 +2391,7 @@ public abstract class Element {
 		}
 	}
 
-	// START KGU#720 2019-08-02: Issue #733 - selective preferences export
+	// START KGU#466 2019-08-02: Issue #733 - selective preferences export
 	public static String[] getPreferenceKeys(String category)
 	{
 		if (category.equals("structure")) {
@@ -2407,7 +2407,7 @@ public abstract class Element {
 		}
 		return new String[]{};
 	}
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
 	
 	public static void saveToINI()
 	{

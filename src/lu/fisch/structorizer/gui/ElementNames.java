@@ -370,10 +370,10 @@ public class ElementNames extends Component {
 			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
-	// START KGU#720 2019-08-02: Issue #733 - Support selective preference export
+	// START KGU#466 2019-08-02: Issue #733 - Support selective preference export
 	public static String[] getPreferenceKeys()
 	{
 		return new String[] {"ElementNames.*"};
 	}
-	// END KGU#720 2019-08-02
+	// END KGU#466 2019-08-02
 }
