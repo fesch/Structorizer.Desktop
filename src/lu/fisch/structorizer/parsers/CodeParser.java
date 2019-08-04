@@ -47,7 +47,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-10-25      Enh. #419: Support for automatic breaking of long lines (postprocess)
  *      Kay Gürtzig     2018-10-29      Enh. #627: New field exception in order to provide stacktrace info if available
  *                                      Issue #630: New member class FilePreparationException
- *      Kay Gürtzig     2019-02-19      Bugfix #684 (empty FOR-In loop keyword on loading preferences mutilated 
+ *      Kay Gürtzig     2019-02-19      Bugfix #684 (empty FOR-In loop keyword on loading preferences mutilated
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *
  ******************************************************************************************************
  *
@@ -1370,6 +1371,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		keywordMap.put("output",     "OUTPUT");
 	}
 
+	// START KGU#466 2019-08-02: Issue #733 - Support selective preference export
+	public static String[] getPreferenceKeys()
+	{
+		return new String[] {"Parser*"};
+	}
+	// END KGU#466 2019-08-02
+
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
@@ -1426,7 +1434,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			Logger.getLogger(CodeParser.class.getName()).log(Level.WARNING, "Ini", e);
 		}
 	}
-
+	
 	public static void saveToINI()
 	{
 		try
