@@ -1398,7 +1398,7 @@ public class Menu extends LangMenuBar implements NSDController
 			preferenceKeys.put("menuPreferencesFont", new String[] {"Font", "Size", "editorFontSize", "fixPadding", "unicodeCompOps"});
 			preferenceKeys.put("menuPreferencesColors", Element.getPreferenceKeys("color"));
 			preferenceKeys.put("menuPreferencesOptions", Element.getPreferenceKeys("structure"));
-			preferenceKeys.put("menuPreferencesParser", CodeParser.getPreferenceKeys());
+			//preferenceKeys.put("menuPreferencesParser", CodeParser.getPreferenceKeys());
 			preferenceKeys.put("menuPreferencesAnalyser", Root.getPreferenceKeys());
 			preferenceKeys.put("menuPreferencesSaving", Mainform.getPreferenceKeys("saving"));
 			String[] exportKeys = new String[generatorPlugins.size()+1];

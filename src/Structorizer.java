@@ -349,8 +349,14 @@ public class Structorizer
 
 		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
-			// KGU 2018-09-14: Issue #537
-			ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+                    // KGU 2018-09-14: Issue #537
+                    //ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+
+                    System.setProperty("apple.laf.useScreenMenuBar", "true");
+                    System.setProperty("apple.awt.graphics.UseQuartz", "true");
+                    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Unimozer");
+
+                    mainform.doOSX();
 		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 

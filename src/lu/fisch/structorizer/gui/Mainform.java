@@ -1401,5 +1401,48 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			diagram.addRecentFile(file.getAbsolutePath());
 		}
 	}
+        
+    public void doOSX() {
+        try {
+            // Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
+            // use as delegates for various com.apple.eawt.ApplicationListener methods
+            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
+            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
+            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
+            OSXAdapter.setDockIconImage(getIconImage());
+            //OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[]{String.class}));
+
+        } catch (Exception e) {
+            //System.err.println("Error while loading the OSXAdapter:");
+            e.printStackTrace();
+        }
+    }
+    
+    // General info dialog; fed to the OSXAdapter as the method to call when 
+    // "About OSXAdapter" is selected from the application menu
+    public void about() {
+        about();
+    }
+
+    // General preferences dialog; fed to the OSXAdapter as the method to call when
+    // "Preferences..." is selected from the application menu
+    public void preferences() {
+        diagram.preferencesNSD();
+    }
+
+    // General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
+    // A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
+    public boolean quit() { 
+        int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
+        if (option == JOptionPane.YES_OPTION)
+        {
+            getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }					
 
 }
