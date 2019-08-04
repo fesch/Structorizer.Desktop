@@ -98,7 +98,7 @@ Current development version: 3.29-12 (2019-08-04)
 - 11: Issue #729: Modified German button caption in element editor [K.-P. Reimers]2
 - 12: Compatibility with the new Windows/Upla installer improved
 - 12: Issue #551: No version check mode hint in the wake of Windows installer <2>
-- 12: Bugfix #731: File copy failure on Linux made arr[z] files vanish [K.-P. R.]2
+- 12: Bugfix #731: File renaming failure on Linux made arr[z] files vanish [K.-P. R.]2
 - 12: Bugfix #732: Cloning groups could end up in shared (glued) positions <2>
 - 12: Design of refactoring dialog improved (text -> keyword table) <2>
 - 12: Issue #733: New handling of a user-independent start configuration file <2>
