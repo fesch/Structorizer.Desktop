@@ -1421,7 +1421,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     // General info dialog; fed to the OSXAdapter as the method to call when 
     // "About OSXAdapter" is selected from the application menu
     public void about() {
-        about();
+        diagram.aboutNSD();
     }
 
     // General preferences dialog; fed to the OSXAdapter as the method to call when
