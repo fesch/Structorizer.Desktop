@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
  *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
  *
  ******************************************************************************************************
  *
@@ -2718,6 +2719,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool TODO
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
@@ -3327,16 +3329,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 *****************************************/
 
 	/**
-	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.<br/>
+	 * Note: This method is intended for batch export.
 	 * @param _roots - vector of diagram Roots to be exported (in this order).
 	 * @param _targetFile - path of the target text file for the code export.
 	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
+	 * @param _settingsFilename - optionally: path of a (partial) ini file for alternative option retrieval
 	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
+	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 */
 	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
 	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, IRoutinePool _routinePool)
+	// START KGU#720 2019-08-05: Enh. #737 - allow to load settings from a configuration file
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, String _settingsFilename, IRoutinePool _routinePool)
+	// END KGU#720 2019-08-05
 	// END KGU#676 2019-03-13
 	{
 		// START KGU#676 2019-03-13: Enh. #696
@@ -3363,6 +3370,32 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Charset {0} not available; {1} used.", new Object[]{_charSet, exportCharset});
 		}
 		
+		//=============== Get export options ======================
+		// START KGU#720 2019-08-05: Enh. #737 - option to load settings from extra settings file
+		if (_settingsFilename != null && (new File(_settingsFilename)).canRead()) {
+			try
+			{
+				Ini ini = Ini.getInstance();
+				ini.load(_settingsFilename);
+				exportAsComments = ini.getProperty("genExportComments","0").equals("true");
+				startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
+				generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+				exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+				suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
+				includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+				exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+			} 
+			catch (FileNotFoundException ex)
+			{
+				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			} 
+			catch (IOException ex)
+			{
+				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			}
+		}
+		// END KGU#720 2019-08-05
+
 		boolean overwrite = false;
 		if (_options != null)
 		{

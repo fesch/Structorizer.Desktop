@@ -43,6 +43,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2018-10-28      Flag to detect unsaved changes introduced (+ public method)
  *      Kay Gürtzig         2019-08-02      Issue #733 New strategy for a central ini file in the installation dir
  *      Kay Gürtzig         2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Kay Gürtzig         2019-08-05      Enh. #737: Additional method variant load(String, boolan)
  *
  ******************************************************************************************************
  *
@@ -446,13 +447,12 @@ public class Ini
 
 	public String getProperty(String _name, String _default)
 	{
-		if (p.getProperty(_name) == null)
+		String value = p.getProperty(_name);
+		if (value == null)
 		{
 			return _default;
-		} else
-		{
-			return p.getProperty(_name);
 		}
+		return value;
 	}
 
 	public Set<Object> keySet()
@@ -460,6 +460,14 @@ public class Ini
 		return (Set<Object>)p.keySet();
 	}
 
+	/**
+	 * Loads the properties from the regular ini file as established by the constructor (according
+	 * to the product-specific ini file location rules).
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @see #load(String)
+	 * @see #loadAlternate()
+	 */
 	public void load() throws FileNotFoundException, IOException
 	{
 		// if(regularExists) loadRegular();
@@ -467,8 +475,31 @@ public class Ini
 		loadRegular();
 	}
 
-	public void load(String _filename) throws FileNotFoundException,
-			IOException
+	/**
+	 * Loads the properties from file {@code _filename}. Previously held properties not
+	 * overridden by those from the file remain preserved.
+	 * @param _filename - name of the file to be loaded
+	 * @param _clearBefore - whether the recent properties should be discarded before
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @see #load()
+	 * @see #load(String, boolean)
+	 */
+	public void load(String _filename) throws FileNotFoundException, IOException
+	// START KGU#720 2019-08-05: Enh. #737 It should be possible clear all properties before loading
+	{
+		load(_filename, false);
+	}
+	/**
+	 * Loads the properties from file {@code _filename}. Clears the previously existing properties
+	 * if the file can be opened.
+	 * @param _filename - name of the file to be loaded
+	 * @param _clearBefore - whether the recent properties should be discarded before
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void load(String _filename, boolean _clearBefore) throws FileNotFoundException, IOException
+	// END KGU#720 2019-08-05
 	{
 		File f = new File(_filename);
 		if (f.length() != 0)
@@ -476,6 +507,11 @@ public class Ini
 			// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 			//p.load(new FileInputStream(_filename));
 			FileInputStream fis = new FileInputStream(_filename);
+			// START KGU#720 2019-08-05: Enh. #737
+			if (_clearBefore) {
+				p.clear();
+			}
+			// END KGU#720 2019-08-05
 			p.load(fis);
 			fis.close();
 			// END KGU#210 2016-07-22

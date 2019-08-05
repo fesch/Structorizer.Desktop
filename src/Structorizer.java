@@ -66,6 +66,8 @@
  *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
  *      Kay Gürtzig     2019-07-28      Issue #551 / KGU#715: No hint about version check option on Windows installer either
  *      Kay Gürtzig     2019-08-01      Issues #551, #733 - corrected directory retrieval
+ *      Bob Fisch       2019-08-04      Issue #537: ApplicationFactory replaced by OSXAdapter stuff
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
  *
  ******************************************************************************************************
  *
@@ -104,7 +106,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import lu.fisch.structorizer.application.ApplicationFactory;
+//import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
@@ -440,7 +442,7 @@ public class Structorizer
 	// START KGU#187 2016-05-02: Enh. #179
 	private static final String[] synopsis = {
 		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]...",
-		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
 		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h",
 		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
@@ -467,8 +469,10 @@ public class Structorizer
 		String codeFileName = outFileName;
 		// the encoding to be used. 
 		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// START KGU#720 2019-08-05: Enh. #737
 		// path of a property file to be preferred over structorizer.ini
-		//String _settingsFileName = _options.get("settingsFile");
+		String _settingsFileName = _options.get("settingsFile");
+		// END KGU#720 2019-08-05
 		for (String fName : _nsdOrArrNames)
 		{
 			try
@@ -573,11 +577,14 @@ public class Structorizer
 				//if (!roots.isEmpty())
 				//gen.exportCode(roots, codeFileName, _switches, charSet);
 				if (!roots.isEmpty()) {
-					gen.exportCode(roots, codeFileName, _switches, charSet, null);
+					gen.exportCode(roots, codeFileName, _switches, charSet, null, null);
 				}
 				int i = 0;
 				for (Entry<ArchivePool, Vector<Root>> poolEntry: pools.entrySet()) {
-					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey());
+					// START KGU#720 2019-08-05: Enh. #737 - now with specific option file
+					//gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey(), null);
+					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, _settingsFileName, poolEntry.getKey());
+					// END KGU#720 2019-08-05
 				}
 				// END KGU#679 2019-02-13
 			}
@@ -727,7 +734,7 @@ public class Structorizer
 				for (String ext: parser.getFileExtensions()) {
 					usage += ext + ", ";
 				}
-				// Get rid of last ", " 
+				// Get rid of last ", "
 				if (usage.endsWith(", ")) {
 					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
 				}
