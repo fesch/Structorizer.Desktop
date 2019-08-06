@@ -104,6 +104,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
  *      Kay Gürtzig     2019-03-27      Enh. #717: New menu entry menuPreferencesWheelUnit
  *      Kay Gürtzig     2019-08-02/03   Issue #733 Selective property export mechanism implemented.
+ *      Kay Gürtzig     2019-08-06      Enh. #740: Backup mechanism for the explicit loading of INI files
  *
  ******************************************************************************************************
  *
@@ -374,10 +375,13 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#287 2017-01-11: Issue #81/#330
 	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.getIcon(51));
 	// END KGU#287 2017-01-11
-	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
-	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
+	protected final JMenu menuPreferencesSave = new JMenu("Save or load preferences ...");
+	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save now");
 	protected final JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
 	protected final JMenuItem menuPreferencesSaveDump = new JMenuItem("Save to file ...");
+	// START KGU#721 2019-08-06: Enh. #740
+	protected final JMenuItem menuPreferencesSaveRestore = new JMenuItem("Restore last backup");
+	// END KGU#721 2019-08-06
 
 	// START KGU#310 2016-12-14
 	// Menu "Debug"
@@ -735,6 +739,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder ttDiagramMenuSettings = new LangTextHolder("Settings from menu \"%\"");
 	public static final LangTextHolder prefsArranger = new LangTextHolder("Arranger");
 	// END KGU#466 2019-08-03
+	// START KGU#721 2019-08-06: Enh. #740
+	protected static final LangTextHolder msgIniBackupFailed = new LangTextHolder("The creation of a backup of the current preferences failed.\nDo you still want to load \"%\"?");
+	protected static final LangTextHolder msgIniRestoreFailed = new LangTextHolder("Could not restore the last preferences backup%");
+	// END KGU#721 2019-08-06
 
 	public void create()
 	{
@@ -1488,27 +1496,22 @@ public class Menu extends LangMenuBar implements NSDController
 						Ini ini = Ini.getInstance();
 
 						// START KGU#258 2016-09-26: Enh. #253
-						HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-						for (String key: CodeParser.keywordSet())
-						{
-							// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
-							//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
-							String keyword = CodeParser.getKeywordOrDefault(key, "");
-							// END KGU#288 2016-11-06
-							if (!keyword.trim().isEmpty())
-							{
-								// Complete strings aren't likely to be found in a key, so don't bother
-								refactoringData.put(key, Element.splitLexically(keyword,  false));
-							}
-							// An empty preForIn keyword is a synonym for the preFor keyword
-							else if (key.equals("preForIn"))
-							{
-								refactoringData.put(key, refactoringData.get("preFor"));
-							}
-						}
+						HashMap<String, StringList> refactoringData = fetchRefactoringData();
 						// END KGU#258 2016-09-26
 
-						ini.load(fc.getSelectedFile().toString());
+						// START KGU#721 2019-08-06: Enh. #740 produce a backup to keep safe
+						if (!ini.backup()) {
+							if (JOptionPane.showConfirmDialog(NSDControl.getFrame(),
+									msgIniBackupFailed.getText().replace("%", fc.getSelectedFile().getPath()), 
+									menuPreferencesSaveLoad.getText(),
+									JOptionPane.OK_CANCEL_OPTION,
+									JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION)
+							{
+								return;
+							}
+						}
+						// END KGU#721b2019-08-06
+						ini.load(fc.getSelectedFile().getPath());
 						ini.save();
 						NSDControl.loadFromINI();
 
@@ -1525,9 +1528,40 @@ public class Menu extends LangMenuBar implements NSDController
 						logger.log(Level.WARNING, "Error loading the configuration file ...", ex);
 					}
 				}
-				NSDControl.savePreferences(); 
+				NSDControl.savePreferences(); // FIXME: This sensible here?
 			}
+
 		} );
+		// START KGU#721 2019-08-06: Enh. #740
+		menuPreferencesSave.add(menuPreferencesSaveRestore);
+		menuPreferencesSaveRestore.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				boolean done = false;
+				String trouble = null;
+				try {
+					Ini ini = Ini.getInstance();
+					HashMap<String, StringList> refactoringData = fetchRefactoringData();
+					done = ini.restore();
+					ini.save();
+					NSDControl.loadFromINI();
+					if (diagram.offerRefactoring(refactoringData))
+					{
+						// (Refactoring involves redrawing)
+						diagram.refactorNSD(refactoringData);
+					}
+				} catch (Exception ex) {
+					logger.log(Level.WARNING, "Error restoring the configuration backup ...", ex);
+					trouble = ex.getMessage();
+				}
+				if (!done) {
+					JOptionPane.showMessageDialog(NSDControl.getFrame(),
+						msgIniRestoreFailed.getText().replace("%", trouble == null ? "!" : ": " + trouble),
+						menuPreferencesSaveRestore.getText(),
+						JOptionPane.ERROR_MESSAGE);
+				}
+			}});
+		// END KGU#721 2019-08-06
 
 		
 		// START KGU#310 2016-12-14: New Debug menu
@@ -1908,6 +1942,9 @@ public class Menu extends LangMenuBar implements NSDController
 			// END KGU#242 2016-09-04
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
+			// START KGU#721 2019-08-06: Enh. #740
+			menuPreferencesSaveRestore.setEnabled(Ini.getInstance().hasBackup());
+			
 			// Recent file
 			// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
 			Font menuItemFont = UIManager.getFont("MenuItem.font");
@@ -2122,5 +2159,34 @@ public class Menu extends LangMenuBar implements NSDController
 		return plugins;
 	}
 	// END KGU#386 2017-04-26
+
+	// START KGU#258 2016-09-26: Enh. #253 (KGU#721 2019-08-06: Enh. #740 - extracted as method)
+	/**
+	 * Collects the current parser preferences in lexically split form for comparison
+	 * with modified parser preferences
+	 * @return a {@link HashMap} associating parser tags with lexically split keywords
+	 */
+	private HashMap<String, StringList> fetchRefactoringData() {
+		HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
+		for (String key: CodeParser.keywordSet())
+		{
+			// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
+			//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
+			String keyword = CodeParser.getKeywordOrDefault(key, "");
+			// END KGU#288 2016-11-06
+			if (!keyword.trim().isEmpty())
+			{
+				// Complete strings aren't likely to be found in a key, so don't bother
+				refactoringData.put(key, Element.splitLexically(keyword,  false));
+			}
+			// An empty preForIn keyword is a synonym for the preFor keyword
+			else if (key.equals("preForIn"))
+			{
+				refactoringData.put(key, refactoringData.get("preFor"));
+			}
+		}
+		return refactoringData;
+	}
+	// END KGU#258 2016-09-26 (KGU#721 2019-08-06)
 
 }

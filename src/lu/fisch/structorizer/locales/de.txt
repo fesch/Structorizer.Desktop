@@ -125,6 +125,7 @@
  *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -255,7 +256,7 @@ Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
-Menu.menuDiagramOutsource.text=Auslagern
+Menu.menuDiagramOutsource.text=Auslagern ...
 Menu.menuDiagramOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
@@ -318,6 +319,7 @@ Menu.menuPreferencesSave.text=Einstellungen sichern/laden
 Menu.menuPreferencesSaveAll.text=Jetzt abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
 Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
+Menu.menuPreferencesSaveRestore.text=Letztes Backup wiederherstellen
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -446,6 +448,8 @@ Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
 Menu.msgAllPreferences.text=Alle Einstellungen
 Menu.msgInvertSelection.text=Auswahl umkehren
+Menu.msgIniBackupFailed.text=Die Erstellung einer Backup-Datei der aktuellen Einstellungen ist gescheitert.\nWollen Sie trotzdem "%" laden?
+Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
 Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 
 // Error messages for analyser

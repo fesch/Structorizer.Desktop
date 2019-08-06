@@ -44,6 +44,8 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-08-02      Issue #733 New strategy for a central ini file in the installation dir
  *      Kay Gürtzig         2019-08-03      Issue #733 Selective property export mechanism implemented.
  *      Kay Gürtzig         2019-08-05      Enh. #737: Additional method variant load(String, boolan)
+ *                                          Issue #733: ...alternate... renamed in ...antecedent...
+ *      Kay Gürtzig         2019-08-06      Enh. #740: Backup support
  *
  ******************************************************************************************************
  *
@@ -91,6 +93,9 @@ public class Ini
 	// START KGU#48 2018-03-21: Issue #463
 	public static final Logger logger = Logger.getLogger(Ini.class.getName());
 	// END KGU 2018-03-21
+	// START KGU#721 2019-08-06 Enh. #740
+	private boolean backedUp = false;
+	// END KGU#721 2019-08-06
 
 	/**
 	 * @return the path of an OS-specific application data subdirectory for Structorizer as string
@@ -241,7 +246,7 @@ public class Ini
 	private Ini() throws FileNotFoundException, IOException
 	{
 		boolean regularExists = false;
-		boolean alternateExists = false;
+		boolean antecedentExists = false;
 		File dir = null;
 		File file = null;
 
@@ -315,7 +320,7 @@ public class Ini
 		try
 		{
 			file = new File(filename2);
-			alternateExists = file.exists();
+			antecedentExists = file.exists();
 		} catch (Exception e)
 		{
 			logger.warning("looking for alternative ini " + e.getMessage());
@@ -323,10 +328,10 @@ public class Ini
 
 		// JOptionPane.showMessageDialog(null, filename+" ==> "+regularExists);
 		// JOptionPane.showMessageDialog(null,
-		// filename2+" ==> "+alternateExists);
+		// filename2+" ==> "+antecedentExists);
 
 		// if no file has been found
-		if (!regularExists & !alternateExists)
+		if (!regularExists & !antecedentExists)
 		{
 			// create the regular one
 			try
@@ -359,12 +364,12 @@ public class Ini
 			{
 				logger.severe(e.getMessage());
 			}
-		} else if (alternateExists)
+		} else if (antecedentExists)
 		{
 			// START KGU#466 2019-08-02: Issue #733 - New strategy w.r.t. to central default ini file
-			// This means: the alternate path has preference before the regular one!
+			// This means: the antecedent path has preference before the regular one!
 			//filename = filename2;
-			//alternateExists = false;
+			//antecedentExists = false;
 			/* Now we want that the first time preferences are loaded they be obtained from the
 			 * central ini file if it exists. The contents are to be saved to the regular ini file
 			 * and further on only the regular file is to be consulted within the session.
@@ -375,12 +380,12 @@ public class Ini
 					// Load all existing individual preferences
 					loadRegular();
 					// Override the set of central preferences 
-					loadAlternate();
+					loadAntecedent();
 					// Save the combination
 					saveRegular();
 				} catch (Exception e)
 				{
-					logger.log(Level.WARNING, "combining alternate with regular file ", e);
+					logger.log(Level.WARNING, "combining antecedent with regular file ", e);
 				}
 			}
 			else {
@@ -391,7 +396,7 @@ public class Ini
 						dir.mkdir();
 					}
 					// Get the central preferences
-					loadAlternate();
+					loadAntecedent();
 					// and save them as start for the regular in file
 					saveRegular();
 					this.iniFileCreated = true;				
@@ -407,7 +412,7 @@ public class Ini
 		// loadRegular();
 
 		/*
-		 * // alternate INI file try { URL mySource =
+		 * // antecedent INI file try { URL mySource =
 		 * Ini.class.getProtectionDomain().getCodeSource().getLocation(); File
 		 * sourceFile = new File(mySource.getPath());
 		 * dirname2=sourceFile.getAbsolutePath(); filename2 =
@@ -434,11 +439,11 @@ public class Ini
 		 * System.out.println(e.getMessage()); } catch(Exception e) {
 		 * System.out.println(e.getMessage()); }
 		 * 
-		 * // alternate INI file try { dir2 = new File(dirname2); file2 = new
+		 * // antecedent INI file try { dir2 = new File(dirname2); file2 = new
 		 * File(filename2);
 		 * 
 		 * if(!file2.exists()) { try { //setProperty("dummy","dummy");
-		 * saveAlternate(); } catch (Exception e) { e.printStackTrace();
+		 * saveAntecedent(); } catch (Exception e) { e.printStackTrace();
 		 * System.out.println(e.getMessage()); } } } catch(Error e) {
 		 * System.out.println(e.getMessage()); } catch(Exception e) {
 		 * System.out.println(e.getMessage()); }
@@ -466,12 +471,12 @@ public class Ini
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @see #load(String)
-	 * @see #loadAlternate()
+	 * @see #loadAntecedent()
 	 */
 	public void load() throws FileNotFoundException, IOException
 	{
 		// if(regularExists) loadRegular();
-		// if(alternateExists) loadAlternate();
+		// if(antecedentExists) loadAntecedent();
 		loadRegular();
 	}
 
@@ -519,7 +524,7 @@ public class Ini
 		}
 	}
 
-	public void loadAlternate() throws FileNotFoundException, IOException
+	public void loadAntecedent() throws FileNotFoundException, IOException
 	{
 		// System.out.println("Trying to load INI file: "+filename);
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
@@ -556,6 +561,11 @@ public class Ini
 		// END KGU#210 2016-07-22
 	}
 
+	/**
+	 * Saves all properties to the regular INI file.
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public void save() throws FileNotFoundException, IOException
 	{
 		saveRegular();
@@ -566,6 +576,7 @@ public class Ini
 	 * @param _filename - target file path
 	 * @throws FileNotFoundException
 	 * @throws IOException
+	 * @see #save(String, Set)
 	 */
 	public void save(String _filename) throws FileNotFoundException, IOException
 	// START KGU#466 2019-08-02: Enh. #733
@@ -573,6 +584,17 @@ public class Ini
 		save(_filename, p);
 	}
 
+	/**
+	 * Saves the preferences specified by {@code preferenceKeys} to the file with
+	 * path {@code _filename}
+	 * @param _filename - target file path
+	 * @param preferenceKeys - a set of property names and possibly start sequences of property
+	 * names (the latter ones have to end with an asterisk interpreted as wildcard; note that
+	 * internal wildcards or even regular expressions will not be recognised as such).
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @see #save()
+	 */
 	public void save(String _filename, Set<String> preferenceKeys) throws FileNotFoundException,	IOException
 	{
 		Properties p1 = new Properties();
@@ -603,6 +625,53 @@ public class Ini
 		save(_filename, p1);
 	}
 	
+	// START KGU#721 2019-08-06 Enh. #740
+	/**
+	 * Makes a backup of the current settings and sets a flag that can be consulted
+	 * with 
+	 * @return true if the backup succeeded (might e.g. fail if the directory or a former backup is read-only).
+	 */
+	public boolean backup()
+	{
+		boolean done = false;
+		try {
+			this.save(filename + ".bak");
+			done = true;
+			this.backedUp = true;
+		} catch (IOException ex) {
+			logger.severe(ex.getMessage());
+		}
+		return done;
+	}
+	
+	/**
+	 * Restores the preferences from the last backup created by {@link #backup()}, will
+	 * clear all preferences not being in the backup and override all being in it.
+	 * @return true if a backup had existed and could be loaded successfully
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 */
+	public boolean restore() throws FileNotFoundException, IOException
+	{
+		boolean done = this.backedUp;
+		if (done) {
+			this.load(filename + ".bak", true);
+			this.backedUp = false;
+		}
+		return done;
+	}
+	
+	/**
+	 * Indicates whether a backup INI file had been produced via {@link #backup()} recently
+	 * in this session. A successful call of {@link #restore()} will clear this flag.
+	 * @return true if a backup INI file is available for {@link #restore()}.
+	 */
+	public boolean hasBackup()
+	{
+		return this.backedUp && (this.backedUp = (new File(filename + ".bak").exists()));
+	}
+	// END KGU#721 2019-08-06
+	
 	private void save(String _filename, Properties props) throws FileNotFoundException,	IOException
 	// END KGU#466 2019-08-02
 	{
@@ -625,14 +694,14 @@ public class Ini
 
 
 	// START KGU#466 2019-08-01: Issue #733 - Not only superfluous, but even dangerous
-	//private void saveAlternate() throws FileNotFoundException, IOException
+	//private void saveAntecedent() throws FileNotFoundException, IOException
 	//{
 	//	// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 	//	//p.store(new FileOutputStream(filename2), "last updated "
 	//	//		+ new java.util.Date());
 	//	this.save(filename2);
 	//	// END KGU#210 2016-07-22
-	//	// JOptionPane.showMessageDialog(null, "Alternate saved => "+filename2);
+	//	// JOptionPane.showMessageDialog(null, "antecedent saved => "+filename2);
 	//}
 	// END KGU#466 2019-08-01
 

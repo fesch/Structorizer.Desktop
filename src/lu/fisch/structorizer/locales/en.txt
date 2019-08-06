@@ -120,6 +120,7 @@
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -252,7 +253,7 @@ Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
-Menu.menuDiagramOutsource.text=Outsource
+Menu.menuDiagramOutsource.text=Outsource ...
 Menu.menuDiagramOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
@@ -315,6 +316,7 @@ Menu.menuPreferencesSave.text=Save or load preferences
 Menu.menuPreferencesSaveAll.text=Save now
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
+Menu.menuPreferencesSaveRestore.text=Restore last backup
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -444,6 +446,8 @@ Menu.msgSelectPreferences.text=Preferences to be exported (categories)
 Menu.msgAllPreferences.text=All preferences
 Menu.msgInvertSelection.text=Invert selection
 Menu.ttDiagramMenuSettings.text=Settings from menu "%"
+Menu.msgIniBackupFailed.text=The creation of a backup of the current preferences failed.\nDo you still want to load "%"?
+Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
 Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser

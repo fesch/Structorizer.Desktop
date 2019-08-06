@@ -125,6 +125,7 @@
  *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17  Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -256,7 +257,7 @@ Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
-Menu.menuDiagramOutsource.text=Delegar
+Menu.menuDiagramOutsource.text=Extraer subprograma ...
 Menu.menuDiagramOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
@@ -319,6 +320,7 @@ Menu.menuPreferencesSave.text=Guardar o importar
 Menu.menuPreferencesSaveAll.text=Guardar ahora
 Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
+Menu.menuPreferencesSaveRestore.text=Restaurar último backup
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -448,6 +450,9 @@ Menu.msgSelectPreferences.text=Preferencias a ser exportados (categorías)
 Menu.msgAllPreferences.text=Todas preferencias
 Menu.msgInvertSelection.text=Invertar selección
 Menu.ttDiagramMenuSettings.text=Opciones del menú "%"
+Menu.msgIniBackupFailed.text=Guardar un backup de las preferencias actuales.\nNo obstante cargar "%"?
+Menu.msgIniRestoreFailed.text=No podía restaurar el último backup%
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".

@@ -262,6 +262,7 @@ Menu.menuPreferencesSave.text=Сохранить/ввезти настройки
 Menu.menuPreferencesSaveAll.text=Сохранить
 Menu.menuPreferencesSaveDump.text=Сохранить как ...
 Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
+Menu.menuPreferencesSaveRestore.text=Ввосстановить последный резерв
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -388,6 +389,8 @@ Menu.msgSelectPreferences.text=Вывозимые настройки (катег
 Menu.msgAllPreferences.text=Все настройки
 Menu.msgInvertSelection.text=Повернуть выбор
 Menu.ttDiagramMenuSettings.text=Настройки из меню "%"
+Menu.msgIniBackupFailed.text=Хранение резерва актуальных настроек обрушился.\nВсё-таки ввезти "%"?
+Menu.msgIniRestoreFailed.text=Не был возможно восстановить последный резерв%
 Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
