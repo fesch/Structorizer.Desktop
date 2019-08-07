@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-13 (2019-08-06)
+Current development version: 3.29-13 (2019-08-07)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -104,7 +104,9 @@ Current development version: 3.29-13 (2019-08-06)
 - 12: Issue #733/1: New handling of a user-independent start configuration file <2>
 - 12: Issue #733/2: Possibility of selective preferences export to ini files <2>
 - 13: Enh. #737: Batch export now with optionally specified settings file <2>
-- 13: Enh. #740: Automatic backup on loading preferences from file <2>
+- 13: Enh. #740: Automatic backup on loading preferences from file (via menu) <2>
+- 13: Enh. #741: Ini file path as command-line option for all modes [S. Sobisch]2
+- 13: Bugfix #742: Command-line option -v didn't actually work with argument <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

@@ -840,14 +840,14 @@ Preferences.btnOK.tooltip=Подтвердите свой выбор.
 
 
 -----[ About ]-----
-About.title=About
+About.title=О программе
 About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
-About.pnlTabbed.tab.2=
-About.pnlTabbed.tab.3=
-About.msgPaths.text=
+About.pnlTabbed.tab.2=Лицензия
+About.pnlTabbed.tab.3=Папки
+About.msgPaths.text=Файл Ини:\n%1\n\nПапка журнала:\n%2\n\nПапка инсталляции:\n%3\n
 About.btnOK.text=ОК
-About.btnOK.tooltip=Подтвердите свой выбор.
+About.btnOK.tooltip=Кончить окно.
 
 
 -----[ FontChooser ]-----
@@ -868,8 +868,8 @@ Colors.lblColors.*.tooltip=Ваш выбор для цвета nˇ [#].
 Colors.colors.*.tooltip=Нажмите чтобы изменить ...
 Colors.btnOK.text=ОК
 Colors.btnOK.tooltip=Подтвердите свой выбор.
-Colors.btnReset.text=
-Colors.btnReset.tooltip=
+Colors.btnReset.text=Сброс
+Colors.btnReset.tooltip=Сброс в начальное состояние
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Изменение цвета
@@ -1007,7 +1007,7 @@ SaveOptionDialog.msgNoFile.text=
 SaveOptionDialog.msgCantEdit.text=
 SaveOptionDialog.msgRiskOfNameClash.text=
 SaveOptionDialog.btnOk.text=ОК
-SaveOptionDialog.btnOk.tooltip=
+SaveOptionDialog.btnOk.tooltip=Сохранить настройки.
 
 -----[ PluginOptionDialog ]-----
 PluginOptionDialog.msgNoValidInteger.text=
@@ -1025,7 +1025,7 @@ ElementNamePreferences.chkUseConfNames.text=
 ElementNamePreferences.lblLocalized.text=
 ElementNamePreferences.lblIndividual.text=
 ElementNamePreferences.btnOK.text=ОК
-ElementNamePreferences.btnOK.tooltip=
+ElementNamePreferences.btnOK.tooltip=Сохранить настройки.
 
 -----[ DiagramControllerAliases ]-----
 // Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
@@ -1033,7 +1033,7 @@ DiagramControllerAliases.title=
 DiagramControllerAliases.lblHeader.text=
 DiagramControllerAliases.lblRemark.text=
 DiagramControllerAliases.chkApplyAliases.text=
-DiagramControllerAliases.btnOK.text=
+DiagramControllerAliases.btnOK.text=OK
 DiagramControllerAliases.hlpEndEditing.text=
 DiagramControllerAliases.msgIdentifierRequired.text=
 DiagramControllerAliases.ttlIllegalValues.text=
@@ -1057,7 +1057,7 @@ CodeImportMonitor.phaseLabels.0.text=
 CodeImportMonitor.phaseLabels.1.text=
 CodeImportMonitor.phaseLabels.2.text=
 CodeImportMonitor.phaseLabels.3.text=
-CodeImportMonitor.btnOk.text=
+CodeImportMonitor.btnOk.text=OK
 CodeImportMonitor.btnCancel.text=
 CodeImportMonitor.lblRoots.text=
 CodeImportMonitor.lblErrors.text=

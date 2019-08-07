@@ -89,6 +89,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
  *
  ******************************************************************************************************
  *
@@ -3335,14 +3336,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _targetFile - path of the target text file for the code export.
 	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
-	 * @param _settingsFilename - optionally: path of a (partial) ini file for alternative option retrieval
+	 * @param _settingsFromFile - whether a (partial) ini file for alternative option retrieval was given
 	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
 	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 */
 	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
 	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
 	// START KGU#720 2019-08-05: Enh. #737 - allow to load settings from a configuration file
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, String _settingsFilename, IRoutinePool _routinePool)
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, boolean _settingsFromFile, IRoutinePool _routinePool)
 	// END KGU#720 2019-08-05
 	// END KGU#676 2019-03-13
 	{
@@ -3371,12 +3372,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		
 		//=============== Get export options ======================
-		// START KGU#720 2019-08-05: Enh. #737 - option to load settings from extra settings file
-		if (_settingsFilename != null && (new File(_settingsFilename)).canRead()) {
+		// START KGU#720/KGU#722 2019-08-07: Enh. #737, #741 - option to load settings from extra settings file
+		if (_settingsFromFile) {
 			try
 			{
 				Ini ini = Ini.getInstance();
-				ini.load(_settingsFilename);
+				ini.load();
 				exportAsComments = ini.getProperty("genExportComments","0").equals("true");
 				startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
 				generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
@@ -3385,16 +3386,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
 				exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
 			} 
-			catch (FileNotFoundException ex)
-			{
-				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			} 
 			catch (IOException ex)
 			{
 				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
 			}
 		}
-		// END KGU#720 2019-08-05
+		// END KGU#720/KGU#722 2019-08-07
 
 		boolean overwrite = false;
 		if (_options != null)
