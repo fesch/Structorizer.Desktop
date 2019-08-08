@@ -905,7 +905,7 @@ About.pnlTabbed.tab.2=License
 About.pnlTabbed.tab.3=Paths
 About.msgPaths.text=Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n
 About.btnOK.text=OK
-About.btnOK.tooltip=Validate your choice.
+About.btnOK.tooltip=Close dialog.
 
 
 -----[ FontChooser ]-----

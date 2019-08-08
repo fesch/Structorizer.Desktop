@@ -540,7 +540,7 @@ About.title=About
 About.pnlTabbed.tab.0=Pessoas envolvidas
 About.pnlTabbed.tab.1=Registro de alterações
 About.btnOK.text=OK
-About.btnOK.tooltip=Confirmar escolha.
+About.btnOK.tooltip=Fechar a janela.
 
 -----[ FontChooser ]-----
 FontChooser.title=Font

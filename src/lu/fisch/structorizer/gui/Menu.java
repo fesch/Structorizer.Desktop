@@ -202,7 +202,7 @@ public class Menu extends LangMenuBar implements NSDController
     // START BOB 2016-08-02
 	protected final JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.getIcon(113));
     // END BOB 2016-08-02
-	protected final JMenuItem menuFileQuit = new JMenuItem("Quit");
+	protected final JMenuItem menuFileQuit = new JMenuItem("Quit", IconLoader.getIcon(122));
 
 	// Menu "Edit"
 	protected final JMenu menuEdit = new JMenu("Edit");

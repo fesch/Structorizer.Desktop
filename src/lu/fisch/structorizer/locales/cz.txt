@@ -507,7 +507,7 @@ About.pnlTabbed.tab.0=Zúčastnění lidé
 About.pnlTabbed.tab.1=Seznam změn
 About.pnlTabbed.tab.2=
 About.btnOK.text=OK
-About.btnOK.tooltip=Potvrďte svou volbu.
+About.btnOK.tooltip=Zavřít okno.
 
 
 -----[ FontChooser ]-----

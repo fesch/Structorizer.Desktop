@@ -390,7 +390,7 @@ About.title=O programie
 About.pnlTabbed.tab.0=Lista płac
 About.pnlTabbed.tab.1=Lista zespołu
 About.btnOK.text=OK
-About.btnOK.tooltip=Zatwierdź swój wybór.
+About.btnOK.tooltip=Zamykać okno.
 
 
 -----[ FontChooser ]-----
