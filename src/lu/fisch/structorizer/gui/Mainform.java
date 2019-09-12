@@ -83,6 +83,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-27      Enh. #717: Loading/saving of Element.E_WHEEL_SCROLL_UNIT
  *      Kay Gürtzig     2019-07-28      Issue KGU#715: isWebStart renamed to isAutoUpdating
  *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
+ *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
  *
  ******************************************************************************************************
  *
@@ -1401,7 +1403,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			diagram.addRecentFile(file.getAbsolutePath());
 		}
 	}
-        
+	// END KGU#679 2019-03-12
+
     public void doOSX() {
         try {
             // Generate and register the OSXAdapter, passing it a hash of all the methods we wish to

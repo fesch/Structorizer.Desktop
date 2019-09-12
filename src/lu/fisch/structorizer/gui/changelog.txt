@@ -108,6 +108,7 @@ Current development version: 3.29-13 (2019-09-12)
 - 13: Enh. #741: Ini file path as command-line option for all modes [S. Sobisch]2
 - 13: Bugfix #742: Command-line option -v didn't actually work with argument <2>
 - 13: Issue #327: Spanish default keywords for input / output modified <2>
+- 13: Bugfix #744: Double-click and filesdrop didn't work with OSX anymore <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
