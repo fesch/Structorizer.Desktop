@@ -1410,12 +1410,18 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
             OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
             OSXAdapter.setDockIconImage(getIconImage());
-            //OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[]{String.class}));
+            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
 
         } catch (Exception e) {
             //System.err.println("Error while loading the OSXAdapter:");
             e.printStackTrace();
         }
+    }
+    
+    // General file handler; fed to the OSXAdapter as the method to call when 
+    // a file associated to Structorizer is double-clicked or dragged onto it:
+    public void loadFile(String filePath) {
+        diagram.openNsdOrArr(filePath);
     }
     
     // General info dialog; fed to the OSXAdapter as the method to call when 
