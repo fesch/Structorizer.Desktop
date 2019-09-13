@@ -47,15 +47,20 @@ package lu.fisch.structorizer.io;
  *                                          Issue #733: ...alternate... renamed in ...presetting...
  *      Kay Gürtzig         2019-08-06      Enh. #740: Backup support
  *      Kay Gürtzig         2019-08-07      Enh. #741: Mechanisms to redirect the ini path via command line
+ *      Kay Gürtzig         2019-09-13      Enh. #741: setIniPath may now attempt to establish the folders along the path
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2019-08-13 - Kay Gürtzig
+ *      - Method setIniPath now allows to establish the directories along the path.
+ *      2019-08-07 - Kay Gürtzig
+ *      - Via the the new method setIniPath an alternative ini file may be forced (this practically
+ *        run contrary to the new rule described on 2019-08-02 (#733).
  *      2019-08-02 - Kay Gürtzig 
  *      - The new strategy is that we save preferences only in the regular ini directory. In the
- *        installation directory, however, there may a (restricted) alternative ini file that
- *        contains certain subset of the preferences always to be imposed on starting a session. 
- *      - 
+ *        installation directory, however, there may be a (restricted) alternative ini file that
+ *        contains certain subset of the preferences always to be imposed on starting a session.
  *
  ******************************************************************************************************///
 
@@ -149,20 +154,31 @@ public class Ini {
 	}
 
 	/**
-	 * @return the userAppData
+	 * @return the current value of the useAppData flag.
 	 */
 	public static boolean isUsingAppData() {
 		return useAppData;
 	}
 
 	/**
-	 * @param userAppData the userAppData to set
+	 * Specifies whether the AppData path is to be used for the ini file.<br/>
+	 * NOTE: Does not redirect an associated ini file! Only to be used to prepare the initialization!
+	 * @param _useAppData - the new useAppData flag value to be set
 	 */
-	public static void setUseAppData(boolean puseAppData) {
-		useAppData = puseAppData;
+	public static void setUseAppData(boolean _useAppData) {
+		useAppData = _useAppData;
 	}
 
 	// START KGU#722 2019-08-07: Enh. #741
+	/**
+	 * Tries to set a non-standard ini file with the given {@code filePath}. In case no ini file 
+	 * (standard or non-standard) had been set before then the new {@code filePath} will just be
+	 * made the favourite file name for the initialization. Otherwise the recent ini file will
+	 * first be saved. If a file with {@code filePath} already exists then it will just be used,
+	 * otherwise its creation will be attempted.
+	 * @param filePath - the path of the designated ini file.
+	 * @return true if the redirection worked, false otherwise.
+	 */
 	public static boolean setIniPath(String filePath) {
 		boolean done = false;
 		if (ini == null) {
@@ -173,7 +189,7 @@ public class Ini {
 			try {
 				ini.save();
 				File file = new File(filePath);
-				if (file.exists() || file.createNewFile()) {
+				if (file.exists() || (file.getParentFile().isDirectory() || file.getParentFile().mkdirs()) && file.createNewFile()) {
 					done = ini.redirect(filePath, false);
 				}
 			} catch (IOException e) {
