@@ -44,7 +44,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-08-02      Issue #733 New strategy for a central ini file in the installation dir
  *      Kay Gürtzig         2019-08-03      Issue #733 Selective property export mechanism implemented.
  *      Kay Gürtzig         2019-08-05      Enh. #737: Additional method variant load(String, boolan)
- *                                          Issue #733: ...alternate... renamed in ...antecedent...
+ *                                          Issue #733: ...alternate... renamed in ...presetting...
  *      Kay Gürtzig         2019-08-06      Enh. #740: Backup support
  *      Kay Gürtzig         2019-08-07      Enh. #741: Mechanisms to redirect the ini path via command line
  *
@@ -262,7 +262,7 @@ public class Ini {
 
 	private Ini() throws FileNotFoundException, IOException {
 		boolean regularExists = false;
-		boolean antecedentExists = false;
+		boolean presettingExists = false;
 		File dir = null;
 		File file = null;
 
@@ -347,17 +347,17 @@ public class Ini {
 		// does the alternative file exist?
 		try {
 			file = new File(filename2);
-			antecedentExists = file.exists();
+			presettingExists = file.exists();
 		} catch (Exception e) {
 			logger.warning("looking for alternative ini " + e.getMessage());
 		}
 
 		// JOptionPane.showMessageDialog(null, filename+" ==> "+regularExists);
 		// JOptionPane.showMessageDialog(null,
-		// filename2+" ==> "+antecedentExists);
+		// filename2+" ==> "+presettingExists);
 
 		// if no file has been found
-		if (!regularExists & !antecedentExists) {
+		if (!regularExists & !presettingExists) {
 			// create the regular one
 			try {
 				dir = new File(dirname);
@@ -383,12 +383,12 @@ public class Ini {
 			} catch (Exception e) {
 				logger.severe(e.getMessage());
 			}
-		} else if (antecedentExists) {
+		} else if (presettingExists) {
 			// START KGU#466 2019-08-02: Issue #733 - New strategy w.r.t. to central default
 			// ini file
-			// This means: the antecedent path has preference before the regular one!
+			// This means: the presetting path has preference before the regular one!
 			// filename = filename2;
-			// antecedentExists = false;
+			// presettingExists = false;
 			/*
 			 * Now we want that the first time preferences are loaded they be obtained from
 			 * the central ini file if it exists. The contents are to be saved to the
@@ -399,12 +399,12 @@ public class Ini {
 				try {
 					// Load all existing individual preferences
 					loadRegular();
-					// Override the set of central preferences
-					loadAntecedent();
+					// Let the set of central preferences override
+					loadPresetting();
 					// Save the combination
 					saveRegular();
 				} catch (Exception e) {
-					logger.log(Level.WARNING, "combining antecedent with regular file ", e);
+					logger.log(Level.WARNING, "combining presetting with regular file ", e);
 				}
 			} else {
 				try {
@@ -413,7 +413,7 @@ public class Ini {
 						dir.mkdir();
 					}
 					// Get the central preferences
-					loadAntecedent();
+					loadPresetting();
 					// and save them as start for the regular in file
 					saveRegular();
 					this.iniFileCreated = true;
@@ -428,7 +428,7 @@ public class Ini {
 		// loadRegular();
 
 		/*
-		 * // antecedent INI file try { URL mySource =
+		 * // presetting INI file try { URL mySource =
 		 * Ini.class.getProtectionDomain().getCodeSource().getLocation(); File
 		 * sourceFile = new File(mySource.getPath());
 		 * dirname2=sourceFile.getAbsolutePath(); filename2 =
@@ -453,10 +453,10 @@ public class Ini {
 		 * System.out.println(e.getMessage()); } catch(Exception e) {
 		 * System.out.println(e.getMessage()); }
 		 * 
-		 * // antecedent INI file try { dir2 = new File(dirname2); file2 = new
+		 * // presetting INI file try { dir2 = new File(dirname2); file2 = new
 		 * File(filename2);
 		 * 
-		 * if(!file2.exists()) { try { //setProperty("dummy","dummy"); saveAntecedent();
+		 * if(!file2.exists()) { try { //setProperty("dummy","dummy"); savePresetting();
 		 * } catch (Exception e) { e.printStackTrace();
 		 * System.out.println(e.getMessage()); } } } catch(Error e) {
 		 * System.out.println(e.getMessage()); } catch(Exception e) {
@@ -483,11 +483,11 @@ public class Ini {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 * @see #load(String)
-	 * @see #loadAntecedent()
+	 * @see #loadPresetting()
 	 */
 	public void load() throws FileNotFoundException, IOException {
 		// if(regularExists) loadRegular();
-		// if(antecedentExists) loadAntecedent();
+		// if(presettingExists) loadPresetting();
 		loadRegular();
 	}
 
@@ -540,7 +540,7 @@ public class Ini {
 		}
 	}
 
-	public void loadAntecedent() throws FileNotFoundException, IOException {
+	public void loadPresetting() throws FileNotFoundException, IOException {
 		// System.out.println("Trying to load INI file: "+filename);
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		File f = new File(filename2);
@@ -746,14 +746,14 @@ public class Ini {
 
 	// START KGU#466 2019-08-01: Issue #733 - Not only superfluous, but even
 	// dangerous
-	// private void saveAntecedent() throws FileNotFoundException, IOException
+	// private void savePresetting() throws FileNotFoundException, IOException
 	// {
 	// // START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 	// //p.store(new FileOutputStream(filename2), "last updated "
 	// // + new java.util.Date());
 	// this.save(filename2);
 	// // END KGU#210 2016-07-22
-	// // JOptionPane.showMessageDialog(null, "antecedent saved => "+filename2);
+	// // JOptionPane.showMessageDialog(null, "presetting saved => "+filename2);
 	// }
 	// END KGU#466 2019-08-01
 

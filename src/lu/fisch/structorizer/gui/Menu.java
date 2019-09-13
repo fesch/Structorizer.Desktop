@@ -105,6 +105,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-27      Enh. #717: New menu entry menuPreferencesWheelUnit
  *      Kay Gürtzig     2019-08-02/03   Issue #733 Selective property export mechanism implemented.
  *      Kay Gürtzig     2019-08-06      Enh. #740: Backup mechanism for the explicit loading of INI files
+ *      Kay Gürtzig     2019-09-13      Enh. #746: Re-translation of import plugin menu items (LangEventListener)
  *
  ******************************************************************************************************
  *
@@ -128,6 +129,8 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangMenuBar;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locale;
@@ -137,7 +140,10 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
-public class Menu extends LangMenuBar implements NSDController
+// START KGU#725 2019-09-13: Enh. #746
+//public class Menu extends LangMenuBar implements NSDController
+public class Menu extends LangMenuBar implements NSDController, LangEventListener
+// END KGU#725 2019-09-13
 {
 	public enum PluginType { GENERATOR, PARSER, IMPORTER, CONTROLLER };
 	
@@ -743,6 +749,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected static final LangTextHolder msgIniBackupFailed = new LangTextHolder("The creation of a backup of the current preferences failed.\nDo you still want to load \"%\"?");
 	protected static final LangTextHolder msgIniRestoreFailed = new LangTextHolder("Could not restore the last preferences backup%");
 	// END KGU#721 2019-08-06
+	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
+	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
+	// END KGU#725 2019-09-13
 
 	public void create()
 	{
@@ -805,8 +814,11 @@ public class Menu extends LangMenuBar implements NSDController
 		// END KGU#354 2017-03-14
 
 		// START KGU#386 2017-04-26
-		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.getIcon(0));
+		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.getIcon(0), this.importpluginItems);
 		// END KGU#386 2017-04-26
+		// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
+		this.msgImportTooltip.addLangEventListener(this);
+		// END KGU#725 2019-09-13
 
 		menuFile.add(menuFileExport);
 		// START KGU#486 2018-01-18: Issue #4
@@ -879,7 +891,7 @@ public class Menu extends LangMenuBar implements NSDController
 //		}
 		// START KGU#486 2018-01-18: Issue #4 - Icon redesign
 		//generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.getIcon(4));
-		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.getIcon(87));
+		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.getIcon(87), null);
 		// END KGU#486 2018-01-18
 		
 		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
@@ -1386,7 +1398,7 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.addSeparator();
 		
 		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
-		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4));
+		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4), null);
 		// END KGU#448 2018-01-04
 
 		// START KGU#466 2019-08.02: Issue #733 - allows selective preferences export
@@ -2069,7 +2081,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#232 2016-08-03
 
 	// START KGU#386 2017-04-26
-	private Vector<GENPlugin> addPluginMenuItems(JMenu _menu, PluginType _type, ImageIcon _defaultIcon)
+	private Vector<GENPlugin> addPluginMenuItems(JMenu _menu, PluginType _type, ImageIcon _defaultIcon, Map<JMenuItem, String> _itemMap)
 	{
 		// read generators from file
 		String fileName = "void.xml";
@@ -2122,6 +2134,11 @@ public class Menu extends LangMenuBar implements NSDController
 			_menu.add(pluginItem);
 			if (plugin.info != null) {
 				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
+				// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
+				if (_itemMap != null) {
+					_itemMap.put(pluginItem, plugin.info);
+				}
+				// END KGU#725 2019-09-13
 			}
 			final String className = plugin.className;
 			// START KGU#354/KGU#395 2017-05-11: Enh. #354 - prepares plugin-specific option
@@ -2188,5 +2205,17 @@ public class Menu extends LangMenuBar implements NSDController
 		return refactoringData;
 	}
 	// END KGU#258 2016-09-26 (KGU#721 2019-08-06)
+
+	// START KGU#725 2019-09-13: Enh. #746 - The importer tooltips hadn't been retranslated
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == msgImportTooltip) {
+			String tooltip = msgImportTooltip.getText();
+			for (Map.Entry<JMenuItem, String> entry: this.importpluginItems.entrySet()) {
+				entry.getKey().setToolTipText(tooltip.replace("%", entry.getValue()));
+			}
+		}
+	}
+	// END KGU#725 2019-09-13
 
 }

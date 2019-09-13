@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-13 (2019-09-12)
+Current development version: 3.29-13 (2019-09-13)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -109,6 +109,7 @@ Current development version: 3.29-13 (2019-09-12)
 - 13: Bugfix #742: Command-line option -v didn't actually work with argument <2>
 - 13: Issue #327: Spanish default keywords for input / output modified <2>
 - 13: Bugfix #744: Double-click and filesdrop didn't work with OSX anymore <2>
+- 13: Enh. #746: Import of hus-Struktogrammer files (.stgr format only) <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>
