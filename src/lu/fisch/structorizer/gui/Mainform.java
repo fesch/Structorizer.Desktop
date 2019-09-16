@@ -85,6 +85,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
  *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
  *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,7 @@ package lu.fisch.structorizer.gui;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -157,6 +159,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
 	private boolean isStartingUp = true;
 	// END KGU#461/KGU#491 2018-02-09
+	// START KGU#724 2019-09-16: Bugfix #744 Open file event queue for OS X
+	public LinkedList<String> filesToOpen = null;
+	// END KGU#724 2019-09-16
 	
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
@@ -1405,53 +1410,63 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	}
 	// END KGU#679 2019-03-12
 
-    public void doOSX() {
-        try {
-            // Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
-            // use as delegates for various com.apple.eawt.ApplicationListener methods
-            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
-            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
-            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-            OSXAdapter.setDockIconImage(getIconImage());
-            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
+	public void doOSX() {
+		try {
+			// Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
+			// use as delegates for various com.apple.eawt.ApplicationListener methods
+			OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
+			OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
+			OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
+			OSXAdapter.setDockIconImage(getIconImage());
+			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
 
-        } catch (Exception e) {
-            //System.err.println("Error while loading the OSXAdapter:");
-            e.printStackTrace();
-        }
-    }
-    
-    // General file handler; fed to the OSXAdapter as the method to call when 
-    // a file associated to Structorizer is double-clicked or dragged onto it:
-    public void loadFile(String filePath) {
-        diagram.openNsdOrArr(filePath);
-    }
-    
-    // General info dialog; fed to the OSXAdapter as the method to call when 
-    // "About OSXAdapter" is selected from the application menu
-    public void about() {
-        diagram.aboutNSD();
-    }
+		} catch (Exception e) {
+			//System.err.println("Error while loading the OSXAdapter:");
+			e.printStackTrace();
+		}
+	}
 
-    // General preferences dialog; fed to the OSXAdapter as the method to call when
-    // "Preferences..." is selected from the application menu
-    public void preferences() {
-        diagram.preferencesNSD();
-    }
+	// General file handler; fed to the OSXAdapter as the method to call when 
+	// a file associated to Structorizer is double-clicked or dragged onto it:
+	public void loadFile(String filePath) {
+		// START KGU#724 2019-09-16: Bugfix #744 (workaround for hazards on startup)
+		if (diagram == null || this.isStartingUp) {
+			// Lazy initialization
+			if (this.filesToOpen == null) {
+				this.filesToOpen = new LinkedList<String>();
+			}
+			filesToOpen.addLast(filePath);	// push the file path to the queue
+			return;
+		}
+		// END KGU#724 2019-09-16
+		diagram.openNsdOrArr(filePath);
+	}
 
-    // General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
-    // A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
-    public boolean quit() { 
-        int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
-        if (option == JOptionPane.YES_OPTION)
-        {
-            getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }					
+	// General info dialog; fed to the OSXAdapter as the method to call when 
+	// "About OSXAdapter" is selected from the application menu
+	public void about() {
+		diagram.aboutNSD();
+	}
+
+	// General preferences dialog; fed to the OSXAdapter as the method to call when
+	// "Preferences..." is selected from the application menu
+	public void preferences() {
+		diagram.preferencesNSD();
+	}
+
+	// General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
+	// A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
+	public boolean quit() { 
+		int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
+		if (option == JOptionPane.YES_OPTION)
+		{
+			getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}					
 
 }

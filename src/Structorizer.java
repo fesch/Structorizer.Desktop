@@ -70,6 +70,7 @@
  *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
  *      Kay Gürtzig     2019-08-07      Enh. #741: Option -s now also respected for interactive mode,
  *                                      Bugfix #742
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *
  ******************************************************************************************************
  *
@@ -381,6 +382,12 @@ public class Structorizer
 					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
 					// them all ...
 					String lastExt = "";	// Last file extension
+					// START KGU#724 2019-09-16: Bugfix #744 - consider postponed openFile events on OS X
+					if (mainform.filesToOpen != null) {
+						fileNames.addAll(mainform.filesToOpen);
+						mainform.filesToOpen.clear();
+					}
+					// END KGU#724 2019-09-16
 					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
 					//for (int i = start; i < args.length; i++)
 					for (int i = 0; i < fileNames.size(); i++)
@@ -456,11 +463,11 @@ public class Structorizer
 
 		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
-                    System.setProperty("apple.laf.useScreenMenuBar", "true");
-                    System.setProperty("apple.awt.graphics.UseQuartz", "true");
-                    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Structorizer");
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
+			System.setProperty("apple.awt.graphics.UseQuartz", "true");
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Structorizer");
 
-                    mainform.doOSX();
+			mainform.doOSX();
 		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
