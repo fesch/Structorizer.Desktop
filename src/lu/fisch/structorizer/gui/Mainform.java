@@ -1430,15 +1430,34 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// a file associated to Structorizer is double-clicked or dragged onto it:
 	public void loadFile(String filePath) {
 		// START KGU#724 2019-09-16: Bugfix #744 (workaround for hazards on startup)
+		if (filePath == null || filePath.isEmpty()) {
+			return;
+		}
 		if (diagram == null || this.isStartingUp) {
 			// Lazy initialization
 			if (this.filesToOpen == null) {
 				this.filesToOpen = new LinkedList<String>();
 			}
 			filesToOpen.addLast(filePath);	// push the file path to the queue
+			// Nothing more to do here at the moment
 			return;
 		}
+		// If files had already been queued then first try to load these
+		else if (this.filesToOpen != null) {
+			String lastExt = "";
+			while (!this.filesToOpen.isEmpty()) {
+				String queuedPath = this.filesToOpen.removeFirst();
+				if (lastExt.equals("nsd") && queuedPath.toLowerCase().endsWith(".nsd")) {
+					diagram.arrangeNSD();
+				}
+				lastExt = diagram.openNsdOrArr(queuedPath);
+			}
+			if (lastExt.equals("nsd") && filePath.toLowerCase().endsWith(".nsd")) {
+				diagram.arrangeNSD();
+			}
+		}
 		// END KGU#724 2019-09-16
+		// Eventually, load the given file
 		diagram.openNsdOrArr(filePath);
 	}
 

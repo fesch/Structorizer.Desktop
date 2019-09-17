@@ -106,6 +106,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-08-02/03   Issue #733 Selective property export mechanism implemented.
  *      Kay Gürtzig     2019-08-06      Enh. #740: Backup mechanism for the explicit loading of INI files
  *      Kay Gürtzig     2019-09-13      Enh. #746: Re-translation of import plugin menu items (LangEventListener)
+ *      Kay Gürtzig     2019-09-17      Issues #747/#748: Menu items for Try elements, shortcuts for Try, Parallel, Forever
  *
  ******************************************************************************************************
  *
@@ -1079,6 +1080,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeForever);
 		menuDiagramAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
+		// START KGU#725 2019-09-17: Issue #747
+		menuDiagramAddBeforeForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#725 2019-09-17
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCall);
 		menuDiagramAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
@@ -1090,12 +1094,18 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforePara);
 		menuDiagramAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
-		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// START KGU#725 2019-09-17: Issue #747
+		//menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#725 2019-09-17
 		// END KGU#169 2016-04-01
 
 		// START KGU#686 2019-03-16: Enh. #56
 		menuDiagramAddBefore.add(menuDiagramAddBeforeTry);
-		menuDiagramAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new try-catch ...","",true); doButtons(); } } );
+		menuDiagramAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
+		// START KGU#725 2019-09-17: Issue #747
+		menuDiagramAddBeforeTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#725 2019-09-17
 		// END KGU#686 2019-03-16
 
 		menuDiagramAdd.add(menuDiagramAddAfter);
@@ -1111,38 +1121,47 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterCase);
 		menuDiagramAddAfterCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,true); doButtons(); } } );
-		menuDiagramAddAfterCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10,0));
+		menuDiagramAddAfterCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterFor);
 		menuDiagramAddAfterFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,true); doButtons(); } } );
-		menuDiagramAddAfterFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7,0));
+		menuDiagramAddAfterFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterWhile);
 		menuDiagramAddAfterWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,true); doButtons(); } } );
-		menuDiagramAddAfterWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8,0));
+		menuDiagramAddAfterWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterRepeat);
 		menuDiagramAddAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,true); doButtons(); } } );
-		menuDiagramAddAfterRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9,0));
+		menuDiagramAddAfterRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterForever);
 		menuDiagramAddAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
+		// START KGU#725 2019-09-17: Issue #747
+		menuDiagramAddAfterForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		// END KGU#725 2019-09-17
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterCall);
 		menuDiagramAddAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",true); doButtons(); } } );
-		menuDiagramAddAfterCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11,0));
+		menuDiagramAddAfterCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterJump);
 		menuDiagramAddAfterJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",true); doButtons(); } } );
-		menuDiagramAddAfterJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12,0));
+		menuDiagramAddAfterJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0));
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterPara);
 		menuDiagramAddAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
-		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13,0));
+		// START KGU#725 2019-09-17: Issue #747
+		//menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, 0));
+		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		// END KGU#725 2019-09-17
 
 		// START KGU#686 2019-03-16: Enh. #56
 		menuDiagramAddAfter.add(menuDiagramAddAfterTry);
-		menuDiagramAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new try-catch ...","",true); doButtons(); } } );
+		menuDiagramAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
+		// START KGU#725 2019-09-17: Issue #747
+		menuDiagramAddAfterTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		// END KGU#725 2019-09-17
 		// END KGU#686 2019-03-16
 
 		menuDiagram.add(menuDiagramEdit);

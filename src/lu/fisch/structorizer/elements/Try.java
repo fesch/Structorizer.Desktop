@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.elements;
 
-import java.awt.Color;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -34,6 +32,7 @@ import java.awt.Color;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-15      First Issue (implementing an idea of Bob Fisch)
+ *      Kay Gürtzig     2019-09-17      Bugfix #749: Width for FINALLY section wasn't properly reserved
  *
  ******************************************************************************************************
  *
@@ -42,6 +41,7 @@ import java.awt.Color;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -151,7 +151,10 @@ public class Try extends Element {
 				E_PADDING/2 + getWidthOutVariables(_canvas, preCatch + " " + lineCatch0, this) + E_PADDING,
 				rCatch.right + E_PADDING,
 				E_PADDING/2 + getWidthOutVariables(_canvas, preFinally, this) + E_PADDING,
-				rFinally.right
+				// START KGU#728 2019-09-17: Bugfix #749
+				//rFinally.right
+				rFinally.right + E_PADDING
+				// END KGU#728 2019-09-17
 				};
 		int width = 0;
 		for (int i = 0; i < widths.length; i++) {
