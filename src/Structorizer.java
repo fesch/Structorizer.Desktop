@@ -71,6 +71,7 @@
  *      Kay Gürtzig     2019-08-07      Enh. #741: Option -s now also respected for interactive mode,
  *                                      Bugfix #742
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
+ *      Kay Gürtzig     2019-09-18      #744 fixing approach: OSX handler configuration moved to Mainform constructor
  *
  ******************************************************************************************************
  *
@@ -379,15 +380,17 @@ public class Structorizer
 					//	start = 1;
 					//}
 					// END KGU#722 2019-08-07
-					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
-					// them all ...
-					String lastExt = "";	// Last file extension
+					
 					// START KGU#724 2019-09-16: Bugfix #744 - consider postponed openFile events on OS X
 					if (mainform.filesToOpen != null) {
 						fileNames.addAll(mainform.filesToOpen);
 						mainform.filesToOpen.clear();
 					}
 					// END KGU#724 2019-09-16
+
+					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
+					// them all ...
+					String lastExt = "";	// Last file extension
 					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
 					//for (int i = start; i < args.length; i++)
 					for (int i = 0; i < fileNames.size(); i++)
@@ -399,14 +402,7 @@ public class Structorizer
 						//String s = args[i].trim();
 						String s = fileNames.get(i).trim();
 						// END KGU#722 219-08-07
-						// START KGU#722 2019-08-07: Enh. #741 - tolerate -s settingsfile
-						//if (!s.isEmpty())
-						if (s.equals("-s") && i+1 < args.length) {
-							i++;
-							continue;
-						}
-						else if (!s.isEmpty())
-						// END KGU#722 2019-08-07
+						if (!s.isEmpty())
 						{
 							if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
 								// Push the previously loaded diagram to Arranger
@@ -467,7 +463,9 @@ public class Structorizer
 			System.setProperty("apple.awt.graphics.UseQuartz", "true");
 			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Structorizer");
 
-			mainform.doOSX();
+			// START KGU#724 2019-09-16: Bugfix #744 - moved to Mainform(true) to establish the handlers sooner
+			//mainform.doOSX();
+			// END KGU#724 2019-09-16
 		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 

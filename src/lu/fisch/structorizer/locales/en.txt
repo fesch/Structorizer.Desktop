@@ -316,7 +316,9 @@ Menu.menuPreferencesSave.text=Save or load preferences
 Menu.menuPreferencesSaveAll.text=Save now
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
+Menu.menuPreferencesSaveLoad.tooltip=Loading preferences from some INI file automatically backups the entire set of previous preferences in a temporary file.
 Menu.menuPreferencesSaveRestore.text=Restore last backup
+Menu.menuPreferencesSaveRestore.tooltip=Reloads the preferences backed up when you last loaded preferences from some INI file during the session.
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=

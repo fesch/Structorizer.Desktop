@@ -250,6 +250,9 @@ Menu.menuPreferencesSave.text=Opslaan of inlezen ...
 Menu.menuPreferencesSaveAll.text=Nu opslaan
 Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
 Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
+Menu.menuPreferencesSaveLoad.tooltip=
+Menu.menuPreferencesSaveRestore.text=
+Menu.menuPreferencesSaveRestore.tooltip=
 
 // Menu "View" (Thans niet gebruikt!)
 Menu.menuView.text=

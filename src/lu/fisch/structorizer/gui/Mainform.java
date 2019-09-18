@@ -86,6 +86,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
  *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
+ *      Kay Gürtzig     2019-09-18      Bugfix #744: OSX configuration split (handlers now earlier set)
  *
  ******************************************************************************************************
  *
@@ -1163,6 +1164,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		this.isStandalone = standalone;
 		// START KGU#484 2018-03-22: Issue #463
 		logger.info("Structorizer " + this.instanceNo + " starting up.");
+		// START KGU#724 2019-09-16: Bugfix #744 - establish the handler as soon as possible
+		if (standalone && System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+		{
+			doOSX();
+		}
+		// END KGU#724 2019-09-16
 		// START KGU#305 2016-12-16: Code revision
 		Arranger.addToChangeListeners(this);
 		// END KGU#305 2016-12-16
@@ -1420,9 +1427,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			OSXAdapter.setDockIconImage(getIconImage());
 			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
 
+			logger.info("OS X handlers established.");
 		} catch (Exception e) {
-			//System.err.println("Error while loading the OSXAdapter:");
 			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to establish OS X handlers", e);
 		}
 	}
 
@@ -1464,13 +1472,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// General info dialog; fed to the OSXAdapter as the method to call when 
 	// "About OSXAdapter" is selected from the application menu
 	public void about() {
-		diagram.aboutNSD();
+		if (diagram != null) diagram.aboutNSD();
 	}
 
 	// General preferences dialog; fed to the OSXAdapter as the method to call when
 	// "Preferences..." is selected from the application menu
 	public void preferences() {
-		diagram.preferencesNSD();
+		if (diagram != null) diagram.preferencesNSD();
 	}
 
 	// General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs

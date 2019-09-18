@@ -321,7 +321,9 @@ Menu.menuPreferencesSave.text=Guardar o importar
 Menu.menuPreferencesSaveAll.text=Guardar ahora
 Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
+Menu.menuPreferencesSaveLoad.tooltip=Antes de cargar preferencias desde un archivo INI las preferencias actuales son guardados automáticamente en un fichero temporal (backup).
 Menu.menuPreferencesSaveRestore.text=Restaurar último backup
+Menu.menuPreferencesSaveRestore.tooltip=Restablce las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=

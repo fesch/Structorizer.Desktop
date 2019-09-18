@@ -319,7 +319,9 @@ Menu.menuPreferencesSave.text=Einstellungen sichern/laden
 Menu.menuPreferencesSaveAll.text=Jetzt abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
 Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
+Menu.menuPreferencesSaveLoad.tooltip=Das Laden von Einstellungen aus einer INI Datei erstellt automatisch ein Backup der vorherigen Einstellungen in einer temporären Datei.
 Menu.menuPreferencesSaveRestore.text=Letztes Backup wiederherstellen
+Menu.menuPreferencesSaveRestore.tooltip=Stellt die Einstellungen aus dem Backup wieder her, das beim letzten Laden einer INI-Datei in dieser Sitzung angelegt wurde.
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
