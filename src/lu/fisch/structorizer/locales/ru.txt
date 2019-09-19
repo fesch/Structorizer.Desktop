@@ -262,7 +262,9 @@ Menu.menuPreferencesSave.text=Сохранить/ввезти настройки
 Menu.menuPreferencesSaveAll.text=Сохранить
 Menu.menuPreferencesSaveDump.text=Сохранить как ...
 Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
+Menu.menuPreferencesSaveLoad.tooltip=Прежде ввозе настройк из файла изготовит резервную копию теперешних настройк
 Menu.menuPreferencesSaveRestore.text=Ввосстановить последный резерв
+Menu.menuPreferencesSaveRestore.tooltip=Ввосстановит настройки из резерва, который был изготовлен когда ввозил файл с настройками последный раз
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=

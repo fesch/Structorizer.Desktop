@@ -86,7 +86,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
  *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
- *      Kay Gürtzig     2019-09-18      Bugfix #744: OSX configuration split (handlers now earlier set)
+ *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
  *
  ******************************************************************************************************
  *
@@ -1164,12 +1164,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		this.isStandalone = standalone;
 		// START KGU#484 2018-03-22: Issue #463
 		logger.info("Structorizer " + this.instanceNo + " starting up.");
-		// START KGU#724 2019-09-16: Bugfix #744 - establish the handler as soon as possible
-		if (standalone && System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-		{
-			doOSX();
-		}
-		// END KGU#724 2019-09-16
+		// END KGU#484 2018-03-22
 		// START KGU#305 2016-12-16: Code revision
 		Arranger.addToChangeListeners(this);
 		// END KGU#305 2016-12-16
@@ -1421,11 +1416,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		try {
 			// Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
 			// use as delegates for various com.apple.eawt.ApplicationListener methods
+			
+			// Issue #744: The file handler must be the first handler to be established! Otherwise the
+			// event of the double-clicked file that led to launching Structorizer might slip through!
+			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
 			OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
 			OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
 			OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
 			OSXAdapter.setDockIconImage(getIconImage());
-			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
 
 			logger.info("OS X handlers established.");
 		} catch (Exception e) {
@@ -1437,12 +1435,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// General file handler; fed to the OSXAdapter as the method to call when 
 	// a file associated to Structorizer is double-clicked or dragged onto it:
 	public void loadFile(String filePath) {
-		// START KGU#724 2019-09-16: Bugfix #744 (workaround for hazards on startup)
+		// START KGU#724 2019-09-16: Issue #744 (workaround for hazards on startup, may no longer be necessary)
 		if (filePath == null || filePath.isEmpty()) {
 			return;
 		}
 		if (diagram == null || this.isStartingUp) {
 			// Lazy initialization
+			logger.info("openFile event with path \"" + filePath + "\" postponed.");
 			if (this.filesToOpen == null) {
 				this.filesToOpen = new LinkedList<String>();
 			}
@@ -1458,15 +1457,27 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (lastExt.equals("nsd") && queuedPath.toLowerCase().endsWith(".nsd")) {
 					diagram.arrangeNSD();
 				}
-				lastExt = diagram.openNsdOrArr(queuedPath);
+				logger.info("Handling postponed openFile event with path \"" + filePath + "\" ...");
+				try {
+					lastExt = diagram.openNsdOrArr(queuedPath);
+				}
+				catch (Exception ex) {
+					logger.log(Level.WARNING, "Failed to load file \"" + queuedPath + "\":", ex);
+				}
 			}
+			// Prepare the current event after having loaded at least one postponed file
 			if (lastExt.equals("nsd") && filePath.toLowerCase().endsWith(".nsd")) {
 				diagram.arrangeNSD();
 			}
 		}
 		// END KGU#724 2019-09-16
 		// Eventually, load the given file
-		diagram.openNsdOrArr(filePath);
+		try {
+			diagram.openNsdOrArr(filePath);
+		}
+		catch (Exception ex) {
+			logger.log(Level.WARNING, "Failed to load file \"" + filePath + "\":", ex);
+		}
 	}
 
 	// General info dialog; fed to the OSXAdapter as the method to call when 

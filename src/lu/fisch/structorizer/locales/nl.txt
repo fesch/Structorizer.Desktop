@@ -250,10 +250,9 @@ Menu.menuPreferencesSave.text=Opslaan of inlezen ...
 Menu.menuPreferencesSaveAll.text=Nu opslaan
 Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
 Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
-Menu.menuPreferencesSaveLoad.tooltip=
-Menu.menuPreferencesSaveRestore.text=
-Menu.menuPreferencesSaveRestore.tooltip=
-
+Menu.menuPreferencesSaveLoad.tooltip=Voorkeuren inlezen uit een INI-bestand maakt automatisch een backup van alle eerdere instellingen, in een tijdelijk bestand.
+Menu.menuPreferencesSaveRestore.text=Laatste backup terugzetten
+Menu.menuPreferencesSaveRestore.tooltip=Leest opnieuw de instellingen in uit de backup, gemaakt na de laatste keer dat er in deze sessie voorkeuren uit een INI-bestand werden ingelezen.
 // Menu "View" (Thans niet gebruikt!)
 Menu.menuView.text=
 
