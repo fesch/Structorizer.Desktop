@@ -426,7 +426,7 @@ About.title=Iwwert
 About.pnlTabbed.tab.0=Agebonne Persons
 About.pnlTabbed.tab.1=Changelog
 About.btnOK.text=OK
-About.btnOK.tooltip=D'Auswahl bestätegen.
+About.btnOK.tooltip=Verloossen.
 
 
 -----[ FontChooser ]-----

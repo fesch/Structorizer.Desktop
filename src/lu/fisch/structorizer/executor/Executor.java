@@ -4194,7 +4194,7 @@ public class Executor implements Runnable
 			this.lastDeclarationSurrogate.executed = true;
 		}
 		// END KGU#477 2017-12-10
-		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
+		// The Root element, REPEAT loop, and TRY block won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
 			trouble = stepRoot((Root)element);

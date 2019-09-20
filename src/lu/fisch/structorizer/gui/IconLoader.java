@@ -222,7 +222,8 @@ public class IconLoader {
 			"118_info.png",
 			"119_rearrange.png",
 			"120_elem_try.png",	// introduced with enh. #56
-			"121_mini_try.png"	// introduced with enh. #56
+			"121_mini_try.png",	// introduced with enh. #56
+			"122_exit.png"		// Introduce with 3.29-13
 	};
 	
 	private static final int[] ICON_SIZES = {

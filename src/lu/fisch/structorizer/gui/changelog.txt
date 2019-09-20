@@ -10,7 +10,7 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 
-Current development version: 3.29-12 (2019-08-04)
+Current development version: 3.29-13 (2019-09-20)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -96,13 +96,24 @@ Current development version: 3.29-12 (2019-08-04)
 - 11: Bugfix #728: Endless loops and other flaws in Find&Replace tackled <2>
 - 11: Find&Replace: Search result presentation strategy unified <2>
 - 11: Issue #729: Modified German button caption in element editor [K.-P. Reimers]2
-- 12: Compatibility with the new Windows/Upla installer improved
+- 12: Compatibility with the new Windows/Upla installer ensured and improved
 - 12: Issue #551: No version check mode hint in the wake of Windows installer <2>
 - 12: Bugfix #731: File renaming failure on Linux made arr[z] files vanish [K.-P. R.]2
 - 12: Bugfix #732: Cloning groups could end up in shared (glued) positions <2>
 - 12: Design of refactoring dialog improved (text -> keyword table) <2>
-- 12: Issue #733: New handling of a user-independent start configuration file <2>
-- 12: Issue #733: Possibility of selective preferences export to ini files <2>
+- 12: Issue #733/1: New handling of a user-independent start configuration file <2>
+- 12: Issue #733/2: Possibility of selective preferences export to ini files <2>
+- 13: Enh. #737: Batch export now with optionally specified settings file <2>
+- 13: Enh. #740: Automatic backup on loading preferences from file (via menu) <2>
+- 13: Enh. #741: Ini file path as command-line option for all modes [S. Sobisch]2
+- 13: Bugfix #742: Command-line option -v didn't actually work with argument <2>
+- 13: Issue #327: Spanish default keywords for input / output modified <2>
+- 13: Bugfix #744: Double-click and filesdrop didn't work with OSX anymore <2>
+- 13: Enh. #746: Import of hus-Struktogrammer files (.stgr format only) <2>
+- 13: Issue #747: New key bindings Ctrl-F5 etc. for TRY, PARALLEL, and ENDLESS <2>
+- 13: Bugfix #748: Menu items to add TRY blocks inserted PARALLEL elements <2>
+- 13: Bugfix #749: Width defect with FINALLY sections in TRY blocks <2>
+- 13: Issue #463: Startup and shutdown log entries now with version number <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

@@ -66,6 +66,11 @@
  *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
  *      Kay Gürtzig     2019-07-28      Issue #551 / KGU#715: No hint about version check option on Windows installer either
  *      Kay Gürtzig     2019-08-01      Issues #551, #733 - corrected directory retrieval
+ *      Bob Fisch       2019-08-04      Issue #537: ApplicationFactory replaced by OSXAdapter stuff
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Option -s now also respected for interactive mode,
+ *                                      Bugfix #742
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *
  ******************************************************************************************************
  *
@@ -104,7 +109,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import lu.fisch.structorizer.application.ApplicationFactory;
+//import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
@@ -138,7 +143,7 @@ public class Structorizer
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
 		String parser = null;
-		String switches = "";
+		StringList switches = new StringList();
 		//String outFileName = null;
 		//String charSet = "UTF-8";
 		// START KGU#354 2017-04-27: Enh. #354
@@ -154,6 +159,10 @@ public class Structorizer
 			printHelp();
 			return;
 		}
+		// START KGU#722 2019-08-06: Enh. #741
+		File settings = null;
+		boolean openFound = false;
+		// END KGU#722 2019-08-06
 		for (int i = 0; i < args.length; i++)
 		{
 			//System.out.println("arg " + i + ": " + args[i]);
@@ -179,6 +188,11 @@ public class Structorizer
 				}
 				// END KGU#538 2018-07-01
 			}
+			// START KGU#722 2019-08-07: Enh. #741
+			else if (i == 0 && args[i].equals("-open")) {
+				openFound = true;
+			}
+			// END KGU#722 2019-08-07
 			// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced 
 			// Legacy support - parsers will now be derived from the file extensions 
 			//else if (i > 0 && (parser != null) && (args[i].equalsIgnoreCase("pas") || args[i].equalsIgnoreCase("pascal"))
@@ -189,18 +203,36 @@ public class Structorizer
 			else if (args[i].equals("-o") && i+1 < args.length)
 			{
 				// Output file name
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
 				//outFileName = args[++i];
 				options.put("outFileName", args[++i]);
 			}
 			else if (args[i].equals("-e") && i+1 < args.length)
 			{
 				// Encoding
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
 				//charSet = args[++i];
 				options.put("charSet", args[++i]);
 			}
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
 			else if (args[i].equals("-v") && i+1 < args.length)
 			{
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
 				// START KGU#354 2018-09-27: More tolerance spent
 				//logDir = args[++i];
 				String dirName = args[i+1]; 
@@ -211,7 +243,10 @@ public class Structorizer
 				}
 				else {
 					//logDir = args[++i];
-					options.put("logDir", "args[++i]");
+					// START KGU#723 2019-08-07: Bugfix #742
+					//options.put("logDir", "args[++i]");
+					options.put("logDir", args[++i]);
+					// END KGU#723 2019-08-07
 				}
 				// END KGU#354 2018-09-27
 			}
@@ -220,11 +255,32 @@ public class Structorizer
 			else if (args[i].equals("-s") && i+1 < args.length)
 			{
 				//settingsFile = args[++i];
-				options.put("settingsFile", args[++i]);
+				// START KGU#722 2019-08-06: Enh. #741
+				//options.put("settingsFile", args[++i]);
+				settings = new File(args[++i]);
+				try {
+					if (settings.canRead() || settings.createNewFile()) {
+						if (settings.canRead()) {
+							// FIXME check whether this resolves the path correctly
+							options.put("settingsFile", settings.getAbsolutePath());
+						}
+					}
+				} catch (IOException ex) {
+					System.err.println("*** Failure on ensuring specified settings file: " + ex.getMessage());
+					Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, "Option -s " + settings.getPath(), ex);
+					settings = null;
+				}
+				// END KGU#722 2019-08-06
 			}
 			// END KGU#538 2018-07-01
 			// START KGU#602 2018-10-25: Enh. #416
 			else if (args[i].equals("-l") && parser != null && i+1 < args.length) {
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
 				try {
 					short maxLen = Short.parseShort(args[i+1]);
 					if (maxLen == 0 || maxLen >= 20) {
@@ -236,21 +292,42 @@ public class Structorizer
 			// END KGU#602 2018-10-25
 			// Target standard output?
 			else if (args[i].equals("-")) {
-				switches += "-";
+				switches.add("-");
 			}
 			// Other options
+			// START KGU#722 2019-08-07: Enh. #741
+			else if (args[i].equals("-open")) {
+				openFound = true;
+			}
+			// END KGU#722 2019-08-07
 			else if (args[i].startsWith("-")) {
-				switches += args[i].substring(1);
+				switches.add(args[i].substring(1));
 			}
 			else
 			{
 				fileNames.add(args[i]);
 			}
 		}
+		// START KGU#722 2019-08-06: Enh. #741
+		if (settings != null) {
+			if (generator != null || parser != null) {
+				try {
+					Ini.getInstance().redirect(settings.getAbsolutePath(), generator != null || parser != null);
+				} catch (IOException ex) {
+					System.err.println("*** Failing to redirect settings file: " + ex.getMessage());
+					Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, "Option -s " + settings.getPath(), ex);
+					options.remove("settingsFile");
+				}
+			}
+			else if (!Ini.setIniPath(settings.getAbsolutePath())) {
+				options.remove("settingsFile");
+			}
+		}
+		// END KGU#722 2019-08-06
 		if (generator != null)
 		{
 			//Structorizer.export(generator, fileNames, outFileName, switches, charSet, null);
-			Structorizer.export(generator, fileNames, options, switches);
+			Structorizer.export(generator, fileNames, options, switches.concatenate());
 			return;
 		}
 		else if (parser != null)
@@ -258,7 +335,7 @@ public class Structorizer
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode
 			//Structorizer.parse(parser, fileNames, outFileName, options, charSet);
 			//Structorizer.parse(parser, fileNames, outFileName, switches, charSet, settingsFile, logDir);
-			Structorizer.parse(parser, fileNames, options, switches);
+			Structorizer.parse(parser, fileNames, options, switches.concatenate());
 			// END KGU#354 2017-04-27
 			return;
 		}
@@ -296,18 +373,34 @@ public class Structorizer
 				public void run() {
 		// END KGU#440 2017-11-06
 					//String s = new String();
-					int start = 0;
-					if (args.length > 0 && args[0].equals("-open")) {
-						start = 1;
+					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
+					//int start = 0;
+					//if (args.length > 0 && args[0].equals("-open")) {
+					//	start = 1;
+					//}
+					// END KGU#722 2019-08-07
+					
+					// START KGU#724 2019-09-16: Issue #744 - consider postponed openFile events on OS X
+					if (mainform.filesToOpen != null) {
+						fileNames.addAll(mainform.filesToOpen);
+						mainform.filesToOpen.clear();
 					}
+					// END KGU#724 2019-09-16
+
 					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
 					// them all ...
 					String lastExt = "";	// Last file extension
-					for (int i=start; i<args.length; i++)
+					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
+					//for (int i = start; i < args.length; i++)
+					for (int i = 0; i < fileNames.size(); i++)
+					// END KGU#722 2019-08-07
 					{
 						// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
 						//s += args[i];
-						String s = args[i].trim();
+						// START KGU#722 2019-08-07: Enh. #741 - we have the filenames already
+						//String s = args[i].trim();
+						String s = fileNames.get(i).trim();
+						// END KGU#722 219-08-07
 						if (!s.isEmpty())
 						{
 							if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
@@ -326,6 +419,22 @@ public class Structorizer
 						}
 						// END KGU#306 2016-12-12/2017-01-27
 					}
+					// START KGU#722 2019-08-07: Enh. #741
+					if (!switches.isEmpty()) {
+						StringBuilder opts = new StringBuilder();
+						for (int i = 0; i < switches.count(); i++) {
+							String swtch = switches.get(i);
+							opts.append(" -");
+							if (!swtch.equals("-")) {
+								opts.append(swtch);
+							}
+							String msg = "Unsupported command line options " + opts.toString().trim() + " ignored.";
+							Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+							JOptionPane.showMessageDialog(mainform, msg,
+									"Command line", JOptionPane.WARNING_MESSAGE);
+						}
+					}
+					// END KGU#722 2019-08-07
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
 				}
 				// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
@@ -349,14 +458,11 @@ public class Structorizer
 
 		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
-                    // KGU 2018-09-14: Issue #537
-                    //ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
+			System.setProperty("apple.awt.graphics.UseQuartz", "true");
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Structorizer");
 
-                    System.setProperty("apple.laf.useScreenMenuBar", "true");
-                    System.setProperty("apple.awt.graphics.UseQuartz", "true");
-                    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Unimozer");
-
-                    mainform.doOSX();
+			mainform.doOSX();
 		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
@@ -439,8 +545,8 @@ public class Structorizer
 	
 	// START KGU#187 2016-05-02: Enh. #179
 	private static final String[] synopsis = {
-		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]...",
-		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		"Structorizer [-s SETTINGSFILE] [-open] [NSDFILE|ARRFILE|ARRZFILE]...",
+		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
 		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h",
 		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
@@ -467,8 +573,10 @@ public class Structorizer
 		String codeFileName = outFileName;
 		// the encoding to be used. 
 		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// START KGU#720 2019-08-07: Enh. #737
 		// path of a property file to be preferred over structorizer.ini
-		//String _settingsFileName = _options.get("settingsFile");
+		boolean settingsGiven = _options.containsKey("settingsFile");
+		// END KGU#720 2019-08-07
 		for (String fName : _nsdOrArrNames)
 		{
 			try
@@ -573,11 +681,17 @@ public class Structorizer
 				//if (!roots.isEmpty())
 				//gen.exportCode(roots, codeFileName, _switches, charSet);
 				if (!roots.isEmpty()) {
-					gen.exportCode(roots, codeFileName, _switches, charSet, null);
+					// START KGU#720 2019-08-06: Enh. #737 - now with specific option file
+					//gen.exportCode(roots, codeFileName, _switches, charSet, null);
+					gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
+					// END KGU#720 2019-08-06
 				}
 				int i = 0;
 				for (Entry<ArchivePool, Vector<Root>> poolEntry: pools.entrySet()) {
-					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey());
+					// START KGU#720 2019-08-05: Enh. #737 - now with specific option file
+					//gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey(), null);
+					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, settingsGiven, poolEntry.getKey());
+					// END KGU#720 2019-08-05
 				}
 				// END KGU#679 2019-02-13
 			}
@@ -694,8 +808,10 @@ public class Structorizer
 		String outFile = _options.get("outFileName"); 
 		// the encoding to be assumed or used 
 		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// START KGU#722 2019-08-07: Enh. #741 - no longer needed, ini redirection already done
 		// path of a property file to be preferred against structorizer.ini
-		String settingsFileName = _options.get("settingsFile");
+		//String settingsFileName = _options.get("settingsFile");
+		// END KGU#722 2019-08-07
 		// Path of the target folder for the parser log
 		String _logDir = _options.get("logDir");
 
@@ -727,7 +843,7 @@ public class Structorizer
 				for (String ext: parser.getFileExtensions()) {
 					usage += ext + ", ";
 				}
-				// Get rid of last ", " 
+				// Get rid of last ", "
 				if (usage.endsWith(", ")) {
 					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
 				}
@@ -831,7 +947,10 @@ public class Structorizer
 			// START KGU#538 2018-07-01: Bugfix #554
 			System.out.println("--- Processing file \"" + filename + "\" with " + parser.getClass().getSimpleName() + " ...");
 			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
-			parser = cloneWithPluginOptions(parsers.get(parser), settingsFileName);
+			// START KGU#722 2019-08-07: Enh. #741 - now ini will already have been associated with a differing settings file
+			//parser = cloneWithPluginOptions(parsers.get(parser), settingsFileName);
+			parser = cloneWithPluginOptions(parsers.get(parser), null);
+			// END KGU#722 2019-08-07
 			// START KGU#678 2019-03-26: fileExt had always remained null
 			StringList fileExts = new StringList(parser.getFileExtensions());
 			// END KGU#678 2019-03-26

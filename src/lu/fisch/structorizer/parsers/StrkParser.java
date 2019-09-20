@@ -154,29 +154,29 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 			@Override
 			public final String getDescription() 
 			{
-		        return getFileDescription();
-		    }
-			
+				return getFileDescription();
+			}
+
 			/* (non-Javadoc)
 			 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 			 */
 			@Override
-		    public final boolean accept(File f) 
+			public final boolean accept(File f) 
 			{
-		        if (f.isDirectory()) 
+				if (f.isDirectory()) 
 				{
-		            return true;
-		        }
-				
-		        String extension = getExtension(f);
-		        if (extension != null) 
-				{
-		            return isOK(f.getName());
+					return true;
 				}
-				
-		        return false;
-		    }
-			
+
+				String extension = getExtension(f);
+				if (extension != null) 
+				{
+					return isOK(f.getName());
+				}
+
+				return false;
+			}
+
 		};
 	}
 

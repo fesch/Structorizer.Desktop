@@ -187,7 +187,7 @@ Menu.menuDiagramDelete.text=Verwijderen
 Menu.menuDiagramMoveUp.text=Naar boven verplaatsen
 Menu.menuDiagramMoveDown.text=Naar beneden verplaatsen
 Menu.menuDiagramTransmute.text=Omzetten
-Menu.menuDiagramOutsource.text=Overlaten
+Menu.menuDiagramOutsource.text=Overlaten ...
 Menu.menuDiagramOutsource.tooltip=Het geselecteerde element overlaten aan een nieuwe subroutine.
 Menu.menuDiagramCollapse.text=Invouwen
 Menu.menuDiagramExpand.text=Uitvouwen
@@ -250,7 +250,9 @@ Menu.menuPreferencesSave.text=Opslaan of inlezen ...
 Menu.menuPreferencesSaveAll.text=Nu opslaan
 Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
 Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
-
+Menu.menuPreferencesSaveLoad.tooltip=Voorkeuren inlezen uit een INI-bestand maakt automatisch een backup van alle eerdere instellingen, in een tijdelijk bestand.
+Menu.menuPreferencesSaveRestore.text=Laatste backup terugzetten
+Menu.menuPreferencesSaveRestore.tooltip=Leest opnieuw de instellingen in uit de backup, gemaakt na de laatste keer dat er in deze sessie voorkeuren uit een INI-bestand werden ingelezen.
 // Menu "View" (Thans niet gebruikt!)
 Menu.menuView.text=
 
@@ -834,9 +836,9 @@ About.pnlTabbed.tab.0=Betrokken personen
 About.pnlTabbed.tab.1=Log van wijzigingen
 About.pnlTabbed.tab.2=Licentie
 About.pnlTabbed.tab.3=Paden
-About.msgPaths.text=Ini-map:\n%1\n\nLog map:\n%2\n\nInstallatiepad:\n%3\n
+About.msgPaths.text=Ini-bestand:\n%1\n\nLog map:\n%2\n\nInstallatiepad:\n%3\n
 About.btnOK.text=OK
-About.btnOK.tooltip=Uw keuze bevestigen.
+About.btnOK.tooltip=Het venster sluiten.
 
 
 -----[ FontChooser ]-----

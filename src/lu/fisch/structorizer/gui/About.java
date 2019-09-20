@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-07-30      Bugfix #571 - about -> license also showed the changelog.txt
  *      Kay Gürtzig     2018-10-08      Issue #620: a fourth tab "Paths" added.
  *      Kay Gürtzig     2019-08-01      Issue #733: Correct representation of the installation directory (URL to UTF-8)
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Paths tab now shows the complete ini file path, not just the dir path
  *
  ******************************************************************************************************
  *
@@ -102,7 +103,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 	// START KGU#595 2018-10-08: Issue #620
 	protected JScrollPane scrollPane4;
 	protected JTextPane txtPaths;
-	public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// START KGU#722 2019-08-07: Enh. #741
+	//public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	public LangTextHolder msgPaths = new LangTextHolder("Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// END KGU#722 2019-08-07
 	// END KGU#595 2018-10-08
 	protected JPanel buttonBar;
 	protected JButton btnOK;
@@ -343,7 +347,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 	private void updatePaths() {
 		File prodDir = Ini.getInstallDirectory();
 		txtPaths.setText(msgPaths.getText().
-				replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				// START KGU#722 2019-08-07: Enh. #741
+				//replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				replace("%1", Ini.getInstance().getIniFile().getAbsolutePath()).
+				// END KGU#722 2019-08-07
 				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
 				replace("%3", prodDir.getAbsolutePath()));
 		txtPaths.setCaretPosition(0);

@@ -120,6 +120,7 @@
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -252,7 +253,7 @@ Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
-Menu.menuDiagramOutsource.text=Outsource
+Menu.menuDiagramOutsource.text=Outsource ...
 Menu.menuDiagramOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
@@ -315,6 +316,9 @@ Menu.menuPreferencesSave.text=Save or load preferences
 Menu.menuPreferencesSaveAll.text=Save now
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
+Menu.menuPreferencesSaveLoad.tooltip=Loading preferences from some INI file automatically backups the entire set of previous preferences in a temporary file.
+Menu.menuPreferencesSaveRestore.text=Restore last backup
+Menu.menuPreferencesSaveRestore.tooltip=Reloads the preferences backed up when you last loaded preferences from some INI file during the session.
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -444,6 +448,8 @@ Menu.msgSelectPreferences.text=Preferences to be exported (categories)
 Menu.msgAllPreferences.text=All preferences
 Menu.msgInvertSelection.text=Invert selection
 Menu.ttDiagramMenuSettings.text=Settings from menu "%"
+Menu.msgIniBackupFailed.text=The creation of a backup of the current preferences failed.\nDo you still want to load "%"?
+Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
 Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
@@ -899,9 +905,9 @@ About.pnlTabbed.tab.0=Implicated Persons
 About.pnlTabbed.tab.1=Changelog
 About.pnlTabbed.tab.2=License
 About.pnlTabbed.tab.3=Paths
-About.msgPaths.text=Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n
+About.msgPaths.text=Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n
 About.btnOK.text=OK
-About.btnOK.tooltip=Validate your choice.
+About.btnOK.tooltip=Close dialog.
 
 
 -----[ FontChooser ]-----

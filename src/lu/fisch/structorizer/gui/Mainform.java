@@ -83,6 +83,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-27      Enh. #717: Loading/saving of Element.E_WHEEL_SCROLL_UNIT
  *      Kay Gürtzig     2019-07-28      Issue KGU#715: isWebStart renamed to isAutoUpdating
  *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
+ *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
+ *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
+ *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
  *
  ******************************************************************************************************
  *
@@ -109,6 +114,7 @@ package lu.fisch.structorizer.gui;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -155,6 +161,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
 	private boolean isStartingUp = true;
 	// END KGU#461/KGU#491 2018-02-09
+	// START KGU#724 2019-09-16: Bugfix #744 Open file event queue for OS X
+	public LinkedList<String> filesToOpen = null;
+	// END KGU#724 2019-09-16
 	
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
@@ -377,15 +386,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 								}
 								// END KGU#49 2017-01-04
 								if (!vetoed) {
-									// START KGU#484 2018-03-22: Issue #463
-									logger.info("Structorizer " + instanceNo + " shutting down.");
+									// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number inserted)
+									logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") shutting down.");
 									// END KGU#484 2018-03-22
 									System.exit(0);	// This kills all related frames and threads as well!
 								}
 							}
 							else {
 								// START KGU#484 2018-03-22: Issue #463
-								logger.info("Structorizer " + instanceNo + " going to dispose.");
+								logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") going to dispose.");
 								// END KGU#484 2018-03-22
 								dispose();
 							}
@@ -1154,8 +1163,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		this.instanceNo = ++instanceCount;
 		// END KGU#326 2017-01-07
 		this.isStandalone = standalone;
-		// START KGU#484 2018-03-22: Issue #463
-		logger.info("Structorizer " + this.instanceNo + " starting up.");
+		// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number added)
+		logger.info("Structorizer " + this.instanceNo + " (version " + Element.E_VERSION + ") starting up.");
+		// END KGU#484 2018-03-22
 		// START KGU#305 2016-12-16: Code revision
 		Arranger.addToChangeListeners(this);
 		// END KGU#305 2016-12-16
@@ -1401,54 +1411,101 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			diagram.addRecentFile(file.getAbsolutePath());
 		}
 	}
-        
-    public void doOSX() {
-        try {
-            // Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
-            // use as delegates for various com.apple.eawt.ApplicationListener methods
-            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
-            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
-            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-            OSXAdapter.setDockIconImage(getIconImage());
-            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
+	// END KGU#679 2019-03-12
 
-        } catch (Exception e) {
-            //System.err.println("Error while loading the OSXAdapter:");
-            e.printStackTrace();
-        }
-    }
-    
-    // General file handler; fed to the OSXAdapter as the method to call when 
-    // a file associated to Structorizer is double-clicked or dragged onto it:
-    public void loadFile(String filePath) {
-        diagram.openNsdOrArr(filePath);
-    }
-    
-    // General info dialog; fed to the OSXAdapter as the method to call when 
-    // "About OSXAdapter" is selected from the application menu
-    public void about() {
-        diagram.aboutNSD();
-    }
+	public void doOSX() {
+		try {
+			// Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
+			// use as delegates for various com.apple.eawt.ApplicationListener methods
+			
+			// Issue #744: The file handler must be the first handler to be established! Otherwise the
+			// event of the double-clicked file that led to launching Structorizer might slip through!
+			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
+			OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
+			OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
+			OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
+			OSXAdapter.setDockIconImage(getIconImage());
 
-    // General preferences dialog; fed to the OSXAdapter as the method to call when
-    // "Preferences..." is selected from the application menu
-    public void preferences() {
-        diagram.preferencesNSD();
-    }
+			logger.info("OS X handlers established.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to establish OS X handlers", e);
+		}
+	}
 
-    // General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
-    // A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
-    public boolean quit() { 
-        int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
-        if (option == JOptionPane.YES_OPTION)
-        {
-            getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }					
+	// General file handler; fed to the OSXAdapter as the method to call when 
+	// a file associated to Structorizer is double-clicked or dragged onto it:
+	public void loadFile(String filePath) {
+		// START KGU#724 2019-09-16: Issue #744 (workaround for hazards on startup, may no longer be necessary)
+		if (filePath == null || filePath.isEmpty()) {
+			return;
+		}
+		if (diagram == null || this.isStartingUp) {
+			// Lazy initialization
+			logger.info("openFile event with path \"" + filePath + "\" postponed.");
+			if (this.filesToOpen == null) {
+				this.filesToOpen = new LinkedList<String>();
+			}
+			filesToOpen.addLast(filePath);	// push the file path to the queue
+			// Nothing more to do here at the moment
+			return;
+		}
+		// If files had already been queued then first try to load these
+		else if (this.filesToOpen != null) {
+			String lastExt = "";
+			while (!this.filesToOpen.isEmpty()) {
+				String queuedPath = this.filesToOpen.removeFirst();
+				if (lastExt.equals("nsd") && queuedPath.toLowerCase().endsWith(".nsd")) {
+					diagram.arrangeNSD();
+				}
+				logger.info("Handling postponed openFile event with path \"" + filePath + "\" ...");
+				try {
+					lastExt = diagram.openNsdOrArr(queuedPath);
+				}
+				catch (Exception ex) {
+					logger.log(Level.WARNING, "Failed to load file \"" + queuedPath + "\":", ex);
+				}
+			}
+			// Prepare the current event after having loaded at least one postponed file
+			if (lastExt.equals("nsd") && filePath.toLowerCase().endsWith(".nsd")) {
+				diagram.arrangeNSD();
+			}
+		}
+		// END KGU#724 2019-09-16
+		// Eventually, load the given file
+		try {
+			diagram.openNsdOrArr(filePath);
+		}
+		catch (Exception ex) {
+			logger.log(Level.WARNING, "Failed to load file \"" + filePath + "\":", ex);
+		}
+	}
+
+	// General info dialog; fed to the OSXAdapter as the method to call when 
+	// "About OSXAdapter" is selected from the application menu
+	public void about() {
+		if (diagram != null) diagram.aboutNSD();
+	}
+
+	// General preferences dialog; fed to the OSXAdapter as the method to call when
+	// "Preferences..." is selected from the application menu
+	public void preferences() {
+		if (diagram != null) diagram.preferencesNSD();
+	}
+
+	// General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
+	// A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
+	public boolean quit() { 
+		int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
+		if (option == JOptionPane.YES_OPTION)
+		{
+			getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}					
 
 }
