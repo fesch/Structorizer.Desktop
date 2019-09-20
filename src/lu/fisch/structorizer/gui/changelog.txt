@@ -113,6 +113,7 @@ Current development version: 3.29-13 (2019-09-20)
 - 13: Issue #747: New key bindings Ctrl-F5 etc. for TRY, PARALLEL, and ENDLESS <2>
 - 13: Bugfix #748: Menu items to add TRY blocks inserted PARALLEL elements <2>
 - 13: Bugfix #749: Width defect with FINALLY sections in TRY blocks <2>
+- 13: Issue #463: Startup and shutdown log entries now with version number <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

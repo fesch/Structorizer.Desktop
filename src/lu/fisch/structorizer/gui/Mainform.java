@@ -87,6 +87,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
+ *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
  *
  ******************************************************************************************************
  *
@@ -385,15 +386,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 								}
 								// END KGU#49 2017-01-04
 								if (!vetoed) {
-									// START KGU#484 2018-03-22: Issue #463
-									logger.info("Structorizer " + instanceNo + " shutting down.");
+									// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number inserted)
+									logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") shutting down.");
 									// END KGU#484 2018-03-22
 									System.exit(0);	// This kills all related frames and threads as well!
 								}
 							}
 							else {
 								// START KGU#484 2018-03-22: Issue #463
-								logger.info("Structorizer " + instanceNo + " going to dispose.");
+								logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") going to dispose.");
 								// END KGU#484 2018-03-22
 								dispose();
 							}
@@ -1162,8 +1163,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		this.instanceNo = ++instanceCount;
 		// END KGU#326 2017-01-07
 		this.isStandalone = standalone;
-		// START KGU#484 2018-03-22: Issue #463
-		logger.info("Structorizer " + this.instanceNo + " starting up.");
+		// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number added)
+		logger.info("Structorizer " + this.instanceNo + " (version " + Element.E_VERSION + ") starting up.");
 		// END KGU#484 2018-03-22
 		// START KGU#305 2016-12-16: Code revision
 		Arranger.addToChangeListeners(this);
