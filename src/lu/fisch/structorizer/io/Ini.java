@@ -33,7 +33,7 @@ package lu.fisch.structorizer.io;
  *      Author              Date            Description
  *      ------              ----            -----------
  *      Bob Fisch           2008-05-02      First Issue
- *      Gennaro Donnarumma  2014-02-02      Ini in JAR support
+ *      Gennaro Donnarumma  2014-02-02      Ini in JAR folder support
  *      Kay Gürtzig         2016-04-26      Jar path updated
  *      Kay Gürtzig         2016-07-22      Bugfix #200: save() method now immediately closes the file
  *      Kay Gürtzig         2016-09-28      First comment line modified (KGU#264)
@@ -48,6 +48,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-08-06      Enh. #740: Backup support
  *      Kay Gürtzig         2019-08-07      Enh. #741: Mechanisms to redirect the ini path via command line
  *      Kay Gürtzig         2019-09-13      Enh. #741: setIniPath may now attempt to establish the folders along the path
+ *      Kay Gürtzig         2019-09-20      Enh. #741: Ini path redirection is now logged
  *
  ******************************************************************************************************
  *
@@ -57,7 +58,7 @@ package lu.fisch.structorizer.io;
  *      2019-08-07 - Kay Gürtzig
  *      - Via the the new method setIniPath an alternative ini file may be forced (this practically
  *        run contrary to the new rule described on 2019-08-02 (#733).
- *      2019-08-02 - Kay Gürtzig 
+ *      2019-08-02 - Kay Gürtzig
  *      - The new strategy is that we save preferences only in the regular ini directory. In the
  *        installation directory, however, there may be a (restricted) alternative ini file that
  *        contains certain subset of the preferences always to be imposed on starting a session.
@@ -729,13 +730,13 @@ public class Ini {
 
 	// START KGU#722 2019-08-06: Enh. #741, bugfix #733
 	/**
-	 * This tries to redeirect the INI file path to the given _filename. If
+	 * This tries to redirect the INI file path to the given _filename. If
 	 * {@code _readOnly} is true or the given file cannot be written then all
-	 * updates etc. go to a temprary file instead.
+	 * updates etc. go to a temporary file instead.
 	 * 
-	 * @param _filename
-	 * @param _readOnly
-	 * @return
+	 * @param _filename - the new Ini file path to be used
+	 * @param _readOnly - if true then changes will be saved to a temp file
+	 * @return Whether the redirection worked (may go to a temp file though)
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
@@ -753,9 +754,11 @@ public class Ini {
 				_filename = tempFile.getAbsolutePath();
 			} catch (IOException ex) {
 				logger.severe(ex.getMessage());
+				return false;
 			}
 		}
 		this.filename = _filename;
+		logger.info("Ini file path redirected to: " + _filename);
 		return true;
 	}
 	// END KGU#722 2019-08-06
