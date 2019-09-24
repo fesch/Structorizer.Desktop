@@ -181,7 +181,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
  *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bugfix #731
  *      Kay Gürtzig     2019-08-01      KGU#719: Refactoring dialog redesigned to show a JTable of key pairs
- *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Kay Gürtzig     2019-08-03      Issue #733: Selective property export mechanism implemented.
+ *      Kay Gürtzig     2019-09-24      Bugfix #751: Cursor traversal didn't reach Try element internals
  *
  ******************************************************************************************************
  *
@@ -8602,6 +8603,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			{
     				y = ((Root)selected).children.getRectOffDrawPoint().top + 2;
     			}
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (selected instanceof Try) {
+    				y = ((Try)selected).qTry.getRectOffDrawPoint().top + 2;
+    			}
+    			// END KGU#729 2019-09-24
     			else
     			{
     				y = selRect.bottom + 2;
@@ -8649,6 +8655,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				x = bodyRect.left + 2;
     				y = (bodyRect.top + bodyRect.bottom) / 2;
     			}
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (selected instanceof Try) {
+    				Rect catchRect = ((Try)selected).qCatch.getRectOffDrawPoint();
+    				x = catchRect.left + 2;
+    				y = catchRect.top + 2;
+    			}
+    			// END KGU#729 2019-09-24
     			else
     			{
     				x = selRect.right + 2;
@@ -8694,6 +8707,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				newSel = selected;	// Stop before the border on boxed diagrams
     			}
     			// END KGU#214 2015-07-31
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (newSel instanceof Try) {
+    				Element sel = null;
+    				if (_direction == Editor.CursorMoveDirection.CMD_UP) {
+    					// From finally go to catch, from catch to try, from outside to finally
+    					if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qTry.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    					else if (!selected.isDescendantOf(newSel)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    				}
+    				else if (_direction == Editor.CursorMoveDirection.CMD_DOWN) {
+    					// From try go to catch, from catch to finally, from finally to subsequent element
+    					if (selected == ((Try)newSel).qTry || selected.isDescendantOf(((Try)newSel).qTry)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().top + 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+    						sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+    					}
+    				}
+    				if (sel != null) {
+    					newSel = sel;
+    				}
+    			}
+    			// END KGU#729 2019-09-24
     			selected = newSel;
     		}
     		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
