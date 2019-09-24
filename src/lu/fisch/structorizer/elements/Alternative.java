@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -33,42 +32,41 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.10      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in drawing methods
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Methods for test coverage tracking added
- *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
- *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Bob Fisch       2007-12-10      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (= KGU#91) in drawing methods
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Methods for test coverage tracking added
+ *      Kay Gürtzig     2016-03-07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *                                      Bugfix #212 (inverted logic of option altPadRight = "enlarge FALSE")
- *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
- *      Kay Gürtzig     2017.02.08      Bugfix #198 (KGU#346) rightward cursor navigation was flawed,
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2017-02-08      Bugfix #198 (KGU#346) rightward cursor navigation was flawed,
  *                                      Inheritance changed (IFork added)
- *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
- *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
- *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
- *      Kay Gürtzig     2018.02.09      Bugfix #507: Element size and layout must depend on branch labels
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Bob Fisch       2018.09.08      Issue #508: Font height reduction for better vertical centering
- *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
- *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2017-10-22      Enh. #128: Design for mode "comments plus text" revised to save space
+ *      Kay Gürtzig     2017-11-01      Bugfix #447: End-standing backslashes suppressed for display and analysis
+ *      Kay Gürtzig     2018-01-21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018-02-09      Bugfix #507: Element size and layout must depend on branch labels
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Bob Fisch       2018-09-08      Issue #508: Font height reduction for better vertical centering
+ *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-28      Enh. #128 - comment block height slightly enlarged
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
-
+ ******************************************************************************************************///
 
 import java.awt.Color;
 import java.awt.Point;
@@ -174,7 +172,7 @@ public class Alternative extends Element implements IFork {
 			//commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
 			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
 			if (commentRect.right != 0) {
-				commentRect.bottom += E_PADDING/6;
+				commentRect.bottom += E_PADDING/3;
 				commentRect.right += 2 * (E_PADDING/2);
 			}
 			// END KGU#435 2017-10-22

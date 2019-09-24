@@ -76,6 +76,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-02-15  Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig         2019-03-08  Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-21  Enh. #56: Export of Try elements implemented
+ *      Kay Gürtzig         2019-03-30  Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -891,7 +892,7 @@ public class PerlGenerator extends Generator {
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment
-					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!",
+					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrence of 'last' instruction!",
 							_indent, isDisabled);
 				}
 				else if (!isEmpty)
@@ -1024,7 +1025,10 @@ public class PerlGenerator extends Generator {
 		String indent = _indent;
 		// START KGU#352 2017-02-26: Cache transform-relevant information 
 		this.paramNames = _paramNames;
-		this.typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = _root.getTypeInfo();
+		this.typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#352 2017-02-26
 		
 		// END KGU#352 2017-02-26

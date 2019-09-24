@@ -73,6 +73,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for optional parameters (by argument extension in the Call)
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
+ *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for called subroutines now with group filter
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -1102,6 +1104,7 @@ public class OberonGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
+		Root owningRoot = Element.getRoot(_call);
 		StringList lines = _call.getUnbrokenText();
 		for (int i = 0; i < lines.count(); i++)
 		{
@@ -1110,7 +1113,7 @@ public class OberonGenerator extends Generator {
 			String line = lines.get(i);
 			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 				Function call = _call.getCalledRoutine();
-				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 				if (!callCandidates.isEmpty()) {
 					// FIXME We'll just fetch the very first one for now...
 					Root called = callCandidates.get(0);
@@ -1426,7 +1429,10 @@ public class OberonGenerator extends Generator {
 	{
 		String indentPlusOne = _indent + this.getIndent();
 		// START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
-		typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//typeMap = _root.getTypeInfo();
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#261 2017-01-30
 		// START KGU#388 2017-10-24: Enh. #423
 		//if (varNames.count() > 0) {
@@ -1606,7 +1612,10 @@ public class OberonGenerator extends Generator {
 					continue;
 				}
 				String expr = transform(constEntry.getValue());
-				TypeMapEntry constType = _root.getTypeInfo().get(constEntry.getKey()); 
+				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+				//TypeMapEntry constType = _root.getTypeInfo().get(constEntry.getKey()); 
+				TypeMapEntry constType = _root.getTypeInfo(routinePool).get(constEntry.getKey()); 
+				// END KGU#676 2019-03-30
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
 						code.add(_indent + "CONST");
@@ -1638,7 +1647,10 @@ public class OberonGenerator extends Generator {
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		String indentPlus3 = indentPlus2 + this.getIndent();
-		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo().entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+		// END KGU#676 2019-03-30
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
 				if (wasDefHandled(_root, key, true)) {

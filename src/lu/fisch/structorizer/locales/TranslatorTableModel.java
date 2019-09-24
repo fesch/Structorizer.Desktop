@@ -30,12 +30,12 @@ public class TranslatorTableModel extends DefaultTableModel {
 	}
 	// END KGU 2016-08-04
 	
-    /* (non-Javadoc)
-     * @see javax.swing.table.DefaultTableModel#isCellEditable(int, int)
-     */
-    @Override
-    public boolean isCellEditable(int row, int column){  
-        return (column==2) && !forbiddenRows.contains(row);  
-    }
+	/* (non-Javadoc)
+	 * @see javax.swing.table.DefaultTableModel#isCellEditable(int, int)
+	 */
+	@Override
+	public boolean isCellEditable(int row, int column){
+		return (column >= 2) && !forbiddenRows.contains(row);
+	}
 
 }

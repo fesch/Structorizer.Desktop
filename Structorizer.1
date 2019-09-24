@@ -1,9 +1,11 @@
-.TH Structorizer 1 "27 September 2018" "" "User's Manual"
+.TH Structorizer 1 "7 August 2019" "version 3.29-13" "User's Manual"
 .SH NAME
-Structorizer \- A program to work with Nassi-Shneiderman diagrams (NSD)
+Structorizer \- Editor for Nassi-Shneiderman diagrams (NSD)
+and tool for algorithm design and analysis based on them.
 .SH SYNOPSIS
 .B Structorizer
-.RI [ nsd\-file ]
+[ \fIoptions\fP ]
+.RI "[ " input\-file " ] ..."
 .br
 .B Structorizer \-x \fIgenerator\fP
 [ \fIoptions\fP ]
@@ -11,73 +13,138 @@ Structorizer \- A program to work with Nassi-Shneiderman diagrams (NSD)
 .br
 .B Structorizer -p
 [
-\fIparser\fP
+.I parser
 ]
 [
 \fIoptions\fP
 ]
-[
-\-o \fIoutput-file\fP
-]
-\fIsource-file\fP ...
+\fIsource\-file\fP ...
 .br
 .B Structorizer \-h
 .br
 .SH DESCRIPTION
-\fBStructorizer\fP can be used as an interactive graphical editor for Nassi-Shneiderman diagrams or as a command-line tool to convert files between the XML-based diagram format and program source code.
-With no argument or a single NSD file name as argument, \fBStructorizer\fP will start in interactive mode. It allows to create, edit and save algorithm descriptions as Nassi-Shneiderman diagrams. They may be exported as pictures in various graphics file formats, and under certain conditions the diagrams may even be executed and analysed (see the home page for a full description of the features and the user interface). \fBStructorizer\fP can also export the algorithms as program stubs to different programming languages.
-Used as a command-line tool, structorizer either converts saved NSD files to program source of several programming languages (option -x) or generates NSD files from parsed source code (option -p by now only from pascal sources) in batch mode.
-By default, the resulting file will have the same name as the (first) input file name but with a different extension (NSD files will have extension .nsd, Pascal source files extension .p etc.). With option \fB-o\fP a different output file name may be specified. By option \fB-\fP the translation result may be directed to standard output instead.
-For the conversions the parser preferences configurable in the interactive mode od Structorizer are relevant, whereas other preferences, particularly the export options are invalid and may only be controlled by the command line options described below.
+\fBStructorizer\fP can be used as a powerful and easy-to-use interactive
+graphical editor for Nassi-Shneiderman diagrams or as a command-line tool
+to convert files between the XML-based diagram format and program source code.
+.br
+With no argument, just an \fB\-s\fP option, and/or a sequence of \fIinput\-file\fP
+names as argument, \fBStructorizer\fP will start in interactive mode. It allows
+to create, edit, and save algorithm descriptions as Nassi-Shneiderman diagrams.
+They may be exported as pictures in various graphics file formats. Adhering to
+some syntactic rules, the diagrams may even be executed, debugged, and analysed
+(see the home page for a full description of the features and the user interface).
+\fBStructorizer\fP can also export the algorithms as program stubs to different
+programming languages, and it may import source code of some programming languages
+and display the algorithmic conetnt as Nassi-Shneiderman diagram.
+.br
+Used as a command-line tool, \fBStructorizer\fP either converts saved NSD files
+(or ARR or ARRZ files, respecively) to program source in one of several available
+programming languages (option \fB\-x\fP) or, conversely, generates NSD files by
+parsing source code (option \fB\-p\fP, by now only from Pascal, C, or COBOL sources)
+in batch mode.
+.br
+By default, the resulting file will have the same name as the (first) input file name
+but with a different extension (NSD files will have extension .nsd, Pascal source
+files extension .p etc.). With option \fB\-o\fP a different output file name may be
+specified. By option \fB\-\fP the translation result may be directed to the standard
+output instead.
+.br
+For the conversions the parser preferences configurable in the interactive mode of
+\fBStructorizer\fP are relevant, whereas other preferences, particularly the export
+options are invalid and may only be controlled by the command line options described
+below. Alternatively, a settings file containing the relevant options may be specified
+via the \fB\-s\fP option. If both a settings file and specific export switches are
+given then the specific switches ovverride the respective settings from the settings file.
 .SH OPTIONS
 .TP
 \fB\-\fP
-Direct exported program code to StdOut instead of writing it to the default output file (if \fB-o\fP is also used then the code will be written both to standard output and to the specified output file).
+Write generated program code directly to StdOut instead of eporting it to the default
+output file (if \fB-o\fP is also used then the code will be written both to standard
+output and to the specified output file). (For export mode.)
 .TP
-\fB\-a\fP
-Also export attributes like author, creation date, license.
+.B \-a
+Also export attributes like author, creation date, license. (For export mode only.)
 .TP
-\fB\-b\fP
-Place opening braces for an compound instruction block at next line below the keyword.
+.B \-b
+Place opening braces for a compound instruction block at next line below the keyword. (For export mode only.)
 .TP
-\fB\-c\fP
-Simple instructions will be exported as comments.
+.B \-c
+Simple instructions will be exported as comments. (For export mode only.)
 .TP
-\fB\-e\fP \fIencoding\fP
+.BI \-e " encoding"
 Select a character encoding for the imported/exported code (default is UTF-8).
 .TP
-\fB\-f\fP
-Force overwriting an existing output file with same name (otherwise a new name will be derived by inserting or appending an integer number to the base name).
+.B \-f
+Force overwriting an existing output file with same name (otherwise a new name
+will be derived by inserting or appending an integer number to the base name).
 .TP
-\fB\-g\fP
-Writes the complete grammar tree of the parsed source file to a text file with on successful parsing.
+.B \-g
+Writes the complete grammar tree of the parsed source file to a text file with
+on successful parsing.
 .TP
-\fB\-h\fP
-Give a short help and a list of names of supported generators (must be the first and only option in order to work).
+.B \-h
+Specifies \fBH\fPelp mode: Give a short help and a list of names of supported
+generators and parsers (must be the first and only option in order to work).
 .TP
-\fB\-l\fP
-Generate line numbers for BASIC or COBOL export.
-.TP
-\fB\-i\fP
+.B \-i
 Generate source code in free format (informal) - for languages like COBOL.
+(For export mode only.)
 .TP
-\fB\-o\fP \fIoutput\-file\fP
+.B \-l
+Generate line numbers for BASIC or COBOL export. (For export mode only.)
+.TP
+.BI \-o " output\-file
 Use the given name / path for the output file instead of the default.
+(For export or parse mode.)
 .TP
-\fB\-s\fP \fIsetting\-file\fP
-Read parser-specific settings from the specified property file.
+\fB\-open\fP
+May be used for the interactive mode, preceding the names of the files to be
+opened in interactive mode.
+(Actually redundant.)
 .TP
-\fB\-t\fP
-Export instructions as they are written i.e. nearly without  translation/interpretation.
+\fB\-p\fP [ \fIparser\fP ]
+Specifies \fBp\fParse mode: Generate an NSD file or an arranger archive file from
+source code. This option must be the first argument.
+The source language is automatically identified via file the extension if no
+\fIparser\fP is specified. If the parser might be ambiguous, then the user is
+prompted to choose among the parser candidates. If a parser is specified and
+it is valid then this will override all automatic guesses.
+.TP 10
+Accepted names (case-insensitive) of parsers are:
+.RS 3
+.B Pascal
+.br
+.B D7Parser
+.br
+.B "ANSI-C73"
+.br
+.B CParser
+.br
+.B "ANSI-C99"
+.br
+.B C99Parser
+.br
+.B COBOL
+.br
+.B COBOLParser
+.RE
+.TP
+.BI \-s " setting\-file"
+Read \fBs\fPettings from the specified property (ini) file. (For interactive,
+export, or parsing mode.)
+.TP
+.B \-t
+Export instructions as they are written i.e. nearly without \fBt\fPranslation/interpretation.
+(For export mode only.)
 .TP
 \fB\-v\fP [ \fIlogdir\fP ]
-Verbose import: writes a logging file to the specified (or by default the current) directory during code import.
+\fBV\fPerbose import: writes a logging file to the specified (or by default the
+current) directory during code import.
+(For parse mode only.)
 .TP
-\fInsd\-file\fP
-A file generated by Structorizer describing a Nassi-Shneiderman diagram as input for \fB-x\fP.
-.TP
-\fB\-x\fP \fIgenerator\fP
-eXport mode: Generate program code for the specified language. This option must be the first argument.
+.BI \-x " generator"
+Specifies e\fBx\fPport mode: Generate program code for the specified language.
+This option must be the first argument.
 .TP 10
 Accepted names (case-insensitive) of generators are:
 .RS 3
@@ -112,33 +179,45 @@ Accepted names (case-insensitive) of generators are:
 .B StrucTeX
 .RE
 .TP
-\fB\-p\fP [ \fIparser\fP ]
-Parse mode: Generate an NSD file from source code. This option must be the first argument. The source language is automatically identified via file the extension if no \fIparser\fR is specified. If the parser might be ambiguous, then the user is prompted to choose among the parser candidates. If a parser is specified and it is valid then this will override al automatic guesses.
-.TP 10
-Accepted names (case-insensitive) of parsers are:
-.RS 3
-.B Pascal
-.br
-.B D7Parser
-.br
-.B "ANSI-C73"
-.br
-.B CParser
-.br
-.B "ANSI-C99"
-.br
-.B C99Parser
-.br
-.B COBOL
-.br
-.B COBOLParser
-.RE
+\fB\-z\fP
+Specifies that the resulting diagrams from parsing one source file (may contain
+several routines, for each of which a diagram will emerge) are to be compressed
+into an \fBarrz\-file\fP rather than be saved as a loose bunch of \fBnsd\-file\fPs.
+(For parse mode only.)
+.TP
+.I arr\-file
+An arrangement list file generated by the Arranger component of Structorizer
+as a text file listing paths of \fBnsd\-file\fPs. (May be used as consistent input
+for code export.)
+.TP
+.I arrz\-file
+An arrangement archive generated by the Arranger component of Structorizer as a
+compressed file containing an \fBarr\-file\fP and the referenced \fBnsd\-file\fPs.
+(May be used as consistent input for code export or result from source code parsing.)
+.TP
+.I input\-file
+A file of one of the types \fBnsd\-file\fPs, \fBarr\-file\fP, or \fBarrz\-file\fP.
+A sequence of files of any of these types can be specified to be opened in interactive
+mode or to be translated in export mode.
+.TP
+.I nsd\-file
+A file generated by Structorizer representing a Nassi-Shneiderman diagram as input for \fB-x\fP.
 .SS "Supported elements"
-Structorizer supports all standard algorithm elements of Nassi-Shneiderman diagrams (e.g. according to DIN 66261) including Parallel sections (i.e. instructions, alternatives, case selections, FOOR loops - both as counting and as for-each or for-in loop -, WHILE loops, REPEAT-UNTIL loops, endless loops, subroutine calls, exit jumps, and parallel sections).
+Structorizer supports all standard algorithm elements of Nassi-Shneiderman diagrams
+(e.g. according to DIN 66261) including Parallel sections (i.e. instructions, alternatives,
+case selections, FOOR loops - both as counting and as for-each or for-in loop -, WHILE loops,
+REPEAT-UNTIL loops, endless loops, subroutine calls, exit jumps, and parallel sections).
+Additionally it supports TRY/CATCH/FINALLY blocks.
 .SH "SEE ALSO"
-Website of Structorizer: https://structorizer.fisch.lu/
-.br
-Description of Nassi-Shneiderman diagrams https://en.wikipedia.org/wiki/Nassi-Shneiderman_diagram
+.TP
+Website of Structorizer:
+https://structorizer.fisch.lu/
+.TP
+User Guide:
+https://help.structorizer.fisch.lu/index.php
+.TP
+Description of Nassi-Shneiderman diagrams
+https://en.wikipedia.org/wiki/Nassi-Shneiderman_diagram
 .SH AUTHORS
 Bob Fisch and Kay Gürtzig
 .SH CONTRIBUTORS

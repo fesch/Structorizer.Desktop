@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.elements;
 
-import java.awt.Color;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -34,6 +32,8 @@ import java.awt.Color;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-15      First Issue (implementing an idea of Bob Fisch)
+ *      Kay Gürtzig     2019-09-17      Bugfix #749: Width for FINALLY section wasn't properly reserved
+ *      Kay Gürtzig     2019-09-24      Bugfix #749: Text content and width in collapsed mode fixed
  *
  ******************************************************************************************************
  *
@@ -42,6 +42,7 @@ import java.awt.Color;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,14 +116,6 @@ public class Try extends Element {
 		if(isCollapsed(true)) 
 		{
 			StringList collapsedText = getCollapsedText();
-			if (!preTry.isEmpty()) {
-				if (collapsedText.isEmpty()) {
-					collapsedText.add(preTry);
-				}
-				else {
-					collapsedText.set(0, preTry + " " + collapsedText.get(0));
-				}
-			}
 			rect0 = Instruction.prepareDraw(_canvas, collapsedText, this);
 			// START KGU#136 2016-03-01: Bugfix #97
 			isRect0UpToDate = true;
@@ -151,7 +144,10 @@ public class Try extends Element {
 				E_PADDING/2 + getWidthOutVariables(_canvas, preCatch + " " + lineCatch0, this) + E_PADDING,
 				rCatch.right + E_PADDING,
 				E_PADDING/2 + getWidthOutVariables(_canvas, preFinally, this) + E_PADDING,
-				rFinally.right
+				// START KGU#728 2019-09-17: Bugfix #749
+				//rFinally.right
+				rFinally.right + E_PADDING
+				// END KGU#728 2019-09-17
 				};
 		int width = 0;
 		for (int i = 0; i < widths.length; i++) {
@@ -193,17 +189,9 @@ public class Try extends Element {
 		if (!checkVisibility(_viewport, _top_left)) { return; }
 		// END KGU#502/KGU#524/KGU#553
 		
-		if(isCollapsed(true)) 
+		if (isCollapsed(true)) 
 		{
 			StringList collapsedText = getCollapsedText();
-			if (!preCatch.isEmpty()) {
-				if (collapsedText.isEmpty()) {
-					collapsedText.add(preCatch);
-				}
-				else {
-					collapsedText.set(0, preCatch + " " + collapsedText.get(0));
-				}
-			}
 			Instruction.draw(_canvas, _top_left, collapsedText, this, _inContention);
 			wasDrawn = true;
 			return;
@@ -244,6 +232,34 @@ public class Try extends Element {
 		wasDrawn = true;
 	}
 
+	// START #728 2019-09-24: Bugfix #749
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getCollapsedText()
+	 */
+	@Override
+	public StringList getCollapsedText()
+	{
+		StringList collapsedText = null;
+		String prefix = preTry;
+		if (qTry.getSize() > 0) {
+			collapsedText = qTry.getElement(0).getCollapsedText();
+		}
+		if (collapsedText == null || collapsedText.isEmpty()) {
+			collapsedText = super.getCollapsedText();
+			if (!collapsedText.isEmpty()) {
+				prefix = preCatch;
+			}
+		}
+		if (collapsedText.isEmpty()) {
+			collapsedText.add(prefix);
+		}
+		else {
+			collapsedText.set(0, prefix + " " + collapsedText.get(0));
+		}
+		return collapsedText;
+	}
+	// END KGU#728 2019-09-24
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#getIcon()
 	 */

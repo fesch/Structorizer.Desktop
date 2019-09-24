@@ -65,10 +65,11 @@ public interface IRoutinePoolListener {
 	
 	/**
 	 * Notification method<br/>
-	 * Intended to inform the RoutinePoolListener about a change of the set of routines held or
-	 * or of a selection change.
+	 * Intended to inform the RoutinePoolListener about a change of the set of held routines or
+	 * of a selection (or possibly an arrangement) change.
 	 * @param _source - The notifying routine pool (implementer of {@link IRoutinePool})
-	 * @param _flags - any combination of {@link #RPC_POOL_CHANGED} or {@link #RPC_SELECTION_CHANGED}
+	 * @param _flags - any combination of {@link #RPC_POOL_CHANGED}, {@link #RPC_SELECTION_CHANGED},
+	 * {@link #RPC_POSITIONS_CHANGED}, or {@link #RPC_GROUP_COLOR_CHANGED}.
 	 */
 	// START KGU#624 2018-12-21: Enh. #655
 	//public void routinePoolChanged(IRoutinePool _source);

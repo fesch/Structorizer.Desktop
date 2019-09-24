@@ -61,7 +61,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
- *      Kay Gürtzig         2019-03-18      Enh. ä56: Export of Try blocks implemented
+ *      Kay Gürtzig         2019-03-18      Enh. #56: Export of Try blocks implemented
+ *      Kay Gürtzig         2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *
  ******************************************************************************************************
  *
@@ -865,6 +866,7 @@ public class BasGenerator extends Generator
 			// START KGU 2014-11-16
 			insertComment(_call, _indent);
 			// END KGU 2014-11-16
+			Root owningRoot = Element.getRoot(_call);
 			for (int i=0; i<_call.getUnbrokenText().count(); i++)
 			{
 				// START KGU#2 2015-12-18: Enh. #9 This may require a CALL command prefix
@@ -872,9 +874,11 @@ public class BasGenerator extends Generator
 				// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 				//String line = transform(_call.getText().get(i));
 				String line = _call.getUnbrokenText().get(i);
-				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
+				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null)
+						&& line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount());
+					java.util.Vector<Root> callCandidates = 
+							routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);

@@ -40,7 +40,7 @@
  *
  *      Author:         Jerone <jeronevw@hotmail.com>
  *
- *      Description:    The dutch language file
+ *      Description:    The Dutch language file
  *
  ******************************************************************************************************
  *
@@ -49,12 +49,13 @@
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Jerone          ???             First Issue
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
+ *      Jaap Woldringh  2019-06-10      Translation updated and accomplished
  *
  ******************************************************************************************************
  *
@@ -94,25 +95,40 @@
  *
  ******************************************************************************************************/
 >>>
+
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Bestand
 Menu.menuFile.mnemonic=b
 // Submenus of "File"
 Menu.menuFileNew.text=Nieuw
 Menu.menuFileOpen.text=Openen ...
+Menu.menuFileOpenRecent.text=Recent bestand openen
 Menu.menuFileSave.text=Opslaan
 Menu.menuFileSaveAs.text=Opslaan als ...
+Menu.menuFileSaveAll.text=Alles opslaan
 Menu.menuFileExport.text=Exporteren
 // Submenu of "File -> Export"
-Menu.menuFileExportCode.text=Code ...
-Menu.menuFileExportPicture.text=Afbeelding ...
+Menu.menuFileExportPicture.text=Afbeelding
+Menu.menuFileExportCode.text=Code
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (meerdere) ...
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
+Menu.lbFileExportCodeFavorite.text=Exporteren als % code
+Menu.menuFileExportCodeFavorite.tooltip=U kunt de doeltaal wijzigen in de exportinstellingen
 Menu.menuFileImport.text=Importeren
 // Submenu of "File -> Import"
-Menu.menuFileImportCode.text=Code ...
+Menu.menuFileImportCode.text=Broncode ...
 Menu.menuFilePrint.text=Afdrukken ...
+Menu.menuFileArrange.text=Rangschikken
+Menu.menuFileAttributes.text=Attributen bekijken ...
+Menu.menuFileTranslator.text=Vertaler ...
 Menu.menuFileQuit.text=Afsluiten
+
 // Menu "Edit"
 Menu.menuEdit.text=Bewerken
 Menu.menuEdit.mnemonic=w
@@ -122,8 +138,17 @@ Menu.menuEditRedo.text=Herhalen
 Menu.menuEditCut.text=Knippen
 Menu.menuEditCopy.text=Kopiëren
 Menu.menuEditPaste.text=Plakken
-Menu.menuEditCopyDiagramPNG.text=Afbeelding als PNG kopiëren
-Menu.menuEditCopyDiagramEMF.text=Afbeelding als EMF kopiëren
+Menu.menuEditSummonSub.text=Subroutine bewerken ...
+Menu.menuEditSummonSub.tooltip=De aangeroepen subroutine ophalen voor bewerking.
+Menu.menuEditFindReplace.text=Zoeken/Vervangen ...
+Menu.menuEditUpgradeTurtle.text=Naar fijntekenen
+Menu.menuEditUpgradeTurtle.tooltip=Vervangt bij alle Turtle-opdrachten in de geselecteerde elementen gehele getallen door nauwkeuriger kommagetallen.
+Menu.menuEditDowngradeTurtle.text=Naar tekenen met hele getallen
+Menu.menuEditDowngradeTurtle.tooltip=Vervangt bij alle Turtleopdrachten in de geselecteerde elementen kommagetallen door minder nauwkeurige gehele getallen
+Menu.menuEditBreakLines.text=Tekstregels (opnieuw) afbreken
+Menu.menuEditBreakLines.tooltip=Maakt het mogelijk dat tekstregels van geselecteerde elementen (en optioneel hun substructuur) op de volgende regel worden voortgezet tot een nieuwe grens aan hun lengte.
+Menu.menuEditCopyDiagramPNG.text=PNG-afbeelding kopiëren
+Menu.menuEditCopyDiagramEMF.text=EMF-afbeelding kopiëren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagram
 Menu.menuDiagram.mnemonic=d
@@ -132,164 +157,407 @@ Menu.menuDiagramAdd.text=Toevoegen
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Ervoor
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instruction
-Menu.menuDiagramAddBeforeAlt.text=IF statement
-Menu.menuDiagramAddBeforeCase.text=CASE statement
-Menu.menuDiagramAddBeforeFor.text=FOR loop
-Menu.menuDiagramAddBeforeWhile.text=WHILE loop
-Menu.menuDiagramAddBeforeRepeat.text=REPEAT loop
-Menu.menuDiagramAddBeforeForever.text=ENDLESS loop
-Menu.menuDiagramAddBeforeCall.text=Call
-Menu.menuDiagramAddBeforeJump.text=Jump
+Menu.menuDiagramAddBeforeInst.text=@a
+Menu.menuDiagramAddBeforeAlt.text=@b-statement
+Menu.menuDiagramAddBeforeCase.text=@c-statement
+Menu.menuDiagramAddBeforeFor.text=@d-lus
+Menu.menuDiagramAddBeforeWhile.text=@g-lus
+Menu.menuDiagramAddBeforeRepeat.text=@h-lus
+Menu.menuDiagramAddBeforeForever.text=@i-lus
+Menu.menuDiagramAddBeforeCall.text=@j
+Menu.menuDiagramAddBeforeJump.text=@k
+Menu.menuDiagramAddBeforePara.text=@l
+Menu.menuDiagramAddBeforeTry.text=@q
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Erna
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instruction
-Menu.menuDiagramAddAfterAlt.text=IF statement
-Menu.menuDiagramAddAfterCase.text=CASE statement
-Menu.menuDiagramAddAfterFor.text=FOR loop
-Menu.menuDiagramAddAfterWhile.text=WHILE loop
-Menu.menuDiagramAddAfterRepeat.text=REPEAT loop
-Menu.menuDiagramAddAfterForever.text=ENDLESS loop
-Menu.menuDiagramAddAfterCall.text=Call
-Menu.menuDiagramAddAfterJump.text=Jump
+Menu.menuDiagramAddAfterInst.text=@a
+Menu.menuDiagramAddAfterAlt.text=@b-statement
+Menu.menuDiagramAddAfterCase.text=@c-statement
+Menu.menuDiagramAddAfterFor.text=@d-lus
+Menu.menuDiagramAddAfterWhile.text=@g-lus
+Menu.menuDiagramAddAfterRepeat.text=@h-lus
+Menu.menuDiagramAddAfterForever.text=@i-lus
+Menu.menuDiagramAddAfterCall.text=@j
+Menu.menuDiagramAddAfterJump.text=@k
+Menu.menuDiagramAddAfterPara.text=@l
+Menu.menuDiagramAddAfterTry.text=@q
 Menu.menuDiagramEdit.text=Bewerken
 Menu.menuDiagramDelete.text=Verwijderen
 Menu.menuDiagramMoveUp.text=Naar boven verplaatsen
 Menu.menuDiagramMoveDown.text=Naar beneden verplaatsen
+Menu.menuDiagramTransmute.text=Omzetten
+Menu.menuDiagramOutsource.text=Overlaten ...
+Menu.menuDiagramOutsource.tooltip=Het geselecteerde element overlaten aan een nieuwe subroutine.
+Menu.menuDiagramCollapse.text=Invouwen
+Menu.menuDiagramExpand.text=Uitvouwen
+// Diagram Appearance
 Menu.menuDiagramType.text=Type
-Menu.menuDiagramTypeProgram.text=Programma
-Menu.menuDiagramTypeFunction.text=Subroutine
-Menu.menuDiagramUnboxed.text=Unboxed diagram?
-Menu.menuDiagramComment.text=Opmerkingen weergeven?
+Menu.menuDiagramTypeProgram.text=@n
+Menu.menuDiagramTypeFunction.text=@o
+Menu.menuDiagramTypeInclude.text=@p
+Menu.menuDiagramUnboxed.text=Diagram zonder rand?
+Menu.menuDiagramComment.text=Commentaar weergeven?
+Menu.menuDiagramSwitchComments.text=Tekst/commentaar wisselen
+Menu.menuDiagramCommentsPlusText.text=Commentaar plus teksten?
+Menu.menuDiagramSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
+Menu.menuDiagramHideDeclarations.text=Simpele declaraties verbergen?
 Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Structogram analyseren?
+Menu.menuDiagramIndex.text=Index Arranger tonen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
 Menu.menuPreferences.mnemonic=i
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Nieuwe versies melden?
+Menu.menuPreferencesNotifyUpdate.tooltip=Structorizer toestaan versie-info op te halen vanaf de thuispagina van Structorizer, en nieuwe uitgaves te melden.
+Menu.menuPreferencesSimplified.text=Eenvoudige taakbalken?
 Menu.menuPreferencesFont.text=Lettertype ...
 Menu.menuPreferencesColors.text=Kleuren ...
 Menu.menuPreferencesOptions.text=Structuren ...
 Menu.menuPreferencesParser.text=Parser ...
-Menu.menuPreferencesLanguage.text=Talen
+Menu.menuPreferencesElements.text=Namen van elementen ...
+Menu.menuPreferencesCtrlAliases.text=Aliassen besturing ...
+Menu.menuPreferencesAnalyser.text=Analyseren ...
+Menu.menuPreferencesSaving.text=Opslaan ...
+Menu.menuPreferencesExport.text=Exporteren ...
+Menu.menuPreferencesImport.text=Importeren ...
+Menu.menuPreferencesLanguage.text=Taal
 Menu.menuPreferencesLanguageItems.en.text=Engels
 Menu.menuPreferencesLanguageItems.de.text=Duits
 Menu.menuPreferencesLanguageItems.fr.text=Frans
 Menu.menuPreferencesLanguageItems.nl.text=Nederlands
 Menu.menuPreferencesLanguageItems.lu.text=Luxemburgs
-Menu.menuPreferencesLanguageItems.it.text=Italian
+Menu.menuPreferencesLanguageItems.es.text=Spaans
+Menu.menuPreferencesLanguageItems.it.text=Italiaans
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugees-Braziliaans
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinees (vereenvoudigd)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinees (traditioneel)
+Menu.menuPreferencesLanguageItems.cz.text=Tsjechisch
+Menu.menuPreferencesLanguageItems.ru.text=Russisch
+Menu.menuPreferencesLanguageItems.pl.text=Pools
+Menu.menuPreferencesLanguageFromFile.text=Uit bestand ...
+Menu.menuPreferencesLanguageFromFile.tooltip=U kunt vertaal-bestanden maken in het Vertalen-hulpmiddel in het Bestandsmenu.
 Menu.menuPreferencesLookAndFeel.text=Uiterlijk
-Menu.menuPreferencesSave.text=Alle instellingen nu opslaan
+Menu.menuPreferencesWheel.text=Muiswiel
+Menu.menuPreferencesWheelCollapse.text=Invouwen met muiswiel?
+Menu.menuPreferencesWheelZoom.text=Omgekeerd zoomen met ctrl + wiel?
+Menu.menuPreferencesWheelUnit.text=Scroll-eenheid voor muiswiel...
+Menu.menuPreferencesScalePreset.text=GUI-schaal ...
+
+Menu.menuPreferencesSave.text=Opslaan of inlezen ...
+Menu.menuPreferencesSaveAll.text=Nu opslaan
+Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
+Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
+Menu.menuPreferencesSaveLoad.tooltip=Voorkeuren inlezen uit een INI-bestand maakt automatisch een backup van alle eerdere instellingen, in een tijdelijk bestand.
+Menu.menuPreferencesSaveRestore.text=Laatste backup terugzetten
+Menu.menuPreferencesSaveRestore.tooltip=Leest opnieuw de instellingen in uit de backup, gemaakt na de laatste keer dat er in deze sessie voorkeuren uit een INI-bestand werden ingelezen.
+// Menu "View" (Thans niet gebruikt!)
+Menu.menuView.text=
 
 // Menu "Debug"
-Menu.menuDebug.text=Debug
-Menu.menuDebug.mnemonic=g
+Menu.menuDebug.text=Fouten opsporen
+Menu.menuDebug.mnemonic=f
 // Submenu of "Debug"
-Menu.menuDebugTurtle.text=Turtleizer ...
-Menu.menuDebugExecute.text=Debugger ...
-Menu.menuDebugDropBrkpts.text=Clear breakpoints
-Menu.menuDebugBreakpoint.text=Toggle breakpoint
-Menu.menuDebugBreakTrigger.text=Specify break trigger ...
-Menu.menuDebugDisable.text=Disable/enable
+Menu.menuDebugTurtle.text=Turtle ...
+Menu.menuDebugExecute.text=Uitvoeren ...
+Menu.menuDebugDropBrkpts.text=Breakpoints wissen
+Menu.menuDebugBreakpoint.text=Breakpoint aan/uit
+Menu.menuDebugBreakTrigger.text=Break trigger opgeven ...
+Menu.menuDebugDisable.text=Aan/Uit
 
 // Menu "Help"
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=Gebruiksaanwijzing
+Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing openen in de browser
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
 
 // Dialog messages
-Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
-Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
-Menu.lblReduced.text=Yes, reduced mode
-Menu.lblNormal.text=No, normal mode
+Menu.msgDialogExpCols.text=In hoeveel kolommen moet de uitvoer worden verdeeld?
+Menu.msgDialogExpRows.text=In hoeveel rijen moet de uitvoer worden verdeeld?
+Menu.msgOverwriteFile.text=Bestaaand bestand overschrijven?
+Menu.msgOverwriteFiles.text=Bestaand(e) bestand(en) gevonden. Overschrijven?
+Menu.msgOverwriteFile1.text=Bestaand bestand "%" overschrijven?
+Menu.msgCancelAll.text=Opslaan van alle overige bestanden annuleren?
+Menu.btnConfirmOverwrite.text=Overschrijven bevestigen
+Menu.msgRepeatSaveAttempt.text=Het bestand is niet opgeslagen. Probeer het opslaan nog eens.
+Menu.msgErrorFileSave.text=Fout bij het opslaan van het bestand: %1
+Menu.msgErrorFileRename.text=Fout(en) bij het hernoemen van het opgeslagen bestand :\n%1Zoek bestand "%2" en verplaats/hernoem dit zelf.
+Menu.msgBreakTriggerPrompt.text=Geef aantal uitvoeringen op tot een break (0 = altijd) ...
+Menu.msgBreakTriggerIgnored.text=Invoer geweigerd - moet een hoofdtelwoord zijn.
+Menu.msgOpenLangFile.text=Taalbestand openen
+Menu.msgLangFile.text=Taalbestand voor Structorizer
+Menu.msgGotoHomepage.text=Ga naar % voor updates<br/>en nieuws over Structorizer
+Menu.msgTitleError.text=Fout
+Menu.msgTitleWarning.text=WAARSCHUWING
+Menu.msgTitleLoadingError.text=Inleesfout
+Menu.msgTitleParserError.text=Leesfout
+Menu.msgTitleURLError.text=URL-fout
+Menu.msgTitleQuestion.text=Vraag
+Menu.msgTitleOpen.text=Bestand openen ...
+Menu.msgTitleSave.text=Bestand opslaan ...
+Menu.msgTitleSaveAs.text=Bestand opslaan als ...
+Menu.msgTitleImport.text=Code importeren - kies bronbestand (let op bestandsfilter) ...
+Menu.msgTitleNSDImport.text=Een diagram importeren uit % ...
+Menu.msgTitleWrongInput.text=Verkeerde invoer
+Menu.msgSaveChanges.text=Wilt u het huidige NSD- (PSD-) bestand opslaan?
+Menu.msgErrorImageSave.text=Fout bij opslaan van de afbeelding(en)!
+Menu.msgErrorUsingGenerator.text=Fout bij gebruik van % generator
+Menu.msgErrorNoFile.text=Bestand niet gevonden!
+Menu.msgBrowseFailed.text=In browser is % niet te zien
+Menu.hdrRefactoringTable.0.text=Referentie
+Menu.hdrRefactoringTable.1.text=Oude sleutel
+Menu.hdrRefactoringTable.2.text=Nieuwe sleutel
+Menu.msgRefactoringOffer.text=Sleutelwoorden, ingesteld in de parserinstellingen, zijn vervangen:
+Menu.msgRefactoringOffer.text=Moeten geopende diagrammen hieraan worden aangepast?
+Menu.lblRefactorNone.text=nee
+Menu.lblRefactorCurrent.text=huidig diagram
+Menu.lblRefactorAll.text=alle diagrammen
+Menu.msgDiscardParserPrefs.text=Weet u zeker dat u afziet van de nieuwe parserinstellingen?
+Menu.msgAdaptStructPrefs.text=Structuurinstellingen aanpassen aan die van de parser?
+Menu.msgKeywordsDiffer.text=Dit is een diagram, waarvan de originele sleutelwoorden afwijken van die van de huidige parserinstellingen:%1\nU heeft gekozen tegen automatisch aanpassen bij importeren.\n\nU heeft nu de volgende optie:\n%2
+Menu.msgRefactorNow.text=Het diagram kan nu worden aangepast (aanbevolen)
+Menu.msgAdoptPreferences.text=U kunt de sleutelwoorden van het ingelezen diagramm gebruiken als de nieuwe parserinstellingen\n  (waardoor alle reeds open diagrammen hieraan worden aangepast!)
+Menu.msgLeaveAsIs.text=U kunt het diagram zo laten, maar dit maakt het opsporen van\n  fouten onmogelijk en leidt tot een defecte export (maar u kunt dit later aanpassen)
+Menu.msgAllowChanges.text=Wijziging toestaan, waardoor de originele sleutelwoorden definitief verloren gaan
+Menu.lblRefactorNow.text=Diagram aanpassen
+Menu.lblAdoptPreferences.text=Sleutelwoorden aanvaarden
+Menu.lblLeaveAsIs.text=Diagram laten zoals het is
+Menu.lblAllowChanges.text=Nu veranderen toestaan
+Menu.msgReplacementsDone.text=% instructies zijn vervangen
+Menu.msgNewerVersionAvail.text=U kunt een nieuwere versie % downloaden.
+Menu.msgUpdateInfoHint.text=Indien u wilt dat Structorizer de beschikbaarheid van een nieuwe versie meldt, kunt\nu het ophalen van gegevens hiervoor toestaan, in de thuispagina van Structorizer\nvia de menu-ingang "%1" ► "%2".\n(informatie over gegevensbescherming: Voor Html-verzoeken wordt uw IP-adres verzonden, maar niet permanent opgeslagen\nEr worden geen persoonlijke gegevens verzonden, opgeslagen, gevolgd, of anderszins verwerkt.)
+Menu.msgWelcomeMessage1.text=Welkom bij Structorizer, de handige, vrije editor voor Nassi-Shneidermann- (ProgrammaStructuur-)diagrammen.\nHiermee kunt u algoritmen ontwerpen, testen, analyseren, exporteren, en nog veel meer.\n(Helaas is de vertaling nooit klaar. U kunt altijd hierbij helpen → Menu "%1 ► %2")\nKiest u a.u.b uw aanvanklelijke dialoogtaal (u kunt die altijd nog wijzigen in het menu):
+Menu.msgWelcomeMessage2.text=Structorizer is ontworpen voor intuïtief gebruik, maar is daarna verbeterd met een groot aantal extra's.\n\nIndien u een absoluut beginner bent, kunt u beginnen met een beperkt menu en een «%».\nWilt u starten in de eenvoudige modus met begeleiding? (U kunt altijd nog naar de volledige modus gaan.)
+Menu.lblOk.text=OK
+Menu.lblYes.text=Ja
+Menu.lblNo.text=Nee
+Menu.lblContinue.text=Ja, verder gaan
+Menu.lblCancel.text=Nee, annuleren
+Menu.lblSkip.text=Nee, overslaan
+Menu.lblModify.text=Nee, wijzigen
+Menu.lblYesToAll.text=Ja op alles
+Menu.lblNoToAll.text=Nee op alles
+Menu.lblSuppressUpdateHint.text=Dit venster niet meer tonen
+Menu.lblHint.text=Hint
+Menu.lblCopyToClipBoard.text=OK + kopiëren naar klembord
+Menu.lblReduced.text=Ja, beperkte modus
+Menu.lblNormal.text=Nee, normale modus
+Menu.ttlCodeImport.text=Import broncode
+Menu.msgSelectParser.text=Het type broncodebestand van "%" is dubbelzinnig.\nKies alstublieft een importtaal/parser:
+Menu.msgImportCancelled.text=Importeren code voor bestand "%" geannuleerd.
+Menu.msgSubroutineName.text=Naam van de nieuwe subroutine
+Menu.msgIncludableName.text=Naam van een (nieuw) insluitbaar diagram waarnaar gedeelde types kunnen worden verplaatst
+Menu.msgMustBeIdentifier.text=De naam die u koos is ongeschikt als naam!
+Menu.msgJumpsOutwardsScope.text=Er zijn JMP-instructies in de geselecteerde elementen naar buiten.\nDoor die over te hevelen wordt de logica van het programma, of de programmacode, aangetast!\nDe betreffende JUMPs staan hieronder en zijn met ROOD weergegeven in het diagram:\n%\n\nWilt u werkelijk nu nog verdergaan?
+Menu.msgImportTooltip.text=Diagrambestanden aangemaakt met de Nassi_Shneidermbewerker van %
+Menu.msgImportFileReadError.text=Bestand "%" bestaat niet of is onleesbaar.
+Menu.msgUnsupportedFileFormat.text=Deze bestanden konden niet worden ingelezen, omdat hun bestandstype niet bekend is, of ondersteund:\n%
+Menu.msgGuidedTours.text=U heeft om begeleiding gevraagd.\n\nU vindt aanbevelingen\nof instructies\nin het tekstgebied onderaan\n(Analyse meldlijst).
+Menu.msgGuidedTourDone.text=Gefeliciteerd  -  U bent klaar met de les «%».
+Menu.msgGuidedTourNext.text=%1\n Les «%2» gaat nu beginnen.\nMisschien wilt u eerst het diagram wissen: → Menu "%3"
+Menu.ttlGuidedTours.text=Begeleide rondleiding
+Menu.msgTooManyDiagrams.text=Het aantal gemaakte diagrammen is groter dan de ingestelde drempelwaarde (%) voor direct weergeven.\nNu alle verkregen diagrammen als bestanden opslaan?
+Menu.lblAcceptProposedNames.text=Voorgestelde namen voor alle bestanden accepteren
+Menu.ttlBreakTextLines.text=Regellengte instellen voor verder gaan op volgende regel
+Menu.msgMaxLineLengthSelected.text=Max. regellengte in geselecteerde element(en): %
+Menu.msgMaxLineLengthSubstructure.text=Max. regellengte, inclusief substructuur: %
+Menu.lblNewMaxLineLength.text=Nieuwe maximum regellengte:
+Menu.lblInvolveSubtree.text=Ook toepassen op substructuur
+Menu.lblPreserveContinuators.text=Bestaande zachte regelafbrekingen behouden
+Menu.msgVetoClose.text=Structurizer gaat afsluiten. Veto?
+Menu.msgSetAsPreferredGenerator.text=De laatste %2 keer heeft u naar %1 programmacode geëxporteerd.\nWilt u nu in het Bestandsmenu van %1 uw favoriete programmeertaal maken om naar te exporteren?
+Menu.msgChooseSubroutine.text=Kies de te bewerken subroutine:
+Menu.msgCreateSubroutine.text=Een nieuwe subroutine «%» aanmaken?
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Besturingsopdracht
+Menu.msgTabHdrAlias.text=Alias
+Menu.ttlMouseScrollUnit.text=Eenheid voor scrollen met muiswiel
+Menu.msgSelectPreferences.text=Te exporterende instellingen (categorieën)
+Menu.msgAllPreferences.text=Alle instellingen
+Menu.msgInvertSelection.text=Selectie omkeren
+Menu.ttDiagramMenuSettings.text=Instellingen van het menu "%"
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
-Menu.error01_1.text=WAARSCHUWING: Geen loop variabele gevonden ...
-Menu.error01_2.text=WAARSCHUWING: Meer dan één variabele gevonden: «%»
-Menu.error01_3.text=Het is niet toegestaan om de loop variabele «%» te bewerken in de loop!
-Menu.error02.text=Geen verandering van variabelen in de conditie gevonden. Mogelijk eindeloze loop ...
-Menu.error03_1.text=De variabele «%1» is nog niet geinitialiseerd%2!
-Menu.error03_2.text=De variabele «%1» is waarschijnlijk nog niet geinitialiseerd%2!
-Menu.error04.text=Het is niet toegestaan om een IF-statement te gebruiken in een lege TRUE-blok!
-Menu.error05.text=De variabele «%» moet in hoofdletters geschreven zijn!
-Menu.error06.text=Het programmanaam «%» moet in hoofdletters geschreven zijn!
+Menu.warning_1.text=WAARSCHUWING: TEKST EN COMMENTAAR ZIJN OP HET SCHERM VERWISSELD! → Menu "%1 ► %2".
+Menu.warning_2.text=LET OP: «%4» is actief. Uit te zetten met: → Menu "%1 ► %2 ► %3".
+Menu.error01_1.text=WAARSCHUWING: Geen lus-variabele gevonden ...
+Menu.error01_2.text=WAARSCHUWING: Meer dan één lusvariabele gevonden: «%»
+Menu.error01_3.text=Het is niet toegestaan om de lus-variabele «%» te wijzigen in de lus!
+Menu.error02.text=Variabele in de conditie is niet gewijzigd. Mogelijk eindeloze lus ...
+Menu.error03_1.text=De variabele «%1» is nog niet geïnitialiseerd%2!
+Menu.error03_2.text=De variabele «%1» is mogelijk nog niet geïnitialiseerd%2!
+Menu.error04.text=Het is niet toegestaan om een IF-statement te gebruiken in een leeg TRUE-blok!
+Menu.error05.text=De variabele «%» moet met hoofdletters geschreven zijn!
+Menu.error06.text=De programmanaam «%» moet met hoofdletters geschreven zijn!
 Menu.error07_1.text=«%» is geen geldige naam voor een programma of functie!
 Menu.error07_2.text=«%» is geen geldige naam voor een parameter!
 Menu.error07_3.text=«%» is geen geldige naam voor een variabele of constante!
-Menu.error08.text=Het is niet toegestaan een assignment te maken in een conditie.
-Menu.error09.text=Uw programma («%») mag niet dezelfde naam hebben als een variabele of parameter!
-Menu.error10_1.text=Een enkele instructie element kan geen input/output instructies en assignments bevatten!
-Menu.error10_2.text=Een enkele instructie element kan geen input en output instructies bevatten!
-Menu.error10_3.text=Een enkele instructie element kan geen input instructies en assignments bevatten!
-Menu.error10_4.text=Een enkele instructie element kan geen output instructies en assignments bevatten!
-Menu.error10_5.text=Een enkele element kan geen constant definitie en andere instructies bevatten!
-Menu.error11.text=U heeft waarschijnlijk een assignment fout gemaakt. Controleer a.u.b. deze instructie!
+Menu.error07_4.text=In namen van diagrammen mogen geen spaties zijn, plaats lage streepjes tussen de woorden:«%». 
+Menu.error08.text=In een conditie mag geen toekenning voorkomen.
+Menu.error09.text=Het programma («%») mag niet dezelfde naam hebben als een variabele of parameter!
+Menu.error10_1.text=Een enkel instructie-element kan geen invoer/uitvoer-instructies en toekenningen bevatten!
+Menu.error10_2.text=Een enkel instructie-element kan geen invoer- en uitvoer-instructies bevatten!
+Menu.error10_3.text=Een enkel instructie-element kan geen invoer-instructies en toekenningen bevatten!
+Menu.error10_4.text=Een enkel instructie-element kan geen uitvoer-instructies en toekenningen bevatten!
+Menu.error10_5.text=Een enkel instructie-element kan geen definities van constanten samen met andere instructies bevatten!
+Menu.error10_6.text=Een enkel instructie-element kan geen definities van typen samen met andere instructies bevatten!
+Menu.error11.text=U heeft waarschijnlijk een toekennings-fout gemaakt. Controleer a.u.b. deze instructie!
 Menu.error12.text=De parameter «%» moet starten met de letter "p" gevolgd door alleen hoofdletters!
-Menu.error13_1.text=Uw functie geeft geen enkel resultaat!
-Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat!
-Menu.errorLineReference.text= (regel %)
+Menu.error13_1.text=Uw functie geeft geen enkel resultaat terug!
+Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat terug!!
+Menu.error13_3.text=Uw functies lijken diverse strijdige teruggeefmechanismen te gebruiken: «%»!
+Menu.error14_1.text=De @d-lusparameters komen niet overeen met de headertekst van de lus!
+Menu.error14_2.text=De stapwaarde («%») van de lus @e is geen geldige gehele constante!!
+Menu.error14_3.text=Variabelenaam «%» kan in strijd zijn met de ingestelde sleutelwoorden voor een FOR-lus-header!
+Menu.error15_1.text=De @j heeft niet de vorm «[ <var> <- ] <routine_naam>(<arg_list>)»!
+Menu.error15_2.text=Het aangeroepen @o -diagram «%» is nu niet beschuikbaar.
+Menu.error15_3.text=Er zijn meer @o-diagrammen met de signatuur «%».
+Menu.error16_1.text=Een @k-element is mogelijk leeg, of begint met een van %, mogelijk gevolgd door een argument!
+Menu.error16_2.text=Een %-instructie, behalve het laatste, moet een @k-element vormen!
+Menu.error16_3.text=Een %1- of %2-instructie moet een @k-element zijn!
+Menu.error16_4.text=Kan niet meer lusniveaus verlaten of onderbreken dan genest in (%)!
+Menu.error16_5.text=U kunt niet direct (%1, %2) springen uit een parallelle thread!
+Menu.error16_6.text=Ongeldig argument voor een «%» @k (moet een gehele constante zijn)!
+Menu.error16_7.text=Instructie is onbereikbaar na een @k!
+Menu.error16_8.text=Het argument voor deze «%» @k is mogelijk niet geschikt (moet een geheel getal zijn).
+Menu.error17.text=Gevaar voor inconsistentie als gevolg van samenkomende toegang tot variabele «%» door meerdere threads!
+Menu.error18.text=Variabele «%1» kan worden verward met variabele(n) «%2» in niet hoofdlettergevoelige talen!
+Menu.error19_1.text=Naam variabele «%1» kan botsen met gereserveerde namen in talen zoals %2!
+Menu.error19_2.text=Naam variabele «%» is gereserveerd in Structorizer en zal waarschijnlijk problemen geven bij uitvoeren!
+Menu.error20_1.text=Een @o -header moet een (mogelijk lege) parameterlijst hebben tussen haakjes.
+Menu.error20_2.text=Standaard parameterwaarden moeten achteraan worden geplaatst in de parameterlijst
+Menu.error21.text=Namen van variabelen I (hoofdletter i), l (kleine letter L), en O (hoofdletter o) zijn moeilijk van elkaar te onderscheiden, en van 1 en 0
+Menu.error22_1.text=Constante «%1» hangt af van naar het schijnt niet-constante waarde(n): «%2».
+Menu.error22_2.text=Poging de waarde van constante «%» te wijzigen!
+Menu.error23_1.text=Diagram «%» is nogal ongeschikt voor een importaanroep omdat er wordt teruggegeven.
+Menu.error23_2.text=Importeren van diagram «%» is recursief!
+Menu.error23_3.text=Importeren wordt hier genegeerd, omdat diagram «%1» al geïmporteerd is: %2
+Menu.error23_4.text=Naamconflict tussen locale en geïmporteerde variabele of constante «%»!
+Menu.error23_5.text=Een @p -diagram «%» is nu niet beschikbaar!
+Menu.error23_6.text=Er zijn meer @p-diagrammen met de naam «%»!
+Menu.error23_7.text=Er is een naamconflict tussen locale en geïmporteerde typedefinitie «%»!
+Menu.error24_1.text=Typedefinitie in (samengestelde) regel % is misvormd.
+Menu.error24_2.text=Typenaam «%» is niet toegestaan of botst met een andere naam.
+Menu.error24_3.text=Componentnaam «%» is niet toegestaan of dubbel.
+Menu.error24_4.text=Componenttype «%» is niet gedefinieerd of onbekend.
+Menu.error24_5.text=Er is geen bekend recordtype «%»!
+Menu.error24_6.text=Recordcomponent «%» wordt niet gewijzigd/geïnitialiseerd!
+Menu.error24_7.text=Recordtype «%1» heeft geen component «%2»!
+Menu.error24_8.text=Variabele «%1» heeft geen component «%2»!
+Menu.hint07_1.text=Wat moet uw algoritme doen? Vervang «%» met een goede naam ervoor!
+Menu.hint25_1.text=Selecteer het centrum van het diagram en plaats er een eerste element, bijv. een invoeropdracht zoals «%1 %2».
+Menu.hint25_2.text=Misschien wilt u gegevens invoeren, bijv. met een instructie zoals «%1 %2». → Menu "%3"
+Menu.hint25_3.text=Misschien wilt u resultaten afdrukken, bijv. met een instructie zoals «%1 %2». → Menu "%3"
+Menu.hint25_4.text=Selecteer het centrum van ht diagram, en plaats daar het eerste element, bijv. een Instructie.
+Menu.hint25_5.text=Selecteer het centrum van het diagram, en plaats daar bijv. een Instructie-element met de definitie van een type of constante.
+Menu.hint25_6.text=Misschien wilt u er een verwerkingselement plaatsen, zoals «%1» tussen invoer en uitvoer. → Menu "%2"
+Menu.hint26.0.text=Selecteer het centrum van het diagram, dubbelklik, druk op Enter of F5, en plaats er de insstructietekst «% "Hallo wereld!"».
+Menu.hint26.1.text=U kunt nu bijv. uw diagram uitproberen: → Menu "%1 ► %2"
+Menu.hint26.2.text=U kunt nu bijv. uw diagram opslaan: → Menu "%1 ► %2"
+Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaal: → Menu "%1 ► %2 ► %3" 
+Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3" 
+Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.checkboxes.1.text=Controle voor gewijzigde loop variabele.
-AnalyserPreferences.checkboxes.2.text=Controle voor eindeloze loop (zover mogelijk!)
-AnalyserPreferences.checkboxes.3.text=Controle voor niet geinitialiseerde variabelen.
-AnalyserPreferences.checkboxes.4.text=Controle voor foutief gebruik van de IF-statement.
-AnalyserPreferences.checkboxes.5.text=Controle voor HOOFDLETTER variabele namen. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Controle voor HOOFDLETTER programma / subnaam. (LUX/MEN)
-AnalyserPreferences.checkboxes.7.text=Controle voor foutieve identifiers.
-AnalyserPreferences.checkboxes.8.text=Controle voor assignment in condities.
-AnalyserPreferences.checkboxes.9.text=Controle die controleerd dat het programma / subnaam niet gelijk is aan een identifier.
-AnalyserPreferences.checkboxes.10.text=Controle voor instructies met inputs en outputs.
-AnalyserPreferences.checkboxes.11.text=Controle voor assignment fouten.
-AnalyserPreferences.checkboxes.12.text=Controle voor gestandaardiseerde parameter naam. (LUX/MEN)
-AnalyserPreferences.checkboxes.13.text=Controle die controleerd dat, in geval van een functie, het een resultaat terug geeft.
+AnalyserPreferences.title=Instellingen Analyser
+AnalyserPreferences.contentPanel.tab.0=Algoritmisch
+AnalyserPreferences.contentPanel.tab.1=Namen/conventies
+AnalyserPreferences.contentPanel.tab.2=Hints/Lessen
+AnalyserPreferences.checkboxes.1.text=Controle op gewijzigde lusvariabelen.
+AnalyserPreferences.checkboxes.2.text=Controle op eindeloze lussen (voor zover detecteerbaar!)
+AnalyserPreferences.checkboxes.3.text=Controle op niet geinitialiseerde variabelen.
+AnalyserPreferences.checkboxes.4.text=Controle op foutief gebruik van de IF-statement.
+AnalyserPreferences.checkboxes.5.text=Controle op namen variabelen met HOOFDLETTERs. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Controle op programma- / subnamen met HOOFDLETTERs. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Controle op geldige namen.
+AnalyserPreferences.checkboxes.8.text=Controle op toekenningen in condities.
+AnalyserPreferences.checkboxes.9.text=Controle dat naam van het programma / sub niet gelijk is aan een andere naam.
+AnalyserPreferences.checkboxes.10.text=Controle op instucties met meerdere typen, op meerdere regels.
+AnalyserPreferences.checkboxes.11.text=Controle op toekenningsfouten.
+AnalyserPreferences.checkboxes.12.text=Controle op gestandaardiseerde parameternamen. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Controle dat, in geval van een functie, een resultaat wordt teruggegeven.
+AnalyserPreferences.checkboxes.14.text=Controle op consistent zijn van @d-lusparameters.
+AnalyserPreferences.checkboxes.15.text=Controle op onjuiste subroutine-@jen en ontbrekende aanroepdoelen.
+AnalyserPreferences.checkboxes.16.text=Controle op onjuist gebruik van @k-elementen.
+AnalyserPreferences.checkboxes.17.text=Controle op inconsistentierisico's in @lle secties.
+AnalyserPreferences.checkboxes.18.text=Controle dat namen niet alleen verschillen in hoofd- en kleine letters
+AnalyserPreferences.checkboxes.19.text=Controle op mogelijk gelijk zijn van een naam aan gereserveerde woorden.
+AnalyserPreferences.checkboxes.20.text=Controle op aanwezigheid van een parameterlijst in een @o-header.
+AnalyserPreferences.checkboxes.21.text=Ontmoedigen van verwarrende namen voor variabelen «I», «l», en «O». 
+AnalyserPreferences.checkboxes.22.text=Controle op mogelijk misbruik van constanten.
+AnalyserPreferences.checkboxes.23.text=Controle op verkeerde importen van diagrammen.
+AnalyserPreferences.checkboxes.24.text=Controle op type-definities en toegang tot record-componenten.
+AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies (IPO-model)
+AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
 AnalyserPreferences.okButton.text=OK
+
 
 
 -----[ Diagram ]-----
 // Buttons
 // I/O
-Editor.btnNew.tooltip=Maak een nieuw leeg diagram.
+Editor.btnNew.tooltip=Maak een nieuw leeg diagram aan.
 Editor.btnOpen.tooltip=Open een bestaand diagram.
 Editor.btnSave.tooltip=Het huidige diagram opslaan.
-// InsertAfter (+shift: Before)
-Editor.btnAfterInst.tooltip=Een nieuwe instruction na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterAlt.tooltip=Een nieuwe IF statement na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterFor.tooltip=Een nieuwe FOR loop na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterWhile.tooltip=Een nieuwe WHILE loop na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterRepeat.tooltip=Een nieuwe REPEAT loop na (+shift: voor) het geselecteerde element toevoegen. 
-Editor.btnAfterCall.tooltip=Een nieuwe CALL na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterForever.tooltip=Een nieuwe ENDLESS loop na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterJump.tooltip=Een nieuwe JUMP na (+shift: voor) het geselecteerde element toevoegen.
-Editor.btnAfterCase.tooltip=Een nieuwe CASE statement na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnSaveAll.tooltip=Alle diagrammen opslaan en groepen met niet opgeslagen wijzigingen
+// InsertAfter (+shift: before)
+Editor.btnAfterInst.tooltip=Een nieuwe @a na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterAlt.tooltip=Een nieuwe @b-statement na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterFor.tooltip=Een nieuwe @d-lus na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterWhile.tooltip=Een nieuwe @g-lus na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterRepeat.tooltip=Een nieuwe @h-lus na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterForever.tooltip=Een nieuwe @i-lus na (+shift: voor) het geselecteerde element toevoegen.
+Editor.btnAfterCall.tooltip=Een nieuwe @j na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterJump.tooltip=Een nieuwe @k na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterCase.tooltip=Een nieuwe @c na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterPara.tooltip=Een nieuwe @l-statement na (+shift: voor) het geselecteerde element invoegen.
+Editor.btnAfterTry.tooltip=Een nieuwe @q-statement na (+shift: voor) het geselecteerde element invoegen.
 // undo & redo
 Editor.btnUndo.tooltip=De laatste actie ongedaan maken.
 Editor.btnRedo.tooltip=De laatste actie herhalen.
+// find & replace
+Editor.btnFindReplace.tooltip=De Zoek- en Vervangdialoog openen.
 // copy & paste
 Editor.btnCut.tooltip=Het geselecteerde element knippen.
 Editor.btnCopy.tooltip=Het geselecteerde element kopiëren.
 Editor.btnPaste.tooltip=Het geknipte of gekopieerde element na het geselecteerde element plakken.
-// style 
+// style
 Editor.btnUnboxed.tooltip=De visuele stijl van het diagram wisselen.
-Editor.btnFunction.tooltip=Subroutine diagram (ronde hoeken).
-Editor.btnProgram.tooltip=Programma diagram (rechte hoeken).
+Editor.btnFunction.tooltip=@o (ronde hoeken).
+Editor.btnProgram.tooltip=@n (rechte hoeken).
+Editor.btnInclude.tooltip=@p (2 afgestoken hoeken).
 // editing
 Editor.btnEdit.tooltip=Het geselecteerde element bewerken.
 Editor.btnDelete.tooltip=Het geselecteerde element verwijderen.
 Editor.btnMoveUp.tooltip=Het geselecteerde element één positie omhoog verplaatsen.
-Editor.btnMoveDown.tooltip= Het geselecteerde element één positie omlaag verplaatsen.
+Editor.btnMoveDown.tooltip=Het geselecteerde element één positie omlaag verplaatsen.
+Editor.btnTransmute.tooltip=Omzetten van bijvoorbeeld instructies naar @js of @ks, rijen samenvoegen of afsplitsen
+Editor.btnOutsource.tooltip=De geselecteerde elementenrij overbrengen naar een nieuwe subroutine
 //printing
 Editor.btnPrint.tooltip=Het diagram afdrukken.
+Editor.btnArrange.tooltip=Het diagram toevoegen aan het paneel van de Arranger
 // font
 Editor.btnFontUp.tooltip=Lettertype vergroten.
 Editor.btnFontDown.tooltip=Lettertype verkleinen.
-// copyright 
-Editor.btnAbout.tooltip=Het informatie bericht over Structorizer weergeven.
+// copyright & help
+Editor.btnAbout.tooltip=Het informatiebericht over Structorizer weergeven.
+Editor.btnHelp.tooltip=De Online User Guide (online gebruikersgids, Engels) in de browser tonen.
 // colors
 Editor.btnColors.*.tooltip=Het geselecteerde element deze kleur geven.
+// collapsing
+Editor.btnCollapse.tooltip=Het geselecteerde element invouwen.
+Editor.btnExpand.tooltip=Het geselecteerde element uitvouwen.
+// debug
+Editor.btnTurtle.tooltip=Turtle openen
+Editor.btnMake.tooltip=Uitvoeren openen
+Editor.btnDropBrk.tooltip=Alle breakpoints verwijderen.
+Editor.btnDisable.tooltip=Geselecteerd(e) element(en) aan/uit.
 // Popup menu
 Editor.popupCut.text=Knippen
 Editor.popupCopy.text=Kopiëren
@@ -298,142 +566,839 @@ Editor.popupAdd.text=Toevoegen
 // Submenu of "Add"
 Editor.popupAddBefore.text=Ervoor
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Instruction
-Editor.popupAddBeforeAlt.text=IF statement
-Editor.popupAddBeforeCase.text=CASE statement
-Editor.popupAddBeforeFor.text=FOR loop
-Editor.popupAddBeforeWhile.text=WHILE loop
-Editor.popupAddBeforeRepeat.text=REPEAT loop
-Editor.popupAddBeforeForever.text=ENDLESS loop
-Editor.popupAddBeforeCall.text=Call
-Editor.popupAddBeforeJump.text=Jump
+Editor.popupAddBeforeInst.text=@a
+Editor.popupAddBeforeAlt.text=@b-statement
+Editor.popupAddBeforeCase.text=@c-statement
+Editor.popupAddBeforeFor.text=@d-lus
+Editor.popupAddBeforeWhile.text=@g-lus
+Editor.popupAddBeforeRepeat.text=@h-lus
+Editor.popupAddBeforeForever.text=@i-lus
+Editor.popupAddBeforeCall.text=@j
+Editor.popupAddBeforeJump.text=@k
+Editor.popupAddBeforePara.text=@l
+Editor.popupAddBeforeTry.text=@q
 // After
 Editor.popupAddAfter.text=Erna
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instruction
-Editor.popupAddAfterAlt.text=IF statement
-Editor.popupAddAfterCase.text=CASE statement
-Editor.popupAddAfterFor.text=FOR loop
-Editor.popupAddAfterWhile.text=WHILE loop
-Editor.popupAddAfterRepeat.text=REPEAT loop
-Editor.popupAddAfterForever.text=ENDLESS loop
-Editor.popupAddAfterCall.text=Call
-Editor.popupAddAfterJump.text=Jump
-// Edxit	
+Editor.popupAddAfterInst.text=@a
+Editor.popupAddAfterAlt.text=@b-statement
+Editor.popupAddAfterCase.text=@c-statement
+Editor.popupAddAfterFor.text=@d-lus
+Editor.popupAddAfterWhile.text=@g-lus
+Editor.popupAddAfterRepeat.text=@h-lus
+Editor.popupAddAfterForever.text=@i-lus
+Editor.popupAddAfterCall.text=@j
+Editor.popupAddAfterJump.text=@k
+Editor.popupAddAfterPara.text=@l
+Editor.popupAddAfterTry.text=@q
+// Edit
 Editor.popupEdit.text=Bewerken
 Editor.popupDelete.text=Verwijderen
 Editor.popupMoveUp.text=Naar boven verplaatsen
 Editor.popupMoveDown.text=Naar beneden verplaatsen
-
+Editor.popupTransmute.text=Omzetten
+Editor.popupOutsource.text=Overbrengen
+Editor.popupOutsource.tooltip=De geselecteerde elementenrij overbrengen naar een nieuwe @o.
+Editor.popupEditSub.text=Subroutine bewerken ...
+Editor.popupEditSub.tooltip=De aangeroepen subroutine ophalen voor bewerken.
+// Collapsing
+Editor.popupCollapse.text=Invouwen
+Editor.popupExpand.text=Uitvouwen
+Editor.popupDisable.text=Aan-/Uitzetten
+// Debug
+Editor.popupBreakpoint.text=Breakpoint wisselen
+Editor.popupBreakTrigger.text=Break trigger opgeven ...
 
 -----[ InputBox ]-----
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Vul een tekst in
 InputBox.lblText.tooltip=
-InputBox.lblComment.text=Opmerking
+InputBox.lblComment.text=Commentaar
 InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=De inhoud van het element.
-InputBox.txtComment.tooltip=De opmerking van het element.
+InputBox.txtComment.tooltip=Het commentaar van het element.
 InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Uw keuze valideren.
 InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
+InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
+InputBox.chkBreakpoint.text=
+InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
+InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
+InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren
+InputBox.lblText.text[elementType:Repeat]=De conditie voor verlaten invoeren
+InputBox.lblText.text[elementType:Case]=Voer de keuze-expressie in en de case-constanten (elke regel een)
+InputBox.lblText.text[elementType:Parallel]=Aantal parallelle threads
+InputBox.lblText.text[elementType:Try]=Naam van de exceptie-variabele
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Nieuwe @a toevoegen ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Nieuwe @b-statement toevoegen ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Nieuwe @c-statement toevoegen ...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Nieuwe @i-lus toevoegen ...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Nieuwe @h-lus toevoegen ...
+InputBox.title[elementType:While,getInsertionType():insert]=Nieuwe @g-lus toevoegen ...
+InputBox.title[elementType:Call,getInsertionType():insert]=Nieuwe @j toevoegen
+InputBox.title[elementType:Jump,getInsertionType():insert]=Nieuwe @k toevoegen ...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Nieuwe @l toevoegen ...
+InputBox.title[elementType:Try,getInsertionType():insert]=Nieuwe @q toevoegen ...
+InputBox.title[elementType:Instruction,getInsertionType():update]=@a bewerken ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=@b-element bewerken ...
+InputBox.title[elementType:Case,getInsertionType():update]=@c-element bewerken ...
+InputBox.title[elementType:Forever,getInsertionType():update]=@i-lus bewerken ...
+InputBox.title[elementType:Repeat,getInsertionType():update]=@h-lus bewerken ...
+InputBox.title[elementType:While,getInsertionType():update]=@g-lus bewerken ...
+InputBox.title[elementType:Call,getInsertionType():update]=@j bewerken ...
+InputBox.title[elementType:Jump,getInsertionType():update]=@k bewerken ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=@l-element bewerken ...
+InputBox.title[elementType:Try,getInsertionType():update]=@q-element bewerken ...
 
+-----[ InputBox For ]-----
+InputBoxFor.title[getInsertionType():insert]=Nieuwe @d-lus invoegen ...
+InputBoxFor.title[getInsertionType():update]=@d-lus bewerken ...
+InputBoxFor.rbCounting.tooltip=Selecteer dit als u tussen een aantal getallen wilt tellen.
+InputBoxFor.rbTraversing.tooltip=Selecteer dit als u langs alle leden wilt gaan van een collectie.
+InputBoxFor.lblVariable.text=Tellervariabele
+InputBoxFor.lblStartVal.text=Startwaarde
+InputBoxFor.lblEndVal.text=Eindwaarde
+InputBoxFor.lblIncr.text=Increment
+InputBoxFor.lblTraversingVariable.text=Elementvariabele
+InputBoxFor.lblValueList.text=Waardenlijst of array
+InputBoxFor.chkTextInput.text=Tekst direct bewerken
+InputBoxFor.chkTextInput.tooltip=Indien aangezet, wordt de inhoud van bovenstaande velden uit de tekst gehaald, en anders wordt de tekst hieruit samengesteld.
+InputBoxFor.lblComment.text=Commentaar
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=Header FOR-lus als tekstregel
+InputBoxFor.txtComment.tooltip=Voer hier het commentaar in van het element
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Bevestig uw keuze (en sluit de dialoog af).
+InputBoxFor.btnCancel.text=Annuleren
+InputBoxFor.btnCancel.tooltip=Sluit de dialoog af, zonder uw invoer/wijzigingen op te slaan.
+InputBoxFor.chkDisabled.text=Uitgeschakeld (uitvoeren en exporteren)
+InputBoxFor.chkBreakpoint.text=Breakpoint
+InputBoxFor.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
+InputBoxFor.msgInvalidIncrement.text=<%> is geen geldige gehele constante
+InputBoxFor.msgMissingBrace1.text=Lijst met waarden moet beginnen met '{'
+InputBoxFor.msgMissingBrace2.text=Lijst met waarden moet worden afgesloten met '}'
+InputBoxFor.msgSeparateWithComma.text=Binnen de accolades moeten de waarden door komma's worden gescheiden.
+InputBoxFor.msgEnsureReturnedArray.text=Weet u zeker dat de functie een array teruggeeft?
+InputBoxFor.msgEnsureVariableIsArray.text=Weet u zeker dat <%> een array is?
+InputBoxFor.msgEnterValueList.text=Voer de lijst van waarden in voor de lus.
+InputBoxFor.msgDiscardData.text=De lusstijl wijzigen betekent kwijt raken van de meeste gegevens!\nWilt u werkelijk de gegevens kwijt?
+InputBoxFor.msgAttention.text=ATTENTIE!
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=@n bewerken
+InputBoxRoot.title[elementType:Function]=@o bewerken
+InputBoxRoot.title[elementType:Includable]=@p bewerken
+InputBoxRoot.lblIncludeList.text=Bij te sluiten diagrammen
+InputBoxRoot.txtIncludeList.tooltip=Namen van bij te sluiten diagrammen bij start uitvoeren (gescheiden door komma's of newlines).
+InputBoxRoot.lblText.text=Naam diagram / signatuur functie
+InputBoxRoot.txtText.tooltip=Voer naam diagram in (voor @ns of @p -diagrammen) of de @o -signatuur (naam, parameterlijst, resultaattype indien aanwezig)
+InputBoxRoot.lblComment.text=Commentaar
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=OK
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=Annuleren
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.btnAttributes.text=Attributen
+InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van  attributen en eigenschappen van dit diagram
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=Attributen van diagram
+AttributeInspector.lblCreatedBy.text=Auteur
+AttributeInspector.lblCreatedOn.text=Aangemaakt op
+AttributeInspector.lblModifiedBy.text=Laatst gewijzigd door
+AttributeInspector.lblModifiedOn.text=Laatst gewijzigd op
+AttributeInspector.lblFilePath.text=Pad naar bestand
+AttributeInspector.lblShadowPath.text=Pad naar schaduwbestand
+AttributeInspector.txtShadowPath.tooltip=Dit pad (gewoonlijk in een map voor tijdelijke bestanden) wordt gebruikt voor in-/uitpakken indien het diagram in een ingepakt archief is.
+AttributeInspector.lblOrigin.text=Oorsprong
+AttributeInspector.btnClearOrigin.text=Wissen
+AttributeInspector.btnClearOrigin.tooltip=Totaal elementen
+AttributeInspector.lblElements.tooltip=Totaal elementen
+AttributeInspector.lblInstrs.tooltip=@as
+AttributeInspector.lblAlts.tooltip=@b-statements
+AttributeInspector.lblCases.tooltip=@c-statements
+AttributeInspector.lblFors.tooltip=@d-lussen
+AttributeInspector.lblWhiles.tooltip=@g-lussen
+AttributeInspector.lblRepeats.tooltip=@h-lussen
+AttributeInspector.lblForevers.tooltip=@i-lussen
+AttributeInspector.lblCalls.tooltip=@js
+AttributeInspector.lblJumps.tooltip=@ks
+AttributeInspector.lblPars.tooltip=@lle secties
+AttributeInspector.lblTries.tooltip=@q-blokken
+AttributeInspector.btnShowLicense.text=Licentietekst
+AttributeInspector.btnShowLicense.tooltip=Met een druk op deze knop kunt u de geselecteerde licentie bewerken of bekijken
+AttributeInspector.cbLicenseName.tooltip=Selecteer een beschikbare licentie uit de persoonlijke licentievoorraad, of de huidige licentie, voor bewerking
+AttributeInspector.lblPrefsAlt.text=@b-statement
+AttributeInspector.lblPrefsCase.text=@c-statement
+AttributeInspector.lblPrefsFor.text=@e-lus
+AttributeInspector.lblPrefsForIn.text=@f-lus
+AttributeInspector.lblPrefsWhile.text=@g-lus
+AttributeInspector.lblPrefsRepeat.text=@h-lus
+AttributeInspector.lblPrefsIO.text=Invoer/Uitvoer
+AttributeInspector.lblPrefsJump.text=@k (Afsluiten)
+AttributeInspector.lblPrefsLeave.text=... lus
+AttributeInspector.lblPrefsReturn.text=... routine
+AttributeInspector.lblPrefsExit.text=... programma
+AttributeInspector.lblPrefsThrow.text=bij fout
+AttributeInspector.lblPrefsPre.text=Voor
+AttributeInspector.lblPrefsPost.text=Na
+AttributeInspector.lblPrefsMore.text=(Meer)
+AttributeInspector.btnParserPrefs.text=Parser-sleutelw. vgl.
+AttributeInspector.btnParserPrefs.tooltip=Parser-sleutelwoorden vergelijken
+AttributeInspector.btnOk.text=OK
+AttributeInspector.btnOk.tooltip=Veranderingen vastleggen en dialoog sluiten.
+AttributeInspector.btnCancel.text=Annuleren
+AttributeInspector.btnCancel.tooltip=Dialoog verlaten zonder vastleggen wijzigingen.
+AttributeInspector.lblMain.text=@n
+AttributeInspector.lblSub.text=@o
+AttributeInspector.lblIncl.text=Bij te sluiten
+AttributeInspector.pnCopyrights.border=Copyrights
+AttributeInspector.pnStatistics.border=Statistieken (tellingen)
+AttributeInspector.pnKeywordSet.border=Verschillende verzameling sleutelwoorden in cache
+AttributeInspector.msgOverrideLicense.text=Licentietekst vervangen door de geselecteerde standaard licentie "%"?
+AttributeInspector.msgLicenseChange.text=Licentiewijziging
+AttributeInspector.msgLicenseLoadError.text=Fout bij inlezen licentietekst voor licentie "%1":\n%2!
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Licentie-Editor van Stuctorizer: %
+LicenseEditor.menuFile.text=Bestand
+LicenseEditor.menuFile.mnemonic=b
+LicenseEditor.menuEdit.text=Bewerken
+LicenseEditor.menuEdit.mnemonic=w
+LicenseEditor.menuProp.text=Eigenschappen
+LicenseEditor.menuProp.mnemonic=e
+LicenseEditor.menuFileCommit.text=Vastleggen
+LicenseEditor.menuFileSave.text=Opslaan (naar pool)
+LicenseEditor.menuFileSaveAs.text=Opslaan als ...
+LicenseEditor.menuFileRename.text=Hernoemen ...
+LicenseEditor.menuFileReload.text=Herinlezen/Terug
+LicenseEditor.menuFileDelete.text=Verwijderen
+LicenseEditor.menuFileQuit.text=Verlaten
+LicenseEditor.menuEditUndo.text=Ongedaan maken
+LicenseEditor.menuEditRedo.text=Opnieuw
+LicenseEditor.menuEditClear.text=Wissen
+LicenseEditor.menuPropFont.text=Lettertype ...
+LicenseEditor.menuPropFontUp.text=Groter lettertype
+LicenseEditor.menuPropFontDown.text=Kleiner lettertype
+LicenseEditor.msgNewLicName.text=Nieuwe naam voor licentie
+LicenseEditor.msgCouldntWriteLicense.text=Kon licentie "%1" niet schrijven naar bestand!\nReden: %2
+LicenseEditor.msgCouldntRenameLicense.text=Kon licentie "%1" niet hernoemen naar "%2"!\nEr bestaat mogelijk al een licentie met die naam.
+LicenseEditor.msgSureToDelete.text=Wilt u echt licentie "%" verwijderen? U kunt dit niet ongedaan maken!
+LicenseEditor.msgSureToDiscard.text=Wilt u echt afzien van alle niet opgeslagen wijzigingen van licentie "%"?
+LicenseEditor.msgPendingChanges.text=Er zijn niet opgeslagen wijzigingen van licentie "%".\nMoeten die nog worden opgeslagen?
+LicenseEditor.msgOverwriteExisting.text=Er is al een licentie "%" in de pool.\nMoet die worden overgeschreven?
 
 -----[ Preferences ]-----
-Preferences.title=Structuur instellingen
-Preferences.pnlAlt.border=IF statement
+Preferences.title=Structuurinstellingen
+Preferences.pnlAlt.border=@b-statement
 Preferences.pnlAlt.tooltip=
-Preferences.lblAltT.text=Label TRUE
+Preferences.lblAltT.text=Label WAAR
 Preferences.lblAltT.tooltip=De label voor de linkerkant.
-Preferences.lblAltF.text=Label FALSE
+Preferences.lblAltF.text=Label ONWAAR
 Preferences.lblAltF.tooltip=De label voor de rechterkant.
 Preferences.lblAltContent.text=Standaard inhoud
-Preferences.lblAltContent.tooltip=De standaard inhoud van een IF statement.
-Preferences.pnlCase.border=CASE statement
+Preferences.lblAltContent.tooltip=De standaard inhoud van een @b-statement.
+Preferences.altPadRight.text=ONWAAR groter maken
+Preferences.pnlCase.border=@c-statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Standaard inhoud
-Preferences.lblCase.tooltip=De standaard inhoud van een CASE statement.
-Preferences.pnlFor.border=FOR loop
+Preferences.lblCase.tooltip=De standaard inhoud van een @c-statement.
+Preferences.lblCaseRot.text=Min. aftakkingen voor rotatie
+Preferences.lblCaseRot.tooltip=Drempelwaarde voor aantal aftakkingen bij pogingen breedte te beperken door elementen te roteren (0=uit)
+Preferences.pnlRoot.border=@m-header
+Preferences.lblRoot.text=Ook koptekst lijst
+Preferences.lblRoot.tooltip=De koptekst van de lijst van @p-diagrammen bij tekenen.
+Preferences.pnlFor.border=@d-lus
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Standaard inhoud
-Preferences.lblFor.tooltip=De standaard inhoud van een FOR loop.
-Preferences.pnlWhile.border=WHILE loop
+Preferences.lblFor.tooltip=De standaard inhoud van een @d-lus.
+Preferences.pnlWhile.border=@g-lus
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Standaard inhoud
-Preferences.lblWhile.tooltip=De standaard inhoud van een WHILE loop.
-Preferences.pnlRepeat.border=REPEAT loop
+Preferences.lblWhile.tooltip=De standaard inhoud van een @g-lus.
+Preferences.pnlRepeat.border=@h-lus.
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Standaard inhoud
-Preferences.lblRepeat.tooltip=De standaard inhoud van een REPEAT loop.
+Preferences.lblRepeat.tooltip=De standaard inhoud van een @h-lus.
+Preferences.pnlTry.border=@q blok-labels
+Preferences.lblTry.tooltip=Label voor het hoofd uitvoerblok in een @q-element
+Preferences.lblCatch.tooltip=Label voor het exceptieblok in een @q-element
+Preferences.lblFinal.tooltip=Label voor het opruimblok in een @q-element
 Preferences.btnOK.text=OK
-Preferences.btnOK.tooltip=Uw keuze valideren.
+Preferences.btnOK.tooltip=Uw keuze bevestigen.
 
 
 -----[ About ]-----
 About.title=Over
 About.pnlTabbed.tab.0=Betrokken personen
-About.pnlTabbed.tab.1=Changelog
+About.pnlTabbed.tab.1=Log van wijzigingen
+About.pnlTabbed.tab.2=Licentie
+About.pnlTabbed.tab.3=Paden
+About.msgPaths.text=Ini-bestand:\n%1\n\nLog map:\n%2\n\nInstallatiepad:\n%3\n
 About.btnOK.text=OK
-About.btnOK.tooltip=Uw keuze valideren.
+About.btnOK.tooltip=Het venster sluiten.
 
 
 -----[ FontChooser ]-----
 FontChooser.title=Lettertype
-FontChooser.lblTest.tooltip=Een test string, zodat u kunt zien hoe het in de editor eruit ziet. 
+FontChooser.lblTest.tooltip=Een test-string, zodat u kunt zien hoe het er straks in de editor uit ziet.
 FontChooser.lblName.text=Naam
 FontChooser.lblName.tooltip=De naam van de selecteerbare lettertypes.
 FontChooser.lblSize.text=Grootte
 FontChooser.lblSize.tooltip=De grootte van de selecteerbare lettertypes.
 FontChooser.btnOK.text=OK
-FontChooser.btnOK.tooltip=Uw keuze valideren.
-
+FontChooser.btnOK.tooltip=Uw keuze bevestigen.
+FontChooser.cbFixPadding.text=Vast opvullen (onafhankelijk van lettertype)
 
 -----[ Colors ]-----
 Colors.title=Kleur instellingen
 Colors.lblColors.*.text=Kleur [#]
-Colors.lblColors.*.tooltip=Uw keuze voor kleur n° [#].
+Colors.lblColors.*.tooltip=Uw keuze voor kleur nˇ [#].
 Colors.colors.*.tooltip=Klik om te bewerken ...
 Colors.btnOK.text=OK
-Colors.btnOK.tooltip=Uw keuze valideren.
-
+Colors.btnOK.tooltip=Uw keuze bevestigen.
+Colors.btnReset.text=Herstel
+Colors.btnReset.tooltip=Herstel alle kleuren naar de oorspronkelijke kleuren.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Kleuren
 ColorChooser.btnCancel.text=Annuleren
 ColorChooser.btnCancel.tooltip=Uw keuze annuleren.
 ColorChooser.btnOK.text=OK
-ColorChooser.btnOK.tooltip=Uw keuze valideren.
+ColorChooser.btnOK.tooltip=Uw keuze bevestigen.
 
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Parser instellingen
-ParserPreferences.lblPre.text=Ervoor
-ParserPreferences.lblPre.tooltip=
-ParserPreferences.lblPost.text=Erna
-ParserPreferences.lblPost.tooltip=
-ParserPreferences.lblAlt.text=IF statement
-ParserPreferences.lblAlt.tooltip=
-ParserPreferences.lblCase.text=CASE statement
-ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=FOR loop
-ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblWhile.text=WHILE loop
-ParserPreferences.lblWhile.tooltip=
-ParserPreferences.lblRepeat.text=REPEAT loop
-ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.title=Parser-instellingen
+ParserPreferences.lblPre.text=Pre
+ParserPreferences.lblPre.tooltip=Voorvoegsel voor hoofdinvoer
+ParserPreferences.lblPost.text=Post
+ParserPreferences.lblPost.tooltip=Achtervoegsel voor hoofdinvoer
+ParserPreferences.lblAlt.text=@b-statement
+ParserPreferences.lblAlt.tooltip=Sleuteltekst rondom conditie in @b-header
+ParserPreferences.lblCase.text=@c-statement
+ParserPreferences.lblCase.tooltip=Sleuteltekst rondom keuze-expressie in @c-header
+ParserPreferences.lblFor.text=@e-lus
+ParserPreferences.lblFor.tooltip=Sleutelekst die de header-ingangen van een @e-lus scheidt
+ParserPreferences.lblForStep.text=Scheiding tussen stappen
+ParserPreferences.lblForIn.text=@f-lus
+ParserPreferences.lblForIn.tooltip=Sleuteltekst die de header-ingangen van een @f-lus scheidt
+ParserPreferences.edtForInPre.tooltip=Kan gelijk zijn aan dat van @e-lussen.
+ParserPreferences.edtForInPost.tooltip=Moet verschillen van alle hier ingestelde sleutelwoorden
+ParserPreferences.lblWhile.text=@g-lus
+ParserPreferences.lblWhile.tooltip=Sleuteltekst rondom conditie in @g-lusheaders
+ParserPreferences.lblRepeat.text=@h-lus
+ParserPreferences.lblRepeat.tooltip=Sleuteltekst rondom conditie in @h-lussen
+ParserPreferences.lblJump.text=@k-statement
+ParserPreferences.lblJump.tooltip=Indelende sleutelwoorden voor statements om een eenheid te verlaten.
+ParserPreferences.lblJumpLeave.text=uit lus(sen)
+ParserPreferences.lblJumpReturn.text=uit routine
+ParserPreferences.lblJumpExit.text=uit programma
+ParserPreferences.lblJumpThrow.text=bij fout
+ParserPreferences.lblInputOutput.text=I|O instructies
+ParserPreferences.lblInputOutput.tooltip=Indelende sleutelwoorden voor invoer en uitvoer.
 ParserPreferences.lblInput.text=Invoer
-ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblInput.tooltip=Sleutelwoord vooraan toevoegen voor invoerinstructies
 ParserPreferences.lblOutput.text=Uitvoer
-ParserPreferences.lblOutput.tooltip=
+ParserPreferences.lblOutput.tooltip=Sleutelwoord vooraan toevoegen voor uitvoerinstructies
+ParserPreferences.chkIgnoreCase.text=Verschil hoofd- en kleine letters negeren
+ParserPreferences.btnFromLocale.text=Lokatie-afhankelijke standaardwaarden ophalen
+ParserPreferences.btnFromLocale.tooltip=Sleutelwoorden zijn onafhankelijk van de taalinstellingen van de GUI. U kunt sleutelwoorden inlezen voor een willekeurige beschikbaar gestelde taal door op deze knop te drukken.
 ParserPreferences.btnOK.text=OK
-ParserPreferences.btnOK.tooltip=Uw keuze valideren.
-
+ParserPreferences.btnOK.tooltip=Uw keuze bevestigen.
+ParserPreferences.lblErrorSign.text=U kunt het karakter ":" niet gebruiken in een parserstring!
+ParserPreferences.lblErrorSign2.text=In de rood gemarkeerde sleutelwoorden zijn conflicterende namen- zij mogen niet aan elkaar gelijk zijn.
+ParserPreferences.lblErrorSign3.text=% van de verplichte sleutelwoorden (zie hint in de kopregel) zijn niet opgegeven!
+ParserPreferences.ttlError.text=Fout
+ParserPreferences.lblHeadline.text=Velden met deze achtergrond zijn verplicht
 
 -----[ PrintPreview ]-----
-PrintPreview.title=Afdrukvoorbeeld 
-PrintPreview.btnOrientation.text=Ligging wisselen 
-PrintPreview.btnOrientation.tooltip=De pagina 90° draaien. 
-PrintPreview.btnCancel.text=Annuleren 
-PrintPreview.btnCancel.tooltip=Printen annuleren. 
-PrintPreview.btnOK.text=Printen 
-PrintPreview.btnOK.tooltip=De diagram printen.
+PrintPreview.title=Afdrukvoorbeeld
+PrintPreview.btnOrientation.text=Oriëntatie wisselen
+PrintPreview.btnOrientation.tooltip=De pagina 90° draaien.
+PrintPreview.btnCancel.text=Annuleren
+PrintPreview.btnCancel.tooltip=Afdrukken annuleren.
+PrintPreview.btnOK.text=Afdrukken
+PrintPreview.btnOK.tooltip=Het diagram afdrukken
+PrintPreview.lblMarginX.text=horiz. marge:
+PrintPreview.lblMarginY.text=vert. marge:
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=Export-opties ...
+ExportOptionDialoge.tabbedPane.tab.0=Algemeen
+ExportOptionDialoge.tabbedPane.tab.1=Omvat
+ExportOptionDialoge.noConversionCheckBox.text=Geen conversie van de inhoud van expressie/instructie
+ExportOptionDialoge.noConversionCheckBox.tooltip=Selecteer deze optie als de tekstinhoud van de elementen al de syntax van de doeltaal weergeeft.
+ExportOptionDialoge.commentsCheckBox.text=Instructies als commentaar exporteren.
+ExportOptionDialoge.bracesCheckBox.text=Openingsaccolade op dezelfde regel plaatsen (C/C++/Java enz.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Regelnummers toevoegen bij exporteren naar BASIC.
+ExportOptionDialoge.chkExportSubroutines.text=Aangeroepen subroutines erbij betrekken.
+ExportOptionDialoge.chkExportLicenseInfo.text=Attributen auteur en licentie exporteren.
+ExportOptionDialoge.lbPrefGenerator.text=Favoriete coode voor export:
+ExportOptionDialoge.lbCharset.text=Karakterset:
+ExportOptionDialoge.chkCharsetAll.text=Alles weergeven?
+ExportOptionDialoge.btnPluginOptions.text=Taalspecifieke opties
+ExportOptionDialoge.msgOptionsForPlugin.text=Opties voor % generator
+ExportOptionDialoge.jLabel1.text=Selecteer a.u.b. de gewenste opties ...
+ExportOptionDialoge.jButton1.text=OK
+ExportOptionDialoge.jButton1.tooltip=Deze instellingen opslaan
+ExportOptionDialoge.includeLists.*.tooltip=Vul een lijst in van bestanden of modules, door kommas's gescheiden, waarvoor voorwaarden voor bijsluiten/importeren/gebruik moeten worden ingevoegd.
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
+
+-----[ ImportOptionDialog ]-----
+ImportOptionDialog.title=Importopties
+ImportOptionDialog.lbIntro.text=Selecteer a.u.b. de de door u gewenste opties...
+ImportOptionDialog.pnlCode.border=bestanden met code
+ImportOptionDialog.pnlNSD.border=NSD-bestanden
+ImportOptionDialog.pnlPreference.border=Voorkeurbestanden
+ImportOptionDialog.lbCharset.text=Karakterset:
+ImportOptionDialog.chkCharsetAll.text=Alles uitlijsten?
+ImportOptionDialog.chkRefactorOnLoading.text=Sleutelwoorden vervangen bij inlezen van een diagram (aanpassen)
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Selecteer deze optie indien alle instelbare sleutelwoorden in het diagram moeten worden aangepast aan de huidige parserinstellingen.
+ImportOptionDialog.chkVarDeclarations.text=Declaraties van variabelen importeren
+ImportOptionDialog.chkVarDeclarations.tooltip=Met deze optie aangezet maken de parsers instructie-elementen van declaraties van variabelen.
+ImportOptionDialog.chkCommentImport.text=Commentaar in broncode importeren
+ImportOptionDialog.chkSaveParseTree.text=Na importeren parse-tree opslaan als tekstbestand.
+ImportOptionDialog.chkSaveParseTree.tooltip=Na een gelukte import kunt u de syntax tree opslaan naar een tekstbestand "*.parsetree.txt".
+ImportOptionDialog.chkLogDir.text=Naar map loggen
+ImportOptionDialog.chkLogDir.tooltip=Een logbestand opslaan tijdens importeren aanzetten
+ImportOptionDialog.txtLogDir.tooltip=Een leeg pad betekent de map van het broncodebestand, "." betekent de huidige map.
+ImportOptionDialog.btnLogDir.tooltip=Pad selecteren in een dialoog.
+ImportOptionDialog.lblMaxLen.text=Maximum regellengte (voor verder gaan op volgende regel):
+ImportOptionDialog.spnMaxLen.tooltip=Lengte 0 betekent geen automatisch regel afbreken bij importeren
+ImportOptionDialog.lblLimit.text=Maximum aantal geïmporteerde diagrammen die direct kunnen worden getoond.
+ImportOptionDialog.btnPluginOptions.text=Taalspecifieke opties
+ImportOptionDialog.msgOptionsForPlugin.text=Opties voor % parser
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Deze instellingen opslaan
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Opties voor opslaan diagrammen ...
+SaveOptionDialog.lbIntro.text=Selecteer a.u.b. de door u gewenste opties ...
+SaveOptionDialog.pnlAutoSave.border=Opties voor automatisch opslaan
+SaveOptionDialog.pnlBackup.border=Backup-opties
+SaveOptionDialog.pnlFileInfo.border=Standaard bestandsinfo
+SaveOptionDialog.pnlFileNames.border=Suggesties voor bestandsnamen
+SaveOptionDialog.pnlArrFiles.border=Arranger-bestanden
+SaveOptionDialog.chkAutoSaveExecute.text=Auto-opslaan tijdens uitvoeren?
+SaveOptionDialog.chkAutoSaveClose.text=Auto-opslaan bij afsluiten?
+SaveOptionDialog.chkBackupFile.text=Backupbestand maken bij heropslaan?
+SaveOptionDialog.chkRelativeCoordinates.text=Opslaan met relatieve coördinaten?
+SaveOptionDialog.chkRelativeCoordinates.tooltip=Dit selecteren wanneer rangschikkingen niet met absolute coördinaten moeten worden opgeslagen, maar relatief ten opzichte van groepgrenzen.
+SaveOptionDialog.lblAuthorName.text=Naam auteur
+SaveOptionDialog.btnLicenseFile.text=Licentiebestand
+SaveOptionDialog.btnLicenseFile.tooltip=De editor openen voor de tekst van deze licentie
+SaveOptionDialog.chkArgNumbers.text=Met aantal argumenten?
+SaveOptionDialog.chkArgNumbers.tooltip=Indien gekozen (standaard), bevatten gesuggereerde bestandsnamen voor @o-diagrammen het (kleinste en grootste) aantal argumenten, bijv. "foo-4.nsd", "bar-1-2.nsd"
+SaveOptionDialog.lblSeparator.text=Scheidingskarakter
+SaveOptionDialog.lblSeparator.tooltip=Het scheidingskarakter tussen diagramnaam en argumentaantallen in gesuggereerde bestandsnamen
+SaveOptionDialog.msgNoFile.text=Geen bestandsnaam geselecteerd of ingevoerd!
+SaveOptionDialog.msgCantEdit.text=Kan geen editor openen voor het gselecteerde bestand!
+SaveOptionDialog.msgRiskOfNameClash.text=Door deze optie uit te zetten riskeert u dubbel voorkomende namen en ongewenst gegevensverlies door overloaden van subroutines!
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Deze instellingen accepteren.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Waarde van '%' moet een geheel getal zijn!
+PluginOptionDialog.msgNoValidUnsigned.text=Waarde van '%' moet een hoofdtelwoord zijn (geheel getal zonder teken)!
+PluginOptionDialog.msgNoValidCharacter.text=Waarde van '%'  moet een enkel karakter zijn!
+PluginOptionDialog.msgNoValidDouble.text=Waarde van '%' moet een getal zijn
+PluginOptionDialog.msgVerificationError.text=Invoercontrole is mislukt
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Annuleren
+
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Voorkeuren voor elementnamen
+ElementNamePreferences.lblExplanation.text=Te tonen elementtypen hernoemen
+ElementNamePreferences.chkUseConfNames.text=De ingestelde labels aanzetten
+ElementNamePreferences.lblLocalized.text=Label in ingestelde taal
+ElementNamePreferences.lblIndividual.text=Ingestelde label
+ElementNamePreferences.btnEnglishStd.text=English (standaard)
+ElementNamePreferences.btnEnglishStd.tooltip=De Engelse standaard namen gebruiken voor elementnamen als ingestelde labels voor alle talen.
+ElementNamePreferences.btnOK.text=OK
+ElementNamePreferences.btnOK.tooltip=Deze instellingen accepteren.
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
+DiagramControllerAliases.title=Alias voor besturingsroutines
+DiagramControllerAliases.lblHeader.text=Geef aliasnamen op voor de routines van bestuurbare add-ons.
+DiagramControllerAliases.lblRemark.text=(Let er op dat hoofd- en kleine letters geen verschil maken in namen van besturingsroutines!)
+DiagramControllerAliases.chkApplyAliases.text=De ingestelde aliassen gebruiken bij tonen enz.
+DiagramControllerAliases.btnOK.text=OK
+DiagramControllerAliases.hlpEndEditing.text=Celbewerking eindigen met <Enter> of <Esc> of door ergens te klikken.
+DiagramControllerAliases.msgIdentifierRequired.text=Uw alias bevat ongeldige karakters.\nDe alias van een routinenaam moet leeg zijn of een identifier\n(bijv. alleen letters bevatten, cijfers en lage streepjes).\n\nDe originele tekst wordt weer hersteld.
+DiagramControllerAliases.ttlIllegalValues.text=Ongeldige alias
+DiagramControllerAliases.msgIn.text=in
+DiagramControllerAliases.msgConflictsFound.text=Er zijn signatuur-conflicten, wijzigingen kunnen niet worden doorgevoerd:\n\n%\n\nDeze conflicten moeten eerst worden opgelost. (De lijst van conflicten wordt naar het klembord gekopieerd.)
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=GUI-schaal
+GUIScaleChooser.txtComment.text=Dit is slechts een voorbeeld. Direct schalen van de gehele toepassing is niet mogelijk.\nDe schaalfactor is pas actief bij de volgende keer starten van Structorize.
+GUIScaleChooser.lblSpinner.text=Schaalfactor
+GUIScaleChooser.pnlTest.border=Voorbeeld
+GUIScaleChooser.lblTest.text=Lettertype
+GUIScaleChooser.lblIcon.text=Pictogram (voorbeeld)
+GUIScaleChooser.chkTest.text=Keuzevakje (kies dit!)
+GUIScaleChooser.btnOK.text=OK
+GUIScaleChooser.btnOK.tooltip=Maak uw keus geldig voor de volgende keer.
+
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=%-code importeren ...
+CodeImportMonitor.phaseLabels.0.text=Pre-processing bestand
+CodeImportMonitor.phaseLabels.1.text=Code parsen
+CodeImportMonitor.phaseLabels.2.text=Diagrammen opbouwen
+CodeImportMonitor.phaseLabels.3.text=Post-processing diagrammen
+CodeImportMonitor.btnOk.text=Ok
+CodeImportMonitor.btnCancel.text=Annuleren
+CodeImportMonitor.lblRoots.text=Aangemaakte diagrammen:
+CodeImportMonitor.lblErrors.text=Er zijn fouten gevonden!
+CodeImportMonitor.msgInterrupted.text=Onderbroken!
+
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Zoeken / Vervangen
+FindAndReplace.lblSearchPattern.text=Zoeken:
+FindAndReplace.lblReplacePattern.text=Vervangen door:
+FindAndReplace.pnlMode.border=Modus
+FindAndReplace.chkCaseSensitive.text=Hoofdlettergevoelig
+FindAndReplace.chkCaseSensitive.mnemonic=g
+FindAndReplace.chkWholeWord.text=Hele woord
+FindAndReplace.chkWholeWord.mnemonic=w
+FindAndReplace.chkRegEx.text=Reguliere expressie
+FindAndReplace.chkRegEx.mnemonic=x
+FindAndReplace.rbDown.text=Neer
+FindAndReplace.rbDown.mnemonic=n
+FindAndReplace.rbUp.text=Op
+FindAndReplace.rbUp.mnemonic=o
+FindAndReplace.pnlScope.border=Bereik
+FindAndReplace.cmbScope.item.0=Huidige selectie
+FindAndReplace.cmbScope.item.1=Huidig diagram
+FindAndReplace.cmbScope.item.2=Geopende diagrammen
+FindAndReplace.pnlRootTypes.border=Diagramtypen
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkInTexts.text=In teksten
+FindAndReplace.chkInTexts.mnemonic=t
+FindAndReplace.chkInComments.text=In commentaar
+FindAndReplace.chkInComments.mnemonic=m
+FindAndReplace.pnlElements.border=Elementtypen
+FindAndReplace.btnAll.text=Alle
+FindAndReplace.btnNone.text=Geen
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+FindAndReplace.chkDisabled.text=Uitgeschakelde elementen
+FindAndReplace.pnlPreview.border=Inhoud
+FindAndReplace.txtText.border=Tekst
+FindAndReplace.txtComm.border=Commentaar
+FindAndReplace.chkElementwise.text=Per element
+FindAndReplace.chkElementwise.menmonic=e
+FindAndReplace.btnFind.text=Zoeken
+FindAndReplace.btnFind.mnemonic=z
+FindAndReplace.btnReplace.text=Vervangen
+FindAndReplace.btnReplace.mnemonic=r
+FindAndReplace.btnReplaceFind.text=Vervangen/Zoeken
+FindAndReplace.btnReplaceFind.mnemonic=v
+FindAndReplace.btnReplaceAll.text=Alles vervangen
+FindAndReplace.btnReplaceAll.mnemonic=a
+FindAndReplace.btnReplaceAll.tooltip=Vervangt alle resterende voorkomens van het zoekpatroon vanaf de huidige positie in de opgegeven richting
+FindAndReplace.btnClose.text=Sluiten
+FindAndReplace.msgRegexCorrupt.text=Reguliere expressie «%1» lijkt ongeldig: %2
+FindAndReplace.ttlSearchError.text=Zoekfout
+
+-----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=Nieuw diagram
+Arranger.btnRemoveDiagram.text=Diagram laten vervallen
+Arranger.btnRemoveDiagrams.text=Diagram laten vervallen
+Arranger.btnRemoveAllDiagrams.text=Alles verwijderen
+Arranger.btnExportPNG.text=PNG export
+Arranger.btnSaveArr.text=Arr. opslaan
+Arranger.btnLoadArr.text=Arr. inlezen
+Arranger.btnAddDiagram.tooltip=Een nieuw, leeg diagram invoegen
+Arranger.btnPinDiagram.text=Diagram vastzetten
+Arranger.btnSetCovered.text=Op volledig getest zetten
+Arranger.btnZoom.text=In/uitzoomen
+Arranger.btnSaveArr.tooltip=Rangschikking van de geselecteerde diagrammen opslaan als lijst (*.arr, of archief: (*.arrz).
+Arranger.btnLoadArr.tooltip=Rangschikking inlezen uit lijst (*.arr) of archief (*.arrz)
+Arranger.btnExportPNG.tooltip=Teken deze rangschikking in een PNG-bestand.
+Arranger.btnPinDiagram.tooltip=Zet de geselecteerde bestanden vast zodat ze niet kunnen worden vervangen
+Arranger.btnSetCovered.tooltip=Markeer de geselecteerde routine-diagrammen als getest, voor aanroepende subroutines.
+Arranger.btnRemoveDiagram.tooltip=Verwijdert de geselecteerde diagrammen - verwijder alle diagrammen met ingedrukte Shift-toets.
+Arranger.btnZoom.tooltip=Shift-toets ingedrukt houden voor inzoomen.
+Arranger.chkDrawGroups.text=Groepen tonen
+Arranger.chkSelectGroups.text=Groepen selecteren
+Arranger.popupHitList.text=Gevonden diagrammen / groepen
+Arranger.popupRemove.text=Geselecteerde diagrammen verwijderen
+Arranger.popupRemoveAll.text=Alle diagrammen verwijderen
+Arranger.popupExpandSelection.text=Selectie uitvouwen
+Arranger.popupExpandSelection.tooltip=Alle subroutines/insluitbare diagrammen waarnaar direct of indirect wordt verwezen, aan de huidige selectie toevoegen.
+Arranger.popupGroup.text=Geselecteerde diagrammen groeperen ...
+Arranger.popupExpandGroup.text=Uitvouwen en groeperen ...
+Arranger.popupAttributes.text=Attributen bekijken ...
+Arranger.popupAttributes.tooltip=Opent de dialoog voor inspectie van attributen
+Arranger.popupHelp.text=Help voor de Arranger ...
+Arranger.popupHelp.tooltip=Toon in de browser de pagina voor de Arranger in de Online User Guide.
+Arranger.popupKeyBindings.text=Toon sneltoetsen ...
+Arranger.popupKeyBindings.tooltip=Toon in de browser de pagina voor de sneltoetsen van de Arranger in de Online User Guide.
+Arranger.popupRearrange.text=Herindelen in groepen
+Arranger.msgConfirmRemoveAll.text=Wilt u werkelijk alle diagrammen verwijderen uit de Arranger?
+Arranger.msgTitleWarning.text=Waarschuwing
+Arranger.msgTitleIllegal.text=Niet toegestane bewerking!
+Arranger.msgActionDelete.text=verwijderen
+Arranger.msgActionCut.text=knippen
+Arranger.msgActionCopy.text=kopiëren
+Arranger.msgConfirmRemove.text=Wilt u werkelijk bovenstaande diagram(men) uit de Arranger %1?
+Arranger.msgConfirmMultiple.text=De volgende %1 diagram(men) van de %2 zijn geselecteerd:\n- %3\n\n%4
+Arranger.msgReadyToExport.text=Bent u gereed om deze subrangschikking naar PNG te exporteren?
+Arranger.msgCantDoWithMultipleRoots.text=Het is onmogelijk meer dan een diagram tegelijk te %1. U selecteerde %2 diagram(men):\n-%3
+Arranger.msgDiagramsSelected.text=diagrammen: %1, geselecteerd: %2
+Arranger.msgBrowseFailed.text=Tonen % 2 in de browser is mislukt
+Arranger.msgTitleURLError.text=URL-fout
+Arranger.msgSelectionExpanded.text=% naar verwezen diagram(men) aan selectie toegevoegd.
+Arranger.msgMissingDiagrams.text=\n\n%1 naar verwezen diagram(men) niet gevonden:\n-%2
+Arranger.msgAmbiguousSignatures.text=\nEr zijn %1 dubbelzinnige signaturen in de selectie, bijv. met diverse zelfde diagrammen:\n- %2
+Arranger.msgEmptySelection.text=Kan diagrammen niet %: niets geselecteerd.
+Arranger.msgActionGroup.text=groep
+Arranger.msgGroupName.text=%1Naam voor de groep van de %2 samen te voegen (join) geselecteerde diagrammen:
+Arranger.msgGroupNameRejected.text=Groepnaam "%" werd geweigerd.
+Arranger.msgGroupExists.text=Er is al een goep met de naam "%". Wat wilt u doen?
+Arranger.msgGroupingOptions.0.text=Diagrammen toevoegen
+Arranger.msgGroupingOptions.1.text=Groep overschrijven
+Arranger.msgGroupingOptions.2.text=Andere groepsnaam proberen
+Arranger.msgGroupingOptions.3.text=Annuleren
+Arranger.msgCongruentGroups.text=De verzameling van de %1 geselecteerde diagrammen is komt overeen met met %2 bestaande groep(en):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=Wilt u toch nog een nieuwe groep aanmaken?
+
+-----[ Surface ]-----
+Surface.msgFileLoadError.text=Inleesfout bestand:
+Surface.msgSavePortable.text=U kunt deze rangschikking opslaan\n- als eem ovrdraagbaar ingepakt archief (*.arrz)\n- of slechts als een rangschikkingslijst van bestandspaden (*.arr).
+Surface.lblSaveAsArrz.text=Als archief (*.arrz)
+Surface.lblSaveAsArr.text=Als lijst (*.arr)
+Surface.msgSaveDialogTitle.text=Gerangschikte verzameling van diagrammen opslaan ...
+Surface.msgSaveError.text=Fout bij opslaan van de rangschikking:
+Surface.msgLoadDialogTitle.text=Opnieuw inlezen van opgeslagen gerangschikte diagrammen ...
+Surface.msgExtractDialogTitle.text=Naar een map uitpakken?
+Surface.msgArrLoadError.text=Fout bij inlezen gerangschikte diagrammen:
+Surface.msgExportDialogTitle.text=Diagram als PNG exporteren ...
+Surface.msgExportError.text=Fout bij opslaan van de afbeelding!
+Surface.msgParseError.text=NSD parser fout:
+Surface.msgResetCovered.text=Routine is al gemarkeerd als getest! Getest-markering herstellen?
+Surface.msgCoverageError.text=Geen geschikt routinediagram geselecteerd, kan niets als getest markeren!
+Surface.msgUnsavedDiagrams.text=Kon deze diagrammen niet opslaan:
+Surface.msgUnsavedHint.text=Misschien wilt u die eerst dubbelklikken en via Structorizer opslaan? (Klik dan op "Annuleren").
+Surface.msgUnsavedContinue.text=Toch maar doorgaan?
+Surface.msgNoArrFile.text=Geen Arranger-bestand gevonden
+Surface.msgDefectiveArr.text=Beschadigde rangschikking.
+Surface.msgDefectiveArrz.text=Beschadigd overdraagbaar rangschikkingsbestand.
+Surface.titleDiagramConflict.text=Diagramconflict
+Surface.msgInsertionConflict.0.text=Er is een andere versie van diagram "%2".\nVan minstens een daarvan zijn wijzigingen niet opgeslagen.
+Surface.msgInsertionConflict.1.text=Er is een equivalente kopie van diagram "%1"\nmet een ander pad "%2".
+Surface.msgInsertionConflict.2.text=Er is een veschillend diagram met signatuur "%1"\en pad "%2".
+Surface.msgOverwriteFile.text=Bestaand bestand "%" overschrijven?
+Surface.msgConfirmOverwrite.text=Overschrijven bevestigen
+Surface.msgTooltipSelectThis.text=Selecteer %1 (+shift: toevoegen aan de selectie)%2 en plaats dit bovenaan.
+Surface.msgGroupRemovalError.text=Fout bij verwijderen groep «%»
+Surface.msgArrangementAlreadyLoaded.text=Het rangschikkingsbestand "%1" is al ingelezen in groep %2.\nOpnieuw inlezen met een andere groepnaam?
+Surface.msgArrangementNotLoaded.text=Inlezen rangschikking is geannuleerd.
+Surface.msgSaveAsNewGroup.text=als nieuwe groep
+Surface.msgSelectGroup.text=Kies a.u.b. of u het bestand van een bestaande groep wilt bijwerken, of dat u een nieuwe rangschikking wilt aanmaken:
+Surface.msgConfirmRemoveGroup.text=Groep «%» is leeg. Wilt u die nu verwijderen?
+Surface.msgSaveGroupChanges.text=Groep «%» heeft veranderingen in de wachtrij.\nWilt u deze veranderingen nu opslaan?
+Surface.msgUnsavedGroups.text=Kon deze groepen (rangschikkingen) niet opslaan:
+Surface.msgDiagram.text=diagram «%»
+Surface.msgGroup.text=groep «%»
+Surface.msgGroupExists.text=Groep met naam «%» bestaat al!
+Surface.titleRenameGroup.text=Groeo "%1" hernoemen naar "%2"?
+Surface.msgRenameArrFile.text=Rangschikkingsbestand\n"%1"\nto "%2"?
+Surface.msgRenamingFailed.text=Kon rangschikkingsbestand niet hernoemen naar "%"!\nActie wordt geannuleerd.
+Surface.msgSharedDiagrams.text=De volgende diagrammen worden nu gedeeld met de groepen in de lijst\n - %1\n\nLet erop dat elke verandering erin invloed heeft op al deze groepen\nen archief %2, ook al is deze laatste niet meer ingelzen!
+
+-----[ ArrangerIndex ]-----
+ArrangerIndex.popupIndexGet.text=Diagram ophalen
+ArrangerIndex.popupIndexAttributes.text=Attributen bekijken ...
+ArrangerIndex.popupIndexInfo.text=Info diagram/groep ...
+ArrangerIndex.popupIndexSave.text=Wijzigingen opslaan
+ArrangerIndex.popupIndexRemove.text=Verwijderen
+ArrangerIndex.popupIndexCovered.text=Getest aan/uit
+ArrangerIndex.popupIndexRemoveAll.text=Alle verwijderen
+ArrangerIndex.popupIndexGroup.text=Groep aanmaken ...
+ArrangerIndex.popupIndexExpandGroup.text=Groep uitbreiden ...
+ArrangerIndex.popupIndexDissolve.text=Groep ontbinden
+ArrangerIndex.popupIndexDetach.text=Uit groep losmaken
+ArrangerIndex.popupIndexAttach.text=Toevoegen aan/verplaatsen naar groep ...
+ArrangerIndex.popupIndexDrawGroup.text=Grenzen van de groep tonen
+ArrangerIndex.popupIndexDrawGroup.tooltip=Afzonderlijk zichtbaar zijn van de geselecteerde groep in de Arranger
+ArrangerIndex.popupIndexRenameGroup.text=Groep hernoemen ...
+ArrangerIndex.popupIndexRenameGroup.tooltip=Staat toe de geselecteerde groep te hernoemen, optioneel samen met bijbehorende bestand
+ArrangerIndex.lblSelectTargetGroup.text=Selecteer de doelgroep:
+ArrangerIndex.lblGroups.text=Bevattende groepen
+ArrangerIndex.lblSubroutines.text=Aangeroepen @os
+ArrangerIndex.lblIncludables.text=Naar @ps verwezen
+ArrangerIndex.lblDependingDiagrams.text=Afhankelijke diagrammen
+ArrangerIndex.lblStaleReferences.text=Verlopen diagramverwijzingen
+ArrangerIndex.lblModifications.text=Niet opgeslagen wijzigingen
+ArrangerIndex.lblExternSubroutines.text=Naar verwezen externe @os
+ArrangerIndex.lblExternIncludables.text=Naar verwezen externe @ps
+ArrangerIndex.btnShowGroup.tooltip=Aan/uit schakelen afzonderlijk zichtbaar zijn van geselecteerde groep in de Arranger.
+ArrangerIndex.btnGroupColors.*.tooltip=Wijzig de groepskleur naar de kleur van deze knop
+ArrangerIndex.msgDefaultGroupName.text=(Standaardgroep)
+ArrangerIndex.msgGroupsAndRootsSelected.text=Zowel groepen als diagrammen geselecteerd. Tegelijk verwijderen uit beiden kan onverwachte resultaten geven.
+ArrangerIndex.msgDeleteGroupMembers.text=U probeert % groepen te wissen.\n\nDe daarin aanwezige diagrammen die worden gedeeld met andere groepen overleven dit.\Wat moet er gebeuren met niet gedeelde diagrammen: verwijderen uit Arranger?\n(anders worden die verplaatst naar de standaard groep.)
+ArrangerIndex.msgConfirmDeleteRoots.text=U selecteerde % diagram(men) voor verwijderen\nWilt u dat/die werkelijk verwijderen uit alle groepen en Arranger?\n(anders wordt het\worden die alleen maar losgemaakt uit de desbetreffebde groep(en).)
+ArrangerIndex.msgAttachOptions.0.text=Aan groep toevoegen
+ArrangerIndex.msgAttachOptions.1.text=Naar groep verplaatsen
+ArrangerIndex.msgAttachOptions.2.text=Annuleren
+ArrangerIndex.msgNumberOfSharedMembers.text=% leden met andere groepen gedeeld.
+ArrangerIndex.msgMembersIncomplete.text=Groep is niet compleet: %1 naar verwezen diagrammen zijn daarbuiten. %2 verlopen verwijzingen.
+ArrangerIndex.msgMembersComplete.text=Groep is compleet. Geen verwijzingen naar buiten
+ArrangerIndex.msgGroupMembersChanged.text=De verzameling van diagramleden is gewijzigd.
+ArrangerIndex.msgGroupMembersMoved.text=De coördinaten van sommige diagramleden zijn gewijzigd
+ArrangerIndex.msgNewGroupName.text=Nieuwe naam voor de geselecteerde groep:
+
+-----> Executor
+-----[ Control ]-----
+Control.title=Regels uitvoeren
+Control.lblSpeed.text=Vertraging:
+Control.btnCallStack.text=Stack oproepen
+Control.lblCallLevel.text=Oproepdiepte:
+Control.chkCollectRuntimeData.text=Runtime-gegevens verzamelen
+Control.cbRunDataDisplay.item.0=Geen kleuren
+Control.cbRunDataDisplay.item.1=Lage testgraad
+Control.cbRunDataDisplay.item.2=hoge testgraad
+Control.cbRunDataDisplay.item.3=aantal keren uitvoeren
+Control.cbRunDataDisplay.item.4=aantal bewerkingen , lin.
+Control.cbRunDataDisplay.item.5=aantal bewerkingen, logar.
+Control.cbRunDataDisplay.item.6=totaal aantal bewerkingen, lin.
+Control.cbRunDataDisplay.item.7=totaal aantal bewerkingen, logar.
+Control.chkOutputToTextWindow.text=Uitvoer naar venster
+Control.lbStopRunningProc.text=Deze actie is niet toegestaan als een diagram wordt uitgevoerd.\nWilt u het huidige uitvoeren stoppen?
+Control.lbInputValue.text=Voer a.u.b. een waarde in voor <%>
+Control.lbInputPaused.text=Uitvoeren wordt onderbroken - u kunt nu de waarde invullen in het invoerveld
+Control.lbInputCancelled.text=Invoer geannuleerd
+Control.lbManuallySet.text=*** Met de hand instellen: %1 <- %2 ***
+Control.lbEmptyLine.text=Lege regel
+Control.lbReturnedResult.text=Teruggegeven resultaat
+Control.lbOutput.text=Uitvoer
+Control.lbInput.text=Invoer
+Control.lbAcknowledge.text=Bevestigen a.u.b. voor verdergaan.
+Control.lbOk.text=OK
+Control.lbPause.text=Pauze
+Control.lbCommit.text=Wijzigingen doorvoeren
+Control.lbDiscard.text=Afzien van wijzigingen
+Control.ttlCompName.text=Naam
+Control.ttlIndex.text=Index
+Control.ttlContent.text=Inhoud
+Control.msgTitleError.text=Fout
+Control.msgTitleQuestion.text=Vraag
+Control.msgTitleParallel.text=Probleem bij parallelle uitvoering
+Control.msgNoSubroutine.text=Een @o-diagram "%1" (%2 parameters) werd niet gevonden!\nProbeer Arranger te starten en plaats de nodige @o -diagrammen er het eerst in.
+Control.msgNoInclDiagram.text=Een @p-diagram "%" werd niet gevonden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
+Control.msgAmbiguousCall.text=@j dubbelzinnig: Verschillende diagrammen gevonden voor subroutines: "%1" (%2 parameters).
+Control.msgInvalidExpr.text=<%1> is geen correcte of bestaande expressie.
+Control.msgInvalidBool.text=<%1> is geen geldige Booleaanse expressie.
+Control.msgIllFunction.text=<%1> is geen correcte functie!
+Control.msgManualBreak.text=Handmatig afgebroken!
+Control.msgIllegalLeave.text=Onjuist argument voor verlaten: %1
+Control.msgWrongExit.text=Onjuiste afsluitwaarde: %1
+Control.msgExitCode.text=Programma eindigde met code %1!
+Control.msgIllegalJump.text=Onjuiste inhoud van een sprong- (b.v. exit) opdracht: <%1>!
+Control.msgTooManyLevels.text=Teveel niveaus voor verlaten (huidig aantal: %1 / opgegeven %2):
+Control.msgJumpOutParallel.text=Onjuiste poging uit een parallelle thread te springen:%Thread wordt beëindigd!
+Control.msgForLoopManipulation.text=Onjuiste poging tot manipuleren van @d-lusvariabele «%»!
+Control.msgInvalidFileNumberRead.text=Ongeldig bestandsnummer of bestand niet open voor lezen.
+Control.msgInvalidFileNumberWrite.text=Ongeldig bestandsnummer of bestand niet open voor schrijven.
+Control.msgNoIntLiteralOnFile.text=Geen geheel getal leesbaar uit bestand!
+Control.msgNoDoubleLiteralOnFile.text=Geen kommagetal leesbaar uit bestand!
+Control.msgEndOfFile.text=Poging gegevens te lezen voorbij het einde van het bestand!
+Control.msgUseStopButton.text=Er is een uitvoering bezig, of in de wacht!\nGebruik de STOPknop voor afbreken en afsluiten.
+Control.msgConstantRedefinition.text=Ongeldige poging constante «%» opnieuw te definiëren of te wijzigen!
+Control.msgConstantArrayElement.text=Aan een array-element «%» kan geen constante waarde worden toegekend!
+Control.msgInvalidRecord.text=Aan een array-element «%» kan geen constante waarde worden toegekend!
+Control.msgInvalidComponent.text=Er is geen component «%1» in recordtype of variabele «%2»!
+Control.msgConstantRecordComponent.text=Een record-component «%» kan door toekenning geen constante worden!
+Control.msgTypeMismatch.text=Waardetype «%1» komt niet overeen met type «%2» van variabele/component «%3»!
+Control.msgBadValueList.text=<%> kan geen lijst met waarden zijn
+Control.msgBadValueListDetails.text=Details: %
+Control.msgIndexOutOfBounds.text=Index «%1» (%2) is voorbij de grenzen van array «%3»!
+Control.msgInitializerAsArgument.text=U kunt geen array direct als argument initialiseren in een built-in functie.\nKen eerst de array toe aan een variable.
+Control.msgVarUpdateErrors.text=Problemen bij bijwerken van variabelen
+Control.msgVarUpdatesFailed.text=Veranderen van deze variabelen is mislukt als gevolg van foutieve berekeningen:\n\n%
+Control.msgEndEditing.text=Om verder te kunnen gaan moet u de celeditor voor variabelen vrijgeven (Enter of Escape).
+Control.msgFunctionConflict.text=\nFunctie «%1(%2)» van %3 vervangen door %4
+Control.msgProcedureConflict.text=Procedure «%1(%2)» van %3 vervangen doo %4
+Control.msgSignatureConflicts.text=Er zijn API-conflicten met de gekozen plugins voor de bestuing: %
+Control.msgGUISyncFault.text=Mogelijke GUI-synchronisatiefout tijdens uitvoeren van «%».\nHervatten uitvoeren proberen?
+Control.msgErrorInSubroutine.text=Fout gevonden bij uitvoeren «%1» op niveau %2:\n	%3!
+Control.msgThrown.text=Exceptie-fout in «%1» op niveau %2: %3
+Control.tblVar.header.0=Naam variabele
+Control.tblVar.header.2=Inhoud
+
+-----[ OutputConsole ]-----
+OutputConsole.title=Uitvoercosole van Structorizer
+OutputConsole.menuProp.text=Eigenschappen
+OutputConsole.menuPropFont.text=Lettertype ...
+OutputConsole.menuPropFontUp.text=Groter lettertype
+OutputConsole.menuPropFontDown.text=Kleiner lettertype
+OutputConsole.menuContent.text=Inhoud
+OutputConsole.menuContentLogCalls.text=Aanroepen loggen
+OutputConsole.menuContentLogMeta.text=Meta-info loggen
+OutputConsole.menuContentLogMeta.tooltip=Berichten loggen, zoals tijden van starten/beëindigen, handmatige wijzigingen van variabelen, etc. (standaard)
+OutputConsole.menuContentSave.text=Log opslaan ...
+OutputConsole.msgOverwriteFile.text=Bestaand bestand overschrijven?
+OutputConsole.msgErrorFileSave.text=Fout bij opslaan van het bestand: %!
+OutputConsole.msgTitleError.text=Fout
+
+-----> Elements
+ElementNames.localizedNames.0.text=Instructie
+ElementNames.localizedNames.1.text=ALS
+ElementNames.localizedNames.2.text=IN GEVAL
+ElementNames.localizedNames.3.text=VOOR
+ElementNames.localizedNames.4.text=VOOR TOT
+ElementNames.localizedNames.5.text=VOOR IN
+ElementNames.localizedNames.6.text=ZOLANG
+ElementNames.localizedNames.7.text=HERHAAL
+ElementNames.localizedNames.8.text=EINDELOOS
+ElementNames.localizedNames.9.text=AANROEP
+ElementNames.localizedNames.10.text=EXIT
+ElementNames.localizedNames.11.text=Parallel
+ElementNames.localizedNames.12.text=Diagram
+ElementNames.localizedNames.13.text=Hoofdprogramma
+ElementNames.localizedNames.14.text=Subroutine
+ElementNames.localizedNames.15.text=Insluitbaar
+ElementNames.localizedNames.16.text=TRY
+
+-----> Keywords
+ParserKeywords.AltPre.text=als
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=in geval
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=voor
+ParserKeywords.ForPost.text=tot
+ParserKeywords.ForStep.text=stap
+ParserKeywords.ForInPre.text=voorelke
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=zolang
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=totdat
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=verlaten
+ParserKeywords.JumpReturn.text=teruggeven
+ParserKeywords.JumpExit.text=exit
+ParserKeywords.JumpThrow.text=throw
+ParserKeywords.Input.text=INVOER
+ParserKeywords.Output.text=UITVOER

@@ -73,6 +73,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-01  Enh. #691: Façade renameGroup() introduced for exactly this purpose
  *      Kay Gürtzig     2019-03-13  Issue #655: status bar coordinate computation changed
  *      Kay Gürtzig     2019-03-13  Enh. #698: Methods getName(), addDiagram() and addArchive() added
+ *      Kay Gürtzig     2019-03-27  Issue #717: Configurable base scroll unit (adaptScrollUnits())
+ *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
  *
  ******************************************************************************************************
  *
@@ -1703,23 +1705,35 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#376 2017-04-11: Enh. #389
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String, Root)
      */
     @Override
-    public Vector<Root> findIncludesByName(String rootName) {
-        return surface.findIncludesByName(rootName);
+    public Vector<Root> findIncludesByName(String rootName, Root includer) {
+        return surface.findIncludesByName(rootName, includer);
     }
     // END KGU#376 2017-04-11
 
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int, Root)
      */
     @Override
-    public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
-        return surface.findRoutinesBySignature(rootName, argCount);
+    public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller) {
+        return surface.findRoutinesBySignature(rootName, argCount, caller);
     }
     // END KGU#2 2015-11-24
     
+	// START KGU#703 2019-03-30: Issue #720 - Needed a convenient retrieval for Roots referring to an Includable
+    /* (non-Javadoc)
+     * Just delegates to surface (making it more efficient than having it done by the default implementation here)
+     * @see lu.fisch.structorizer.archivar.IRoutinePool#findIncludingRoots(java.lang.String, boolean)
+     */
+    @Override
+    public Set<Root> findIncludingRoots(String includableName, boolean recursively)
+    {
+        return surface.findIncludingRoots(includableName, recursively);
+    }
+    // END KGU#703 2019-03-30
+
     // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.executor.IRoutinePool#getAllRoots()
@@ -2129,5 +2143,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#646 2019-02-05
+
+	// START KGU#699 2019-03-27: Issue #717
+	/**
+	 * Allows immediately to react to changes of the basic mouse wheel unit
+	 */
+	public void adaptScrollUnits() {
+		surface.adaptLayout();
+	}
+	// END KGU#699 2019-03-27
 	
 }

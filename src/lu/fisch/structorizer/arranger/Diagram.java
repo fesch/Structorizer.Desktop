@@ -171,7 +171,7 @@ public class Diagram extends ArchiveRecord
 
 	// START KGU#626 2018-12-30: Enh. #657
 	/**
-	 * @return the array of the group names this diagran is member of.
+	 * @return the array of the group names this diagram is member of.
 	 * @see #addToGroup(Group)
 	 * @see #removeFromGroup(Group)
 	 */

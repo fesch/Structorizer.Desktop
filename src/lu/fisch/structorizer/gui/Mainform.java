@@ -80,6 +80,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-16      Enh. #682: Extended welcome menu with language choice
  *      Kay Gürtzig     2019-02-20      Issue #686: Improved the detection of the current Look and Feel
  *      Kay Gürtzig     2019-03-21      Enh. #707: Configurations for filename proposals
+ *      Kay Gürtzig     2019-03-27      Enh. #717: Loading/saving of Element.E_WHEEL_SCROLL_UNIT
+ *      Kay Gürtzig     2019-07-28      Issue KGU#715: isWebStart renamed to isAutoUpdating
+ *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Bob Fisch       2019-08-04      Issue #537: OSXAdapter stuff introduced
+ *      Kay Gürtzig     2019-09-10      Bugfix #744: OSX file handler hadn't been configured
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
+ *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
+ *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
  *
  ******************************************************************************************************
  *
@@ -106,6 +114,7 @@ package lu.fisch.structorizer.gui;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -152,6 +161,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU#461/KGU#491 2018-02-09: Bugfix #455/#465/#507: We got into trouble on reloading the preferences
 	private boolean isStartingUp = true;
 	// END KGU#461/KGU#491 2018-02-09
+	// START KGU#724 2019-09-16: Bugfix #744 Open file event queue for OS X
+	public LinkedList<String> filesToOpen = null;
+	// END KGU#724 2019-09-16
 	
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
@@ -165,7 +177,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	boolean isNew = false;
 	// END KGU#456 2017-11-05
 	// START KGU#532 2018-06-25: To be able to suppress version hints on webstart (doesn't make sense)
-	public boolean isWebStart = false;
+	public boolean isAutoUpdating = false;
 	// END KGU#532 2018-06-25
 	
 	// START KGU#655 2019-02-16: Enhanced welcome menu
@@ -374,15 +386,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 								}
 								// END KGU#49 2017-01-04
 								if (!vetoed) {
-									// START KGU#484 2018-03-22: Issue #463
-									logger.info("Structorizer " + instanceNo + " shutting down.");
+									// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number inserted)
+									logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") shutting down.");
 									// END KGU#484 2018-03-22
 									System.exit(0);	// This kills all related frames and threads as well!
 								}
 							}
 							else {
 								// START KGU#484 2018-03-22: Issue #463
-								logger.info("Structorizer " + instanceNo + " going to dispose.");
+								logger.info("Structorizer " + instanceNo + " (version " + Element.E_VERSION + ") going to dispose.");
 								// END KGU#484 2018-03-22
 								dispose();
 							}
@@ -533,18 +545,53 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		// END KGU#461/KGU#491 2018-02-09
 	}
 	
-
 	/******************************
 	 * Load & save INI-file
 	 ******************************/
+	// START KGU#466 2019-08-02: Issue #733 - selective preferences export
+	/**
+	 * Returns the preference keys used in the ini file for the given {@code category}
+	 * (if class {@code Mainform} is responsible for the saving and loading of the properties
+	 * of this category. Currently, the following categories are supported here:
+	 * <ul>
+	 * <li>"diagram": Settings from the "Diagram" menu</li>
+	 * <li>"saving": File saving options</li>
+	 * </ul>
+	 * @param category
+	 * @return a String array containing the relevant keys for the ini file
+	 * @see Element#getPreferenceKeys(String)
+	 * @see Root#getPreferenceKeys()
+	 * @see CodeParser#getPreferenceKeys()
+	 */
+	public static String[] getPreferenceKeys(String category)
+	{
+		if (category.equals("saving")) {
+			return new String[] {"autoSaveOnExecute", "autoSaveOnClose", "makeBackups", "filenameWithArgNos",
+					"filenameSigSeparator", "arrangerRelCoords"};
+		}
+		else if (category.equals("diagram")) {
+			return new String[] {"showComments", "commentsPlusText", "switchTextComments", "varHightlight",
+					"DIN", "hideDeclarations", "index", };
+		}
+		else if (category.equals("wheel")) {
+			return new String[] {"wheel*"};
+		}
+		else if (category.equals("update")) {
+			return new String[] {"retrieveVersion", "suppressUpdateHint"};
+		}
+		return new String[]{};
+	}
+	// END KGU#466 2019-08-02
+	
 	public void loadFromINI()
 	{
 		try
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI
+			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI (?)
 
+			// ======================== GUI scaling ==========================
 			double scaleFactor = Double.parseDouble(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
 			if (scaleFactor <= 0.5) scaleFactor = 1.0;	// Pathologic value...
@@ -553,6 +600,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_NEXT_SCALE_FACTOR = scaleFactor;
 			// END KGU#287 2017-01-09
 			
+			// ======================= position ==============================
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 			int defaultWidth = Double.valueOf(750 * scaleFactor).intValue();
 			int defaultHeight = Double.valueOf(550 * scaleFactor).intValue();
@@ -625,6 +673,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#503 2018-03-14: Enh. #519
 			Element.E_WHEEL_REVERSE_ZOOM = ini.getProperty("wheelCtrlReverse", "0").equals("1");
 			// END KGU#503 2018-03-14
+			// START KGU#699 2019-03-27: Enh. #717
+			Element.E_WHEEL_SCROLL_UNIT = Integer.parseInt(ini.getProperty("wheelScrollUnit", "0"));
+			// END KGU#699 2019-03-27
 			// START KGU#494 2018-09-10: Issue #508
 			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
 			// END KGU#494 2018-09-10
@@ -632,12 +683,27 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
 			// END KGU#300 2016-12-02
+
+			
+			// Analyser (see also Root.saveToIni())
+			// START KGU#239 2016-08-12: Code redesign
+			for (int i = 1; i <= Root.numberOfChecks(); i++)
+			{
+				// START KGU#456 2017-11-05: Issue #452 - use initial Root.analyserChecks as defaults 
+				//Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
+				Root.setCheck(i, ini.getProperty("check" + i, Root.check(i) ? "1" : "0").equals("1"));
+				// END KGU#456 2017-11-05
+			}
+			// END KGU#2/KGU#78 2016-08-12
+			
 			if (diagram != null) 
 			{
+				// ======= current directories, recent files, find settings ======
 				// START KGU#602 2018-10-28: Let diagram fetch its properties itself
 				diagram.fetchIniProperties(ini);
 				// END KGU#602 2018-10-28
 				
+				// ==================== diagram menu settings ====================
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
 				{
@@ -674,13 +740,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
 				// END KGU#227 2017-12-06
 				// analyser
-				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
+				// KGU 2016-07-27: Analyser should by default be switched on. See Issue #207
 				/*
 				if (ini.getProperty("analyser","0").equals("0")) // default = 0
 				{
 					diagram.setAnalyser(false);
 				}
 				/**/
+				
 				// START KGU#480 2018-01-21: Enh. #490
 				if (Element.controllerName2Alias.isEmpty()) {
 					for (DiagramController controller: diagram.getDiagramControllers()) {
@@ -764,30 +831,19 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_FILENAME_SIG_SEPARATOR = filenameSepa.isEmpty() ? '-' : filenameSepa.charAt(0);
 			// END KGU#690 2019-03-21
 			
-			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
-			// END KGU#331 2017-01-15
-			
 			// START KGU#630 2019-01-13: Enh. #662/4
 			Arranger.A_STORE_RELATIVE_COORDS = ini.getProperty("arrangerRelCoords", "0").equals("1");
 			// END KGU#630 2019-01-13
+			
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
+			// END KGU#331 2017-01-15
 			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			
 			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
-			
-			// Analyser (see also Root.saveToIni())
-			// START KGU#239 2016-08-12: Code redesign
-			for (int i = 1; i <= Root.numberOfChecks(); i++)
-			{
-				// START KGU#456 2017-11-05: Issue #452 - use initial Root.analyserChecks as defaults 
-				//Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
-				Root.setCheck(i, ini.getProperty("check" + i, Root.check(i) ? "1" : "0").equals("1"));
-				// END KGU#456 2017-11-05
-			}
-			// END KGU#2/KGU#78 2016-08-12
 			
 			doButtons();
 		}
@@ -810,13 +866,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Ini ini = Ini.getInstance();
 			ini.load();
 
-			// position
+			// ======================= position ==============================
 			ini.setProperty("Top",Integer.toString(getLocationOnScreen().x));
 			ini.setProperty("Left",Integer.toString(getLocationOnScreen().y));
 			ini.setProperty("Width",Integer.toString(getWidth()));
 			ini.setProperty("Height",Integer.toString(getHeight()));
 
-			// current directory, version retrieval, recent files, find settings
+			// ======= current directories, recent files, find settings ======
 			if (diagram != null)
 			{
 				// START KGU#324 2017-06-16: Enh. #415 Let diagram cache it itself
@@ -835,13 +891,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.cacheIniProperties(ini);
 				// END KGU#324 2017-06-16
 			}
+			
+			// ======================= update control ========================
 			// START KGU#300 2016-12-02: Enh. #300
 			ini.setProperty("retrieveVersion", Boolean.toString(Diagram.retrieveVersion));
 			// END KGU#300 2016-12-02
+			// START KGU#300 2016-12-02: Enh. #300
+			// Update hint suppression
+			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
+			// END KGU#300 2016-12-02
 		
-			// language
+			// =========================== language ==========================
 			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			
+			// ==================== diagram menu settings ====================
 			// DIN, comments
 			ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
 			ini.setProperty("showComments", (Element.E_SHOWCOMMENTS ? "1" : "0"));
@@ -853,21 +916,42 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#477 2017-12-06: Enh. #487
 			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
 			// END KGU#227 2016-12-06
+			// KGU 2016-07-27: Analyser should by default be switched on. See Issue #207
+			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
+			// START KGU#456 2017-11-05: Issue #452
+			ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
+			// END KGU#456 2017-11-05
+			
+			// ====================== controller aliases =====================
 			// START KGU#480 2018-01-21: Enh. #490
 			ini.setProperty("applyAliases", Element.E_APPLY_ALIASES ? "1" : "0");
 			// END KGU#480 2018-01-21
-			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
-			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
+			
+			// ========================== wheel ==============================
 			// START KGU#123 2016-01-04: Enh. #87
 			ini.setProperty("wheelToCollapse", (Element.E_WHEELCOLLAPSE ? "1" : "0"));
 			// END KGU#123 2016-01-04
 			// START KGU#503 2018-03-14: Enh. #519
 			ini.setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 			// END KGU#503 2018-03-14
+			// START KGU#699 2019-03-27: Enh. #717
+			ini.setProperty("wheelScrollUnit", Integer.toString(Element.E_WHEEL_SCROLL_UNIT));
+			// END KGU#699 2019-03-27
+
+			// ========================== fonts ==============================
 			// START KGU#494 2018-09-10: Issue #508
 			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
 			// END KGU#494 2018-09-10
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			// END KGU#331 2017-01-15
+			// START KGU#428 2017-10-06: Enh. #430
+			if (InputBox.FONT_SIZE > 0) {
+				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));
+			}
+			// END KGU#428 2017-10-06
 			
+			// ======================= saving options ========================
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
 			ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
 			ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
@@ -878,36 +962,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("filenameSigSeparator", Character.toString(Element.E_FILENAME_SIG_SEPARATOR));
 			// END KGU#690 2019-03-21
 
-			// START KGU#456 2017-11-05: Issue #452
-			ini.setProperty("userSkillLevel", (Element.E_REDUCED_TOOLBARS ? "0" : "1"));
-			// END KGU#456 2017-11-05
-
-			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
-			// END KGU#331 2017-01-15
-
-			// look and feel
+			// ======================= look and feel =========================
 			if (laf != null)
 			{
 				ini.setProperty("laf", laf);
 			}
 			
+			// ======================== GUI scaling ==========================
 			// START KGU#287 2017-01-11: Issue #81/#330
 			if (this.preselectedScaleFactor != null) {
 				ini.setProperty("scaleFactor", this.preselectedScaleFactor);
 			}
 			// END KGU#287 2017-01-11
 			
-			// START KGU#428 2017-10-06: Enh. #430
-			if (InputBox.FONT_SIZE > 0) {
-				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));
-			}
-			// END KGU#428 2017-10-06
 
-			// START KGU#300 2016-12-02: Enh. #300
-			// Update hint suppression
-			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
-			// END KGU#300 2016-12-02
 
 			// START KGU#324 2017-06-16: Enh. #415: Now done by diagram.cacheIniProperties(ini) above
 //			// recent files
@@ -1095,8 +1163,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		this.instanceNo = ++instanceCount;
 		// END KGU#326 2017-01-07
 		this.isStandalone = standalone;
-		// START KGU#484 2018-03-22: Issue #463
-		logger.info("Structorizer " + this.instanceNo + " starting up.");
+		// START KGU#484 2018-03-22: Issue #463 (2019-09-20: version number added)
+		logger.info("Structorizer " + this.instanceNo + " (version " + Element.E_VERSION + ") starting up.");
+		// END KGU#484 2018-03-22
 		// START KGU#305 2016-12-16: Code revision
 		Arranger.addToChangeListeners(this);
 		// END KGU#305 2016-12-16
@@ -1232,7 +1301,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense
 			//if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
-			if (!isWebStart && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
+			if (!isAutoUpdating && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
 				// END KGU#532 2018-06-25
 				int chosen = JOptionPane.showOptionDialog(this,
 						Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
@@ -1310,6 +1379,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED | IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
 				this.editor.repaintArrangerIndex();
 			}
+			// START KGU#701 2019-03-30: Issue #718
+			diagram.invalidateAndRedraw();
+			// END KGU#701 2019-03-30
 		}
 		updateAnalysis();
 	}
@@ -1339,5 +1411,101 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			diagram.addRecentFile(file.getAbsolutePath());
 		}
 	}
+	// END KGU#679 2019-03-12
+
+	public void doOSX() {
+		try {
+			// Generate and register the OSXAdapter, passing it a hash of all the methods we wish to
+			// use as delegates for various com.apple.eawt.ApplicationListener methods
+			
+			// Issue #744: The file handler must be the first handler to be established! Otherwise the
+			// event of the double-clicked file that led to launching Structorizer might slip through!
+			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
+			OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
+			OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
+			OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
+			OSXAdapter.setDockIconImage(getIconImage());
+
+			logger.info("OS X handlers established.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to establish OS X handlers", e);
+		}
+	}
+
+	// General file handler; fed to the OSXAdapter as the method to call when 
+	// a file associated to Structorizer is double-clicked or dragged onto it:
+	public void loadFile(String filePath) {
+		// START KGU#724 2019-09-16: Issue #744 (workaround for hazards on startup, may no longer be necessary)
+		if (filePath == null || filePath.isEmpty()) {
+			return;
+		}
+		if (diagram == null || this.isStartingUp) {
+			// Lazy initialization
+			logger.info("openFile event with path \"" + filePath + "\" postponed.");
+			if (this.filesToOpen == null) {
+				this.filesToOpen = new LinkedList<String>();
+			}
+			filesToOpen.addLast(filePath);	// push the file path to the queue
+			// Nothing more to do here at the moment
+			return;
+		}
+		// If files had already been queued then first try to load these
+		else if (this.filesToOpen != null) {
+			String lastExt = "";
+			while (!this.filesToOpen.isEmpty()) {
+				String queuedPath = this.filesToOpen.removeFirst();
+				if (lastExt.equals("nsd") && queuedPath.toLowerCase().endsWith(".nsd")) {
+					diagram.arrangeNSD();
+				}
+				logger.info("Handling postponed openFile event with path \"" + filePath + "\" ...");
+				try {
+					lastExt = diagram.openNsdOrArr(queuedPath);
+				}
+				catch (Exception ex) {
+					logger.log(Level.WARNING, "Failed to load file \"" + queuedPath + "\":", ex);
+				}
+			}
+			// Prepare the current event after having loaded at least one postponed file
+			if (lastExt.equals("nsd") && filePath.toLowerCase().endsWith(".nsd")) {
+				diagram.arrangeNSD();
+			}
+		}
+		// END KGU#724 2019-09-16
+		// Eventually, load the given file
+		try {
+			diagram.openNsdOrArr(filePath);
+		}
+		catch (Exception ex) {
+			logger.log(Level.WARNING, "Failed to load file \"" + filePath + "\":", ex);
+		}
+	}
+
+	// General info dialog; fed to the OSXAdapter as the method to call when 
+	// "About OSXAdapter" is selected from the application menu
+	public void about() {
+		if (diagram != null) diagram.aboutNSD();
+	}
+
+	// General preferences dialog; fed to the OSXAdapter as the method to call when
+	// "Preferences..." is selected from the application menu
+	public void preferences() {
+		if (diagram != null) diagram.preferencesNSD();
+	}
+
+	// General quit handler; fed to the OSXAdapter as the method to call when a system quit event occurs
+	// A quit event is triggered by Cmd-Q, selecting Quit from the application or Dock menu, or logging out
+	public boolean quit() { 
+		int option = JOptionPane.showConfirmDialog(this, "Are you sure you want to quit?", "Quit?", JOptionPane.YES_NO_OPTION);
+		if (option == JOptionPane.YES_OPTION)
+		{
+			getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}					
 
 }

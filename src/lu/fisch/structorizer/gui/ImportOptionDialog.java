@@ -31,16 +31,17 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      kay             2016.09.25  First Issue
- *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
- *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.03.06  Enh. #368: New code option to import variable declarations
- *      Kay Gürtzig     2017.04.27  Enh. #354: New option logDir, all layouts fundamentally revised
- *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls 
- *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
- *      Kay Gürtzig     2018.07.13  Issue #557: New limitation option for the number of imported roots to be displayed
- *      Kay Gürtzig     2018.10.26  Enh. #419: New line length limitation option
+ *      Kay Gürtzig     2016-09-25  First Issue
+ *      Kay Gürtzig     2016-11-11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017-01-07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017-03-06  Enh. #368: New code option to import variable declarations
+ *      Kay Gürtzig     2017-04-27  Enh. #354: New option logDir, all layouts fundamentally revised
+ *      Kay Gürtzig     2017-05-09  Issue #400: keyListener at all controls 
+ *      Kay Gürtzig     2017-06-20  Enh. #354/#357: generator-specific option mechanism implemented
+ *      Kay Gürtzig     2018-07-13  Issue #557: New limitation option for the number of imported roots to be displayed
+ *      Kay Gürtzig     2018-10-26  Enh. #419: New line length limitation option
+ *      Kay Gürtzig     2019-03-29  Issue #557, #718: Limit for the max. number of roots could be enlarged
  *
  ******************************************************************************************************
  *
@@ -88,6 +89,10 @@ import lu.fisch.structorizer.parsers.GENParser;
  */
 @SuppressWarnings("serial")
 public class ImportOptionDialog extends LangDialog {
+	
+	// START KGU#701 2019-03-29: Issues #557, #718
+	private static final int MAX_DIAGRAMS = 250;	// was 150 before, no longer needed so strict
+	// END KGU#701 2019-03-29
 
     public boolean goOn = false;
 
@@ -207,7 +212,10 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
         lblLimit.setText("Maximum number of imported diagrams for direct display:");
         lblLimit.setBorder(new EmptyBorder(0, 0, 0, 5));
-        SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
+    	// START KGU#701 2019-03-29: Issues #557, #718
+        //SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
+        SpinnerModel spnModel = new SpinnerNumberModel(50, 5, MAX_DIAGRAMS, 5);
+    	// END KGU#701 2019-03-29
         spnLimit.setModel(spnModel);
 //        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
 //        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
@@ -352,10 +360,10 @@ public class ImportOptionDialog extends LangDialog {
                 pnlCodeLayout.createSequentialGroup()
                 .add(pnlCodeLayout.createParallelGroup()
                         .add(pnlCodeLayout.createSequentialGroup()
-                        		.add(lbCharset)
-                        		.addContainerGap()
-                        		.add(chkLogDir)
-                        		)
+                                .add(lbCharset)
+                                .addContainerGap()
+                                .add(chkLogDir)
+                                )
                         .add(pnlCodeLayout.createSequentialGroup()
                                 .add(pnlCodeLayout.createParallelGroup()
                                         .add(cbCharset)

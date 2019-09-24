@@ -221,8 +221,9 @@ public class IconLoader {
 			"117_groupExpand.png",
 			"118_info.png",
 			"119_rearrange.png",
-			"120_elem_try.png",
-			"121_mini_try.png"
+			"120_elem_try.png",	// introduced with enh. #56
+			"121_mini_try.png",	// introduced with enh. #56
+			"122_exit.png"		// Introduce with 3.29-13
 	};
 	
 	private static final int[] ICON_SIZES = {
@@ -727,7 +728,7 @@ public class IconLoader {
 			ii = new ImageIcon(getURI(from + "icons/" + fileName));
 		}
 		catch (Exception ex) {
-			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent!", ex);
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent - no icon file \"" + fileName + "\"!", ex);
 			return getMissingIcon();
 		}
 		// END KGU#577 2018-09-17

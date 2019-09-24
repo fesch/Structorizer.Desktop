@@ -125,6 +125,8 @@
  *      Kay Gürtzig     2019-02-17  Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17  Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2019-08-06  Issues #733-#740: New messages for preferences mechanisms
+ *      Kay Gürtzig     2019-09-12  Standard parser keywords for input / output modified (#327)
  *
  ******************************************************************************************************
  *
@@ -180,8 +182,8 @@ Menu.menuFileSaveAs.text=Guardar como ...
 Menu.menuFileSaveAll.text=Guardar todo
 Menu.menuFileExport.text=Exportar
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Imagen ...
-Menu.menuFileExportCode.text=Código ...
+Menu.menuFileExportPicture.text=Imagen
+Menu.menuFileExportCode.text=Código
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (en mosaico) ...
 Menu.menuFileExportPictureEMF.text=
@@ -196,7 +198,7 @@ Menu.menuFileImportCode.text=Código ...
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Colocar en el Arranger
 Menu.menuFileAttributes.text=Inspiciar propiedades ...
-Menu.menuFileTranslator.text=Traductor
+Menu.menuFileTranslator.text=Traductor ...
 Menu.menuFileQuit.text=Salir
 // Menu "Edit"
 Menu.menuEdit.text=Editar
@@ -256,7 +258,7 @@ Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
-Menu.menuDiagramOutsource.text=Delegar
+Menu.menuDiagramOutsource.text=Extraer subprograma ...
 Menu.menuDiagramOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
@@ -313,11 +315,15 @@ Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 Menu.menuPreferencesWheel.text=Rueda
 Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
 Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
+Menu.menuPreferencesWheelUnit.text=Unidad de desplazamiento ...
 
-Menu.menuPreferencesSave.text=Todas las preferencias ...
-Menu.menuPreferencesSaveAll.text=Guardar/Importar
-Menu.menuPreferencesSaveDump.text=Guardar como ...
+Menu.menuPreferencesSave.text=Guardar o importar
+Menu.menuPreferencesSaveAll.text=Guardar ahora
+Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
+Menu.menuPreferencesSaveLoad.tooltip=Antes de cargar preferencias desde un archivo INI las preferencias actuales son guardados automáticamente en un fichero temporal (backup).
+Menu.menuPreferencesSaveRestore.text=Restaurar último backup
+Menu.menuPreferencesSaveRestore.tooltip=Restablce las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -375,7 +381,11 @@ Menu.msgErrorImageSave.text=¡Error grabando imágen(es)!
 Menu.msgErrorUsingGenerator.text=Error exportando código %
 Menu.msgErrorNoFile.text=¡Archivo no encontrado!
 Menu.msgBrowseFailed.text=Mostrar % en el browser no logró.
-Menu.msgRefactoringOffer.text=Configuradas palabras claves fueron reemplazadas:%¿Deben diagramas abiertos ser adaptados correspondiéntemente?
+Menu.hdrRefactoringTable.0.text=Referencia
+Menu.hdrRefactoringTable.1.text=Anterior
+Menu.hdrRefactoringTable.2.text=Nueva
+Menu.msgRefactoringOffer1.text=Configuradas palabras claves fueron reemplazadas:
+Menu.msgRefactoringOffer2.text=¿Deben diagramas abiertos ser adaptados correspondiéntemente?
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=el editado
 Menu.lblRefactorAll.text=todos
@@ -438,6 +448,14 @@ Menu.msgCreateSubroutine.text=¿Crear nueva subrutina «%»?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
+Menu.ttlMouseScrollUnit.text=Unidad de decplazamiento (rueda del ratón)
+Menu.msgSelectPreferences.text=Preferencias a ser exportados (categorías)
+Menu.msgAllPreferences.text=Todas preferencias
+Menu.msgInvertSelection.text=Invertar selección
+Menu.ttDiagramMenuSettings.text=Opciones del menú "%"
+Menu.msgIniBackupFailed.text=Guardar un backup de las preferencias actuales.\nNo obstante cargar "%"?
+Menu.msgIniRestoreFailed.text=No podía restaurar el último backup%
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "%1 ► %2".
@@ -799,6 +817,7 @@ AttributeInspector.lblPrefsPre.text=Antes
 AttributeInspector.lblPrefsPost.text=Después
 AttributeInspector.lblPrefsMore.text=(Demás)
 AttributeInspector.btnParserPrefs.text=Comparar claves configuradas
+AttributeInspector.btnParserPrefs.tooltip=Mostrar preferencias del Analizador para la comparación con las claves configuradas
 AttributeInspector.btnOk.text=Aceptar
 AttributeInspector.btnOk.tooltip=Aceptar los cambios y cerrar el diálogo
 AttributeInspector.btnCancel.text=Cancelar
@@ -809,7 +828,7 @@ AttributeInspector.lblIncl.text=@p
 AttributeInspector.pnCopyrights.border=Copyrights
 AttributeInspector.pnStatistics.border=Cantidades (estadística)
 AttributeInspector.pnKeywordSet.border=Juego diferente de palabras claves  
-AttributeInspector.msgOverrideLicense.text=¿Reemplazar el texto de licencia por el de la seleccionada licencia estandard "%"?
+AttributeInspector.msgOverrideLicense.text=¿Reemplazar el texto de licencia por el de la seleccionada licencia estándar "%"?
 AttributeInspector.msgLicenseChange.text=Modificación de Licencia
 AttributeInspector.msgLicenseLoadError.text=¡Error al tratar de cargar el texto de licencia "%1":\n%2!
 
@@ -888,7 +907,7 @@ About.pnlTabbed.tab.0=Personas implicadas
 About.pnlTabbed.tab.1=Diario de cambios
 About.pnlTabbed.tab.2=Licencia
 About.pnlTabbed.tab.3=Rutas
-About.msgPaths.text=Carpeta de Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n
+About.msgPaths.text=Fichero Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n
 About.btnOK.text=Aceptar
 About.btnOK.tooltip=Cerrar el diálogo.
 
@@ -1068,6 +1087,8 @@ ElementNamePreferences.lblExplanation.text=Renombra tipos de elementos para el d
 ElementNamePreferences.chkUseConfNames.text=Permite las designaciones preferidas
 ElementNamePreferences.lblLocalized.text=Nombre localizado
 ElementNamePreferences.lblIndividual.text=Nombre preferido
+ElementNamePreferences.btnEnglishStd.text=Inglés estándar
+ElementNamePreferences.btnEnglishStd.tooltip=Adoptar las designaciones ingleses estándar como nombres preferidos (para todos idiomas).
 ElementNamePreferences.btnOK.text=Aceptar
 ElementNamePreferences.btnOK.tooltip=Aceptar los cambios.
 
@@ -1130,6 +1151,18 @@ FindAndReplace.chkInComments.text=En comentarios
 FindAndReplace.pnlElements.border=Tipos de elemente
 FindAndReplace.btnAll.text=Todos
 FindAndReplace.btnNone.text=Ningunos
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
 FindAndReplace.chkDisabled.text=Elementos inactivos
 FindAndReplace.pnlPreview.border=Contenido
 FindAndReplace.txtText.border=Texto
@@ -1139,6 +1172,7 @@ FindAndReplace.btnFind.text=Buscar
 FindAndReplace.btnReplace.text=Reemplazar
 FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
 FindAndReplace.btnReplaceAll.text=Reemplazar todos
+FindAndReplace.btnReplaceAll.tooltip=Reemplaza todas aparencias restantes del texto de búsqueda a partir de la posición actual en la puesta dirección.
 FindAndReplace.btnClose.text=Cerrar
 
 -----> Arranger
@@ -1270,6 +1304,7 @@ ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
 ArrangerIndex.lblSubroutines.text=Subrutinas calladas
 ArrangerIndex.lblIncludables.text=Incluíbles requeridos
+ArrangerIndex.lblDependingDiagrams.text=Diagramas dependientes
 ArrangerIndex.lblStaleReferences.text=Referencias no satisfechas
 ArrangerIndex.lblModifications.text=Modificaciones no guardados
 ArrangerIndex.lblExternSubroutines.text=Requeridas @os externas
@@ -1420,5 +1455,5 @@ ParserKeywords.JumpLeave.text=salir
 ParserKeywords.JumpReturn.text=retornar
 ParserKeywords.JumpExit.text=abortar
 ParserKeywords.JumpThrow.text=lanzar
-ParserKeywords.Input.text=entrada
-ParserKeywords.Output.text=salida
+ParserKeywords.Input.text=LEER
+ParserKeywords.Output.text=ESCRIBIR

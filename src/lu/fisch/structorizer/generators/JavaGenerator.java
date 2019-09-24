@@ -72,7 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-01-22      Bugfix #669: FOR-In loop was incorrect for traversing strings 
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and Jump element of throw flavour
- *
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -879,7 +879,10 @@ public class JavaGenerator extends CGenerator
 
 		addCode("", _indent, isDisabled);
 		addCode("Object[] results;", indentPlusOne, isDisabled);
-		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		for (int i = 0; i < nThreads; i++) {
 			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
 			String future = "future" + suffix + "_" + i;
@@ -934,7 +937,10 @@ public class JavaGenerator extends CGenerator
 			boolean isDisabled = par.isDisabled();
 			String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
 			Root root = Element.getRoot(par);
-			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+			// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+			//HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo(routinePool);
+			// END KGU#676 2019-03-30
 			int i = 0;
 			// We still don't care for synchronisation, mutual exclusion etc.
 			for (Subqueue sq: par.qs) {

@@ -1,4 +1,4 @@
-/*
+﻿/*
     Structorizer 
     A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
@@ -120,6 +120,7 @@
  *      Kay Gürtzig     2019-02-17      Issue #684: New messages for ParserPreferences
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -175,8 +176,8 @@ Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileSaveAll.text=Save All
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Picture ...
-Menu.menuFileExportCode.text=Code ...
+Menu.menuFileExportPicture.text=Picture
+Menu.menuFileExportCode.text=Code
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
@@ -191,7 +192,7 @@ Menu.menuFileImportCode.text=Source Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
 Menu.menuFileAttributes.text=Inspect attributes ...
-Menu.menuFileTranslator.text=Translator
+Menu.menuFileTranslator.text=Translator ...
 Menu.menuFileQuit.text=Quit
 
 // Menu "Edit"
@@ -252,7 +253,7 @@ Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
-Menu.menuDiagramOutsource.text=Outsource
+Menu.menuDiagramOutsource.text=Outsource ...
 Menu.menuDiagramOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
@@ -308,12 +309,16 @@ Menu.menuPreferencesLookAndFeel.text=Look & Feel
 Menu.menuPreferencesWheel.text=Mouse wheel
 Menu.menuPreferencesWheelCollapse.text=Mouse wheel for collapsing?
 Menu.menuPreferencesWheelZoom.text=Reverse zoom with ctrl + wheel?
+Menu.menuPreferencesWheelUnit.text=Mouse wheel scrolling unit ...
 Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 
-Menu.menuPreferencesSave.text=All preferences ...
-Menu.menuPreferencesSaveAll.text=Save
+Menu.menuPreferencesSave.text=Save or load preferences
+Menu.menuPreferencesSaveAll.text=Save now
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
+Menu.menuPreferencesSaveLoad.tooltip=Loading preferences from some INI file automatically backups the entire set of previous preferences in a temporary file.
+Menu.menuPreferencesSaveRestore.text=Restore last backup
+Menu.menuPreferencesSaveRestore.tooltip=Reloads the preferences backed up when you last loaded preferences from some INI file during the session.
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -371,7 +376,11 @@ Menu.msgErrorImageSave.text=Error on saving the image(s)!
 Menu.msgErrorUsingGenerator.text=Error while using % generator
 Menu.msgErrorNoFile.text=File not found!
 Menu.msgBrowseFailed.text=Failed to show % in browser
-Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were replaced:%Are opened diagrams to be refactored accordingly?
+Menu.hdrRefactoringTable.0.text=Reference
+Menu.hdrRefactoringTable.1.text=Old
+Menu.hdrRefactoringTable.2.text=New
+Menu.msgRefactoringOffer1.text=Keywords configured in the Parser Preferences were replaced:
+Menu.msgRefactoringOffer2.text=Are opened diagrams to be refactored accordingly?
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=current diagram
 Menu.lblRefactorAll.text=all diagrams
@@ -434,6 +443,14 @@ Menu.msgCreateSubroutine.text=Create a new subroutine «%»?
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
+Menu.ttlMouseScrollUnit.text=Mouse wheel scrolling unit
+Menu.msgSelectPreferences.text=Preferences to be exported (categories)
+Menu.msgAllPreferences.text=All preferences
+Menu.msgInvertSelection.text=Invert selection
+Menu.ttDiagramMenuSettings.text=Settings from menu "%"
+Menu.msgIniBackupFailed.text=The creation of a backup of the current preferences failed.\nDo you still want to load "%"?
+Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
+Menu.prefsArranger.text=Arranger
 
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".
@@ -716,15 +733,15 @@ InputBoxFor.lblIncr.text=
 InputBoxFor.lblTraversingVariable.text=
 InputBoxFor.lblValueList.text=
 InputBoxFor.chkTextInput.text=
-InputBoxFor.chkTextInput.tooltip=
+InputBoxFor.chkTextInput.tooltip=If enabled then the content for the above fields will be extracted from the text, otherwise the text will be composed from the field contents.
 InputBoxFor.lblComment.text=
 InputBoxFor.lblComment.tooltip=
 InputBoxFor.txtText.tooltip=
-InputBoxFor.txtComment.tooltip=
+InputBoxFor.txtComment.tooltip=Enter the comment of the element here.
 InputBoxFor.btnOK.text=
-InputBoxFor.btnOK.tooltip=
+InputBoxFor.btnOK.tooltip=Validate your choice (and close the dialog).
 InputBoxFor.btnCancel.text=
-InputBoxFor.btnCancel.tooltip=
+InputBoxFor.btnCancel.tooltip=Closes the dialog without saving your input/modifications.
 InputBoxFor.chkDisabled.text=Disabled (execution and export)
 InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Break at execution count: %
@@ -798,6 +815,7 @@ AttributeInspector.lblPrefsPre.text=Pre
 AttributeInspector.lblPrefsPost.text=Post
 AttributeInspector.lblPrefsMore.text=(More)
 AttributeInspector.btnParserPrefs.text=Compare parser keys
+AttributeInspector.btnParserPrefs.tooltip=Show the current parser preferences for comparison.
 AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Commit changes and close dialog.
 AttributeInspector.btnCancel.text=Cancel
@@ -887,9 +905,9 @@ About.pnlTabbed.tab.0=Implicated Persons
 About.pnlTabbed.tab.1=Changelog
 About.pnlTabbed.tab.2=License
 About.pnlTabbed.tab.3=Paths
-About.msgPaths.text=Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n
+About.msgPaths.text=Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n
 About.btnOK.text=OK
-About.btnOK.tooltip=Validate your choice.
+About.btnOK.tooltip=Close dialog.
 
 
 -----[ FontChooser ]-----
@@ -1066,6 +1084,8 @@ ElementNamePreferences.lblExplanation.text=Re-label the Element types for displa
 ElementNamePreferences.chkUseConfNames.text=Enable the configured labels
 ElementNamePreferences.lblLocalized.text=Localized label
 ElementNamePreferences.lblIndividual.text=Configured label
+ElementNamePreferences.btnEnglishStd.text=English Standard
+ElementNamePreferences.btnEnglishStd.tooltip=Adopt the English standard element names as configured labels for all languages.
 ElementNamePreferences.btnOK.text=OK
 ElementNamePreferences.btnOK.tooltip=Accept these settings.
 
@@ -1111,32 +1131,60 @@ FindAndReplace.lblSearchPattern.text=Find:
 FindAndReplace.lblReplacePattern.text=Replace with:
 FindAndReplace.pnlMode.border=Mode
 FindAndReplace.chkCaseSensitive.text=Case sensitive
+FindAndReplace.chkCaseSensitive.mnemonic=c
 FindAndReplace.chkWholeWord.text=Whole word
+FindAndReplace.chkWholeWord.mnemonic=w
 FindAndReplace.chkRegEx.text=Regular expressions
+FindAndReplace.chkRegEx.mnemonic=x
 FindAndReplace.rbDown.text=Down
+FindAndReplace.rbDown.mnemonic=o
 FindAndReplace.rbUp.text=Up
+FindAndReplace.rbUp.mnemonic=u
 FindAndReplace.pnlScope.border=Scope
 FindAndReplace.cmbScope.item.0=Current selection
 FindAndReplace.cmbScope.item.1=Current diagram
 FindAndReplace.cmbScope.item.2=Opened diagrams
 FindAndReplace.pnlRootTypes.border=Diagram types
 FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
 FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
 FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=In texts
+FindAndReplace.chkInTexts.mnemonic=t
 FindAndReplace.chkInComments.text=In comments
-FindAndReplace.pnlElements.border=Element Types
+FindAndReplace.chkInComments.mnemonic=m
+FindAndReplace.pnlElements.border=Element types
 FindAndReplace.btnAll.text=All
 FindAndReplace.btnNone.text=None
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
 FindAndReplace.chkDisabled.text=Disabled elements
 FindAndReplace.pnlPreview.border=Contents
 FindAndReplace.txtText.border=Text
 FindAndReplace.txtComm.border=Comment
-FindAndReplace.chkElementwise.text=Element-wise
+FindAndReplace.chkElementwise.text=Element by element
+FindAndReplace.chkElementwise.menmonic=e
 FindAndReplace.btnFind.text=Find
+FindAndReplace.btnFind.mnemonic=n
 FindAndReplace.btnReplace.text=Replace
+FindAndReplace.btnReplace.mnemonic=r
 FindAndReplace.btnReplaceFind.text=Replace/Find
+FindAndReplace.btnReplaceFind.mnemonic=d
 FindAndReplace.btnReplaceAll.text=Replace All
+FindAndReplace.btnReplaceAll.mnemonic=a8
+FindAndReplace.btnReplaceAll.tooltip=Replaces all remaining occurrences of the search pattern in the given direction from the current position on.
 FindAndReplace.btnClose.text=Close
 FindAndReplace.msgRegexCorrupt.text=Regular expression «%1» seems invalid: %2
 FindAndReplace.ttlSearchError.text=Search Error
@@ -1270,6 +1318,7 @@ ArrangerIndex.lblSelectTargetGroup.text=Select the target group:
 ArrangerIndex.lblGroups.text=Containing groups
 ArrangerIndex.lblSubroutines.text=Called @os
 ArrangerIndex.lblIncludables.text=Referenced @ps
+ArrangerIndex.lblDependingDiagrams.text=Dependent diagrams
 ArrangerIndex.lblStaleReferences.text=Stale diagram references
 ArrangerIndex.lblModifications.text=Unsaved modifications
 ArrangerIndex.lblExternSubroutines.text=Referenced external @os

@@ -107,8 +107,8 @@ Menu.menuFileSave.text=Späicheren
 Menu.menuFileSaveAs.text=Späicheren ënner...
 Menu.menuFileExport.text=Exportéieren
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Biller...
-Menu.menuFileExportCode.text=Code ...
+Menu.menuFileExportPicture.text=Biller
+Menu.menuFileExportCode.text=Code
 Menu.menuFileImport.text=Importéieren
 // Submenu of "File -> Import"
 Menu.menuFileImportCode.text=Code ...
@@ -195,7 +195,7 @@ Menu.menuPreferencesLanguageItems.pl.text=Polnesch
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 
-Menu.menuPreferencesSave.text=All Astellungen ...
+Menu.menuPreferencesSave.text=Späicheren oder lueden ...
 Menu.menuPreferencesSaveAll.text=Späicheren
 Menu.menuPreferencesSaveDump.text=Späicheren als Datei ...
 Menu.menuPreferencesSaveLoad.text=Aus Datei lueden
@@ -426,7 +426,7 @@ About.title=Iwwert
 About.pnlTabbed.tab.0=Agebonne Persons
 About.pnlTabbed.tab.1=Changelog
 About.btnOK.text=OK
-About.btnOK.tooltip=D'Auswahl bestätegen.
+About.btnOK.tooltip=Verloossen.
 
 
 -----[ FontChooser ]-----
@@ -502,3 +502,42 @@ ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Astellunge fir de Datei-Import
+
+-----[ FindAndReplace ]-----
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+
+-----> Elements
+ElementNames.localizedNames.0.text=Instruction
+ElementNames.localizedNames.1.text=IF
+ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.3.text=FOR
+ElementNames.localizedNames.4.text=FOR-TO
+ElementNames.localizedNames.5.text=FOR-IN
+ElementNames.localizedNames.6.text=WHILE
+ElementNames.localizedNames.7.text=REPEAT
+ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.9.text=CALL
+ElementNames.localizedNames.10.text=EXIT
+ElementNames.localizedNames.11.text=PARALLEL
+ElementNames.localizedNames.12.text=Diagram
+ElementNames.localizedNames.13.text=Main program
+ElementNames.localizedNames.14.text=Sub-routine
+ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.16.text=TRY

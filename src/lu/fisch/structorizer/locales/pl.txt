@@ -106,12 +106,13 @@ Menu.menuFileSave.text=Zapisz
 Menu.menuFileSaveAs.text=Zapisz jako ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Obrazek ...
-Menu.menuFileExportCode.text=Kod ...
+Menu.menuFileExportPicture.text=Obrazek
+Menu.menuFileExportCode.text=Kod
 Menu.menuFileImport.text=Import
 // Submenu of "File -> Import"
 Menu.menuFileImportCode.text=Kod ...
 Menu.menuFilePrint.text=Drukuj ...
+Menu.menuFileTranslator.text=Tłumacz ...
 Menu.menuFileQuit.text=Wyjdź
 // Menu "Edit"
 Menu.menuEdit.text=Edytuj
@@ -188,7 +189,7 @@ Menu.menuPreferencesLanguageItems.pl.text=Polski
 
 Menu.menuPreferencesLookAndFeel.text=Wygląd
 
-Menu.menuPreferencesSave.text=Wszystkie preferencje ...
+Menu.menuPreferencesSave.text=Zapisz lub odczytaj
 Menu.menuPreferencesSaveAll.text=Zapisz
 Menu.menuPreferencesSaveDump.text=Zapisz do pliku ...
 Menu.menuPreferencesSaveLoad.text=Odczytaj z pliku ...
@@ -389,7 +390,7 @@ About.title=O programie
 About.pnlTabbed.tab.0=Lista płac
 About.pnlTabbed.tab.1=Lista zespołu
 About.btnOK.text=OK
-About.btnOK.tooltip=Zatwierdź swój wybór.
+About.btnOK.tooltip=Zamykać okno.
 
 
 -----[ FontChooser ]-----
@@ -452,3 +453,42 @@ PrintPreview.btnCancel.text=Cofnij wydruk
 PrintPreview.btnCancel.tooltip=Cofnij wydruk.
 PrintPreview.btnOK.text=Drukuj
 PrintPreview.btnOK.tooltip=Wydrukuj diagram.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+
+-----> Elements
+ElementNames.localizedNames.0.text=Instruction
+ElementNames.localizedNames.1.text=IF
+ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.3.text=FOR
+ElementNames.localizedNames.4.text=FOR-TO
+ElementNames.localizedNames.5.text=FOR-IN
+ElementNames.localizedNames.6.text=WHILE
+ElementNames.localizedNames.7.text=REPEAT
+ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.9.text=CALL
+ElementNames.localizedNames.10.text=EXIT
+ElementNames.localizedNames.11.text=PARALLEL
+ElementNames.localizedNames.12.text=Diagram
+ElementNames.localizedNames.13.text=Main program
+ElementNames.localizedNames.14.text=Sub-routine
+ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.16.text=TRY

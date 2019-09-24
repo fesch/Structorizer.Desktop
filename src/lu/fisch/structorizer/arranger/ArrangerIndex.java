@@ -38,6 +38,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-01-28      Issue #670: Update of the info box components on look & feel change
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-03-01      Enh. #691: Group renaming enabled (new context menu item + accelerator)
+ *      Kay Gürtzig     2019-03-30      Enh. #720: tree node for dependent diagrams (includers/callers) added
  *
  ******************************************************************************************************
  *
@@ -63,6 +64,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -93,8 +95,10 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import lu.fisch.structorizer.archivar.IRoutinePoolListener;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.ColorButton;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.GUIScaler;
@@ -159,10 +163,16 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected final JLabel lblSubroutines = new JLabel("Called subroutines");
 	protected final JLabel lblIncludables = new JLabel("Referenced includables");
 	protected final JLabel lblStaleReferences = new JLabel("Stale diagram references");
+	// START KGU#703 2019-03-30: Issue #720
+	protected final JLabel lblDependingDiagrams = new JLabel("Dependent diagrams");
+	// END KGU##783 2019-03-30
 	protected final DefaultMutableTreeNode nodeGroups = new DefaultMutableTreeNode(lblGroups);
 	protected final DefaultMutableTreeNode nodeSubroutines = new DefaultMutableTreeNode(lblSubroutines);
 	protected final DefaultMutableTreeNode nodeIncludables = new DefaultMutableTreeNode(lblIncludables);
 	protected final DefaultMutableTreeNode nodeStaleReferences = new DefaultMutableTreeNode(lblStaleReferences);
+	// START KGU#703 2019-03-30: Issue #720
+	protected final DefaultMutableTreeNode nodeDependingDiagrams = new DefaultMutableTreeNode(lblDependingDiagrams);
+	// END KGU##783 2019-03-30
 	// END KGU#626 2019-01-03
 	protected final DefaultMutableTreeNode nodeIndexGroupInfoTop = new DefaultMutableTreeNode();
 	protected final JTree indexGroupInfoTree = new JTree(nodeIndexGroupInfoTop);
@@ -216,7 +226,6 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	protected static final LangTextHolder msgMembersComplete = new LangTextHolder("Group is complete: No outward references");
 	protected static final LangTextHolder msgGroupMembersChanged = new LangTextHolder("The set of member diagrams was modified.");
 	protected static final LangTextHolder msgGroupMembersMoved = new LangTextHolder("The coordinates of some member diagrams were changed.");
-	
 	
 	public static class ArrangerIndexCellRenderer extends DefaultTreeCellRenderer {
 		private final static ImageIcon mainIcon = IconLoader.getIcon(22);
@@ -593,6 +602,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		lblGroups.setIcon(IconLoader.getIcon(94));
 		lblSubroutines.setIcon(IconLoader.getIcon(21));
 		lblIncludables.setIcon(IconLoader.getIcon(71));
+		lblDependingDiagrams.setIcon(IconLoader.getIcon(22));
 		lblStaleReferences.setIcon(IconLoader.getIcon(5));
 		
 		indexInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
@@ -601,6 +611,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		nodeIndexInfoTop.add(nodeSubroutines);
 		nodeIndexInfoTop.add(nodeIncludables);
 		nodeIndexInfoTop.add(nodeStaleReferences);
+		// START KGU#703 2019-03-30: Enh. #720
+		nodeIndexInfoTop.add(nodeDependingDiagrams);
+		// END KGU#703 2019-03-30
 
 		// START KGU#630 2019-01-07: Enh. #662 - now the equivalents for group info
 		lblExternSubroutines.setIcon(IconLoader.getIcon(21));
@@ -965,17 +978,37 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 			HashSet<Root> roots = new HashSet<Root>();
 			StringList missing = new StringList();
 			roots.add(selectedRoot);
-			Collection<Root> moreRoots = Arranger.getInstance().accomplishRootSet(roots, null, missing);
+			Vector<Root> moreRoots = new Vector<Root>(Arranger.getInstance().accomplishRootSet(roots, null, missing));
+			Collections.sort(moreRoots, Root.SIGNATURE_ORDER);
 			for (Root root: moreRoots) {
 				if (!root.equals(selectedRoot)) {
 					if (root.isInclude()) {
-						nodeIncludables.add(new DefaultMutableTreeNode(root));
+						nodeIncludables.add(this.makeNodeWithGroups(root, null));
 					}
 					else if (root.isSubroutine()) {
-						nodeSubroutines.add(new DefaultMutableTreeNode(root));
+						nodeSubroutines.add(this.makeNodeWithGroups(root, null));
 					}
 				}
 			}
+			// START KGU#703 2019-03-30: Enh. #720
+			nodeDependingDiagrams.removeAllChildren();
+			if (selectedRoot.isInclude()) {
+				String name = selectedRoot.getMethodName();
+				Vector<Root> dependents = new Vector<Root>(Arranger.getInstance().findIncludingRoots(name, false));
+				Collections.sort(dependents, Root.SIGNATURE_ORDER);
+				for (Root dependent: dependents) {
+					if (Arranger.getInstance().findIncludesByName(name, dependent).contains(selectedRoot)) {
+						nodeDependingDiagrams.add(makeNodeWithGroups(dependent, null));
+					}
+				}
+				
+			}
+			else if (selectedRoot.isSubroutine()) {
+				for (Root dependent: this.retrieveCallers(selectedRoot)) {
+					nodeDependingDiagrams.add(makeNodeWithGroups(dependent, null));
+				}
+			}
+			// END KGU#703 2019-03-30
 			nodeStaleReferences.removeAllChildren();
 			for (int i = 0; i < missing.count(); i++) {
 				nodeStaleReferences.add(new DefaultMutableTreeNode(missing.get(i)));
@@ -1082,6 +1115,28 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#626 2019-01-05
+
+	// START KGU#703 2019-03-30: Enh. #720
+	/** @return a sorted vector of diagrams calling the given subroutine (under group aspect) */
+	private Vector<Root> retrieveCallers(Root subRoutine) {
+		Vector<Root> callers = new Vector<Root>();
+		for (Root candidate: Arranger.getSortedRoots()) {
+			for (Call call: candidate.collectCalls()) {
+				Function fct = call.getCalledRoutine();
+				if (fct != null && fct.isFunction()
+						&& Arranger.getInstance().findRoutinesBySignature(
+								fct.getName(), 
+								fct.paramCount(), 
+								candidate).contains(subRoutine)) {
+					callers.add(candidate);
+					break;
+				}
+			}
+		}
+		Collections.sort(callers, Root.SIGNATURE_ORDER);
+		return callers;
+	}
+	// END KGU#703 2019-03-30
 
 	/** @return a new node for {@code root} with subnodes for every group {@code root} is member of except {@code selectedGroup} */
 	private DefaultMutableTreeNode makeNodeWithGroups(Root root, Group selectedGroup) {

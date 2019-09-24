@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
  *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
+ *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *
  ******************************************************************************************************
  *
@@ -1251,7 +1252,10 @@ public class BASHGenerator extends Generator {
 	public String generateCode(Root _root, String _indent) {
 		
 		// START KGU#405 2017-05-19: Issue #237
-		typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//typeMap = _root.getTypeInfo();
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{

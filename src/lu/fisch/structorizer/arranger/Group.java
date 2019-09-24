@@ -193,7 +193,7 @@ public class Group {
 	}
 	
 	/**
-	 * Creates a new empty group with the given {@code _name} name and containing
+	 * Creates a new group with the given {@code _name} name and containing
 	 * the given {@code _diagrams}.
 	 * @param _name - group name
 	 * @param _diagrams - the (initial) set of {@link Diagram}s
@@ -561,7 +561,7 @@ public class Group {
 	}
 	
 	/**
-	 * Returns a sorted list of {@link Roots} held by Arranger.
+	 * Returns a sorted list of {@link Roots} being comprised by this group.
 	 * @return vector of {@link Roots}, sorted by {@link Root#SIGNATURE_ORDER}
 	 */
 	public Vector<Root> getSortedRoots()

@@ -68,6 +68,14 @@ public class LangTextHolder
 	{
 		this.text = _text;
 	}
+	
+	/**
+	 * Replaces the held text. Method fires {@link LangEvent}s notifying all registered
+	 * {@link LangEventListeners}.
+	 * @param _text - The new string content
+	 * @see #addLangEventListener(LangEventListener)
+	 * @see #removeLangEventListener(LangEventListener)
+	 */
 	public void setText(String _text)
 	{
 		this.text = _text;
@@ -80,10 +88,15 @@ public class LangTextHolder
 		}
 		// END KGU#596 2018-10-08
 	}
+	
+	/**
+	 * @return the held text string
+	 */
 	public String getText()
 	{
 		return this.text;
 	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

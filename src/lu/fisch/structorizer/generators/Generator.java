@@ -87,6 +87,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
  *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
  *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
  *
  ******************************************************************************************************
  *
@@ -1800,7 +1803,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			//Vector<Root> foundRoots = Arranger.getInstance().
 			//		findRoutinesBySignature(called.getName(), called.paramCount());
 			Vector<Root> foundRoots = routinePool.
-					findRoutinesBySignature(called.getName(), called.paramCount());
+					findRoutinesBySignature(called.getName(), called.paramCount(), _caller);
 			// END KGU#676 2019-03-13
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
@@ -1914,7 +1917,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				Root newIncl = null;
 				String includeName = _root.includeList.get(i);
-				Vector<Root> candidates = routinePool.findIncludesByName(includeName);
+				Vector<Root> candidates = routinePool.findIncludesByName(includeName, _root);
 				if (!candidates.isEmpty()) {
 					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
@@ -2650,7 +2653,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Inserts constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
-	 * @param _root - the diagram the daclarations and definitions of are to be inserted
+	 * @param _root - the diagram the declarations and definitions of are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
@@ -2717,6 +2720,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool TODO
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
@@ -3326,16 +3330,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 *****************************************/
 
 	/**
-	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.<br/>
+	 * Note: This method is intended for batch export.
 	 * @param _roots - vector of diagram Roots to be exported (in this order).
 	 * @param _targetFile - path of the target text file for the code export.
 	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
+	 * @param _settingsFromFile - whether a (partial) ini file for alternative option retrieval was given
 	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
+	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 */
 	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
 	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, IRoutinePool _routinePool)
+	// START KGU#720 2019-08-05: Enh. #737 - allow to load settings from a configuration file
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, boolean _settingsFromFile, IRoutinePool _routinePool)
+	// END KGU#720 2019-08-05
 	// END KGU#676 2019-03-13
 	{
 		// START KGU#676 2019-03-13: Enh. #696
@@ -3362,6 +3371,28 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Charset {0} not available; {1} used.", new Object[]{_charSet, exportCharset});
 		}
 		
+		//=============== Get export options ======================
+		// START KGU#720/KGU#722 2019-08-07: Enh. #737, #741 - option to load settings from extra settings file
+		if (_settingsFromFile) {
+			try
+			{
+				Ini ini = Ini.getInstance();
+				ini.load();
+				exportAsComments = ini.getProperty("genExportComments","0").equals("true");
+				startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
+				generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+				exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+				suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
+				includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+				exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+			} 
+			catch (IOException ex)
+			{
+				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			}
+		}
+		// END KGU#720/KGU#722 2019-08-07
+
 		boolean overwrite = false;
 		if (_options != null)
 		{
@@ -3466,6 +3497,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU#676 2019-03-13
 		for (Root root : _roots)
 		{
+			// START KGU#676 2019-03-31: Isse #696
+			root.specialRoutinePool = routinePool;
+			// END KGU#676 2019-03-31
 			if (firstExport || routinePool != null)
 			{
 				firstExport = false;

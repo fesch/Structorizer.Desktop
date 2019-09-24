@@ -33,6 +33,8 @@ package lu.fisch.structorizer.archivar;
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-10      First Issue
  *      Kay Gürtzig     2019-03-14      Enh. #697: New method deriveArrangementList()
+ *      Kay Gürtzig     2019-03-26      Enh. #697: Bugfixes in zipArrangement(), saveArrangement()
+ *      Kay Gürtzig     2019-07-31      Bugfix #731 (also comprising #526): new static methods renameTo, copyFile
  *
  ******************************************************************************************************
  *
@@ -449,6 +451,12 @@ public class Archivar {
 			return this.entries.iterator();
 		}
 		
+		/**
+		 * Composes the lines of an arrangement file reflecting the cotents of this ArchiveIndex.
+		 * @param preferArchivePaths - whether virtual paths of the contained diagrams are to
+		 * preferred (or otherwise the "real" or shadow paths)
+		 * @return a {@link StringList} of the lines the corresponding arrangement list file would contain
+		 */
 		public StringList deriveArrangementList(boolean preferArchivePaths)
 		{
 			StringList arr = new StringList();
@@ -462,7 +470,9 @@ public class Archivar {
 					line.add("-1");
 					line.add("-1");
 				}
+				// The columns of path and name are generated together
 				StringList pathName = new StringList();
+				// Derive the file path
 				if ((preferArchivePaths || entry.path == null) && entry.virtPath != null) {
 					pathName.add(entry.virtPath);
 				}
@@ -475,6 +485,7 @@ public class Archivar {
 				else {
 					pathName.add("");
 				}
+				// Now add the diagram name
 				if (entry.name != null) {
 					pathName.add(entry.name);
 				}
@@ -572,7 +583,12 @@ public class Archivar {
 				items.add(new ArchiveRecord(root));
 			}
 		}
-		return saveArrangement(items, findTempDir().getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"), _archive, null, null, _troubles);
+		// START KGU#678 2019-03-26: Enh. #697 we need that virgin diagrams get saved
+		//return saveArrangement(items, findTempDir().getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"), _archive, null, null, _troubles);
+		File tempDir = findTempDir();
+		return saveArrangement(items, tempDir.getAbsolutePath() + File.separator + _archive.getName().replace(".arrz", ".arr"),
+				_archive, tempDir, null, _troubles);
+		// END KGU#678 2019-03-26
 	}
 
 	/**
@@ -597,7 +613,7 @@ public class Archivar {
 	/**
 	 * Creates an arrangement list with path {@code _arrFilePath}, and possibly an archive {@code _targetFile},
 	 * from the {@link ArchiveRecord}s given in {@code _items}.<br/>
-	 * If the creation of an archive is intended (i.e. {@code _archive} is given then the arranger
+	 * If the creation of an archive is intended (i.e. {@code _archive} is given) then the arranger
 	 * list file will only contain the pure file names (without absolute path) of the nsd files
 	 * of the archive items.
 	 * @param _items - collection of @ArchiveRecord items to form the arrangement list from it
@@ -633,6 +649,9 @@ public class Archivar {
 						if (_virginTargetDir == null || !saveVirginNSD(item.root, _virginTargetDir)) {
 							continue;
 						}
+						// START KGU#678 2019-03-26: Bugfix on occasion of enh. #697
+						path = item.root.getPath();
+						// END KGU#678 2019-03-26
 					}
 					if (item.point != null) {
 						out.write(Integer.toString(Math.max(item.point.x - offsetX, 0)) + ",");
@@ -1146,4 +1165,84 @@ public class Archivar {
 	public ArchiveIndex makeEmptyIndex() {
 		return new ArchiveIndex();
 	}
+	
+	// START KGU#509/KGU#717 2019-07-31: Bugfix #526, #731 - workarounds for a failing File.renameTo() operation
+	/**
+	 * Moves/renames file {@code f1} to file {@code f2} in a operating-system-independent way.
+	 * This is a replacement for {@link File#renameTo(File)} and a wrapper for
+	 * {@link Files#move(Path, Path, java.nio.file.CopyOption...)}.
+	 * @param f1 - source {@link File}
+	 * @param f2 - {@link File} representing the target path.
+	 * @return true if and only if no error occurred, the target file exists and the source file
+	 * no longer exists at its original place.
+	 * @see #copyFile(File, File, boolean)
+	 */
+	public static boolean renameTo(File f1, File f2)
+	{
+		boolean done = false;
+		Path p1 = f1.toPath();
+		Path p2 = f2.toPath();
+		try {
+			Files.move(p1, p2, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			// Let's be a little paranoid...
+			done =  f2.exists() && (!f1.exists() || f1.getAbsolutePath().equals(f2.getAbsolutePath()));
+		}
+		catch (Exception ex) {
+			Logger.getLogger(Archivar.class.getName()).log(Level.WARNING, "Failed to move \"" + f1 + "\" to \"" + f2 + "\"", ex);
+		}
+		return done;
+	}
+	
+	/**
+	 * Performs a bytewise copy of {@code sourceFile} to {@code targetFile} as workaround
+	 * for Linux where {@link File#renameTo(File)} may fail among file systems. If the
+	 * target file exists after the copy the source file will be removed.<br/>
+	 * Note: Consider {@link #renameTo(File, File)} instead if {@code removeSource is true.}
+	 * @param sourceFile
+	 * @param targetFile
+	 * @param removeSource - whether the {@code sourceFile} is to be removed after a successful
+	 * copy
+	 * @return in case of errors, a string describing them.
+	 * @see #renameTo(File, File)
+	 */
+	public static String copyFile(File sourceFile, File targetFile, boolean removeSource) {
+		String problems = "";
+		final int BLOCKSIZE = 512;
+		byte[] buffer = new byte[BLOCKSIZE];
+		FileOutputStream fos = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(sourceFile.getAbsolutePath());
+			fos = new FileOutputStream(targetFile.getAbsolutePath());
+			int readBytes = 0;
+			do {
+				readBytes = fis.read(buffer);
+				if (readBytes > 0) {
+					fos.write(buffer, 0, readBytes);
+				}
+			} while (readBytes > 0);
+		} catch (FileNotFoundException e) {
+			problems += e + "\n";
+		} catch (IOException e) {
+			problems += e + "\n";
+		}
+		finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {}
+			}
+			if (fis != null) {
+				try {
+					fis.close();
+					if (removeSource && targetFile.exists()) {
+						sourceFile.delete();
+					}
+				} catch (IOException e) {}
+			}
+		}
+		return problems;
+	}
+	// END KGU#509/KGU#717 2019-07-31
+
 }
