@@ -172,7 +172,7 @@ public class CSharpGenerator extends CGenerator
 	 * Subclassable method to specify the degree of availability of a try-catch-finally
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
-	 * @see #insertCatchHeading(Try, String)
+	 * @see #appendCatchHeading(Try, String)
 	 */
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
@@ -350,18 +350,18 @@ public class CSharpGenerator extends CGenerator
 	 * The exit code will be passed to the generated code.
 	 */
 	@Override
-	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		Jump dummy = new Jump();
-		insertBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
-		insertComment("WinForms app", _indent + this.getIndent());
+		appendBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
+		appendComment("WinForms app", _indent + this.getIndent());
 		addCode(this.getIndent() + "System.Windows.Forms.Application.Exit();", _indent, isDisabled);
-		insertBlockTail(dummy, null, _indent);
+		appendBlockTail(dummy, null, _indent);
 
-		insertBlockHeading(dummy, "else", _indent); 
-		insertComment("Console app", _indent + this.getIndent());
+		appendBlockHeading(dummy, "else", _indent); 
+		appendComment("Console app", _indent + this.getIndent());
 		addCode(this.getIndent() + "System.Environment.Exit(" + _exitCode + ");", _indent, isDisabled);
-		insertBlockTail(dummy, null, _indent);
+		appendBlockTail(dummy, null, _indent);
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -483,7 +483,7 @@ public class CSharpGenerator extends CGenerator
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
-		insertDeclComment(_root, _indent, typeKey);
+		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
 			String indentPlus2 = indentPlus1 + this.getIndent();
@@ -614,7 +614,7 @@ public class CSharpGenerator extends CGenerator
 			if (itemType == null)
 			{
 				itemType = "object";
-				this.insertComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
+				this.appendComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
 				
 			}
 			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
@@ -634,21 +634,21 @@ public class CSharpGenerator extends CGenerator
 			}
 			else {
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object", indent);
-				this.insertComment("      and/or prepare the elements of the array.", indent);
+				this.appendComment("TODO: Select a more sensible item type than Object", indent);
+				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
 		// Creation of the loop header
-		insertBlockHeading(_for, "foreach (" + itemType + " " + var + " in " +	valueList + ")", indent);
+		appendBlockHeading(_for, "foreach (" + itemType + " " + var + " in " +	valueList + ")", indent);
 
 		// Add the loop body as is
 		generateCode(_for.q, indent + this.getIndent());
 
 		// Accomplish the loop
-		insertBlockTail(_for, null, indent);
+		appendBlockTail(_for, null, indent);
 
 		if (items != null)
 		{
@@ -669,12 +669,12 @@ public class CSharpGenerator extends CGenerator
 		String indentPlusOne = _indent + this.getIndent();
 		String suffix = Integer.toHexString(_para.hashCode());
 
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("{", _indent, isDisabled);
 		
 		StringList[] asgndVars = new StringList[_para.qs.size()];
@@ -711,13 +711,13 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		addCode("}", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 
-	// Inserts class definitions for workers to be used by the threads to this.subClassDefinitions
+	// Adds class definitions for workers to be used by the threads to this.subClassDefinitions
 	private StringList generateParallelThreadWorkers(Root _root, String _indent)
 	{
 		StringList codeBefore = this.code;
@@ -741,7 +741,7 @@ public class CSharpGenerator extends CGenerator
 				}
 			});
 			if (!containedParallels.isEmpty()) {
-				insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+				appendComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 			}
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
@@ -768,10 +768,10 @@ public class CSharpGenerator extends CGenerator
 					}
 					addCode("class " + worker + "{", _indent, isDisabled);
 					if (setVars.count() > 0 || usedVars.count() > 0) {
-						insertComment("TODO: Check and accomplish the member declarations here", indentPlusOne);
+						appendComment("TODO: Check and accomplish the member declarations here", indentPlusOne);
 					}
 					if (setVars.count() > 0) {
-						insertComment("TODO: Maybe you must care for an initialization of the public members, too", indentPlusOne);
+						appendComment("TODO: Maybe you must care for an initialization of the public members, too", indentPlusOne);
 					}
 					StringList argList = this.makeArgList(setVars, typeMap);
 					for (int j = 0; j < argList.count(); j++) {
@@ -799,7 +799,7 @@ public class CSharpGenerator extends CGenerator
 				}
 			}
 			if (!containedParallels.isEmpty()) {
-				insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+				appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
 			}
 			code.add(_indent);
 		}
@@ -809,6 +809,14 @@ public class CSharpGenerator extends CGenerator
 		return workerDefinitions;
 	}
 	
+	/**
+	 * Generates an argument list for a worker thread routine as branch of a parallel section.
+	 * Types for the variable names in {@code varNames} are retrieved from {@code typeMap}. If
+	 * no associated type can be identified then a comment {@code "type?"} will be inserted.
+	 * @param varNames - list of variable names to be passed in
+	 * @param typeMap - maps variable names and type names to type specifications
+	 * @return a list of argument declarations
+	 */
 	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
 	{
 		StringList argList = new StringList();
@@ -846,17 +854,17 @@ public class CSharpGenerator extends CGenerator
 			warn = true;
 		}
 		if (warn) {
-			insertComment("FIXME: You should replace System.Exception by an own subclass!", _indent);
+			appendComment("FIXME: You should replace System.Exception by an own subclass!", _indent);
 		}
 		// In case of an empty argument with non-null caughtException we assume a rethrow
 		addCode(("throw " + _thrown).trim() + ";", _indent, _asComment);
 	}
 
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.CGenerator#insertCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 * @see lu.fisch.structorizer.generators.CGenerator#appendCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
 	 */
 	@Override
-	protected void insertCatchHeading(Try _try, String _indent) {
+	protected void appendCatchHeading(Try _try, String _indent) {
 		
 		boolean isDisabled = _try.isDisabled();
 		String varName = _try.getExceptionVarName();
@@ -865,7 +873,7 @@ public class CSharpGenerator extends CGenerator
 		if (varName != null && !varName.isEmpty()) {
 			head = "catch(Exception " + exName + ")";
 		}
-		this.insertBlockHeading(_try, head, _indent);
+		this.appendBlockHeading(_try, head, _indent);
 		if (exName != null) {
 			this.addCode("string " + varName + " = " + exName + ".ToString()", _indent + this.getIndent(), isDisabled);
 		}
@@ -893,13 +901,13 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			if (!_root.isProgram()) {
-				insertGlobalDefinitions(_root, indentPlus1, true);
+				appendGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
 			code.add("");
@@ -919,17 +927,17 @@ public class CSharpGenerator extends CGenerator
 				this.generatorIncludes.add("System.Threading");
 			}
 			// END KGU#348 2017-02-24
-			this.insertGeneratorIncludes(_indent, false);
+			this.appendGeneratorIncludes(_indent, false);
 			code.add(_indent);
 			// STARTB KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(_indent);
+			this.appendUserIncludes(_indent);
 			// END KGU#351 2017-02-26
 			code.add(_indent);
 			// START KGU 2015-10-18
-			insertBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
+			appendBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18
 
-			insertBlockHeading(_root, "public class "+ _procName, _indent);
+			appendBlockHeading(_root, "public class "+ _procName, _indent);
 			code.add(_indent);
 			// START KGU#348 2017-02-24: Enh.#348
 			this.subClassInsertionLine = code.count();
@@ -942,11 +950,11 @@ public class CSharpGenerator extends CGenerator
 			// END KU#311 2017-01-05
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", indentPlus1);
-			insertGlobalDefinitions(_root, indentPlus1, true);
+			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add(_indent);
 			code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
-			insertBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
+			appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
 			code.add("");
 		}
 		else {
@@ -961,7 +969,7 @@ public class CSharpGenerator extends CGenerator
 				this.subClassInsertionLine = code.count();
 			}
 			// END KGU#348 2017-02-24
-			insertBlockComment(_root.getComment(), indentPlus1, "/// <summary>", "/// ", "/// </summary>");
+			appendBlockComment(_root.getComment(), indentPlus1, "/// <summary>", "/// ", "/// </summary>");
 			for (String param: _paramNames.toArray()) {
 				code.add(indentPlus1 + "/// <param name=\"" + param + "\"> TODO </param>");
 			}
@@ -1000,18 +1008,18 @@ public class CSharpGenerator extends CGenerator
 				// END KGU#371 2019-03-07
 			}
 			fnHeader += ")";
-			insertBlockHeading(_root, fnHeader, indentPlus1);
+			appendBlockHeading(_root, fnHeader, indentPlus1);
 		}
 
-		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		insertGlobalInitialisations(indentPlus2);
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		appendGlobalInitialisations(indentPlus2);
 		// END KGU#376 2017-09-26
 
 		// START KGU#348 2017-02-24: Enh. #348 - Actual translation of Parallel sections
 		StringList workers = this.generateParallelThreadWorkers(_root, indentPlus1);
 		boolean moveSubroutineInsertions = this.subroutineInsertionLine > this.subClassInsertionLine;
 		for (int i = 0; i < workers.count(); i++) {
-			this.code.insert(workers.get(i), this.subClassInsertionLine++);
+			insertCode(workers.get(i), this.subClassInsertionLine++);
 			if (moveSubroutineInsertions) this.subroutineInsertionLine++;
 		}
 		// END KGU#348 2017-02-24
@@ -1082,10 +1090,10 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			code.add(_indent);
-			insertComment("TODO: You may have to modify input instructions,", _indent);
-			insertComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
-			insertComment("      Parse methods according to the variable type, e.g.:", _indent);
-			insertComment("         i = int.Parse(Console.ReadLine());", _indent);
+			appendComment("TODO: You may have to modify input instructions,", _indent);
+			appendComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
+			appendComment("      Parse methods according to the variable type, e.g.:", _indent);
+			appendComment("         i = int.Parse(Console.ReadLine());", _indent);
 		}
 		// END KGU#236 2016-12-22
 	}

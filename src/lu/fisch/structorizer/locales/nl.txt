@@ -206,6 +206,7 @@ Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Structogram analyseren?
 Menu.menuDiagramIndex.text=Index Arranger tonen?
+Menu.menuDiagramPreview.text=Code-preview tonen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
 Menu.menuPreferences.mnemonic=i
@@ -608,6 +609,9 @@ Editor.popupDisable.text=Aan-/Uitzetten
 // Debug
 Editor.popupBreakpoint.text=Breakpoint wisselen
 Editor.popupBreakTrigger.text=Break trigger opgeven ...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Index Arranger
+Editor.pnlTabbed.tab.1=Code-preview
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=

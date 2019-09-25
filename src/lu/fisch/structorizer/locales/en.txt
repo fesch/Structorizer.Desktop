@@ -272,6 +272,8 @@ Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
 Menu.menuDiagramIndex.text=Show Arranger index?
+Menu.menuDiagramPreview.text=Show Code preview?
+
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
@@ -677,6 +679,9 @@ Editor.popupDisable.text=Disable/enable
 // Debug
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Arranger index
+Editor.pnlTabbed.tab.1=Code preview
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=

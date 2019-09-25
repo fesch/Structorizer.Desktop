@@ -920,7 +920,7 @@ public class D7Parser extends CodeParser
 				//Read File Line By Line
 				while ((strLine = br.readLine()) != null)   
 				{
-					// START KGU#537 2018-07-01: Enh. #553 Make parser interruptable
+					// START KGU#537 2018-07-01: Enh. #553 Make parser interruptible
 					checkCancelled();
 					// END KGU#537 2018-07-01
 					// START KGU#589 2018-09-28: Workaround #615

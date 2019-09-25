@@ -90,6 +90,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
  *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
+ *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation
  *
  ******************************************************************************************************
  *
@@ -131,7 +132,6 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -189,15 +189,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 {
 	// START KGU#371 2019-03-07: Enh. #385 - Support for default subroutine arguments
 	/**
-	 * Classifies a language w.r.t. the capability of overloading subroutine signatures. There are three levels
-	 * distinguished here:<br/>
-	 * 0. No overloading allowed: subroutines may not share the same name, not even if their argument lists differ in length.<br/>
-	 * 1. Overloading is legitimate but default arguments can only be achieved by delegating the call to another subroutine
-	 * with more arguments.<br/>
-	 * 2. Overloading and default arguments are available, such that a single definition may declare several signatures.<br/>
-	 * Note: In programming languages overloading usually also means distinction by argument types. Since declarations of variables
-	 * aren't mandatory in Structorizer, tyoe inference is weak and vague at most. So it isn't actually possible to distinguish
-	 * parameter lists by argument types in Structorizer. Hence executable diagrams won't make use of it. So, export should be
+	 * Classifies a language w.r.t. the capability of overloading subroutine signatures. There are
+	 * three levels distinguished here:
+	 * <ul>
+	 * <li>{@link #OL_NO_OVERLOADING}: No overloading allowed, subroutines may not share the same
+	 * name, not even if their argument lists differ in length.</li>
+	 * <li>{@link #OL_DELEGATION}: Overloading is legitimate but default arguments can only be
+	 * achieved by delegating the call to another subroutine with more arguments.</li>
+	 * <li>{@link #OL_DEFAULT_ARGUMENTS}: Overloading and default arguments are available, such
+	 * that a single definition may declare several signatures.</li>
+	 * </ul>
+	 * Note: In programming languages overloading usually also means distinction by argument types.
+	 * Since declarations of variables aren't mandatory in Structorizer, tyoe inference is weak and
+	 * vague at most. So it isn't actually possible to distinguish parameter lists by argument types
+	 * in Structorizer. Hence executable diagrams won't make use of it. So, export should be
 	 * relatively safe.
 	 * @author Kay Gürtzig
 	 */
@@ -291,7 +296,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Maps diagram signatures to the respective lists of names of declared constants, types and variables */
 	private HashMap<String, StringList> declaredStuff = new HashMap<String, StringList>(); 
 	// END KGU#376/KGU#388 2017-09-26
-    
+	// START KGU#705 2019-09-23: Enh. #738
+	/** Maps processed elements to the corresponding code line interval and indentation depth */
+	private HashMap<Element, int[]> codeMap = null;
+	// END KGU#705 2019-09-23
+	
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 //	protected boolean hasOutput = false;
@@ -550,10 +559,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Returns the (usually comma-separated) list of configured header, library,
 	 * module, or unit names, for which language-specific include / import / uses
 	 * directives are to be inserted into the exported source files. It's up to the
-	 * inheriting generator class to provide a sensible include pattern if is to make
-	 * use of the default insertion routine insertUserIncludes(String).
+	 * inheriting generator class to provide a sensible include pattern if it is to
+	 * make use of the default insertion routine insertUserIncludes(String).
 	 * @see #getIncludePattern()
-	 * @see #insertUserIncludes(String) 
+	 * @see #appendUserIncludes(String) 
 	 * @return String with configured include items (empty string if nothing specified)
 	 */
 	protected String optionIncludeFiles()
@@ -748,58 +757,59 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
+	// KGU 2019-09-24: Renamed to appendAsComment
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
-	 * Inserts the text of {@code _element} as comments into the code, using delimiters
+	 * Appends the text of {@code _element} as comments to the code, using delimiters
 	 * {@link #commentSymbolLeft()} and {@link #commentSymbolRight()} (if given) to enclose
 	 * the comment lines, with indentation {@code _indent}.
-	 * @see #insertComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
 	 */
-	protected boolean insertAsComment(Element _element, String _indent)
+	protected boolean appendAsComment(Element _element, String _indent)
 	{
 		// START KGU#173 2016-04-04: Issue #151 - Get rid of the inflationary ExportOptionDialoge threads
 		//if(eod.commentsCheckBox.isSelected()) {
 		if (this.exportAsComments) {
 		// END KGU#173 2016-04-04
-			insertComment(_element.getText(), _indent);
+			appendComment(_element.getText(), _indent);
 			return true;
 		}
 		return false;
 	}
 
 	/**
-	 * Inserts the comment part of _element into the code, using delimiters this.commentSymbolLeft
+	 * Appends the comment part of _element to the code, using delimiters this.commentSymbolLeft
 	 * and this.commentSymbolRight (if given) to enclose the comment lines, with indentation _indent
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
 	 */
-	protected void insertComment(Element _element, String _indent)
+	protected void appendComment(Element _element, String _indent)
 	{
-		this.insertComment(_element.getComment(), _indent);
+		this.appendComment(_element.getComment(), _indent);
 	}
 
 	/**
-	 * Inserts the given String as single comment line to the exported code
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * Appends the given String as single comment line to the exported code
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _text - the text to be inserted as comment
+	 * @param _text - the text to be added as comment
 	 * @param _indent - indentation string
 	 */
-	protected void insertComment(String _text, String _indent)
+	protected void appendComment(String _text, String _indent)
 	{
 		String[] lines = _text.split("\n");
 		for (int i = 0; i < lines.length; i++)
@@ -809,16 +819,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Inserts all lines of the given StringList as a series of single comment lines to the exported code
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * Appends all lines of the given StringList as a series of single comment lines to the exported code
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _sl - the text to be inserted as comment
+	 * @param _sl - the text to be added as comment
 	 * @param _indent - indentation string
 	 */
-	protected void insertComment(StringList _sl, String _indent)
+	protected void appendComment(StringList _sl, String _indent)
 	{
 		for (int i = 0; i < _sl.count(); i++)
 		{
@@ -827,18 +837,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			String commentLine = _sl.get(i);
 			// Skip an initial empty comment line
 			if (i > 0 || !commentLine.isEmpty()) {
-				insertComment(commentLine, _indent);
+				appendComment(commentLine, _indent);
 			}
 		}
 	}
 	
 	/**
-	 * Inserts a multi-line comment with configurable comment delimiters for the starting line, the
+	 * Appends a multi-line comment with configurable comment delimiters for the starting line, the
 	 * continuation lines, and the trailing line.
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _sl - the StringList to be written as commment
 	 * @param _indent - the basic indentation 
@@ -846,7 +856,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
 	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
 	 */
-	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
+	protected void appendBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
 		// START KGU#199 2016-07-07: Precaution against enh. #188 (multi-line StringList elements)
 		_sl = StringList.explode(_sl,  "\n");
@@ -875,12 +885,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#607 2018-10-30: (Issue #346)
 	/**
 	 * This is a service method inheriting generators may call at the appropriate
-	 * position in order to insert include (or import or uses etc.) directives
+	 * position in order to add include (or import or uses etc.) directives
 	 * the generator regards as necessary and had enqueued in {@link #generatorIncludes}.<br/>
-	 * If user-configured include items have already been inserted in the code then
+	 * If user-configured include items have already been added to the code then
 	 * argument {@code skipUserIncludes} should be set true in oder to skip them here.
-	 * Otherwise the argument should be set false lest items of the itersection of both
-	 * sets should be omitted by both this method and {@link #insertUserIncludes(String)}.<br/>
+	 * Otherwise the argument should be set false lest items of the intersection of both
+	 * sets should be omitted by both this method and {@link #appendUserIncludes(String)}.<br/>
 	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
 	 * (empty at {@link Generator} level) for every configured item before the
 	 * insertion takes place - if some pre-processing of the items is necessary
@@ -895,7 +905,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #insertUserIncludes(String, boolean)
 	 * @see #generatorIncludes
 	 */
-	protected int insertGeneratorIncludes(String _indent, boolean skipUserIncludes)
+	protected int appendGeneratorIncludes(String _indent, boolean skipUserIncludes)
 	{
 		int nInserted = 0;
 		String pattern = this.getIncludePattern();
@@ -918,7 +928,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * This is a service method inheriting generators may call at the appropriate
-	 * position in order to insert include (or import or uses etc.) directives
+	 * position in order to add include (or import or uses etc.) directives
 	 * for the include items configured in the export options for the respective
 	 * language.<br/>
 	 * Include items that have already been enqueued for code insertion by the
@@ -934,12 +944,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #getIncludePattern()
 	 * @see #prepareIncludeItem(String)
 	 * @see #optionIncludeFiles()
-	 * @see #insertGeneratorIncludes(String, boolean)
+	 * @see #appendGeneratorIncludes(String, boolean)
 	 * @see #generatorIncludes
 	 */
-	protected int insertUserIncludes(String _indent)
+	protected int appendUserIncludes(String _indent)
 	{
-		int nInserted = 0;
+		int nAdded = 0;
 		String pattern = this.getIncludePattern();
 		String includes = this.optionIncludeFiles().trim();
 		if (pattern != null && includes != null && !includes.isEmpty()) {
@@ -957,7 +967,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				// START KGU#607 2018-10-30: Issue #346
 				//code.add(_indent + pattern.replace("%%", includes));
 				code.add(_indent + pattern.replace("%%", items.concatenate(",")));
-				nInserted++;
+				nAdded++;
 				// END KGU#607 2018-10-30
 			}
 			// .. otherwise produce a single line for every item
@@ -966,20 +976,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					String item = items.get(i).trim();
 					if (!item.isEmpty()) {
 						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));
-						nInserted++;
+						nAdded++;
 					}
 				}
 			}
 		}
-		return nInserted;
+		return nAdded;
 	}
 	/**
 	 * Method may pre-process an include file or module name for the import / use
-	 * clause. This version is called by {@link #insertUserIncludes(String)} and does nothing but
+	 * clause. This version is called by {@link #appendUserIncludes(String)} and does nothing but
 	 * may be overridden. 
 	 * @see #getIncludePattern()
 	 * @see #optionIncludeFiles()
-	 * @see #insertUserIncludes(String)
+	 * @see #appendUserIncludes(String)
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
@@ -994,11 +1004,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Depending on {@code asComment}, adds the given text either as comment or as active
 	 * source code to the code lines.
 	 * This is a convenient wrapper for {@code this.code.add(String)}.
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @param text - the prepared (transformed and composed) line of code
 	 * @param _indent - current indentation
 	 * @param asComment - whether or not the code is to be commented out.
@@ -1008,7 +1018,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (asComment)
 		{
 			// Indentation is intentionally put inside the comment (comment encloses entire line)
-			insertComment(_indent + text, "");
+			appendComment(_indent + text, "");
 		}
 		else
 		{
@@ -1016,6 +1026,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	// END KGU#277 2016-10-13
+	
+	// START KGU#705 2019-09-24: Enh. #738
+	/**
+	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which is supposed
+	 * to be a single line, otherwise counting trouble is likely to occur) into the {@link #code}
+	 * before line number {@code atLine}, i.e. updates all lines references within {@link #codeMap}
+	 * if existent.
+	 * @param text - the line to be inserted at {@code atLine}
+	 * @param atLine - the number of the line (code entry) before which {@code text} is to be inserted
+	 */
+	protected void insertCode(String text, int atLine)
+	{
+		code.insert(text,  atLine);
+		// Now update the line number references >= atLine
+		if (codeMap != null) {
+			for (int[] entry: codeMap.values()) {
+				if (entry[0] >= atLine) {
+					entry[0]++;
+					entry[1]++;
+				}
+			}
+		}
+	}
+	// END KGU#705 2019-09-24
 
 	// START KGU#376/KGU#388 2017-09-25: Enh. #389, #423
 	/**
@@ -1026,11 +1060,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _indent - the current indentation as String
 	 * @param _id - the declared identifier (const, var or type)
 	 */
-	protected void insertDeclComment(Root _root, String _indent, String _id) {
+	protected void appendDeclComment(Root _root, String _indent, String _id) {
 		if (this.declarationCommentMap.containsKey(_root)) {
 			Instruction srcElement = this.declarationCommentMap.get(_root).get(_id);
 			if (srcElement != null && srcElement != this.lastDeclSource) {
-				insertComment(srcElement, _indent);
+				appendComment(srcElement, _indent);
 				// One comment is enough
 				this.lastDeclSource = srcElement;
 				return;
@@ -1042,7 +1076,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					&& this.declarationCommentMap.containsKey(incl)) {
 				Instruction srcElement = this.declarationCommentMap.get(incl).get(_id);
 				if (srcElement != null && srcElement != this.lastDeclSource) {
-					insertComment(srcElement, _indent);
+					appendComment(srcElement, _indent);
 					// One comment is enough
 					this.lastDeclSource = srcElement;
 					return;
@@ -2066,7 +2100,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
-	 * @see #insertAsComment(Element, String)
+	 * @see #appendAsComment(Element, String)
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
@@ -2384,13 +2418,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void generateCode(Try _try, String _indent)
 	{
-		insertComment("try (FIXME!)", _indent);
+		appendComment("try (FIXME!)", _indent);
 		generateCode(_try.qTry, _indent + this.getIndent());
-		insertComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
+		appendComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
 		generateCode(_try.qCatch, _indent + this.getIndent());
-		insertComment("fimally (FIXME!)", _indent);
+		appendComment("fimally (FIXME!)", _indent);
 		generateCode(_try.qFinally, _indent + this.getIndent());
-		insertComment("end try (FIXME!)", _indent);
+		appendComment("end try (FIXME!)", _indent);
 	}
 	// END KGU#686 2019-03-17
 
@@ -2418,6 +2452,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected final void generateCode(Element _ele, String _indent)
 	{
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_ele, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		if(_ele.getClass().getSimpleName().equals("Instruction"))
 		{
 			generateCode((Instruction) _ele, _indent);
@@ -2464,6 +2506,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			generateCode((Jump) _ele,_indent);
 		}
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap!= null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_ele)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
 	}
 	
 	/**
@@ -2547,6 +2595,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		String preaIndent = generateHeader(_root, _indent, procName, paramNames, paramTypes, resultType);
 		String bodyIndent = generatePreamble(_root, preaIndent, varNames);
 		// END KGU#74 2015-11-30
@@ -2559,6 +2615,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateResult(_root, preaIndent, alwaysReturns, varNames);
 		generateFooter(_root, _indent);
 		// END KGU#74 2015-11-30
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap!= null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
 
 		return code.getText();
 	}
@@ -2631,36 +2693,35 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
 	/**
-	 * Inserts the definitions and declarations of all includable diagrams recursively required by
+	 * Appends the definitions and declarations of all includable diagrams recursively required by
 	 * the roots to be exported in topological order
 	 * @param _root - the currently exported Root (supposed to be the hierarchy top)
 	 * @param _indent - the current indentation
 	 * @param _force - Whether the insertion is to be forced no regard of declaration policy
 	 */
-	protected void insertGlobalDefinitions(Root _root, String _indent, boolean _force) {
+	protected void appendGlobalDefinitions(Root _root, String _indent, boolean _force) {
 		boolean thisDone = false;
 		code.add("");
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-			insertDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
+			appendDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
 			}
 		}
 		if (_root.isInclude() && !thisDone) {
-			insertDefinitions(_root, _indent, this.varNames, true);				
+			appendDefinitions(_root, _indent, this.varNames, true);				
 		}
 	}
 	
 	/**
-	 * Inserts constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
 	 * @param _root - the diagram the declarations and definitions of are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
 	 */
-	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
-		// TODO Auto-generated method stub
-		
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+		// TODO To be overridden by subclasses
 	}
 
 	/**
@@ -2668,11 +2729,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * the roots to be exported in topological order 
 	 * @param _indent - current indentation string
 	 */
-	protected void insertGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = true;
 				// END KGU#501 2018-02-22
@@ -2680,7 +2741,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = false;
 				// END KGU#501 2018-02-22
-				insertComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
 			}
 			if (code.count() > startLine) {
 				code.add(_indent);
@@ -2692,23 +2753,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
-	 * Inserts the copyright information (author name, license name and text) if the respective option
+	 * Appends the copyright information (author name, license name and text) if the respective option
 	 * is enabled. 
 	 * @param _root - the Root object holding the relevant attributes
 	 * @param _indent - the current indentation string
 	 * @param _fullText - whether the full license text is to be inserted, too (may be lengthy!)
 	 */
-	protected void insertCopyright(Root _root, String _indent, boolean _fullText) {
+	protected void appendCopyright(Root _root, String _indent, boolean _fullText) {
 		if (this.optionExportLicenseInfo()) {
-			this.insertComment("", _indent);
-			this.insertComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
+			this.appendComment("", _indent);
+			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
 			if (_root.licenseName != null) {
-				this.insertComment("License: " + _root.licenseName, _indent);
+				this.appendComment("License: " + _root.licenseName, _indent);
 			}
 			if (_fullText && _root.licenseText != null) {
-				this.insertComment(StringList.explode(_root.licenseText, "\n"), _indent);
+				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
 			}
-			this.insertComment("", _indent);
+			this.appendComment("", _indent);
 		}
 	}
 	
@@ -2718,7 +2779,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @param _routinePool TODO
+	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
 	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
@@ -2735,63 +2796,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
 		routinePool = _routinePool;
 		// END KGU#676 2019-03-13
+		
 		//=============== Get export options ======================
-		try
-		{
-			Ini ini = Ini.getInstance();
-			ini.load();
-			// START KGU#173 2016-04-04: Issue #151 - get rid of all the hidden ExportOptionDialoge produced here
-//			eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
-//			if(ini.getProperty("genExportComments","0").equals("true"))
-//				eod.commentsCheckBox.setSelected(true);
-//			else 
-//				eod.commentsCheckBox.setSelected(false);
-//			// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
-//			eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
-//			eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
-//			// END KGU#16/KGU#113 2015-12-18
-//			// START KGU#162 2016-03-31: Enh. #144
-//			eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
-//			this.suppressTransformation = eod.noConversionCheckBox.isSelected(); 
-//			// END KGU#16/KGU#113 2015-12-18
-			exportAsComments = ini.getProperty("genExportComments","0").equals("true");
-			startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
-			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
-			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
-			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
-			// END KGU#173 2016-04-04
-			// START KGU#178 2016-07-19: Enh. #160
-			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
-			// END KGU#178 2016-07-19
-			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
-			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
-			// END KGU#351 2017-02-26
-			// START KGU#363 2017-05-11: Enh. #372 - license and author info ought to be exportable as well
-			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
-			// END KGU#363 2017-05-11
-
-		} 
-		catch (FileNotFoundException ex)
-		{
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			// END KGU#484 2018-04-05
-		} 
-		catch (IOException ex)
-		{
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			// END KGU#484 2018-04-05
-		}
+		getExportOptions();
 
 		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
 
 		// set directory
-		if(_root.getFile()!=null)
+		if (_root.getFile() != null)
 		{
 			dlgSave.setCurrentDirectory(_root.getFile());
 		}
@@ -3014,6 +3028,99 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU 2017-04-26
 	}
 	
+	// START KGU#705 2019-09-23: Enh. #738
+	/**
+	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)} for live
+	 * code preview as there is no file selection etc. 
+	 * @param _root - program or top-level routine diagram (call hierarchy root)
+	 * @param _frame - the GUI Frame object responsible for this action
+	 * @param _routinePool - {@link Arranger} or some other routine pool for subroutine analysis
+	 * @param _codeMap TODO
+	 * @return the produced code as a (multi-line) string.
+	 */
+	public String deriveCode(Root _root, Frame _frame, IRoutinePool _routinePool, HashMap<Element, int[]> _codeMap)
+	{
+		codeMap = _codeMap;
+		
+		String code = "";
+		routinePool = _routinePool;
+
+		//=============== Get export options ======================
+		getExportOptions();
+
+		//=============== Split keywords for more precise detection ======================
+		this.splitKeywords.clear();
+		String[] keywords = CodeParser.getAllProperties();
+		for (int k = 0; k < keywords.length; k++)
+		{
+			this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+		}
+
+		//=============== Now do the code generation ======================
+		try
+		{
+			gatherElementInformationRoot(_root);
+
+			includedRoots = sortTopologically(includeMap);
+			for (Root incl: includedRoots.toArray(new Root[]{})) {
+				gatherElementInformationRoot(incl);
+			}
+
+			code = generateCode(_root, "");
+		}
+		catch (Exception e)
+		{
+			String message = e.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			getLogger().log(Level.WARNING, "Error on saving file!", e);
+			// END KGU#484 2018-04-05
+			if (message == null) {
+				message = e.getClass().getSimpleName();
+			}
+			JOptionPane.showMessageDialog(null,
+					"Error while compiling the code preview!\n" + message,
+					"Error", JOptionPane.ERROR_MESSAGE);
+		}
+		return code;
+	}
+	
+	/**
+	 * Retrieves all general export preferences from the INI file and caches them in
+	 * appropriate fields. 
+	 */
+	private void getExportOptions() {
+		try
+		{
+			Ini ini = Ini.getInstance();
+			ini.load();
+
+			exportAsComments = ini.getProperty("genExportComments","0").equals("true");
+			startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
+			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
+
+			exportSubroutines = false;
+			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+
+		} 
+		catch (IOException ex)
+		{
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+		}
+	}
+	
+	/**
+	 * @return the mapping of processed elements to corresponding code line number intervals after, may be null
+	 */
+	public HashMap<Element, int[]> getCodeMap()
+	{
+		return codeMap;
+	}
+	// END KGU#705 2019-09-23
+	
 	// START KGU#690 2019-03-121: Enh. #707
 	/**
 	 * This method allows the subclass to modify the automatically generated file name proposal
@@ -3032,7 +3139,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**
 	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
-	 * the top-level diagram code has been created and generates and inserts the code
+	 * the top-level diagram code has been created and generates and adds the code
 	 * sequences of the called subroutines of {@code _root}in topologically sorted order.
 	 * @param _root - the top-level diagram root.
 	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
@@ -3174,7 +3281,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (line.contains("===== STRUCTORIZER FILE API START =====")){
 					sectNo++;
 					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
-					code.insert(_indentation, _atLine++);
+					insertCode(_indentation, _atLine++);
 				}
 				if (doInsert) {
 					// Unify indentation and replace dummy messages by localized ones
@@ -3184,11 +3291,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
 					line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
 					line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
-					code.insert(_indentation + line, _atLine++);
+					insertCode(_indentation + line, _atLine++);
 				}
 				if (line.contains("===== STRUCTORIZER FILE API END =====")){
 					doInsert = false;
-					code.insert(_indentation, _atLine++);
+					insertCode(_indentation, _atLine++);
 				}
 			}
 			reader.close();
@@ -3507,7 +3614,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			else
 			{
 				code.add("");
-				this.insertComment("=======8<=====================================================", "");
+				this.appendComment("=======8<=====================================================", "");
 				code.add("");
 			}
 
@@ -3568,7 +3675,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (!subroutines.containsKey(root) && !includedRoots.contains(root)) {
 					if (!firstExport) {
 						code.add("");
-						this.insertComment("=======8<=====================================================", "");
+						this.appendComment("=======8<=====================================================", "");
 						code.add("");
 					}
 					generateCode(root, "");
@@ -3580,9 +3687,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			this.subroutineInsertionLine = subroutineLine;
 			if (!firstExport && !subroutines.isEmpty()) {
-				code.insert("", subroutineLine);
-				code.insert(this.commentSymbolLeft() + " = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = =" + this.commentSymbolRight(), subroutineLine);
-				code.insert("", subroutineLine);
+				insertCode("", subroutineLine);
+				insertCode(this.commentSymbolLeft() + " = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = =" + this.commentSymbolRight(), subroutineLine);
+				insertCode("", subroutineLine);
 			}
 			generateSubroutineCode(null);
 		}

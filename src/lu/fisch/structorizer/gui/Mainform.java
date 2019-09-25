@@ -781,6 +781,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
 				//System.out.println("* ArrangerIndex is set.");
 				// END KGU#305 2016-12-14
+				// START KGU#705 2019-09-24: Enh. #738
+				diagram.setCodePreview(ini.getProperty("codePreview", "1").equals("1"));	// default = 1
+				// END KGU#705 2019-09-14
 				// START KGU#456 2017-11-05: Issue #452
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
 				// END KGU#452 2017-11-05

@@ -89,6 +89,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-18      Enh. #56: Export of try-catch-finally blocks
  *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-09-24/25   Bugfix #752: Declarations in Calls are to be handled, workaround for type defects
  *
  ******************************************************************************************************
  *
@@ -247,7 +248,7 @@ public class CGenerator extends Generator {
 		return "goto";
 	}
 	
-	// See also insertExitInstr(int, String)
+	// See also appendExitInstr(int, String)
 	// END KGU#16/KGU#74 2015-11-30
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
@@ -300,7 +301,7 @@ public class CGenerator extends Generator {
 	 * Subclassable method to specify the degree of availability of a try-catch-finally
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
-	 * @see #insertCatchHeading(Try, String)
+	 * @see #appendCatchHeading(Try, String)
 	 */
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
@@ -363,7 +364,7 @@ public class CGenerator extends Generator {
 	 * Instruction to create a language-specific exit instruction (subclassable)
 	 * The exit code will be passed to the generated code.
 	 */
-	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
 		//code.add(_indent + "exit(" + _exitCode + ")");
@@ -623,7 +624,7 @@ public class CGenerator extends Generator {
 
 	// END KGU#388 2017-09-26
 
-	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
+	protected void appendBlockHeading(Element elem, String _headingText, String _indent)
 	{
 		boolean isDisabled = elem.isDisabled();
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && this.isLabelAtLoopStart())  
@@ -641,7 +642,7 @@ public class CGenerator extends Generator {
 		}
 	}
 
-	protected void insertBlockTail(Element elem, String _tailText, String _indent)
+	protected void appendBlockTail(Element elem, String _tailText, String _indent)
 	{
 		boolean isDisabled = elem.isDisabled();
 		if (_tailText == null) {
@@ -741,7 +742,7 @@ public class CGenerator extends Generator {
 	}
 
 	/**
-	 * Inserts a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * Appends a typedef or struct definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
@@ -753,7 +754,7 @@ public class CGenerator extends Generator {
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
-		insertDeclComment(_root, _indent, typeKey);
+		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
 			addCode("struct " + _type.typeName + " {", _indent, _asComment);
@@ -773,7 +774,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
 
-		if (!insertAsComment(_inst, _indent)) {
+		if (!appendAsComment(_inst, _indent)) {
 
 			// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
 			//insertComment(_inst, _indent);
@@ -808,106 +809,134 @@ public class CGenerator extends Generator {
 				//addCode(codeLine, _indent, isDisabled);
 				// Things will get easier and more precise with tokenization
 				// (which must be done based on the original line)
-				StringList tokens = Element.splitLexically(line.trim(), true);
-				StringList pureTokens = tokens.copy();	// will not contain separating space
-				StringList exprTokens = null;	// Tokens of the expression in case of an assignment
-				StringList pureExprTokens = null;	// as before, will not contain separating space
-				pureTokens.removeAll(" ");
-				String expr = null;	// Original expression
-				int posAsgn = tokens.indexOf("<-");
-				if (posAsgn < 0) {
-					posAsgn = tokens.count();
+				commentInserted = generateInstructionLine(_inst, _indent, commentInserted, line);
+				// END KGU#277/KGU#284 2016-10-13
+			}
+
+		}
+		
+	}
+
+	// START KGU#730 2019-09-24: Bugfix #752 Outsourced from generateCode(Instruction, String) because also needed for Calls
+	/**
+	 * @param _inst - the Instruction (or Call) element
+	 * @param _indent - current indentation
+	 * @param commentInserted - whether the element comment had already been inserted
+	 * @param line - the current instruction line
+	 * @return true if the element comment will have been inserted when this routine is left
+	 */
+	protected boolean generateInstructionLine(Instruction _inst, String _indent, boolean commentInserted, String line) {
+		// Cases to be distinguished and handled:
+		// 1. assignment
+		// 1.1 with declaration (mind record initializer!)
+		// 1.1.1 as constant
+		// 1.1.2 as variable
+		// 1.2 without declaration 
+		// 1.2.1 with record or array initializer
+		// 1.2.2 without record initializer
+		// 2. mere declaration
+		// 2.1 as constant
+		// 2.2 as variable
+		// 3. type definition
+		// 4. Input / output
+		boolean isDisabled = _inst.isDisabled(); 
+		StringList tokens = Element.splitLexically(line.trim(), true);
+		StringList pureTokens = tokens.copy();	// will not contain separating space
+		StringList exprTokens = null;	// Tokens of the expression in case of an assignment
+		StringList pureExprTokens = null;	// as before, will not contain separating space
+		pureTokens.removeAll(" ");
+		String expr = null;	// Original expression
+		int posAsgn = tokens.indexOf("<-");
+		if (posAsgn < 0) {
+			posAsgn = tokens.count();
+		}
+		else {
+			exprTokens = tokens.subSequence(posAsgn + 1, tokens.count());
+			pureExprTokens = pureTokens.subSequence(pureTokens.indexOf("<-")+1, pureTokens.count());
+		}
+		String codeLine = null;
+		String varName = Instruction.getAssignedVarname(pureTokens);
+		boolean isDecl = Instruction.isDeclaration(line);
+		//exprTokens.removeAll(" ");
+		if (!this.suppressTransformation && (isDecl || exprTokens != null)) {
+			// Cases 1 or 2
+			// If there is an initialization then it must at least be generated
+			// as assignment.
+			// With declaration styles other than than C-like, this requires
+			// cutting out the type specification together with the
+			// specific keywords and separators ("var"+":" / "dim"+"as").
+			// With C-style initializations, however, it depends on whether
+			// code-internal declarations are allowed (C++, C#, Java) or not
+			// (pure C): If allowed then we may just convert it as is, otherwise
+			// we must cut off the type specification (i.e. all text preceding the
+			// variable name).
+			// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
+			if (pureTokens.get(0).equals("const")) {
+				// Cases 1.1.1 or 2.1
+				if (!this.isInternalDeclarationAllowed()) {
+					return commentInserted;
+				}
+				// We try to enrich or accomplish defective type information
+				Root root = Element.getRoot(_inst);
+				if (root.constants.get(varName) != null) {
+					this.appendDeclaration(root, varName, _indent, true);
+					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
+					return true;
+				}	
+			}
+			// END KGU#375 2017-04-12
+			if (isDecl && (this.isInternalDeclarationAllowed() || exprTokens != null)) {
+				// cases 1.1.2 or 2.2
+				if (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim")) {
+					// Case 1.1.2a/b or 2.2a/b (Pascal/BASIC declaration)
+					String separator = tokens.get(0).equalsIgnoreCase("dim") ? "as" : ":";
+					int posColon = tokens.indexOf(separator, 2, false);
+					// Declaration well-formed?
+					if (posColon > 0) {
+						// Compose the lval without type
+						codeLine = transform(tokens.subSequence(1, posColon).concatenate().trim());
+						if (this.isInternalDeclarationAllowed()) {
+							// Insert the type description
+							String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
+							// START KGU#561 2018-07-21: Bugfix #564
+							//codeLine = transform(transformType(type, "")) + " " + codeLine;
+							type = transformType(type, "");
+							codeLine = this.transformArrayDeclaration(type, codeLine);
+							// END KGU#561 2018-07-21
+						}
+					}
 				}
 				else {
-					exprTokens = tokens.subSequence(posAsgn + 1, tokens.count());
-					pureExprTokens = pureTokens.subSequence(pureTokens.indexOf("<-")+1, pureTokens.count());
-				}
-				String codeLine = null;
-				String varName = Instruction.getAssignedVarname(pureTokens);
-				boolean isDecl = Instruction.isDeclaration(line);
-				//exprTokens.removeAll(" ");
-				if (!this.suppressTransformation && (isDecl || exprTokens != null)) {
-					// Cases 1 or 2
-					// If there is an initialization then it must at least be generated
-					// as assignment.
-					// With declaration styles other than than C-like, this requires
-					// cutting out the type specification together with the
-					// specific keywords and separators ("var"+":" / "dim"+"as").
-					// With C-style initializations, however, it depends on whether
-					// code-internal declarations are allowed (C++, C#, Java) or not
-					// (pure C): If allowed then we may just convert it as is, otherwise
-					// we must cut off the type specification (i.e. all text preceding the
-					// variable name).
-					// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
-					if (pureTokens.get(0).equals("const")) {
-						// Cases 1.1.1 or 2.1
-						if (!this.isInternalDeclarationAllowed()) {
-							// Should already have been defined
-							continue;
-						}
-						// We try to enrich or accomplish defective type information
-						Root root = Element.getRoot(_inst);
-						if (root.constants.get(varName) != null) {
-							this.insertDeclaration(root, varName, _indent, true);
-							// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
-							commentInserted = true;
-							// END KGU#424 2017-09-26
-							continue;
-						}	
-					}
-					// END KGU#375 2017-04-12
-					if (isDecl && (this.isInternalDeclarationAllowed() || exprTokens != null)) {
-						// cases 1.1.2 or 2.2
-						if (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim")) {
-							// Case 1.1.2a/b or 2.2a/b (Pascal/BASIC declaration)
-							String separator = tokens.get(0).equalsIgnoreCase("dim") ? "as" : ":";
-							int posColon = tokens.indexOf(separator, 2, false);
-							// Declaration well-formed?
-							if (posColon > 0) {
-								// Compose the lval without type
-								codeLine = transform(tokens.subSequence(1, posColon).concatenate().trim());
-								if (this.isInternalDeclarationAllowed()) {
-									// Insert the type description
-									String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
-									// START KGU#561 2018-07-21: Bugfix #564
-									//codeLine = transform(transformType(type, "")) + " " + codeLine;
-									type = transformType(type, "");
-									codeLine = this.transformArrayDeclaration(type, codeLine);
-									// END KGU#561 2018-07-21
-								}
-							}
+					// Case 1.1.2c or 2.2c (2.2c not needed if internal declarations not allowed)
+					// Must be C-style declaration
+					if (this.isInternalDeclarationAllowed()) {
+						// Case 2.2c (allowed) or 1.1.2c
+						// START KGU#560 2018-07-22: Bugfix #564
+						//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+						TypeMapEntry type = this.typeMap.get(varName);
+						if (type != null && type.isArray()) {
+							String elemType = type.getCanonicalType(true, false);
+							codeLine = this.makeArrayDeclaration(this.transformType(elemType, "int"), varName, type);
 						}
 						else {
-							// Case 1.1.2c or 2.2c (2.2c not needed if internal declarations not allowed)
-							// Must be C-style declaration
-							if (this.isInternalDeclarationAllowed()) {
-								// Case 2.2c (allowed) or 1.1.2c
-								// START KGU#560 2018-07-22: Bugfix #564
-								//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
-								TypeMapEntry type = this.typeMap.get(varName);
-								if (type != null && type.isArray()) {
-									String elemType = type.getCanonicalType(true, false);
-									codeLine = this.makeArrayDeclaration(this.transformType(elemType, "int"), varName, type);
-								}
-								else {
-									// Combine type and variable as is
-									codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
-								}
-								// END KGU#560 2018-07-22
-							}
-							else if (exprTokens != null) {
-								// Case 1.1.2c (2.2c not allowed)
-								// Cut out leading type specification
-								int posVar = tokens.indexOf(varName);
-								// START KGU#560 2018-07-21: Bugfix #564 In case of an array declaration we must wipe off the array stuff
-								//codeLine = transform(tokens.subSequence(posVar, posAsgn).concatenate().trim());
-								int posEnd = tokens.indexOf("[", posVar+1);
-								if (!isDecl || posEnd < 0 || posEnd > posAsgn) {
-									posEnd = posAsgn;
-								}
-								codeLine = transform(tokens.subSequence(posVar, posEnd).concatenate().trim());
-								// END KGU#560 2018-07-21
-							}
+							// Combine type and variable as is
+							codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+						}
+						// END KGU#560 2018-07-22
+					}
+					else if (exprTokens != null) {
+						// Case 1.1.2c (2.2c not allowed)
+						// Cut out leading type specification
+						int posVar = tokens.indexOf(varName);
+						// START KGU#560 2018-07-21: Bugfix #564 In case of an array declaration we must wipe off the array stuff
+						//codeLine = transform(tokens.subSequence(posVar, posAsgn).concatenate().trim());
+						int posEnd = tokens.indexOf("[", posVar+1);
+						if (!isDecl || posEnd < 0 || posEnd > posAsgn) {
+							posEnd = posAsgn;
+						}
+						codeLine = transform(tokens.subSequence(posVar, posEnd).concatenate().trim());
+						// END KGU#560 2018-07-21
+					}
 //							// START KGU#375 2017-04-13: Enh. #388
 //							//codeLine = transform(tokens.concatenate().trim());
 //							else if (tokens.get(0).equals("const")) {
@@ -921,127 +950,121 @@ public class CGenerator extends Generator {
 //									continue;
 //								}
 //							}
-						}
-					}
-					else if (!isDecl && exprTokens != null) {
-						// Case 1.2
-						// Combine variable access as is
-						codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
-					}
-					// Now we care for a possible assignment
-					if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
-						// START KGU#560 2018-07-21: Bugfix #564 - several problems with array initializers
-						int posBrace = pureExprTokens.indexOf("{");
-						if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
-							// Case 1.1 or 1.2.1 (either array or record initializer)
-							if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)) {
-								String typeName = pureExprTokens.get(0);							
-								TypeMapEntry recType = this.typeMap.get(":"+typeName);
-								if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
-									// transforms the Structorizer record initializer into a C-conform one
-									expr = this.transformRecordInit(exprTokens.concatenate().trim(), recType);
-								}
-								else {
-									// In this case it's either no declaration or the declaration has already been generated
-									// at the block beginning
-									if (!commentInserted) {
-										insertComment(_inst, _indent);
-										commentInserted = true;
-									}
-									// END KGU#424 2017-09-26
-									// FIXME: Possibly codeLine (the lval string) might be too much as first argument
-									// START KGU#559 2018-07-20: Enh. #563
-									//this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, null);
-									this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, recType);
-									// END KGU#559 2018-07-20
-									// All done already
-									continue;
-								}
-							}
-							else {
-								StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()), ",", true);
-								String elemType = null;
-								TypeMapEntry arrType = this.typeMap.get(varName);
-								if (arrType != null && arrType.isArray()) {
-									elemType = arrType.getCanonicalType(true, false);
-									if (elemType != null && elemType.startsWith("@")) {
-										elemType = elemType.substring(1);
-									}
-								}
-								expr = this.generateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
-								if (expr == null) {
-									continue;
-								}
-							}
-						}
-						// END KGU#560 2018-07-21
-						else {
-							expr = this.transform(exprTokens.concatenate()).trim();
-						}
-					}
-					if (expr != null) {
-						// In this case codeLine must be different from null
-						codeLine += " = " + expr;
-					}
-				} // if (!this.suppressTransformation && (isDecl || exprTokens != null))
-				// START KGU#388 2017-09-25: Enh. #423
-				else if (!this.suppressTransformation && Instruction.isTypeDefinition(line, typeMap)) {
-					// Attention! The following condition must not be combined with the above one! 
-					if (this.isInternalDeclarationAllowed()) {
-						tokens.removeAll(" ");
-						int posEqu = tokens.indexOf("=");
-						String typeName = null;
-						if (posEqu == 2) {
-							typeName = tokens.get(1);
-						}
-						TypeMapEntry type = this.typeMap.get(":" + typeName);
-						Root root = Element.getRoot(_inst);
-						if (type != null) {
-							this.generateTypeDef(root, typeName, type, _indent, isDisabled);
-							commentInserted = true;
-							// CodeLine is not filled because the code has already been generated
-						}
-						else {
-							// Hardly a recognizable type definition, just put it as is...
-							codeLine = "typedef " + transform(tokens.concatenate(" ", posEqu + 1)) + " " + typeName;
-						}
-					}
 				}
-				// END KGU#388 2017-09-25
-				else {
-					// All other cases (e.g. input, output)
-					// START KGU#653 2019-02-14: Enh. #680 - care for multi-variable input lines
-					//codeLine = transform(line);
-					StringList inputItems = Instruction.getInputItems(line);
-					if (inputItems == null || !generateMultipleInput(inputItems, _indent, isDisabled, commentInserted ? null : _inst.getComment())) {
-						codeLine = transform(line);
+			}
+			else if (!isDecl && exprTokens != null) {
+				// Case 1.2
+				// Combine variable access as is
+				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
+			}
+			// Now we care for a possible assignment
+			if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
+				// START KGU#560 2018-07-21: Bugfix #564 - several problems with array initializers
+				int posBrace = pureExprTokens.indexOf("{");
+				if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
+					// Case 1.1 or 1.2.1 (either array or record initializer)
+					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+						String typeName = pureExprTokens.get(0);							
+						TypeMapEntry recType = this.typeMap.get(":"+typeName);
+						if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
+							// transforms the Structorizer record initializer into a C-conform one
+							expr = this.transformRecordInit(exprTokens.concatenate().trim(), recType);
+						}
+						else {
+							// In this case it's either no declaration or the declaration has already been generated
+							// at the block beginning
+							if (!commentInserted) {
+								appendComment(_inst, _indent);
+								commentInserted = true;
+							}
+							// END KGU#424 2017-09-26
+							// FIXME: Possibly codeLine (the lval string) might be too much as first argument
+							// START KGU#559 2018-07-20: Enh. #563
+							//this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, null);
+							this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, recType);
+							return commentInserted;
+						}
 					}
 					else {
-						codeLine = null;
+						StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()), ",", true);
+						String elemType = null;
+						TypeMapEntry arrType = this.typeMap.get(varName);
+						if (arrType != null && arrType.isArray()) {
+							elemType = arrType.getCanonicalType(true, false);
+							if (elemType != null && elemType.startsWith("@")) {
+								elemType = elemType.substring(1);
+							}
+						}
+						expr = this.generateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
+						if (expr == null) {
+							return commentInserted;
+						}
 					}
-					// END KGU#653 2019-02-14
 				}
-				// Now append the codeLine in case it was composed and not already appended
-				if (codeLine != null) {
-					String lineEnd = ";";
-					if (Instruction.isTurtleizerMove(line)) {
-						codeLine = this.enhanceWithColor(codeLine, _inst);
-						lineEnd = "";	// codeLine already contains a line end in this case
-					}
-					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
-					if (!commentInserted) {
-						insertComment(_inst, _indent);
-						commentInserted = true;
-					}
-					// END KGU#424 2017-09-26
-					addCode(codeLine + lineEnd, _indent, isDisabled);
+				// END KGU#560 2018-07-21
+				else {
+					expr = this.transform(exprTokens.concatenate()).trim();
 				}
-				// END KGU#261 2017-01-26
-				// END KGU#277/KGU#284 2016-10-13
 			}
-
+			if (expr != null) {
+				// In this case codeLine must be different from null
+				codeLine += " = " + expr;
+			}
+		} // if (!this.suppressTransformation && (isDecl || exprTokens != null))
+		// START KGU#388 2017-09-25: Enh. #423
+		else if (!this.suppressTransformation && Instruction.isTypeDefinition(line, typeMap)) {
+			// Attention! The following condition must not be combined with the above one! 
+			if (this.isInternalDeclarationAllowed()) {
+				tokens.removeAll(" ");
+				int posEqu = tokens.indexOf("=");
+				String typeName = null;
+				if (posEqu == 2) {
+					typeName = tokens.get(1);
+				}
+				TypeMapEntry type = this.typeMap.get(":" + typeName);
+				Root root = Element.getRoot(_inst);
+				if (type != null) {
+					this.generateTypeDef(root, typeName, type, _indent, isDisabled);
+					commentInserted = true;
+					// CodeLine is not filled because the code has already been generated
+				}
+				else {
+					// Hardly a recognizable type definition, just put it as is...
+					codeLine = "typedef " + transform(tokens.concatenate(" ", posEqu + 1)) + " " + typeName;
+				}
+			}
 		}
-		
+		// END KGU#388 2017-09-25
+		else {
+			// All other cases (e.g. input, output)
+			// START KGU#653 2019-02-14: Enh. #680 - care for multi-variable input lines
+			//codeLine = transform(line);
+			StringList inputItems = Instruction.getInputItems(line);
+			if (inputItems == null || !generateMultipleInput(inputItems, _indent, isDisabled, commentInserted ? null : _inst.getComment())) {
+				codeLine = transform(line);
+			}
+			else {
+				codeLine = null;
+			}
+			// END KGU#653 2019-02-14
+		}
+		// Now append the codeLine in case it was composed and not already appended
+		if (codeLine != null) {
+			String lineEnd = ";";
+			if (Instruction.isTurtleizerMove(line)) {
+				codeLine = this.enhanceWithColor(codeLine, _inst);
+				lineEnd = "";	// codeLine already contains a line end in this case
+			}
+			// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
+			if (!commentInserted) {
+				appendComment(_inst, _indent);
+				commentInserted = true;
+			}
+			// END KGU#424 2017-09-26
+			addCode(codeLine + lineEnd, _indent, isDisabled);
+		}
+		// END KGU#261 2017-01-26
+		return commentInserted;
 	}
 
 	// START KGU#653 2019-02-14: Enh. #680 - auxiliary methods for handling multi-item input instructions
@@ -1063,7 +1086,7 @@ public class CGenerator extends Generator {
 			}
 			_inputItems.remove(0);
 			if (_comment != null) {
-				this.insertComment(_comment, _indent);
+				this.appendComment(_comment, _indent);
 			}
 			String targetList = composeInputItems(_inputItems);
 			if (targetList != null) {
@@ -1107,7 +1130,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		
 		// START KGU#453 2017-11-02: Issue #447
 		//String condition = transform(_alt.getText().getLongString(), false).trim();
@@ -1119,14 +1142,14 @@ public class CGenerator extends Generator {
 		// END KGU#301 2016-12-01
 			condition = "(" + condition + ")";
 		
-		insertBlockHeading(_alt, "if " + condition, _indent);
+		appendBlockHeading(_alt, "if " + condition, _indent);
 		generateCode(_alt.qTrue, _indent + this.getIndent());
-		insertBlockTail(_alt, null, _indent);
+		appendBlockTail(_alt, null, _indent);
 
 		if (_alt.qFalse.getSize() != 0) {
-			insertBlockHeading(_alt, "else", _indent);
+			appendBlockHeading(_alt, "else", _indent);
 			generateCode(_alt.qFalse, _indent + this.getIndent());
-			insertBlockTail(_alt, null, _indent);
+			appendBlockTail(_alt, null, _indent);
 		}
 	}
 
@@ -1134,7 +1157,7 @@ public class CGenerator extends Generator {
 	protected void generateCode(Case _case, String _indent) {
 		
 		boolean isDisabled = _case.isDisabled();
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 		
 		// START KGU#453 2017-11-02: Issue #447
 		//StringList lines = _case.getText();
@@ -1148,7 +1171,7 @@ public class CGenerator extends Generator {
 			condition = "(" + condition + ")";
 		}
 
-		insertBlockHeading(_case, "switch " + condition, _indent);
+		appendBlockHeading(_case, "switch " + condition, _indent);
 
 		for (int i = 0; i < _case.qs.size() - 1; i++) {
 			// START KGU#15 2015-10-21: Support for multiple constants per
@@ -1188,7 +1211,7 @@ public class CGenerator extends Generator {
 			// END KGU#71 2015-11-10
 		}
 		
-		insertBlockTail(_case, null, _indent);
+		appendBlockTail(_case, null, _indent);
 	}
 
 	// END KGU#18/#23 2015-10-20
@@ -1196,7 +1219,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(For _for, String _indent) {
 
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 		
 		// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 		if (_for.isForInLoop())
@@ -1218,14 +1241,14 @@ public class CGenerator extends Generator {
 		int step = _for.getStepConst();
 		String compOp = (step > 0) ? " <= " : " >= ";
 		String increment = var + " += (" + step + ")";
-		insertBlockHeading(_for, "for (" + decl + var + " = "
+		appendBlockHeading(_for, "for (" + decl + var + " = "
 				+ transform(_for.getStartValue(), false) + "; " + var + compOp
 				+ transform(_for.getEndValue(), false) + "; " + increment + ")",
 				_indent);
 
 		generateCode(_for.q, _indent + this.getIndent());
 
-		insertBlockTail(_for, null, _indent);
+		appendBlockTail(_for, null, _indent);
 
 	}
 	
@@ -1323,7 +1346,7 @@ public class CGenerator extends Generator {
 					//this.addGlobalTypeDef(typeDef, "TODO: Define a sensible 'ItemType' for the loop further down", isDisabled);
 					this.addCode(typeDef, indent, isDisabled);
 					// END KGU#355 2017-03-30
-					this.insertComment("TODO: Prepare the elements of the array according to defined type (or conversely).", indent);
+					this.appendComment("TODO: Prepare the elements of the array according to defined type (or conversely).", indent);
 				}
 			}
 			// We define a fixed array here
@@ -1359,7 +1382,7 @@ public class CGenerator extends Generator {
 			addCode("{", _indent, isDisabled);
 
 			if (endValStr.equals("???")) {
-				this.insertComment("TODO: Find out and fill in the number of elements of the array " + valueList + " here!", _indent);
+				this.appendComment("TODO: Find out and fill in the number of elements of the array " + valueList + " here!", _indent);
 			}
 			addCode("int " + limitName + " = " + endValStr +";", indent, isDisabled);
 
@@ -1387,14 +1410,14 @@ public class CGenerator extends Generator {
 			addCode("int " + indexName + ";", indent, isDisabled);
 
 			// Creation of the loop header
-			insertBlockHeading(
+			appendBlockHeading(
 					_for, "for (" + indexName + " = " + startValStr + "; " +
 					indexName + " < " + endValStr + "; " + indexName + "++)",
 					indent);
 			
 			// Assignment of a single item to the given variable
 			if (itemType.startsWith("union ")) {
-				this.insertComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
+				this.appendComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
 			}
 			addCode(this.getIndent() + (itemType + " " + itemVar + " = " +
 					arrayName + "[" + indexName + "];").trim(), indent, isDisabled);
@@ -1403,7 +1426,7 @@ public class CGenerator extends Generator {
 			generateCode(_for.q, indent + this.getIndent());
 
 			// Accomplish the loop
-			insertBlockTail(_for, null, indent);
+			appendBlockTail(_for, null, indent);
 
 			// Close the extra block
 			addCode("}", _indent, isDisabled);
@@ -1414,14 +1437,14 @@ public class CGenerator extends Generator {
 			// END KGU#355 2017-03-05
 			// We have no strategy here, no idea how to find out the number and type of elements,
 			// no idea how to iterate the members, so we leave it similar to C# and just add a TODO comment...
-			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+			this.appendComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
 
 			// Creation of the loop header
-			insertBlockHeading(_for, "foreach (" + var + " in " + transform(valueList, false) + ")", _indent);
+			appendBlockHeading(_for, "foreach (" + var + " in " + transform(valueList, false) + ")", _indent);
 			// Add the loop body as is
 			generateCode(_for.q, _indent + this.getIndent());
 			// Accomplish the loop
-			insertBlockTail(_for, null, _indent);
+			appendBlockTail(_for, null, _indent);
 			
 			done = true;
 		}
@@ -1432,7 +1455,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(While _while, String _indent) {
 		
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		
 
 		String condition = transform(_while.getText().getLongString(), false)
@@ -1444,20 +1467,20 @@ public class CGenerator extends Generator {
 			condition = "(" + condition + ")";
 		}
 
-		insertBlockHeading(_while, "while " + condition, _indent);
+		appendBlockHeading(_while, "while " + condition, _indent);
 
 		generateCode(_while.q, _indent + this.getIndent());
 
-		insertBlockTail(_while, null, _indent);
+		appendBlockTail(_while, null, _indent);
 
 	}
 
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 
-		insertBlockHeading(_repeat, "do", _indent);
+		appendBlockHeading(_repeat, "do", _indent);
 
 		generateCode(_repeat.q, _indent + this.getIndent());
 
@@ -1468,29 +1491,32 @@ public class CGenerator extends Generator {
 		if (!isParenthesized(condition)) {
 			condition = "(" + condition + ")";
 		}
-		insertBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
 		// END KGU#301 2016-12-01
 	}
 
 	@Override
 	protected void generateCode(Forever _forever, String _indent) {
 		
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 
-		insertBlockHeading(_forever, "while (true)", _indent);
+		appendBlockHeading(_forever, "while (true)", _indent);
 
 		generateCode(_forever.q, _indent + this.getIndent());
 
-		insertBlockTail(_forever, null, _indent);
+		appendBlockTail(_forever, null, _indent);
 	}
 
 	@Override
 	protected void generateCode(Call _call, String _indent) {
  
-		if (!insertAsComment(_call, _indent)) {
+		if (!appendAsComment(_call, _indent)) {
 
+			boolean commentInserted = false;
+			
 			boolean isDisabled = _call.isDisabled();
-			insertComment(_call, _indent);
+
+			appendComment(_call, _indent);
 			// In theory, here should be only one line, but we better be prepared...
 			StringList lines = _call.getUnbrokenText();
 			Root owningRoot = Element.getRoot(_call);
@@ -1512,7 +1538,7 @@ public class CGenerator extends Generator {
 						StringList defaults = new StringList();
 						called.collectParameters(null, null, defaults);
 						if (defaults.count() > call.paramCount()) {
-							// We just insert the list of default values for the missing arguments
+							// We just add the list of default values for the missing arguments
 							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
 									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
 						}
@@ -1520,7 +1546,15 @@ public class CGenerator extends Generator {
 				}
 				// END KGU#371 2019-03-07
 				// Input or Output should not occur here
-				addCode(transform(line, false) + ";", _indent, isDisabled);
+				// START KGU#730 2019-09-24: Bugfix #752 ... but declarations (even const definitions) could occur!
+//				addCode(transform(line, false) + ";", _indent, isDisabled);
+				if (Instruction.isAssignment(line)) {
+					commentInserted = generateInstructionLine(_call, _indent, commentInserted, line);
+				}
+				else {
+					addCode(transform(line, false) + ";", _indent, isDisabled);
+				}
+				// END KGU#730 2019-09-24
 			}
 		}
 		
@@ -1548,14 +1582,14 @@ public class CGenerator extends Generator {
 //			if (roots.size() == 1) {
 //				Root imported = roots.get(0);
 //				imported.getVarNames();	// This also initializes the constants information we may need here
-//				insertComment("*** START " + _line + " *** ", _indent);		
+//				appendComment("*** START " + _line + " *** ", _indent);		
 //				generateCode(imported.children, _indent);
-//				insertComment("*** END " + _line + " *** ", _indent);		
+//				appendComment("*** END " + _line + " *** ", _indent);		
 //				done = true;
 //			}
 //		}
 //		if (!done) {
-//			insertComment(_line, _indent);		
+//			appendComment(_line, _indent);		
 //		}
 //	}
 //	// END KGU#376 2017-04-13
@@ -1570,11 +1604,11 @@ public class CGenerator extends Generator {
 		// {
 		// code.add(_indent+transform(_jump.getText().get(i))+";");
 		// }
-		if (!insertAsComment(_jump, _indent)) {
+		if (!appendAsComment(_jump, _indent)) {
 			
 			boolean isDisabled = _jump.isDisabled();
 
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 
 			// START KGU#380 2017-04-14: Bugfix #394 Done in another way now
 			// KGU 2015-10-18: In case of an empty text generate a break
@@ -1612,7 +1646,7 @@ public class CGenerator extends Generator {
 				//else if (line.matches(preExitMatch))
 				else if (_jump.isExit())
 				{
-					insertExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
+					appendExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 				}
 				// START KGU#686 2019-03-20: Enh. #56 Throw has to be implemented
 				else if (_jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
@@ -1627,8 +1661,8 @@ public class CGenerator extends Generator {
 					String label = this.labelBaseName + ref;
 					if (ref.intValue() < 0)
 					{
-						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-						insertComment(line, _indent);
+						appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						appendComment(line, _indent);
 						label = "__ERROR__";
 					}
 					addCode(this.getMultiLevelLeaveInstr() + " " + label + ";", _indent, isDisabled);
@@ -1645,8 +1679,8 @@ public class CGenerator extends Generator {
 				}
 				else if (!isEmpty)
 				{
-					insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+					appendComment(line, _indent);
 				}
 				// END KGU#74/KGU#78 2015-11-30
 			}
@@ -1676,29 +1710,29 @@ public class CGenerator extends Generator {
 	{
 
 		boolean isDisabled = _para.isDisabled();
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
+			appendComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
 			addCode("{", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
 			addCode("}", _indent + this.getIndent(), isDisabled);
-			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			appendComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
 			addCode("", "", isDisabled);
 		}
 
 		addCode("}", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-11-30
@@ -1712,38 +1746,38 @@ public class CGenerator extends Generator {
 	{
 
 		boolean isDisabled = _try.isDisabled();
-		insertComment(_try, _indent);
+		appendComment(_try, _indent);
 	
 		TryCatchSupportLevel trySupport = this.getTryCatchLevel();
 		if (trySupport == TryCatchSupportLevel.TC_NO_TRY) {
-			this.insertComment("TODO: Find an equivalent for this non-supported try / catch block!", _indent);
+			this.appendComment("TODO: Find an equivalent for this non-supported try / catch block!", _indent);
 		}
 		_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
 		try {
-			this.insertBlockHeading(_try, "try", _indent);
+			this.appendBlockHeading(_try, "try", _indent);
 			_try.disabled = isDisabled;
 
 			generateCode(_try.qTry, _indent + this.getIndent());
 
 			_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
-			this.insertBlockTail(_try, null, _indent);
+			this.appendBlockTail(_try, null, _indent);
 			String caught = this.caughtException;
-			this.insertCatchHeading(_try, _indent);
+			this.appendCatchHeading(_try, _indent);
 
 			// If try/catch isn't supported then the entire catch block is to be disabled
 			generateCode(_try.qCatch, _indent + this.getIndent());
 
 			this.caughtException = caught;
-			this.insertBlockTail(_try, null, _indent);
+			this.appendBlockTail(_try, null, _indent);
 			if (_try.qFinally.getSize() > 0) {
 				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
-				this.insertBlockHeading(_try, "finally", _indent);
+				this.appendBlockHeading(_try, "finally", _indent);
 				_try.disabled = isDisabled;
 
 				generateCode(_try.qFinally, _indent + this.getIndent());
 
 				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
-				this.insertBlockTail(_try, null, _indent);
+				this.appendBlockTail(_try, null, _indent);
 			}
 		}
 		finally {
@@ -1762,13 +1796,13 @@ public class CGenerator extends Generator {
 	 * @param _indent - the current indentation (outside the block)
 	 * @see #getTryCatchLevel()
 	 */
-	protected void insertCatchHeading(Try _try, String _indent) {
+	protected void appendCatchHeading(Try _try, String _indent) {
 		String varName = _try.getExceptionVarName();
 		String head = "catch (...)";
 		if (varName != null && !varName.isEmpty()) {
 			head = "catch(char " + varName + "[])";
 		}
-		this.insertBlockHeading(_try, head, _indent);
+		this.appendBlockHeading(_try, head, _indent);
 	}
 	// END KGU#686 2019-03-18
 
@@ -1799,14 +1833,14 @@ public class CGenerator extends Generator {
 		} else if (_root.isInclude()) {
 			pr = "includable";
 		}
-		insertComment(pr + " " + _root.getText().get(0), _indent);
+		appendComment(pr + " " + _root.getText().get(0), _indent);
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
 		// END KGU#178 2016-07-20
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			code.add("");
 			// START KGU#236 2016-08-10: Issue #227
@@ -1825,17 +1859,17 @@ public class CGenerator extends Generator {
 			// START KGU#607 2018-10-30: Issue 346
 			this.generatorIncludes.add("<stdbool.h>");
 			// END KGU#607 2018-10-30
-			this.insertGeneratorIncludes("", false);
+			this.appendGeneratorIncludes("", false);
 			code.add("");
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
-			this.insertUserIncludes("");
+			this.appendUserIncludes("");
 			// START KGU#446 2017-10-27: Enh. #441
 			this.includeInsertionLine = code.count();
 			// END KGU#446 2017-10-27
 			code.add("");
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-26: Enh. #389 - definitions from all included diagrams will follow
-			insertGlobalDefinitions(_root, _indent, false);
+			appendGlobalDefinitions(_root, _indent, false);
 			// END KGU#376 2017-09-26
 			// END KGU#236 2016-08-10
 			// START KGU#178 2016-07-20: Enh. #160
@@ -1850,7 +1884,7 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
 
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		if (_root.isProgram())
 			code.add("int main(void)");
 		else {
@@ -1877,18 +1911,18 @@ public class CGenerator extends Generator {
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
-			insertComment("TODO: Revise the return type and declare the parameters.", _indent);
+			appendComment("TODO: Revise the return type and declare the parameters.", _indent);
 			// START KGU#140 2017-01-31: Enh. #113
 			if (returnsArray) {
-				insertComment("      C does not permit to return arrays - find an other way to pass the result!", _indent);
+				appendComment("      C does not permit to return arrays - find an other way to pass the result!", _indent);
 			}
 			// END KGU#140 2017-01-31
 			code.add(fnHeader);
 		}
 		code.add(_indent + "{");
 		
-		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		insertGlobalInitialisations(_indent + this.getIndent());
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		appendGlobalInitialisations(_indent + this.getIndent());
 		// END KGU#376 2017-09-26
 		
 		return _indent + this.getIndent();
@@ -1904,12 +1938,12 @@ public class CGenerator extends Generator {
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 	{
-		insertComment("TODO: Check and accomplish variable declarations:", _indent);
-        // START KGU#261/KGU#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
-		// START KGU#504 2018-03-13: Bugfix #520, #521: only insert declarations if conversion is allowed
+		appendComment("TODO: Check and accomplish variable declarations:", _indent);
+		// START KGU#261/KGU#332 2017-01-26: Enh. #259/#335: Add actual declarations if possible
+		// START KGU#504 2018-03-13: Bugfix #520, #521: only add declarations if conversion is allowed
 		//insertDefinitions(_root, _indent, varNames, false);
 		if (!this.suppressTransformation) {
-			insertDefinitions(_root, _indent, varNames, false);
+			appendDefinitions(_root, _indent, varNames, false);
 		}
 		// END KGU#504 2018-03-13
 		// END KGU#261/KGU#332 2017-01-26
@@ -1922,13 +1956,13 @@ public class CGenerator extends Generator {
 
 	// START KGU#376 2017-09-26: Enh #389 - declaration stuff condensed to a method
 	/**
-	 * Inserts constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
-	 * @param _root - the diagram the daclarations and definitions of are to be inserted
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * @param _root - the diagram the declarations and definitions of are to be added
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
-	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
+	 * @param _force - true means that the addition is forced even if option {@link #isInternalDeclarationAllowed()} is set 
 	 */
-	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// TODO: structured constants must be defined after the type definitions (see PasGenerator)!
 		int lastLine = code.count();
 		// START KGU#375 2017-04-12: Enh. #388 - we want to add new information but this is not to have an impact on _root 
@@ -1941,7 +1975,7 @@ public class CGenerator extends Generator {
 		// END KGU#261/KGU#332 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 		for (String constName: _root.constants.keySet()) {
-			insertDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());			
+			appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());			
 		}
 		// END KGU#375 2017-04-12
 		// START KGU#388 2017-09-26: Enh. #423 Place the necessary type definitions here
@@ -1949,13 +1983,13 @@ public class CGenerator extends Generator {
 			this.generateTypeDefs(_root, _indent);
 		}
 		// END KGU#388 2017-09-26
-        // START KGU 2015-11-30: List the variables to be declared (This will include merely declared variables!)
+		// START KGU 2015-11-30: List the variables to be declared (This will include merely declared variables!)
 		for (int v = 0; v < _varNames.count(); v++) {
-	        // START KGU#261/#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
+			// START KGU#261/#332 2017-01-26: Enh. #259/#335: Add actual declarations if possible
 			//insertComment(varNames.get(v), _indent);
 			String varName = _varNames.get(v);
 			if (!_root.constants.containsKey(varName)) {
-				insertDeclaration(_root, varName, _indent, _force || !this.isInternalDeclarationAllowed());
+				appendDeclaration(_root, varName, _indent, _force || !this.isInternalDeclarationAllowed());
 			}
 			// END KGU#261/KGU#332 2017-01-16
 		}
@@ -1964,7 +1998,7 @@ public class CGenerator extends Generator {
 		if (_root.isInclude()) {
 			for (String id: this.typeMap.keySet()) {
 				if (!id.startsWith(":") && !_varNames.contains(id)) {
-					insertDeclaration(_root, id, _indent, _force || !this.isInternalDeclarationAllowed());
+					appendDeclaration(_root, id, _indent, _force || !this.isInternalDeclarationAllowed());
 				}
 			}
 		}
@@ -1985,7 +2019,7 @@ public class CGenerator extends Generator {
 	 * @param _indent - the current indentation (as String)
 	 * @param _fullDecl - whether the declaration is to be forced in full format
 	 */
-	protected void insertDeclaration(Root _root, String _name, String _indent, boolean _fullDecl)
+	protected void appendDeclaration(Root _root, String _name, String _indent, boolean _fullDecl)
 	{
 		// START KGU#376 2017-09-26: Enh. #389
 		if (wasDefHandled(_root, _name, false)) {
@@ -2009,15 +2043,24 @@ public class CGenerator extends Generator {
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		// FIXME (KGU 2017-09-30): It should be extremely unlikely now that there isn't a typeMap entry
-		else if (constValue != null) {
-			getLogger().log(Level.WARNING, "insertDeclaration({0}, {1}, ...): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!",
+		// START KGU#730 2019-09-25: workaround #752 - unfortunately a typeMap entry may be deficient (from subroutine)
+		//else if (constValue != null) {
+		if (constValue != null && (types == null || types.isEmpty())) {
+		// END KGU#730 2019-09-25
+			getLogger().log(Level.WARNING, "appendDeclaration({0}, {1}, ...): MISSING TYPE MAP ENTRY FOR THIS CONSTANT!",
 					new Object[]{_root, _name});
+			// This is likely to fail if constValue is an external function call
 			String type = Element.identifyExprType(typeMap, constValue, false);
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
 				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
 			}
+			// START KGU#730 2019-09-25: Bugfix #752 - we must provide something lest the definition should go lost
+			else if (_fullDecl) {
+				types = StringList.getNew("???");
+			}
+			// END KGU#730 2019-09-25
 		}
 		// END KGU#375 2017-04-12
 		// If the type is unambiguous and has no C-style declaration or may not be
@@ -2028,7 +2071,7 @@ public class CGenerator extends Generator {
 				//(typeInfo != null && !typeInfo.isCStyleDeclaredAt(null) || _fullDecl)) {			
 				(typeInfo != null && !typeInfo.isDeclaredWithin(null) || _fullDecl)) {			
 			String decl = types.get(0).trim();
-			// START KGU#375 2017-04-12: Enh. #388 - types.get(0) doesn't contain anymore than e.g. "const"?
+			// START KGU#375 2017-04-12: Enh. #388 - types.get(0) doesn't contain anything more than e.g. "const"?
 			if (decl.equals(transfConst) && constValue != null) {
 				// The actual type spec is missing but we try to extract it from the value
 				decl += " " + Element.identifyExprType(typeMap, constValue, false);
@@ -2066,12 +2109,12 @@ public class CGenerator extends Generator {
 			}
 			// END KGU#388 2017-09-27
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
-			insertDeclComment(_root, _indent, _name);
+			appendDeclComment(_root, _indent, _name);
 			// Just ensure that the declaration is registered
 			setDefHandled(_root.getSignatureString(false), _name);
 			// END KGU#424 2017-09-26
 			if (decl.contains("???")) {
-				insertComment(decl + ";", _indent);
+				appendComment(decl + ";", _indent);
 			}
 			else {
 				// START KGU#501 2018-02-22: Bugfix #517 In Java, C++, or C# we may need modifiers here
@@ -2082,7 +2125,7 @@ public class CGenerator extends Generator {
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
 		else if (types == null || _fullDecl){
-			insertComment(_name + ";", _indent);
+			appendComment(_name + ";", _indent);
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
 			setDefHandled(_root.getSignatureString(false), _name);
 			// END KGU#424 2017-09-26
@@ -2138,7 +2181,7 @@ public class CGenerator extends Generator {
 	// START KGU#560 2018-07-21: Bugfix #564 Array initializers have to be decomposed if not occurring in a declaration
 	/**
 	 * Generates code that decomposes possible initializers into a series of separate assignments if
-	 * there no compact translation, otherwise just adds appropriate transformed code.
+	 * there is no compact translation, otherwise just adds appropriate transformed code.
 	 * @param _lValue - the left side of the assignment (without modifiers!)
 	 * @param _expr - the expression in Structorizer syntax
 	 * @param _indent - current indentation level (as String)
@@ -2214,11 +2257,11 @@ public class CGenerator extends Generator {
 		if (this.hasInput(_root)) {
 		// END KGU#236 2016-08-10
 			code.add(_indent);
-			insertComment("TODO:", _indent);
-			insertComment(
+			appendComment("TODO:", _indent);
+			appendComment(
 					"For any input using the 'scanf' function you need to fill the first argument.",
 					_indent);
-			insertComment(
+			appendComment(
 					"http://en.wikipedia.org/wiki/Scanf#Format_string_specifications",
 					_indent);
 		// START KGU#236 2016-08-10: Issue #227
@@ -2226,11 +2269,11 @@ public class CGenerator extends Generator {
 		if (this.hasOutput(_root)) {
 		// END KGU#236 2016-08-10
 		code.add(_indent);
-		insertComment("TODO:", _indent);
-		insertComment(
+		appendComment("TODO:", _indent);
+		appendComment(
 				"For any output using the 'printf' function you need to fill the first argument:",
 				_indent);
-		insertComment(
+		appendComment(
 				"http://en.wikipedia.org/wiki/Printf#printf_format_placeholders",
 				_indent);
 		// START KGU#236 2016-08-10: Issue #227
@@ -2275,7 +2318,7 @@ public class CGenerator extends Generator {
 	}
 	
 	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
+	 * Method is to finish up after the text additions of the diagram, i.e. to close open blocks etc. 
 	 * @param _root 
 	 * @param _indent
 	 */

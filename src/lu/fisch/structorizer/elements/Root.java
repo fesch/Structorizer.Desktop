@@ -2203,82 +2203,86 @@ public class Root extends Element {
 
     public boolean moveDown(Element _ele)
     {
-            boolean res = false;
-            if(_ele!=null)
+        boolean res = false;
+        if(_ele!=null)
+        {
+            // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            if (_ele instanceof SelectedSequence)
             {
-                // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-                if (_ele instanceof SelectedSequence)
-                {
-                	res = ((SelectedSequence)_ele).moveDown();
-                }
-                else
-                {
-                	// END KGU#144 2016-01-22
-                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
-                    if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
-                            !_ele.getClass().getSimpleName().equals("Root") &&
-                            ((i+1)<((Subqueue) _ele.parent).getSize()))
-                    {
-                            // START KGU#136 2016-03-02: Bugfix #97
-                            //((Subqueue) _ele.parent).removeElement(i);
-                            //((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
-                            ((Subqueue) _ele.parent).moveElement(i, i+1);
-                            // END KGU#136 2016-03-02: Bugfix #97
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
-                            //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                            _ele.setSelected(true);
-                            res=true;
-                    }
-               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
-                }
-                // END KGU#144 2016-01-22
+                res = ((SelectedSequence)_ele).moveDown();
             }
-            return res;
+            else
+            {
+                // END KGU#144 2016-01-22
+                int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
+                        !_ele.getClass().getSimpleName().equals("Root") &&
+                        ((i+1)<((Subqueue) _ele.parent).getSize()))
+                {
+                    // START KGU#136 2016-03-02: Bugfix #97
+                    //((Subqueue) _ele.parent).removeElement(i);
+                    //((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
+                    ((Subqueue) _ele.parent).moveElement(i, i+1);
+                    // END KGU#136 2016-03-02: Bugfix #97
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                    //hasChanged=true;
+                    // END KGU#137 2016-01-11
+                    _ele.setSelected(true);
+                    res=true;
+                }
+            // START KGU#144 2016-01-22: Bugfix #38 (continued)
+            }
+            // END KGU#144 2016-01-22
+        }
+        return res;
     }
 
     public boolean moveUp(Element _ele)
     {
-            boolean res = false;
-            if(_ele!=null)
+        boolean res = false;
+        if(_ele!=null)
+        {
+            // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            if (_ele instanceof SelectedSequence)
             {
-                // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-                if (_ele instanceof SelectedSequence)
-                {
-                	res = ((SelectedSequence)_ele).moveUp();
-                }
-                else
-                {
-                // END KGU#144 2016-01-22
-                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
-                    if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
-                            !_ele.getClass().getSimpleName().equals("Root") &&
-                            ((i-1>=0)))
-                    {
-                            // START KGU#136 2016-03-02: Bugfix #97
-                            //((Subqueue) _ele.parent).removeElement(i);
-                            //((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
-                            ((Subqueue) _ele.parent).moveElement(i, i-1);
-                            // END KGU#136 2016-03-02: Bugfix #97
-                        	// START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
-                            //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                            _ele.setSelected(true);
-                            res=true;
-                    }
-               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
-               	}
-               	// END KGU#144 2016-01-22
+                res = ((SelectedSequence)_ele).moveUp();
             }
-            return res;
+            else
+            {
+                // END KGU#144 2016-01-22
+                int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
+                        !_ele.getClass().getSimpleName().equals("Root") &&
+                        ((i-1>=0)))
+                {
+                    // START KGU#136 2016-03-02: Bugfix #97
+                    //((Subqueue) _ele.parent).removeElement(i);
+                    //((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
+                    ((Subqueue) _ele.parent).moveElement(i, i-1);
+                    // END KGU#136 2016-03-02: Bugfix #97
+                    // START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
+                    //hasChanged=true;
+                    // END KGU#137 2016-01-11
+                    _ele.setSelected(true);
+                    res=true;
+                }
+            // START KGU#144 2016-01-22: Bugfix #38 (continued)
+            }
+            // END KGU#144 2016-01-22
+        }
+        return res;
     }
 
     /**
      * Returns a File object representing the existing file this diagram is stored within
      * or proceeding from. In case this is an extracted file, it will represent the path
      * of the containing archive. If this is not associated to a file (e.g. never saved) or
-     * the origin file cannot be located anymore then the result will be null.
+     * the origin file cannot be located anymore then the result will be null.<br/>
+     * (The result is equivalent to {@code new File(this.getPath(true))}, if this is
+     * associated to a file at all.)
      * @return a File object representing the existing source or archive file or null
+     * @see #getPath()
+     * @see #getPath(boolean)
      */
     public File getFile()
     {
@@ -2301,8 +2305,9 @@ public class Root extends Element {
 
     /**
      * Returns the absolute file path as string if this diagram is associated to a file or an empty string
-     * otherwise.
+     * otherwise.<br/>
      * If the file resides within an arrz archive, the path will be a symbolic path into the arrz archive.
+     * (This method is equivalent to {@code getPath(false)}.)
      * @return the absolute path of the nsd file (may be symbolic)
      * @see #getPath(boolean)
      * @see #getFile()
@@ -2315,10 +2320,12 @@ public class Root extends Element {
     
     /**
      * Returns the absolute file path as string if this diagram is associated to a file,
-     * or an empty string otherwise.
+     * or an empty string otherwise.<br/>
      * If the file resides within an arrz archive, the path may be a symbolic path into
      * the arrz archive unless {@code pathOfrigin} is true, in which case it will be the
-     * archive path itself instead.
+     * archive path itself instead.<br/>
+     * {@code getPath(true)} is equivalent to {@code getFile().getAbsolutePath()} if this
+     * is associated to a file at all.
      * @param pathOfOrigin - if true and the diagram resides within an arrz archive the
      * path of the mere archive will be returned.
      * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
@@ -2329,7 +2336,7 @@ public class Root extends Element {
     {
     	if (filename.equals(""))
     	{
-    		return new String();
+    		return filename;
     	}
     	else
     	{

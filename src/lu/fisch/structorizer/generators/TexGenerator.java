@@ -605,7 +605,7 @@ public class TexGenerator extends Generator {
 			code.add("\\usepackage{struktex}");
 			code.add("\\usepackage{german}");
 			// START KGU#483 2017-12-31: Issue #497 - there might also be usepackage additions
-			this.insertUserIncludes("");
+			this.appendUserIncludes("");
 			// END KGU#483 2017-12-31
 			code.add("");
 			// START KGU#483 2017-12-31: Issue #497
@@ -658,7 +658,7 @@ public class TexGenerator extends Generator {
 				while (!this.includedRoots.isEmpty()) {
 					Root incl = this.includedRoots.remove();
 					if (incl != _root) {
-						this.insertDefinitions(incl, _indent, null, true);
+						this.appendDefinitions(incl, _indent, null, true);
 					}
 				}
 			}
@@ -710,7 +710,7 @@ public class TexGenerator extends Generator {
 	// END KGU#483 2017-12-30
 
 	// START KGU#483 2018-01-02: Enh. #389 + issue #497
-	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// Just generate the entire diagram...
 		boolean wasTopLevel = topLevel;
 		try {

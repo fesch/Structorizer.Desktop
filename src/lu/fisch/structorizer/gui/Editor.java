@@ -75,6 +75,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-15/17   Issue #56: new menu items for Try elements, breakpoint items disabled
  *                                      for Forever and Try elements.
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
+ *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approach
  *
  ******************************************************************************************************
  *
@@ -87,9 +88,11 @@ import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.FocusEvent.Cause;
 import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 
 import lu.fisch.structorizer.arranger.ArrangerIndex;
 import lu.fisch.structorizer.arranger.Group;
@@ -115,6 +118,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
 	protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
 
+	// START KGU#705 2019-09-23: Enh. #738 Code preview
+	protected final JTextArea txtCode = new JTextArea();
+	// END KGU#705 2019-09-23
 	// Panels
 	public Diagram diagram = new Diagram(this, "???");
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
@@ -129,6 +135,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
 	protected final JScrollPane scrollIndex = new JScrollPane(arrangerIndex);
 	// END KGU#305 2016-12-12
+	// START KGU#705 2019-09-23: Enh. #738 Code preview
+	public final JTabbedPane pnlTabbed = new JTabbedPane();
+	protected final JScrollPane scrollCode = new JScrollPane(txtCode);
+	// END KGU#705 2019-09-23
 
 	// Buttons
 	// I/O
@@ -434,10 +444,59 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#305 2016-12-12
 		
 		createDiagramArea();
+
+		// START KGU#705 2019-09-23: Enh. #738
+		pnlTabbed.setTabPlacement(SwingConstants.BOTTOM);
+		pnlTabbed.add("Arrangerindex", scrollIndex);
+		
+		try {
+			txtCode.setTabSize(4);
+			txtCode.getDocument().insertString(0, "", null);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		txtCode.setEditable(false);
+		pnlTabbed.add("Code preview", scrollCode);
+		FocusListener tabbedFocusListener = new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent evt) {
+				Object src = evt.getSource();
+				if (src == pnlTabbed) {
+					switch (evt.getCause()) {
+					case TRAVERSAL_FORWARD:
+						pnlTabbed.transferFocus();
+						break;
+					case TRAVERSAL_BACKWARD:
+						pnlTabbed.transferFocusBackward();
+						break;
+					default:
+						System.out.println(evt.getID() + " + " + evt.getCause() + ": " + evt.getOppositeComponent());							
+					}
+				}
+				else if (src == scrollIndex) {
+					pnlTabbed.setSelectedIndex(0);
+				}
+				else if (src == scrollCode) {
+					pnlTabbed.setSelectedIndex(1);
+				}
+			}
+
+			@Override
+			public void focusLost(FocusEvent evt) {
+			}
+		};
+		pnlTabbed.addFocusListener(tabbedFocusListener);
+		scrollIndex.addFocusListener(tabbedFocusListener);
+		scrollCode.addFocusListener(tabbedFocusListener);
+		// END KGU#705 2019-09-23
 		
 		// START KGU#305 2016-12-12: Enh. #305
 		//createArrangerIndex();	// KGU#630 2019-01-12: Now done by ArrangerIndex itself
-		sp305.add(scrollIndex);
+		// START KGU#705 2019-09-23: Enh. #738 Arranger index now tabbed together with Code preview
+		//sp305.add(scrollIndex);
+		sp305.add(pnlTabbed);
+		// END KGU#705 2019-09-23
 		// END KGU#305 2016-12-12
 
 
@@ -1290,10 +1349,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			sp.setDividerSize(0);
 		}
 		
-		// START KGU#305 2016-12-12: Enh. 305
-		// arranger index
-		
-		doButtonsArrangerIndex();
+		// START KGU#305 2016-12-12: Enh. 305, KGU#705 2019-09-23: Enh. #738
+		// arranger index and code preview
+		doButtonsTabbedPane();
+		// END KGU#305 2016-12-12
 
                 // Intends to ensure the original toolbar order after redocking?
                 /*
@@ -1310,29 +1369,60 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 
 	/**
-	 * Checks and updates the visibility / usability of all Arranger-Index-specific buttons,
-	 * menu items and other controls
+	 * Checks and updates the visibility / usability of the tabbed pane including all Arranger-
+	 * Index-specific buttons, menu items, and other controls as well as the code preview page 
 	 */
-	private void doButtonsArrangerIndex() {
+	private void doButtonsTabbedPane() {
 		// START KGU#626 2019-01-01: Enh. #657
 		//if (diagram.showingArrangerIndex() && !diagrams.isEmpty())
-		if (diagram.showingArrangerIndex() && !arrangerIndex.isEmpty())
+		// START KGU#705 2019-09-23: Enh. #738
+		//if (diagram.showingArrangerIndex() && !arrangerIndex.isEmpty())
+		boolean showIndex = diagram.showingArrangerIndex() && !arrangerIndex.isEmpty();
+		boolean showPreview = diagram.showingCodePreview(); 
+		if (showIndex || showPreview)
+		// END KGU#705 2019-09-23
 		// END KGU#626 2019-01-01
 		{
 			if (sp305.getDividerSize()==0)
 			{
-				sp305.remove(scrollIndex);
-				sp305.add(scrollIndex);
+				// START KGU#705 2019-09-23: Enh. #738
+				//sp305.remove(scrollIndex);
+				//sp305.add(scrollIndex);
+				sp305.remove(pnlTabbed);
+				sp305.add(pnlTabbed);
+				// END KGU#705 2019-09-23
 			}
-			scrollIndex.setVisible(true);
-			scrollIndex.setViewportView(arrangerIndex);
+			//START KGU#705 2019-09-23: Enh. #738
+			//scrollIndex.setVisible(true);
+			//scrollIndex.setViewportView(arrangerIndex);
+			boolean wasEnabledIndex = pnlTabbed.isEnabledAt(0);
+			boolean wasEnabledPreview = pnlTabbed.isEnabledAt(1);
+			pnlTabbed.setEnabledAt(0, showIndex);
+			if (showIndex) {
+				scrollIndex.setViewportView(arrangerIndex);
+			}
+			pnlTabbed.setEnabledAt(1, showPreview);
+			if (!wasEnabledIndex && showIndex || !showPreview) {
+				pnlTabbed.setSelectedIndex(0);
+			}
+			else if (!wasEnabledPreview && showPreview || !showIndex) {
+				pnlTabbed.setSelectedIndex(1);
+			}
+			// END KGU#705 2019-09-23
 			sp305.setDividerSize(5);
-			scrollIndex.revalidate();
+			if (showIndex) {
+				scrollIndex.revalidate();
+			}
 		}
 		else
 		{
-			scrollIndex.setVisible(false);
-			sp305.remove(scrollIndex);
+			// START KGU#705 2019-09-23: Enh. #738
+			//scrollIndex.setVisible(false);
+			//sp305.remove(scrollIndex);
+			pnlTabbed.setEnabledAt(0, showIndex);
+			pnlTabbed.setEnabledAt(1, showPreview);
+			sp305.remove(pnlTabbed);
+			// END KGU#705 2019-09-23
 			sp305.setDividerSize(0);
 		}
 		// END KGU#305 2016-12-12
@@ -1507,7 +1597,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	public void repaintArrangerIndex() {
 		this.scrollIndex.repaint();
 		this.scrollIndex.validate();
-		this.doButtonsArrangerIndex();
+		this.doButtonsTabbedPane();
 	}
 	// END KGU#626 2019-01-04
 	// END KGU#305 2016-12-12

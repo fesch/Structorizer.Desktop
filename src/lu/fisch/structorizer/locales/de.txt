@@ -275,6 +275,7 @@ Menu.menuDiagramMarker.text=Variable hervorheben?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
+Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -679,6 +680,9 @@ Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Debug
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Arranger-Index
+Editor.pnlTabbed.tab.1=Code-Voransicht
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Einzugebender Text

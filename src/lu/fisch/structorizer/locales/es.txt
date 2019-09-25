@@ -277,6 +277,7 @@ Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
+Menu.menuDiagramPreview.text=¿Mostrar prevista de código?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
@@ -681,6 +682,9 @@ Editor.popupDisable.text=Desactivar/Reactivar
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Indice de Arranger
+Editor.pnlTabbed.tab.1=Prevista de código
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Por favor ingresa un texto

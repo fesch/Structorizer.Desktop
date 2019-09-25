@@ -492,21 +492,21 @@ public class PasGenerator extends Generator
 			{
 				posDecl = code.indexOf(seekIndent + "var");
 				if (posDecl >= 0) {
-					code.insert("", posDecl);
-					code.insert(seekIndent + _category, posDecl);					
+					insertCode("", posDecl);
+					insertCode(seekIndent + _category, posDecl);					
 				}
 				seekIndent += this.getIndent();
 			}
 		}
 		// END KGU#332 2017-01-30
-		code.insert(seekIndent + text, posDecl + 1);
+		insertCode(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
-		if (!insertAsComment(_inst, _indent)) {
+		if (!appendAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
 
@@ -520,7 +520,7 @@ public class PasGenerator extends Generator
 			StringList lines = _inst.getUnbrokenText();
 			// START KGU#424 2017-09-25: Put the comment if the element doesn't contain anything else
 			if (lines.getLongString().trim().isEmpty()) {
-				insertComment(_inst, _indent);
+				appendComment(_inst, _indent);
 				commentInserted = true;
 			}
 			// END KGU#424 2017-09-25
@@ -536,7 +536,7 @@ public class PasGenerator extends Generator
 					{
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
@@ -549,7 +549,7 @@ public class PasGenerator extends Generator
 					{
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
@@ -578,7 +578,7 @@ public class PasGenerator extends Generator
 						int posBrace = expr.indexOf("{");
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
@@ -661,7 +661,7 @@ public class PasGenerator extends Generator
 						if (transline != null) {
 							// START KGU#424 2017-09-25: Put the comment on substantial content
 							if (!commentInserted) {
-								insertComment(_inst, _indent);
+								appendComment(_inst, _indent);
 								commentInserted = true;
 							}
 							// END KGU#424 2017-09-25
@@ -700,7 +700,7 @@ public class PasGenerator extends Generator
 			// starts with 1 but may vary widely). We solve the problem
 			// by providing a configurable start index constant
 			//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-			insertComment("Hint: Automatically decomposed array initialization", _indent);
+			appendComment("Hint: Automatically decomposed array initialization", _indent);
 			// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
 			//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
 			//		_indent.length());
@@ -823,7 +823,7 @@ public class PasGenerator extends Generator
     	boolean isDisabled = _alt.isDisabled();
 
     	// START KGU 2014-11-16
-    	insertComment(_alt, _indent);
+    	appendComment(_alt, _indent);
     	// END KGU 2014-11-16
 
     	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -833,7 +833,7 @@ public class PasGenerator extends Generator
     		StringList tokens = Element.splitLexically(condition, true);
     		for (int i = 0; i < this.fileVarNames.count(); i++) {
     			if (tokens.contains(this.fileVarNames.get(i))) {
-    				this.insertComment("TODO: Consider replacing this file test using IOResult!", _indent);
+    				this.appendComment("TODO: Consider replacing this file test using IOResult!", _indent);
     			}
     		}
     	}
@@ -859,7 +859,7 @@ public class PasGenerator extends Generator
     	boolean isDisabled = _case.isDisabled();
 
     	// START KGU 2014-11-16
-    	insertComment(_case, _indent);
+    	appendComment(_case, _indent);
     	// END KGU 2014-11-16
 
     	// START KGU#453 2017-11-02: Issue #447
@@ -899,7 +899,7 @@ public class PasGenerator extends Generator
     protected void generateCode(For _for, String _indent)
     {
     	// START KGU 2014-11-16
-    	insertComment(_for, _indent);
+    	appendComment(_for, _indent);
     	// END KGU 2014-11-16
 
     	// START KGU#61 2016-03-23: Enh. 84
@@ -1031,7 +1031,7 @@ public class PasGenerator extends Generator
 			else {
 				itemType = "FIXME_" + postfix;
 				// We do a dummy type definition
-				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+				this.appendComment("TODO: Specify an appropriate element type for the array!", _indent);
 			}
 
 			// Insert the array and index declarations
@@ -1069,7 +1069,7 @@ public class PasGenerator extends Generator
 			String valueList = _for.getValueList();
 			// We have no strategy here, no idea how to find out the number and type of elements,
 			// no idea how to iterate the members, so we leave it similar to Delphi and just add a TODO comment...
-			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+			this.appendComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
 
 			// Creation of the loop header
 			addCode("for " + var + " in " + transform(valueList, false) + " do",
@@ -1090,7 +1090,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _while.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
@@ -1116,7 +1116,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _repeat.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
@@ -1141,7 +1141,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _forever.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 
 		addCode("while (true) do", _indent, isDisabled);
@@ -1163,7 +1163,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _call.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_call, _indent);
+		appendComment(_call, _indent);
 		// END KGU 2014-11-16
 
 		StringList lines = _call.getUnbrokenText();
@@ -1176,11 +1176,11 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if (!insertAsComment(_jump, _indent)) {
+		if (!appendAsComment(_jump, _indent)) {
 			
 			boolean isDisabled = _jump.isDisabled();
 
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 
 			// KGU 2015-11-30: In Pascal, there is no break and no goto,
 			// so empty Jumps won't be allowed
@@ -1198,13 +1198,13 @@ public class PasGenerator extends Generator
 				String label = "StructorizerLabel_" + ref;
 				if (ref.intValue() < 0)
 				{
-					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-					insertComment(lines.getLongString(), _indent);
+					appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					appendComment(lines.getLongString(), _indent);
 					label = "__ERROR__";
 				}
 				else
 				{
-					insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+					appendComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
 				}
 				addCode("goto" + " " + label + ";", _indent, isDisabled);
 			}
@@ -1251,13 +1251,13 @@ public class PasGenerator extends Generator
 					// END KGU#686 2019-03-20
 					else if (!isEmpty)
 					{
-						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-						insertComment(line, _indent);
+						appendComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
+						appendComment(line, _indent);
 					}
 					// END KGU#74/KGU#78 2015-11-30
 				}
 				if (isEmpty) {
-					insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
+					appendComment("FIXME: An empty jump was found here! Cannot be translated to " +
 							this.getFileDescription(), _indent);
 				}
 			// START KGU#142 2016-01-17: Bugfix for enh. #23 (continued)
@@ -1272,30 +1272,30 @@ public class PasGenerator extends Generator
 		boolean isDisabled = _para.isDisabled();
 		
 		// START KGU 2014-11-16
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 		// END KGU 2014-11-16
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		addCode("begin", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
+			appendComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
 			addCode("begin", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
 			addCode("end;", _indent + this.getIndent(), isDisabled);
-			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			appendComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
 			addCode("", "", isDisabled);
 		}
 
 		addCode("end;", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-11-30
@@ -1309,7 +1309,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _try.isDisabled();
 		
-		insertComment(_try, _indent);
+		appendComment(_try, _indent);
 
 		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
 		String indent0 = _indent;
@@ -1337,7 +1337,7 @@ public class PasGenerator extends Generator
 		this.addCode("begin", indent1, isDisabled);
 		String indent2 = indent1 + this.getIndent();
 		if (exName != null && !exName.isEmpty()) {
-			this.insertComment("FIXME: Ensure a declaration for variable " + exName + " (String) in the VAR block!", indent2);
+			this.appendComment("FIXME: Ensure a declaration for variable " + exName + " (String) in the VAR block!", indent2);
 			this.addCode(exName + " := Ex.Message;", indent2, isDisabled);
 		}
 		generateCode(_try.qCatch, indent2);
@@ -1373,20 +1373,20 @@ public class PasGenerator extends Generator
 		}
 		// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - This is the unit comment, not the function comment
 		if (topLevel && _root.isSubroutine()) {
-			insertComment("Unit provides a routine with following functionality:", _indent);
+			appendComment("Unit provides a routine with following functionality:", _indent);
 		}
 		// END KGU#194/KGU#376 2017-09-22
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		if (topLevel)
 		{
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			// FIXME This may have little to do with whether it's a program
 			if (_root.isProgram()) {
-				this.insertUserIncludes(_indent);
+				this.appendUserIncludes(_indent);
 				// FIXME (#389): If Includables are to form separate UNITs then they are to be referenced here, too
 			}
 			// END KGU#351 2017-02-26
@@ -1418,11 +1418,11 @@ public class PasGenerator extends Generator
 				code.add(_indent);
 				code.add(_indent + "INTERFACE");
 				// STARTB KGU#351 2017-02-26: Enh. #346
-				this.insertUserIncludes(_indent);
+				this.appendUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				code.add(_indent);
 				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
-				insertComment(_root, _indent);
+				appendComment(_root, _indent);
 				// END KGU#194/KGU#376 2017-09-22
 			}
 			// END KGU#194 2016-05-07
@@ -1646,14 +1646,14 @@ public class PasGenerator extends Generator
 			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
 			for (Root incl: includes) {
 				if (incl != _root) {
-					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
+					this.appendPostponedInitialisations(incl, _indent + this.getIndent());
 				}
 			}
 			// START KGU#504 2018-03-13: Bugfix #520, #521
 			//if (_varNames != null) {
 			if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 			// END KGU#504 2018-03-13
-				this.insertPostponedInitialisations(_root, _indent + this.getIndent());
+				this.appendPostponedInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#375 2017-09-20
 			code.add(_indent);
@@ -1706,7 +1706,7 @@ public class PasGenerator extends Generator
 						_sectionBegun = true;
 					}
 					// START KGU#424 2017-09-25
-					insertDeclComment(_root, indentPlus1, constName);
+					appendDeclComment(_root, indentPlus1, constName);
 					// END KGU#424 2017-09-25
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
 				}
@@ -1716,7 +1716,7 @@ public class PasGenerator extends Generator
 					if (expr.endsWith("}")) {
 						// Seems to be an initializer
 						// START KGU#424 2017-09-25
-						insertDeclComment(_root, "", constName);
+						appendDeclComment(_root, "", constName);
 						// END KGU#424 2017-09-25
 						if (constType.isArray()) {
 							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null), false);
@@ -1772,7 +1772,7 @@ public class PasGenerator extends Generator
 					_sectionBegun = true;
 				}
 				// START KGU#424 2017-09-25
-				insertDeclComment(_root, indentPlus1, key);
+				appendDeclComment(_root, indentPlus1, key);
 				// END KGU#424 2017-09-25
 				TypeMapEntry type = typeEntry.getValue();
 				if (type.isRecord()) {
@@ -1836,7 +1836,7 @@ public class PasGenerator extends Generator
 				_sectionBegun = true;
 			}
 			// START KGU#424 2017-09-25
-			insertDeclComment(_root, indentPlus1, varName);
+			appendDeclComment(_root, indentPlus1, varName);
 			// END KGU#424 2017-09-25
 			TypeMapEntry typeInfo = typeMap.get(varName); 
 			StringList types = null;
@@ -1864,7 +1864,7 @@ public class PasGenerator extends Generator
 				}
 				type = prefix + type;
 				if (type.contains("???")) {
-					insertComment(varName + ": " + type + ";", indentPlus1);
+					appendComment(varName + ": " + type + ";", indentPlus1);
 				}
 				else {
 					if (isComplexConst) {
@@ -1874,7 +1874,7 @@ public class PasGenerator extends Generator
 				}
 			}
 			else {
-				insertComment(varName, indentPlus1);
+				appendComment(varName, indentPlus1);
 			}
 			// END KGU#261 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388
@@ -1884,7 +1884,7 @@ public class PasGenerator extends Generator
 	}
 
 	// START KGU#375/KGU#376/KGU#388 2017-09-20: Enh. #388, #389, #423 
-	private void insertPostponedInitialisations(Root _root, String _indent) {
+	private void appendPostponedInitialisations(Root _root, String _indent) {
 		StringList initLines = this.structuredInitialisations.get(_root);
 		if (initLines != null) {
 			for (int i = 0; i < initLines.count(); i++) {
@@ -1908,7 +1908,7 @@ public class PasGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				varName = varNames.get(vx);
 				code.add(_indent);
-				insertComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
+				appendComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
 				code.add(_indent + this.getIndent() + _root.getMethodName() + " := " + varName + ";");
 			}
 		}
