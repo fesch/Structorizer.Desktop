@@ -764,7 +764,7 @@ InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einz
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
 InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
 InputBoxRoot.lblComment.text=Einzugebender Kommentar
-InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBoxRoot.txtComment.tooltip=Z.B. Wozu dient der Algorithmus, wie ist er anzuwenden, wer hat ihn erstellt usw.
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxRoot.btnCancel.text=Abbrechen
@@ -875,7 +875,7 @@ Preferences.pnlCase.tooltip=Einstellungen zur @c-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
-Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements verringern (0 = aus)
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
@@ -893,7 +893,7 @@ Preferences.lblRepeat.text=Voreinstellungs-Text
 Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im @h-Schleifen-Fuß.
 Preferences.pnlTry.border=@q-Block-Beschriftungen
 Preferences.lblTry.tooltip=Markierung des Hauptanweisungsblocks im @q-Element
-Preferences.lblCatch.tooltip=Markierung des Ausahmebehandlungsblocks im @-Element
+Preferences.lblCatch.tooltip=Markierung des Ausahmebehandlungsblocks im @q-Element
 Preferences.lblFinal.tooltip=Markierung des Aufräumblocks im @q-Element
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
