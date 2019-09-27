@@ -184,6 +184,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-08-03      Issue #733: Selective property export mechanism implemented.
  *      Kay Gürtzig     2019-09-24      Bugfix #751: Cursor traversal didn't reach Try element internals
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approaches
+ *      Kay Gürtzig     2019-09-27      Enh. #738: Methods for code preview popup menu reaction
  *
  ******************************************************************************************************
  *
@@ -218,6 +219,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -461,7 +463,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     /** Indicates whether Arranger index is visible (diagram setting) */
 	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
 	// END KGU#305 2016-12-12
-	// START KGU#305 2019-09-23: Enh. #738
+	// START KGU#705 2019-09-23: Enh. #738
 	/** Indicates whether code preview is enabled (diagram setting) */
 	private boolean show_CODE_PREVIEW = false;		// Code Preview visible?
 	/** Maps Elements to line number intervals of the current code preview */
@@ -473,8 +475,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private final HighlightPainter execHighlightPainter = 
 			new DefaultHighlighter.DefaultHighlightPainter(Element.E_RUNNINGCOLOR);
 	/** Caches the highlight manager for {@link #codePreview} */
-	Highlighter codeHighlighter = null;
-	// END KGU#305 2019-09-23
+	private Highlighter codeHighlighter = null;
+	// END KGU#705 2019-09-23
 
     // recently opened files
     protected Vector<String> recentFiles = new Vector<String>();
@@ -991,6 +993,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
 		if (e.getSource() == this)
 		{
+			// START KGU#705 2019-09-26: Enh. #738: The focus wasn't automatically gained on clicking into the diagram
+			this.getParent().getParent().requestFocus();
+			// END KGU#705 2019-09-26
 			//System.out.println("Pressed");
 			mouseX = e.getX();
 			mouseY = e.getY();
@@ -1455,7 +1460,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#705 2019-09-24: Enh. 738
 		if (show_CODE_PREVIEW && codeHighlighter != null && element.executed) {
 			codeHighlighter.removeAllHighlights();
-			this.highlightCodeForElement(element, true);
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					highlightCodeForElement(element, true);
+				}
+			});
 		}
 		// END KGU#705 2019-09-24
 	}
@@ -1515,10 +1525,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void invalidateAndRedraw()
 	{
-		// During execution it is no good idea to rest variable, constants, and type informaion.
+		// During execution it is no good idea to reset variable, constants, and type information.
 		// Anyway the pool changes will usually only be a pseudo addition in order to get ownership
-		// of executed subroutines, so better ignore it. Otherwise of course, we should react to
-		// a possible insertion or removal of some referred includable.
+		// of executed subroutines, so better ignore it.
+		// Otherwise, of course, we should react to a possible insertion or removal of some referred
+		// includable, and even subroutines becoming available may have an impact on derived types
+		// (result types), even recursively.
 		if (!root.isExecuted()) {
 			root.clearVarAndTypeInfo(false);
 		}
@@ -1720,10 +1732,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (show_CODE_PREVIEW && codePreviewMap != null) {
 			int pos = -1;
-			if (codeHighlighter == null) {
-				codeHighlighter = codePreview.getHighlighter();
+			if (codeHighlighter != null) {
+				codeHighlighter.removeAllHighlights();
 			}
-			codeHighlighter.removeAllHighlights();
 			if (this.selected != null) {
 				if (this.selected instanceof IElementSequence) {
 					IElementSequence.Iterator iter = ((IElementSequence)this.selected).iterator(false);
@@ -1759,6 +1770,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int pos = -1;
 		int[] interval = codePreviewMap.get(ele);
 		if (interval != null) {
+			if (codeHighlighter == null) {
+				codeHighlighter = codePreview.getHighlighter();
+			}
 			for (int line = interval[0]; line < interval[1]; line++) {
 				try {
 					pos = codePreview.getLineStartOffset(line);
@@ -1782,6 +1796,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return pos;
 	}
 	// END KGU#705 2019-09-24
+	
+	/**
+	 * Tries to identify the {@link Element} that is responsible for the code line
+	 * with given number {@code lineNo} in the {@link #codePreview}.
+	 * @param lineNo - number of a line in the {@link #codePreview}.
+	 * @return the closest corresponding {@link Element}.
+	 */
+	public Element identifyElementForCodeLine(int lineNo)
+	{
+		int lineRangeSize = codePreview.getLineCount();
+		Element closest = null;
+		for (Entry<Element, int[]> entry: codePreviewMap.entrySet()) {
+			int[] range = entry.getValue();
+			if (range[0] <= lineNo && range[1] > lineNo) {
+				if (range[1] - range[0] < lineRangeSize || closest == null) {
+					closest = entry.getKey();
+					lineRangeSize = range[1] - range[0];
+				}
+			}
+		}
+		return closest;
+	}
+	
+	// START KGU#705 2019-09-26: Enh. #738
+	/**
+	 * Entry point for external components to get the given {@code element}
+	 * consistently selected in the diagram.
+	 * @param element - the {@link Element} to be selected
+	 */
+	public void selectElement(Element element)
+	{
+		if (element != null) {
+			Element sel = root.findSelected();
+			if (sel != null) {
+				sel.setSelected(false);
+			}
+			element.setSelected(true);
+			this.selected = element;
+			this.redraw(element);
+			if (codeHighlighter != null) {
+				codeHighlighter.removeAllHighlights();
+			}
+			this.highlightCodeForElement(element, false);
+		}
+	}
+	// END KGU#705 2019-09-26
 
 	/**
 	* Method: print <p>
@@ -3263,9 +3323,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/*****************************************
 	 * edit method
+	 * @return TODO
 	 *****************************************/
-	public void editNSD()
+	/**
+	 * Opens the editor for the currently selected element
+	 * @return true if the element was changed, false otherwise
+	 */
+	public boolean editNSD()
 	{
+		boolean modified = false;
 		Element element = getSelected();
 		if (element!=null)
 		{
@@ -3302,7 +3368,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					try {
 						addUndoNSD(false);
 					} catch (CancelledException e) {
-						return;
+						return false;
 					}
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
@@ -3312,6 +3378,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					selected = ele.setSelected(true);
+					modified = true;
 					redraw();
 				}
 			}
@@ -3360,7 +3427,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				showInputBox(data, element.getClass().getSimpleName(), false);
 				// END KGU#42 2015-10-14
 
-				if (data.result==true)
+				if (data.result == true)
 				{
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
@@ -3373,7 +3440,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					try {
 						this.addUndoNSD(element instanceof Root);
 					} catch (CancelledException e) {
-						return;
+						return false;
 					}
 					// END KGU#684 2019-06-13
 					// END KGU#363 2017-05-21
@@ -3419,6 +3486,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#136 2016-03-01: Bugfix #97
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
+					modified = true;
 					redraw();
 				}
 			}
@@ -3428,9 +3496,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			adaptScrollUnits();
 			// END KGU#444 2017-10-23
 			// START KGU#705 2019-09-23: Enh. #738
-			this.updateCodePreview();
+			if (modified) {
+				this.updateCodePreview();
+			}
 			// END KGU#705 2019-09-23
 		}
+		return modified;
 	}
 	
 	private void preEditFor(EditData _data, For _for)
@@ -8183,6 +8254,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						ini.setProperty("genExportPreferred", plugin.title);
 						ini.save();
 						updateCodePreview();
+						NSDControl.doButtons();
 					}
 					break;
 				}
@@ -9223,6 +9295,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				this.findDialog.adaptToNewLaF();
 			}
 			catch (Exception ex) {}
+		}
+		if (this.codeHighlighter != null)
+		{
+			this.codeHighlighter = codePreview.getHighlighter();
+			this.updateCodePreview();
 		}
 	}
 	// END KGU#324 2017-05-30

@@ -298,7 +298,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376/KGU#388 2017-09-26
 	// START KGU#705 2019-09-23: Enh. #738
 	/** Maps processed elements to the corresponding code line interval and indentation depth */
-	private HashMap<Element, int[]> codeMap = null;
+	protected HashMap<Element, int[]> codeMap = null;
 	// END KGU#705 2019-09-23
 	
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
@@ -1044,6 +1044,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			for (int[] entry: codeMap.values()) {
 				if (entry[0] >= atLine) {
 					entry[0]++;
+					entry[1]++;
+				}
+				else if (entry[1] >= atLine) {
 					entry[1]++;
 				}
 			}
@@ -2616,7 +2619,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateFooter(_root, _indent);
 		// END KGU#74 2015-11-30
 		// START KGU#705 2019-09-23: Enh. #738
-		if (codeMap!= null) {
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
 			// Update the end line no relative to the start line no
 			codeMap.get(_root)[1] += (code.count() - line0);
 		}

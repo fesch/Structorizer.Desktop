@@ -51,6 +51,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2019-03-08      Enh. #385: Optional function arguments with defaults
+ *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
  *
  ******************************************************************************************************
  *
@@ -132,6 +133,16 @@ public class KSHGenerator extends BASHGenerator {
 
 		String indent = _indent;
 		// START KGU#178 2016-07-20: Enh. #160
+		
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
+		
 		if (topLevel)
 		{
 			code.add("#!/usr/bin/ksh");
@@ -233,6 +244,13 @@ public class KSHGenerator extends BASHGenerator {
 			code.add("}");
 		}
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
 		return code.getText();
 		
 	}

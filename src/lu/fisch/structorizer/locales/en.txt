@@ -682,6 +682,10 @@ Editor.popupBreakTrigger.text=Specify break trigger...
 // Tabbed pane
 Editor.pnlTabbed.tab.0=Arranger index
 Editor.pnlTabbed.tab.1=Code preview
+Editor.popupCodeExport.text=Export ...
+Editor.popupCodeExport.tooltip=Export the code to file
+Editor.popupCodeHide.text=Hide code preview
+Editor.ttPopupCodePreview.text=Switches the code preview to % and sets it as favourite export language.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=

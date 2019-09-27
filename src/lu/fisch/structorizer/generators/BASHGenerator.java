@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
  *
  ******************************************************************************************************
  *
@@ -1256,6 +1257,14 @@ public class BASHGenerator extends Generator {
 		//typeMap = _root.getTypeInfo();
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
@@ -1383,6 +1392,13 @@ public class BASHGenerator extends Generator {
 			code.add("}");
 		}
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
 		return code.getText();
 		
 	}

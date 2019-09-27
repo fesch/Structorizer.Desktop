@@ -2213,7 +2213,7 @@ public class Root extends Element {
             }
             else
             {
-                // END KGU#144 2016-01-22
+            // END KGU#144 2016-01-22
                 int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                 if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                         !_ele.getClass().getSimpleName().equals("Root") &&

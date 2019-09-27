@@ -705,7 +705,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				
 				// ==================== diagram menu settings ====================
 				// DIN 66261
-				if (ini.getProperty("DIN","0").equals("1")) // default = 0
+				if (ini.getProperty("DIN","1").equals("1")) // default = 1 (since version 3.30)
 				{
 					//diagram.setDIN();
 					Element.E_DIN = true;

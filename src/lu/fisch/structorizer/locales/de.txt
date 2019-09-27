@@ -683,6 +683,10 @@ Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
 // Tabbed pane
 Editor.pnlTabbed.tab.0=Arranger-Index
 Editor.pnlTabbed.tab.1=Code-Voransicht
+Editor.popupCodeExport.text=Exportieren ...
+Editor.popupCodeExport.tooltip=Den Code in eine Datei exportieren.
+Editor.popupCodeHide.text=Code-Voransicht verbergen
+Editor.ttPopupCodePreview.text=Stellt die Code-Voransicht nach % um und setzt % als bevorzugte Exportsprache.
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Einzugebender Text

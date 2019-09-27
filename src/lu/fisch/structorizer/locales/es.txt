@@ -329,7 +329,7 @@ Menu.menuPreferencesSaveRestore.tooltip=Restablce las peferencias del backup cua
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
 
-// Menu "Debug"
+// Menu "Debug" (Caption "Depurar" might be better but would require to change the mnemonic to e.g. 'u')
 Menu.menuDebug.text=Debug
 Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
@@ -685,6 +685,10 @@ Editor.popupBreakTrigger.text=Fija la condición de parar ...
 // Tabbed pane
 Editor.pnlTabbed.tab.0=Indice de Arranger
 Editor.pnlTabbed.tab.1=Prevista de código
+Editor.popupCodeExport.text=Exportar ...
+Editor.popupCodeExport.tooltip=Exportar el código a un archivo
+Editor.popupCodeHide.text=Esconder la prevista
+Editor.ttPopupCodePreview.text=Cambia la prevista de código hacia % y lo pone como lenguaje preferido de exportación.
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Por favor ingresa un texto
