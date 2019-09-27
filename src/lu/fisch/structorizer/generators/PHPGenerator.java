@@ -488,7 +488,7 @@ public class PHPGenerator extends Generator
     		// END KGU#162 2016-04-01
     	}
     	// END KGU#61 2016-03-23
-		// END KGU#3 2015-11-02
+    	// END KGU#3 2015-11-02
         addCode("{", _indent, isDisabled);
         generateCode(_for.q,_indent+this.getIndent());
         addCode("}", _indent, isDisabled);
@@ -559,13 +559,13 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Call _call, String _indent)
     {
-    	boolean isDisabled = _call.isDisabled();
-    	
-		// START KGU 2014-11-16
-		appendComment(_call, _indent);
-		// END KGU 2014-11-16
+        boolean isDisabled = _call.isDisabled();
+    
+        // START KGU 2014-11-16
+        appendComment(_call, _indent);
+        // END KGU 2014-11-16
 
-		StringList lines = _call.getUnbrokenText();
+        StringList lines = _call.getUnbrokenText();
         for(int i=0;i<lines.count();i++)
         {
         	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
