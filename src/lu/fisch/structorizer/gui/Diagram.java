@@ -185,6 +185,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-24      Bugfix #751: Cursor traversal didn't reach Try element internals
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approaches
  *      Kay Gürtzig     2019-09-27      Enh. #738: Methods for code preview popup menu reaction
+ *      Kay Gürtzig     2019-09-28      Javadoc completions, fine-tuning for #738
  *
  ******************************************************************************************************
  *
@@ -323,9 +324,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mY = -1;
     
     private NSDController NSDControl = null;
-    
+
 	// START KGU#534 2018-06-27: Enh. #552
-    /** Nesting depth of serial actions */
+	/*========================================
+	 * Serial action support
+	 *========================================*/
+	/** Nesting depth of serial actions */
 	private static short serialActionDepth = 0;
 	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
 	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE};
@@ -439,11 +443,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Last used value for interactive line length limitation (word wrapping) */
 	public int lastWordWrapLimit = 0;
 	// END KGU#602 2018-10-28
-    // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
-    private String prefGeneratorName = "";
-    // END KGU#170 2016-04-01
-    // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
-    /** Cache of class instances implementing interface {@link CodeParser} */
+	// START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
+	private String prefGeneratorName = "";
+	// END KGU#170 2016-04-01
+	// START KGU#354 2017-03-15: Enh. #354 CodeParser cache
+	/** Cache of class instances implementing interface {@link CodeParser} */
 	private static Vector<CodeParser> parsers = null;
 	/** The {@link GENPlugin}s held here provide parser-specific option specifications */
 	private static Vector<GENPlugin> parserPlugins = null;
@@ -454,13 +458,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Bitset of enabled {@link DiagramController} instances */ 
 	private long enabledDiagramControllers = 0;
 	// END KGU#448 2018-01-05
-    
-    // START KGU#300 2016-12-02: Enh. #300 - update notification settings
-    // KGU#300 2017-03-15: turned static
-    public static boolean retrieveVersion = false;
-    // END KGU#300 2016-12-02
+
+	// START KGU#300 2016-12-02: Enh. #300 - update notification settings
+	// KGU#300 2017-03-15: turned static
+	public static boolean retrieveVersion = false;
+	// END KGU#300 2016-12-02
 	// START KGU#305 2016-12-12: Enh. #305
-    /** Indicates whether Arranger index is visible (diagram setting) */
+	/** Indicates whether Arranger index is visible (diagram setting) */
 	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
 	// END KGU#305 2016-12-12
 	// START KGU#705 2019-09-23: Enh. #738
@@ -513,10 +517,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#667 2019-02-26
 
 
-	/*****************************************
-	 * CONSTRUCTOR
-     *****************************************/
-    public Diagram(Editor _editor, String _string)
+    /*========================================
+     * CONSTRUCTOR
+     *========================================*/
+    /**
+     * Creates the Working area implementing most of the associated actions
+     * @param _editor - the associated {@link Editor} instance providing toolbar, popup menu, and more
+     * @param _name - name of the initial diagram to be presented
+     */
+    public Diagram(Editor _editor, String _name)
     {
         super(true);
         this.setDoubleBuffered(true);	// we don't need double buffering, because the drawing
@@ -531,7 +540,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // END KGU#705 2019-09-23
             NSDControl = _editor;
         }
-        create(_string);
+        create(_name);
     }
 
 
@@ -544,8 +553,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	/**
-	 * @param root the Root to set
-	 * @return false if the user refuses to adopt the Root or the Root is being executed
+	 * Replaces the current diagram ({@link #root}) by the given {@code root} unless
+	 * {@link Executor} is running or the user cancels the action on occasion of an
+	 * requested decision about unsaved changes of the recently held {@link #root}.
+	 * @param root - the {@link Root} to set
+	 * @return false if the user refuses to adopt {@code root} or the current {@link Root} is being executed
 	 */
 	public boolean setRootIfNotRunning(Root root) {
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
@@ -623,13 +635,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * @return true if the Analyser is currently enabled, false otherwise
 	 */
-    public boolean getAnalyser()
-    {
-        return Element.E_ANALYSER;
-    }
+	public boolean getAnalyser()
+	{
+		return Element.E_ANALYSER;
+	}
 
-    private void create(String _string)
-    {
+	private void create(String _string)
+	{
 		// load different things from INI-file
 		Element.loadFromINI();
 		CodeParser.loadFromINI();
@@ -1833,7 +1845,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				sel.setSelected(false);
 			}
 			element.setSelected(true);
-			this.selected = element;
+			selected = element;
+			selectedDown = selected;
 			this.redraw(element);
 			if (codeHighlighter != null) {
 				codeHighlighter.removeAllHighlights();
@@ -1890,9 +1903,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * New method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Replaces the current {@link #root} by a new empty {@link Root} unless the current
+	 * {@link #root} is being executed or the user refuses to make a decision about unsaved
+	 * changes.
+	 */
 	public void newNSD()
 	{
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
@@ -1940,9 +1958,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Open method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Action method to have the user select an NSD or arrangement file to be loaded (which is going to
+	 * replace the current {@link #root}. Does nothing if there is a pending execution.
+	 * @see #openNSD(String)
+	 * @see #openNsdOrArr(String)
+	 */
 	public void openNSD()
 	{
 		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
@@ -2006,6 +2030,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * If none of the expected file extensions match then an empty string is returned.
 	 * @param _filepath - the path of the file to be loaded
 	 * @return - the file extension
+	 * @see #openNSD()
+	 * @see #openNSD(String)
 	 */
 	public String openNsdOrArr(String _filepath)
 	{
@@ -2028,6 +2054,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#316 2016-12-28
 
+	/**
+	 * Method is to open an NSD file (not an arrangement file!) the path of which
+	 * is given by {@code _filename}.<br/>
+	 * If arrangement file are also to be accepted then use {@link #openNsdOrArr(String)} instead.
+	 * @param _filename - file path of an NSD file
+	 * @see #openNsdOrArr(String)
+	 */
 	public void openNSD(String _filename)
 	{
 		// START KGU#48 2015-10-17: Arranger support
@@ -2241,9 +2274,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#289 2016-11-15
 
-	/*****************************************
+	/*========================================
 	 * SaveAll method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Saves all NSD (and arrangement) files without file association or with unsaved changes
+	 * in a serial action.
+	 */
 	public void saveAllNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
@@ -2263,13 +2300,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * SaveAs method
-	 *****************************************/
+	 *========================================*/
 	
 	/**
 	 * Tries to save the current {@link Root} under a new path. Opens a FileChooser for this purpose
-	 * @return true if the diagram was saved, false otherwise
+	 * @return true if the diagram was saved, false otherwise.
 	 */
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
@@ -2280,6 +2317,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Tries to save the {@link Root} given as {@code root} under a new path. Opens a FileChooser for
 	 * this purpose.
+	 * @param root - the diagram to be saved.
 	 * @return true if the diagram was saved, false otherwise
 	 */
 	private boolean saveAsNSD(Root root)
@@ -2510,9 +2548,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return writeNow;
 	}
 
-	/*****************************************
+	/*========================================
 	 * Save method
-	 *****************************************/
+	 *========================================*/
 	
 	/**
 	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
@@ -2926,9 +2964,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#316 2016-12-28
 
-	/*****************************************
+	/*========================================
 	 * addUndo method
-	 *****************************************/
+	 *========================================*/
 	/**
 	 * Creates an undo entry on .root, if the action wasn't cancelled. (Otherwise
 	 * a CancelledException is thrown.)
@@ -2952,9 +2990,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#684 2019-06-13
 	}
 
-	/*****************************************
+	/*========================================
 	 * Undo method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Reverts the last action from the undo stack and updates the environment.
+	 */
 	public void undoNSD()
 	{
 		// START KGU#684 2019-06-13: Bugfix #728
@@ -2990,9 +3031,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * Redo method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Redoes the last undone action (if possible) and updates the environment.
+	 */
 	public void redoNSD()
 	{
 		// START KGU#684 2019-06-13: Bugfix #728
@@ -3028,9 +3072,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * applicability test methods
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Checks whether the prerequisites to paste elements are fulfilled.
+	 * @return true if there is something to paste and pasting is allowed.
+	 */
 	public boolean canPaste()
 	{
 		boolean cond = (eCopy!=null && selected!=null);
@@ -3053,6 +3101,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited...
+	/**
+	 * Checks whether the prerequisites to cut selected elements are fulfilled.
+	 * @return true if there is something selected and may be cut now.
+	 * @see #canCopy()
+	 */
 	//public boolean canCutCopy()
 	public boolean canCut()
 	{
@@ -3066,6 +3119,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// ... though breakpoints shall still be controllable
+	/**
+	 * Checks whether the prerequisites to copy selected elements are fulfilled.
+	 * @return true if there is something selected and may be copied now.
+	 * @see #canCut()
+	 * @see #canCopyNoRoot()
+	 */
 	public boolean canCopy()
 	// END KGU#143 2016-01-21
 	{
@@ -3085,6 +3144,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#177 2016-07-06: Enh. #158 - accidently breakpoints had become enabled on Root
+	/**
+	 * Restricted check wheher the selectd element(s) may be copied - will return false
+	 * if the selected element is a {@link Root}.
+	 * @return true if there is something except a {@link Root} selected and may be copied now.
+	 * @see #canCopy()
+	 * @see #canCut()
+	 */
 	public boolean canCopyNoRoot()
 	{
 		return canCopy() && !(selected instanceof Root);
@@ -3092,6 +3158,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#177 2016-07-06
 	
 	// START KGU#143 2016-11-17: Issue #114: Complex condition for editability
+	/**
+	 * Checks whether the prerequisites to edit the selected element are fulfilled.
+	 * @return true if there is something selected and may be edited now.
+	 */
 	public boolean canEdit()
 	{
 		return selected != null && !this.selectedIsMultiple() &&
@@ -3176,12 +3246,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#373 2017-03-28
 	
-	/*****************************************
+	/*========================================
 	 * setColor method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Sets the background colour of the selected element(s) to {@code _color} (undoable).
+	 * @param _color - the colour to be applied.
+	 */
 	public void setColor(Color _color)
 	{
-		if(getSelected()!=null)
+		if (getSelected() != null)
 		{
 			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
 			//root.addUndo();
@@ -3202,9 +3276,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Copy method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Copies the selected element(s) either to the system clipboard (if a {@link Root}
+	 * is selected or to an internal cache (otherwise).
+	 * @see #canCopy()
+	 * @see #cutNSD()
+	 * @see #pasteNSD()
+	 */
 	public void copyNSD()
 	{
 		if (selected!=null)
@@ -3226,9 +3307,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * cut method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Copies the selected element(s) to an internal cache and then removes them
+	 * from the current diagram (undoable). Does nothing if {@link #root} is selected.
+	 * @see #canCut()
+	 * @see #copyNSD()
+	 * @see #pasteNSD()
+	 */
 	public void cutNSD()
 	{
 		if (selected != null && selected != root)
@@ -3270,9 +3358,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * paste method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Pastes the elements from the internal copy cache to to the next position
+	 * after the currently selected element(s).
+	 * Does nothing if the copy cache is empty or nor target elements are selected.
+	 * @see #canPaste()
+	 * @see #copyNSD()
+	 * @see #cutNSD()
+	 */
 	public void pasteNSD()
 	{
 		if (selected != null && eCopy!=null)
@@ -3321,13 +3417,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * edit method
-	 * @return TODO
-	 *****************************************/
+	 *========================================*/
 	/**
-	 * Opens the editor for the currently selected element
+	 * Opens the editor for the currently selected element and applies
+	 * the committed changes (undoable).
 	 * @return true if the element was changed, false otherwise
+	 * @see #canEdit()
 	 */
 	public boolean editNSD()
 	{
@@ -3575,9 +3672,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
-	/*****************************************
+	/*========================================
 	 * moveUp method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Moves the selected element(s) one position up in the current diagram (undoable).
+	 * @see Element#canMoveUp()
+	 */
 	public void moveUpNSD()
 	{
 		//root.addUndo();
@@ -3594,9 +3695,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * moveDown method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Moves the selected element(s) one position down in the current diagram (undoable).
+	 * @see Element#canMoveDown()
+	 */
 	public void moveDownNSD()
 	{
 		//root.addUndo();
@@ -3613,9 +3718,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * delete method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Removes the selected element(s) fro the current diagram (undoable).
+	 * @see #canCut()
+	 */
 	public void deleteNSD()
 	{
 		//root.addUndo();
@@ -3711,9 +3820,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#181 2016-04-19
 	
 	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
-	/*****************************************
+	/*========================================
 	 * collapse method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Marks the selected element(s) as collapsed such that they are represented
+	 * by a surrogate the size of a simple instruction on drawing.
+	 * @see #expandNSD()
+	 */
 	public void collapseNSD()
 	{
 		getSelected().setCollapsed(true);
@@ -3725,9 +3839,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444 2017-10-23
 	}
 	
-	/*****************************************
+	/*========================================
 	 * expand method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Removes the collapsed flag from the selected elements such that they get
+	 * represented in their usual shape again on drawing the diagram.
+	 * @see #collapseNSD()
+	 */
 	public void expandNSD()
 	{
 		getSelected().setCollapsed(false);
@@ -3744,6 +3863,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*========================================
 	 * disable method
 	 *=======================================*/
+	/**
+	 * Flips the disabled flag on the selected element(s). If several elements are
+	 * selected, some of which are disabled while others are not, then disables all
+	 * of them. To disable an element means that it gets handled like a comment on
+	 * execution and export (undoable).
+	 */
 	public void disableNSD()
 	{
 		boolean allDisabled = true;
@@ -3776,9 +3901,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	// END KGU#277 2016-10-13
 
-	/*****************************************
+	/*========================================
 	 * add method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the element editor for the new given {@link Element} {@code _ele} and
+	 * inserts the edited element after (if {@code _after} is true) or before (otherwise)
+	 * the selected element(s) unless the user cancels the action.
+	 * @param _ele - the new {@link Element} to be processed
+	 * @param _title - proposed title for the editor (may be overridden by the localisation mechanism
+	 * @param _pre - the default prefix text as configured in the Structure Preferences
+	 * @param _after - whether {@code _ele} is to be inserted after (true) or before (false) the selected element.
+	 */
 	public void addNewElement(Element _ele, String _title, String _pre, boolean _after)
 	{
 		if (getSelected()!=null)
@@ -3878,10 +4012,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * subroutine derivation method(s)
-	 *****************************************/
+	 *========================================*/
 	// START KGU#365 2017-03-19: Enh. #380 - perform the possible conversion
+	/**
+	 * Extracts the select element(s) from the diagram, moves them to an interactively
+	 * specified new subroutine diagram and replaces them by a {@link Call} for the latter
+	 * (undoable).
+	 */
 	public void outsourceNSD()
 	{
 		if (this.selected != null) {
@@ -4274,10 +4413,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#667 2019-02-26
 
-	/*****************************************
+	/*========================================
 	 * transmute method(s)
-	 *****************************************/
+	 *========================================*/
 	// START KGU#199 2016-07-06: Enh. #188 - perform the possible conversion
+	/**
+	 * Converts the selected element(s) into some substitute according to the
+	 * specified transmutation rules (undoable).
+	 * @see #canTransmute()
+	 */
 	public void transmuteNSD()
 	{
 		Subqueue parent = (Subqueue)selected.parent;
@@ -4336,6 +4480,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#357 2017-03-10: Enh. #367
+	/** Helper method of {@link #transmuteNSD()} */
 	private void swapBranches(Alternative _alt) {
 		String condition = _alt.getText().getText();
 		String negCondition = Element.negateCondition(condition);
@@ -4350,6 +4495,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#357 2017-03-10
 
+	/** Helper method of {@link #transmuteNSD()} */
 	private void transmuteToSequence(Subqueue parent)
 	{
 		// Comment will be split as follows:
@@ -4382,6 +4528,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		selected.setSelected(true);
 	}
 	
+	/** Helper method of {@link #transmuteNSD()} */
 	private void transmuteToSpecialInstr(Subqueue parent)
 	{
 		Instruction instr = (Instruction)selected;
@@ -4405,6 +4552,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedDown = this.selected;
 	}
 	
+	/** Helper subroutine of {@link #transmuteNSD()} */
 	private void transmuteToCompoundInstr(Subqueue parent)
 	{
 		// Comments will be composed as follows:
@@ -4490,7 +4638,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#199 2016-07-06
 
 	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
-	// This is a transmutation helper function
+	/** Helper method of {@link #transmuteNSD()} */
 	private void decomposeForLoop(Subqueue parent)
 	{
 		// Comment will be tranferred to the While loop.
@@ -4551,7 +4699,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#229 2016-08-01
 
 	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
-	// This is a transmutation helper function
+	/** Helper method of {@link #transmuteNSD()} */
 	private void decomposeCase(Subqueue parent)
 	{
 		// Comment will be transferred to the first replacing element
@@ -4679,10 +4827,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Turtleizer precision methods
 	 *=======================================*/
 	/**
-	 * Replaces all Turtleizer fd and bk procedure calls by the more precise
-	 * forward and backward instructions (precisionUp = true) or the other way round
-	 * in the selected elements 
-	 * @param precisionUp
+	 * Replaces all Turtleizer {@code fd} and {@code bk} procedure calls by the more precise
+	 * {@code forward} and {@code backward} instructions ({@code precisionUp} = true) or the other way round
+	 * ({@code precisionUp} = false) in the selected elements 
+	 * @param precisionUp - whether to convert to the more precise or to the less precise versions
 	 */
 	public void replaceTurtleizerAPI(boolean precisionUp)
 	{
@@ -4774,7 +4922,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#602 2018-10-26: Enh. #619
 	/**
 	 * Adjusts line breaking for the selected element(s). Requests the details
-	 * ineractively from the user
+	 * interactively from the user.
 	 */
 	public void rebreakLines()
 	{
@@ -4894,9 +5042,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#602 2016-10-26
 
 	// START KGU#43 2015-10-12
-	/*****************************************
+	/*========================================
 	 * breakpoint methods
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Enables or disables the breakpoint on the selected element(s) depending on the previous
+	 * state. Does not affect a possibly configured break trigger.
+	 * @see Element#toggleBreakpoint()
+	 * @see #editBreakTrigger()
+	 * @see #clearBreakpoints()
+	 */
 	public void toggleBreakpoint()
 	{
 		Element ele = getSelected();
@@ -4908,6 +5063,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#213 2016-08-02: Enh. #215
+	/**
+	 * Opens a dialog that allows to set the break trigger value (i.e. the execution count
+	 * value that triggers a breakpoint if enabled.
+	 * @see #toggleBreakpoint()
+	 * @see #clearBreakpoints()
+	 */
 	public void editBreakTrigger() {
 		// TODO Auto-generated method stub
 		Element ele = getSelected();
@@ -4958,12 +5119,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#213 2016-08-02
 
+	/**
+	 * Unsets all enabled breakpoints throughout the current diagram.
+	 * @see #toggleBreakpoint()
+	 * @see #editBreakTrigger()
+	 */
 	public void clearBreakpoints()
 	{
 		root.clearBreakpoints();
 		redraw();
 	}
 
+	/**
+	 * Clears all execution flags and counts throughout the entire diagram held as
+	 * {@link #root}.
+	 */
 	public void clearExecutionStatus()
 	{
 		root.clearExecutionStatus();
@@ -4971,9 +5141,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#43 2015-10-12
 
-	/*****************************************
+	/*========================================
 	 * print method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the print preview for the current {@link #root} from which it can be printed.
+	 * @see #exportPDF()
+	 */
 	public void printNSD()
 	{
 		/*
@@ -5016,9 +5190,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU #2 2015-11-19
-	/*****************************************
+	/*========================================
 	 * arrange method
-	 *****************************************/
+	 *========================================*/
 	/**
 	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
 	 * it will be (re-)opened. 
@@ -5056,9 +5230,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#125 2016-01-06
 
-	/*****************************************
+	/*========================================
 	 * about method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the About window with version info, authors tab, license text, change log tab, and paths tab.
+	 */
 	public void aboutNSD()
 	{
 		About about = new About(NSDControl.getFrame());
@@ -5074,9 +5251,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		about.setVisible(true);
 	}
 
-	/*****************************************
+	/*========================================
 	 * export picture method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens a dialog for the configuration of a multi-tile PNG export and a {@link FileChooser}
+	 * and performs the respective image export.
+	 * @see #exportPNG()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportPNGmulti()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5138,7 +5324,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			File file = new File(filename.replace(".png", "-00-00.png"));
 			// END KGU#224 2016-07-28
 			boolean writeDown = true;
-            
+			
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
@@ -5252,7 +5438,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		// END KGU#456 2017-11-05
 	}
-        
+
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as PNG file.
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportPNG()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5345,6 +5539,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as EMF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportEMF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5440,6 +5642,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as SVG file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportSVG() // does not work!!
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5556,6 +5766,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as SWF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportPDF()
+	 * @see #exportEMF()
+	 */
 	public void exportSWF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5651,6 +5869,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as PDF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportSWF()
+	 * @see #printNSD()
+	 */
 	public void exportPDF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5747,9 +5974,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Import method for foreign diagrams
-	 *****************************************/
+	 *========================================*/
 	
 	// START KGU#386 2017-04-25: version 3.26-06 - new import sources
 	/**
@@ -5811,9 +6038,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#386 2017-04-25
 	
-	/*****************************************
+	/*========================================
 	 * import methods for code
-	 *****************************************/
+	 *========================================*/
 
 	// START KGU#354 2017-03-04: Enh. #354
 //	public void importPAS()
@@ -6342,10 +6569,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#354 2017-03-15
 
-	/*****************************************
+	/*========================================
 	 * export code methods
-	 * @param options 
-	 *****************************************/
+	 *========================================*/
 
 	/**
 	 * Export the current diagram to the programming language associated to the generator {@code _generatorClassName}
@@ -6540,9 +6766,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#395 2017-05-11
 
 	// START KGU#208 2016-07-22: Enh. #199
-	/*****************************************
+	/*========================================
 	 * help method
-	 *****************************************/
+	 *========================================*/
 
 	/**
 	 * Tries to open the online User Guide in the browser
@@ -6619,16 +6845,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#208 2016-07-22
 	
-	/*****************************************
+	/*========================================
 	 * update method
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Shows an info box with the link to the download page of Structorizer
+	 * and informs whether there is a newer version available.
+	 * @see #updateNSD(boolean)
+	 */
 	public void updateNSD()
 	// START KGU#300 2016-12-02: Enh. #300
 	{
 		updateNSD(true);
 	}
 	
+	/**
+	 * hecks the availability of a newer version on the download page and shows an
+	 * info box with the link to the download page of Structorizer if a new version
+	 * is available or {@code evenWithoutNewerVersion} is true.
+	 * @param evenWithoutNewerVersion - whether the infor box is always to be popped up.
+	 * @see #updateNSD()
+	 */
 	public void updateNSD(boolean evenWithoutNewerVersion)
 	// END KGU#300 2016-12-02
 	{
@@ -6726,6 +6964,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#300 2016-12-02 Enh. #300 Support for version retrieval
+	/**
+	 * Helper method for {@link #updateNSD()}
+	 * @return the version string, e.g. "3.29-14", of the latest version available or null,
+	 * depending on whether online version retrieval is enabled by {@link #retrieveVersion}.
+	 */
 	private String retrieveLatestVersion()
 	{
 		// START KGU#563 2018-07-26: Issue #566
@@ -6783,6 +7026,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //	}
 	// END KGU#300 2016-12-06
 	
+	/**
+	 * @return the version string, e.g. "3.30-05", of the latest version more adavanced than the
+	 * currently running version if online version retrieval is enabled ({@link #retrieveVersion})
+	 * and a newer version is available; null otherwise.
+	 */
 	public String getLatestVersionIfNewer()
 	{
 		int cmp = 0;
@@ -6815,10 +7063,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#300 2016-12-02
 
-	/*****************************************
+	/*========================================
 	 * the preferences dialog methods
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Opens the colour configuration dialog and processes configuration changes.
+	 */
 	public void colorsNSD()
 	{
 		// START KGU#245 2018-07-02: Converted to arrays
@@ -6879,6 +7130,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
+	/**
+	 * Opens the structure prefereneces dialog and processes configuration changes.
+	 */
 	public void preferencesNSD()
 	{
 		Preferences preferences = new Preferences(NSDControl.getFrame());
@@ -6962,6 +7216,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#393 2017-05-09		
 	}
 
+	/**
+	 * Opens the parser preferences dialog and processes configuration changes.
+	 */
 	public void parserNSD()
 	{
 		ParserPreferences parserPreferences = new ParserPreferences(NSDControl.getFrame());
@@ -7338,6 +7595,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#362 2017-03-28
 
+	/**
+	 * Replaces used parser keywords in the specified diagrams by the keywords associated to them
+	 * in the keyword map {@code refactoringData}, which also contains the specification
+	 * whether all open diagrams are to be refactored in this way or just {@link #root}.
+	 * @param refactoringData - maps old keywords to new keywords and may contain keys "refactorAll"
+	 * and "ignoreCase" as mere flags.
+	 */
 	public void refactorNSD(HashMap<String, StringList> refactoringData)
 	{
 		if (refactoringData != null)
@@ -7416,6 +7680,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#258 2016-09-26
 
+	/**
+	 * Opens the Arranger Preferences dialog and processes configuration changes
+	 */
 	public void analyserNSD()
 	{
 		AnalyserPreferences analyserPreferences = new AnalyserPreferences(NSDControl.getFrame());
@@ -7487,6 +7754,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#456 2017-11-15
 
+    /**
+     * Opens the export options dialog and processes configuration changes.
+     */
     public void exportOptions()
     {
         try
@@ -7605,9 +7875,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // END KGU#484 2018-04-05
         }
     }
-    
-    // START KGU#705 2019-09-24: Enh. #738
-    // FIXME: Instead of this hint we might offer a popup menu with a language choice
+
+	// START KGU#705 2019-09-24: Enh. #738
 	/**
 	 * Sets a tooltip to the codePreview tab showing the language name plus
 	 * (if retrievable) the tooltip of Menu.menuFileExportCodeFavorite.
@@ -7630,6 +7899,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#705 2019-09-24
 
     // START KGU#258 2016-09-26: Enh. #253
+    /**
+     * Opens the import options dialog and processes configuration changes.
+     */
     public void importOptions()
     {
         try
@@ -7638,7 +7910,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ini.load();
             // START KGU#416 2017-06-20: Enh. #354,#357
             //ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
-        	this.retrieveParsers();
+            this.retrieveParsers();
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame(), parserPlugins);
             // END KGU#416 2017-06-20
             // START KGU#362 2017-03-28: Issue #370 - default turned to true
@@ -7741,70 +8013,76 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#258 2016-09-26
 
-    // START KGU#309 2016-12-15: Enh. #310
-    public void savingOptions()
-    {
-    	try {
-    		SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    		Ini ini = Ini.getInstance();
-    		sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
-    		sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
-    		sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
-    		// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
-    		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
-    		// END KGU#363 2017-03-12
-    		// START KGU#630 2019-01-13: Enh. #662/4
-    		sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
-    		// END KGU#630 2019-01-13
-    		// START KGU#690 2019-03-21: Enh. #707
-    		sod.chkArgNumbers.setSelected(Element.E_FILENAME_WITH_ARGNUMBERS);
-    		sod.cbSeparator.setSelectedItem(Element.E_FILENAME_SIG_SEPARATOR);
-    		// END KGU#690 2019-03-21
-    		sod.setVisible(true);
+	// START KGU#309 2016-12-15: Enh. #310
+	/**
+	 * Opens the file saveing options dialog and processes configuration changes.
+	 */
+	public void savingOptions()
+	{
+		try {
+			SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+			Ini ini = Ini.getInstance();
+			sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+			sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+			sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+			sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+			sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+			// END KGU#363 2017-03-12
+			// START KGU#630 2019-01-13: Enh. #662/4
+			sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
+			// END KGU#630 2019-01-13
+			// START KGU#690 2019-03-21: Enh. #707
+			sod.chkArgNumbers.setSelected(Element.E_FILENAME_WITH_ARGNUMBERS);
+			sod.cbSeparator.setSelectedItem(Element.E_FILENAME_SIG_SEPARATOR);
+			// END KGU#690 2019-03-21
+			sod.setVisible(true);
 
-    		if (sod.goOn==true)
-    		{
-    			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
-    			// START KGU#630 2019-01-13: Enh. #662/4
-    			Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
-    			// END KGU#630 2019-01-13
-    			// START KGU#690 2019-03-21: Enh. #707
-    			Element.E_FILENAME_WITH_ARGNUMBERS = sod.chkArgNumbers.isSelected();
-    			Element.E_FILENAME_SIG_SEPARATOR = (Character)sod.cbSeparator.getSelectedItem();
-    			// END KGU#690 2019-03-21
-    			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    			ini.setProperty("authorName", sod.txtAuthorName.getText());
-    			String licName = (String)sod.cbLicenseFile.getSelectedItem();
-    			if (licName == null) {
-    				ini.setProperty("licenseName", "");
-    			}
-    			else {
-    				ini.setProperty("licenseName", licName);
-    			}
-    			// END KGU#363 2017-03-12
-    			ini.save();
-    		}
-    	} catch (FileNotFoundException e) {
-    		// START KGU#484 2018-04-05: Issue #463
-    		//e.printStackTrace();
-    		logger.log(Level.WARNING, "Trouble accessing preferences.", e);
-    		// END KGU#484 2018-04-05
-    	} catch (IOException e) {
-    		// START KGU#484 2018-04-05: Issue #463
-    		//e.printStackTrace();
-    		logger.log(Level.WARNING, "Trouble accessing saving preferences.", e);
-    		// END KGU#484 2018-04-05
-    	}
-    }
-    // END KGU#258 2016-09-26
+			if (sod.goOn==true)
+			{
+				Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+				Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+				Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+				// START KGU#630 2019-01-13: Enh. #662/4
+				Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
+				// END KGU#630 2019-01-13
+				// START KGU#690 2019-03-21: Enh. #707
+				Element.E_FILENAME_WITH_ARGNUMBERS = sod.chkArgNumbers.isSelected();
+				Element.E_FILENAME_SIG_SEPARATOR = (Character)sod.cbSeparator.getSelectedItem();
+				// END KGU#690 2019-03-21
+				// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+				ini.setProperty("authorName", sod.txtAuthorName.getText());
+				String licName = (String)sod.cbLicenseFile.getSelectedItem();
+				if (licName == null) {
+					ini.setProperty("licenseName", "");
+				}
+				else {
+					ini.setProperty("licenseName", licName);
+				}
+				// END KGU#363 2017-03-12
+				ini.save();
+			}
+		} catch (FileNotFoundException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing preferences.", e);
+			// END KGU#484 2018-04-05
+		} catch (IOException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing saving preferences.", e);
+			// END KGU#484 2018-04-05
+		}
+	}
+	// END KGU#258 2016-09-26
 
-    /*****************************************
-     * font control
-     *****************************************/
+	/*========================================
+	 * font control
+	 *========================================*/
 
+	/**
+	 * Opens the font configration dialog and processes configuration changes.
+	 */
 	public void fontNSD()
 	{
 		// START KGU#494 2018-09-10: Issue #508 - support option among fix / proportional padding
@@ -7849,6 +8127,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
+	/**
+	 * Enlarges the diagram font by two points
+	 */
 	public void fontUpNSD()
 	{
 		// change font size
@@ -7868,6 +8149,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444/KGU#618 2018-12-18
 	}
 
+	/**
+	 * Diminishes the diagram font by two points.
+	 */
 	public void fontDownNSD()
 	{
 		if (Element.getFont().getSize()-2 >= 4)
@@ -7890,9 +8174,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444/KGU#618 2018-12-18
 	}
 
-	/*****************************************
+	/*========================================
 	 * DIN conformity
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Flips the graphical representation of FOR loops between DIN 66261 and ENDLESS design
+	 * @see #setDIN()
+	 * @see #getDIN()
+	 */
 	public void toggleDIN()
 	{
 		Element.E_DIN = !(Element.E_DIN);
@@ -7903,6 +8192,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * Switches the graphical representation of FOR loops to DIN 66261 design
+	 * @see #toggleDIN()
+	 * @see #getDIN()
+	 */
 	public void setDIN()
 	{
 		Element.E_DIN = true;
@@ -7913,15 +8207,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * @return true if the representation of FOR loops is currently conform to DIN-66261.
+	 * @see #toggleDIN()
+	 * @see #setDIN()
+	 */
 	public boolean getDIN()
 	{
 		return Element.E_DIN;
 	}
 
-	/*****************************************
+	/*========================================
 	 * diagram type and shape
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Reduces the frame of the current diagram to a very frugal shape if {@code _unboxed} is true
+	 * or switches it to a complete box otherwise.
+	 * @see #isUnboxed()
+	 */
 	public void setUnboxed(boolean _unboxed)
 	{
 		root.isBoxed = !_unboxed;
@@ -7935,11 +8239,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * @return true if the frame of this diagram is reduced to a frugal shape.
+	 * @see #setUnboxed(boolean)
+	 */
 	public boolean isUnboxed()
 	{
 		return !root.isBoxed;
 	}
 
+	/**
+	 * Changes the type of {@link #root} to a Subroutine diagram.
+	 * @see #setProgram()
+	 * @see #setInclude()
+	 * @see #isSubroutine()
+	 */
 	public void setFunction()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208 - outer dimensions change
@@ -7959,6 +8273,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * Changes the type of {@link #root} to Main program.
+	 * @see #setFunction()
+	 * @see #setInclude()
+	 * @see #isProgram()
+	 */
 	public void setProgram()
 	{
 		// START KGU#221 2016-07-28: Bugfix #208
@@ -7993,6 +8313,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#376 2017-05-16: Enh. #389
+	/**
+	 * Changes the type of {@link #root} to Includable.
+	 * @see #setFunction()
+	 * @see #setProgram()
+	 * @see #isInclude()
+	 */
 	public void setInclude()
 	{
 		// For an unboxed diagram, the outer dimensions may change
@@ -8023,22 +8349,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU #376 2017-05-16
 
+	/**
+	 * @return true if the diagram is of type Main program
+	 * @see #isSubroutine()
+	 * @see #isInclude()
+	 * @see #setProgram()
+	 */
 	public boolean isProgram()
 	{
 		return root.isProgram();
 	}
+	/**
+	 * @return true if the diagram is of type Function
+	 * @see #isProgram()
+	 * @see #isInclude()
+	 * @see #setFunction()
+	 */
 	public boolean isSubroutine()
 	{
 		return root.isSubroutine();
 	}
+	/**
+	 * @return true if the diagram is of type Includable
+	 * @see #isSubroutine()
+	 * @see #isProgram()
+	 * @see #setInclude()
+	 */
 	public boolean isInclude()
 	{
 		return root.isInclude();
 	}
 
-	/*****************************************
+	/*========================================
 	 * comment modes
-	 *****************************************/
+	 *========================================*/
 
 	public void setComments(boolean _comments)
 	{
@@ -8077,11 +8421,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// END KGU#220 2016-07-27
     	repaint();
     }
-    
-	/*****************************************
+
+	/*========================================
 	 * further settings
-	 *****************************************/	
+	 *========================================*/	
 	
+	/**
+	 * Enables or disables the syntax higighting in the elements for all diagrams
+	 * @param _highlight - true to switch syntax mmarkup on, false to disable it
+	 */
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
@@ -8093,6 +8441,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * Toggles the activation of the Analyser component (and the visibility of the Report list).
+	 * @see #setAnalyser(boolean)
+	 */
 	public void toggleAnalyser()
 	{
 		setAnalyser(!Element.E_ANALYSER);
@@ -8105,6 +8457,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Enables or disables the Analyser, according to the value of {@code _analyse}.
 	 * @param _analyse - the new status of Analyser (true to enable, obviously)
+	 * @see #toggleAnalyser()
 	 */
 	public void setAnalyser(boolean _analyse)
 	{
@@ -8160,6 +8513,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#123 2016-01-04: Enh. #87
 	/**
 	 * Toggles the use of the mouse wheel for collapsing/expanding elements
+	 * @see #toggleCtrlWheelMode()
+	 * @see #configureWheelUnit()
 	 */
 	public void toggleWheelMode()
 	{
@@ -8169,7 +8524,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	// START KGU#503 2018-03-14: Enh. #519
 	/**
-	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out
+	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out.
+	 * @see #toggleWheelMode()
+	 * @see #configureWheelUnit()
 	 */
 	public void toggleCtrlWheelMode()
 	{
@@ -8180,7 +8537,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#699 2019-03-27: Issue #717 scrolling "speed" ought to be configurable
 	/**
 	 * Opens a little dialog offering to configure the default scrolling increment
-	 * for the mouse wheel via a spinner 
+	 * for the mouse wheel via a spinner.
+	 * @see #toggleWheelMode()
+	 * @see #toggleCtrlWheelMode()
 	 */
 	public void configureWheelUnit()
 	{
@@ -8249,8 +8608,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			for (GENPlugin plugin: Menu.generatorPlugins) {
 				if (genName.equalsIgnoreCase(plugin.title)) {
 					ini.load();
+					if (!genName.equalsIgnoreCase(this.prefGeneratorName)) {
+						this.generatorUseCount = 1;
+					}
 					this.prefGeneratorName = plugin.title;
-					if (!genName.equals(ini.getProperty("genExportPreferred", "Java"))) {
+					if (!this.prefGeneratorName.equals(ini.getProperty("genExportPreferred", "Java"))) {
 						ini.setProperty("genExportPreferred", plugin.title);
 						ini.save();
 						updateCodePreview();
@@ -8267,11 +8629,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#705 2ß19-09-24
 
-	/*****************************************
+	/*========================================
 	 * inputbox methods
-	 *****************************************/
+	 *========================================*/
 	// START KGU 2015-10-14: additional parameters for title customisation
 	//public void showInputBox(EditData _data)
+	/**
+	 * Opens the appropriate elemet editor version for element type {@code _elementType} and
+	 * gathers the editing results in {@code _data}.
+	 * @param _data - container for the content transfer between the element and the InputBox
+	 * @param _elementType - Class name of the {@link Element} we offer editing for
+	 * @param _isInsertion - Indicates whether or not the element is a new object
+	 */
 	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion)
 	// END KGU 2015-10-14
 	{
@@ -8510,9 +8879,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * CLIPBOARD INTERACTIONS
-     *****************************************/
+     *========================================*/
+	/**
+	 * Copies the diagram as a PNG picture to the system clipboard.<br/>
+	 * NOTE: For some platforms, the clipboard content may yet be a JPEG image rather than PNG.
+	 * @see #copyToClipboardEMF()
+	 */
 	public void copyToClipboardPNG()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -8557,6 +8931,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#183 2016-04-24
 	}
 
+	/**
+	 * Copies the diagram as a EMF picture to the system clipboard.
+	 * @see #copyToClipboardPNG()
+	 */
 	public void copyToClipboardEMF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -8704,9 +9082,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 
-	/*****************************************
+	/*========================================
 	 * ANALYSER
-     *****************************************/
+	 *========================================*/
+	/**
+	 * Instigates the analysis of the current diagram held in {@link #root}
+	 */
 	protected void analyse()
 	{
 		if (Element.E_ANALYSER && errorlist != null && isInitialized)
@@ -8738,9 +9119,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	 /*****************************************
-	  * Recently used files
-	  *****************************************/
+	/*========================================
+	 * Recently used files
+	 *========================================*/
+	/**
+	 * Adds the given path {@code _filename} to the list of recently used files.
+	 * @param _filename - the path of the file most recently used (loaded/saved)
+	 * @see #addRecentFile(String, boolean)
+	 */
 	public void addRecentFile(String _filename)
 	{
 		addRecentFile(_filename,true);
@@ -8753,6 +9139,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param _filename - path of a file most recently used
 	 * @param saveINI - if true then we will immediately save the list to the ini
 	 * file and have all button visibility checked immediately.
+	 * @see #addRecentFile(String)
 	 */
 	public void addRecentFile(String _filename, boolean saveINI)
 	{
@@ -8778,36 +9165,45 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#602 2018-10-28
 	}
 
-    /*****************************************
-     * Run
-	 *****************************************/
-    public void goRun()
-    {
-    	// START KGU#448 2018-01-05: Enh. #443 - generalized DiagramController activation
-    	//Executor.getInstance(this,null);
-    	Executor.getInstance(this, this.getEnabledControllers());
-    	// END KGU#448 2018-01-05
-    	if (root.advanceTutorialState(26, this.root)) {
-    		analyse();
-    	}
-    	if (root.advanceTutorialState(26, this.root)) {
-    		analyse();
-    	}
-    }
+	/*========================================
+	 * Run
+	 *========================================*/
+	/**
+	 * Activates the {@link Executor} forcing open the debug {@link Control}.
+	 * @see #goTurtle()
+	 */
+	public void goRun()
+	{
+		// START KGU#448 2018-01-05: Enh. #443 - generalized DiagramController activation
+		//Executor.getInstance(this,null);
+		Executor.getInstance(this, this.getEnabledControllers());
+		// END KGU#448 2018-01-05
+		if (root.advanceTutorialState(26, this.root)) {
+			analyse();
+		}
+		if (root.advanceTutorialState(26, this.root)) {
+			analyse();
+		}
+	}
 
+	/**
+	 * Ensures the {@link TurtleBox} being open and activates the {@link Executor}
+	 * forcing open the debug {@link Control}.
+	 * @see #goRun()
+	 */
 	public void goTurtle()
-    {
-    	if (turtle == null)
-    	{
-    		turtle = new TurtleBox(500,500);
-    	}
-    	turtle.setVisible(true);
-    	// Activate the executor (getInstance() is supposed to do that)
-    	// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
-    	//Executor.getInstance(this,turtle);
-    	this.enableController("lu.fisch.turtle.TurtleBox", true);
-    	goRun();
-    	// END KGU#448 2018-01-05
+	{
+		if (turtle == null)
+		{
+			turtle = new TurtleBox(500,500);
+		}
+		turtle.setVisible(true);
+		// Activate the executor (getInstance() is supposed to do that)
+		// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
+		//Executor.getInstance(this,turtle);
+		this.enableController("lu.fisch.turtle.TurtleBox", true);
+		goRun();
+		// END KGU#448 2018-01-05
 
     }
     
@@ -8886,7 +9282,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return diagramControllers;
 	}
 
-	/** Returns an array of {@link DiagramController} instances enabled for execution */
+	/** @return an array of {@link DiagramController} instances enabled for execution */
 	private DiagramController[] getEnabledControllers() {
 		this.getDiagramControllers();
 		LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
