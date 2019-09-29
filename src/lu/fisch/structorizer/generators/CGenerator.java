@@ -339,7 +339,7 @@ public class CGenerator extends Generator {
 	 */
 	@Override
 	protected String getOutputReplacer() {
-		return "printf(\"TODO: specify format\", $1); printf(\"\\n\")";
+		return "printf(\"TODO: specify format\\n\", $1)";
 	}
 
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config

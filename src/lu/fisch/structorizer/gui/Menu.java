@@ -637,7 +637,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#258 2016-10-03
 	// START KGU#362 2017-03-28: Enh. #370
 	public static final LangTextHolder msgDiscardParserPrefs = new LangTextHolder("Sure to discard new parser preferences?");
-	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?");
+	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?\n(e.g.: %)");
 	public static final LangTextHolder msgKeywordsDiffer = new LangTextHolder("This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\n"
 			+ "You have opted against automatic refactoring on loading.\n\n"
 			+ "Now you have the following opportunities:\n%2");

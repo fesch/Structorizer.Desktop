@@ -186,6 +186,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approaches
  *      Kay Gürtzig     2019-09-27      Enh. #738: Methods for code preview popup menu reaction
  *      Kay Gürtzig     2019-09-28      Javadoc completions, fine-tuning for #738
+ *      Kay Gürtzig     2019-09-29      Issue #753: Unnecessary structure preference synchronization offers suppressed.
  *
  ******************************************************************************************************
  *
@@ -7349,7 +7350,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				redraw();
 			}
 			// END KGU#136 2016-03-31
-			
+
+			// STAR KGU#705 2019-09-29: Enh. #738
+			updateCodePreview();
+			// END KGU#705 2019-09-29
 		}
 	}
 	
@@ -7479,9 +7483,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#362 2017-03-28: Issue #370 - helper methods for preference consistency 
 	private void offerStructPrefAdaptation(HashMap<String, StringList> refactoringData)
 	{
-		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
-				Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+		// START KGU#735 2019-09-29: Issue #753 - first do a check to avoid puzzling questions
+		//if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+		//		Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+		//		JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+		String updateNeed = null;
+		if (((updateNeed = checkPref(Element.preAlt, refactoringData, "preAlt", "postAlt")) != null ||
+				(updateNeed = checkPref(Element.preWhile,	refactoringData, "preWhile", "postWhile")) != null ||
+				(updateNeed	= checkPref(Element.preRepeat, refactoringData, "preRepeat", "postRepeat")) != null ||
+				(updateNeed = checkPrefCase(Element.preCase, refactoringData)) != null ||
+				(updateNeed = checkPrefFor(Element.preFor, refactoringData)) != null)
+				&& JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+				Menu.msgAdaptStructPrefs.getText().replace("%", updateNeed), Menu.msgTitleQuestion.getText(),
 				JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+		// END KGU#735 2019-09-29
 			Element.preAlt = replacePref(Element.preAlt,
 					refactoringData, "preAlt", "postAlt");
 			Element.preWhile = replacePref(Element.preWhile,
@@ -7499,19 +7514,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String prefixKey, String postfixKey)
 	{
 		StringList old = refactoringData.get(prefixKey);
+		int startPos = 0;
 		if (old != null) {
 			String oldPrefix = old.concatenate();
 			String newPrefix = CodeParser.getKeywordOrDefault(prefixKey, "");
 			if (!oldPrefix.trim().isEmpty() && structPref.startsWith(oldPrefix)) {
 				structPref = newPrefix + structPref.substring(oldPrefix.length());
+				startPos = newPrefix.length();
 			}
 		}
 		old = refactoringData.get(postfixKey);
 		if (old != null) {
 			String oldPostfix = old.concatenate();
 			String newPostfix = CodeParser.getKeywordOrDefault(postfixKey, "");
-			if (!oldPostfix.trim().isEmpty() && structPref.endsWith(oldPostfix)) {
-				structPref = structPref.trim().substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
+			if (!oldPostfix.trim().isEmpty() && structPref.substring(startPos).endsWith(oldPostfix)) {
+				structPref = structPref.substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
 			}
 		}
 		return structPref;
@@ -7571,29 +7588,58 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if ((old = refactoringData.get("postForIn")) != null) {
 			oldInfix2 = old.concatenate();
 		}
+		String tail = "";
 		if (!oldPrefix1.trim().isEmpty() && !oldInfix1.trim().isEmpty() &&
-				structPref.startsWith(oldPrefix1) && structPref.contains(oldInfix1)) {
-			structPref = newPrefix1 + structPref.substring(oldPrefix1.length());
-			if (structPref.matches(".*?\\W+" + oldInfix1 + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1 + "(\\W+.*?)",
+				structPref.startsWith(oldPrefix1) && (tail = structPref.substring(oldPrefix1.length())).contains(oldInfix1)) {
+			if (tail.matches(".*?\\W+" + oldInfix1 + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix1 + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix1) + "$2");
 			}
-			if (structPref.matches(".*?\\W+" + oldInfix1a + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1a + "(\\W+.*?)",
+			if (tail.matches(".*?\\W+" + oldInfix1a + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix1a + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix1a) + "$2");
 			}
+			structPref = newPrefix1 + tail;
 		}
 		else if (!oldPrefix2.trim().isEmpty() && !oldInfix2.trim().isEmpty() &&
-				structPref.startsWith(oldPrefix2) && structPref.contains(oldInfix2)) {
-			structPref = newPrefix2 + structPref.substring(oldPrefix2.length());
-			if (structPref.matches(".*?\\W+" + oldInfix2 + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix2 + "(\\W+.*?)",
+				structPref.startsWith(oldPrefix2) && (tail = structPref.substring(oldPrefix2.length())).contains(oldInfix2)) {
+			if (tail.matches(".*?\\W+" + oldInfix2 + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix2 + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix2) + "$2");
 			}
+			structPref = newPrefix2 + tail;
 		}
 		return structPref;
 	}
 	// END KGU#362 2017-03-28
+	
+	// START KGU#735 2019-09-29: Issue #753 - check methods for preference consistency 
+	private String checkPref(String structPref, HashMap<String, StringList> refactoringData,
+			String prefixKey, String postfixKey)
+	{
+		String newPref = replacePref(structPref, refactoringData, prefixKey, postfixKey);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
+	
+	private String checkPrefCase(String structPref, HashMap<String, StringList> refactoringData) {
+		String newPref = replacePrefCase(structPref, refactoringData);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
+
+	private String checkPrefFor(String structPref, HashMap<String, StringList> refactoringData) {
+		String newPref = replacePrefFor(structPref, refactoringData);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
+	// END KGU#735 2019-09-29
 
 	/**
 	 * Replaces used parser keywords in the specified diagrams by the keywords associated to them
