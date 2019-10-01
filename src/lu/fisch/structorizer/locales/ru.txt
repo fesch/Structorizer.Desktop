@@ -383,7 +383,7 @@ Menu.lblNewMaxLineLength.text=Новая высшая длина строк:
 Menu.lblInvolveSubtree.text=Выполнить и в составных частях
 Menu.lblPreserveContinuators.text=Сохранить существующие верстки если короче
 Menu.msgVetoClose.text=
-Menu.msgSetAsPreferredGenerator.text=
+Menu.msgSetAsPreferredGenerator.text=Вы экспортировали %2. раз на %1 -\nхочете применить его предпочтительным вывозным языком?
 Menu.msgChooseSubroutine.text=
 Menu.msgCreateSubroutine.text=
 // Table column headers for DiagramControllerAliases
@@ -629,6 +629,7 @@ Editor.pnlTabbed.tab.1=Просмотр кодa
 Editor.popupCodeExport.text=Экспортировать ...
 Editor.popupCodeExport.tooltip=Экспортировать код в файл
 Editor.popupCodeHide.text=Утаить просмотр кода
+Editor.ttPopupCodePreview.text=Переменит просмотр кода к % и его применит .
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=

@@ -3082,8 +3082,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			String message = e.getMessage();
 			// START KGU#484 2018-04-05: Issue #463
-			//e.printStackTrace();
-			getLogger().log(Level.WARNING, "Error on saving file!", e);
+			e.printStackTrace();
+			getLogger().log(Level.WARNING, "Error on generating code!", e);
 			// END KGU#484 2018-04-05
 			if (message == null) {
 				message = e.getClass().getSimpleName();

@@ -32,6 +32,7 @@ package lu.fisch.structorizer.generators;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-05-21      First Issue (#721)
+ *      Kay Gürtzig     2019-09-30      Array and record initializer handling added.
  *
  ******************************************************************************************************
  *
@@ -40,10 +41,15 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Try;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;
 
 /**
@@ -110,6 +116,15 @@ public class JsGenerator extends CGenerator {
 	}
 
 	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getTryCatchLevel()
+	 */
+	@Override
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+
+	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
 	 */
 	@Override
@@ -153,6 +168,117 @@ public class JsGenerator extends CGenerator {
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;	// Both overloading and default arguments (ES6/ES2015)
 	}
 
+	/**
+	 * Generates code that decomposes an array initializer into a series of element assignments if there no
+	 * compact translation.
+	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
+	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
+	 * @param _indent - the current indentation level
+	 * @param _isDisabled - whether the code is commented out
+	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
+	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
+	 */
+	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	{
+		return this.transform("[" + _arrayItems.concatenate(", ") + "]");
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
+	 */
+	@Override
+	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
+		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
+		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		// END KGU#559 2018-07-20
+		LinkedHashMap<String, TypeMapEntry> compInfo;
+		if (typeInfo != null) {
+			compInfo = typeInfo.getComponentInfo(true);
+		}
+		else {
+			compInfo = new LinkedHashMap<String, TypeMapEntry>();
+			for (String key: comps.keySet()) {
+				compInfo.put(key, null);
+			}
+		}
+		StringBuilder recordInit = new StringBuilder("{");
+		boolean isFirst = true;
+		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
+			String compName = compEntry.getKey();
+			String compVal = comps.get(compName);
+			if (!compName.startsWith("§") && compVal != null) {
+				if (isFirst) {
+					isFirst = false;
+				}
+				else {
+					recordInit.append(", ");
+				}
+				recordInit.append(compName + ":");
+				if (compEntry.getValue() != null && compEntry.getValue().isRecord()) {
+					recordInit.append(transformRecordInit(compVal, compEntry.getValue()));
+				}
+				else {
+					recordInit.append(transform(compVal));
+				}
+			}
+		}
+		recordInit.append("}");
+		return recordInit.toString();
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeArrayDeclaration(java.lang.String, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
+	 */
+	@Override
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	{
+		return ("var " + _varName).trim(); 
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateRecordInit(java.lang.String, java.lang.String, java.lang.String, boolean, lu.fisch.structorizer.elements.TypeMapEntry)
+	 */
+	@Override
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
+	{
+		String compVal = transformRecordInit(_recordValue, _typeEntry);
+		addCode(_lValue + " = " + compVal, _indent, _isDisabled);
+	}
+	
+	
+	/**
+	 * We suppress type definitions here and replace them by a comment line.
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateTypeDef(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry, java.lang.String, boolean)
+	 */
+	@Override
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		appendDeclComment(_root, _indent, typeKey);
+		appendComment("type " + _typeName + ": " + _type.getCanonicalType(false, false).replace("$", "object"), _indent);
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateInstructionLine(lu.fisch.structorizer.elements.Instruction, java.lang.String, boolean, java.lang.String)
+	 */
+	@Override
+	protected boolean generateInstructionLine(Instruction _inst, String _indent, boolean commentInserted, String line)
+	{
+		// Don't do anything with type definitions
+		if (Instruction.isTypeDefinition(line, typeMap)) {
+			return false;
+		}
+		return super.generateInstructionLine(_inst, _indent, commentInserted, line);
+	}
+
+	@Override
+	protected String composeTypeAndNameForDecl(String _type, String _name) {
+		return "var " + _name;
+	}
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#makeExceptionFrom(java.lang.String)
 	 */
@@ -185,7 +311,7 @@ public class JsGenerator extends CGenerator {
 		}
 		this.caughtException = exName;
 	}
-
+	
 	
 	/**
 	 * Composes the heading for the program or function according to the
@@ -202,9 +328,12 @@ public class JsGenerator extends CGenerator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		if (!topLevel)
+		if (topLevel)
 		{
-			code.add("");					
+			code.add("<script>");
+		}
+		else {
+			code.add("");
 		}
 		String pr = "program";
 		if (_root.isSubroutine()) {
@@ -253,7 +382,7 @@ public class JsGenerator extends CGenerator {
 		// END KGU#178 2016-07-20
 
 		appendComment(_root, _indent);
-		if (!_root.isProgram()) {
+		if (_root.isSubroutine()) {
 			//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
 			String fnHeader = "function " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
@@ -285,6 +414,9 @@ public class JsGenerator extends CGenerator {
 		if (!this.suppressTransformation) {
 			appendDefinitions(_root, _indent, varNames, false);
 		}
+		if (this.typeMap == null) {
+			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		}
 		//generateIOComment(_root, _indent);
 		code.add(_indent);
 		return _indent;
@@ -308,12 +440,14 @@ public class JsGenerator extends CGenerator {
 		String decl = "var " + _name;
 		if (_root.constants.containsKey(_name) && constValue != null) {
 			decl = "const " + _name;
-//					if (constValue.contains("{") && constValue.endsWith("}") && typeInfo != null && typeInfo.isRecord()) {
-//						constValue = transformRecordInit(constValue, typeInfo);
-//					}
-//					else {
-//						constValue = transform(constValue);
-//					}
+			// FIXME
+			TypeMapEntry typeInfo = typeMap.get(_name);
+					if (constValue.contains("{") && constValue.endsWith("}") && typeInfo != null && typeInfo.isRecord()) {
+						constValue = transformRecordInit(constValue, typeInfo);
+					}
+					else {
+						constValue = transform(constValue);
+					}
 			decl += " = " + constValue;
 		}
 		appendDeclComment(_root, _indent, _name);
@@ -363,10 +497,13 @@ public class JsGenerator extends CGenerator {
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-		if (!_root.isProgram()) {
-			code.add(_indent + "}");		
+		if (_root.isSubroutine()) {
+			code.add(_indent + "}");
 		}
 
+		if (topLevel) {
+			code.add("</script>");
+		}
 //		if (topLevel && this.usesFileAPI) {
 //			this.insertFileAPI("java");
 //		}

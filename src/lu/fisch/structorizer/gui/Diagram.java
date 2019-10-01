@@ -1199,6 +1199,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							doDraw = true;
+							// START KGU#705 2019-09-30: Enh. #738
+							updateCodePreview();
+							// END KGU#705 2019-09-30
 						}
 						else
 						{
@@ -1760,6 +1763,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					pos = highlightCodeForElement(this.selected, false);
 				}
 			}
+			else {
+				// FIXME DEBUG
+				System.out.println("No selection");
+			}
 			if (pos >= 0) {
 				try {
 					// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
@@ -1767,7 +1774,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// Scroll to make the rectangle visible
 					codePreview.scrollRectToVisible(viewRect);
 				}
-				catch (BadLocationException e) {}
+				catch (BadLocationException e) {
+					// FIXME DEBUG
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -6698,7 +6708,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		highlightCodeForSelection();
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				highlightCodeForSelection();
+			}
+		});
+		//highlightCodeForSelection();
 	}
 
 	private void fetchPluginSpecificExportOptions(Generator _generator) {
@@ -8317,6 +8334,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 		// END KGU#253 2016-09-22
 		redraw();
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 
 	/**
@@ -8356,6 +8376,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Arranger.getInstance().redraw();
 		}
 		// END KGU#701 2019-03-30
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 
 	// START KGU#376 2017-05-16: Enh. #389
@@ -8392,6 +8415,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Arranger.getInstance().redraw();
 		}
 		// END KGU#701 2019-03-30
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 	// END KGU #376 2017-05-16
 

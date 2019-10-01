@@ -1100,6 +1100,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		this.ttPopupCodePreview.addLangEventListener(new LangEventListener() {
 			@Override
 			public void LangChanged(LangEvent evt) {
+				String tooltip = ttPopupCodePreview.getText();
 				for (Component comp: popupCode.getComponents()) {
 					String name = comp.getName();
 					if (comp instanceof JCheckBoxMenuItem) {

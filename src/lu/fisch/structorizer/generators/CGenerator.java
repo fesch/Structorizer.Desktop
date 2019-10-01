@@ -575,7 +575,10 @@ public class CGenerator extends Generator {
 			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
 		}
 		else {
-			decl = (_typeDescr + " " + _varName).trim();
+			// START KGU#711 2019-09-30: Enh. #721 - for Javascript we should allow to substitute the type
+			//decl = (_typeDescr + " " + _varName).trim();
+			decl = this.composeTypeAndNameForDecl(_typeDescr, _varName).trim();
+			// END KGU#711 2019-09-30
 		}
 		return decl;
 	}
@@ -621,7 +624,6 @@ public class CGenerator extends Generator {
 		recordInit += "}";
 		return recordInit;
 	}
-
 	// END KGU#388 2017-09-26
 
 	protected void appendBlockHeading(Element elem, String _headingText, String _indent)
@@ -781,8 +783,6 @@ public class CGenerator extends Generator {
 			boolean commentInserted = false;
 			// END KGU#424 2017-09-26
 
-			boolean isDisabled = _inst.isDisabled();
-
 			StringList lines = _inst.getUnbrokenText();
 			for (int i = 0; i < lines.count(); i++) {
 				// FIXME: We must distinguish for every line:
@@ -919,8 +919,15 @@ public class CGenerator extends Generator {
 							codeLine = this.makeArrayDeclaration(this.transformType(elemType, "int"), varName, type);
 						}
 						else {
+							// START KGU#711 2019-09-30: Enh. #721: Consider Javascript
 							// Combine type and variable as is
-							codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+							//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+							int posVar = tokens.indexOf(varName);
+							codeLine = this.composeTypeAndNameForDecl(
+									tokens.subSequence(0, posVar).concatenate().trim(),
+									tokens.subSequence(posVar, posAsgn).concatenate().trim());
+							codeLine = transform(codeLine);
+							// END KGU#711 2019-09-30
 						}
 						// END KGU#560 2018-07-22
 					}
@@ -2082,7 +2089,10 @@ public class CGenerator extends Generator {
 				decl = makeArrayDeclaration(decl, _name, typeInfo);
 			}
 			else {
-				decl = decl + " " + _name;
+				// START KGU#711 2019-09-30: Enh. #721 Javascript generator doesn't want type names
+				//decl = decl + " " + _name;
+				decl = this.composeTypeAndNameForDecl(decl, _name);
+				// END KGU#711 2019-09-30
 			}
 			// START KGU#375 2017-04-12: Enh. #388 support for constant definitions
 			if (_root.constants.containsKey(_name)) {
@@ -2133,7 +2143,19 @@ public class CGenerator extends Generator {
 		// END KGU#261/KGU#332 2017-01-16
 	}
 	// END KGU#375 2017-04-12
-	
+
+	// START KGU#711 2019-09-30: Enh. #721 - Allows subclasses a different composition
+	/**
+	 * Just composes given type designator {@code _type} and variable name {@code _name}
+	 * for a declaration.
+	 * @param _type - type designator
+	 * @param _name - variable name
+	 * @return the composed string (usually concatenated via blank)
+	 */
+	protected String composeTypeAndNameForDecl(String _type, String _name) {
+		return _type + " " + _name;
+	}
+
 	// START KGU#501 2018-02-22: Bugfix #517
 	/**
 	 * Returns modifiers to be placed in front of the declaration OF {@code _name} for the
@@ -2151,7 +2173,8 @@ public class CGenerator extends Generator {
 
 	// START KGU#388 2017-09-26: Enh. #423
 	/**
-	 * Generates code that decomposes a record initializer into separate component assignments
+	 * Generates code that decomposes a record initializer into separate component assignments if
+	 * necessary or converts it into the appropriate target language.
 	 * @param _lValue - the left side of the assignment (without modifiers!)
 	 * @param _recordValue - the record initializer according to Structorizer syntax
 	 * @param _indent - current indentation level (as String)

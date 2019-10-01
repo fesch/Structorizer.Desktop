@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2018-10-05      Bugfix #619: Undue declaration of function result variable dropped
  *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig         2019-10-01      Issue #754: Instruction with "return" and UNIT name for code preview fixed
  *
  ******************************************************************************************************
  *
@@ -555,6 +556,9 @@ public class PasGenerator extends Generator
 						// END KGU#424 2017-09-25
 						addCode("exit;", _indent, isDisabled);
 					}
+					// START KGU#737 2019-10-01: Issue #754
+					continue;	// There is nothing more t be done about this line!
+					// END KGU#737 2019-10-01
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)
 				//else	// no return
@@ -875,10 +879,10 @@ public class PasGenerator extends Generator
 
     	for(int i=0;i<_case.qs.size()-1;i++)
     	{
-        	// START KGU#453 2017-11-02: Issue #447
+    		// START KGU#453 2017-11-02: Issue #447
     		//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
     		addCode(unbrokenText.get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
-        	// END KGU#453 2017-11-02
+    		// END KGU#453 2017-11-02
     		addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
     		generateCode(_case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
     		addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
@@ -887,7 +891,7 @@ public class PasGenerator extends Generator
     	// START KGU#453 2017-11-02: Issue #447
     	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
     	if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
-        // END KGU#453 2017-11-02
+    	// END KGU#453 2017-11-02
     	{
     		addCode("else", _indent+this.getIndent(), isDisabled);
     		generateCode(_case.qs.get(_case.qs.size()-1), _indent+this.getIndent()+this.getIndent());
@@ -1052,17 +1056,17 @@ public class PasGenerator extends Generator
 			}
 			
 			// Creation of the loop header
-    		addCode("for " + indexName + " := 1 to " + nItems + " do",
-    				_indent, isDisabled);
+			addCode("for " + indexName + " := 1 to " + nItems + " do",
+					_indent, isDisabled);
 
-    		// Creation of the loop body
-            addCode("begin", _indent, isDisabled);
-            addCode(var + " := " + arrayName + "[" + indexName + "];",
-            		_indent+this.getIndent(), isDisabled);
-            generateCode(_for.q, _indent+this.getIndent());
-            addCode("end;", _indent, isDisabled);
+			// Creation of the loop body
+			addCode("begin", _indent, isDisabled);
+			addCode(var + " := " + arrayName + "[" + indexName + "];",
+					_indent+this.getIndent(), isDisabled);
+			generateCode(_for.q, _indent+this.getIndent());
+			addCode("end;", _indent, isDisabled);
 
-            done = true;
+			done = true;
 		}
 		else
 		{
@@ -1075,9 +1079,9 @@ public class PasGenerator extends Generator
 			addCode("for " + var + " in " + transform(valueList, false) + " do",
 					_indent, isDisabled);
 			// Add the loop body as is
-            addCode("begin", _indent, isDisabled);
+			addCode("begin", _indent, isDisabled);
 			generateCode(_for.q, _indent + this.getIndent());
-            addCode("end;", _indent, isDisabled);
+			addCode("end;", _indent, isDisabled);
 			
 			done = true;
 		}
@@ -1383,7 +1387,7 @@ public class PasGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#351 2017-02-26: Enh. #346
 			// FIXME This may have little to do with whether it's a program
 			if (_root.isProgram()) {
 				this.appendUserIncludes(_indent);
@@ -1411,6 +1415,12 @@ public class PasGenerator extends Generator
 						ch = '_';
 					}
 					unitName += ch;
+				}
+				if (unitName.isEmpty()) {
+					unitName = _root.proposeFileName().toUpperCase();
+					if (unitName.contains("-")) {
+						unitName = unitName.substring(0, unitName.indexOf('-'));
+					}
 				}
 				code.add(_indent + "UNIT " + unitName + ";");
 				// END KGU#194 2016-07-20

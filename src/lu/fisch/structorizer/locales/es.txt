@@ -324,7 +324,7 @@ Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
 Menu.menuPreferencesSaveLoad.tooltip=Antes de cargar preferencias desde un archivo INI las preferencias actuales son guardados automáticamente en un fichero temporal (backup).
 Menu.menuPreferencesSaveRestore.text=Restaurar último backup
-Menu.menuPreferencesSaveRestore.tooltip=Restablce las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
+Menu.menuPreferencesSaveRestore.tooltip=Restablece las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -427,7 +427,7 @@ Menu.msgSubroutineName.text=Nombre del nuevo subprograma
 Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
 Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
-Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman desde %
+Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman\ndesde %
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
