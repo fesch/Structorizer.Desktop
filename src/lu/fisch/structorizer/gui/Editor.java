@@ -79,6 +79,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-26      Enh. #738: Popup menu for code review accomplished.
  *      Kay Gürtzig     2019-09-27      Enh. #738: Click in code preview now selects element and highlights code,
  *                                      double-click opens element editor
+ *      Kay Gürtzig     2019-10-02      Enh. #738 code preview font control via Ctrl-Numpad-+/-
  *
  ******************************************************************************************************
  *
@@ -474,6 +475,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			e.printStackTrace();
 		}
 		txtCode.setEditable(false);
+		txtCode.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
+					controlCodeFont(e.getKeyCode() == KeyEvent.VK_ADD);
+				}
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {}
+		});
+		
 		pnlTabbed.add("Code preview", scrollCode);
 		FocusListener tabbedFocusListener = new FocusListener() {
 			@Override
@@ -516,7 +530,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#705 2019-09-23
 		// END KGU#305 2016-12-12
 
-		// START KGU#705 2019-9-26: Enh. #738
+		// START KGU#705 2019-09-26: Enh. #738
 		this.createPreviewPopupMenu();
 		// END KGU#705 2019-09-26
 
@@ -542,6 +556,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//doButtons();
 		//container.validate();
 	}
+
+	// START KGU#705 2019-10-02: Enh. #738
+	/**
+	 * Incrementally enlarges or diminishes the code preview font.
+	 * @param fontUp - {@code true} to enlarge the font, {@code false} to diminish it 
+	 */
+	protected void controlCodeFont(boolean fontUp) {
+		Font font = txtCode.getFont();
+		float increment = 2.0f;
+		if (!fontUp) {
+			increment = font.getSize() > 8 ? -2.0f : 0.0f;
+		}
+		Font newFont = font.deriveFont(font.getSize()+increment);
+		txtCode.setFont(newFont);
+	}
+	// END KGU#705 2019-10-02
 
 	/**
 	 * Sets up the diagram editing area in fields {@link #scrollarea}, {@link #diagram}.
@@ -1135,7 +1165,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupCode.add(popupCodeHide);
 	}
 	// END KGU#705 2019-09-26
-	
+
 	/**
 	 * Sets up the error list in fields {@link #scrolllist}, {@link #errorlist}.
 	 */

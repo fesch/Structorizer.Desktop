@@ -58,8 +58,10 @@ import lu.fisch.utils.StringList;
  */
 public class JsGenerator extends CGenerator {
 
+	private Root currentRoot = null;
+	
 	/**
-	 * 
+	 * Generates a blank Javascript code generator
 	 */
 	public JsGenerator() {
 		// TODO Auto-generated constructor stub
@@ -276,7 +278,11 @@ public class JsGenerator extends CGenerator {
 
 	@Override
 	protected String composeTypeAndNameForDecl(String _type, String _name) {
-		return "var " + _name;
+		String prefix = "";
+		if (!this.wasDefHandled(currentRoot, _name, true)) {
+			prefix = "var ";
+		}
+		return prefix + _name;
 	}
 
 	/* (non-Javadoc)
@@ -328,6 +334,7 @@ public class JsGenerator extends CGenerator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
+		currentRoot = _root;
 		if (topLevel)
 		{
 			code.add("<script>");

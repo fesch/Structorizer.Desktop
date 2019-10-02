@@ -90,6 +90,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-09-24/25   Bugfix #752: Declarations in Calls are to be handled, workaround for type defects
+ *      Kay Gürtzig             2019-10-02      Enh. #721: New hooks for Jacascript in declaration handling
  *
  ******************************************************************************************************
  *
@@ -870,6 +871,7 @@ public class CGenerator extends Generator {
 			// (pure C): If allowed then we may just convert it as is, otherwise
 			// we must cut off the type specification (i.e. all text preceding the
 			// variable name).
+			Root root = Element.getRoot(_inst);
 			// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 			if (pureTokens.get(0).equals("const")) {
 				// Cases 1.1.1 or 2.1
@@ -877,7 +879,6 @@ public class CGenerator extends Generator {
 					return commentInserted;
 				}
 				// We try to enrich or accomplish defective type information
-				Root root = Element.getRoot(_inst);
 				if (root.constants.get(varName) != null) {
 					this.appendDeclaration(root, varName, _indent, true);
 					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
@@ -896,6 +897,11 @@ public class CGenerator extends Generator {
 						// Compose the lval without type
 						codeLine = transform(tokens.subSequence(1, posColon).concatenate().trim());
 						if (this.isInternalDeclarationAllowed()) {
+							// START KGU#711 2019-10-01: Enh. #721 Precaution for Javascript
+							if (exprTokens == null && wasDefHandled(root, varName, false)) {
+								return commentInserted;
+							}
+							// END KGU#711 2019-10-01
 							// Insert the type description
 							String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
 							// START KGU#561 2018-07-21: Bugfix #564
@@ -911,6 +917,11 @@ public class CGenerator extends Generator {
 					// Must be C-style declaration
 					if (this.isInternalDeclarationAllowed()) {
 						// Case 2.2c (allowed) or 1.1.2c
+						// START KGU#711 2019-10-01: Enh. #721 Avoid nonsense declarations in Javascript
+						if (exprTokens == null && this.wasDefHandled(root, varName, false)) {
+							return commentInserted;
+						}
+						// END KGU#711 2019-10-01
 						// START KGU#560 2018-07-22: Bugfix #564
 						//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
 						TypeMapEntry type = this.typeMap.get(varName);
