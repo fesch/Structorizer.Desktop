@@ -489,37 +489,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		});
 		
 		pnlTabbed.add("Code preview", scrollCode);
-		FocusListener tabbedFocusListener = new FocusListener() {
-			@Override
-			public void focusGained(FocusEvent evt) {
-				Object src = evt.getSource();
-				if (src == pnlTabbed) {
-					switch (evt.getCause()) {
-					case TRAVERSAL_FORWARD:
-						pnlTabbed.transferFocus();
-						break;
-					case TRAVERSAL_BACKWARD:
-						pnlTabbed.transferFocusBackward();
-						break;
-					default:
-						//System.out.println(evt.getID() + " + " + evt.getCause() + ": " + evt.getOppositeComponent());							
-					}
-				}
-				else if (src == scrollIndex) {
-					pnlTabbed.setSelectedIndex(0);
-				}
-				else if (src == scrollCode) {
-					pnlTabbed.setSelectedIndex(1);
-				}
-			}
-
-			@Override
-			public void focusLost(FocusEvent evt) {
-			}
-		};
-		pnlTabbed.addFocusListener(tabbedFocusListener);
-		scrollIndex.addFocusListener(tabbedFocusListener);
-		scrollCode.addFocusListener(tabbedFocusListener);
 		// END KGU#705 2019-09-23
 		
 		// START KGU#305 2016-12-12: Enh. #305
