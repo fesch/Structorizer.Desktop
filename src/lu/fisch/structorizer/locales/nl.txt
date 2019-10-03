@@ -612,6 +612,10 @@ Editor.popupBreakTrigger.text=Break trigger opgeven ...
 // Tabbed pane
 Editor.pnlTabbed.tab.0=Index Arranger
 Editor.pnlTabbed.tab.1=Code-preview
+Editor.popupCodeExport.text=Exporteren ...
+Editor.popupCodeExport.tooltip=Code exporteren naar bestand.
+Editor.popupCodeHide.text=Code-preview verbergen
+Editor.ttPopupCodePreview.text=Code-preview verwisselen voor % en bijstellen als favoriete code voor export.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=
@@ -940,7 +944,7 @@ ExportOptionDialoge.bracesCheckBox.text=Openingsaccolade op dezelfde regel plaat
 ExportOptionDialoge.lineNumbersCheckBox.text=Regelnummers toevoegen bij exporteren naar BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Aangeroepen subroutines erbij betrekken.
 ExportOptionDialoge.chkExportLicenseInfo.text=Attributen auteur en licentie exporteren.
-ExportOptionDialoge.lbPrefGenerator.text=Favoriete coode voor export:
+ExportOptionDialoge.lbPrefGenerator.text=Favoriete code voor export:
 ExportOptionDialoge.lbCharset.text=Karakterset:
 ExportOptionDialoge.chkCharsetAll.text=Alles weergeven?
 ExportOptionDialoge.btnPluginOptions.text=Taalspecifieke opties
@@ -1249,6 +1253,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Grenzen van de groep tonen
 ArrangerIndex.popupIndexDrawGroup.tooltip=Afzonderlijk zichtbaar zijn van de geselecteerde groep in de Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Groep hernoemen ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Staat toe de geselecteerde groep te hernoemen, optioneel samen met bijbehorende bestand
+ArrangerIndex.popupIndexHide.text=Arranger index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Selecteer de doelgroep:
 ArrangerIndex.lblGroups.text=Bevattende groepen
 ArrangerIndex.lblSubroutines.text=Aangeroepen @os

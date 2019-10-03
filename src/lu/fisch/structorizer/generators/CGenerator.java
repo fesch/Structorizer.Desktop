@@ -91,6 +91,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-09-24/25   Bugfix #752: Declarations in Calls are to be handled, workaround for type defects
  *      Kay Gürtzig             2019-10-02      Enh. #721: New hooks for Jacascript in declaration handling
+ *      Kay Gürtzig             2019-10-03      Bugfix #756: Transformation damage on expressions containing "<-" and brackets
  *
  ******************************************************************************************************
  *
@@ -466,10 +467,10 @@ public class CGenerator extends Generator {
 // START KGU#18/KGU#23 2015-11-01: Obsolete    
 //    public static String transform(String _input)
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
 	 */
 	@Override
-	protected String transform(String _input)
+	protected String transform(String _input, boolean _doInputOutput)
 	{
 		// START KGU#162 2016-04-01: Enh. #144
 		if (!this.suppressTransformation)
@@ -480,27 +481,38 @@ public class CGenerator extends Generator {
 			int asgnPos = _input.indexOf("<-");
 			if (asgnPos > 0)
 			{
-				String lval = _input.substring(0, asgnPos).trim();
-				String expr = _input.substring(asgnPos + "<-".length()).trim();
-				String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
-				String index = typeNameIndex[2];
-				_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
-						(index.isEmpty() ? "" : "["+index+"]") + 
-						// START KGU#388 2017-09-27: Enh. #423
-						typeNameIndex[3] +
-						// END KGU#388 2017-09-27: Enh. #423
-						" <- " + expr).trim();
+				// START KGU#739 2019-10-03: Bugfix #756 we must avoid false positives...
+				//String lval = _input.substring(0, asgnPos).trim();
+				//String expr = _input.substring(asgnPos + "<-".length()).trim();
+				StringList tokens = Element.splitLexically(_input, true);
+				if ((asgnPos = tokens.indexOf("<-")) > 0) {
+					String lval = tokens.concatenate("", 0, asgnPos);
+					String expr = tokens.concatenate("", asgnPos+1).trim();
+				// END KGU#739 2019-10-03
+					String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
+					String index = typeNameIndex[2];
+					_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
+							(index.isEmpty() ? "" : "["+index+"]") + 
+							// START KGU#388 2017-09-27: Enh. #423
+							typeNameIndex[3] +
+							// END KGU#388 2017-09-27: Enh. #423
+							" <- " + expr).trim();
+				// START KGU#739 2019-10-03: Bugfix #756 part 2
+				}
+				// END KGU#739 2019-10-03
 			}
 			// END KGU#109/KGU#141 2016-01-16
 		// START KGU#162 2016-04-01: Enh. #144
 		}
 		// END KGU#162 2016-04-01
 		
-		_input = super.transform(_input);
+		_input = super.transform(_input, _doInputOutput);
 
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
-		_input = _input.replace("scanf(\"TODO: specify format\", &)", "getchar()");
-		_input = _input.replace("printf(\"TODO: specify format\", ); ", "");
+		if (_doInputOutput) {
+			_input = _input.replace("scanf(\"TODO: specify format\", &)", "getchar()");
+			_input = _input.replace("printf(\"TODO: specify format\", ); ", "");
+		}
 		// END KGU#108 2015-12-13
 
 		return _input.trim();
@@ -588,7 +600,7 @@ public class CGenerator extends Generator {
 	// START KGU#388 2017-09-26: Enh. #423 struct type support
 	/**
 	 * Returns a target-language expression replacing the Structorizer record
-	 * initializer- as far as it can be handled within one line
+	 * initializer - as far as it can be handled within one line
 	 * @param constValue - the Structorizer record initializer
 	 * @param typeInfo - the TypeMapEntry describing the record type
 	 * @return the equivalent target code as expression string
@@ -599,7 +611,7 @@ public class CGenerator extends Generator {
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
-		String recordInit = "{";
+		StringBuilder recordInit = new StringBuilder("{");
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
@@ -608,22 +620,22 @@ public class CGenerator extends Generator {
 				isFirst = false;
 			}
 			else {
-				recordInit += ", ";
+				recordInit.append(", ");
 			}
 			if (!compName.startsWith("§")) {
 				if (compVal == null) {
-					recordInit += "0 /*undef.*/";
+					recordInit.append("0 /*undef.*/");
 				}
 				else if (compEntry.getValue().isRecord()) {
-					recordInit += transformRecordInit(compVal, compEntry.getValue());
+					recordInit.append(transformRecordInit(compVal, compEntry.getValue()));
 				}
 				else {
-					recordInit += transform(compVal);
+					recordInit.append(transform(compVal));
 				}
 			}
 		}
-		recordInit += "}";
-		return recordInit;
+		recordInit.append("}");
+		return recordInit.toString();
 	}
 	// END KGU#388 2017-09-26
 
@@ -1013,7 +1025,7 @@ public class CGenerator extends Generator {
 								elemType = elemType.substring(1);
 							}
 						}
-						expr = this.generateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
+						expr = this.transformOrGenerateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
 						if (expr == null) {
 							return commentInserted;
 						}
@@ -2236,7 +2248,13 @@ public class CGenerator extends Generator {
 				else {
 					// Array initializer
 					StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()-1), ",", true);
-					this.generateArrayInit(_lValue, items.subSequence(0, items.count()-1), _indent, _isDisabled, null, false);
+					// START KGU#732 2019-10-03: Issue #755
+					//this.generateArrayInit(_lValue, items.subSequence(0, items.count()-1), _indent, _isDisabled, null, false);
+					_expr = this.transformOrGenerateArrayInit(_lValue, items.subSequence(0, items.count()-1), _indent, _isDisabled, null, false);
+					if (_expr != null) {
+						addCode(transform(_lValue) + " = " + _expr + ";", _indent, _isDisabled);
+					}
+					// END KGU#732 2019-10-03
 				}
 			}
 			else {
@@ -2251,19 +2269,33 @@ public class CGenerator extends Generator {
 	}
 	
 	/**
-	 * Generates code that decomposes an array initializer into a series of element assignments if there no
-	 * compact translation.
+	 * Either composes and returns a syntax-conform array initializer expression (if possible ad allowed)
+	 * or directly generates code that decomposes an array initializer into a series of element assignments
+	 * if there is no compact translation. In the latter case {@code null} will be returned.
 	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
 	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
 	 * @param _indent - the current indentation level
 	 * @param _isDisabled - whether the code is commented out
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
+	 * @return either the transformed array initializer string or {@code null} (in the latter case the code
+	 * was already generated)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
 		if (_isDecl && this.isInternalDeclarationAllowed()) {
-			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+			// START KGU#732 2019-10-03: Bugfix #755 we have to care for recursive transformation
+			//return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+			StringBuilder arrIni = new StringBuilder();
+			String sepa = "{";
+			for (int i = 0; i < _arrayItems.count(); i++) {
+				arrIni.append(sepa);
+				arrIni.append(transform(_arrayItems.get(i)));
+				sepa = ", ";
+			}
+			arrIni.append('}');
+			return arrIni.toString();
+			// END KGU#732 2019-10-03
 		}
 		for (int i = 0; i < _arrayItems.count(); i++) {
 			// initializers must be handled recursively!
@@ -2274,6 +2306,14 @@ public class CGenerator extends Generator {
 	// END KGU#560 2018-07-21
 
 	// START KGU#332 2017-01-30: Decomposition of generatePreamble() to ease sub-classing
+	/**
+	 * Returns the language-specific Array-declarator (element type description plus name plus
+	 * index range specifiers) in the respective order.
+	 * @param _elementType - canonicalized internal type string for the array elements.
+	 * @param _varName - Name of the array variable to be declared
+	 * @param typeInfo - the type map entry for the array variable (to retrieve index ranges)
+	 * @return the transformed declarator
+	 */
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
 		int nLevels = _elementType.lastIndexOf('@')+1;

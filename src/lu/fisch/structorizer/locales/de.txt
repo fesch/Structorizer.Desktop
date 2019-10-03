@@ -1323,6 +1323,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
+ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
 ArrangerIndex.lblSubroutines.text=Aufgerufene Unterprogramme

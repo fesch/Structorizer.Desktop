@@ -629,7 +629,7 @@ Editor.pnlTabbed.tab.1=Просмотр кодa
 Editor.popupCodeExport.text=Экспортировать ...
 Editor.popupCodeExport.tooltip=Экспортировать код в файл
 Editor.popupCodeHide.text=Утаить просмотр кода
-Editor.ttPopupCodePreview.text=Переменит просмотр кода к % и его применит .
+Editor.ttPopupCodePreview.text=Переменит просмотр кода к % и его применит предпочитаемыйм языком для экспортa.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=
@@ -957,7 +957,7 @@ ExportOptionDialoge.bracesCheckBox.text=
 ExportOptionDialoge.lineNumbersCheckBox.text=
 ExportOptionDialoge.chkExportSubroutines.text=
 ExportOptionDialoge.chkExportLicenseInfo.text=
-ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbPrefGenerator.text=Предпочитаемый язык для экспортa
 ExportOptionDialoge.lbCharset.text=
 ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.btnPluginOptions.text=
@@ -1251,6 +1251,7 @@ ArrangerIndex.popupIndexDrawGroup.text=
 ArrangerIndex.popupIndexDrawGroup.tooltip=
 ArrangerIndex.popupIndexRenameGroup.text=
 ArrangerIndex.popupIndexRenameGroup.tooltip=
+ArrangerIndex.popupIndexHide.text=Утаить индекс Arranger
 ArrangerIndex.lblSelectTargetGroup.text=
 ArrangerIndex.lblGroups.text=
 ArrangerIndex.lblSubroutines.text=

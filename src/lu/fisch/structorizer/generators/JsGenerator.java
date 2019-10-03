@@ -32,7 +32,8 @@ package lu.fisch.structorizer.generators;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-05-21      First Issue (#721)
- *      Kay Gürtzig     2019-09-30      Array and record initializer handling added.
+ *      Kay Gürtzig     2019-09-30      Array and record initializer handling added...
+ *      Kay Gürtzig     2019-10-03      ... and improved (still not clean - we need a new recursive approach)
  *
  ******************************************************************************************************
  *
@@ -46,6 +47,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Try;
@@ -180,9 +182,13 @@ public class JsGenerator extends CGenerator {
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
-		return this.transform("[" + _arrayItems.concatenate(", ") + "]");
+		StringList transItems = new StringList();
+		for (int i = 0; i < _arrayItems.count(); i++) {
+			transItems.add(this.transform(_arrayItems.get(i), false));
+		}
+		return "[" + transItems.concatenate(", ") + "]";
 	}
 
 	/* (non-Javadoc)
@@ -220,15 +226,27 @@ public class JsGenerator extends CGenerator {
 				if (compEntry.getValue() != null && compEntry.getValue().isRecord()) {
 					recordInit.append(transformRecordInit(compVal, compEntry.getValue()));
 				}
+				// START KGU#732 2019-10-03: Bugfix #755 FIXME - nasty workaround
+				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					StringList items = Element.splitExpressionList(compVal.substring(1), ",", true);
+					items.delete(items.count()-1);
+					for (int i = 0; i < items.count(); i++) {
+						items.set(i, transform(items.get(i)));
+					}
+					recordInit.append("[");
+					recordInit.append(items.concatenate(", ", 0));
+					recordInit.append("]");
+				}
+				// END KGU#561 2018-07-21
 				else {
-					recordInit.append(transform(compVal));
+					recordInit.append(transform(compVal, false));
 				}
 			}
 		}
 		recordInit.append("}");
 		return recordInit.toString();
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#makeArrayDeclaration(java.lang.String, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
 	 */
@@ -274,6 +292,37 @@ public class JsGenerator extends CGenerator {
 			return false;
 		}
 		return super.generateInstructionLine(_inst, _indent, commentInserted, line);
+	}
+	
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		String var = _for.getCounterVar();
+		String valueList = _for.getValueList();
+		StringList items = this.extractForInListItems(_for);
+		
+		if (items != null) {
+			for (int i = 0; i < items.count(); i++) {
+				items.set(i,  transform(items.get(i), false));
+			}
+			valueList = "[" + items.concatenate(", ") + "]";
+		}
+		
+		// Creation of the loop header
+		appendBlockHeading(_for, "for (const " + var + " of " +	valueList + ")", _indent);
+
+		// Add the loop body as is
+		generateCode(_for.q, _indent + this.getIndent());
+
+		// Accomplish the loop
+		appendBlockTail(_for, null, _indent);
+
+		return true;
 	}
 
 	@Override

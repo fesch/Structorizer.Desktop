@@ -1123,6 +1123,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				}
 			}
 		});
+		
 		popupCodeHide.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		popupCodeHide.addActionListener(new ActionListener() {
 			@Override
@@ -1130,7 +1131,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				diagram.setCodePreview(false);
 			}
 		});
+		
 		popupCode.add(popupCodeExport);
+		popupCode.addSeparator();
 		popupCode.add(popupCodeHide);
 	}
 	// END KGU#705 2019-09-26

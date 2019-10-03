@@ -66,6 +66,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and support of throw Jumps
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
+ *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *
  ******************************************************************************************************
  *
@@ -458,18 +460,26 @@ public class CSharpGenerator extends CGenerator
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
-		if (_isDecl) {
-			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
-		}
-		else if (_elemType != null) {
-			return "new " + this.transformType(_elemType, "object") + "[]{" + _arrayItems.concatenate(", ") + "}";
-		}
-		else {
-			super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		// START KGU#732 2019-10-03: Bugfix #755 - The operator new is always to be used.
+		//if (_isDecl) {
+		//	return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		//}
+		//else if (_elemType != null) {
+		//	return "new " + this.transformType(_elemType, "object") + "[]{" + _arrayItems.concatenate(", ") + "}";
+		//}
+		//else {
+		//	super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		//}
+		//return null;
+		// The C-like initializer
+		String initializerC = super.transformOrGenerateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, _elemType, true);
+		if (initializerC != null) {
+			return "new " + this.transformType(_elemType, "object") + "[]" + initializerC;
 		}
 		return null;
+		// END KGU#732 2019-10-03
 	}
 	// END KGU#560 2018-07-21
 
@@ -537,17 +547,13 @@ public class CSharpGenerator extends CGenerator
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
-	 * We try our very best to create a working loop from a FOR-IN construct
-	 * This will only work, however, if we can get reliable information about
-	 * the size of the value list, which won't be the case if we obtain it e.g.
-	 * via a variable.
+	 * We try our very best to create a working loop from a FOR-IN construct.
 	 * @param _for - the element to be exported
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
 	protected boolean generateForInCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -556,7 +562,6 @@ public class CSharpGenerator extends CGenerator
 		String itemType = null;
 		if (items != null)
 		{
-			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogeneous? We will just try four ways: int,
 			// double, String, and derived type name. If none of them match we use
@@ -597,7 +602,23 @@ public class CSharpGenerator extends CGenerator
 					allString = item.startsWith("\"") && item.endsWith("\"") &&
 							!item.substring(1, item.length()-1).contains("\"");
 				}
+				// START KGU#388 2019-10-02: Enh. #423 (had been forgotten in 2017)
+				if (allCommon)
+				{
+					String itType = Element.identifyExprType(this.typeMap, item, true);
+					if (i == 0) {
+						commonType = itType;
+					}
+					if (!commonType.equals(itType)) {
+						allCommon = false;
+					}
+				}
+				// END KGU#388 2019-10-02
+				// START KGU#732 2019-10-02: Bugfix #755 - transformation of the items is necessary
+				items.set(i, transform(item));
+				// END KGU#732 2019-10-02
 			}
+			valueList = "{" + items.concatenate(", ") + "}";
 			// START KGU#388 2017-09-28: Enh. #423
 			//if (allInt) itemType = "int";
 			if (allCommon) itemType = commonType;
@@ -605,11 +626,12 @@ public class CSharpGenerator extends CGenerator
 			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
-			String arrayName = "array20160322";
-			
-			// Extra block to encapsulate the additional variable declarations
-			addCode("{", _indent , isDisabled);
-			indent += this.getIndent();
+			// START KGU#732 2019-10-02: Bugfix #755 part 1 - no need to define an extra variable, initializer was wrong
+			//String arrayName = "array20160322";
+			//
+			//addCode("{", _indent , isDisabled);
+			//indent += this.getIndent();
+			// END KGU#732 2019-10-02
 			
 			if (itemType == null)
 			{
@@ -617,9 +639,12 @@ public class CSharpGenerator extends CGenerator
 				this.appendComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
 				
 			}
-			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
-			
-			valueList = arrayName;
+			// START KGU#732 2019-10-02: Bugfix #755 part 2
+			//addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
+			//
+			//valueList = arrayName;
+			valueList = "new " + itemType + "[]" + valueList;
+			// END KGU#732 2019-10-02
 		}
 		else
 		{
@@ -650,10 +675,12 @@ public class CSharpGenerator extends CGenerator
 		// Accomplish the loop
 		appendBlockTail(_for, null, indent);
 
-		if (items != null)
-		{
-			addCode("}", _indent, isDisabled);
-		}
+		// START KGU#732 2019-10-02: Bugfix #755 part 3
+		//if (items != null)
+		//{
+		//	addCode("}", _indent, isDisabled);
+		//}
+		// END KGU#732 2019-10-02
 		
 		return true;
 	}

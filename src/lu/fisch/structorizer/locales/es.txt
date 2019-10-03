@@ -1308,6 +1308,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
 ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
+ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
 ArrangerIndex.lblSubroutines.text=Subrutinas calladas

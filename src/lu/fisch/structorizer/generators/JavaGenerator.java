@@ -73,6 +73,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and Jump element of throw flavour
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
+ *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *
  ******************************************************************************************************
  *
@@ -393,37 +395,40 @@ public class JavaGenerator extends CGenerator
 	// END KGU#311 2017-01-05
 
 	@Override
-	protected String transform(String _input)
+	protected String transform(String _input, boolean _doInputOutput)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = CodeParser.getKeyword("output").trim(); 
-		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
-		{
-			StringList expressions = 
-					Element.splitExpressionList(_input.substring(outputKey.length()), ",");
-			// Some of the expressions might be sums, so better put parentheses around them
-			if (expressions.count() > 1) {
-				_input = outputKey + " (" + expressions.concatenate(") + (") + ")";
+		if (_doInputOutput) {
+			String outputKey = CodeParser.getKeyword("output").trim(); 
+			if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
+			{
+				StringList expressions = 
+						Element.splitExpressionList(_input.substring(outputKey.length()), ",");
+				// Some of the expressions might be sums, so better put parentheses around them
+				if (expressions.count() > 1) {
+					_input = outputKey + " (" + expressions.concatenate(") + (") + ")";
+				}
 			}
 		}
 		// END KGU#101 2015-12-12
 
 		// START KGU#18/KGU#23 2015-11-01: This can now be inherited
-		String s = super.transform(_input) /*.replace(" div "," / ")*/;
+		String s = super.transform(_input, _doInputOutput) /*.replace(" div "," / ")*/;
 		// END KGU#18/KGU#23 2015-11-01
 
-		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
-		String inpRepl = getInputReplacer(false).replace("$1", "").trim();
-		if (s.startsWith(inpRepl)) {
-			s = s.substring(2);
+		if (_doInputOutput) {
+			// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
+			String inpRepl = getInputReplacer(false).replace("$1", "").trim();
+			if (s.startsWith(inpRepl)) {
+				s = s.substring(2);
+			}
+			// END KGU#108 2015-12-15
+			// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
+			else if (s.endsWith(";  " + inpRepl)) {
+				s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
+			}
+			//END KGU#281
 		}
-		// END KGU#108 2015-12-15
-		// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
-		else if (s.endsWith(";  " + inpRepl)) {
-			s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
-		}
-		//END KGU#281
-
 
 		// Math function
 		s=s.replace("cos(", "Math.cos(");
@@ -586,27 +591,34 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#560 2018-07-21: Bugfux #564 Array initializers have to be decomposed if not occurring in a declaration
 	/**
-	 * Generates code that decomposes an array initializer into a series of element assignments if there no
-	 * compact translation.
+	 * Generates code that decomposes an array initializer into a series of element assignments if there
+	 * is no compact translation.
 	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
 	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
 	 * @param _indent - the current indentation level
 	 * @param _isDisabled - whether the code is commented out
-	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
+	 * @param _elemType - the {@link TypeMapEntry} of the element type if available (null otherwise)
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
-		if (_isDecl) {
-			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		// START KGU#732 2019-10-03: Bugfix #755 - The new operator is always to be used.
+		//if (_isDecl) {
+		//	return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		//}
+		//else if (_elemType != null) {
+		//	return "new " + this.transformType(_elemType, "Object") + "[]{" + _arrayItems.concatenate(", ") + "}";
+		//}
+		//else {
+		//	super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		//}
+		//return null;
+		String initializerC = super.transformOrGenerateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, _elemType, true);
+		if (initializerC == null) {
+			if (_lValue != null) return _lValue;	// Assignment sequence already generated (???)
 		}
-		else if (_elemType != null) {
-			return "new " + this.transformType(_elemType, "Object") + "[]{" + _arrayItems.concatenate(", ") + "}";
-		}
-		else {
-			super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
-		}
-		return null;
+		return "new " + this.transformType(_elemType, "Object") + "[]" + initializerC;
+		// END KGU#732 2019-10-03
 	}
 	// END KGU#560 2018-07-21
 
@@ -701,17 +713,14 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
-	 * We try our very best to create a working loop from a FOR-IN construct
-	 * This will only work, however, if we can get reliable information about
-	 * the size of the value list, which won't be the case if we obtain it e.g.
-	 * via a variable.
+	 * We try our very best to create a working loop from a FOR-IN construct.
 	 * @param _for - the element to be exported
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
+	@Override
 	protected boolean generateForInCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -720,7 +729,6 @@ public class JavaGenerator extends CGenerator
 		String itemType = null;
 		if (items != null)
 		{
-			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogeneous? We will just try four ways: int,
 			// double, String, and derived type name. If none of them match we use
@@ -773,7 +781,11 @@ public class JavaGenerator extends CGenerator
 					}
 				}
 				// END KGU#388 2017-09-28
+				// START KGU#732 2019-10-02: Bugfix #755 - transformation of the items is necessary
+				items.set(i, transform(item));
+				// END KGU#732 2019-10-02
 			}
+			valueList = "{" + items.concatenate(", ") + "}";
 			// START KGU#388 2017-09-28: Enh. #423
 			//if (allInt) itemType = "int";
 			if (allCommon) itemType = commonType;
@@ -781,11 +793,12 @@ public class JavaGenerator extends CGenerator
 			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
-			String arrayName = "array20160322";
-			
-			// Extra block to encapsulate the additional variable declarations
-			addCode("{", _indent, isDisabled);
-			indent += this.getIndent();
+			// START KGU#732 2019-10-02: Bugfix #755 part 1 - there is no need to define a variable
+			//String arrayName = "array20160322";
+			//
+			//addCode("{", _indent, isDisabled);
+			//indent += this.getIndent();
+			// END KGU#732 2019-10-02
 			
 			if (itemType == null)
 			{
@@ -793,10 +806,13 @@ public class JavaGenerator extends CGenerator
 				this.appendComment("TODO: Select a more sensible item type than Object", indent);
 				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
-			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
-					indent, isDisabled);
-			
-			valueList = arrayName;
+			// START KGU#732 2019-10-02: Bugfix #755 part 2
+			//addCode(itemType + "[] " + arrayName + " = new " + itemType + "[]" + transform(valueList, false) + ";",
+			//		indent, isDisabled);
+			//
+			//valueList = arrayName;
+			valueList = "new " + itemType + "[]" + valueList;
+			// END KGU#732 2019-10-02
 		}
 		else
 		{
@@ -832,10 +848,12 @@ public class JavaGenerator extends CGenerator
 		// Accomplish the loop
 		appendBlockTail(_for, null, indent);
 
-		if (items != null)
-		{
-			addCode("}", _indent, isDisabled);
-		}
+		// START KGU#732 2019-10-02: Bugfix #755 part 3 - obsolete code disabled
+		//if (items != null)
+		//{
+		//	addCode("}", _indent, isDisabled);
+		//}
+		// END KGU#732 2019-10-02
 		
 		return true;
 	}

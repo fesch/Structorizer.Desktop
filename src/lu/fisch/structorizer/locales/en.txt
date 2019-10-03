@@ -1323,6 +1323,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Show bounds of the group
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individual visibility of the selected group in Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Rename group ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Allows to rename the selected group, optionally including the associated file
+ArrangerIndex.popupIndexHide.text=Hide Arranger index
 ArrangerIndex.lblSelectTargetGroup.text=Select the target group:
 ArrangerIndex.lblGroups.text=Containing groups
 ArrangerIndex.lblSubroutines.text=Called @os
