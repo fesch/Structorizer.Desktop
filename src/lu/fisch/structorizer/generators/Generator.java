@@ -99,7 +99,7 @@ package lu.fisch.structorizer.generators;
  *      - It was requested that the proposed export file name should primarily follow the nsd file name if
  *        that has already existed.
  *      - For Python export in particular there shouldn't be hyphens in the file name. So if the user decides
- *        to export a subroutine diagram to some language wth file name peculiarities, the inheriting generator
+ *        to export a subroutine diagram to some language with file name peculiarities, the inheriting generator
  *        now gets a chance to intervene (i.e. to modify the file name proposal).
  *      2016-12-22 - Enhancement #314: Structorizer file API support.
  *      - This is in the most cases done by copying a set of implementing functions for the target language
@@ -119,8 +119,8 @@ package lu.fisch.structorizer.generators;
  *      	
  *      2015-11-30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
- *      - parameter names and types as well as function name and type are preprocessed
- *      - result mechanisms are also analysed
+ *      - parameter names and types as well as function name and type are pre-processed
+ *      - result mechanisms are also analysed.
  *
  *      2014-11-16 - Enhancement
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
@@ -2808,7 +2808,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU#676 2019-03-13
 		
 		//=============== Get export options ======================
-		getExportOptions();
+		getExportOptions(true);
 
 		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
@@ -3056,7 +3056,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		routinePool = _routinePool;
 
 		//=============== Get export options ======================
-		getExportOptions();
+		getExportOptions(false);
 
 		//=============== Split keywords for more precise detection ======================
 		this.splitKeywords.clear();
@@ -3098,8 +3098,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Retrieves all general export preferences from the INI file and caches them in
 	 * appropriate fields. 
+	 * @param considerSubroutineOption - If false then subroutines won't be exported, otherwise
+	 * it depends on the respective export option
 	 */
-	private void getExportOptions() {
+	private void getExportOptions(boolean considerSubroutineOption) {
 		try
 		{
 			Ini ini = Ini.getInstance();
@@ -3110,8 +3112,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
 			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
 			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
-
-			exportSubroutines = false;
+			exportSubroutines = considerSubroutineOption && ini.getProperty("genExportSubroutines", "0").equals("true");
 			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
 			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
 

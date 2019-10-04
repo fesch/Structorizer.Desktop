@@ -224,6 +224,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -2257,6 +2258,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#679 2019-03-12
 
+	// START KGU#742 2019-10-04: To solve a problem with concurrent modifications 
+	/**
+	 * If the given {@link Root} {@code root} is orphaned (i.e. has no owning
+	 * {@link Mainform} then it will be assigned to the given {@code mainform}.
+	 * @param root a {@link Root} supposed to be in the pool
+	 * @param mainform - the adopting {@link Mainform}
+	 */
+	public void adoptRootIfOrphaned(Root root, Mainform mainform) {
+		Diagram owner = rootMap.get(root);
+		if (owner != null && owner.mainform == null) {
+			owner.mainform = mainform;
+		}
+	}
+	// END KGU#742 2019-10-04
+	
 	/**
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
 	 * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
@@ -5256,4 +5272,5 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+
 }

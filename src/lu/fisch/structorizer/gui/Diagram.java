@@ -1763,10 +1763,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					pos = highlightCodeForElement(this.selected, false);
 				}
 			}
-			else {
-				// FIXME DEBUG
-				System.out.println("No selection");
-			}
 			if (pos >= 0) {
 				try {
 					// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
@@ -5236,7 +5232,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (isArrangerOpen())
 		{
 			Arranger arr = Arranger.getInstance();
-			arr.addToPool(root, NSDControl.getFrame());			
+			// START KGU#742 2019-10-04: This caused ConcurrentModificationExceptions
+			//arr.addToPool(root, frame);
+			arr.adoptRootIfOrphaned(root, (Mainform)NSDControl.getFrame());
+			//END KGU#741 2019-10-04
 		}
 	}
 	// END KGU#125 2016-01-06

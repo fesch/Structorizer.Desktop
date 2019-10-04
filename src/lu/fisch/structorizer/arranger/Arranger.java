@@ -370,6 +370,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#626 2018-12-28
 
+    // START KGU#742 2019-10-04 New method to avoid ConcurrentModificationException during execution
+	public void adoptRootIfOrphaned(Root root, Mainform mainform) {
+		surface.adoptRootIfOrphaned(root, mainform);
+	}
+	// END KGU#742 2019-10-04
+    
     // START KGU#289 2016-11-15: Enh. #290 (Arrangement files oadable from Structorizer)
     /**
      * Has the file specified by arrFilename (may be an .arr or an .arrz file) loaded as
@@ -2152,5 +2158,5 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		surface.adaptLayout();
 	}
 	// END KGU#699 2019-03-27
-	
+
 }
