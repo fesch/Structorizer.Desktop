@@ -11,7 +11,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - Javascript generator still incomplete and deficient.
 
-Current development version: 3.30 (2019-10-04)
+Current development version: 3.30 (2019-10-05)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -128,6 +128,8 @@ Current development version: 3.30 (2019-10-04)
 - 14: Bugfix #755: Defective Java/C# export of array initializers <2>
 - 14: Bugfix #756: Expression export defects to C language family <2>
 - 14: Bugfix #757: Include list text area was too small under Windows 10 <2>
+- 14: Bugfix #758: "Edit subroutine" didn't reliably arrange the new routine <2>
+- 14: Bugfix #759: Closing Structorizer sub-instances impaired functioning <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

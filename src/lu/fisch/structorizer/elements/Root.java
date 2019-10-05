@@ -4537,7 +4537,7 @@ public class Root extends Element {
 				if (posBrack > 0) {
 					path += _tokens.concatenate("", posBrack, posDot);
 				}
-				//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
+				//error  = new DetectedError("Variable «"+varName+"» hasn't got a component «"+compName+"»!", _instr);
 				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
 				varType = null;
 				path += "." + after;

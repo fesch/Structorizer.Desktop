@@ -180,6 +180,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-03-17/18   Enh. #56 - Implementation of try/catch/finally and throw
  *      Kay Gürtzig     2019-03-28      Enh. #657 - Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-09-24      Enh. #738 - Reflection of the executed element in code preview
+ *      Kay Gürtzig     2019-10-04      Precaution against ConcurrentModificationException (from Arranger)
  *
  ******************************************************************************************************
  *
@@ -2647,7 +2648,6 @@ public class Executor implements Runnable
     			{
     				diagr.addUpdater((Updater)pool);
     			}
-    			// FIXME: We must not do this within an iterator loop!
     			diagram.adoptArrangedOrphanNSD(diagr);
     			// END KGU#125 2016-01-05
     		}

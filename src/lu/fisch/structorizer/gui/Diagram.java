@@ -187,6 +187,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-27      Enh. #738: Methods for code preview popup menu reaction
  *      Kay Gürtzig     2019-09-28      Javadoc completions, fine-tuning for #738
  *      Kay Gürtzig     2019-09-29      Issue #753: Unnecessary structure preference synchronization offers suppressed.
+ *      Kay Gürtzig     2019-10-05      Issues #758 (Edit subroutine) and KGU#743 (root type change) fixed
  *
  ******************************************************************************************************
  *
@@ -4073,11 +4074,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#365 2017-04-14
 			String hint = Menu.msgMustBeIdentifier.getText();
-			String prompt = Menu.msgSubroutineName.getText() + ": ";
+			String prompt1 = Menu.msgSubroutineName.getText() + ": ";
+			String prompt = prompt1;
 			String subroutineName = null;
 			do {
 				subroutineName = JOptionPane.showInputDialog(prompt);
-				prompt = hint + "\n" + Menu.msgSubroutineName.getText() + ": ";
+				prompt = hint + "\n" + prompt1;
 			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
 			if (subroutineName != null) {
 				try {
@@ -4123,70 +4125,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 					//sub.getVarNames();	// just to prepare proper drawing.
 					StringList subVars = sub.retrieveVarNames();
-					HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
-					for (int i = 0; i < subVars.count(); i++) {
-						String varName = subVars.get(i);
-						TypeMapEntry varType = parentTypes.get(varName);
-						if (varType != null && varType.isRecord()) {
-							Element defining = varType.getDeclaringElement();
-							if (defining != null) {
-								Root typeSource = Element.getRoot(defining); 
-								if (typeSource == root) {
-									sharedTypesMap.putIfAbsent(varType.typeName, defining);
-								}
-								else if (typeSource != null) {
-									sub.addToIncludeList(typeSource);
-								}
-							}
-						}
-					}
-					if (!sharedTypesMap.isEmpty()) {
-						// FIXME: We might also offer a combo box containing the already included diagrams of root
-						prompt = Menu.msgIncludableName.getText() + ": ";
-						String includableName = null;
-						do {
-							includableName = JOptionPane.showInputDialog(prompt);
-							prompt = hint + "\n" + Menu.msgIncludableName.getText() + ": ";
-						} while (includableName == null || !Function.testIdentifier(includableName, null));
-						Root incl = null;
-						if (Arranger.hasInstance()) {
-							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
-							if (!includes.isEmpty()) {
-								incl = includes.firstElement();
-								incl.addUndo();
-							}
-						}
-						boolean isNewIncl = incl == null;
-						if (isNewIncl) {
-							incl = new Root();
-							incl.setText(includableName);
-							incl.setInclude();
-							// adopt presentation properties from root
-							//incl.highlightVars = Element.E_VARHIGHLIGHT;
-							incl.isBoxed = root.isBoxed;
-						}
-						for (Element source: sharedTypesMap.values()) {
-							((Subqueue)source.parent).removeElement(source);
-							incl.children.addElement(source);
-						}
-						incl.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
-						if (isNewIncl) {
-							// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
-							//Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
-							Arranger.getInstance().addToPool(incl, NSDControl.getFrame(), targetGroupName);
-							// END KGU#638 3019-01-20
-						}
-						// START KGU#626 2019-01-06: Enh. #657
-						// Associate the includable to all groups root is member of
-						if (groups != null) {
-							for (Group group: groups) {
-								Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
-							}
-						}
-						// END KGU#626 2019-01-06
-						root.addToIncludeList(includableName);
-						sub.addToIncludeList(includableName);
-					}
+					prepareArgTypesForSub(parentTypes, groups, targetGroupName, sub, subVars);
 					// END KGU#506 2018-03-14
 					sub.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
 					Arranger arr = Arranger.getInstance();
@@ -4219,6 +4158,102 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#705 2019-09-23
 			}
 		}
+	}
+	
+	/**
+	 * Retrieves the types for subroutine variables {@code subVars} from the typeMap
+	 * {@code parentTypes} of the calling routine and adopts or implants required includables.
+	 * @param parentTypes - type map of the calling routine
+	 * @param groups - Arranger groups of the calling routine (for Includable implantation)
+	 * @param targetGroupName - name of the target group for the routine
+	 * @param sub - the subroutine (its includeList may be modified)
+	 * @param subVars - the interesting variables of the routine
+	 * @return a StringList of type names in order of {@code subVars}.
+	 */
+	private StringList prepareArgTypesForSub(HashMap<String, TypeMapEntry> parentTypes, Collection<Group> groups,
+			String targetGroupName, Root sub, StringList subVars) {
+		HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+		StringList typeNames = new StringList();
+		for (int i = 0; i < subVars.count(); i++) {
+			String typeName = "";
+			TypeMapEntry varType = null;
+			String varName = subVars.get(i);
+			if (Function.testIdentifier(varName, "")) {
+				varType = parentTypes.get(varName);
+				if (varType != null) {
+					typeName = varType.getCanonicalType(true, true);
+				}
+			}
+			else {
+				typeName = Element.identifyExprType(parentTypes, varName, true);
+				if (!typeName.isEmpty()) {
+					varType = parentTypes.get(":"+typeName);
+				}
+			}
+			if (varType != null && varType.isRecord()) {
+				Element defining = varType.getDeclaringElement();
+				if (defining != null) {
+					Root typeSource = Element.getRoot(defining); 
+					if (typeSource == root) {
+						sharedTypesMap.putIfAbsent(varType.typeName, defining);
+					}
+					else if (typeSource != null) {
+						sub.addToIncludeList(typeSource);
+					}
+				}
+			}
+			typeNames.add(typeName);
+		}
+		if (!sharedTypesMap.isEmpty()) {
+			// FIXME: We might also offer a combo box containing the already included diagrams of root
+			String hint = Menu.msgMustBeIdentifier.getText() + "\n";
+			String prompt1 = Menu.msgIncludableName.getText() + ": ";
+			String prompt = prompt1;
+			String includableName = null;
+			do {
+				includableName = JOptionPane.showInputDialog(prompt);
+				prompt = hint + prompt1;
+			} while (includableName == null || !Function.testIdentifier(includableName, null));
+			Root incl = null;
+			if (Arranger.hasInstance()) {
+				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
+				if (!includes.isEmpty()) {
+					incl = includes.firstElement();
+					incl.addUndo();
+				}
+			}
+			boolean isNewIncl = incl == null;
+			if (isNewIncl) {
+				incl = new Root();
+				incl.setText(includableName);
+				incl.setInclude();
+				// adopt presentation properties from root
+				//incl.highlightVars = Element.E_VARHIGHLIGHT;
+				incl.isBoxed = root.isBoxed;
+			}
+			for (Element source: sharedTypesMap.values()) {
+				((Subqueue)source.parent).removeElement(source);
+				incl.children.addElement(source);
+			}
+			incl.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
+			if (isNewIncl) {
+				// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
+				//Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
+				Arranger.getInstance().addToPool(incl, NSDControl.getFrame(), targetGroupName);
+				// END KGU#638 3019-01-20
+			}
+			// START KGU#626 2019-01-06: Enh. #657
+			// Associate the includable to all groups root is member of
+			if (groups != null) {
+				for (Group group: groups) {
+					Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
+				}
+			}
+			// END KGU#626 2019-01-06
+			root.addToIncludeList(includableName);
+			sub.addToIncludeList(includableName);
+		}
+		return typeNames;
 	}
 	// END KGU#365 2017-03-19
 
@@ -4330,18 +4365,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					return;
 				}
 				subroutine = new Root();
+				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				StringList params = new StringList();
 				for (int i = 0; i < called.paramCount(); i++) {
 					String param = called.getParam(i);
-					if (!Function.testIdentifier(param, null) || params.contains(param)) {
-						param = "param" + (i+1);
-					}
 					params.add(param);
 				}
+				// START KGU#744 2019-10-05: Issue #758 - retrieve argument types and care for shared types 
+				StringList argTypes = this.prepareArgTypesForSub(root.getTypeInfo(), myGroups, targetGroupName, subroutine, params);
+				String paramSeparator = ", ";
+				for (int i = 0; i < params.count(); i++) {
+					String typeName = argTypes.get(i).replace("@", "array of ");
+					if (!Function.testIdentifier(params.get(i), "")) {
+						params.set(i, "param" + (i+1));
+					}
+					if (!typeName.isEmpty() && !typeName.equals("???")) {
+						params.set(i, params.get(i) + ": " + typeName);
+						paramSeparator = "; ";
+					}
+				}
+				// END KGU#744 2019-10-05
 				String result = "";
 				if (((Call)selected).isFunctionCall()) {
-					String line = call.getUnbrokenText().get(0);
-					String var = Call.getAssignedVarname(Element.splitLexically(line, true));
+					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
+					lineTokens.removeAll(" ");
+					String var = Call.getAssignedVarname(lineTokens);
 					if (Function.testIdentifier(var, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
@@ -4356,11 +4404,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						result = ": ???";
 					}
 				}
-				subroutine.setText(called.getName() + "(" + params.concatenate(", ") + ")" + result);
+				subroutine.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
 				subroutine.setProgram(false);
 				subroutine.setChanged(false);
 				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
-				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
 					// If the diagram is a program then create an exclusive group named after the main diagram 
 					if (root.isProgram()) {
@@ -4377,13 +4424,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					targetGroupName = myGroups.iterator().next().getName();
 				}
 			}
-			if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+			// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
+			//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+			if (
+					subForm == null ||
+					subForm.diagram == null ||
+					subForm.diagram.getRoot() != subroutine && (!subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine))
+					)
+			{
+			// END KGU#744 2019-10-05
 				subForm = new Mainform(false);
 				subForm.addWindowListener(new WindowListener() {
 					@Override
 					public void windowOpened(WindowEvent e) {}
 					@Override
 					public void windowClosing(WindowEvent e) {
+						// A dead Mainform causes enormous trouble if we try to work with it.
 						if (subForm == e.getSource()) {
 							subForm = null;
 						}
@@ -4391,6 +4447,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					@Override
 					public void windowClosed(WindowEvent e) {
 						((Mainform)(e.getSource())).removeWindowListener(this);
+						// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
+						if (subForm == e.getSource()) {
+							subForm = null;
+						}
+						// END KGU#744 2019-10-05
 					}
 					@Override
 					public void windowIconified(WindowEvent e) {}
@@ -4403,14 +4464,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					
 				});
 			}
-			subForm.setRoot(subroutine);
+			if (subForm.diagram.getRoot() != subroutine) {
+				subForm.setRoot(subroutine);
+			}
 			// If it is a new root then add it to Arranger
 			if (targetGroupName != null) {
 				Arranger.getInstance().addToPool(subroutine, subForm, targetGroupName);
 			}
+			// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be added to Arranger
+			else {
+				Arranger.getInstance().addToPool(subroutine, subForm);
+			}
+			Arranger.getInstance().setVisible(true);
+			// END KGU#744 2019-10-05
 			if (!subForm.isVisible()) {
 				subForm.setVisible(true);
 			}
+			// START KGU#744 2019-10-05: Bugfix #758
+			int state = subForm.getExtendedState();
+			if ((state & Frame.ICONIFIED) != 0) {
+				subForm.setExtendedState(state & ~Frame.ICONIFIED);
+			}
+			// END KGU#744 2019-10-05
 			Point loc = NSDControl.getFrame().getLocation();
 			Point locSub = subForm.getLocation();
 			if (loc.equals(locSub)) {
@@ -8318,12 +8393,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void setFunction()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208 - outer dimensions change
-		if (!root.isBoxed && root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
-		// END KGU#221 2016-07-28
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown();
 		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -8346,12 +8417,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void setProgram()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isBoxed && !root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
-		// END KGU#221 2016-07-28
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown(); 
 		// START KGU#703 2019-03-30: Issue #720
 		boolean poolModified = false;
 		if (root.isInclude() && Arranger.hasInstance()) {
@@ -8389,11 +8456,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void setInclude()
 	{
-		// For an unboxed diagram, the outer dimensions may change
-		if (!root.isBoxed && root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown(); 
 		root.setInclude();
 		// START KGU#703 2019-03-30: Issue #720
 		boolean poolModified = false;

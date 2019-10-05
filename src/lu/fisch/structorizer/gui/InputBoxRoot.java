@@ -35,7 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-05-21      Attribute editing now delegated to new class AttributeInspector
  *      Kay Gürtzig     2017-06-30      Enh. #389: Text area for Include list added.
  *      Kay Gürtzig     2018-12-19      Issue #651: Include list editing now delegated to a JOptionPane
- *      Kay Gürtzig     2019-10-04      Bugfix #757: JTextArea size of include list. 
+ *      Kay Gürtzig     2019-10-04      Bugfix #757: JTextArea size for include list. 
  *
  ******************************************************************************************************
  *
@@ -175,7 +175,7 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 		_gbc.gridx = 1;
 		_gbc.gridy = (lineNo += _gbc.gridheight);
 		_gbc.gridwidth = 18;
-		_gbc.gridheight = 30;
+		_gbc.gridheight = 1;
 		_gbc.fill = GridBagConstraints.BOTH;
 		_gbc.weightx = 1;
 		_gbc.weighty = 0;
@@ -285,16 +285,16 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
     			licenseInfo = oldLicInfo;
     		}
     	}
-        // START KGU#620 2018-12-19: Issue #651 - Include list now editable via a button
+    	// START KGU#620 2018-12-19: Issue #651 - Include list now editable via a button
     	else if (source == btnIncludeList) {
     		String oldList = txtIncludeList.getText();
-        	txtIncludeList.setFont(txtText.getFont());
-        	// START KGU#741 2019-10-04: Bugfix #757
+    		txtIncludeList.setFont(txtText.getFont());
+    		// START KGU#741 2019-10-04: Bugfix #757
     		//int fontHeight = txtIncludeList.getFontMetrics(txtIncludeList.getFont().deriveFont(FONT_SIZE)).getHeight();
     		//scrIncludeList.setPreferredSize(new Dimension(scrIncludeList.getPreferredSize().width, (int)Math.ceil(10 * fontHeight)));
-        	txtIncludeList.setColumns(30);
-        	txtIncludeList.setRows(10);
-        	// END KGU#741 2019-10-04
+    		txtIncludeList.setColumns(30);
+    		txtIncludeList.setRows(5);
+    		// END KGU#741 2019-10-04
     		int answer = JOptionPane.showConfirmDialog(frame,
     				scrIncludeList, lblIncludeList.getText(),
     				JOptionPane.OK_CANCEL_OPTION,
@@ -305,16 +305,16 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
     			txtIncludeList.setText(oldList);
     		}
     		else {
-        		StringList includes = this.getIncludeList();
-        		int nIncludes = 0;
-        		if (includes != null) {
-        			nIncludes = includes.count();
-        			btnIncludeList.setToolTipText(includes.concatenate(", "));
-        		}
-        		else {
-        			btnIncludeList.setToolTipText(null);
-        		}
-        		btnIncludeList.setText(lblIncludeList.getText() + " (" + nIncludes + ")");
+    			StringList includes = this.getIncludeList();
+    			int nIncludes = 0;
+    			if (includes != null) {
+    				nIncludes = includes.count();
+    				btnIncludeList.setToolTipText(includes.concatenate(", "));
+    			}
+    			else {
+    				btnIncludeList.setToolTipText(null);
+    			}
+    			btnIncludeList.setText(lblIncludeList.getText() + " (" + nIncludes + ")");
     		}
     	}
     	// END KGU#620 2018-12-19
