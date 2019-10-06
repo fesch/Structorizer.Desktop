@@ -66,6 +66,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019.02.14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw-flavour Jumps
+ *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
  *
  ******************************************************************************************************
  *
@@ -303,11 +304,11 @@ public class PHPGenerator extends Generator
     protected void generateCode(Instruction _inst, String _indent)
     {
     	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
-		if (!insertAsComment(_inst, _indent)) {
+		if (!appendAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
 			
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 
 			StringList lines = _inst.getUnbrokenText();
 			for (int i=0; i<lines.count(); i++)
@@ -359,7 +360,7 @@ public class PHPGenerator extends Generator
     	boolean isDisabled = _alt.isDisabled();
     	
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 
     	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
@@ -387,7 +388,7 @@ public class PHPGenerator extends Generator
     	boolean isDisabled = _case.isDisabled();
     	
     	// START KGU 2014-11-16
-    	insertComment(_case, _indent);
+    	appendComment(_case, _indent);
     	// END KGU 2014-11-16
 
     	// START KGU#453 2017-11-02: Issue #447
@@ -433,11 +434,11 @@ public class PHPGenerator extends Generator
     {
     	boolean isDisabled = _for.isDisabled();
     	
-		// START KGU 2014-11-16
-		insertComment(_for, _indent);
-		// END KGU 2014-11-16
+    	// START KGU 2014-11-16
+    	appendComment(_for, _indent);
+    	// END KGU 2014-11-16
 
-		// START KGU#3 2015-11-02: Now we have a more reliable mechanism
+    	// START KGU#3 2015-11-02: Now we have a more reliable mechanism
     	String var = _for.getCounterVar();
     	// START KGU#162 2016-04-01: Enh. #144 more tentative mode of operation
     	if (!var.startsWith("$"))
@@ -487,10 +488,10 @@ public class PHPGenerator extends Generator
     		// END KGU#162 2016-04-01
     	}
     	// END KGU#61 2016-03-23
-		// END KGU#3 2015-11-02
-        addCode("{", _indent, isDisabled);
-        generateCode(_for.q,_indent+this.getIndent());
-        addCode("}", _indent, isDisabled);
+    	// END KGU#3 2015-11-02
+    	addCode("{", _indent, isDisabled);
+    	generateCode(_for.q,_indent+this.getIndent());
+    	addCode("}", _indent, isDisabled);
     }
 
     @Override
@@ -499,7 +500,7 @@ public class PHPGenerator extends Generator
     	boolean isDisabled = _while.isDisabled();
 
     	// START KGU 2014-11-16
-    	insertComment(_while, _indent);
+    	appendComment(_while, _indent);
     	// END KGU 2014-11-16
 
     	String condition = transform(_while.getUnbrokenText().getLongString()).trim();
@@ -520,7 +521,7 @@ public class PHPGenerator extends Generator
         boolean isDisabled = _repeat.isDisabled();
         
         // START KGU 2014-11-16
-        insertComment(_repeat, _indent);
+        appendComment(_repeat, _indent);
         // END KGU 2014-11-16
 
         addCode("do", _indent, isDisabled);
@@ -546,7 +547,7 @@ public class PHPGenerator extends Generator
         boolean isDisabled = _forever.isDisabled();
         
         // START KGU 2014-11-16
-        insertComment(_forever, _indent);
+        appendComment(_forever, _indent);
         // END KGU 2014-11-16
 
         addCode("while (true)", _indent, isDisabled);
@@ -558,13 +559,13 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Call _call, String _indent)
     {
-    	boolean isDisabled = _call.isDisabled();
-    	
-		// START KGU 2014-11-16
-		insertComment(_call, _indent);
-		// END KGU 2014-11-16
+        boolean isDisabled = _call.isDisabled();
+    
+        // START KGU 2014-11-16
+        appendComment(_call, _indent);
+        // END KGU 2014-11-16
 
-		StringList lines = _call.getUnbrokenText();
+        StringList lines = _call.getUnbrokenText();
         for(int i=0;i<lines.count();i++)
         {
         	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
@@ -580,7 +581,7 @@ public class PHPGenerator extends Generator
 		boolean isDisabled = _jump.isDisabled();
 		
 		// START KGU 2014-11-16
-		insertComment(_jump, _indent);
+		appendComment(_jump, _indent);
 		// END KGU 2014-11-16
 
 		// START KGU#78 2015-12-18: Enh. #23 - sensible exit strategy
@@ -619,8 +620,8 @@ public class PHPGenerator extends Generator
 				String label = this.labelBaseName + ref;
 				if (ref.intValue() < 0)
 				{
-					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					appendComment(line, _indent);
 					label = "__ERROR__";
 				}
 				addCode("goto " + label + ";", _indent, isDisabled);
@@ -639,8 +640,8 @@ public class PHPGenerator extends Generator
 			}
 			else if (!isEmpty)
 			{
-				insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
-				insertComment(line, _indent);
+				appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+				appendComment(line, _indent);
 			}
 			// END KGU#74/KGU#78 2015-11-30
 		}
@@ -658,7 +659,7 @@ public class PHPGenerator extends Generator
 		String varName = _try.getExceptionVarName();
 		String exName = "ex" + Integer.toHexString(_try.hashCode());
 		
-		this.insertComment(_try, _indent);
+		this.appendComment(_try, _indent);
 		
 		this.addCode("try {", _indent, isDisabled);
 		this.generateCode(_try.qTry, indentPlus1);
@@ -690,45 +691,55 @@ public class PHPGenerator extends Generator
         
         String pr = "program";
         if (_root.isSubroutine()) {
-        	pr = "function";
+            pr = "function";
         } else if (_root.isInclude()) {
-        	pr = "includable";
+            pr = "includable";
         }
+
+        // START KGU#705 2019-09-23: Enh. #738
+        int line0 = code.count();
+        if (codeMap!= null) {
+            // register the triple of start line no, end line no, and indentation depth
+            // (tab chars count as 1 char for the text positioning!)
+            codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+        }
+        // END KGU#705 2019-09-23
+
         // START KGU#178 2016-07-20: Enh. #160
         //code.add("<?php");
         //insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
         if (topLevel)
         {
             code.add("<?php");
-            insertComment(pr+" "+ procName + " (generated by Structorizer " + Element.E_VERSION + ")", _indent);
+            appendComment(pr+" "+ procName + " (generated by Structorizer " + Element.E_VERSION + ")", _indent);
             // START KGU#363 2017-05-16: Enh. #372
-            insertCopyright(_root, _indent, true);
+            appendCopyright(_root, _indent, true);
             // END KGU#363 2017-05-16
             // START KGU#351 2017-02-26: Enh. #346
-            this.insertUserIncludes("");
+            this.appendUserIncludes("");
             // END KGU#351 2017-02-26
             subroutineInsertionLine = code.count();
             // START KGU#311 2017-01-03: Enh. #314 File API support
             if (this.usesFileAPI) {
-            	this.insertFileAPI("php");
+                this.insertFileAPI("php");
             }
             // END KGU#311 2017-01-03
         }
         code.add("");
         if (!topLevel || !subroutines.isEmpty())
         {
-            insertComment(pr + " " + procName, _indent);
+            appendComment(pr + " " + procName, _indent);
         }
         // END KGU#178 2016-07-20
         // START KGU 2014-11-16
-        insertComment(_root, "");
+        appendComment(_root, "");
         // END KGU 2014-11-16
         if (_root.isProgram() == true)
         {
             code.add("");
-            insertComment("TODO declare your variables here if necessary", _indent);
+            appendComment("TODO declare your variables here if necessary", _indent);
             code.add("");
-            insertComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
+            appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
             code.add("");
             generateCode(_root.children, _indent);
         }
@@ -741,37 +752,37 @@ public class PHPGenerator extends Generator
                 if (fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"()";
             }
             else {
-            	fnHeader = procName + "(";
-            	StringList argNames = _root.getParameterNames();
-            	// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
-            	int minArgs = _root.getMinParameterCount();
-            	StringList argDefaults = _root.getParameterDefaults();
-            	// END KGU#371 2019-03-08
-            	for (int i = 0; i < argNames.count(); i++) {
-            		String argName = argNames.get(i);
-            		if (!argName.startsWith("$")) {
-            			argName = "$" + argName;
-            		}
-            		if (i > 0) {
-           			fnHeader += ", " + argName;
-            		}
-            		else {
-            			fnHeader += argName;
-            		}
-            		// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
-            		if (i >= minArgs) {
-            			fnHeader += " = " + transform(argDefaults.get(i));
-            		}
-            		// END KGU#371 2019-03-08
-            	}
-            	fnHeader += ")";
+                fnHeader = procName + "(";
+                StringList argNames = _root.getParameterNames();
+                // START KGU#371 2019-3-08: Enh. #385 support for optional arguments
+                int minArgs = _root.getMinParameterCount();
+                StringList argDefaults = _root.getParameterDefaults();
+                // END KGU#371 2019-03-08
+                for (int i = 0; i < argNames.count(); i++) {
+                	String argName = argNames.get(i);
+                	if (!argName.startsWith("$")) {
+                		argName = "$" + argName;
+                	}
+                	if (i > 0) {
+                		fnHeader += ", " + argName;
+                	}
+                	else {
+                		fnHeader += argName;
+                	}
+                	// START KGU#371 2019-3-08: Enh. #385 support for optional arguments
+                	if (i >= minArgs) {
+                		fnHeader += " = " + transform(argDefaults.get(i));
+                	}
+                	// END KGU#371 2019-03-08
+                }
+                fnHeader += ")";
             }
             // END KGU#62 2016-12-30
             code.add("function " + fnHeader);
             code.add("{");
-            insertComment("TODO declare your variables here if necessary", _indent + this.getIndent());
+            appendComment("TODO declare your variables here if necessary", _indent + this.getIndent());
             code.add(_indent+"");
-            insertComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent + this.getIndent());
+            appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent + this.getIndent());
             code.add("");
             generateCode(_root.children, _indent + this.getIndent());
             // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
@@ -789,6 +800,13 @@ public class PHPGenerator extends Generator
             code.add("?>");
         }
         // END KGU#178 2016-07-20
+
+        // START KGU#705 2019-09-23: Enh. #738
+        if (codeMap != null) {
+        	// Update the end line no relative to the start line no
+        	codeMap.get(_root)[1] += (code.count() - line0);
+        }
+        // END KGU#705 2019-09-23
 
         return code.getText();
     }

@@ -48,6 +48,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-01-18  Issue #346: Precaution against uninitialized arrays in setLocale()
  *      Kay Gürtzig     2019-03-03  Enh. #327: New methods removeLocale(String, boolean), removeLocales(boolean)
  *      Kay Gürtzig     2019-06-14  Issue #728: Mechanism for setting mnemonics enhanced
+ *      Kay Gürtzig     2019-09-30  KGU#736 Precaution against newlines in tooltips
  *
  ******************************************************************************************************
  *
@@ -73,6 +74,7 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 import lu.fisch.structorizer.gui.ElementNames;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
@@ -858,6 +860,11 @@ public class Locales {
             method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("tooltip")) {
             Method method = _fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+            // START KGU#736 2019-09-29: In case of contained newlines, try to convert the text to html.
+            if (_text.contains("\n") && !_text.startsWith("<html>")) {
+                _text = "<html>" + BString.encodeToHtml(_text).replace("\n", "<br/>") + "</html>";
+            }
+            // END KGU#736 2019-09-29
             method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("border")) {
             Method method = _fieldClass.getMethod("setBorder", new Class[]{Border.class});

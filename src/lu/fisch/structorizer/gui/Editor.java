@@ -75,6 +75,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-15/17   Issue #56: new menu items for Try elements, breakpoint items disabled
  *                                      for Forever and Try elements.
  *      Kay Gürtzig     2019-03-22      Enh. #452: Several popup menu items made invisible on simplified mode
+ *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approach
+ *      Kay Gürtzig     2019-09-26      Enh. #738: Popup menu for code review accomplished.
+ *      Kay Gürtzig     2019-09-27      Enh. #738: Click in code preview now selects element and highlights code,
+ *                                      double-click opens element editor
+ *      Kay Gürtzig     2019-10-02      Enh. #738 code preview font control via Ctrl-Numpad-+/-
  *
  ******************************************************************************************************
  *
@@ -87,14 +92,23 @@ import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 
 import lu.fisch.structorizer.arranger.ArrangerIndex;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangPanel;
+import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.parsers.GENParser;
 
 @SuppressWarnings("serial")
 public class Editor extends LangPanel implements NSDController, ComponentListener
@@ -115,6 +129,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
 	protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
 
+	// START KGU#705 2019-09-23: Enh. #738 Code preview
+	protected final JTextArea txtCode = new JTextArea();
+	// END KGU#705 2019-09-23
 	// Panels
 	public Diagram diagram = new Diagram(this, "???");
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
@@ -129,6 +146,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
 	protected final JScrollPane scrollIndex = new JScrollPane(arrangerIndex);
 	// END KGU#305 2016-12-12
+	// START KGU#705 2019-09-23: Enh. #738 Code preview
+	public final JTabbedPane pnlTabbed = new JTabbedPane();
+	protected final JScrollPane scrollCode = new JScrollPane(txtCode);
+	// END KGU#705 2019-09-23
 
 	// Buttons
 	// I/O
@@ -287,6 +308,12 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.getIcon(112));
 	// END KGU#143 2016-08-02
 	
+	// START KGU#705 2019-09-26: Enh. #738
+	protected final JPopupMenu popupCode = new JPopupMenu();
+	protected final JMenuItem popupCodeExport = new JMenuItem("Export ...", IconLoader.getIcon(32));
+	protected final JMenuItem popupCodeHide = new JMenuItem("Hide code preview");
+	protected final LangTextHolder ttPopupCodePreview = new LangTextHolder("Switches the code preview to % and sets it as favourite export language.");
+	// END KGU#705 2019-09-26
 	
 	// START KGU#177 2016-04-06: Enh. #158
 	// Action names
@@ -372,25 +399,25 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#294 2016-11-22
 
-    private MyToolbar newToolBar(String name, boolean indispensable)
-    {
-        MyToolbar toolbar = new MyToolbar();
-        toolbar.setName(name);
-        diagram.toolbars.add(toolbar);
-        // START KGU#456 2017-11-05: Enh. #452
-        if (!indispensable) {
-        	diagram.expertToolbars.add(toolbar);
-        	if (Element.E_REDUCED_TOOLBARS) {
-        		toolbar.setVisible(false);
-        	}
-        }
-        // END KGU#456 2017-11-05
-        this.add(toolbar, AKDockLayout.NORTH);
-        toolbar.setFloatable(true);
-        toolbar.setRollover(true);
-        //toolbar.addSeparator();
-        return toolbar;
-    }
+	private MyToolbar newToolBar(String name, boolean indispensable)
+	{
+		MyToolbar toolbar = new MyToolbar();
+		toolbar.setName(name);
+		diagram.toolbars.add(toolbar);
+		// START KGU#456 2017-11-05: Enh. #452
+		if (!indispensable) {
+			diagram.expertToolbars.add(toolbar);
+			if (Element.E_REDUCED_TOOLBARS) {
+				toolbar.setVisible(false);
+			}
+		}
+		// END KGU#456 2017-11-05
+		this.add(toolbar, AKDockLayout.NORTH);
+		toolbar.setFloatable(true);
+		toolbar.setRollover(true);
+		//toolbar.addSeparator();
+		return toolbar;
+	}
 
 	private void create()
 	{
@@ -434,12 +461,47 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#305 2016-12-12
 		
 		createDiagramArea();
+
+		// START KGU#705 2019-09-23: Enh. #738
+		pnlTabbed.setTabPlacement(SwingConstants.BOTTOM);
+		pnlTabbed.add("Arrangerindex", scrollIndex);
+		
+		try {
+			txtCode.setTabSize(4);
+			txtCode.setBackground(new Color(237, 237, 255));
+			txtCode.getDocument().insertString(0, "", null);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		txtCode.setEditable(false);
+		txtCode.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
+					controlCodeFont(e.getKeyCode() == KeyEvent.VK_ADD);
+				}
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {}
+		});
+		
+		pnlTabbed.add("Code preview", scrollCode);
+		// END KGU#705 2019-09-23
 		
 		// START KGU#305 2016-12-12: Enh. #305
 		//createArrangerIndex();	// KGU#630 2019-01-12: Now done by ArrangerIndex itself
-		sp305.add(scrollIndex);
+		// START KGU#705 2019-09-23: Enh. #738 Arranger index now tabbed together with Code preview
+		//sp305.add(scrollIndex);
+		sp305.add(pnlTabbed);
+		// END KGU#705 2019-09-23
 		// END KGU#305 2016-12-12
 
+		// START KGU#705 2019-09-26: Enh. #738
+		this.createPreviewPopupMenu();
+		// END KGU#705 2019-09-26
 
 		//container.add(scrolllist,AKDockLayout.SOUTH);
 		createErrorList();
@@ -447,6 +509,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		//diagram.setOpaque(true);
 		diagram.addMouseListener(new PopupListener());
+		txtCode.addMouseListener(new PopupListener());
+
 		
 		// START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
 		GUIScaler.rescaleComponents(this);
@@ -461,6 +525,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//doButtons();
 		//container.validate();
 	}
+
+	// START KGU#705 2019-10-02: Enh. #738
+	/**
+	 * Incrementally enlarges or diminishes the code preview font.
+	 * @param fontUp - {@code true} to enlarge the font, {@code false} to diminish it 
+	 */
+	protected void controlCodeFont(boolean fontUp) {
+		Font font = txtCode.getFont();
+		float increment = 2.0f;
+		if (!fontUp) {
+			increment = font.getSize() > 8 ? -2.0f : 0.0f;
+		}
+		Font newFont = font.deriveFont(font.getSize()+increment);
+		txtCode.setFont(newFont);
+	}
+	// END KGU#705 2019-10-02
 
 	/**
 	 * Sets up the diagram editing area in fields {@link #scrollarea}, {@link #diagram}.
@@ -975,6 +1055,89 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 	}
 	
+	// START KGU#705 2019-09-26: Enh. #738
+	private void createPreviewPopupMenu()
+	{
+		Vector<GENPlugin> plugins = Menu.generatorPlugins;
+		if (plugins.isEmpty()) {
+			// Editor must retrieve the plugins itself, obvioulsy
+			String fileName = "generators.xml";
+			BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
+			GENParser genp = new GENParser();
+			plugins = genp.parse(buff);
+			try { buff.close();	} catch (IOException e) {}
+		}
+		ImageIcon defaultIcon = IconLoader.getIcon(87);
+		String tooltip = ttPopupCodePreview.getText();
+		ActionListener listener = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Object item = e.getSource();
+				if (item instanceof JMenuItem) {
+					diagram.setPreferredGeneratorName(((JMenuItem)item).getText());
+				}
+			}
+		};
+		for (GENPlugin plugin: plugins)
+		{
+			ImageIcon icon = defaultIcon;	// The default icon
+			if (plugin.icon != null && !plugin.icon.isEmpty()) {
+				try {
+					URL iconFile = this.getClass().getResource(plugin.icon);
+					if (iconFile != null) {
+						icon = IconLoader.getIconImage(this.getClass().getResource(plugin.icon));
+					}
+				}
+				catch (Exception ex) {}
+			}
+			JCheckBoxMenuItem pluginItem = new JCheckBoxMenuItem(plugin.title, icon);
+			pluginItem.setName("code_" + plugin.title);
+			popupCode.add(pluginItem);
+			pluginItem.setToolTipText(tooltip.replace("%", plugin.title));
+			pluginItem.addActionListener(listener);
+		}
+		this.ttPopupCodePreview.addLangEventListener(new LangEventListener() {
+			@Override
+			public void LangChanged(LangEvent evt) {
+				String tooltip = ttPopupCodePreview.getText();
+				for (Component comp: popupCode.getComponents()) {
+					String name = comp.getName();
+					if (comp instanceof JCheckBoxMenuItem) {
+						((JMenuItem)comp).setToolTipText(tooltip.replace("%", name.substring(5)));						
+					}
+				}
+			}});
+		
+		popupCode.addSeparator();
+		
+		popupCodeExport.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+		popupCodeExport.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				String language = diagram.getPreferredGeneratorName();
+				for (GENPlugin plugin: Menu.generatorPlugins) {
+					if (plugin.title.equals(language)) {
+						diagram.export(plugin.className, plugin.options);
+						break;
+					}
+				}
+			}
+		});
+		
+		popupCodeHide.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		popupCodeHide.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				diagram.setCodePreview(false);
+			}
+		});
+		
+		popupCode.add(popupCodeExport);
+		popupCode.addSeparator();
+		popupCode.add(popupCodeHide);
+	}
+	// END KGU#705 2019-09-26
+
 	/**
 	 * Sets up the error list in fields {@link #scrolllist}, {@link #errorlist}.
 	 */
@@ -1266,6 +1429,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupAddBeforeFor.setIcon(iconFor);
 		popupAddAfterFor.setIcon(iconFor);
 		
+		for (Component comp: popupCode.getComponents()) {
+			if (comp instanceof JCheckBoxMenuItem) {
+				((JCheckBoxMenuItem)comp).setSelected(comp.getName().equals("code_" + diagram.getPreferredGeneratorName()));
+			}
+		}
 		
 		//scrollarea.revalidate();
 		//scrollarea.setViewportView(diagram);
@@ -1290,10 +1458,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			sp.setDividerSize(0);
 		}
 		
-		// START KGU#305 2016-12-12: Enh. 305
-		// arranger index
-		
-		doButtonsArrangerIndex();
+		// START KGU#305 2016-12-12: Enh. 305, KGU#705 2019-09-23: Enh. #738
+		// arranger index and code preview
+		doButtonsTabbedPane();
+		// END KGU#305 2016-12-12
 
                 // Intends to ensure the original toolbar order after redocking?
                 /*
@@ -1310,29 +1478,60 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 
 	/**
-	 * Checks and updates the visibility / usability of all Arranger-Index-specific buttons,
-	 * menu items and other controls
+	 * Checks and updates the visibility / usability of the tabbed pane including all Arranger-
+	 * Index-specific buttons, menu items, and other controls as well as the code preview page 
 	 */
-	private void doButtonsArrangerIndex() {
+	private void doButtonsTabbedPane() {
 		// START KGU#626 2019-01-01: Enh. #657
 		//if (diagram.showingArrangerIndex() && !diagrams.isEmpty())
-		if (diagram.showingArrangerIndex() && !arrangerIndex.isEmpty())
+		// START KGU#705 2019-09-23: Enh. #738
+		//if (diagram.showingArrangerIndex() && !arrangerIndex.isEmpty())
+		boolean showIndex = diagram.showingArrangerIndex() && !arrangerIndex.isEmpty();
+		boolean showPreview = diagram.showingCodePreview(); 
+		if (showIndex || showPreview)
+		// END KGU#705 2019-09-23
 		// END KGU#626 2019-01-01
 		{
 			if (sp305.getDividerSize()==0)
 			{
-				sp305.remove(scrollIndex);
-				sp305.add(scrollIndex);
+				// START KGU#705 2019-09-23: Enh. #738
+				//sp305.remove(scrollIndex);
+				//sp305.add(scrollIndex);
+				sp305.remove(pnlTabbed);
+				sp305.add(pnlTabbed);
+				// END KGU#705 2019-09-23
 			}
-			scrollIndex.setVisible(true);
-			scrollIndex.setViewportView(arrangerIndex);
+			//START KGU#705 2019-09-23: Enh. #738
+			//scrollIndex.setVisible(true);
+			//scrollIndex.setViewportView(arrangerIndex);
+			boolean wasEnabledIndex = pnlTabbed.isEnabledAt(0);
+			boolean wasEnabledPreview = pnlTabbed.isEnabledAt(1);
+			pnlTabbed.setEnabledAt(0, showIndex);
+			if (showIndex) {
+				scrollIndex.setViewportView(arrangerIndex);
+			}
+			pnlTabbed.setEnabledAt(1, showPreview);
+			if (!wasEnabledIndex && showIndex || !showPreview) {
+				pnlTabbed.setSelectedIndex(0);
+			}
+			else if (!wasEnabledPreview && showPreview || !showIndex) {
+				pnlTabbed.setSelectedIndex(1);
+			}
+			// END KGU#705 2019-09-23
 			sp305.setDividerSize(5);
-			scrollIndex.revalidate();
+			if (showIndex) {
+				scrollIndex.revalidate();
+			}
 		}
 		else
 		{
-			scrollIndex.setVisible(false);
-			sp305.remove(scrollIndex);
+			// START KGU#705 2019-09-23: Enh. #738
+			//scrollIndex.setVisible(false);
+			//sp305.remove(scrollIndex);
+			pnlTabbed.setEnabledAt(0, showIndex);
+			pnlTabbed.setEnabledAt(1, showPreview);
+			sp305.remove(pnlTabbed);
+			// END KGU#705 2019-09-23
 			sp305.setDividerSize(0);
 		}
 		// END KGU#305 2016-12-12
@@ -1386,6 +1585,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		@Override
 		public void mousePressed(MouseEvent e)
 		{
+			Element closest = null;
+			if (e.getSource() == txtCode) {
+				try {
+					int line = txtCode.getLineOfOffset(txtCode.getCaretPosition());
+					closest = diagram.identifyElementForCodeLine(line);
+				} catch (BadLocationException ex) {}
+			}
+			if (closest != null && e.getButton() == MouseEvent.BUTTON1) {
+				diagram.selectElement(closest);
+				if (e.getClickCount() == 2) {
+					diagram.editNSD();
+					doButtons();
+				}
+			}
 			showPopup(e);
 		}
 		
@@ -1401,10 +1614,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			{
 				// START KGU#318 2017-01-05: Enh. #319
 				//popup.show(e.getComponent(), e.getX(), e.getY());
-				if (e.getComponent() == diagram) {
-					popup.show(e.getComponent(), e.getX(), e.getY());
+				Component comp = e.getComponent();
+				if (comp == diagram) {
+					popup.show(comp, e.getX(), e.getY());
 				}
 				// END KGU#318 2017-01-05
+				// START KGU#705 2019-09-26: Enh. #738
+				else if (comp == txtCode) {
+					popupCode.show(comp, e.getX(), e.getY());
+				}
+				// END KGU#705 2019-09-26
 			}
 		}
 	}
@@ -1507,7 +1726,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	public void repaintArrangerIndex() {
 		this.scrollIndex.repaint();
 		this.scrollIndex.validate();
-		this.doButtonsArrangerIndex();
+		this.doButtonsTabbedPane();
 	}
 	// END KGU#626 2019-01-04
 	// END KGU#305 2016-12-12
@@ -1518,13 +1737,16 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	{
 		super.updateUI();
 		// Cater for the look and feel update of the popup menu.
-		for (Component comp: new Component[] {this.popup}) {
+		// START KGU#705 209-09-26: Enh. #738
+		//for (Component comp: new Component[] {this.popup}) {
+		for (Component comp: new Component[] {this.popup, this.popupCode}) {
+		// END KGU#708 2019-09-26
 			if (comp != null) {
 				try {
 					javax.swing.SwingUtilities.updateComponentTreeUI(comp);
 				}
 				catch (Exception ex) {
-					System.out.println("L&F problem with " + comp);
+					System.err.println("L&F problem with " + comp);
 				}
 			}
 		}

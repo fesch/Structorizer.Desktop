@@ -179,6 +179,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-03-14      Issue #366 - Mainform, Arranger, and Control now also under focus watch
  *      Kay Gürtzig     2019-03-17/18   Enh. #56 - Implementation of try/catch/finally and throw
  *      Kay Gürtzig     2019-03-28      Enh. #657 - Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-09-24      Enh. #738 - Reflection of the executed element in code preview
+ *      Kay Gürtzig     2019-10-04      Precaution against ConcurrentModificationException (from Arranger)
  *
  ******************************************************************************************************
  *
@@ -311,6 +313,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1552,6 +1555,9 @@ public class Executor implements Runnable
 		}
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
+		// START KGU#705 2019-09-24: Enh. #738
+		diagram.updateCodePreview();
+		// END KGU#705 2019-09-24
 		//System.out.println("stackTrace size: " + stackTrace.count());
 	}
 	
@@ -2008,8 +2014,18 @@ public class Executor implements Runnable
 				String diagrName = root.includeList.get(i);
 				try {
 					imp = this.findIncludableWithName(diagrName);
-				} catch (Exception ex) {
-					return ex.getMessage();	// Ambiguous call!
+				}
+				catch (ConcurrentModificationException ex) {
+					ex.printStackTrace();
+					return ex.toString();
+				}
+				catch (Exception ex) {
+					// Likely to be an ambiguous call, but might be something else
+					String msg = ex.getMessage();
+					if (msg == null) {
+						msg = ex.toString();
+					}
+					return msg;
 				}
 				if (imp != null)
 				{
@@ -2600,10 +2616,12 @@ public class Executor implements Runnable
     			candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
     		}
     		else {
-    			candidates = new Vector<Root>();
-    			for (Root cand: pool.findIncludesByName(name, context.root)) {
-    				candidates.add(cand);
-    			}
+    			// Why the heck this circumvention? 
+//    			candidates = new Vector<Root>();
+//    			for (Root cand: pool.findIncludesByName(name, context.root)) {
+//    				candidates.add(cand);
+//    			}
+    			candidates = pool.findIncludesByName(name, context.root);
     		}
     		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
     		//for (int c = 0; subroutine == null && c < candidates.size(); c++)
@@ -2612,11 +2630,11 @@ public class Executor implements Runnable
     		{
     			// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			//subroutine = candidates.get(c);
+				Root cand = candidates.get(c);
     			if (diagr == null) {
-    				diagr = candidates.get(c);
+    				diagr = cand;
     			}
     			else {
-    				Root cand = candidates.get(c);
     				int similarity = diagr.compareTo(cand); 
     				if (similarity > 2 && similarity != 4) {
     					// 3: Equal file path but unsaved changes in one or both diagrams;

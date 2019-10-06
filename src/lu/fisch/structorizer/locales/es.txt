@@ -277,6 +277,7 @@ Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
+Menu.menuDiagramPreview.text=¿Mostrar prevista de código?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
@@ -323,12 +324,12 @@ Menu.menuPreferencesSaveDump.text=Guardar en un archivo ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
 Menu.menuPreferencesSaveLoad.tooltip=Antes de cargar preferencias desde un archivo INI las preferencias actuales son guardados automáticamente en un fichero temporal (backup).
 Menu.menuPreferencesSaveRestore.text=Restaurar último backup
-Menu.menuPreferencesSaveRestore.tooltip=Restablce las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
+Menu.menuPreferencesSaveRestore.tooltip=Restablece las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
 
-// Menu "Debug"
+// Menu "Debug" (Caption "Depurar" might be better but would require to change the mnemonic to e.g. 'u')
 Menu.menuDebug.text=Debug
 Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
@@ -390,7 +391,7 @@ Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=el editado
 Menu.lblRefactorAll.text=todos
 Menu.msgDiscardParserPrefs.text=¿Seguro a revertir las nuevas preferencias del analisador?
-Menu.msgAdaptStructPrefs.text=¿Adaptar las preferencias de estructuras a las del analisador?
+Menu.msgAdaptStructPrefs.text=¿Adaptar las preferencias de estructuras a las del analisador?\n(p.ej.: %)
 Menu.msgKeywordsDiffer.text=Este diagrama usa otras palabras claves que están configuradas para el Analisador:%1\nHas impedido la adapatación automática durante el importe.\n\nAhora tienes las opciónes siguientes:\n%2
 Menu.msgRefactorNow.text=El diagrama puede ser adaptado ahora misma (recomendado)
 Menu.msgAdoptPreferences.text=Puedes adquirir las palabras claves del diagrama cargado como nuevas preferencias del Analisador\n   (¡inducirá la adaptación de todos los otros diagramas abiertos!)
@@ -426,7 +427,7 @@ Menu.msgSubroutineName.text=Nombre del nuevo subprograma
 Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
 Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
-Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman desde %
+Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman\ndesde %
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
@@ -681,6 +682,13 @@ Editor.popupDisable.text=Desactivar/Reactivar
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Indice de Arranger
+Editor.pnlTabbed.tab.1=Prevista de código
+Editor.popupCodeExport.text=Exportar ...
+Editor.popupCodeExport.tooltip=Exportar el código a un archivo
+Editor.popupCodeHide.text=Esconder la prevista
+Editor.ttPopupCodePreview.text=Cambia la prevista de código hacia % y lo pone como lenguaje preferido de exportación.
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Por favor ingresa un texto
@@ -1300,6 +1308,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
 ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
+ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
 ArrangerIndex.lblSubroutines.text=Subrutinas calladas

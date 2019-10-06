@@ -181,7 +181,13 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-13      Bugfix #728: Wipe the result tree in an opened F&R dialog on editing.
  *      Kay Gürtzig     2019-07-31      Issue #526: File renaming workaround reorganised on occasion of bugfix #731
  *      Kay Gürtzig     2019-08-01      KGU#719: Refactoring dialog redesigned to show a JTable of key pairs
- *      Kay Gürtzig     2019-08-03      Issue #733 Selective property export mechanism implemented.
+ *      Kay Gürtzig     2019-08-03      Issue #733: Selective property export mechanism implemented.
+ *      Kay Gürtzig     2019-09-24      Bugfix #751: Cursor traversal didn't reach Try element internals
+ *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation approaches
+ *      Kay Gürtzig     2019-09-27      Enh. #738: Methods for code preview popup menu reaction
+ *      Kay Gürtzig     2019-09-28      Javadoc completions, fine-tuning for #738
+ *      Kay Gürtzig     2019-09-29      Issue #753: Unnecessary structure preference synchronization offers suppressed.
+ *      Kay Gürtzig     2019-10-05      Issues #758 (Edit subroutine) and KGU#743 (root type change) fixed
  *
  ******************************************************************************************************
  *
@@ -216,6 +222,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -236,7 +243,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultFormatter;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -315,9 +326,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mY = -1;
     
     private NSDController NSDControl = null;
-    
+
 	// START KGU#534 2018-06-27: Enh. #552
-    /** Nesting depth of serial actions */
+	/*========================================
+	 * Serial action support
+	 *========================================*/
+	/** Nesting depth of serial actions */
 	private static short serialActionDepth = 0;
 	public enum SerialDecisionStatus {INDIVIDUAL, YES_TO_ALL, NO_TO_ALL};
 	public enum SerialDecisionAspect {SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE};
@@ -411,10 +425,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
-    // START KGU#626 2019-01-01: Enh. #657
-    //private JList<Root> diagramIndex = null;
-    private JTree arrangerIndex = null;
-    // END KGU#626 2019-01-01
+    // START KGU#705 2019-09-23: Enh. #738
+    private JTextArea codePreview = null; 
+    // END KGU#705 2019-09-23
 
     // START KGU#368 2017-03-10: Enh. #376 - Allow copy and paste among Structorizer instances
     //private Element eCopy = null;
@@ -432,11 +445,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Last used value for interactive line length limitation (word wrapping) */
 	public int lastWordWrapLimit = 0;
 	// END KGU#602 2018-10-28
-    // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
-    private String prefGeneratorName = "";
-    // END KGU#170 2016-04-01
-    // START KGU#354 2017-03-15: Enh. #354 CodeParser cache
-    /** Cache of class instances implementing interface {@link CodeParser} */
+	// START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
+	private String prefGeneratorName = "";
+	// END KGU#170 2016-04-01
+	// START KGU#354 2017-03-15: Enh. #354 CodeParser cache
+	/** Cache of class instances implementing interface {@link CodeParser} */
 	private static Vector<CodeParser> parsers = null;
 	/** The {@link GENPlugin}s held here provide parser-specific option specifications */
 	private static Vector<GENPlugin> parserPlugins = null;
@@ -447,14 +460,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Bitset of enabled {@link DiagramController} instances */ 
 	private long enabledDiagramControllers = 0;
 	// END KGU#448 2018-01-05
-    
-    // START KGU#300 2016-12-02: Enh. #300 - update notification settings
-    // KGU#300 2017-03-15: turned static
-    public static boolean retrieveVersion = false;
-    // END KGU#300 2016-12-02
+
+	// START KGU#300 2016-12-02: Enh. #300 - update notification settings
+	// KGU#300 2017-03-15: turned static
+	public static boolean retrieveVersion = false;
+	// END KGU#300 2016-12-02
 	// START KGU#305 2016-12-12: Enh. #305
+	/** Indicates whether Arranger index is visible (diagram setting) */
 	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
 	// END KGU#305 2016-12-12
+	// START KGU#705 2019-09-23: Enh. #738
+	/** Indicates whether code preview is enabled (diagram setting) */
+	private boolean show_CODE_PREVIEW = false;		// Code Preview visible?
+	/** Maps Elements to line number intervals of the current code preview */
+	private HashMap<Element, int[]> codePreviewMap = null;
+	/** Highlight painter for the {@link #codePreview} */
+	private final HighlightPainter codeHighlightPainter = 
+			new DefaultHighlighter.DefaultHighlightPainter(Element.E_DRAWCOLOR);
+	/** Highlight painter for executed elements in the {@link #codePreview} */
+	private final HighlightPainter execHighlightPainter = 
+			new DefaultHighlighter.DefaultHighlightPainter(Element.E_RUNNINGCOLOR);
+	/** Caches the highlight manager for {@link #codePreview} */
+	private Highlighter codeHighlighter = null;
+	// END KGU#705 2019-09-23
 
     // recently opened files
     protected Vector<String> recentFiles = new Vector<String>();
@@ -490,26 +518,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private Mainform subForm = null;
 	// END KGU#667 2019-02-26
 
-	/*****************************************
-	 * CONSTRUCTOR
-     *****************************************/
-    public Diagram(Editor _editor, String _string)
+
+    /*========================================
+     * CONSTRUCTOR
+     *========================================*/
+    /**
+     * Creates the Working area implementing most of the associated actions
+     * @param _editor - the associated {@link Editor} instance providing toolbar, popup menu, and more
+     * @param _name - name of the initial diagram to be presented
+     */
+    public Diagram(Editor _editor, String _name)
     {
         super(true);
         this.setDoubleBuffered(true);	// we don't need double buffering, because the drawing
                                                                         // itself does it allready!
         this.setBackground(Color.LIGHT_GRAY);
 
-        if(_editor!=null)
+        if(_editor != null)
         {
-            errorlist=_editor.errorlist;
-            // START KGU#626 2019-01-01: Enh. #657
-            //diagramIndex = _editor.diagramIndex;
-            arrangerIndex = _editor.arrangerIndex;
-            // END KGU#626 2019-01-01
+            errorlist = _editor.errorlist;
+            // START KGU#705 2019-09-23: Enh. #738
+            codePreview = _editor.txtCode;
+            // END KGU#705 2019-09-23
             NSDControl = _editor;
         }
-        create(_string);
+        create(_name);
     }
 
 
@@ -522,8 +555,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	/**
-	 * @param root the Root to set
-	 * @return false if the user refuses to adopt the Root or the Root is being executed
+	 * Replaces the current diagram ({@link #root}) by the given {@code root} unless
+	 * {@link Executor} is running or the user cancels the action on occasion of an
+	 * requested decision about unsaved changes of the recently held {@link #root}.
+	 * @param root - the {@link Root} to set
+	 * @return false if the user refuses to adopt {@code root} or the current {@link Root} is being executed
 	 */
 	public boolean setRootIfNotRunning(Root root) {
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
@@ -535,6 +571,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#430 2017-10-12: Issue #432 allow to set the root without immediate redrawing
+	/**
+	 * Replaces the current {@link Root} by the given {@code root} and updates all
+	 * depending GUI elements.
+	 * @param root - the new diagram root
+	 * @param askToSave - in case the rcent {@link Root} has unsaved changes, ask to save it?
+	 * @param draw - If true then the work area will be redrawn
+	 * @return true if {@code root} wasn't null ad has properly replaced the current diagram
+	 */
 	//public boolean setRoot(Root root, boolean askToSave)
 	public boolean setRoot(Root root, boolean askToSave, boolean draw)
 	// END KGU#430 2017-10-12
@@ -567,6 +611,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				redraw();
 				analyse();
 			}
+			// START KGU#705 2019-09-23: Enh. #738
+			this.updateCodePreview();
+			// END KGU#705 2019-09-23
 			// START KGU#149 2016-02-03: Bugfix #117
 			doButtons();
 			// END KGU#149 2016-02-03
@@ -590,13 +637,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * @return true if the Analyser is currently enabled, false otherwise
 	 */
-    public boolean getAnalyser()
-    {
-        return Element.E_ANALYSER;
-    }
+	public boolean getAnalyser()
+	{
+		return Element.E_ANALYSER;
+	}
 
-    private void create(String _string)
-    {
+	private void create(String _string)
+	{
 		// load different things from INI-file
 		Element.loadFromINI();
 		CodeParser.loadFromINI();
@@ -960,6 +1007,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
 		if (e.getSource() == this)
 		{
+			// START KGU#705 2019-09-26: Enh. #738: The focus wasn't automatically gained on clicking into the diagram
+			this.getParent().getParent().requestFocus();
+			// END KGU#705 2019-09-26
 			//System.out.println("Pressed");
 			mouseX = e.getX();
 			mouseY = e.getY();
@@ -1067,6 +1117,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 
+			// START KGU#705 2019-09-24: Enh. #738
+			highlightCodeForSelection();
+			// END KGU#705 2019-09-24
 			if (NSDControl != null) NSDControl.doButtons();
 		}
 	}
@@ -1147,6 +1200,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							doDraw = true;
+							// START KGU#705 2019-09-30: Enh. #738
+							updateCodePreview();
+							// END KGU#705 2019-09-30
 						}
 						else
 						{
@@ -1217,8 +1273,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//{
 			//	Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
 			//}
-			else if (e.getSource() == arrangerIndex && arrangerIndex.getSelectionCount() == 1) {
-			}
 			// END KGU#626 2019-01-01
 			// END KGU#305 2016-12-12
 		}
@@ -1252,6 +1306,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#276 2016-10-11
 					// do the button thing
 					if(NSDControl!=null) NSDControl.doButtons();
+					// START KGU#705 2019-09-24: Enh. #738
+					highlightCodeForSelection();
+					// END KGU#705 2019-09-24
 				}
 			}
 			else if (e.getSource() == errorlist)
@@ -1266,6 +1323,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (selected != null && errElem != selected) {
 						selected.setSelected(false);
 						selected = errElem.setSelected(true);
+						// START KGU#705 2019-09-24: Enh. #738
+						highlightCodeForSelection();
+						// END KGU#705 2019-09-24
 					}
 					// END KGU#565 2018-07-27
 					// edit it
@@ -1414,6 +1474,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.warning(ex.toString());
 		}
 		redraw();	// This is to make sure the drawing rectangles are correct
+		// START KGU#705 2019-09-24: Enh. 738
+		if (show_CODE_PREVIEW && codeHighlighter != null && element.executed) {
+			codeHighlighter.removeAllHighlights();
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					highlightCodeForElement(element, true);
+				}
+			});
+		}
+		// END KGU#705 2019-09-24
 	}
 	// END KGU#276 2016-10-09
 
@@ -1471,10 +1542,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void invalidateAndRedraw()
 	{
-		// During execution it is no good idea to rest variable, constants, and type informaion.
+		// During execution it is no good idea to reset variable, constants, and type information.
 		// Anyway the pool changes will usually only be a pseudo addition in order to get ownership
-		// of executed subroutines, so better ignore it. Otherwise of course, we should react to
-		// a possible insertion or removal of some referred includable.
+		// of executed subroutines, so better ignore it.
+		// Otherwise, of course, we should react to a possible insertion or removal of some referred
+		// includable, and even subroutines becoming available may have an impact on derived types
+		// (result types), even recursively.
 		if (!root.isExecuted()) {
 			root.clearVarAndTypeInfo(false);
 		}
@@ -1662,8 +1735,134 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (refresh) {
 			redraw();
 		}
+		// START KGU#705 2019-09-24: Enh. #738
+		highlightCodeForSelection();
+		// END KGU#705 2019-09-24
 	}
 	// END KGU#41 2015-10-11
+	
+	// START KGU#705 2019-09-24: Enh. #738
+	/**
+	 * Highlights the code regions corresponding to the current selection in the preview area.
+	 */
+	private void highlightCodeForSelection()
+	{
+		if (show_CODE_PREVIEW && codePreviewMap != null) {
+			int pos = -1;
+			if (codeHighlighter != null) {
+				codeHighlighter.removeAllHighlights();
+			}
+			if (this.selected != null) {
+				if (this.selected instanceof IElementSequence) {
+					IElementSequence.Iterator iter = ((IElementSequence)this.selected).iterator(false);
+					while (iter.hasNext()) {
+						int p = highlightCodeForElement(iter.next(), false);
+						if (pos < 0) pos = p;
+					}
+				}
+				else {
+					pos = highlightCodeForElement(this.selected, false);
+				}
+			}
+			if (pos >= 0) {
+				try {
+					// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
+					Rectangle viewRect = codePreview.modelToView(pos);
+					// Scroll to make the rectangle visible
+					codePreview.scrollRectToVisible(viewRect);
+				}
+				catch (BadLocationException e) {
+					// FIXME DEBUG
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Highlights the code regions corresponding to the given element {@code ele} in the preview area .
+	 * @param ele - the {@link Element} the code for which is to be highlighted
+	 * @param scrollTo TODO
+	 * @return the start position of the first line of the element code
+	 */
+	private int highlightCodeForElement(Element ele, boolean scrollTo)
+	{
+		int pos = -1;
+		int[] interval = codePreviewMap.get(ele);
+		if (interval != null) {
+			if (codeHighlighter == null) {
+				codeHighlighter = codePreview.getHighlighter();
+			}
+			for (int line = interval[0]; line < interval[1]; line++) {
+				try {
+					pos = codePreview.getLineStartOffset(line);
+					int p0 = pos + interval[2];
+					int p1 = codePreview.getLineEndOffset(line);
+					if (p0 < p1) {
+						codeHighlighter.addHighlight(p0, p1, ele.executed ? execHighlightPainter : codeHighlightPainter);
+						if (scrollTo) {
+							// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
+							Rectangle viewRect = codePreview.modelToView(pos);
+							// Scroll to make the rectangle visible
+							codePreview.scrollRectToVisible(viewRect);
+						}
+					}
+				} catch (BadLocationException e) {
+					// Just ignore errors
+					logger.warning("Bad code preview location for element " + ele);
+				}
+			}
+		}
+		return pos;
+	}
+	// END KGU#705 2019-09-24
+	
+	/**
+	 * Tries to identify the {@link Element} that is responsible for the code line
+	 * with given number {@code lineNo} in the {@link #codePreview}.
+	 * @param lineNo - number of a line in the {@link #codePreview}.
+	 * @return the closest corresponding {@link Element}.
+	 */
+	public Element identifyElementForCodeLine(int lineNo)
+	{
+		int lineRangeSize = codePreview.getLineCount();
+		Element closest = null;
+		for (Entry<Element, int[]> entry: codePreviewMap.entrySet()) {
+			int[] range = entry.getValue();
+			if (range[0] <= lineNo && range[1] > lineNo) {
+				if (range[1] - range[0] < lineRangeSize || closest == null) {
+					closest = entry.getKey();
+					lineRangeSize = range[1] - range[0];
+				}
+			}
+		}
+		return closest;
+	}
+	
+	// START KGU#705 2019-09-26: Enh. #738
+	/**
+	 * Entry point for external components to get the given {@code element}
+	 * consistently selected in the diagram.
+	 * @param element - the {@link Element} to be selected
+	 */
+	public void selectElement(Element element)
+	{
+		if (element != null) {
+			Element sel = root.findSelected();
+			if (sel != null) {
+				sel.setSelected(false);
+			}
+			element.setSelected(true);
+			selected = element;
+			selectedDown = selected;
+			this.redraw(element);
+			if (codeHighlighter != null) {
+				codeHighlighter.removeAllHighlights();
+			}
+			this.highlightCodeForElement(element, false);
+		}
+	}
+	// END KGU#705 2019-09-26
 
 	/**
 	* Method: print <p>
@@ -1712,9 +1911,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * New method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Replaces the current {@link #root} by a new empty {@link Root} unless the current
+	 * {@link #root} is being executed or the user refuses to make a decision about unsaved
+	 * changes.
+	 */
 	public void newNSD()
 	{
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
@@ -1756,12 +1960,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			oldRoot.notifyReplaced(root);
 		}
 		// END KGU#48 2015-10-17
+		// START KGU#705 2019-09-23: Enh. #738
+		this.updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Open method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Action method to have the user select an NSD or arrangement file to be loaded (which is going to
+	 * replace the current {@link #root}. Does nothing if there is a pending execution.
+	 * @see #openNSD(String)
+	 * @see #openNsdOrArr(String)
+	 */
 	public void openNSD()
 	{
 		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
@@ -1825,6 +2038,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * If none of the expected file extensions match then an empty string is returned.
 	 * @param _filepath - the path of the file to be loaded
 	 * @return - the file extension
+	 * @see #openNSD()
+	 * @see #openNSD(String)
 	 */
 	public String openNsdOrArr(String _filepath)
 	{
@@ -1847,6 +2062,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#316 2016-12-28
 
+	/**
+	 * Method is to open an NSD file (not an arrangement file!) the path of which
+	 * is given by {@code _filename}.<br/>
+	 * If arrangement file are also to be accepted then use {@link #openNsdOrArr(String)} instead.
+	 * @param _filename - file path of an NSD file
+	 * @see #openNsdOrArr(String)
+	 */
 	public void openNSD(String _filename)
 	{
 		// START KGU#48 2015-10-17: Arranger support
@@ -1903,6 +2125,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					this.handleKeywordDifferences(false);
 				}
 				// END KGU#362 2017-03-28
+				// START KGU#705 2019-09-23: Enh. #738
+				this.updateCodePreview();
+				// END KGU#705 2019-09-23
 			}
 		}
 		catch (Exception e)
@@ -2057,9 +2282,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#289 2016-11-15
 
-	/*****************************************
+	/*========================================
 	 * SaveAll method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Saves all NSD (and arrangement) files without file association or with unsaved changes
+	 * in a serial action.
+	 */
 	public void saveAllNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
@@ -2079,13 +2308,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * SaveAs method
-	 *****************************************/
+	 *========================================*/
 	
 	/**
 	 * Tries to save the current {@link Root} under a new path. Opens a FileChooser for this purpose
-	 * @return true if the diagram was saved, false otherwise
+	 * @return true if the diagram was saved, false otherwise.
 	 */
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
@@ -2096,6 +2325,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Tries to save the {@link Root} given as {@code root} under a new path. Opens a FileChooser for
 	 * this purpose.
+	 * @param root - the diagram to be saved.
 	 * @return true if the diagram was saved, false otherwise
 	 */
 	private boolean saveAsNSD(Root root)
@@ -2326,9 +2556,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return writeNow;
 	}
 
-	/*****************************************
+	/*========================================
 	 * Save method
-	 *****************************************/
+	 *========================================*/
 	
 	/**
 	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
@@ -2742,9 +2972,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#316 2016-12-28
 
-	/*****************************************
+	/*========================================
 	 * addUndo method
-	 *****************************************/
+	 *========================================*/
 	/**
 	 * Creates an undo entry on .root, if the action wasn't cancelled. (Otherwise
 	 * a CancelledException is thrown.)
@@ -2768,9 +2998,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#684 2019-06-13
 	}
 
-	/*****************************************
+	/*========================================
 	 * Undo method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Reverts the last action from the undo stack and updates the environment.
+	 */
 	public void undoNSD()
 	{
 		// START KGU#684 2019-06-13: Bugfix #728
@@ -2801,11 +3034,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * Redo method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Redoes the last undone action (if possible) and updates the environment.
+	 */
 	public void redoNSD()
 	{
 		// START KGU#684 2019-06-13: Bugfix #728
@@ -2836,11 +3075,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * applicability test methods
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Checks whether the prerequisites to paste elements are fulfilled.
+	 * @return true if there is something to paste and pasting is allowed.
+	 */
 	public boolean canPaste()
 	{
 		boolean cond = (eCopy!=null && selected!=null);
@@ -2863,6 +3109,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited...
+	/**
+	 * Checks whether the prerequisites to cut selected elements are fulfilled.
+	 * @return true if there is something selected and may be cut now.
+	 * @see #canCopy()
+	 */
 	//public boolean canCutCopy()
 	public boolean canCut()
 	{
@@ -2876,6 +3127,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// ... though breakpoints shall still be controllable
+	/**
+	 * Checks whether the prerequisites to copy selected elements are fulfilled.
+	 * @return true if there is something selected and may be copied now.
+	 * @see #canCut()
+	 * @see #canCopyNoRoot()
+	 */
 	public boolean canCopy()
 	// END KGU#143 2016-01-21
 	{
@@ -2895,6 +3152,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#177 2016-07-06: Enh. #158 - accidently breakpoints had become enabled on Root
+	/**
+	 * Restricted check wheher the selectd element(s) may be copied - will return false
+	 * if the selected element is a {@link Root}.
+	 * @return true if there is something except a {@link Root} selected and may be copied now.
+	 * @see #canCopy()
+	 * @see #canCut()
+	 */
 	public boolean canCopyNoRoot()
 	{
 		return canCopy() && !(selected instanceof Root);
@@ -2902,6 +3166,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#177 2016-07-06
 	
 	// START KGU#143 2016-11-17: Issue #114: Complex condition for editability
+	/**
+	 * Checks whether the prerequisites to edit the selected element are fulfilled.
+	 * @return true if there is something selected and may be edited now.
+	 */
 	public boolean canEdit()
 	{
 		return selected != null && !this.selectedIsMultiple() &&
@@ -2986,12 +3254,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#373 2017-03-28
 	
-	/*****************************************
+	/*========================================
 	 * setColor method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Sets the background colour of the selected element(s) to {@code _color} (undoable).
+	 * @param _color - the colour to be applied.
+	 */
 	public void setColor(Color _color)
 	{
-		if(getSelected()!=null)
+		if (getSelected() != null)
 		{
 			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
 			//root.addUndo();
@@ -3012,9 +3284,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Copy method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Copies the selected element(s) either to the system clipboard (if a {@link Root}
+	 * is selected or to an internal cache (otherwise).
+	 * @see #canCopy()
+	 * @see #cutNSD()
+	 * @see #pasteNSD()
+	 */
 	public void copyNSD()
 	{
 		if (selected!=null)
@@ -3036,9 +3315,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * cut method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Copies the selected element(s) to an internal cache and then removes them
+	 * from the current diagram (undoable). Does nothing if {@link #root} is selected.
+	 * @see #canCut()
+	 * @see #copyNSD()
+	 * @see #pasteNSD()
+	 */
 	public void cutNSD()
 	{
 		if (selected != null && selected != root)
@@ -3074,12 +3360,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 			adaptScrollUnits();
 			// END KGU#444 2017-10-23
+			// START KGU#705 2019-09-24: Enh. #738
+			updateCodePreview();
+			// END KGU#705 2019-09-24
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * paste method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Pastes the elements from the internal copy cache to to the next position
+	 * after the currently selected element(s).
+	 * Does nothing if the copy cache is empty or nor target elements are selected.
+	 * @see #canPaste()
+	 * @see #copyNSD()
+	 * @see #cutNSD()
+	 */
 	public void pasteNSD()
 	{
 		if (selected != null && eCopy!=null)
@@ -3122,14 +3419,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 			adaptScrollUnits();
 			// END KGU#444 2017-10-23
+			// START KGU#705 2019-09-24: Enh. #738
+			updateCodePreview();
+			// END KGU#705 2019-09-24
 		}
 	}
 
-	/*****************************************
+	/*========================================
 	 * edit method
-	 *****************************************/
-	public void editNSD()
+	 *========================================*/
+	/**
+	 * Opens the editor for the currently selected element and applies
+	 * the committed changes (undoable).
+	 * @return true if the element was changed, false otherwise
+	 * @see #canEdit()
+	 */
+	public boolean editNSD()
 	{
+		boolean modified = false;
 		Element element = getSelected();
 		if (element!=null)
 		{
@@ -3166,7 +3473,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					try {
 						addUndoNSD(false);
 					} catch (CancelledException e) {
-						return;
+						return false;
 					}
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
@@ -3176,6 +3483,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					selected = ele.setSelected(true);
+					modified = true;
 					redraw();
 				}
 			}
@@ -3224,7 +3532,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				showInputBox(data, element.getClass().getSimpleName(), false);
 				// END KGU#42 2015-10-14
 
-				if (data.result==true)
+				if (data.result == true)
 				{
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
@@ -3237,7 +3545,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					try {
 						this.addUndoNSD(element instanceof Root);
 					} catch (CancelledException e) {
-						return;
+						return false;
 					}
 					// END KGU#684 2019-06-13
 					// END KGU#363 2017-05-21
@@ -3283,6 +3591,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#136 2016-03-01: Bugfix #97
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
+					modified = true;
 					redraw();
 				}
 			}
@@ -3291,7 +3600,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 			adaptScrollUnits();
 			// END KGU#444 2017-10-23
+			// START KGU#705 2019-09-23: Enh. #738
+			if (modified) {
+				this.updateCodePreview();
+			}
+			// END KGU#705 2019-09-23
 		}
+		return modified;
 	}
 	
 	private void preEditFor(EditData _data, For _for)
@@ -3365,9 +3680,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
-	/*****************************************
+	/*========================================
 	 * moveUp method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Moves the selected element(s) one position up in the current diagram (undoable).
+	 * @see Element#canMoveUp()
+	 */
 	public void moveUpNSD()
 	{
 		//root.addUndo();
@@ -3379,11 +3698,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.moveUp(getSelected());
 		redraw();
 		analyse();
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * moveDown method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Moves the selected element(s) one position down in the current diagram (undoable).
+	 * @see Element#canMoveDown()
+	 */
 	public void moveDownNSD()
 	{
 		//root.addUndo();
@@ -3395,11 +3721,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		root.moveDown(getSelected());
 		redraw();
 		analyse();
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 
-	/*****************************************
+	/*========================================
 	 * delete method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Removes the selected element(s) fro the current diagram (undoable).
+	 * @see #canCut()
+	 */
 	public void deleteNSD()
 	{
 		//root.addUndo();
@@ -3433,6 +3766,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 		adaptScrollUnits();
 		// END KGU#444 2017-10-23
+		// START KGU#705 2019-09-23: Enh. #738
+		this.updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 	
 	// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
@@ -3492,9 +3828,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#181 2016-04-19
 	
 	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
-	/*****************************************
+	/*========================================
 	 * collapse method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Marks the selected element(s) as collapsed such that they are represented
+	 * by a surrogate the size of a simple instruction on drawing.
+	 * @see #expandNSD()
+	 */
 	public void collapseNSD()
 	{
 		getSelected().setCollapsed(true);
@@ -3506,9 +3847,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444 2017-10-23
 	}
 	
-	/*****************************************
+	/*========================================
 	 * expand method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Removes the collapsed flag from the selected elements such that they get
+	 * represented in their usual shape again on drawing the diagram.
+	 * @see #collapseNSD()
+	 */
 	public void expandNSD()
 	{
 		getSelected().setCollapsed(false);
@@ -3525,6 +3871,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*========================================
 	 * disable method
 	 *=======================================*/
+	/**
+	 * Flips the disabled flag on the selected element(s). If several elements are
+	 * selected, some of which are disabled while others are not, then disables all
+	 * of them. To disable an element means that it gets handled like a comment on
+	 * execution and export (undoable).
+	 */
 	public void disableNSD()
 	{
 		boolean allDisabled = true;
@@ -3550,13 +3902,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 		this.NSDControl.doButtons();
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 	
 	// END KGU#277 2016-10-13
 
-	/*****************************************
+	/*========================================
 	 * add method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the element editor for the new given {@link Element} {@code _ele} and
+	 * inserts the edited element after (if {@code _after} is true) or before (otherwise)
+	 * the selected element(s) unless the user cancels the action.
+	 * @param _ele - the new {@link Element} to be processed
+	 * @param _title - proposed title for the editor (may be overridden by the localisation mechanism
+	 * @param _pre - the default prefix text as configured in the Structure Preferences
+	 * @param _after - whether {@code _ele} is to be inserted after (true) or before (false) the selected element.
+	 */
 	public void addNewElement(Element _ele, String _title, String _pre, boolean _after)
 	{
 		if (getSelected()!=null)
@@ -3649,14 +4013,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 				adaptScrollUnits();
 				// END KGU#444 2017-10-23
+				// START KGU#705 2019-09-23: Enh. #738
+				updateCodePreview();
+				// END KGU#705 2019-09-23
 			}
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * subroutine derivation method(s)
-	 *****************************************/
+	 *========================================*/
 	// START KGU#365 2017-03-19: Enh. #380 - perform the possible conversion
+	/**
+	 * Extracts the select element(s) from the diagram, moves them to an interactively
+	 * specified new subroutine diagram and replaces them by a {@link Call} for the latter
+	 * (undoable).
+	 */
 	public void outsourceNSD()
 	{
 		if (this.selected != null) {
@@ -3702,11 +4074,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#365 2017-04-14
 			String hint = Menu.msgMustBeIdentifier.getText();
-			String prompt = Menu.msgSubroutineName.getText() + ": ";
+			String prompt1 = Menu.msgSubroutineName.getText() + ": ";
+			String prompt = prompt1;
 			String subroutineName = null;
 			do {
 				subroutineName = JOptionPane.showInputDialog(prompt);
-				prompt = hint + "\n" + Menu.msgSubroutineName.getText() + ": ";
+				prompt = hint + "\n" + prompt1;
 			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
 			if (subroutineName != null) {
 				try {
@@ -3752,70 +4125,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#506 2018-03-14: issue #522 - we need to check for record types
 					//sub.getVarNames();	// just to prepare proper drawing.
 					StringList subVars = sub.retrieveVarNames();
-					HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
-					for (int i = 0; i < subVars.count(); i++) {
-						String varName = subVars.get(i);
-						TypeMapEntry varType = parentTypes.get(varName);
-						if (varType != null && varType.isRecord()) {
-							Element defining = varType.getDeclaringElement();
-							if (defining != null) {
-								Root typeSource = Element.getRoot(defining); 
-								if (typeSource == root) {
-									sharedTypesMap.putIfAbsent(varType.typeName, defining);
-								}
-								else if (typeSource != null) {
-									sub.addToIncludeList(typeSource);
-								}
-							}
-						}
-					}
-					if (!sharedTypesMap.isEmpty()) {
-						// FIXME: We might also offer a combo box containing the already included diagrams of root
-						prompt = Menu.msgIncludableName.getText() + ": ";
-						String includableName = null;
-						do {
-							includableName = JOptionPane.showInputDialog(prompt);
-							prompt = hint + "\n" + Menu.msgIncludableName.getText() + ": ";
-						} while (includableName == null || !Function.testIdentifier(includableName, null));
-						Root incl = null;
-						if (Arranger.hasInstance()) {
-							Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
-							if (!includes.isEmpty()) {
-								incl = includes.firstElement();
-								incl.addUndo();
-							}
-						}
-						boolean isNewIncl = incl == null;
-						if (isNewIncl) {
-							incl = new Root();
-							incl.setText(includableName);
-							incl.setInclude();
-							// adopt presentation properties from root
-							//incl.highlightVars = Element.E_VARHIGHLIGHT;
-							incl.isBoxed = root.isBoxed;
-						}
-						for (Element source: sharedTypesMap.values()) {
-							((Subqueue)source.parent).removeElement(source);
-							incl.children.addElement(source);
-						}
-						incl.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
-						if (isNewIncl) {
-							// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
-							//Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
-							Arranger.getInstance().addToPool(incl, NSDControl.getFrame(), targetGroupName);
-							// END KGU#638 3019-01-20
-						}
-						// START KGU#626 2019-01-06: Enh. #657
-						// Associate the includable to all groups root is member of
-						if (groups != null) {
-							for (Group group: groups) {
-								Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
-							}
-						}
-						// END KGU#626 2019-01-06
-						root.addToIncludeList(includableName);
-						sub.addToIncludeList(includableName);
-					}
+					prepareArgTypesForSub(parentTypes, groups, targetGroupName, sub, subVars);
 					// END KGU#506 2018-03-14
 					sub.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
 					Arranger arr = Arranger.getInstance();
@@ -3843,8 +4153,107 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 				adaptScrollUnits();
 				// END KGU#444 2017-10-23
+				// START KGU#705 2019-09-23: Enh. #738
+				updateCodePreview();
+				// END KGU#705 2019-09-23
 			}
 		}
+	}
+	
+	/**
+	 * Retrieves the types for subroutine variables {@code subVars} from the typeMap
+	 * {@code parentTypes} of the calling routine and adopts or implants required includables.
+	 * @param parentTypes - type map of the calling routine
+	 * @param groups - Arranger groups of the calling routine (for Includable implantation)
+	 * @param targetGroupName - name of the target group for the routine
+	 * @param sub - the subroutine (its includeList may be modified)
+	 * @param subVars - the interesting variables of the routine
+	 * @return a StringList of type names in order of {@code subVars}.
+	 */
+	private StringList prepareArgTypesForSub(HashMap<String, TypeMapEntry> parentTypes, Collection<Group> groups,
+			String targetGroupName, Root sub, StringList subVars) {
+		HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+		StringList typeNames = new StringList();
+		for (int i = 0; i < subVars.count(); i++) {
+			String typeName = "";
+			TypeMapEntry varType = null;
+			String varName = subVars.get(i);
+			if (Function.testIdentifier(varName, "")) {
+				varType = parentTypes.get(varName);
+				if (varType != null) {
+					typeName = varType.getCanonicalType(true, true);
+				}
+			}
+			else {
+				typeName = Element.identifyExprType(parentTypes, varName, true);
+				if (!typeName.isEmpty()) {
+					varType = parentTypes.get(":"+typeName);
+				}
+			}
+			if (varType != null && varType.isRecord()) {
+				Element defining = varType.getDeclaringElement();
+				if (defining != null) {
+					Root typeSource = Element.getRoot(defining); 
+					if (typeSource == root) {
+						sharedTypesMap.putIfAbsent(varType.typeName, defining);
+					}
+					else if (typeSource != null) {
+						sub.addToIncludeList(typeSource);
+					}
+				}
+			}
+			typeNames.add(typeName);
+		}
+		if (!sharedTypesMap.isEmpty()) {
+			// FIXME: We might also offer a combo box containing the already included diagrams of root
+			String hint = Menu.msgMustBeIdentifier.getText() + "\n";
+			String prompt1 = Menu.msgIncludableName.getText() + ": ";
+			String prompt = prompt1;
+			String includableName = null;
+			do {
+				includableName = JOptionPane.showInputDialog(prompt);
+				prompt = hint + prompt1;
+			} while (includableName == null || !Function.testIdentifier(includableName, null));
+			Root incl = null;
+			if (Arranger.hasInstance()) {
+				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
+				if (!includes.isEmpty()) {
+					incl = includes.firstElement();
+					incl.addUndo();
+				}
+			}
+			boolean isNewIncl = incl == null;
+			if (isNewIncl) {
+				incl = new Root();
+				incl.setText(includableName);
+				incl.setInclude();
+				// adopt presentation properties from root
+				//incl.highlightVars = Element.E_VARHIGHLIGHT;
+				incl.isBoxed = root.isBoxed;
+			}
+			for (Element source: sharedTypesMap.values()) {
+				((Subqueue)source.parent).removeElement(source);
+				incl.children.addElement(source);
+			}
+			incl.setChanged(false);	// The argument false does NOT mean to reset the changed flag!
+			if (isNewIncl) {
+				// START KGU#638 2019-01-20: Issue #668 - Improved group association behaviour
+				//Arranger.getInstance().addToPool(incl, NSDControl.getFrame());
+				Arranger.getInstance().addToPool(incl, NSDControl.getFrame(), targetGroupName);
+				// END KGU#638 3019-01-20
+			}
+			// START KGU#626 2019-01-06: Enh. #657
+			// Associate the includable to all groups root is member of
+			if (groups != null) {
+				for (Group group: groups) {
+					Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
+				}
+			}
+			// END KGU#626 2019-01-06
+			root.addToIncludeList(includableName);
+			sub.addToIncludeList(includableName);
+		}
+		return typeNames;
 	}
 	// END KGU#365 2017-03-19
 
@@ -3956,18 +4365,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					return;
 				}
 				subroutine = new Root();
+				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				StringList params = new StringList();
 				for (int i = 0; i < called.paramCount(); i++) {
 					String param = called.getParam(i);
-					if (!Function.testIdentifier(param, null) || params.contains(param)) {
-						param = "param" + (i+1);
-					}
 					params.add(param);
 				}
+				// START KGU#744 2019-10-05: Issue #758 - retrieve argument types and care for shared types 
+				StringList argTypes = this.prepareArgTypesForSub(root.getTypeInfo(), myGroups, targetGroupName, subroutine, params);
+				String paramSeparator = ", ";
+				for (int i = 0; i < params.count(); i++) {
+					String typeName = argTypes.get(i).replace("@", "array of ");
+					if (!Function.testIdentifier(params.get(i), "")) {
+						params.set(i, "param" + (i+1));
+					}
+					if (!typeName.isEmpty() && !typeName.equals("???")) {
+						params.set(i, params.get(i) + ": " + typeName);
+						paramSeparator = "; ";
+					}
+				}
+				// END KGU#744 2019-10-05
 				String result = "";
 				if (((Call)selected).isFunctionCall()) {
-					String line = call.getUnbrokenText().get(0);
-					String var = Call.getAssignedVarname(Element.splitLexically(line, true));
+					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
+					lineTokens.removeAll(" ");
+					String var = Call.getAssignedVarname(lineTokens);
 					if (Function.testIdentifier(var, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
@@ -3982,11 +4404,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						result = ": ???";
 					}
 				}
-				subroutine.setText(called.getName() + "(" + params.concatenate(", ") + ")" + result);
+				subroutine.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
 				subroutine.setProgram(false);
 				subroutine.setChanged(false);
 				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
-				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
 					// If the diagram is a program then create an exclusive group named after the main diagram 
 					if (root.isProgram()) {
@@ -4003,13 +4424,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					targetGroupName = myGroups.iterator().next().getName();
 				}
 			}
-			if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+			// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
+			//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+			if (
+					subForm == null ||
+					subForm.diagram == null ||
+					subForm.diagram.getRoot() != subroutine && (!subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine))
+					)
+			{
+			// END KGU#744 2019-10-05
 				subForm = new Mainform(false);
 				subForm.addWindowListener(new WindowListener() {
 					@Override
 					public void windowOpened(WindowEvent e) {}
 					@Override
 					public void windowClosing(WindowEvent e) {
+						// A dead Mainform causes enormous trouble if we try to work with it.
 						if (subForm == e.getSource()) {
 							subForm = null;
 						}
@@ -4017,6 +4447,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					@Override
 					public void windowClosed(WindowEvent e) {
 						((Mainform)(e.getSource())).removeWindowListener(this);
+						// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
+						if (subForm == e.getSource()) {
+							subForm = null;
+						}
+						// END KGU#744 2019-10-05
 					}
 					@Override
 					public void windowIconified(WindowEvent e) {}
@@ -4029,14 +4464,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					
 				});
 			}
-			subForm.setRoot(subroutine);
+			if (subForm.diagram.getRoot() != subroutine) {
+				subForm.setRoot(subroutine);
+			}
 			// If it is a new root then add it to Arranger
 			if (targetGroupName != null) {
 				Arranger.getInstance().addToPool(subroutine, subForm, targetGroupName);
 			}
+			// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be added to Arranger
+			else {
+				Arranger.getInstance().addToPool(subroutine, subForm);
+			}
+			Arranger.getInstance().setVisible(true);
+			// END KGU#744 2019-10-05
 			if (!subForm.isVisible()) {
 				subForm.setVisible(true);
 			}
+			// START KGU#744 2019-10-05: Bugfix #758
+			int state = subForm.getExtendedState();
+			if ((state & Frame.ICONIFIED) != 0) {
+				subForm.setExtendedState(state & ~Frame.ICONIFIED);
+			}
+			// END KGU#744 2019-10-05
 			Point loc = NSDControl.getFrame().getLocation();
 			Point locSub = subForm.getLocation();
 			if (loc.equals(locSub)) {
@@ -4046,10 +4495,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#667 2019-02-26
 
-	/*****************************************
+	/*========================================
 	 * transmute method(s)
-	 *****************************************/
+	 *========================================*/
 	// START KGU#199 2016-07-06: Enh. #188 - perform the possible conversion
+	/**
+	 * Converts the selected element(s) into some substitute according to the
+	 * specified transmutation rules (undoable).
+	 * @see #canTransmute()
+	 */
 	public void transmuteNSD()
 	{
 		Subqueue parent = (Subqueue)selected.parent;
@@ -4102,9 +4556,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#444 2017-10-23: Issue #417 - reduce scrolling complexity
 		adaptScrollUnits();
 		// END KGU#444 2017-10-23
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 	
 	// START KGU#357 2017-03-10: Enh. #367
+	/** Helper method of {@link #transmuteNSD()} */
 	private void swapBranches(Alternative _alt) {
 		String condition = _alt.getText().getText();
 		String negCondition = Element.negateCondition(condition);
@@ -4119,6 +4577,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#357 2017-03-10
 
+	/** Helper method of {@link #transmuteNSD()} */
 	private void transmuteToSequence(Subqueue parent)
 	{
 		// Comment will be split as follows:
@@ -4151,6 +4610,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		selected.setSelected(true);
 	}
 	
+	/** Helper method of {@link #transmuteNSD()} */
 	private void transmuteToSpecialInstr(Subqueue parent)
 	{
 		Instruction instr = (Instruction)selected;
@@ -4174,6 +4634,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedDown = this.selected;
 	}
 	
+	/** Helper subroutine of {@link #transmuteNSD()} */
 	private void transmuteToCompoundInstr(Subqueue parent)
 	{
 		// Comments will be composed as follows:
@@ -4259,7 +4720,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#199 2016-07-06
 
 	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
-	// This is a transmutation helper function
+	/** Helper method of {@link #transmuteNSD()} */
 	private void decomposeForLoop(Subqueue parent)
 	{
 		// Comment will be tranferred to the While loop.
@@ -4320,7 +4781,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#229 2016-08-01
 
 	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
-	// This is a transmutation helper function
+	/** Helper method of {@link #transmuteNSD()} */
 	private void decomposeCase(Subqueue parent)
 	{
 		// Comment will be transferred to the first replacing element
@@ -4448,10 +4909,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Turtleizer precision methods
 	 *=======================================*/
 	/**
-	 * Replaces all Turtleizer fd and bk procedure calls by the more precise
-	 * forward and backward instructions (precisionUp = true) or the other way round
-	 * in the selected elements 
-	 * @param precisionUp
+	 * Replaces all Turtleizer {@code fd} and {@code bk} procedure calls by the more precise
+	 * {@code forward} and {@code backward} instructions ({@code precisionUp} = true) or the other way round
+	 * ({@code precisionUp} = false) in the selected elements 
+	 * @param precisionUp - whether to convert to the more precise or to the less precise versions
 	 */
 	public void replaceTurtleizerAPI(boolean precisionUp)
 	{
@@ -4534,14 +4995,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 				Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
 		// END #272 2016-10-17
-		
+		// START KGU#705 2019-09-23: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-23
 	}
 	// END KGU#282 2016-10-16
 	
 	// START KGU#602 2018-10-26: Enh. #619
 	/**
 	 * Adjusts line breaking for the selected element(s). Requests the details
-	 * ineractively from the user
+	 * interactively from the user.
 	 */
 	public void rebreakLines()
 	{
@@ -4652,15 +5115,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (!changed) {
 					root.undo(false);
 				}
+				// START KGU#705 2019-09-23: Enh. #738
+				updateCodePreview();
+				// END KGU#705 2019-09-23
 			}
 		}
 	}
 	// END KGU#602 2016-10-26
 
 	// START KGU#43 2015-10-12
-	/*****************************************
+	/*========================================
 	 * breakpoint methods
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Enables or disables the breakpoint on the selected element(s) depending on the previous
+	 * state. Does not affect a possibly configured break trigger.
+	 * @see Element#toggleBreakpoint()
+	 * @see #editBreakTrigger()
+	 * @see #clearBreakpoints()
+	 */
 	public void toggleBreakpoint()
 	{
 		Element ele = getSelected();
@@ -4672,6 +5145,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#213 2016-08-02: Enh. #215
+	/**
+	 * Opens a dialog that allows to set the break trigger value (i.e. the execution count
+	 * value that triggers a breakpoint if enabled.
+	 * @see #toggleBreakpoint()
+	 * @see #clearBreakpoints()
+	 */
 	public void editBreakTrigger() {
 		// TODO Auto-generated method stub
 		Element ele = getSelected();
@@ -4722,12 +5201,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#213 2016-08-02
 
+	/**
+	 * Unsets all enabled breakpoints throughout the current diagram.
+	 * @see #toggleBreakpoint()
+	 * @see #editBreakTrigger()
+	 */
 	public void clearBreakpoints()
 	{
 		root.clearBreakpoints();
 		redraw();
 	}
 
+	/**
+	 * Clears all execution flags and counts throughout the entire diagram held as
+	 * {@link #root}.
+	 */
 	public void clearExecutionStatus()
 	{
 		root.clearExecutionStatus();
@@ -4735,9 +5223,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#43 2015-10-12
 
-	/*****************************************
+	/*========================================
 	 * print method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the print preview for the current {@link #root} from which it can be printed.
+	 * @see #exportPDF()
+	 */
 	public void printNSD()
 	{
 		/*
@@ -4780,9 +5272,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU #2 2015-11-19
-	/*****************************************
+	/*========================================
 	 * arrange method
-	 *****************************************/
+	 *========================================*/
 	/**
 	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
 	 * it will be (re-)opened. 
@@ -4815,14 +5307,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (isArrangerOpen())
 		{
 			Arranger arr = Arranger.getInstance();
-			arr.addToPool(root, NSDControl.getFrame());			
+			// START KGU#742 2019-10-04: This caused ConcurrentModificationExceptions
+			//arr.addToPool(root, frame);
+			arr.adoptRootIfOrphaned(root, (Mainform)NSDControl.getFrame());
+			//END KGU#741 2019-10-04
 		}
 	}
 	// END KGU#125 2016-01-06
 
-	/*****************************************
+	/*========================================
 	 * about method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens the About window with version info, authors tab, license text, change log tab, and paths tab.
+	 */
 	public void aboutNSD()
 	{
 		About about = new About(NSDControl.getFrame());
@@ -4838,9 +5336,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		about.setVisible(true);
 	}
 
-	/*****************************************
+	/*========================================
 	 * export picture method
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Opens a dialog for the configuration of a multi-tile PNG export and a {@link FileChooser}
+	 * and performs the respective image export.
+	 * @see #exportPNG()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportPNGmulti()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -4902,7 +5409,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			File file = new File(filename.replace(".png", "-00-00.png"));
 			// END KGU#224 2016-07-28
 			boolean writeDown = true;
-            
+			
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
@@ -5016,7 +5523,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		// END KGU#456 2017-11-05
 	}
-        
+
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as PNG file.
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportPNG()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5109,6 +5624,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as EMF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportEMF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5204,6 +5727,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as SVG file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportEMF()
+	 * @see #exportPDF()
+	 * @see #exportSWF()
+	 */
 	public void exportSVG() // does not work!!
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5320,6 +5851,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as SWF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportPDF()
+	 * @see #exportEMF()
+	 */
 	public void exportSWF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5415,6 +5954,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	/**
+	 * Opens a {@link FileChooser} and performs the image export as PDF file.
+	 * @see #exportPNG()
+	 * @see #exportPNGmulti()
+	 * @see #exportSVG()
+	 * @see #exportEMF()
+	 * @see #exportSWF()
+	 * @see #printNSD()
+	 */
 	public void exportPDF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -5511,9 +6059,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	/*****************************************
+	/*========================================
 	 * Import method for foreign diagrams
-	 *****************************************/
+	 *========================================*/
 	
 	// START KGU#386 2017-04-25: version 3.26-06 - new import sources
 	/**
@@ -5575,9 +6123,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#386 2017-04-25
 	
-	/*****************************************
+	/*========================================
 	 * import methods for code
-	 *****************************************/
+	 *========================================*/
 
 	// START KGU#354 2017-03-04: Enh. #354
 //	public void importPAS()
@@ -6007,6 +6555,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 - We may have obtained huge diagrams...
 				this.adaptScrollUnits();
 				// END KGU#444/KGU#618 2018-12-18
+				// START KGU#705 2019-09-24: Enh. #738
+				updateCodePreview();
+				// END KGU#705 2019-09-24
 			}
 		}
 	} 
@@ -6103,10 +6654,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#354 2017-03-15
 
-	/*****************************************
+	/*========================================
 	 * export code methods
-	 * @param options 
-	 *****************************************/
+	 *========================================*/
+
 	/**
 	 * Export the current diagram to the programming language associated to the generator {@code _generatorClassName}
 	 * @param _generatorClassName - class name of he generator to be used
@@ -6166,6 +6717,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							this.prefGeneratorName = thisGenName;
 							Ini.getInstance().setProperty("genExportPreferred", thisGenName);
 							Ini.getInstance().save();
+							// START KGU#705 2019-09-23: Enh. #738
+							this.updateCodePreview();
+							// END KGU#705 2019-09-23
 							// doButtons() is assumed to be performed after his method had been called, anyway
 						}
 					}
@@ -6187,6 +6741,67 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
+	
+	// START KGU#705 2019-09-23: Enh. #738: Code preview support
+	/**
+	 * Place a code preview for the current diagram to the currrent favourite programming language.
+	 * Also fills the {@link #codePreviewMap} with associations between {@link Element}s and line
+	 * intervals.
+	 * @param _specificOptions - generator-specific options 
+	 */
+	public void updateCodePreview()
+	{
+		if (this.show_CODE_PREVIEW && this.codePreview != null) {
+			String generatorName = this.getPreferredGeneratorName();
+			try
+			{
+				codePreviewMap = new HashMap<Element, int[]>();
+				Generator gen = null;
+				for (GENPlugin plugin: Menu.generatorPlugins) {
+					if (plugin.title.equals(generatorName)) {
+						Class<?> genClass = Class.forName(plugin.className);
+						gen = (Generator) genClass.getDeclaredConstructor().newInstance();
+						fetchPluginSpecificExportOptions(gen);
+						String code = gen.deriveCode(root,
+								NSDControl.getFrame(),
+								(Arranger.hasInstance() ? Arranger.getInstance() : null),
+								codePreviewMap);
+						codePreview.setText(code);
+						break;
+					}
+				}
+				setCodePreviewTooltip();
+			}
+			catch (Exception ex)
+			{
+				String message = ex.getLocalizedMessage();
+				if (message == null) message = ex.getMessage();
+				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+						Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
+						Menu.msgTitleError.getText(),
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				highlightCodeForSelection();
+			}
+		});
+		//highlightCodeForSelection();
+	}
+
+	private void fetchPluginSpecificExportOptions(Generator _generator) {
+		for (GENPlugin plugin: Menu.generatorPlugins) {
+			if (plugin.className.equals(_generator.getClass().getName())) {
+				// FIXME: Improve performance here! Avoid repetitive retrieval but ensure sensitiveness to changes
+				setPluginSpecificOptions(_generator, plugin.className, plugin.options);
+				break;
+			}
+		}
+	}
+	// END KGU#705 2019-09-23
 
 	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
 	private void setPluginSpecificOptions(IPluginClass _gen, String _generatorClassName,
@@ -6243,10 +6858,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#395 2017-05-11
 
 	// START KGU#208 2016-07-22: Enh. #199
-	/*****************************************
+	/*========================================
 	 * help method
-	 *****************************************/
-
+	 *========================================*/
 
 	/**
 	 * Tries to open the online User Guide in the browser
@@ -6323,16 +6937,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#208 2016-07-22
 	
-	/*****************************************
+	/*========================================
 	 * update method
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Shows an info box with the link to the download page of Structorizer
+	 * and informs whether there is a newer version available.
+	 * @see #updateNSD(boolean)
+	 */
 	public void updateNSD()
 	// START KGU#300 2016-12-02: Enh. #300
 	{
 		updateNSD(true);
 	}
 	
+	/**
+	 * hecks the availability of a newer version on the download page and shows an
+	 * info box with the link to the download page of Structorizer if a new version
+	 * is available or {@code evenWithoutNewerVersion} is true.
+	 * @param evenWithoutNewerVersion - whether the infor box is always to be popped up.
+	 * @see #updateNSD()
+	 */
 	public void updateNSD(boolean evenWithoutNewerVersion)
 	// END KGU#300 2016-12-02
 	{
@@ -6430,6 +7056,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#300 2016-12-02 Enh. #300 Support for version retrieval
+	/**
+	 * Helper method for {@link #updateNSD()}
+	 * @return the version string, e.g. "3.29-14", of the latest version available or null,
+	 * depending on whether online version retrieval is enabled by {@link #retrieveVersion}.
+	 */
 	private String retrieveLatestVersion()
 	{
 		// START KGU#563 2018-07-26: Issue #566
@@ -6487,6 +7118,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //	}
 	// END KGU#300 2016-12-06
 	
+	/**
+	 * @return the version string, e.g. "3.30-05", of the latest version more adavanced than the
+	 * currently running version if online version retrieval is enabled ({@link #retrieveVersion})
+	 * and a newer version is available; null otherwise.
+	 */
 	public String getLatestVersionIfNewer()
 	{
 		int cmp = 0;
@@ -6519,10 +7155,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#300 2016-12-02
 
-	/*****************************************
+	/*========================================
 	 * the preferences dialog methods
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Opens the colour configuration dialog and processes configuration changes.
+	 */
 	public void colorsNSD()
 	{
 		// START KGU#245 2018-07-02: Converted to arrays
@@ -6583,6 +7222,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
+	/**
+	 * Opens the structure prefereneces dialog and processes configuration changes.
+	 */
 	public void preferencesNSD()
 	{
 		Preferences preferences = new Preferences(NSDControl.getFrame());
@@ -6666,6 +7308,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#393 2017-05-09		
 	}
 
+	/**
+	 * Opens the parser preferences dialog and processes configuration changes.
+	 */
 	public void parserNSD()
 	{
 		ParserPreferences parserPreferences = new ParserPreferences(NSDControl.getFrame());
@@ -6796,7 +7441,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				redraw();
 			}
 			// END KGU#136 2016-03-31
-			
+
+			// STAR KGU#705 2019-09-29: Enh. #738
+			updateCodePreview();
+			// END KGU#705 2019-09-29
 		}
 	}
 	
@@ -6926,9 +7574,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#362 2017-03-28: Issue #370 - helper methods for preference consistency 
 	private void offerStructPrefAdaptation(HashMap<String, StringList> refactoringData)
 	{
-		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
-				Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+		// START KGU#735 2019-09-29: Issue #753 - first do a check to avoid puzzling questions
+		//if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+		//		Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+		//		JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+		String updateNeed = null;
+		if (((updateNeed = checkPref(Element.preAlt, refactoringData, "preAlt", "postAlt")) != null ||
+				(updateNeed = checkPref(Element.preWhile,	refactoringData, "preWhile", "postWhile")) != null ||
+				(updateNeed	= checkPref(Element.preRepeat, refactoringData, "preRepeat", "postRepeat")) != null ||
+				(updateNeed = checkPrefCase(Element.preCase, refactoringData)) != null ||
+				(updateNeed = checkPrefFor(Element.preFor, refactoringData)) != null)
+				&& JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+				Menu.msgAdaptStructPrefs.getText().replace("%", updateNeed), Menu.msgTitleQuestion.getText(),
 				JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+		// END KGU#735 2019-09-29
 			Element.preAlt = replacePref(Element.preAlt,
 					refactoringData, "preAlt", "postAlt");
 			Element.preWhile = replacePref(Element.preWhile,
@@ -6946,19 +7605,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String prefixKey, String postfixKey)
 	{
 		StringList old = refactoringData.get(prefixKey);
+		int startPos = 0;
 		if (old != null) {
 			String oldPrefix = old.concatenate();
 			String newPrefix = CodeParser.getKeywordOrDefault(prefixKey, "");
 			if (!oldPrefix.trim().isEmpty() && structPref.startsWith(oldPrefix)) {
 				structPref = newPrefix + structPref.substring(oldPrefix.length());
+				startPos = newPrefix.length();
 			}
 		}
 		old = refactoringData.get(postfixKey);
 		if (old != null) {
 			String oldPostfix = old.concatenate();
 			String newPostfix = CodeParser.getKeywordOrDefault(postfixKey, "");
-			if (!oldPostfix.trim().isEmpty() && structPref.endsWith(oldPostfix)) {
-				structPref = structPref.trim().substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
+			if (!oldPostfix.trim().isEmpty() && structPref.substring(startPos).endsWith(oldPostfix)) {
+				structPref = structPref.substring(0, structPref.length() - oldPostfix.length()) + newPostfix;
 			}
 		}
 		return structPref;
@@ -7018,30 +7679,66 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if ((old = refactoringData.get("postForIn")) != null) {
 			oldInfix2 = old.concatenate();
 		}
+		String tail = "";
 		if (!oldPrefix1.trim().isEmpty() && !oldInfix1.trim().isEmpty() &&
-				structPref.startsWith(oldPrefix1) && structPref.contains(oldInfix1)) {
-			structPref = newPrefix1 + structPref.substring(oldPrefix1.length());
-			if (structPref.matches(".*?\\W+" + oldInfix1 + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1 + "(\\W+.*?)",
+				structPref.startsWith(oldPrefix1) && (tail = structPref.substring(oldPrefix1.length())).contains(oldInfix1)) {
+			if (tail.matches(".*?\\W+" + oldInfix1 + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix1 + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix1) + "$2");
 			}
-			if (structPref.matches(".*?\\W+" + oldInfix1a + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix1a + "(\\W+.*?)",
+			if (tail.matches(".*?\\W+" + oldInfix1a + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix1a + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix1a) + "$2");
 			}
+			structPref = newPrefix1 + tail;
 		}
 		else if (!oldPrefix2.trim().isEmpty() && !oldInfix2.trim().isEmpty() &&
-				structPref.startsWith(oldPrefix2) && structPref.contains(oldInfix2)) {
-			structPref = newPrefix2 + structPref.substring(oldPrefix2.length());
-			if (structPref.matches(".*?\\W+" + oldInfix2 + "\\W+.*?")) {
-				structPref = structPref.replaceFirst("(.*?\\W+)" + oldInfix2 + "(\\W+.*?)",
+				structPref.startsWith(oldPrefix2) && (tail = structPref.substring(oldPrefix2.length())).contains(oldInfix2)) {
+			if (tail.matches(".*?\\W+" + oldInfix2 + "\\W+.*?")) {
+				tail = tail.replaceFirst("(.*?\\W+)" + oldInfix2 + "(\\W+.*?)",
 						"$1" + Matcher.quoteReplacement(newInfix2) + "$2");
 			}
+			structPref = newPrefix2 + tail;
 		}
 		return structPref;
 	}
 	// END KGU#362 2017-03-28
+	
+	// START KGU#735 2019-09-29: Issue #753 - check methods for preference consistency 
+	private String checkPref(String structPref, HashMap<String, StringList> refactoringData,
+			String prefixKey, String postfixKey)
+	{
+		String newPref = replacePref(structPref, refactoringData, prefixKey, postfixKey);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
+	
+	private String checkPrefCase(String structPref, HashMap<String, StringList> refactoringData) {
+		String newPref = replacePrefCase(structPref, refactoringData);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
 
+	private String checkPrefFor(String structPref, HashMap<String, StringList> refactoringData) {
+		String newPref = replacePrefFor(structPref, refactoringData);
+		if (!newPref.equals(structPref)) {
+			return structPref + " --> " + newPref;
+		}
+		return null;
+	}
+	// END KGU#735 2019-09-29
+
+	/**
+	 * Replaces used parser keywords in the specified diagrams by the keywords associated to them
+	 * in the keyword map {@code refactoringData}, which also contains the specification
+	 * whether all open diagrams are to be refactored in this way or just {@link #root}.
+	 * @param refactoringData - maps old keywords to new keywords and may contain keys "refactorAll"
+	 * and "ignoreCase" as mere flags.
+	 */
 	public void refactorNSD(HashMap<String, StringList> refactoringData)
 	{
 		if (refactoringData != null)
@@ -7120,6 +7817,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#258 2016-09-26
 
+	/**
+	 * Opens the Arranger Preferences dialog and processes configuration changes
+	 */
 	public void analyserNSD()
 	{
 		AnalyserPreferences analyserPreferences = new AnalyserPreferences(NSDControl.getFrame());
@@ -7191,6 +7891,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#456 2017-11-15
 
+    /**
+     * Opens the export options dialog and processes configuration changes.
+     */
     public void exportOptions()
     {
         try
@@ -7243,7 +7946,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
             eod.setVisible(true);
 
-            if(eod.goOn==true)
+            if (eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
                 // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
@@ -7296,14 +7999,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 }
                 // END KGU#351 2017-02-26
                 ini.save();
+                // START KGU#705 2019-09-23: Enh. #738
+                this.updateCodePreview();
+                // END KGU#705 2019-09-23
             }
-        } 
-        catch (FileNotFoundException ex)
-        {
-            // START KGU#484 2018-04-05: Issue #463
-            //ex.printStackTrace();
-            logger.log(Level.WARNING, "Trouble saving preferences.", ex);
-            // END KGU#484 2018-04-05
         } 
         catch (IOException ex)
         {
@@ -7314,7 +8013,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
     }
 
+	// START KGU#705 2019-09-24: Enh. #738
+	/**
+	 * Sets a tooltip to the codePreview tab showing the language name plus
+	 * (if retrievable) the tooltip of Menu.menuFileExportCodeFavorite.
+	 */
+	protected void setCodePreviewTooltip() {
+		Component comp = codePreview;
+		while (comp != null && !(comp instanceof JTabbedPane)) {
+			comp = comp.getParent();
+		}
+		if (comp instanceof JTabbedPane) {
+			//prefGenName + Menu.
+			Locales locales = Locales.getInstance();
+			String tt = locales.getLocale(locales.getLoadedLocaleName()).getValue("Structorizer", "Menu.menuFileExportCodeFavorite.tooltip");
+			if (tt.isEmpty()) {
+				tt = locales.getDefaultLocale().getValue("Structorizer", "Menu.menuFileExportCodeFavorite.tooltip");
+			}
+			((JTabbedPane)comp).setToolTipTextAt(1, prefGeneratorName + " - " + tt);
+		}
+	}
+	// END KGU#705 2019-09-24
+
     // START KGU#258 2016-09-26: Enh. #253
+    /**
+     * Opens the import options dialog and processes configuration changes.
+     */
     public void importOptions()
     {
         try
@@ -7323,7 +8047,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ini.load();
             // START KGU#416 2017-06-20: Enh. #354,#357
             //ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
-        	this.retrieveParsers();
+            this.retrieveParsers();
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame(), parserPlugins);
             // END KGU#416 2017-06-20
             // START KGU#362 2017-03-28: Issue #370 - default turned to true
@@ -7426,70 +8150,76 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#258 2016-09-26
 
-    // START KGU#309 2016-12-15: Enh. #310
-    public void savingOptions()
-    {
-    	try {
-    		SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    		Ini ini = Ini.getInstance();
-    		sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
-    		sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
-    		sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
-    		// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    		sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
-    		sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
-    		// END KGU#363 2017-03-12
-    		// START KGU#630 2019-01-13: Enh. #662/4
-    		sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
-    		// END KGU#630 2019-01-13
-    		// START KGU#690 2019-03-21: Enh. #707
-    		sod.chkArgNumbers.setSelected(Element.E_FILENAME_WITH_ARGNUMBERS);
-    		sod.cbSeparator.setSelectedItem(Element.E_FILENAME_SIG_SEPARATOR);
-    		// END KGU#690 2019-03-21
-    		sod.setVisible(true);
+	// START KGU#309 2016-12-15: Enh. #310
+	/**
+	 * Opens the file saveing options dialog and processes configuration changes.
+	 */
+	public void savingOptions()
+	{
+		try {
+			SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+			Ini ini = Ini.getInstance();
+			sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+			sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+			sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+			sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+			sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+			// END KGU#363 2017-03-12
+			// START KGU#630 2019-01-13: Enh. #662/4
+			sod.chkRelativeCoordinates.setSelected(Arranger.A_STORE_RELATIVE_COORDS);
+			// END KGU#630 2019-01-13
+			// START KGU#690 2019-03-21: Enh. #707
+			sod.chkArgNumbers.setSelected(Element.E_FILENAME_WITH_ARGNUMBERS);
+			sod.cbSeparator.setSelectedItem(Element.E_FILENAME_SIG_SEPARATOR);
+			// END KGU#690 2019-03-21
+			sod.setVisible(true);
 
-    		if (sod.goOn==true)
-    		{
-    			Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    			Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    			Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
-    			// START KGU#630 2019-01-13: Enh. #662/4
-    			Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
-    			// END KGU#630 2019-01-13
-    			// START KGU#690 2019-03-21: Enh. #707
-    			Element.E_FILENAME_WITH_ARGNUMBERS = sod.chkArgNumbers.isSelected();
-    			Element.E_FILENAME_SIG_SEPARATOR = (Character)sod.cbSeparator.getSelectedItem();
-    			// END KGU#690 2019-03-21
-    			// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
-    			ini.setProperty("authorName", sod.txtAuthorName.getText());
-    			String licName = (String)sod.cbLicenseFile.getSelectedItem();
-    			if (licName == null) {
-    				ini.setProperty("licenseName", "");
-    			}
-    			else {
-    				ini.setProperty("licenseName", licName);
-    			}
-    			// END KGU#363 2017-03-12
-    			ini.save();
-    		}
-    	} catch (FileNotFoundException e) {
-    		// START KGU#484 2018-04-05: Issue #463
-    		//e.printStackTrace();
-    		logger.log(Level.WARNING, "Trouble accessing preferences.", e);
-    		// END KGU#484 2018-04-05
-    	} catch (IOException e) {
-    		// START KGU#484 2018-04-05: Issue #463
-    		//e.printStackTrace();
-    		logger.log(Level.WARNING, "Trouble accessing saving preferences.", e);
-    		// END KGU#484 2018-04-05
-    	}
-    }
-    // END KGU#258 2016-09-26
+			if (sod.goOn==true)
+			{
+				Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+				Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+				Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+				// START KGU#630 2019-01-13: Enh. #662/4
+				Arranger.A_STORE_RELATIVE_COORDS = sod.chkRelativeCoordinates.isSelected();
+				// END KGU#630 2019-01-13
+				// START KGU#690 2019-03-21: Enh. #707
+				Element.E_FILENAME_WITH_ARGNUMBERS = sod.chkArgNumbers.isSelected();
+				Element.E_FILENAME_SIG_SEPARATOR = (Character)sod.cbSeparator.getSelectedItem();
+				// END KGU#690 2019-03-21
+				// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+				ini.setProperty("authorName", sod.txtAuthorName.getText());
+				String licName = (String)sod.cbLicenseFile.getSelectedItem();
+				if (licName == null) {
+					ini.setProperty("licenseName", "");
+				}
+				else {
+					ini.setProperty("licenseName", licName);
+				}
+				// END KGU#363 2017-03-12
+				ini.save();
+			}
+		} catch (FileNotFoundException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing preferences.", e);
+			// END KGU#484 2018-04-05
+		} catch (IOException e) {
+			// START KGU#484 2018-04-05: Issue #463
+			//e.printStackTrace();
+			logger.log(Level.WARNING, "Trouble accessing saving preferences.", e);
+			// END KGU#484 2018-04-05
+		}
+	}
+	// END KGU#258 2016-09-26
 
-    /*****************************************
-     * font control
-     *****************************************/
+	/*========================================
+	 * font control
+	 *========================================*/
 
+	/**
+	 * Opens the font configration dialog and processes configuration changes.
+	 */
 	public void fontNSD()
 	{
 		// START KGU#494 2018-09-10: Issue #508 - support option among fix / proportional padding
@@ -7534,6 +8264,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	}
 
+	/**
+	 * Enlarges the diagram font by two points
+	 */
 	public void fontUpNSD()
 	{
 		// change font size
@@ -7553,6 +8286,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444/KGU#618 2018-12-18
 	}
 
+	/**
+	 * Diminishes the diagram font by two points.
+	 */
 	public void fontDownNSD()
 	{
 		if (Element.getFont().getSize()-2 >= 4)
@@ -7575,9 +8311,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#444/KGU#618 2018-12-18
 	}
 
-	/*****************************************
+	/*========================================
 	 * DIN conformity
-	 *****************************************/
+	 *========================================*/
+	/**
+	 * Flips the graphical representation of FOR loops between DIN 66261 and ENDLESS design
+	 * @see #setDIN()
+	 * @see #getDIN()
+	 */
 	public void toggleDIN()
 	{
 		Element.E_DIN = !(Element.E_DIN);
@@ -7588,6 +8329,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * Switches the graphical representation of FOR loops to DIN 66261 design
+	 * @see #toggleDIN()
+	 * @see #getDIN()
+	 */
 	public void setDIN()
 	{
 		Element.E_DIN = true;
@@ -7598,15 +8344,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * @return true if the representation of FOR loops is currently conform to DIN-66261.
+	 * @see #toggleDIN()
+	 * @see #setDIN()
+	 */
 	public boolean getDIN()
 	{
 		return Element.E_DIN;
 	}
 
-	/*****************************************
+	/*========================================
 	 * diagram type and shape
-	 *****************************************/
+	 *========================================*/
 
+	/**
+	 * Reduces the frame of the current diagram to a very frugal shape if {@code _unboxed} is true
+	 * or switches it to a complete box otherwise.
+	 * @see #isUnboxed()
+	 */
 	public void setUnboxed(boolean _unboxed)
 	{
 		root.isBoxed = !_unboxed;
@@ -7620,19 +8376,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * @return true if the frame of this diagram is reduced to a frugal shape.
+	 * @see #setUnboxed(boolean)
+	 */
 	public boolean isUnboxed()
 	{
 		return !root.isBoxed;
 	}
 
+	/**
+	 * Changes the type of {@link #root} to a Subroutine diagram.
+	 * @see #setProgram()
+	 * @see #setInclude()
+	 * @see #isSubroutine()
+	 */
 	public void setFunction()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208 - outer dimensions change
-		if (!root.isBoxed && root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
-		// END KGU#221 2016-07-28
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown();
 		root.setProgram(false);
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -7642,16 +8404,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 		// END KGU#253 2016-09-22
 		redraw();
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 
+	/**
+	 * Changes the type of {@link #root} to Main program.
+	 * @see #setFunction()
+	 * @see #setInclude()
+	 * @see #isProgram()
+	 */
 	public void setProgram()
 	{
-		// START KGU#221 2016-07-28: Bugfix #208
-		if (!root.isBoxed && !root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
-		// END KGU#221 2016-07-28
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown(); 
 		// START KGU#703 2019-03-30: Issue #720
 		boolean poolModified = false;
 		if (root.isInclude() && Arranger.hasInstance()) {
@@ -7675,16 +8442,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Arranger.getInstance().redraw();
 		}
 		// END KGU#701 2019-03-30
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 
 	// START KGU#376 2017-05-16: Enh. #389
+	/**
+	 * Changes the type of {@link #root} to Includable.
+	 * @see #setFunction()
+	 * @see #setProgram()
+	 * @see #isInclude()
+	 */
 	public void setInclude()
 	{
-		// For an unboxed diagram, the outer dimensions may change
-		if (!root.isBoxed && root.isProgram())
-		{
-			root.resetDrawingInfoUp();
-		}
+		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
+		root.resetDrawingInfoDown(); 
 		root.setInclude();
 		// START KGU#703 2019-03-30: Issue #720
 		boolean poolModified = false;
@@ -7705,25 +8478,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Arranger.getInstance().redraw();
 		}
 		// END KGU#701 2019-03-30
+		// START KGU#705 2019-10-01: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-10-01
 	}
 	// END KGU #376 2017-05-16
 
+	/**
+	 * @return true if the diagram is of type Main program
+	 * @see #isSubroutine()
+	 * @see #isInclude()
+	 * @see #setProgram()
+	 */
 	public boolean isProgram()
 	{
 		return root.isProgram();
 	}
+	/**
+	 * @return true if the diagram is of type Function
+	 * @see #isProgram()
+	 * @see #isInclude()
+	 * @see #setFunction()
+	 */
 	public boolean isSubroutine()
 	{
 		return root.isSubroutine();
 	}
+	/**
+	 * @return true if the diagram is of type Includable
+	 * @see #isSubroutine()
+	 * @see #isProgram()
+	 * @see #setInclude()
+	 */
 	public boolean isInclude()
 	{
 		return root.isInclude();
 	}
 
-	/*****************************************
+	/*========================================
 	 * comment modes
-	 *****************************************/
+	 *========================================*/
 
 	public void setComments(boolean _comments)
 	{
@@ -7762,11 +8556,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// END KGU#220 2016-07-27
     	repaint();
     }
-    
-	/*****************************************
+
+	/*========================================
 	 * further settings
-	 *****************************************/	
+	 *========================================*/	
 	
+	/**
+	 * Enables or disables the syntax higighting in the elements for all diagrams
+	 * @param _highlight - true to switch syntax mmarkup on, false to disable it
+	 */
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT = _highlight;	// this is now directly used for drawing
@@ -7778,6 +8576,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+	/**
+	 * Toggles the activation of the Analyser component (and the visibility of the Report list).
+	 * @see #setAnalyser(boolean)
+	 */
 	public void toggleAnalyser()
 	{
 		setAnalyser(!Element.E_ANALYSER);
@@ -7790,6 +8592,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Enables or disables the Analyser, according to the value of {@code _analyse}.
 	 * @param _analyse - the new status of Analyser (true to enable, obviously)
+	 * @see #toggleAnalyser()
 	 */
 	public void setAnalyser(boolean _analyse)
 	{
@@ -7809,18 +8612,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		NSDControl.doButtons();
 	}
 	/**
-	 * @return true if the Arranger index is crrently enabled (shown), false otherwise
+	 * @return true if the Arranger index is currently enabled (shown), false otherwise
 	 * @see #setArrangerIndex(boolean)
 	 */
 	public boolean showingArrangerIndex()
 	{
 		return this.show_ARRANGER_INDEX;
 	}
+	// END KGU#305 2016-12-14
+	
+	// START KGU#705 2019-09-23: Enh. #738
+	/**
+	 * Enables or disables the Code Preview, according to the value of {@code _showPreview}.
+	 * @param _showPreview - whether to enable (true) or disable (false) the code preview
+	 * @see #showingCodePreview()
+	 */
+	public void setCodePreview(boolean _showPreview)
+	{
+		this.show_CODE_PREVIEW = _showPreview;
+		if (_showPreview) {
+			this.updateCodePreview();
+		}
+		NSDControl.doButtons();
+	}
+	/**
+	 * @return true if the Code Preview is currently enabled (shown), false otherwise
+	 * @see #setCodePreview(boolean)
+	 */
+	public boolean showingCodePreview()
+	{
+		return this.show_CODE_PREVIEW;
+	}
 	// END KGU#305 216-12-14
 	
 	// START KGU#123 2016-01-04: Enh. #87
 	/**
 	 * Toggles the use of the mouse wheel for collapsing/expanding elements
+	 * @see #toggleCtrlWheelMode()
+	 * @see #configureWheelUnit()
 	 */
 	public void toggleWheelMode()
 	{
@@ -7830,7 +8659,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	// START KGU#503 2018-03-14: Enh. #519
 	/**
-	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out
+	 * Toggles the effect of the mouse wheel (with Ctrl key pressed) for Zooming: in or out.
+	 * @see #toggleWheelMode()
+	 * @see #configureWheelUnit()
 	 */
 	public void toggleCtrlWheelMode()
 	{
@@ -7841,7 +8672,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#699 2019-03-27: Issue #717 scrolling "speed" ought to be configurable
 	/**
 	 * Opens a little dialog offering to configure the default scrolling increment
-	 * for the mouse wheel via a spinner 
+	 * for the mouse wheel via a spinner.
+	 * @see #toggleWheelMode()
+	 * @see #toggleCtrlWheelMode()
 	 */
 	public void configureWheelUnit()
 	{
@@ -7864,6 +8697,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#699 2019-03-27
 
 	// START KGU#170 2016-04-01: Enh. #144: Maintain a preferred export generator
+	/**
+	 * Retrieves (and caches) the configured favourite code generator (also
+	 * relevant for the code preview)
+	 * @return Language title of the preferred generator
+	 * @see #setPreferredGeneratorName(String)
+	 */
 	public String getPreferredGeneratorName()
 	{
 		if (this.prefGeneratorName.isEmpty())
@@ -7874,13 +8713,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				ini.load();
 				this.prefGeneratorName = ini.getProperty("genExportPreferred", "Java");
 			} 
-			catch (FileNotFoundException ex)
-			{
-				// START KGU#484 2018-04-05: Issue #463
-				//ex.printStackTrace();
-				logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
-				// END KGU#484 2018-04-05
-			}
 			catch (IOException ex)
 			{
 				// START KGU#484 2018-04-05: Issue #463
@@ -7892,12 +8724,58 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return this.prefGeneratorName;
 	}
 	// END KGU#170 2016-04-01
+	
+	// START KGU#705 2019-09-24: Enh. #738
+	/**
+	 * Retrieves (and caches) the configured favourite code generator (also
+	 * relevant for the code preview).
+	 * @param genName - Language title for the preferred generator
+	 * @see #getPreferredGeneratorName()
+	 */
+	public void setPreferredGeneratorName(String genName)
+	{
+		if (genName == null || genName.trim().isEmpty()) {
+			return;
+		}
+		try
+		{
+			Ini ini = Ini.getInstance();
+			for (GENPlugin plugin: Menu.generatorPlugins) {
+				if (genName.equalsIgnoreCase(plugin.title)) {
+					ini.load();
+					if (!genName.equalsIgnoreCase(this.prefGeneratorName)) {
+						this.generatorUseCount = 1;
+					}
+					this.prefGeneratorName = plugin.title;
+					if (!this.prefGeneratorName.equals(ini.getProperty("genExportPreferred", "Java"))) {
+						ini.setProperty("genExportPreferred", plugin.title);
+						ini.save();
+						updateCodePreview();
+						NSDControl.doButtons();
+					}
+					break;
+				}
+			}
+		} 
+		catch (IOException ex)
+		{
+			logger.log(Level.WARNING, "Trouble accessing preferences.", ex);
+		}		
+	}
+	// END KGU#705 2ß19-09-24
 
-	/*****************************************
+	/*========================================
 	 * inputbox methods
-	 *****************************************/
+	 *========================================*/
 	// START KGU 2015-10-14: additional parameters for title customisation
 	//public void showInputBox(EditData _data)
+	/**
+	 * Opens the appropriate elemet editor version for element type {@code _elementType} and
+	 * gathers the editing results in {@code _data}.
+	 * @param _data - container for the content transfer between the element and the InputBox
+	 * @param _elementType - Class name of the {@link Element} we offer editing for
+	 * @param _isInsertion - Indicates whether or not the element is a new object
+	 */
 	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion)
 	// END KGU 2015-10-14
 	{
@@ -8136,9 +9014,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	/*****************************************
+	/*========================================
 	 * CLIPBOARD INTERACTIONS
-     *****************************************/
+     *========================================*/
+	/**
+	 * Copies the diagram as a PNG picture to the system clipboard.<br/>
+	 * NOTE: For some platforms, the clipboard content may yet be a JPEG image rather than PNG.
+	 * @see #copyToClipboardEMF()
+	 */
 	public void copyToClipboardPNG()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -8183,6 +9066,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#183 2016-04-24
 	}
 
+	/**
+	 * Copies the diagram as a EMF picture to the system clipboard.
+	 * @see #copyToClipboardPNG()
+	 */
 	public void copyToClipboardEMF()
 	{
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
@@ -8330,9 +9217,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 
-	/*****************************************
+	/*========================================
 	 * ANALYSER
-     *****************************************/
+	 *========================================*/
+	/**
+	 * Instigates the analysis of the current diagram held in {@link #root}
+	 */
 	protected void analyse()
 	{
 		if (Element.E_ANALYSER && errorlist != null && isInitialized)
@@ -8364,9 +9254,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
-	 /*****************************************
-	  * Recently used files
-	  *****************************************/
+	/*========================================
+	 * Recently used files
+	 *========================================*/
+	/**
+	 * Adds the given path {@code _filename} to the list of recently used files.
+	 * @param _filename - the path of the file most recently used (loaded/saved)
+	 * @see #addRecentFile(String, boolean)
+	 */
 	public void addRecentFile(String _filename)
 	{
 		addRecentFile(_filename,true);
@@ -8379,6 +9274,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param _filename - path of a file most recently used
 	 * @param saveINI - if true then we will immediately save the list to the ini
 	 * file and have all button visibility checked immediately.
+	 * @see #addRecentFile(String)
 	 */
 	public void addRecentFile(String _filename, boolean saveINI)
 	{
@@ -8404,36 +9300,45 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#602 2018-10-28
 	}
 
-    /*****************************************
-     * Run
-	 *****************************************/
-    public void goRun()
-    {
-    	// START KGU#448 2018-01-05: Enh. #443 - generalized DiagramController activation
-    	//Executor.getInstance(this,null);
-    	Executor.getInstance(this, this.getEnabledControllers());
-    	// END KGU#448 2018-01-05
-    	if (root.advanceTutorialState(26, this.root)) {
-    		analyse();
-    	}
-    	if (root.advanceTutorialState(26, this.root)) {
-    		analyse();
-    	}
-    }
+	/*========================================
+	 * Run
+	 *========================================*/
+	/**
+	 * Activates the {@link Executor} forcing open the debug {@link Control}.
+	 * @see #goTurtle()
+	 */
+	public void goRun()
+	{
+		// START KGU#448 2018-01-05: Enh. #443 - generalized DiagramController activation
+		//Executor.getInstance(this,null);
+		Executor.getInstance(this, this.getEnabledControllers());
+		// END KGU#448 2018-01-05
+		if (root.advanceTutorialState(26, this.root)) {
+			analyse();
+		}
+		if (root.advanceTutorialState(26, this.root)) {
+			analyse();
+		}
+	}
 
+	/**
+	 * Ensures the {@link TurtleBox} being open and activates the {@link Executor}
+	 * forcing open the debug {@link Control}.
+	 * @see #goRun()
+	 */
 	public void goTurtle()
-    {
-    	if (turtle == null)
-    	{
-    		turtle = new TurtleBox(500,500);
-    	}
-    	turtle.setVisible(true);
-    	// Activate the executor (getInstance() is supposed to do that)
-    	// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
-    	//Executor.getInstance(this,turtle);
-    	this.enableController("lu.fisch.turtle.TurtleBox", true);
-    	goRun();
-    	// END KGU#448 2018-01-05
+	{
+		if (turtle == null)
+		{
+			turtle = new TurtleBox(500,500);
+		}
+		turtle.setVisible(true);
+		// Activate the executor (getInstance() is supposed to do that)
+		// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
+		//Executor.getInstance(this,turtle);
+		this.enableController("lu.fisch.turtle.TurtleBox", true);
+		goRun();
+		// END KGU#448 2018-01-05
 
     }
     
@@ -8512,7 +9417,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return diagramControllers;
 	}
 
-	/** Returns an array of {@link DiagramController} instances enabled for execution */
+	/** @return an array of {@link DiagramController} instances enabled for execution */
 	private DiagramController[] getEnabledControllers() {
 		this.getDiagramControllers();
 		LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
@@ -8602,6 +9507,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			{
     				y = ((Root)selected).children.getRectOffDrawPoint().top + 2;
     			}
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (selected instanceof Try) {
+    				y = ((Try)selected).qTry.getRectOffDrawPoint().top + 2;
+    			}
+    			// END KGU#729 2019-09-24
     			else
     			{
     				y = selRect.bottom + 2;
@@ -8649,6 +9559,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				x = bodyRect.left + 2;
     				y = (bodyRect.top + bodyRect.bottom) / 2;
     			}
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (selected instanceof Try) {
+    				Rect catchRect = ((Try)selected).qCatch.getRectOffDrawPoint();
+    				x = catchRect.left + 2;
+    				y = catchRect.top + 2;
+    			}
+    			// END KGU#729 2019-09-24
     			else
     			{
     				x = selRect.right + 2;
@@ -8694,6 +9611,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				newSel = selected;	// Stop before the border on boxed diagrams
     			}
     			// END KGU#214 2015-07-31
+    			// START KGU#729 2019-09-24: Bugfix #751
+    			else if (newSel instanceof Try) {
+    				Element sel = null;
+    				if (_direction == Editor.CursorMoveDirection.CMD_UP) {
+    					// From finally go to catch, from catch to try, from outside to finally
+    					if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qTry.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    					else if (!selected.isDescendantOf(newSel)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
+    					}
+    				}
+    				else if (_direction == Editor.CursorMoveDirection.CMD_DOWN) {
+    					// From try go to catch, from catch to finally, from finally to subsequent element
+    					if (selected == ((Try)newSel).qTry || selected.isDescendantOf(((Try)newSel).qTry)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().top + 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+    					}
+    					else if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+    						sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+    					}
+    				}
+    				if (sel != null) {
+    					newSel = sel;
+    				}
+    			}
+    			// END KGU#729 2019-09-24
     			selected = newSel;
     		}
     		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
@@ -8710,6 +9659,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		redraw(selected);
     		// END KGU#177 2016-04-14
 
+    		// START KGU#705 2019-09-24: Enh. #738
+    		highlightCodeForSelection();
+    		// END KGU#705 2019-09-24
     		// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
     		this.doButtons();
     		// END KGU#177 2016-04-24
@@ -8757,6 +9709,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			redraw(selected);
     			this.doButtons();
     		}
+    		// START KGU#705 2019-09-24: Enh. #738
+    		highlightCodeForSelection();
+    		// END KGU#705 2019-09-24
     	}
     }
     // END KGU#206 2016-07-21
@@ -8807,6 +9762,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// do the button thing
 				if (NSDControl!=null) NSDControl.doButtons();
 				
+				// START KGU#705 2019-09-24: Enh. #738
+				highlightCodeForSelection();
+				// END KGU#705 2019-09-24
 				errorlist.requestFocusInWindow();
 			}
 			// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
@@ -8869,6 +9827,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			catch (Exception ex) {}
 		}
+		if (this.codeHighlighter != null)
+		{
+			this.codeHighlighter = codePreview.getHighlighter();
+			this.updateCodePreview();
+		}
 	}
 	// END KGU#324 2017-05-30
 
@@ -8891,6 +9854,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#305 2016-12-15: Enh. #305
 		ini.setProperty("index", (this.showingArrangerIndex() ? "1" : "0"));
 		// END KGU#305 2016-12-15
+		// START KGU#705 2019-09-24: Enh. #738
+		ini.setProperty("codePreview", (this.showingCodePreview() ? "1" : "0"));
+		// END KGU#705 2019-09-14
 		if (this.recentFiles.size()!=0)
 		{
 			for(int i=0; i < this.recentFiles.size(); i++)
@@ -9023,6 +9989,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		else {
 			redraw();
 		}
+		// START KGU#705 2019-09-24: Enh. #738
+		updateCodePreview();
+		// END KGU#705 2019-09-24
 		// FIXME: The diagram will not always have been scrolled to the selected element by now...
 	}
 	// END KGU#477 2017-12-06

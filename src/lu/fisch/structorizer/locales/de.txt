@@ -275,6 +275,7 @@ Menu.menuDiagramMarker.text=Variable hervorheben?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
+Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -388,7 +389,7 @@ Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
 Menu.msgDiscardParserPrefs.text=Wirklich alle neuen Parser-Einstellungen verwerfen?
-Menu.msgAdaptStructPrefs.text=Struktur-Einstellungen (Default-Texte) an neue Parser-Einstellungen anpassen?
+Menu.msgAdaptStructPrefs.text=Struktur-Einstellungen (Default-Texte) an neue Parser-Einstellungen anpassen?\n(z.B.: %)
 Menu.msgKeywordsDiffer.text=Ursprünglicher Schlüsselwortkontext des geladenen Diagramms wich von den aktuellen Parser-Einstellungen ab:%1\nDas automatische Anpassen beim Laden ist ausgestellt.\n\nSie haben nun folgende Möglichkeiten:\n%2
 Menu.msgRefactorNow.text=Das Diagramm kann jetzt an die Parser-Einstellungen angepasst werden (empfohlen)
 Menu.msgAdoptPreferences.text=Sie können die mit dem Diagramm geladenen Schlüsselwörter als neue Parser-Einstellungen übernehmen\n   (was allerdings das Anpassen aller anderen geladenen Diagramme bewirkt!)
@@ -424,7 +425,7 @@ Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
 Menu.msgMustBeIdentifier.text=Der gewählte Name war nicht als Bezeichner geeignet!
 Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es @k-Anweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
-Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
+Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Diagramm-Editor\naus %\nerstellte Diagrammdateien
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
@@ -679,6 +680,13 @@ Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Debug
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Arranger-Index
+Editor.pnlTabbed.tab.1=Code-Voransicht
+Editor.popupCodeExport.text=Exportieren ...
+Editor.popupCodeExport.tooltip=Den Code in eine Datei exportieren.
+Editor.popupCodeHide.text=Code-Voransicht verbergen
+Editor.ttPopupCodePreview.text=Stellt die Code-Voransicht nach % um und setzt % als bevorzugte Exportsprache.
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Einzugebender Text
@@ -764,7 +772,7 @@ InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einz
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
 InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
 InputBoxRoot.lblComment.text=Einzugebender Kommentar
-InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBoxRoot.txtComment.tooltip=Z.B. Wozu dient der Algorithmus, wie ist er anzuwenden, wer hat ihn erstellt usw.
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxRoot.btnCancel.text=Abbrechen
@@ -875,7 +883,7 @@ Preferences.pnlCase.tooltip=Einstellungen zur @c-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
-Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements verringern (0 = aus)
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
@@ -893,7 +901,7 @@ Preferences.lblRepeat.text=Voreinstellungs-Text
 Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im @h-Schleifen-Fuß.
 Preferences.pnlTry.border=@q-Block-Beschriftungen
 Preferences.lblTry.tooltip=Markierung des Hauptanweisungsblocks im @q-Element
-Preferences.lblCatch.tooltip=Markierung des Ausahmebehandlungsblocks im @-Element
+Preferences.lblCatch.tooltip=Markierung des Ausahmebehandlungsblocks im @q-Element
 Preferences.lblFinal.tooltip=Markierung des Aufräumblocks im @q-Element
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
@@ -1315,6 +1323,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
+ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
 ArrangerIndex.lblSubroutines.text=Aufgerufene Unterprogramme

@@ -148,6 +148,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	// START KGU#669 2019-03-01: Enh. #691
 	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
 	// END KGU#669 2019-03-01
+	// START KGU#705 2019-10-03: Added on occasion of Enh. #738 (code preview) for regularity
+	protected final JMenuItem popupIndexHide = new JMenuItem("Hide Arranger index");
+	// END KGU#705 2019-10-03
 	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptation from Windows to others was defective if it hadn't been open before
 	private boolean wasPopupOpen = false;
 	// END KGU#646 2019-02-10
@@ -591,6 +594,17 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		popupIndex.add(popupIndexRemoveAll);
 		popupIndexRemoveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemoveAll(); } });
 		// END KGU#534 2018-06-27
+		
+		popupIndex.addSeparator();
+		popupIndex.add(popupIndexHide);
+		popupIndexHide.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		popupIndexHide.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				diagram.setArrangerIndex(false);
+			}
+		});
+
 		
 		// START KGU#626 2019-01-04: Enh. #657 - a panel that may sporadically be needed for the detach action
 		pnlGroupSelect.setLayout(new FlowLayout());

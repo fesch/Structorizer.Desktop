@@ -260,7 +260,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.29-13";
+	public static final String E_VERSION = "3.30";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3930,7 +3930,7 @@ public abstract class Element {
      */
     public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)
     {
-    	int count = 0;
+        int count = 0;
         count += _tokens.replaceAll(":=", "<-");
         // START KGU#115 2015-12-23: Bugfix #74 - logical inversion
         //if (_assignmentOnly)
@@ -3947,7 +3947,7 @@ public abstract class Element {
         	count += _tokens.replaceAllCi("not", "!");
         	count += _tokens.replaceAllCi("xor", "^");
         }
-    	return count;
+        return count;
     }
 	// END KGU#92 2015-12-01
 
