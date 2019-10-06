@@ -6757,6 +6757,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				codePreviewMap = new HashMap<Element, int[]>();
 				Generator gen = null;
+				Arranger arranger = null;
+				if (Arranger.hasInstance()) {
+					arranger = Arranger.getInstance();
+				}
 				for (GENPlugin plugin: Menu.generatorPlugins) {
 					if (plugin.title.equals(generatorName)) {
 						Class<?> genClass = Class.forName(plugin.className);
@@ -6764,7 +6768,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						fetchPluginSpecificExportOptions(gen);
 						String code = gen.deriveCode(root,
 								NSDControl.getFrame(),
-								(Arranger.hasInstance() ? Arranger.getInstance() : null),
+								arranger,
 								codePreviewMap);
 						codePreview.setText(code);
 						break;

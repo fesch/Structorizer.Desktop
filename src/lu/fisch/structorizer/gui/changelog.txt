@@ -9,7 +9,10 @@ Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- Javascript generator still incomplete and deficient.
+- The Javascript generator is just a prototype and may be deficient.
+
+Current development version: 3.30-01 (2019-10-06)
+- 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -126,7 +129,7 @@ Version: 3.30 (2019-10-06)
 - 14: Bugfix #754: 2 Pascal code generator flaws (return instr. / UNIT name) <2>
 - 14: Enh. #721: Javascript export prototype [A. Brusinsky]2
 - 14: Bugfix #755: Defective Java/C# export of array initializers <2>
-- 14: Bugfix #756: Defects in expression export to C language family <2>
+- 14: Bugfix #756: Expression export defects to C language family <2>
 - 14: Bugfix #757: Include list text area was too small under Windows 10 <2>
 - 14: Bugfix #758: "Edit subroutine" didn't reliably arrange the new routine <2>
 - 14: Bugfix #759: Closing Structorizer sub-instances impaired functioning <2>
