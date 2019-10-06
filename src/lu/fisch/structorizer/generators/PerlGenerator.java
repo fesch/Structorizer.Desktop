@@ -408,10 +408,10 @@ public class PerlGenerator extends Generator {
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
-		if (!insertAsComment(_inst, _indent))
+		if (!appendAsComment(_inst, _indent))
 		{
 			boolean isDisabled = _inst.isDisabled();
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 
 			StringList lines = _inst.getUnbrokenText();
 			for(int i=0;i<lines.count();i++)
@@ -448,7 +448,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll("(.*or die \\\"Failed to open )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileOpen call by something like «open(my $fHandle, \"<\", \"filename\") or die \"error message\";»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileOpen call by something like «open(my $fHandle, \"<\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
 					if (text.contains("fileCreate(")) {
@@ -460,7 +460,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll("(.*or die \\\"Failed to create )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileCreate call by something like «open(my $fHandle, \">\", \"filename\") or die \"error message\";»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileCreate call by something like «open(my $fHandle, \">\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
 					if (text.contains("fileAppend(")) {
@@ -472,7 +472,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll("(.*or die \\\"Failed to append to )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileAppend call by something like «open(my $fHandle, \">>\", \"filename\") or die \"error message\";»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileAppend call by something like «open(my $fHandle, \">>\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
 					if (text.contains("fileRead(") || text.contains("fileReadInt(") || text.contains("fileReadDouble(") || text.contains("fileReadLine(")) {
@@ -480,12 +480,12 @@ public class PerlGenerator extends Generator {
 						String pattern = "(.*?)\\s*=\\s*fileRead\\w*\\((.*)\\)(.*)";
 						if (text.matches(pattern)) {
 							if (!fctName.equals("Line")) {
-								this.insertComment("TODO FileAPI: Originally this was a fileRead" + fctName + " call, so ensure to obtain the right thing!", _indent);							
+								this.appendComment("TODO FileAPI: Originally this was a fileRead" + fctName + " call, so ensure to obtain the right thing!", _indent);							
 							}
 							text = text.replaceAll(pattern, "$1 = <$2> $3");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileRead" + fctName + " call by something like «<$fileHandle>\";»", _indent);							
+							this.appendComment("TODO FileAPI: Replace the fileRead" + fctName + " call by something like «<$fileHandle>\";»", _indent);							
 						}
 					}
 					if (text.contains("fileReadChar(")) {
@@ -494,7 +494,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "$1 = gect\\($2\\)$3");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileReadChar* call by something like «getc($fileHandle)\";»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileReadChar* call by something like «getc($fileHandle)\";»", _indent);
 						}
 					}
 					if (text.contains("fileWrite(")) {
@@ -503,7 +503,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "print $2 $3 $4");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileWrite call by something like «print $fileHandle value;»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileWrite call by something like «print $fileHandle value;»", _indent);
 						}
 					}
 					if (text.contains("fileWriteLine(")) {
@@ -512,7 +512,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "print $2 $3; print $2 \\\"\\\\n\\\" $4");
 						}
 						else {
-							this.insertComment("TODO FileAPI: Replace the fileWriteLine call by something like «print $fileHandle value; print $fileHandle \"\\n\";»", _indent);
+							this.appendComment("TODO FileAPI: Replace the fileWriteLine call by something like «print $fileHandle value; print $fileHandle \"\\n\";»", _indent);
 						}
 					}
 					if (text.contains("fileClose(")) {
@@ -539,7 +539,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
@@ -547,12 +547,12 @@ public class PerlGenerator extends Generator {
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
-				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
 			else {
 				for (int k = 0; k < this.fileVars.count(); k++) {
 					if (condition.contains(this.fileVars.get(k))) {
-						this.insertComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);						
+						this.appendComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);						
 					}
 				}
 			}
@@ -587,7 +587,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 
 		// Since Perl release 5.8.0, switch is a standard module...
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
@@ -654,7 +654,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 		
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 
 		String var = _for.getCounterVar();
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
@@ -724,14 +724,14 @@ public class PerlGenerator extends Generator {
 		boolean isDisabled = _while.isDisabled();
 		
 		addCode("", "", isDisabled);
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
-				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
 		}
 		// END KGU#311 2017-01-04
@@ -760,7 +760,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 
 		addCode("do {", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
@@ -770,7 +770,7 @@ public class PerlGenerator extends Generator {
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI) {
 			if (condition.contains("fileEOF(")) {
-				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
 		}
 		// END KGU#311 2017-01-04
@@ -796,7 +796,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 
 		addCode("while (1) {", _indent, isDisabled);		
 		generateCode(_forever.q, _indent+this.getIndent());
@@ -809,11 +809,11 @@ public class PerlGenerator extends Generator {
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-		if(!insertAsComment(_call, _indent))
+		if(!appendAsComment(_call, _indent))
 		{
 			boolean isDisabled = _call.isDisabled();
 
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 
 			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
 			this.isWithinCall = true;
@@ -831,7 +831,7 @@ public class PerlGenerator extends Generator {
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
-		if(!insertAsComment(_jump, _indent))
+		if(!appendAsComment(_jump, _indent))
 // START KGU#78 2015-12-17: Block braces had been missing! Enh. #23 - jump support
 //			insertComment(_jump, _indent);
 //			for(int i=0;i<_jump.getText().count();i++)
@@ -882,8 +882,8 @@ public class PerlGenerator extends Generator {
 					String label = this.labelBaseName + ref;
 					if (ref.intValue() < 0)
 					{
-						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-						insertComment(line, _indent);
+						appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						appendComment(line, _indent);
 						label = "__ERROR__";
 					}
 					addCode("goto " + label + ";", _indent, isDisabled);
@@ -897,8 +897,8 @@ public class PerlGenerator extends Generator {
 				}
 				else if (!isEmpty)
 				{
-					insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+					appendComment(line, _indent);
 				}
 				// END KGU#74/KGU#78 2015-11-30
 			}
@@ -923,19 +923,19 @@ public class PerlGenerator extends Generator {
 		String suffix = Integer.toHexString(_para.hashCode());
 				
 		// START KGU 2014-11-16
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 		// END KGU 2014-11-16
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("Requires at least Perl 5.8 and version threads 2.07", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("Requires at least Perl 5.8 and version threads 2.07", _indent);
 		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			appendComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			asgndVars[i] = root.getVarNames(_para.qs.get(i), false).reverse();
 			boolean hasResults = asgndVars[i].count() > 0;
 			StringList usedVars = root.getUsedVarNames(_para.qs.get(i), false, false).reverse();
@@ -970,7 +970,7 @@ public class PerlGenerator extends Generator {
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			appendComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
 			String resultVars = asgndVars[i].concatenate(", $").trim();
 			if (!resultVars.isEmpty()) {
 				resultVars = "($" + resultVars + ") = ";
@@ -980,9 +980,9 @@ public class PerlGenerator extends Generator {
 		}
 
 		addCode("}", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-12-17
@@ -996,7 +996,7 @@ public class PerlGenerator extends Generator {
 	{
 		String indent1 = _indent + this.getIndent();
 		boolean isDisabled = _try.isDisabled();
-		this.insertAsComment(_try, _indent);
+		this.appendAsComment(_try, _indent);
 		this.addCode("eval {", _indent, isDisabled);
 		if (_try.qFinally.getSize() > 0) {
 			this.addCode("my $final" + Integer.toHexString(_try.hashCode()) + " = finally {", indent1, isDisabled);
@@ -1039,9 +1039,9 @@ public class PerlGenerator extends Generator {
 		if (topLevel)
 		{
 			code.add(_indent + "#!/usr/bin/perl");
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			//if (_root.isProgram) {
 			generatorIncludes.add("strict");
@@ -1054,19 +1054,19 @@ public class PerlGenerator extends Generator {
 			}
 			// END KGU#348 2017-02-25
 			code.add("");
-			this.insertGeneratorIncludes(_indent, false);
+			this.appendGeneratorIncludes(_indent, false);
 			// END KGU#686 2019-03-21
 			// START KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(_indent);
+			this.appendUserIncludes(_indent);
 			// END KGU#351 2017-02-26
 			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
 			if (this.usesFileAPI) {
 				code.add(_indent);
-				this.insertComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
-				this.insertComment("      which cannot not be translated completely.", _indent);
-				this.insertComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
-				this.insertComment("      the code according to the recommendations.", _indent);
-				this.insertComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
+				this.appendComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
+				this.appendComment("      which cannot not be translated completely.", _indent);
+				this.appendComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
+				this.appendComment("      the code according to the recommendations.", _indent);
+				this.appendComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
 				code.add(_indent);
 			}
 			// END KGU#311 2017-01-04
@@ -1084,7 +1084,7 @@ public class PerlGenerator extends Generator {
 			code.add("");
 		}
 		// END KGU#178 2016-07-20
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		// FIXME: What to do with includable diagrams? 
 		if( _root.isSubroutine() ) {
 			code.add(_indent + "sub " + _procName + " {");
@@ -1218,9 +1218,9 @@ public class PerlGenerator extends Generator {
 	private void addFinallyPackage(String _indent)
 	{
 		code.add("");
-		insertComment("----------------------------------------------------------------------", _indent);
-		insertComment(" Finally class, introduced to handle finally blocks via RAII", _indent);
-		insertComment("----------------------------------------------------------------------", _indent);
+		appendComment("----------------------------------------------------------------------", _indent);
+		appendComment(" Finally class, introduced to handle finally blocks via RAII", _indent);
+		appendComment("----------------------------------------------------------------------", _indent);
 		addCode("package Finally;", _indent, false);
 		addCode("sub new {", _indent, false);
 		addCode("my ($class, $code) = @_;", _indent + this.getIndent(), false);

@@ -73,6 +73,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and Jump element of throw flavour
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
+ *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *
  ******************************************************************************************************
  *
@@ -180,7 +182,7 @@ public class JavaGenerator extends CGenerator
 	 * Subclassable method to specify the degree of availability of a try-catch-finally
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
-	 * @see #insertCatchHeading(Try, String)
+	 * @see #appendCatchHeading(Try, String)
 	 */
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
@@ -321,7 +323,7 @@ public class JavaGenerator extends CGenerator
 	 * The exit code will be passed to the generated code.
 	 */
 	@Override
-	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		addCode("System.exit(" + _exitCode + ")", _indent, isDisabled);
 	}
@@ -393,37 +395,40 @@ public class JavaGenerator extends CGenerator
 	// END KGU#311 2017-01-05
 
 	@Override
-	protected String transform(String _input)
+	protected String transform(String _input, boolean _doInputOutput)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = CodeParser.getKeyword("output").trim(); 
-		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
-		{
-			StringList expressions = 
-					Element.splitExpressionList(_input.substring(outputKey.length()), ",");
-			// Some of the expressions might be sums, so better put parentheses around them
-			if (expressions.count() > 1) {
-				_input = outputKey + " (" + expressions.concatenate(") + (") + ")";
+		if (_doInputOutput) {
+			String outputKey = CodeParser.getKeyword("output").trim(); 
+			if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
+			{
+				StringList expressions = 
+						Element.splitExpressionList(_input.substring(outputKey.length()), ",");
+				// Some of the expressions might be sums, so better put parentheses around them
+				if (expressions.count() > 1) {
+					_input = outputKey + " (" + expressions.concatenate(") + (") + ")";
+				}
 			}
 		}
 		// END KGU#101 2015-12-12
 
 		// START KGU#18/KGU#23 2015-11-01: This can now be inherited
-		String s = super.transform(_input) /*.replace(" div "," / ")*/;
+		String s = super.transform(_input, _doInputOutput) /*.replace(" div "," / ")*/;
 		// END KGU#18/KGU#23 2015-11-01
 
-		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
-		String inpRepl = getInputReplacer(false).replace("$1", "").trim();
-		if (s.startsWith(inpRepl)) {
-			s = s.substring(2);
+		if (_doInputOutput) {
+			// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
+			String inpRepl = getInputReplacer(false).replace("$1", "").trim();
+			if (s.startsWith(inpRepl)) {
+				s = s.substring(2);
+			}
+			// END KGU#108 2015-12-15
+			// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
+			else if (s.endsWith(";  " + inpRepl)) {
+				s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
+			}
+			//END KGU#281
 		}
-		// END KGU#108 2015-12-15
-		// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
-		else if (s.endsWith(";  " + inpRepl)) {
-			s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
-		}
-		//END KGU#281
-
 
 		// Math function
 		s=s.replace("cos(", "Math.cos(");
@@ -586,27 +591,34 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#560 2018-07-21: Bugfux #564 Array initializers have to be decomposed if not occurring in a declaration
 	/**
-	 * Generates code that decomposes an array initializer into a series of element assignments if there no
-	 * compact translation.
+	 * Generates code that decomposes an array initializer into a series of element assignments if there
+	 * is no compact translation.
 	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
 	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
 	 * @param _indent - the current indentation level
 	 * @param _isDisabled - whether the code is commented out
-	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
+	 * @param _elemType - the {@link TypeMapEntry} of the element type if available (null otherwise)
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
-		if (_isDecl) {
-			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		// START KGU#732 2019-10-03: Bugfix #755 - The new operator is always to be used.
+		//if (_isDecl) {
+		//	return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		//}
+		//else if (_elemType != null) {
+		//	return "new " + this.transformType(_elemType, "Object") + "[]{" + _arrayItems.concatenate(", ") + "}";
+		//}
+		//else {
+		//	super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		//}
+		//return null;
+		String initializerC = super.transformOrGenerateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, _elemType, true);
+		if (initializerC == null) {
+			if (_lValue != null) return _lValue;	// Assignment sequence already generated (???)
 		}
-		else if (_elemType != null) {
-			return "new " + this.transformType(_elemType, "Object") + "[]{" + _arrayItems.concatenate(", ") + "}";
-		}
-		else {
-			super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
-		}
-		return null;
+		return "new " + this.transformType(_elemType, "Object") + "[]" + initializerC;
+		// END KGU#732 2019-10-03
 	}
 	// END KGU#560 2018-07-21
 
@@ -634,7 +646,7 @@ public class JavaGenerator extends CGenerator
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
-		insertDeclComment(_root, _indent, typeKey);
+		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
 			String indentPlus2 = indentPlus1 + this.getIndent();
@@ -701,17 +713,14 @@ public class JavaGenerator extends CGenerator
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
-	 * We try our very best to create a working loop from a FOR-IN construct
-	 * This will only work, however, if we can get reliable information about
-	 * the size of the value list, which won't be the case if we obtain it e.g.
-	 * via a variable.
+	 * We try our very best to create a working loop from a FOR-IN construct.
 	 * @param _for - the element to be exported
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
+	@Override
 	protected boolean generateForInCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -720,7 +729,6 @@ public class JavaGenerator extends CGenerator
 		String itemType = null;
 		if (items != null)
 		{
-			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogeneous? We will just try four ways: int,
 			// double, String, and derived type name. If none of them match we use
@@ -773,7 +781,11 @@ public class JavaGenerator extends CGenerator
 					}
 				}
 				// END KGU#388 2017-09-28
+				// START KGU#732 2019-10-02: Bugfix #755 - transformation of the items is necessary
+				items.set(i, transform(item));
+				// END KGU#732 2019-10-02
 			}
+			valueList = "{" + items.concatenate(", ") + "}";
 			// START KGU#388 2017-09-28: Enh. #423
 			//if (allInt) itemType = "int";
 			if (allCommon) itemType = commonType;
@@ -781,22 +793,26 @@ public class JavaGenerator extends CGenerator
 			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
-			String arrayName = "array20160322";
-			
-			// Extra block to encapsulate the additional variable declarations
-			addCode("{", _indent, isDisabled);
-			indent += this.getIndent();
+			// START KGU#732 2019-10-02: Bugfix #755 part 1 - there is no need to define a variable
+			//String arrayName = "array20160322";
+			//
+			//addCode("{", _indent, isDisabled);
+			//indent += this.getIndent();
+			// END KGU#732 2019-10-02
 			
 			if (itemType == null)
 			{
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object", indent);
-				this.insertComment("      and/or prepare the elements of the array.", indent);
+				this.appendComment("TODO: Select a more sensible item type than Object", indent);
+				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
-			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
-					indent, isDisabled);
-			
-			valueList = arrayName;
+			// START KGU#732 2019-10-02: Bugfix #755 part 2
+			//addCode(itemType + "[] " + arrayName + " = new " + itemType + "[]" + transform(valueList, false) + ";",
+			//		indent, isDisabled);
+			//
+			//valueList = arrayName;
+			valueList = "new " + itemType + "[]" + valueList;
+			// END KGU#732 2019-10-02
 		}
 		else
 		{
@@ -817,25 +833,27 @@ public class JavaGenerator extends CGenerator
 			// END KGU#640 2019-01-22
 			else {
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+				this.appendComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
 			}
 			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
 		// Creation of the loop header
-		insertBlockHeading(_for, "for (" + itemType + " " + var + " : " +	valueList + ")", indent);
+		appendBlockHeading(_for, "for (" + itemType + " " + var + " : " +	valueList + ")", indent);
 
 		// Add the loop body as is
 		generateCode(_for.q, indent + this.getIndent());
 
 		// Accomplish the loop
-		insertBlockTail(_for, null, indent);
+		appendBlockTail(_for, null, indent);
 
-		if (items != null)
-		{
-			addCode("}", _indent, isDisabled);
-		}
+		// START KGU#732 2019-10-02: Bugfix #755 part 3 - obsolete code disabled
+		//if (items != null)
+		//{
+		//	addCode("}", _indent, isDisabled);
+		//}
+		// END KGU#732 2019-10-02
 		
 		return true;
 	}
@@ -853,18 +871,18 @@ public class JavaGenerator extends CGenerator
 		StringList[] asgnd = new StringList[nThreads];
 		String suffix = Integer.toHexString(_para.hashCode());
 
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("try {", _indent, isDisabled);
 		addCode("ExecutorService pool = Executors.newFixedThreadPool(" + nThreads + ");", indentPlusOne, isDisabled);
 
 		for (int i = 0; i < nThreads; i++) {
 			addCode("", _indent, isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			appendComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			Subqueue sq = _para.qs.get(i);
 			String future = "future" + suffix + "_" + i;
 			String worker = "Worker" + suffix + "_" + i;
@@ -884,7 +902,7 @@ public class JavaGenerator extends CGenerator
 		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
 		for (int i = 0; i < nThreads; i++) {
-			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			appendComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
 			String future = "future" + suffix + "_" + i;
 			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
 			for (int v = 0; v < asgnd[i].count(); v++) {
@@ -905,13 +923,13 @@ public class JavaGenerator extends CGenerator
 		addCode("pool.shutdown();", indentPlusOne, isDisabled);
 		addCode("}", _indent, isDisabled);
 		addCode("catch (Exception ex) { System.err.println(ex.getMessage()); ex.printStackTrace(); }", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 
-	// Inserts class definitions for worker objects to be used by the threads
+	// Adds class definitions for worker objects to be used by the threads
 	private void generateParallelThreadWorkers(Root _root, String _indent)
 	{
 		String indentPlusOne = _indent + this.getIndent();
@@ -931,7 +949,7 @@ public class JavaGenerator extends CGenerator
 			}
 		});
 		if (!containedParallels.isEmpty()) {
-			insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+			appendComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 		}
 		for (Parallel par: containedParallels) {
 			boolean isDisabled = par.isDisabled();
@@ -983,11 +1001,19 @@ public class JavaGenerator extends CGenerator
 			}
 		}
 		if (!containedParallels.isEmpty()) {
-			insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+			appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
 			code.add(_indent);
 		}
 	}
 	
+	/**
+	 * Generates an argument list for a worker thread routine as branch of a parallel section.
+	 * Types for the variable names in {@code varNames} are retrieved from {@code typeMap}. If
+	 * no associated type can be identified then a comment {@code "type?"} will be inserted.
+	 * @param varNames - list of variable names to be passed in
+	 * @param typeMap - maps variable names and type names to type specifications
+	 * @return a list of argument declarations
+	 */
 	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
 	{
 		StringList argList = new StringList();
@@ -1028,16 +1054,16 @@ public class JavaGenerator extends CGenerator
 	// END KGU#686 2019-03-18
 	// START KGU#686 2019-03-2: Enh. #56
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.CGenerator#insertCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 * @see lu.fisch.structorizer.generators.CGenerator#appendCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
 	 */
 	@Override
-	protected void insertCatchHeading(Try _try, String _indent) {
+	protected void appendCatchHeading(Try _try, String _indent) {
 		
 		boolean isDisabled = _try.isDisabled();
 		String varName = _try.getExceptionVarName();
 		String exName = "ex" + Integer.toHexString(_try.hashCode());;
 		String head = "catch (Exception " + exName + ")";
-		this.insertBlockHeading(_try, head, _indent);
+		this.appendBlockHeading(_try, head, _indent);
 		if (varName != null && !varName.isEmpty()) {
 			this.addCode("String " + varName + " = " + exName + ".getMessage()", _indent + this.getIndent(), isDisabled);
 		}
@@ -1065,13 +1091,13 @@ public class JavaGenerator extends CGenerator
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			if (!_root.isProgram()) {
-				insertGlobalDefinitions(_root, indentPlus1, true);
+				appendGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
 			code.add("");
@@ -1095,31 +1121,31 @@ public class JavaGenerator extends CGenerator
 					this.generatorIncludes.add("java.util.concurrent.Executors");
 					this.generatorIncludes.add("java.util.concurrent.Future");
 				}
-				if (this.insertGeneratorIncludes(_indent, false) > 0) {
+				if (this.appendGeneratorIncludes(_indent, false) > 0) {
 					code.add("");
 				}
 				// END KGU#348 2017-02-24#
 				// STARTB KGU#351 2017-02-26: Enh. #346
-				this.insertUserIncludes(_indent);
+				this.appendUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				// START KGU#446 2017-10-27: Enh. #441
 				this.includeInsertionLine = code.count();
 				// END KGU#446 2017-10-27
 			}
-			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
-			insertBlockHeading(_root, "public class " + _procName, _indent);
+			appendBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
+			appendBlockHeading(_root, "public class " + _procName, _indent);
 
 			code.add("");
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", this.getIndent());
-			insertGlobalDefinitions(_root, indentPlus1, true);
+			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add("");
 			code.add(indentPlus1 + "/**");
 			code.add(indentPlus1 + " * @param args");
 			code.add(indentPlus1 + " */");
 
-			insertBlockHeading(_root, "public static void main(String[] args)", indentPlus1);
+			appendBlockHeading(_root, "public static void main(String[] args)", indentPlus1);
 		}
 		else {
 			// START KGU#446 2018-01-21: Enh. #441
@@ -1142,10 +1168,10 @@ public class JavaGenerator extends CGenerator
 			}
 			while (minArgs <= _paramNames.count()) {
 			// END KGU#371 2019-03-07
-				insertBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
+				appendBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
 				// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
-				//insertBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
-				insertBlockComment(_paramNames.subSequence(0, minArgs), indentPlus1, null, " * @param ", null);
+				//appendBlockComment(_paramNames, indentPlus1, null, " * @param ", null);
+				appendBlockComment(_paramNames.subSequence(0, minArgs), indentPlus1, null, " * @param ", null);
 				// END KGU#371 2019-03-07
 				if (docResult) {
 					code.add(indentPlus1 + " * @return ");
@@ -1168,7 +1194,7 @@ public class JavaGenerator extends CGenerator
 					// END KGU#140 2017-02-01
 				}
 				fnHeader += ")";
-				insertBlockHeading(_root, fnHeader,  indentPlus1);
+				appendBlockHeading(_root, fnHeader,  indentPlus1);
 			// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
 				if (minArgs < _paramNames.count()) {
 						addCode("return " + _procName + "(" + _paramNames.concatenate(", ", 0, minArgs) +
@@ -1182,7 +1208,7 @@ public class JavaGenerator extends CGenerator
 		}
 
 		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		insertGlobalInitialisations(indentPlus2);
+		appendGlobalInitialisations(indentPlus2);
 		// END KGU#376 2017-09-26
 
 		return indentPlus2;
@@ -1239,9 +1265,9 @@ public class JavaGenerator extends CGenerator
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			code.add(_indent);
-			insertComment("TODO: You may have to modify input instructions,", _indent);			
-			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
-			insertComment("      according to the variable type, say nextInt().", _indent);			
+			appendComment("TODO: You may have to modify input instructions,", _indent);			
+			appendComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
+			appendComment("      according to the variable type, say nextInt().", _indent);			
 		}
 		// END KGU#236 2016-12-22
 	}
@@ -1306,9 +1332,9 @@ public class JavaGenerator extends CGenerator
 		if (topLevel && this.usesTurtleizer) {
 			// START KGU#563 2018-07-26: Issue #566
 			//code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
-			code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", this.includeInsertionLine++);
+			insertCode(this.commentSymbolLeft() + " TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", this.includeInsertionLine++);
 			// END KGU#563 2018-07-26
-			code.insert((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
+			insertCode((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
 		}
 		// END KGU#446 2017-10-27
 	}

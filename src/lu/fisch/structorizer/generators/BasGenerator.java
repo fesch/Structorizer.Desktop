@@ -344,7 +344,7 @@ public class BasGenerator extends Generator
             {
             	// Associate label number with line number of the following dummy comment 
             	this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
-            	insertComment("Exit point from above loop.", _indent);
+            	appendComment("Exit point from above loop.", _indent);
             }
             else
             {
@@ -362,10 +362,10 @@ public class BasGenerator extends Generator
 	
 	// We need an overridden fundamental comment method here to be able to insert line numbers.
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#insertComment(java.lang.String, java.lang.String)
+	 * @see lu.fisch.structorizer.generators.Generator#appendComment(java.lang.String, java.lang.String)
 	 */
 	@Override
-	protected void insertComment(String _text, String _indent)
+	protected void appendComment(String _text, String _indent)
 	{
 		String[] lines = _text.split("\n");
 		for (int i = 0; i < lines.length; i++)
@@ -375,13 +375,13 @@ public class BasGenerator extends Generator
 	}
 
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#insertBlockComment(lu.fisch.utils.StringList, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see lu.fisch.structorizer.generators.Generator#appendBlockComment(lu.fisch.utils.StringList, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
+	protected void appendBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
 		int oldSize = code.count();
-		super.insertBlockComment(_sl, _indent, _start, _cont, _end);
+		super.appendBlockComment(_sl, _indent, _start, _cont, _end);
 		// Set the line numbers afterwards, the super method wouldn't have done it
 		if (this.optionCodeLineNumbering())
 		{
@@ -456,7 +456,7 @@ public class BasGenerator extends Generator
 	{
 		if (isDisabled)
 		{
-			insertComment(_indent + text, "");
+			appendComment(_indent + text, "");
 		}
 		else
 		{
@@ -469,12 +469,12 @@ public class BasGenerator extends Generator
 	protected void generateCode(Instruction _inst, String _indent)
 	{
 
-		if(!insertAsComment(_inst, _indent)) {
+		if(!appendAsComment(_inst, _indent)) {
 			// START KGU#277 2016-10-13: Enh. #270
 			boolean disabled = _inst.isDisabled();
 			// END KGU#277 2016-10-13
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 			// END KGU 2014-11-16
 			for(int i=0; i<_inst.getText().count(); i++)
 			{
@@ -504,7 +504,7 @@ public class BasGenerator extends Generator
 							// index range here (though in Pascal indexing usually 
 							// starts with 1 but may vary widely). We solve the problem
 							// by providing a configurable start index variable 
-							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							appendComment("TODO: Check indexBase value (automatically generated)", _indent);
 							// START KGU#277 2016-10-13: Enh. #270
 							//code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
 							addCode("LET indexBase = 0", _indent, disabled);
@@ -550,7 +550,7 @@ public class BasGenerator extends Generator
     	String indentPlusOne = _indent + this.getIndent();
 
     	// START KGU 2015-11-02
-    	insertComment(_alt, _indent);
+    	appendComment(_alt, _indent);
     	// END KGU 2015-11-02
 
     	// START KGU#277 2016-10-13: Enh. #270
@@ -585,7 +585,7 @@ public class BasGenerator extends Generator
         String indentPlusTwo = indentPlusOne + this.getIndent();
 
         // START KGU 2015-11-02
-        insertComment(_case, _indent);
+        appendComment(_case, _indent);
         // END KGU 2015-11-02
 
         // START KGU#277 2016-10-13: Enh. #270
@@ -630,7 +630,7 @@ public class BasGenerator extends Generator
     {
     	// START KGU#3 2015-11-02: Sensible handling of FOR loops
         //code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+"");
-    	insertComment(_for, _indent);
+    	appendComment(_for, _indent);
     	
     	// START KGU#61 2016-03-23: Enh. 84
     	if (_for.isForInLoop() && generateForInCode(_for, _indent))
@@ -750,7 +750,7 @@ public class BasGenerator extends Generator
 			else {
 				itemType = "FIXME_" + postfix;
 				// We do a dummy type definition
-				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+				this.appendComment("TODO: Specify an appropriate element type for the array!", _indent);
 			}
 
 			// Insert the array declaration and initialisation
@@ -790,7 +790,7 @@ public class BasGenerator extends Generator
             String condition = transform(_while.getText().getLongString(), false).trim();
 
             // START KGU 2015-11-02
-            insertComment(_while, _indent);
+            appendComment(_while, _indent);
             // END KGU 2015-11-02
 
             // The traditional BASIC while loop looks like WHILE condition ... WEND
@@ -817,7 +817,7 @@ public class BasGenerator extends Generator
             String condition = transform(_repeat.getText().getLongString()).trim();
 
             // START KGU 2015-11-02
-            insertComment(_repeat, _indent);
+            appendComment(_repeat, _indent);
             // END KGU 2015-11-02
 
             // START KGU#277 2016-10-13: Enh. #270
@@ -840,7 +840,7 @@ public class BasGenerator extends Generator
     protected void generateCode(Forever _forever, String _indent)
     {
         // START KGU 2015-11-02
-        insertComment(_forever, _indent);
+        appendComment(_forever, _indent);
         // END KGU 2015-11-02
 
         // START KGU#277 2016-10-13: Enh. #270
@@ -862,9 +862,9 @@ public class BasGenerator extends Generator
 	@Override
 	protected void generateCode(Call _call, String _indent)
 	{
-		if(!insertAsComment(_call, _indent)) {
+		if(!appendAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			Root owningRoot = Element.getRoot(_call);
 			for (int i=0; i<_call.getUnbrokenText().count(); i++)
@@ -907,12 +907,12 @@ public class BasGenerator extends Generator
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if(!insertAsComment(_jump, _indent)) {
+		if(!appendAsComment(_jump, _indent)) {
 			// START #277 2016-10-13: Enh. #270
 			boolean disabled = _jump.isDisabled();
 			// END KGU#277 2016-10-13
 			// START KGU 2014-11-16
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 
 			// START KGU#78 2015-12-18: Enh. #23 Generate sensible goto instructions
@@ -955,7 +955,7 @@ public class BasGenerator extends Generator
 				// START KGU#686 2019-03-18: Enh. #56
 				else if (Jump.isThrow(line)) {
 					if (this.optionCodeLineNumbering()) {
-						insertComment("FIXME: Only a number is allowed as parameter:", _indent);
+						appendComment("FIXME: Only a number is allowed as parameter:", _indent);
 						addCode("ERROR " + line.substring(preThrow.length()).trim(), _indent, disabled);
 					}
 					else {
@@ -970,8 +970,8 @@ public class BasGenerator extends Generator
 					String label = this.labelBaseName + ref;
 					if (ref.intValue() < 0)
 					{
-						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-						insertComment(line, _indent);
+						appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						appendComment(line, _indent);
 						label = "__ERROR__";
 					}
 					// START KGU#277 2016-10-13: Enh. #270
@@ -982,8 +982,8 @@ public class BasGenerator extends Generator
 				}
 				else if (!isEmpty)
 				{
-					insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
+					appendComment(line, _indent);
 				}
 				// END KGU#74/KGU#78 2015-11-30
 			}
@@ -993,7 +993,7 @@ public class BasGenerator extends Generator
 				String label = this.labelBaseName + ref;
 				if (ref.intValue() < 0)
 				{
-					insertComment("FIXME: Structorizer detected illegal jump attempt here!", _indent);
+					appendComment("FIXME: Structorizer detected illegal jump attempt here!", _indent);
 					label = "__ERROR__";
 				}
 				// START KGU#277 2016-10-13: Enh. #270
@@ -1010,17 +1010,17 @@ public class BasGenerator extends Generator
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		String indentPlusOne = _indent + this.getIndent();
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(this.getLineNumber());
 		boolean disabled = _para.isDisabled();
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-13
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		//code.add(this.getLineNumber() + _indent + "PARALLEL");
 
 		for (int i = 0; i < _para.qs.size(); i++) {
@@ -1028,11 +1028,11 @@ public class BasGenerator extends Generator
 			//code.add(this.getLineNumber());
 			addCode("", "", disabled);
 			// END KGU#277 2016-10-13
-			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			appendComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			//code.add(this.getLineNumber() + indentPlusOne + "THREAD");
 			generateCode((Subqueue) _para.qs.get(i), indentPlusOne + this.getIndent());
 			//code.add(this.getLineNumber() + indentPlusOne + "END THREAD");
-			insertComment("------------------ END THREAD " + i + " ------------------", indentPlusOne);
+			appendComment("------------------ END THREAD " + i + " ------------------", indentPlusOne);
 			// START KGU#277 2016-10-13: Enh. #270
 			//code.add(this.getLineNumber());
 			addCode("", "", disabled);
@@ -1040,9 +1040,9 @@ public class BasGenerator extends Generator
 		}
 
 		//code.add(this.getLineNumber() + _indent + "END PARALLEL");
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(this.getLineNumber());
 		addCode("", "", disabled);
@@ -1058,7 +1058,7 @@ public class BasGenerator extends Generator
 	{
 
 		boolean isDisabled = _try.isDisabled();
-		insertComment(_try, _indent);
+		appendComment(_try, _indent);
 
 		String indent1 = _indent + this.getIndent();
 		String varName = _try.getExceptionVarName();
@@ -1099,12 +1099,12 @@ public class BasGenerator extends Generator
 
 			int ixGotoFinal = this.code.count();
 			this.addCode("GOTO §§§", _indent, isDisabled);
-			this.insertComment("Start of error handler, FIXME: variable '" + varName + "' should conatain error info ...", _indent);
+			this.appendComment("Start of error handler, FIXME: variable '" + varName + "' should conatain error info ...", _indent);
 			this.code.set(ixOnGoto, this.code.get(ixOnGoto).replace("§§§", Integer.toString(this.lineNumber)));
 		
 			generateCode(_try.qCatch, indent1);
 		
-			this.insertComment("End of error handler, resume here ...", _indent);
+			this.appendComment("End of error handler, resume here ...", _indent);
 			this.code.set(ixGotoFinal, this.code.get(ixGotoFinal).replace("§§§", Integer.toString(this.lineNumber)));
 		
 			this.addCode("ON ERROR GOTO 0", _indent, isDisabled);
@@ -1142,18 +1142,18 @@ public class BasGenerator extends Generator
 		//insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 		if (topLevel)
 		{
-			insertComment(_root, _indent);
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment(_root, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			subroutineInsertionLine = code.count();	// (this will be revised in line nmbering mode)
-			insertComment("", _indent);
+			appendComment("", _indent);
 		}
 		else
 		{
-			insertComment("", _indent);
-			insertComment(_root, _indent);
+			appendComment("", _indent);
+			appendComment(_root, _indent);
 		}
 		// END KGU#178 2016-07-20
 
@@ -1166,11 +1166,11 @@ public class BasGenerator extends Generator
 			signature += "(";
 			if (this.optionCodeLineNumbering())
 			{
-				insertComment("TODO: Add type-specific suffixes where necessary!", _indent);
+				appendComment("TODO: Add type-specific suffixes where necessary!", _indent);
 			}
 			else
 			{
-				insertComment("TODO: Check (and specify if needed) the argument and result types!", _indent);        		
+				appendComment("TODO: Check (and specify if needed) the argument and result types!", _indent);        		
 			}
 			// START KGU#371 2019-03-08: Enh. #385 Deal with optional arguments#
 			int minArgs = _root.getMinParameterCount();
@@ -1215,15 +1215,15 @@ public class BasGenerator extends Generator
 		if (!this.optionCodeLineNumbering())
 		{
 			String indentPlusOne = _indent + this.getIndent();
-			insertComment("TODO: declare your variables here:", _indent );
+			appendComment("TODO: declare your variables here:", _indent );
 			for (int v = 0; v < _varNames.count(); v++) {
-				insertComment("DIM " + _varNames.get(v) + " AS <type>", indentPlusOne);
+				appendComment("DIM " + _varNames.get(v) + " AS <type>", indentPlusOne);
 			}
-			insertComment("", _indent);
+			appendComment("", _indent);
 		}
 		else
 		{
-			insertComment("TODO: add the respective type suffixes to your variable names if required", _indent );
+			appendComment("TODO: add the respective type suffixes to your variable names if required", _indent );
 		}
 		return _indent;
 	}

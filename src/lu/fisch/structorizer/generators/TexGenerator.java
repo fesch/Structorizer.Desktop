@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
  *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
  *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
+ *      Kay Gürtzig     2019-09-27      Enh. #738: Support for code preview map on Root level
  *
  ******************************************************************************************************
  *
@@ -595,7 +596,16 @@ public class TexGenerator extends Generator {
 		s.AddStrings(children.getTeX(_indent+E_INDENT));
 		s.add(makeIndent(_indent)+'\end{struktogramm}');
 		*/
-		
+
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
+
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
@@ -605,7 +615,7 @@ public class TexGenerator extends Generator {
 			code.add("\\usepackage{struktex}");
 			code.add("\\usepackage{german}");
 			// START KGU#483 2017-12-31: Issue #497 - there might also be usepackage additions
-			this.insertUserIncludes("");
+			this.appendUserIncludes("");
 			// END KGU#483 2017-12-31
 			code.add("");
 			// START KGU#483 2017-12-31: Issue #497
@@ -658,7 +668,7 @@ public class TexGenerator extends Generator {
 				while (!this.includedRoots.isEmpty()) {
 					Root incl = this.includedRoots.remove();
 					if (incl != _root) {
-						this.insertDefinitions(incl, _indent, null, true);
+						this.appendDefinitions(incl, _indent, null, true);
 					}
 				}
 			}
@@ -667,6 +677,13 @@ public class TexGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
 		return code.getText();
 	}
 
@@ -710,7 +727,7 @@ public class TexGenerator extends Generator {
 	// END KGU#483 2017-12-30
 
 	// START KGU#483 2018-01-02: Enh. #389 + issue #497
-	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// Just generate the entire diagram...
 		boolean wasTopLevel = topLevel;
 		try {

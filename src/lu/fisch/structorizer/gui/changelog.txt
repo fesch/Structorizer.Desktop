@@ -9,8 +9,9 @@ Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
+- Javascript generator still incomplete and deficient.
 
-Current development version: 3.29-14 (2019-09-25)
+Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
 - 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
@@ -116,7 +117,19 @@ Current development version: 3.29-14 (2019-09-25)
 - 13: Issue #463: Startup and shutdown log entries now with version number <2>
 - 14: Bugfix #749: Drawing of collapsed TRY elements fixed <2>
 - 14: Bugfix #751: Cursor key navigation didn't reach TRY element internals <2>
-- 14: Messages in Diagram editor and Structure preferences corrected (EN, DE) <2>
+- 14: Messages in diagram editor and Structure preferences corrected (EN, DE) <2>
+- 14: Enh. #738: Code preview in right window part (tabbed with Arranger index) <2>
+- 14: Bugfix #752: Workarounds for deficient declaration export to C/Java <2>
+- 14: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
+- 14: Default mode for setting DIN 66261 (FOR loop design) changed to true <2>.
+- 14: Issue #753: Irrelevant structure preference adaptation requests avoided <2>
+- 14: Bugfix #754: 2 Pascal code generator flaws (return instr. / UNIT name) <2>
+- 14: Enh. #721: Javascript export prototype [A. Brusinsky]2
+- 14: Bugfix #755: Defective Java/C# export of array initializers <2>
+- 14: Bugfix #756: Defects in expression export to C language family <2>
+- 14: Bugfix #757: Include list text area was too small under Windows 10 <2>
+- 14: Bugfix #758: "Edit subroutine" didn't reliably arrange the new routine <2>
+- 14: Bugfix #759: Closing Structorizer sub-instances impaired functioning <2>
 
 Version: 3.29 (2019-01-07)
 - 01: Bugfix #511: Cursor-down key was trapped by collapsed CASE and PARALLEL <2>

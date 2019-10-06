@@ -206,6 +206,7 @@ Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Structogram analyseren?
 Menu.menuDiagramIndex.text=Index Arranger tonen?
+Menu.menuDiagramPreview.text=Code-preview tonen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
 Menu.menuPreferences.mnemonic=i
@@ -318,7 +319,7 @@ Menu.lblRefactorNone.text=nee
 Menu.lblRefactorCurrent.text=huidig diagram
 Menu.lblRefactorAll.text=alle diagrammen
 Menu.msgDiscardParserPrefs.text=Weet u zeker dat u afziet van de nieuwe parserinstellingen?
-Menu.msgAdaptStructPrefs.text=Structuurinstellingen aanpassen aan die van de parser?
+Menu.msgAdaptStructPrefs.text=Structuurinstellingen aanpassen aan die van de parser?\n(bv. %)
 Menu.msgKeywordsDiffer.text=Dit is een diagram, waarvan de originele sleutelwoorden afwijken van die van de huidige parserinstellingen:%1\nU heeft gekozen tegen automatisch aanpassen bij importeren.\n\nU heeft nu de volgende optie:\n%2
 Menu.msgRefactorNow.text=Het diagram kan nu worden aangepast (aanbevolen)
 Menu.msgAdoptPreferences.text=U kunt de sleutelwoorden van het ingelezen diagramm gebruiken als de nieuwe parserinstellingen\n  (waardoor alle reeds open diagrammen hieraan worden aangepast!)
@@ -354,7 +355,7 @@ Menu.msgSubroutineName.text=Naam van de nieuwe subroutine
 Menu.msgIncludableName.text=Naam van een (nieuw) insluitbaar diagram waarnaar gedeelde types kunnen worden verplaatst
 Menu.msgMustBeIdentifier.text=De naam die u koos is ongeschikt als naam!
 Menu.msgJumpsOutwardsScope.text=Er zijn JMP-instructies in de geselecteerde elementen naar buiten.\nDoor die over te hevelen wordt de logica van het programma, of de programmacode, aangetast!\nDe betreffende JUMPs staan hieronder en zijn met ROOD weergegeven in het diagram:\n%\n\nWilt u werkelijk nu nog verdergaan?
-Menu.msgImportTooltip.text=Diagrambestanden aangemaakt met de Nassi_Shneidermbewerker van %
+Menu.msgImportTooltip.text=Diagrambestanden aangemaakt met de Nassi-Shneiderman-bewerker\nvan %
 Menu.msgImportFileReadError.text=Bestand "%" bestaat niet of is onleesbaar.
 Menu.msgUnsupportedFileFormat.text=Deze bestanden konden niet worden ingelezen, omdat hun bestandstype niet bekend is, of ondersteund:\n%
 Menu.msgGuidedTours.text=U heeft om begeleiding gevraagd.\n\nU vindt aanbevelingen\nof instructies\nin het tekstgebied onderaan\n(Analyse meldlijst).
@@ -608,6 +609,13 @@ Editor.popupDisable.text=Aan-/Uitzetten
 // Debug
 Editor.popupBreakpoint.text=Breakpoint wisselen
 Editor.popupBreakTrigger.text=Break trigger opgeven ...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Index Arranger
+Editor.pnlTabbed.tab.1=Code-preview
+Editor.popupCodeExport.text=Exporteren ...
+Editor.popupCodeExport.tooltip=Code exporteren naar bestand.
+Editor.popupCodeHide.text=Code-preview verbergen
+Editor.ttPopupCodePreview.text=Code-preview verwisselen voor % en bijstellen als favoriete code voor export.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=
@@ -936,7 +944,7 @@ ExportOptionDialoge.bracesCheckBox.text=Openingsaccolade op dezelfde regel plaat
 ExportOptionDialoge.lineNumbersCheckBox.text=Regelnummers toevoegen bij exporteren naar BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Aangeroepen subroutines erbij betrekken.
 ExportOptionDialoge.chkExportLicenseInfo.text=Attributen auteur en licentie exporteren.
-ExportOptionDialoge.lbPrefGenerator.text=Favoriete coode voor export:
+ExportOptionDialoge.lbPrefGenerator.text=Favoriete code voor export:
 ExportOptionDialoge.lbCharset.text=Karakterset:
 ExportOptionDialoge.chkCharsetAll.text=Alles weergeven?
 ExportOptionDialoge.btnPluginOptions.text=Taalspecifieke opties
@@ -1245,6 +1253,7 @@ ArrangerIndex.popupIndexDrawGroup.text=Grenzen van de groep tonen
 ArrangerIndex.popupIndexDrawGroup.tooltip=Afzonderlijk zichtbaar zijn van de geselecteerde groep in de Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Groep hernoemen ...
 ArrangerIndex.popupIndexRenameGroup.tooltip=Staat toe de geselecteerde groep te hernoemen, optioneel samen met bijbehorende bestand
+ArrangerIndex.popupIndexHide.text=Arranger index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Selecteer de doelgroep:
 ArrangerIndex.lblGroups.text=Bevattende groepen
 ArrangerIndex.lblSubroutines.text=Aangeroepen @os

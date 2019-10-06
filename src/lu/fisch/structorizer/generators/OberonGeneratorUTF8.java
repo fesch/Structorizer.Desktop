@@ -12,6 +12,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Root;
 
 /**
@@ -20,7 +22,7 @@ import lu.fisch.structorizer.elements.Root;
  */
 public class OberonGeneratorUTF8 extends OberonGenerator
 {
-	public File exportCode(Root _root, File _currentDirectory, Frame frame)
+	public File exportCode(Root _root, File _currentDirectory, Frame frame, IRoutinePool _routinePool)
 	{
 		File exportDir = _currentDirectory;
 		boolean saveIt = true;

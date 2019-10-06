@@ -107,6 +107,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-08-06      Enh. #740: Backup mechanism for the explicit loading of INI files
  *      Kay Gürtzig     2019-09-13      Enh. #746: Re-translation of import plugin menu items (LangEventListener)
  *      Kay Gürtzig     2019-09-17      Issues #747/#748: Menu items for Try elements, shortcuts for Try, Parallel, Forever
+ *      Kay Gürtzig     2019-09-24      Enh. #738: New menu items for code preview
+ *      Kay Gürtzig     2019-09-30      KGU#736 Precaution against newlines in tooltips
  *
  ******************************************************************************************************
  *
@@ -138,6 +140,7 @@ import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
@@ -308,26 +311,29 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#310 2016-12-14
 
 	protected final JMenu menuDiagramType = new JMenu("Type");
-	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.getIcon(22));
-	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub",IconLoader.getIcon(21));
+	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main", IconLoader.getIcon(22));
+	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub", IconLoader.getIcon(21));
 	//START KGU#376 2017-05-16: Enh. #389
-	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable",IconLoader.getIcon(71));
+	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
 	//END KGU#376 2017-05-16
-	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?",IconLoader.getIcon(40));
-	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.getIcon(77));
-	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.getIcon(79));
-	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.getIcon(82));
-	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.getIcon(83));
-	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.getIcon(102));
+	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?", IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
+	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
+	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
+	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
 	// START KGU#227 2016-07-31: Enh. #128
-	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.getIcon(111));
+	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
 	// END KGU#227 2016-07-31
 	// START KGU#477 2017-12-06: Enh. #487
-	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?",IconLoader.getIcon(85));
+	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
 	// END KGU#477 2017-12-06
 	// START KGU#305 2016-12-14: Enh. #305
-	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?",IconLoader.getIcon(29));
+	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
 	// END KGU#305 2016-12-14
+	// START KGU#705 2019-09-23: Enh. #738
+	protected final JCheckBoxMenuItem menuDiagramPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
+	// END KGU#705 2019-09-23
 
 	// Menu "Preferences"
 	// START KGU#466 2019-08-02: Issue #733 - prepare a selective preferences export, lazy initialisation
@@ -633,7 +639,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#258 2016-10-03
 	// START KGU#362 2017-03-28: Enh. #370
 	public static final LangTextHolder msgDiscardParserPrefs = new LangTextHolder("Sure to discard new parser preferences?");
-	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?");
+	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?\n(e.g.: %)");
 	public static final LangTextHolder msgKeywordsDiffer = new LangTextHolder("This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\n"
 			+ "You have opted against automatic refactoring on loading.\n\n"
 			+ "Now you have the following opportunities:\n%2");
@@ -715,7 +721,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgMustBeIdentifier = new LangTextHolder("Your chosen name was not suited as identifier!");
 	// END KGU#506 2018-03-14
 	// START KGU#386 2017-04-28
-	public static final LangTextHolder msgImportTooltip = new LangTextHolder("Diagram files generated by the Nassi-Shneiderman editor from %");
+	public static final LangTextHolder msgImportTooltip = new LangTextHolder("<html>Diagram files generated by the Nassi-Shneiderman editor<br/>from %</html>");
 	// END KGU#386 2017-04-28
 	// START KGU#480 2018-01-19: Enh. #490 - table header strings for DiagramControllerAliases
 	public static final LangTextHolder msgTabHdrSignature = new LangTextHolder("Signature");
@@ -1292,6 +1298,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
 
+		// START KGU#705 2019-09-23: Enh. #738
+		menuDiagram.add(menuDiagramPreview);
+		menuDiagramPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuDiagramPreview.isSelected()); } } );
+		menuDiagramPreview.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#305 2016-12-14
+
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
 		menuPreferences.setMnemonic(KeyEvent.VK_P);
@@ -1782,6 +1794,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// START KGU#305 2016-12-14: Enh. #305
 			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
 			// END KGU#305 2016-12-14
+			// START KGU#705 2019-09-24: Enh. #738
+			menuDiagramPreview.setSelected(diagram.showingCodePreview());
+			// END KGU#705 2019-09-24
 
 			// elements
 			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
@@ -2014,15 +2029,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		create();
 	}
 
-	// START KGU#456 2017-11-05: Enh. #452 Support for uato-documentation
+	// START KGU#456 2017-11-05: Enh. #452 Support for auto-documentation
 	/**
 	 * Tries to retrieve the current captions for the menus and items named by {@code menuItemKeys}
 	 * and returns the localized captions as string array.<br/>
-	 * If {@code defaultStrings} are given (must have same length as {@code menuItemKeys} then the
-	 * respective default string will be used if retrieval fails for some of the given keys
+	 * If {@code defaultStrings} are given (should have same length as {@code menuItemKeys} then the
+	 * respective default string will be used if retrieval fails for some of the given keys. If not
+	 * given or too short then the respective caption from the default locale is retrieved instead. 
 	 * @param menuItemKeys - an array of names
-	 * @param defaultStrings
-	 * @return
+	 * @param defaultStrings - an array of default names for the requested captions or null
+	 * @return the array of retrieved captions
 	 */
 	public static String[] getLocalizedMenuPath(String[] menuItemKeys, String[] defaultStrings)
 	{
@@ -2032,8 +2048,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		if (locale != null) {
 			for (int i = 0; i < menuItemKeys.length; i++) {
 				String text = locale.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
-				if (text.isEmpty() && defaultStrings != null && i < defaultStrings.length) {
-					text = defaultStrings[i];
+				if (text.isEmpty()) {
+					if (defaultStrings != null && i < defaultStrings.length) {
+						text = defaultStrings[i];
+					}
+					else {
+						text = Locales.getInstance().getDefaultLocale().getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
+					}
 				}
 				names[i] = text;
 			}
@@ -2067,6 +2088,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		Locales.getInstance().setLocale(localeName);
 		doButtons();
 		diagram.analyse();
+		// START KGU#705 2019-09-24: Enh. #738
+		diagram.setCodePreviewTooltip();
+		// END KGU#705 2019-09-24
+
 	}
 	// END KGU#235 2016-08-09
 	
@@ -2152,7 +2177,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			}
 			_menu.add(pluginItem);
 			if (plugin.info != null) {
-				pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
+				// START KGU#736 2019-09-30: Cater for newlines
+				//pluginItem.setToolTipText(tooltip.replace("%", plugin.info));
+				pluginItem.setToolTipText(prepareTooltip(tooltip.replace("%", plugin.info)));
+				// END KGU#736 2019-09-30
 				// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 				if (_itemMap != null) {
 					_itemMap.put(pluginItem, plugin.info);
@@ -2231,10 +2259,27 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		if (evt.getSource() == msgImportTooltip) {
 			String tooltip = msgImportTooltip.getText();
 			for (Map.Entry<JMenuItem, String> entry: this.importpluginItems.entrySet()) {
-				entry.getKey().setToolTipText(tooltip.replace("%", entry.getValue()));
+				// START KGU#736 2019-09-30
+				//entry.getKey().setToolTipText(tooltip.replace("%", entry.getValue()));
+				entry.getKey().setToolTipText(prepareTooltip(tooltip.replace("%", entry.getValue())));
+				// END KGU#736 2019-09-30
 			}
 		}
 	}
 	// END KGU#725 2019-09-13
+	
+	// START KGU#736 2019-09-30: Convert tooltip texts with newlines into html format
+	/**
+	 * Converts the given raw tooltip string into an html text if it contains newlines.
+	 * @param tooltipString - the intended tooltip string
+	 * @return an equivalent HTML string or the original string
+	 */
+	public static String prepareTooltip(String tooltipString)
+	{
+		if (tooltipString.contains("\n") && !tooltipString.toLowerCase().startsWith("<html>")) {
+			tooltipString = "<html>" + BString.encodeToHtml(tooltipString).replace("\n", "<br/>") + "</html>";
+		}
+		return tooltipString;
+	}
 
 }

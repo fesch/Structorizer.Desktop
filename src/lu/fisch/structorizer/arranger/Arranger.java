@@ -75,6 +75,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-13  Enh. #698: Methods getName(), addDiagram() and addArchive() added
  *      Kay Gürtzig     2019-03-27  Issue #717: Configurable base scroll unit (adaptScrollUnits())
  *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
+ *      Kay Gürtzig     2019-10-05  Bugfix #759: Exception catch in routinePoolChanged() as emergency workaround
  *
  ******************************************************************************************************
  *
@@ -370,6 +371,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#626 2018-12-28
 
+    // START KGU#742 2019-10-04 New method to avoid ConcurrentModificationException during execution
+    public void adoptRootIfOrphaned(Root root, Mainform mainform) {
+        surface.adoptRootIfOrphaned(root, mainform);
+    }
+    // END KGU#742 2019-10-04
+    
     // START KGU#289 2016-11-15: Enh. #290 (Arrangement files oadable from Structorizer)
     /**
      * Has the file specified by arrFilename (may be an .arr or an .arrz file) loaded as
@@ -381,7 +388,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      */
     public String loadArrangement(Mainform form, File arrFile)
     {
-    	return surface.loadArrFile(form, arrFile);
+        return surface.loadArrFile(form, arrFile);
     }
     // END KGU#259 2016-11-15
 
@@ -1871,7 +1878,19 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 		// END KGU#624 2018-12-21
 		for (IRoutinePoolListener listener: listeners) {
-			listener.routinePoolChanged(this, _flags);
+			// START KGU#745 2019-10-05: Bugfix #759: We may not get rid of all stale listeners, it seems
+			//listener.routinePoolChanged(this, _flags);
+			try {
+				listener.routinePoolChanged(this, _flags);
+			}
+			catch (Exception ex) {
+				System.err.println("Arranger listeners: " + listeners.size());
+				String descr = listener.toString();
+				if (listener instanceof Mainform) {
+					descr = ((Mainform)listener).getTitle();
+				}
+				logger.log(Level.SEVERE, "Stale Arranger listener: " + descr);
+			}
 		}
 	}
 	// END KGU#305 2016-12-16
@@ -2152,5 +2171,5 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		surface.adaptLayout();
 	}
 	// END KGU#699 2019-03-27
-	
+
 }

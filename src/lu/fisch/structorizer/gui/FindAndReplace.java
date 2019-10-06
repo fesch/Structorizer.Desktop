@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-12      Bugfix #728 - flaws on traversing and replacement tackled
  *      Kay Gürtzig     2019-06-13      Bugfix #728 - IRoutinePoolListener inheritance added, now reacts on diagram changes
  *                                      Retrieval and traversal strategies unified (now tree is always completely shown)
+ *      Kay Gürtzig     2019-09-29      Enh. #738: Update of code preview ensured after replacements
  *
  ******************************************************************************************************
  *
@@ -1350,7 +1351,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		if (replace && nMatches > 0) {
 			// START KGU#684 2019-06-13: Bugfix #728 - avoid interference from element modifications
 			replacing = true;
-			System.out.println("replacing set true...");
+			//System.out.println("replacing set true...");
 			try {
 			// END KGU#684 2019-06-13
 				// Replace next match according to the current pattern
@@ -1424,7 +1425,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			}
 			finally {
 				replacing = false;
-				System.out.println("replacing resset to false...");
+				//System.out.println("replacing resset to false...");
 			}
 
 			diagram.doButtons();
@@ -1452,6 +1453,9 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 						gotoNext = false;
 					}
 				}
+				// START KGU#705 2019-09-29: Enh. #738: Code preview is to updated as well
+				diagram.updateCodePreview();
+				// END KGU#705 2019-09-29
 			}
 		}
 		

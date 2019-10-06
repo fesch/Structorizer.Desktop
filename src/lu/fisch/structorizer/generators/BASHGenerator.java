@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
  *
  ******************************************************************************************************
  *
@@ -765,9 +766,9 @@ public class BASHGenerator extends Generator {
 	
 	protected void generateCode(Instruction _inst, String _indent) {
 		
-		if(!insertAsComment(_inst, _indent)) {
+		if(!appendAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
 			StringList text = _inst.getUnbrokenText(); 
@@ -806,7 +807,7 @@ public class BASHGenerator extends Generator {
 				if (this.usesFileAPI) {
 					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 						if (line.contains(Executor.fileAPI_names[j] + "(")) {
-							insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+							appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 							break;
 						}
 					}
@@ -834,7 +835,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 		// START KGU#132 2016-01-08: Bugfix #96 - approach with C-like syntax
 		//code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
@@ -848,7 +849,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -896,7 +897,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent+"case "+transform(_case.getText().get(0))+" in");
@@ -944,7 +945,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 		// END KGU 2014-11-16
 		// START KGU#30 2015-10-18: This resulted in nonsense if the algorithm was a real counting loop
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
@@ -1040,7 +1041,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 		// START KGU#132 2016-01-08: Bugfix #96 first approach with C-like syntax (( ))
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
@@ -1053,7 +1054,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1088,11 +1089,11 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
 		// generate the loop body twice to preserve semantics!
-		insertComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
+		appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
 		generateCode(_repeat.q, _indent);		
 		// END KGU#60 2015-11-02
 		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
@@ -1106,7 +1107,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1142,7 +1143,7 @@ public class BASHGenerator extends Generator {
 		}
 		// END KGU#277 2016-10-14
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent + "while [ 1 ]");
@@ -1160,9 +1161,9 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-		if(!insertAsComment(_call, _indent)) {
+		if(!appendAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _call.isDisabled();
@@ -1178,9 +1179,9 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
-		if(!insertAsComment(_jump, _indent)) {
+		if(!appendAsComment(_jump, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _jump.isDisabled();
@@ -1202,10 +1203,10 @@ public class BASHGenerator extends Generator {
 		// START KGU#277 2016-10-14: Enh. #270
 		boolean disabled = _para.isDisabled();
 		// END KGU#277 2016-10-14
-		insertComment(_para, _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment(_para, _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		String indent1 = _indent + this.getIndent();
 		String varName = "pids" + Integer.toHexString(_para.hashCode());
 		// START KGU#277 2016-10-14: Enh. #270
@@ -1228,9 +1229,9 @@ public class BASHGenerator extends Generator {
 		// START KGU#277 2016-10-14: Enh. #270
 		addCode("wait ${" + varName + "}", _indent, disabled);
 		// END KGU#277 2016-10-14
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 	}
 	// END KGU#174 2016-04-05
 	
@@ -1256,36 +1257,44 @@ public class BASHGenerator extends Generator {
 		//typeMap = _root.getTypeInfo();
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
 			code.add("#!/bin/bash");
 			// STARTB KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes("");
+			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 		}
 		code.add("");
 
 		// START KGU 2014-11-16
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		// END KGU 2014-11-16
 		String indent = _indent;
 		if (topLevel)
 		{
-			insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
+			appendComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 
 			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 			if (this.usesFileAPI) {
 				code.add(_indent);
-				insertComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				insertComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				insertComment("     syntax for automatic conversion.", _indent);
-				insertComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				insertComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				insertComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
+				appendComment("     syntax for automatic conversion.", _indent);
+				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
+				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
+				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
 			}
 			// END KGU#311 2017-01-05
 			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
@@ -1306,7 +1315,7 @@ public class BASHGenerator extends Generator {
 				if (occurringFunctions.contains("chr"))
 				{
 			code.add(indent);
-			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+			appendComment("chr() - converts decimal value to its ASCII character representation", indent);
 			code.add(indent + "chr() {");
 			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
 			code.add(indent + "}");
@@ -1315,7 +1324,7 @@ public class BASHGenerator extends Generator {
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-			insertComment("ord() - converts ASCII character to its decimal value", indent);
+			appendComment("ord() - converts ASCII character to its decimal value", indent);
 			code.add(indent + "ord() {");
 			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
 			code.add(indent + "}");
@@ -1365,7 +1374,7 @@ public class BASHGenerator extends Generator {
 		code.add("");
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
-		insertComment("TODO: Check and revise the syntax of all expressions!", _indent);
+		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		code.add("");
 		// END KGU#129 2016-01-08
 		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
@@ -1383,6 +1392,13 @@ public class BASHGenerator extends Generator {
 			code.add("}");
 		}
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
 		return code.getText();
 		
 	}

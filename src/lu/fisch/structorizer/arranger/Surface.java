@@ -118,6 +118,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
  *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
  *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
+ *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Manforms impaired functioning
  *
  ******************************************************************************************************
  *
@@ -224,6 +225,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -1001,6 +1003,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		// END KGU#679 2019-03-13
+		// START KGU#746 2019-10-05: The status change of the group wasn't shown in Arranger index
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// END KGU#746 2019-10-05
 		return done ? group : null;
 	}
 
@@ -2257,6 +2262,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#679 2019-03-12
 
+	// START KGU#742 2019-10-04: To solve a problem with concurrent modifications 
+	/**
+	 * If the given {@link Root} {@code root} is orphaned (i.e. has no owning
+	 * {@link Mainform} then it will be assigned to the given {@code mainform}.
+	 * @param root a {@link Root} supposed to be in the pool
+	 * @param mainform - the adopting {@link Mainform}
+	 */
+	public void adoptRootIfOrphaned(Root root, Mainform mainform) {
+		Diagram owner = rootMap.get(root);
+		if (owner != null && owner.mainform == null) {
+			owner.mainform = mainform;
+			mainform.addWindowListener(this);
+		}
+		root.addUpdater(this);
+	}
+	// END KGU#742 2019-10-04
+	
 	/**
 	 * Places the passed-in diagram {@code root} in the drawing area if it hadn't already been
 	 * residing here. If a {@link Mainform} {@code form} was given, then it is registered with
@@ -2563,6 +2585,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer needed
 				//form.updateArrangerIndex();
 				// END KGU#305 2016-12-12
+				// START KGU#745 2019-10-05: Bugfix #759 - We must be informed about dying Mainforms
+				form.addWindowListener(this);
+				// END KGU#745 2019-10-05
 			}
 			// END KGU#125 2016-01-07
 			root.addUpdater(this);
@@ -2688,6 +2713,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// Let the user decide to save it or not, or to cancel this removal 
 				boolean goOn = form.diagram.saveNSD(true);
 				// Destroy the temporary Mainform
+				// START KGU#745 2019-10-05: Bugfix #759 - we must also remove it from the listeners (had added itself)
+				removeChangeListener(form);
+				// END KGU#745 2019-10-05
 				form.dispose();
 				if (!goOn)
 				{
@@ -4251,8 +4279,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		return mainforms;
 	}
-	// END KGU#305 2016-12-16	
-
+	// END KGU#305 2016-12-16
+	
 	/* (non-Javadoc)
 	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
 	 */
@@ -4303,8 +4331,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void windowClosed(WindowEvent e)
 	{
 		// START KGU#305 2016-12-16
-		if (e.getSource() instanceof Mainform) { 
-			removeChangeListener((Mainform)e.getSource());
+		if (e.getSource() instanceof Mainform) {
+			Mainform form = (Mainform)e.getSource();
+			removeChangeListener(form);
+			// START KGU#745 2019-10-05: Bugfix #759 - We must make sure that stale mainforms get dropped
+			if (diagrams != null) {
+				for (int i = 0; i < diagrams.size(); i++) {
+					Diagram diagr = diagrams.get(i);
+					if (diagr.mainform == form) {
+						diagr.mainform = null;
+					}
+				}
+			}
+			// END KGU#745 2019-10-05
 		}
 		// END KGU#305 2016-12-16
 	}
@@ -5256,4 +5295,5 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+
 }

@@ -161,6 +161,7 @@ Menu.menuEditBreakLines.text=Изменить верстку
 Menu.menuEditBreakLines.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
 Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
+
 // Menu "Diagram"
 Menu.menuDiagram.text=Схема
 Menu.menuDiagram.mnemonic=с
@@ -218,6 +219,8 @@ Menu.menuDiagramMarker.text=Подсвечивать переменные
 Menu.menuDiagramDIN.text=DIN (ДИН 66261)?
 Menu.menuDiagramAnalyser.text=Анализировать схему
 Menu.menuDiagramIndex.text=Вставить индекс Arranger?
+Menu.menuDiagramPreview.text=Вставить просмотр кодa?
+
 // Menu "Preferences"
 Menu.menuPreferences.text=Настройки
 Menu.menuPreferences.mnemonic=н
@@ -380,7 +383,7 @@ Menu.lblNewMaxLineLength.text=Новая высшая длина строк:
 Menu.lblInvolveSubtree.text=Выполнить и в составных частях
 Menu.lblPreserveContinuators.text=Сохранить существующие верстки если короче
 Menu.msgVetoClose.text=
-Menu.msgSetAsPreferredGenerator.text=
+Menu.msgSetAsPreferredGenerator.text=Вы экспортировали %2. раз на %1 -\nхочете применить его предпочтительным вывозным языком?
 Menu.msgChooseSubroutine.text=
 Menu.msgCreateSubroutine.text=
 // Table column headers for DiagramControllerAliases
@@ -620,6 +623,13 @@ Editor.popupDisable.text=Подавить
 // Debug
 Editor.popupBreakpoint.text=Сменить точку останова
 Editor.popupBreakTrigger.text=Счетчик точки останова
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Индекс Arranger
+Editor.pnlTabbed.tab.1=Просмотр кодa
+Editor.popupCodeExport.text=Экспортировать ...
+Editor.popupCodeExport.tooltip=Экспортировать код в файл
+Editor.popupCodeHide.text=Утаить просмотр кода
+Editor.ttPopupCodePreview.text=Переменит просмотр кода к % и его применит предпочитаемыйм языком для экспортa.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=
@@ -947,7 +957,7 @@ ExportOptionDialoge.bracesCheckBox.text=
 ExportOptionDialoge.lineNumbersCheckBox.text=
 ExportOptionDialoge.chkExportSubroutines.text=
 ExportOptionDialoge.chkExportLicenseInfo.text=
-ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbPrefGenerator.text=Предпочитаемый язык для экспортa
 ExportOptionDialoge.lbCharset.text=
 ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.btnPluginOptions.text=
@@ -1241,6 +1251,7 @@ ArrangerIndex.popupIndexDrawGroup.text=
 ArrangerIndex.popupIndexDrawGroup.tooltip=
 ArrangerIndex.popupIndexRenameGroup.text=
 ArrangerIndex.popupIndexRenameGroup.tooltip=
+ArrangerIndex.popupIndexHide.text=Утаить индекс Arranger
 ArrangerIndex.lblSelectTargetGroup.text=
 ArrangerIndex.lblGroups.text=
 ArrangerIndex.lblSubroutines.text=

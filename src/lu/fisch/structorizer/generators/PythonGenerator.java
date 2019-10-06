@@ -564,10 +564,10 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-		if(!insertAsComment(_inst, _indent)) {
+		if(!appendAsComment(_inst, _indent)) {
 			boolean isDisabled = _inst.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 			// END KGU 2014-11-16
 			StringList lines = _inst.getUnbrokenText();
 			String tmpCol = null;
@@ -632,7 +632,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _alt.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
@@ -662,7 +662,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _case.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 		// END KGU 2014-11-16
 
 		// START KGU#453 2017-11-02: Issue #447
@@ -708,7 +708,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _for .isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 		// END KGU 2014-11-16
 
 		String counterStr = _for.getCounterVar();
@@ -753,7 +753,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _while.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
@@ -778,7 +778,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _repeat.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 		addCode("while True:", _indent, isDisabled);
 		generateCode((Subqueue) _repeat. q,_indent + this.getIndent());
@@ -802,7 +802,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _forever.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		addCode("while True:", _indent, isDisabled);
 		generateCode((Subqueue) _forever.q, _indent + this.getIndent());
@@ -817,11 +817,11 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		if(!insertAsComment(_call, _indent))
+		if(!appendAsComment(_call, _indent))
 		{
 			boolean isDisabled = _call.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			StringList lines = _call.getText();
 			for(int i=0; i<lines.count(); i++)
@@ -836,11 +836,11 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if(!insertAsComment(_jump, _indent))
+		if(!appendAsComment(_jump, _indent))
 		{
 			boolean isDisabled = _jump.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 			// START KGU#78 2015-12-17: Enh. 38 - translate acceptable Jumps to break instructions
 			//for(int i=0;i<_jump.getText().count();i++)
@@ -889,8 +889,8 @@ public class PythonGenerator extends Generator
 				// END KGU#686 2019-03-21
 				else if (!isEmpty)
 				{
-					insertComment("FIXME: unsupported jump/exit instruction!", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: unsupported jump/exit instruction!", _indent);
+					appendComment(line, _indent);
 				}
 			}
 			if (isEmpty) {
@@ -909,12 +909,12 @@ public class PythonGenerator extends Generator
 
 		//String indentPlusOne = _indent + this.getIndent();
 		//String indentPlusTwo = indentPlusOne + this.getIndent();
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		//insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		//addCode("", indentPlusOne, isDisabled);
 
@@ -952,9 +952,9 @@ public class PythonGenerator extends Generator
 			String threadVar = "thr" + suffix + "_" + i;
 			addCode(threadVar + ".join()", _indent, isDisabled);
 		}
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", _indent, isDisabled);
 	}
 	// END KGU#47 2015-12-17
@@ -1009,13 +1009,13 @@ public class PythonGenerator extends Generator
 			}
 		}
 		if (globals.count() > 0) {
-			code.insert(_indent + "", lineBefore);
+			insertCode(_indent + "", lineBefore);
 			for (int v = 0; v < globals.count(); v++) {
 				String varName = globals.get(v);
 				String end = varName.startsWith(this.commentSymbolLeft()) ? this.commentSymbolRight() : "";
-				code.insert(_indent + varName + " = 0" + end, lineBefore);
+				insertCode(_indent + varName + " = 0" + end, lineBefore);
 			}
-			code.insert(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
+			insertCode(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
 		}
 	}
 	// END KGU#47/KGU#348 2017-02-19
@@ -1024,7 +1024,7 @@ public class PythonGenerator extends Generator
 	protected void generateCode(Try _try, String _indent)
 	{
 		boolean isDisabled = _try.isDisabled();
-		this.insertComment(_try, _indent);
+		this.appendComment(_try, _indent);
 		
 		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
 		String indent0 = _indent;
@@ -1060,7 +1060,7 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
 	/**
-	 * Inserts a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * Adds a typedef or struct definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
@@ -1096,19 +1096,19 @@ public class PythonGenerator extends Generator
 	}
 
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#insertGlobalInitialisations(java.lang.String)
+	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
-	protected void insertGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 				//typeMap = incl.getTypeInfo();
 				typeMap = incl.getTypeInfo(routinePool);	// This line is the difference to Generator!
 				// END KGU#676 2019-03-30
 				generateCode(incl.children, _indent);
-				insertComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
 			if (code.count() > startLine) {
 				code.add(_indent);
@@ -1120,9 +1120,9 @@ public class PythonGenerator extends Generator
 	 * Declares imported names as global
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
-	 * @see #insertGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(String)
 	 */
-	private void insertGlobalDeclarations(Root _root, String _indent) {
+	private void appendGlobalDeclarations(Root _root, String _indent) {
 		if (_root.includeList != null) {
 			HashSet<String> declared = new HashSet<String>();
 			for (Root incl: this.includedRoots) {
@@ -1170,10 +1170,10 @@ public class PythonGenerator extends Generator
 			// START KGU#366 2017-03-10: Issue #378 the used character set is to be named 
 			code.add(_indent + "# -*- coding: " + this.getExportCharset().toLowerCase() + " -*-");
 			// END KGU#366 2017-03-10
-			insertComment(_root.getText().get(0), _indent);
-			insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment(_root.getText().get(0), _indent);
+			appendComment("generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
@@ -1185,7 +1185,7 @@ public class PythonGenerator extends Generator
 			this.generatorIncludes.add("math");		// Will be inserted later
 			// END KGU#607 2018-10-30
 			// START KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(indent);
+			this.appendUserIncludes(indent);
 			// END KGU#351 2017-02-26
 			// START KGU#600 2018-10-17: It is too cumbersome to check if math is actually needed
 			code.add(_indent + "import math");
@@ -1194,7 +1194,7 @@ public class PythonGenerator extends Generator
 			this.includeInsertionLine = code.count();
 			// END KGU#598 2018-10-17
 			// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
-			this.insertGlobalInitialisations(_indent);
+			this.appendGlobalInitialisations(_indent);
 			// END KGU#376 2017-10-02
 //			if (code.count() == this.includeInsertionLine) {
 //				code.add(_indent);
@@ -1209,11 +1209,11 @@ public class PythonGenerator extends Generator
 		code.add("");
 		// FIXME: How to handle includables here?
 		if (!_root.isSubroutine()) {
-			insertComment(_root, _indent);
+			appendComment(_root, _indent);
 		}
 		else {
 			indent = _indent + this.getIndent();
-			insertComment(_root, _indent);
+			appendComment(_root, _indent);
 			// START KGU#371 2019-03-08: Enh. #385 deal with optional parameters
 			//code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			String header = _indent + "def " + _procName + "(";
@@ -1244,7 +1244,7 @@ public class PythonGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// START KGU#376 2017-10-03: Enh. #389 - Variables and types of the included diagrams must be marked as global here
-		insertGlobalDeclarations(_root, _indent);
+		appendGlobalDeclarations(_root, _indent);
 		// END KGU#376 2017-10-03
 		// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 		generateParallelThreadFunctions(_root, _indent);
@@ -1291,9 +1291,9 @@ public class PythonGenerator extends Generator
 
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {
-			code.insert("import turtle", this.includeInsertionLine);
-			code.insert("turtle.colormode(255)", this.includeInsertionLine+1);
-			code.insert("turtle.mode(\"logo\")", this.includeInsertionLine+2);
+			insertCode("import turtle", this.includeInsertionLine);
+			insertCode("turtle.colormode(255)", this.includeInsertionLine+1);
+			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine+2);
 			this.subroutineInsertionLine += 3;
 			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
 		}
