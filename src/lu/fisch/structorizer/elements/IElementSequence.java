@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
 *      Kay Gürtzig      2017-05-30      Enh. #415: Equipped with a tree-capable Iterator class
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
+*      Kay Gürtzig      2019-10-12      Bugfix #705/2: Retrieval mistake for CASE, PARALLEL branches in getNext(boolean)
 *
 ******************************************************************************************************
 *
@@ -163,10 +164,18 @@ public interface IElementSequence {
 				}
 				// END KGU#686 2019-03-17
 			}
-			if (next != null && move) {
-				current = (Subqueue)next.parent;
-				positions.push(0);
+			// START KGU#750 2019-10-12: Bugfix #705/2 wrong consecution in case of move = false
+			//if (next != null && move) {
+			//	current = (Subqueue)next.parent;
+			//	positions.push(0);
+			//}
+			if (next != null) {
+				if (move) {
+					current = (Subqueue)next.parent;
+					positions.push(0);
+				}
 			}
+			// END KGU#750 2019-10-12
 			// el might still be atomic, so look for a successor (tree neighbour) 
 			else if (at < current.getSize()-1) {
 				next = current.getElement(at+1);
@@ -195,13 +204,19 @@ public interface IElementSequence {
 					Vector<Subqueue> subqueues = (el instanceof Case) ? ((Case)el).qs : ((Parallel)el).qs;
 					// First identify the current subqueue
 					boolean found = false;
+					// START KGU#688 2019-03-17: Bugfix #705 - Wrong loop condition averted search.
+					//for (int i = 0; next != null && i < subqueues.size(); i++) {
 					for (int i = 0; next == null && i < subqueues.size(); i++) {
+					// END KGU#688 2019-03-17
 						if (!found && seq == subqueues.get(i)) {
 							found = true;
 						}
 						else if (found && subqueues.get(i).getSize() > 0) {
 							seq = subqueues.get(i);
-							next = current.getElement(0);
+							// START KGU#750 2019-10-12: Bugfix #705/2
+							//next = current.getElement(0);
+							next = seq.getElement(0);
+							// END KGU#750 2019-10-12
 							if (move) {
 								while (positions.size() > level) {
 									positions.pop();
@@ -222,7 +237,10 @@ public interface IElementSequence {
 						}
 						else if (found && subqueues[i].getSize() > 0) {
 							seq = subqueues[i];
-							next = current.getElement(0);
+							// START KGU#750 2019-10-12: Bugfix #705/2
+							//next = current.getElement(0);
+							next = seq.getElement(0);
+							// END KGU#750 2019-10-12
 							if (move) {
 								while (positions.size() > level) {
 									positions.pop();

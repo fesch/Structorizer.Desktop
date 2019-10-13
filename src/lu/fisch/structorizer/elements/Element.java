@@ -277,9 +277,12 @@ public abstract class Element {
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
+	" - Javascript: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"Import grammars and parsers written and maintained by\n"+
 	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - COBOL: Simon Sobisch, Kay Gürtzig"+
+	" - Struktogrammeditor: Kay Gürtzig"+
+	" - hus-Struktogrammer: Kay Gürtzig"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+

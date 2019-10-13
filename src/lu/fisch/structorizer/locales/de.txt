@@ -444,9 +444,6 @@ Menu.msgVetoClose.text=Structorizer ist dabei, sich zu beenden. Einspruch?
 Menu.msgSetAsPreferredGenerator.text=Sie haben die letzten %2 Male %1-Code exportiert.\nMöchten Sie %1 jetzt im Dateimenü als die bevorzugte Exportsprache setzen?
 Menu.msgChooseSubroutine.text=Bitte zu bearbeitendes Unterprogramm auswählen:
 Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
-// Table column headers for DiagramControllerAliases
-Menu.msgTabHdrSignature.text=Routinensignatur
-Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
 Menu.msgAllPreferences.text=Alle Einstellungen
@@ -454,6 +451,11 @@ Menu.msgInvertSelection.text=Auswahl umkehren
 Menu.msgIniBackupFailed.text=Die Erstellung einer Backup-Datei der aktuellen Einstellungen ist gescheitert.\nWollen Sie trotzdem "%" laden?
 Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
 Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
+Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routinensignatur
+Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".
@@ -1305,6 +1307,7 @@ Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
 Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
 Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
 Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
+Surface.msgFileMissing.text= fehlt!
 
 ----[ ArrangerIndex ]----
 ArrangerIndex.popupIndexGet.text=Diagram holen

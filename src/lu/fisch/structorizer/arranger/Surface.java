@@ -118,7 +118,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
  *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
  *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
- *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Manforms impaired functioning
+ *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Mainforms impaired functioning
+ *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements 
  *
  ******************************************************************************************************
  *
@@ -225,7 +226,6 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -390,6 +390,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#680 2019-03-11: Bugfix #699
 	public static final LangTextHolder msgSharedDiagrams = new LangTextHolder("The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!");
 	// END KGU#680 2019-03-11
+	// START KGU#749 2019-10-13: Bugfix #763
+	public static final LangTextHolder msgFileMissing = new LangTextHolder(" missing!");
+	// END KGU#749 2019-10-13
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -1267,7 +1270,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		StringList unsaved = new StringList();
 		StringList errors = new StringList();
 		for (Diagram diagr: group.getDiagrams()) {
-			if (diagr.root.getFile() == null) {
+			// START KGU#749 2019-10-13: Bugfix #763 - Diagrams with inaccessible files must also be saved
+			//if (diagr.root.getFile() == null) {
+			File assocFile = diagr.root.getFile();
+			if (assocFile == null || !assocFile.canRead()) {
+			// END KGU#749 2019-10-13
 				String filename = tempDir.getAbsolutePath() + File.separator + diagr.root.proposeFileName();
 				File file = new File(filename + ".nsd");
 				int count = 1;
@@ -1288,7 +1295,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						diagr.mainform.doButtons();
 					}
 				} catch (IOException ex) {
-					unsaved.add(diagr.root.proposeFileName());
+					// START KGU#749 2019-10-13: Bugfix #763
+					//unsaved.add(diagr.root.proposeFileName());
+					if (assocFile != null) {
+						unsaved.add(assocFile.getAbsolutePath());
+					}
+					else {
+						unsaved.add(diagr.root.proposeFileName());
+					}
+					// END KGU#749 2019-10-13
 					errors.add(ex.toString());
 				}
 				finally {
@@ -1680,7 +1695,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList problems = new StringList();
 			List<ArchiveRecord> records = (new Archivar()).loadArrangement(arrFile, unzippedFrom, currentDirectory, problems);
 			if (!problems.isEmpty()) {
-				errorMessage = problems.getText();
+				errorMessage = problems.getText().replace(" MISSING!", msgFileMissing.getText());
 			}
 			Mainform form = (frame instanceof Mainform) ? (Mainform)frame : null;
 			for (ArchiveRecord record: records) {
@@ -3128,7 +3143,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Diagram diagram = iter.next();
 				Mainform form = diagram.mainform;
 				// START KGU#650 2019-02-11: Issue #677 - Ensure a Mainform if we have to archive diagrams
-				boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				// START KGU#749 2019-10-13: Bugfix #763 - make sure the file actually exists
+				//boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				boolean hasFile = diagram.root.getFile() != null;
+				// END KGU#749 2019-10-13
 				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
 					form = someMainform = tempMainform = new Mainform(false);
 				}

@@ -188,6 +188,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-28      Javadoc completions, fine-tuning for #738
  *      Kay Gürtzig     2019-09-29      Issue #753: Unnecessary structure preference synchronization offers suppressed.
  *      Kay Gürtzig     2019-10-05      Issues #758 (Edit subroutine) and KGU#743 (root type change) fixed
+ *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
+ *      Kay Gürtzig     2019-10-13      Bugfix #763: Stale file also triggers save request in saveNSD()
  *
  ******************************************************************************************************
  *
@@ -2597,7 +2599,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// only save if something has been changed
 		// START KGU#137 2016-01-11: Use the new method now
 		//if(root.hasChanged==true)
-		if (!root.isEmpty() && root.hasChanged())
+		// START KGU#749 2019-10-13: Bugfix #763 - also save in case of a stale file
+		//if (!root.isEmpty() && root.hasChanged())
+		boolean hasValidFile = root.getFile() != null;
+		if (!root.isEmpty() && (root.hasChanged() || !hasValidFile))
+		// END KGU#749 2019-10-13
 		// END KGU#137 2016-01-11
 		{
 			String message = null;
@@ -2621,7 +2627,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				//System.out.println(this.currentDirectory.getAbsolutePath());
 				
-				if (root.filename.equals(""))
+				// START KGU#749 2019-10-13: Bugfix #763 - Also save in case of a stale file
+				//if (root.filename.equals(""))
+				if (!hasValidFile)
+				// END KGU#749 2019-10-13
 				{
 					// root has never been saved
 // START KGU#248 2016-09-15: Bugfix #244 delegate to saveAsNSD()
@@ -2878,6 +2887,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 					Menu.msgErrorFileSave.getText().replace("%", message),
 					Menu.msgTitleError.getText(),
@@ -6110,7 +6120,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				redraw();
 			}
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), ex.getMessage(),
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
+			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), message,
 					Menu.msgTitleError.getText(), JOptionPane.ERROR_MESSAGE);
 			// START KGU#484 2018-04-05: Issue #463
 			//ex.printStackTrace();
@@ -6542,7 +6555,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					logger.log(Level.WARNING, "", ex);
 					// END KGU#484 2018-04-05
 				}
-				if (message == null) message = ex.toString();
+				if (message == null || message.isEmpty()) message = ex.toString();
 				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 						Menu.msgErrorUsingParser.getText().replace("%", parser.getDialogTitle())+"\n" + message,
 						Menu.msgTitleError.getText(),
@@ -6735,6 +6748,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
 			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
 					Menu.msgTitleError.getText(),
@@ -6780,6 +6794,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				String message = ex.getLocalizedMessage();
 				if (message == null) message = ex.getMessage();
+				if (message == null || message.isEmpty()) message = ex.toString();
 				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
 						Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
 						Menu.msgTitleError.getText(),
@@ -6845,10 +6860,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 				catch (NumberFormatException ex) {
+					String message = ex.getMessage();
+					if (message == null || message.isEmpty()) message = ex.toString();
 					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
 							new Object[]{
 									_gen.getClass().getSimpleName(),
-									ex.getMessage(),
+									message,
 									valueStr,
 									type,
 									optionKey});
@@ -7031,6 +7048,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							// END KGU#484 2018-04-05
 							errorMessage = ex.getLocalizedMessage();
 							if (errorMessage == null) errorMessage = ex.getMessage();
+							if (errorMessage == null || errorMessage.isEmpty()) errorMessage = ex.toString();
 						}
 						if (errorMessage != null)
 						{
@@ -9137,7 +9155,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					logger.logp(Level.SEVERE, "EMFSelection", "static init", e.getMessage());
+					String message = e.getMessage();
+					if (message == null || message.isEmpty()) message = e.toString();
+					logger.logp(Level.SEVERE, "EMFSelection", "static init", message);
 				}
 			}
 
