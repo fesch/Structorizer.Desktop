@@ -3215,6 +3215,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// START KGU#650 2019-02-11: Issue #677
 			if (tempMainform != null) {
+				// START KGU#745 2019-10-14: Bugfix #759 - we must also remove it from the listeners (had added itself)
+				removeChangeListener(tempMainform);
+				// END KGU#745 2019-10-14
 				tempMainform.dispose();
 			}
 			// END KGU#650 2019-02-11
