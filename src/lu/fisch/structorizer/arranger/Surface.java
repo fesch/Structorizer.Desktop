@@ -119,7 +119,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
  *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
  *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Mainforms impaired functioning
- *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements 
+ *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements
+ *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group failed.
  *
  ******************************************************************************************************
  *
@@ -1067,7 +1068,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				tempDir = dir.getParentFile();
 			}
 		}
-
+		LinkedList<Root> savedRoots = null;
 		try
 		{
 			// Prepare to save the arr file (if portable is false then this is the outfile)
@@ -1082,7 +1083,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
 				// START KGU#650 2019-02-11: Issue #677 save all virgin group members to the temp dir
-				saveVirginRootsToTempDir(group, tempDir);
+				savedRoots = saveVirginRootsToTempDir(group, tempDir);
 				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
@@ -1125,7 +1126,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 			}
 			Archivar archivar = new Archivar();
-			tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			// START KGU#752 2019-10-14: Bugfix #764 - the update of the arr file if portable==false was averted
+			//tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			String tmpArrzName = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			if (portable) {
+				tmpFilename = tmpArrzName;
+			}
+			// END KGU#752 2019-10-14
 			// END KGU#679 2019-03-11
 
 			// START KGU#682 2019-03-15: Bugfix #703 - group change status must get a chance to be reset.
@@ -1222,6 +1229,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					else if (diagr.root.shadowFilepath == null) {
 						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
 								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+						if (savedRoots.contains(diagr.root)) {
+							for (String grName: diagr.getGroupNames()) {
+								Group gr = this.groups.get(grName);
+								if (gr != null && gr.getFile() != null && gr.getArrzFile() == null) {
+									// The arrangement list file is out of date (new diagram file path).
+									gr.membersChanged = true;
+								}
+							}
+						}
 					}
 				}
 				// Ensure all new copies are saved somewhere such that they will get a virtual path later
@@ -1240,7 +1256,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
 							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
 				}
-				// START KGU#682 2019-03-15: Issue #704 grop change status must be reset.
+				// START KGU#682 2019-03-15: Issue #704 group change status must be reset.
 				group.membersChanged = false;
 				// END KGU#682 2019-03-15
 			}
@@ -1264,7 +1280,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	// START KGU#650 2019-02-11: Issue #677 - Inconveniences on saving arrangement archives
-	/** Tries to save all unsaved group members in the given temporary directory with a unique name */
+	/** Tries to save all unsaved group members in the given temporary directory, ensuring
+	 * unique names. Raises a message box with the names of all diagrams the saving attempt
+	 * for which failed.
+	 * @param group - the {@link Group} the diagrams of which are to be saved if not already associated to a file
+	 * @param tempDir - the target directory
+	 * @return a list of the {@link Root} objects that were successfully saved
+	 */
 	private LinkedList<Root> saveVirginRootsToTempDir(Group group, File tempDir) {
 		LinkedList<Root> savedRoots = new LinkedList<Root>();
 		StringList unsaved = new StringList();

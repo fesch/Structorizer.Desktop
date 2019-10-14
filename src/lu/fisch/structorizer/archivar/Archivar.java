@@ -35,7 +35,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-14      Enh. #697: New method deriveArrangementList()
  *      Kay Gürtzig     2019-03-26      Enh. #697: Bugfixes in zipArrangement(), saveArrangement()
  *      Kay Gürtzig     2019-07-31      Bugfix #731 (also comprising #526): new static methods renameTo, copyFile
- *      Kay Gürtzig     2019-10-13      Bugfix #763: Missing references files now add to the problem list on loading
+ *      Kay Gürtzig     2019-10-14      Bugfix #763: Missing references files now add to the problem list on loading
  *
  ******************************************************************************************************
  *
@@ -870,6 +870,7 @@ public class Archivar {
 				StringList fields = StringList.explode(line, ",");
 				if (fields.count() >= 3)
 				{
+					boolean fileMissing = false;
 					Root root = null;
 					Point point = new Point();
 					point.x = Integer.parseInt(fields.get(0));
@@ -894,15 +895,25 @@ public class Archivar {
 						if (arrzFile.exists()) {
 							root = extractNSDFrom(arrzFile, pureName, null, _troubles);
 						}
+						// START KGU#749 2019-10-14: Bugfix #763 - we must inform about missing files
+						else {
+							fileMissing = true;
+						}
+						// END KGU#749 2019-10-14
 					}
-					// START KGU#749 2019-10-13: Bugfix #763 - we must inform about missing files
+					// START KGU#749 2019-10-14: Bugfix #763 - we must inform about missing files
 					else {
-						_troubles.add(_arrFile.getName() + ": \"" + nsd.getAbsolutePath() + "\" MISSING!");
+						fileMissing = true;
 					}
-					// END KGU#749 2019-10-13
+					// END KGU#749 2019-10-14
 					if (root != null) {
 						items.add(new ArchiveRecord(root, point));
 					}
+					// START KGU#749 2019-10-14: Bugfix #763 - we must inform about missing files
+					else if (fileMissing) {
+						_troubles.add(_arrFile.getName() + ": \"" + nsd.getAbsolutePath() + "\" MISSING!");
+					}
+					// END KGU#749 2019-10-14
 				}
 			}
 

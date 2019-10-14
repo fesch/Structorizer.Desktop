@@ -11,11 +11,12 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
 
-Current development version: 3.30-01 (2019-10-13)
+Current development version: 3.30-01 (2019-10-14)
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
 - 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
-- 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2> 
+- 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
+- 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
