@@ -120,7 +120,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
  *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Mainforms impaired functioning
  *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements
- *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group failed.
+ *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group used to fail.
+ *      Kay Gürtzig     2019-10-15      Bugfix #763: On resaving stale diagrams, the shadow path had to be cleared.
  *
  ******************************************************************************************************
  *
@@ -955,7 +956,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		else {
 			// The group originates from or has been saved to a file
 			File file = group.getFile();
-			File arrzFile = group.getArrzFile();
+			File arrzFile = group.getArrzFile(false);
 			if (arrzFile != null) {
 				portable = true;
 				extension += "z";
@@ -998,7 +999,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#626 2019-01-02
 		// START KGU#679 2019-03-12: Enh. #698 - Inform associated Mainforms about the new file
-		File file = group.getArrzFile();
+		File file = group.getArrzFile(false);
 		if (done && !goingToClose && (file != null || (file = group.getFile()) != null)) {
 			for (Diagram diagr: group.getDiagrams()) {
 				if (diagr.mainform != null) {
@@ -1232,7 +1233,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						if (savedRoots.contains(diagr.root)) {
 							for (String grName: diagr.getGroupNames()) {
 								Group gr = this.groups.get(grName);
-								if (gr != null && gr.getFile() != null && gr.getArrzFile() == null) {
+								if (gr != null && gr.getFile() != null && gr.getArrzFile(false) == null) {
 									// The arrangement list file is out of date (new diagram file path).
 									gr.membersChanged = true;
 								}
@@ -1295,6 +1296,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#749 2019-10-13: Bugfix #763 - Diagrams with inaccessible files must also be saved
 			//if (diagr.root.getFile() == null) {
 			File assocFile = diagr.root.getFile();
+			// START KGU#749 2019-10-15: Bugfix #763 We must make sure that there is no obsolete shadow file path
+			// If there is a valid shadow file path then don't save it with a new file but wipe the file name
+			if (assocFile == null && diagr.root.shadowFilepath != null) {
+				assocFile = new File(diagr.root.shadowFilepath);
+				diagr.root.filename = assocFile.getAbsolutePath();
+				diagr.root.shadowFilepath = null;
+				if (assocFile.canRead()) {
+					// Formally this is a change as if the diagram had been saved again
+					savedRoots.add(diagr.root);
+				}
+			}
+			// END KGU#749 2019-10-15
 			if (assocFile == null || !assocFile.canRead()) {
 			// END KGU#749 2019-10-13
 				String filename = tempDir.getAbsolutePath() + File.separator + diagr.root.proposeFileName();
@@ -1614,7 +1627,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// Warn and ask for confirmation if this group has already been loaded
 				Group oldGroup = groups.get(groupName);
 				File oldFile = null;
-				if ((oldFile = oldGroup.getArrzFile()) != null && unzippedFrom != null && oldFile.compareTo(unzippedFrom) == 0 ||
+				if ((oldFile = oldGroup.getArrzFile(false)) != null && unzippedFrom != null && oldFile.compareTo(unzippedFrom) == 0 ||
 						(oldFile = oldGroup.getFile()) != null && oldFile.compareTo(arrFile) == 0) {
 					if (JOptionPane.showConfirmDialog(frame,
 							msgArrangementAlreadyLoaded.getText()
@@ -3913,7 +3926,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (String groupName: diagr.getGroupNames()) {
 					Group group = this.groups.get(groupName);
 					File arrzFile = null;
-					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile()) != null) {
+					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile(false)) != null) {
 						if (!source.getPath(true).equals(arrzFile.getAbsolutePath())) {
 							group.membersChanged = true;
 						}
@@ -5272,7 +5285,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (group.getFile() != null) {
 			String ext = ".arrz";
 			File arrFile = group.getFile();
-			File file = group.getArrzFile();
+			File file = group.getArrzFile(true);
 			if (file == null) {
 				ext = ".arr";
 				file = arrFile;

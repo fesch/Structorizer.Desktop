@@ -147,7 +147,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
  *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
- *      Kay Gürtzig     2019-10-13      Bugfix #763: Test for stale file association in getFile()
+ *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
  *      
  ******************************************************************************************************
  *
@@ -1755,7 +1755,22 @@ public class Root extends Element {
 		return _sel ? this : null;
 	}
 
+	// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
+	/**
+	 * Like {@link #copy()} but also copies the file paths (particularly important
+	 * for recursive execution to avoid eternal saving requests).
+	 * @return the copied {@link Root}
+	 */
+	public Root copyWithFilepaths()
+	{
+		Root cpy = (Root)this.copy();
+		cpy.filename = this.filename;
+		cpy.shadowFilepath = this.shadowFilepath;
+		return cpy;
+	}
+	// END KGU#749 2019-10-15
 
+    @Override
     public Element copy()
     {
             Root ele = new Root(this.getText().copy());

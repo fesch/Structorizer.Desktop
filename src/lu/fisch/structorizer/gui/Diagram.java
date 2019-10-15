@@ -189,7 +189,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-29      Issue #753: Unnecessary structure preference synchronization offers suppressed.
  *      Kay Gürtzig     2019-10-05      Issues #758 (Edit subroutine) and KGU#743 (root type change) fixed
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
- *      Kay Gürtzig     2019-10-13      Bugfix #763: Stale file also triggers save request in saveNSD()
+ *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Stale file also triggers save request in saveNSD()
  *
  ******************************************************************************************************
  *
@@ -2602,6 +2602,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#749 2019-10-13: Bugfix #763 - also save in case of a stale file
 		//if (!root.isEmpty() && root.hasChanged())
 		boolean hasValidFile = root.getFile() != null;
+		if (!hasValidFile && root.shadowFilepath != null) {
+			File shadow = new File(root.shadowFilepath);
+			if (shadow.canRead()) {
+				root.filename = shadow.getAbsolutePath();
+				root.shadowFilepath = null;	// FIXME: This may require refreshing / updating - is it ensured?
+				hasValidFile = true;
+			}
+		}
 		if (!root.isEmpty() && (root.hasChanged() || !hasValidFile))
 		// END KGU#749 2019-10-13
 		// END KGU#137 2016-01-11

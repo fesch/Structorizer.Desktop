@@ -814,6 +814,13 @@ public abstract class Element {
 	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention);
 	
+	/**
+	 * Copies this element. Implementing subclasses may make use of some helper methods
+	 * like {@link #copyDetails(Element, boolean)} to ensure that all relevant associated
+	 * data will be copied (possibly depending on the context).
+	 * @return a copy of this element.
+	 * @see #copyDetails(Element, boolean)
+	 */
 	public abstract Element copy();
 	
 	/**
@@ -830,7 +837,7 @@ public abstract class Element {
 	
 	// START KGU#156 2016-03-11: Enh. #124
 	/**
-	 * Copies the runtime data tha is to be cloned - Usually this comprises the deep
+	 * Copies the runtime data that is to be cloned - Usually this comprises the deep
 	 * coverage status and the execution counter index. Only for certain kinds of elements
 	 * the shallow coverage status is to be copied as well - therefore the argument.
 	 * @param _target - target element of the copy operation
@@ -855,6 +862,14 @@ public abstract class Element {
 	// END KGU#156 2016-03-11
 	
 	// START KGU#213 2016-08-01: Enh. #215 - derived from Instruction
+	/**
+	 * Copies important attributes of this element and associated data to the target
+	 * element {@code _ele}.
+	 * @param _ele - the target element
+	 * @param _simplyCoveredToo - whether on copying runtime data the shallow coverage
+	 * status is to be copied, too
+	 * @see #copyRuntimeData(Element, boolean)
+	 */
 	protected void copyDetails(Element _ele, boolean _simplyCoveredToo)
 	{
 		// START KGU#261 2017-01-19: Enh. #259 (type map)

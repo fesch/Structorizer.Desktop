@@ -39,6 +39,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-01      Enh. #691 Method rename() added (does only parts of what is to be done)
  *      Kay Gürtzig     2019-03-11      Modification in addDiagram() for bugfix #699
  *      Kay Gürtzig     2019-03-19      Issues #518, #544, #557: Drawing depends on visible rect now.
+ *      Kay Gürtzig     2019-10-15      Issue #763: Method getArrzFile parameterized to address stale .arrz files
  *
  ******************************************************************************************************
  *
@@ -326,7 +327,7 @@ public class Group {
 	 * @return a {@link File} object with the associated absolute path of the
 	 * Arranger list file this group is associated to (stemming from or last saved to)
 	 * or null if the group had never been associated to an arrangement file.
-	 * @see #getArrzFile()
+	 * @see #getArrzFile(boolean)
 	 */
 	public File getFile()
 	{
@@ -341,15 +342,24 @@ public class Group {
 	 * Arranger archive this group's Arranger list file and diagram files
 	 * are residing in. Returns null if the group is not residing in an
 	 * arrz file.
-	 * @return either a {@link File} object for an arrz file or null
+	 * @param onlyIfExistent - if true then in case of an invalid .arrz path null will be returned, otherwise
+	 * a returned {@link File} object may represent a non-existent file (needs checking).
+	 * @return either a {@link File} object for an .arrz file or null (not that the resulting file may not exist
+	 * if {@code onlyIfExitent} was false
 	 * @see #getFile()
 	 */
-	public File getArrzFile()
+	// START KGU#749 2019-10-15: Bugfix #763 - We need a possibility to identify even a stale arrz file
+	//public File getArrzFile()
+	public File getArrzFile(boolean onlyIfExistent)
+	// END KGU#749 2019-10-15
 	{
 		File file = this.getFile();
 		if (file != null && !file.exists() && this.filePath.toLowerCase().contains(".arrz")) {
 			file = file.getParentFile();
-			if (!file.isFile() || !file.getName().toLowerCase().endsWith(".arrz")) {
+			// START KGU#749 2019-10-15: Issue #763
+			//if (!file.isFile() || !file.getName().toLowerCase().endsWith(".arrz")) {
+			if (!file.getName().toLowerCase().endsWith(".arrz") || onlyIfExistent && !file.isFile()) {
+			// END KGU#749 2019-10-15
 				file = null;
 			}
 		}
@@ -371,7 +381,7 @@ public class Group {
 	 * @param adaptDiagrams - if true and {@code arrzFile} isn't null then the virtual file
 	 * paths of all diagrams matching the previous arrz path will be updated to {@code arrzFile}.
 	 * @see #getFile()
-	 * @see #getArrzFile()
+	 * @see #getArrzFile(boolean)
 	 * @see Surface#renameGroup(Group, String, java.awt.Component)
 	 */
 	protected void setFile(File arrFile, File arrzFile, boolean adaptDiagrams)
@@ -690,7 +700,7 @@ public class Group {
 	public ImageIcon getIcon(boolean withColor)
 	{
 		int iconNo = 94;
-		if (getArrzFile() != null) {
+		if (getArrzFile(false) != null) {
 			iconNo = 96;
 		}
 		else if (getFile() != null) {
