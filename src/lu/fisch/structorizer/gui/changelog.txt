@@ -18,6 +18,7 @@ Current development version: 3.30-01 (2019-10-15)
 - 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
 - 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
 - 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
+- 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
