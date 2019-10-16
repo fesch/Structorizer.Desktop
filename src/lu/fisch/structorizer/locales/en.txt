@@ -442,9 +442,6 @@ Menu.msgVetoClose.text=Structorizer is going to close. Veto?
 Menu.msgSetAsPreferredGenerator.text=You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu now?
 Menu.msgChooseSubroutine.text=Choose the subroutine to be edited:
 Menu.msgCreateSubroutine.text=Create a new subroutine «%»?
-// Table column headers for DiagramControllerAliases
-Menu.msgTabHdrSignature.text=Routine Signature
-Menu.msgTabHdrAlias.text=Alias Name
 Menu.ttlMouseScrollUnit.text=Mouse wheel scrolling unit
 Menu.msgSelectPreferences.text=Preferences to be exported (categories)
 Menu.msgAllPreferences.text=All preferences
@@ -453,6 +450,10 @@ Menu.ttDiagramMenuSettings.text=Settings from menu "%"
 Menu.msgIniBackupFailed.text=The creation of a backup of the current preferences failed.\nDo you still want to load "%"?
 Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
 Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=Problem on changing Look & Feel to %1: %2
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routine Signature
+Menu.msgTabHdrAlias.text=Alias Name
 
 // Error messages for analyser
 Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "%1 ► %2".
@@ -1305,6 +1306,7 @@ Surface.titleRenameGroup.text=Renaming Group «%1» to «%2»
 Surface.msgRenameArrFile.text=Rename arrangement file\n"%1"\nto "%2"?
 Surface.msgRenamingFailed.text=Could not rename arrangement file to "%"!\nAction cancelled!
 Surface.msgSharedDiagrams.text=The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!
+Surface.msgFileMissing.text= missing!
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Get diagram

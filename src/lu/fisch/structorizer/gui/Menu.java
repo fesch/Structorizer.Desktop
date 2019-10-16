@@ -590,6 +590,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#509 2018-03-20: Bugfix #526
 	public static final LangTextHolder msgErrorFileRename = new LangTextHolder("Error(s) on renaming the saved file:\n%1Look for file \"%2\" and move/rename it yourself."); 
 	// END KGU#509 2018-03-20
+	// START KGU#747 2019-10-07: Try to avoid empty error boxes on start
+	public static final LangTextHolder msgErrorSettingLaF = new LangTextHolder("Problem on changing Look & Feel to %1: %2");
+	// END KGU#747 2019-10-07
 	// START KGU#232 2016-08-02: Enh. #222
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
@@ -1596,6 +1599,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				} catch (Exception ex) {
 					logger.log(Level.WARNING, "Error restoring the configuration backup ...", ex);
 					trouble = ex.getMessage();
+					if (trouble == null || trouble.isEmpty()) {
+						trouble = ex.toString();
+					}
 				}
 				if (!done) {
 					JOptionPane.showMessageDialog(NSDControl.getFrame(),

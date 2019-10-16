@@ -9,7 +9,17 @@ Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- Javascript generator still incomplete and deficient.
+- The Javascript generator is just a prototype and may be deficient.
+
+Current development version: 3.30-01 (2019-10-16)
+- 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
+- 01: Bugfix #761: Code preview defect flooded the log stream. <2>
+- 01: Precautions against empty error messages on startup <2>
+- 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
+- 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
+- 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
+- 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
+- 01: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -120,13 +130,12 @@ Version: 3.30 (2019-10-06)
 - 14: Messages in diagram editor and Structure preferences corrected (EN, DE) <2>
 - 14: Enh. #738: Code preview in right window part (tabbed with Arranger index) <2>
 - 14: Bugfix #752: Workarounds for deficient declaration export to C/Java <2>
-- 14: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
 - 14: Default mode for setting DIN 66261 (FOR loop design) changed to true <2>.
 - 14: Issue #753: Irrelevant structure preference adaptation requests avoided <2>
 - 14: Bugfix #754: 2 Pascal code generator flaws (return instr. / UNIT name) <2>
 - 14: Enh. #721: Javascript export prototype [A. Brusinsky]2
 - 14: Bugfix #755: Defective Java/C# export of array initializers <2>
-- 14: Bugfix #756: Defects in expression export to C language family <2>
+- 14: Bugfix #756: Expression export defects to C language family <2>
 - 14: Bugfix #757: Include list text area was too small under Windows 10 <2>
 - 14: Bugfix #758: "Edit subroutine" didn't reliably arrange the new routine <2>
 - 14: Bugfix #759: Closing Structorizer sub-instances impaired functioning <2>

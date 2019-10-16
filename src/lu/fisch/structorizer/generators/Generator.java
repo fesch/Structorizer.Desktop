@@ -92,6 +92,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation
  *      Kay Gürtzig     2019-10-04      Enh. #738: Code preview accomplished and released.
+ *      Kay Gürtzig     2019-10-06      Bugfix #762?: Duplicated code lines in generateCode(Root,String) caused
+ *                                      wrong Root line range in the codeMap (and consecutive errors)
  *
  ******************************************************************************************************
  *
@@ -2619,13 +2621,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateResult(_root, preaIndent, alwaysReturns, varNames);
 		generateFooter(_root, _indent);
 		// END KGU#74 2015-11-30
-		// START KGU#705 2019-09-23: Enh. #738
-		if (codeMap != null) {
-			// Update the end line no relative to the start line no
-			codeMap.get(_root)[1] += (code.count() - line0);
-		}
-		// END KGU#705 2019-09-23
-
 		// START KGU#705 2019-09-23: Enh. #738
 		if (codeMap != null) {
 			// Update the end line no relative to the start line no

@@ -147,6 +147,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
  *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
  *      
  ******************************************************************************************************
  *
@@ -1754,7 +1755,22 @@ public class Root extends Element {
 		return _sel ? this : null;
 	}
 
+	// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
+	/**
+	 * Like {@link #copy()} but also copies the file paths (particularly important
+	 * for recursive execution to avoid eternal saving requests).
+	 * @return the copied {@link Root}
+	 */
+	public Root copyWithFilepaths()
+	{
+		Root cpy = (Root)this.copy();
+		cpy.filename = this.filename;
+		cpy.shadowFilepath = this.shadowFilepath;
+		return cpy;
+	}
+	// END KGU#749 2019-10-15
 
+    @Override
     public Element copy()
     {
             Root ele = new Root(this.getText().copy());
@@ -2295,9 +2311,15 @@ public class Root extends Element {
     		// START KGU#316 2017-01-03: Issue #318 - we must not return a virtual path
     		//return new File(filename);
     		File myFile = new File(filename);
+    		//File myFile = new File("N:\\doof\\dumm\\duemmer.nsd");
     		while (myFile != null && !myFile.exists()) {
     			myFile = myFile.getParentFile();
     		}
+    		// START KGU#749 2019-10-13: Bugfix #763
+    		if (myFile != null && myFile.isDirectory()) {
+    			myFile = null;
+    		}
+    		// END KGU#749 2019-10-13
     		return myFile;
     		// END KGU#316 2017-01-03
     	}
@@ -2322,7 +2344,7 @@ public class Root extends Element {
      * Returns the absolute file path as string if this diagram is associated to a file,
      * or an empty string otherwise.<br/>
      * If the file resides within an arrz archive, the path may be a symbolic path into
-     * the arrz archive unless {@code pathOfrigin} is true, in which case it will be the
+     * the arrz archive unless {@code pathOfOrigin} is true, in which case it will be the
      * archive path itself instead.<br/>
      * {@code getPath(true)} is equivalent to {@code getFile().getAbsolutePath()} if this
      * is associated to a file at all.
@@ -2343,7 +2365,7 @@ public class Root extends Element {
     		File f = new File(filename);
     		// START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     		if (pathOfOrigin && this.shadowFilepath != null) {
-    			while(f != null && !f.isFile()) {
+    			while (f != null && !f.isFile()) {
     				f = f.getParentFile();
     			}
     			// No Zip file found?

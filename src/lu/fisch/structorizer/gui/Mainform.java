@@ -88,6 +88,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
  *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
+ *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *
  ******************************************************************************************************
  *
@@ -1084,9 +1085,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					catch (Exception e)
 					{
 						// show error
-						JOptionPane.showOptionDialog(null,e.getMessage(),
-													 "Error ...",
-													 JOptionPane.OK_OPTION, JOptionPane.ERROR_MESSAGE,null,null,null);
+						String message = e.getMessage();
+						if (message == null || message.isEmpty()) message = e.toString();
+						JOptionPane.showOptionDialog(null,
+								Menu.msgErrorSettingLaF.getText().replace("%1", _laf).replace("%2", message),
+								Menu.msgTitleError.getText(),
+								JOptionPane.OK_OPTION, 
+								JOptionPane.ERROR_MESSAGE,
+								null,null,null);
 					}
 				}
 				// START KGU#661 2019-02-20: Issue #686

@@ -181,6 +181,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-03-28      Enh. #657 - Retrieval for subroutines now with group filter
  *      Kay Gürtzig     2019-09-24      Enh. #738 - Reflection of the executed element in code preview
  *      Kay Gürtzig     2019-10-04      Precaution against ConcurrentModificationException (from Arranger)
+ *      Kay Gürtzig     2019-10-15      Issue #763 - precautions against collateral effects of widened save check.
  *
  ******************************************************************************************************
  *
@@ -2307,7 +2308,10 @@ public class Executor implements Runnable
 		// If the found subroutine is already an active caller, then we need a new instance of it
 		if (root.isCalling)
 		{
-			root = (Root)root.copy();
+			// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
+			//root = (Root)root.copy();
+			root = root.copyWithFilepaths();
+			// END KGU#749 2019-10-15
 			root.isCalling = false;
 			// Remaining initialisations will be done by this.execute(...).
 			cloned = true;

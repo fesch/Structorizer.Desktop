@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürttig         2019-10-15      Bugfix #765: Private field typeMap had to be made protected
  *
  ******************************************************************************************************
  *
@@ -256,7 +257,10 @@ public class BASHGenerator extends Generator {
 	
 	/************ Code Generation **************/
 	
-	private HashMap<String, TypeMapEntry> typeMap = null;
+	// START KGU#753 2019-10-15: Bugfix #765 had to be made protected, since KSHGenerator must initialize it as well. 
+	//private HashMap<String, TypeMapEntry> typeMap = null;
+	protected HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#753 2019-10-15 
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)

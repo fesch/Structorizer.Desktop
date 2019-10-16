@@ -52,6 +52,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürttig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens
  *
  ******************************************************************************************************
  *
@@ -132,6 +133,10 @@ public class KSHGenerator extends BASHGenerator {
 	public String generateCode(Root _root, String _indent) {
 
 		String indent = _indent;
+		// START KGU#753 2019-10-15: Bugfix #765 - superclass methods need an initialized typeMap
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#753 2019-10-15
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		
 		// START KGU#705 2019-09-23: Enh. #738
