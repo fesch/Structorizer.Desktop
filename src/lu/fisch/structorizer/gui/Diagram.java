@@ -2623,6 +2623,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				message = Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"";
 			}
+                        if(this.NSDControl==null) return false;
 			res = requestSaveDecision(message, this.NSDControl.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
 			
 			// START KGU#534 2018-06-27: Enh. #552
