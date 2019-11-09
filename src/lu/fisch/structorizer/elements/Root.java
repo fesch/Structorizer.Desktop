@@ -148,6 +148,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
+ *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      
  ******************************************************************************************************
  *
@@ -647,7 +648,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false									// 26
+		false,	true,	true					// 26 .. 28
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -3446,6 +3447,9 @@ public class Root extends Element {
     			Case caseEle = ((Case) ele);
 				int si = caseEle.qs.size();	// Number of branches
     			StringList initialVars = _vars.copy();
+    			// START KGU#758 2019-11-08: Enh. #770
+    			analyse_27_28(caseEle, _errors);
+    			// END KGU#758 2019-11-08
     			// This Hashtable will contain strings composed of as many '1' characters as
     			// branches initialise the respective new variable - so in the end we can see
     			// which variables aren't always initialised.
@@ -3471,12 +3475,12 @@ public class Root extends Element {
     			//System.out.println(myInitVars);
     			// walk trough the hash table and check
     			Enumeration<String> keys = myInitVars.keys();
-				// adapt size if no "default"
-				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
-				{
-					si--;
-				}
-				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
+    			// adapt size if no "default"
+    			if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
+    			{
+    				si--;
+    			}
+    			//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
     			while ( keys.hasMoreElements() )
     			{
     				String key = keys.nextElement();
@@ -4664,19 +4668,19 @@ public class Root extends Element {
 					// END KGU#376 2017-04-20
 					if (subResultFlags[0]) {
 						//error  = new DetectedError("Diagram «%» is rather unsuited to be included as it makes use of return.",(Element) _node.getElement(i));
-						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);    				
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);
 					}
 					// Now associate all sub-analysis results with the Call element
 					for (DetectedError err: impErrors) {
 						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
-						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);    				
+						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);
 					}
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423
 					for (String key: importedTypes.keySet()) {
 						if (key.startsWith(":") && _types.containsKey(key)) {
 							//error  = new DetectedError("There is a name conflict between local and imported type definition «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);							
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);
 						}
 						else {
 							_types.put(key, importedTypes.get(key));
@@ -4687,7 +4691,7 @@ public class Root extends Element {
 						String varName = importedVars.get(j);
 						if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (int j = 0; j < importedUncVars.count(); j++) {
@@ -4696,14 +4700,14 @@ public class Root extends Element {
 						addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), this), 3);    						    					
 						if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
 						if (!_constants.containsKey(constEntry.getKey())) {
 							_constants.put(constEntry.getKey(), constEntry.getValue());
 							if (!this.constants.containsKey(constEntry.getKey())) {
-								this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
+								this.constants.put(constEntry.getKey(), constEntry.getValue());
 							}
 						}
 					}
@@ -4732,6 +4736,55 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#514 2018-04-03
+	
+	// START KGU#758 2019-11-08: Enh. #770 - check CASE elements
+	private void analyse_27_28(Case _case, Vector<DetectedError> _errors)
+	{
+		HashSet<String> selectors = new HashSet<String>();
+		HashSet<Integer> values = new HashSet<Integer>();
+		StringList text = _case.getUnbrokenText();
+		StringList duplicates = new StringList();
+		boolean nonNumbers = false;
+		for (int i = 1; i < text.count(); i++) {
+			StringList items = Element.splitExpressionList(text.get(i), ",");
+			for (int j = 0; j < items.count(); j++) {
+				int val = 0;
+				String item = items.get(j);
+				// Check for duplicates (including the default label)
+				if (!selectors.add(item)) {
+					duplicates.add(item);
+				}
+				// Check for non-integers and non-characters (without the default branch label)
+				if (j < items.count()-1) {
+					String constVal = this.constants.get(item);
+					if (constVal == null) {
+						constVal = item;
+					}
+					// Check if it is not a character literal
+					if (!constVal.endsWith("'") || !(constVal.startsWith("'\\") && constVal.length() > 3 || constVal.startsWith("'") && constVal.length() == 3)) {
+						try {
+							val = Integer.parseInt(constVal);
+							if (!values.add(val)) {
+								duplicates.addIfNew(constVal);
+							}
+						}
+						catch (NumberFormatException ex) {
+							nonNumbers = true;
+						}
+					}
+				}
+			}
+		}
+		if (nonNumbers) {
+			//error  = new DetectedError("Some selector item seems not to be an integer constant.", _case);
+			addError(_errors, new DetectedError(Menu.error27.getText(), _case), 27);
+		}
+		if (!duplicates.isEmpty()) {
+			//error  = new DetectedError("There are multiple (conflicting) selector items (%) in the CASE element!", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error28, duplicates.concatenate(", ")), _case), 28);
+		}
+	}
+	// END KGU#758 2019-11-08
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**

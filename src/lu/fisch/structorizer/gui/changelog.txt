@@ -11,7 +11,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
 
-Current development version: 3.30-01 (2019-10-16)
+Current development version: 3.30-02 (2019-11-09)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -20,6 +20,10 @@ Current development version: 3.30-01 (2019-10-16)
 - 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
 - 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
 - 01: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
+- 02: Bugfix #769: String literals containing commas in CASE branch selectors <2>
+- 02: Enh. #770: New Analyser checks for CASE elements (selector consistency) <2>
+- 02: Bugfix #771: Unhandled syntax errors during execution (e.g. type names) <2>
+- 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

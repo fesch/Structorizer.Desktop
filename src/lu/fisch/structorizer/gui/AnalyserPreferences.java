@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
  *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions)
  *      Kay Gürtzig     2017.11.04      Enh. #452: Charm initiative: start hints tab 
+ *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *
  ******************************************************************************************************
  *
@@ -103,7 +104,9 @@ public class AnalyserPreferences extends LangDialog {
 		/*23*/"Check against faulty diagram includes.",
 		/*24*/"Check type definitions and record component access.",
 		/*25*/"Recommendations for first program instructions.",
-		/*26*/"Short \"hello world\" tour."
+		/*26*/"Short \"hello world\" tour.",
+		/*27*/"Check that CASE selector items are integer constants.",
+		/*28*/"Check that CASE selector lists are disjoint."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -117,8 +120,8 @@ public class AnalyserPreferences extends LangDialog {
 		checkboxTabs.put("Algorithmic", new int[]{
 				// instructions
 				3, 11, 22, 24,
-				0,// alternatives
-				8, 4,
+				0,// alternatives and case
+				8, 4, 27, 28,
 				0,// loops
 				1, 14, 2,
 				0,// functions and calls

@@ -536,6 +536,8 @@ Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %
 Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
 Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
+Menu.error27.text=Einige Auswahlwerte scheinen keine Ganzzahlkonstante zu sein.
+Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -569,6 +571,8 @@ AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehen
 AnalyserPreferences.checkboxes.24.text=Typedefinitionen und Zugriff auf Verbundkomponenten überprüfen.
 AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisungen (EVA-Prinzip)
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
+AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
+AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.okButton.text=OK
 
 
