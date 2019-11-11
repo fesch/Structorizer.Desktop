@@ -82,6 +82,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-10-01      Issue #754: Instruction with "return" and UNIT name for code preview fixed
  *      Kay Gürtzig         2019-11-08      Bugfix #772: NullPointerExceptions in code preview, due to late typeMap init
+ *      Kay Gürtzig         2019-11-11      Bugfix #773: Mere declarations at top level exported, incomplete
+ *                                          declarations (defective type) no longer as comment but with FIXME! marker
  *
  ******************************************************************************************************
  *
@@ -1687,6 +1689,17 @@ public class PasGenerator extends Generator
 			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
 		}
 		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			StringList declNames = new StringList();	// Names of declared variables without initialisations
+			for (String id: this.typeMap.keySet()) {
+				if (!id.startsWith(":") && !_varNames.contains(id)) {
+					declNames.add(id);
+				}
+			}
+			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+		}
+		// END KGU#759 2019-11-11
 		return includes;
 	}
 
@@ -1878,18 +1891,25 @@ public class PasGenerator extends Generator
 					type = type.substring(1);
 				}
 				type = prefix + type;
+				String comment = "";
 				if (type.contains("???")) {
+					// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
 					appendComment(varName + ": " + type + ";", indentPlus1);
+					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
+					// END KGU#759 2019-11-11
 				}
-				else {
-					if (isComplexConst) {
-						varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
-					}
-					code.add(indentPlus1 + varName + ": " + type + ";");
+				//else {
+				if (isComplexConst) {
+					varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
 				}
+				addCode(varName + ": " + type + ";" + comment, indentPlus1, false);
+				//}
 			}
 			else {
-				appendComment(varName, indentPlus1);
+				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				//appendComment(varName, indentPlus1);
+				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
+				// END KGU#759 2019-11-11
 			}
 			// END KGU#261 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388

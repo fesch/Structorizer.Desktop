@@ -92,8 +92,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation
  *      Kay Gürtzig     2019-10-04      Enh. #738: Code preview accomplished and released.
- *      Kay Gürtzig     2019-10-06      Bugfix #762?: Duplicated code lines in generateCode(Root,String) caused
+ *      Kay Gürtzig     2019-10-06      Bugfix #761: Duplicated code lines in generateCode(Root,String) caused
  *                                      wrong Root line range in the codeMap (and consecutive errors)
+ *      Kay Gürtzig     2019-11-11      Issue #767: Approach to achieve deterministic routine order on export
  *
  ******************************************************************************************************
  *
@@ -150,6 +151,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -278,7 +281,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#74 2015-11-29
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
 	/** Recursive usage map of called subroutines */
-	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #767 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Line number where to insert subroutine definitions */
 	protected int subroutineInsertionLine = 0;
 	/** Indentation level (string) for subroutine definitions to be inserted */
@@ -290,7 +296,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#178 2016-07-19
 	// START KGU#376 2017-09-20: Enh. #389
 	/** Recursive usage map of diagram includes */
-	protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #767 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> includeMap = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
 	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
@@ -1876,7 +1885,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _referenceMap - the map from referred Roots to referring Roots
 	 * @return the {@code _referred} Root if it hadn't been in {@code _referenceMap} before 
 	 */
-	private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap) {
+	// START KGU#754 2019-11-11: Issue #767 - we want deterministiv routine orders
+	//private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap)
+	private Root putRootsToMap(Root _referred, Root _caller, SortedMap<Root, SubTopoSortEntry> _referenceMap)
+	// END KGU#754 2019-11-11
+	{
 		// Is there already an entry for this root?
 		Root newSub = null;
 		SubTopoSortEntry entry = _referenceMap.get(_referred);
@@ -1950,7 +1963,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#237 2016-08-10
 	
 	// START KGU#376 2017-09-20: Enh. #389
-	private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	// START KGU#754 2019-11-11: Issue #767
+	//private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	private void registerIncludedRoots(Root _root, SortedMap<Root, SubTopoSortEntry> _includedRoots)
+	// END KGU#754 2019-11-11
 	{
 		if (_root.includeList != null && (routinePool != null)) {
 			for (int i = 0; i < _root.includeList.count(); i++)
@@ -1977,7 +1993,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 
-	private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap) {
+	// START KGU#754 2019-11-11: Issue #767 - aimed at deterministic order
+	//private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap)
+	private Root getAmongExportedRoots(String includeName, SortedMap<Root, SubTopoSortEntry> _includeMap)
+	// END KGU#754 2019-11-11
+	{
 		for (Root included: _includeMap.keySet()) {
 			if (includeName.equals(included.getMethodName())) {
 				return included;
@@ -2721,7 +2741,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
-	 * @param _root - the diagram the declarations and definitions of are to be inserted
+	 * @param _root - the diagram the declarations and definitions of which are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
@@ -3178,7 +3198,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _dependencyMap - the dependency graph of the routines as map - will be emptied!
 	 * @return queue of the sorted diagrams (independent first, dependent ones following)
 	 */
-	protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap) {
+	// START KGU#754 2019-11-11: Issue #767 - we want to achieve deterministic routine order
+	//protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap)
+	protected Queue<Root> sortTopologically(SortedMap<Root, SubTopoSortEntry> _dependencyMap)
+	// END KGU#754 2019-11-11
+	{
 		Queue<Root> sortedRoots = new LinkedList<Root>();
 		Queue<Root> roots = new LinkedList<Root>();
 		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines

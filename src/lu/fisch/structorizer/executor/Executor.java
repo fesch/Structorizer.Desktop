@@ -7086,7 +7086,12 @@ public class Executor implements Runnable
 				}
 				// START KGU#756 2019-11-08: Internal interpreter errors may e.g. occur if a type name "Char" is evaluated
 				catch (Error ex) {
-					throw new EvalError("Error on evaluating «" + expr + "»: " + ex.toString(), null, null);
+					if (ex.getClass().getName().equals("bsh.Parser$LookaheadSuccess")) {
+						throw new EvalError("Syntax error in expression «" + expr + "» - possibly a misplaced type name.", null, null);
+					}
+					else {
+						throw ex;
+					}
 				}
 				// END KGU#756 2019-11-08
 			} while (error423);

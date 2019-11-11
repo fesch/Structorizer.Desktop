@@ -75,6 +75,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig             2019-03-28      Enh. #657: Retrieval for called subroutines now with group filter
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-11-11      Bugfix #773: Mere declarations at top level exported, declarations
+ *                                              with incomplete type no longer outcommented but marked with FIXME! comments
  *
  ******************************************************************************************************
  *
@@ -1248,11 +1250,11 @@ public class OberonGenerator extends Generator {
 //			{
 //				code.add(_root.getComment().get(i));
 //			}
-//	        // START KGU 2014-11-16: Don't get the comments get lost
+//			// START KGU 2014-11-16: Don't get the comments get lost
 //			else {
 //				insertComment(_root.getComment().get(i).substring(1), "");
 //			}
-//	        // END KGU 2014-11-16
+//			// END KGU 2014-11-16
 //			
 //		}
 //		
@@ -1394,11 +1396,11 @@ public class OberonGenerator extends Generator {
 //			{
 //				code.add(_indent + _root.getComment().get(i));
 //			}
-//	        // START KGU 2014-11-16: Don't let the comments get lost
+//			// START KGU 2014-11-16: Don't let the comments get lost
 //			else {
 //				insertComment(_root.getComment().get(i).substring(1), _indent);
 //			}
-//	        // END KGU 2014-11-16
+//			// END KGU 2014-11-16
 //		}
 		// START KGU 2016-01-16: No need to create an empty comment
 		//insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
@@ -1488,11 +1490,9 @@ public class OberonGenerator extends Generator {
 		}
 		// END KGU#236 2016-08-10
 		// START KGU#376 2017-10-24: Enh. #389 - code of includes is to be produced here
-		if (!_root.isInclude()) {
-			if (_root.isProgram()) {
-				for (Root incl: includes) {
-					generateCode(incl.children, _indent + this.getIndent());
-				}
+		if (_root.isProgram()) {
+			for (Root incl: includes) {
+				generateCode(incl.children, _indent + this.getIndent());
 			}
 		}
 		// END KGU#376 2017-10-24
@@ -1588,6 +1588,17 @@ public class OberonGenerator extends Generator {
 			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
 		}
 		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			StringList declNames = new StringList();	// Names of declared variables without initialisations
+			for (String id: this.typeMap.keySet()) {
+				if (!id.startsWith(":") && !_varNames.contains(id)) {
+					declNames.add(id);
+				}
+			}
+			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+		}
+		// END KGU#759 2019-11-11
 		return includes;
 	}
 
@@ -1734,18 +1745,25 @@ public class OberonGenerator extends Generator {
 			}
 			if (types != null && types.count() == 1) {
 				String type = this.resolveArrayType(typeInfo, types.get(0));
+				String comment = "";
 				if (type.contains("???")) {
-					appendComment(varName + ": " + type + ";", indentPlus1);
+					// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+					//appendComment(varName + ": " + type + ";", indentPlus1);
+					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
+					// END KGU#759 2019-11-11
 				}
-				else {
-					if (isComplexConst) {
-						varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
-					}
-					code.add(indentPlus1 + varName + ": " + type + ";");
+				//else {
+				if (isComplexConst) {
+					varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
 				}
+				addCode(varName + ": " + type + ";" + comment, indentPlus1, false);
+				//}
 			}
 			else {
-				appendComment(varName + ": ???;", indentPlus1);
+				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				//appendComment(varName + ": ???;", indentPlus1);
+				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
+				// END KGU#759 2019-11-11
 			}
 		}
 		return _sectionBegun;
