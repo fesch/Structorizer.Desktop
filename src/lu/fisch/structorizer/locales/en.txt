@@ -534,6 +534,8 @@ Menu.hint26.1.text=Now you may e.g. test your diagram: → Menu "%1 ► %2"
 Menu.hint26.2.text=Now you may e.g. save your diagram: → Menu "%1 ► %2"
 Menu.hint26.3.text=Now you may e.g. export your diagram to some programming language: → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=Now you may e.g. export your diagram as graphics file: → Menu "%1 ► %2 ► %3"
+Menu.error27.text=Some @c selector items don't seem to be integer constants.
+Menu.error28.text=There are multiple (conflicting) selector items (%) in the @c element!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -567,6 +569,8 @@ AnalyserPreferences.checkboxes.23.text=Check against faulty diagram imports.
 AnalyserPreferences.checkboxes.24.text=Check type definitions and record component access.
 AnalyserPreferences.checkboxes.25.text=Guide to first program instructions (IPO model)
 AnalyserPreferences.checkboxes.26.text=Short "hello world" tour
+AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer constants.
+AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
 AnalyserPreferences.okButton.text=OK
 
 

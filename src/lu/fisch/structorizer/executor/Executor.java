@@ -182,6 +182,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-09-24      Enh. #738 - Reflection of the executed element in code preview
  *      Kay Gürtzig     2019-10-04      Precaution against ConcurrentModificationException (from Arranger)
  *      Kay Gürtzig     2019-10-15      Issue #763 - precautions against collateral effects of widened save check.
+ *      Kay Gürtzig     2019-11-08      Bugfix #769 - CASE selector list splitting was too simple for string literals
+ *      Kay Gürtzig     2019-11-09      Bugfix #771 - Unhandled errors deep from the interpreter
  *
  ******************************************************************************************************
  *
@@ -311,6 +313,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -5817,7 +5820,10 @@ public class Executor implements Runnable
 			{
 				// START KGU#15 2015-10-21: Support for multiple constants per branch
 				//String test = convert(expression + text.get(q));
-				String[] constants = text.get(q).split(",");
+				// START KGU#755 2019-11-08: Bugfix #769 - string literals might contain commas
+				//String[] constants = text.get(q).split(",");
+				String[] constants = Element.splitExpressionList(text.get(q), ",").toArray();
+				// END KGU#755 2019-11-08
 				// END KGU#15 2015-10-21
 				boolean go = false;
 				if ((q == last) && hasDefaultBranch)
@@ -7078,6 +7084,16 @@ public class Executor implements Runnable
 						throw err;
 					}
 				}
+				// START KGU#756 2019-11-08: Internal interpreter errors may e.g. occur if a type name "Char" is evaluated
+				catch (Error ex) {
+					if (ex.getClass().getName().equals("bsh.Parser$LookaheadSuccess")) {
+						throw new EvalError("Syntax error in expression «" + expr + "» - possibly a misplaced type name.", null, null);
+					}
+					else {
+						throw ex;
+					}
+				}
+				// END KGU#756 2019-11-08
 			} while (error423);
 		}
 		return value;

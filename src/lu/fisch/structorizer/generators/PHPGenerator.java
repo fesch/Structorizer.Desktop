@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw-flavour Jumps
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *
  ******************************************************************************************************
  *
@@ -408,7 +409,10 @@ public class PHPGenerator extends Generator
     	{
     		// START KGU#15 2015-11-02: Support for multiple constants per branch
     		//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
-    		StringList constants = StringList.explode(lines.get(i+1), ",");
+    		// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+    		//StringList constants = StringList.explode(lines.get(i+1), ",");
+    		StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+    		// END KGU#755 2019-11-08
     		for (int j = 0; j < constants.count(); j++)
     		{
     			addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);

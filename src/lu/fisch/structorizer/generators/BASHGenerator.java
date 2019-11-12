@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürttig         2019-10-15      Bugfix #765: Private field typeMap had to be made protected
+ *      Kay Gürtzig         2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *
  ******************************************************************************************************
  *
@@ -920,7 +921,11 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 			// START KGU#453 2017-11-02: Issue #447
 			//addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
-			addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			StringList items = Element.splitExpressionList(unbrokenText.get(i+1).trim(), ",");
+			addCode(this.getIndent() + items.concatenate("|") + ")", _indent, disabled);
+			// END KGU#755 2019-11-08
 			// END KGU#453 2017-11-02
 			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02

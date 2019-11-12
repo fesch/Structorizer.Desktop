@@ -81,6 +81,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-10-01      Issue #754: Instruction with "return" and UNIT name for code preview fixed
+ *      Kay Gürtzig         2019-11-08      Bugfix #772: NullPointerExceptions in code preview, due to late typeMap init
+ *      Kay Gürtzig         2019-11-11      Bugfix #773: Mere declarations at top level exported, incomplete
+ *                                          declarations (defective type) no longer as comment but with FIXME! marker
  *
  ******************************************************************************************************
  *
@@ -494,7 +497,7 @@ public class PasGenerator extends Generator
 				posDecl = code.indexOf(seekIndent + "var");
 				if (posDecl >= 0) {
 					insertCode("", posDecl);
-					insertCode(seekIndent + _category, posDecl);					
+					insertCode(seekIndent + _category, posDecl);
 				}
 				seekIndent += this.getIndent();
 			}
@@ -504,9 +507,9 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#61 2016-03-23
 
-    @Override
-    protected void generateCode(Instruction _inst, String _indent)
-    {
+	@Override
+	protected void generateCode(Instruction _inst, String _indent)
+	{
 		if (!appendAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
@@ -877,7 +880,7 @@ public class PasGenerator extends Generator
 
     	addCode("case "+condition+" of", _indent, isDisabled);
 
-    	for(int i=0;i<_case.qs.size()-1;i++)
+    	for (int i = 0; i < _case.qs.size()-1; i++)
     	{
     		// START KGU#453 2017-11-02: Issue #447
     		//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
@@ -1395,6 +1398,10 @@ public class PasGenerator extends Generator
 			}
 			// END KGU#351 2017-02-26
 		}
+		
+		// START KGU#757 2019-11-08: Bugfix #772 - had been in generatePreamble, which might cause NullPointerExceptions here
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#757 2019-11-08
 
 		String signature = _root.getMethodName();
 		if (!_root.isProgram()) {
@@ -1534,7 +1541,7 @@ public class PasGenerator extends Generator
 		// START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//typeMap = _root.getTypeInfo();
-		typeMap = _root.getTypeInfo(routinePool);
+		//typeMap = _root.getTypeInfo(routinePool); // KGU#757 2019-11-08 Bugfix #772 - moved to generateHeader()
 		// END KGU#676 2019-03-30
 		// END KGU#261 2017-01-30
 		// START KGU#388 2017-09-20: Enh. #423
@@ -1682,6 +1689,17 @@ public class PasGenerator extends Generator
 			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
 		}
 		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			StringList declNames = new StringList();	// Names of declared variables without initialisations
+			for (String id: this.typeMap.keySet()) {
+				if (!id.startsWith(":") && !_varNames.contains(id)) {
+					declNames.add(id);
+				}
+			}
+			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+		}
+		// END KGU#759 2019-11-11
 		return includes;
 	}
 
@@ -1873,18 +1891,25 @@ public class PasGenerator extends Generator
 					type = type.substring(1);
 				}
 				type = prefix + type;
+				String comment = "";
 				if (type.contains("???")) {
+					// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
 					appendComment(varName + ": " + type + ";", indentPlus1);
+					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
+					// END KGU#759 2019-11-11
 				}
-				else {
-					if (isComplexConst) {
-						varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
-					}
-					code.add(indentPlus1 + varName + ": " + type + ";");
+				//else {
+				if (isComplexConst) {
+					varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
 				}
+				addCode(varName + ": " + type + ";" + comment, indentPlus1, false);
+				//}
 			}
 			else {
-				appendComment(varName, indentPlus1);
+				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				//appendComment(varName, indentPlus1);
+				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
+				// END KGU#759 2019-11-11
 			}
 			// END KGU#261 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388

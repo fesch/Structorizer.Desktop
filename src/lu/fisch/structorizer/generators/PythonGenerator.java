@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
+ *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *
  ******************************************************************************************************
  *
@@ -675,7 +676,10 @@ public class PythonGenerator extends Generator
 		{
 			String caseline = _indent + ((i == 0) ? "if" : "elif") + " (";
 			// START KGU#15 2015-10-21: Support for multiple constants per branch
-			StringList constants = StringList.explode(lines.get(i+1), ",");
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//StringList constants = StringList.explode(lines.get(i+1), ",");
+			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++)
 			{
 				if (j > 0) caseline = caseline + " or ";

@@ -92,6 +92,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-09-24/25   Bugfix #752: Declarations in Calls are to be handled, workaround for type defects
  *      Kay Gürtzig             2019-10-02      Enh. #721: New hooks for Jacascript in declaration handling
  *      Kay Gürtzig             2019-10-03      Bugfix #756: Transformation damage on expressions containing "<-" and brackets
+ *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
  *
  ******************************************************************************************************
  *
@@ -1206,7 +1208,10 @@ public class CGenerator extends Generator {
 		for (int i = 0; i < _case.qs.size() - 1; i++) {
 			// START KGU#15 2015-10-21: Support for multiple constants per
 			// branch
-			StringList constants = StringList.explode(lines.get(i + 1), ",");
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//StringList constants = StringList.explode(lines.get(i + 1), ",");
+			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++) {
 				code.add(_indent + "case " + constants.get(j).trim() + ":");
 			}
@@ -2147,7 +2152,10 @@ public class CGenerator extends Generator {
 			setDefHandled(_root.getSignatureString(false), _name);
 			// END KGU#424 2017-09-26
 			if (decl.contains("???")) {
-				appendComment(decl + ";", _indent);
+				// START #730 2019-11-12: Issue #752 don't comment it out, a missing declaration is a syntax error anyway
+				//appendComment(decl + ";", _indent);
+				addCode(decl + ";", _indent, false);
+				// END KGU#730 2019-11-12
 			}
 			else {
 				// START KGU#501 2018-02-22: Bugfix #517 In Java, C++, or C# we may need modifiers here
@@ -2158,7 +2166,10 @@ public class CGenerator extends Generator {
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
 		else if (types == null || _fullDecl){
-			appendComment(_name + ";", _indent);
+			// START #730 2019-11-12: Issue #752 don't comment it out, a missing declaration is a syntax error anyway
+			//appendComment(_name + ";", _indent);
+			addCode("??? " + _name + ";", _indent, false);
+			// END KGU#730 2019-11-12
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
 			setDefHandled(_root.getSignatureString(false), _name);
 			// END KGU#424 2017-09-26
