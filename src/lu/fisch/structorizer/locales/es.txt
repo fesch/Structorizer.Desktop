@@ -538,7 +538,7 @@ Menu.hint26.1.text=Ahora puedes p.ej. probar tu diagrama: → Menú "%1 ► %2"
 Menu.hint26.2.text=Ahora puedes p.ej. grabar tu diagrama: → Menú "%1 ► %2"
 Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Menú "%1 ► %2 ► %3"
 Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menú "%1 ► %2 ► %3"
-Menu.error27.text=Algunos valores comparativos @c no parecen constantes integrales.
+Menu.error27.text=Algunos valores comparativos @c (p.ej. «%») no parecen constantes integrales.
 Menu.error28.text=!Valores comparativos (%) ocurren varias veces o en más de un ramo del elemento @c!
 Menu.errorLineReference.text= (línea %)
 

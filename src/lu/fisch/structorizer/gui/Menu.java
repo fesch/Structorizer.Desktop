@@ -559,8 +559,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			new LangTextHolder("Now you may e.g. export your diagram as graphics file: → Menu \"%1 ► %2 ► %3\"")
 	};
 	// END KGU#456 2017-11-01
-	public static final LangTextHolder error27 = new LangTextHolder("Some selector item seems not to be an integer constant.");
+	// START KGU#758 2019-11-08: Enh. #770
+	public static final LangTextHolder error27 = new LangTextHolder("Some selector items (e.g. «%») don't seem to be integer constants.");
 	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
+	// END KGU#758 2019-11-08
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
 	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");

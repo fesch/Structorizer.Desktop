@@ -477,6 +477,8 @@ Menu.hint26.1.text=
 Menu.hint26.2.text=
 Menu.hint26.3.text=
 Menu.hint26.4.text=
+Menu.error27.text=Некоторые показатели выбора (напр. «%») не являются целочисленными постоянными.
+Menu.error28.text=Некоторые показатели выбора (%) стоят над различными ветками!
 Menu.errorLineReference.text=(строка %)
 
 -----[ AnalyserPreferences ]-----
@@ -510,6 +512,8 @@ AnalyserPreferences.checkboxes.23.text=
 AnalyserPreferences.checkboxes.24.text=
 AnalyserPreferences.checkboxes.25.text=
 AnalyserPreferences.checkboxes.26.text=Краткий курс "Привет, мир!"
+AnalyserPreferences.checkboxes.27.text=Проверять что @c показатели являются целочисленными постоянными.
+AnalyserPreferences.checkboxes.28.text=Проверять что @c показатели не стоят над различными ветками.
 AnalyserPreferences.okButton.text=ОК
 
 

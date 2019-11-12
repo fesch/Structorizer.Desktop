@@ -11,7 +11,7 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
 
-Current development version: 3.30-02 (2019-11-12)
+Current development version: 3.30-03 (2019-11-12)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -27,6 +27,7 @@ Current development version: 3.30-02 (2019-11-12)
 - 02: Bugfix #771: Unhandled syntax errors during execution (e.g. type names) <2>
 - 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
 - 02: Bugfix #773: Export of declarations to Oberon, Pascal [K.-P. Reimers]2
+- 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

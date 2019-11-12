@@ -4744,7 +4744,7 @@ public class Root extends Element {
 		HashSet<Integer> values = new HashSet<Integer>();
 		StringList text = _case.getUnbrokenText();
 		StringList duplicates = new StringList();
-		boolean nonNumbers = false;
+		String aNonNumber = null;
 		for (int i = 1; i < text.count(); i++) {
 			StringList items = Element.splitExpressionList(text.get(i), ",");
 			for (int j = 0; j < items.count(); j++) {
@@ -4752,10 +4752,10 @@ public class Root extends Element {
 				String item = items.get(j);
 				// Check for duplicates (including the default label)
 				if (!selectors.add(item)) {
-					duplicates.add(item);
+					duplicates.addIfNew(item);
 				}
 				// Check for non-integers and non-characters (without the default branch label)
-				if (j < items.count()-1) {
+				if (i < text.count()-1) {
 					String constVal = this.constants.get(item);
 					if (constVal == null) {
 						constVal = item;
@@ -4769,15 +4769,15 @@ public class Root extends Element {
 							}
 						}
 						catch (NumberFormatException ex) {
-							nonNumbers = true;
+							aNonNumber = item;
 						}
 					}
 				}
 			}
 		}
-		if (nonNumbers) {
+		if (aNonNumber != null) {
 			//error  = new DetectedError("Some selector item seems not to be an integer constant.", _case);
-			addError(_errors, new DetectedError(Menu.error27.getText(), _case), 27);
+			addError(_errors, new DetectedError(errorMsg(Menu.error27, aNonNumber), _case), 27);
 		}
 		if (!duplicates.isEmpty()) {
 			//error  = new DetectedError("There are multiple (conflicting) selector items (%) in the CASE element!", _case);

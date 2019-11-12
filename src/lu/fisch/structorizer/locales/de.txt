@@ -536,7 +536,7 @@ Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %
 Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
 Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
-Menu.error27.text=Einige Auswahlwerte scheinen keine Ganzzahlkonstante zu sein.
+Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
 Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.errorLineReference.text= (Zeile %)
 
