@@ -84,6 +84,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-08      Bugfix #772: NullPointerExceptions in code preview, due to late typeMap init
  *      Kay Gürtzig         2019-11-11      Bugfix #773: Mere declarations at top level exported, incomplete
  *                                          declarations (defective type) no longer as comment but with FIXME! marker
+ *      Kay Gürtzig         2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
+ *                                          as local declarations in subroutines where the variables get assigned
  *
  ******************************************************************************************************
  *
@@ -1686,18 +1688,29 @@ public class PasGenerator extends Generator
 		//if (_varNames != null) {
 		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 		// END KGU#504 2018-03-13
-			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
-		}
-		// END KGU#375 2017-04-12
-		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
-		if (topLevel) {
-			StringList declNames = new StringList();	// Names of declared variables without initialisations
-			for (String id: this.typeMap.keySet()) {
-				if (!id.startsWith(":") && !_varNames.contains(id)) {
-					declNames.add(id);
+			// START KGU#762 2019-11-13: Bugfix #776 - we must not repeat mere decalartions from Includables here
+			//introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+			StringList ownVarNames = _varNames.copy();
+			if (!topLevel && _root.includeList != null) {
+				for (Root incl: includedRoots) {
+					// Because of recursiveness of declaration retrieval, we may restrict to the
+					// directly included diagrams, this reduces the risk of eliminating variable
+					// names that are not included but locally defined.
+					if (_root.includeList.contains(incl.getMethodName())) {
+						StringList declNames = incl.getMereDeclarationNames();
+						for (int i = 0; i < declNames.count(); i++) {
+							ownVarNames.removeAll(declNames.get(i));
+						}
+					}
 				}
 			}
-			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+			introPlaced = generateVarDecls(_root, _indent, ownVarNames, _complexConsts, introPlaced);
+			// END KGU#762 2019-11-13
+		}
+		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
 		}
 		// END KGU#759 2019-11-11
 		return includes;

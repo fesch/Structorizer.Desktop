@@ -77,6 +77,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-11-11      Bugfix #773: Mere declarations at top level exported, declarations
  *                                              with incomplete type no longer outcommented but marked with FIXME! comments
+ *      Kay Gürtzig             2019-11-12      Enh. #775: Slightly more type-sensitive input instruction handling
+ *      Kay Gürtzig             2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
+ *                                              as local declarations in subroutines where the variables get assigned
  *
  ******************************************************************************************************
  *
@@ -525,16 +528,22 @@ public class OberonGenerator extends Generator {
 						if (!prompt.isEmpty()) {
 							generateTypeSpecificOutput(prompt, _indent, isDisabled, outputKey);
 						}
-						appendComment("TODO: Replace \"TYPE\" by the the actual In procedure name for the respective type!", _indent);
+						//appendComment("TODO: Replace \"TYPE\" by the the actual In procedure name for the respective type!", _indent);
 						for (int j = 1; j < inputItems.count(); j++) {
 							String inputItem = inputItems.get(j);
-							addCode(transform(inputKey + " \"" + inputItem + "\" " + inputItem), _indent, isDisabled);
+							// START KGU#761 2019-11-12: Enh. #775 - slightly more intelligence is feasible here
+							//addCode(transform(inputKey + " \"" + inputItem + "\" " + inputItem), _indent, isDisabled);
+							addCode(specifyInputMethod(_indent, inputItem, transform(inputKey + " \"" + inputItem + "\" " + inputItem)), _indent, isDisabled);
+							// END KGU#761 2019-11-12
 						}
 					}
 					else {
 						String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
 						if (transf.contains("In.TYPE(")) {
-							appendComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+							// START KGU#761 2019-11-12: Enh. #775 - slightly more intelligence is feasible here
+							//appendComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+							transf = specifyInputMethod(_indent, inputItems.get(1), transf);
+							// END KGU#761 2019-11-12
 						}
 						addCode(transf, _indent, isDisabled);
 					}
@@ -654,6 +663,50 @@ public class OberonGenerator extends Generator {
 		}
 		// END KGU 2015-10-18
 	}
+	
+	// START KGU#761 2019-11-12: Enh. #775 - slightly more intelligence is feasible here
+	/**
+	 * Tries to replace the placeholder `TYPE' in the transformed default input phrase {@code transf}
+	 * by a type-specific actual method name for the type of the variable given by {@code varName}.
+	 * @param _indent - current indentation level
+	 * @param varName - input variable string (might of course be an array element or a record component)
+	 * @param transf - the general transformed input instruction, presumably with placeholder "In.TYPE(..."
+	 * @return a revised (and more specific) input instruction
+	 */
+	private String specifyInputMethod(String _indent, String varName, String transf) {
+		boolean done = false;
+		TypeMapEntry type = this.typeMap.get(varName);
+		if (type != null) {
+			String typeName = type.getCanonicalType(true, true);
+			if (typeName != null && !typeName.trim().isEmpty() && !typeName.contains("???")) {
+				typeName = this.transformType(typeName, "TYPE");
+				done = true;
+				if (typeName.equals("INTEGER") || typeName.equals("SHORTINT")) {
+					transf = transf.replace("In.TYPE(", "In.Int(");
+				}
+				else if (typeName.equals("LONGINT")) {
+					transf = transf.replace("In.TYPE(", "In.LongInt(");
+				}
+				else if (typeName.equals("CHAR")) {
+					transf = transf.replace("In.TYPE(", "In.Char(");
+				}
+				else if (typeName.endsWith("REAL")) {
+					transf = transf.replace("In.TYPE(", "In.Real(");
+				}
+				else if (typeName.equals("ARRAY 100 OF CHAR")) {
+					transf = transf.replace("In.TYPE(", "In.String(");
+				}
+				else {
+					done = false;
+				}
+			}
+		}
+		if (!done) {
+			appendComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+		}
+		return transf;
+	}
+	// END KGU#761 2019-11-12
 
 	// START KGU#236 2016-10-15: Issue #227 - For literals, we can of course determine the type...
 	/**
@@ -1576,6 +1629,8 @@ public class OberonGenerator extends Generator {
 		}
 		
 		introPlaced = false;	// Has the TYPE keyword already been written?
+		// We must not repeat global declaration on local level, the loop won't be executed on sub-levels
+		// because `includes' was only filled at top level (see above)
 		for (Root incl: includes) {
 			if (incl != _root) {
 				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), _complexConsts, introPlaced);
@@ -1585,18 +1640,29 @@ public class OberonGenerator extends Generator {
 		//if (_varNames != null) {
 		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 		// END KGU#504 2018-03-13
-			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
-		}
-		// END KGU#375 2017-04-12
-		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
-		if (topLevel) {
-			StringList declNames = new StringList();	// Names of declared variables without initialisations
-			for (String id: this.typeMap.keySet()) {
-				if (!id.startsWith(":") && !_varNames.contains(id)) {
-					declNames.add(id);
+			// START KGU#762 2019-11-13: Bugfix #776 - we must not repeat mere decalartions from Includables here
+			//introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+			StringList ownVarNames = _varNames.copy();
+			if (!topLevel && _root.includeList != null) {
+				for (Root incl: includedRoots) {
+					// Because of recursiveness of declaration retrieval, we may restrict to the
+					// directly included diagrams, this reduces the risk of eliminating variable
+					// names that are not included but locally defined.
+					if (_root.includeList.contains(incl.getMethodName())) {
+						StringList declNames = incl.getMereDeclarationNames();
+						for (int i = 0; i < declNames.count(); i++) {
+							ownVarNames.removeAll(declNames.get(i));
+						}
+					}
 				}
 			}
-			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+			introPlaced = generateVarDecls(_root, _indent, ownVarNames, _complexConsts, introPlaced);
+			// END KGU#762 2019-11-13
+		}
+		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
 		}
 		// END KGU#759 2019-11-11
 		return includes;

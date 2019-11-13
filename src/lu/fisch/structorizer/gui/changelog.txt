@@ -28,6 +28,7 @@ Current development version: 3.30-03 (2019-11-12)
 - 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
 - 02: Bugfix #773: Export of declarations to Oberon, Pascal [K.-P. Reimers]2
 - 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
+- 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
