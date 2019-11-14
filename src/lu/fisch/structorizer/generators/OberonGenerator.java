@@ -80,6 +80,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-12      Enh. #775: Slightly more type-sensitive input instruction handling
  *      Kay Gürtzig             2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
  *                                              as local declarations in subroutines where the variables get assigned
+ *      Kay Gürtzig             2019-11-14      Bugfix #779 Correct handling of input and output in case of program diagrams
+ *      Kay Gürtzig             2019-11-14      Issue #780: Definitions and calls of parameterless procedures omit parentheses
  *
  ******************************************************************************************************
  *
@@ -1166,6 +1168,9 @@ public class OberonGenerator extends Generator {
 			// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 			//addCode(transform(lines.get(i))+";", _indent, isDisabled);
 			String line = lines.get(i);
+			// START KGU#766 2019-11-14: Issue #780 Omit empty parentheses on procedure calls.
+			boolean isFctCall = Instruction.isAssignment(line);
+			// END KGU#766 2019-11-14
 			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 				Function call = _call.getCalledRoutine();
 				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
@@ -1179,8 +1184,18 @@ public class OberonGenerator extends Generator {
 						line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
 								defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
 					}
+					// START KGU#766 2019-11-14: Issue #780 Check if it might yet be a function
+					if (called.getResultType() != null) {
+						isFctCall = true;
+					}
+					// END KGU#766 2019-11-14
 				}
 			}
+			// START KGU#766 2019-11-14: Issue #780 Omit empty parentheses on procedure calls.
+			if (!isFctCall && line.endsWith("()")) {
+				line = line.substring(0, line.length()-2);
+			}
+			// END KGU#766 2019-11-14
 			addCode(transform(line)+";", _indent, isDisabled);
 			// END KGU#371 2019-03-08
 		}
@@ -1327,8 +1342,13 @@ public class OberonGenerator extends Generator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		// FIXME: How to handle includable diagrams?
 		String header = (_root.isProgram() ? "MODULE " : "PROCEDURE ") + _procName;
+		// START KGU#765 2019-11-14: Enh. 346, bugfix #779 Avoid duplicate IMPORTs
+		if (topLevel) {
+			if (this.hasInput()) generatorIncludes.add("In");
+			if (this.hasOutput()) generatorIncludes.add("Out");
+		}
+		// END KGU#765 2019-11-14
 		if (!_root.isProgram())
 		{
 			// FIXME: How to handle includable diagrams?
@@ -1353,7 +1373,7 @@ public class OberonGenerator extends Generator {
 				code.add(_indent + "MODULE " + moduleName + ";");
 				code.add(_indent);
 
-				// STARTB KGU#351 2017-02-26: Enh. #346
+				// START KGU#351 2017-02-26: Enh. #346
 				this.appendUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				if (this.hasInput() || this.hasOutput())
@@ -1378,7 +1398,8 @@ public class OberonGenerator extends Generator {
 
 			header += "*";	// Marked for export as default
 			String lastType = "";
-			header += "(";
+			//header += "(";
+			String paramList = "";
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
 				String type = transformType(_paramTypes.get(p), "(*type?*)");
@@ -1390,29 +1411,30 @@ public class OberonGenerator extends Generator {
 				if (p > 0) {
 					if (type.equals("(*type?*)") || !type.equals(lastType)) {
 				// END KGU#140 2017-01-31
-						header += ": " + lastType + "; ";
+						paramList += ": " + lastType + "; ";
 						// START KGU#332 2017-01-31: Enh. #335 Improved type support
 						if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
-							header += "VAR ";
+							paramList += "VAR ";
 						}
 						// END KGU#332 2017-01-31
 					}
 					else {
-						header += ", ";
+						paramList += ", ";
 					}
 				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				}
 				// END KGU#140 2017-01-31
-				header += _paramNames.get(p).trim();
+				paramList += _paramNames.get(p).trim();
 				if (p+1 == nParams) {
 					//header += ": " + type + ")";
-					header += ": " + type;
+					paramList += ": " + type;
 				}
 				lastType = type;
 			}
-			header += ")";
+			//header += ")";
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
+				header += "(" + paramList + ")";
 				// START KGU#332 2017-01-31: Enh. #335
 				//header += ": " + transformType(_resultType, "");
 				String oberonType = transformType(_resultType, "");
@@ -1421,6 +1443,9 @@ public class OberonGenerator extends Generator {
 				}
 				header += ": " + oberonType;
 				// END KGI#332 2017-01-31
+			}
+			else if (!paramList.isEmpty()) {
+				header += "(" + paramList + ")";
 			}
 		}
 		
@@ -1431,13 +1456,25 @@ public class OberonGenerator extends Generator {
 		//{
 		//	code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
 		//}
-		if (_root.isProgram() && (this.hasInput(_root) || this.hasOutput(_root)))
+		// START KGU#765 2019-11-14: Bugfix #779
+		//if (_root.isProgram() && (this.hasInput(_root) || this.hasOutput(_root)))
+		//{
+		//	StringList ioModules = new StringList();
+		//	if (this.hasInput(_root)) ioModules.add("In");
+		//	if (this.hasOutput(_root)) ioModules.add("Out");
+		//	code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
+		//}
+		if (_root.isProgram())
 		{
-  			StringList ioModules = new StringList();
-			if (this.hasInput(_root)) ioModules.add("In");
-			if (this.hasOutput(_root)) ioModules.add("Out");
-			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
+			this.appendUserIncludes(_indent);
+			if (this.hasInput() || this.hasOutput()) {
+				StringList ioModules = new StringList();
+				if (this.hasInput()) ioModules.add("In");
+				if (this.hasOutput()) ioModules.add("Out");
+				code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
+			}
 		}
+		// END KGU#765 2019-11-14
 		// END KGU#236 2016-08-10
 		// END KGU#61 2016-03-23
 
@@ -1533,11 +1570,17 @@ public class OberonGenerator extends Generator {
 		code.add(_indent + "BEGIN");
 		// START KGU#236 2016-08-10: Issue #227
 		boolean isProcModule = _root.isSubroutine() && this.optionExportSubroutines();
-		if (topLevel && this.hasInput(_root) && !isProcModule)
+		// START KGU#765 2019-11-14: Bugfix #779
+		//if (topLevel && this.hasInput(_root) && !isProcModule)
+		if (topLevel && this.hasInput() && !isProcModule)
+		// END KGU#765 2019-11-14
 		{
 			code.add(_indent + this.getIndent() + "In.Open;");
 		}
-		if (topLevel && this.hasOutput(_root) && !isProcModule)
+		// START KGU#765 2019-11-14: Bugfix #779
+		//if (topLevel && this.hasOutput(_root) && !isProcModule)
+		if (topLevel && this.hasOutput() && !isProcModule)
+		// END KGU#765 2019-11-14
 		{
 			code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
 		}

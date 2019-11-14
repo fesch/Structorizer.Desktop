@@ -49,8 +49,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
  *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
  *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" added.
- *      Kay Gürtuig     2017.06.30      Enh. #389: New attribute "includeList" added.
+ *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList" added.
  *      Kay Gürtzig     2019-03-17      Enh. #56: Method generateCode(Try, String) implemented.
+ *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
  *
  ******************************************************************************************************
  *
@@ -517,48 +518,49 @@ public class XmlGenerator extends Generator
 		return code.getText();
 	}
 
-	private String loadLicenseText(String licName) {
-		String error = null;
-		String content = "";
-		File licDir = Ini.getIniDirectory();
-		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
-		File[] licFiles = licDir.listFiles(new LicFilter());
-		File licFile = null; 
-		for (int i = 0; licFile == null && i < licFiles.length; i++) {
-			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
-				licFile = licFiles[i];
-			}		
-		}
-		BufferedReader br = null;
-		try {
-			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
-			br = new BufferedReader(isr);
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				content += line + '\n';
-			};
-		} catch (UnsupportedEncodingException e) {
-			error = e.getMessage();
-		} catch (FileNotFoundException e) {
-			error = e.getMessage();
-		} catch (IOException e) {
-			error = e.getMessage();
-		}
-		if (br != null) {
-			try {
-				br.close();
-			} catch (IOException e) {
-				error = e.getMessage();
-			}
-		}
-		if (error != null) {
-			getLogger().log(Level.WARNING, "{0}", error);
-		}
-		if (content.trim().isEmpty()) {
-			content = null;
-		}
-		return content;	
-	}
+// START KGU#763 2019-11-13: Bugfix #778 - moved to class Generator
+//	private String loadLicenseText(String licName) {
+//		String error = null;
+//		String content = "";
+//		File licDir = Ini.getIniDirectory();
+//		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+//		File[] licFiles = licDir.listFiles(new LicFilter());
+//		File licFile = null; 
+//		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+//			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+//				licFile = licFiles[i];
+//			}		
+//		}
+//		BufferedReader br = null;
+//		try {
+//			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+//			br = new BufferedReader(isr);
+//			String line = null;
+//			while ((line = br.readLine()) != null) {
+//				content += line + '\n';
+//			};
+//		} catch (UnsupportedEncodingException e) {
+//			error = e.getMessage();
+//		} catch (FileNotFoundException e) {
+//			error = e.getMessage();
+//		} catch (IOException e) {
+//			error = e.getMessage();
+//		}
+//		if (br != null) {
+//			try {
+//				br.close();
+//			} catch (IOException e) {
+//				error = e.getMessage();
+//			}
+//		}
+//		if (error != null) {
+//			getLogger().log(Level.WARNING, "{0}", error);
+//		}
+//		if (content.trim().isEmpty()) {
+//			content = null;
+//		}
+//		return content;	
+//	}
 
 //	@Override - obsolete since 3.27
 //	public String[] getReservedWords() {
@@ -571,6 +573,6 @@ public class XmlGenerator extends Generator
 //		// Auto-generated method stub
 //		return false;
 //	}
-	
+// END KGU#763 2019-11-13
 
 }

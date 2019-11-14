@@ -95,6 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-10-06      Bugfix #761: Duplicated code lines in generateCode(Root,String) caused
  *                                      wrong Root line range in the codeMap (and consecutive errors)
  *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
+ *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
  *
  ******************************************************************************************************
  *
@@ -136,6 +137,8 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -185,6 +188,7 @@ import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.BTextfile;
@@ -2791,6 +2795,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
 			if (_root.licenseName != null) {
 				this.appendComment("License: " + _root.licenseName, _indent);
+				// START KGU#763 2019-11-13: Bugfix #778
+				if (_fullText && _root.licenseText == null) {
+					String licText = this.loadLicenseText(_root.licenseName);
+					if (licText != null) {
+						this.appendComment(StringList.explode(licText, "\n"), _indent);
+					}
+				}
+				// END KGU#7763 2019-11-13
 			}
 			if (_fullText && _root.licenseText != null) {
 				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
@@ -3783,6 +3795,58 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
 	}
+	
+	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
+	/**
+	 * Retrieves the licanes text associated to license name {@code licName} from
+	 * the license pool directory
+	 * @param licName - name of the license (file name will be drived from it)
+	 * @return the text content of the license file (if existent), may be null
+	 */
+	protected String loadLicenseText(String licName) {
+		String error = null;
+		String content = "";
+		File licDir = Ini.getIniDirectory();
+		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+		File[] licFiles = licDir.listFiles(new LicFilter());
+		File licFile = null; 
+		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+				licFile = licFiles[i];
+			}		
+		}
+		BufferedReader br = null;
+		try {
+			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+			br = new BufferedReader(isr);
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				content += line + '\n';
+			};
+		} catch (UnsupportedEncodingException e) {
+			error = e.getMessage();
+		} catch (FileNotFoundException e) {
+			error = e.getMessage();
+		} catch (IOException e) {
+			error = e.getMessage();
+		}
+		if (br != null) {
+			try {
+				br.close();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		}
+		if (error != null) {
+			getLogger().log(Level.WARNING, "{0}", error);
+		}
+		if (content.trim().isEmpty()) {
+			content = null;
+		}
+		return content;	
+	}
+	// END KGU#763 2019-11-13
+
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)

@@ -149,6 +149,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
+ *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
  *      
  ******************************************************************************************************
  *
@@ -573,7 +574,8 @@ public class Root extends Element {
 	// END KGU#363 2017-05-21
 
 	/**
-	 * Names of variables defined within this diagram (may be null after changes!)
+	 * Names of variables defined within this diagram (may be null after changes,
+	 * lazy initialization!)
 	 * @see #getCachedVarNames()
 	 */
 	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
@@ -2914,15 +2916,17 @@ public class Root extends Element {
 
     /**
      * Provides all variable names of the entire program if cached, otherwise retrieves and
-     * stores them in this.variables.
+     * stores them in {@link #variables}.
      * @return list of variable names
      * @see #retrieveVarNames()
+     * @see #getMereDeclarationNames()
      */
     public StringList getVarNames() {
     	//System.out.println("getVarNames() called...");
     	if (this.variables != null) {
     		return this.variables;
     	}
+    	// This is the same as retrieveVarNames()
     	return getVarNames(this, false, false, true);
     }
     
@@ -3015,6 +3019,27 @@ public class Root extends Element {
             //System.out.println(varNames.getCommaText());
             return varNames;
     }
+    
+    // START KGU#672 2019-11-13: Introduced for Bugfix #762
+    /**
+     * @return A list of the names of uninitialized, i.e. merely declared, variables
+     * (of this diagram and all included diagrams).
+     * @see #getVarNames()
+     * @see #getTypeInfo()
+     */
+    public StringList getMereDeclarationNames()
+    {
+    	StringList declNames = new StringList();	// Result
+    	StringList varNames = this.getVarNames();	// Names of initialized variables
+    	for (String name: this.getTypeInfo().keySet()) {
+    		// Ignore type names and omit initialized variables (which should also include constants)
+    		if (!name.startsWith(":") && !varNames.contains(name)) {
+    			declNames.add(name);
+    		}
+    	}
+    	return declNames;
+    }
+    // END KGU#672 2019-11-13
     
     // START KGU#261 2017-01-20: Enh. #259
     /**
