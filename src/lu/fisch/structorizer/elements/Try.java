@@ -506,7 +506,7 @@ public class Try extends Element {
 		//}
 		String excName = this.getExceptionVarName();
 		if (excName != null) {
-			addToTypeMap(typeMap, excName, "Exception", 0, true, true, false);
+			addToTypeMap(typeMap, excName, "Exception", 0, true, true);
 		}
 	}
 	

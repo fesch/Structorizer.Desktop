@@ -66,6 +66,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017-10-31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
  *      Kay Gürtzig     2018-12-03      Bugfix #641: Display of updated variable values forced
  *      Kay Gürtzig     2018-12-16      Issue #644: New message msgInitializerAsArgument
+ *      Kay Gürtzig     2019-11-17      Enh. #739: New error message for defective enum type definitions
  *
  ******************************************************************************************************
  *
@@ -1078,6 +1079,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 	public static final LangTextHolder msgErrorInSubroutine = new LangTextHolder("Caught error on executing «%1» at level %2:\n\t%3!");
 	public static final LangTextHolder msgThrown = new LangTextHolder("Exception thrown in «%1» at level %2: %3");
 	// END KGU#686 2019-03-17
+	// START KGU#452 2019-11-17: Enh. #739
+	public static final LangTextHolder msgInvalidEnumDefinition = new LangTextHolder("Invalid enumeration type definition «%»!");
+	// END KGU#452 2019-11-17
 
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

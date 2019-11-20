@@ -1233,7 +1233,7 @@ public class For extends Element implements ILoop {
 	{
 		if (!this.isForInLoop()) {
 			// This may be regarded as an explicit type declaration
-			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, true, false);
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, true);
 		}
 		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
 		else {
@@ -1251,7 +1251,7 @@ public class For extends Element implements ILoop {
 					}
 				}
 				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
-					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false, false);
+					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false);
 				}
 			}
 			else {
@@ -1261,7 +1261,7 @@ public class For extends Element implements ILoop {
 					typeSpec = identifyExprType(typeMap, valueListString, false);
 					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
 						// nibble one array level off as the loop variable is of the element type
-						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false, false);						
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);						
 					}
 				}
 			}

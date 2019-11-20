@@ -94,6 +94,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-03      Bugfix #756: Transformation damage on expressions containing "<-" and brackets
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
+ *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
  *
  ******************************************************************************************************
  *
@@ -567,9 +568,19 @@ public class CGenerator extends Generator {
 	protected String transformTypeWithLookup(String _type, String _default) {
 		TypeMapEntry typeInfo = this.typeMap.get(":" + _type);
 		// The typeInfo might be an alias, in this case no specific measures are necessary
-		if (typeInfo != null && typeInfo.isRecord() && _type.equals(typeInfo.typeName)) {
-			_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+		// START KGU#542 2019-11-17: Enh. #739
+		//if (typeInfo != null && typeInfo.isRecord() && _type.equals(typeInfo.typeName)) {
+		//	_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+		//}
+		if (typeInfo != null && (typeInfo.isRecord() || typeInfo.isEnum()) && _type.equals(typeInfo.typeName)) {
+			if (typeInfo.isRecord()) {
+				_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+			}
+			else {
+				_type = this.transformEnumTypeRef(typeInfo.typeName);
+			}
 		}
+		// END KGU#542 2019-11-17
 		else {
 			_type = transformType(_type, _default);
 		}
@@ -585,7 +596,7 @@ public class CGenerator extends Generator {
 		String decl = "";
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
 			String canonType = typeInfo.getTypes().get(0);
 			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
 		}
@@ -693,6 +704,7 @@ public class CGenerator extends Generator {
 	 * The returned type description will have to be split before the first
 	 * occurring opening bracket in order to place the variable or type name there.
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @param definingWithin - a possible outer type context
 	 * @return a String suited as C type description in declarations etc. 
 	 */
 	@Override
@@ -706,6 +718,11 @@ public class CGenerator extends Generator {
 		if (typeInfo.isRecord()) {
 			elType = transformRecordTypeRef(elType, typeInfo == definingWithin);
 		}
+		// START KGU#542 2019-11-17: Enh. #739 - support for enum types
+		else if (typeInfo.isEnum()) {
+			elType = transformEnumTypeRef(elType);
+		}
+		// END KGU#542 2019-11-17
 		else {
 			elType = transformType(elType, "/*???*/");
 		}
@@ -740,6 +757,19 @@ public class CGenerator extends Generator {
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return "struct " + structName + (isRecursive ? " * " : "");
 	}
+	
+	// START KGU#542 2019-11-17: Enh. #739
+	/**
+	 * Special adaptation of enum type name references in C-like languages, e.g. C
+	 * adds a prefix "enum" wherever it is used. C++ doesn't need to, Java and C#
+	 * don't, so the inheriting classes must override this.
+	 * @param enumName - name of the structured type
+	 * @return the prepared reference string
+	 */
+	protected String transformEnumTypeRef(String enumName) {
+		return "enum " + enumName;
+	}
+	// END KGU#542 2019-11-17
 
 	/**
 	 * Adds the type definitions for all types in {@code _root.getTypeInfo()}.
@@ -771,9 +801,9 @@ public class CGenerator extends Generator {
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
+		String indentPlus1 = _indent + this.getIndent();
 		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
-			String indentPlus1 = _indent + this.getIndent();
 			addCode("struct " + _type.typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
@@ -781,6 +811,23 @@ public class CGenerator extends Generator {
 			}
 			addCode("};", _indent, _asComment);
 		}
+		// START KGU#542 2019-11-17: Enh. #739
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			String itemList = items.concatenate(", ");
+			if (itemList.length() > 70) {
+				addCode("enum " + _type.typeName + "{", _indent, _asComment);
+				for (int i = 0; i < items.count(); i++) {
+					// FIXME: We might have to transform the value...
+					addCode(items.get(i) + (i < items.count() -1 ? "," : ""), indentPlus1, _asComment);
+				}
+				addCode("};", _indent, _asComment);
+			}
+			else {
+				addCode("enum " + _type.typeName + "{" + itemList + "};", _indent, _asComment);
+			}
+		}
+		// END KGU#542 2019-11-17
 		else {
 			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
 					_indent, _asComment);					
@@ -2064,6 +2111,11 @@ public class CGenerator extends Generator {
 		TypeMapEntry typeInfo = typeMap.get(_name);
 		StringList types = null;
 		String constValue = _root.constants.get(_name);
+		// START KGU#542 2019-11-17: Enh. #739 Don't add enumerator constant definitions
+		if (constValue != null && constValue.startsWith(":")) {
+			return;	// If the value string starts with a colon then it originates in an enumeration type.
+		}
+		// END KGU#542 2019-11-17
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
 			// START KGU#388 2017-09-30: Enh. #423
@@ -2071,6 +2123,11 @@ public class CGenerator extends Generator {
 			if (typeInfo.isRecord()) {
 				types = StringList.getNew(this.transformRecordTypeRef(typeInfo.typeName, false));
 			}
+			// START KGU#542 2019-11-17: Enh. #739 - support for enum types
+			else if (typeInfo.isEnum()) {
+				types = StringList.getNew(this.transformEnumTypeRef(typeInfo.typeName));
+			}
+			// END KGU#542 2019-11-17
 			else {
 				types = getTransformedTypes(typeInfo, true);
 			}
@@ -2089,7 +2146,7 @@ public class CGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false));
 			}
 			// START KGU#730 2019-09-25: Bugfix #752 - we must provide something lest the definition should go lost
 			else if (_fullDecl) {

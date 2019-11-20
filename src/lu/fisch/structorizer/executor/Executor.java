@@ -184,6 +184,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-10-15      Issue #763 - precautions against collateral effects of widened save check.
  *      Kay Gürtzig     2019-11-08      Bugfix #769 - CASE selector list splitting was too simple for string literals
  *      Kay Gürtzig     2019-11-09      Bugfix #771 - Unhandled errors deep from the interpreter
+ *      Kay Gürtzig     2019-11-17      Enh. #739 - Support for enum type definitions
  *
  ******************************************************************************************************
  *
@@ -4489,10 +4490,44 @@ public class Executor implements Runnable
 				}
 				else {
 					// START KGU#508 2018-03-19: Bugfix #525 operation count for non-typedefs
+					// We don't increment the total execution count here - this is regarded as a non-operation
 					isTypeDef = true;
 					// END KGU#508 2018-03-19
 					element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
-					// We don't increment the total execution count here - this is regarded as a non-operation
+					// START KGU#542 2019-11-17: Enh. #739 - In case of an enum type definition we have to assign the constants
+					String typeDescr = cmd.substring(cmd.indexOf('=')+1).trim();
+					if (TypeMapEntry.MATCHER_ENUM.reset(typeDescr).matches()) {
+						isTypeDef = false;	// Is to be counted as an ordinary instruction (costs even more)
+						HashMap<String, String> enumItems = context.root.extractEnumerationConstants(cmd);
+						if (enumItems == null) {
+							trouble = Control.msgInvalidEnumDefinition.getText().replace("%", typeDescr);
+						}
+						else {
+							for (Entry<String,String> enumItem: enumItems.entrySet()) {
+								String constName = enumItem.getKey();
+								// This is the prefixed value
+								String enumValue = enumItem.getValue();
+								// Check whether the constant may be set or confirmed
+								String oldVal = context.root.constants.put(constName, enumValue);
+								if (oldVal != null && !enumValue.equals(oldVal)) {
+									// There was a differing value before
+									trouble = control.msgConstantRedefinition.getText().replace("%", constName);
+									break;
+								}
+								else {
+									// This is the pure value (ought to be an integral literal)
+									int trueValue = Integer.parseInt(context.root.getConstValueString(constName));
+									// Temporarily clear the constants entry lest we should get an error
+									context.root.constants.remove(constName);
+									// Now establish the value in the interpreter and the variable display
+									setVar("const " + constName, trueValue);
+									// Override the true constant value with the prfixed value string in the constants map
+									context.root.constants.put(constName, enumValue);
+								}
+							}
+						}
+					}
+					// END KGU#542 2019-11-17
 				}
 				// END KGU#388 2017-09-13
 				// START KGU#156/KGU#508 2018-03-19: Enh. #124, bugfix #525 - this has to be done for all non-typedefs
@@ -4551,7 +4586,7 @@ public class Executor implements Runnable
 				// END KGU#569 2018-08-06
 			}
 			i++;
-		}
+		} // while ((i < sl.count()) && trouble.equals("") ...)
 		if (trouble.equals(""))
 		{
 			element.executed = false;
@@ -4894,7 +4929,7 @@ public class Executor implements Runnable
 	
 	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	/**
-	 * Submethod of stepInstruction(Instruction element), handling an assignment.
+	 * Submethod of {@link #stepInstruction(Instruction)}, handling an assignment.
 	 * Also updates the dynamic type map. 
 	 * @param cmd - the (assignment) instruction line, may also contain declarative parts
 	 * @param instr - the Instruction element
@@ -5082,12 +5117,12 @@ public class Executor implements Runnable
 					if (oldEntry == null) {
 						TypeMapEntry typeEntry = null;
 						if (typeDescr != null && (typeEntry = context.dynTypeMap.get(":" + typeDescr)) == null) {
-							typeEntry = new TypeMapEntry(typeDescr, null, null, instr, lineNo, true, false, false);
+							typeEntry = new TypeMapEntry(typeDescr, null, null, instr, lineNo, true, false);
 						}
 						context.dynTypeMap.put(target, typeEntry);
 					}
 					else {
-						oldEntry.addDeclaration(typeDescr, instr, lineNo, true, false);
+						oldEntry.addDeclaration(typeDescr, instr, lineNo, true);
 					}
 				}
 			}
@@ -5110,7 +5145,12 @@ public class Executor implements Runnable
 		
 	}
 	
-	// Submethod of stepInstruction(Instruction element), handling an input instruction
+	/**
+	 * Submethod of {@link #stepInstruction(Instruction)}, handling an input instruction
+	 * @param cmd - the instruction line expressing an input operation
+	 * @return a possible error string
+	 * @throws EvalError
+	 */
 	private String tryInput(String cmd) throws EvalError
 	{
 		String trouble = "";
@@ -5380,7 +5420,12 @@ public class Executor implements Runnable
 	}
 	// END KGU#653 2019-02-14
 
-	// Submethod of stepInstruction(Instruction element), handling an output instruction
+	/**
+	 * Submethod of {@link #stepInstruction(Instruction)}, handling an output instruction
+	 * @param cmd - the output instruction line
+	 * @return a possible error string
+	 * @throws EvalError
+	 */
 	private String tryOutput(String cmd) throws EvalError
 	{
 		String trouble = "";

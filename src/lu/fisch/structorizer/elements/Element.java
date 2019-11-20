@@ -107,6 +107,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
  *
  ******************************************************************************************************
  *
@@ -3048,7 +3049,8 @@ public abstract class Element {
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or
 	 * record type definition, respectively) given by {@code declText} and adds their names
-	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
+	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.<br/>
+	 * CAUTION: Some elements of {@code declTypes} may be null on return!
 	 * @param declText - the text of the declaration inside the parentheses or braces
 	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or null
 	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or null
@@ -3439,6 +3441,9 @@ public abstract class Element {
 						specialSigns.add("record");
 						specialSigns.add("struct");
 						// END KGU#388 2017-09-13
+						// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
+						specialSigns.add("enum");
+						// END KGU#542 2019-11-17
 						specialSigns.add("mod");
 						specialSigns.add("div");
 						// START KGU#331 2017-01-13: Enh. #333
@@ -4355,9 +4360,8 @@ public abstract class Element {
 	 * @param lineNo - number of the element text line containing the type description
 	 * @param isAssigned - is to indicate whether a value is assigned here
 	 * @param explicitly - whether the type association was an explicit declaration or just guessed
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 */
-	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly, boolean isCStyle)
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly)
 	{
 		if (varName != null && !typeSpec.isEmpty()) {
 			TypeMapEntry entry = typeMap.get(varName);
@@ -4372,7 +4376,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
@@ -4382,7 +4386,7 @@ public abstract class Element {
 				}
 				// END KGU#593 2018-10-05
 				// add an alternative declaration to the type map entry
-				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
+				entry.addDeclaration(typeSpec, this, lineNo, isAssigned);
 			}
 		}				
 	}
@@ -4395,10 +4399,8 @@ public abstract class Element {
 	 * @param typeName - name of the new defined type
 	 * @param typeSpec - a type-describing string as found in the definition
 	 * @param compNames - list of the component identifiers (strings)
-	 * @param compTypes - list of type-describing strings (a type name or a type construction)
+	 * @param compTypes - list of type-describing strings (a type name or a type construction or null!)
 	 * @param lineNo - number of the element text line containing the type description
-	 * @param isAssigned - is to indicate whether a value is assigned here
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 * @return true if the {@code typeName} was new and could be placed in the {@code typeMap}.
 	 */
 	protected boolean addRecordTypeToTypeMap(HashMap<String,TypeMapEntry> typeMap, String typeName, String typeSpec, StringList compNames, StringList compTypes, int lineNo)
@@ -4427,14 +4429,14 @@ public abstract class Element {
 									}
 									else {
 										// Create a named dummy entry
-										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true, false);
+										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true);
 									}
 								}
 							}
 							// FIXME KGU#687 2019-03-16: Issue #408 - no longer needed?
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true, false);
+								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true);
 							}
 						}
 					}

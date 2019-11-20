@@ -492,7 +492,7 @@ public class JsGenerator extends CGenerator {
 		if (wasDefHandled(_root, _name, false)) {
 			return;
 		}
-		String constValue = _root.constants.get(_name);
+		String constValue = _root.getConstValueString(_name);
 		String decl = "var " + _name;
 		if (_root.constants.containsKey(_name) && constValue != null) {
 			decl = "const " + _name;

@@ -333,7 +333,7 @@ public class PasGenerator extends Generator
 	{
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
 			_typeDescr = transformTypeFromEntry(typeInfo, null);
 		}
 		return _typeDescr;
@@ -1738,7 +1738,15 @@ public class PasGenerator extends Generator
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
 				//code.add(indentPlus1 + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");
-				String expr = transform(constEntry.getValue());
+				// START KGU#452 2019-11-17: Enh. #739 Skip enumerator values - they are to be handled in a type definition
+				//String expr = transform(constEntry.getValue());
+				//String expr = transform(constEntry.getValue());
+				String expr = constEntry.getValue();
+				if (expr != null && expr.startsWith(":")) {
+					continue;
+				}
+				expr = transform(expr);
+				// END KGU#452 2019-11-17
 				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
@@ -1823,6 +1831,23 @@ public class PasGenerator extends Generator
 					}
 					code.add(indentPlus2 + "END;");
 				}
+				// START KGU#542 2019-11-17: Enh. #739
+				else if (type.isEnum()) {
+					StringList items = type.getEnumerationInfo();
+					String itemList = items.concatenate(", ");
+					if (itemList.length() > 70) {
+						code.add(indentPlus1 + key.substring(1) + " = (");
+						for (int i = 0; i < items.count(); i++) {
+							// FIXME: We might have to transform the value...
+							code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
+						}
+						code.add(indentPlus2 + ");");
+					}
+					else {
+						code.add(indentPlus1 + key.substring(1) + " = (" + itemList + ");");
+					}
+				}
+				// END KGU#542 2019-11-17
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}

@@ -1731,7 +1731,14 @@ public class OberonGenerator extends Generator {
 				if (wasDefHandled(_root, constName, true)) {
 					continue;
 				}
-				String expr = transform(constEntry.getValue());
+				// START KGU#452 2019-11-17: Enh. #739 Skip enumerator values - they are to be handled in a type definition
+				//String expr = transform(constEntry.getValue());
+				String expr = constEntry.getValue();
+				if (expr != null && expr.startsWith(":")) {
+					continue;
+				}
+				expr = transform(expr);
+				// END KGU#452 2019-11-17
 				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 				//TypeMapEntry constType = _root.getTypeInfo().get(constEntry.getKey()); 
 				TypeMapEntry constType = _root.getTypeInfo(routinePool).get(constEntry.getKey()); 
@@ -1794,6 +1801,17 @@ public class OberonGenerator extends Generator {
 					}
 					code.add(indentPlus2 + "END;");
 				}
+				// START KGU#542 2019-11-17: Enh. #739
+				else if (type.isEnum()) {
+					code.add(indentPlus1 + key.substring(1) + " = ENUM");
+					StringList items = type.getEnumerationInfo();
+					for (int i = 0; i < items.count(); i++) {
+						// FIXME: We might have to transform the value...
+						code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
+					}
+					code.add(indentPlus2 + "END;");
+				}
+				// END KGU#542 2019-11-17
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}

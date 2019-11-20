@@ -150,6 +150,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
+ *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      
  ******************************************************************************************************
  *
@@ -619,7 +620,9 @@ public class Root extends Element {
 	
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
-	 * Names and cached value expressions of detected constants among the {@link #variables} 
+	 * Names and cached value expressions of detected constants among the {@link #variables}.
+	 * For enumeration type constants, the actual value is prefixed with ":" + typename + "€".
+	 * @see #getConstValueString(String) 
 	 */
 	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
 	// END KGU#375 2017-03-31
@@ -2779,6 +2782,26 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#388 2017-10-09
+	
+	// START KGU#542 2019-11-17: Enh. #739 Support for enumeration type values
+	/**
+	 * Returns the value string (cached literal or expression) associated to constant
+	 * {@code constName} (if it was defined) or null (otherwise). In case of enumeration
+	 * constants, wipes off the typename prefix (":" + &lt;typename&gt; + "€").
+	 * @param constName - name of the constant
+	 * @return value string for the constant (cleaned in case of an enumerator) or null
+	 * @see #constants
+	 */
+	public String getConstValueString(String constName)
+	{
+		String valString = this.constants.get(constName);
+		if (valString != null && valString.startsWith(":") && valString.contains("€")) {
+			// Skim off the enumerator type name
+			valString = valString.substring(valString.indexOf('€')+1);
+		}
+		return valString;
+	}
+	// END KGU#542 2019-11-17
 
     // KGU 2016-03-29 Rewritten based on tokens
     /**
@@ -2986,6 +3009,16 @@ public class Root extends Element {
                     	int i = 0;
                     	while (i < lines.count()) {
                     		if (Instruction.isTypeDefinition(lines.get(i), null)) {
+                    			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
+                    			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
+                    			if (constVals != null) {
+                    				// FIXME If this interferes then we might generate singular constant definition lines
+                    				//this.constants.putAll(constVals);
+                    				for (Entry<String, String> enumItem: constVals.entrySet()) {
+                    					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
+                    				}
+                    			}
+                    			// END KGU#542 2019-11-17
                     			lines.remove(i);
                     		}
                     		else {
@@ -3020,6 +3053,58 @@ public class Root extends Element {
             return varNames;
     }
     
+    /**
+     * Retrieves all constants from the given type definition list if it is an
+     * enumeration type list and returns their name-value map.<br/>
+     * The associated values will be prefixed with ":" + typename + "€".
+     * @param _typeDefLine - the (unbroken) line of the enum type definition
+     * @returns a map of the enumeration constants to their prefixed values strings or null
+     */
+    public LinkedHashMap<String,String> extractEnumerationConstants(String _typeDefLine)
+    {
+    	LinkedHashMap<String,String> enumConstants = null;
+    	StringList tokens = Element.splitLexically(_typeDefLine, true);
+    	tokens.removeAll(" ");
+    	if (!tokens.get(3).equalsIgnoreCase("enum")) {
+    		return null;
+    	}
+    	String typename = tokens.get(1);
+    	String typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
+    	// Confirm that the syntax is okay
+    	if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches()) {
+    		enumConstants = new LinkedHashMap<String, String>();
+    		int val = 0;
+    		int posBrace = typeSpec.indexOf('{');
+    		StringList items = StringList.explode(typeSpec.substring(posBrace+1, typeSpec.length()-1), ",");
+    		for (int i = 0; i < items.count(); i++, val++) {
+    			String item = items.get(i);
+    			int posEq = item.indexOf('=');
+    			if (posEq >= 0) {
+    				// Get the value string
+    				String valStr = item.substring(posEq+1).trim();
+    				// Reduce item to the pure constant name
+    				item = item.substring(0, posEq);
+    				if (this.constants.containsKey(valStr)) {
+    					// Is an already defined constant, get the associated value string
+    					valStr = this.getConstValueString(valStr);
+    				}
+    				try {
+    					int val0 = Integer.parseInt(valStr);
+    					// Don't accept negative values
+    					if (val0 >= 0) {
+    						val = val0;
+    					}
+    				}
+    				catch (NumberFormatException ex) {
+    					// Just ignore the explicit value and use the standard
+    				}
+    			}
+    			enumConstants.put(item, ":" + typename + "€" + val);
+    		}
+    	}
+    	return enumConstants;
+    }
+
     // START KGU#672 2019-11-13: Introduced for Bugfix #762
     /**
      * @return A list of the names of uninitialized, i.e. merely declared, variables
@@ -3158,7 +3243,7 @@ public class Root extends Element {
 		String typeSpec = null;
 		for (Param par: parameters) {
 			if ((typeSpec = par.getType()) != null) {
-				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true, false);
+				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true);
 			}
 		}
 		if (this.isSubroutine()) {
@@ -3170,7 +3255,7 @@ public class Root extends Element {
 				// consideration where we check whether an explicit variable declaration will come (mostly C++,
 				// C#, Java) we drive better if we don't set the "explicitly" flag here.
 				//this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
-				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false, false);
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
 				// END KGU#593 2018-10-05
 			}
 		}
@@ -4425,7 +4510,7 @@ public class Root extends Element {
 			else if (line.startsWith("type ") || isTypedef) {
 				if (!isTypedef) {
 					//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
-					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
+					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);
 				}
 				else {
 					StringList tokens = splitLexically(line, true);
@@ -4443,29 +4528,55 @@ public class Root extends Element {
 							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
-						for (int j = 0; j < compNames.count(); j++) {
-							String compName = compNames.get(j);
-							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
-								//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-								addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						String tag = typeSpec.substring(0, posBrace).toLowerCase();
+						if (tag.equals("enum")) {
+							HashMap<String,String> enumDefs = this.extractEnumerationConstants(line);
+							if (enumDefs == null) {
+								//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
 							}
-							String type = compTypes.get(j).trim();
-							// Clear off array specifiers, but the check is still too restrictive...
-							if (type != null) {
-								String typeLower;
-								if (type.endsWith("]") && type.contains("[")) {
-									type = type.substring(0, type.indexOf("[")).trim();
-								}
-								else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-									type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-								}
-								if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-									//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							else {
+								for (Entry<String, String> enumItem: enumDefs.entrySet()) {
+									String constName = enumItem.getKey();
+									String enumValue = enumItem.getValue();
+									String oldVal = _definedConsts.put(constName, enumValue);
+									if (oldVal != null && !oldVal.equals(enumValue)) {
+										//error  = new DetectedError("Attempt to modify the value of constant «"+varName+"»!", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error22_2, constName), _instr), 22);						
+									}
 								}
 							}
 						}
+						else {	// tag assumed to be "record" or "struct"
+						// END KGU#542 2019-11-17
+							this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+							for (int j = 0; j < compNames.count(); j++) {
+								String compName = compNames.get(j);
+								if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
+									//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+								}
+								String type = compTypes.get(j);
+								// Clear off array specifiers, but the check is still too restrictive...
+								if (type != null) {
+									type = type.trim();
+									String typeLower;
+									if (type.endsWith("]") && type.contains("[")) {
+										type = type.substring(0, type.indexOf("[")).trim();
+									}
+									else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+										type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+									}
+									if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+										//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+									}
+								}
+							}
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						}
+						// END KGU#542 2019-11-17
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
 					else if (Function.testIdentifier(typeSpec, null) && !_types.containsKey(":" + typeSpec)) {
@@ -4781,7 +4892,7 @@ public class Root extends Element {
 				}
 				// Check for non-integers and non-characters (without the default branch label)
 				if (i < text.count()-1) {
-					String constVal = this.constants.get(item);
+					String constVal = this.getConstValueString(item);
 					if (constVal == null) {
 						constVal = item;
 					}

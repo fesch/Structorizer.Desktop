@@ -58,6 +58,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig     2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig     2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig     2019-10-18      Enh. #739: Support for enum types
  *
  ******************************************************************************************************
  *
@@ -288,37 +289,39 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#653 2019-02-14
 
-	// START KGU#388 2017-09-27: Enh.#423
-	/**
-	 * Adds a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
-	 * globally or in the preamble before.
-	 * @param _root - the originating Root
-	 * @param _type - the type map entry the definition for which is requested here
-	 * @param _indent - the current indentation
-	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
-	 */
-	@Override
-	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
-		String typeKey = ":" + _typeName;
-		if (this.wasDefHandled(_root, typeKey, true)) {
-			return;
-		}
-		appendDeclComment(_root, _indent, typeKey);
-		if (_type.isRecord()) {
-			String indentPlus1 = _indent + this.getIndent();
-			addCode("struct " + _typeName + " {", _indent, _asComment);
-			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
-						indentPlus1, _asComment);
-			}
-			addCode("};", _indent, _asComment);
-		}
-		else {
-			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
-					_indent, _asComment);					
-		}
-	}
-	// END KGU#388 2017-09-27
+// START KGU#542 2019-11-17: Enh. #739: This code was identical to that of super
+//	// START KGU#388 2017-09-27: Enh.#423
+//	/**
+//	 * Adds a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
+//	 * globally or in the preamble before.
+//	 * @param _root - the originating Root
+//	 * @param _type - the type map entry the definition for which is requested here
+//	 * @param _indent - the current indentation
+//	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+//	 */
+//	@Override
+//	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+//		String typeKey = ":" + _typeName;
+//		if (this.wasDefHandled(_root, typeKey, true)) {
+//			return;
+//		}
+//		appendDeclComment(_root, _indent, typeKey);
+//		if (_type.isRecord()) {
+//			String indentPlus1 = _indent + this.getIndent();
+//			addCode("struct " + _typeName + " {", _indent, _asComment);
+//			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+//				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+//						indentPlus1, _asComment);
+//			}
+//			addCode("};", _indent, _asComment);
+//		}
+//		else {
+//			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
+//					_indent, _asComment);					
+//		}
+//	}
+//	// END KGU#388 2017-09-27
+// END KGU#542 2019-11-17
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -675,6 +678,16 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return structName + (isRecursive ? " * " : "");
 	}
+
+	// START KGU#542 2019-11-17: Enh. #739
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformEnumTypeRef(java.lang.String)
+	 */
+	@Override
+	protected String transformEnumTypeRef(String enumName) {
+		return enumName;
+	}
+	// END KGU#542 2019-11-17
 
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
