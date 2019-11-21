@@ -33,39 +33,40 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.07      First Issue
- *      Bob Fisch       2008.02.06      Modified for DIN / not DIN
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
- *      Kay Gürtzig     2015.11.04      New mechanism to split and compose the FOR clause into/from dedicated fields
- *      Kay Gürtzig     2015.11.14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
- *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
+ *      Bob Fisch       2007-12-07      First Issue
+ *      Bob Fisch       2008-02-06      Modified for DIN / not DIN
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-12      Comment drawing centralized and breakpoint mechanism prepared.
+ *      Kay Gürtzig     2015-11-04      New mechanism to split and compose the FOR clause into/from dedicated fields
+ *      Kay Gürtzig     2015-11-14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-03-20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
  *                                      to distinguish and handle FOR-IN loops 
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.05.02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
- *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
- *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-05-02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-07-30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2016-09-24      Enh. #250: Adaptations to make the new editor design work
+ *      Kay Gürtzig     2016-09-25      Issue #252: ':=' and '<-' equivalence in consistency check
  *                                      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised
- *      Kay Gürtzig     2017.01.26      Enh. #259: Type retrieval support added (for counting loops)
- *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
- *      Kay Gürtzig     2017.04.30      Enh. #354: New structured constructors
- *      Kay Gürtzig     2017.11.02      Issue #447: Precaution against line-continuating backslashes 
- *      Kay Gürtzig     2018.02.12:     Issue #4: Separate icons for FOR loops introduced
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.07.12      Separator bug in For(String,String,String,int) fixed.
- *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2016-10-04      Enh. #253: Refactoring configuration revised
+ *      Kay Gürtzig     2017-01-26      Enh. #259: Type retrieval support added (for counting loops)
+ *      Kay Gürtzig     2017-04-14      Enh. #259: Approach to guess FOR-IN loop variable type too
+ *      Kay Gürtzig     2017-04-30      Enh. #354: New structured constructors
+ *      Kay Gürtzig     2017-11-02      Issue #447: Precaution against line-continuating backslashes 
+ *      Kay Gürtzig     2018-02-12:     Issue #4: Separate icons for FOR loops introduced
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-07-12      Separator bug in For(String,String,String,int) fixed.
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-11-21      Enh. #739 Enum types considered in type compatibility check for FOR-IN lists 
  *
  ******************************************************************************************************
  *
@@ -1247,7 +1248,21 @@ public class For extends Element implements ILoop {
 						typeSpec = itemType;
 					}
 					else if (!itemType.isEmpty() && !typeSpec.equalsIgnoreCase(itemType)) {
-						typeSpec = TypeMapEntry.combineTypes(itemType, typeSpec, true);
+						// START KGU#542 2019-11-21: Enh. #739 try a resolution if an enumerator type collides with int
+						//typeSpec = TypeMapEntry.combineTypes(itemType, typeSpec, true);
+						TypeMapEntry type1 = typeMap.get(":" + itemType);
+						TypeMapEntry type2 = typeMap.get(":" + typeSpec);
+						boolean isEnum1 = type1 != null && type1.isEnum();
+						boolean isEnum2 = type2 != null && type2.isEnum();
+						if (isEnum1 && typeSpec.equals("int")
+								|| isEnum2 && itemType.equals("int")
+								|| isEnum1 && isEnum2 && !type1.typeName.equals(type2.typeName)) {
+							typeSpec = "int";
+						}
+						else {
+							typeSpec = TypeMapEntry.combineTypes(itemType, typeSpec, true);
+						}
+						// END KGU#542 2019-11-21
 					}
 				}
 				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
@@ -1261,7 +1276,7 @@ public class For extends Element implements ILoop {
 					typeSpec = identifyExprType(typeMap, valueListString, false);
 					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
 						// nibble one array level off as the loop variable is of the element type
-						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);						
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);
 					}
 				}
 			}

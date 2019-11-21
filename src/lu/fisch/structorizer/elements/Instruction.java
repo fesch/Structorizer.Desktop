@@ -1181,7 +1181,7 @@ public class Instruction extends Element {
 						if (root != null) {
 							TypeMapEntry enumType = new TypeMapEntry(typeSpec, typename, typeMap, this, lineNo, false, false);
 							typeMap.put(":" + typename, enumType);
-							HashMap<String, String> enumItems = root.extractEnumerationConstants(typeSpec);
+							HashMap<String, String> enumItems = root.extractEnumerationConstants(line);
 							if (enumItems != null) {
 								for (String constName: enumItems.keySet()) {
 									typeMap.put(constName, enumType);

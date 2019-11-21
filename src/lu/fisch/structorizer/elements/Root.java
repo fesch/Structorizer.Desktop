@@ -151,6 +151,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
+ *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
  *      
  ******************************************************************************************************
  *
@@ -2787,7 +2788,7 @@ public class Root extends Element {
 	/**
 	 * Returns the value string (cached literal or expression) associated to constant
 	 * {@code constName} (if it was defined) or null (otherwise). In case of enumeration
-	 * constants, wipes off the typename prefix (":" + &lt;typename&gt; + "€").
+	 * constants, wipes off the typename prefix ({@code ":" + <typename> + "€"}).
 	 * @param constName - name of the constant
 	 * @return value string for the constant (cleaned in case of an enumerator) or null
 	 * @see #constants
@@ -3012,8 +3013,7 @@ public class Root extends Element {
                     			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
                     			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
                     			if (constVals != null) {
-                    				// FIXME If this interferes then we might generate singular constant definition lines
-                    				//this.constants.putAll(constVals);
+                    				// We simply generate singular constant definition lines
                     				for (Entry<String, String> enumItem: constVals.entrySet()) {
                     					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
                     				}
@@ -3056,7 +3056,8 @@ public class Root extends Element {
     /**
      * Retrieves all constants from the given type definition list if it is an
      * enumeration type list and returns their name-value map.<br/>
-     * The associated values will be prefixed with ":" + typename + "€".
+     * The associated values will be prefixed with {@code ":" + <typename> + "€"} and may be
+     * constant expressions, particularly of kind {@code <something>+<number>}.
      * @param _typeDefLine - the (unbroken) line of the enum type definition
      * @returns a map of the enumeration constants to their prefixed values strings or null
      */
@@ -3074,6 +3075,7 @@ public class Root extends Element {
     	if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches()) {
     		enumConstants = new LinkedHashMap<String, String>();
     		int val = 0;
+    		String valStr = "";
     		int posBrace = typeSpec.indexOf('{');
     		StringList items = StringList.explode(typeSpec.substring(posBrace+1, typeSpec.length()-1), ",");
     		for (int i = 0; i < items.count(); i++, val++) {
@@ -3081,25 +3083,37 @@ public class Root extends Element {
     			int posEq = item.indexOf('=');
     			if (posEq >= 0) {
     				// Get the value string
-    				String valStr = item.substring(posEq+1).trim();
+    				valStr = item.substring(posEq+1).trim();
+    				val = 0;
     				// Reduce item to the pure constant name
     				item = item.substring(0, posEq);
+    				// FIXME: We should be able to evaluate constant expressions, e.g. "MONDAY+1"!
     				if (this.constants.containsKey(valStr)) {
     					// Is an already defined constant, get the associated value string
     					valStr = this.getConstValueString(valStr);
+    				}
+    				else if (valStr.contains("+")) {
+    					int posPlus = valStr.lastIndexOf('+');
+    					try {
+    						int offset = Integer.parseInt(valStr.substring(posPlus+1));
+    						valStr = valStr.substring(0, posPlus).trim();
+    						val = offset;
+    					}
+    					catch (NumberFormatException ex) {}
     				}
     				try {
     					int val0 = Integer.parseInt(valStr);
     					// Don't accept negative values
     					if (val0 >= 0) {
     						val = val0;
+    						valStr = "";
     					}
     				}
     				catch (NumberFormatException ex) {
     					// Just ignore the explicit value and use the standard
     				}
     			}
-    			enumConstants.put(item, ":" + typename + "€" + val);
+    			enumConstants.put(item, ":" + typename + "€" + valStr + (!valStr.isEmpty() ? "+" : "") + val);
     		}
     	}
     	return enumConstants;

@@ -67,6 +67,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2018-12-03      Bugfix #641: Display of updated variable values forced
  *      Kay Gürtzig     2018-12-16      Issue #644: New message msgInitializerAsArgument
  *      Kay Gürtzig     2019-11-17      Enh. #739: New error message for defective enum type definitions
+ *      Kay Gürtzig     2019-11-21      Enh. #739: Mnemonic display and ComboBox editing for enumerator values
+ *                                      Editability check bug fixed in the table model fixed
  *
  ******************************************************************************************************
  *
@@ -146,6 +148,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             if (value instanceof JButton) {
             	return (JButton)value;
             }
+            // START KGU#542 2019-11-21: Enh. #739 combobox for declared enumerator variables
+            else if (value instanceof JComboBox) {
+            	Object item = ((JComboBox<?>)value).getSelectedItem();
+            	if (item instanceof String) {
+            		setText((String)item);
+            	}
+            	return this;
+            }
+            // END KGU#542 2019-11-21
             // END KGU#443 2017-10-16
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             DefaultTableModel model = (DefaultTableModel) table.getModel();
@@ -362,7 +373,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             		return true;	// Pulldown button always enabled if there is one
             	}
             	else if (column > 1) {
-            		String name = (String)this.getValueAt(row, column);
+            		String name = (String)this.getValueAt(row, 0);
             		return !Executor.getInstance().isConstant(name);
             	}
             	return false;
@@ -375,6 +386,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         tblVar.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblVar.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblVar.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
+        // START KGU#542 2019-11-21: Enh. #739 - There may be comboboxes for enumerator variables
+        tblVar.getColumnModel().getColumn(2).setCellEditor(new EnumeratorCellEditor());
+        // END KGU#542 2019-11-21
         tblVar.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         // END KGU#443 2017-10-16
         jScrollPane1.setViewportView(tblVar);
@@ -853,35 +867,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
             //tm.setValueAt(vars.get(i).get(0), i, 0);
             //tm.setValueAt(vars.get(i).get(1), i, 1);
-            JButton pulldown = null;
-            String name = vars.get(i)[0];
-            String value = vars.get(i)[1];
-            if (value.endsWith("}")) {
-            	pulldown = new JButton();
-            	pulldown.setName(name);
-            	pulldown.setIcon(pulldownIcon);
-            	pulldown.addActionListener(this.pulldownActionListener);
+            Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
+            for (int j = 0; j < rowData.length; j++) {
+                tm.setValueAt(rowData[j], i, j);
             }
-            tm.setValueAt(name, i, 0);
-            tm.setValueAt(pulldown, i, 1);
-            tm.setValueAt(value, i, 2);
             // END KGU#443 2017-10-16
         }
         // Add additional rows
         for (int i = nRows; i < vars.size(); i++) {
             // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
             //tm.addRow(vars.get(i));
-            JButton pulldown = null;
-            String name = vars.get(i)[0];
-            String value = vars.get(i)[1];
-            if (value.endsWith("}")) {
-            	pulldown = new JButton();
-            	pulldown.setName(name);
-            	pulldown.setIcon(pulldownIcon);
-            	pulldown.addActionListener(this.pulldownActionListener);
-            }
-            Object[] rowData = {name, pulldown, value};
-            tm.addRow(rowData);
+            tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
             // END KGU#443 2017-10-16
         }
         // END KGU#274 2016-10-08
@@ -894,6 +890,30 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         tblVar.repaint();
         // ENDKGU#608 2018-12-03
     }
+
+	/**
+	 * @param varEntry - String array containing the variable name and a value string
+	 * @param pulldownIcon - the icon to be used for a pull-down button
+	 * @return an Object array representing teh prepared row for the variable display
+	 */
+	private Object[] makeVarListRow(String[] varEntry, ImageIcon pulldownIcon) {
+		JButton pulldown = null;
+		String name = varEntry[0];
+		Object value = varEntry[1];
+		if (varEntry[1].endsWith("}")) {
+			pulldown = new JButton();
+			pulldown.setName(name);
+			pulldown.setIcon(pulldownIcon);
+			pulldown.addActionListener(this.pulldownActionListener);
+		}
+		else if (Executor.getInstance().isEnumerator(name) && !Executor.getInstance().isConstant(name)) {
+			StringList enumNames = Executor.getInstance().getEnumeratorValuesFor(name);
+			JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
+			cbEnum.setSelectedIndex(enumNames.indexOf(varEntry[1]));
+			value = cbEnum;
+		}
+		return new Object[]{name, pulldown, value};
+	}
 
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
     public void updateCallLevel(int level)
@@ -1119,6 +1139,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			// END KGU#443 2017-10-16
     			if (val != null)
     			{
+    				// START KGU#542 2019-11-21: Enh. #739 - support enumerator variables
+    				if (val instanceof JComboBox) {
+    					val = ((JComboBox<?>)val).getSelectedItem();
+    				}
+    				// END KGU#542 2019-11-21
     				varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
     				//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
     			}

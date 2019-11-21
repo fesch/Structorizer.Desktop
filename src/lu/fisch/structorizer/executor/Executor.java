@@ -185,6 +185,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-08      Bugfix #769 - CASE selector list splitting was too simple for string literals
  *      Kay Gürtzig     2019-11-09      Bugfix #771 - Unhandled errors deep from the interpreter
  *      Kay Gürtzig     2019-11-17      Enh. #739 - Support for enum type definitions
+ *      Kay Gürtzig     2019-11-20/21   Enh. #739 - Several fixes and improvements for enh. #739 (enum types)
  *
  ******************************************************************************************************
  *
@@ -3919,6 +3920,16 @@ public class Executor implements Runnable
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
 			Object val = context.interpreter.get(varName);
 			String valStr = prepareValueForDisplay(val, context.dynTypeMap);
+			// START KGU#542 2019-11-20: Enh. #739 - support enumeration types
+			TypeMapEntry varType = context.dynTypeMap.get(varName);
+			if (varType != null && varType.isEnum() && val instanceof Integer) {
+				int testVal = ((Integer)val).intValue();
+				String enumStr = decodeEnumValue(testVal, varType);
+				if (enumStr != null && !enumStr.equals(varName)) {
+					valStr = enumStr;
+				}
+			}
+			// END KGU#542 2019-11-20
 			// END KGU#67 2015-11-08
 			vars.add(new String[]{varName, valStr});
 		}
@@ -4026,6 +4037,7 @@ public class Executor implements Runnable
 		{
 			String varName = entry.getKey();
 			try {
+				TypeMapEntry type = context.dynTypeMap.get(varName);
 				Object oldValue = context.interpreter.get(varName);
 				Object newValue = entry.getValue();
 				// START KGU#443 2017-10-29: Issue #439 Precaution against unnecessary value overwriting
@@ -4090,12 +4102,11 @@ public class Executor implements Runnable
 //					}
 				}
 				// START KGU#388 2017-10-08: Enh. #423
-				else if (context.dynTypeMap.containsKey(varName) && context.dynTypeMap.get(varName).isRecord()) {
+				else if (type != null && type.isRecord()) {
 					// START KGU#439 2017-10-13: Issue #436 We must not break references
 					//context.interpreter.set(varName, evaluateExpression((String)newValue, true));
 					Object newObject = evaluateExpression((String)newValue, true, false);
 					if (oldValue instanceof HashMap && newObject instanceof HashMap) {
-						TypeMapEntry type = context.dynTypeMap.get(varName);
 						for (String key: type.getComponentInfo(true).keySet()) {
 							if (!key.startsWith("§")) {
 								if (((HashMap<String, Object>)newObject).containsKey(key)) {
@@ -4112,6 +4123,17 @@ public class Executor implements Runnable
 					}
 					// END KGU#439 2017-10-13
 				}
+				// START KGU#542 2019-11-21: Enh. #739 - support enum types
+				else if (type != null && type.isEnum() && context.constants.containsKey(newValue)) {
+					Object constVal = context.constants.get(newValue);
+					if (constVal instanceof Integer && newValue.equals(this.decodeEnumValue((Integer)constVal, type))) {
+						context.interpreter.set(varName, constVal);
+					}
+					else {
+						setVarRaw(varName, (String)newValue);
+					}
+				}
+				// END KGU#542 2019-11-21
 				else
 				{
 					setVarRaw(varName, (String)newValue);
@@ -4129,12 +4151,60 @@ public class Executor implements Runnable
 	}
 	// END KGU#68 2015-11-06
 	
+	// START KGU#542 2019-11-21: Enh. #739 Support for enumeration types
+	private String decodeEnumValue(int testVal, TypeMapEntry varType) {
+		int itemVal = 0;
+		StringList enumInfo = varType.getEnumerationInfo();
+		for (int j = 0; j < enumInfo.count(); j++) {
+			String[] enumItem = enumInfo.get(j).split("\\s*=\\s*", 2);
+			if (enumItem.length > 1) {
+				try {
+					Object e1 = context.interpreter.eval(enumItem[1]);
+					if (e1 instanceof Integer && (Integer)e1 >= 0) {
+						itemVal = ((Integer)e1).intValue();
+					}
+				}
+				catch (EvalError ex) {}
+			}
+			if (testVal == itemVal) {
+				return enumItem[0];
+			}
+			itemVal++;
+		}
+		return null;
+	}
+	// END KGU#542 2019-11-21
+	
 	// START KGU#375 2017-03-30: Auxiliary callback for Control
 	public boolean isConstant(String varName)
 	{
 		return context.constants.containsKey(varName.trim());
 	}
 	// END KGU#375 2017-03-30
+	
+	// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
+	public boolean isEnumerator(String varName)
+	{
+		TypeMapEntry type = context.dynTypeMap.get(varName);
+		return type != null && type.isEnum();
+	}
+	
+	public StringList getEnumeratorValuesFor(String varName)
+	{
+		TypeMapEntry type = context.dynTypeMap.get(varName);
+		if (type == null || !type.isEnum()) {
+			return null;
+		}
+		StringList names = type.getEnumerationInfo();
+		for (int i = 0; i < names.count(); i++) {
+			int posEqu = names.get(i).indexOf('=');
+			if (posEqu >= 0) {
+				names.set(i,  names.get(i).substring(0, posEqu).trim());
+			}
+		}
+		return names;
+	}
+	// END KGU#542 2019-11-21
 
 	public void start(boolean useSteps)
 	{
@@ -4509,20 +4579,16 @@ public class Executor implements Runnable
 								String enumValue = enumItem.getValue();
 								// Check whether the constant may be set or confirmed
 								String oldVal = context.root.constants.put(constName, enumValue);
-								if (oldVal != null && !enumValue.equals(oldVal)) {
-									// There was a differing value before
+								if (oldVal != null && !enumValue.equals(oldVal) || context.constants.containsKey(constName)) {
+									// There had been a differing value before
 									trouble = control.msgConstantRedefinition.getText().replace("%", constName);
 									break;
 								}
 								else {
 									// This is the pure value (ought to be an integral literal)
-									int trueValue = Integer.parseInt(context.root.getConstValueString(constName));
-									// Temporarily clear the constants entry lest we should get an error
-									context.root.constants.remove(constName);
+									Object trueValue = context.interpreter.eval(context.root.getConstValueString(constName));
 									// Now establish the value in the interpreter and the variable display
 									setVar("const " + constName, trueValue);
-									// Override the true constant value with the prfixed value string in the constants map
-									context.root.constants.put(constName, enumValue);
 								}
 							}
 						}

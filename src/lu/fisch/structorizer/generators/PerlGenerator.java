@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-21  Enh. #56: Export of Try elements implemented
  *      Kay Gürtzig         2019-03-30  Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-11-19  Issues #423, #739: Support for struct and enum types (begun)
+ *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well a record initializer handling revised
  *
  ******************************************************************************************************
  *
@@ -223,6 +224,11 @@ public class PerlGenerator extends Generator {
 	private boolean isWithinCall = false;
 	// END KGU#352 2017-02-26
 
+	// START KGU#542 2019-11-20: Enh. #739 - Support enum types
+	/** Currently exported {@link Root} object. */
+	private Root root;
+	// END KGU#542 2019-11-20
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
@@ -279,10 +285,35 @@ public class PerlGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#388/KGU#542 2019-11-19: Enh. #423, #739 transferred the stuff from transform(String) hitherto
+		tokens.removeAll(" ");	// Condense
+		// Now transform all array and record initializers
+		// To go from right to left should ensure we advance from the innermost to the outermost brace
+		int posBrace = tokens.lastIndexOf("{");
+		while (posBrace > 0) {
+			int posBrace2 = tokens.indexOf("}", posBrace + 1);
+			TypeMapEntry type = null;
+			if ((type = this.typeMap.get(tokens.get(posBrace-1))) != null && type.isRecord()) {
+				StringList rInit = this.transformRecordInit(tokens.concatenate(null,posBrace-1, posBrace2+1), type);
+				tokens.remove(posBrace-1, posBrace2+1);
+				tokens.insert(rInit, posBrace-1);
+			}
+			// The other case of '{' ... '}' (assumed to be a record initializer) can be ignored here,
+			// since it is sufficient to have the braces replced by parentheses, which will be done below
+			tokens.count("");
+			posBrace = tokens.lastIndexOf("{", posBrace-1);
+		}
+		// END KGU#388/KGU#542 2019-11-19
 		// START KGU#62/KGU#103 2015-12-12: Bugfix #57 - We must work based on a lexical analysis
 		for (int i = 0; i < varNames.count(); i++)
 		{
 			String varName = varNames.get(i);
+			// Is it an enumeration value? Then prefix it with its type name
+			String constVal = root.constants.get(varName);
+			if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+				//tokens.replaceAll(varName, constVal.substring(1, constVal.indexOf('€')) + '_' + varName);
+				continue;
+			}
 			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
 			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
 			// START KGU#352 2017-02-26: Different approaches for arrays and references
@@ -301,14 +332,15 @@ public class PerlGenerator extends Generator {
 					}
 					else if (this.isWithinCall) {
 						// To pass an array to a subroutine we must use a reference
-						tokens.set(pos,  "\\@" + prefix + varName);
+						tokens.set(pos, "\\@" + prefix + varName);
 					}
 					else {
-						tokens.set(pos,  "@" + prefix + varName);
+						tokens.set(pos, "@" + prefix + varName);
 					}
 				}
 			}
 			else {
+				// FIXME: This will also replace component names with same name!
 				tokens.replaceAll(varName, "$"+varName);
 			}
 			// END KGU#352 2017-02-26
@@ -328,21 +360,21 @@ public class PerlGenerator extends Generator {
 				// Handle possible component access
 				int j = i-1;
 				String pre = tokens.get(j).trim();
-				while (pre.isEmpty() && j > 0) {
-					pre = tokens.get(--j).trim();
-				}
+				//while (pre.isEmpty() && j > 0) {
+				//	pre = tokens.get(--j).trim();
+				//}
 				j = i+1;
 				String post = tokens.get(j).trim();
-				while (post.isEmpty() && j < tokens.count()) {
-					post = tokens.get(++j).trim();
-				}
+				//while (post.isEmpty() && j < tokens.count()) {
+				//	post = tokens.get(++j).trim();
+				//}
 				if ((pre.equals("]") || Function.testIdentifier(pre, null) || pre.startsWith("$") && Function.testIdentifier(pre.substring(1), null))
 						&& Function.testIdentifier(post, null)) {
 					tokens.set(i, "->");
 				}
 			}
 		}
-		return tokens.concatenate();
+		return tokens.concatenate(null);
 	}
 	// END KGU#93 2015-12-21
 	
@@ -361,29 +393,6 @@ public class PerlGenerator extends Generator {
 		{
 		// END KGU#162 2016-04-01
 			_input = Element.unifyOperators(_input);
-			StringList tokens = Element.splitLexically(_input, true);
-			int asgnPos = tokens.indexOf("<-");	// This might mutilate string literals!
-			if (asgnPos > 0)
-			{
-				String lval = tokens.subSequence(0, asgnPos).concatenate().trim();
-				String expr = tokens.subSequence(asgnPos + 1, tokens.count()).concatenate().trim();
-				if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
-				{
-					// The curly braces will be replaced with parentheses by transformTokens()
-					_input = "@" + lval + " <- " + expr;				
-				}
-				// START KGU#388 2019-11-19: Enh. #432 Support of record initializers
-				else if (tokens.indexOf("{", asgnPos+1) > 0) {
-					int posBrace = expr.indexOf('{');
-					String typeName = expr.substring(0, posBrace);
-					TypeMapEntry type = this.typeMap.get(":" + typeName);
-					if (type != null && type.isRecord()) {
-						String rInit = this.transformRecordInit(expr, type);
-						return transform("$" + lval) + " = " + rInit;
-					}
-				}
-				// END KGU#388 2019-11-19
-			}
 		// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode
 		}
 		// END KGU#162 2016-04-01
@@ -444,7 +453,10 @@ public class PerlGenerator extends Generator {
 		// TODO Auto-generated method stub
 		String indentPlus1 = _indent + this.getIndent();
 		if (_type.isEnum()) {
-			addCode("use enum " + _typeName + "(" + _type.getEnumerationInfo().concatenate(" ") + ");", _indent, _disabled);
+			// FIXME: This was a misconception, type name will not be needed
+			//addCode("use enum " + _typeName + "(" + _type.getEnumerationInfo().concatenate(" ") + ");", _indent, _disabled);
+			//addCode("use enum qw(:" + _typeName + "_ " + _type.getEnumerationInfo().concatenate(" ") + ");", _indent, _disabled);
+			addCode("use enum qw(" + _type.getEnumerationInfo().concatenate(" ") + ");", _indent, _disabled);
 		}
 		else if (_type.isRecord()) {
 			// FIXME Should we use Class::Struct or simply hashtables? Can the latter define a named type?
@@ -474,21 +486,23 @@ public class PerlGenerator extends Generator {
 	 * @return a string representing an adequate Perl code for the initialisation. May contain
 	 * indentation and newline characters
 	 */
-	protected String transformRecordInit(String _recordValue, TypeMapEntry _typeEntry)
+	protected StringList transformRecordInit(String _recordValue, TypeMapEntry _typeEntry)
 	{
-		StringBuilder sb = new StringBuilder();
-		sb.append(_typeEntry.typeName);
-		sb.append("->new(\n");
+		StringList result = new StringList();
+		result.add(_typeEntry.typeName + "->new(\n");
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry);
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
 			String compVal = comp.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
-				sb.append("\t" + compName + " => " + this.transform(compVal) + ",\n");
+				result.add("\t" + compName);
+				result.add(" => ");
+				result.add(compVal);
+				result.add(",\n");
 			}
 		}
-		sb.append(");");
-		return sb.toString();
+		result.add(");\n");
+		return result;
 	}
 	// END KGU#388 2019-11-19
 
@@ -505,6 +519,7 @@ public class PerlGenerator extends Generator {
 			for (int i = 0; i < lines.count(); i++)
 			{
 				String line = lines.get(i);
+				boolean isAsgn = Instruction.isAssignment(line);
 				// START KGU#653 2019-02-15: Enh. #680 - input with several items...
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {
@@ -529,13 +544,30 @@ public class PerlGenerator extends Generator {
 					this.generateTypeDef(root, typeName, type, _indent, isDisabled);
 					continue;
 				}
-				else if (Instruction.isDeclaration(line) && !Instruction.isAssignment(line)) {
+				else if (Instruction.isDeclaration(line) && !isAsgn) {
 					// Declarations will have been handled in the preamble
+					if (!_inst.getComment().trim().isEmpty()) {
+						appendComment(line, _indent);
+					}
 					continue;
 				}
 				// END KGU#388/KGU#542 2019-11-19
 
-				String text = transform(line);
+				String text = null;
+				if (isAsgn) {
+					StringList tokens = Element.splitLexically(line, true);
+					tokens.removeAll(" ");
+					Element.unifyOperators(tokens, true);
+					int posAsgn = tokens.indexOf("<-");
+					String var = Instruction.getAssignedVarname(tokens.subSequence(0, posAsgn));
+					StringList expr = tokens.subSequence(posAsgn+1, tokens.count());
+					if (Function.testIdentifier(var, null) && expr.get(0).equals("{") && expr.get(expr.count()-1).equals("}")) {
+						text = "@" + var + " = " + transform(expr.concatenate(null));
+					}
+				}
+				if (text == null) {
+					text = transform(line);
+				}
 				if (!text.endsWith(";")) { text += ";"; }
 				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 				if (this.usesFileAPI) {
@@ -620,9 +652,6 @@ public class PerlGenerator extends Generator {
 					}
 				}
 				// END KGU#311 2017-01-04
-				if (Instruction.isAssignment(line)) {
-					
-				}
 				
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + text);
@@ -1126,6 +1155,9 @@ public class PerlGenerator extends Generator {
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
 		String indent = _indent;
+		// START KGU#542 2019-11-20: Enh. #739 - Support enum types
+		this.root = _root;
+		// END KGU#542 2019-11-20
 		// START KGU#352 2017-02-26: Cache transform-relevant information 
 		this.paramNames = _paramNames;
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export

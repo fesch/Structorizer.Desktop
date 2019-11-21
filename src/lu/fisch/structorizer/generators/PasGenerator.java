@@ -86,6 +86,7 @@ package lu.fisch.structorizer.generators;
  *                                          declarations (defective type) no longer as comment but with FIXME! marker
  *      Kay Gürtzig         2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
  *                                          as local declarations in subroutines where the variables get assigned
+ *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
  *
  ******************************************************************************************************
  *
@@ -980,10 +981,13 @@ public class PasGenerator extends Generator
 		if (items != null)
 		{
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try four types: boolean,
-			// integer, real and string, where we can only test literals.
+			// do if items are heterogenous? We will just try five types: boolean,
+			// common enum type, integer, real and string, where we can only test literals.
 			// If none of them match then we add a TODO comment.
 			int nItems = items.count();
+			// START KGU#542 2019-11-21: Enh. #739
+			String allEnum = "";
+			// END KGU#542 2019-11-21
 			boolean allBoolean = true;
 			boolean allInt = true;
 			boolean allReal = true;
@@ -991,6 +995,9 @@ public class PasGenerator extends Generator
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
+				// START KGU#542 2019-11-21: Enh. #739
+				TypeMapEntry tme = this.typeMap.get(item);
+				// END KGU#542 2019-11-21
 				if (allBoolean)
 				{
 					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
@@ -1005,7 +1012,10 @@ public class PasGenerator extends Generator
 					}
 					catch (NumberFormatException ex)
 					{
-						allInt = false;
+						// START KGU#542 2019-11-21: Enh. #739 enum type support - it might be an enumerator constant
+						//allInt = false;
+						allInt = tme !=  null && tme.isEnum();
+						// END KGU#542 2019-11-21
 					}
 				}
 				if (allReal)
@@ -1025,6 +1035,23 @@ public class PasGenerator extends Generator
 							item.startsWith("\'") && item.endsWith("\'") &&
 							!item.substring(1, item.length()-1).contains("\'");
 				}
+				// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
+				if (allEnum != null)
+				{
+					if (tme != null && tme.isEnum()) {
+						if (allEnum.isEmpty()) {
+							allEnum = tme.typeName;
+						}
+						else if (!allEnum.equals(tme.typeName)) {
+							allEnum = null;	// Game over for enumerator (different enumerators)
+						}
+					}
+					else {
+						// Obviously no enumerator constant
+						allEnum = null;
+					}
+				}
+				// END KGU#542 2019-11-21
 			}
 			
 			// Create some generic and unique variable names
@@ -1034,6 +1061,9 @@ public class PasGenerator extends Generator
 
 			String itemType = "";
 			if (allBoolean) itemType = "boolean";
+			// START KGU#542 2019-11-21: Enh. #739
+			else if (allEnum != null && !allEnum.isEmpty()) itemType = allEnum;
+			// END KGU#542 2019-11-21
 			else if (allInt) itemType = "integer";
 			else if (allReal) itemType = "real";
 			else if (allString) itemType = "string";
