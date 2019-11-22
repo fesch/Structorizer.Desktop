@@ -315,7 +315,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -3369,6 +3368,7 @@ public class Executor implements Runnable
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object)
 	 */
+	@SuppressWarnings("unchecked")
 	private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
@@ -3602,7 +3602,7 @@ public class Executor implements Runnable
 					// KGU#432: The variable had been declared as array but not initialized - so be generous here
 					objectArray = new ArrayList<Object>();
 				}
-				else if (targetObject instanceof ArrayList<?>) {
+				else if (targetObject instanceof ArrayList) {
 					objectArray = (ArrayList<Object>)targetObject;
 					oldSize = objectArray.size();
 				}
@@ -3925,8 +3925,15 @@ public class Executor implements Runnable
 			if (varType != null && varType.isEnum() && val instanceof Integer) {
 				int testVal = ((Integer)val).intValue();
 				String enumStr = decodeEnumValue(testVal, varType);
-				if (enumStr != null && !enumStr.equals(varName)) {
-					valStr = enumStr;
+				if (enumStr != null) {
+					if (enumStr.equals(varName)) {
+						// This is the enumerator itself (a constant), so append the type name
+						valStr += " (" + varType.typeName + ")";
+					}
+					else {
+						// For variables just holding the enumarator value, just show the name instead
+						valStr = enumStr;
+					}
 				}
 			}
 			// END KGU#542 2019-11-20
@@ -3950,11 +3957,10 @@ public class Executor implements Runnable
 		if (val != null)
 		{
 			valStr = val.toString();
-			if (val instanceof ArrayList<?>)
+			if (val instanceof ArrayList)
 			{
 				valStr = "{";
-				@SuppressWarnings("unchecked")
-				ArrayList<Object> valArray = (ArrayList<Object>)val;
+				ArrayList<?> valArray = (ArrayList<?>)val;
 				for (int j = 0; j < valArray.size(); j++)
 				{
 					String elementStr = prepareValueForDisplay(valArray.get(j), typeMap);
@@ -3968,8 +3974,7 @@ public class Executor implements Runnable
 			if (val instanceof HashMap) {
 			// END KGU#526 2018-08-01
 				// In case we have access to a type map provide the declared component order.
-				@SuppressWarnings("unchecked")
-				HashMap<String, Object> hmVal = (HashMap<String, Object>)val;
+				HashMap<?, ?> hmVal = (HashMap<?, ?>)val;
 				String typeName = String.valueOf(hmVal.get("§TYPENAME§"));
 				valStr = typeName + "{";
 				// START KGU#526 2018-08-01: Enh. #423 - Try to preserve component order
@@ -3985,12 +3990,14 @@ public class Executor implements Runnable
 				}
 				else {
 				// END KGU#526 2018-08-01
-					for (Entry<String, Object> entry: hmVal.entrySet())
+					for (Entry<?, ?> entry: hmVal.entrySet())
 					{
-						String key = entry.getKey();
-						if (!key.startsWith("§")) {
-							String elementStr = prepareValueForDisplay(entry.getValue(), typeMap);
-							valStr += ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
+						if (entry.getKey() instanceof String) {
+							String key = (String)entry.getKey();
+							if (!key.startsWith("§")) {
+								String elementStr = prepareValueForDisplay(entry.getValue(), typeMap);
+								valStr += ((j++ > 0) ? ", " : "") + key + ": " + elementStr;
+							}
 						}
 					}
 				// START KGU#526 2018-08-01: Enh. #423 (continuation)
@@ -4211,9 +4218,7 @@ public class Executor implements Runnable
 		paus = useSteps;
 		step = useSteps;
 		stop = false;
-		// START KGU#384 2017-04-22: execution context redesign - no longer an attribute
-		//this.variables = new StringList();
-		// END KGU#384 2017-04-22
+
 		control.updateVars(new Vector<String[]>());
 		
 		running = true;
@@ -4255,18 +4260,6 @@ public class Executor implements Runnable
 		// END KGU#277 2016-10-13
 		
 		element.executed = true;
-		// START KGU#276 2016-10-09: Issue #269: Now done in checkBreakpoint()
-//		if (delay != 0 || step)
-//		{
-//			diagram.redraw();
-//		}
-//		if (step) {
-//			diagram.redraw(element);	// Doesn't work properly...
-//		}
-//		else if (delay != 0) {
-//			diagram.redraw();
-//		}
-		// END KGU#276 2016-10-09
 		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
 		diagram.doButtons();
 		// END KGU#143 2016-01-21
@@ -4376,28 +4369,9 @@ public class Executor implements Runnable
 		element.waited = true;
 
 		// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//		String trouble = new String();
-//		int i = 0;
-//		// START KGU#77 2015-11-11: Leave if a return statement has been executed
-//		//while ((i < element.children.children.size())
-//		//		&& trouble.equals("") && (stop == false))
-//		while ((i < element.children.getSize())
-//				&& trouble.equals("") && (stop == false) && !returned)
-//		// END KGU#77 2015-11-11
-//		{
-//			trouble = step(element.children.getElement(i));
-//			i++;
-//		}
 		String trouble = stepSubqueue(element.children, false);
 		// END KGU#117 2016-03-07
 
-		// START KGU#148 2016-01-29: Moved to execute
-//		delay();
-//		if (trouble.equals(""))
-//		{
-//			element.clearExecutionStatus();
-//		}
-		// END KGU#148 2016-01-29
 		return trouble;
 	}
 
@@ -4436,12 +4410,6 @@ public class Executor implements Runnable
 				// START KGU#508 2018-03-19: Bugfix #525 operation count for all non-typedefs
 				boolean isTypeDef = false;
 				// END KGU#508 2018-03-19
-				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
-//				if (i > 0)
-//				{
-//					delay();
-//				}
-				// END KGU#271 2016-10-06
 				
 				// START KGU#490 2018-02-07: Bugfix #503 - we should first rule out input, output instructions, and JUMPs
 				//if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
@@ -4489,40 +4457,10 @@ public class Executor implements Runnable
 					// START KGU#377 2017-03-30: Bugfix
 					//if (cmd.indexOf("<-") >= 0)
 					if (Element.splitLexically(cmd, true).contains("<-"))
-						// END KGU#377 2017-03-30: Bugfix
+					// END KGU#377 2017-03-30: Bugfix
 					{
 						trouble = tryAssignment(cmd, element, i);
 					}
-					// input
-					// START KGU#490 2018-02-07: Bugfix #503 - we should first rule out input, output instructions, and JUMPs
-					//// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
-					////else if (cmd.indexOf(CodeParser.input) >= 0)
-					//else if (cmd.matches(
-					//		this.getKeywordPattern(CodeParser.getKeyword("input")) + "([\\W].*|$)"))
-					//	// END KGU#65 2015-11-04
-					//{
-					//	trouble = tryInput(cmd);
-					//}
-					//// output
-					// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
-					//else if (cmd.indexOf(CodeParser.output) >= 0)
-					//else if (cmd.matches(
-					//		this.getKeywordPattern(CodeParser.getKeyword("output")) + "([\\W].*|$)"))
-					//	// END KGU#65 2015-11-04
-					//{
-					//	trouble = tryOutput(cmd);
-					//}
-					//// return statement
-					//// START KGU 2015-11-28: The "return" keyword ought to be the first word of the instruction,
-					//// comparison should not be case-sensitive while CodeParser.preReturn isn't fully configurable,
-					//// but a separator would be fine...
-					////else if (cmd.indexOf("return") >= 0)
-					//else if (cmd.matches(
-					//		this.getKeywordPattern(CodeParser.getKeywordOrDefault("preReturn", "return")) + "([\\W].*|$)"))
-					//	// END KGU 2015-11-11
-					//{		 
-					//	trouble = tryReturn(cmd.trim());
-					//}
 					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
 					else if (cmd.matches("^var.*:.*")) {
 						// START KGU#388 2017-09-14: Enh. #423
@@ -4550,11 +4488,6 @@ public class Executor implements Runnable
 						// END KGU#490 2018-02-08
 						trouble = trySubroutine(cmd, element);
 					}
-					// START KGU#508 2018-03-19: Bugfix #525 - this has to be done for all non-typedefs
-					//// START KGU#156 2016-03-11: Enh. #124
-					//element.addToExecTotalCount(1, true);	// For the instruction line
-					////END KGU#156 2016-03-11
-					// END KGU#508 2018-03-19
 					
 				// START KGU#388 2017-09-13: Enh. #423
 				}
@@ -5116,52 +5049,6 @@ public class Executor implements Runnable
 		// END KGU#2 2015-10-17
 		// Now evaluate the expression
 		// START KGU#426 2017-09-30: Enh. #48, #423, bugfix #429 we need this code e.g in tryReturn, too
-//		// FIXME: This should be recursive!
-//		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
-//		else if (expression.startsWith("{") && expression.endsWith("}"))
-//		{
-//			// FIXME: We might have to evaluate those element values in advance, which are initializers themselves...
-//			this.evaluateExpression("Object[] tmp20160114kgu = " + expression, false);
-//			value = context.interpreter.get("tmp20160114kgu");
-//			context.interpreter.unset("tmp20160114kgu");
-//		}
-//		// END KGU#100 2016-01-14
-//		// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
-//		else if (tokens.indexOf("{") == 1 && expression.endsWith("}")
-//				&& (recordType = identifyRecordType(tokens.get(0), true)) != null)
-//		{
-//			this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
-//			HashMap<String, String> components = Element.splitRecordInitializer(expression);
-//			if (components == null || components.containsKey("§TAIL§")) {
-//				trouble = control.msgInvalidExpr.getText().replace("%1", expression);
-//			}
-//			else {
-//				components.remove("§TYPENAME§");
-//				LinkedHashMap<String, TypeMapEntry> compDefs = recordType.getComponentInfo(false);
-//				for (Entry<String, String> comp: components.entrySet()) {
-//					// FIXME: We might have to evaluate the component value in advance if it is an initializer itself...
-//					if (compDefs.containsKey(comp.getKey())) {
-//						context.interpreter.eval("tmp20170913kgu.put(\"" + comp.getKey() + "\", " + comp.getValue() + ");");
-//					}
-//					else {
-//						trouble = control.msgInvalidComponent.getText().replace("%1", comp.getKey()).replace("%2", recordType.typeName);
-//						break;
-//					}
-//				}
-//				value = context.interpreter.get("tmp20170913kgu");
-//				if (value instanceof HashMap<?,?>) {
-//					((HashMap<String, Object>)value).put("§TYPENAME§", recordType.typeName);
-//				}
-//				context.interpreter.unset("tmp20170913kgu");
-//			}
-//		}
-//		// END KGU#388 2017-09-13
-//		else
-//		{
-//			//cmd = cmd.replace("<-", "=");
-//		
-//			value = this.evaluateExpression(expression);
-//		}
 		else
 		{
 			value = this.evaluateExpression(expression, true, false);
@@ -5597,7 +5484,7 @@ public class Executor implements Runnable
 		String trouble = "";
 		String header = control.lbReturnedResult.getText();
 		String out = cmd.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length()).trim();
-		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
+		// START KGU#77 (#21) 2015-11-13: We ought to allow an empty return
 		//Object n = interpreter.eval(out);
 		//if (n == null)
 		//{
@@ -5810,72 +5697,6 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-07-01
-//		else if (element instanceof Call && element.isImportCall()) {
-//			Root imp = null;
-//			String diagrName = ((Call)element).getSignatureString();
-//			try {
-//				imp = this.findProgramWithName(diagrName);
-//			} catch (Exception ex) {
-//				return ex.getMessage();	// Ambiguous call!
-//			}
-//			// END KGU#317 2016-12-29
-//			if (imp != null)
-//			{
-//				// START KGU#376 207-04-21: Enh. ä389
-//				// Has this import already been executed -then just adopt the results
-//				if (this.importMap.containsKey(imp)) {
-//					ImportInfo impInfo = this.importMap.get(imp);
-//					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-//							imp.variables, null, imp.constants.keySet(), false);
-//					// FIXME adopt the imported typedefs if any
-//					context.variables.addIfNew(impInfo.variableNames);
-//					for (String constName: imp.constants.keySet()) {
-//						if (!context.constants.containsKey(constName)) {
-//							context.constants.put(constName, impInfo.interpreter.get(constName));
-//						}
-//					}
-//					// START KGU#117 2017-04-29: Enh. #77
-//					if (Element.E_COLLECTRUNTIMEDATA)
-//					{
-//						element.simplyCovered = true;
-//						if (imp.isTestCovered(true)) {
-//							element.deeplyCovered = true;
-//						}
-//					}
-//					// END KGU#117 2017-04-29
-//					try 
-//					{
-//						updateVariableDisplay();
-//					}
-//					catch (EvalError ex) {}
-//				}
-//				else {
-//				// END KGU#376 2017-04-21
-//					executeCall(imp, null, (Call)element);
-//					// START KGU#117 2016-03-10: Enh. #77
-//					if (Element.E_COLLECTRUNTIMEDATA)
-//					{
-//						element.simplyCovered = true;
-//					}
-//					// END KGU#117 2016-03-10
-//				// START KGU#376 207-04-21: Enh. ä389
-//				}
-//				context.importList.addIfNew(diagrName);
-//				// END KGU#376 2017-04-21
-//			}
-//			else
-//			{
-//				// START KGU#197 2016-07-27: Now translatable message
-//				//trouble = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
-//				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
-//				trouble = control.msgNoProgDiagram.getText().
-//						replace("%", diagrName);
-//				// END KGU#197 2016-07-27
-//			}
-//			
-//		}
-		// END KGU#376 2017-04-11
 		else {
 			// START KGU#197 2017-06-06: Now localizable
 			//trouble = "<" + cmd + "> is not a correct function!";
@@ -6184,26 +6005,6 @@ public class Executor implements Runnable
 					element.waited = true;
 
 					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//					int i = 0;
-//					Subqueue body;
-//					if (eternal)
-//					{
-//						body = ((Forever)element).q;
-//					}
-//					else
-//					{
-//						body = ((While) element).q;
-//					}
-//					// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-//					//while ((i < body.children.size())
-//					//		&& trouble.equals("") && (stop == false))
-//					while ((i < body.getSize())
-//							&& trouble.equals("") && (stop == false) && !returned && leave == 0)
-//					// END KGU#77/KGU#78 2015-11-25
-//					{
-//						trouble = step(body.getElement(i));
-//						i++;
-//					}
 					if (trouble.isEmpty())
 					{
 						trouble = stepSubqueue(((ILoop)element).getBody(), true);						
@@ -6344,17 +6145,6 @@ public class Executor implements Runnable
 				do
 				{
 					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//					int i = 0;
-//					// START KGU#77/KGU#78 2015-11-25: Leave if some Jump statement has been executed
-//					//while ((i < element.q.children.size())
-//					//		&& trouble.equals("") && (stop == false))
-//					while ((i < element.q.getSize())
-//							&& trouble.equals("") && (stop == false) && !returned && leave == 0)
-//					// END KGU#77/KGU#78 2015-11-25
-//					{
-//						trouble = step(element.q.getElement(i));
-//						i++;
-//					}
 					if (trouble.isEmpty())
 					{
 						trouble = stepSubqueue(element.getBody(), true);
@@ -6438,54 +6228,15 @@ public class Executor implements Runnable
 		// END KGU#307 2016-12-12
 		try
 		{
-			// START KGU#3 2015-10-31: Now it's time for the new intrinsic mechanism
-//			String str = element.getText().getText();
-//
-//			String pas = "1";
-//			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
-//			{
-//				String[] pieces = str.split(", pas =");
-//				str=pieces[0];
-//				pas = pieces[1].trim();
-//			}
-//			// START KGU 2015-10-13: The above mechanism has/had several flaws:
-//			// 1. The parsing works only for the hard-coded french keyword (ought to be a preference).
-//			// 2. the while condition didn't work for negative pas values.
-//			// 3. the pas value was parsed again and again in every loop.
-//			// 4. It's certainly not consistent with code export
-//			// To solve 2 and 3 we provide the Integer conversion once in advance
 			int sval = element.getStepConst();
-			// END KGU#3 2015-10-31
-			
-			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
-//			// cut off the start of the expression
-//			if (!CodeParser.preFor.equals(""))
-//			{
-//				str = BString.replace(str, CodeParser.preFor, "");
-//			}
-//			// trim blanks
-//			str = str.trim();
-//			// modify the later word
-//			if (!CodeParser.postFor.equals(""))
-//			{
-//				str = BString.replace(str, CodeParser.postFor, "<=");
-//			}
-//			// do other transformations
-//			str = CGenerator.transform(str);
-//			String counter = str.substring(0, str.indexOf("="));
 			String counter = element.getCounterVar();
-			// END KGU#3 2015-10-27
-			// complete
 			
 			// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 			context.forLoopVars.add(counter);
 			// END KGU#307 2016-12-12
 
-			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
-//			String s = str.substring(str.indexOf("=") + 1,
-//					str.indexOf("<=")).trim();
 			String s = element.getStartValue(); 
-			// END KGU#3 2015-10-27
+
 			s = convert(s);
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
@@ -6516,10 +6267,7 @@ public class Executor implements Runnable
 				ival = ((Double) n).intValue();
 			}
 
-			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
-//			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
 			s = element.getEndValue();
-			// END KGU#3 2015-10-27
 			s = convert(s);
 			// START KGU#417 2017-06-30: Enh. #424 - Turtleizer functions must be evaluated
 			s = this.evaluateDiagramControllerFunctions(s);
@@ -6570,17 +6318,6 @@ public class Executor implements Runnable
 
 
 				// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//				int i = 0;
-//				// START KGU#77/KGU#78 2015-11-25: Leave if a return statement has been executed
-//				//while ((i < element.q.children.size())
-//				//		&& trouble.equals("") && (stop == false))
-//				while ((i < element.q.getSize())
-//						&& trouble.equals("") && (stop == false) && !returned && leave == 0)
-//				// END KGU#77/KGU#78 2015-11-25
-//				{
-//					trouble = step(element.q.getElement(i));
-//					i++;
-//				}
 				if (trouble.isEmpty())
 				{
 					trouble = stepSubqueue(element.getBody(), true);
@@ -6604,14 +6341,6 @@ public class Executor implements Runnable
 				element.waited = true;
 				
 				// START KGU 2015-10-13: The step value is now calculated in advance
-//				try
-//				{
-//					cw+=Integer.valueOf(pas);
-//				}
-//				catch(Exception e)
-//				{
-//					cw++;
-//				}
 				cw += sval;
 				// END KGU 2015-10-13
 			}
@@ -6744,8 +6473,8 @@ public class Executor implements Runnable
 			{
 				valueList = (Object[]) value;
 			}
-			else if (value instanceof ArrayList<?>) {
-				valueList = ((ArrayList<Object>)value).toArray();
+			else if (value instanceof ArrayList) {
+				valueList = ((ArrayList<?>)value).toArray();
 			}
 			// START KGU#429 2017-10-08
 			else if (value instanceof String) {

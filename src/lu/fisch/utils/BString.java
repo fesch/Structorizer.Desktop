@@ -32,16 +32,17 @@ package lu.fisch.utils;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2003.05.10      First Issue
- *		Bob Fisch		2007.12.09		Moved to another package and adapted for Structorizer
- *		Kay Gürtzig		2015.10.31		Performance improvements
- *      Kay Gürtzig     2017.03.13      New method pair encodeToXML and decodeFromXML added for enh. #372,
+ *      Bob Fisch       2003-05-10      First Issue
+ *		Bob Fisch		2007-12-09		Moved to another package and adapted for Structorizer
+ *		Kay Gürtzig		2015-10-31		Performance improvements
+ *      Kay Gürtzig     2017-03-13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
- *      Kay Gürtzig     2017.06.18      Method breakup refined to cope with meta symbols in the string to
+ *      Kay Gürtzig     2017-06-18      Method breakup refined to cope with meta symbols in the string to
  *                                      be broken up for regex matching. Code revision, several redundant
  *                                      methods declared as deprecated
- *      Kay Gürtzig     2017.11.03      Bugfix #448: Method breakup(String) revised again
- *      Kay Gürtzig     2018.09.12      Method name typo refactored: enocodeVectorToHtml() --> encodeVectorToHtml()
+ *      Kay Gürtzig     2017-11-03      Bugfix #448: Method breakup(String) revised again
+ *      Kay Gürtzig     2018-09-12      Method name typo refactored: enocodeVectorToHtml() --> encodeVectorToHtml()
+ *      Kay Gürtzig     2019-11-22      Dead code in encodeToHtml() disabled, bugfix in explode()
  *
  ******************************************************************************************************
  *
@@ -73,15 +74,16 @@ public abstract class BString
 			str = str.replace("\"","&#34;");
 			//str=BString.replace(str," ","&nbsp;");
 			
-			// FIXME (KGU): The following code is irrelevant for the result! Should we return res (if not null)?
-			String res = null;
-			try {
-				byte[] utf8 = str.getBytes("UTF-8");
-				res = new String(utf8, "UTF-8");
-			} 
-			catch (Exception e) 
-			{
-			}
+			// START KGU 2019-11-22: The following code was irrelevant for the result! Should we have return res (if not null)?
+			//String res = null;
+			//try {
+			//	byte[] utf8 = str.getBytes("UTF-8");
+			//	res = new String(utf8, "UTF-8");
+			//} 
+			//catch (Exception e) 
+			//{
+			//}
+			// END KGU 2019-11-22
 			
 			return str;
 		}
@@ -214,7 +216,7 @@ public abstract class BString
 		
 		/**
 		 * Cuts blanks at the end and at the beginning of the string. [trim]<br/>
-		 * NOTE: You should better use {@code str.trim()} instead.  
+		 * NOTE: You should better use {@link String#trim()} instead.  
 		 *@param str - The string to be trimmed
 		 *@return The trimmed string
 		 */
@@ -227,7 +229,7 @@ public abstract class BString
 		/**
 		 * Checks whether a string contains any non-blank characters<br/>
 		 * NOTE: You may use {@code !str.trim().isEmpty()} instead
-		 *@param str The string to check
+		 *@param str - The string to check
 		 *@return true iff there is at least one non-blank character
 		 */
 		@Deprecated
@@ -249,7 +251,7 @@ public abstract class BString
 		
 		/**
 		 * Replaces all substrings with another substring <br/>
-		 * NOTE: You should better use {@code str.replace(substr, with)} instead.
+		 * NOTE: You should better use {@link String#replace(CharSequence, CharSequence)} instead.
 		 *@param str The original string
 		 *@param substr The substring to be replaced
 		 *@param with The substring to put in
@@ -278,7 +280,8 @@ public abstract class BString
 		}
 		
 		/**
-		 * Replaces all substrings with another substring
+		 * Replaces all substrings {@code substr} in string {@code str} with another
+		 * substring {@code with}.
 		 *@return The replaced string
 		 *@param str The original string
 		 *@param substr The substring to be replaced
@@ -309,7 +312,7 @@ public abstract class BString
 		}
 
 		/**
-		 * Checks that the character codes of string s are strictly monotonous,
+		 * Checks that the character codes of string {@code s} are strictly monotonous,
 		 * i.e. i &le; j --&gt; s[i] &le; s[j], but not all equal (if there are
 		 * at least two characters).
 		 * @param s - the string to be analysed
@@ -342,6 +345,7 @@ public abstract class BString
 		 * @param pre - the prefix to be confirmed
 		 * @param str - the analysed string
 		 * @return true iff {@code str} starts with prefix {@code pre}
+		 * @see String#startsWith(String)
 		 */
 		@Deprecated
 		public static boolean isPrefixOf(String pre, String str)
@@ -361,27 +365,33 @@ public abstract class BString
 		
 		/**
 		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
-		 * and returns a StringList consisting of the split parts (without the separating
+		 * and returns a {@link StringList} consisting of the split parts (without the separating
 		 * delimiters) in order of occurrence.<br/>
 		 * @param _source - the string to be split
 		 * @param _by - the separating string (not interpreted as regular expression!)
 		 * @return the split result
+		 * @see StringList#explode(String, String)
+		 * @see String#explodeWithDelimiter(String, String)
 		 */
 		public static StringList explode(String _source, String _by)
 		{
 			StringList sl = new StringList();
 			
-			while(!_source.equals(""))
+			while (!_source.isEmpty())
 			{
-				if (_source.indexOf(_by)>=0)
+				int posBy = _source.indexOf(_by);
+				if (posBy >= 0)
 				{
-					sl.add(_source.substring(0,_source.indexOf(_by)-1));
-					_source=_source.substring(_source.indexOf(_by)+_by.length(), _source.length());
+					// START KGU 2019-11-22 Wrong cut position
+					//sl.add(_source.substring(0,_source.indexOf(_by)-1));
+					sl.add(_source.substring(0, posBy));
+					// END KGU 2019-11-22
+					_source=_source.substring(posBy + _by.length());
 				}
 				else
 				{
 					sl.add(_source);
-					_source="";
+					_source = "";
 				}
 			}
 			return sl;
@@ -391,10 +401,11 @@ public abstract class BString
 		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
 		 * and returns a StringList consisting of the split parts and the separating
 		 * delimiters in order of occurrence.<br/>
-		 * NOTE: Use method {@code explodeWithDElimiter(String, String)} on {@link #StringList} instead.
+		 * NOTE: Use method {@link StringList#explodeWithDelimiter(String, String)} instead.
 		 * @param _source - the string to be split
 		 * @param _by - the separating string
 		 * @return the split result
+		 * @see String#explodeWithDelimiter(String, String)
 		 */
 		@Deprecated
 		public static StringList explodeWithDelimiter(String _source, String _by)
