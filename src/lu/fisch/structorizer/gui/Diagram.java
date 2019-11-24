@@ -190,6 +190,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-10-05      Issues #758 (Edit subroutine) and KGU#743 (root type change) fixed
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Stale file also triggers save request in saveNSD()
+ *      Bob Fisch       2019-11-24      New method setRootForce() introduced as interface for Unimozer (c)
  *
  ******************************************************************************************************
  *
@@ -571,36 +572,50 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.getParent().getParent().requestFocusInWindow();	// It's the JScrollPane (Editor.scrollaraea)
 		return setRoot(root, true, true);
 	}
-        
-        
-        public boolean setRootForce(Root root)
+
+	// START BOB 2019-11-24: Unimozer needs this method
+	/**
+	 * Replaces the current {@link Root} by the given {@code root} (if not null)
+	 * and updates all depending GUI elements.<br/>
+	 * CAUTION: Special interface for embedded use in Unimozer. Does not protect
+	 * unsaved changes to the recently held {@link Root}!
+	 * @param root - The new {@link Root} object (NSD) to be shown.
+	 * @return true (no matter what happened)
+	 * @see #setRoot(Root, boolean, boolean)
+	 * @see #setRootIfNotRunning(Root)
+	 */
+	public boolean setRootForce(Root root)
 	{
-            if (root != null)
-            {
-                this.root = root;
-                selected = root.findSelected();
-                if (selected == null)
-                {
-                        selected = root;
-                        root.setSelected(true);
-                }
-                redraw();
-                analyse();
-                this.updateCodePreview();
-                doButtons();
-                adaptScrollUnits();
-            }
-            return true;
-        }
+		if (root != null)
+		{
+			this.root = root;
+			selected = root.findSelected();
+			if (selected == null)
+			{
+				selected = root;
+				root.setSelected(true);
+			}
+			redraw();
+			analyse();
+			this.updateCodePreview();
+			doButtons();
+			adaptScrollUnits();
+		}
+		return true;
+	}
+	// END BOB 2019-11-24
 	
 	// START KGU#430 2017-10-12: Issue #432 allow to set the root without immediate redrawing
 	/**
 	 * Replaces the current {@link Root} by the given {@code root} and updates all
-	 * depending GUI elements.
+	 * depending GUI elements.<br/>
+	 * Should not be used while Executor is running the current Root - consider using {@link #setRootIfNotRunning(Root)}
+	 * instead, which does a preliminary check.
 	 * @param root - the new diagram root
 	 * @param askToSave - in case the rcent {@link Root} has unsaved changes, ask to save it?
 	 * @param draw - If true then the work area will be redrawn
-	 * @return true if {@code root} wasn't null ad has properly replaced the current diagram
+	 * @return true if {@code root} wasn't null and has properly replaced the current diagram
+	 * @see #setRootIfNotRunning(Root)
 	 */
 	//public boolean setRoot(Root root, boolean askToSave)
 	public boolean setRoot(Root root, boolean askToSave, boolean draw)
@@ -611,7 +626,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Save if something has been changed
 			if (!saveNSD(askToSave))
 			{
-                            	// Abort this if the user cancels the save request
+				// Abort this if the user cancels the save request
 				return false;
 			}
 			this.unselectAll(draw);
@@ -644,7 +659,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			adaptScrollUnits();
 			// END KGU#44 2017-10-23
 		}
-		return true;
+		return root != null;
 	}
 	// END KGU#48,KGU#49 2015-10-18
 
@@ -2037,7 +2052,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		dlgOpen.setFileFilter(filter);
 		// END KGU 2016-01-15
 		// show & get result
-		int result = dlgOpen.showOpenDialog(this.NSDControl.getFrame());
+		int result = dlgOpen.showOpenDialog(this.getFrame());
 		// react on result
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2171,7 +2186,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		if (errorMessage != null)
 		{
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + _filename + "\": " + errorMessage, 
+			JOptionPane.showMessageDialog(this.getFrame(), "\"" + _filename + "\": " + errorMessage, 
 					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
@@ -2214,7 +2229,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		for (int i = 0; i < optionTexts.length; i++) {
 			menuText += (char)('a' + i) + ") " + optionTexts[i] + (i+1 < optionTexts.length ? "," : ".") + "\n";
 		}
-		int answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+		int answer = JOptionPane.showOptionDialog(this.getFrame(),
 				Menu.msgKeywordsDiffer.getText().replace("%1", "\n" + replacements.getText() + "\n").replace("%2", menuText),
 				Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.QUESTION_MESSAGE,
@@ -2287,11 +2302,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMsg = Menu.msgErrorNoFile.getText();
 		}
 		else {
-			errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile);			
+			errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);			
 		}
 		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), "\"" + arrFile + "\": " + errorMsg, 
+			JOptionPane.showMessageDialog(this.getFrame(), "\"" + arrFile + "\": " + errorMsg, 
 					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);			
 		}
@@ -2318,12 +2333,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		startSerialMode();
 		try {
 			if ((saveNSD(false)
-					|| JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+					|| JOptionPane.showConfirmDialog(this.getFrame(),
 							Menu.msgCancelAll.getText(),
 							Menu.msgTitleSave.getText(),
 							JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
 					&& Arranger.hasInstance()) {
-				Arranger.getInstance().saveAll(this.NSDControl.getFrame());
+				Arranger.getInstance().saveAll(this.getFrame());
 			}
 		}
 		finally {
@@ -2415,7 +2430,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//int result = dlgSave.showSaveDialog(this);
 		int result = JFileChooser.ERROR_OPTION;
 		do {
-			result = dlgSave.showSaveDialog(this.NSDControl.getFrame());
+			result = dlgSave.showSaveDialog(this.getFrame());
 		// END KGU#248 2016-9-15
 			if (result == JFileChooser.APPROVE_OPTION)
 			{
@@ -2538,7 +2553,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						message = Menu.msgOverwriteFile1.getText().replaceAll("%", f.getAbsolutePath());
 					}
 					int res = JOptionPane.showOptionDialog(
-							this.NSDControl.getFrame(),
+							this.getFrame(),
 							message,
 							Menu.btnConfirmOverwrite.getText(),
 							JOptionPane.DEFAULT_OPTION,
@@ -2567,7 +2582,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else {
 			// END KGU#534 2018-06-27
 				int res = JOptionPane.showConfirmDialog(
-						this.NSDControl.getFrame(),
+						this.getFrame(),
 						Menu.msgOverwriteFile.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION);
@@ -2644,8 +2659,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				message = Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"";
 			}
-                        if(this.NSDControl==null) return false;
-			res = requestSaveDecision(message, this.NSDControl.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
+			// START BOB 2019-10-16: Unimozer crashed with a NullPointerException
+			if (this.NSDControl==null) return false;
+			// END BOB 2019-10-16
+			res = requestSaveDecision(message, this.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
 			
 			// START KGU#534 2018-06-27: Enh. #552
 			//if (res==0)
@@ -2705,7 +2722,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//res = -1;	// Cancel all
 						if (!Element.E_AUTO_SAVE_ON_CLOSE
 								|| !isGoingToClose
-								|| JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+								|| JOptionPane.showConfirmDialog(this.getFrame(),
 										Menu.msgVetoClose.getText(),
 										Menu.msgTitleWarning.getText(),
 										JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
@@ -2888,7 +2905,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							new Object[]{filename, f.getAbsolutePath()});
 					String errors = Archivar.copyFile(tmpFile, f, true);
 					if (!errors.isEmpty()) {
-						JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+						JOptionPane.showMessageDialog(this.getFrame(),
 								Menu.msgErrorFileRename.getText().replace("%1", errors).replace("%2", tmpFile.getAbsolutePath()),
 								Menu.msgTitleError.getText(),
 								JOptionPane.ERROR_MESSAGE, null);						
@@ -2918,7 +2935,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorFileSave.getText().replace("%", message),
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE, null);
@@ -3003,7 +3020,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		if (error != null) {
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+			JOptionPane.showMessageDialog(this.getFrame(),
 					error,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE, null);
@@ -4095,7 +4112,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				try {
 					redraw();
 					String[] options = new String[]{Menu.lblContinue.getText(), Menu.lblCancel.getText()};
-					answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+					answer = JOptionPane.showOptionDialog(this.getFrame(),
 							Menu.msgJumpsOutwardsScope.getText().replace("%", jumpTexts), 
 							Menu.msgTitleWarning.getText(),
 							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
@@ -4144,11 +4161,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// If the diagram is a program then create an exclusive group named after the main diagram 
 					if (root.isProgram()) {
 						targetGroupName = root.getMethodName(true);
-						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame(), targetGroupName);
+						Arranger.getInstance().addToPool(root, this.getFrame(), targetGroupName);
 						groups = Arranger.getInstance().getGroupsFromRoot(root, true);
 					}
 					else {
-						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame());
+						Arranger.getInstance().addToPool(root, this.getFrame());
 					}
 				}
 				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == groups.size()) {
@@ -4177,7 +4194,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// Associate the subroutine to all groups root is member of
 					if (groups != null) {
 						for (Group group: groups) {
-							Arranger.getInstance().attachRootToGroup(group, sub, null, this.NSDControl.getFrame());
+							Arranger.getInstance().attachRootToGroup(group, sub, null, this.getFrame());
 						}
 					}
 					// END KGU#626 2019-01-06
@@ -4286,7 +4303,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Associate the includable to all groups root is member of
 			if (groups != null) {
 				for (Group group: groups) {
-					Arranger.getInstance().attachRootToGroup(group, incl, null, this.NSDControl.getFrame());
+					Arranger.getInstance().attachRootToGroup(group, incl, null, this.getFrame());
 				}
 			}
 			// END KGU#626 2019-01-06
@@ -4452,11 +4469,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// If the diagram is a program then create an exclusive group named after the main diagram 
 					if (root.isProgram()) {
 						targetGroupName = root.getMethodName(true);
-						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame(), targetGroupName);
+						Arranger.getInstance().addToPool(root, this.getFrame(), targetGroupName);
 						myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 					}
 					else {
-						Arranger.getInstance().addToPool(root, this.NSDControl.getFrame());
+						Arranger.getInstance().addToPool(root, this.getFrame());
 					}
 				}
 				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == myGroups.size()) {
@@ -5032,7 +5049,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			switcher.activate();
 			selected.traverse(switcher);			
 		}
-		JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+		JOptionPane.showMessageDialog(this.getFrame(),
 				Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
 		// END #272 2016-10-17
 		// START KGU#705 2019-09-23: Enh. #738
@@ -5122,7 +5139,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			cbRecursive.addChangeListener(changeListener);
 
 			int answer = JOptionPane.showConfirmDialog(
-					this.NSDControl.getFrame(), pnl,
+					this.getFrame(), pnl,
 					Menu.ttlBreakTextLines.getText(),
 					JOptionPane.OK_CANCEL_OPTION);
 
@@ -5198,7 +5215,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			int trigger = ele.getBreakTriggerCount();
 			// FIXME: Replace this quick-and-dirty approach by something more functional
-			String str = JOptionPane.showInputDialog(this.NSDControl.getFrame(),
+			String str = JOptionPane.showInputDialog(this.getFrame(),
 					Menu.msgBreakTriggerPrompt.getText(),
 					Integer.toString(trigger));
 			if (str != null)
@@ -5230,7 +5247,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
 				if (!isDone) {
-					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+					JOptionPane.showMessageDialog(this.getFrame(),
 						Menu.msgBreakTriggerIgnored.getText(),
 						Menu.msgTitleWrongInput.getText(),
 						JOptionPane.ERROR_MESSAGE);
@@ -5452,7 +5469,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 			if(file.exists())
 			{
-				int response = JOptionPane.showConfirmDialog (this.NSDControl.getFrame(),
+				int response = JOptionPane.showConfirmDialog (this.getFrame(),
 						Menu.msgOverwriteFiles.getText(),
 						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
@@ -5542,7 +5559,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+					JOptionPane.showMessageDialog(this.getFrame(),
 							Menu.msgErrorImageSave.getText(),
 							Menu.msgTitleError.getText(), 
 							JOptionPane.ERROR_MESSAGE);
@@ -5642,7 +5659,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+					JOptionPane.showMessageDialog(this.getFrame(),
 							Menu.msgErrorImageSave.getText(),
 							Menu.msgTitleError.getText(),
 							JOptionPane.ERROR_MESSAGE);
@@ -6153,7 +6170,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), message,
+			JOptionPane.showMessageDialog(this.getFrame(), message,
 					Menu.msgTitleError.getText(), JOptionPane.ERROR_MESSAGE);
 			// START KGU#484 2018-04-05: Issue #463
 			//ex.printStackTrace();
@@ -6361,7 +6378,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
 			
 			if (!file.canRead()) {
-				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+				JOptionPane.showMessageDialog(this.getFrame(), 
 						Menu.msgImportFileReadError.getText().replace("%", file.getPath()));
 				return;
 			}
@@ -6372,7 +6389,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			parser = identifyParser(file, filter);
 			
 			if (parser == null) {
-				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+				JOptionPane.showMessageDialog(this.getFrame(), 
 						Menu.msgImportCancelled.getText().replace("%", file.getPath()));
 				return;
 			}
@@ -6432,7 +6449,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //						);
 				ImportWorker worker = new ImportWorker(parser, file, ini,logPath);
 				// Pop up the progress monitor (it will be closed via the OK buttons).
-				new CodeImportMonitor(this.NSDControl.getFrame(), worker, parser.getDialogTitle());
+				new CodeImportMonitor(this.getFrame(), worker, parser.getDialogTitle());
 				List<Root> newRoots = worker.get();
 				// END KGU#537 2018-06-30
 				// END KGU#265 2016-09-28
@@ -6452,7 +6469,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					int maxRoots = Integer.parseInt(ini.getProperty("impMaxRootsForDisplay", "20"));
 					if (nRoots > maxRoots) {
 						String[] options = {Menu.lblContinue.getText(), Menu.lblCancel.getText()};
-						int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+						int chosen = JOptionPane.showOptionDialog(this.getFrame(),
 								Menu.msgTooManyDiagrams.getText().replace("%", Integer.toString(maxRoots)),
 								Menu.ttlCodeImport.getText(),
 								JOptionPane.YES_NO_OPTION,
@@ -6471,7 +6488,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								// If the saving attempt fails, ask whether the saving loop is to be cancelled 
 								if (!this.saveNSD(nextRoot, false)) {
 									if (JOptionPane.showConfirmDialog(
-											this.NSDControl.getFrame(),
+											this.getFrame(),
 											Menu.msgCancelAll.getText(),
 											Menu.ttlCodeImport.getText(),
 											JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -6547,7 +6564,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//		Menu.msgTitleParserError.getText(),
 					//		JOptionPane.ERROR_MESSAGE, null);
 					String[] options = {Menu.lblOk.getText(), Menu.lblCopyToClipBoard.getText()};
-					int chosen = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+					int chosen = JOptionPane.showOptionDialog(this.getFrame(),
 							parser.error,
 							Menu.msgTitleParserError.getText(),
 							JOptionPane.YES_NO_OPTION,
@@ -6572,7 +6589,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			catch (java.util.concurrent.CancellationException ex) {
-				JOptionPane.showMessageDialog(this.NSDControl.getFrame(), 
+				JOptionPane.showMessageDialog(this.getFrame(), 
 						Menu.msgImportCancelled.getText().replace("%", file.getPath()));				
 			}
 			catch(Exception ex)
@@ -6586,7 +6603,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#484 2018-04-05
 				}
 				if (message == null || message.isEmpty()) message = ex.toString();
-				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+				JOptionPane.showMessageDialog(this.getFrame(),
 						Menu.msgErrorUsingParser.getText().replace("%", parser.getDialogTitle())+"\n" + message,
 						Menu.msgTitleError.getText(),
 						JOptionPane.ERROR_MESSAGE);
@@ -6691,7 +6708,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), errors, 
+			JOptionPane.showMessageDialog(this.getFrame(), errors, 
 					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -6752,7 +6769,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (thisGenName.equals(this.lastGeneratorName)) {
 					if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
 							&& !prefGenName.equals(this.lastGeneratorName)) {
-						if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+						if (JOptionPane.showConfirmDialog(this.getFrame(), 
 								Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
 								Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
 								JOptionPane.YES_NO_OPTION,
@@ -6779,7 +6796,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
@@ -6825,7 +6842,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String message = ex.getLocalizedMessage();
 				if (message == null) message = ex.getMessage();
 				if (message == null || message.isEmpty()) message = ex.toString();
-				JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+				JOptionPane.showMessageDialog(this.getFrame(),
 						Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
 						Menu.msgTitleError.getText(),
 						JOptionPane.ERROR_MESSAGE);
@@ -7096,7 +7113,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			JLabel label = new JLabel();
 			ep.setBackground(label.getBackground());
 
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), ep);
+			JOptionPane.showMessageDialog(this.getFrame(), ep);
 		}
 		catch(Exception e)
 		{
@@ -7588,7 +7605,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
 			int answer = JOptionPane.CLOSED_OPTION;
 			do {
-				answer = JOptionPane.showOptionDialog(this.NSDControl.getFrame(),
+				answer = JOptionPane.showOptionDialog(this.getFrame(),
 						// START KGU#719 2019-08-01
 						//Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
 						box,
@@ -7597,7 +7614,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						JOptionPane.QUESTION_MESSAGE,
 						null,
 						options, options[2]);
-				if (answer == JOptionPane.CLOSED_OPTION && JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+				if (answer == JOptionPane.CLOSED_OPTION && JOptionPane.showConfirmDialog(this.getFrame(),
 						Menu.msgDiscardParserPrefs.getText()) == JOptionPane.OK_OPTION) {
 					// Revert the changes
 					for (Map.Entry<String, StringList> refEntry: refactoringData.entrySet()) {
@@ -7636,7 +7653,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				(updateNeed	= checkPref(Element.preRepeat, refactoringData, "preRepeat", "postRepeat")) != null ||
 				(updateNeed = checkPrefCase(Element.preCase, refactoringData)) != null ||
 				(updateNeed = checkPrefFor(Element.preFor, refactoringData)) != null)
-				&& JOptionPane.showConfirmDialog(this.NSDControl.getFrame(),
+				&& JOptionPane.showConfirmDialog(this.getFrame(),
 				Menu.msgAdaptStructPrefs.getText().replace("%", updateNeed), Menu.msgTitleQuestion.getText(),
 				JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
 		// END KGU#735 2019-09-29
@@ -8733,7 +8750,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		JSpinner spnUnit = new JSpinner();
 		spnUnit.setModel(new SpinnerNumberModel(Math.max(1, Element.E_WHEEL_SCROLL_UNIT), 1, 20, 1));
 		spnUnit.addMouseWheelListener(this);
-		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), 
+		if (JOptionPane.showConfirmDialog(this.getFrame(), 
 				spnUnit,
 				Menu.ttlMouseScrollUnit.getText(),
 				JOptionPane.OK_CANCEL_OPTION,
@@ -9465,7 +9482,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
-			JOptionPane.showMessageDialog(this.NSDControl.getFrame(), errors, 
+			JOptionPane.showMessageDialog(this.getFrame(), errors, 
 					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
 		return diagramControllers;
@@ -9848,7 +9865,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void inspectAttributes(Root _root) {
 		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
-				this.NSDControl.getFrame(), licInfo);
+				this.getFrame(), licInfo);
 		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
@@ -10010,7 +10027,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	// START KGU#459 2017-11-14: Enh. #459-1
 	public void showTutorialHint() {
-		JOptionPane.showMessageDialog(this.NSDControl.getFrame(),
+		JOptionPane.showMessageDialog(this.getFrame(),
 				Menu.msgGuidedTours.getText(),
 				Menu.ttlGuidedTours.getText(),
 				JOptionPane.INFORMATION_MESSAGE,
@@ -10056,7 +10073,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * localization. 
 	 */
 	public void elementNamesNSD() {
-		ElementNamePreferences namePrefs = new ElementNamePreferences(this.NSDControl.getFrame());
+		ElementNamePreferences namePrefs = new ElementNamePreferences(this.getFrame());
 		for (int i = 0; i < namePrefs.txtElements.length; i++) {
 			namePrefs.txtElements[i].setText(ElementNames.configuredNames[i]);
 		}
@@ -10115,7 +10132,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void controllerAliasesNSD(Vector<GENPlugin> controllerPlugins)
 	{
-		DiagramControllerAliases dialog = new DiagramControllerAliases(this.NSDControl.getFrame(), controllerPlugins);
+		DiagramControllerAliases dialog = new DiagramControllerAliases(this.getFrame(), controllerPlugins);
 		dialog.setVisible(true);
 		// FIXME: Just temporary - mind Element.controllerName2Alias and Element.controllerAlias2Name
 		if (dialog.OK) {
@@ -10143,9 +10160,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#480 2018-01-18
 	
 	// START KGU#356 2019-03-14: Issue #366
-	/** @return the owning @{@link JFrame} (actually the {@link Mainform}) */
+	/** @return the owning @{@link JFrame} (actually the {@link Mainform}) or null */
 	public JFrame getFrame()
 	{
+		// START KGU 2019-11-24: Make sure this doesn't cause a NullPointerException
+		if (this.NSDControl == null) {
+			return null;
+		}
+		// END KGU 2019-11-24
 		return this.NSDControl.getFrame();
 	}
 	// END KGU#356 2019-03-14
@@ -10234,7 +10256,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		panel.add(new JSeparator(SwingConstants.HORIZONTAL));
 		panel.add(panel2);
 		GUIScaler.rescaleComponents(panel);
-		if (JOptionPane.showConfirmDialog(this.NSDControl.getFrame(), panel, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+		if (JOptionPane.showConfirmDialog(this.getFrame(), panel, title, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 			keys = new HashSet<String>();
 			if (!chkAll.isSelected()) {
 				i = 0;

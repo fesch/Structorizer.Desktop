@@ -2243,7 +2243,7 @@ public class CGenerator extends Generator {
 		// Add a comment if there is no type info or internal declaration is not allowed
 		else if (types == null || _fullDecl){
 			String typeName = "???";
-			START KGU#771 2019-11-24: Bugfix #783
+			// START KGU#771 2019-11-24: Bugfix #783
 			if (types != null) {
 				typeName = types.get(0) + "???";
 			}
