@@ -571,6 +571,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.getParent().getParent().requestFocusInWindow();	// It's the JScrollPane (Editor.scrollaraea)
 		return setRoot(root, true, true);
 	}
+        
+        
+        public boolean setRootForce(Root root)
+	{
+            if (root != null)
+            {
+                this.root = root;
+                selected = root.findSelected();
+                if (selected == null)
+                {
+                        selected = root;
+                        root.setSelected(true);
+                }
+                redraw();
+                analyse();
+                this.updateCodePreview();
+                doButtons();
+                adaptScrollUnits();
+            }
+            return true;
+        }
 	
 	// START KGU#430 2017-10-12: Issue #432 allow to set the root without immediate redrawing
 	/**
@@ -590,7 +611,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Save if something has been changed
 			if (!saveNSD(askToSave))
 			{
-				// Abort this if the user cancels the save request
+                            	// Abort this if the user cancels the save request
 				return false;
 			}
 			this.unselectAll(draw);
@@ -2623,6 +2644,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				message = Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"";
 			}
+                        if(this.NSDControl==null) return false;
 			res = requestSaveDecision(message, this.NSDControl.getFrame(), SerialDecisionAspect.SERIAL_SAVE);
 			
 			// START KGU#534 2018-06-27: Enh. #552
