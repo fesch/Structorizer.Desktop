@@ -7004,7 +7004,7 @@ public class Executor implements Runnable
 //		this.evaluateExpression("HashMap tmp20170913kgu = new HashMap()", false);
 		// START KGU#559 2018-07-20: Enh. #563 - simplified record initializers (smarter interpretation)
 		//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null));
-		HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null), recordType);
+		HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate(null), recordType, false);
 		// END KGU#559 2018-07-20
 		if (components == null || components.containsKey("§TAIL§")) {
 			throw new EvalError(control.msgInvalidExpr.getText().replace("%1", _expr), null, null);

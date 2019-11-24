@@ -81,6 +81,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürttig         2019-10-15      Bugfix #765: Private field typeMap had to be made protected
  *      Kay Gürtzig         2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
+ *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
  *
  ******************************************************************************************************
  *
@@ -124,6 +126,7 @@ package lu.fisch.structorizer.generators;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -258,6 +261,8 @@ public class BASHGenerator extends Generator {
 	
 	/************ Code Generation **************/
 	
+	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
+	
 	// START KGU#753 2019-10-15: Bugfix #765 had to be made protected, since KSHGenerator must initialize it as well. 
 	//private HashMap<String, TypeMapEntry> typeMap = null;
 	protected HashMap<String, TypeMapEntry> typeMap = null;
@@ -336,13 +341,8 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-		// Trim the tokens at end (just for sure)
-		int pos0 = 0;
-		int posx = tokens.count();
-		while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-		while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
-		tokens.remove(posx, tokens.count());
-		tokens.remove(0, pos0);
+		// Trim the tokens at both ends (just for sure)
+		tokens = tokens.trim();
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
@@ -393,19 +393,19 @@ public class BASHGenerator extends Generator {
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
 		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = tokens.lastIndexOf("]", posAsgnOpr-1);
-    	for (int i = 0; i < varNames.count(); i++)
-    	{
-    		String varName = varNames.get(i);
-    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		// Transform the expression right of the assignment symbol
-    		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
-    		// Transform the index expression on the left side of the assignment symbol
-    		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
-    	}
+		for (int i = 0; i < varNames.count(); i++)
+		{
+			String varName = varNames.get(i);
+			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+			// Transform the expression right of the assignment symbol
+			transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
+			// Transform the index expression on the left side of the assignment symbol
+			transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
+		}
 
 		// Position of the assignment operator may have changed now
-    	posAsgnOpr = tokens.indexOf("<-");
+		posAsgnOpr = tokens.indexOf("<-");
 		// END KGU#96 2016-01-08
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
@@ -437,11 +437,8 @@ public class BASHGenerator extends Generator {
 				}
 			}
 		}
-    	// Trim the tokens at front
-    	pos0 = 0;
-    	posx = tokens.count();
-    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-    	tokens.remove(0, pos0);
+		// Trim the tokens (at front)
+		tokens = tokens.trim();
 		// Re-combine the rval expression to a string 
 		String expr = tokens.concatenate();
 		// If the expression is a function call, then convert it to shell syntax
@@ -493,7 +490,7 @@ public class BASHGenerator extends Generator {
 				&& tokens.get(1).equals("{") && expr.endsWith("}")
 				// START KGU#559 2018-07-20: Enh. #  Try to fetch sufficient type info
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
-				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)))) != null) {
+				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
@@ -504,8 +501,15 @@ public class BASHGenerator extends Generator {
 					sepa = " ";
 				}
 			}
-			sb.append(")");
-			expr = sb.toString();
+			// START KGU#771 2019-11-24: Bugfix #783 - fallback for the case of missing struct info
+			//sb.append(")");
+			//expr = sb.toString();
+			// If the type info was available or didn't provide any content then leave expr as is
+			if (sb.length() > 0) {
+				sb.append(")");
+				expr = sb.toString();
+			}
+			// END KGU#771 2019-11-24
 		}
 		// END KGU#388 2017-10-24
 		// The following is a very rough and vague heuristics to support arithmetic expressions 
@@ -554,14 +558,36 @@ public class BASHGenerator extends Generator {
 				exprTokens.contains("*") ||
 				exprTokens.contains("/") ||
 				exprTokens.contains("%");
+		// Avoid recursive enclosing in $(...)
 		if (isArithm) {
 			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
 			exprTokens.add(" ))");
 		}
+		// START KGU#772 2019-11-24: Bugfix #784 - avoid redundant enclosing with $(...)
+		//else if (isAssigned) {
+		//	exprTokens.insert("$(", 0);
+		//	exprTokens.add(")");
+		//}
 		else if (isAssigned) {
-			exprTokens.insert("$(", 0);
-			exprTokens.add(")");
+			boolean isVarAccess =
+					exprTokens.count() == 4 &&
+					exprTokens.get(0).equals("$") &&
+					exprTokens.get(1).equals("{") &&
+					this.varNames.contains(exprTokens.get(2)) &&
+					exprTokens.get(3).equals("}") ||
+					exprTokens.count() == 1 &&
+					VAR_ACCESS_MATCHER.reset(exprTokens.get(0)).matches() &&
+					this.varNames.contains(exprTokens.get(0).substring(2, exprTokens.get(0).length()-1));
+			if (isVarAccess) {
+				exprTokens.insert("\"", 0);
+				exprTokens.add("\"");
+			}
+			else {
+				exprTokens.insert("$(", 0);
+				exprTokens.add(")");
+			}
 		}
+		// END KGU#772 2019-11-24
 		return exprTokens.concatenate();
 	}
 	protected String transformExpression(String expr, boolean isAssigned)
@@ -750,10 +776,10 @@ public class BASHGenerator extends Generator {
 		// END KGU#162 2016-03-31
 		
 
-        // START KGU#114 2015-12-22: Bugfix #71
-        //return _input.trim();
-        return intermed.trim();
-        // END KGU#114 2015-12-22
+		// START KGU#114 2015-12-22: Bugfix #71
+		//return _input.trim();
+		return intermed.trim();
+		// END KGU#114 2015-12-22
 	}
 	
 	/* (non-Javadoc)
@@ -802,11 +828,12 @@ public class BASHGenerator extends Generator {
 					continue;
 				}
 				// END KGU#653 2019-02-15
-				// START KGU#388 2017-10-24: Enh. #423 ignore type definitions
-				if (Instruction.isTypeDefinition(line)) {
+				// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
+				//if (Instruction.isTypeDefinition(line)) {
+				if (Instruction.isMereDeclaration(line)) {
 					continue;
 				}
-				// END KGU#388 2017-10-24
+				// END KGU#388/KGU#772 2017-10-24/2019-11-24
 				String codeLine = transform(line);
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {
@@ -1177,7 +1204,7 @@ public class BASHGenerator extends Generator {
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _call.isDisabled();
 			// END KGU#277 2016-10-14
-			for(int i=0;i<_call.getText().count();i++)
+			for (int i = 0; i < _call.getText().count(); i++)
 			{
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_call.getText().get(i)));
@@ -1397,7 +1424,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#389 2017-10-23
 		generateCode(_root.children, indent);
 		
-		if( ! _root.isProgram() ) {
+		if (_root.isSubroutine()) {
 			code.add("}");
 		}
 		

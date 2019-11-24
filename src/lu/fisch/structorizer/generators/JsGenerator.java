@@ -34,6 +34,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-05-21      First Issue (#721)
  *      Kay Gürtzig     2019-09-30      Array and record initializer handling added...
  *      Kay Gürtzig     2019-10-03      ... and improved (still not clean - we need a new recursive approach)
+ *      Kay Gürtzig     2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *
  ******************************************************************************************************
  *
@@ -198,7 +199,10 @@ public class JsGenerator extends CGenerator {
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		// START KGU#771 2019 11-24: Bugfix #783 - precaution against unknown type
+		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, true);
+		// END KGU#771 2019-11-24
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo;
 		if (typeInfo != null) {
@@ -215,6 +219,7 @@ public class JsGenerator extends CGenerator {
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
 			String compVal = comps.get(compName);
+			TypeMapEntry compType = compEntry.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
 				if (isFirst) {
 					isFirst = false;
@@ -223,11 +228,14 @@ public class JsGenerator extends CGenerator {
 					recordInit.append(", ");
 				}
 				recordInit.append(compName + ":");
-				if (compEntry.getValue() != null && compEntry.getValue().isRecord()) {
-					recordInit.append(transformRecordInit(compVal, compEntry.getValue()));
+				if (compType != null && compType.isRecord()) {
+					recordInit.append(transformRecordInit(compVal, compType));
 				}
 				// START KGU#732 2019-10-03: Bugfix #755 FIXME - nasty workaround
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				// START KGU#771 2019-11-24: Bugfix #783 Caused a NullPointer exception on missing type info
+				//else if (compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				// END KGU#771 2019-11-24
 					StringList items = Element.splitExpressionList(compVal.substring(1), ",", true);
 					items.delete(items.count()-1);
 					for (int i = 0; i < items.count(); i++) {

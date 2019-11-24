@@ -390,13 +390,14 @@ public class CSharpGenerator extends CGenerator
 		// This is practically identical to Java
 		// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
+			TypeMapEntry compType = compEntry.getValue();
 			String compVal = comps.get(compName);
 			if (isFirst) {
 				isFirst = false;
@@ -408,12 +409,12 @@ public class CSharpGenerator extends CGenerator
 				if (compVal == null) {
 					recordInit += "null";
 				}
-				else if (compEntry.getValue().isRecord()) {
-					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				else if (compType != null && compType.isRecord()) {
+					recordInit += transformRecordInit(compVal, compType);
 				}
 				// START KGU#561 2018-07-21: Bugfix #564
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
-					String elemType = compEntry.getValue().getCanonicalType(true, false).substring(1);
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					String elemType = compType.getCanonicalType(true, false).substring(1);
 					recordInit += "new " + this.transformType(elemType, "object") + "[]" + compVal;
 				}
 				// END KGU#561 2018-07-21

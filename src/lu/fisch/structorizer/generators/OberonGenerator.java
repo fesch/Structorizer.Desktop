@@ -840,7 +840,7 @@ public class OberonGenerator extends Generator {
 	{
 		// START KGU#559 2018-07-22: Enh. #563
 		//HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _recType);
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _recType, false);
 		// END KGU#559 2018-07-22
 		if (_forConstant) {
 			appendComment("Note: " + _varName + " was meant to be a record CONSTANT...", _indent);

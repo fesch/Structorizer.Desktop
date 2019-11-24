@@ -758,7 +758,7 @@ public class PasGenerator extends Generator
 	//	HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
 	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled, TypeMapEntry _typeEntry)
 	{
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry);
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry, false);
 	// END KGU#559 2018-07-20
 		if (_forConstant) {
 			String typeName = components.get("§TYPENAME§");

@@ -2760,7 +2760,7 @@ public class Root extends Element {
 		int posBrace = 0;
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
-				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null);
+				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null, false);
 				if (components != null) {
 					// Remove all tokens from the type name on (they are in the HashMap now)
 					tokens.remove(posBrace-1, tokens.count());
@@ -4630,7 +4630,7 @@ public class Root extends Element {
 						else {
 							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType);
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
 							// END KGU#559 2018-07-20
 							Set<String> compNames = recType.getComponentInfo(true).keySet();
 							for (String compName: compNames) {

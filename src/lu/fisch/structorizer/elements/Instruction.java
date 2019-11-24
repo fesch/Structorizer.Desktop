@@ -984,11 +984,17 @@ public class Instruction extends Element {
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; isHideable && i < lines.count(); i++) {
 			String line = lines.get(i);
-			isHideable = line.isEmpty() || isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+			isHideable = line.isEmpty() || isMereDeclaration(line);
 		}
 		return isHideable;
 	}
 	// END KGU#477 2017-12-06
+	// START KGU#772 2019-11-24: We want to be able to suppress expression of code for mere declarations
+	public static boolean isMereDeclaration(String line)
+	{
+		return isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+	}
+	// END KGU#772 2019-11-24
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed

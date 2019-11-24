@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
  *
  ******************************************************************************************************
  *
@@ -114,7 +115,6 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -389,9 +389,9 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Record support
 	/**
-	 * Recursively looks for record initializers in the tokens and if there are some replaces
+	 * Recursively looks for record initializers in the tokens and, if there are some, replaces
 	 * the respective type name token by the entire transformed record initializer as single
-	 * string element and hence immune against further token manipulations.
+	 * string element (which is hence immune against further token manipulations).<br/>
 	 * @param tokens - the token list of the split line, will be modified.
 	 */
 	private void transformRecordInitializers(StringList tokens) {
@@ -409,7 +409,7 @@ public class PythonGenerator extends Generator
 				// We will now reorder the elements and drop the names
 				// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry);
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
 				String tail = comps.get("§TAIL§");	// String part beyond the initializer
@@ -572,6 +572,7 @@ public class PythonGenerator extends Generator
 			// END KGU 2014-11-16
 			StringList lines = _inst.getUnbrokenText();
 			String tmpCol = null;
+			Root root = Element.getRoot(_inst);
 			for(int i = 0; i < lines.count(); i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -612,9 +613,14 @@ public class PythonGenerator extends Generator
 				else if (Instruction.isTypeDefinition(line)) {
 					mtchTypename.reset(line).matches();
 					String typeName = mtchTypename.group(1);
-					done = this.generateTypeDef(Element.getRoot(_inst), typeName, null, _indent, isDisabled);
+					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
 				}
 				// END KGU#388 2017-10-02
+				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified oinitialisations
+				else if (Instruction.isMereDeclaration(line)) {
+					done = generateDeclaration(line, root, _indent, isDisabled);
+				}
+				// END KGU#767 2019-11-24
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -1125,40 +1131,83 @@ public class PythonGenerator extends Generator
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
 	 * @see #appendGlobalInitialisations(String)
+	 * @see #generateDeclaration(String, Root, String, boolean)
 	 */
 	private void appendGlobalDeclarations(Root _root, String _indent) {
-		if (_root.includeList != null) {
-			HashSet<String> declared = new HashSet<String>();
-			for (Root incl: this.includedRoots) {
-				if (_root.includeList.contains(incl.getMethodName())) {
-					// Start with the types
-					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
-					//for (String name: incl.getTypeInfo().keySet()) {
-					for (String name: incl.getTypeInfo(routinePool).keySet()) {
-					// END KGU#676 2019-03-30
-						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);								
-						}
-					}
-					// Now add the variables (including constants)
-					StringList names = incl.retrieveVarNames();
-					for (int i = 0; i < names.count(); i++)
-					{
-						String name = names.get(i);
-						if (!declared.contains(name)) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);
-						}
-					}
+		// START KGU#767 2019-11-24: Bugfix #782 Fundamentally revised
+//		if (_root.includeList != null) {
+//			HashSet<String> declared = new HashSet<String>();
+//			for (Root incl: this.includedRoots) {
+//				if (_root.includeList.contains(incl.getMethodName())) {
+//					// Start with the types
+//					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+//					//for (String name: incl.getTypeInfo().keySet()) {
+//					for (String name: incl.getTypeInfo(routinePool).keySet()) {
+//					// END KGU#676 2019-03-30
+//						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);								
+//						}
+//					}
+//					// Now add the variables (including constants)
+//					StringList names = incl.retrieveVarNames();
+//					for (int i = 0; i < names.count(); i++)
+//					{
+//						String name = names.get(i);
+//						if (!declared.contains(name)) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);
+//						}
+//					}
+//				}
+//			}
+//			if (!declared.isEmpty()) {
+//				addCode("", _indent, false);
+//			}
+//		}
+		for (String name: this.typeMap.keySet()) {
+			if (this.wasDefHandled(_root, name, false, true) && !this.wasDefHandled(_root, name, true, false)) {
+				if (name.startsWith(":")) {
+					name = name.substring(1);
 				}
-			}
-			if (!declared.isEmpty()) {
-				addCode("", _indent, false);
+				addCode("global " + name, _indent, false);
 			}
 		}
+		// END KGU#767 2019-11-24
 	}
 	// END KGU#388 2017-10-02
+
+	// START KGU#767 2019-11-24: Bugfix #782 - wrong handling of global / local declarations
+	/**
+	 * Generates a declaration from the given line and registers it with the given root.
+	 * @param _line - the original line of the declaration
+	 * @param _root - the owning {@link Root} object
+	 * @param _indent - current indentation level
+	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to be a comment)
+	 * @return true iff all code generation for the instruction line is done
+	 */
+	private boolean generateDeclaration(String _line, Root _root, String _indent, boolean _isDisabled) {
+		StringList tokens = Element.splitLexically(_line + " <- 0", true);
+		tokens.removeAll(" ");
+		String varName = Instruction.getAssignedVarname(tokens);
+		if (this.wasDefHandled(_root, varName, false)) {
+			return true;
+		}
+		String typeComment = "";
+		TypeMapEntry type = this.typeMap.get(varName);
+		if (type != null) {
+			StringList typeNames = this.getTransformedTypes(type, true);
+			if (typeNames != null && !typeNames.isEmpty()) {
+				typeComment = "\t" + this.commentSymbolLeft() +
+						" meant to be of type " + typeNames.concatenate(" or ") + " " +
+						this.commentSymbolRight();
+			}
+		}
+		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
+		this.setDefHandled(_root.getSignatureString(false), varName);
+		return true;
+	}
+	// END KGU#767 2019-11-24
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -1179,6 +1228,9 @@ public class PythonGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+			appendComment("You should have installed module recordtype: pip install recordtype", _indent);
+			appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
+			code.add(_indent + "from recordtype import recordtype");
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
 				code.add(_indent);
@@ -1248,7 +1300,9 @@ public class PythonGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// START KGU#376 2017-10-03: Enh. #389 - Variables and types of the included diagrams must be marked as global here
+		// START KGU#767 2019-11-24: Bugfix #782: Disabled, will now be done via generateDeclaration() from generateCode(Instruction...)
 		appendGlobalDeclarations(_root, _indent);
+		// END KGU#767 2019-11-24
 		// END KGU#376 2017-10-03
 		// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 		generateParallelThreadFunctions(_root, _indent);

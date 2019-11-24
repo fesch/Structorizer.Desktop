@@ -108,6 +108,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
+ *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
  *
  ******************************************************************************************************
  *
@@ -3217,12 +3218,16 @@ public abstract class Element {
 	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
 	 * name of {@code _typeInfo} then unprefixed component values will be associated
 	 * to the component names of the type in order of occurrence unless an explicit
-	 * component name prefix occurs. 
+	 * component name prefix occurs.<br/>
+	 * If {@code _typeInfo} is null and {@code generateDummyCompNames} is true then generic
+	 * component names of form {@code "FIXME_<typename>_<i>"} may be provided for components
+	 * with missing names in the {@code _text}.
 	 * @param _text - the initializer expression with or without typename but with braces.
 	 * @param _typeInfo - the type map entry for the corresponding record type if available
+	 * @param _generateDummyCompNames - if true then missing component names (not retrievable) will be replaced by generic ones
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
+	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo, boolean _generateDummyCompNames)
 	{
 		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
 		//HashMap<String, String> components = new HashMap<String, String>();
@@ -3271,6 +3276,11 @@ public abstract class Element {
 				components.put(compNames[i], parts.get(i));
 			}
 			// END KGU#559 2018-07-20
+			// START KGU#711 2019-11-24: Bugfix #783 workaround for missing type info
+			else if (compNames == null && !typename.isEmpty()) {
+				components.put("FIXME_" + typename + "_" + i, parts.get(i));
+			}
+			// END KGU#711 2019-11-24
 		}
 		return components;
 	}

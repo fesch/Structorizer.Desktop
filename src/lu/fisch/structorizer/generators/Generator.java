@@ -96,6 +96,7 @@ package lu.fisch.structorizer.generators;
  *                                      wrong Root line range in the codeMap (and consecutive errors)
  *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
  *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
+ *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
  *
  ******************************************************************************************************
  *
@@ -444,7 +445,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract String commentSymbolLeft();
 	/**
 	 * Right delimiter of a both-end delimited comment. In case commentSymbolLeft()
-	 * returns a line-comment symbol, then here should the epty string be returned
+	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
 	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
@@ -733,12 +734,31 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
 	 */
+	// START KGU#767 2019-11-24: Bugfix #782 for Python - we need to tell included from own declarations
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
+	{
+		return wasDefHandled(_root, _id, _setDefinedIfNot, true);
+	}
+
+	/**
+	 * Checks whether the given {@code _id} has already been defined<b/>
+	 * 1. by diagram {@code _root} itself or
+	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
+	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * in {@link #declaredStuff}.
+	 * @param _root - the currently exported {@link Root}
+	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
+	 * @param _involveIncludables - whether the included diagrams are also to be consulted
+	 * @return true if there had already been a definition before
+	 */
+	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
+	// END KGU#767 2019-11-24
 	{
 		String signature = _root.getSignatureString(false);
 		StringList definedIds = this.declaredStuff.get(signature);
 		boolean handled = definedIds != null && definedIds.contains(_id);
-		if (_root.includeList != null) {
+		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
 				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
@@ -1185,7 +1205,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// but it's still needed for the meaningful ones.
 		String[] keywords = CodeParser.getAllProperties();
 		for (int kw = 0; kw < keywords.length; kw++)
-		{    				
+		{
 			if (keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = this.splitKeywords.elementAt(kw);

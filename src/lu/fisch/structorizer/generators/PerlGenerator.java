@@ -490,7 +490,7 @@ public class PerlGenerator extends Generator {
 	{
 		StringList result = new StringList();
 		result.add(_typeEntry.typeName + "->new(\n");
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
 			String compVal = comp.getValue();

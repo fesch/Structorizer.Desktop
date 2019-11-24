@@ -95,6 +95,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
  *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
+ *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
+ *                                              Bugfix #782: Handling of global/local declarations mended
  *
  ******************************************************************************************************
  *
@@ -621,7 +623,7 @@ public class CGenerator extends Generator {
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		StringBuilder recordInit = new StringBuilder("{");
@@ -1035,6 +1037,23 @@ public class CGenerator extends Generator {
 				// Case 1.2
 				// Combine variable access as is
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
+				// START KGU#767 2019-11-24: Bugfix #782 maybe we must introduce a postponed declaration here
+				if (varName != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)) {
+					TypeMapEntry type = this.typeMap.get(varName);
+					String typeName = "???";
+					if (type != null) {
+						StringList types = this.getTransformedTypes(type, true);
+						if (types != null && ! types.isEmpty()) {
+							typeName = types.get(0);
+							if (types.count() > 1) {
+								typeName += "???";
+							}
+						}
+					}
+					codeLine = typeName + " " + codeLine;
+					this.setDefHandled(root.getSignatureString(false), varName);
+				}
+				// END KGU#767 2019-11-24
 			}
 			// Now we care for a possible assignment
 			if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
@@ -2223,9 +2242,15 @@ public class CGenerator extends Generator {
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
 		else if (types == null || _fullDecl){
+			String typeName = "???";
+			START KGU#771 2019-11-24: Bugfix #783
+			if (types != null) {
+				typeName = types.get(0) + "???";
+			}
+			// END KGU#771 2019-11-24
 			// START #730 2019-11-12: Issue #752 don't comment it out, a missing declaration is a syntax error anyway
 			//appendComment(_name + ";", _indent);
-			addCode("??? " + _name + ";", _indent, false);
+			addCode(typeName + " " + _name + ";", _indent, false);
 			// END KGU#730 2019-11-12
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
 			setDefHandled(_root.getSignatureString(false), _name);
@@ -2277,7 +2302,14 @@ public class CGenerator extends Generator {
 	//	HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, null);
 	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
 	{
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry);
+		// START KGU#771 2019-11-24: Bugfix #783 In case of an unknown record type we should at least write the original content
+		if (_typeEntry == null) {
+			addCode(_lValue + " = " + _recordValue + ";\t" + this.commentSymbolLeft() + " FIXME: missing type information for struct! " + this.commentSymbolRight(),
+					_indent, false);
+			return;
+		}
+		// END KGU#771 2019-11-24
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
 	// END KGU#559 2018-07-20
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
