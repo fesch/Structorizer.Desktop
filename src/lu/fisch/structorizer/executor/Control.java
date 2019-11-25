@@ -69,6 +69,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-17      Enh. #739: New error message for defective enum type definitions
  *      Kay Gürtzig     2019-11-21      Enh. #739: Mnemonic display and ComboBox editing for enumerator values
  *                                      Editability check bug fixed in the table model fixed
+ *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
  *
  ******************************************************************************************************
  *
@@ -621,6 +622,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         chkCollectRuntimeData.setEnabled(true);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
+        // START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+        if (activeEnumEditor != null) {
+            activeEnumEditor.stopCellEditing();
+            activeEnumEditor = null;
+        }
+        // END KGU#542 2019-11-25
         this.setVisible(false);
     }
 
@@ -883,7 +890,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#274 2016-10-08
         // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
         if (vars.size() > 0) {
-            ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            try {
+                ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            }
+            catch (ArrayIndexOutOfBoundsException ex) {
+                // Just ignore it - it is caused by races.
+            }
         }
         // END KGU#443 2017-10-16
         // START KGU#608 2018-12-03: Bugfix #641 - Sometimes the table didn't show the updated content 
@@ -953,6 +965,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     /** Normative visibility for play and step button (to be restored when cell editor is released) */
     private boolean startButtonsEnabled = true;
     // END KGU#442 2017-10-14
+    // START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    private AbstractCellEditor activeEnumEditor = null;
+    // END KGU#542 2019-11-25
     // START KGU#443 2017-10-16: Enh. #439
     private AbstractCellEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
@@ -1122,6 +1137,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			if (cellEditor instanceof PulldownButtonCellEditor) {
     				activeBtnEditor = (PulldownButtonCellEditor)cellEditor;
     			}
+    			// START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    			else if (cellEditor instanceof EnumeratorCellEditor) {
+    				activeEnumEditor = (EnumeratorCellEditor)cellEditor;
+    			}
+    			// END KGU#542 2019-11-25p
     			btnPlay.setEnabled(false);
     			btnStep.setEnabled(false);
     			if (startButtonsEnabled) {
@@ -1142,6 +1162,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     				// START KGU#542 2019-11-21: Enh. #739 - support enumerator variables
     				if (val instanceof JComboBox) {
     					val = ((JComboBox<?>)val).getSelectedItem();
+    					// START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    					activeEnumEditor = null;
+    					// END KGU#542 2019-11-25p
     				}
     				// END KGU#542 2019-11-21
     				varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
