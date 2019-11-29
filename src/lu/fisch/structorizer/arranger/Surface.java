@@ -122,6 +122,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements
  *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group used to fail.
  *      Kay Gürtzig     2019-10-15      Bugfix #763: On resaving stale diagrams, the shadow path had to be cleared.
+ *      Kay Gürtzig     2019-11-28      Bugfix #788: Offered arrz extraction to user-chosen folder was ignored
  *
  ******************************************************************************************************
  *
@@ -1913,7 +1914,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //		}
 //		return arrFile;
 		Archivar archivar = new Archivar();
-		ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, null);
+		// START KGU#775 2019-11-29: Bugfix #788 - the extraction target dir was ignored
+		//ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, null);
+		ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, targetDir);
+		// END KGU#775 2019-11-29
 		return archiveIndex.arrFile;
 	}
 

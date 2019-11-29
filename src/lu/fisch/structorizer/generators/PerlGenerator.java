@@ -78,11 +78,16 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-21  Enh. #56: Export of Try elements implemented
  *      Kay Gürtzig         2019-03-30  Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-11-19  Issues #423, #739: Support for struct and enum types (begun)
- *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well a record initializer handling revised
+ *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well as record initializer handling revised
+ *      Kay Gürtzig         2019-11-28  Issue #388: "use constant" approach withdrawn (except for enums), wrong lval references avoided
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
+ *      
+ *      2019-11-28 Issue #388 (KGU#375)
+ *      - A temporary solution for constants (via use constant) had to be withdrawn because these constants cannot be scoped
+ *        and don't behave like readonly variables, they can hardly be used with function calls or the like.
  *
  ******************************************************************************************************///
 
@@ -286,29 +291,38 @@ public class PerlGenerator extends Generator {
 	protected String transformTokens(StringList tokens)
 	{
 		// START KGU#388/KGU#542 2019-11-19: Enh. #423, #739 transferred the stuff from transform(String) hitherto
-		tokens.removeAll(" ");	// Condense
+		// Manipulate a condensed token list copy simultaneously (makes it easier to locate neighbouring tokens)
+		StringList denseTokens = tokens.copy();
+		denseTokens.removeAll(" ");	// Condense
 		// Now transform all array and record initializers
 		// To go from right to left should ensure we advance from the innermost to the outermost brace
-		int posBrace = tokens.lastIndexOf("{");
-		while (posBrace > 0) {
-			int posBrace2 = tokens.indexOf("}", posBrace + 1);
+		int posBraceL = tokens.lastIndexOf("{");
+		int posBrace0L = denseTokens.lastIndexOf("{");
+		while (posBraceL > 0) {
+			int posBrace0R = denseTokens.indexOf("}", posBrace0L + 1);
+			int posBraceR = tokens.indexOf("}", posBraceL + 1);
 			TypeMapEntry type = null;
-			if ((type = this.typeMap.get(tokens.get(posBrace-1))) != null && type.isRecord()) {
-				StringList rInit = this.transformRecordInit(tokens.concatenate(null,posBrace-1, posBrace2+1), type);
-				tokens.remove(posBrace-1, posBrace2+1);
-				tokens.insert(rInit, posBrace-1);
+			if ((type = this.typeMap.get(denseTokens.get(posBrace0L-1))) != null && type.isRecord()) {
+				// Transform the condensed record initializer
+				StringList rInit = this.transformRecordInit(denseTokens.concatenate(null, posBrace0L-1, posBrace0R+1), type);
+				tokens.remove(posBraceL-1, posBraceR+1);
+				tokens.insert(rInit, posBraceL-1);
+				// Now do the analogous thing for the condensed token list
+				denseTokens.remove(posBrace0L-1, posBrace0R+1);
+				denseTokens.insert(rInit, posBrace0L-1);;
 			}
 			// The other case of '{' ... '}' (assumed to be a record initializer) can be ignored here,
-			// since it is sufficient to have the braces replced by parentheses, which will be done below
-			tokens.count("");
-			posBrace = tokens.lastIndexOf("{", posBrace-1);
+			// since it is sufficient to have the braces replaced by parentheses, which will be done below
+			posBraceL = tokens.lastIndexOf("{", posBraceL-1);
+			posBrace0L = denseTokens.lastIndexOf("{", posBrace0L + 1);
 		}
 		// END KGU#388/KGU#542 2019-11-19
 		// START KGU#62/KGU#103 2015-12-12: Bugfix #57 - We must work based on a lexical analysis
+		int posAsgn = tokens.indexOf("<-");
 		for (int i = 0; i < varNames.count(); i++)
 		{
 			String varName = varNames.get(i);
-			// Is it an enumeration value? Then prefix it with its type name
+			// Is it an enumeration constant? Then don't prefix it
 			String constVal = root.constants.get(varName);
 			if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
 				//tokens.replaceAll(varName, constVal.substring(1, constVal.indexOf('€')) + '_' + varName);
@@ -319,33 +333,47 @@ public class PerlGenerator extends Generator {
 			// START KGU#352 2017-02-26: Different approaches for arrays and references
 			//tokens.replaceAll(varName, "$"+varName);
 			TypeMapEntry typeEntry = this.typeMap.get(varName);
-			if (typeEntry != null && typeEntry.isArray()) {
-				String prefix = "";
+			if (typeEntry != null && (typeEntry.isArray() || typeEntry.isRecord())) {
+				String refPrefix = "";
+				String prefix = typeEntry.isArray() ? "@" : "$";
 				int pos = -1;
+				int pos0 = -1;
 				if (this.paramNames.contains(varName)) {
-					prefix = "$";	// dereference the variable
+					refPrefix = "$";	// dereference the variable
 				}
-				while ((pos = tokens.indexOf(varName, pos+1)) >= 0) {
+				while ((pos = tokens.indexOf(varName)) >= 0) {
 					// Array element access?
-					if (pos+3 < tokens.count() && tokens.get(pos+1).equals("[")) {
-						tokens.set(pos, "$" + prefix + varName);
+					pos0 = denseTokens.indexOf(varName, pos0+1);
+					if (pos0+3 < denseTokens.count() && denseTokens.get(pos0+1).equals("[")) {
+						tokens.set(pos, "$" + refPrefix + varName);
 					}
-					else if (this.isWithinCall) {
-						// To pass an array to a subroutine we must use a reference
-						tokens.set(pos, "\\@" + prefix + varName);
+					else if (this.isWithinCall && pos > posAsgn) {
+						// To pass an array or record to a subroutine we must use a reference
+						tokens.set(pos, "\\" + prefix + refPrefix + varName);
 					}
 					else {
-						tokens.set(pos, "@" + prefix + varName);
+						tokens.set(pos, prefix + refPrefix + varName);
 					}
 				}
 			}
 			else {
-				// FIXME: This will also replace component names with same name!
-				tokens.replaceAll(varName, "$"+varName);
+				// START KGU#388 2019-11-28: Enh. #423 - avoid to replace component names!
+				//tokens.replaceAll(varName, "$"+varName);
+				int pos = -1, pos0 = -1;
+				while ((pos = tokens.indexOf(varName, pos+1)) >= 0) {
+					pos0 = denseTokens.indexOf(varName, pos0+1);
+					if (pos0 == 0 || !denseTokens.get(pos0-1).equals(".")) {
+						tokens.set(pos, "$"+varName);
+					}
+				}
+				// END KGU#388 2019-11-28
 			}
 			// END KGU#352 2017-02-26
 		}
 		// END KGU#62/KGU#103 2015-12-12
+		// START KGU#375 2019-11-28: Issue #388 - a "const" keyword must not remain here
+		tokens.removeAll("const");
+		// END KGU#375 2019-11-28
 		// START KGU 2017-02-26
 		tokens.replaceAll("random", "rand");
 		// END KGU 2017-02-26
@@ -358,19 +386,22 @@ public class PerlGenerator extends Generator {
 		for (int i = 1; i < tokens.count()-1; i++) {
 			if (tokens.get(i).equals(".")) {
 				// Handle possible component access
-				int j = i-1;
-				String pre = tokens.get(j).trim();
-				//while (pre.isEmpty() && j > 0) {
-				//	pre = tokens.get(--j).trim();
-				//}
-				j = i+1;
-				String post = tokens.get(j).trim();
-				//while (post.isEmpty() && j < tokens.count()) {
-				//	post = tokens.get(++j).trim();
-				//}
+				int jL = i-1;
+				String pre = tokens.get(jL).trim();
+				while (pre.isEmpty() && jL > 0) {
+					pre = tokens.get(--jL).trim();
+				}
+				int jR = i+1;
+				String post = tokens.get(jR).trim();
+				while (post.isEmpty() && jR < tokens.count()-1) {
+					post = tokens.get(++jR).trim();
+				}
 				if ((pre.equals("]") || Function.testIdentifier(pre, null) || pre.startsWith("$") && Function.testIdentifier(pre.substring(1), null))
 						&& Function.testIdentifier(post, null)) {
+					tokens.remove(i+1, jR);
 					tokens.set(i, "->");
+					tokens.remove(++jL, i);
+					i -= (i - jL);
 				}
 			}
 		}
@@ -1266,26 +1297,27 @@ public class PerlGenerator extends Generator {
 		//		code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
 		//	}
 		//}
-		// START KGU#375/KGU#542 2019-11-19: Enh. #388, #739 - Support for constants
-		for (Entry<String, String> constEntry: _root.constants.entrySet()) {
-			String constName = constEntry.getKey();
-			String constValue = constEntry.getValue();
-			// Skip enumeration items
-			if (!constValue.startsWith(":")) {
-				addCode("use constant " + constName + " => " + transform(constValue) + ";", _indent, false);
-			}
-		}
+		// START KGU#375/KGU#542 2019-11-19: Enh. #388, #739 - Support for constants (withdrawn for inconsistency)
+		//StringList paramNames = _root.getParameterNames();
+		//for (Entry<String, String> constEntry: _root.constants.entrySet()) {
+		//	String constName = constEntry.getKey();
+		//	String constValue = constEntry.getValue();
+		//	// Skip arguments and enumeration items
+		//	if (!paramNames.contains(constName) && !constValue.startsWith(":")) {
+		//		addCode("use constant " + constName + " => " + transform(constValue) + ";", _indent, false);
+		//	}
+		//}
 		// END KGU#375 2019-11-19
 		for (int v = 0; v < _varNames.count(); v++) {
 			String varName = _varNames.get(v);
-			// START KGU#375 2019-11-19: Enh. #388 - Support for constants, now already defined above
-			if (!_root.constants.containsKey(varName)) {
+			// START KGU#375 2019-11-19: Enh. #388 - Support for constants, now already defined above (withdrawn for inconsistency)
+			//if (!_root.constants.containsKey(varName)) {
 			// END KGU#375 2019-11-19
 				TypeMapEntry typeEntry = this.typeMap.get(varName);
 				String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
 				code.add(_indent + "my " + prefix + varName + ";");
 			// START KGU#375 2019-11-19: Enh. #388 - Support for constants
-			}
+			//}
 			// END KGU#375 2019-11-19
 		}
 		// END KGU#352 2017-02-26

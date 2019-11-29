@@ -186,6 +186,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-09      Bugfix #771 - Unhandled errors deep from the interpreter
  *      Kay Gürtzig     2019-11-17      Enh. #739 - Support for enum type definitions
  *      Kay Gürtzig     2019-11-20/21   Enh. #739 - Several fixes and improvements for enh. #739 (enum types)
+ *      Kay Gürtzig     2019-11-28      Bugfix #773: component access within index expressions caused trouble in some cases
  *
  ******************************************************************************************************
  *
@@ -3475,8 +3476,11 @@ public class Executor implements Runnable
 				else {
 					target = tokens.get(posLBrack-1);
 					if (posLBrack == 1) {
-						indexStr = tokens.concatenate(" ");
-						// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition#
+						// START KGU#773 2019-11-28: Bugfix #786 - To insert spaces wasn't helpful
+						//indexStr = tokens.concatenate(" ");
+						indexStr = tokens.concatenate(null);
+						// END KGU#773 2019-11-28
+						// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition
 						// A string comparison in the index string  may be unlikely but not impossible
 						indexStr = this.convertStringComparison(indexStr);
 						// END KGU#490 2018-02-08
@@ -6799,6 +6803,9 @@ public class Executor implements Runnable
 	{
 		Object value = null;
 		StringList tokens = Element.splitLexically(_expr, true);
+		// START KGU#773 2019-11-28: Bugfix #786 Blanks are not tolerated by the susequent mechanisms like index evaluation
+		tokens.removeAll(" ");
+		// END KGU#773 2019-11-28
 		// START KGU#439 2017-10-13: Enh. #436 Arrays now represented by ArrayLists
 		if (!_preserveBrackets) {
 			if (tokens.indexOf(OBJECT_ARRAY, 0, true) == 0) {
@@ -6844,7 +6851,10 @@ public class Executor implements Runnable
 			// with partially undone conversions. This should not noticeably slow down the evaluation in case
 			// no error occurs.
 			boolean error423 = false;
-			String expr = tokens.concatenate();
+			// START KGU#773 2019-11-28: Bugfix #786 Since blanks have been eliminated now, we must be cautious on concatenation
+			//String expr = tokens.concatenate();
+			String expr = tokens.concatenate(null);
+			// END KGU#773 2019-11-28
 			boolean messageAugmented = false;
 			do {
 				error423 = false;
@@ -7067,7 +7077,7 @@ public class Executor implements Runnable
 	
 	// START KGU#33/KGU#34 2014-12-05
 	// Method tries to extract the index value from an expression formed like
-	// a array element access, i.e. "<arrayname>[<expression>]"
+	// an array element access, i.e. "<arrayname>[<expression>]"
 	private int getIndexValue(String varname) throws EvalError
 	{
 		// START KGU#141 2016-01-16: Bugfix #112

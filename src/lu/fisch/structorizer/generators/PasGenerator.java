@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
  *                                          as local declarations in subroutines where the variables get assigned
  *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
+ *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
  *
  ******************************************************************************************************
  *
@@ -1840,7 +1841,10 @@ public class PasGenerator extends Generator
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		String indentPlus3 = indentPlus2 + this.getIndent();
-		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		// START KGU#774 2019-11-29: Bugfix #787 - On top level, any Includable declared any types known to main
+		//for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+		// END KGU#774 2019-11-29
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
 				if (wasDefHandled(_root, key, true)) {

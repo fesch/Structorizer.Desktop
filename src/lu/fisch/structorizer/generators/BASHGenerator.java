@@ -492,6 +492,9 @@ public class BASHGenerator extends Generator {
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
 				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
+			// START KGU#388 2019-11-28: Bugfix #423 - record initializations must not be separated from the declaration
+			lval = "declare -a " + lval;
+			// END KGU#388 2019-11-28
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
 			for (Entry<String, String> entry: recordIni.entrySet()) {
@@ -1414,6 +1417,7 @@ public class BASHGenerator extends Generator {
 		code.add("");
 		// END KGU#129 2016-01-08
 		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
+		// FIXME: We should only do so if they won't get initialized
 		for (int i = 0; i < varNames.count(); i++) {
 			String varName = varNames.get(i);
 			TypeMapEntry typeEntry = typeMap.get(varName);
