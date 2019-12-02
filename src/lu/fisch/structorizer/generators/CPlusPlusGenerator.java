@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig     2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig     2019-10-18      Enh. #739: Support for enum types
+ *      Kay Gürtzig     2019-12-02      KGU#784 Defective type descriptions in argument lists and thread function operators
  *
  ******************************************************************************************************
  *
@@ -73,7 +74,6 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -488,13 +488,21 @@ public class CPlusPlusGenerator extends CGenerator {
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			boolean isArray = false;
 			if (typeEntry != null) {
 				isArray = typeEntry.isArray();
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					int posBrack = typeSpec.indexOf("[");
+					if (posBrack > 0) {
+						varName += typeSpec.substring(posBrack);
+						typeSpec = typeSpec.substring(0, posBrack);
+					}
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList += (v > 0 ? ", " : "") + typeSpec + (isArray ? " " : "& ") + varName;
@@ -631,7 +639,7 @@ public class CPlusPlusGenerator extends CGenerator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);
 				if (defVal != null) {

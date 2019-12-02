@@ -1920,7 +1920,7 @@ public class OberonGenerator extends Generator {
 				//}
 			}
 			else {
-				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				// START KGU#759 2019-11-11: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
 				//appendComment(varName + ": ???;", indentPlus1);
 				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
 				// END KGU#759 2019-11-11

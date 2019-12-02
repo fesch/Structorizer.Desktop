@@ -1965,10 +1965,10 @@ public class PasGenerator extends Generator
 				type = prefix + type;
 				String comment = "";
 				if (type.contains("???")) {
-					// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
-					appendComment(varName + ": " + type + ";", indentPlus1);
+					// START KGU#759 2019-12-02: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
+					//appendComment(varName + ": " + type + ";", indentPlus1);
 					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
-					// END KGU#759 2019-11-11
+					// END KGU#759 2019-12-02
 				}
 				//else {
 				if (isComplexConst) {
@@ -1978,7 +1978,7 @@ public class PasGenerator extends Generator
 				//}
 			}
 			else {
-				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				// START KGU#759 2019-11-11: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
 				//appendComment(varName, indentPlus1);
 				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
 				// END KGU#759 2019-11-11

@@ -97,6 +97,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
  *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
+ *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
  *
  ******************************************************************************************************
  *
@@ -323,6 +324,14 @@ public class CGenerator extends Generator {
 		return true;
 	}
 	// END KGU#560 2018-07-22
+	
+	// START KGU#784 2019-12-02
+	/** @return whether the index range for array declarations is to be appended to the element type (otherwise to the variable name) */
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return false;
+	}
+	// END KGU#784 2019-12-02
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -726,7 +735,7 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#542 2019-11-17
 		else {
-			elType = transformType(elType, "/*???*/");
+			elType = transformType(elType, "???");
 		}
 		_typeDescr = elType;
 		for (int i = 0; i < nLevels; i++) {
@@ -935,6 +944,7 @@ public class CGenerator extends Generator {
 			// we must cut off the type specification (i.e. all text preceding the
 			// variable name).
 			Root root = Element.getRoot(_inst);
+			StringList paramNames = root.getParameterNames();
 			// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 			if (pureTokens.get(0).equals("const")) {
 				// Cases 1.1.1 or 2.1
@@ -1038,21 +1048,27 @@ public class CGenerator extends Generator {
 				// Combine variable access as is
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
 				// START KGU#767 2019-11-30: Bugfix #782 maybe we must introduce a postponed declaration here
-				if (varName != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)) {
+				if (varName != null
+						&& Function.testIdentifier(varName, null)
+						&& codeLine.indexOf(varName) + varName.length() == codeLine.length()
+						&& !paramNames.contains(varName)
+						&& !this.wasDefHandled(root, varName, false)) {
 					TypeMapEntry type = this.typeMap.get(varName);
 					String typeName = "???";
 					if (type != null) {
-						StringList types = this.getTransformedTypes(type, true);
-						if (types != null && ! types.isEmpty()) {
-							typeName = types.get(0);
-							if (types.count() > 1) {
-								// Type is ambiguous
-								typeName += "???";
-							}
-						}
+						typeName = transformTypeFromEntry(type, null);
 						if (type.isRecord()) {
 							isDecl = true;
 						}
+						// START KGU#784 2019-12-02
+						else if (type.isArray() && !this.arrayBracketsAtTypeName()) {
+							int posBrack = typeName.indexOf("[");
+							if (posBrack > 0) {
+								codeLine += typeName.substring(posBrack);
+								typeName = typeName.substring(0, posBrack);
+							}
+						}
+						// END KGU#784 2019-12-02
 					}
 					codeLine = typeName + " " + codeLine;
 					this.setDefHandled(root.getSignatureString(false), varName);
@@ -2012,7 +2028,7 @@ public class CGenerator extends Generator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";

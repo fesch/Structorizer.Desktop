@@ -228,6 +228,12 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#560 2018-07-22
 
+	@Override
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return true;
+	}
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
@@ -851,11 +857,14 @@ public class CSharpGenerator extends CGenerator
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			if (typeEntry != null) {
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList.add(typeSpec + " " + varName);
@@ -1026,7 +1035,7 @@ public class CSharpGenerator extends CGenerator
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);

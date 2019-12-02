@@ -268,6 +268,12 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#560 2018-07-22
 
+	@Override
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return true;
+	}
+
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
 	 * Maps light-weight instances of DiagramControllers for API retrieval
@@ -1060,11 +1066,14 @@ public class JavaGenerator extends CGenerator
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			if (typeEntry != null) {
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList.add(typeSpec + " " + varName);
@@ -1237,7 +1246,7 @@ public class JavaGenerator extends CGenerator
 					// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
 					//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 					//		_paramNames.get(p)).trim();
-					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 					// END KGU#140 2017-02-01
 				}
 				fnHeader += ")";
