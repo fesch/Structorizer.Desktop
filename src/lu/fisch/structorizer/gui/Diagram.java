@@ -4447,7 +4447,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (((Call)selected).isFunctionCall()) {
 					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
 					lineTokens.removeAll(" ");
-					String var = Call.getAssignedVarname(lineTokens);
+					String var = Call.getAssignedVarname(lineTokens, true);
 					if (Function.testIdentifier(var, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");

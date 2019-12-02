@@ -159,7 +159,7 @@ function normalizeInput(sentence) {
 	var position;
 	
 	
-	string sentence = lowercase(sentence);
+	sentence = lowercase(sentence);
 	for (const symbol of ['.', ',', ';', '!', '?']) {
 		position = pos(symbol, sentence);
 		while (position > 0) {

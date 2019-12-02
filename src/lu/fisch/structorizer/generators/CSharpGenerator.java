@@ -387,6 +387,18 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#332 2017-04-14
 
+	// START KGU#784 2019-12-02
+	@Override
+	protected String transformType(String _type, String _default)
+	{
+		if (_type != null && (_type.equals("String") || _type.equals("Object"))) {
+			_type = _type.toLowerCase();
+		}
+		return super.transformType(_type, _default);
+	}
+	// END KGU#784 2019-12-02
+
+	
 	// START KGU#388 2017-09-28: Enh. #423
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
@@ -662,11 +674,11 @@ public class CSharpGenerator extends CGenerator
 			if (listType != null && listType.isArray() && (itemType = listType.getCanonicalType(true, false)) != null
 					&& itemType.startsWith("@"))
 			{
-				itemType = this.transformType(itemType.substring(1), "Object");	
+				itemType = this.transformType(itemType.substring(1), "object");	
 			}
 			else {
 				itemType = "Object";
-				this.appendComment("TODO: Select a more sensible item type than Object", indent);
+				this.appendComment("TODO: Select a more sensible item type than object", indent);
 				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
@@ -1119,7 +1131,7 @@ public class CSharpGenerator extends CGenerator
 		while (_elementType.startsWith("@")) {
 			_elementType = _elementType.substring(1) + ",";
 		}
-		return (_elementType + sepa + _varName).trim(); 
+		return (transformType(_elementType, _elementType) + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

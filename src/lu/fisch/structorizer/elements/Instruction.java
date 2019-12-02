@@ -1138,7 +1138,7 @@ public class Instruction extends Element {
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
 			isAssigned = !rightSide.isEmpty();
 			// Isolate the variable name from the left-hand side of the assignment
-			varName = getAssignedVarname(leftSide);
+			varName = getAssignedVarname(leftSide, false);
 			// Without const, var, or dim, a declaration must be a C-style declaration
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
 			// If the target is a record component we won't add a type specification.
@@ -1216,17 +1216,20 @@ public class Instruction extends Element {
 	}
 	
 	/**
-	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
+	 * Extracts the target variable name (or the the entire variable expression, see argument
+	 * {@code entireTarget} out of the given blank-free token sequence which may comprise
 	 * the entire line of an assignment or just its left part.<br/>
 	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
 	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
 	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
 	 * the result would be just "foo".
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
+	 * @param entireTarget if this is true then index expressions etc. will remain in the result
+	 * (so it is no longer the pure name)
 	 * @return the extracted variable name or null
 	 */
 	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
-	public static String getAssignedVarname(StringList tokens) {
+	public static String getAssignedVarname(StringList tokens, boolean entireTarget) {
 		String varName = null;
 		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
 		tokens = coagulateSubexpressions(tokens.copy());		
@@ -1291,11 +1294,16 @@ public class Instruction extends Element {
 			}
 			// END KGU#780 2019-12-01
 			// END KGU#388 2017-09-14
+			// START KGU#784 2019-12-02
+			if (entireTarget) {
+				varName = tokens.concatenate(null, i);
+			}
+			// END KGU#784 2019-12-02
 		}
 		return varName;
 	}
 	// END KGU#261 2017-01-26
-
+	
 	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
 	/**
 	 * Tries to extract type information from the right side of an assignment.

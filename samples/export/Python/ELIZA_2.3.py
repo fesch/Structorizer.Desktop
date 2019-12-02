@@ -12,6 +12,7 @@
 # You should have installed module recordtype: pip install recordtype 
 #     See https://pypi.org/project/recordtype 
 from recordtype import recordtype
+from enum import Enum
 import math
 # BEGIN (global) code from included diagram "History" 
 # histArray contains the most recent user replies as ring buffer; 

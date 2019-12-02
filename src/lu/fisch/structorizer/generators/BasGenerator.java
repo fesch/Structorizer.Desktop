@@ -542,7 +542,7 @@ public class BasGenerator extends Generator
 					{
 						StringList leftSide = tokens.subSequence(0, asgnPos);
 						leftSide.removeAll(" ");
-						String varName = Instruction.getAssignedVarname(leftSide);
+						String varName = Instruction.getAssignedVarname(leftSide, false);
 						StringList exprTokens = tokens.subSequence(asgnPos+1, tokens.count()).trim();
 						isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
 						// START KGU#780 2019-12-01 - trouble with complicated left sides fixed

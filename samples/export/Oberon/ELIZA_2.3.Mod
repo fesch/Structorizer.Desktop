@@ -35,18 +35,19 @@ TYPE
       histIndex:	INTEGER
     END;
 
+  (* Associates a key word in the text with an index in the reply ring array *)
   KeyMapEntry = RECORD
       keyword:	ARRAY 100 OF CHAR;
       index:	INTEGER
     END;
 
 VAR
-  index2b754786: INTEGER;
-  array2b754786: ARRAY 5 OF ARRAY 100 OF CHAR;
-  indexd1c96b3: INTEGER;
-  index25eaa9a3: INTEGER;
-  index54cd6c29: INTEGER;
-  array54cd6c29: ARRAY 2 OF ARRAY 100 OF CHAR;
+  index29f23747: INTEGER;
+  array29f23747: ARRAY 5 OF ARRAY 100 OF CHAR;
+  index55f0bd09: INTEGER;
+  index3cd00c5b: INTEGER;
+  index7507a2dd: INTEGER;
+  array7507a2dd: ARRAY 2 OF ARRAY 100 OF CHAR;
   (* TODO: check and accomplish variable declarations *)
   varPart: ARRAY 100 OF CHAR;
   (* Converts the input to lowercase, cuts out interpunctation *)
@@ -55,18 +56,16 @@ VAR
   replyRing: ???;	(* FIXME! *)
   reply: ARRAY 100 OF CHAR;
   posAster: INTEGER;
-  offsets: ???;	(* FIXME! *)
+  offsets: ARRAY OF INTEGER;
   (* Should never happen... *)
   keyIndex: ???;	(* FIXME! *)
   isRepeated: BOOLEAN;
   isGone: BOOLEAN;
   (* Stores the last five inputs of the user in a ring buffer, *)
-  (* the first element is the current insertion index *)
+  (* the second component is the rolling (over-)write index. *)
   history: History;
   findInfo: ARRAY 2 OF INTEGER;
   entry: KeyMapEntry;
-  [keyIndex]: offsets;
-  [length(keyMap)-1]: offsets;
 
 (* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
 PROCEDURE adjustSpelling*(sentence: ARRAY 100 OF CHAR): ARRAY 100 OF CHAR;
@@ -90,10 +89,10 @@ BEGIN
     delete(result, 1, position);
     insert(CAP(start), result, 1);
   END;
-  array54cd6c29[0] := " i ";
-  array54cd6c29[1] := " i\'";
-  FOR index54cd6c29 := 0 TO 1 DO
-    word := array54cd6c29[index54cd6c29];
+  array7507a2dd[0] := " i ";
+  array7507a2dd[1] := " i\'";
+  FOR index7507a2dd := 0 TO 1 DO
+    word := array7507a2dd[index7507a2dd];
     position := pos(word, result);
     WHILE position > 0 DO
       delete(result, position+1, 1);
@@ -116,8 +115,8 @@ VAR
   saidBye: BOOLEAN;
   pair: ARRAY OF ARRAY 100 OF CHAR;
 BEGIN
-  FOR index25eaa9a3 := 0 TO LEN(phrases)-1 DO
-    pair := phrases[index25eaa9a3];
+  FOR index3cd00c5b := 0 TO LEN(phrases)-1 DO
+    pair := phrases[index3cd00c5b];
     IF pos(pair[0], text) > 0 THEN
       saidBye := true;
       (* TODO: Replace "TYPE" by the the actual Out procedure name for this type and add a length argument where needed! *)
@@ -165,8 +164,8 @@ VAR
   left: ARRAY 100 OF CHAR;
 BEGIN
   result := " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
-  FOR indexd1c96b3 := 0 TO LEN(flexions)-1 DO
-    pair := flexions[indexd1c96b3];
+  FOR index55f0bd09 := 0 TO LEN(flexions)-1 DO
+    pair := flexions[index55f0bd09];
     left := "";
     right := result;
     position := pos(pair[0], right);
@@ -237,13 +236,13 @@ VAR
   position: INTEGER;
 BEGIN
   sentence := lowercase(sentence);
-  array2b754786[0] := '.';
-  array2b754786[1] := ',';
-  array2b754786[2] := ';';
-  array2b754786[3] := '!';
-  array2b754786[4] := '?';
-  FOR index2b754786 := 0 TO 4 DO
-    symbol := array2b754786[index2b754786];
+  array29f23747[0] := '.';
+  array29f23747[1] := ',';
+  array29f23747[2] := ';';
+  array29f23747[3] := '!';
+  array29f23747[4] := '?';
+  FOR index29f23747 := 0 TO 4 DO
+    symbol := array29f23747[index29f23747];
     position := pos(symbol, sentence);
     WHILE position > 0 DO
       sentence := copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -258,7 +257,7 @@ END normalizeInput;
 PROCEDURE setupGoodByePhrases*(): ARRAY OF ARRAY 2 OF ARRAY 100 OF CHAR;
 VAR
   (* TODO: check and accomplish variable declarations *)
-  phrases: ???;	(* FIXME! *)
+  phrases: ARRAY OF ARRAY 2 OF ARRAY 100 OF CHAR;
 BEGIN
   (* Hint: Automatically decomposed array initialization *)
   phrases[0, 0] := " shut";
@@ -279,7 +278,7 @@ PROCEDURE setupKeywords*(): ARRAY OF KeyMapEntry;
 VAR
   (* TODO: check and accomplish variable declarations *)
   (* The empty key string (last entry) is the default clause - will always be found *)
-  keywords: ???;	(* FIXME! *)
+  keywords: ARRAY OF KeyMapEntry;
 BEGIN
   (* The empty key string (last entry) is the default clause - will always be found *)
   keywords[39].keyword := "";
@@ -372,7 +371,7 @@ PROCEDURE setupReflexions*(): ARRAY OF ARRAY 2 OF ARRAY 100 OF CHAR;
  *)
 VAR
   (* TODO: check and accomplish variable declarations *)
-  reflexions: ???;	(* FIXME! *)
+  reflexions: ARRAY OF ARRAY 2 OF ARRAY 100 OF CHAR;
 BEGIN
   (* Hint: Automatically decomposed array initialization *)
   reflexions[0, 0] := " are ";
@@ -583,6 +582,7 @@ BEGIN
   (* Note: The depth of the history is to be specified by initializing a variable of this type, *)
   (* e.g. for a history of depth 5: *)
   (* myhistory <- History{{"", "", "", "", ""}, 0} *)
+  (* Associates a key word in the text with an index in the reply ring array *)
   (* Title information *)
   Out.String("************* ELIZA **************");
   Out.Ln;
@@ -609,7 +609,7 @@ BEGIN
   Out.String("**********************************");
   Out.Ln;
   (* Stores the last five inputs of the user in a ring buffer, *)
-  (* the first element is the current insertion index *)
+  (* the second component is the rolling (over-)write index. *)
   (* Hint: Automatically decomposed array initialization *)
   history.histArray[0] := "";
   history.histArray[1] := "";

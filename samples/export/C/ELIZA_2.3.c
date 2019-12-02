@@ -26,6 +26,7 @@ struct History {
 	int	histIndex;
 };
 
+// Associates a key word in the text with an index in the reply ring array 
 struct KeyMapEntry {
 	char*	keyword;
 	int	index;
@@ -55,10 +56,10 @@ char* adjustSpelling(char* sentence)
 		insert(uppercase(start), result, 1);
 	}
 	{
-		char* array68e5dcd3[2] = {" i ", " i\'"};
-		int index68e5dcd3;
-		for (index68e5dcd3 = 0; index68e5dcd3 < 2; index68e5dcd3++) {
-			char* word = array68e5dcd3[index68e5dcd3];
+		char* array324bf690[2] = {" i ", " i\'"};
+		int index324bf690;
+		for (index324bf690 = 0; index324bf690 < 2; index324bf690++) {
+			char* word = array324bf690[index324bf690];
 			position = pos(word, result);
 			while (position > 0) {
 				delete(result, position+1, 1);
@@ -90,10 +91,10 @@ bool checkGoodBye(char* text, char* phrases[][2])
 	
 	{
 	// TODO: Find out and fill in the number of elements of the array phrases here! 
-		int count399f0c79 = ???;
-		int index399f0c79;
-		for (index399f0c79 = 0; index399f0c79 < count399f0c79; index399f0c79++) {
-			char* pair[] = phrases[index399f0c79];
+		int count14015767 = ???;
+		int index14015767;
+		for (index14015767 = 0; index14015767 < count14015767; index14015767++) {
+			char* pair[] = phrases[index14015767];
 			if (pos(pair[0], text) > 0) {
 				saidBye = true;
 				printf("TODO: specify format\n", pair[1]);
@@ -145,10 +146,10 @@ char* conjugateStrings(char* sentence, char* key, int keyPos, char* flexions[][2
 	result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
 	{
 	// TODO: Find out and fill in the number of elements of the array flexions here! 
-		int count71dff7a0 = ???;
-		int index71dff7a0;
-		for (index71dff7a0 = 0; index71dff7a0 < count71dff7a0; index71dff7a0++) {
-			char* pair[] = flexions[index71dff7a0];
+		int count6e7cbe69 = ???;
+		int index6e7cbe69;
+		for (index6e7cbe69 = 0; index6e7cbe69 < count6e7cbe69; index6e7cbe69++) {
+			char* pair[] = flexions[index6e7cbe69];
 			left = "";
 			right = result;
 			position = pos(pair[0], right);
@@ -213,17 +214,17 @@ int[2] findKeyword(const array of KeyMapEntry keyMap, char* sentence)
 char* normalizeInput(char* sentence)
 {
 	// TODO: Check and accomplish variable declarations: 
-	char* symbol;
+	char symbol;
 	char* result;
 	int position;
 	
 	
-	char* sentence = lowercase(sentence);
+	sentence = lowercase(sentence);
 	{
-		char* array25bde283[5] = {'.', ',', ';', '!', '?'};
-		int index25bde283;
-		for (index25bde283 = 0; index25bde283 < 5; index25bde283++) {
-			char* symbol = array25bde283[index25bde283];
+		char arrayb4f79f[5] = {'.', ',', ';', '!', '?'};
+		int indexb4f79f;
+		for (indexb4f79f = 0; indexb4f79f < 5; indexb4f79f++) {
+			char symbol = arrayb4f79f[indexb4f79f];
 			position = pos(symbol, sentence);
 			while (position > 0) {
 				sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -242,7 +243,7 @@ char* normalizeInput(char* sentence)
 char*[][2] setupGoodByePhrases()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? phrases;
+	char* phrases[][2];
 	
 	
 	phrases[0][0] = " shut";
@@ -261,7 +262,8 @@ char*[][2] setupGoodByePhrases()
 KeyMapEntry[] setupKeywords()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? keywords;
+	// The empty key string (last entry) is the default clause - will always be found 
+	KeyMapEntry keywords[];
 	
 	
 	// The empty key string (last entry) is the default clause - will always be found 
@@ -355,7 +357,7 @@ KeyMapEntry[] setupKeywords()
 char*[][2] setupReflexions()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? reflexions;
+	char* reflexions[][2];
 	
 	
 	reflexions[0][0] = " are ";
@@ -547,12 +549,12 @@ int main(void)
 	??? replyRing;
 	char* reply;
 	int posAster;
-	??? offsets;
+	int offsets[];
 	??? keyIndex;
 	bool isRepeated;
 	bool isGone;
 	// Stores the last five inputs of the user in a ring buffer, 
-	// the first element is the current insertion index 
+	// the second component is the rolling (over-)write index. 
 	struct History history;
 	int findInfo[2];
 	struct KeyMapEntry entry;
@@ -580,7 +582,7 @@ int main(void)
 	printf("TODO: specify format\n", "* (Requires at least Structorizer 3.30-03 to run)");
 	printf("TODO: specify format\n", "**********************************");
 	// Stores the last five inputs of the user in a ring buffer, 
-	// the first element is the current insertion index 
+	// the second component is the rolling (over-)write index. 
 	history.histArray[0] = "";
 	history.histArray[1] = "";
 	history.histArray[2] = "";

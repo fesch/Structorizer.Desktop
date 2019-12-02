@@ -1229,7 +1229,7 @@ public class PythonGenerator extends Generator
 	private boolean generateDeclaration(String _line, Root _root, String _indent, boolean _isDisabled) {
 		StringList tokens = Element.splitLexically(_line + " <- 0", true);
 		tokens.removeAll(" ");
-		String varName = Instruction.getAssignedVarname(tokens);
+		String varName = Instruction.getAssignedVarname(tokens, false);
 		if (this.wasDefHandled(_root, varName, false)) {
 			return true;
 		}

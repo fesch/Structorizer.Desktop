@@ -596,7 +596,7 @@ public class PerlGenerator extends Generator {
 					tokens.removeAll(" ");
 					Element.unifyOperators(tokens, true);
 					int posAsgn = tokens.indexOf("<-");
-					String var = Instruction.getAssignedVarname(tokens.subSequence(0, posAsgn));
+					String var = Instruction.getAssignedVarname(tokens.subSequence(0, posAsgn), true);
 					StringList expr = tokens.subSequence(posAsgn+1, tokens.count());
 					if (Function.testIdentifier(var, null) && expr.get(0).equals("{") && expr.get(expr.count()-1).equals("}")) {
 						text = "@" + var + " = " + transform(expr.concatenate(null));

@@ -109,6 +109,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
  *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
+ *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
  *
  ******************************************************************************************************
  *
@@ -3324,6 +3325,11 @@ public abstract class Element {
 		else if (Function.isFunction(expr)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
+		// START KGU#782 2019-12-02 For certain purposes, e.g. export of FOR-IN loops char detection may be essential
+		else if (expr.startsWith("'") && expr.endsWith("'") && (expr.length() == 3 || expr.length() == 4 && expr.charAt(1) == '\\')) {
+			typeSpec = "char";
+		}
+		// END KGU#782 2019-12-02
 		else if (STRING_PATTERN.matcher(expr).matches()) {
 			typeSpec = "String";
 		}

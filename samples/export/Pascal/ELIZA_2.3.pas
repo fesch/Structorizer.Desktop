@@ -32,6 +32,7 @@ type
       histIndex:	Longint;
     END;
 
+  { Associates a key word in the text with an index in the reply ring array }
   KeyMapEntry = RECORD
       keyword:	string;
       index:	Longint;
@@ -47,10 +48,10 @@ const
   keyMap = setupKeywords();
 
 var
-  index4dfd25e3: 1..5;
-  array4dfd25e3: array [1..5] of string;
-  index6638e86d: 1..2;
-  array6638e86d: array [1..2] of string;
+  index29f23747: 1..5;
+  array29f23747: array [1..5] of string;
+  index7507a2dd: 1..2;
+  array7507a2dd: array [1..2] of string;
   varPart: String;
   { Converts the input to lowercase, cuts out interpunctation }
   { and pads the string }
@@ -58,18 +59,16 @@ var
   replyRing: ???;	{ FIXME! }
   reply: String;
   posAster: Longint;
-  offsets: ???;	{ FIXME! }
+  offsets: array of Longint;
   { Should never happen... }
   keyIndex: ???;	{ FIXME! }
   isRepeated: boolean;
   isGone: boolean;
   { Stores the last five inputs of the user in a ring buffer, }
-  { the first element is the current insertion index }
+  { the second component is the rolling (over-)write index. }
   history: History;
   findInfo: array [0..1] of Longint;
   entry: KeyMapEntry;
-  [keyIndex]: offsets;
-  [length(keyMap)-1]: offsets;
 
 
 { Cares for correct letter case among others }
@@ -94,11 +93,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  array6638e86d[1] := ' i ';
-  array6638e86d[2] := ' i\''';
-  for index6638e86d := 1 to 2 do
+  array7507a2dd[1] := ' i ';
+  array7507a2dd[2] := ' i\''';
+  for index7507a2dd := 1 to 2 do
   begin
-    word := array6638e86d[index6638e86d];
+    word := array7507a2dd[index7507a2dd];
     position := pos(word, result);
     while (position > 0) do
     begin
@@ -257,14 +256,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  array4dfd25e3[1] := '.';
-  array4dfd25e3[2] := ',';
-  array4dfd25e3[3] := ';';
-  array4dfd25e3[4] := '!';
-  array4dfd25e3[5] := '?';
-  for index4dfd25e3 := 1 to 5 do
+  array29f23747[1] := '.';
+  array29f23747[2] := ',';
+  array29f23747[3] := ';';
+  array29f23747[4] := '!';
+  array29f23747[5] := '?';
+  for index29f23747 := 1 to 5 do
   begin
-    symbol := array4dfd25e3[index4dfd25e3];
+    symbol := array29f23747[index29f23747];
     position := pos(symbol, sentence);
     while (position > 0) do
     begin
@@ -282,7 +281,7 @@ end;
 function setupGoodByePhrases(): array of array [0..1] of string;
 
 var
-  phrases: ???;	{ FIXME! }
+  phrases: array of array [0..1] of String;
 
 begin
   { Hint: Automatically decomposed array initialization }
@@ -302,7 +301,7 @@ function setupKeywords(): array of KeyMapEntry;
 
 var
   { The empty key string (last entry) is the default clause - will always be found }
-  keywords: ???;	{ FIXME! }
+  keywords: array of KeyMapEntry;
 
 begin
   { The empty key string (last entry) is the default clause - will always be found }
@@ -394,7 +393,7 @@ end;
 function setupReflexions(): array of array [0..1] of string;
 
 var
-  reflexions: ???;	{ FIXME! }
+  reflexions: array of array [0..1] of String;
 
 begin
   { Hint: Automatically decomposed array initialization }
@@ -608,7 +607,7 @@ begin
   writeln('* (Requires at least Structorizer 3.30-03 to run)');
   writeln('**********************************');
   { Stores the last five inputs of the user in a ring buffer, }
-  { the first element is the current insertion index }
+  { the second component is the rolling (over-)write index. }
   { Hint: Automatically decomposed array initialization }
   history.histArray[0] := '';
   history.histArray[1] := '';

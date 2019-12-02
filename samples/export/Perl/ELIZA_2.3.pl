@@ -36,8 +36,8 @@ sub adjustSpelling {
     }
 
 
-    my @array68e5dcd3 = (" i ", " i\'")
-    foreach $word (@array68e5dcd3) {
+    my @array324bf690 = (" i ", " i\'")
+    foreach $word (@array324bf690) {
         $position = pos($word, $result);
 
         while ( $position > 0 ) {
@@ -194,8 +194,8 @@ sub normalizeInput {
     
     $sentence = lowercase($sentence);
 
-    my @array25bde283 = ('.', ',', ';', '!', '?')
-    foreach $symbol (@array25bde283) {
+    my @arrayb4f79f = ('.', ',', ';', '!', '?')
+    foreach $symbol (@arrayb4f79f) {
         $position = pos($symbol, $sentence);
 
         while ( $position > 0 ) {
@@ -212,11 +212,11 @@ sub normalizeInput {
 
 sub setupGoodByePhrases {
 
-    my $phrases;
+    my @phrases;
     
     $phrases[0] = (" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice.");
     $phrases[1] = ("bye", "Well, let\'s end our talk for now. See you later. Bye.");
-    return $phrases;
+    return @phrases;
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -224,7 +224,7 @@ sub setupGoodByePhrases {
 # reply ring as defined in `setupReplies()´. 
 sub setupKeywords {
 
-    my $keywords;
+    my @keywords;
     
     # The empty key string (last entry) is the default clause - will always be found 
     $keywords[39] = KeyMapEntry("", 29);
@@ -267,13 +267,13 @@ sub setupKeywords {
     $keywords[36] = KeyMapEntry("smartphone", 27);
     $keywords[37] = KeyMapEntry("father ", 28);
     $keywords[38] = KeyMapEntry("mother ", 28);
-    return $keywords;
+    return @keywords;
 }
 
 # Returns an array of pairs of mutualy substitutable  
 sub setupReflexions {
 
-    my $reflexions;
+    my @reflexions;
     
     $reflexions[0] = (" are ", " am ");
     $reflexions[1] = (" were ", " was ");
@@ -285,7 +285,7 @@ sub setupReflexions {
     $reflexions[7] = (" my ", " your ");
     $reflexions[8] = (" i ", " you ");
     $reflexions[9] = (" am ", " are ");
-    return $reflexions;
+    return @reflexions;
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -351,7 +351,7 @@ my $reply;
 my @replies;
 my @reflexions;
 my $posAster;
-my $offsets;
+my @offsets;
 my @keyMap;
 my $keyIndex;
 my $isRepeated;
@@ -375,7 +375,7 @@ print "* Version: 2.3 (2019-11-28)", "\n";
 print "* (Requires at least Structorizer 3.30-03 to run)", "\n";
 print "**********************************", "\n";
 # Stores the last five inputs of the user in a ring buffer, 
-# the first element is the current insertion index 
+# the second component is the rolling (over-)write index. 
 $history = History(("", "", "", "", ""), 0);
 @replies = setupReplies();
 @reflexions = setupReflexions();

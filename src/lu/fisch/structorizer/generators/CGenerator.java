@@ -928,7 +928,7 @@ public class CGenerator extends Generator {
 			pureExprTokens = pureTokens.subSequence(pureTokens.indexOf("<-")+1, pureTokens.count());
 		}
 		String codeLine = null;
-		String varName = Instruction.getAssignedVarname(pureTokens);
+		String varName = Instruction.getAssignedVarname(pureTokens, false);
 		boolean isDecl = Instruction.isDeclaration(line);
 		//exprTokens.removeAll(" ");
 		if (!this.suppressTransformation && (isDecl || exprTokens != null)) {
@@ -1112,6 +1112,27 @@ public class CGenerator extends Generator {
 							if (elemType != null && elemType.startsWith("@")) {
 								elemType = elemType.substring(1);
 							}
+							// START KGU #784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
+							int posIdx = codeLine.indexOf(varName) + varName.length();
+							String indices = codeLine.substring(posIdx).trim();
+							while (elemType.startsWith("@") && indices.startsWith("[")) {
+								elemType = elemType.substring(1);
+								StringList indexList = Element.splitExpressionList(indices.substring(1), ",", true);
+								indexList.remove(0); // Drop first index expression (has already been handled)
+								// Are there perhaps more indices within the same bracket pair (comma-separated list)?
+								while (indexList.count() > 1 && elemType.startsWith("@")) {
+									indexList.remove(0);
+									elemType = elemType.substring(1);
+								}
+								if (indexList.isEmpty()) {
+									indices = "";
+								}
+								else if (indexList.get(0).trim().startsWith("]")) {
+									// This should be the tail
+									indices = indexList.get(0).substring(1);
+								}
+							}
+							// END KGU #784 2019-12-02
 						}
 						expr = this.transformOrGenerateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
 						if (expr == null) {
@@ -1408,6 +1429,7 @@ public class CGenerator extends Generator {
 			// do if items are heterogeneous? We will make use of the typeMap and
 			// hope to get sensible information. Otherwise we add a TODO comment.
 			int nItems = items.count();
+			boolean allChar = true;	// KGU#782 2019-12-02: We now also detect char elements
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
@@ -1417,7 +1439,10 @@ public class CGenerator extends Generator {
 				String item = items.get(i);
 				String type = Element.identifyExprType(this.typeMap, item, false);
 				itemTypes.add(this.transformType(type, "int"));
-				if (!type.equals("int") && !type.equals("boolean")) {
+				if (!type.equals("char")) {
+					allChar = false;
+				}
+				if (!type.equals("int") && !type.equals("boolean") && !type.equals("char")) {
 					allInt = false;
 				}
 				// START KGU#355 2017-03-30: #365 - allow type conversion
@@ -1426,11 +1451,12 @@ public class CGenerator extends Generator {
 				// END KGU#355 2017-03-30
 					allDouble = false;
 				}
-				if (!type.equals("String")) {
+				if (!type.equals("String") && !type.equals("char")) {
 					allString = false;
 				}
 			}
-			if (allInt) itemType = "int";
+			if (allChar) itemType = "char";
+			else if (allInt) itemType = "int";
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayLiteral = "{" + items.concatenate(", ") + "}";
@@ -1540,6 +1566,7 @@ public class CGenerator extends Generator {
 			if (itemType.startsWith("union ")) {
 				this.appendComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
 			}
+			// Well, this is local to the loop, so it won't cause trouble with an automatic declaration in the outer context
 			addCode(this.getIndent() + (itemType + " " + itemVar + " = " +
 					arrayName + "[" + indexName + "];").trim(), indent, isDisabled);
 

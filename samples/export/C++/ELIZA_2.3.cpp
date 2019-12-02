@@ -19,6 +19,7 @@ struct History {
 	int	histIndex;
 };
 
+// Associates a key word in the text with an index in the reply ring array 
 struct KeyMapEntry {
 	string	keyword;
 	int	index;
@@ -187,7 +188,7 @@ string normalizeInput(string sentence)
 	int position;
 	
 	
-	string sentence = lowercase(sentence);
+	sentence = lowercase(sentence);
 	for (auto symbol : {'.', ',', ';', '!', '?'}) {
 		position = pos(symbol, sentence);
 		while (position > 0) {
@@ -206,7 +207,7 @@ string normalizeInput(string sentence)
 string[][2] setupGoodByePhrases()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? phrases;
+	string phrases[][2];
 	
 	
 	phrases[0][0] = " shut";
@@ -225,7 +226,8 @@ string[][2] setupGoodByePhrases()
 KeyMapEntry[] setupKeywords()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? keywords;
+	// The empty key string (last entry) is the default clause - will always be found 
+	KeyMapEntry keywords[];
 	
 	
 	// The empty key string (last entry) is the default clause - will always be found 
@@ -319,7 +321,7 @@ KeyMapEntry[] setupKeywords()
 string[][2] setupReflexions()
 {
 	// TODO: Check and accomplish variable declarations: 
-	??? reflexions;
+	string reflexions[][2];
 	
 	
 	reflexions[0][0] = " are ";
@@ -508,7 +510,7 @@ int main(void)
 	string userInput;
 	string reply;
 	int posAster;
-	??? offsets;
+	int offsets[];
 	bool isRepeated;
 	bool isGone;
 	int findInfo[2];
@@ -528,7 +530,7 @@ int main(void)
 	std::cout << "* (Requires at least Structorizer 3.30-03 to run)" << std::endl;
 	std::cout << "**********************************" << std::endl;
 	// Stores the last five inputs of the user in a ring buffer, 
-	// the first element is the current insertion index 
+	// the second component is the rolling (over-)write index. 
 	History history = {{"", "", "", "", ""}, 0};
 	const string replies[][/*???*/] = setupReplies();
 	const string reflexions[][2] = setupReflexions();

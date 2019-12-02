@@ -53,6 +53,7 @@ public class ELIZA {
 		}
 	};
 	
+	// Associates a key word in the text with an index in the reply ring array 
 	public struct KeyMapEntry{
 		public string	keyword;
 		public int	index;
@@ -73,13 +74,13 @@ public class ELIZA {
 		// END initialization for "KeyMapEntry" 
 		
 		// TODO: Check and accomplish variable declarations: 
-		String varPart;
+		string varPart;
 		// Converts the input to lowercase, cuts out interpunctation 
 		// and pads the string 
 		string userInput;
-		String reply;
+		string reply;
 		int posAster;
-		??? offsets;
+		int[] offsets;
 		bool isRepeated;
 		bool isGone;
 		int[] findInfo;
@@ -104,8 +105,8 @@ public class ELIZA {
 		Console.WriteLine("* (Requires at least Structorizer 3.30-03 to run)");
 		Console.WriteLine("**********************************");
 		// Stores the last five inputs of the user in a ring buffer, 
-		// the first element is the current insertion index 
-		History history = new History(new string[]{"","","","",""}, 0);
+		// the second component is the rolling (over-)write index. 
+		History history = new History(new string[]{"", "", "", "", ""}, 0);
 		const string[,] replies = setupReplies();
 		const string[,] reflexions = setupReflexions();
 		const string[,] byePhrases = setupGoodByePhrases();
@@ -165,7 +166,7 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string adjustSpelling(string sentence) {
 		// TODO: Check and accomplish variable declarations: 
-		String word;
+		string word;
 		string start;
 		string result;
 		int position;
@@ -254,11 +255,11 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string conjugateStrings(string sentence, string key, int keyPos, string[,] flexions) {
 		// TODO: Check and accomplish variable declarations: 
-		String right;
-		String result;
+		string right;
+		string result;
 		int position;
 		string[] pair;
-		String left;
+		string left;
 		
 		
 		result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
@@ -326,12 +327,12 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string normalizeInput(string sentence) {
 		// TODO: Check and accomplish variable declarations: 
-		String symbol;
-		String result;
+		string symbol;
+		string result;
 		int position;
 		
 		
-		string sentence = lowercase(sentence);
+		sentence = lowercase(sentence);
 		foreach (String symbol in new String[]{'.', ',', ';', '!', '?'}) {
 			position = pos(symbol, sentence);
 			while (position > 0) {
@@ -349,11 +350,11 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string[,] setupGoodByePhrases() {
 		// TODO: Check and accomplish variable declarations: 
-		??? phrases;
+		string[,] phrases;
 		
 		
-		phrases[0] = new object[]{" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."};
-		phrases[1] = new object[]{"bye", "Well, let\'s end our talk for now. See you later. Bye."};
+		phrases[0] = new string[]{" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."};
+		phrases[1] = new string[]{"bye", "Well, let\'s end our talk for now. See you later. Bye."};
 		return phrases;
 	}
 
@@ -365,7 +366,8 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static KeyMapEntry[] setupKeywords() {
 		// TODO: Check and accomplish variable declarations: 
-		??? keywords;
+		// The empty key string (last entry) is the default clause - will always be found 
+		KeyMapEntry[] keywords;
 		
 		
 		// The empty key string (last entry) is the default clause - will always be found 
@@ -418,19 +420,19 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string[,] setupReflexions() {
 		// TODO: Check and accomplish variable declarations: 
-		??? reflexions;
+		string[,] reflexions;
 		
 		
-		reflexions[0] = new object[]{" are ", " am "};
-		reflexions[1] = new object[]{" were ", " was "};
-		reflexions[2] = new object[]{" you ", " I "};
-		reflexions[3] = new object[]{" your", " my"};
-		reflexions[4] = new object[]{" i\'ve ", " you\'ve "};
-		reflexions[5] = new object[]{" i\'m ", " you\'re "};
-		reflexions[6] = new object[]{" me ", " you "};
-		reflexions[7] = new object[]{" my ", " your "};
-		reflexions[8] = new object[]{" i ", " you "};
-		reflexions[9] = new object[]{" am ", " are "};
+		reflexions[0] = new string[]{" are ", " am "};
+		reflexions[1] = new string[]{" were ", " was "};
+		reflexions[2] = new string[]{" you ", " I "};
+		reflexions[3] = new string[]{" your", " my"};
+		reflexions[4] = new string[]{" i\'ve ", " you\'ve "};
+		reflexions[5] = new string[]{" i\'m ", " you\'re "};
+		reflexions[6] = new string[]{" me ", " you "};
+		reflexions[7] = new string[]{" my ", " your "};
+		reflexions[8] = new string[]{" i ", " you "};
+		reflexions[9] = new string[]{" am ", " are "};
 		return reflexions;
 	}
 
@@ -448,36 +450,36 @@ public class ELIZA {
 		String[,] replies;
 		// We start with the highest index for performance reasons 
 		// (is to avoid frequent array resizing) 
-		replies[29] = new object[]{"Say, do you have any psychological problems?", "What does that suggest to you?", "I see.", "I'm not sure I understand you fully.", "Come come elucidate your thoughts.", "Can you elaborate on that?", "That is quite interesting."};
-		replies[0] = new object[]{"Don't you believe that I can*?", "Perhaps you would like to be like me?", "You want me to be able to*?"};
-		replies[1] = new object[]{"Perhaps you don't want to*?", "Do you want to be able to*?"};
-		replies[2] = new object[]{"What makes you think I am*?", "Does it please you to believe I am*?", "Perhaps you would like to be*?", "Do you sometimes wish you were*?"};
-		replies[3] = new object[]{"Don't you really*?", "Why don't you*?", "Do you wish to be able to*?", "Does that trouble you*?"};
-		replies[4] = new object[]{"Do you often feel*?", "Are you afraid of feeling*?", "Do you enjoy feeling*?"};
-		replies[5] = new object[]{"Do you really believe I don't*?", "Perhaps in good time I will*.", "Do you want me to*?"};
-		replies[6] = new object[]{"Do you think you should be able to*?", "Why can't you*?"};
-		replies[7] = new object[]{"Why are you interested in whether or not I am*?", "Would you prefer if I were not*?", "Perhaps in your fantasies I am*?"};
-		replies[8] = new object[]{"How do you know you can't*?", "Have you tried?", "Perhaps you can now*."};
-		replies[9] = new object[]{"Did you come to me because you are*?", "How long have you been*?", "Do you believe it is normal to be*?", "Do you enjoy being*?"};
-		replies[10] = new object[]{"We were discussing you--not me.", "Oh, I*.", "You're not really talking about me, are you?"};
-		replies[11] = new object[]{"What would it mean to you if you got*?", "Why do you want*?", "Suppose you soon got*...", "What if you never got*?", "I sometimes also want*."};
-		replies[12] = new object[]{"Why do you ask?", "Does that question interest you?", "What answer would please you the most?", "What do you think?", "Are such questions on your mind often?", "What is it that you really want to know?", "Have you asked anyone else?", "Have you asked such questions before?", "What else comes to mind when you ask that?"};
-		replies[13] = new object[]{"Names don't interest me.", "I don't care about names -- please go on."};
-		replies[14] = new object[]{"Is that the real reason?", "Don't any other reasons come to mind?", "Does that reason explain anything else?", "What other reasons might there be?"};
-		replies[15] = new object[]{"Please don't apologize!", "Apologies are not necessary.", "What feelings do you have when you apologize?", "Don't be so defensive!"};
-		replies[16] = new object[]{"What does that dream suggest to you?", "Do you dream often?", "What persons appear in your dreams?", "Are you disturbed by your dreams?"};
-		replies[17] = new object[]{"How do you do ...please state your problem."};
-		replies[18] = new object[]{"You don't seem quite certain.", "Why the uncertain tone?", "Can't you be more positive?", "You aren't sure?", "Don't you know?"};
-		replies[19] = new object[]{"Are you saying no just to be negative?", "You are being a bit negative.", "Why not?", "Are you sure?", "Why no?"};
-		replies[20] = new object[]{"Why are you concerned about my*?", "What about your own*?"};
-		replies[21] = new object[]{"Can you think of a specific example?", "When?", "What are you thinking of?", "Really, always?"};
-		replies[22] = new object[]{"Do you really think so?", "But you are not sure you*?", "Do you doubt you*?"};
-		replies[23] = new object[]{"In what way?", "What resemblance do you see?", "What does the similarity suggest to you?", "What other connections do you see?", "Could there really be some connection?", "How?", "You seem quite positive."};
-		replies[24] = new object[]{"Are you sure?", "I see.", "I understand."};
-		replies[25] = new object[]{"Why do you bring up the topic of friends?", "Do your friends worry you?", "Do your friends pick on you?", "Are you sure you have any friends?", "Do you impose on your friends?", "Perhaps your love for friends worries you."};
-		replies[26] = new object[]{"Do computers worry you?", "Are you talking about me in particular?", "Are you frightened by machines?", "Why do you mention computers?", "What do you think machines have to do with your problem?", "Don't you think computers can help people?", "What is it about machines that worries you?"};
-		replies[27] = new object[]{"Do you sometimes feel uneasy without a smartphone?", "Have you had these phantasies before?", "Does the world seem more real for you via apps?"};
-		replies[28] = new object[]{"Tell me more about your family.", "Who else in your family*?", "What does family relations mean for you?", "Come on, How old are you?"};
+		replies[29] = new string[]{"Say, do you have any psychological problems?", "What does that suggest to you?", "I see.", "I'm not sure I understand you fully.", "Come come elucidate your thoughts.", "Can you elaborate on that?", "That is quite interesting."};
+		replies[0] = new string[]{"Don't you believe that I can*?", "Perhaps you would like to be like me?", "You want me to be able to*?"};
+		replies[1] = new string[]{"Perhaps you don't want to*?", "Do you want to be able to*?"};
+		replies[2] = new string[]{"What makes you think I am*?", "Does it please you to believe I am*?", "Perhaps you would like to be*?", "Do you sometimes wish you were*?"};
+		replies[3] = new string[]{"Don't you really*?", "Why don't you*?", "Do you wish to be able to*?", "Does that trouble you*?"};
+		replies[4] = new string[]{"Do you often feel*?", "Are you afraid of feeling*?", "Do you enjoy feeling*?"};
+		replies[5] = new string[]{"Do you really believe I don't*?", "Perhaps in good time I will*.", "Do you want me to*?"};
+		replies[6] = new string[]{"Do you think you should be able to*?", "Why can't you*?"};
+		replies[7] = new string[]{"Why are you interested in whether or not I am*?", "Would you prefer if I were not*?", "Perhaps in your fantasies I am*?"};
+		replies[8] = new string[]{"How do you know you can't*?", "Have you tried?", "Perhaps you can now*."};
+		replies[9] = new string[]{"Did you come to me because you are*?", "How long have you been*?", "Do you believe it is normal to be*?", "Do you enjoy being*?"};
+		replies[10] = new string[]{"We were discussing you--not me.", "Oh, I*.", "You're not really talking about me, are you?"};
+		replies[11] = new string[]{"What would it mean to you if you got*?", "Why do you want*?", "Suppose you soon got*...", "What if you never got*?", "I sometimes also want*."};
+		replies[12] = new string[]{"Why do you ask?", "Does that question interest you?", "What answer would please you the most?", "What do you think?", "Are such questions on your mind often?", "What is it that you really want to know?", "Have you asked anyone else?", "Have you asked such questions before?", "What else comes to mind when you ask that?"};
+		replies[13] = new string[]{"Names don't interest me.", "I don't care about names -- please go on."};
+		replies[14] = new string[]{"Is that the real reason?", "Don't any other reasons come to mind?", "Does that reason explain anything else?", "What other reasons might there be?"};
+		replies[15] = new string[]{"Please don't apologize!", "Apologies are not necessary.", "What feelings do you have when you apologize?", "Don't be so defensive!"};
+		replies[16] = new string[]{"What does that dream suggest to you?", "Do you dream often?", "What persons appear in your dreams?", "Are you disturbed by your dreams?"};
+		replies[17] = new string[]{"How do you do ...please state your problem."};
+		replies[18] = new string[]{"You don't seem quite certain.", "Why the uncertain tone?", "Can't you be more positive?", "You aren't sure?", "Don't you know?"};
+		replies[19] = new string[]{"Are you saying no just to be negative?", "You are being a bit negative.", "Why not?", "Are you sure?", "Why no?"};
+		replies[20] = new string[]{"Why are you concerned about my*?", "What about your own*?"};
+		replies[21] = new string[]{"Can you think of a specific example?", "When?", "What are you thinking of?", "Really, always?"};
+		replies[22] = new string[]{"Do you really think so?", "But you are not sure you*?", "Do you doubt you*?"};
+		replies[23] = new string[]{"In what way?", "What resemblance do you see?", "What does the similarity suggest to you?", "What other connections do you see?", "Could there really be some connection?", "How?", "You seem quite positive."};
+		replies[24] = new string[]{"Are you sure?", "I see.", "I understand."};
+		replies[25] = new string[]{"Why do you bring up the topic of friends?", "Do your friends worry you?", "Do your friends pick on you?", "Are you sure you have any friends?", "Do you impose on your friends?", "Perhaps your love for friends worries you."};
+		replies[26] = new string[]{"Do computers worry you?", "Are you talking about me in particular?", "Are you frightened by machines?", "Why do you mention computers?", "What do you think machines have to do with your problem?", "Don't you think computers can help people?", "What is it about machines that worries you?"};
+		replies[27] = new string[]{"Do you sometimes feel uneasy without a smartphone?", "Have you had these phantasies before?", "Does the world seem more real for you via apps?"};
+		replies[28] = new string[]{"Tell me more about your family.", "Who else in your family*?", "What does family relations mean for you?", "Come on, How old are you?"};
 		setupReplies = replies;
 		
 		return setupReplies;

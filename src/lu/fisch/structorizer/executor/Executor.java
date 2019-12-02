@@ -5068,7 +5068,7 @@ public class Executor implements Runnable
 			//instr.updateTypeMapFromLine(context.dynTypeMap, cmd, lineNo);
 			if (!leftSide.contains(".") && !leftSide.contains("[")) {
 				TypeMapEntry oldEntry = null;
-				String target = Instruction.getAssignedVarname(Element.splitLexically(leftSide, true)) + "";
+				String target = Instruction.getAssignedVarname(Element.splitLexically(leftSide, true), false) + "";
 				if (!context.dynTypeMap.containsKey(target) || !(oldEntry = context.dynTypeMap.get(target)).isDeclared) {
 					String typeDescr = Instruction.identifyExprType(context.dynTypeMap, expression, true);
 					if (oldEntry == null) {

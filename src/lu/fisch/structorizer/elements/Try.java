@@ -532,7 +532,8 @@ public class Try extends Element {
 	public String getExceptionVarName()
 	{
 		return Instruction.getAssignedVarname(
-				Element.splitLexically(this.getUnbrokenText().getLongString(), true)
+				Element.splitLexically(this.getUnbrokenText().getLongString(), true),
+				false
 				);
 	}
 
