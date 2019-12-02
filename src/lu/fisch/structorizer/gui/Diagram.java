@@ -191,6 +191,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Stale file also triggers save request in saveNSD()
  *      Bob Fisch       2019-11-24      New method setRootForce() introduced as interface for Unimozer (c)
+ *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled 
  *
  ******************************************************************************************************
  *
@@ -8812,11 +8813,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			for (GENPlugin plugin: Menu.generatorPlugins) {
 				if (genName.equalsIgnoreCase(plugin.title)) {
 					ini.load();
-					if (!genName.equalsIgnoreCase(this.prefGeneratorName)) {
-						this.generatorUseCount = 1;
-					}
-					this.prefGeneratorName = plugin.title;
-					if (!this.prefGeneratorName.equals(ini.getProperty("genExportPreferred", "Java"))) {
+					// START KGU#764 2019-11-29: Issue #777 - Another Sructorizer instance may have changed the favourite language
+					//if (!genName.equalsIgnoreCase(this.prefGeneratorName)) {
+					//	this.generatorUseCount = 1;
+					//}
+					//this.prefGeneratorName = plugin.title;
+					//if (!this.prefGeneratorName.equals(ini.getProperty("genExportPreferred", "Java"))) {
+					String iniGeneratorName = ini.getProperty("genExportPreferred", this.prefGeneratorName);
+					boolean modified = !genName.equalsIgnoreCase(this.prefGeneratorName) || !genName.equalsIgnoreCase(iniGeneratorName);
+					if (modified) {
+						this.prefGeneratorName = plugin.title;
+					// END KGU#764 2019-11-29
 						ini.setProperty("genExportPreferred", plugin.title);
 						ini.save();
 						updateCodePreview();

@@ -733,6 +733,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
+	 * @see #setDefHandled(String, String)
 	 */
 	// START KGU#767 2019-11-24: Bugfix #782 for Python - we need to tell included from own declarations
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
@@ -751,6 +753,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @param _involveIncludables - whether the included diagrams are also to be consulted
 	 * @return true if there had already been a definition before
+	 * @see #setDefHandled(String, String)
 	 */
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
 	// END KGU#767 2019-11-24
@@ -779,8 +782,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
 	 * with signature {@code _signature}. Returns whether the 
-	 * @param _signature
-	 * @param _id
+	 * @param _signature - signature of the responsible {@link Root}
+	 * @param _id - the identifier (or ':'-prefixed type key) of the declared entity
+	 * @see #wasDefHandled(Root, String, boolean)
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 */
 	protected void setDefHandled(String _signature, String _id) {
 		StringList definedIds;

@@ -83,6 +83,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
+ *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
  *
  ******************************************************************************************************
  *
@@ -262,6 +263,26 @@ public class BASHGenerator extends Generator {
 	/************ Code Generation **************/
 	
 	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
+	
+	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
+	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
+	protected String getEnumDeclarator()
+	{
+		return "declare -ri ";
+	}
+	
+	/** @return the shell-specific declarator for array variables (e.g. {@code "declare -a "} for bash) */
+	protected String getArrayDeclarator()
+	{
+		return "declare -a ";
+	}
+
+	/** @return the shell-specific declarator for associative arrays (maps, e.g. {@code "declare -A "} for bash) */
+	protected String getAssocDeclarator()
+	{
+		return "declare -A ";
+	}
+	// END KGU#542 2019-12-01
 	
 	// START KGU#753 2019-10-15: Bugfix #765 had to be made protected, since KSHGenerator must initialize it as well. 
 	//private HashMap<String, TypeMapEntry> typeMap = null;
@@ -466,7 +487,11 @@ public class BASHGenerator extends Generator {
 			//}
 			expr = transformExpression(fct);
 			// END KGU#405 2017-05-19
-			if (posAsgnOpr > 0)
+			// START KGU 2019-12-01: An evaluation should not apply for subroutines!
+			//if (posAsgnOpr > 0)
+			if (posAsgnOpr > 0 &&
+					(this.routinePool == null || this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty()))
+			// END KGU 2019-12-01
 			{
 				// START KGU#390 2017-05-05: Issue #396
 				//expr = "`" + expr + "`";
@@ -474,9 +499,10 @@ public class BASHGenerator extends Generator {
 				// END KGU#390 2017-05-05
 			}
 		}
+		// FIXME (KGU 2019-12-01) this looks too simplistic
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
 		{
-			lval = "declare -a " + lval;
+			lval = this.getArrayDeclarator() + lval;
 			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
 			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
 			for (int i = 0; i < items.count(); i++) {
@@ -493,7 +519,7 @@ public class BASHGenerator extends Generator {
 				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
 			// START KGU#388 2019-11-28: Bugfix #423 - record initializations must not be separated from the declaration
-			lval = "declare -a " + lval;
+			lval = this.getArrayDeclarator() + lval;
 			// END KGU#388 2019-11-28
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
@@ -1416,13 +1442,21 @@ public class BASHGenerator extends Generator {
 		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		code.add("");
 		// END KGU#129 2016-01-08
+		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+			TypeMapEntry type = typeEntry.getValue();
+			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+				appendEnumeratorDef(type, _indent);
+			}
+		}
+		// END KGU#542 2019-12-01
 		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
 		// FIXME: We should only do so if they won't get initialized
 		for (int i = 0; i < varNames.count(); i++) {
 			String varName = varNames.get(i);
 			TypeMapEntry typeEntry = typeMap.get(varName);
 			if (typeEntry != null && typeEntry.isRecord()) {
-				addCode("declare -A " + varName, _indent, false);
+				addCode(this.getAssocDeclarator() + varName, _indent, false);
 			}
 		}
 		// END KGU#389 2017-10-23
@@ -1442,6 +1476,38 @@ public class BASHGenerator extends Generator {
 		return code.getText();
 		
 	}
+
+	// START KGU#542 2019-12-01: Enh. #739 support for enumeration types
+	/**
+	 * Generates a shell equivalent for an enumeration type by declaring the
+	 * respective set of read-only integer variables.
+	 * @param _type - the {@link TpyeMapEntry} of the enumeration type
+	 * @param _indent - the current indentation string
+	 */
+	protected void appendEnumeratorDef(TypeMapEntry _type, String _indent) {
+		StringList enumItems = _type.getEnumerationInfo();
+		appendComment("START enumeration type " + _type.typeName, _indent);
+		// In vintage BASIC, we will just generate separate variable definitions
+		int offset = 0;
+		String lastVal = "";
+		for (int i = 0; i < enumItems.count(); i++) {
+			String[] itemSpec = enumItems.get(i).split("=", 2);
+			if (itemSpec.length > 1) {
+				lastVal = itemSpec[1].trim();
+				offset = 0;
+				try {
+					int code = Integer.parseUnsignedInt(lastVal);
+					lastVal = "";
+					offset = code;
+				}
+				catch (NumberFormatException ex) {}
+			}
+			addCode(this.getEnumDeclarator() + itemSpec[0] + "=" + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, false);
+			offset++;
+		}
+		appendComment("END enumeration type "+ _type.typeName, _indent);
+	}
+	// END KGU#542 2019-12-01
 	
 }
 

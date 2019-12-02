@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
+ *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
  *
  ******************************************************************************************************
  *
@@ -242,6 +243,10 @@ public class PythonGenerator extends Generator
 
 	/************ Code Generation **************/
 
+	// START KGU#542 2019-12-01: Enh. #739 - support for enumerator types
+	/** The currently exported {@link Root} */
+	private Root root = null;
+	// END KGU#542 2019-12-01
 	// START KGU#388 2017-10-02: Enh. #423 - Support for recordtypes
 	/** cache for the type map of the current Root */
 	private HashMap<String, TypeMapEntry> typeMap = null;
@@ -335,6 +340,7 @@ public class PythonGenerator extends Generator
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				// Handle DiagramController (more specifically: Turtleizer) routine calls
 				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
 				//String turtleMethod = null;
 				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
@@ -360,6 +366,14 @@ public class PythonGenerator extends Generator
 					}
 				}
 				// END KGU#480 2018-01-21
+				// START KGU#542 2019-12-01: Enh. #739 support for enumerators
+				else if (this.varNames.contains(token) && this.root != null && this.root.constants.get(token) != null) {
+					String constVal = this.root.constants.get(token);
+					if (constVal.startsWith(":") && constVal.contains("€")) {
+						tokens.set(i, constVal.substring(1, constVal.indexOf("€"))+ "." + token);
+					}
+				}
+				// END KGU#542 2019-12-01
 			}
 		}
 		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
@@ -1070,7 +1084,7 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
 	/**
-	 * Adds a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * Adds a typedef, struct, or enum definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
@@ -1102,6 +1116,32 @@ public class PythonGenerator extends Generator
 			addCode(typeDef, _indent, _asComment);
 			done = true;
 		}
+		// START KGU#542 2019-12-01: Enh. #739 - Support for enumeration types (since Python 3.4)
+		else if (_type.isEnum()) {
+			String indentPlus1 = _indent + this.getIndent();
+			StringList enumItems = _type.getEnumerationInfo();
+			addCode("class " + _typeName + "(Enum):", _indent, _asComment);
+			int offset = 0;
+			String lastVal = "";
+			for (int i = 0; i < enumItems.count(); i++) {
+				String[] itemSpec = enumItems.get(i).split("=", 2);
+				if (itemSpec.length > 1) {
+					lastVal = itemSpec[1].trim();
+					offset = 0;
+					try {
+						int code = Integer.parseUnsignedInt(lastVal);
+						lastVal = "";
+						offset = code;
+					}
+					catch (NumberFormatException ex) {}
+				}
+				addCode(itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, indentPlus1, _asComment);
+				offset++;
+			}
+			addCode("", _indent, _asComment);
+			done = true;
+		}
+		// END KGU#542 2019-12-01
 		return done;
 	}
 
@@ -1231,13 +1271,17 @@ public class PythonGenerator extends Generator
 			appendComment("You should have installed module recordtype: pip install recordtype", _indent);
 			appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
 			code.add(_indent + "from recordtype import recordtype");
+			// START KGU#542 2019-12-01: Enh. #739
+			code.add(_indent + "from enum import Enum");
+			this.generatorIncludes.add("enum");
+			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
 				code.add(_indent);
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
-			// START KGU#607 2018-10-30:Issue #346
+			// START KGU#607 2018-10-30: Issue #346
 			this.generatorIncludes.add("math");		// Will be inserted later
 			// END KGU#607 2018-10-30
 			// START KGU#351 2017-02-26: Enh. #346
@@ -1290,6 +1334,9 @@ public class PythonGenerator extends Generator
 		this.typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
 		// END KGU#388 2017-10-02
+		// START KGU#542 2019-12-01: Enh. #739 - For enumerator transformation, we will also need _root in in deeper contexts
+		this.root = _root;
+		// END KGU#542 2019-12-01
 		return indent;
 	}
 

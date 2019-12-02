@@ -1139,7 +1139,7 @@ public class Instruction extends Element {
 			isAssigned = !rightSide.isEmpty();
 			// Isolate the variable name from the left-hand side of the assignment
 			varName = getAssignedVarname(leftSide);
-			// Without const, var, or dim a declaration must be a C-style declaration
+			// Without const, var, or dim, a declaration must be a C-style declaration
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
 			// If the target is a record component we won't add a type specification.
 			if (varName != null && !varName.contains(".")) {
@@ -1217,8 +1217,11 @@ public class Instruction extends Element {
 	
 	/**
 	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
-	 * the entire line of an assignment or just its left part.
+	 * the entire line of an assignment or just its left part.<br/>
 	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
+	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
+	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
+	 * the result would be just "foo".
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
@@ -1226,7 +1229,7 @@ public class Instruction extends Element {
 	public static String getAssignedVarname(StringList tokens) {
 		String varName = null;
 		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
-		tokens = coagulateSubexpressions(tokens);		
+		tokens = coagulateSubexpressions(tokens.copy());		
 		// END KGU689 2019-03-21
 		int posAsgn = tokens.indexOf("<-");
 		if (posAsgn > 0) {
@@ -1246,15 +1249,47 @@ public class Instruction extends Element {
 			tokens = tokens.subSequence(0, posColon);
 		}
 		// END KGU#388 2017-09-15
-		// The last sequence of dot.separated ids should be the variable name
+		// The last sequence of dot-separated ids should be the variable name
 		if (tokens.count() > 0) {
 			int i = tokens.count()-1;
 			varName = tokens.get(i);
-			// START KGU#388 2017-09-14: Enh. #423
-			while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
-				varName = tokens.get(i-2) + "." + varName;
-				i -= 2;
+			// START KGU#780 2019-12-01: Bugfix - endstanding index access was erroneously returned
+			// FIXME But it might be even more complicated, e.g. foo[i].bar[j]!
+			while (varName.startsWith("[") && varName.endsWith("]") && i > 0) {
+				if (posColon >= 0) {
+					// Something is wrong here - there should not be be both a declaration and a bracket(?)
+					return null;
+				}
+				// It is a coagulated index access - skip it
+				varName = tokens.get(--i);
 			}
+			// END KGU#780 2019-12-01
+			// START KGU#388 2017-09-14: Enh. #423
+			// START KGU#780 2019-12-01: In cases like foo[i].bar[j] we want to return rather "foo" than "bar"
+			//while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
+			//	varName = tokens.get(i-2) + "." + varName;
+			//	i -= 2;
+			//}
+			while (i > 1 && varName != null && tokens.get(i-1).equals(".")) {
+				String preDotToken = tokens.get(i-2);
+				if (Function.testIdentifier(preDotToken, null)) {
+					varName = tokens.get(i-2) + "." + varName;
+					i -= 2;
+				}
+				else {
+					// We may expect either an index expression or an identifier (variable or component name)
+					while (i > 1 && preDotToken.startsWith("[") && preDotToken.endsWith("]")) {
+						// Skip index expressions (invalidate the name, it was a component of an array element)
+						varName = null;
+						preDotToken = tokens.get(--i - 2);
+					}
+					if (varName == null && Function.testIdentifier(preDotToken, null)) {
+						varName = preDotToken;	// Start again with the identifier prior to the indices
+						i -= 2;	// this ought to be the token index of varName
+					}
+				}
+			}
+			// END KGU#780 2019-12-01
 			// END KGU#388 2017-09-14
 		}
 		return varName;

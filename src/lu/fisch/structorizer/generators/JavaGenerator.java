@@ -75,7 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
- *      Kay Gürtzig             2019-10-18      Enh. #739: Support for enum types
+ *      Kay Gürtzig             2019-10-18      Enh. #739: Support for enum types (debugged on 2019-11-30)
  *
  ******************************************************************************************************
  *
@@ -358,6 +358,9 @@ public class JavaGenerator extends CGenerator
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, null)) {
+				// START KGU#542 2019-11-30: Enh. #739 - support for enum types
+				String constVal = null;	// Will be needed on enum test
+				// END KGU#542 2019-11-30
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
@@ -381,8 +384,7 @@ public class JavaGenerator extends CGenerator
 				}
 				// END KGU#480 2018-01-21
 				// START KGU#542 2019-11-18: Enh. #739 - support for enum types
-				else if (this.root != null && this.root.constants.containsKey(token)) {
-					String constVal = this.root.constants.get(token);
+				else if (this.root != null && (constVal = this.root.constants.get(token)) != null) {
 					int posEu = constVal.indexOf('€');
 					if (constVal.startsWith(":") && posEu > 1) {
 						// In general, the enum constant names are to be qualified

@@ -52,7 +52,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
- *      Kay Gürttig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens
+ *      Kay Gürtzig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens()
+ *      Kay Gürtzig             2019-12-01      Enh. #739: At least minimum support for enum types, array declarations mended
  *
  ******************************************************************************************************
  *
@@ -64,9 +65,11 @@ package lu.fisch.structorizer.generators;
  *      
  ******************************************************************************************************///
 
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;
 
 
@@ -104,7 +107,38 @@ public class KSHGenerator extends BASHGenerator {
 
 	/************ Code Generation **************/
 	
-//	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
+	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getEnumDeclarator()
+	 */
+	@Override
+	protected String getEnumDeclarator()
+	{
+		return "";	// ksh doesn't know a declare command (as far as we know)
+	}
+
+	// On this occasion, we also repair the array declaration, which differes from bash
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getArrayDeclarator()
+	 */
+	@Override
+	protected String getArrayDeclarator()
+	{
+		return "set -A ";
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getAssocDeclarator()
+	 */
+	@Override
+	protected String getAssocDeclarator()
+	{
+		return "typeset -A ";
+	}
+	// END KGU#542 2019-12-01
+	
+
+	//	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
 //	@Override
 //	protected void generateCode(For _for, String _indent) {
 //
@@ -236,6 +270,14 @@ public class KSHGenerator extends BASHGenerator {
 			// END KGU#53 2015-11-02
 		}
 		
+		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+			TypeMapEntry type = typeEntry.getValue();
+			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+				appendEnumeratorDef(type, _indent);
+			}
+		}
+		// END KGU#542 2019-12-01
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
 		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);

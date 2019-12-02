@@ -96,7 +96,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
  *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
  *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
- *                                              Bugfix #782: Handling of global/local declarations mended
+ *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *
  ******************************************************************************************************
  *
@@ -944,7 +944,7 @@ public class CGenerator extends Generator {
 				// We try to enrich or accomplish defective type information
 				if (root.constants.get(varName) != null) {
 					this.appendDeclaration(root, varName, _indent, true);
-					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
+					// KGU#424: Avoid the comment here if the element contains mere declarations
 					return true;
 				}	
 			}
@@ -1037,7 +1037,7 @@ public class CGenerator extends Generator {
 				// Case 1.2
 				// Combine variable access as is
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
-				// START KGU#767 2019-11-24: Bugfix #782 maybe we must introduce a postponed declaration here
+				// START KGU#767 2019-11-30: Bugfix #782 maybe we must introduce a postponed declaration here
 				if (varName != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)) {
 					TypeMapEntry type = this.typeMap.get(varName);
 					String typeName = "???";
@@ -1046,14 +1046,18 @@ public class CGenerator extends Generator {
 						if (types != null && ! types.isEmpty()) {
 							typeName = types.get(0);
 							if (types.count() > 1) {
+								// Type is ambiguous
 								typeName += "???";
 							}
+						}
+						if (type.isRecord()) {
+							isDecl = true;
 						}
 					}
 					codeLine = typeName + " " + codeLine;
 					this.setDefHandled(root.getSignatureString(false), varName);
 				}
-				// END KGU#767 2019-11-24
+				// END KGU#767 2019-11-30
 			}
 			// Now we care for a possible assignment
 			if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
@@ -1075,11 +1079,11 @@ public class CGenerator extends Generator {
 								appendComment(_inst, _indent);
 								commentInserted = true;
 							}
-							// END KGU#424 2017-09-26
 							// FIXME: Possibly codeLine (the lval string) might be too much as first argument
 							// START KGU#559 2018-07-20: Enh. #563
 							//this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, null);
 							this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, recType);
+							// END KGU#559 2018-07-20
 							return commentInserted;
 						}
 					}
@@ -2341,7 +2345,7 @@ public class CGenerator extends Generator {
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
 				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
 					// Record initializer
-					String typeName = pureExprTokens.get(0);							
+					String typeName = pureExprTokens.get(0);
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);
 					this.generateRecordInit(_lValue, _expr, _indent, _isDisabled, recType);
 				}

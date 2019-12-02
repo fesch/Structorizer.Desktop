@@ -77,7 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-08  Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-21  Enh. #56: Export of Try elements implemented
  *      Kay Gürtzig         2019-03-30  Issue #696: Type retrieval had to consider an alternative pool
- *      Kay Gürtzig         2019-11-19  Issues #423, #739: Support for struct and enum types (begun)
+ *      Kay Gürtzig         2019-11-19  Issues #423, #739: Support for struct and enum types (begun, continued 2019-12-01)
  *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well as record initializer handling revised
  *      Kay Gürtzig         2019-11-28  Issue #388: "use constant" approach withdrawn (except for enums), wrong lval references avoided
  *
@@ -94,6 +94,7 @@ package lu.fisch.structorizer.generators;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -219,6 +220,7 @@ public class PerlGenerator extends Generator {
 
 	/************ Code Generation **************/
 	
+	private final Matcher varMatcher = Pattern.compile("^\\\\?[@$]?[$]?[A-Za-z_]\\w*$").matcher("");
 	// START KGU#311 2017-01-04: Enh. #314 File API analysis
 	private StringList fileVars = new StringList();
 	// END KGU#311 2017-01-04
@@ -349,6 +351,7 @@ public class PerlGenerator extends Generator {
 					}
 					else if (this.isWithinCall && pos > posAsgn) {
 						// To pass an array or record to a subroutine we must use a reference
+						// FIXME: for a component or the like the reference would have to be applied to all ("\($foo->bar)")
 						tokens.set(pos, "\\" + prefix + refPrefix + varName);
 					}
 					else {
@@ -396,7 +399,10 @@ public class PerlGenerator extends Generator {
 				while (post.isEmpty() && jR < tokens.count()-1) {
 					post = tokens.get(++jR).trim();
 				}
-				if ((pre.equals("]") || Function.testIdentifier(pre, null) || pre.startsWith("$") && Function.testIdentifier(pre.substring(1), null))
+				// START KGU#388 2019-11-29: Issue #423 - there are a lot of combinable prefixes
+				//if ((pre.equals("]") || Function.testIdentifier(pre, null) || pre.startsWith("$") && Function.testIdentifier(pre.substring(1), null))
+				if ((pre.equals("]") || varMatcher.reset(pre).matches())
+				// END KGU#388 2019-11-29
 						&& Function.testIdentifier(post, null)) {
 					tokens.remove(i+1, jR);
 					tokens.set(i, "->");
@@ -1310,15 +1316,16 @@ public class PerlGenerator extends Generator {
 		// END KGU#375 2019-11-19
 		for (int v = 0; v < _varNames.count(); v++) {
 			String varName = _varNames.get(v);
-			// START KGU#375 2019-11-19: Enh. #388 - Support for constants, now already defined above (withdrawn for inconsistency)
-			//if (!_root.constants.containsKey(varName)) {
-			// END KGU#375 2019-11-19
-				TypeMapEntry typeEntry = this.typeMap.get(varName);
+			TypeMapEntry typeEntry = this.typeMap.get(varName);
+			// START KGU#375/KGU#542 2019-12-01: Enh. #388, #739 - Don't declare enum constants here!
+			//String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
+			//code.add(_indent + "my " + prefix + varName + ";");
+			String constVal = _root.constants.get(varName);
+			if (constVal == null || !constVal.startsWith(":")) {
 				String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
 				code.add(_indent + "my " + prefix + varName + ";");
-			// START KGU#375 2019-11-19: Enh. #388 - Support for constants
-			//}
-			// END KGU#375 2019-11-19
+			}
+			// END KGU#375/KGU#542 2019-11-19
 		}
 		// END KGU#352 2017-02-26
 		code.add(_indent);

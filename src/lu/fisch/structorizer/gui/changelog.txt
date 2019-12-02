@@ -12,7 +12,7 @@ Known issues:
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
 
-Current development version: 3.30-03 (2019-11-29)
+Current development version: 3.30-03 (2019-12-02)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -34,15 +34,19 @@ Current development version: 3.30-03 (2019-11-29)
 - 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
 - 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
 - 03: Bugfix #776: Global variables are locally eclipsed on Pascal/Oberon export <2>
+- 03: Bugfix #777: Concurrently changed favourite export language handled. <2>
 - 03: Bugfix #778: License text was not exported with "fresh" diagrams <2>
 - 03: Bugfix #779: Defective Oberon export of main program diagrams with I/O <2>
 - 03: Issue #780: Parameterless procedures in Oberon without parentheses [K.-P. R.]2
 - 03: Bugfix #782: Code export of global (included) declarations was wrong. <2>
-- 03: Bugfix #783: No or nonsense code export for assigments of unknown structs <2>
+- 03: Bugfix #783: No or nonsense code export for assignments of unknown structs <2>
 - 03: Bugfix #784: Suppression of mere variable declarations on bash/ksh export <2>
 - 03: Bugfix #786: Record access in index expressions used to fail on execution <2>
 - 03: Bugfix #787: Multiplied top-level type definitions on Pascal export <2>
-- 03: Bugfix #788: Arrz file extraction to a user-specific folder did not work. <2> 
+- 03: Bugfix #788: Arrz file extraction to a user-specific folder did not work. <2>
+- 03: Bugfix #789: Wrong BASIC export of function calls (started with "CALL") <2>
+- 03: Bugfix #790: BASIC export failed with line continuation and initializers <2>
+- 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
