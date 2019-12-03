@@ -50,6 +50,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2019-02-15      Method isEmpty() added
  *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
  *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
+ *      Kay Gürtzig     2019-11-20      New methods count(String), count(String, boolean), insert(StringList, int)
  *
  ******************************************************************************************************
  *
@@ -757,19 +758,48 @@ public class StringList {
 		}
 	}
 
+	/**
+	 * Removes the {@code _index}th element from the StringList.
+	 * @param _index - the position of the element to be removed
+	 * @throws ArrayIndexOutOfBoundsException if {@code _index} is out of range (_index < 0 || _index >= count())
+	 */
 	public void delete(int _index)
 	{
 		strings.removeElementAt(_index);
 	}
 
+	/**
+	 * Inserts the given string {@code _string} into this StringList before position {@code _index}.
+	 * Throws an exception if _index is negative or larger than the current length.
+	 * @param _strList - the StringList to be inserted
+	 * @param _index - the insertion index
+	 * @throws ArrayIndexOutOfBoundsException if {@code _index} is out of range (_index < 0 || _index > count())
+	 */
 	public void insert(String _string, int _index)
 	{
 		strings.insertElementAt(_string,_index);
 	}
+	
+	/**
+	 * Inserts the series of copies of all elements of {@code _strList} into
+	 * this StringList before position {@code _index}. Throws an exception if _index
+	 * is negative or larger than the current length.
+	 * @param _strList - the StringList to be inserted
+	 * @param _index - the insertion index
+	 * @throws ArrayIndexOutOfBoundsException if {@code _index} is out of range (_index < 0 || _index > count())
+	 */
+	public void insert(StringList _strList, int _index)
+	{
+		if (_index >= 0 && _index <= strings.size() && !_strList.isEmpty()) {
+			for (int i = 0; i < _strList.count(); i++) {
+				strings.insertElementAt(_strList.get(i), _index++);
+			}
+		}
+	}
 
 	public void setText(String _text)
 	{
-		String[] lines = _text.split ("\n");
+		String[] lines = _text.split("\n");
 		strings.clear();
 		for (int i=0; i < lines.length; i++)
 		{
@@ -813,9 +843,9 @@ public class StringList {
 		boolean lastEndedLikeId = false;
 		// END KGU#425 2017-09-29
 		boolean isFirst = true;
-        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
+		for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
 		{
-        	String thisString = strings.get(i);
+			String thisString = strings.get(i);
 			if (isFirst)
 			{
 				//text = strings.get(i);
@@ -843,7 +873,7 @@ public class StringList {
 			text.append(thisString);
 		}
 		//return text;
-        return text.toString();
+		return text.toString();
 	}
 	
 	public String concatenate(String _separator, int _start)
@@ -887,6 +917,34 @@ public class StringList {
 	public int count()
 	{
 		return strings.size();
+	}
+	
+	/**
+	 * Counts the occurrences of the given string {@code str} among the elements
+	 * @param str - the string to search for
+	 * @return the number of occurrences
+	 * @see #count(String, boolean)
+	 */
+	public int count(String _str)
+	{
+		return this.count(_str, true);
+	}
+	
+	/**
+	 * Counts the occurrences of the given string {@code str} among the elements
+	 * @param str - the string to search for
+	 * @param matchCase - whether upper/lower case should make a difference
+	 * @return the number of occurrences
+	 */
+	public int count(String _str, boolean _matchCase)
+	{
+		int cnt = 0;
+		for (String elem: this.strings) {
+			if (_matchCase && elem.equals(_str) || !_matchCase && elem.equalsIgnoreCase(_str)) {
+				cnt++;
+			}
+		}
+		return cnt;
 	}
 	
 	/**

@@ -107,6 +107,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
+ *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
+ *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
  *
  ******************************************************************************************************
  *
@@ -260,7 +263,7 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.30-02";
+	public static final String E_VERSION = "3.30-03";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3048,7 +3051,8 @@ public abstract class Element {
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or
 	 * record type definition, respectively) given by {@code declText} and adds their names
-	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
+	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.<br/>
+	 * CAUTION: Some elements of {@code declTypes} may be null on return!
 	 * @param declText - the text of the declaration inside the parentheses or braces
 	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or null
 	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or null
@@ -3215,12 +3219,16 @@ public abstract class Element {
 	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
 	 * name of {@code _typeInfo} then unprefixed component values will be associated
 	 * to the component names of the type in order of occurrence unless an explicit
-	 * component name prefix occurs. 
+	 * component name prefix occurs.<br/>
+	 * If {@code _typeInfo} is null and {@code generateDummyCompNames} is true then generic
+	 * component names of form {@code "FIXME_<typename>_<i>"} may be provided for components
+	 * with missing names in the {@code _text}.
 	 * @param _text - the initializer expression with or without typename but with braces.
 	 * @param _typeInfo - the type map entry for the corresponding record type if available
+	 * @param _generateDummyCompNames - if true then missing component names (not retrievable) will be replaced by generic ones
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
+	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo, boolean _generateDummyCompNames)
 	{
 		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
 		//HashMap<String, String> components = new HashMap<String, String>();
@@ -3269,6 +3277,11 @@ public abstract class Element {
 				components.put(compNames[i], parts.get(i));
 			}
 			// END KGU#559 2018-07-20
+			// START KGU#711 2019-11-24: Bugfix #783 workaround for missing type info
+			else if (compNames == null && !typename.isEmpty()) {
+				components.put("FIXME_" + typename + "_" + i, parts.get(i));
+			}
+			// END KGU#711 2019-11-24
 		}
 		return components;
 	}
@@ -3312,6 +3325,11 @@ public abstract class Element {
 		else if (Function.isFunction(expr)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
+		// START KGU#782 2019-12-02 For certain purposes, e.g. export of FOR-IN loops char detection may be essential
+		else if (expr.startsWith("'") && expr.endsWith("'") && (expr.length() == 3 || expr.length() == 4 && expr.charAt(1) == '\\')) {
+			typeSpec = "char";
+		}
+		// END KGU#782 2019-12-02
 		else if (STRING_PATTERN.matcher(expr).matches()) {
 			typeSpec = "String";
 		}
@@ -3439,6 +3457,9 @@ public abstract class Element {
 						specialSigns.add("record");
 						specialSigns.add("struct");
 						// END KGU#388 2017-09-13
+						// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
+						specialSigns.add("enum");
+						// END KGU#542 2019-11-17
 						specialSigns.add("mod");
 						specialSigns.add("div");
 						// START KGU#331 2017-01-13: Enh. #333
@@ -4355,9 +4376,8 @@ public abstract class Element {
 	 * @param lineNo - number of the element text line containing the type description
 	 * @param isAssigned - is to indicate whether a value is assigned here
 	 * @param explicitly - whether the type association was an explicit declaration or just guessed
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 */
-	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly, boolean isCStyle)
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly)
 	{
 		if (varName != null && !typeSpec.isEmpty()) {
 			TypeMapEntry entry = typeMap.get(varName);
@@ -4372,7 +4392,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
@@ -4382,7 +4402,7 @@ public abstract class Element {
 				}
 				// END KGU#593 2018-10-05
 				// add an alternative declaration to the type map entry
-				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
+				entry.addDeclaration(typeSpec, this, lineNo, isAssigned);
 			}
 		}				
 	}
@@ -4395,10 +4415,8 @@ public abstract class Element {
 	 * @param typeName - name of the new defined type
 	 * @param typeSpec - a type-describing string as found in the definition
 	 * @param compNames - list of the component identifiers (strings)
-	 * @param compTypes - list of type-describing strings (a type name or a type construction)
+	 * @param compTypes - list of type-describing strings (a type name or a type construction or null!)
 	 * @param lineNo - number of the element text line containing the type description
-	 * @param isAssigned - is to indicate whether a value is assigned here
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 * @return true if the {@code typeName} was new and could be placed in the {@code typeMap}.
 	 */
 	protected boolean addRecordTypeToTypeMap(HashMap<String,TypeMapEntry> typeMap, String typeName, String typeSpec, StringList compNames, StringList compTypes, int lineNo)
@@ -4427,14 +4445,14 @@ public abstract class Element {
 									}
 									else {
 										// Create a named dummy entry
-										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true, false);
+										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true);
 									}
 								}
 							}
 							// FIXME KGU#687 2019-03-16: Issue #408 - no longer needed?
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true, false);
+								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true);
 							}
 						}
 					}

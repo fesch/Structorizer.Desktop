@@ -413,7 +413,7 @@ public class COBOLGenerator extends Generator {
 		String cobName = this.transformName(_name);
 		TypeMapEntry typeInfo = typeMap.get(_name);
 		StringList types = null;
-		String constValue = _root.constants.get(_name);
+		String constValue = _root.getConstValueString(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
 			 types = getTransformedTypes(typeInfo, false);
@@ -424,7 +424,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be

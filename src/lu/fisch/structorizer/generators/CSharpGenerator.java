@@ -228,6 +228,12 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#560 2018-07-22
 
+	@Override
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return true;
+	}
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
@@ -381,6 +387,18 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#332 2017-04-14
 
+	// START KGU#784 2019-12-02
+	@Override
+	protected String transformType(String _type, String _default)
+	{
+		if (_type != null && (_type.equals("String") || _type.equals("Object"))) {
+			_type = _type.toLowerCase();
+		}
+		return super.transformType(_type, _default);
+	}
+	// END KGU#784 2019-12-02
+
+	
 	// START KGU#388 2017-09-28: Enh. #423
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
@@ -390,13 +408,14 @@ public class CSharpGenerator extends CGenerator
 		// This is practically identical to Java
 		// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
+			TypeMapEntry compType = compEntry.getValue();
 			String compVal = comps.get(compName);
 			if (isFirst) {
 				isFirst = false;
@@ -408,12 +427,12 @@ public class CSharpGenerator extends CGenerator
 				if (compVal == null) {
 					recordInit += "null";
 				}
-				else if (compEntry.getValue().isRecord()) {
-					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				else if (compType != null && compType.isRecord()) {
+					recordInit += transformRecordInit(compVal, compType);
 				}
 				// START KGU#561 2018-07-21: Bugfix #564
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
-					String elemType = compEntry.getValue().getCanonicalType(true, false).substring(1);
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					String elemType = compType.getCanonicalType(true, false).substring(1);
 					recordInit += "new " + this.transformType(elemType, "object") + "[]" + compVal;
 				}
 				// END KGU#561 2018-07-21
@@ -655,11 +674,11 @@ public class CSharpGenerator extends CGenerator
 			if (listType != null && listType.isArray() && (itemType = listType.getCanonicalType(true, false)) != null
 					&& itemType.startsWith("@"))
 			{
-				itemType = this.transformType(itemType.substring(1), "Object");	
+				itemType = this.transformType(itemType.substring(1), "object");	
 			}
 			else {
 				itemType = "Object";
-				this.appendComment("TODO: Select a more sensible item type than Object", indent);
+				this.appendComment("TODO: Select a more sensible item type than object", indent);
 				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
@@ -850,11 +869,14 @@ public class CSharpGenerator extends CGenerator
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			if (typeEntry != null) {
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList.add(typeSpec + " " + varName);
@@ -1025,7 +1047,7 @@ public class CSharpGenerator extends CGenerator
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);
@@ -1109,7 +1131,7 @@ public class CSharpGenerator extends CGenerator
 		while (_elementType.startsWith("@")) {
 			_elementType = _elementType.substring(1) + ",";
 		}
-		return (_elementType + sepa + _varName).trim(); 
+		return (transformType(_elementType, _elementType) + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

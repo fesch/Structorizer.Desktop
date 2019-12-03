@@ -94,6 +94,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-03      Bugfix #756: Transformation damage on expressions containing "<-" and brackets
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
+ *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
+ *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
+ *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
+ *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
  *
  ******************************************************************************************************
  *
@@ -320,6 +324,14 @@ public class CGenerator extends Generator {
 		return true;
 	}
 	// END KGU#560 2018-07-22
+	
+	// START KGU#784 2019-12-02
+	/** @return whether the index range for array declarations is to be appended to the element type (otherwise to the variable name) */
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return false;
+	}
+	// END KGU#784 2019-12-02
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -567,9 +579,19 @@ public class CGenerator extends Generator {
 	protected String transformTypeWithLookup(String _type, String _default) {
 		TypeMapEntry typeInfo = this.typeMap.get(":" + _type);
 		// The typeInfo might be an alias, in this case no specific measures are necessary
-		if (typeInfo != null && typeInfo.isRecord() && _type.equals(typeInfo.typeName)) {
-			_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+		// START KGU#542 2019-11-17: Enh. #739
+		//if (typeInfo != null && typeInfo.isRecord() && _type.equals(typeInfo.typeName)) {
+		//	_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+		//}
+		if (typeInfo != null && (typeInfo.isRecord() || typeInfo.isEnum()) && _type.equals(typeInfo.typeName)) {
+			if (typeInfo.isRecord()) {
+				_type = this.transformRecordTypeRef(typeInfo.typeName, false);
+			}
+			else {
+				_type = this.transformEnumTypeRef(typeInfo.typeName);
+			}
 		}
+		// END KGU#542 2019-11-17
 		else {
 			_type = transformType(_type, _default);
 		}
@@ -585,7 +607,7 @@ public class CGenerator extends Generator {
 		String decl = "";
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
 			String canonType = typeInfo.getTypes().get(0);
 			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
 		}
@@ -610,7 +632,7 @@ public class CGenerator extends Generator {
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		StringBuilder recordInit = new StringBuilder("{");
@@ -693,6 +715,7 @@ public class CGenerator extends Generator {
 	 * The returned type description will have to be split before the first
 	 * occurring opening bracket in order to place the variable or type name there.
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @param definingWithin - a possible outer type context
 	 * @return a String suited as C type description in declarations etc. 
 	 */
 	@Override
@@ -706,8 +729,13 @@ public class CGenerator extends Generator {
 		if (typeInfo.isRecord()) {
 			elType = transformRecordTypeRef(elType, typeInfo == definingWithin);
 		}
+		// START KGU#542 2019-11-17: Enh. #739 - support for enum types
+		else if (typeInfo.isEnum()) {
+			elType = transformEnumTypeRef(elType);
+		}
+		// END KGU#542 2019-11-17
 		else {
-			elType = transformType(elType, "/*???*/");
+			elType = transformType(elType, "???");
 		}
 		_typeDescr = elType;
 		for (int i = 0; i < nLevels; i++) {
@@ -740,6 +768,19 @@ public class CGenerator extends Generator {
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return "struct " + structName + (isRecursive ? " * " : "");
 	}
+	
+	// START KGU#542 2019-11-17: Enh. #739
+	/**
+	 * Special adaptation of enum type name references in C-like languages, e.g. C
+	 * adds a prefix "enum" wherever it is used. C++ doesn't need to, Java and C#
+	 * don't, so the inheriting classes must override this.
+	 * @param enumName - name of the structured type
+	 * @return the prepared reference string
+	 */
+	protected String transformEnumTypeRef(String enumName) {
+		return "enum " + enumName;
+	}
+	// END KGU#542 2019-11-17
 
 	/**
 	 * Adds the type definitions for all types in {@code _root.getTypeInfo()}.
@@ -771,9 +812,9 @@ public class CGenerator extends Generator {
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
+		String indentPlus1 = _indent + this.getIndent();
 		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
-			String indentPlus1 = _indent + this.getIndent();
 			addCode("struct " + _type.typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
@@ -781,6 +822,23 @@ public class CGenerator extends Generator {
 			}
 			addCode("};", _indent, _asComment);
 		}
+		// START KGU#542 2019-11-17: Enh. #739
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			String itemList = items.concatenate(", ");
+			if (itemList.length() > 70) {
+				addCode("enum " + _type.typeName + "{", _indent, _asComment);
+				for (int i = 0; i < items.count(); i++) {
+					// FIXME: We might have to transform the value...
+					addCode(items.get(i) + (i < items.count() -1 ? "," : ""), indentPlus1, _asComment);
+				}
+				addCode("};", _indent, _asComment);
+			}
+			else {
+				addCode("enum " + _type.typeName + "{" + itemList + "};", _indent, _asComment);
+			}
+		}
+		// END KGU#542 2019-11-17
 		else {
 			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
 					_indent, _asComment);					
@@ -870,7 +928,7 @@ public class CGenerator extends Generator {
 			pureExprTokens = pureTokens.subSequence(pureTokens.indexOf("<-")+1, pureTokens.count());
 		}
 		String codeLine = null;
-		String varName = Instruction.getAssignedVarname(pureTokens);
+		String varName = Instruction.getAssignedVarname(pureTokens, false);
 		boolean isDecl = Instruction.isDeclaration(line);
 		//exprTokens.removeAll(" ");
 		if (!this.suppressTransformation && (isDecl || exprTokens != null)) {
@@ -886,6 +944,7 @@ public class CGenerator extends Generator {
 			// we must cut off the type specification (i.e. all text preceding the
 			// variable name).
 			Root root = Element.getRoot(_inst);
+			StringList paramNames = root.getParameterNames();
 			// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 			if (pureTokens.get(0).equals("const")) {
 				// Cases 1.1.1 or 2.1
@@ -895,7 +954,7 @@ public class CGenerator extends Generator {
 				// We try to enrich or accomplish defective type information
 				if (root.constants.get(varName) != null) {
 					this.appendDeclaration(root, varName, _indent, true);
-					// START KGU#424 2017-09-26: Avoid the comment here if the element contains mere declarations
+					// KGU#424: Avoid the comment here if the element contains mere declarations
 					return true;
 				}	
 			}
@@ -988,6 +1047,33 @@ public class CGenerator extends Generator {
 				// Case 1.2
 				// Combine variable access as is
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
+				// START KGU#767 2019-11-30: Bugfix #782 maybe we must introduce a postponed declaration here
+				if (varName != null
+						&& Function.testIdentifier(varName, null)
+						&& codeLine.indexOf(varName) + varName.length() == codeLine.length()
+						&& !paramNames.contains(varName)
+						&& !this.wasDefHandled(root, varName, false)) {
+					TypeMapEntry type = this.typeMap.get(varName);
+					String typeName = "???";
+					if (type != null) {
+						typeName = transformTypeFromEntry(type, null);
+						if (type.isRecord()) {
+							isDecl = true;
+						}
+						// START KGU#784 2019-12-02
+						else if (type.isArray() && !this.arrayBracketsAtTypeName()) {
+							int posBrack = typeName.indexOf("[");
+							if (posBrack > 0) {
+								codeLine += typeName.substring(posBrack);
+								typeName = typeName.substring(0, posBrack);
+							}
+						}
+						// END KGU#784 2019-12-02
+					}
+					codeLine = typeName + " " + codeLine;
+					this.setDefHandled(root.getSignatureString(false), varName);
+				}
+				// END KGU#767 2019-11-30
 			}
 			// Now we care for a possible assignment
 			if (codeLine != null && exprTokens != null && pureExprTokens.count() > 0) {
@@ -1009,11 +1095,11 @@ public class CGenerator extends Generator {
 								appendComment(_inst, _indent);
 								commentInserted = true;
 							}
-							// END KGU#424 2017-09-26
 							// FIXME: Possibly codeLine (the lval string) might be too much as first argument
 							// START KGU#559 2018-07-20: Enh. #563
 							//this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, null);
 							this.generateRecordInit(codeLine, pureExprTokens.concatenate(), _indent, isDisabled, recType);
+							// END KGU#559 2018-07-20
 							return commentInserted;
 						}
 					}
@@ -1026,6 +1112,27 @@ public class CGenerator extends Generator {
 							if (elemType != null && elemType.startsWith("@")) {
 								elemType = elemType.substring(1);
 							}
+							// START KGU #784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
+							int posIdx = codeLine.indexOf(varName) + varName.length();
+							String indices = codeLine.substring(posIdx).trim();
+							while (elemType.startsWith("@") && indices.startsWith("[")) {
+								elemType = elemType.substring(1);
+								StringList indexList = Element.splitExpressionList(indices.substring(1), ",", true);
+								indexList.remove(0); // Drop first index expression (has already been handled)
+								// Are there perhaps more indices within the same bracket pair (comma-separated list)?
+								while (indexList.count() > 1 && elemType.startsWith("@")) {
+									indexList.remove(0);
+									elemType = elemType.substring(1);
+								}
+								if (indexList.isEmpty()) {
+									indices = "";
+								}
+								else if (indexList.get(0).trim().startsWith("]")) {
+									// This should be the tail
+									indices = indexList.get(0).substring(1);
+								}
+							}
+							// END KGU #784 2019-12-02
 						}
 						expr = this.transformOrGenerateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
 						if (expr == null) {
@@ -1322,6 +1429,7 @@ public class CGenerator extends Generator {
 			// do if items are heterogeneous? We will make use of the typeMap and
 			// hope to get sensible information. Otherwise we add a TODO comment.
 			int nItems = items.count();
+			boolean allChar = true;	// KGU#782 2019-12-02: We now also detect char elements
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
@@ -1331,7 +1439,10 @@ public class CGenerator extends Generator {
 				String item = items.get(i);
 				String type = Element.identifyExprType(this.typeMap, item, false);
 				itemTypes.add(this.transformType(type, "int"));
-				if (!type.equals("int") && !type.equals("boolean")) {
+				if (!type.equals("char")) {
+					allChar = false;
+				}
+				if (!type.equals("int") && !type.equals("boolean") && !type.equals("char")) {
 					allInt = false;
 				}
 				// START KGU#355 2017-03-30: #365 - allow type conversion
@@ -1340,11 +1451,12 @@ public class CGenerator extends Generator {
 				// END KGU#355 2017-03-30
 					allDouble = false;
 				}
-				if (!type.equals("String")) {
+				if (!type.equals("String") && !type.equals("char")) {
 					allString = false;
 				}
 			}
-			if (allInt) itemType = "int";
+			if (allChar) itemType = "char";
+			else if (allInt) itemType = "int";
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayLiteral = "{" + items.concatenate(", ") + "}";
@@ -1454,6 +1566,7 @@ public class CGenerator extends Generator {
 			if (itemType.startsWith("union ")) {
 				this.appendComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
 			}
+			// Well, this is local to the loop, so it won't cause trouble with an automatic declaration in the outer context
 			addCode(this.getIndent() + (itemType + " " + itemVar + " = " +
 					arrayName + "[" + indexName + "];").trim(), indent, isDisabled);
 
@@ -1942,7 +2055,7 @@ public class CGenerator extends Generator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
@@ -2064,6 +2177,11 @@ public class CGenerator extends Generator {
 		TypeMapEntry typeInfo = typeMap.get(_name);
 		StringList types = null;
 		String constValue = _root.constants.get(_name);
+		// START KGU#542 2019-11-17: Enh. #739 Don't add enumerator constant definitions
+		if (constValue != null && constValue.startsWith(":")) {
+			return;	// If the value string starts with a colon then it originates in an enumeration type.
+		}
+		// END KGU#542 2019-11-17
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
 			// START KGU#388 2017-09-30: Enh. #423
@@ -2071,6 +2189,11 @@ public class CGenerator extends Generator {
 			if (typeInfo.isRecord()) {
 				types = StringList.getNew(this.transformRecordTypeRef(typeInfo.typeName, false));
 			}
+			// START KGU#542 2019-11-17: Enh. #739 - support for enum types
+			else if (typeInfo.isEnum()) {
+				types = StringList.getNew(this.transformEnumTypeRef(typeInfo.typeName));
+			}
+			// END KGU#542 2019-11-17
 			else {
 				types = getTransformedTypes(typeInfo, true);
 			}
@@ -2089,7 +2212,7 @@ public class CGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false));
 			}
 			// START KGU#730 2019-09-25: Bugfix #752 - we must provide something lest the definition should go lost
 			else if (_fullDecl) {
@@ -2166,9 +2289,15 @@ public class CGenerator extends Generator {
 		}
 		// Add a comment if there is no type info or internal declaration is not allowed
 		else if (types == null || _fullDecl){
+			String typeName = "???";
+			// START KGU#771 2019-11-24: Bugfix #783
+			if (types != null) {
+				typeName = types.get(0) + "???";
+			}
+			// END KGU#771 2019-11-24
 			// START #730 2019-11-12: Issue #752 don't comment it out, a missing declaration is a syntax error anyway
 			//appendComment(_name + ";", _indent);
-			addCode("??? " + _name + ";", _indent, false);
+			addCode(typeName + " " + _name + ";", _indent, false);
 			// END KGU#730 2019-11-12
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
 			setDefHandled(_root.getSignatureString(false), _name);
@@ -2220,7 +2349,14 @@ public class CGenerator extends Generator {
 	//	HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, null);
 	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
 	{
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry);
+		// START KGU#771 2019-11-24: Bugfix #783 In case of an unknown record type we should at least write the original content
+		if (_typeEntry == null) {
+			addCode(_lValue + " = " + _recordValue + ";\t" + this.commentSymbolLeft() + " FIXME: missing type information for struct! " + this.commentSymbolRight(),
+					_indent, false);
+			return;
+		}
+		// END KGU#771 2019-11-24
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
 	// END KGU#559 2018-07-20
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
@@ -2252,7 +2388,7 @@ public class CGenerator extends Generator {
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
 				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
 					// Record initializer
-					String typeName = pureExprTokens.get(0);							
+					String typeName = pureExprTokens.get(0);
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);
 					this.generateRecordInit(_lValue, _expr, _indent, _isDisabled, recType);
 				}

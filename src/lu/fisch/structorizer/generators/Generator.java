@@ -95,6 +95,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-10-06      Bugfix #761: Duplicated code lines in generateCode(Root,String) caused
  *                                      wrong Root line range in the codeMap (and consecutive errors)
  *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
+ *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
+ *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
  *
  ******************************************************************************************************
  *
@@ -136,6 +138,8 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -185,6 +189,7 @@ import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.BTextfile;
@@ -440,7 +445,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract String commentSymbolLeft();
 	/**
 	 * Right delimiter of a both-end delimited comment. In case commentSymbolLeft()
-	 * returns a line-comment symbol, then here should the epty string be returned
+	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
 	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
@@ -728,13 +733,35 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
+	 * @see #setDefHandled(String, String)
 	 */
+	// START KGU#767 2019-11-24: Bugfix #782 for Python - we need to tell included from own declarations
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
+	{
+		return wasDefHandled(_root, _id, _setDefinedIfNot, true);
+	}
+
+	/**
+	 * Checks whether the given {@code _id} has already been defined<b/>
+	 * 1. by diagram {@code _root} itself or
+	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
+	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * in {@link #declaredStuff}.
+	 * @param _root - the currently exported {@link Root}
+	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
+	 * @param _involveIncludables - whether the included diagrams are also to be consulted
+	 * @return true if there had already been a definition before
+	 * @see #setDefHandled(String, String)
+	 */
+	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
+	// END KGU#767 2019-11-24
 	{
 		String signature = _root.getSignatureString(false);
 		StringList definedIds = this.declaredStuff.get(signature);
 		boolean handled = definedIds != null && definedIds.contains(_id);
-		if (_root.includeList != null) {
+		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
 				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
@@ -755,8 +782,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
 	 * with signature {@code _signature}. Returns whether the 
-	 * @param _signature
-	 * @param _id
+	 * @param _signature - signature of the responsible {@link Root}
+	 * @param _id - the identifier (or ':'-prefixed type key) of the declared entity
+	 * @see #wasDefHandled(Root, String, boolean)
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 */
 	protected void setDefHandled(String _signature, String _id) {
 		StringList definedIds;
@@ -1181,7 +1210,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// but it's still needed for the meaningful ones.
 		String[] keywords = CodeParser.getAllProperties();
 		for (int kw = 0; kw < keywords.length; kw++)
-		{    				
+		{
 			if (keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = this.splitKeywords.elementAt(kw);
@@ -2791,6 +2820,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
 			if (_root.licenseName != null) {
 				this.appendComment("License: " + _root.licenseName, _indent);
+				// START KGU#763 2019-11-13: Bugfix #778
+				if (_fullText && _root.licenseText == null) {
+					String licText = this.loadLicenseText(_root.licenseName);
+					if (licText != null) {
+						this.appendComment(StringList.explode(licText, "\n"), _indent);
+					}
+				}
+				// END KGU#7763 2019-11-13
 			}
 			if (_fullText && _root.licenseText != null) {
 				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
@@ -3783,6 +3820,58 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
 	}
+	
+	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
+	/**
+	 * Retrieves the licanes text associated to license name {@code licName} from
+	 * the license pool directory
+	 * @param licName - name of the license (file name will be drived from it)
+	 * @return the text content of the license file (if existent), may be null
+	 */
+	protected String loadLicenseText(String licName) {
+		String error = null;
+		String content = "";
+		File licDir = Ini.getIniDirectory();
+		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+		File[] licFiles = licDir.listFiles(new LicFilter());
+		File licFile = null; 
+		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+				licFile = licFiles[i];
+			}		
+		}
+		BufferedReader br = null;
+		try {
+			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+			br = new BufferedReader(isr);
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				content += line + '\n';
+			};
+		} catch (UnsupportedEncodingException e) {
+			error = e.getMessage();
+		} catch (FileNotFoundException e) {
+			error = e.getMessage();
+		} catch (IOException e) {
+			error = e.getMessage();
+		}
+		if (br != null) {
+			try {
+				br.close();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		}
+		if (error != null) {
+			getLogger().log(Level.WARNING, "{0}", error);
+		}
+		if (content.trim().isEmpty()) {
+			content = null;
+		}
+		return content;	
+	}
+	// END KGU#763 2019-11-13
+
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)

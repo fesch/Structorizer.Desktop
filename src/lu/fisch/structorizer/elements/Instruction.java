@@ -68,6 +68,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
+ *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *
  ******************************************************************************************************
  *
@@ -81,6 +82,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -515,6 +517,19 @@ public class Instruction extends Element {
 				if (!isTypeDefinition(line, null)) {
 					_lines.add(line);
 				}
+				// START KGU#542 2019-11-17: Enh. #739 special treatment for enum type definitions
+				else if (isEnumTypeDefinition(line)) {
+					Root myRoot = getRoot(this);
+					HashMap<String, String> constVals = myRoot.extractEnumerationConstants(line);
+					if (constVals != null) {
+						// FIXME If this interferes then we might generate singular constant definition lines
+						//this.constants.putAll(constVals);
+						for (Entry<String, String> enumItem: constVals.entrySet()) {
+							_lines.add("const " + enumItem.getKey() + " <- " + enumItem.getValue());
+						}
+					}
+				}
+				// END KGU#542 2019-11-17
 			}
 			// END KGU#388 2017-09-13
 			// END KGU#413 2017-06-09
@@ -846,12 +861,14 @@ public class Instruction extends Element {
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
-	 * d)...f) same as a)...c) but with struct instead of record.<br/>
-	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * d)...f) same as a)...c) but with struct instead of record;<br/>
+	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
+	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String, HashMap)
 	 * @see #isTypeDefinition()
+	 * @see #isEnumTypeDefinition(String)
 	 */
 	public static boolean isTypeDefinition(String line)
 	{
@@ -863,8 +880,9 @@ public class Instruction extends Element {
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br/>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br/>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
-	 * d)...f) same as a)...c) but with struct instead of record.<br/>
-	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * d)...f) same as a)...c) but with struct instead of record;<br/>
+	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
+	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
@@ -882,16 +900,20 @@ public class Instruction extends Element {
 		}
 		unifyOperators(tokens, true);
 		int posDef = tokens.indexOf("=");
-		if (posDef < 2) {
+		if (posDef < 2 || posDef == tokens.count()-1) {
 			return false;
 		}
 		// FIXME why would we allow to define multi-word type names?
 		String typename = tokens.concatenate("", 1, posDef).trim();
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		tokens.removeAll(" ");
-		return Function.testIdentifier(typename, null) && 
-				((tokens.get(0).equalsIgnoreCase("record") || tokens.get(0).equalsIgnoreCase("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
-				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tokens.get(0)) || typeMap == null && Function.testIdentifier(tokens.get(0), null)));
+		String tag = tokens.get(0).toLowerCase();
+		return Function.testIdentifier(typename, null) &&
+				// START KGU#542 2019-11-17: Enh. #739 - also consider enumeration types
+				//((tag.equals("record") || tag.equals("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				((tag.equals("record") || tag.equals("struct") || tag.equals("enum")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				// END KGU#542 2019-11-17
+				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, null)));
 		
 	}
 	/** @return true if all non-empty lines comply to {@link #isTypeDefinition(String)} */
@@ -932,6 +954,25 @@ public class Instruction extends Element {
 		return isTypeDefinition(null, false);
 	}
 	// END KGU#388 2017-07-03
+	// START KGU#542 2019-11-17: Enh. #739 - identify enum type line
+	/**
+	 * Returns true if the given {@code line} of code is a type definition of the following form:<br>
+	 * type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} }.<br/>
+	 * @param line - String comprising one line of code
+	 * @return true iff line is of one of the forms a) through e)
+	 * @see #isTypeDefinition(String, HashMap)
+	 * @see #isTypeDefinition()
+	 */
+	public static boolean isEnumTypeDefinition(String line)
+	{
+		boolean isEnum = isTypeDefinition(line);
+		if (isEnum) {
+			int posEq = line.indexOf('=');
+			isEnum = posEq > 0 && TypeMapEntry.MATCHER_ENUM.reset(line.substring(posEq+1).trim()).matches();
+		}
+		return isEnum;
+	}
+	// END KGU#542 2019-11-17
 	
 	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
 	/** @return true iff this Instruction contains nothing but type definitions and
@@ -943,11 +984,17 @@ public class Instruction extends Element {
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; isHideable && i < lines.count(); i++) {
 			String line = lines.get(i);
-			isHideable = line.isEmpty() || isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+			isHideable = line.isEmpty() || isMereDeclaration(line);
 		}
 		return isHideable;
 	}
 	// END KGU#477 2017-12-06
+	// START KGU#772 2019-11-24: We want to be able to suppress expression of code for mere declarations
+	public static boolean isMereDeclaration(String line)
+	{
+		return isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+	}
+	// END KGU#772 2019-11-24
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -1074,7 +1121,7 @@ public class Instruction extends Element {
 			for (int i = 0; i < varTokens.count(); i++)
 			{
 				if (Function.testIdentifier(varTokens.get(i), null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
-					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true, false);
+					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true);
 				}
 			}
 		}
@@ -1091,8 +1138,8 @@ public class Instruction extends Element {
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
 			isAssigned = !rightSide.isEmpty();
 			// Isolate the variable name from the left-hand side of the assignment
-			varName = getAssignedVarname(leftSide);
-			// Without const, var, or dim a declaration must be a C-style declaration
+			varName = getAssignedVarname(leftSide, false);
+			// Without const, var, or dim, a declaration must be a C-style declaration
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
 			// If the target is a record component we won't add a type specification.
 			if (varName != null && !varName.contains(".")) {
@@ -1119,20 +1166,46 @@ public class Instruction extends Element {
 					}
 				}
 			}
-			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl, isCStyleDecl);
+			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl);
 		}
 		// START KU#388 2017-08-07: Enh. #423
 		else if (isTypeDefinition(line, typeMap)) {
-			// FIXME: In future, array type definitions are also to be handled...
+			// START KGU#542 2019-11-17: Enh. #739
+			boolean isEnum = tokens.get(3).equalsIgnoreCase("enum");
+			// END KGU#542 2019-11-17
+			// FIXME: In future, array type definitions will also have to be handled...
 			String typename = tokens.get(1);
 			// Because of possible C-style declarations we must not glue the tokens together with "".
 			typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
 			int posBrace = typeSpec.indexOf("{");
 			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
-				StringList compNames = new StringList();
-				StringList compTypes = new StringList();
-				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes, null);
-				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+				// START KGU#542 2019-11-17: Enh. #739 Handle enumeration tapes
+				if (isEnum) {
+					// first make sure the syntax is okay
+					if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches() ) {
+						Root root = getRoot(this);
+						if (root != null) {
+							TypeMapEntry enumType = new TypeMapEntry(typeSpec, typename, typeMap, this, lineNo, false, false);
+							typeMap.put(":" + typename, enumType);
+							HashMap<String, String> enumItems = root.extractEnumerationConstants(line);
+							if (enumItems != null) {
+								for (String constName: enumItems.keySet()) {
+									typeMap.put(constName, enumType);
+								}
+							}
+						}
+						
+					}
+				}
+				else {
+				// END KGU#542 2019-11-17
+					StringList compNames = new StringList();
+					StringList compTypes = new StringList();
+					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+					addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+				// START KGU#542 2019-11-17: Enh. #739
+				}
+				// END KGU#542 2019-1-17
 			}
 			else {
 				// According to isTypeefinition() this must now be an alias for an existing type
@@ -1143,17 +1216,23 @@ public class Instruction extends Element {
 	}
 	
 	/**
-	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
-	 * the entire line of an assignment or just its left part.
+	 * Extracts the target variable name (or the the entire variable expression, see argument
+	 * {@code entireTarget} out of the given blank-free token sequence which may comprise
+	 * the entire line of an assignment or just its left part.<br/>
 	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
+	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
+	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
+	 * the result would be just "foo".
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
+	 * @param entireTarget if this is true then index expressions etc. will remain in the result
+	 * (so it is no longer the pure name)
 	 * @return the extracted variable name or null
 	 */
 	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
-	public static String getAssignedVarname(StringList tokens) {
+	public static String getAssignedVarname(StringList tokens, boolean entireTarget) {
 		String varName = null;
 		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
-		tokens = coagulateSubexpressions(tokens);		
+		tokens = coagulateSubexpressions(tokens.copy());		
 		// END KGU689 2019-03-21
 		int posAsgn = tokens.indexOf("<-");
 		if (posAsgn > 0) {
@@ -1173,21 +1252,58 @@ public class Instruction extends Element {
 			tokens = tokens.subSequence(0, posColon);
 		}
 		// END KGU#388 2017-09-15
-		// The last sequence of dot.separated ids should be the variable name
+		// The last sequence of dot-separated ids should be the variable name
 		if (tokens.count() > 0) {
 			int i = tokens.count()-1;
 			varName = tokens.get(i);
-			// START KGU#388 2017-09-14: Enh. #423
-			while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
-				varName = tokens.get(i-2) + "." + varName;
-				i -= 2;
+			// START KGU#780 2019-12-01: Bugfix - endstanding index access was erroneously returned
+			// FIXME But it might be even more complicated, e.g. foo[i].bar[j]!
+			while (varName.startsWith("[") && varName.endsWith("]") && i > 0) {
+				if (posColon >= 0) {
+					// Something is wrong here - there should not be be both a declaration and a bracket(?)
+					return null;
+				}
+				// It is a coagulated index access - skip it
+				varName = tokens.get(--i);
 			}
+			// END KGU#780 2019-12-01
+			// START KGU#388 2017-09-14: Enh. #423
+			// START KGU#780 2019-12-01: In cases like foo[i].bar[j] we want to return rather "foo" than "bar"
+			//while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
+			//	varName = tokens.get(i-2) + "." + varName;
+			//	i -= 2;
+			//}
+			while (i > 1 && varName != null && tokens.get(i-1).equals(".")) {
+				String preDotToken = tokens.get(i-2);
+				if (Function.testIdentifier(preDotToken, null)) {
+					varName = tokens.get(i-2) + "." + varName;
+					i -= 2;
+				}
+				else {
+					// We may expect either an index expression or an identifier (variable or component name)
+					while (i > 1 && preDotToken.startsWith("[") && preDotToken.endsWith("]")) {
+						// Skip index expressions (invalidate the name, it was a component of an array element)
+						varName = null;
+						preDotToken = tokens.get(--i - 2);
+					}
+					if (varName == null && Function.testIdentifier(preDotToken, null)) {
+						varName = preDotToken;	// Start again with the identifier prior to the indices
+						i -= 2;	// this ought to be the token index of varName
+					}
+				}
+			}
+			// END KGU#780 2019-12-01
 			// END KGU#388 2017-09-14
+			// START KGU#784 2019-12-02
+			if (entireTarget) {
+				varName = tokens.concatenate(null, i);
+			}
+			// END KGU#784 2019-12-02
 		}
 		return varName;
 	}
 	// END KGU#261 2017-01-26
-
+	
 	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
 	/**
 	 * Tries to extract type information from the right side of an assignment.
@@ -1217,6 +1333,17 @@ public class Instruction extends Element {
 			typeSpec += "[" + items.count() + "]";
 		}
 		else {
+			// START KGU#542 2019-11-17: Enh. #739 Check for enumerator constant
+			if (rightSide.count() == 1 && Function.testIdentifier(rightSide.get(0), null)) {
+				Root root = getRoot(this);
+				if (root != null) {
+					String constVal = root.constants.get(rightSide.get(0));
+					if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+						return constVal.substring(1, constVal.indexOf('€'));	// This is the type name
+					}
+				}
+			}
+			// END KGU#542 2019-11-17
 			// Try to derive the type from the expression
 			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
 		}
@@ -1235,8 +1362,8 @@ public class Instruction extends Element {
 	{
 		String typeSpec = "";
 		
-			// Try to derive the type from the expression
-			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
+		// Try to derive the type from the expression
+		typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
 		return typeSpec;
 	}
 	// END KGU#388 2017-08-07

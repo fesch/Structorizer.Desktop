@@ -56,6 +56,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-02-28      Bugfix #690 - workaround for struct types in function headers
  *      Kay Gürtzig     2019-03-01      Bugfix #692 - failed constant recognition
  *      Kay Gürtzig     2019-03-29      KGU#702: Index range exception in method getPointers() fixed.
+ *      Kay Gürtzig     2019-11-18      Enh. #739: Direct enum type import
  *
  ******************************************************************************************************
  *
@@ -1978,23 +1979,41 @@ public class C99Parser extends CPreParser
 						if (names.count() > 0 && _parentNode != null) {
 							names = names.reverse();
 							values = values.reverse();
-							int val = 0;
-							String baseVal = "";
+							//int val = 0;
+							//String baseVal = "";
 							for (int i = 0; i < names.count(); i++) {
-								if (!values.get(i).isEmpty()) {
-									baseVal = values.get(i);
-									try {
-										val = Integer.parseInt(baseVal);
-										baseVal = "";	// If the value was an int literal, we don't need an expr. string
-									}
-									catch (NumberFormatException ex) {
-										val = 0;
-									}
+								// START KGU#542 2019-11-18: Enh. #739 - true enum type import
+								//if (!values.get(i).isEmpty()) {
+								//	baseVal = values.get(i);
+								//	try {
+								//		val = Integer.parseInt(baseVal);
+								//		baseVal = "";	// If the value was an int literal, we don't need an expr. string
+								//	}
+								//	catch (NumberFormatException ex) {
+								//		val = 0;
+								//	}
+								//}
+								//names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
+								//val++;
+								String valStr = values.get(i).trim();
+								if (!valStr.isEmpty()) {
+									names.set(i, names.get(i) + " = " + valStr);
 								}
-								names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
-								val++;
+								// END KGU#542 2019-11-18
 							}
-							Instruction enumDef = new Instruction(names);
+							// START KGU#542 2019-11-18: Enh. #739
+							//Instruction enumDef = new Instruction(names);
+							String sepa = ", ";
+							// FIXME: Tune the threshold if necessary
+							if (names.count() > 10) {
+								sepa = ",\\\n";
+							}
+							if (typeName == null) {
+								typeName = "Enum" + Math.abs(System.nanoTime());
+							}
+							Instruction enumDef = new Instruction(
+									StringList.explode("type " + typeName + " = enum{" + names.concatenate(sepa) + "}", "\n"));
+							// END KGU#542 2019-11-18
 							this.equipWithSourceComment(enumDef, prefix.asReduction());
 							if (typeName != null) {
 								enumDef.getComment().add("Enumeration type " + typeName);

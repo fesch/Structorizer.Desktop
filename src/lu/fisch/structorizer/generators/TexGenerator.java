@@ -301,7 +301,7 @@ public class TexGenerator extends Generator {
 					// get the variable name
 					StringList tokens = Element.splitLexically(line + "<-", true);
 					tokens.removeAll(" ");
-					String varName = Instruction.getAssignedVarname(tokens);
+					String varName = Instruction.getAssignedVarname(tokens, false);
 					code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
 							+ transform(line) + "}");
 					code.add(_indent+this.getIndent() + "\\end{declaration}");    				

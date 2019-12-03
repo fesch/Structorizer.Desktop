@@ -65,6 +65,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Bugfix #614: Redundant result assignments in function diagrams removed
  *                                      Workaround #615: Replace comment delimiters (* *) with { } in preparation phase
  *      Kay Gürtzig     2019-03-23      Enh. #56: Import of Try and Raise instructions implemented.
+ *      Kay Gürtzig     2019-11-19      Enh. #739: Genuine enumeration type import (revision of #558)
  *
  ******************************************************************************************************
  *
@@ -1272,7 +1273,9 @@ public class D7Parser extends CodeParser
 					_parentNode.addElement(def);
 					if (isEnum) {
 						def.setColor(colorConst);
-						def.getComment().add("Enumerator type " + typeName);
+						// START KGU#542 2019-11-19: Enh. #739 - No longer needed, now genuine enum type import
+						//def.getComment().add("Enumerator type " + typeName);
+						// END KGU#542 2019-11-19
 					}
 				}
 			}
@@ -1782,6 +1785,14 @@ public class D7Parser extends CodeParser
 	}
 
 	// START KGU#542 2018-07-11: Enh. #558 - provisional enum type support
+	/**
+	 * Returns the complete instruction element content for an enumeration type
+	 * definition represented by the {@link Reduction} {@code redEnumL}
+	 * @param redEnumL - the enumeration reduction to be analysed
+	 * @param typeName - actually more than just the type name but "type &lt;typename&rt; = ".
+	 * @return the text content for the {@link Instruction} element to be created
+	 * @throws ParserCancelled in case of an interactive user abort
+	 */
 	private String importEnumType(Reduction redEnumL, String typeName) throws ParserCancelled {
 		StringList names = new StringList();
 		StringList values = new StringList();
@@ -1806,24 +1817,38 @@ public class D7Parser extends CodeParser
 		if (names.count() > 0) {
 			names = names.reverse();
 			values = values.reverse();
-			int val = 0;
-			String baseVal = "";
+			//int val = 0;
+			//String baseVal = "";
 			for (int i = 0; i < names.count(); i++) {
-				if (!values.get(i).isEmpty()) {
-					baseVal = values.get(i);
-					try {
-						val = Integer.parseInt(baseVal);
-						baseVal = "";	// If the value was an int literal, we don't need an expr. string
-					}
-					catch (NumberFormatException ex) {
-						val = 0;
-					}
+				// START KGU#542 2019-11-19: Enh. #739 - true enum type import
+				//if (!values.get(i).isEmpty()) {
+				//	baseVal = values.get(i);
+				//	try {
+				//		val = Integer.parseInt(baseVal);
+				//		baseVal = "";	// If the value was an int literal, we don't need an expr. string
+				//	}
+				//	catch (NumberFormatException ex) {
+				//		val = 0;
+				//	}
+				//}
+				//names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
+				//val++;
+				String valStr = values.get(i).trim();
+				if (!valStr.isEmpty()) {
+					names.set(i, names.get(i) + " = " + valStr);
 				}
-				names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
-				val++;
+				// END KGU#542 2019-11-19
 			}
 		}
-		return names.concatenate("\n");
+		// START KGU#542 2019-11-18: Enh. #739
+		//return names.concatenate("\n");
+		String sepa = ", ";
+		// FIXME: Tune the threshold if necessary
+		if (names.count() > 10) {
+			sepa = ",\\\n";
+		}
+		return typeName + "enum{" + names.concatenate(sepa) + "}";
+		// END KGU#542 2019-11-19
 	}
 	// END KGU#542 2018-07-11
 

@@ -84,6 +84,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-08      Bugfix #772: NullPointerExceptions in code preview, due to late typeMap init
  *      Kay Gürtzig         2019-11-11      Bugfix #773: Mere declarations at top level exported, incomplete
  *                                          declarations (defective type) no longer as comment but with FIXME! marker
+ *      Kay Gürtzig         2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
+ *                                          as local declarations in subroutines where the variables get assigned
+ *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
+ *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
  *
  ******************************************************************************************************
  *
@@ -331,7 +335,7 @@ public class PasGenerator extends Generator
 	{
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
 			_typeDescr = transformTypeFromEntry(typeInfo, null);
 		}
 		return _typeDescr;
@@ -755,7 +759,7 @@ public class PasGenerator extends Generator
 	//	HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
 	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled, TypeMapEntry _typeEntry)
 	{
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry);
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry, false);
 	// END KGU#559 2018-07-20
 		if (_forConstant) {
 			String typeName = components.get("§TYPENAME§");
@@ -978,10 +982,13 @@ public class PasGenerator extends Generator
 		if (items != null)
 		{
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try four types: boolean,
-			// integer, real and string, where we can only test literals.
+			// do if items are heterogenous? We will just try five types: boolean,
+			// common enum type, integer, real and string, where we can only test literals.
 			// If none of them match then we add a TODO comment.
 			int nItems = items.count();
+			// START KGU#542 2019-11-21: Enh. #739
+			String allEnum = "";
+			// END KGU#542 2019-11-21
 			boolean allBoolean = true;
 			boolean allInt = true;
 			boolean allReal = true;
@@ -989,6 +996,9 @@ public class PasGenerator extends Generator
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
+				// START KGU#542 2019-11-21: Enh. #739
+				TypeMapEntry tme = this.typeMap.get(item);
+				// END KGU#542 2019-11-21
 				if (allBoolean)
 				{
 					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
@@ -1003,7 +1013,10 @@ public class PasGenerator extends Generator
 					}
 					catch (NumberFormatException ex)
 					{
-						allInt = false;
+						// START KGU#542 2019-11-21: Enh. #739 enum type support - it might be an enumerator constant
+						//allInt = false;
+						allInt = tme !=  null && tme.isEnum();
+						// END KGU#542 2019-11-21
 					}
 				}
 				if (allReal)
@@ -1023,6 +1036,23 @@ public class PasGenerator extends Generator
 							item.startsWith("\'") && item.endsWith("\'") &&
 							!item.substring(1, item.length()-1).contains("\'");
 				}
+				// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
+				if (allEnum != null)
+				{
+					if (tme != null && tme.isEnum()) {
+						if (allEnum.isEmpty()) {
+							allEnum = tme.typeName;
+						}
+						else if (!allEnum.equals(tme.typeName)) {
+							allEnum = null;	// Game over for enumerator (different enumerators)
+						}
+					}
+					else {
+						// Obviously no enumerator constant
+						allEnum = null;
+					}
+				}
+				// END KGU#542 2019-11-21
 			}
 			
 			// Create some generic and unique variable names
@@ -1032,6 +1062,9 @@ public class PasGenerator extends Generator
 
 			String itemType = "";
 			if (allBoolean) itemType = "boolean";
+			// START KGU#542 2019-11-21: Enh. #739
+			else if (allEnum != null && !allEnum.isEmpty()) itemType = allEnum;
+			// END KGU#542 2019-11-21
 			else if (allInt) itemType = "integer";
 			else if (allReal) itemType = "real";
 			else if (allString) itemType = "string";
@@ -1686,18 +1719,29 @@ public class PasGenerator extends Generator
 		//if (_varNames != null) {
 		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 		// END KGU#504 2018-03-13
-			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
-		}
-		// END KGU#375 2017-04-12
-		// START KGU#759 2019-11-11: Bugfix #733 - Specific care for merely declared (uninitialized) variables
-		if (topLevel) {
-			StringList declNames = new StringList();	// Names of declared variables without initialisations
-			for (String id: this.typeMap.keySet()) {
-				if (!id.startsWith(":") && !_varNames.contains(id)) {
-					declNames.add(id);
+			// START KGU#762 2019-11-13: Bugfix #776 - we must not repeat mere decalartions from Includables here
+			//introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+			StringList ownVarNames = _varNames.copy();
+			if (!topLevel && _root.includeList != null) {
+				for (Root incl: includedRoots) {
+					// Because of recursiveness of declaration retrieval, we may restrict to the
+					// directly included diagrams, this reduces the risk of eliminating variable
+					// names that are not included but locally defined.
+					if (_root.includeList.contains(incl.getMethodName())) {
+						StringList declNames = incl.getMereDeclarationNames();
+						for (int i = 0; i < declNames.count(); i++) {
+							ownVarNames.removeAll(declNames.get(i));
+						}
+					}
 				}
 			}
-			generateVarDecls(_root, _indent, declNames, new StringList(), introPlaced);
+			introPlaced = generateVarDecls(_root, _indent, ownVarNames, _complexConsts, introPlaced);
+			// END KGU#762 2019-11-13
+		}
+		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
 		}
 		// END KGU#759 2019-11-11
 		return includes;
@@ -1725,7 +1769,15 @@ public class PasGenerator extends Generator
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
 				//code.add(indentPlus1 + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");
-				String expr = transform(constEntry.getValue());
+				// START KGU#452 2019-11-17: Enh. #739 Skip enumerator values - they are to be handled in a type definition
+				//String expr = transform(constEntry.getValue());
+				//String expr = transform(constEntry.getValue());
+				String expr = constEntry.getValue();
+				if (expr != null && expr.startsWith(":")) {
+					continue;
+				}
+				expr = transform(expr);
+				// END KGU#452 2019-11-17
 				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
@@ -1789,7 +1841,10 @@ public class PasGenerator extends Generator
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		String indentPlus3 = indentPlus2 + this.getIndent();
-		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		// START KGU#774 2019-11-29: Bugfix #787 - On top level, any Includable declared any types known to main
+		//for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+		// END KGU#774 2019-11-29
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
 				if (wasDefHandled(_root, key, true)) {
@@ -1810,6 +1865,23 @@ public class PasGenerator extends Generator
 					}
 					code.add(indentPlus2 + "END;");
 				}
+				// START KGU#542 2019-11-17: Enh. #739
+				else if (type.isEnum()) {
+					StringList items = type.getEnumerationInfo();
+					String itemList = items.concatenate(", ");
+					if (itemList.length() > 70) {
+						code.add(indentPlus1 + key.substring(1) + " = (");
+						for (int i = 0; i < items.count(); i++) {
+							// FIXME: We might have to transform the value...
+							code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
+						}
+						code.add(indentPlus2 + ");");
+					}
+					else {
+						code.add(indentPlus1 + key.substring(1) + " = (" + itemList + ");");
+					}
+				}
+				// END KGU#542 2019-11-17
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}
@@ -1893,10 +1965,10 @@ public class PasGenerator extends Generator
 				type = prefix + type;
 				String comment = "";
 				if (type.contains("???")) {
-					// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
-					appendComment(varName + ": " + type + ";", indentPlus1);
+					// START KGU#759 2019-12-02: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
+					//appendComment(varName + ": " + type + ";", indentPlus1);
 					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
-					// END KGU#759 2019-11-11
+					// END KGU#759 2019-12-02
 				}
 				//else {
 				if (isComplexConst) {
@@ -1906,7 +1978,7 @@ public class PasGenerator extends Generator
 				//}
 			}
 			else {
-				// START KGU#759 2019-11-11: Issue #733 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				// START KGU#759 2019-11-11: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
 				//appendComment(varName, indentPlus1);
 				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
 				// END KGU#759 2019-11-11

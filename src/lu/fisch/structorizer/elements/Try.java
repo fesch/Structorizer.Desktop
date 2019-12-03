@@ -506,7 +506,7 @@ public class Try extends Element {
 		//}
 		String excName = this.getExceptionVarName();
 		if (excName != null) {
-			addToTypeMap(typeMap, excName, "Exception", 0, true, true, false);
+			addToTypeMap(typeMap, excName, "Exception", 0, true, true);
 		}
 	}
 	
@@ -532,7 +532,8 @@ public class Try extends Element {
 	public String getExceptionVarName()
 	{
 		return Instruction.getAssignedVarname(
-				Element.splitLexically(this.getUnbrokenText().getLongString(), true)
+				Element.splitLexically(this.getUnbrokenText().getLongString(), true),
+				false
 				);
 	}
 
