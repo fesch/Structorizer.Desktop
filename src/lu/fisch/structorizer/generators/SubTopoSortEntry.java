@@ -34,6 +34,7 @@ package lu.fisch.structorizer.generators;
 *      ------          ----            -----------
 *      Kay Gürtzig     2016.07.19      First issue (for enh. #160)
 *      Kay Gürtzig     2016.08.10      Modification for bugfix #228 (KGU#237)
+*      Kay Gürtzig     2019-12-03      Issue #766: Sorted caller set to achieve deterministic routine order
 *
 ******************************************************************************************************
 *
@@ -41,8 +42,7 @@ package lu.fisch.structorizer.generators;
 *      
 ******************************************************************************************************///
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.TreeSet;
 
 import lu.fisch.structorizer.elements.Root;
 
@@ -52,7 +52,10 @@ import lu.fisch.structorizer.elements.Root;
  * depends on).
  */
 final class SubTopoSortEntry {
-	public Set<Root> callers = new HashSet<Root>();
+	// START KGU#754 2019-12-03: Issue #766 - we want deterministic routine orders
+	//public Set<Root> callers = new HashSet<Root>();
+	public TreeSet<Root> callers = new TreeSet<Root>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-12-03
 	public int nReferingTo = 0;	// number of different(!) routines being called
 	
 	SubTopoSortEntry(Root _caller)

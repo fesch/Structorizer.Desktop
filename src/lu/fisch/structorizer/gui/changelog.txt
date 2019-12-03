@@ -12,7 +12,7 @@ Known issues:
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
 
-Current development version: 3.30-03 (2019-12-03)
+Current development version: 3.30-03 (2019-12-02)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -31,6 +31,7 @@ Current development version: 3.30-03 (2019-12-03)
 - 03: Enh. #388: Support for constants on Perl export (had been missing) <2>
 - 03: Enh. #423: Support for record types on Perl export (had been missing) <2>
 - 03: Enh. #739: Enum type definitions introduced (incl. C99, Pascal import) <2>
+- 03: Issue #766: Deterministic export order had not worked for deep hierarchies <2>
 - 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
 - 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
 - 03: Bugfix #776: Global variables are locally eclipsed on Pascal/Oberon export <2>
