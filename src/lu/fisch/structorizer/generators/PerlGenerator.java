@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-19  Issues #423, #739: Support for struct and enum types (begun, continued 2019-12-01)
  *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well as record initializer handling revised
  *      Kay Gürtzig         2019-11-28  Issue #388: "use constant" approach withdrawn (except for enums), wrong lval references avoided
+ *      Kay Gürtzig         2019-12-03  Bugfix #793: var initializations like "var v: type <- val" were incorrectly translated
  *
  ******************************************************************************************************
  *
@@ -557,6 +558,7 @@ public class PerlGenerator extends Generator {
 			{
 				String line = lines.get(i);
 				boolean isAsgn = Instruction.isAssignment(line);
+				boolean isDecl = Instruction.isDeclaration(line);
 				// START KGU#653 2019-02-15: Enh. #680 - input with several items...
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {
@@ -581,7 +583,7 @@ public class PerlGenerator extends Generator {
 					this.generateTypeDef(root, typeName, type, _indent, isDisabled);
 					continue;
 				}
-				else if (Instruction.isDeclaration(line) && !isAsgn) {
+				else if (isDecl && !isAsgn) {
 					// Declarations will have been handled in the preamble
 					if (!_inst.getComment().trim().isEmpty()) {
 						appendComment(line, _indent);
@@ -601,6 +603,12 @@ public class PerlGenerator extends Generator {
 					if (Function.testIdentifier(var, null) && expr.get(0).equals("{") && expr.get(expr.count()-1).equals("}")) {
 						text = "@" + var + " = " + transform(expr.concatenate(null));
 					}
+					// START KGU#787 2019-12-03: Bugfix #793 - variable declaration parts remained
+					else if (isDecl) {
+						// Wipe off all declaratory parts
+						line = var + " <- " + expr.concatenate(null);
+					}
+					// END KGU#787 2019-12-03
 				}
 				if (text == null) {
 					text = transform(line);
