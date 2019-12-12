@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
@@ -102,38 +103,6 @@ public class COBOLGenerator extends Generator {
 		return TryCatchSupportLevel.TC_NO_TRY;
 	}
 	// END KGU#686 2019-03-18
-
-	/**
-	 * get start for COBOL source or comment line with correct length depending
-	 * on reference-format and optional line numbering for fixed-form reference
-	 * format
-	 * 
-	 * @return the complete start for the line, identical to _indent in
-	 *         free-form reference format
-	 * 
-	 */
-	protected String getLineStart(Boolean isCommentLine) {
-
-		String prefix;
-		// switching the reference format between free-form and fixed-form
-		if (!this.optionFixedSourceFormat()) {
-			prefix = this.getIndent();
-		} else {
-			if (this.optionCodeLineNumbering()) {
-				prefix = String.format("%5d", this.lineNumber) + " ";
-				this.lineNumber += this.lineIncrement;
-			} else {
-				prefix = "      ";
-			}
-			if (!isCommentLine) {
-				prefix += " ";
-			}
-		}
-		if (isCommentLine) {
-			prefix += this.commentSymbolLeft() + " ";
-		}
-		return prefix;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -248,6 +217,38 @@ public class COBOLGenerator extends Generator {
 		return OverloadingLevel.OL_NO_OVERLOADING;
 	}
 	// END KGU#371 2019-03-07
+
+	/**
+	 * get start for COBOL source or comment line with correct length depending
+	 * on reference-format and optional line numbering for fixed-form reference
+	 * format
+	 * 
+	 * @return the complete start for the line, identical to _indent in
+	 *         free-form reference format
+	 * 
+	 */
+	protected String getLineStart(Boolean isCommentLine) {
+
+		String prefix;
+		// switching the reference format between free-form and fixed-form
+		if (!this.optionFixedSourceFormat()) {
+			prefix = this.getIndent();
+		} else {
+			if (this.optionCodeLineNumbering()) {
+				prefix = String.format("%5d", this.lineNumber) + " ";
+				this.lineNumber += this.lineIncrement;
+			} else {
+				prefix = "      ";
+			}
+			if (!isCommentLine) {
+				prefix += " ";
+			}
+		}
+		if (isCommentLine) {
+			prefix += this.commentSymbolLeft() + " ";
+		}
+		return prefix;
+	}
 
 	// include / import / uses config
 	/*
@@ -401,6 +402,69 @@ public class COBOLGenerator extends Generator {
 	}
 	// END KGU#395 2017-05-11	
 	
+	/************ Code Generation **************/
+	
+	// START KGU#388/KGU#542 2019-12-04: Enh. #423, #739
+	@Override
+	protected String transformType(String _type, String _default)
+	{
+		if (_type == null) {
+			_type = _default;
+		}
+		else if (_type.equals("const")) {
+			_type = "78 ";
+		}
+		return _type;
+	}
+	
+	/**
+	 * Adds the type definitions for all types in {@code _root.getTypeInfo()}.
+	 * @param _root - originating Root
+	 * @param _indent - current indentation level (as String)
+	 */
+	protected void generateTypeDefs(Root _root, String _indent) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+			String typeKey = typeEntry.getKey();
+			if (typeKey.startsWith(":")) {
+				generateTypeDef(_root, typeKey.substring(1), typeEntry.getValue(), _indent, false);
+			}
+		}
+	}
+
+	/**
+	 * Appends a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * if it hadn't been defined globally or in the preamble before.
+	 * @param _root - the originating Root
+	 * @param _type - the type map entry the definition for which is requested here
+	 * @param _indent - the current indentation
+	 * @param _asComment - if the type definition is only to be added as comment (disabled)
+	 */
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		String indentPlus1 = _indent + this.getIndent();
+		appendDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			addCode("struct " + _type.typeName + " {", _indent, _asComment);
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+						indentPlus1, _asComment);
+			}
+			addCode("};", _indent, _asComment);
+		}
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			appendComment("enum " + _type.typeName, _indent);
+			for (int i = 0; i < items.count(); i++) {
+				// FIXME: We might have to transform the value...
+				addCode(items.get(i) + (i < items.count() -1 ? "," : ""), indentPlus1, _asComment);
+			}
+		}
+	}
+	// END KGU#388/KGU#542 2019-12-04
+
 	// START KGU#375 2017-04-12: Enh. #388 common preparation of constants and variables
 	protected void appendDeclaration(Root _root, String _name, String _indent)
 	{
@@ -481,8 +545,6 @@ public class COBOLGenerator extends Generator {
 		return _elementType;
 	}
 
-	/************ Code Generation **************/
-	
 	protected void generateCode(Try _try, String _indent)
 	{
 		/* FIXME this should somehow be converted to a "declarative procedure" declaration,
