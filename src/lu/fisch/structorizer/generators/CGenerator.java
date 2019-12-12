@@ -805,9 +805,10 @@ public class CGenerator extends Generator {
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
 	 * @param _indent - the current indentation
-	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+	 * @param _asComment - if the type definition is only to be added as comment (disabled)
 	 */
 	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		// FIXME: Content just copied from CGenerator
 		String typeKey = ":" + _typeName;
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;

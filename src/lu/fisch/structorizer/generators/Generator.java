@@ -97,6 +97,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
  *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
  *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
+ *      Kay Gürtzig     2019-12-11      Bugfix #794: Code preview crash with unconfigured license preference
  *
  ******************************************************************************************************
  *
@@ -2818,7 +2819,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (this.optionExportLicenseInfo()) {
 			this.appendComment("", _indent);
 			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
-			if (_root.licenseName != null) {
+			// START KGU#763 2019-12-11: Bugfix #794 - for an empty license name, we don't need to check
+			//if (_root.licenseName != null) {
+			if (_root.licenseName != null && !_root.licenseName.trim().isEmpty()) {
+			// END KGU#763 2019-12-11
 				this.appendComment("License: " + _root.licenseName, _indent);
 				// START KGU#763 2019-11-13: Bugfix #778
 				if (_fullText && _root.licenseText == null) {
@@ -2827,7 +2831,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						this.appendComment(StringList.explode(licText, "\n"), _indent);
 					}
 				}
-				// END KGU#7763 2019-11-13
+				// END KGU#763 2019-11-13
 			}
 			if (_fullText && _root.licenseText != null) {
 				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
@@ -3823,7 +3827,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
 	/**
-	 * Retrieves the licanes text associated to license name {@code licName} from
+	 * Retrieves the license text associated to license name {@code licName} from
 	 * the license pool directory
 	 * @param licName - name of the license (file name will be drived from it)
 	 * @return the text content of the license file (if existent), may be null
@@ -3841,20 +3845,26 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}		
 		}
 		BufferedReader br = null;
-		try {
-			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
-			br = new BufferedReader(isr);
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				content += line + '\n';
-			};
-		} catch (UnsupportedEncodingException e) {
-			error = e.getMessage();
-		} catch (FileNotFoundException e) {
-			error = e.getMessage();
-		} catch (IOException e) {
-			error = e.getMessage();
+		// START KGU#763 2019-12-11: Bugfix #794 part 1
+		if (licFile != null) {
+		// END KGU#763 2019-12-11
+			try {
+				InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+				br = new BufferedReader(isr);
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					content += line + '\n';
+				};
+			} catch (UnsupportedEncodingException e) {
+				error = e.getMessage();
+			} catch (FileNotFoundException e) {
+				error = e.getMessage();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		// START KGU#763 2019-12-11: Bugfix #794 part 2
 		}
+		// END KGU#763 2019-12-11
 		if (br != null) {
 			try {
 				br.close();

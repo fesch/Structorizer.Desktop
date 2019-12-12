@@ -12,7 +12,7 @@ Known issues:
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
 
-Current development version: 3.30-03 (2019-12-02)
+Current development version: 3.30-04 (2019-12-11)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -48,6 +48,8 @@ Current development version: 3.30-03 (2019-12-02)
 - 03: Bugfix #789: Wrong BASIC export of function calls (started with "CALL") <2>
 - 03: Bugfix #790: BASIC export failed with line continuation and initializers <2>
 - 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
+- 04: Bugfix #793: Wrong Perl export of initialized explicit var declarations <2>
+- 04: Bugfix #794: Code preview fails with error if license is not configured <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
