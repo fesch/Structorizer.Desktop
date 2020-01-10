@@ -1286,7 +1286,7 @@ Version 1.15 (never published)
 - Printing support with
   print-preview [T1IF1 2006/2007 - José-Maria Espinosa]
 
-Version 1.14 (200-11-16)
+Version 1.14 (2006-11-16)
 - Press <ESC> to cancel input
   dialog [T1IF1 2006/2007]
 - Switch visual style [LOEGU]
