@@ -3835,7 +3835,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected String loadLicenseText(String licName) {
 		String error = null;
 		String content = "";
-		File licDir = Ini.getIniDirectory();
+		// START KGU#789 2020-01-20: Bugfix #802: Must use standard ini directory
+		//File licDir = Ini.getIniDirectory();
+		File licDir = Ini.getIniDirectory(true);
+		// END KGU#789 2020-01-20
 		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
 		File[] licFiles = licDir.listFiles(new LicFilter());
 		File licFile = null; 

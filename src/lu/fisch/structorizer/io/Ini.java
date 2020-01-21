@@ -49,6 +49,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-08-07      Enh. #741: Mechanisms to redirect the ini path via command line
  *      Kay Gürtzig         2019-09-13      Enh. #741: setIniPath may now attempt to establish the folders along the path
  *      Kay Gürtzig         2019-09-20      Enh. #741: Ini path redirection is now logged
+ *      Kay Gürtzig         2020-01-20      Bugfix #802: Version of getIniDirectory with parameter to obtain the standard folder 
  *
  ******************************************************************************************************
  *
@@ -204,11 +205,39 @@ public class Ini {
 	// START KGU#363 2017-03-13: Enh. #372 We use the ini directory for the licenses
 	// as well
 	/**
+	 * Returns the path where the ini file is supposed to reside. In case of a specified
+	 * predominant oder redirected ini file, it will be directory of this file rather than
+	 * the standard ini folder (except in early initialization phase).
 	 * @return the path of the directory for the ini file as string
+	 * @see #getIniDirectory(boolean)
 	 */
-	public static File getIniDirectory() {
+	public static File getIniDirectory()
+	// START KGU#789 2020-01-20: Bugfix #802 (on occasion of enh. #801)
+	{
+		return getIniDirectory(false);
+	}
+	
+	/**
+	 * Returns the path where the ini file is supposed to reside. It depends on paramater
+	 * {@code alwaysStandard} whether in case of a specified predominant oder redirected
+	 * ini file still the user-specific standard folder is returned (true) or the directory
+	 * of the configured non-standard ini file (predominant / redirected).
+	 * the standard ini folder (except in early initialization phase). Method {@link #getIniDirectory()}
+	 * is equivalent to {@code getIniDirectory(false)}.
+	 * @param alwaysStandard 
+	 * @return the directory path of the effective ini file as string
+	 * @see #getIniDirectory()
+	 */
+	public static File getIniDirectory(boolean alwaysStandard)
+	// END KGU#789 2020-01-20
+	{
 		File iniDir = null;
-		if (ini == null || ini.filename == null || ini.filename.isEmpty() || !(new File(ini.filename)).exists()) {
+		// START KGU#789 2020-01-20: Bugfix #802
+		//if (ini == null || ini.filename == null || ini.filename.isEmpty() || !(new File(ini.filename)).exists())
+		if (alwaysStandard || 
+				ini == null || ini.filename == null || ini.filename.isEmpty() || !(new File(ini.filename)).exists())
+		// END KGU#789 2020-01-20
+		{
 			try {
 				String dirName = System.getProperty("user.home") + System.getProperty("file.separator")
 						+ ".structorizer";

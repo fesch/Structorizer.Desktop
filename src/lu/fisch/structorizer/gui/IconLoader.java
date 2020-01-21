@@ -75,6 +75,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-03      Enh. #657: New icons 116_groupAttach, 117_groupExpand added
  *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets
  *      Kay Gürtzig     2019-01-12      Enh. #622/3: 119_rearrange added
+ *      Kay Gürtzig     2020-01-20      Enh. #801: 123_help_book added
  *
  ******************************************************************************************************
  *
@@ -223,7 +224,8 @@ public class IconLoader {
 			"119_rearrange.png",
 			"120_elem_try.png",	// introduced with enh. #56
 			"121_mini_try.png",	// introduced with enh. #56
-			"122_exit.png"		// Introduce with 3.29-13
+			"122_exit.png",		// Introduced with 3.29-13
+			"123_help_book.png"	// introduced with 3.30-05 for #801
 	};
 	
 	private static final int[] ICON_SIZES = {

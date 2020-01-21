@@ -263,7 +263,11 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.30-04";
+	// START KGU#791 2020-01-20: Enh. #801 - support for offline help
+	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
+	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
+	// END KGU#791 2020-01-20
+	public static final String E_VERSION = "3.30-05";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+

@@ -309,7 +309,10 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	 */
 	private File getLicenseDirectory()
 	{
-		return Ini.getIniDirectory();
+		// START KGU#789 2020-01-20: Bugfix #802 - adhere to the user-specific standard ini dir
+		//return Ini.getIniDirectory();
+		return Ini.getIniDirectory(true);
+		// END KGU#789 2020-01-20
 	}
 
 

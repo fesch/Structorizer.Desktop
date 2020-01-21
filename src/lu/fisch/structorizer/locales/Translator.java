@@ -51,6 +51,7 @@ package lu.fisch.structorizer.locales;
  *                                      used for loading, save button coloured together with locale button)
  *      Kay Gürtzig     2019-06-07/08   Enh. #726: Pull-down buttons opening new TranslatorRowEditor added
  *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
+ *      Kay Gürtzig     2020-01-20      Enh. #801: Key F1 now tries to open the PDF help file if offline
  *
  ******************************************************************************************************
  *
@@ -110,6 +111,7 @@ import lu.fisch.structorizer.gui.ElementNames;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.utils.Desktop;
 import lu.fisch.utils.StringList;
 
 /**
@@ -744,7 +746,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
         KeyListener myKeyListener = new KeyListener() {
 
-			@Override
+            @Override
             public void keyPressed(KeyEvent evt) {
                 int keyCode = evt.getKeyCode();
                 switch (keyCode) {
@@ -969,10 +971,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     // START KGU#709 2019-06-10: Issue #726 - Usability improvements
     /**
-     * Opens the User Guide page for Translator in the browser if possible
+     * Opens the User Guide page for Translator in the browser (or as PDF) if possible
      */
     private void helpTranslator() {
-    	String query = "?menu=115";
+        String query = "?menu=115";
         Logger logger = Logger.getLogger(Translator.class.getName());
         String help = Element.E_HELP_PAGE + query;
         boolean isLaunched = false;
@@ -983,8 +985,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }
         // The isLaunched mechanism above does not signal an unavailable help page.
         // With the following code we can find out whether the help page was available...
-        // TODO In this case we might offer to download the PDF for offline use,
-        // otherwise we could try to open a possibly previously downloaded PDF ...
+        // In this case we may try to open a possibly previously downloaded PDF ...
         URL url;
         HttpsURLConnection con = null;
         try {
@@ -1009,14 +1010,39 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }
         if (!isLaunched)
         {
-            String message = "Failed to show % in browser".replace("%", help);
+            String message = "Failed to show \"%\" in browser".replace("%", help);
+            // START KGU#789 2020-01-20: Enh. #801
+            boolean asPdf = showHelpPDF();
+            if (asPdf) {
+                message += "\n\nA recently downloaded User Guide is shown by your PDF reader instead."
+                        + "\nPlease go to section \"Translator\" in chapter \"Features\".";
+            }
+            // END KGU#789 2020-01-20
             JOptionPane.showMessageDialog(this,
                     message,
                     "URL Error",
-                    JOptionPane.ERROR_MESSAGE);
+                    asPdf ? JOptionPane.WARNING_MESSAGE : JOptionPane.ERROR_MESSAGE);
             // TODO We might look for a downloaded PDF version and offer to open this instead...
         }
     }
+    
+    // START KGU#789 2020-01-20: Enh. #801
+    /**
+     * Tries to present a downloaded PDF version of the user guide from the ini directory.
+     * @return true if a user guide file is present and  could be shown.
+     */
+    private boolean showHelpPDF()
+    {
+        String helpFileName = Element.E_HELP_FILE;;
+        File helpDir = Ini.getIniDirectory(true);
+        File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
+        if (helpFile.canRead()) {
+            return Desktop.open(helpFile);
+        }
+        return false;
+    }
+    // END KGU#791 2020-01-20
+
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {

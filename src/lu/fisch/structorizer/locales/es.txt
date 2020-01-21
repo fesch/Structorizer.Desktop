@@ -127,6 +127,7 @@
  *      Kay Gürtzig     2019-03-17  Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig     2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig     2019-09-12  Standard parser keywords for input / output modified (#327)
+ *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -346,6 +347,8 @@ Menu.menuHelp.mnemonic=y
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Manual (inglés)
 Menu.menuHelpOnline.tooltip=Abrir el manual (inglés) en el browser.
+Menu.menuHelpDownload.text=Descargar el manual como PDF
+Menu.menuHelpDownload.tooltip=Descargar la versión PDF más actual del manual como suplente para el caso desconectado.
 Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
 
@@ -381,7 +384,10 @@ Menu.msgSaveChanges.text=¿Guardar cambios del diagrama en archivo?
 Menu.msgErrorImageSave.text=¡Error grabando imágen(es)!
 Menu.msgErrorUsingGenerator.text=Error exportando código %
 Menu.msgErrorNoFile.text=¡Archivo no encontrado!
-Menu.msgBrowseFailed.text=Mostrar % en el browser no logró.
+Menu.msgBrowseFailed.text=Mostrar "%" en el browser no logró.
+Menu.msgShowingOfflineGuide.text=La versión PDF del manual más reciéntemente descargada es presentada en su lugar (PDF reader).
+Menu.msgDownloadFailed.text=No fue posible descargar el manual:\n%
+Menu.msgHostNotAvailable.text=El sitio web "%" no es alcanzable.
 Menu.hdrRefactoringTable.0.text=Referencia
 Menu.hdrRefactoringTable.1.text=Anterior
 Menu.hdrRefactoringTable.2.text=Nueva
@@ -1236,6 +1242,7 @@ Arranger.msgReadyToExport.text=¿Ahora exportar la imagen de esta colocación pa
 Arranger.msgCantDoWithMultipleRoots.text=No es posible %1 más de un diagrama a la vez. Has seleccionado %2 diagramas:\n- %3
 Arranger.msgDiagramsSelected.text=diagramas: %1, seleccionados: %2
 Arranger.msgBrowseFailed.text=Mostrar % en el browser no logró.
+Arranger.msgShowingOfflineGuide.text=La versión PDF del manual más reciéntemente descargada es presentada en su lugar (PDF reader).\nBusca sección "Arranger" en el capítulo "Features".
 Arranger.msgTitleURLError.text=Error en URL
 Arranger.msgSelectionExpanded.text=% referenciados diagramas fueron añadidos a la selección.
 Arranger.msgMissingDiagrams.text=\n\n%1 referenciados diagramas faltan:\n- %2

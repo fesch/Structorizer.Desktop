@@ -191,7 +191,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Stale file also triggers save request in saveNSD()
  *      Bob Fisch       2019-11-24      New method setRootForce() introduced as interface for Unimozer (c)
- *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled 
+ *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled
+ *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
  *
  ******************************************************************************************************
  *
@@ -223,6 +224,9 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -260,6 +264,7 @@ import org.freehep.graphicsio.swf.*;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.utils.Desktop;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.Locales;
@@ -6989,22 +6994,98 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.log(Level.WARNING, "Failed Access to " + help, e);
 		}
 		finally {
-			con.disconnect();
+			if (con != null) {
+				con.disconnect();
+			}
 		}
 		// END KGU 2018-12-24
 		if (!isLaunched)
 		{
 			String message = Menu.msgBrowseFailed.getText().replace("%", help);
+			boolean offlineShown = this.showHelpPDF();
+			if (offlineShown) {
+				message += "\n\n" + Menu.msgShowingOfflineGuide.getText();
+			}
 			JOptionPane.showMessageDialog(null,
 			message,
 			Menu.msgTitleURLError.getText(),
-			JOptionPane.ERROR_MESSAGE);
+			offlineShown ? JOptionPane.WARNING_MESSAGE : JOptionPane.ERROR_MESSAGE);
 			// TODO We might look for a downloaded PDF version and offer to open this instead...
+			
 		}
 		// END KGU#250 2016-09-17
-
+		else {
+			// Download the current PDF version if there hasn't been any by now.
+			this.downloadHelpPDF(false);
+		}
 	}
 	// END KGU#208 2016-07-22
+	
+	// START KGU#791 2020-01-20: Enh. #801 support offline help
+	/**
+	 * Tries to download the PDF version of the user guide to the ini directory
+	 * @param overrideExisting - if an existing user guide file is to be overriden by the newest one
+	 * @return true if the download was done and successful.
+	 */
+	public boolean downloadHelpPDF(boolean overrideExisting)
+	{
+		/* See https://stackoverflow.com/questions/921262/how-to-download-and-save-a-file-from-internet-using-java
+		 * for technical discussion 
+		 */
+		// FIXME: This might better be done in a performLater environment
+		boolean done = false;
+		try {
+			String helpFileName = Element.E_HELP_FILE;
+			String helpFileURI = Element.E_DOWNLOAD_PAGE + "?file=" + helpFileName;
+			URL website = new URL(helpFileURI);
+			File helpDir = Ini.getIniDirectory(true);
+			File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
+			if (!helpFile.exists() || overrideExisting) {
+				try (InputStream inputStream = website.openStream();
+						ReadableByteChannel readableByteChannel = Channels.newChannel(inputStream);
+						FileOutputStream fileOutputStream = new FileOutputStream(helpFile)) {
+					long copied = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, 1 << 24);
+					done = copied > 0;
+				}
+				catch (IOException ex) {
+					logger.log(Level.INFO, "Failed to download help file!", ex);
+					if (overrideExisting) {
+						String error = ex.getMessage();
+						if (error == null) {
+							error = ex.toString();
+						}
+						else if (ex instanceof UnknownHostException) {
+							error = Menu.msgHostNotAvailable.getText().replace("%", error);
+						}	
+						JOptionPane.showMessageDialog(null,
+								Menu.msgDownloadFailed.getText().replace("%", error),
+								Menu.msgTitleURLError.getText(),
+								JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		}
+		catch (MalformedURLException ex) {
+
+		}
+		return done;
+	}
+	
+	/**
+	 * Tries to present a downloaded PDF version of the user guide from the ini directory.
+	 * @return true if a user guide file is present and  could be shown.
+	 */
+	private boolean showHelpPDF()
+	{
+		String helpFileName = Element.E_HELP_FILE;
+		File helpDir = Ini.getIniDirectory(true);
+		File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
+		if (helpFile.canRead()) {
+			return Desktop.open(helpFile);
+		}
+		return false;
+	}
+	// END KGU#791 2020-01-20
 	
 	/*========================================
 	 * update method
