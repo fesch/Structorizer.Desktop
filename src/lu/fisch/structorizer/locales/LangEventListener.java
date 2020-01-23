@@ -50,6 +50,11 @@ package lu.fisch.structorizer.locales;
  */
 public interface LangEventListener {
 
+	/**
+	 * Invoked when the source object of event {@code evt}, usually a {@link LangTextHolder}, was affected
+	 * by a Locale change.
+	 * @param evt - The language event
+	 */
 	public void LangChanged(LangEvent evt);
 	
 }

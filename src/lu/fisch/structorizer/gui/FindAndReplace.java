@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -31,25 +31,32 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.05.30      First Issue (#415)
- *      Kay Gürtzig     2017.06.13      Pattern combo boxes with history
- *      Kay Gürtzig     2017.06.17      JTree for multi-Root retrieval
- *      Kay Gürtzig     2017.06.19      Preview size problem solved, inner-element navigation, matching flaws fixed
- *      Kay Gürtzig     2017.06.22      NullPointerException on replacing due to cleared currentNode fixed
- *      Kay Gürtzig     2017.09.12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
- *      Kay Gürtzig     2017.10.09      Internal consistency of For elements on replacement ensured (KGU#431)
- *      Kay Gürtzig     2017.11.03      Bugfix #448: endless self-replacement averted, performance improved
+ *      Kay Gürtzig     2017-05-30      First Issue (#415)
+ *      Kay Gürtzig     2017-06-13      Pattern combo boxes with history
+ *      Kay Gürtzig     2017-06-17      JTree for multi-Root retrieval
+ *      Kay Gürtzig     2017-06-19      Preview size problem solved, inner-element navigation, matching flaws fixed
+ *      Kay Gürtzig     2017-06-22      NullPointerException on replacing due to cleared currentNode fixed
+ *      Kay Gürtzig     2017-09-12      Combobox fixes: cursor up/down in pulldown list and Esc key without pulldown
+ *      Kay Gürtzig     2017-10-09      Internal consistency of For elements on replacement ensured (KGU#431)
+ *      Kay Gürtzig     2017-11-03      Bugfix #448: endless self-replacement averted, performance improved
  *                                      (minimum-invasive revision)
- *      Kay Gürtzig     2018.01.22      Enh. #490: The dialog now works on the controller alias texts if enabled
- *      Kay Gürtzig     2018.04.05      Issue #463: Plain console messages replaced by logging mechanism
- *      Kay Gürtzig     2018.07.02      Bugfix KGU#540 - An element filter change didn't reset the result
+ *      Kay Gürtzig     2018-01-22      Enh. #490: The dialog now works on the controller alias texts if enabled
+ *      Kay Gürtzig     2018-04-05      Issue #463: Plain console messages replaced by logging mechanism
+ *      Kay Gürtzig     2018-07-02      Bugfix KGU#540 - An element filter change didn't reset the result
+ *      Kay Gürtzig     2018-11-21      Bugfix #448: Apparently forgotten part of the fix accomplished
+ *      Kay Gürtzig     2018-11-22      Bugfix #637: ArrayIndexOutOfBoundsException in replacePattern(...)
+ *      Kay Gürtzig     2019-02-07      Workaround for truncation of node texts with scale factors > 1.0 (KGU#647)
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Try elements integrated, element panel layout revised
+ *      Kay Gürtzig     2019-06-12      Bugfix #728 - flaws on traversing and replacement tackled
+ *      Kay Gürtzig     2019-06-13      Bugfix #728 - IRoutinePoolListener inheritance added, now reacts on diagram changes
+ *                                      Retrieval and traversal strategies unified (now tree is always completely shown)
+ *      Kay Gürtzig     2019-09-29      Enh. #738: Update of code preview ensured after replacements
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      TODO / FIXME:
  *      - Matching / Replacement with regular expressions ok?
- *      - Update or clear this dialog on heavy changes to the set of available open diagrams
  *      - Place element icons next to the element type checkboxes (and analogously to the Root type checkboxes)?
  *
  ******************************************************************************************************///
@@ -91,8 +98,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextPane;
 import javax.swing.JTree;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -108,6 +118,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import lu.fisch.structorizer.archivar.IRoutinePool;
+import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -127,7 +139,7 @@ import lu.fisch.utils.StringList;
  * patterns with the opportunity to replace the text parts by other patterns
  */
 @SuppressWarnings("serial")
-public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
+public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*implements WindowListener*/ {
 
 	// START KGU#484 2018-04-05: Info #463
 	public static final Logger logger = Logger.getLogger(FindAndReplace.class.getName());
@@ -139,17 +151,22 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	private static final int MAX_PREVIEW_HEIGHT = 75;
 	/** little trick to achieve a sufficient text box width on packing the dialog */
 	private static final String patternPrototype = "This is just a string long enough to establish a sufficient width for the entire dialog";
+	// START KGU#647 2019-02-07: Part of the #675 workaround
+	/** Matcher to identify Windows look&feel classes */
+	private static final Matcher WINDOWS_LaF_MATCHER = Pattern.compile(".*windows.*", Pattern.CASE_INSENSITIVE).matcher("");
+	/** GUI scale factor */
+	private static double scaleFactor = 1.0;
+	// END KGU#647 2019-02-07
 	/** Search pattern history */
 	private final LinkedList<String> searchPatterns = new LinkedList<String>();
 	/** Replacement pattern history */
 	private final LinkedList<String> replacePatterns = new LinkedList<String>();
 	/** recursion-stopping flag for the choice list update of pattern comboboxes */
 	private boolean fillingComboBox = false;
-	/**
-	 * treeIterator is only used with single-Root scope, traversing the diagram without prediction of matching elements
-	 * @see #currentNode
-	 */
-	private IElementSequence.Iterator treeIterator = null;
+	// START KGU#684 2019-06-13: Bugfix #728
+	/** Replacement action flag (is to avoid result tree wiping during replacement) */
+	private boolean replacing = false;
+	// END KGU#684 2019-06-13
 	/** Currently focused diagram {@link Element} (caches the current position of {@link #treeIterator}) */
 	private Element currentElement = null;
 	// START KGU#454 2017-11-03: Bugfix #448
@@ -169,8 +186,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	/** Fixed invisible top node of the tree view, root of the apparent search result forest */
 	private final DefaultMutableTreeNode resultTop = new DefaultMutableTreeNode("Search Results");
 	/**
-	 * currentNode is used with multi-Root scope to navigate in the pre-retrieved tree of matching elements
-	 * @see #treeIterator
+	 * currentNode is used to navigate in the pre-retrieved tree of matching elements
 	 */
 	private DefaultMutableTreeNode currentNode = null;
 	private DefaultTreeModel resultModel = null;
@@ -185,7 +201,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	/**
 	 * Allows to formulate sets of interesting element types
 	 */
-	public enum ElementType { ROOT, INSTRUCTION, ALTERNATIVE, CASE, FOR, WHILE, REPEAT, FOREVER, CALL, JUMP, PARALLEL };
+	// START KGU#686 2019-03-17: Enh. #56
+	//public enum ElementType { ROOT, INSTRUCTION, ALTERNATIVE, CASE, FOR, WHILE, REPEAT, FOREVER, CALL, JUMP, PARALLEL };
+	public enum ElementType { ROOT, INSTRUCTION, ALTERNATIVE, CASE, FOR, WHILE, REPEAT, FOREVER, CALL, JUMP, PARALLEL, TRY };
+	// END KGU#686 2019-03-15
 	
 	/**
 	 * Specifies the search scope (a selected element sequence, single diagram, or multiple diagrams).<br/>
@@ -209,48 +228,45 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	
 	private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
 
-	    public MyTreeCellRenderer() {}
+		public MyTreeCellRenderer() {}
 
-	    public Component getTreeCellRendererComponent(
-	                        JTree tree,
-	                        Object value,
-	                        boolean sel,
-	                        boolean expanded,
-	                        boolean leaf,
-	                        int row,
-	                        boolean hasFocus)
-	    {
-	    	ImageIcon icon = null;
-	    	if (value instanceof DefaultMutableTreeNode) {
-	    		value = ((DefaultMutableTreeNode)value).getUserObject();
-	    	}
-	    	Object description = value;
-	    	if (value instanceof Element) {
-	    		// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
-	    		//StringList text = ((Element)value).getText();
-	    		StringList text = ((Element)value).getAliasText();
-	    		// END KGU#480 2018-01-22
-	    		if (text.count() > 0) {
-	    			description = text.get(0);
-	    			if (text.count() > 1) {
-	    				description += " ...";
-	    			}
-	    		}
-	    		else {
-	    			description = "---";
-	    		}
-	    		icon = ((Element)value).getMiniIcon();
-	    	} 
-	        super.getTreeCellRendererComponent(
-	                        tree, description, sel,
-	                        expanded, leaf, row,
-	                        hasFocus);
-	        if (icon != null) {
-	            setIcon(icon);
-	        }
-
-	        return this;
-	    }
+		@Override
+		public Component getTreeCellRendererComponent(
+				JTree tree,
+				Object value,
+				boolean sel,
+				boolean expanded,
+				boolean leaf,
+				int row,
+				boolean hasFocus)
+		{
+			super.getTreeCellRendererComponent(
+					tree, value, sel,
+					expanded, leaf, row,
+					hasFocus);
+			if (value instanceof DefaultMutableTreeNode) {
+				value = ((DefaultMutableTreeNode)value).getUserObject();
+			}
+			if (value instanceof Element) {
+				ImageIcon icon = ((Element)value).getMiniIcon();
+				if (icon != null) {
+					setIcon(icon);
+				}
+				// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
+				//StringList text = ((Element)value).getText();
+				String description = "---";
+				StringList text = ((Element)value).getAliasText();
+				// END KGU#480 2018-01-22
+				if (!text.isEmpty()) {
+					description = text.get(0);
+					if (text.count() > 1) {
+						description += " ...";
+					}
+				}
+				this.setText(description);
+			}
+			return this;
+		}
 	};
 		
 	// Needed GUI controls
@@ -287,6 +303,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	protected StyledDocument docComm = null;
 	/** Presentation of the search results over a diagram forest */
 	protected JTree treResults = null;
+	protected JScrollPane scrTree;
 	
 	protected JPanel pnlOptions;
 	protected JPanel pnlMode;
@@ -320,7 +337,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
 
-		this.setIconImage(IconLoader.getIcon(0).getImage());
+		this.setIconImage(IconLoader.getIcon(73).getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();
@@ -331,7 +348,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			logger.log(Level.WARNING, "Failed to re-read preferences.", ex);
 			// END KGU#484 2018-04-05
 		}
-		double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+		scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 		int inset = (int)Math.round(5 * scaleFactor);
 
 		for (int i = 1; i <= MAX_RECENT_PATTERNS; i++) {
@@ -382,14 +399,12 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 
 			@Override
 			public void keyReleased(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-				
+				// No action necessary
 			}
 
 			@Override
 			public void keyTyped(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-				
+				// No action necessary
 			}
 		};
 		
@@ -430,7 +445,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			@SuppressWarnings("unchecked")
 			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent evt) {
-				// TODO Auto-generated method stub
 				Object comp = evt.getSource();
 				if (comp instanceof JComboBox<?>) {
 					updatePatternList((JComboBox<String>)comp);
@@ -464,7 +478,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			
 			cmbReplacePattern.setEditable(true);
 			cmbReplacePattern.setPrototypeDisplayValue(patternPrototype);
-			//cmbReplacePattern.addKeyListener(keyListener);
 			cmbReplacePattern.getEditor().getEditorComponent().addKeyListener(cmbKeyListener);
 			cmbReplacePattern.addItemListener(new ItemListener(){
 				@Override
@@ -486,7 +499,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			gbcPatterns.gridwidth = 1;
 			gbcPatterns.gridheight = 1;
 			gbcPatterns.weightx = 1;
-			//gbcPatterns.fill = GridBagConstraints.HORIZONTAL;
 			gbcPatterns.anchor = GridBagConstraints.WEST;
 			gbcPatterns.insets = new Insets(inset, inset, 0, inset);
 			gblPatterns.setConstraints(lblSearchPattern, gbcPatterns);
@@ -545,7 +557,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			grpDirection.add(rbDown);
 			grpDirection.add(rbUp);
 			
-			//this.chkCaseSensitive = new JCheckBox("Case sensitive");
 			this.chkCaseSensitive.setMnemonic(java.awt.event.KeyEvent.VK_C);
 			this.chkCaseSensitive.addKeyListener(keyListener);
 			this.chkCaseSensitive.setSelected(ini.getProperty("findCaseSensitive", "0").equals("1"));
@@ -573,7 +584,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			
 			JPanel pnlDirection = new JPanel();
 			pnlDirection.setLayout(new GridLayout(1, 0));
-			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_D);
+			this.rbDown.setMnemonic(java.awt.event.KeyEvent.VK_O);
 			this.rbDown.addKeyListener(keyListener);
 			pnlDirection.add(rbDown);
 			this.rbUp.setMnemonic(java.awt.event.KeyEvent.VK_U);
@@ -639,7 +650,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			gbcScope.insets.top = 0;
 			pnlScope.add(pnlRootTypes, gbcScope);
 			
-			//pnlWherein.setBorder(new TitledBorder("Wherein"));
 			pnlWherein.setBorder(BorderFactory.createEtchedBorder());
 			pnlWherein.setLayout(new BoxLayout(pnlWherein, BoxLayout.Y_AXIS));
 			chkInTexts = new JCheckBox("In texts");
@@ -691,9 +701,8 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			JPanel pnlOptionsEast = new JPanel();
 			pnlOptionsEast.setLayout(new BoxLayout(pnlOptionsEast, BoxLayout.Y_AXIS));
 
-			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
-			pnlElements.setLayout(new GridLayout(0, 1));
 			pnlElements.setBorder(new TitledBorder("Element Types"));
+			pnlElements.setLayout(new BoxLayout(pnlElements, BoxLayout.Y_AXIS));
 			
 			btnAll = new JButton("All");
 			btnAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent arg0) { selectAllElementTypes(true); }});
@@ -705,6 +714,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			pnlSelectButtons.setLayout(new BoxLayout(pnlSelectButtons, BoxLayout.X_AXIS));
 			pnlSelectButtons.add(btnAll);
 			pnlSelectButtons.add(btnNone);
+			pnlSelectButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 			
 			pnlElements.add(pnlSelectButtons);
 			
@@ -718,7 +728,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 						btnReplace.setEnabled(currentElement != null);
 						btnReplaceAll.setEnabled(true);
 					}
-					// START KGU#540 2018-07-02: Bugfix a filter change didn't reset the selection result
+					// START KGU#540 2018-07-02: Bugfix - a filter change didn't reset the selection result
 					// FIXME: In case it is a stronger restriction, we might perhaps just refilter the results?
 					resetResults();
 					// END KGU#540 2018-07-02
@@ -733,18 +743,20 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				chkElementTypes[i].setSelected(sel);
 				chkElementTypes[i].addItemListener(elementTypeListener);
 				chkElementTypes[i].addKeyListener(keyListener);
+				chkElementTypes[i].setAlignmentX(Component.LEFT_ALIGNMENT);
 				pnlElements.add(chkElementTypes[i]);
 			}
-//			pnlOptions.add(pnlElements, BorderLayout.EAST);
-			pnlOptionsEast.add(pnlElements);
 
-			JPanel pnlDisabled = new JPanel();
+			pnlElements.add(new JSeparator(SwingConstants.HORIZONTAL));
+
 			chkDisabled = new JCheckBox("Disabled elements");
 			chkDisabled.setSelected(ini.getProperty("findDisabledElements", "0").equals("1"));
 			chkDisabled.addKeyListener(keyListener);
-			pnlDisabled.add(chkDisabled);
-			pnlOptionsEast.add(pnlDisabled);
-			
+			chkDisabled.setAlignmentX(Component.LEFT_ALIGNMENT);
+			pnlElements.add(chkDisabled);
+
+			pnlOptionsEast.add(pnlElements);
+
 			pnlOptions.add(pnlOptionsEast, BorderLayout.EAST);
 			
 			// -------------- Text View ---------------
@@ -752,73 +764,53 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			pnlPreview.setLayout(new GridLayout(0, 1));
 			pnlPreview.setBorder(BorderFactory.createTitledBorder("Contents"));
 
-			// This is no good way to enforce maximum height because the layout continues
-			// to try to enlarge this on and on...
-//			ComponentAdapter textScrollListener = new ComponentAdapter() {
-//				@Override
-//				public void componentResized(ComponentEvent evt) {
-//					Component comp = evt.getComponent();
-//					int w = comp.getSize().width;
-//					int h = comp.getSize().height;
-//					int maxHeight = comp.getMaximumSize().height;
-//					System.out.println(comp + " w = " + w + ", h = " + h + ", maxh = " + maxHeight);
-//					if (h > maxHeight) {
-//						comp.setSize(new Dimension(w, maxHeight));
-//						comp.repaint();
-//						comp.revalidate();
-//					}
-//					
-//					super.componentResized(evt);
-//				}
-//			};
-			
 			txtText = new JTextPane();
 			txtText.setBorder(BorderFactory.createTitledBorder("Text"));
 			txtText.setEditable(false);
 			txtText.setEnabled(false);
 			txtText.addKeyListener(keyListener);
-	    	JScrollPane scrText = new JScrollPane(txtText);
-//	    	txtText.addComponentListener(textScrollListener);
-	    	docText = txtText.getStyledDocument();
-	    	//Style defStyle = doc.getStyle("default");
-    		Style hilStyle = docText.addStyle("highlight", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
-    		hilStyle = docText.addStyle("emphasis", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
-    		
-    		pnlPreview.add(scrText);
+			JScrollPane scrText = new JScrollPane(txtText);
+//			txtText.addComponentListener(textScrollListener);
+			docText = txtText.getStyledDocument();
+			//Style defStyle = doc.getStyle("default");
+			Style hilStyle = docText.addStyle("highlight", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle = docText.addStyle("emphasis", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
-    		txtComm = new JTextPane();
+			pnlPreview.add(scrText);
+
+			txtComm = new JTextPane();
 			txtComm.setBorder(BorderFactory.createTitledBorder("Comment"));
 			txtComm.setEditable(false);
 			txtComm.setEnabled(false);
 			txtComm.addKeyListener(keyListener);
 
 			JScrollPane scrComm = new JScrollPane(txtComm);
-//	    	txtComm.addComponentListener(textScrollListener);
-	    	docComm = txtComm.getStyledDocument();
-	    	//Style defStyle = doc.getStyle("default");
-    		hilStyle = docComm.addStyle("highlight", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
-    		hilStyle = docComm.addStyle("emphasis", null);
-    		hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
-    		
-    		pnlPreview.add(scrComm);
-    		pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
-			
-    		Dimension dim = scrText.getMaximumSize();
-    		int maxHeight = (int)Math.floor(scaleFactor * MAX_PREVIEW_HEIGHT);
-    		if (dim != null) {
-    			scrText.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
-    			scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, maxHeight));
-    		}
-    		dim = scrComm.getMaximumSize();
-    		if (dim != null) {
-    			scrComm.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
-    			scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, maxHeight));
-    		}
+//			txtComm.addComponentListener(textScrollListener);
+			docComm = txtComm.getStyledDocument();
+			//Style defStyle = doc.getStyle("default");
+			hilStyle = docComm.addStyle("highlight", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle = docComm.addStyle("emphasis", null);
+			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
-    		// --------------------------------------
+			pnlPreview.add(scrComm);
+			pnlOptions.add(pnlPreview, BorderLayout.SOUTH);
+
+			Dimension dim = scrText.getMaximumSize();
+			int maxHeight = (int)Math.floor(scaleFactor * MAX_PREVIEW_HEIGHT);
+			if (dim != null) {
+				scrText.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+				scrText.setPreferredSize(new Dimension(scrText.getPreferredSize().width, maxHeight));
+			}
+			dim = scrComm.getMaximumSize();
+			if (dim != null) {
+				scrComm.setMaximumSize(new Dimension(dim.width, maxHeight));	// Doesn't actually work
+				scrComm.setPreferredSize(new Dimension(scrComm.getPreferredSize().width, maxHeight));
+			}
+
+			// --------------------------------------
 			contentPane.add(pnlOptions, BorderLayout.CENTER);
 			
 		}
@@ -831,35 +823,38 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					TreeSelectionModel.SINGLE_TREE_SELECTION);
 			this.treResults.setExpandsSelectedPaths(true);
 			this.treResults.setRootVisible(false);
+			// START KGU#647 2019-02-07: Issue #675 Helps to avoid the tree node texts being truncated (replaced by an ellipse)
+			if (scaleFactor > 1.0) {
+				this.treResults.setLargeModel(true);
+			}
+			// END KGU#647 2019-02-07
 			// Allow to select an element in the tree
 			this.treResults.addTreeSelectionListener(new TreeSelectionListener(){
 				@Override
 				public void valueChanged(TreeSelectionEvent evt) {
-					if (cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
-						currentNode = (DefaultMutableTreeNode)treResults.getLastSelectedPathComponent();
-						if (currentNode != null) {
-							Object ele = currentNode.getUserObject();
-							if (currentNode.isLeaf() && ele instanceof Element) {
-								int pos = -1;
-								if (chkElementwise == null || !chkElementwise.isSelected()) {
-									if (rbUp != null && rbUp.isSelected()) {
-										pos = checkElementMatch((Element)ele) - 1;
-									}
-									else {
-										pos = 0;
-									}
+					currentNode = (DefaultMutableTreeNode)treResults.getLastSelectedPathComponent();
+					if (currentNode != null) {
+						Object ele = currentNode.getUserObject();
+						if (currentNode.isLeaf() && ele instanceof Element) {
+							int pos = -1;
+							if (chkElementwise == null || !chkElementwise.isSelected()) {
+								if (rbUp != null && rbUp.isSelected()) {
+									pos = checkElementMatch((Element)ele) - 1;
 								}
-								setCurrentElement((Element)ele, pos);
+								else {
+									pos = 0;
+								}
 							}
-							if (ele instanceof Root) {
-								Arranger.scrollToDiagram((Root)ele, true);
-							}
+							setCurrentElement((Element)ele, pos);
+						}
+						if (ele instanceof Root && cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
+							Arranger.scrollToDiagram((Root)ele, true);
 						}
 					}
 				}});
 			this.treResults.setCellRenderer(new MyTreeCellRenderer());
 			this.treResults.addKeyListener(keyListener);
-			JScrollPane scrTree = new JScrollPane(this.treResults);
+			this.scrTree = new JScrollPane(this.treResults);
 
 			pnlOptions.add(scrTree, BorderLayout.CENTER);
 		}
@@ -967,12 +962,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * unselects the element in the diagram (if selected).
 	 */
 	protected void clearCurrentElement() {
-		Element selected = diagram.getSelected();
 		if (currentElement != null) {
+			Element selected = diagram.getSelected();
 			if (selected == null ||
+					this.cmbScope.getSelectedItem() != Scope.CURRENT_SELECTION ||
 					selected instanceof IElementSequence && ((IElementSequence)selected).getIndexOf(currentElement) >= 0 ||
 					!(selected instanceof IElementSequence) && currentElement != selected) {
 				currentElement.setSelected(false);
+				if (Element.getRoot(currentElement) == diagram.getRoot()) {
+					diagram.redraw(currentElement);
+				}
 			}
 			currentElement = null;
 			// START KGU#454 2017-11-03: Bugfix #448
@@ -1031,7 +1030,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		// END KGU#454 2017-11-03
 		currentPosition = positionInElement;
 		ele.setSelected(true);
-		diagram.redraw(ele);
+		if (Element.getRoot(ele) == diagram.getRoot()) {
+			diagram.redraw(ele);
+		}
 		//System.out.println(ele);
 		int nMatches = 0;
 		boolean enable = false;
@@ -1056,7 +1057,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	/**
 	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
 	 * for the original {@link StringList} {@code txtLines}. 
-	 * @param txtParts - source text split to matchs and sourrounding parts
+	 * @param textParts - source text split to matches and surrounding parts
 	 * @param doc - the target {@link StyledDocument} 
 	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
 	 * @param posOffset - the index of the current match
@@ -1085,28 +1086,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		else {
-			// START KGU#454 2017-11-03: Bugfix #448
-//			StringList matches = new StringList();
-//			String[] parts = splitText(text0, pattern, matches);
-//			nParts = parts.length;
-//			int emphPos = -1;
-//			for (int i = 0; i < nParts; i++) {
-//		    	try {
-//		    		doc.insertString(doc.getLength(), parts[i], doc.getStyle("default"));
-//		    		if (i < nParts-1) {
-//		    			if (i == currPos) {
-//		    				emphPos = doc.getLength();
-//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("emphasis"));
-//		    			}
-//		    			else {
-//		    				if (emphPos < 0) emphPos = doc.getLength();
-//		    				doc.insertString(doc.getLength(), matches.get(i), doc.getStyle("highlight"));
-//		    			}
-//		    		}
-//		    	} catch (BadLocationException e) {
-//		    		e.printStackTrace();
-//		    	}
-//			}
+			// START KGU#454 2017-11-03: Bugfix #448 (obsolete code removed 2019-02-07)
 			// Once having the split parts it's extremely simple: Show the text parts
 			// alternatingly in normal and highlighted style.
 			try {
@@ -1263,12 +1243,19 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	// END KGU#454 2017-11-03
 
 	/**
-	 * Empties the result tree and unsets all navigation data ({@link #currentElement}, {@link #treeIterator},
-	 * {@link #currentNode}, {@link #currentPosition}). (part of the ItemListener for the scope choice, the StateChangeListener of the pattern combo boxes)
+	 * Empties the result tree and unsets all navigation data ({@link #currentElement},
+	 * {@link #treeIterator}, {@link #currentNode}, {@link #currentPosition}). (Part of
+	 * the ItemListener for the scope choice and the StateChangeListener of the pattern
+	 * combo boxes, but may also be called externally.)
 	 */
-	private void resetResults()
+	public void resetResults()
 	{
-		treeIterator = null;
+		// START KGU#684 2019-06-13: Bugfix #728 - Should not be triggered during replacement
+		if (replacing) {
+			return;
+		}
+		// END KGU#684 2019-06-13
+//		treeIterator = null;
 		resultTop.removeAllChildren();
 		currentNode = null;
 		clearCurrentElement();
@@ -1277,6 +1264,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			treResults.setEnabled(false);
 		}
 	}
+	
+	// START KGU#684 2019-06-13: Bugfix #728
+	@Override
+	public void routinePoolChanged(IRoutinePool _source, int _flags) {
+		if ((_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0
+				&& this.cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
+			this.resetResults();
+		}
+	}
+	// END KGU#684 2019-06-13
 
 	/**
 	 * Enables or disables all element types (selects or unselects the corresponding
@@ -1300,20 +1297,17 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * Action method for find event {@code evt}. Performs a single action step, i.e.
 	 * jumps to the next matching position (if {@code gotoNext} is true) after having
 	 * possibly done a single replacement at the current matching position (if {@code replace} is true).
-	 * In case there is no {@link #currentNode} (with scope {@link #OPENED_DIAGRAMS})
-	 * or the {@link #treeIterator} is exhausted (other scopes), the result tree will be
-	 * refreshed according to the current criteria.
+	 * In case there is no {@link #currentNode}, the result tree will be refreshed
+	 * according to the current criteria.
 	 * @param evt - the triggering {@link ActionEvent}
 	 * @param replace - are replacements to be performed?
 	 * @param gotoNext - is the position to be moved to the next matching hit?
 	 * @return indicates whether a requested replacement could be performed 
 	 */
 	protected boolean findActionPerformed(ActionEvent evt, boolean replace, boolean gotoNext) {
-		boolean done = false;
+		boolean replacementsDone = false;
 		boolean up = rbUp.isSelected();
 		boolean elementwise = chkElementwise.isSelected();
-		Element selected = diagram.getSelected();
-		Scope scope = (Scope)cmbScope.getSelectedItem();
 		// START KGU#454 2017-11-03: Bugfix #448 Check regex patterns in advance
 		if (this.chkRegEx.isSelected()) {
 			String patternString = (String)this.cmbSearchPattern.getEditor().getItem();
@@ -1330,65 +1324,36 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 		}
 		// END KGU#4545 2017-11-03
-			// PHASE 1: Identify and set up the element traversing strategy 
-			if (scope == Scope.OPENED_DIAGRAMS) {
-				// Previous search exhausted? Then retrieve results
-				if (currentNode == null) {
-					fillResultTree();
-					gotoNext = false;
-					replace = false;
-				}
-			}
-			else if (treeIterator == null) {
-				// Reinitialize iterator for incremental search
-				if (selected == null || scope == Scope.CURRENT_DIAGRAM) {
-					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-					int nMatches = checkElementMatch(diagram.getRoot()); 
-					if (nMatches > 0) {
-						setCurrentElement(diagram.getRoot(), elementwise ? -1 : (up ? nMatches - 1 : 0));
-						replace = false;
-						gotoNext = false;
-					}
-					treeIterator = diagram.getRoot().children.iterator(true);
-				}
-				else if (selected instanceof IElementSequence) {
-					// We are on a Subqueue level, request a deep search iterator
-					treeIterator = ((IElementSequence) selected).iterator(true);
-				}
-				else if (selected.parent != null) {
-					// We are neither on Subqueue level nor on Root level, so concoct a
-					// pseudo-sequence only comprising just the selected element and
-					// request a deep search iterator (selected might be composed)
-					treeIterator = (new SelectedSequence(selected, selected)).iterator(true);
-				}
-				else if (selected instanceof Root) {
-					// Now this is a somewhat dirty trick to make sure a matching Root isn't ignored
-					int nMatches = checkElementMatch(selected); 
-					if (nMatches > 0) {
-						setCurrentElement(selected, elementwise ? -1 : (up ? nMatches - 1 : 0));
-						replace = false;
-						gotoNext = false;
-					}
-					treeIterator = ((Root)selected).children.iterator(true);
-				}
-				// Go to last element if we are to go upwards (looks awkward but works)
-				if (treeIterator != null && up) {
-					while (treeIterator.hasNext()) {
-						treeIterator.next();
-					}
-				}
-			}
 
-			// PHASE 2: Look into the currentElement (if there is one)
-			int nMatches = 0;
-			if (currentElement != null) {
-				// Get the total number of (remaining) matches in the current element's interesting texts
-				// START KGU#454 2017-11-03: Bugfix #448 - It must not be done by new matching!
-				//nMatches = checkElementMatch(currentElement);
-				nMatches = checkElementMatch();
-				// END KGU#4545 2017-11-03
+		// PHASE 1: Identify and set up the element traversing strategy
+		// Previous search exhausted? Then retrieve results
+		if (currentNode == null) {
+			fillResultTree();
+			// START KGU#647 2019-02-07: FIXME - Empirical workaround for issue #675 (truncated node lines)
+			if (scaleFactor > 1.0 && !WINDOWS_LaF_MATCHER.reset(UIManager.getLookAndFeel().getName()).matches()) {
+				// No idea why exactly, the lines get truncated (ends replaced by ellipse on the first) on the first attempt
+				fillResultTree();
 			}
-			if (replace && nMatches > 0) {
+			// ÉND KGU#647 2019-02-07
+			gotoNext = false;
+			replace = false;
+		}
+
+		// PHASE 2: Look into the currentElement (if there is one) and care for replacements
+		int nMatches = 0;
+		if (currentElement != null) {
+			// Get the total number of (remaining) matches in the current element's interesting texts
+			// START KGU#454 2017-11-03: Bugfix #448 - It must not be done by new matching!
+			//nMatches = checkElementMatch(currentElement);
+			nMatches = checkElementMatch();
+			// END KGU#4545 2017-11-03
+		}
+		if (replace && nMatches > 0) {
+			// START KGU#684 2019-06-13: Bugfix #728 - avoid interference from element modifications
+			replacing = true;
+			//System.out.println("replacing set true...");
+			try {
+			// END KGU#684 2019-06-13
 				// Replace next match according to the current pattern
 				Root root = Element.getRoot(currentElement);
 				if (root != null) {
@@ -1401,13 +1366,13 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				// END KGU#480 2018-01-22
 				StringList comment = currentElement.getComment();
 				// START KGU#454 2017-11-03: Bugfix #448
-//				int nMatchesComment = textMatches(comment);
-//				int nMatchesText = textMatches(text);
+				//int nMatchesComment = textMatches(comment);
+				//int nMatchesText = textMatches(text);
 				int nMatchesComment = (partsComment.count() - 1) / 2;
 				int nMatchesText = (partsText.count() - 1) / 2;
 				// END KGU#454 2017-11-03
 				// Start with the element text (prioritized if included)
-				if ((elementwise || !done) && chkInTexts.isSelected() 
+				if ((elementwise || !replacementsDone) && chkInTexts.isSelected() 
 						&& nMatchesText > currentPosition) {
 					// START KGU#454 2017-11-03: Bugfix #448
 					//text = replacePattern(text, elementwise, currentPosition);
@@ -1423,11 +1388,14 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					}
 					// END KGU#431 2017-10-09
 					currentElement.resetDrawingInfoUp();
-					this.fillPreview(text, docText, txtText, 0, true);
-					done = true;
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(text, docText, txtText, 0, true);
+					this.fillPreview(partsText, docText, txtText, (replace && up) ? 1 : 0, true);
+					// END KGU#609 2018-11-21
+					replacementsDone = true;
 				}
 				// Now cater for the comment if included
-				if ((elementwise || !done) && chkInComments.isSelected()
+				if ((elementwise || !replacementsDone) && chkInComments.isSelected()
 						&& nMatchesComment > currentPosition - nMatchesText) {
 					// START KGU#454 2017-11-03: Bugfix #448
 					//comment = replacePattern(comment, elementwise, currentPosition - nMatchesText);
@@ -1435,8 +1403,11 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					// END KGU#454 2017-11-03 
 					currentElement.setComment(comment);
 					currentElement.resetDrawingInfoUp();
-					this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
-					done = true;
+					// START KGU#609 2018-11-21: Bugfix #448 accomplished
+					//this.fillPreview(comment, docComm, txtComm, nMatchesText, true);
+					this.fillPreview(partsComment, docComm, txtComm, nMatchesText + ((replace && up) ? 1 : 0), true);
+					// END KGU#609 2018-11-21
+					replacementsDone = true;
 				}
 				if (currentNode != null) {
 					// We better cache the current node locally lest the reload actions should reset it.
@@ -1451,10 +1422,16 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 						treResults.setSelectionPath(new TreePath(currentNode.getPath()));
 					}
 				}
+			}
+			finally {
+				replacing = false;
+				//System.out.println("replacing resset to false...");
+			}
+
 			diagram.doButtons();
 			// Make sure the Structorizer working area is refreshed, too
 			diagram.redraw(currentElement);
-			if (done) {
+			if (replacementsDone) {
 				if (elementwise) {
 					// after an elementwise replacement there can't be matches left (unless the
 					// replacement hasn't accidently induced new matches, which should NOT be
@@ -1468,13 +1445,21 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 					nMatches--;
 					// Avoid a node change while the current node isn't exhausted (note that on
 					// downward search the currentPosition must not be incremented after the match
-					// having been replaced).
-					if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
+					// having been replaced). On upward search the move will be done in phase 3.
+					// START KGU#684 2019-06-12: Bugfix #728
+					//if (!up && currentPosition < nMatches || up && --currentPosition >= 0) {
+					if (!up && currentPosition < nMatches) {
+					// END KGU#684 2019-06-12
 						gotoNext = false;
 					}
 				}
+				// START KGU#705 2019-09-29: Enh. #738: Code preview is to updated as well
+				diagram.updateCodePreview();
+				// END KGU#705 2019-09-29
 			}
 		}
+		
+		// PHASE 3: traverse to next position (if stlll requested)
 		// Is there another matching position within this element? (We might have come here in non-replacing mode!)
 		// Remember that "up" in the tree means backward in the text and "down" means forward in the text here
 		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
@@ -1486,36 +1471,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				currentPosition++;
 			}
 			setCurrentElement(currentElement, currentPosition);
-		}
-		else if (gotoNext && treeIterator != null) {
-			// no, single-Root scope: find the next matching element within the current diagram
-			boolean found = false;
-			clearCurrentElement();
-			if (rbUp.isSelected()) 
-				while (!found && treeIterator.hasPrevious()) {
-					Element ele = treeIterator.previous();
-					nMatches = checkElementMatch(ele);
-					if (found = nMatches > 0) {
-						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
-						updateResultTree();
-						done = true;
-					}
-				}
-			else 
-				while (!found && treeIterator.hasNext()) {
-					Element ele = treeIterator.next();
-					nMatches = checkElementMatch(ele);
-					if (found = nMatches > 0) {
-						setCurrentElement(ele, elementwise ? -1 : (up ? nMatches - 1 : 0));
-						updateResultTree();
-						done = true;
-					}
-				}
-			if (!found) {
-				// Iterator exhausted - drop it
-				treeIterator = null;
-				updateResultTree();
-			}
 		}
 		else if (gotoNext && currentNode != null) {
 			// go to the next element within in the search result tree
@@ -1532,48 +1487,20 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 				TreePath path = new TreePath(currentNode.getPath());
 				treResults.setSelectionPath(path);
 				treResults.scrollPathToVisible(path);
-				done = true;
+				// START KGU#684 2019-06-12: Bugfix #728 - cannot have been correct -> endless loop
+				//replacementsDone = true;
+				// END KGU#684 2019-06-12
 			}
 			else {
 				clearCurrentElement();
 				treResults.clearSelection();
 			}
 		}
-		return done;
+		return replacementsDone;
 	}
 	
 	/**
-	 * Does nothing in case of an active multi-Root search (scope OPENED_DIAGRAMS). Otherwise
-	 * (i.e. in single-Root scope), the result tree is updated around the {@link #currentElement},
-	 * i.e. with dummy nodes before and/or after the node representing the current element. 
-	 * @see #fillResultTree()
-	 */
-	private void updateResultTree() {
-		if (currentNode == null) {
-			this.resultTop.removeAllChildren();
-			this.resultModel.reload();
-			if (currentElement != null && treeIterator != null) {
-				if (treeIterator.hasPrevious()) {
-					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
-				}
-				DefaultMutableTreeNode eleNode = new DefaultMutableTreeNode(currentElement); 
-				this.resultModel.insertNodeInto(eleNode, resultTop, resultTop.getChildCount());
-				if (treeIterator.hasNext()) {
-					this.resultModel.insertNodeInto(new DefaultMutableTreeNode("..."), resultTop, resultTop.getChildCount());
-				}
-				TreePath path = new TreePath(eleNode.getPath());
-				treResults.scrollPathToVisible(path);
-				treResults.setSelectionPath(path);
-				treResults.setEnabled(true);
-			}
-			else {
-				treResults.setEnabled(false);
-			}
-		}
-	}
-
-	/**
-	 * Initializes the result tree for scope OPENED_DIAGRAMS and sets {@link #currentNode} (if possible)
+	 * Initializes the result tree and sets {@link #currentNode} (if possible)
 	 * @see #updateResultTree()
 	 */
 	private void fillResultTree() {
@@ -1581,13 +1508,42 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		resultModel.reload();
 		clearCurrentElement();
 		DefaultMutableTreeNode lastNode = null;
-		Vector<Root> roots = Arranger.getSortedRoots();
+		// START KGU#712 2019-06-13 CR
+		//Vector<Root> roots = Arranger.getSortedRoots();
+		Scope scope = (Scope)this.cmbScope.getSelectedItem();
+		Vector<Root> roots;
+		if (scope == Scope.OPENED_DIAGRAMS) {
+			roots = Arranger.getSortedRoots();
+		}
+		else {
+			roots = new Vector<Root>();
+		}
+		// END KGU#712 2019-06-13
+		if (!roots.isEmpty()) {
+			Arranger.addToChangeListeners(this);
+		}
 		if (!roots.contains(diagram.getRoot())) {
 			roots.add(0, diagram.getRoot());
 		}
 		for (Root root: roots) {
-			LinkedList<Element> elements = this.findElements(root.children, true);
-			if (checkElementMatch(root) > 0) {
+			IElementSequence range = null;
+			Element selected = diagram.getSelected();
+			if (scope == Scope.CURRENT_SELECTION && root == diagram.getRoot()) {
+				if (selected == null || selected == root) {
+					range = root.children;
+				}
+				else if (selected instanceof IElementSequence) {
+					range = (IElementSequence)selected;
+				}
+				else {
+					range = new SelectedSequence(selected, selected);
+				}
+			}
+			else {
+				range = root.children;
+			}
+			LinkedList<Element> elements = this.findElements(range, true);
+			if ((scope != Scope.CURRENT_SELECTION || selected == root) && checkElementMatch(root) > 0) {
 				elements.addFirst(root);
 			}
 			if (!elements.isEmpty()) {
@@ -1610,6 +1566,9 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		if (currentNode != null) {
 			TreePath path = new TreePath(currentNode.getPath());
 			treResults.scrollPathToVisible(path);
+			if (scrTree.getHorizontalScrollBar().isVisible()) {
+				scrTree.getHorizontalScrollBar().setValue(0);
+			}
 			treResults.setSelectionPath(path);
 			treResults.setEnabled(true);
 		}
@@ -1625,75 +1584,15 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 	 * @param evt - the inducing event
 	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
+		// START KGU#684 2019-06-12: Bugfix #728
+		// If the search hasn't been initialised then find the first match
+		if (currentNode == null /*&& treeIterator == null*/) {
+			findActionPerformed(evt, false, false);
+		}
+		// END KGU#684 2019-06-12
 		while (findActionPerformed(evt, true, true));
+		
 	}
-
-	// START KGU#454 2017-11-03: Bugfix #448 signature meaning changed, implementation revised
-//	/**
-//	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
-//	 * @param text - the target text, broken into lines.
-//	 * @param all - whether all matches are to be replaced (then {@code pos} will be ignored)
-//	 * @param pos - the number of the target match within the text otherwise
-//	 * @return the replacement result as {@link StringList} of lines
-//	 */
-//	private StringList replacePattern(StringList text, boolean all, int pos) {
-//		// We compose the StringList elements since there might be line-overlapping matches 
-//		String brokenText = text.getText();	// the text lines concatenated with newlines
-//		// Get the current settings
-//		String searchPattern = (String)cmbSearchPattern.getEditor().getItem();
-//		String replacePattern = (String)cmbReplacePattern.getEditor().getItem();
-//		String resultText = brokenText;
-//		boolean caseSensitive = chkCaseSensitive.isSelected();
-//		boolean isRegex = chkRegEx.isSelected();
-//		boolean wholeWord = chkWholeWord.isSelected(); 
-//		if (all) {
-//			if (!isRegex) {
-//				// Patterns are no regular expressions. So form conservative regex patterns 
-//				if (!caseSensitive) {
-//					// KGU 2017-06-18: Method breakup now ensures quoting of regex meta symbols
-//					searchPattern = BString.breakup(searchPattern);
-//				}
-//				else {
-//					searchPattern = Pattern.quote(searchPattern);
-//				}
-//				replacePattern = "$1" + Matcher.quoteReplacement(replacePattern) + "$2";
-//				if (wholeWord) {
-//					searchPattern = "(^|.*?\\W)" + searchPattern + "($|\\W.*?)";
-//				}
-//				else {
-//					searchPattern = "(.*?)" + searchPattern + "(.*?)";
-//				}
-//			}
-//			resultText = brokenText.replaceAll(searchPattern, replacePattern);
-//		}
-//		else {
-//			// In case of an individual replacement first split the text and count the matches
-//			// The splitting function will collect the matches and return the parts around the matches 
-//			StringList actualMatches = new StringList();	// to be filled by function splitText
-//			String[] parts = splitText(brokenText, searchPattern, actualMatches);
-//			String[] matches = actualMatches.toArray();		// Should be one element shorter than parts
-//			int nParts = parts.length;
-//			resultText = "";
-//			for (int i = 0; i < nParts; i++) {
-//				resultText += parts[i];
-//				if (i == pos) {
-//					// At the very position replace the found match
-//					if (isRegex) {
-//						resultText += matches[i].replaceFirst(searchPattern, replacePattern);
-//					}
-//					else {
-//						resultText += replacePattern;
-//					}
-//				}
-//				else if (i < nParts - 1) {
-//					// at all other places re-insert the match without change
-//					resultText += matches[i];
-//				}
-//			}
-//		}
-//		// Split the lines again
-//		return StringList.explode(resultText, "\n");
-//	}
 
 	/**
 	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
@@ -1727,7 +1626,10 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			}
 			splitText.remove(1, splitText.count());
 		}
-		else {
+		// START KGU#610 2018-11-22: Bugfix #637 - for comments without matches, negative pos causes harm here
+		//else {
+		else if (pos >= 0) {
+		// END KGU#610 2018-11-22
 			// In case of an individual replacement first split the text and count the matches
 			// The splitting function will collect the matches and return the parts around the matches
 			pos = pos * 2 + 1;
@@ -1852,11 +1754,6 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 			// Wait with updates until the popup gets closed. 
 			return;
 		}
-//		LinkedList<String> patternList = replacePatterns;
-//		if (box == cmbSearchPattern) {
-//			resetResults();
-//			patternList = searchPatterns;
-//		}
 		if (evt.getStateChange() == ItemEvent.SELECTED) {
 			updatePatternList(box);
 		}
@@ -1984,49 +1881,7 @@ public class FindAndReplace extends LangFrame /*implements WindowListener*/ {
 		}
 		return elements;
 	}
-	
-//	@Override
-//	public void windowActivated(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowClosed(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowClosing(WindowEvent arg0) {
-//		// Store the patterns in Ini
-//		cacheToIni(Ini.getInstance());
-//	}
-//
-//	@Override
-//	public void windowDeactivated(WindowEvent arg0) {
-//		// Store the patterns in Ini
-//		cacheToIni(Ini.getInstance());
-//	}
-//
-//	@Override
-//	public void windowDeiconified(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowIconified(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-//
-//	@Override
-//	public void windowOpened(WindowEvent arg0) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-	
+
 	/**
 	 * Has the given {@link Ini} instance {@code ini} save all relevant search criteria and
 	 * settings to the associated structorizer.ini file.

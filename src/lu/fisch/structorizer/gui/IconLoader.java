@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,43 +32,49 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.28      First Issue
- *      Kay Gürtzig     2015.10.12      New icons (103_breakpt, 104_nobreakpt) introduced
- *      Kay Gürtzig     2015.11.19      New Arranger icon (icoArr) introduced
- *      Kay Gürtzig     2016.01.03/04   Enh. #87 (=KGU#123) Basic icons for NSD element types and
+ *      Bob Fisch       2007-12-28      First Issue
+ *      Kay Gürtzig     2015-10-12      New icons (103_breakpt, 104_nobreakpt) introduced
+ *      Kay Gürtzig     2015-11-19      New Arranger icon (icoArr) introduced
+ *      Kay Gürtzig     2016-01-03/04   Enh. #87 (=KGU#123) Basic icons for NSD element types and
  *                                      element collapsing introduced
- *      Kay Gürtzig     2016.07.06      Enh. #188: New icon 109_wand introduced for element conversion
- *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
- *      Kay Gürtzig     2016.07.31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
- *      Kay Gürtzig     2016.08.02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
- *      Kay Gürtzig     2016.09.05      Generic support for locale icons
- *      Kay Gürtzig     2016.09.25      Enh. #253: New icon 025_import for import configuration
- *      Kay Gürtzig     2016.10.13      Enh. #270: New icon 026_disable for inactive elements
- *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
- *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
- *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
- *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
- *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
- *      Kay Gürtzig     2017.01.11      Enh. #81: New icon 051_scale_gui for scaling preset
- *      Kay Gürtzig     2017.03.13      Enh. #372: New icons 065_paragraph through 067_commit for license editing
- *      Kay Gürtzig     2017.03.23      Enh. #380: Icon 068 for the conversion of a sequence to a subroutine
- *      Kay Gürtzig     2017.03.28      Enh. #387: Icon 069 for "Save All" added.
- *      Kay Gürtzig     2017.04.29      Enh. #319/#389: New icon 070_program_green for Arranger index
- *      Kay Gürtzig     2017.05.16      Enh. #389: New icons 071_include, 072_include_green
- *      Kay Gürtzig     2017.06.13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
- *      Kay Gürtzig     2017.10.16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
- *      Kay Gürtzig     2017.12.06      Enh. #487: New icon 085_hide_decl for hiding declarations
- *      Kay Gürtzig     2017.12.11      Enh. #425: New icons 114_down and 115_up for Translator
- *      Kay Gürtzig     2018.01.04      New icon 092_SaveAs
- *      Kay Gürtzig     2018.01.18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
- *      Kay Gürtzig     2018.01.25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
- *      Kay Gürtzig     2018.02.06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
- *      Kay Gürtzig     2018.02.09      Issue #4: Some icon renaming and reorganisation
- *      Kay Gürtzig     2018.02.12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
- *      Kay Gürtzig     2018.02.14      Issue #510: Colour button icon shape changed from rectangle to circle.
- *      Kay Gürtzig     2018.06.28      Smaller element symbols for Search + Replace (###_mini_???.png)
- *      Kay Gürtzig     2018.07.17      Issue #561: New icon 055_sigma (sum symbol) added
- *      Kay Gürtzig     2018.09.18      Issue #601: More safety on icon request (dummy icon, log).
+ *      Kay Gürtzig     2016-07-06      Enh. #188: New icon 109_wand introduced for element conversion
+ *      Kay Gürtzig     2016-07-22      Enh. #199: New icon 110_help introduced for online user guide activation
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
+ *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
+ *      Kay Gürtzig     2016-09-05      Generic support for locale icons
+ *      Kay Gürtzig     2016-09-25      Enh. #253: New icon 025_import for import configuration
+ *      Kay Gürtzig     2016-10-13      Enh. #270: New icon 026_disable for inactive elements
+ *      Kay Gürtzig     2016-10-16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
+ *      Kay Gürtzig     2016-11-01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
+ *      Kay Gürtzig     2016-12-14      Enh. #305: New icon 029_index for the Arranger index 
+ *      Kay Gürtzig     2017-01-05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
+ *      Kay Gürtzig     2017-01-07      Enh. #319: New icon 030_function_green for Arranger index
+ *      Kay Gürtzig     2017-01-11      Enh. #81: New icon 051_scale_gui for scaling preset
+ *      Kay Gürtzig     2017-03-13      Enh. #372: New icons 065_paragraph through 067_commit for license editing
+ *      Kay Gürtzig     2017-03-23      Enh. #380: Icon 068 for the conversion of a sequence to a subroutine
+ *      Kay Gürtzig     2017-03-28      Enh. #387: Icon 069 for "Save All" added.
+ *      Kay Gürtzig     2017-04-29      Enh. #319/#389: New icon 070_program_green for Arranger index
+ *      Kay Gürtzig     2017-05-16      Enh. #389: New icons 071_include, 072_include_green
+ *      Kay Gürtzig     2017-06-13      Enh. #415: New icon 073_binoculars for Find & Replace dialog
+ *      Kay Gürtzig     2017-10-16      Enh. #439: New icons 080_pulldown and 084_pencil introduced
+ *      Kay Gürtzig     2017-12-06      Enh. #487: New icon 085_hide_decl for hiding declarations
+ *      Kay Gürtzig     2017-12-11      Enh. #425: New icons 114_down and 115_up for Translator
+ *      Kay Gürtzig     2018-01-04      New icon 092_SaveAs
+ *      Kay Gürtzig     2018-01-18      Issue #4: New icons 032_export, 086_properties, 087_code, 088_picture
+ *      Kay Gürtzig     2018-01-25      Issue #4: Enumerable icon fields converted into an array (ico011 --> getIcon(11))
+ *      Kay Gürtzig     2018-02-06      Issue #4: Extra factor in getIconImage() for e.g. Arranger icons
+ *      Kay Gürtzig     2018-02-09      Issue #4: Some icon renaming and reorganisation
+ *      Kay Gürtzig     2018-02-12      Issue #4: Distinct set of FOR loop icons (no longer = forever/while)
+ *      Kay Gürtzig     2018-02-14      Issue #510: Colour button icon shape changed from rectangle to circle.
+ *      Kay Gürtzig     2018-06-28      Smaller element symbols for Search + Replace (###_mini_???.png)
+ *      Kay Gürtzig     2018-07-17      Issue #561: New icon 055_sigma (sum symbol) added
+ *      Kay Gürtzig     2018-09-18      Issue #601: More safety on icon request (dummy icon, log).
+ *      Kay Gürtzig     2018-10-27      Enh. #619: New icon 056_wordwrap for line breaking menu item
+ *      Kay Gürtzig     2018-12-27      Enh. #657: New icons 089_keyboard, 090_layers for Arranger popup menu added
+ *      Kay Gürtzig     2019-01-01      Enh. #657: New icons 094_group through 098_groupDetach added
+ *      Kay Gürtzig     2019-01-03      Enh. #657: New icons 116_groupAttach, 117_groupExpand added
+ *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets
+ *      Kay Gürtzig     2019-01-12      Enh. #622/3: 119_rearrange added
  *
  ******************************************************************************************************
  *
@@ -151,7 +157,7 @@ public class IconLoader {
 			"053_elem_for.png",	// new
 			"054_tortoise.png",
 			"055_sigma.png",	//"055_jumpafter.png",	// obsolete (#510)
-			null,	//"056_jumpbefore.png",	// obsolete (#510)
+			"056_wordwrap.png",	//"056_jumpbefore.png",	// obsolete (#510)
 			"057_elem_inst.png",
 			"058_elem_call.png",
 			"059_elem_jump.png",
@@ -184,16 +190,16 @@ public class IconLoader {
 			"086_properties.png",
 			"087_code.png",		// or use "087_code1.png" alternatively
 			"088_picture.png",	// export / import
-			null,	//"089_paraAfter.png",	// obsolete (#510)
-			null,	//"090_paraBefore.png",	// obsolete (#510)
+			"089_keyboard.png",	//"089_paraAfter.png",	// obsolete (#510)
+			"090_layers.png",	//"090_paraBefore.png",	// obsolete (#510)
 			"091_elem_para.png",
 			"092_SaveAs.png",
 			"093_picture_export.png",	// for Arranger toolbar
-			null,	//"094_forBefore.png",		// obsolete (#510)
-			null,	//"095_for_dinBefore.png",	// obsolete (#510)
-			null,	//"096_forAfter.png",			// obsolete (#510)
-			null,	//"097_for_dinAfter.png",		// obsolete (#510)
-			null,	// 98
+			"094_group.png",	//ex "094_forBefore.png",		// obsolete (#510)
+			"095_groupList.png",	//ex "095_for_dinBefore.png",	// obsolete (#510)
+			"096_groupArchive.png",	//ex "096_forAfter.png",			// obsolete (#510)
+			"097_groupDissolve.png",	//"097_for_dinAfter.png",		// obsolete (#510)
+			"098_groupDetach.png",	// 98
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
 			"101_diagram_new.png",	// for Arranger toolbar and Arranger index
@@ -211,6 +217,13 @@ public class IconLoader {
 			"113_translator.png",
 			"114_down.png",	// for Translator Find dialog
 			"115_up.png",	// for Translator Find dialog
+			"116_groupAttach.png",
+			"117_groupExpand.png",
+			"118_info.png",
+			"119_rearrange.png",
+			"120_elem_try.png",	// introduced with enh. #56
+			"121_mini_try.png",	// introduced with enh. #56
+			"122_exit.png"		// Introduce with 3.29-13
 	};
 	
 	private static final int[] ICON_SIZES = {
@@ -464,7 +477,7 @@ public class IconLoader {
 				throw new Exception("Invalid icon number " + iconNo);
 			}
 			catch (Exception ex) {
-				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent", ex);
+				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent", ex);
 			}
 		}
 		if (icon == null) {
@@ -715,7 +728,7 @@ public class IconLoader {
 			ii = new ImageIcon(getURI(from + "icons/" + fileName));
 		}
 		catch (Exception ex) {
-			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsitent!", ex);
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent - no icon file \"" + fileName + "\"!", ex);
 			return getMissingIcon();
 		}
 		// END KGU#577 2018-09-17
@@ -892,6 +905,11 @@ public class IconLoader {
 	
 	public static ImageIcon generateIcon(Color _color)
 	{
+		return generateIcon(_color, 0);
+	}
+	
+	public static ImageIcon generateIcon(Color _color, int _insets)
+	{
 		int size = (int) (16*scaleFactor);
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
@@ -901,12 +919,12 @@ public class IconLoader {
 		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
 		graphics.setColor(Color.BLACK);
-		graphics.fillOval(0, 0, size, size);
+		graphics.fillOval(_insets, _insets, size - 2 * _insets, size - 2 * _insets);
 		// END KGU#493 2018-02-14
 		graphics.setColor(_color);
 		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
 		//graphics.fillRect(1,1,size-2,size-2);
-		graphics.fillOval(1, 1, size-2, size-2);
+		graphics.fillOval(_insets+1, _insets+1, size-2*(_insets+1), size-2*(_insets+1));
 		// END KGU#493 2018-02-14
 		// START KGU 2018-09-17 free resources no longer needed
 		graphics.dispose();

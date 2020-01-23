@@ -53,4 +53,4 @@ fi
 
 # actual start
 #echo "Your Java Version is $VERSION, all fine."
-java -jar $DIR/Structorizer.app/Contents/Java/Structorizer.jar "$@"
+java -jar "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" "$@"

@@ -33,37 +33,43 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2009.05.18      First Issue
- *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
- *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
- *      Kay Gürtzig     2016.03.06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
- *      Kay Gürtzig     2016.03.13      Enh. #124 (KGU#156): Runtime data collection generalised
- *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
- *      Kay Gürtzig     2016.03.18      KGU#89: Extended Language translation support
- *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
- *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
- *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
- *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
- *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
- *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
- *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
- *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
- *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
- *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
- *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
- *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
- *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
- *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
- *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
- *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
- *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
- *      Kay Gürtzig     2017.09.14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
- *      Kay Gürtzig     2017.10.08      Title String and further error message for enh. #423 introduced
- *      Kay Gürtzig     2017.10.11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
- *      Kay Gürtzig     2017.10.13      Enh. #437: Message box on failed interactive variable setting
- *      Kay Gürtzig     2017.10.14      Enh. #438: Execution can no longer be resumed with pending variable editing
- *      Kay Gürtzig     2017.10.16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
- *      Kay Gürtzig     2017.10.31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
+ *      Bob Fisch       2009-05-18      First Issue
+ *      Kay Gürtzig     2015-11-05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015-11-14      New controls to display the call level for enhancement #9 (KGU#2)
+ *      Kay Gürtzig     2016-03-06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
+ *      Kay Gürtzig     2016-03-13      Enh. #124 (KGU#156): Runtime data collection generalised
+ *      Kay Gürtzig     2016-03-17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
+ *      Kay Gürtzig     2016-03-18      KGU#89: Extended Language translation support
+ *      Kay Gürtzig     2016-03-25      Message translations now held in LangTextHolder instead of JLabel
+ *      Kay Gürtzig     2016-04-12      Enh. #137: additional toggle to direct input and output to a text window
+ *      Kay Gürtzig     2016-05-05      KGU#197: Further (forgotten) LangTextHolders added
+ *      Kay Gürtzig     2016-07-25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
+ *      Kay Gürtzig     2016-07-27      KGU#197: More LangTextHolders for Executor error messages
+ *      Kay Gürtzig     2016-08-03      KGU#89: Inheritance enhanced to improve language support (var table)
+ *      Kay Gürtzig     2016-10-05      Bugfix #260: Editing of 1st column in variable table disabled.
+ *      Kay Gürtzig     2016-10-07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
+ *      Kay Gürtzig     2016-10-08      Issue #264 variable display updates caused frequent silent exceptions on rendering
+ *      Kay Gürtzig     2016-11-01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2016-12-12      Issue #307: New error message msgForLoopManipulation
+ *      Kay Gürtzig     2016-12-29      KGU#317 (issues #267, #315) New message for multiple subroutines
+ *      Kay Gürtzig     2016-01-09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017-03-27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017-03-30      Enh. #388: Support for the display of constants
+ *      Kay Gürtzig     2017-04-12      Bugfix #391: Defective button control in step mode fixed.
+ *      Kay Gürtzig     2017-09-14      Enh. #423: New error messages msgInvalidComponent, msgTypeMismatch
+ *      Kay Gürtzig     2017-10-08      Title String and further error message for enh. #423 introduced
+ *      Kay Gürtzig     2017-10-11      Bugfix #435: Checkboxes didn't show selected state in rescaled GUI mode
+ *      Kay Gürtzig     2017-10-13      Enh. #437: Message box on failed interactive variable setting
+ *      Kay Gürtzig     2017-10-14      Enh. #438: Execution can no longer be resumed with pending variable editing
+ *      Kay Gürtzig     2017-10-16      Enh. #439: Opportunity to inspect/edit structured values via tabular editor.
+ *      Kay Gürtzig     2017-10-31      Enh. #439: Internal class ValueEditor outsourced as ValuePresenter
+ *      Kay Gürtzig     2018-12-03      Bugfix #641: Display of updated variable values forced
+ *      Kay Gürtzig     2018-12-16      Issue #644: New message msgInitializerAsArgument
+ *      Kay Gürtzig     2019-11-17      Enh. #739: New error message for defective enum type definitions
+ *      Kay Gürtzig     2019-11-21      Enh. #739: Mnemonic display and ComboBox editing for enumerator values
+ *                                      Editability check bug fixed in the table model fixed
+ *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
  *
  ******************************************************************************************************
  *
@@ -143,6 +149,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             if (value instanceof JButton) {
             	return (JButton)value;
             }
+            // START KGU#542 2019-11-21: Enh. #739 combobox for declared enumerator variables
+            else if (value instanceof JComboBox) {
+            	Object item = ((JComboBox<?>)value).getSelectedItem();
+            	if (item instanceof String) {
+            		setText((String)item);
+            	}
+            	return this;
+            }
+            // END KGU#542 2019-11-21
             // END KGU#443 2017-10-16
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             DefaultTableModel model = (DefaultTableModel) table.getModel();
@@ -354,12 +369,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             @Override
             public boolean isCellEditable(int row, int column){
             	// START KGU#443 2017-10-31: Enh. #439
-                //return (column>=1);  
+            	//return (column>=1);  
             	if (column == 1) {
             		return true;	// Pulldown button always enabled if there is one
             	}
             	else if (column > 1) {
-            		String name = (String)this.getValueAt(row, column);
+            		String name = (String)this.getValueAt(row, 0);
             		return !Executor.getInstance().isConstant(name);
             	}
             	return false;
@@ -372,6 +387,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         tblVar.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblVar.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblVar.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
+        // START KGU#542 2019-11-21: Enh. #739 - There may be comboboxes for enumerator variables
+        tblVar.getColumnModel().getColumn(2).setCellEditor(new EnumeratorCellEditor());
+        // END KGU#542 2019-11-21
         tblVar.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         // END KGU#443 2017-10-16
         jScrollPane1.setViewportView(tblVar);
@@ -604,6 +622,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         chkCollectRuntimeData.setEnabled(true);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
+        // START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+        if (activeEnumEditor != null) {
+            activeEnumEditor.stopCellEditing();
+            activeEnumEditor = null;
+        }
+        // END KGU#542 2019-11-25
         this.setVisible(false);
     }
 
@@ -767,7 +791,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#210 2016-07-25
     // END KGU#159 2016-03-17
-    
+
 	// START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
 	private void btnPullDownActionPerformed(java.awt.event.ActionEvent evt)
 	{
@@ -850,44 +874,58 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
             //tm.setValueAt(vars.get(i).get(0), i, 0);
             //tm.setValueAt(vars.get(i).get(1), i, 1);
-            JButton pulldown = null;
-            String name = vars.get(i)[0];
-            String value = vars.get(i)[1];
-            if (value.endsWith("}")) {
-            	pulldown = new JButton();
-            	pulldown.setName(name);
-            	pulldown.setIcon(pulldownIcon);
-            	pulldown.addActionListener(this.pulldownActionListener);
+            Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
+            for (int j = 0; j < rowData.length; j++) {
+                tm.setValueAt(rowData[j], i, j);
             }
-            tm.setValueAt(name, i, 0);
-            tm.setValueAt(pulldown, i, 1);
-            tm.setValueAt(value, i, 2);
             // END KGU#443 2017-10-16
         }
         // Add additional rows
         for (int i = nRows; i < vars.size(); i++) {
             // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
             //tm.addRow(vars.get(i));
-            JButton pulldown = null;
-            String name = vars.get(i)[0];
-            String value = vars.get(i)[1];
-            if (value.endsWith("}")) {
-            	pulldown = new JButton();
-            	pulldown.setName(name);
-            	pulldown.setIcon(pulldownIcon);
-            	pulldown.addActionListener(this.pulldownActionListener);
-            }
-            Object[] rowData = {name, pulldown, value};
-            tm.addRow(rowData);
+            tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
             // END KGU#443 2017-10-16
         }
         // END KGU#274 2016-10-08
         // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
         if (vars.size() > 0) {
-            ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            try {
+                ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            }
+            catch (ArrayIndexOutOfBoundsException ex) {
+                // Just ignore it - it is caused by races.
+            }
         }
         // END KGU#443 2017-10-16
+        // START KGU#608 2018-12-03: Bugfix #641 - Sometimes the table didn't show the updated content 
+        tblVar.repaint();
+        // ENDKGU#608 2018-12-03
     }
+
+	/**
+	 * @param varEntry - String array containing the variable name and a value string
+	 * @param pulldownIcon - the icon to be used for a pull-down button
+	 * @return an Object array representing teh prepared row for the variable display
+	 */
+	private Object[] makeVarListRow(String[] varEntry, ImageIcon pulldownIcon) {
+		JButton pulldown = null;
+		String name = varEntry[0];
+		Object value = varEntry[1];
+		if (varEntry[1].endsWith("}")) {
+			pulldown = new JButton();
+			pulldown.setName(name);
+			pulldown.setIcon(pulldownIcon);
+			pulldown.addActionListener(this.pulldownActionListener);
+		}
+		else if (Executor.getInstance().isEnumerator(name) && !Executor.getInstance().isConstant(name)) {
+			StringList enumNames = Executor.getInstance().getEnumeratorValuesFor(name);
+			JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
+			cbEnum.setSelectedIndex(enumNames.indexOf(varEntry[1]));
+			value = cbEnum;
+		}
+		return new Object[]{name, pulldown, value};
+	}
 
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
     public void updateCallLevel(int level)
@@ -927,6 +965,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     /** Normative visibility for play and step button (to be restored when cell editor is released) */
     private boolean startButtonsEnabled = true;
     // END KGU#442 2017-10-14
+    // START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    private AbstractCellEditor activeEnumEditor = null;
+    // END KGU#542 2019-11-25
     // START KGU#443 2017-10-16: Enh. #439
     private AbstractCellEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
@@ -955,8 +996,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
     		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
- // START KGU#376 2017-04-11: Enh. #389
-    // END KGU#376 2017-04-11
     public final LangTextHolder msgNoInclDiagram = 
     		new LangTextHolder("An includable diagram \"%\" could not be found!\nConsider starting the Arranger and place the needed diagram there first.");
  // // START KGU#317 2016-12-29
@@ -1026,6 +1065,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgIndexOutOfBounds =
     		new LangTextHolder("Index «%1» (%2) is out of bounds for array «%3»!");
     // END KGU#510 2018-03-10
+    // START KGU#615 2018-12-16: Bugfix #644 - More instructive error explanation for inappropriate initializer use
+    public final LangTextHolder msgInitializerAsArgument =
+    		new LangTextHolder("You may not pass an array initializer directly as argument to a built-in function.\nAssign the array to a variable first.");
+    // END KGU#615 2018-12-16
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");
@@ -1066,8 +1109,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#448 2017-10-28
     // START KGU#569 2018-08-09: New messages for issue #577
     public static final LangTextHolder msgGUISyncFault = new LangTextHolder("Possible GUI synchronisation fault on executing «%».\nTry to resume execution?");
-    
-    // END KGU#5689 2018-08-09
+    // END KGU#569 2018-08-09
+	// START KGU#686 2019-03-17: Enh. #56 Try-Catch element and throw flavour of Jump introduced
+	public static final LangTextHolder msgErrorInSubroutine = new LangTextHolder("Caught error on executing «%1» at level %2:\n\t%3!");
+	public static final LangTextHolder msgThrown = new LangTextHolder("Exception thrown in «%1» at level %2: %3");
+	// END KGU#686 2019-03-17
+	// START KGU#452 2019-11-17: Enh. #739
+	public static final LangTextHolder msgInvalidEnumDefinition = new LangTextHolder("Invalid enumeration type definition «%»!");
+	// END KGU#452 2019-11-17
+
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
@@ -1087,6 +1137,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			if (cellEditor instanceof PulldownButtonCellEditor) {
     				activeBtnEditor = (PulldownButtonCellEditor)cellEditor;
     			}
+    			// START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    			else if (cellEditor instanceof EnumeratorCellEditor) {
+    				activeEnumEditor = (EnumeratorCellEditor)cellEditor;
+    			}
+    			// END KGU#542 2019-11-25p
     			btnPlay.setEnabled(false);
     			btnStep.setEnabled(false);
     			if (startButtonsEnabled) {
@@ -1104,6 +1159,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     			// END KGU#443 2017-10-16
     			if (val != null)
     			{
+    				// START KGU#542 2019-11-21: Enh. #739 - support enumerator variables
+    				if (val instanceof JComboBox) {
+    					val = ((JComboBox<?>)val).getSelectedItem();
+    					// START KGU#542 2019-11-25: Enh. #739 - We must ensure clean cell editor status on stop
+    					activeEnumEditor = null;
+    					// END KGU#542 2019-11-25p
+    				}
+    				// END KGU#542 2019-11-21
     				varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
     				//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
     			}

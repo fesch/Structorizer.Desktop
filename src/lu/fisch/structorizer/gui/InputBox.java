@@ -198,10 +198,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         
         // START KGU#428 2017-10-06: Enh. #430
         if (FONT_SIZE > 0) {
-        	for (JComponent comp: scalableComponents) {
-            	Font font = comp.getFont();
-            	comp.setFont(font.deriveFont(FONT_SIZE));
-        	}
+            for (JComponent comp: scalableComponents) {
+                Font font = comp.getFont();
+                comp.setFont(font.deriveFont(FONT_SIZE));
+            }
         }
         // END KGU#428 2017-10-06
  
@@ -210,7 +210,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         GridBagConstraints gbcPanel1 = new GridBagConstraints();
         gbcPanel1.insets = new Insets(border, border, 0, border);
         pnPanel1.setLayout(gbPanel1);
-            // END KGU#3 2015-10-24
+        // END KGU#3 2015-10-24
         
         gbcPanel1.gridx = 1;
         gbcPanel1.gridy = 2;
@@ -450,7 +450,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         }
         // START KGU#294 2016-11-21: Issue #284 - Opportunity to modify JTextField font size
         else if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
-        	fontControl(e.getKeyCode() == KeyEvent.VK_ADD);
+            fontControl(e.getKeyCode() == KeyEvent.VK_ADD);
         }
         // END KGU#294 2016-11-21
     }

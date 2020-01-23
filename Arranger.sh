@@ -18,6 +18,7 @@ set -e
 #      Simon Sobisch                 2018.06.03    Check for jar, tweaked version checks
 #      Bob Fisch                     2018.09.05    get correct dir if symlinked
 #      Kay Gürtzig                   2018.09.19    Bugfix #604: Condition in jar test (line 31) corrected (#586)
+#      Kay Gürtzig                   2018.11.27    Precaution against installation path with blanks
 #
 ################################################################################
 
@@ -53,4 +54,4 @@ fi
 
 # actual start
 #echo "Your Java Version is $VERSION, all fine."
-java -cp $DIR/Structorizer.app/Contents/Java/Structorizer.jar lu.fisch.structorizer.arranger.Arranger
+java -cp "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" lu.fisch.structorizer.arranger.Arranger

@@ -49,7 +49,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
  *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
  *      Kay Gürtzig     2017.05.22      Enh. #372: New attribute "origin" added.
- *      Kay Gürtuig     2017.06.30      Enh. #389: New attribute "includeList" added.
+ *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList" added.
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Method generateCode(Try, String) implemented.
+ *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
  *
  ******************************************************************************************************
  *
@@ -70,6 +72,7 @@ import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -142,8 +145,31 @@ public class XmlGenerator extends Generator
 	}
 	// END KGU#351 2017-02-26
 
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// Just leave all as is...
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
 	/************ Code Generation **************/
-    
+	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
@@ -175,9 +201,9 @@ public class XmlGenerator extends Generator
 //	}
 	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
-    
-    
-    @Override
+
+
+	@Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
 		String r = "0";
@@ -188,13 +214,13 @@ public class XmlGenerator extends Generator
 												(_inst.disabled ? "1" : "0") + "\"></instruction>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Alternative _alt, String _indent)
 	{
 		code.add(_indent+"<alternative text=\""+BString.encodeToHtml(_alt.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_alt.getComment().getCommaText())+"\" color=\""+
 				 _alt.getHexColor()+"\" disabled=\""+ (_alt.disabled ? "1" : "0") + "\">");
-    	// START KGU 2016-12-21: Bugfix #317
+		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qTrue>");
 		//generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qTrue>");
@@ -203,11 +229,11 @@ public class XmlGenerator extends Generator
 		//code.add(_indent+this.getIndent()+"</qFalse>");
 		generateCode(_alt.qTrue, _indent+this.getIndent(), "qTrue");
 		generateCode(_alt.qFalse, _indent+this.getIndent(), "qFalse");
-	    // END KGU 2016-12-21
+		// END KGU 2016-12-21
 		code.add(_indent+"</alternative>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
 		code.add(_indent+"<case text=\""+BString.encodeToHtml(_case.getText().getCommaText())+"\" comment=\""+
@@ -215,82 +241,82 @@ public class XmlGenerator extends Generator
 				 _case.getHexColor()+"\" disabled=\""+ (_case.disabled ? "1" : "0") + "\">");
 		for(int i=0;i<_case.qs.size();i++)
 		{
-	    	// START KGU 2016-12-21: Bugfix #317
+			// START KGU 2016-12-21: Bugfix #317
 			//code.add(_indent+this.getIndent()+"<qCase>");
 			//generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
 			//code.add(_indent+this.getIndent()+"</qCase>");
 			generateCode(_case.qs.get(i), _indent+this.getIndent(), "qCase");
-		    // END KGU 2016-12-21
+			// END KGU 2016-12-21
 		}
 		code.add(_indent+"</case>");
 	}
 
-    @Override
-    	protected void generateCode(Parallel _para, String _indent)
+	@Override
+	protected void generateCode(Parallel _para, String _indent)
 	{
 		code.add(_indent+"<parallel text=\""+BString.encodeToHtml(_para.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_para.getComment().getCommaText())+"\" color=\""+
 				 _para.getHexColor()+"\">");
 		for(int i=0;i<_para.qs.size();i++)
 		{
-	    	// START KGU 2016-12-21: Bugfix #317
+			// START KGU 2016-12-21: Bugfix #317
 			//code.add(_indent+this.getIndent()+"<qPara>");
 			//generateCode((Subqueue) _para.qs.get(i),_indent+this.getIndent()+this.getIndent());
 			//code.add(_indent+this.getIndent()+"</qPara>");
 			generateCode(_para.qs.get(i), _indent+this.getIndent(), "qPara");
-		    // END KGU 2016-12-21
+			// END KGU 2016-12-21
 		}
 		code.add(_indent+"</parallel>");
 	}
 
-    @Override
+	@Override
 	protected void generateCode(For _for, String _indent)
 	{
-    	// START KGU#118 2015-12-31: Bugfix 82: "free-style" FOR loops used to obstruct saving
-    	// We need some pre-processing to enhance robustness: If some of the specific fields
-    	// cannot be retrieved then just omit them, they aren't strictly needed on loading.
-    	String[] specificInfo = _for.splitForClause();
-    	// START KGU#268 2016-10-04: Bugfix #258: The approach above turned out to be too simple
-    	// The split clause is good as a basis but if the FOR loop style was identified then the
-    	// specifically stored information might be better suited (particularly if e.g. parser
-    	// keywords have been changed in the meantime. So override the split result if more precise
-    	// data is available...
-    	String info = _for.getCounterVar();
-    	if (info != null && !info.isEmpty())
-    	{
-    		specificInfo[0] = info;
-    	}
-    	if (_for.style == For.ForLoopStyle.COUNTER)
-    	{
-        	if ((info = _for.getStartValue()) != null && !info.isEmpty())
-        	{
-        		specificInfo[1] = info;
-        	}
-        	if ((info = _for.getEndValue()) != null && !info.isEmpty())
-        	{
-        		specificInfo[2] = info;
-        	}
-       		specificInfo[3] = Integer.toString(_for.getStepConst());
-    	}
-    	// END KGU#268 2016-10-04
-    	String specificAttributes = "";
-    	for (int i = 0; i < forLoopAttributes.length; i++)
-    	{
-    		if (specificInfo[i] != null)
-    		{
-    			specificAttributes += "\" " + forLoopAttributes[i] + "=\"" + BString.encodeToHtml(specificInfo[i]);
-    		}
-    	}
-    	code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
-    			"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
-    			specificAttributes +
-    			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
-    			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
-    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(CodeParser.getKeyword("postForIn"))) : "") +
-    			"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
-    			(_for.disabled ? "1" : "0") + "\">");
-    	// END KGU#118 2015-12-31
-    	// START KGU 2016-12-21: Bugfix #317
+		// START KGU#118 2015-12-31: Bugfix 82: "free-style" FOR loops used to obstruct saving
+		// We need some pre-processing to enhance robustness: If some of the specific fields
+		// cannot be retrieved then just omit them, they aren't strictly needed on loading.
+		String[] specificInfo = _for.splitForClause();
+		// START KGU#268 2016-10-04: Bugfix #258: The approach above turned out to be too simple
+		// The split clause is good as a basis but if the FOR loop style was identified then the
+		// specifically stored information might be better suited (particularly if e.g. parser
+		// keywords have been changed in the meantime. So override the split result if more precise
+		// data is available...
+		String info = _for.getCounterVar();
+		if (info != null && !info.isEmpty())
+		{
+			specificInfo[0] = info;
+		}
+		if (_for.style == For.ForLoopStyle.COUNTER)
+		{
+			if ((info = _for.getStartValue()) != null && !info.isEmpty())
+			{
+				specificInfo[1] = info;
+			}
+			if ((info = _for.getEndValue()) != null && !info.isEmpty())
+			{
+				specificInfo[2] = info;
+			}
+			specificInfo[3] = Integer.toString(_for.getStepConst());
+		}
+		// END KGU#268 2016-10-04
+		String specificAttributes = "";
+		for (int i = 0; i < forLoopAttributes.length; i++)
+		{
+			if (specificInfo[i] != null)
+			{
+				specificAttributes += "\" " + forLoopAttributes[i] + "=\"" + BString.encodeToHtml(specificInfo[i]);
+			}
+		}
+		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
+				specificAttributes +
+				"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
+				// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
+				(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(CodeParser.getKeyword("postForIn"))) : "") +
+				"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
+				(_for.disabled ? "1" : "0") + "\">");
+		// END KGU#118 2015-12-31
+		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qFor>");
 		//generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qFor>");
@@ -299,52 +325,52 @@ public class XmlGenerator extends Generator
 		code.add(_indent+"</for>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(While _while, String _indent)
 	{
 		code.add(_indent+"<while text=\""+BString.encodeToHtml(_while.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_while.getComment().getCommaText())+"\" color=\""+
 				 _while.getHexColor()+"\" disabled=\""+(_while.disabled ? "1" : "0") + "\">");
-    	// START KGU 2016-12-21: Bugfix #317
+		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qWhile>");
 		//generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qWhile>");
 		generateCode(_while.q, _indent+this.getIndent(), "qWhile");
-	    // END KGU 2016-12-21
+		// END KGU 2016-12-21
 		code.add(_indent+"</while>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		code.add(_indent+"<repeat text=\""+BString.encodeToHtml(_repeat.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_repeat.getComment().getCommaText())+"\" color=\""+
 				 _repeat.getHexColor()+"\" disabled=\""+ (_repeat.disabled ? "1" : "0") + "\">");
-    	// START KGU 2016-12-21: Bugfix #317
+		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qRepeat>");
 		//generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qRepeat>");
 		generateCode(_repeat.q, _indent+this.getIndent(), "qRepeat");
-	    // END KGU 2016-12-21
+		// END KGU 2016-12-21
 		code.add(_indent+"</repeat>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		code.add(_indent+"<forever text=\""+BString.encodeToHtml(_forever.getText().getCommaText())+"\" comment=\""+
+		code.add(_indent+"<forever comment=\""+
 				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
 				 _forever.getHexColor()+"\" disabled=\""+(_forever.disabled ? "1" : "0") + "\">");
-    	// START KGU 2016-12-21: Bugfix #317
+		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qForever>");
 		//generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qForever>");
 		generateCode(_forever.q, _indent+this.getIndent(), "qForever");
-	    // END KGU 2016-12-21
+		// END KGU 2016-12-21
 		code.add(_indent+"</forever>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Call _call, String _indent)
 	{
 		code.add(_indent+"<call text=\""+BString.encodeToHtml(_call.getText().getCommaText())+"\" comment=\""+
@@ -352,7 +378,7 @@ public class XmlGenerator extends Generator
 				 _call.getHexColor()+"\" disabled=\""+(_call.disabled ? "1" : "0") + "\"></call>");
 	}
 	
-    @Override
+	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
 		code.add(_indent+"<jump text=\""+BString.encodeToHtml(_jump.getText().getCommaText())+"\" comment=\""+
@@ -360,6 +386,20 @@ public class XmlGenerator extends Generator
 				 _jump.getHexColor()+"\" disabled=\""+(_jump.disabled ? "1" : "0") + "\"></jump>");
 	}
 	
+	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+		code.add(_indent+"<try text=\""+BString.encodeToHtml(_try.getText().getCommaText())+"\" comment=\""+
+				 BString.encodeToHtml(_try.getComment().getCommaText())+"\" color=\""+
+				 _try.getHexColor()+"\" disabled=\""+(_try.disabled ? "1" : "0") + "\">");
+		generateCode(_try.qTry, _indent + this.getIndent(), "qTry");
+		generateCode(_try.qCatch, _indent + this.getIndent(), "qCatch");
+		generateCode(_try.qFinally, _indent + this.getIndent(), "qFinally");
+		code.add(_indent+"</try>");
+	}
+	// END KGU#686 2019-03-17
+
 	// START KGU 2016-12-21: Bugfix #315 - preserve the element colour of empty subqueues
 	protected void generateCode(Subqueue _subqueue, String _indent, String tagName)
 	{
@@ -368,16 +408,16 @@ public class XmlGenerator extends Generator
 			colorAttr = " color=\""+_subqueue.getHexColor() + "\"";
 		}
 		code.add(_indent+"<" + tagName + colorAttr + ">");
-    	generateCode(_subqueue, _indent + this.getIndent());
+		generateCode(_subqueue, _indent + this.getIndent());
 		code.add(_indent+"</" + tagName + ">");
 	}
-    // END KGU 2016-12-21
+	// END KGU 2016-12-21
 	
     @Override
 	public String generateCode(Root _root, String _indent)
 	{
  		String pr = _root.isProgram() ? "program" : "sub";
- 	   	// START KGU#376 2017-05-16: Enh. #389
+ 		// START KGU#376 2017-05-16: Enh. #389
  		if (_root.isInclude()) {
  			pr = "includable";
  		}
@@ -478,48 +518,49 @@ public class XmlGenerator extends Generator
 		return code.getText();
 	}
 
-	private String loadLicenseText(String licName) {
-		String error = null;
-		String content = "";
-		File licDir = Ini.getIniDirectory();
-		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
-		File[] licFiles = licDir.listFiles(new LicFilter());
-		File licFile = null; 
-		for (int i = 0; licFile == null && i < licFiles.length; i++) {
-			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
-				licFile = licFiles[i];
-			}		
-		}
-		BufferedReader br = null;
-		try {
-			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
-			br = new BufferedReader(isr);
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				content += line + '\n';
-			};
-		} catch (UnsupportedEncodingException e) {
-			error = e.getMessage();
-		} catch (FileNotFoundException e) {
-			error = e.getMessage();
-		} catch (IOException e) {
-			error = e.getMessage();
-		}
-		if (br != null) {
-			try {
-				br.close();
-			} catch (IOException e) {
-				error = e.getMessage();
-			}
-		}
-		if (error != null) {
-			getLogger().log(Level.WARNING, "{0}", error);
-		}
-		if (content.trim().isEmpty()) {
-			content = null;
-		}
-		return content;	
-	}
+// START KGU#763 2019-11-13: Bugfix #778 - moved to class Generator
+//	private String loadLicenseText(String licName) {
+//		String error = null;
+//		String content = "";
+//		File licDir = Ini.getIniDirectory();
+//		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+//		File[] licFiles = licDir.listFiles(new LicFilter());
+//		File licFile = null; 
+//		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+//			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+//				licFile = licFiles[i];
+//			}		
+//		}
+//		BufferedReader br = null;
+//		try {
+//			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+//			br = new BufferedReader(isr);
+//			String line = null;
+//			while ((line = br.readLine()) != null) {
+//				content += line + '\n';
+//			};
+//		} catch (UnsupportedEncodingException e) {
+//			error = e.getMessage();
+//		} catch (FileNotFoundException e) {
+//			error = e.getMessage();
+//		} catch (IOException e) {
+//			error = e.getMessage();
+//		}
+//		if (br != null) {
+//			try {
+//				br.close();
+//			} catch (IOException e) {
+//				error = e.getMessage();
+//			}
+//		}
+//		if (error != null) {
+//			getLogger().log(Level.WARNING, "{0}", error);
+//		}
+//		if (content.trim().isEmpty()) {
+//			content = null;
+//		}
+//		return content;	
+//	}
 
 //	@Override - obsolete since 3.27
 //	public String[] getReservedWords() {
@@ -532,6 +573,6 @@ public class XmlGenerator extends Generator
 //		// Auto-generated method stub
 //		return false;
 //	}
-	
+// END KGU#763 2019-11-13
 
 }

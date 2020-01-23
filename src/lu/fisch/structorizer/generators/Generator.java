@@ -32,78 +32,104 @@ package lu.fisch.structorizer.generators;
  *
  *      Author          Date			Description
  *      ------          ----			-----------
- *      Bob Fisch       2007.12.27		First Issue
- *      Bob Fisch       2008.04.12		Plugin Interface
- *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
- *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
- *      Kay Gürtzig     2015.11.01		transform methods re-organised (KGU#18/KGU23) using subclassing
- *      Kay Gürtzig     2015.11.30		General pre-processing for generateCode(Root, String) (KGU#47)
- *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
- *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
+ *      Bob Fisch       2007-12-27		First Issue
+ *      Bob Fisch       2008-04-12		Plugin Interface
+ *      Kay Gürtzig     2014-11-16		comment generation revised (see comment below)
+ *      Kay Gürtzig     2015-10-18		File name proposal in exportCode(Root, File, Frame) delegated to Root
+ *      Kay Gürtzig     2015-11-01		transform methods re-organised (KGU#18/KGU23) using subclassing
+ *      Kay Gürtzig     2015-11-30		General pre-processing for generateCode(Root, String) (KGU#47)
+ *      Bob Fisch       2015-12-10		Bugfix #51: when input identifier is alone, it was not converted
+ *      Kay Gürtzig     2015-12-18		Enh #66, #67: New export options
  *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
- *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
+ *      Kay Gürtzig     2015-12-22		Slight performance improvement in transform()
  *      Kay Gürtzig     2016-01-16      KGU#141: New generic method lValueToTypeNameIndex introduced for Issue #112
  *      Kay Gürtzig     2016-03-22      KGU#61/KGU#129: varNames now basic field for all subclasses
  *      Kay Gürtzig     2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig     2016-04-01      Enh. #110 - export file filter now pre-selected
  *      Kay Gürtzig     2016-04-04      Issues #149, #151 - Configurable charset / useless ExportOptionDialogs
  *      Kay Gürtzig     2016-04-28      Draft for enh. #179 - batch mode (KGU#187)
- *      Kay Gürtzig     2016.04.29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
- *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposal slightly modified (KGU#205)
- *      Kay Gürtzig     2016.07.20      Enh. #160: Support for export of involved subroutines (KGU#178)
+ *      Kay Gürtzig     2016-04-29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
+ *      Kay Gürtzig     2016-07-19      Enh. #192: File name proposal slightly modified (KGU#205)
+ *      Kay Gürtzig     2016-07-20      Enh. #160: Support for export of involved subroutines (KGU#178)
  *      Kay Gürtzig     2016-08-10      Issue #227: information gathering pass introduced to control optional
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
- *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.kewordMap refactoring done
- *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
- *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
- *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
- *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
- *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
- *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
- *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
- *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
- *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
- *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers
- *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
- *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
- *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
- *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
- *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
- *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
- *      Kay Gürtzig     2017.05.16      Enh. #372: New method insertCopyright()
- *      Kay Gürtzig     2017.09.20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
- *      Kay Gürtzig     2017.09.20      Enh. #388/#423: comment mapping for declarations introduced
- *      Kay Gürtzig     2017.09.26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
- *      Kay Gürtzig     2018.02.22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
- *      Kay Gürtzig     2018.03.13      Modifications for bugfix #521, transformOutput() revised
+ *      Kay Gürtzig     2016-09-25      Enh. #253: CodeParser.kewordMap refactoring done
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016-10-15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
+ *      Kay Gürtzig     2016-10-16      Bugfix #275: Defective subroutine registration for topological sort mended
+ *      Kay Gürtzig     2016-12-01      Bugfix #301: New method boolean isParenthesized(String)
+ *      Kay Gürtzig     2016-12-22      Enh. #314: Support for Structorizer File API, improvements for #227
+ *      Kay Gürtzig     2017-01-20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
+ *      Kay Gürtzig     2017-01-26      Enh. #259: Type info is now gathered for declarations support
+ *      Kay Gürtzig     2017-01-30      Bugfix #337: Mutilation of lvalues with nested index access
+ *      Kay Gürtzig     2017-02-19      KGU#348: Additions to support PythonGenerator in generating Parallel code
+ *      Kay Gürtzig     2017-02-20      Bugfix #349: Export missed to generate recursive subroutines and their callers
+ *      Kay Gürtzig     2017-02-26      Enh. #346 (mechanism to add user-configured file includes) 
+ *      Kay Gürtzig     2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig     2017-03-05      Issue #365: Support for posterior insertion of global definitions
+ *      Kay Gürtzig     2017-03-10      Issue #368: New method getExportCharset
+ *      Kay Gürtzig     2017-04-14      Bugfix #394: Jump map generation revised
+ *      Kay Gürtzig     2017-04-18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
+ *      Kay Gürtzig     2017-04-26      Signature of method exportCode() modified to return the used directory
+ *      Kay Gürtzig     2017-05-16      Enh. #372: New method insertCopyright()
+ *      Kay Gürtzig     2017-09-20      Enh. #389: Mechanism for include retrieval (analogous to #160 for subroutines)
+ *      Kay Gürtzig     2017-09-20      Enh. #388/#423: comment mapping for declarations introduced
+ *      Kay Gürtzig     2017-09-26      Enh. #389/#423: Supporting code parts from PasGenerator adopted
+ *      Kay Gürtzig     2018-02-22      Bugfix #517: Infrastructure for correct handling of decl./init. from includables
+ *      Kay Gürtzig     2018-03-13      Modifications for bugfix #521, transformOutput() revised
+ *      Kay Gürtzig     2018-10-30      New field generatorIncludes and method insertGeneratorIncludes() to
+ *                                      avoid duplicate include/import/using entries system <-> user 
+ *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig     2019-02-16      Enh. #681: method exportCode() now returns null if export was cancelled.
+ *      Kay Gürtzig     2019-03-13      Enh. #696: All references to Arranger replaced by routinePool,
+ *                                      subroutine retrieval enabled in the batch version of exportCode
+ *      Kay Gürtzig     2019-03-17      Enh. #56: Basic method generateCode(Try, String) added.
+ *      Kay Gürtzig     2019-03-21      Issue #706: A newline symbol was to be appended to the last text file line
+ *      Kay Gürtzig     2019-03-21      Issue #707: Modifications to the file name proposal (see comment)
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
+ *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation
+ *      Kay Gürtzig     2019-10-04      Enh. #738: Code preview accomplished and released.
+ *      Kay Gürtzig     2019-10-06      Bugfix #761: Duplicated code lines in generateCode(Root,String) caused
+ *                                      wrong Root line range in the codeMap (and consecutive errors)
+ *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
+ *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
+ *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
+ *      Kay Gürtzig     2019-12-11      Bugfix #794: Code preview crash with unconfigured license preference
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      2016.12.22 - Enhancement #314: Structorizer file API support.
+ *      2019-03-21 - Issue #707 (elemhsb / Kay Gürtzig)
+ *      - It was requested that the proposed export file name should primarily follow the nsd file name if
+ *        that has already existed.
+ *      - For Python export in particular there shouldn't be hyphens in the file name. So if the user decides
+ *        to export a subroutine diagram to some language with file name peculiarities, the inheriting generator
+ *        now gets a chance to intervene (i.e. to modify the file name proposal).
+ *      2016-12-22 - Enhancement #314: Structorizer file API support.
  *      - This is in the most cases done by copying a set of implementing functions for the target language
  *        into the resulting file. Generator provides two methods insertFileAPI() for this purpose.
  *      - Generator supports this by an extended information scanning to decide whether the file API is used.
- *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
+ *      2016-10-15 - Enhancement #271: Input instruction with integrated prompt string
  *      - For input instructions with prompt string (enh. #271), different inputReplacer patterns are needed
  *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
  *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
  *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
  *      	
- *      2016.07.20 - Enhancement #160 - option to include called subroutines
+ *      2016-07-20 - Enhancement #160 - option to include called subroutines
  *      - there is no sufficient way to export a called subroutine when its call is generated, because
  *        duplicate exports must be avoided and usually a topological sorting is necessary.
  *        For a topologically sorted duplication-free export, however, all called subroutines must be known
  *        in advance. Therefore, we must analyse the subroutines as well in advance 
  *      	
- *      2015.11.30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
+ *      2015-11-30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
- *      - parameter names and types as well as function name and type are preprocessed
- *      - result mechanisms are also analysed
+ *      - parameter names and types as well as function name and type are pre-processed
+ *      - result mechanisms are also analysed.
  *
- *      2014.11.16 - Enhancement
+ *      2014-11-16 - Enhancement
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
  *      
@@ -113,6 +139,7 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -129,6 +156,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -138,7 +167,7 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -153,6 +182,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Control;
@@ -160,6 +190,7 @@ import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.BTextfile;
@@ -168,6 +199,45 @@ import lu.fisch.utils.StringList;
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
+	// START KGU#371 2019-03-07: Enh. #385 - Support for default subroutine arguments
+	/**
+	 * Classifies a language w.r.t. the capability of overloading subroutine signatures. There are
+	 * three levels distinguished here:
+	 * <ul>
+	 * <li>{@link #OL_NO_OVERLOADING}: No overloading allowed, subroutines may not share the same
+	 * name, not even if their argument lists differ in length.</li>
+	 * <li>{@link #OL_DELEGATION}: Overloading is legitimate but default arguments can only be
+	 * achieved by delegating the call to another subroutine with more arguments.</li>
+	 * <li>{@link #OL_DEFAULT_ARGUMENTS}: Overloading and default arguments are available, such
+	 * that a single definition may declare several signatures.</li>
+	 * </ul>
+	 * Note: In programming languages overloading usually also means distinction by argument types.
+	 * Since declarations of variables aren't mandatory in Structorizer, tyoe inference is weak and
+	 * vague at most. So it isn't actually possible to distinguish parameter lists by argument types
+	 * in Structorizer. Hence executable diagrams won't make use of it. So, export should be
+	 * relatively safe.
+	 * @author Kay Gürtzig
+	 */
+	public enum OverloadingLevel {OL_NO_OVERLOADING, OL_DELEGATION, OL_DEFAULT_ARGUMENTS};
+	// END KGU#371 2019-03-07
+	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Type represents possible levels of exception support, i.e. whether or not
+	 * and which parts of a try-catch-finally block are supported.(It is assumed
+	 * that a {@code throw} mechanism is available if try/catch is supported.)
+	 * <ul>
+	 * <li>{@link #TC_NO_TRY} means no {@code try/catch/throw} at all;</li>
+	 * <li>{@link #TC_TRY_CATCH} means {@code try/catch} and {@code throw} but no {@code finally} clause.</li>
+	 * <li>{@link #TC_TRY_CATCH_FINALLY} means full exception support, {@code finally} included.</li>
+	 * </ul>
+	 * @see #getTryCatchLevel()
+	 * @author Kay Gürtzig
+	 */
+	public enum TryCatchSupportLevel {TC_NO_TRY, TC_TRY_CATCH, TC_TRY_CATCH_FINALLY};
+	// END KGU#686 2019-03-18
+
+	
 	/************ Fields ***********************/
 	// START KGU#484 2018-03-22: Issue #463
 	private Logger logger = null;
@@ -191,6 +261,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#395 2017-05-11: Enh. #357 - generator-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
 	// END KGU#395 2017-05-11
+	// START KGU#676 2019-03-13: Enh. #696 Explicit routine pool instead of direct Arranger access
+	protected IRoutinePool routinePool = null;
+	// END KGU#676 2019-03-13
 
 	protected StringList code = new StringList();
 	
@@ -214,7 +287,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#74 2015-11-29
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
 	/** Recursive usage map of called subroutines */
-	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #766 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Line number where to insert subroutine definitions */
 	protected int subroutineInsertionLine = 0;
 	/** Indentation level (string) for subroutine definitions to be inserted */
@@ -226,7 +302,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#178 2016-07-19
 	// START KGU#376 2017-09-20: Enh. #389
 	/** Recursive usage map of diagram includes */
-	protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #766 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> includeMap = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
 	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
@@ -235,7 +314,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Maps diagram signatures to the respective lists of names of declared constants, types and variables */
 	private HashMap<String, StringList> declaredStuff = new HashMap<String, StringList>(); 
 	// END KGU#376/KGU#388 2017-09-26
-    
+	// START KGU#705 2019-09-23: Enh. #738
+	/** Maps processed elements to the corresponding code line interval and indentation depth */
+	protected HashMap<Element, int[]> codeMap = null;
+	// END KGU#705 2019-09-23
+	
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 //	protected boolean hasOutput = false;
@@ -257,6 +340,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Flag to indicate whether the diagram contains Parallel elements */
 	protected boolean hasParallels = false;
 	// END KGU#348 2017-02-19
+	// START KGU#686 2019-03-21: Enh. #56
+	protected boolean hasTryBlocks = false;
+	// END KGU#686 2019-03-21
 	// START KGU#424 2017-09-25: We introduce a source mapping for declaration comments
 	/** Maps declared names (variable, constants, types) per Root to originating Elements */
 	protected HashMap<Root, HashMap<String, Instruction>> declarationCommentMap = new HashMap<Root, HashMap<String, Instruction>>();
@@ -285,6 +371,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return this.includeInitialisation;
 	}
 	// END KGU#501 2018-02-22
+	// START KGU#607 2018-10-30: Enh. 346
+	/** A list of generator-induced includes to be intersected or united with the configured user includes */
+	protected StringList generatorIncludes = new StringList();
+	// END KGU#607 2018-10-30
 	
 	/************ Abstract Methods *************/
 	// START KGU#484 2018-03-22: Issue #463
@@ -356,7 +446,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract String commentSymbolLeft();
 	/**
 	 * Right delimiter of a both-end delimited comment. In case commentSymbolLeft()
-	 * returns a line-comment symbol, then here should the epty string be returned
+	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
 	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
@@ -413,6 +503,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract String getIncludePattern();
 	// END KGU#351 2017-02-26
 	
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	protected abstract OverloadingLevel getOverloadingLevel();
+	// END KGU#371 2019-03-07
+	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Specifies the degree of availability of a try-catch-finally construction
+	 * and the corresponding throw mechanism in the target language.
+	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
+	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
+	 */
+	protected abstract TryCatchSupportLevel getTryCatchLevel();
+	// END KGU#686 2019-0318
+
 	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
 	/**
 	 * Returns the currently configured character set name for the file export
@@ -470,10 +577,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Returns the (usually comma-separated) list of configured header, library,
 	 * module, or unit names, for which language-specific include / import / uses
 	 * directives are to be inserted into the exported source files. It's up to the
-	 * inheriting generator class to provide a sensible include pattern if is to make
-	 * use of the default insertion routine insertUserIncludes(String).
+	 * inheriting generator class to provide a sensible include pattern if it is to
+	 * make use of the default insertion routine insertUserIncludes(String).
 	 * @see #getIncludePattern()
-	 * @see #insertUserIncludes(String) 
+	 * @see #appendUserIncludes(String) 
 	 * @return String with configured include items (empty string if nothing specified)
 	 */
 	protected String optionIncludeFiles()
@@ -627,13 +734,35 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
+	 * @see #setDefHandled(String, String)
 	 */
+	// START KGU#767 2019-11-24: Bugfix #782 for Python - we need to tell included from own declarations
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
+	{
+		return wasDefHandled(_root, _id, _setDefinedIfNot, true);
+	}
+
+	/**
+	 * Checks whether the given {@code _id} has already been defined<b/>
+	 * 1. by diagram {@code _root} itself or
+	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
+	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * in {@link #declaredStuff}.
+	 * @param _root - the currently exported {@link Root}
+	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
+	 * @param _involveIncludables - whether the included diagrams are also to be consulted
+	 * @return true if there had already been a definition before
+	 * @see #setDefHandled(String, String)
+	 */
+	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
+	// END KGU#767 2019-11-24
 	{
 		String signature = _root.getSignatureString(false);
 		StringList definedIds = this.declaredStuff.get(signature);
 		boolean handled = definedIds != null && definedIds.contains(_id);
-		if (_root.includeList != null) {
+		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
 				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
@@ -654,8 +783,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
 	 * with signature {@code _signature}. Returns whether the 
-	 * @param signature
-	 * @param _id
+	 * @param _signature - signature of the responsible {@link Root}
+	 * @param _id - the identifier (or ':'-prefixed type key) of the declared entity
+	 * @see #wasDefHandled(Root, String, boolean)
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 */
 	protected void setDefHandled(String _signature, String _id) {
 		StringList definedIds;
@@ -668,58 +799,59 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
+	// KGU 2019-09-24: Renamed to appendAsComment
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
-	 * Inserts the text of {@code _element} as comments into the code, using delimiters
+	 * Appends the text of {@code _element} as comments to the code, using delimiters
 	 * {@link #commentSymbolLeft()} and {@link #commentSymbolRight()} (if given) to enclose
 	 * the comment lines, with indentation {@code _indent}.
-	 * @see #insertComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
 	 */
-	protected boolean insertAsComment(Element _element, String _indent)
+	protected boolean appendAsComment(Element _element, String _indent)
 	{
 		// START KGU#173 2016-04-04: Issue #151 - Get rid of the inflationary ExportOptionDialoge threads
 		//if(eod.commentsCheckBox.isSelected()) {
 		if (this.exportAsComments) {
 		// END KGU#173 2016-04-04
-			insertComment(_element.getText(), _indent);
+			appendComment(_element.getText(), _indent);
 			return true;
 		}
 		return false;
 	}
 
 	/**
-	 * Inserts the comment part of _element into the code, using delimiters this.commentSymbolLeft
+	 * Appends the comment part of _element to the code, using delimiters this.commentSymbolLeft
 	 * and this.commentSymbolRight (if given) to enclose the comment lines, with indentation _indent
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
 	 */
-	protected void insertComment(Element _element, String _indent)
+	protected void appendComment(Element _element, String _indent)
 	{
-		this.insertComment(_element.getComment(), _indent);
+		this.appendComment(_element.getComment(), _indent);
 	}
 
 	/**
-	 * Inserts the given String as single comment line to the exported code
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * Appends the given String as single comment line to the exported code
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _text - the text to be inserted as comment
+	 * @param _text - the text to be added as comment
 	 * @param _indent - indentation string
 	 */
-	protected void insertComment(String _text, String _indent)
+	protected void appendComment(String _text, String _indent)
 	{
 		String[] lines = _text.split("\n");
 		for (int i = 0; i < lines.length; i++)
@@ -729,36 +861,36 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Inserts all lines of the given StringList as a series of single comment lines to the exported code
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * Appends all lines of the given StringList as a series of single comment lines to the exported code
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _sl - the text to be inserted as comment
+	 * @param _sl - the text to be added as comment
 	 * @param _indent - indentation string
 	 */
-	protected void insertComment(StringList _sl, String _indent)
+	protected void appendComment(StringList _sl, String _indent)
 	{
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			insertComment(commentLine, _indent);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				appendComment(commentLine, _indent);
+			}
 		}
 	}
 	
 	/**
-	 * Inserts a multi-line comment with configurable comment delimiters for the starting line, the
+	 * Appends a multi-line comment with configurable comment delimiters for the starting line, the
 	 * continuation lines, and the trailing line.
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
 	 * @see #addCode(String, String, boolean) 
 	 * @param _sl - the StringList to be written as commment
 	 * @param _indent - the basic indentation 
@@ -766,7 +898,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
 	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
 	 */
-	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
+	protected void appendBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
 		// START KGU#199 2016-07-07: Precaution against enh. #188 (multi-line StringList elements)
 		_sl = StringList.explode(_sl,  "\n");
@@ -777,13 +909,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		for (int i = 0; i < _sl.count(); i++)
 		{
-        	// The following splitting is just to avoid empty comment lines and broken
-        	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _sl.get(i);
-        	// Skip an initial empty comment line
-       		if (i > 0 || !commentLine.isEmpty()) {
-       			code.add(_indent + _cont + commentLine);
-       		}
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				code.add(_indent + _cont + commentLine);
+			}
 		}
 		if (_end != null)
 		{
@@ -791,52 +923,115 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	// END KGU 2015-10-18
-	
-	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+
+	// START KGU#607 2018-10-30: (Issue #346)
 	/**
 	 * This is a service method inheriting generators may call at the appropriate
-	 * position in order to insert include (or import or uses etc.) directives
-	 * for the include items configured in the export options for the respective
-	 * language.<br/>
-	 * The method calls a subclassable empty method {@link #prepareIncludeItem(String)}
-	 * for every item configured before the insertion takes place - if some
-	 * pre-processing of the items is necessary then the generator subclass may
-	 * override this method.<br/>
-	 * The configured list of include items may also be retrieved directly via
-	 * method {@link #optionIncludeFiles()} and then be processed individually.
+	 * position in order to add include (or import or uses etc.) directives
+	 * the generator regards as necessary and had enqueued in {@link #generatorIncludes}.<br/>
+	 * If user-configured include items have already been added to the code then
+	 * argument {@code skipUserIncludes} should be set true in oder to skip them here.
+	 * Otherwise the argument should be set false lest items of the intersection of both
+	 * sets should be omitted by both this method and {@link #appendUserIncludes(String)}.<br/>
+	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
+	 * (empty at {@link Generator} level) for every configured item before the
+	 * insertion takes place - if some pre-processing of the items is necessary
+	 * then the generator subclass ought to override the preparation method.<br/>
+	 * @param _indent - current indentation string
+	 * @param skipUserIncludes - if user includes have already been added to the code
+	 * and are not to be repeated inadvertently here.
+	 * @return number of inserted lines
 	 * @see #getIncludePattern()
 	 * @see #prepareIncludeItem(String)
 	 * @see #optionIncludeFiles()
-	 * @param _indent - indentation for the directives
+	 * @see #insertUserIncludes(String, boolean)
+	 * @see #generatorIncludes
 	 */
-	protected void insertUserIncludes(String _indent)
+	protected int appendGeneratorIncludes(String _indent, boolean skipUserIncludes)
 	{
+		int nInserted = 0;
+		String pattern = this.getIncludePattern();
+		HashSet<String> userIncludes = new HashSet<String>();
+		if (skipUserIncludes) {
+			for (String item: this.optionIncludeFiles().split(",")) {
+				userIncludes.add(item.trim());
+			}
+		}
+		for (int i = 0; i < this.generatorIncludes.count(); i++) {
+			String incl = this.generatorIncludes.get(i);
+			if (!userIncludes.contains(incl)) {
+				code.add(_indent + pattern.replace("%", prepareIncludeItem(incl)));
+				nInserted++;
+			}
+		}
+		return nInserted;
+	}
+	// END KGU#607 2018-10-30
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * This is a service method inheriting generators may call at the appropriate
+	 * position in order to add include (or import or uses etc.) directives
+	 * for the include items configured in the export options for the respective
+	 * language.<br/>
+	 * Include items that have already been enqueued for code insertion by the
+	 * generator itself in {@link #generatorIncludes} will be spared here.<br/>
+	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
+	 * (empty at {@link CodeGnerator} level) for every item configured before the
+	 * insertion takes place - if some pre-processing of the items is necessary
+	 * then the generator subclass may override this method.<br/>
+	 * The configured list of include items may also be retrieved directly via
+	 * method {@link #optionIncludeFiles()} and then be processed individually.
+	 * @param _indent - indentation for the directives
+	 * @return number of inserted lines
+	 * @see #getIncludePattern()
+	 * @see #prepareIncludeItem(String)
+	 * @see #optionIncludeFiles()
+	 * @see #appendGeneratorIncludes(String, boolean)
+	 * @see #generatorIncludes
+	 */
+	protected int appendUserIncludes(String _indent)
+	{
+		int nAdded = 0;
 		String pattern = this.getIncludePattern();
 		String includes = this.optionIncludeFiles().trim();
 		if (pattern != null && includes != null && !includes.isEmpty()) {
+			// START KGU#607 2018-10-30: Issue #346 - Avoid duplicate includes
+			StringList items = new StringList(includes.split(","));
+			for (int i = items.count()-1; i >= 0; i--) {
+				String item = items.get(i).trim();
+				if (this.generatorIncludes.contains(item)) {
+					items.remove(i);
+				}
+			}
+			// END KGU#607 2018-10-30
 			// Collective (enumerative) include phrase available?
 			if (pattern.contains("%%")) {
-				code.add(_indent + pattern.replace("%%", includes));
+				// START KGU#607 2018-10-30: Issue #346
+				//code.add(_indent + pattern.replace("%%", includes));
+				code.add(_indent + pattern.replace("%%", items.concatenate(",")));
+				nAdded++;
+				// END KGU#607 2018-10-30
 			}
 			// .. otherwise produce a single line for every item
 			else if (pattern.contains("%")) {
-				String[] items = includes.split(",");
-				for (int i = 0; i < items.length; i++) {
-					String item = items[i].trim();
+				for (int i = 0; i < items.count(); i++) {
+					String item = items.get(i).trim();
 					if (!item.isEmpty()) {
-						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));						
+						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));
+						nAdded++;
 					}
 				}
 			}
 		}
+		return nAdded;
 	}
 	/**
 	 * Method may pre-process an include file or module name for the import / use
-	 * clause. This version is called by {@link #insertUserIncludes(String)} and does nothing but
+	 * clause. This version is called by {@link #appendUserIncludes(String)} and does nothing but
 	 * may be overridden. 
 	 * @see #getIncludePattern()
 	 * @see #optionIncludeFiles()
-	 * @see #insertUserIncludes(String)
+	 * @see #appendUserIncludes(String)
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
@@ -851,11 +1046,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Depending on {@code asComment}, adds the given text either as comment or as active
 	 * source code to the code lines.
 	 * This is a convenient wrapper for {@code this.code.add(String)}.
-	 * @see #insertComment(Element, String)
-	 * @see #insertAsComment(Element, String)
-	 * @see #insertComment(String, String)
-	 * @see #insertComment(StringList, String)
-	 * @see #insertBlockComment(StringList, String, String, String, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 * @param text - the prepared (transformed and composed) line of code
 	 * @param _indent - current indentation
 	 * @param asComment - whether or not the code is to be commented out.
@@ -865,7 +1060,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (asComment)
 		{
 			// Indentation is intentionally put inside the comment (comment encloses entire line)
-			insertComment(_indent + text, "");
+			appendComment(_indent + text, "");
 		}
 		else
 		{
@@ -873,6 +1068,33 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	// END KGU#277 2016-10-13
+	
+	// START KGU#705 2019-09-24: Enh. #738
+	/**
+	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which is supposed
+	 * to be a single line, otherwise counting trouble is likely to occur) into the {@link #code}
+	 * before line number {@code atLine}, i.e. updates all lines references within {@link #codeMap}
+	 * if existent.
+	 * @param text - the line to be inserted at {@code atLine}
+	 * @param atLine - the number of the line (code entry) before which {@code text} is to be inserted
+	 */
+	protected void insertCode(String text, int atLine)
+	{
+		code.insert(text,  atLine);
+		// Now update the line number references >= atLine
+		if (codeMap != null) {
+			for (int[] entry: codeMap.values()) {
+				if (entry[0] >= atLine) {
+					entry[0]++;
+					entry[1]++;
+				}
+				else if (entry[1] >= atLine) {
+					entry[1]++;
+				}
+			}
+		}
+	}
+	// END KGU#705 2019-09-24
 
 	// START KGU#376/KGU#388 2017-09-25: Enh. #389, #423
 	/**
@@ -883,11 +1105,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _indent - the current indentation as String
 	 * @param _id - the declared identifier (const, var or type)
 	 */
-	protected void insertDeclComment(Root _root, String _indent, String _id) {
+	protected void appendDeclComment(Root _root, String _indent, String _id) {
 		if (this.declarationCommentMap.containsKey(_root)) {
 			Instruction srcElement = this.declarationCommentMap.get(_root).get(_id);
 			if (srcElement != null && srcElement != this.lastDeclSource) {
-				insertComment(srcElement, _indent);
+				appendComment(srcElement, _indent);
 				// One comment is enough
 				this.lastDeclSource = srcElement;
 				return;
@@ -899,7 +1121,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					&& this.declarationCommentMap.containsKey(incl)) {
 				Instruction srcElement = this.declarationCommentMap.get(incl).get(_id);
 				if (srcElement != null && srcElement != this.lastDeclSource) {
-					insertComment(srcElement, _indent);
+					appendComment(srcElement, _indent);
 					// One comment is enough
 					this.lastDeclSource = srcElement;
 					return;
@@ -989,7 +1211,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// but it's still needed for the meaningful ones.
 		String[] keywords = CodeParser.getAllProperties();
 		for (int kw = 0; kw < keywords.length; kw++)
-		{    				
+		{
 			if (keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = this.splitKeywords.elementAt(kw);
@@ -1142,6 +1364,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#261 2017-01-26
 	
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This dummy implementation returns just null, meaning there is no such conversion in general (such that several
+	 * input instructions must be generated. Subclasses the target language of which allows multi-variable input
+	 * instructions should override this.
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
+	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
 	 * and if so replaces it according to the regex pattern provided by
@@ -1200,15 +1439,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				String subst = getInputReplacer(false);
 				// START KGU#399 2017-05-16: bugfix #51, #403
 				//_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
-				_interm = _interm.replaceFirst(pattern, subst);
+				// START KGU#653 2019-02-14: Enh. #680
+				//_interm = _interm.replaceFirst(pattern, subst);
+				_interm = subst.replace("$1", tail);
+				// END KGU#653 3019-02-14
 				// END KGU#399 2017-05-16
 			}
 			else {
 				String subst = getInputReplacer(true);
 				// START KGU#399 2017-05-16: bugfix #51, #403				
 				//_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
-				pattern = "^" + getKeywordPattern(keyword) + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
-				_interm = _interm.replaceFirst(pattern, subst);
+				// START KGU#653 2019-02-14: Enh. #680
+				//pattern = "^" + getKeywordPattern(keyword) + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
+				//_interm = _interm.replaceFirst(pattern, subst);
+				pattern = "^" + "\\h*("+quotes+".*"+quotes+")[,]?\\s*(.*)";
+				_interm = tail.replaceFirst(pattern, subst);
+				// END KGU#653 2019-02-14
 				// END KGU#399 2017-05-16
 			}
 			// END KGU#281 2016-10-15
@@ -1427,6 +1673,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					// After an unconditional leave further instructions at this level are redundant  
 					return surelyReturns;
 				}
+				// START KGU#686 2019-03-18: Enh. #56 support for try / catch /throw
+				else if (jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
+					// Doesn't return a regular result but we won't get to the end, so a default return is
+					// not required, we handle this as if a result would have been returned.
+					return true;
+				}
+				// END KGU#686 2019-03-18
 				else	// No recognized jump type
 // END KGU#380 2017-04-14
 				{
@@ -1511,21 +1764,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		// Avoid too much nonsense on indexed variables
 		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
-    	//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
-    	// END KGU#334 2017-01-30
+		//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
+		// END KGU#334 2017-01-30
 		String type = "";
 		String name = null;
 		String index = "";
 		String comp = "";
-    	String before = _lval;
-    	String after = "";
-    	int posL = _lval.indexOf("[");
-    	int posR = _lval.lastIndexOf("]");
-    	if (posL >= 0 && posR > posL) {
-    		index = _lval.substring(posL + 1, posR);
-    		before = _lval.substring(0, posL);
-    		after = _lval.substring(posR + 1);
-    	}
+		String before = _lval;
+		String after = "";
+		int posL = _lval.indexOf("[");
+		int posR = _lval.lastIndexOf("]");
+		if (posL >= 0 && posR > posL) {
+			index = _lval.substring(posL + 1, posR);
+			before = _lval.substring(0, posL);
+			after = _lval.substring(posR + 1);
+		}
 		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), ".")) {
 			comp = after;
 			name = before;
@@ -1616,11 +1869,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		Function called = _call.getCalledRoutine();
 		// START KGU#349 2017-02-20: Bugfix #349 - don't register directly recursive calls
 		//if (called != null && Arranger.hasInstance())
-		if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// START KGU#371 2019-03-08: Enh. #385 cope with optional parameters
+		//if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// START KGU#676 2019-03-13: Enh. #696 Routine pool may now stem from an archive 
+		//if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && Arranger.hasInstance())
+		if (called != null && !(_caller.getMethodName().equals(called.getName()) && _caller.acceptsArgCount(called.paramCount()) >= 0) && routinePool != null)
+		// END KGU#676 2019-03-13
+		// END KGU#371 2019-03-07
 		// END KGU#349 2017-02-20
 		{
-			Vector<Root> foundRoots = Arranger.getInstance().
-					findRoutinesBySignature(called.getName(), called.paramCount());
+			// START KGU#676 2019-03-13: Enh. #696 Routine pool may now stem from an archive 
+			//Vector<Root> foundRoots = Arranger.getInstance().
+			//		findRoutinesBySignature(called.getName(), called.paramCount());
+			Vector<Root> foundRoots = routinePool.
+					findRoutinesBySignature(called.getName(), called.paramCount(), _caller);
+			// END KGU#676 2019-03-13
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
@@ -1652,7 +1915,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _referenceMap - the map from referred Roots to referring Roots
 	 * @return the {@code _referred} Root if it hadn't been in {@code _referenceMap} before 
 	 */
-	private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap) {
+	// START KGU#754 2019-11-11: Issue #766 - we want deterministic routine orders
+	//private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap)
+	private Root putRootsToMap(Root _referred, Root _caller, SortedMap<Root, SubTopoSortEntry> _referenceMap)
+	// END KGU#754 2019-11-11
+	{
 		// Is there already an entry for this root?
 		Root newSub = null;
 		SubTopoSortEntry entry = _referenceMap.get(_referred);
@@ -1683,7 +1950,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU#238 2016-08-11: Code revision
 		//Vector<Call> calls = new Vector<Call>();
 		//collectCalls(_root.children, calls);
-		Vector<Call> calls = collectCalls(_root);
+		// START KGU#624 2018-12-26: Enh. #655 - method moved to Root
+		//Vector<Call> calls = collectCalls(_root);
+		Vector<Call> calls = _root.collectCalls();
+		// END KGU#624 2018-12-26
 		// END KGU#238 2016-08-11
 		for (Call call: calls)
 		{
@@ -1696,31 +1966,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 		}
 	}
-	
-	// START KGU#238 2016-08-12: Code revision
-	private Vector<Call> collectCalls(Element _ele)
-	{
-		final class CallCollector implements IElementVisitor
-		{
-			public Vector<Call> calls = new Vector<Call>();
-			
-			@Override
-			public boolean visitPreOrder(Element _ele) {
-				if (_ele instanceof Call) {
-					calls.add((Call)_ele);
-				}
-				return true;
-			}
-			@Override
-			public boolean visitPostOrder(Element _ele) {
-				return true;
-			}
-		};
-		CallCollector visitor = new CallCollector();
-		_ele.traverse(visitor);
-		return visitor.calls;
-	}
-	// END KGU#178 2016-07-19
 	
 	// START KGU#237 2016-08-10: Bugfix #228
 	/**
@@ -1735,7 +1980,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		for (Root sub: subroutines.keySet())
 		{
 			if (sub.getMethodName().equals(fct.getName())
-					&& sub.getParameterNames().count() == fct.paramCount())
+					// START KGU#371 2019-03-08: Enh. #385 allow optional parameters
+					//&& sub.getParameterNames().count() == fct.paramCount())
+					&& sub.acceptsArgCount(fct.paramCount()) >= 0)
+					// END KGU#371 2019-03-08
 			{
 				return sub;
 			}
@@ -1745,14 +1993,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#237 2016-08-10
 	
 	// START KGU#376 2017-09-20: Enh. #389
-	private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	// START KGU#754 2019-11-11: Issue #766
+	//private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	private void registerIncludedRoots(Root _root, SortedMap<Root, SubTopoSortEntry> _includedRoots)
+	// END KGU#754 2019-11-11
 	{
-		if (_root.includeList != null && Arranger.hasInstance()) {
+		if (_root.includeList != null && (routinePool != null)) {
 			for (int i = 0; i < _root.includeList.count(); i++)
 			{
 				Root newIncl = null;
 				String includeName = _root.includeList.get(i);
-				Vector<Root> candidates = Arranger.getInstance().findIncludesByName(includeName);
+				Vector<Root> candidates = routinePool.findIncludesByName(includeName, _root);
 				if (!candidates.isEmpty()) {
 					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
@@ -1772,7 +2023,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 
-	private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap) {
+	// START KGU#754 2019-11-11: Issue #766 - aimed at deterministic order
+	//private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap)
+	private Root getAmongExportedRoots(String includeName, SortedMap<Root, SubTopoSortEntry> _includeMap)
+	// END KGU#754 2019-11-11
+	{
 		for (Root included: _includeMap.keySet()) {
 			if (includeName.equals(included.getMethodName())) {
 				return included;
@@ -1863,6 +2118,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			hasParallels = true;
 		}
 		// END KGU#348 2017-02-19
+		// START KGU#686 2019-03-21: Enh. #56 - For Perl, try-catch is an extra module
+		else if (_ele instanceof Try) {
+			hasTryBlocks = true;
+		}
+		// END KGU#686 2019-03-21
 		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
 		if (!usesFileAPI && _ele.getText().getText().contains("file"))
 		{
@@ -1879,7 +2139,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#236 2016-08-10
  	
 	/**
-	 * This method is responsible for generating the code of an {@code Instruction} element.
+	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
 	 * be aware of the several export options.
@@ -1892,23 +2152,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
-	 * @see #insertAsComment(Element, String)
+	 * @see #appendAsComment(Element, String)
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
-    protected void generateCode(Instruction _inst, String _indent)
+	protected void generateCode(Instruction _inst, String _indent)
 	{
-            //
+		//
 	}
 	
 	/**
 	 * This method is responsible for generating the code of an {@code Alternative}
-	 * element i.e. an IF construction.
+	 * element i.e. an IF construction.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -1922,6 +2183,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -1940,7 +2202,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Case}
-	 * element i.e. a multiple selection.
+	 * element i.e. a multiple selection.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -1954,6 +2216,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -1975,7 +2238,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code For} loop
-	 * element, either of counting or enumerating style.
+	 * element, either of counting or enumerating style.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -1989,6 +2252,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2005,7 +2269,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code While} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2019,6 +2283,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2035,7 +2300,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Repeat} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2049,6 +2314,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2065,7 +2331,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * This method is responsible for generating the code of a {@code Forever} loop
-	 * element.
+	 * element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
 	 * (you may have a look at its code to see how the recursive descending is done).
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
@@ -2079,6 +2345,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2094,7 +2361,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * This method is responsible for generating the code of a {@code Call} element.
+	 * This method is responsible for generating the code of a {@code Call} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
 	 * It should make use of available helper methods {@link #transform(String)} etc. and
 	 * be aware of the several export options.
@@ -2107,6 +2374,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -2118,6 +2386,71 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// code.add(_indent+"");
 	}
 
+	/**
+	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator class.
+	 * It should make use of available helper methods {@link #transform(String)} etc. and
+	 * be aware of the several export options.
+	 * @see #generateCode(Instruction, String)
+	 * @see #generateCode(Alternative, String)
+	 * @see #generateCode(Case, String)
+	 * @see #generateCode(For, String)
+	 * @see #generateCode(While, String)
+	 * @see #generateCode(Repeat, String)
+	 * @see #generateCode(Forever, String)
+	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
+	 * @see #generateCode(Root, String)
+	 * @see #getIndent()
+	 * @see #optionCodeLineNumbering()
+	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
+	 * @param _indent - the indentation string valid for the given Instruction
+	 */
+	protected void generateCode(Jump _jump, String _indent)
+	{
+		// code.add(_indent+"");
+	}
+
+	/**
+	 * This method is responsible for generating the code of a {@code Parallel} section
+	 * element.<br/>
+	 * This dummy version just concatenates the threads sequentially and should therefore
+	 * be overridden by each inheriting generator class that knows to orchestrate
+	 * parallelism
+	 * (you may have a look at its code to see how the recursive descending is done).
+	 * It should make use of available helper methods {@link #transform(String)} etc. and
+	 * be aware of the several export options.
+	 * @see #generateCode(Instruction, String)
+	 * @see #generateCode(Alternative, String)
+	 * @see #generateCode(Case, String)
+	 * @see #generateCode(For, String)
+	 * @see #generateCode(While, String)
+	 * @see #generateCode(Repeat, String)
+	 * @see #generateCode(Forever, String)
+	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Jump, String)
+	 * @see #generateCode(Try, String)
+	 * @see #generateCode(Root, String)
+	 * @see #getIndent()
+	 * @see #optionCodeLineNumbering()
+	 * @see #optionBlockBraceNextLine()
+	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
+	 * @param _indent - the indentation string valid for the given Instruction
+	 */
+	protected void generateCode(Parallel _para, String _indent)
+	{
+		// code.add(_indent+"");
+		for(int i = 0; i < _para.qs.size(); i++)
+		{
+			// code.add(_indent+"");
+			generateCode((Subqueue) _para.qs.get(i), _indent+this.getIndent());
+			// code.add(_indent+"");
+		}
+		// code.add(_indent+"");
+	}
+	
+	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
 	/**
 	 * This method is responsible for generating the code of an {@code Instruction} element.
 	 * This dummy version is to be overridden by each inheriting generator class.
@@ -2131,52 +2464,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Repeat, String)
 	 * @see #generateCode(Forever, String)
 	 * @see #generateCode(Call, String)
+	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
-	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
+	 * @param _try - the {@link lu.fisch.structorizer.elements.Try}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
-	protected void generateCode(Jump _jump, String _indent)
+	protected void generateCode(Try _try, String _indent)
 	{
-		// code.add(_indent+"");
+		appendComment("try (FIXME!)", _indent);
+		generateCode(_try.qTry, _indent + this.getIndent());
+		appendComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
+		generateCode(_try.qCatch, _indent + this.getIndent());
+		appendComment("fimally (FIXME!)", _indent);
+		generateCode(_try.qFinally, _indent + this.getIndent());
+		appendComment("end try (FIXME!)", _indent);
 	}
-
-	/**
-	 * This method is responsible for generating the code of a {@code Parallel} loop
-	 * element.
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
-	 * @see #generateCode(Instruction, String)
-	 * @see #generateCode(Alternative, String)
-	 * @see #generateCode(Case, String)
-	 * @see #generateCode(For, String)
-	 * @see #generateCode(While, String)
-	 * @see #generateCode(Repeat, String)
-	 * @see #generateCode(Forever, String)
-	 * @see #generateCode(Call, String)
-	 * @see #generateCode(Jump, String)
-	 * @see #generateCode(Root, String)
-	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
-	 * @see #optionBlockBraceNextLine()
-	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
-	 * @param _indent - the indentation string valid for the given Instruction
-	 */
-	protected void generateCode(Parallel _para, String _indent)
-	{
-		// code.add(_indent+"");
-		for(int i=0; i < _para.qs.size(); i++)
-		{
-			// code.add(_indent+"");
-			generateCode((Subqueue) _para.qs.get(i), _indent+this.getIndent());
-			// code.add(_indent+"");
-		}
-		// code.add(_indent+"");
-	}
+	// END KGU#686 2019-03-17
 
 	/**
 	 * This method does not generate anything itself, it is just a formal
@@ -2202,6 +2508,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected final void generateCode(Element _ele, String _indent)
 	{
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_ele, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		if(_ele.getClass().getSimpleName().equals("Instruction"))
 		{
 			generateCode((Instruction) _ele, _indent);
@@ -2234,6 +2548,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			generateCode((Forever) _ele,_indent);
 		}
+		// START KGU#686 2019-03-17: Enh. #56
+		else if(_ele.getClass().getSimpleName().equals("Try"))
+		{
+			generateCode((Try) _ele,_indent);
+		}
+		// END KGU#686 2019-03-17
 		else if(_ele.getClass().getSimpleName().equals("Call"))
 		{
 			generateCode((Call) _ele,_indent);
@@ -2242,6 +2562,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			generateCode((Jump) _ele,_indent);
 		}
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap!= null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_ele)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
 	}
 	
 	/**
@@ -2307,13 +2633,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean alwaysReturns = mapJumps(_root.children);
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
-		_root.collectParameters(paramNames, paramTypes);
+		_root.collectParameters(paramNames, paramTypes, null);
 		String resultType = _root.getResultType();
 		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
 		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
 		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
 		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
-		this.varNames = _root.getVarNames();
+		// START KGU#691 2019-03-21: Bugfix - the variable highlighting and detection was inflicted
+		//this.varNames = _root.getVarNames();
+		this.varNames = _root.retrieveVarNames().copy();
+		// END KGU#691 2019-03-21
 		for (int p = 0; p < paramNames.count(); p++) {
 			this.varNames.removeAll(paramNames.get(p));
 		}
@@ -2322,6 +2651,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		String preaIndent = generateHeader(_root, _indent, procName, paramNames, paramTypes, resultType);
 		String bodyIndent = generatePreamble(_root, preaIndent, varNames);
 		// END KGU#74 2015-11-30
@@ -2334,6 +2671,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateResult(_root, preaIndent, alwaysReturns, varNames);
 		generateFooter(_root, _indent);
 		// END KGU#74 2015-11-30
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
 
 		return code.getText();
 	}
@@ -2406,36 +2749,35 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
 	/**
-	 * Inserts the definitions and declarations of all includable diagrams recursively required by
+	 * Appends the definitions and declarations of all includable diagrams recursively required by
 	 * the roots to be exported in topological order
 	 * @param _root - the currently exported Root (supposed to be the hierarchy top)
 	 * @param _indent - the current indentation
 	 * @param _force - Whether the insertion is to be forced no regard of declaration policy
 	 */
-	protected void insertGlobalDefinitions(Root _root, String _indent, boolean _force) {
+	protected void appendGlobalDefinitions(Root _root, String _indent, boolean _force) {
 		boolean thisDone = false;
 		code.add("");
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-			insertDefinitions(incl, _indent, incl.getVarNames(), _force);
+			appendDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
 			}
 		}
 		if (_root.isInclude() && !thisDone) {
-			insertDefinitions(_root, _indent, this.varNames, true);				
+			appendDefinitions(_root, _indent, this.varNames, true);				
 		}
 	}
 	
 	/**
-	 * Inserts constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
-	 * @param _root - the diagram the daclarations and definitions of are to be inserted
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * @param _root - the diagram the declarations and definitions of which are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
 	 */
-	protected void insertDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
-		// TODO Auto-generated method stub
-		
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+		// TODO To be overridden by subclasses
 	}
 
 	/**
@@ -2443,11 +2785,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * the roots to be exported in topological order 
 	 * @param _indent - current indentation string
 	 */
-	protected void insertGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = true;
 				// END KGU#501 2018-02-22
@@ -2455,7 +2797,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = false;
 				// END KGU#501 2018-02-22
-				insertComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
 			}
 			if (code.count() > startLine) {
 				code.add(_indent);
@@ -2467,99 +2809,70 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
-	 * Inserts the copyright information (author name, license name and text) if the respective option
+	 * Appends the copyright information (author name, license name and text) if the respective option
 	 * is enabled. 
 	 * @param _root - the Root object holding the relevant attributes
 	 * @param _indent - the current indentation string
 	 * @param _fullText - whether the full license text is to be inserted, too (may be lengthy!)
 	 */
-	protected void insertCopyright(Root _root, String _indent, boolean _fullText) {
+	protected void appendCopyright(Root _root, String _indent, boolean _fullText) {
 		if (this.optionExportLicenseInfo()) {
-			this.insertComment("", _indent);
-			this.insertComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
-			if (_root.licenseName != null) {
-				this.insertComment("License: " + _root.licenseName, _indent);
+			this.appendComment("", _indent);
+			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
+			// START KGU#763 2019-12-11: Bugfix #794 - for an empty license name, we don't need to check
+			//if (_root.licenseName != null) {
+			if (_root.licenseName != null && !_root.licenseName.trim().isEmpty()) {
+			// END KGU#763 2019-12-11
+				this.appendComment("License: " + _root.licenseName, _indent);
+				// START KGU#763 2019-11-13: Bugfix #778
+				if (_fullText && _root.licenseText == null) {
+					String licText = this.loadLicenseText(_root.licenseName);
+					if (licText != null) {
+						this.appendComment(StringList.explode(licText, "\n"), _indent);
+					}
+				}
+				// END KGU#763 2019-11-13
 			}
 			if (_fullText && _root.licenseText != null) {
-				this.insertComment(StringList.explode(_root.licenseText, "\n"), _indent);
+				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
 			}
-			this.insertComment("", _indent);
+			this.appendComment("", _indent);
 		}
 	}
 	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
-	 * opens a file selection dialog
+	 * opens a file selection dialog, and effectuates the actual code export.
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @return the chosen target directory
+	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
+	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
-	public File exportCode(Root _root, File _proposedDirectory, Frame _frame)
+	// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
+	public File exportCode(Root _root, File _proposedDirectory, Frame _frame, IRoutinePool _routinePool)
+	// END KGU#676 2019-03-13
 	// END KGU 2017-04-26
 	{
 		// START KGU 2017-04-26
 		File exportDir = _proposedDirectory;
 		// END KGU 2017-04-26
+		// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
+		routinePool = _routinePool;
+		// END KGU#676 2019-03-13
+		
 		//=============== Get export options ======================
-		try
-		{
-			Ini ini = Ini.getInstance();
-			ini.load();
-			// START KGU#173 2016-04-04: Issue #151 - get rid of all the hidden ExportOptionDialoge produced here
-//			eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
-//			if(ini.getProperty("genExportComments","0").equals("true"))
-//				eod.commentsCheckBox.setSelected(true);
-//			else 
-//				eod.commentsCheckBox.setSelected(false);
-//			// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
-//			eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
-//			eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
-//			// END KGU#16/KGU#113 2015-12-18
-//			// START KGU#162 2016-03-31: Enh. #144
-//			eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
-//			this.suppressTransformation = eod.noConversionCheckBox.isSelected(); 
-//			// END KGU#16/KGU#113 2015-12-18
-			exportAsComments = ini.getProperty("genExportComments","0").equals("true");
-			startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
-			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
-			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
-			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
-			// END KGU#173 2016-04-04
-			// START KGU#178 2016-07-19: Enh. #160
-			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
-			// END KGU#178 2016-07-19
-			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
-			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
-			// END KGU#351 2017-02-26
-			// START KGU#363 2017-05-11: Enh. #372 - license and author info ought to be exportable as well
-			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
-			// END KGU#363 2017-05-11
-
-		} 
-		catch (FileNotFoundException ex)
-		{
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			// END KGU#484 2018-04-05
-		} 
-		catch (IOException ex)
-		{
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			// END KGU#484 2018-04-05
-		}
+		getExportOptions(true);
 
 		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
 
 		// set directory
-		if(_root.getFile()!=null)
+		if (_root.getFile() != null)
 		{
 			dlgSave.setCurrentDirectory(_root.getFile());
 		}
@@ -2574,7 +2887,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//		nsdName.replace(':', '_');
 		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = _root.proposeFileName();
+		// START KGU#690 2019-03-21: Issue #707 We prefer the base name of the diagram file if already saved
+		//String nsdName = _root.proposeFileName();
+		String nsdName = _root.getPath();
+		if (nsdName.isEmpty()) {
+			nsdName = _root.proposeFileName();
+		}
+		else {
+			nsdName = (new File(nsdName)).getName();
+			int dotPos = nsdName.lastIndexOf('.');
+			if (dotPos > 1) {
+				nsdName = nsdName.substring(0, dotPos);
+			}
+		}
+		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
+		nsdName = this.ensureFilenameConformity(nsdName);
+		// END KGU#690 2019-03-21
 		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2723,6 +3051,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				outp.rewrite(exportCharset);
 				// END KGU#168 2016-04-04
 				outp.write(code);
+				// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+				if (!code.isEmpty()) {
+					outp.write("\n");
+				}
+				// END KGU#689 2019-03-21
 				outp.close();
 				
 				if (this.usesFileAPI) {
@@ -2743,25 +3076,139 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
-		   	// START KGU#178 2016-07-20: Enh. #160
-		   	if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
-		   	{
+			// START KGU#178 2016-07-20: Enh. #160
+			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+			{
 				JOptionPane.showMessageDialog(null,
 						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
-		   	}
-		   	// END KGU#178 2016-07-20
+			}
+			// END KGU#178 2016-07-20
 		} // if (file != null)
+		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
+		else {
+			exportDir = null;
+		}
+		// END KGU#654 2019-02-16
 		// START KGU 2017-04-26
 		return exportDir;
 		// END KGU 2017-04-26
 	}
 	
+	// START KGU#705 2019-09-23: Enh. #738
+	/**
+	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)} for live
+	 * code preview as there is no file selection etc. 
+	 * @param _root - program or top-level routine diagram (call hierarchy root)
+	 * @param _frame - the GUI Frame object responsible for this action
+	 * @param _routinePool - {@link Arranger} or some other routine pool for subroutine analysis
+	 * @param _codeMap TODO
+	 * @return the produced code as a (multi-line) string.
+	 */
+	public String deriveCode(Root _root, Frame _frame, IRoutinePool _routinePool, HashMap<Element, int[]> _codeMap)
+	{
+		codeMap = _codeMap;
+		
+		String code = "";
+		routinePool = _routinePool;
+
+		//=============== Get export options ======================
+		getExportOptions(false);
+
+		//=============== Split keywords for more precise detection ======================
+		this.splitKeywords.clear();
+		String[] keywords = CodeParser.getAllProperties();
+		for (int k = 0; k < keywords.length; k++)
+		{
+			this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+		}
+
+		//=============== Now do the code generation ======================
+		try
+		{
+			gatherElementInformationRoot(_root);
+
+			includedRoots = sortTopologically(includeMap);
+			for (Root incl: includedRoots.toArray(new Root[]{})) {
+				gatherElementInformationRoot(incl);
+			}
+
+			code = generateCode(_root, "");
+		}
+		catch (Exception e)
+		{
+			String message = e.getMessage();
+			// START KGU#484 2018-04-05: Issue #463
+			e.printStackTrace();
+			getLogger().log(Level.WARNING, "Error on generating code!", e);
+			// END KGU#484 2018-04-05
+			if (message == null) {
+				message = e.getClass().getSimpleName();
+			}
+			JOptionPane.showMessageDialog(null,
+					"Error while compiling the code preview!\n" + message,
+					"Error", JOptionPane.ERROR_MESSAGE);
+		}
+		return code;
+	}
+	
+	/**
+	 * Retrieves all general export preferences from the INI file and caches them in
+	 * appropriate fields. 
+	 * @param considerSubroutineOption - If false then subroutines won't be exported, otherwise
+	 * it depends on the respective export option
+	 */
+	private void getExportOptions(boolean considerSubroutineOption) {
+		try
+		{
+			Ini ini = Ini.getInstance();
+			ini.load();
+
+			exportAsComments = ini.getProperty("genExportComments","0").equals("true");
+			startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
+			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
+			exportSubroutines = considerSubroutineOption && ini.getProperty("genExportSubroutines", "0").equals("true");
+			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+
+		} 
+		catch (IOException ex)
+		{
+			this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+		}
+	}
+	
+	/**
+	 * @return the mapping of processed elements to corresponding code line number intervals after, may be null
+	 */
+	public HashMap<Element, int[]> getCodeMap()
+	{
+		return codeMap;
+	}
+	// END KGU#705 2019-09-23
+	
+	// START KGU#690 2019-03-121: Enh. #707
+	/**
+	 * This method allows the subclass to modify the automatically generated file name proposal
+	 * to ensure conformity with file name conventions of the target language.
+	 * This should concentrate on the base name rather than the extension (which will typically
+	 * not be included in the argument string).<br/>
+	 * The base method just passes the argument through.
+	 * @param proposedFilename - a base fle name according to the proposal rules for NSD file names.
+	 * @return the possibly modified name
+	 */
+	protected String ensureFilenameConformity(String proposedFilename) {
+		return proposedFilename;
+	}
+	// END KGU#690 2019-03-21
+	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**
-	 * Routine is called from {@link #exportCode(Root, File, Frame)} after the top-level
-	 * diagram code has been created and generates and inserts the code sequences of the
-	 * called subroutines of {@code _root}in topologically sorted order.
+	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
+	 * the top-level diagram code has been created and generates and adds the code
+	 * sequences of the called subroutines of {@code _root}in topologically sorted order.
 	 * @param _root - the top-level diagram root.
 	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
 	 * @see #sortTopologically(Hashtable)
@@ -2792,7 +3239,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _dependencyMap - the dependency graph of the routines as map - will be emptied!
 	 * @return queue of the sorted diagrams (independent first, dependent ones following)
 	 */
-	protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap) {
+	// START KGU#754 2019-11-11: Issue #766 - we want to achieve deterministic routine order
+	//protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap)
+	protected Queue<Root> sortTopologically(SortedMap<Root, SubTopoSortEntry> _dependencyMap)
+	// END KGU#754 2019-11-11
+	{
 		Queue<Root> sortedRoots = new LinkedList<Root>();
 		Queue<Root> roots = new LinkedList<Root>();
 		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
@@ -2902,7 +3353,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (line.contains("===== STRUCTORIZER FILE API START =====")){
 					sectNo++;
 					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
-					code.insert(_indentation, _atLine++);
+					insertCode(_indentation, _atLine++);
 				}
 				if (doInsert) {
 					// Unify indentation and replace dummy messages by localized ones
@@ -2912,11 +3363,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
 					line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
 					line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
-					code.insert(_indentation + line, _atLine++);
+					insertCode(_indentation + line, _atLine++);
 				}
 				if (line.contains("===== STRUCTORIZER FILE API END =====")){
 					doInsert = false;
-					code.insert(_indentation, _atLine++);
+					insertCode(_indentation, _atLine++);
 				}
 			}
 			reader.close();
@@ -3058,14 +3509,34 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 *****************************************/
 
 	/**
-	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.<br/>
+	 * Note: This method is intended for batch export.
 	 * @param _roots - vector of diagram Roots to be exported (in this order).
 	 * @param _targetFile - path of the target text file for the code export.
 	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
+	 * @param _settingsFromFile - whether a (partial) ini file for alternative option retrieval was given
+	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
+	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 */
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
+	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	// START KGU#720 2019-08-05: Enh. #737 - allow to load settings from a configuration file
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, boolean _settingsFromFile, IRoutinePool _routinePool)
+	// END KGU#720 2019-08-05
+	// END KGU#676 2019-03-13
 	{
+		// START KGU#676 2019-03-13: Enh. #696
+		routinePool = _routinePool;
+		this.exportSubroutines = _routinePool != null;
+		this.pureFilename = "";
+		this.hasParallels = false;
+		this.usesFileAPI = false;
+		this.hasInput = false;
+		this.hasEmptyInput = false;
+		this.hasOutput = false;
+		this.code.clear();
+		// END KGU#676 2019-03-13
 		// START KGU#311 2016-12-27: Enh. #314
 		boolean someRootUsesFileAPI = false;
 		// END KGU#311 2016-12-27
@@ -3079,6 +3550,28 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Charset {0} not available; {1} used.", new Object[]{_charSet, exportCharset});
 		}
 		
+		//=============== Get export options ======================
+		// START KGU#720/KGU#722 2019-08-07: Enh. #737, #741 - option to load settings from extra settings file
+		if (_settingsFromFile) {
+			try
+			{
+				Ini ini = Ini.getInstance();
+				ini.load();
+				exportAsComments = ini.getProperty("genExportComments","0").equals("true");
+				startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
+				generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+				exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+				suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
+				includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+				exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+			} 
+			catch (IOException ex)
+			{
+				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			}
+		}
+		// END KGU#720/KGU#722 2019-08-07
+
 		boolean overwrite = false;
 		if (_options != null)
 		{
@@ -3171,29 +3664,108 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 
 		boolean firstExport = true;
+		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+		this.subroutines.clear();
+		this.includedRoots.clear();
+		this.includeMap.clear();
+		if (this.optionExportSubroutines()) {
+			if (routinePool.getName() != null) {
+				this.pureFilename = routinePool.getName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			}
+		}
+		// END KGU#676 2019-03-13
 		for (Root root : _roots)
 		{
-			if (firstExport)
+			// START KGU#676 2019-03-31: Isse #696
+			root.specialRoutinePool = routinePool;
+			// END KGU#676 2019-03-31
+			if (firstExport || routinePool != null)
 			{
 				firstExport = false;
 			}
 			else
 			{
 				code.add("");
-				this.insertComment("============================================================", "");
+				this.appendComment("=======8<=====================================================", "");
 				code.add("");
 			}
-			// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
-			this.hasParallels = false;
-			// START KGU#348 2017-09-25
-			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
-			this.usesFileAPI = false;
+
+			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+			if (this.optionExportSubroutines()) {
+				boolean wasAdded = false;
+				// Precaution for recursive top-level routine
+				if (!root.isProgram() && !subroutines.containsKey(root))
+				{
+					subroutines.put(root, new SubTopoSortEntry(null));
+					wasAdded = true;
+				}
+				registerCalledSubroutines(root);
+				if (wasAdded)
+				{
+					subroutines.remove(root);
+				}
+				if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			}
+			else {
+			// END KGU#676 2019-03-13
+				// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
+				this.hasParallels = false;
+				// START KGU#348 2017-09-25
+				// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+				this.usesFileAPI = false;
+			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+			}
+			// END KGU#676 2019-03-13
 			gatherElementInformationRoot(root);
 			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
-			this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			if (this.pureFilename.isEmpty()) {
+				this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			}
 			// END KGU#311 2016-12-27
-			generateCode(root, "");
+
+			// START KGU#676 2019-03-13: Enh. #696 Postpone this until we have all subroutine information
+			//generateCode(root, "");
+			if (!this.optionExportSubroutines()) {
+				generateCode(root, "");
+			}
+			// END KGU#678 2019-03-13
+			
 		}
+		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
+		if (this.optionExportSubroutines()) {
+			for (Root sub: subroutines.keySet())
+			{
+				gatherElementInformationRoot(sub);
+			}
+			includedRoots = sortTopologically(includeMap);
+			for (Root incl: includedRoots.toArray(new Root[]{})) {
+				gatherElementInformationRoot(incl);
+			}
+			int subroutineLine = code.count();
+			firstExport = true;
+			for (Root root: _roots) {
+				if (!subroutines.containsKey(root) && !includedRoots.contains(root)) {
+					if (!firstExport) {
+						code.add("");
+						this.appendComment("=======8<=====================================================", "");
+						code.add("");
+					}
+					generateCode(root, "");
+					if (firstExport) {
+						subroutineLine = this.subroutineInsertionLine;
+						firstExport = false;
+					}
+				}
+			}
+			this.subroutineInsertionLine = subroutineLine;
+			if (!firstExport && !subroutines.isEmpty()) {
+				insertCode("", subroutineLine);
+				insertCode(this.commentSymbolLeft() + " = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = =" + this.commentSymbolRight(), subroutineLine);
+				insertCode("", subroutineLine);
+			}
+			generateSubroutineCode(null);
+		}
+		// END KGU#676 2019-03-13
 
 		// Did the user want the code directed to standard output?
 		if (_options.indexOf('-') >= 0)
@@ -3209,6 +3781,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			outp.rewrite(exportCharset);
 
 			outp.write(code.getText());
+			// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+			if (!code.isEmpty()) {
+				outp.write("\n");
+			}
+			// END KGU#689 2019-03-21
 			outp.close();
 			
 			// START KGU#311 2016-12-27: Enh. #314 Allow the subclass to copy necessary resource files
@@ -3247,6 +3824,64 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
 	}
+	
+	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
+	/**
+	 * Retrieves the license text associated to license name {@code licName} from
+	 * the license pool directory
+	 * @param licName - name of the license (file name will be drived from it)
+	 * @return the text content of the license file (if existent), may be null
+	 */
+	protected String loadLicenseText(String licName) {
+		String error = null;
+		String content = "";
+		File licDir = Ini.getIniDirectory();
+		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+		File[] licFiles = licDir.listFiles(new LicFilter());
+		File licFile = null; 
+		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+				licFile = licFiles[i];
+			}		
+		}
+		BufferedReader br = null;
+		// START KGU#763 2019-12-11: Bugfix #794 part 1
+		if (licFile != null) {
+		// END KGU#763 2019-12-11
+			try {
+				InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+				br = new BufferedReader(isr);
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					content += line + '\n';
+				};
+			} catch (UnsupportedEncodingException e) {
+				error = e.getMessage();
+			} catch (FileNotFoundException e) {
+				error = e.getMessage();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		// START KGU#763 2019-12-11: Bugfix #794 part 2
+		}
+		// END KGU#763 2019-12-11
+		if (br != null) {
+			try {
+				br.close();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		}
+		if (error != null) {
+			getLogger().log(Level.WARNING, "{0}", error);
+		}
+		if (content.trim().isEmpty()) {
+			content = null;
+		}
+		return content;	
+	}
+	// END KGU#763 2019-11-13
+
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)
@@ -3300,30 +3935,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	public String getDescription() 
 	{
-        return getFileDescription();
-    }
-	
-    public boolean accept(File f) 
+		return getFileDescription();
+	}
+
+	public boolean accept(File f) 
 	{
-        if (f.isDirectory()) 
+		if (f.isDirectory()) 
 		{
-            return true;
-        }
-		
-        String extension = getExtension(f);
-        if (extension != null) 
-		{
-            return isOK(f.getName());
+			return true;
 		}
-		
-        return false;
-    }
-	
+
+		String extension = getExtension(f);
+		if (extension != null) 
+		{
+			return isOK(f.getName());
+		}
+
+		return false;
+	}
+
 
 	/******* Constructor ******************/
 
 	public Generator()
 	{
 	}
-	
+
 }

@@ -11,12 +11,12 @@
 	    <!-- Note the usage of classpathref to avoid copy-pasting all 
 	    your classpath entries from another target. -->
 	  <bundleapp 
-	  		outputdirectory="./Structorizer/"
+	        outputdirectory="./Structorizer/"
 	        name="Structorizer"
 	        displayname="Structorizer"
 	        identifier="lu.fisch.Structorizer"
-	        shortversion="3.28-10"
-	        version="3.28-10"
+	        shortversion="3.30-04"
+	        version="3.30-04"
 	        icon="icons/Structorizer.icns"
 	        mainclassname="Structorizer"
 	        copyright="Bob Fisch"

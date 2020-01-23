@@ -31,15 +31,17 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      kay             2016.09.25  First Issue
- *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
- *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.03.06  Enh. #368: New code option to import variable declarations
- *      Kay Gürtzig     2017.04.27  Enh. #354: New option logDir, all layouts fundamentally revised
- *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls 
- *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
- *      Kay Gürtzig     2018.07.13  Issue #557: New limitation option for the number of imported roots to be displayed
+ *      Kay Gürtzig     2016-09-25  First Issue
+ *      Kay Gürtzig     2016-11-11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017-01-07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017-03-06  Enh. #368: New code option to import variable declarations
+ *      Kay Gürtzig     2017-04-27  Enh. #354: New option logDir, all layouts fundamentally revised
+ *      Kay Gürtzig     2017-05-09  Issue #400: keyListener at all controls 
+ *      Kay Gürtzig     2017-06-20  Enh. #354/#357: generator-specific option mechanism implemented
+ *      Kay Gürtzig     2018-07-13  Issue #557: New limitation option for the number of imported roots to be displayed
+ *      Kay Gürtzig     2018-10-26  Enh. #419: New line length limitation option
+ *      Kay Gürtzig     2019-03-29  Issue #557, #718: Limit for the max. number of roots could be enlarged
  *
  ******************************************************************************************************
  *
@@ -70,6 +72,7 @@ import java.util.Vector;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
@@ -86,6 +89,10 @@ import lu.fisch.structorizer.parsers.GENParser;
  */
 @SuppressWarnings("serial")
 public class ImportOptionDialog extends LangDialog {
+	
+	// START KGU#701 2019-03-29: Issues #557, #718
+	private static final int MAX_DIAGRAMS = 250;	// was 150 before, no longer needed so strict
+	// END KGU#701 2019-03-29
 
     public boolean goOn = false;
 
@@ -123,10 +130,14 @@ public class ImportOptionDialog extends LangDialog {
         pnlNSD = new javax.swing.JPanel();
         pnlPreference = new javax.swing.JPanel();
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
-        pnlLimit = new javax.swing.JPanel();
+        javax.swing.JPanel pnlLimit = new javax.swing.JPanel();
         lblLimit = new javax.swing.JLabel();
         spnLimit = new javax.swing.JSpinner();
         // END KGU#553 2018-07-13
+        // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
+        lblMaxLen = new javax.swing.JLabel();
+        spnMaxLen = new javax.swing.JSpinner();
+        // END KGU#602 2018-10-25
         chkRefactorOnLoading = new javax.swing.JCheckBox();
         //chkOfferRefactoringIni = new javax.swing.JCheckBox();
         lbIntro = new javax.swing.JLabel();
@@ -201,13 +212,46 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
         lblLimit.setText("Maximum number of imported diagrams for direct display:");
         lblLimit.setBorder(new EmptyBorder(0, 0, 0, 5));
-		SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
+    	// START KGU#701 2019-03-29: Issues #557, #718
+        //SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
+        SpinnerModel spnModel = new SpinnerNumberModel(50, 5, MAX_DIAGRAMS, 5);
+    	// END KGU#701 2019-03-29
         spnLimit.setModel(spnModel);
-        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
-        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
-        pnlLimit.add(lblLimit);
-        pnlLimit.add(spnLimit);
+//        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
+//        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
+//        pnlLimit.add(lblLimit);
+//        pnlLimit.add(spnLimit);
+        
         // END KGU#553 2018-07-13
+
+        // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
+        lblMaxLen.setText("Maximum line length (for word wrapping):");
+        lblMaxLen.setBorder(new EmptyBorder(0, 0, 0, 5));
+		SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
+        spnMaxLen.setModel(spnModelLen);
+
+        GridBagConstraints gbcLimits = new GridBagConstraints();
+        gbcLimits.insets = new Insets(0, 5, 5, 5);
+		gbcLimits.weightx = 1.0;
+		gbcLimits.anchor = GridBagConstraints.LINE_START;
+        
+        pnlLimit.setLayout(new GridBagLayout());
+        gbcLimits.gridx = 0; gbcLimits.gridy = 0;
+        pnlLimit.add(lblMaxLen, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnMaxLen, gbcLimits);
+
+        gbcLimits.gridwidth = 1;
+        gbcLimits.gridx = 0; gbcLimits.gridy++;        
+        gbcLimits.fill = GridBagConstraints.NONE;
+        pnlLimit.add(lblLimit, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnLimit, gbcLimits);
+        // END KGU#602 2018-10-25
 
         // START KGU#416 2017-06-20: Enh. #354,#357
         btnPluginOptions.setText("Language-specific Options");
@@ -258,107 +302,107 @@ public class ImportOptionDialog extends LangDialog {
         org.jdesktop.layout.GroupLayout pnlTopLayout = new org.jdesktop.layout.GroupLayout(pnlTop);
         pnlTop.setLayout(pnlTopLayout);
         pnlTopLayout.setHorizontalGroup(
-        		pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        				.add(pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-        		        		.add(pnlTopLayout.createSequentialGroup()
-        		        				.addContainerGap()
-        		        				.add(lbIntro)
-        		        				.addContainerGap()
-        		        				)
-        		        		.add(pnlOptions)
-        						)
-        		);
+                pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(pnlTopLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(pnlTopLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .add(lbIntro)
+                                .addContainerGap()
+                                )
+                        .add(pnlOptions)
+                        )
+                );
         pnlTopLayout.setVerticalGroup(
-        		pnlTopLayout.createSequentialGroup()
-        		.addContainerGap()
-        		.add(lbIntro)
-        		.add(pnlOptions)
-        		);
-        
+                pnlTopLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(lbIntro)
+                .add(pnlOptions)
+                );
+
         pnlCode.setBorder(new TitledBorder("Code Files"));
         org.jdesktop.layout.GroupLayout pnlCodeLayout = new org.jdesktop.layout.GroupLayout(pnlCode);
         pnlCode.setLayout(pnlCodeLayout);
         pnlCodeLayout.setHorizontalGroup(
-        		pnlCodeLayout.createParallelGroup()
-        		.add(pnlCodeLayout.createSequentialGroup()
-        				.add(pnlCodeLayout.createParallelGroup()
-        						.add(pnlCodeLayout.createSequentialGroup()
-        								.addContainerGap()
-        								.add(lbCharset)
-        						)
-                				.add(chkLogDir)
-				        		// START KGU#416 2017-06-20: Enh. #354, #357
-								.add(btnPluginOptions)
-				        		// END KGU#416 2017-06-20
-                				)
-        				.add(pnlCodeLayout.createParallelGroup()
-        						.add(pnlCodeLayout.createSequentialGroup()
-        		        				.add(cbCharset)
-        		        				.add(chkCharsetAll)
-        								)
-        						.add(pnlCodeLayout.createSequentialGroup()
-        		        				.add(txtLogDir)
-        		        				.add(btnLogDir)
-        								)
-		                		// START KGU#416 2017-06-20: Enh. #354, #357
-		        				.add(cbOptionPlugins)
-		                		// END KGU#416 2017-06-20
-        						)
-        				)
-        		.add(chkVarDeclarations)
-        		.add(chkCommentImport)
-        		.add(chkSaveParseTree)
-        		// START KGU#553 2018-07-13: Issue #557
-        		.add(pnlLimit)
-        		// END KGU#553 2018-07-13
+                pnlCodeLayout.createParallelGroup()
+                .add(pnlCodeLayout.createSequentialGroup()
+                        .add(pnlCodeLayout.createParallelGroup()
+                                .add(pnlCodeLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .add(lbCharset)
+                                        )
+                                .add(chkLogDir)
+                                // START KGU#416 2017-06-20: Enh. #354, #357
+                                .add(btnPluginOptions)
+                                // END KGU#416 2017-06-20
+                                )
+                        .add(pnlCodeLayout.createParallelGroup()
+                                .add(pnlCodeLayout.createSequentialGroup()
+                                        .add(cbCharset)
+                                        .add(chkCharsetAll)
+                                        )
+                                .add(pnlCodeLayout.createSequentialGroup()
+                                        .add(txtLogDir)
+                                        .add(btnLogDir)
+                                        )
+                                // START KGU#416 2017-06-20: Enh. #354, #357
+                                .add(cbOptionPlugins)
+                                // END KGU#416 2017-06-20
+                                )
+                        )
+                .add(chkVarDeclarations)
+                .add(chkCommentImport)
+                .add(chkSaveParseTree)
+                // START KGU#553 2018-07-13: Issue #557
+                .add(pnlLimit)
+                // END KGU#553 2018-07-13
         		);
         pnlCodeLayout.setVerticalGroup(
-        		pnlCodeLayout.createSequentialGroup()
-        		.add(pnlCodeLayout.createParallelGroup()
-        				.add(pnlCodeLayout.createSequentialGroup()
-        						.add(lbCharset)
-        						.addContainerGap()
-        						.add(chkLogDir)
-        						)
-        				.add(pnlCodeLayout.createSequentialGroup()
-        						.add(pnlCodeLayout.createParallelGroup()
-        								.add(cbCharset)
-        								.add(chkCharsetAll)
-        								)
-        						.addContainerGap()
-           						.add(pnlCodeLayout.createParallelGroup()
-        								.add(txtLogDir)
-        								.add(btnLogDir)
-        								)
-        						)
-        				)
-        		.add(chkVarDeclarations)
-        		.add(chkCommentImport)
-        		.add(chkSaveParseTree)
-        		// START KGU#553 2018-07-13: Issue #557
-        		.add(pnlLimit)
-        		// END KGU#553 2018-07-13
-        		// START KGU#416 2017-06-20: Enh. #354, #357
-        		.add(pnlCodeLayout.createParallelGroup()
-                		.add(btnPluginOptions)
-                		.add(cbOptionPlugins)
-                		)
-        		// END KGU#416 2017-06-20
-        		);
-        
+                pnlCodeLayout.createSequentialGroup()
+                .add(pnlCodeLayout.createParallelGroup()
+                        .add(pnlCodeLayout.createSequentialGroup()
+                                .add(lbCharset)
+                                .addContainerGap()
+                                .add(chkLogDir)
+                                )
+                        .add(pnlCodeLayout.createSequentialGroup()
+                                .add(pnlCodeLayout.createParallelGroup()
+                                        .add(cbCharset)
+                                        .add(chkCharsetAll)
+                                        )
+                                .addContainerGap()
+                                .add(pnlCodeLayout.createParallelGroup()
+                                        .add(txtLogDir)
+                                        .add(btnLogDir)
+                                        )
+                                )
+                        )
+                .add(chkVarDeclarations)
+                .add(chkCommentImport)
+                .add(chkSaveParseTree)
+                // START KGU#553 2018-07-13: Issue #557
+                .add(pnlLimit)
+                // END KGU#553 2018-07-13
+                // START KGU#416 2017-06-20: Enh. #354, #357
+                .add(pnlCodeLayout.createParallelGroup()
+                        .add(btnPluginOptions)
+                        .add(cbOptionPlugins)
+                        )
+                // END KGU#416 2017-06-20
+                );
+
         pnlNSD.setBorder(new TitledBorder("NSD Files"));
 //        pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
         org.jdesktop.layout.GroupLayout pnlNSDLayout = new org.jdesktop.layout.GroupLayout(pnlNSD);
         pnlNSD.setLayout(pnlNSDLayout);
         //pnlNSD.add(chkRefactorOnLoading);
         pnlNSDLayout.setHorizontalGroup(
-        		pnlNSDLayout.createParallelGroup()
-        		.add(chkRefactorOnLoading)
-        		);
+                pnlNSDLayout.createParallelGroup()
+                .add(chkRefactorOnLoading)
+                );
         pnlNSDLayout.setVerticalGroup(
-        		pnlNSDLayout.createSequentialGroup()
-        		.add(chkRefactorOnLoading)
-        		);
+                pnlNSDLayout.createSequentialGroup()
+                .add(chkRefactorOnLoading)
+                );
         
         pnlPreference.setBorder(new TitledBorder("Preference Files"));
         pnlPreference.setLayout(new GridLayout(0, 1, 0, 1));
@@ -391,39 +435,43 @@ public class ImportOptionDialog extends LangDialog {
         content.add(pnlButtons, BorderLayout.SOUTH);
         
         // START KGU#393 2017-05-09: Issue #400 - GUI consistency - let Esc and ctrl/shift-Enter work
-		KeyListener keyListener = new KeyListener()
-		{
-			public void keyPressed(KeyEvent e) 
-			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
-					setVisible(false);
-				}
-				else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
-				{
-					goOn = true;
-					setVisible(false);
-				}
-			}
-			
-			public void keyReleased(KeyEvent ke) {} 
-			public void keyTyped(KeyEvent kevt) {}
-		};
-		btnOk.addKeyListener(keyListener);
-		cbCharset.addKeyListener(keyListener);
-		chkCharsetAll.addKeyListener(keyListener);
-		chkLogDir.addKeyListener(keyListener);
-		chkSaveParseTree.addKeyListener(keyListener);
-		chkVarDeclarations.addKeyListener(keyListener);
-		chkCommentImport.addKeyListener(keyListener);
-		chkRefactorOnLoading.addKeyListener(keyListener);
-		// END KGU#393 2017-05-09		
-	    // START KGU#416 2017-06-20: Enh. #354. #357
-		btnPluginOptions.addKeyListener(keyListener);
-		cbOptionPlugins.addKeyListener(keyListener);
-	    // END KGU#416 2017-06-20
+        KeyListener keyListener = new KeyListener()
+        {
+            public void keyPressed(KeyEvent e) 
+            {
+                if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+                {
+                    setVisible(false);
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown()))
+                {
+                    goOn = true;
+                    setVisible(false);
+                }
+            }
 
-		// START KGU#354 2017-04-27
+            public void keyReleased(KeyEvent ke) {} 
+            public void keyTyped(KeyEvent kevt) {}
+        };
+        btnOk.addKeyListener(keyListener);
+        cbCharset.addKeyListener(keyListener);
+        chkCharsetAll.addKeyListener(keyListener);
+        chkLogDir.addKeyListener(keyListener);
+        chkSaveParseTree.addKeyListener(keyListener);
+        chkVarDeclarations.addKeyListener(keyListener);
+        chkCommentImport.addKeyListener(keyListener);
+        chkRefactorOnLoading.addKeyListener(keyListener);
+        // END KGU#393 2017-05-09		
+        // START KGU#416 2017-06-20: Enh. #354. #357
+        btnPluginOptions.addKeyListener(keyListener);
+        cbOptionPlugins.addKeyListener(keyListener);
+        // END KGU#416 2017-06-20
+        // START KGU#602 2018-10-26: Issue #419
+        ((JSpinner.DefaultEditor)spnLimit.getEditor()).getTextField().addKeyListener(keyListener);
+        ((JSpinner.DefaultEditor)spnMaxLen.getEditor()).getTextField().addKeyListener(keyListener);
+        // END KGU#602 2018-10-26
+
+        // START KGU#354 2017-04-27
         doLogButtons();
         // END KGU#354 2017-04-27
         
@@ -449,28 +497,28 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#354 2017-04-27: Enh. #354 Specify a log directory
         String logPath = txtLogDir.getText().trim();
         if (chkLogDir.isSelected() && !logPath.isEmpty() && !logPath.equals(".")) {
-    	    File logDir = new File(logPath);
-    	    String errMsg = null;
-    	    if (!logDir.isDirectory()) {
-    	        errMsg = this.msgDirDoesntExist.getText();
-    	    }
-    	    else {
-    	    	File test = new File(logDir, "###test###.txt");
-    	    	try {
-    	    		test.createNewFile();
-    	    		test.delete();
-    	    	}
-    	    	catch (IOException ex) {
-    	    		errMsg = this.msgDirNotWritable.getText();
-    	    	}
-    	    }
-    	    if (errMsg != null) {
-    	        JOptionPane.showMessageDialog(this,
-    	                errMsg.replace("%", logPath),
-    	                chkLogDir.getText(), JOptionPane.ERROR_MESSAGE);
-    	        txtLogDir.requestFocusInWindow();
-    	        return;
-    	    }
+            File logDir = new File(logPath);
+            String errMsg = null;
+            if (!logDir.isDirectory()) {
+            	errMsg = this.msgDirDoesntExist.getText();
+            }
+            else {
+                File test = new File(logDir, "###test###.txt");
+                try {
+                    test.createNewFile();
+                    test.delete();
+                }
+                catch (IOException ex) {
+                    errMsg = this.msgDirNotWritable.getText();
+                }
+            }
+            if (errMsg != null) {
+                JOptionPane.showMessageDialog(this,
+                        errMsg.replace("%", logPath),
+                        chkLogDir.getText(), JOptionPane.ERROR_MESSAGE);
+                txtLogDir.requestFocusInWindow();
+                return;
+            }
         }
         // END KGU#354 2017-04-27
         goOn = true;
@@ -480,62 +528,62 @@ public class ImportOptionDialog extends LangDialog {
     // START KGU#354 2017-04-27: Enh. #354
     private void jlogDirButtonActionPerformed(ActionEvent evt)
     {
-    	String path = txtLogDir.getText();
-    	JFileChooser logDirChooser = new JFileChooser();
-    	logDirChooser.setDialogTitle(chkLogDir.getText());
-    	if (!path.isEmpty()) {
-    		logDirChooser.setCurrentDirectory(new File(path));
-    	}
-    	logDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    	int answer = logDirChooser.showOpenDialog(this);
-    	if (answer == JFileChooser.APPROVE_OPTION) {
-    		txtLogDir.setText(logDirChooser.getSelectedFile().getAbsolutePath());
-    	}
+        String path = txtLogDir.getText();
+        JFileChooser logDirChooser = new JFileChooser();
+        logDirChooser.setDialogTitle(chkLogDir.getText());
+        if (!path.isEmpty()) {
+            logDirChooser.setCurrentDirectory(new File(path));
+        }
+        logDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int answer = logDirChooser.showOpenDialog(this);
+        if (answer == JFileChooser.APPROVE_OPTION) {
+            txtLogDir.setText(logDirChooser.getSelectedFile().getAbsolutePath());
+        }
     }
     
     public void doLogButtons()
     {
-		boolean isLogEnabled = chkLogDir.isSelected();
-		txtLogDir.setEnabled(isLogEnabled);
-		btnLogDir.setEnabled(isLogEnabled);    	
+        boolean isLogEnabled = chkLogDir.isSelected();
+        txtLogDir.setEnabled(isLogEnabled);
+        btnLogDir.setEnabled(isLogEnabled);    	
     }
     // END KGU#354 2017-04-27
 
     public void charsetListChanged(String favouredCharset)
     {
-    	Set<String> availableCharsets = Charset.availableCharsets().keySet();
-    	cbCharset.removeAllItems();
+        Set<String> availableCharsets = Charset.availableCharsets().keySet();
+        cbCharset.removeAllItems();
         if (chkCharsetAll.isSelected())
         {
-        	for (String charsetName : availableCharsets)
-        	{
-        		cbCharset.addItem(charsetName);
-        	}
+            for (String charsetName : availableCharsets)
+            {
+                cbCharset.addItem(charsetName);
+            }
         }
         else
         {
-        	boolean inNewList = false;
-        	for (int i = 0; i < standardCharsets.length; i++)
-        	{
-        		String charsetName = standardCharsets[i];
-        		if (availableCharsets.contains(charsetName))
-        		{
-        			cbCharset.addItem(charsetName);
-        			if (favouredCharset != null && favouredCharset.equals(charsetName))
-        			{
-        				inNewList = true;
-        			}
-        		}
-        	}
-        	if (favouredCharset != null && !inNewList && availableCharsets.contains(favouredCharset))
-        	{
-        		cbCharset.insertItemAt(favouredCharset,  0);
-        	}
+            boolean inNewList = false;
+            for (int i = 0; i < standardCharsets.length; i++)
+            {
+                String charsetName = standardCharsets[i];
+                if (availableCharsets.contains(charsetName))
+                {
+                    cbCharset.addItem(charsetName);
+                    if (favouredCharset != null && favouredCharset.equals(charsetName))
+                    {
+                        inNewList = true;
+                    }
+                }
+            }
+            if (favouredCharset != null && !inNewList && availableCharsets.contains(favouredCharset))
+            {
+                cbCharset.insertItemAt(favouredCharset,  0);
+            }
         }
-    	if (favouredCharset != null)
-    	{
-    		cbCharset.setSelectedItem(favouredCharset);
-    	}
+        if (favouredCharset != null)
+        {
+            cbCharset.setSelectedItem(favouredCharset);
+        }
     }
 
     /**
@@ -546,22 +594,22 @@ public class ImportOptionDialog extends LangDialog {
      */
     private Vector<String> getCodeParserNames(boolean withOptionsOnly)
     {
-    	if (this.plugins == null) {
-    		// read generators from file
-    		// and add them to the Vector
-    		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-    		GENParser genp = new GENParser();
-    		this.plugins = genp.parse(buff);
-    		try { buff.close();	} catch (IOException e) {}
-    	}
-    	Vector<String> parserTitles = new Vector<String>();
-		for(int i = 0; i < plugins.size(); i++)
-		{
-			if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
-				parserTitles.add(plugins.get(i).title);
-			}
-		}
-		return parserTitles;
+        if (this.plugins == null) {
+            // read generators from file
+            // and add them to the Vector
+            BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+            GENParser genp = new GENParser();
+            this.plugins = genp.parse(buff);
+            try { buff.close();	} catch (IOException e) {}
+        }
+        Vector<String> parserTitles = new Vector<String>();
+        for(int i = 0; i < plugins.size(); i++)
+        {
+            if (!withOptionsOnly || !plugins.get(i).options.isEmpty()) {
+                parserTitles.add(plugins.get(i).title);
+            }
+        }
+        return parserTitles;
     }
 
 //    /**
@@ -621,9 +669,6 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JPanel pnlNSD;
     public javax.swing.JPanel pnlPreference;
     public javax.swing.JPanel pnlCode;
-    // START KGU#553 2018-07-12: Issue #557
-    public javax.swing.JPanel pnlLimit;
-    // END KGU#553 2018-07-12
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;
@@ -659,16 +704,20 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JButton btnLogDir;
     // END KGU#354 2017-04-27
     // End of variables declaration
-	// START KGU#416 2017-06-20: Enh. #354, #357
-	public Vector<GENPlugin> plugins = null;
-	// In order of plugins there is an option value map per parser plugin
-	public Vector<HashMap<String, String>> parserOptions = new Vector<HashMap<String, String>>();
-	public javax.swing.JButton btnPluginOptions;
-	public javax.swing.JComboBox<String> cbOptionPlugins;
-	public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Parser");
-	// END KGU#416 2017-06-20
+    // START KGU#416 2017-06-20: Enh. #354, #357
+    public Vector<GENPlugin> plugins = null;
+    // In order of plugins there is an option value map per parser plugin
+    public Vector<HashMap<String, String>> parserOptions = new Vector<HashMap<String, String>>();
+    public javax.swing.JButton btnPluginOptions;
+    public javax.swing.JComboBox<String> cbOptionPlugins;
+    public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Parser");
+    // END KGU#416 2017-06-20
     // START KGU#553 2018-07-12: Issue #557
     public javax.swing.JLabel lblLimit;
     public javax.swing.JSpinner spnLimit;
     // END KGU#553 2018-07-12
+    // START KGU#602 2018-10-25: Enh. #419
+    public javax.swing.JLabel lblMaxLen;
+    public javax.swing.JSpinner spnMaxLen;    
+    // END KGU#602 2018-10-25
 }

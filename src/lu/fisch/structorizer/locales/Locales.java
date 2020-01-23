@@ -33,18 +33,22 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2016.08.02  First Issue
- *      Kay Gürtzig     2016.08.12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
- *      Kay Gürtzig     2016.09.05  Mechanism to translate Hashtables of controls (initially for language preferences)
- *      Kay Gürtzig     2016.09.09  Fix in getSectionNames(), Javadoc accomplished
- *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
- *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
- *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
- *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
- *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
- *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
- *      Kay Gürtzig     2017.10.02  Enh. #415: The title localization wasn't done for JFrame offsprings
- *      Kay Gürtzig     2018.07.02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target 
+ *      Bob Fisch       2016-08-02  First Issue
+ *      Kay Gürtzig     2016-08-12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016-09-05  Mechanism to translate Hashtables of controls (initially for language preferences)
+ *      Kay Gürtzig     2016-09-09  Fix in getSectionNames(), Javadoc accomplished
+ *      Kay Gürtzig     2016-09-13  Bugfix #241 in checkConditions() (KGU#246)
+ *      Kay Gürtzig     2016-09-22  Issue #248: Workaround for Linux systems with Java 1.7
+ *      Kay Gürtzig     2016-09-28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
+ *      Kay Gürtzig     2016-12-07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
+ *      Kay Gürtzig     2016-02-03  Issue #340: registration without immediate update launch
+ *      Kay Gürtzig     2017-02-27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
+ *      Kay Gürtzig     2017-10-02  Enh. #415: The title localization wasn't done for JFrame offsprings
+ *      Kay Gürtzig     2018-07-02  KGU#245: Substrings "[#]" may be replaced by the actual index in an array target
+ *      Kay Gürtzig     2019-01-18  Issue #346: Precaution against uninitialized arrays in setLocale()
+ *      Kay Gürtzig     2019-03-03  Enh. #327: New methods removeLocale(String, boolean), removeLocales(boolean)
+ *      Kay Gürtzig     2019-06-14  Issue #728: Mechanism for setting mnemonics enhanced
+ *      Kay Gürtzig     2019-09-30  KGU#736 Precaution against newlines in tooltips
  *
  ******************************************************************************************************
  *
@@ -70,6 +74,7 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 import lu.fisch.structorizer.gui.ElementNames;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
@@ -78,9 +83,9 @@ import lu.fisch.utils.StringList;
  */
 public class Locales {
     /**
-     * LOCALES_LIST of all locales we have and their respective English denomination
+     * LOCALES_LIST of all locales we have and their respective English denomination.<br/>
      * Locales for actually existing languages MUST have an English language name, whereas
-     * pure technical pseudo-locales MUST NOT have a denomination
+     * pure technical pseudo-locales MUST NOT have a denomination.<br/>
      * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
      */
     public static final String[][] LOCALES_LIST = {
@@ -220,7 +225,7 @@ public class Locales {
     
     /**
      * Returns the locale associated with the given name of the locale (language
-     * code) or the locale file. If the loacle hadn't been loaded yet then it will
+     * code) or the locale file. If the locale hadn't been loaded yet then it will
      * be loaded now - this may take time and could raise error message boxes.
      * @param name - language code, pseudo locale name, or locale file name
      * @return - the locale associated with the given name
@@ -230,15 +235,58 @@ public class Locales {
         // try to get the locale
         Locale locale = locales.get(name);
         // if it has not yet been loaded
-        if(locale==null)
+        if (locale == null)
         {
             // load it now ...
-            locale=new Locale(name+".txt");
+            locale = new Locale(name + ".txt");
             // ... and put it into the list
             locales.put(name, locale);
         }
         return locale;
     }
+    
+    // START KGU#323 2019-03-03: Enh. #327 There should be an opportunity to dispose no longer needed locales
+    /**
+     * Removes a the {@link Locale} with name {@code name} if it had been cached and is not the current
+     * {@link Locale}, unless it contains unsaved changes and {@code discardChanges} is false
+     * @param name - name of the Locale to be get rid of
+     * @param discardChanges - whether the Locale is to be removed even if it has unsaved changes
+     * @return true if there won't be a cached Locale with the given name thereafter
+     */
+    public boolean removeLocale(String name, boolean discardChanges)
+    {
+        // Don't dispose the current locale
+        boolean isAbsent = !name.equals(loadedLocaleName);
+        if (!discardChanges) {
+            Locale locale = locales.get(name);
+            if (locale != null && locale.hasUnsavedChanges) {
+                isAbsent = false;
+            }
+        }
+        if (isAbsent) {
+            locales.remove(name);
+        }
+        return isAbsent;
+    }
+    
+    /**
+     * Will remove all cached {@link Locale}s different from the current {@link Locale} unless
+     * they have unsaved changes and {@code discardChanges} is not true.
+     * @param discardChanges - whether Locales with unsaved changes are to be removed nevertheless
+     * @return true if all but the current Locale have been discarded
+     */
+    public boolean removeLocales(boolean discardChanges)
+    {
+        boolean allDone = true;
+        java.util.Set<String> localeKeys = locales.keySet();
+        String[] localeNames = localeKeys.toArray(new String[localeKeys.size()]);
+        for (String localeName: localeNames) {
+            boolean done = localeName.equals(loadedLocaleName) || removeLocale(localeName, discardChanges);
+            allDone = allDone && done;
+        }
+        return allDone;
+    }
+    // END KGU#323 2019-03-03
     
     /**
      * Retrieves all locales providing a line with the given key (no matter whether
@@ -326,7 +374,7 @@ public class Locales {
         boolean found = false;
         for (int i = 0; !found && i < LOCALES_LIST.length; i++)
         {
-        	found = LOCALES_LIST[i][0].equals(localeName);
+            found = LOCALES_LIST[i][0].equals(localeName);
         }
     	return found;
     }
@@ -510,7 +558,7 @@ public class Locales {
             
             if(errorMessage!=null)
                 logger.log(Level.WARNING, "CONDITION ({0}:{1}): {2}",
-                		new Object[]{fieldName, value, errorMessage});
+                        new Object[]{fieldName, value, errorMessage});
 
             if(fieldValue!=null)
                 result &= value.trim().equalsIgnoreCase(fieldValue.trim());
@@ -542,12 +590,12 @@ public class Locales {
 //    	}
         // The parts on both sides of the equality sign (compound key and string value)
         StringList parts;
-    	// The pieces of the split key (i.e. parts[0])
+        // The pieces of the split key (i.e. parts[0])
         StringList pieces;
         
         for (int i = 0; i < lines.count(); i++) {
             parts = StringList.explodeFirstOnly(lines.get(i), "=");
-        	//System.out.println(parts.get(0));
+            //System.out.println(parts.get(0));
             pieces = StringList.explode(parts.get(0), "\\.");
             
             if (pieces.get(0).equalsIgnoreCase(component.getClass().getSimpleName()) && 
@@ -586,7 +634,7 @@ public class Locales {
                     // START KGU#263 2016-09-28: Generally replace any found "\n" by a real newline
                     // START #479 2017-12-15: Enh. #492 - replace element names
                     //parts.set(1, parts.get(1).replace("\\n", "\n"));
-                	parts.set(1, ElementNames.resolveElementNames(parts.get(1).replace("\\n", "\n")));
+                    parts.set(1, ElementNames.resolveElementNames(parts.get(1).replace("\\n", "\n"), null));
                     // END KGU#479 2017-12-15
                     // END KGU#263 2016-09-28
 
@@ -637,86 +685,90 @@ public class Locales {
                                 // START KGU#239 2016-08-12: Opportunity to localize an array of controls
                                 if (fieldClass.isArray() && pieces.count() > 3)
                                 {
-                                    int length = Array.getLength(target);
-                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
-                                    //int index = Integer.parseUnsignedInt(piece2);
-                                    //if (index < length) {
-                                    // START KGU#351 2017-02-26
-                                    //int index = Integer.parseInt(piece2);
-                                    //if (index >= 0 && index < length) {
-                                	//// END KGU#252 2016-09-22
-                                    //    target = Array.get(target, index);
-                                    //    fieldClass = target.getClass();
-                                    //    pieces.remove(2);	// Index no longer needed
-                                    //    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
-                                    //    piece2 = pieces.get(2).toLowerCase();
-                                    //}
-                                    int ixStart = 0, ixEnd = 0;
-                                    if (piece2.equals("*")) {
-                                    	// All indices!
-                                    	ixEnd = length;
+                                    // On startup we might be faster here than the initialization of the components, such
+                                    // that we must face nasty NullPointerExceptions if we don't prevent
+                                    if (target != null) {
+                                        int length = Array.getLength(target);
+                                        // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                        //int index = Integer.parseUnsignedInt(piece2);
+                                        //if (index < length) {
+                                        // START KGU#351 2017-02-26
+                                        //int index = Integer.parseInt(piece2);
+                                        //if (index >= 0 && index < length) {
+                                        //// END KGU#252 2016-09-22
+                                        //    target = Array.get(target, index);
+                                        //    fieldClass = target.getClass();
+                                        //    pieces.remove(2);	// Index no longer needed
+                                        //    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                        //    piece2 = pieces.get(2).toLowerCase();
+                                        //}
+                                        int ixStart = 0, ixEnd = 0;
+                                        if (piece2.equals("*")) {
+                                            // All indices!
+                                            ixEnd = length;
+                                        }
+                                        else {
+                                            ixStart = Integer.parseInt(piece2);
+                                            ixEnd = ixStart + 1;
+                                        }
+                                        pieces.remove(2);	// Index no longer needed
+                                        pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                        piece2 = pieces.get(2).toLowerCase();
+                                        if (ixStart >= 0 && ixEnd <= length) {
+                                            String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
+                                            for (int index = ixStart; index < ixEnd; index++) {
+                                                Object tgt = Array.get(target, index);
+                                                // START KGU#245 2018-07-02: New mechanism to insert the index into the text
+                                                //this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts.get(1));
+                                                this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, 
+                                                        parts.get(1).replace("[#]", Integer.toString(index)));
+                                                // END KGU#245 2018-07-02
+                                            }
+                                            // Target exhausted
+                                            target = null;
+                                        }
+                                        // END KGU#351 2017-02-26
+                                        // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                        else
+                                        {
+                                            logger.log(Level.WARNING,
+                                                    "LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
+                                                            + "Index out of range (0...{4})!",
+                                                            new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
+                                        }
+                                        // END KGU#252 2016-09-22
                                     }
-                                    else {
-                                    	ixStart = Integer.parseInt(piece2);
-                                    	ixEnd = ixStart + 1;
-                                    }
-                                    pieces.remove(2);	// Index no longer needed
-                                    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
-                                    piece2 = pieces.get(2).toLowerCase();
-                                    if (ixStart >= 0 && ixEnd <= length) {
-                                    	String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
-                                    	for (int index = ixStart; index < ixEnd; index++) {
-                                    		Object tgt = Array.get(target, index);
-                                    		// START KGU#245 2018-07-02: New mechanism to insert the index into the text
-                                    		//this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts.get(1));
-                                    		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, 
-                                    				parts.get(1).replace("[#]", Integer.toString(index)));
-                                    		// END KGU#245 2018-07-02
-                                    	}
-                                    	// Target exhausted
-                                    	target = null;
-                                    }
-                                    // END KGU#351 2017-02-26
-                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
-                                    else
-                                    {
-                                        logger.log(Level.WARNING,
-                                        		"LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
-                                        		+ "Index out of range (0...{4})!",
-                                        		new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
-                                    }
-                                	// END KGU#252 2016-09-22
                                 }
                                 // END KGU#239 2016-08-12
                                 // START KGU#242 2016-09-04
                                 else if ((fieldClass.getName().equals("java.util.HashMap") || fieldClass.getName().equals("java.util.Hashtable")) && pieces.count() > 3)
                                 {
-                                	String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
-                                	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
-                                	// On startup we might be faster here than the initialization of the components, such
-                                	// that we must face nasty NullPointerExceptions if we don't prevent
-                            		if (target != null) {
-                            			try {
-                            				target = method.invoke(target, piece2);
-                            				if (target == null)
-                            				{
-                            					logger.log(Level.WARNING, "LANG: No Element <{0}.{1}> found!",
-                            							new Object[]{pieces.get(0), piece1_2});
-                            				}
-                            			}
-                            			catch (Exception e) {
-                            				// FIXME: No idea why this always goes off just on startup
-                            				logger.log(Level.WARNING, "LANG: Trouble accessing <{0}.{1}>",
-                            						new Object[]{pieces.get(0), piece1_2});
-                            			}
-                            		}
-                            		if (target != null)
-                                	{
-                                		fieldClass = target.getClass();
-                                		pieces.remove(2);	// Key no longer needed
-                                		pieces.set(1, piece1_2);
-                                		piece2 = pieces.get(2).toLowerCase();
-                                	}
+                                    String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
+                                    Method method = fieldClass.getMethod("get", new Class[]{Object.class});
+                                    // On startup we might be faster here than the initialization of the components, such
+                                    // that we must face nasty NullPointerExceptions if we don't prevent
+                                    if (target != null) {
+                                        try {
+                                            target = method.invoke(target, piece2);
+                                            if (target == null)
+                                            {
+                                                logger.log(Level.WARNING, "LANG: No Element <{0}.{1}> found!",
+                                                        new Object[]{pieces.get(0), piece1_2});
+                                            }
+                                        }
+                                        catch (Exception e) {
+                                            // FIXME: No idea why this always goes off just on startup
+                                            logger.log(Level.WARNING, "LANG: Trouble accessing <{0}.{1}>",
+                                                    new Object[]{pieces.get(0), piece1_2});
+                                        }
+                                    }
+                                    if (target != null)
+                                    {
+                                        fieldClass = target.getClass();
+                                        pieces.remove(2);	// Key no longer needed
+                                        pieces.set(1, piece1_2);
+                                        piece2 = pieces.get(2).toLowerCase();
+                                    }
                                 }
                                 // END KGU#242 2016-09-04
                                 
@@ -776,20 +828,20 @@ public class Locales {
                                 // END KGU#351 2017-02-26
                                 // END KGU#156 2016-03-13
                             } catch (Exception e) {
-                            	String reason = e.getMessage();
-                            	if (reason == null) {
-                            		reason = e.getClass().getSimpleName();
-                            		// START KGU#484 2018-04-05: Issue #463
-                            		//e.printStackTrace();
-                            		logger.log(Level.WARNING, "", e);	// FIXME: really that important?
-                            		// END KGU#484 2018-04-05
-                            	}
+                                String reason = e.getMessage();
+                                if (reason == null) {
+                                    reason = e.getClass().getSimpleName();
+                                    // START KGU#484 2018-04-05: Issue #463
+                                    //e.printStackTrace();
+                                    logger.log(Level.WARNING, "", e);	// FIXME: really that important?
+                                    // END KGU#484 2018-04-05
+                                }
                                 logger.log(Level.WARNING, "LANG: Error while setting property <{0}> for element <{1}>!\n",
-                                		new Object[]{pieces.get(2), pieces.get(0), pieces.get(1), reason});
+                                        new Object[]{pieces.get(2), pieces.get(0), pieces.get(1), reason});
                             }
                         } else {
                             logger.log(Level.WARNING, "LANG: Field not found <{0}.{1}>",
-                            		new Object[]{pieces.get(0), pieces.get(1)});
+                                    new Object[]{pieces.get(0), pieces.get(1)});
                         }
                     }
                 }
@@ -800,14 +852,19 @@ public class Locales {
     // START KGU#351 2017-02-26: Outsourced from setLocale(Component, StringList)
     private void setFieldProperty(Object _target, Class<?> _fieldClass, String _property, String _piece3, String _text) throws Exception
     {
-    	if (_target == null) {
-    		return;
-    	}
+        if (_target == null) {
+            return;
+        }
         if (_property.equals("text")) {
             Method method = _fieldClass.getMethod("setText", new Class[]{String.class});
             method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("tooltip")) {
             Method method = _fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+            // START KGU#736 2019-09-29: In case of contained newlines, try to convert the text to html.
+            if (_text.contains("\n") && !_text.startsWith("<html>")) {
+                _text = "<html>" + BString.encodeToHtml(_text).replace("\n", "<br/>") + "</html>";
+            }
+            // END KGU#736 2019-09-29
             method.invoke(_target, new Object[]{_text});
         } else if (_property.equals("border")) {
             Method method = _fieldClass.getMethod("setBorder", new Class[]{Border.class});
@@ -826,6 +883,13 @@ public class Locales {
                 int keyCode = KeyEvent.getExtendedKeyCodeForChar(_text.toLowerCase().charAt(0));
                 if (keyCode != KeyEvent.VK_UNDEFINED) {
                     method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
+                    // START KGU#713 2019-06-14: Issue #728 Allow to position the mnemonic in the caption
+                    String pos = _text.substring(1);	// an index may follow, e.g in "g12"
+                    if (!pos.isEmpty()) {
+                        method = _fieldClass.getMethod("setDisplayedMnemonicIndex", new Class[]{int.class});
+                        method.invoke(_target, new Object[]{Integer.valueOf(pos)});
+                    }
+                    // END KGU#713 2019-06-14
                 }
             } catch (NoSuchMethodError ex) {
             	logger.warning("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
@@ -840,9 +904,9 @@ public class Locales {
             Method method = _fieldClass.getMethod("getItemAt", new Class[]{int.class});
             Object item = method.invoke(_target, new Object[]{Integer.valueOf(_piece3)});
             if (item != null) {
-            	Class<?> itemClass = item.getClass();
-            	method = itemClass.getMethod("setText", new Class[]{String.class});
-            	method.invoke(item, new Object[]{_text});
+                Class<?> itemClass = item.getClass();
+                method = itemClass.getMethod("setText", new Class[]{String.class});
+                method.invoke(item, new Object[]{_text});
             }
         }
         // END KGU#156 2016-03-13
@@ -856,7 +920,7 @@ public class Locales {
      */
     public String getLoadedLocaleName()
     {
-        if(loadedLocaleName==null) return DEFAULT_LOCALE;
+        if (loadedLocaleName==null) return DEFAULT_LOCALE;
         else return loadedLocaleName;
     }
     

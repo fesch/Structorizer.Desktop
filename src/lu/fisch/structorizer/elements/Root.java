@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,117 +32,139 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Bob Fisch       2008.04.18      Added analyser
- *      Kay Gürtzig     2014.10.18      Var name search unified and false detection of "as" within var names mended
- *      Kay Gürtzig     2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *      Kay Gürtzig     2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
- *      Kay Gürtzig     2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
- *      Kay Gürtzig     2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig     2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig     2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Bob Fisch       2008-04-18      Added analyser
+ *      Kay Gürtzig     2014-10-18      Var name search unified and false detection of "as" within var names mended
+ *      Kay Gürtzig     2015-10-12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *      Kay Gürtzig     2015-10-16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *      Kay Gürtzig     2015-10-17      improved Arranger support by method notifyReplaced (KGU#48)
+ *      Kay Gürtzig     2015-11-03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig     2015-11-13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig     2015-11-22/23   Modifications to support selection of Element sequences (KGU#87),
  *                                      Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig     2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *      Kay Gürtzig     2015-11-28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
  *                                      saveToIni()
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
- *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
- *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
- *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
- *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015-12-10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Kay Gürtzig     2015-12-11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
+ *      Kay Gürtzig     2015-12-20      Bugfix #50 (KGU#112) getResultType() slightly revised
+ *      Kay Gürtzig     2016-01-02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
+ *      Kay Gürtzig     2016-01-06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
- *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
- *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
+ *      Kay Gürtzig     2016-01-08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016-01-11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
- *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
- *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
- *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
- *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
- *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
+ *      Kay Gürtzig     2016-01-14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016-01-16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016-01-21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016-01-22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
+ *      Kay Gürtzig     2016-02-25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-03-21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *      Kay Gürtzig     2016-03-25      Bugfix #135 (KGU#163) Method analyse(.,.,.,.,.) decomposed and corrected
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
  *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
- *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
- *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
- *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
- *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
+ *      Kay Gürtzig     2016-07-19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
+ *      Kay Gürtzig     2016-07-22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
+ *      Kay Gürtzig     2016-07-25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
+ *      Kay Gürtzig     2016-07-27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
+ *      Kay Gürtzig     2016-07-28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
  *                                      Bugfix KGU#222 in collectParameters()
- *      Kay Gürtzig     2016.08.12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
+ *      Kay Gürtzig     2016-08-12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
  *                                      for easier maintenance
- *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
- *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
+ *      Kay Gürtzig     2016-09-21      Enh. #249: New analyser check 20 (function header syntax) implemented
+ *      Kay Gürtzig     2016-09-25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *                                      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
- *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
- *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
- *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
- *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
+ *      Kay Gürtzig     2016-10-11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
+ *      Kay Gürtzig     2016-10-12      Issue #271: user-defined prompt strings in input instructions
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Analyser checks for disabled elements averted.
+ *      Kay Gürtzig     2016-11-22      Bugfix #295: Spurious error11 in return statements with equality comparison
+ *      Kay Gürtzig     2016-12-12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
- *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
- *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
- *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
- *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
- *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
- *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
- *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
- *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
- *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
- *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
- *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
- *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
- *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
- *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
- *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
- *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
+ *      Kay Gürtzig     2016-12-16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
+ *      Kay Gürtzig     2016-12-28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
+ *      Kay Gürtzig     2016-12-29      Enh. #315: New comparison method distinguishing different equality levels
+ *      Kay Gürtzig     2017-01-07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
+ *      Kay Gürtzig     2017-01-13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
+ *      Kay Gürtzig     2017-01-17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
+ *      Kay Gürtzig     2017-01-30      Enh. #335: Type info mechanism established
+ *      Kay Gürtzig     2017-01-31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
+ *      Kay Gürtzig     2017-02-01      Enh. #259/#335: Parameters added to typeMap
+ *      Kay Gürtzig     2017-02-07      KGU#343: Result analysis mechanism revised
+ *      Kay Gürtzig     2017-03-06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
+ *      Kay Gürtzig     2017-03-10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
+ *      Kay Gürtzig     2017-03-10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
+ *      Kay Gürtzig     2017-03-14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
+ *      Kay Gürtzig     2017-03-30      Enh. #388: const retrieval (method collectParameters() modified)
+ *      Kay Gürtzig     2017-04-04      Enh. #388: New Analyser check for constant definitions (no. 22),
  *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
- *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
- *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
- *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
- *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
- *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
- *      Kay Gürtzig     2017.05.06      Bugfix #397: Wrong insertion position with SelectedSequence as target
- *      Kay Gürtzig     2017.05.09      Enh. #372: Statistics method supporting the AttributeInspector
- *      Kay Gürtzig     2017.05.16      Enh. #389: Third diagram type introduced.
- *      Kay Gürtzig     2017.05.21      Enh. #372: additional attributes included in undo/redo mechanism
- *      Kay Gürtzig     2017.05.22      Enh. #272: New attribute "origin"
- *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList"
- *      Kay Gürtzig     2017.07.02      Enh. #389: Analyser and execution mechanisms adapted to new include design
- *      Kay Gürtzig     2017.09.18      Enh. #423: Type retrieval and Analyser enhancement for record types
- *      Kay Gürtzig     2017.10.09      Enh. #423: Adjustments for Analyser check 24.
- *      Kay Gürtzig     2017.10.26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
- *      Kay Gürtzig     2017.11.04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
- *      Kay Gürtzig     2017.11.05      Issue #454: logic of getMethodName() modified
- *      Kay Gürtzig     2018.03.12      Bugfix #518: Distinction between uninitialized and empty typeMap
- *      Kay Gürtzig     2018.03.15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
+ *      Kay Gürtzig     2017-04-05      Issue #390: Improved initialization check for multi-line instructions
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Analyser additions for import calls implemented
+ *      Kay Gürtzig     2017-04-13      Enh. #380: Method outsourceToSubroutine() improved
+ *      Kay Gürtzig     2017-04-14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
+ *      Kay Gürtzig     2017-04-21      Enh. #389: import checks re-organized to a new check group 23
+ *      Kay Gürtzig     2017-05-06      Bugfix #397: Wrong insertion position with SelectedSequence as target
+ *      Kay Gürtzig     2017-05-09      Enh. #372: Statistics method supporting the AttributeInspector
+ *      Kay Gürtzig     2017-05-16      Enh. #389: Third diagram type introduced.
+ *      Kay Gürtzig     2017-05-21      Enh. #372: additional attributes included in undo/redo mechanism
+ *      Kay Gürtzig     2017-05-22      Enh. #272: New attribute "origin"
+ *      Kay Gürtzig     2017-06-30      Enh. #389: New attribute "includeList"
+ *      Kay Gürtzig     2017-07-02      Enh. #389: Analyser and execution mechanisms adapted to new include design
+ *      Kay Gürtzig     2017-09-18      Enh. #423: Type retrieval and Analyser enhancement for record types
+ *      Kay Gürtzig     2017-10-09      Enh. #423: Adjustments for Analyser check 24.
+ *      Kay Gürtzig     2017-10-26      Enh. #423: Wrong type map reference in analyse_22_24() corrected
+ *      Kay Gürtzig     2017-11-04      Enh. #452: More tutoring in Analyser, method getMethodName(boolean) introduced
+ *      Kay Gürtzig     2017-11-05      Issue #454: logic of getMethodName() modified
+ *      Kay Gürtzig     2018-03-12      Bugfix #518: Distinction between uninitialized and empty typeMap
+ *      Kay Gürtzig     2018-03-15      Bugfix #522: makeTypedescription (for outsourcing) now considers record types,
  *                                      Bugfix #523: Defective undo and redo of include_list changes mended
  *                                      KGU#505: Analyser now copes better with lists of record access expressions
- *      Kay Gürtzig     2018.04.03      Bugfix #528: Record component access analysis mended and applied to all elements
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.07.17      Issue #561: getElementCounts() modified for AttributeInspector update
- *      Kay Gürtzig     2018.07.20      Enh. #563: Analyser accepts simplified record initializers
- *      Kay Gürtzig     2018.07.25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
- *      Kay Gürtzig     2018.09.12      Refinement to #372: More file meta data used as workaround for missing author attributes 
- *      Kay Gürtzig     2018.09.17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
- *      Kay Gürtzig     2018.09.24      Bugfix #605: Defective argument list parsing mended
- *      Kay Gürtzig     2018.09.28      Issue #613: New methods removeFromIncludeList(...)
- *      Kay Gürtzig     2018.10.04      Bugfix #618: Function names shouldn't be reported as used variables
+ *      Kay Gürtzig     2018-04-03      Bugfix #528: Record component access analysis mended and applied to all elements
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-07-17      Issue #561: getElementCounts() modified for AttributeInspector update
+ *      Kay Gürtzig     2018-07-20      Enh. #563: Analyser accepts simplified record initializers
+ *      Kay Gürtzig     2018-07-25      Dropped field highlightVars (Element.E_VARHIGHLIGHT works directly now)
+ *      Kay Gürtzig     2018-09-12      Refinement to #372: More file meta data used as workaround for missing author attributes 
+ *      Kay Gürtzig     2018-09-17      Issue #594 Last remnants of com.stevesoft.pat.Regex replaced
+ *      Kay Gürtzig     2018-09-24      Bugfix #605: Defective argument list parsing mended
+ *      Kay Gürtzig     2018-09-28      Issue #613: New methods removeFromIncludeList(...)
+ *      Kay Gürtzig     2018-10-04      Bugfix #618: Function names shouldn't be reported as used variables
+ *      Kay Gürtzig     2018-10-25      Enh. #419: New methods breakElementTextLines(...), getMaxLineLength(...)
+ *      Kay Gürtzig     2018-12-18      Bugfix #649: New method getElementCount(), use of cached variable names on redrawing
+ *      Kay Gürtzig     2018-12-19      Bugfix #652: Drawing preparation and actual drawing were inconsistent
+ *                                      w.r.t. the "Included Diagrams" box, such that ugly discrepancies appeared.
+ *      Kay Gürtzig     2018-12-26      Method collectCalls(Element) moved hitherto from class Generator
+ *      Kay Gürtzig     2019-02-16      Enh. #680: getUsedVarNames() fixed for multi-item INPUT (nearby fixed a bug with indexed variables)
+ *      Kay Gürtzig     2019-03-07      Enh. #385: Support for default values in argument lists
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-20      Bugfix #706: analyse_15 hardened against inconsistent Call contents
+ *      Kay Gürtzig     2019-03-21      Enh. #707: Configuration for file name proposals
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
+ *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
+ *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
+ *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
+ *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
+ *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
  *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
- *      2016.03.25 (KGU#163)
+ *      2019-03-07 (KGU#371)
+ *      - Parameter list analysis has become still more complex, so it seemed sensible to cache the
+ *        parameter list while the text doesn't change.
+ *      2016-03-25 (KGU#163)
  *      - Detection of un-initialised variables (analyser check #3) only worked for variables with
  *        initialisation after use. Variables nowhere initialised weren't found at all! This was now
  *        eventually mended.
- *      2016.01.11 (KGU#137)
+ *      2016-01-11 (KGU#137)
  *      - When changes are undone back to the moment of last file saving, the hasChanged is to be reset
  *      - Therefore, we now track the undo stack size when saving. As soon as an undo action returns to
  *        the recorded stack size, the hasChanged flag will be reset. Undoing more steps sets the
@@ -191,6 +213,7 @@ import java.awt.Font;
 import java.awt.image.*;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -201,6 +224,7 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 //import lu.fisch.structorizer.generators.Generator;
@@ -270,6 +294,16 @@ public class Root extends Element {
 	public boolean isIncluding = false;
 	// END KGU#376 2017-07-02
 	
+	// START KGU#624 2018-12-22: Enh. #655
+	/** selection flags for different drawing contexts. Index 0 is unused (instead field {@link #selected} is used) */ 
+	private boolean[] contextSelections = new boolean[DrawingContext.values().length];
+	// END KGU#624 2018-12-22
+	
+	// START KGU#676 2019-03-31: Enh. #696 - We need pool access for batch export
+	/** A routine to be used for retrieval of includables and subroutines instead of Arranger if not null */
+	public IRoutinePool specialRoutinePool = null;
+	// END KGU#676 2019-03-31
+	
 	public Subqueue children = new Subqueue();
 
 	public int height = 0;
@@ -301,6 +335,11 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	
+	// START KGU#371 2019-03-07: Enh. #385 for performance reasons, we cache the parameter list here
+	/** Cached parameter list, each entry is composed of name, type, and default, each as Strings (defaults may be null) */
+	private ArrayList<Param> parameterList = null;
+	// END KGU#371 2019-03-07
 	
 	// START KGU#376 2017-06-30: Enh. #389: Includable diagrams now managed directly by Root
 	/** List of the names of the diagrams to be included by this Root (may be null!) */
@@ -537,12 +576,54 @@ public class Root extends Element {
 	// END KGU#363 2017-05-21
 
 	/**
-	 * Names of variables defined within this diagram
+	 * Names of variables defined within this diagram (may be null after changes,
+	 * lazy initialization!)
+	 * @see #getCachedVarNames()
 	 */
-	public StringList variables = new StringList();
+	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
+	//public StringList variables = new StringList();
+	// START KGU#701 2019-03-30: Issue #718 - This should better not be accessible directly - we need to be aware of changes
+	//public StringList variables = null;
+	private StringList variables = null;
+	// END KGU#701 2ß19-03-30
+	
+	/**
+	 * @return Cached names of the variables defined within this diagram (may be empty after changes).
+	 * Will not retrieve variables.
+	 * @see #variables
+	 * @see #retrieveVarNames()
+	 * @see #getVarNames()
+	 */
+	public StringList getCachedVarNames()
+	{
+		if (variables != null) {
+			return variables;
+		}
+		return new StringList();
+	}
+	// END KGU#444/KGU#618 2018-12-18
+	
+	// START KGU#686 2019-03-16: Enh. #56 (introduction of Try blocks)
+	@Override
+	protected Set<String> getVariableSetFor(Element _element)
+	{
+		Set<String> varNames = new HashSet<String>();
+		// START KGU#701 2019-03-30: Issue #718 - we must react to changes
+		//StringList vars = getCachedVarNames();
+		StringList vars = getVarNames();
+		// END KGU#701 2019-03-30
+		for (int i = 0; i < vars.count(); i++) {
+			varNames.add(vars.get(i));
+		}
+		return varNames;
+	}
+	// END KGU#686 2019-03-16
+	
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
-	 * Names and cached value expressions of detected constants among the {@link #variables} 
+	 * Names and cached value expressions of detected constants among the {@link #variables}.
+	 * For enumeration type constants, the actual value is prefixed with ":" + typename + "€".
+	 * @see #getConstValueString(String) 
 	 */
 	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
 	// END KGU#375 2017-03-31
@@ -573,7 +654,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false									// 26
+		false,	true,	true					// 26 .. 28
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -745,6 +826,11 @@ public class Root extends Element {
 		// START KGU#363 2017-03-14: Enh. #372 - License fields
 		licenseName = Ini.getInstance().getProperty("licenseName", "");
 		// END KGU#363 2017-03-14
+		// START KGU#624 2018-12-22: Enh. #655 - Independent selection markers for certain contexts
+		for (int i = 0; i < this.contextSelections.length; i++) {
+			this.contextSelections[i] = false;
+		}
+		// END KGU#624 2018-12-22
 		//this(StringList.getNew("???"));
 	}
 
@@ -765,10 +851,26 @@ public class Root extends Element {
 		// END KGU#363 2017-03-14
 	}
 	
+	// START KGU#371 2019-03-07: Enh. #385 - clear parameter list cache
+	@Override
+	public void setText(String _text)
+	{
+		text.setText(_text);
+		parameterList = null;
+	}
+
+	@Override
+	public void setText(StringList _text)
+	{
+		text = _text;
+		parameterList = null;
+	}
+	// END KGU#371 2019-03-07
+
     public void addUpdater(Updater updater)
     {
     	// START KGU#48 2015-10-17: While this.updaters is only a Vector, we must avoid multiple registration...
-        //updaters.add(updater);
+    	//updaters.add(updater);
     	if (!updaters.contains(updater))
     	{
     		updaters.add(updater);
@@ -871,7 +973,7 @@ public class Root extends Element {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0.copy();
+		if (this.isRect0UpToDate) return rect0.copy();
 		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
 		//pt0Sub.x = 0;
 		// END KGU#516 2018-04-04
@@ -925,21 +1027,12 @@ public class Root extends Element {
 		}
 		// END KGU#227 2016-07-31
 		
-		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
-		if (this.includeList != null) {
-			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - 2 * padding, false);
-			rect0.bottom += includesBox.bottom - includesBox.top + E_PADDING/2;
-			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + 2 * padding);
-		}
-		// END KGU#376 2017-07-01
-		
 		pt0Sub.y = rect0.bottom;
 		if (isBoxed)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
 		subrect0 = children.prepareDraw(_canvas);
-
 		if (isBoxed)
 		{
 			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
@@ -950,9 +1043,22 @@ public class Root extends Element {
 		}
 
 		rect0.bottom += subrect0.bottom;
-		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
+		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine or includable
 		if (!isBoxed && !isProgram()) rect0.bottom += E_PADDING/2;
 		// END KGU#221 2016-07-28
+
+		// START KGU#376 2017-07-01: Enh. #389 - determine the required size for the import list
+		// KGU#621 2018-12-19: Bugfix #652 - children size exploration has to be done before!
+		if (this.includeList != null) {
+			// KGU#621 2018-12-19: Bugfix #652 - Padding assumptions corrected
+			Rect includesBox = this.writeOutImports(_canvas, 0, 0, rect0.right - padding, false);
+			int inclHeight = includesBox.bottom - includesBox.top + E_PADDING/2;
+			rect0.bottom += inclHeight;
+			rect0.right = Math.max(rect0.right, includesBox.right - includesBox.left + padding);
+			pt0Sub.y += inclHeight;
+		}
+		// END KGU#376 2017-07-01
+		
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
@@ -961,7 +1067,7 @@ public class Root extends Element {
 		this.pt0Sub = pt0Sub;
 		// END KGU#516 2018-04-04
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0.copy();
 	}
@@ -976,7 +1082,7 @@ public class Root extends Element {
 		_canvas = new Canvas(bufferGraphics);
 
 
-		draw(_canvas, _top_left);
+		draw(_canvas, _top_left, null, false);
 
 		// draw buffer to output canvas
 		origCanvas.draw(bufferImg,0,0);
@@ -986,15 +1092,24 @@ public class Root extends Element {
 		System.gc();
 	}
 
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
+		draw(_canvas, _top_left, _viewport, false, DrawingContext.DC_STRUCTORIZER);
+	}
+	
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention, DrawingContext _context)
+	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
-		Color drawColor = getFillColor();
+		Color drawColor = getFillColor(_context);
 		// END KGU 2015-10-13
 
 		// FIXME: Drawing shouldn't modify the element
-		if (getText().count()==0)
+		if (getText().isEmpty())
 		{
 			text.add("???");
 		}
@@ -1004,7 +1119,7 @@ public class Root extends Element {
 			text.insert("???",0);
 		}
 
-		rect = _top_left.copy();
+		Rect myRect = _top_left.copy();
 
 		// draw background
 
@@ -1077,20 +1192,21 @@ public class Root extends Element {
 
 		// draw text
 		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here had been wrong
-		for(int i=0; i<getText(false).count(); i++)
+		for (int i = 0; i < getText(false).count(); i++)
 		{
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  rect.left + textPadding,
+							  myRect.left + textPadding,
 							  // START KGU#227 2016-07-31: Enh. #128
 							  //rect.top + (i+1)*fm.getHeight() + textPadding,
-							  rect.top + (i+1)*fm.getHeight() + textPadding + commentHeight,
+							  myRect.top + (i+1)*fm.getHeight() + textPadding + commentHeight,
 							  // END KGU#227 2016-07-31
 							  (String)getText(false).get(i),
-							  this);
+							  this,
+							  _inContention);
 		}
 		// write the run-time info if enabled (Enh. #124)
-		this.writeOutRuntimeInfo(canvas, rect.right - textPadding, rect.top);
+		this.writeOutRuntimeInfo(canvas, myRect.right - textPadding, myRect.top);
 		// END KGU#216 2016-07-25
 		
 		canvas.setFont(Element.font);
@@ -1110,7 +1226,7 @@ public class Root extends Element {
 			bodyRect.bottom -= E_PADDING/2;
 		}
 		
-		children.draw(_canvas, bodyRect);
+		children.draw(_canvas, bodyRect, _viewport, _inContention);
 		// END KGU#227 2016-07-31
 
 		// draw box around
@@ -1125,7 +1241,7 @@ public class Root extends Element {
 
 
 		// draw thick line
-		if (isBoxed==false)
+		if (isBoxed == false)
 		{
 			Rect sepRect = bodyRect.copy();
 			sepRect.bottom = sepRect.top--;
@@ -1155,14 +1271,14 @@ public class Root extends Element {
 //			}
 			// END KGU#221 2016-07-27
 			canvas.setColor(Color.BLACK);
-			rect = _top_left.copy();
+			myRect = _top_left.copy();
 			// START KGU#376 2017-05-16: Enh. #389
 			//canvas.roundRect(rect);
 			if (isSubroutine()) {
-				canvas.roundRect(rect, R_CORNER);
+				canvas.roundRect(myRect, R_CORNER);
 			}
 			else {
-				canvas.drawPoly(this.makeBevelledRect(rect, bevel));
+				canvas.drawPoly(this.makeBevelledRect(myRect, bevel));
 			}
 			// END KGU#376 2017-05-16
 		}
@@ -1174,6 +1290,9 @@ public class Root extends Element {
 		this.topLeft.x = _top_left.left - this.drawPoint.x;
 		this.topLeft.y = _top_left.top - this.drawPoint.y;
 		// END KGU#136 2016-03-01
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#376 2017-07-01: Enh. #389
@@ -1181,7 +1300,7 @@ public class Root extends Element {
 	 * Draws (or calculates) a box with the names of the diagrams to be included.<br/>
 	 * NOTE: Should only be called if includeList isn't empty.
 	 * @param _canvas - the current drawing surface
-	 * @param _x - left margin cordinate
+	 * @param _x - left margin coordinate
 	 * @param _y - upper margin coordinate
 	 * @param maxWidth - maximum width of the box
 	 * @param _actuallyDraw - draw (true) or only calculate size (false)
@@ -1189,19 +1308,19 @@ public class Root extends Element {
 	 */
 	protected Rect writeOutImports(Canvas _canvas, int _x, int _y, int _maxWidth, boolean _actuallyDraw)
 	{
-		int height = 0;
-		int width = 0;
-		int padding = E_PADDING/2;
+		int height = 0;				// Pure total text height (without padding)
+		int width = 0;				// Pure maximum text width (without padding)
+		int padding = E_PADDING/2;	// Box-internal padding
 		// smaller font
 		int smallFontSize = Element.font.getSize() * 2 / 3;
 		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, smallFontSize);
 		Font smallBoldFont = new Font(Element.font.getName(), Font.BOLD, smallFontSize);
-		FontMetrics fm = _canvas.getFontMetrics(smallFont);
-		int fontHeight = fm.getHeight();
 		// backup the original font
 		Font backupFont = _canvas.getFont();
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.BLACK);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
 		String caption = Element.preImport.trim();
 		int captionX = _x + padding;
 		int captionY = _y;
@@ -1212,6 +1331,11 @@ public class Root extends Element {
 			if (this.includeList.count() > 0) {
 				height += fontHeight/4 + fontHeight;	// upper padding + string height
 				width = _canvas.stringWidth(caption);
+				// START KGU#621 2018-12-19: Bugfix #652 For the further comparison we may have to enlarge _maxWidth
+				if (!_actuallyDraw) {
+					_maxWidth = Math.max(width + 2 * padding, _maxWidth);
+				}
+				// END KGU#621 2018-12-19
 				captionY = _y + height;
 			}
 		}
@@ -1220,25 +1344,42 @@ public class Root extends Element {
 		_canvas.setFont(smallBoldFont);
 		String line = "";
 		StringList includeLines = new StringList();
+		// START KGU#621 2018-12-19: Bugfix #652
+		// In preparation phase we must ensure a width that corresponds at least to the longest name
+		if (!_actuallyDraw) {
+			for (int i = 0; i < this.includeList.count(); i++) {
+				_maxWidth = Math.max(_maxWidth, _canvas.stringWidth(this.includeList.get(i)) + 2 * padding);
+			}
+		}
+		// END KGU#621 2018-12-19
 		for (int i = 0; i < this.includeList.count(); i++) {
 			String name = this.includeList.get(i);
-			if (line.isEmpty() || padding + _canvas.stringWidth(line + ", " + name) < _maxWidth)
+			// Since the leading ", " will be cut off we don't have to add ", " for the test
+			// In theory 2 * padding would have to be added for comparison but this turned out too large
+			if (line.isEmpty() || 2 * padding + _canvas.stringWidth(line + name) < _maxWidth)
 			{
+				// The space is wide enough to append name, or we have no choice
 				line += ", " + name;
 			}
 			else {
+				// Stash the current line (cannot be extended)
 				height += fontHeight;
+				line = line.substring(2);	// Cut off the leading ", " from the old line
 				width = Math.max(width, _canvas.stringWidth(line));
-				includeLines.add(line.substring(2));
-				line = ", " + name;
+				includeLines.add(line);
+				// Start a new line
+				line = ", " + name;			// Place the name to the new line
 			}
 		}
+		// Is there a begun line? Then stash it
 		if (!line.isEmpty())
 		{
 			height += fontHeight;
+			line = line.substring(2);	// Cut off the leading ", " from the last line
 			width = Math.max(width, _canvas.stringWidth(line));
-			includeLines.add(line.substring(2));
+			includeLines.add(line);
 		}
+		
 		Rect inclBox = new Rect(_x, _y, _x + Math.max(_maxWidth, width + 2 * padding), _y + height);
 		if (height > 0)
 		{
@@ -1294,8 +1435,8 @@ public class Root extends Element {
     			_rect.bottom,			// lower right bevel
     			//_rect.bottom			// closes automatically
     	}; 
-		return  new Polygon(xCoords, yCoords, xCoords.length);
-	}
+    	return  new Polygon(xCoords, yCoords, xCoords.length);
+    }
     // END KGU#376 2017-05-16
     
     // START KGU#324 2017-06-16: Enh. #415 we need an icon for the find result tree
@@ -1371,6 +1512,34 @@ public class Root extends Element {
 		return sel;
 	}
 	// END KGU#183 2016-04-24
+	
+	// START KGU 2019-03-14 Helps to place imported Roots more sensibly in Arranger
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect()
+	 */
+	@Override
+	public Rect getRect()
+	{
+		if (!wasDrawn && isRect0UpToDate) {
+			return rect0.copy();
+		}
+		return super.getRect();
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect(java.awt.Point)
+	 */
+	@Override
+	public Rect getRect(Point relativeTo)
+	{
+		Rect myRect = rect;
+		if (!wasDrawn && isRect0UpToDate) {
+			myRect = rect0;
+		}
+		return new Rect(myRect.left + relativeTo.x, myRect.top + relativeTo.y,
+				myRect.right + relativeTo.x, myRect.bottom + relativeTo.y);		
+	}
+	// END KGU 2019-03-14
 
     public void removeElement(Element _ele)
     {
@@ -1394,12 +1563,12 @@ public class Root extends Element {
                     // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97
-                        	_ele.parent.resetDrawingInfoUp();
-                        	// END KGU#136 2016-03-01
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-03-01: Bugfix #97
+                            _ele.parent.resetDrawingInfoUp();
+                            // END KGU#136 2016-03-01
                     }
             }
     }
@@ -1413,16 +1582,16 @@ public class Root extends Element {
                             ((Subqueue) _ele).addElement(_new);
                             _ele.selected = false;
                             _new.selected = true;
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-07-07: Bugfix #97 - now delegated to Subqueue
-                        	//_ele.resetDrawingInfoUp();
-                        	// END KGU#136 2016-07-07
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-07-07: Bugfix #97 - now delegated to Subqueue
+                            //_ele.resetDrawingInfoUp();
+                            // END KGU#136 2016-07-07
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
-                    	    // START KGU#389 2017-05-06: Bugfix #397 - wrong placement if _ele was a SelectedSequence
+                            // START KGU#389 2017-05-06: Bugfix #397 - wrong placement if _ele was a SelectedSequence
                             //int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                             Element target = _ele;
                             if (_ele instanceof IElementSequence) {
@@ -1438,12 +1607,12 @@ public class Root extends Element {
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected = false;
                             _new.selected = true;
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97 - now delegated to Subqueue
-                        	//_ele.parent.resetDrawingInfoUp();
-                        	// END KGU#136 2016-03-01
+                            // END KGU#137 2016-01-11
+                            // START KGU#136 2016-03-01: Bugfix #97 - now delegated to Subqueue
+                            //_ele.parent.resetDrawingInfoUp();
+                            // END KGU#136 2016-03-01
                     }
                     else
                     {
@@ -1501,10 +1670,13 @@ public class Root extends Element {
      * stack overflow due to endless recursion).
      * @param _g - the target graphics environment
      * @param _point - the target position
+     * @param _viewport - visible area of the viewport
      * @param _prohibitedUpdater - if given an updater not to be informed
+     * @param _drawingContext - the context e.g. for selection highlighting 
+     * @param _inContention TODO
      * @return the area occupied by this diagram as {@link Rect}
      */
-    public Rect draw(Graphics _g, Point _point, Updater _prohibitedUpdater)
+    public Rect draw(Graphics _g, Point _point, Rectangle _viewport, Updater _prohibitedUpdater, DrawingContext _drawingContext, boolean _inContention)
     {
         setDrawPoint(_point);
 
@@ -1543,19 +1715,19 @@ public class Root extends Element {
         myrect.top += _point.y;
         myrect.right += _point.x;
         myrect.bottom += _point.y;
-        this.draw(canvas, myrect);
+        this.draw(canvas, myrect, _viewport, _inContention, _drawingContext);
 
         return myrect;
     }
 
-    public Rect draw(Graphics _g, Point _point)
-    {
-        return draw(_g, _point, null);
-    }
+//    public Rect draw(Graphics _g, Point _point)
+//    {
+//        return draw(_g, _point, null, null, DrawingContext.DC_STRUCTORIZER);
+//    }
 
-    public Rect draw(Graphics _g)
+    public Rect draw(Graphics _g, Rectangle _viewport)
     {
-        return draw(_g, new Point(0,0), null);
+        return draw(_g, new Point(0,0), _viewport, null, DrawingContext.DC_STRUCTORIZER, false);
 
         /*
         // inform updaters
@@ -1572,7 +1744,40 @@ public class Root extends Element {
 
         return myrect;/**/
     }
+    
+    public boolean getSelected(DrawingContext _drawingContext)
+    {
+    	if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+    		return getSelected();
+    	}
+    	return this.contextSelections[_drawingContext.ordinal()];
+    }
 
+	public Element setSelected(boolean _sel, DrawingContext _drawingContext)
+	{
+		if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+			return setSelected(_sel);
+		}
+		this.contextSelections[_drawingContext.ordinal()] = _sel;
+		return _sel ? this : null;
+	}
+
+	// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
+	/**
+	 * Like {@link #copy()} but also copies the file paths (particularly important
+	 * for recursive execution to avoid eternal saving requests).
+	 * @return the copied {@link Root}
+	 */
+	public Root copyWithFilepaths()
+	{
+		Root cpy = (Root)this.copy();
+		cpy.filename = this.filename;
+		cpy.shadowFilepath = this.shadowFilepath;
+		return cpy;
+	}
+	// END KGU#749 2019-10-15
+
+    @Override
     public Element copy()
     {
             Root ele = new Root(this.getText().copy());
@@ -1584,13 +1789,18 @@ public class Root extends Element {
             ele.children.parent = ele;
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
+            // START KGU#704 2019-03-30: Bugfix #699 - we must not forget to clone the includeList
+            if (this.includeList != null) {
+                ele.includeList = this.includeList.copy();
+            }
+            // END KGU#704 2019-03-30
             // START KGU#363 2017-03-10: Enh. #372
             ele.author = this.author;
             ele.created = this.created;
-        	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
-    		if (modifiedby.trim().isEmpty()) {
-    			modifiedby = System.getProperty("user.name");
-    		}
+            this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+            if (modifiedby.trim().isEmpty()) {
+            	modifiedby = System.getProperty("user.name");
+            }
             ele.modified = new Date();
             // END KGU#363 2017-03-10
             return ele;
@@ -1614,20 +1824,20 @@ public class Root extends Element {
 	/**
 	 * Equivalence check returning one of the following similarity "levels":<br/>
 	 * 0: no resemblance<br/>
-     * 1: Identity (i. e. the Java Root elements are identical);<br/>
-     * 2: Exact equality (i. e. objects aren't identical but all attributes
-     *    and structure are recursively equal AND the file paths are equal
-     *    AND there are no unsaved changes in both diagrams);<br/>
-     * 3: Equal file path but unsaved changes in one or both diagrams (this
-     *    can occur if several Structorizer instances in the same application
-     *    loaded the same file independently);<br/>
-     * 4: Equal contents but different file paths (may occur if a file copy
-     *    is loaded or if a Structorizer instance just copied the diagram
-     *    with "Save as");<br/>
-     * 5: Equal signature (i. e. type, name and argument number) but different
-     *    content or structure.
-     * @param another - the Root to compare with
-     * @return a resemblance code according to the description above
+	 * 1: Identity (i. e. the Java Root elements are identical);<br/>
+	 * 2: Exact equality (i. e. objects aren't identical but all attributes
+	 *    and structure are recursively equal AND the file paths are equal
+	 *    AND there are no unsaved changes in both diagrams);<br/>
+	 * 3: Equal file path but unsaved changes in one or both diagrams (this
+	 *    can occur if several Structorizer instances in the same application
+	 *    loaded the same file independently);<br/>
+	 * 4: Equal contents but different file paths (may occur if a file copy
+	 *    is loaded or if a Structorizer instance just copied the diagram
+	 *    with "Save as");<br/>
+	 * 5: Equal signature (i. e. type, name and argument number) but different
+	 *    content or structure.
+	 * @param another - the Root to compare with
+	 * @return a resemblance code according to the description above
 	 */
 	public int compareTo(Root another)
 	{
@@ -1732,20 +1942,26 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
+		// START KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30: Issues #259, #417, #649, #718
+		this.clearVarAndTypeInfo(true);
+		// END KGU#261/KGU#444/KGU#618/KGU#701 2018-12-18
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
-	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-		// FIXME: Certain explicit declarations should remain
-		this.clearTypeInfo();
-		// END KGU#261 2017-01-26
-    	// START KGU#363 2017-03-10: Enh. #372
-    	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		// START KGU#701/KGU#703 2019-03-30: Issue #718
+		if (this.isInclude() && Arranger.hasInstance()) {
+			for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+				ref.clearVarAndTypeInfo(false);
+			}
+		}
+		// END KGU#701/KGU#703 2019-03-30
+		// START KGU#363 2017-03-10: Enh. #372
+		this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
 		if (modifiedby.trim().isEmpty()) {
 			modifiedby = System.getProperty("user.name");
 		}
-    	this.modified = new Date();
-    	// END KGU#363 2017-03-10
+		this.modified = new Date();
+		// END KGU#363 2017-03-10
 	}
 
 	/**
@@ -1757,12 +1973,12 @@ public class Root extends Element {
 	 * @see #canRedo()
 	 */
 	public boolean canUndo()
-    {
-    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
-    	//return (undoList.size()>0);
-    	return (undoList.size() > 0) && !this.waited;
-    	// END KGU#143 2016-01-21
-    }
+	{
+		// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+		//return (undoList.size()>0);
+		return (undoList.size() > 0) && !this.waited;
+		// END KGU#143 2016-01-21
+	}
 
 	/**
 	 * Checks whether there are stacked redoable changes
@@ -1772,13 +1988,13 @@ public class Root extends Element {
 	 * @see #clearRedo()
 	 * @see #canUndo()
 	 */
-    public boolean canRedo()
-    {
-    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
-    	//return (redoList.size()>0);
-    	return (redoList.size() > 0) && !this.waited;
-    	// END KGU#143 2016-01-21
-    }
+	public boolean canRedo()
+	{
+		// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+		//return (redoList.size()>0);
+		return (redoList.size() > 0) && !this.waited;
+		// END KGU#143 2016-01-21
+	}
 
     /**
      * Removes all entries from the redo stack
@@ -1788,7 +2004,7 @@ public class Root extends Element {
      */
     public void clearRedo()
     {
-            redoList = new Stack<Subqueue>();
+        redoList = new Stack<Subqueue>();
     }
 
     /**
@@ -1799,11 +2015,11 @@ public class Root extends Element {
      */
     public void clearUndo()
     {
-            undoList = new Stack<Subqueue>();
-    		// START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
-            // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
-            this.undoLevelOfLastSave = -1;
-    		// END KGU#137 2016-01-11
+        undoList = new Stack<Subqueue>();
+        // START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+        // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
+        this.undoLevelOfLastSave = -1;
+        // END KGU#137 2016-01-11
     }
 
     /**
@@ -1820,11 +2036,11 @@ public class Root extends Element {
     }
     
     /**
-     * Takes the top entry form the undo stack and reverts the associated changes. If argument {@code redoable}
+     * Takes the top entry from the undo stack and reverts the associated changes. If argument {@code redoable}
      * is true then adds a corresponding entry to the redo stack otherwise the undone action won't be redoable
      * (This should only be set false in order to clean the undo stack of entries that are part of a larger
-     * transaction also involving other diagrams and cannot consistently be redone therefore e.g. on outsourcing
-     * subroutines, normally {@link #undo()} is to be used instead.)
+     * transaction also involving other diagrams and cannot consistently be redone therefore, e.g. on outsourcing
+     * subroutines; normally {@link #undo()} is to be used instead.)
      * @see #undo()
      * @see #canUndo()
      * @see #addUndo()
@@ -1850,9 +2066,9 @@ public class Root extends Element {
                     redoList.peek().diagramRefs = this.includeList.concatenate(",");
                 }
                 // END KGU#507 2018-03-15
-        		// START KGU#363 2018-09-12 
+                // START KGU#363 2018-09-12 
                 redoList.peek().modified = this.modified;
-        		// END KGU#363 2018-09-12
+                // END KGU#363 2018-09-12
             // START KGU#365 2017-03-19: Enh. #380
             }
             // END KGU#365 2017-03-19
@@ -1864,9 +2080,9 @@ public class Root extends Element {
             children.text.clear();
             children.comment.clear();
             // END KGU#120 2016-01-02
-        	// START KGU#363 2017-05-21: Enh. #372
-        	// If the undone action involves Root attributes then we must
-        	// cache the current attributes on the redo stack accordingly
+            // START KGU#363 2017-05-21: Enh. #372
+            // If the undone action involves Root attributes then we must
+            // cache the current attributes on the redo stack accordingly
             // and restore the attributes from the undo stack
             if (children.rootAttributes != null) {
                 if (redoable) {
@@ -1876,14 +2092,14 @@ public class Root extends Element {
                 children.rootAttributes = null;
             }
             // END KGU#363 2017-05-21
-    		// START KGU#363 2018-09-12
-        	this.modified = children.modified;	// Restore the former modification date
-        	children.modified = null;
-        	// Special action if all changes have been undone.
+            // START KGU#363 2018-09-12
+            this.modified = children.modified;	// Restore the former modification date
+            children.modified = null;
+            // Special action if all changes have been undone.
             if (undoList.empty()) {
             	this.modifiedby = this.modifiedby0;
             }
-    		// END KGU#363 2018-09-12
+            // END KGU#363 2018-09-12
             // START KGU#376 2017-07-01: Enh. #389
             if (children.diagramRefs != null) {
                 this.includeList = StringList.explode(children.diagramRefs, ",");
@@ -1895,13 +2111,16 @@ public class Root extends Element {
                 this.includeList = null;
             }
             // END KGU507 2018-03-15
-            // START KGU#136 2016-03-01: Bugfix #97
-            this.resetDrawingInfoDown();
-            // END KGU#136 2016-03-01
-            // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-            // FIXME: Certain explicit declarations should remain
-            this.clearTypeInfo();
-            // END KGU#261 2017-01-26
+            // START KGU#136/KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30: Issues #97, #259, #417, #649, #718
+            this.clearVarAndTypeInfo(true);
+            // END KGU#136/KGU#261/KGU#444/KGU#618/KGU#701 2019-03-30
+            // START KGU#703 2019-03-30: Issue #718
+            if (this.isInclude() && Arranger.hasInstance()) {
+                for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+                    ref.clearVarAndTypeInfo(false);
+                }
+            }
+            // END KGU#703 2019-03-30
         }
     }
 
@@ -1913,7 +2132,7 @@ public class Root extends Element {
     		this.licenseText = attributes.licenseText;
     		this.origin = attributes.origin;
     	}
-	}
+    }
     // KGU#363 2017-05-21
     
     /**
@@ -1924,60 +2143,63 @@ public class Root extends Element {
      */
     public void redo()
     {
-            if (redoList.size()>0)
-            {
-                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
-                    //this.hasChanged=true;
-                    // END KGU#137 2016-01-11
-                    undoList.add((Subqueue)children.copy());
-                    // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
-                    undoList.peek().setText(this.text.copy());
-                    undoList.peek().setComment(this.comment.copy());
-                    // END KGU#120 2016-01-02
-                    // START KGU#507 2018-03-15: Bugfix #523
-                    if (this.includeList != null) {
-                        undoList.peek().diagramRefs = this.includeList.concatenate(",");
-                    }
-                    // END KGU#507 2018-03-15
-            		// START KGU#363 2018-09-12: Enh. #372
-                	undoList.peek().modified = this.modified;	// Save the current modification date
-            		// END KGU#363 2018-09-12
-                    children = redoList.pop();
-                    children.parent = this;
-                    // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
-                    this.setText(children.getText().copy());
-                    this.setComment(children.getComment().copy());
-                    children.text.clear();
-                    children.comment.clear();
-                    // END KGU#120 2016-01-02
-                    // START KGU#363 2017-05-21: Enh. #372
-                    if (children.rootAttributes != null) {
-                	    undoList.peek().rootAttributes = new RootAttributes(this);
-                	    this.adoptAttributes(children.rootAttributes);
-                	    children.rootAttributes = null;
-                    }
-                    // END KGU#363 2017-05-21
-                    // START KGU#363 2018-09-12: Enh. #372
-                    this.modified = children.modified;
-                    children.modified = null;
-                    // END KGU#363 2018-09-12
-                    // START KGU#507 2018-03-15: Bugfix #523
-                    if (children.diagramRefs != null) {
-                        this.includeList = StringList.explode(children.diagramRefs, ",");
-                        children.diagramRefs = null;
-                    }
-                    else {
-                        this.includeList = null;
-                    }
-                    // END KGU#507 2018-03-15
-                    // START KGU#136 2016-03-01: Bugfix #97
-                    this.resetDrawingInfoDown();
-                    // END KGU#136 2016-03-01
-                    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-                    // FIXME: Certain explicit declarations should remain
-                    this.clearTypeInfo();
-                    // END KGU#261 2017-01-26
+        if (redoList.size()>0)
+        {
+            // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+            //this.hasChanged=true;
+            // END KGU#137 2016-01-11
+            undoList.add((Subqueue)children.copy());
+            // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
+            undoList.peek().setText(this.text.copy());
+            undoList.peek().setComment(this.comment.copy());
+            // END KGU#120 2016-01-02
+            // START KGU#507 2018-03-15: Bugfix #523
+            if (this.includeList != null) {
+                undoList.peek().diagramRefs = this.includeList.concatenate(",");
             }
+            // END KGU#507 2018-03-15
+            // START KGU#363 2018-09-12: Enh. #372
+            undoList.peek().modified = this.modified;	// Save the current modification date
+            // END KGU#363 2018-09-12
+            children = redoList.pop();
+            children.parent = this;
+            // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
+            this.setText(children.getText().copy());
+            this.setComment(children.getComment().copy());
+            children.text.clear();
+            children.comment.clear();
+            // END KGU#120 2016-01-02
+            // START KGU#363 2017-05-21: Enh. #372
+            if (children.rootAttributes != null) {
+                undoList.peek().rootAttributes = new RootAttributes(this);
+                this.adoptAttributes(children.rootAttributes);
+                children.rootAttributes = null;
+            }
+            // END KGU#363 2017-05-21
+            // START KGU#363 2018-09-12: Enh. #372
+            this.modified = children.modified;
+            children.modified = null;
+            // END KGU#363 2018-09-12
+            // START KGU#507 2018-03-15: Bugfix #523
+            if (children.diagramRefs != null) {
+                this.includeList = StringList.explode(children.diagramRefs, ",");
+                children.diagramRefs = null;
+            }
+            else {
+                this.includeList = null;
+            }
+            // END KGU#507 2018-03-15
+            // START KGU#136/KGU#261/KGU#701 2019-03-30: Bugfix #97, enh. #259, #718
+            this.clearVarAndTypeInfo(true);
+            // END KGU#136/KGU#261 2019-03-20
+            // START KGU#703 2019-03-30: Issue #720
+            if (this.isInclude() && Arranger.hasInstance()) {
+                for (Root ref: Arranger.getInstance().findIncludingRoots(this.getMethodName(), true)) {
+                    ref.clearVarAndTypeInfo(false);
+                }
+            }
+            // END KGU#703 2019-03-30
+        }
     }
 
     // START KGU#137 2016-01-11: Bugfix #103 - Synchronize saving with undo / redo stacks
@@ -1988,15 +2210,15 @@ public class Root extends Element {
      */
     public void rememberSaved()
     {
-    	this.undoLevelOfLastSave = this.undoList.size();
-    	// START KGU#137 2016-01-14: Bugfix #107
-    	this.hasChanged = false;
-    	// END KGU#137 2016-01-16
-    	// START KGU#330 2017-01-13: Enh. #305 Notify arranger index listeners
+        this.undoLevelOfLastSave = this.undoList.size();
+        // START KGU#137 2016-01-14: Bugfix #107
+        this.hasChanged = false;
+        // END KGU#137 2016-01-16
+        // START KGU#330 2017-01-13: Enh. #305 Notify arranger index listeners
         // inform updaters
         for(int u = 0; u < updaters.size(); u++)
         {
-        	updaters.get(u).update(this);
+            updaters.get(u).update(this);
         }
         // END KGU#330 2017-01-13
     }
@@ -2004,86 +2226,90 @@ public class Root extends Element {
 
     public boolean moveDown(Element _ele)
     {
-            boolean res = false;
-            if(_ele!=null)
+        boolean res = false;
+        if(_ele!=null)
+        {
+            // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            if (_ele instanceof SelectedSequence)
             {
-            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-            	if (_ele instanceof SelectedSequence)
-            	{
-            		res = ((SelectedSequence)_ele).moveDown();
-            	}
-            	else
-            	{
-            	// END KGU#144 2016-01-22
-                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
-                    if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
-                            !_ele.getClass().getSimpleName().equals("Root") &&
-                            ((i+1)<((Subqueue) _ele.parent).getSize()))
-                    {
-                            // START KGU#136 2016-03-02: Bugfix #97
-                            //((Subqueue) _ele.parent).removeElement(i);
-                            //((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
-                            ((Subqueue) _ele.parent).moveElement(i, i+1);
-                            // END KGU#136 2016-03-02: Bugfix #97
-                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
-                            //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                            _ele.setSelected(true);
-                            res=true;
-                    }
-               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
-            	}
-            	// END KGU#144 2016-01-22
+                res = ((SelectedSequence)_ele).moveDown();
             }
-            return res;
+            else
+            {
+            // END KGU#144 2016-01-22
+                int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
+                        !_ele.getClass().getSimpleName().equals("Root") &&
+                        ((i+1)<((Subqueue) _ele.parent).getSize()))
+                {
+                    // START KGU#136 2016-03-02: Bugfix #97
+                    //((Subqueue) _ele.parent).removeElement(i);
+                    //((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
+                    ((Subqueue) _ele.parent).moveElement(i, i+1);
+                    // END KGU#136 2016-03-02: Bugfix #97
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                    //hasChanged=true;
+                    // END KGU#137 2016-01-11
+                    _ele.setSelected(true);
+                    res=true;
+                }
+            // START KGU#144 2016-01-22: Bugfix #38 (continued)
+            }
+            // END KGU#144 2016-01-22
+        }
+        return res;
     }
 
     public boolean moveUp(Element _ele)
     {
-            boolean res = false;
-            if(_ele!=null)
+        boolean res = false;
+        if(_ele!=null)
+        {
+            // START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            if (_ele instanceof SelectedSequence)
             {
-            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
-            	if (_ele instanceof SelectedSequence)
-            	{
-            		res = ((SelectedSequence)_ele).moveUp();
-            	}
-            	else
-            	{
-            	// END KGU#144 2016-01-22
-                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
-                    if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
-                            !_ele.getClass().getSimpleName().equals("Root") &&
-                            ((i-1>=0)))
-                    {
-                            // START KGU#136 2016-03-02: Bugfix #97
-                            //((Subqueue) _ele.parent).removeElement(i);
-                            //((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
-                            ((Subqueue) _ele.parent).moveElement(i, i-1);
-                            // END KGU#136 2016-03-02: Bugfix #97
-                        	// START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
-                            //hasChanged=true;
-                        	// END KGU#137 2016-01-11
-                            _ele.setSelected(true);
-                            res=true;
-                    }
-               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
-               	}
-               	// END KGU#144 2016-01-22
+                res = ((SelectedSequence)_ele).moveUp();
             }
-            return res;
+            else
+            {
+                // END KGU#144 2016-01-22
+                int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
+                        !_ele.getClass().getSimpleName().equals("Root") &&
+                        ((i-1>=0)))
+                {
+                    // START KGU#136 2016-03-02: Bugfix #97
+                    //((Subqueue) _ele.parent).removeElement(i);
+                    //((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
+                    ((Subqueue) _ele.parent).moveElement(i, i-1);
+                    // END KGU#136 2016-03-02: Bugfix #97
+                    // START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
+                    //hasChanged=true;
+                    // END KGU#137 2016-01-11
+                    _ele.setSelected(true);
+                    res=true;
+                }
+            // START KGU#144 2016-01-22: Bugfix #38 (continued)
+            }
+            // END KGU#144 2016-01-22
+        }
+        return res;
     }
 
     /**
      * Returns a File object representing the existing file this diagram is stored within
      * or proceeding from. In case this is an extracted file, it will represent the path
-     * of the containing archive. If this is not associatd to a file (e.g. never saved) or
-     * the origin file cannot be located anymore then the result will be null.
-     * @return a File object reprsenting th existing source or archive file or null
+     * of the containing archive. If this is not associated to a file (e.g. never saved) or
+     * the origin file cannot be located anymore then the result will be null.<br/>
+     * (The result is equivalent to {@code new File(this.getPath(true))}, if this is
+     * associated to a file at all.)
+     * @return a File object representing the existing source or archive file or null
+     * @see #getPath()
+     * @see #getPath(boolean)
      */
     public File getFile()
     {
-    	if(filename.equals(""))
+    	if (filename.equals(""))
     	{
     		return null;
     	}
@@ -2092,33 +2318,61 @@ public class Root extends Element {
     		// START KGU#316 2017-01-03: Issue #318 - we must not return a virtual path
     		//return new File(filename);
     		File myFile = new File(filename);
+    		//File myFile = new File("N:\\doof\\dumm\\duemmer.nsd");
     		while (myFile != null && !myFile.exists()) {
     			myFile = myFile.getParentFile();
     		}
+    		// START KGU#749 2019-10-13: Bugfix #763
+    		if (myFile != null && myFile.isDirectory()) {
+    			myFile = null;
+    		}
+    		// END KGU#749 2019-10-13
     		return myFile;
     		// END KGU#316 2017-01-03
     	}
     }
 
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file or an empty string
+     * otherwise.<br/>
+     * If the file resides within an arrz archive, the path will be a symbolic path into the arrz archive.
+     * (This method is equivalent to {@code getPath(false)}.)
+     * @return the absolute path of the nsd file (may be symbolic)
+     * @see #getPath(boolean)
+     * @see #getFile()
+     */
     public String getPath()
     // START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     {
     	return getPath(false);
     }
     
+    /**
+     * Returns the absolute file path as string if this diagram is associated to a file,
+     * or an empty string otherwise.<br/>
+     * If the file resides within an arrz archive, the path may be a symbolic path into
+     * the arrz archive unless {@code pathOfOrigin} is true, in which case it will be the
+     * archive path itself instead.<br/>
+     * {@code getPath(true)} is equivalent to {@code getFile().getAbsolutePath()} if this
+     * is associated to a file at all.
+     * @param pathOfOrigin - if true and the diagram resides within an arrz archive the
+     * path of the mere archive will be returned.
+     * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
+     * @see #getFile()
+     */
     public String getPath(boolean pathOfOrigin)
     // END KGU#316 2016-12-28
     {
     	if (filename.equals(""))
     	{
-    		return new String();
+    		return filename;
     	}
     	else
     	{
     		File f = new File(filename);
     		// START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     		if (pathOfOrigin && this.shadowFilepath != null) {
-    			while(f != null && !f.isFile()) {
+    			while (f != null && !f.isFile()) {
     				f = f.getParentFile();
     			}
     			// No Zip file found?
@@ -2146,14 +2400,14 @@ public class Root extends Element {
     	// (such that we ought to deliver its header for the variable detection), this doesn't
     	// hold for programs and includable diagrams.
     	// START KGU#376 2017-07-02: Enh. #389 - beware of cyclic recursion
-		//if (!this.isProgram && !_instructionsOnly)
-		//{
-		//	_lines.add(this.getText());
-		//}
-		//this.children.addFullText(_lines, _instructionsOnly);
-		HashSet<Root> implicatedRoots = new HashSet<Root>();
-		this.addFullText(_lines, _instructionsOnly, implicatedRoots);
-		// END KGU#376 2017-07-02
+    	//if (!this.isProgram && !_instructionsOnly)
+    	//{
+    	//	_lines.add(this.getText());
+    	//}
+    	//this.children.addFullText(_lines, _instructionsOnly);
+    	HashSet<Root> implicatedRoots = new HashSet<Root>();
+    	this.addFullText(_lines, _instructionsOnly, implicatedRoots);
+    	// END KGU#376 2017-07-02
     }
     // END KGU 2015-10-16
     
@@ -2161,21 +2415,31 @@ public class Root extends Element {
     protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
     	if (!_implicatedRoots.contains(this)) {
-        	if (this.includeList != null && Arranger.hasInstance()) {
-        		_implicatedRoots.add(this);
-        		for (int i = 0; i < this.includeList.count(); i++) {
-        			String name = this.includeList.get(i);
-    				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+    		// START KGU#676 2019-03-31: Enh. #696
+    		//if (this.includeList != null && Arranger.hasInstance()) {
+    		IRoutinePool pool = specialRoutinePool;
+    		if (this.includeList != null && (pool != null || Arranger.hasInstance())) {
+    			if (pool == null) {
+    				pool = Arranger.getInstance();
+    			}
+    		// END KGU#676 2019-03-31
+    			_implicatedRoots.add(this);
+    			for (int i = 0; i < this.includeList.count(); i++) {
+    				String name = this.includeList.get(i);
+    				// START KGU#676 2019-03-31: Enh. #696
+    				//Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
+    				Vector<Root> roots = pool.findIncludesByName(name, this);
+    				// END KGU#676 2019-03-31
     				if (roots.size() == 1) {
     					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
     				}
     			}		
-        	}
-        	if (this.isSubroutine() && !_instructionsOnly)
-        	{
-        		_lines.add(this.getText());
-        	}
-        	this.children.addFullText(_lines, _instructionsOnly);
+    		}
+    		if (this.isSubroutine() && !_instructionsOnly)
+    		{
+    			_lines.add(this.getText());
+    		}
+    		this.children.addFullText(_lines, _instructionsOnly);
     	}
     }
     // END KGU#376 2017-07-02
@@ -2188,43 +2452,43 @@ public class Root extends Element {
      */
     private String extractVarName(String _s)
     {
-    	//System.out.println("IN : "+_s);
-    	// START KGU#141 2016-01-16: Bugfix #112
+        //System.out.println("IN : "+_s);
+        // START KGU#141 2016-01-16: Bugfix #112
 //            if(_s.indexOf("[")>=0)
 //            {
 //                    _s=_s.substring(0,_s.indexOf("["));
 //            }
-    	while (_s.startsWith("(") && _s.endsWith(")"))
-    	{
-    		_s = _s.substring(1,  _s.length()-1).trim();
-    	}
-    	// START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
-    	// START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
-    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-    	//Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
-    	// END KGU 2016-03-29
-    	//_s = r.replaceAll(_s);
-    	_s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
-    	// END KGU#575 2018-09-17
-    	// START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
-    	if (_s.indexOf(".") >= 0)
-    	{
-    		_s = _s.substring(0, _s.indexOf("."));
-    	}
-    	// START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
-    	// In case of Pascal-typed variables we should only use the part before the separator
-    	int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
-    	if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
-    	{
-    		_s = _s.substring(0, colonPos).trim();
-    	}
-    	// In case of C-typed variables we should only use the last word (identifier)
-    	String[] tokens = _s.split(" ");
-    	if (tokens.length > 0) _s = tokens[tokens.length-1];
-    	// END KGU#109/KGU#141 2016-01-16
-    	//System.out.println("OUT : "+_s);
+        while (_s.startsWith("(") && _s.endsWith(")"))
+        {
+        	_s = _s.substring(1,  _s.length()-1).trim();
+        }
+        // START KGU#575 2018-09-17: Issue #594 - Get rid of an obsolete 3rd-party Regex library
+        // START KGU 2016-03-29: Bugfix - nested index expressions were defectively split (a bracket remained)
+        //Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+        //Regex r = new Regex("(.*?)[\\[](.*)[\\]](.*?)","$1 $3");
+        // END KGU 2016-03-29
+        //_s = r.replaceAll(_s);
+        _s = INDEX_PATTERN_GREEDY.matcher(_s).replaceAll("$1 $3");
+        // END KGU#575 2018-09-17
+        // START KGU#141 2016-01-16: Bugfix #112 Cut off component and method names
+        if (_s.indexOf(".") >= 0)
+        {
+        	_s = _s.substring(0, _s.indexOf("."));
+        }
+        // START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
+        // In case of Pascal-typed variables we should only use the part before the separator
+        int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
+        if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
+        {
+        	_s = _s.substring(0, colonPos).trim();
+        }
+        // In case of C-typed variables we should only use the last word (identifier)
+        String[] tokens = _s.split(" ");
+        if (tokens.length > 0) _s = tokens[tokens.length-1];
+        // END KGU#109/KGU#141 2016-01-16
+        //System.out.println("OUT : "+_s);
 
-    	return _s;
+        return _s;
 
     }
 
@@ -2262,7 +2526,10 @@ public class Root extends Element {
     					}
     				}
     			}
-    			else {
+    			// START KGU#686 2019-03-16: Enh. #56 the text of the catch clause is kind of declaration, not use
+    			//else {
+    			else if (!(_ele instanceof Try)) {
+    			// END KGU#686 2019-03-16
     				lines.add(unbrokenLines);
     			}
     			// END KGU#413 2017-09-13
@@ -2296,8 +2563,8 @@ public class Root extends Element {
     		}
     		//System.out.println(lines);
 
-			String[] keywords = CodeParser.getAllProperties();
-			StringList parts = new StringList();
+    		String[] keywords = CodeParser.getAllProperties();
+    		StringList parts = new StringList();
     		
     		for(int i=0; i<lines.count(); i++)
     		{
@@ -2312,26 +2579,27 @@ public class Root extends Element {
 
     	}
 
-    	varNames = varNames.reverse();
+    	varNames = varNames.reverse();	// Why is it reversed?
     	//varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
     	return varNames;
     }
-    
-    // START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22_24
-    /**
-     * Gathers the names of all variables that are used in text line _line in expressions:<br/>
-     * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
-     * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
-     * HYP 3: output (?) &lt;used&gt; (?)<br/>
-     * @param _line - the element text line to be analysed
-     * @param _keywords the set of parser keywords (if available)
-     * @return StringList of used variable names according to the above specification
-     */
-    private StringList getUsedVarNames(String _line, String[] _keywords)
-    {
-    	if (_keywords == null) {
-    		_keywords = CodeParser.getAllProperties();
-    	}
+
+	// START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22_24
+	/**
+	 * Gathers the names of all variables that are used in text line _line in expressions:<br/>
+	 * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
+	 * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
+	 * HYP 3: output (?) &lt;used&gt; (?)<br/>
+	 * HYP 4: input (?)'['&lt;used&gt;']'
+	 * @param _line - the element text line to be analysed
+	 * @param _keywords the set of parser keywords (if available)
+	 * @return StringList of used variable names according to the above specification
+	 */
+	private StringList getUsedVarNames(String _line, String[] _keywords)
+	{
+		if (_keywords == null) {
+			_keywords = CodeParser.getAllProperties();
+		}
 //		Regex r;
 
 		// modify "inc" and "dec" function (Pascal)
@@ -2339,12 +2607,12 @@ public class Root extends Element {
 //		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
 //		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
-    	// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
+		// START KGU#575 2018-09-17: Issue #594 - we may simply use the equivalent matchers inherited from Element
 		//_line = INC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 + $2");
 		//_line = INC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 + 1");
 		//_line = DEC_PATTERN2.matcher(_line).replaceAll("$1 <- $1 - $2");
 		//_line = DEC_PATTERN1.matcher(_line).replaceAll("$1 <- $1 - 1");
-    	_line = transform_inc_dec(_line);
+		_line = transform_inc_dec(_line);
 		// END KGU#575 2018-09-17
 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
@@ -2354,11 +2622,11 @@ public class Root extends Element {
 		// Replace all split keywords by the respective configured strings
 		// This replacement will be aware of the case sensitivity preference
 		for (int kw = 0; kw < _keywords.length; kw++)
-		{    				
+		{
 			if (_keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = splitKeywords.elementAt(kw);
-    			int keyLength = keyTokens.count();
+				int keyLength = keyTokens.count();
 				int pos = -1;
 				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
 				{
@@ -2370,7 +2638,7 @@ public class Root extends Element {
 				}
 			}
 		}
-		
+
 		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
 		if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
 		{
@@ -2415,18 +2683,25 @@ public class Root extends Element {
 		// parse out array index
 		else if (token0.equals(CodeParser.getKeyword("input")))
 		{
-			String s = "";
-			if (tokens.indexOf("[", 1) >= 0)
-			{
-				//System.out.print("Reducing \"" + s);
-				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-				//s = r.replaceAll(s);
-				s = INDEX_PATTERN.matcher(tokens.subSequence(1, tokens.count()).concatenate()).replaceAll("$2");
-				//System.out.println("\" to \"" + s + "\"");
+			// START KGU#653 2019-02-16: Enh. #680 - with multiple variables we must decompose the list
+			StringList items = Instruction.getInputItems(_line);
+			tokens.clear();
+			for (int j = 1; j < items.count(); j++) {
+				StringList itemTokens = Element.splitLexically(items.get(j), true);
+				String s = "";
+				if (itemTokens.indexOf("[", 1) >= 0)
+				{
+					//System.out.print("Reducing \"" + s);
+					//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+					//s = r.replaceAll(s);
+					s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					//System.out.println("\" to \"" + s + "\"");
+				}
+				// Only the indices are relevant here
+				itemTokens = Element.splitLexically(s, true);
+				tokens.addIfNew(itemTokens);
 			}
-			else 
-			// Only the indices are relevant here
-			tokens = Element.splitLexically(s, true);
+			// END KGU#653 2019-02-16
 		}
 
 		tokens.removeAll(" ");
@@ -2454,7 +2729,7 @@ public class Root extends Element {
 			//if((Function.testIdentifier(token, null)
 			//		&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
 			//		|| this.variables.contains(token)))
-			if((Function.testIdentifier(token, null) || this.variables.contains(token))
+			if((Function.testIdentifier(token, null) || this.getCachedVarNames().contains(token))
 					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("(")))
 			// END KGU#588 2018-10-04
 			{
@@ -2474,8 +2749,8 @@ public class Root extends Element {
 			}
 		}
 		return tokens;
-    }
-    // END KGU#375 2017-04-04
+	}
+	// END KGU#375 2017-04-04
 	// START KGU#388 2017-10-09: Enh. #423
 	/**
 	 * Recursively cuts off all irrelevant stuff of record initializers for {@link #getUsedVarNames(String, String[])}
@@ -2485,7 +2760,7 @@ public class Root extends Element {
 		int posBrace = 0;
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
-				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null);
+				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null, false);
 				if (components != null) {
 					// Remove all tokens from the type name on (they are in the HashMap now)
 					tokens.remove(posBrace-1, tokens.count());
@@ -2508,6 +2783,26 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#388 2017-10-09
+	
+	// START KGU#542 2019-11-17: Enh. #739 Support for enumeration type values
+	/**
+	 * Returns the value string (cached literal or expression) associated to constant
+	 * {@code constName} (if it was defined) or null (otherwise). In case of enumeration
+	 * constants, wipes off the typename prefix ({@code ":" + <typename> + "€"}).
+	 * @param constName - name of the constant
+	 * @return value string for the constant (cleaned in case of an enumerator) or null
+	 * @see #constants
+	 */
+	public String getConstValueString(String constName)
+	{
+		String valString = this.constants.get(constName);
+		if (valString != null && valString.startsWith(":") && valString.contains("€")) {
+			// Skim off the enumerator type name
+			valString = valString.substring(valString.indexOf('€')+1);
+		}
+		return valString;
+	}
+	// END KGU#542 2019-11-17
 
     // KGU 2016-03-29 Rewritten based on tokens
     /**
@@ -2543,14 +2838,14 @@ public class Root extends Element {
     	{
     		String allText = lines.get(i);
     		// modify "inc" and "dec" function (Pascal)
-            // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
-            //Regex r;
+    		// START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+    		//Regex r;
     		//r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
     		//r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
     		allText = transform_inc_dec(allText);
-            // END KGU#575 2018-09-17
+    		// END KGU#575 2018-09-17
 
     		StringList tokens = Element.splitLexically(allText, true);
 
@@ -2616,7 +2911,6 @@ public class Root extends Element {
     			}
     			//String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
     			// END KGU#281 2016-10-12
-    			// FIXME: Why do we expect a list of variables here (executor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(tokens.subSequence(inpPos, tokens.count()), ",", false);
     			for (int p = 0; p < parts.count(); p++)
@@ -2636,12 +2930,30 @@ public class Root extends Element {
      * Extract all variable names of the entire program and store them in
      * this.variables.
      * @return list of variable names
+     * @see #getVarNames()
      */
-    public StringList getVarNames()
+    public StringList retrieveVarNames()
     {
+            //System.out.println("getVarNames() called...");
             return getVarNames(this, false, false, true);
     }
 
+    /**
+     * Provides all variable names of the entire program if cached, otherwise retrieves and
+     * stores them in {@link #variables}.
+     * @return list of variable names
+     * @see #retrieveVarNames()
+     * @see #getMereDeclarationNames()
+     */
+    public StringList getVarNames() {
+    	//System.out.println("getVarNames() called...");
+    	if (this.variables != null) {
+    		return this.variables;
+    	}
+    	// This is the same as retrieveVarNames()
+    	return getVarNames(this, false, false, true);
+    }
+    
     /**
      * Extract the names of all variables assigned or introduced within passed-in element _ele.
      * @return list of variable names
@@ -2675,10 +2987,10 @@ public class Root extends Element {
             // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
             // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
             // !!
-        	// KGU 2015-11-29: Decomposed -> new method collectParameters
+            // KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isSubroutine() && _ele==this && !_onlyBody)
             {
-            	collectParameters(varNames, argTypes);
+            	collectParameters(varNames, argTypes, null);
             	for (int i = 0; i < varNames.count(); i++) {
             		String type = argTypes.get(i); 
             		if (type != null && (type.trim() + " ").startsWith("const")) {
@@ -2689,10 +3001,7 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-//            // START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
             if(_onlyEle && !_onlyBody)
-//            if(_onlyEle && !_onlyBody && !(_ele instanceof Call && ((Call)_ele).isImportCall()))
-//            // END KGU#376 2017-04-11
             {
                     // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
                     //lines = _ele.getText().copy();
@@ -2701,6 +3010,15 @@ public class Root extends Element {
                     	int i = 0;
                     	while (i < lines.count()) {
                     		if (Instruction.isTypeDefinition(lines.get(i), null)) {
+                    			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
+                    			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
+                    			if (constVals != null) {
+                    				// We simply generate singular constant definition lines
+                    				for (Entry<String, String> enumItem: constVals.entrySet()) {
+                    					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
+                    				}
+                    			}
+                    			// END KGU#542 2019-11-17
                     			lines.remove(i);
                     		}
                     		else {
@@ -2725,17 +3043,102 @@ public class Root extends Element {
                     // START KGU#39 2015-10-16
             }
             
-            // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
-            // if (!(this instanceof Root))
             varNames.add(getVarNames(lines, this.constants));
 
-            varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
+            varNames = varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
-                    this.variables=varNames;
+                    this.variables = varNames;
             }
             //System.out.println(varNames.getCommaText());
             return varNames;
     }
+    
+    /**
+     * Retrieves all constants from the given type definition list if it is an
+     * enumeration type list and returns their name-value map.<br/>
+     * The associated values will be prefixed with {@code ":" + <typename> + "€"} and may be
+     * constant expressions, particularly of kind {@code <something>+<number>}.
+     * @param _typeDefLine - the (unbroken) line of the enum type definition
+     * @returns a map of the enumeration constants to their prefixed values strings or null
+     */
+    public LinkedHashMap<String,String> extractEnumerationConstants(String _typeDefLine)
+    {
+    	LinkedHashMap<String,String> enumConstants = null;
+    	StringList tokens = Element.splitLexically(_typeDefLine, true);
+    	tokens.removeAll(" ");
+    	if (!tokens.get(3).equalsIgnoreCase("enum")) {
+    		return null;
+    	}
+    	String typename = tokens.get(1);
+    	String typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
+    	// Confirm that the syntax is okay
+    	if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches()) {
+    		enumConstants = new LinkedHashMap<String, String>();
+    		int val = 0;
+    		String valStr = "";
+    		int posBrace = typeSpec.indexOf('{');
+    		StringList items = StringList.explode(typeSpec.substring(posBrace+1, typeSpec.length()-1), ",");
+    		for (int i = 0; i < items.count(); i++, val++) {
+    			String item = items.get(i);
+    			int posEq = item.indexOf('=');
+    			if (posEq >= 0) {
+    				// Get the value string
+    				valStr = item.substring(posEq+1).trim();
+    				val = 0;
+    				// Reduce item to the pure constant name
+    				item = item.substring(0, posEq);
+    				// FIXME: We should be able to evaluate constant expressions, e.g. "MONDAY+1"!
+    				if (this.constants.containsKey(valStr)) {
+    					// Is an already defined constant, get the associated value string
+    					valStr = this.getConstValueString(valStr);
+    				}
+    				else if (valStr.contains("+")) {
+    					int posPlus = valStr.lastIndexOf('+');
+    					try {
+    						int offset = Integer.parseInt(valStr.substring(posPlus+1));
+    						valStr = valStr.substring(0, posPlus).trim();
+    						val = offset;
+    					}
+    					catch (NumberFormatException ex) {}
+    				}
+    				try {
+    					int val0 = Integer.parseInt(valStr);
+    					// Don't accept negative values
+    					if (val0 >= 0) {
+    						val = val0;
+    						valStr = "";
+    					}
+    				}
+    				catch (NumberFormatException ex) {
+    					// Just ignore the explicit value and use the standard
+    				}
+    			}
+    			enumConstants.put(item, ":" + typename + "€" + valStr + (!valStr.isEmpty() ? "+" : "") + val);
+    		}
+    	}
+    	return enumConstants;
+    }
+
+    // START KGU#672 2019-11-13: Introduced for Bugfix #762
+    /**
+     * @return A list of the names of uninitialized, i.e. merely declared, variables
+     * (of this diagram and all included diagrams).
+     * @see #getVarNames()
+     * @see #getTypeInfo()
+     */
+    public StringList getMereDeclarationNames()
+    {
+    	StringList declNames = new StringList();	// Result
+    	StringList varNames = this.getVarNames();	// Names of initialized variables
+    	for (String name: this.getTypeInfo().keySet()) {
+    		// Ignore type names and omit initialized variables (which should also include constants)
+    		if (!name.startsWith(":") && !varNames.contains(name)) {
+    			declNames.add(name);
+    		}
+    	}
+    	return declNames;
+    }
+    // END KGU#672 2019-11-13
     
     // START KGU#261 2017-01-20: Enh. #259
     /**
@@ -2747,6 +3150,22 @@ public class Root extends Element {
      * respective defined or declared TypeMapEntries with structural information.
      */
     public HashMap<String, TypeMapEntry> getTypeInfo()
+    // START KGU#678 2019-03-30: Enh. #696: For batch export mode, we must provide an alternative pool for includes
+    {
+        return getTypeInfo(null);
+    }
+    
+    /**
+     * Creates (if not already cached), caches, and returns the static overall type map
+     * for this diagram and its included definition providers retrieved from {@code routinePool}
+     * if given, otherwise from {@link Arranger} if available.<br/>
+     * Every change to this diagram clears the cache and hence leads to an info refresh.
+     * @param routinePool - a diagram pool to search for includables (default: {@link Arranger} instance)
+     * @return the type table mapping prefixed type names and variable names to their
+     * respective defined or declared TypeMapEntries with structural information.
+     */
+    public HashMap<String, TypeMapEntry> getTypeInfo(IRoutinePool routinePool)    
+    // END KGU#678 2019-03-30
     {
     	// START KGU#502 2018-03-12: Bugfix #518 - Avoid repeated traversal in case of lacking type and var info
     	//if (this.typeMap.isEmpty()) {
@@ -2758,28 +3177,39 @@ public class Root extends Element {
     		if (this.includeList != null) {
     			for (int i = 0; i < this.includeList.count(); i++) {
     				String inclName = this.includeList.get(i);
-    				if (Arranger.hasInstance()) {
-    					for (Root incl: Arranger.getInstance().findIncludesByName(inclName)) {
+    				// START KGU#66 2019-03-30: Enh.#696 consider alternative routine pool
+    				//if (Arranger.hasInstance()) {
+    				//	for (Root incl: Arranger.getInstance().findIncludesByName(inclName, this)) {
+    				//		typeMap.putAll(incl.getTypeInfo());
+    				//	}
+    				//}
+    				IRoutinePool pool = routinePool;
+    				if (pool == null && (pool = specialRoutinePool) == null && Arranger.hasInstance()) {
+    					pool = Arranger.getInstance();
+    				}
+    				if (pool != null) {
+    					for (Root incl: pool.findIncludesByName(inclName, this)) {
     						typeMap.putAll(incl.getTypeInfo());
     					}
     				}
+    				// END KGU#676 2019-03-30
     			}
     		}
     		// END KGU#388 2017-09-18
     		IElementVisitor collector = new IElementVisitor() {
 
-				@Override
-				public boolean visitPreOrder(Element _ele) {
-					if (!_ele.disabled) {
-						_ele.updateTypeMap(typeMap);
-					}
-					return true;
-				}
+    			@Override
+    			public boolean visitPreOrder(Element _ele) {
+    				if (!_ele.disabled) {
+    					_ele.updateTypeMap(typeMap);
+    				}
+    				return true;
+    			}
 
-				@Override
-				public boolean visitPostOrder(Element _ele) {
-					return true;
-				}
+    			@Override
+    			public boolean visitPostOrder(Element _ele) {
+    				return true;
+    			}
     			
     		};
     		this.traverse(collector);
@@ -2787,6 +3217,7 @@ public class Root extends Element {
     	return this.typeMap;
     }
     
+    /** Also consider clearVarAndTypeInfo() */
     private void clearTypeInfo()
     {
     	// START KGU#502 2018-03-12: Bugfix #518
@@ -2795,8 +3226,27 @@ public class Root extends Element {
     	// END KGU#502 2018-03-12
     }
     // END KGU#261 2017-01-20
-    
-    // START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
+
+	// START KGU#701/KGU#703 2019-03-30: Issue #718, #720
+	/**
+	 * Clears (invalidates) all cached variable names and type information.
+	 * Also resets the drawing information recursively if {@link Element#E_VARHIGHLIGHT}
+	 * is true.
+	 * @param clearDrawInfo - if true then drawing info will also be reset (otherwise only
+	 * in case of {@link Element#E_VARHIGHLIGHT}).
+	 */
+	public void clearVarAndTypeInfo(boolean clearDrawInfo)
+	{
+		this.variables = null;
+		this.constants.clear();
+		this.clearTypeInfo();
+		if (clearDrawInfo || E_VARHIGHLIGHT) {
+			this.resetDrawingInfoDown();
+		}
+	}
+	// END KGU#701/KGU#703 2019-03-30
+
+	// START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
 	/**
 	 * Adds all parameter declarations to the given map (varname -> typeinfo).
 	 * @param typeMap
@@ -2807,7 +3257,7 @@ public class Root extends Element {
 		String typeSpec = null;
 		for (Param par: parameters) {
 			if ((typeSpec = par.getType()) != null) {
-				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true, false);
+				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true);
 			}
 		}
 		if (this.isSubroutine()) {
@@ -2819,7 +3269,7 @@ public class Root extends Element {
 				// consideration where we check whether an explicit variable declaration will come (mostly C++,
 				// C#, Java) we drive better if we don't set the "explicitly" flag here.
 				//this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
-				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false, false);
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
 				// END KGU#593 2018-10-05
 			}
 		}
@@ -2828,93 +3278,37 @@ public class Root extends Element {
 
     
     // START BFI 2015-12-10
-	/**
-	 * Obsolete method to get a type description of the result type of this (if being a
-	 * function), or null, if not available.
-	 * Use getResultType() instead!
-	 * @return informal type description or null
-	 */
-	@Deprecated
-    public String getReturnType()
-    {
-        try 
-        {
-            // stop and return null if this is not a function
-            if(!this.isSubroutine()) return null;
-            // get the root text
-            String rootText = this.getText().getText(); 
-            // stop if there is no closing parenthesis
-            if(rootText.indexOf(")")<0) return null;
-            // get part after closing parenthesis
-            rootText = rootText.substring(rootText.indexOf(")")+1);
-            // replace eventually ":"
-            rootText = rootText.replaceAll(":", "");
-            
-            return rootText.trim();
-        }
-        catch(Exception e)
-        {
-            return null;
-        }
-    }
-    
-    /*
-    // test getReturnType()
-    public static void main(String[] args)
-    {
-        StringList sl = new StringList();
-        sl.add("test(a,b:integer; c:real): string");
-        Root root = new Root(sl);
-        root.isProgram=false;
-
-        System.out.println("Starting ...");
-        System.out.println(root.getReturnType());
-        System.out.println("- end -");
-    }
-    */
-            
     /**
-     * Identifies parameter names and types of the routine and returns an array list
-     * of Param objects being name-type pairs.
-     * This is just a different aggregation of the same results getParameterNames() and
-     * getParameterTypes() would provide.
+     * Identifies parameter names, types, and default values of the routine and returns an array list
+     * of Param objects being name-type-default triples.
+     * This is just a different aggregation of the same results {@link #getParameterNames()},
+     * {@link #getParameterTypes()}, and {@link #getParameterDefaults()} would provide.
      * @return the list of the declared parameters
      */
     public ArrayList<Param> getParams()
     {
-            ArrayList<Param> resultVars = new ArrayList<Param>();
+        // START KGU#371 2019-03-07: Enh. #385 Now we cache this list for beter performance
+        //ArrayList<Param> resultVars = new ArrayList<Param>();
+ 
+        //StringList names = new StringList();
+        //StringList types = new StringList();
+        //collectParameters(names, types);
+        //for (int i = 0; i < names.count(); i++)
+        //{
+        //    resultVars.add(new Param(names.get(i), types.get(i)));
+        //}
 
-            StringList names = new StringList();
-            StringList types = new StringList();
-            
-            collectParameters(names, types);
-            
-            for (int i = 0; i < names.count(); i++)
-            {
-            	resultVars.add(new Param(names.get(i), types.get(i)));
-            }
-            
-            return resultVars;
-    }    
-    
-    /*
-    // test getParams()
-    public static void main(String[] args)
-    {
-        StringList sl = new StringList();
-        sl.add("a,b:integer; c:real");
-        Root root = new Root(sl);
-        root.isProgram=false;
-
-        System.out.println("Starting ...");
-        ArrayList<Param> vars = root.getParams();
-        for(int i=0; i<vars.size(); i++)
-        {
-           System.out.println(i+") "+vars.get(i).name+" = "+vars.get(i).type);
+        //return resultVars;
+        if (parameterList == null) {
+            // Method fills parameterList
+            collectParameters(null, null, null);
         }
-        System.out.println("- end -");
-    }
-    /**/
+        if (parameterList == null) {
+        	return new ArrayList<Param>();
+        }
+        return parameterList;
+        // END KGU#371 2019-03-07
+    }    
     // END BFI 2015-12-10
     
     // START KGU 2016-03-25: JLabel replaced by new class LangTextHolder
@@ -2954,9 +3348,7 @@ public class Root extends Element {
      */
     private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags, HashMap<String, TypeMapEntry> _types)
     {
-    	//this.getVarNames();
-    	
-    	for (int i=0; i<_node.getSize(); i++)
+    	for (int i = 0; i < _node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
     		// START KGU#277 2016-10-13: Enh. #270 - disabled elements are to be handled as if they wouldn't exist
@@ -2990,16 +3382,16 @@ public class Root extends Element {
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
     		// CHECK #22: constant depending on non-constants or constant redefinition
-      		// CHECK #24: type definitions
+    		// CHECK #24: type definitions
     		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
-				// START KGU#375 2017-04-04: Enh. #388
+    			// START KGU#375 2017-04-04: Enh. #388
     			// START KGU#388 2017-09-16: Enh. #423 record analysis
-				//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
-				analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
-				// END KGU#388 2017-09-16
-				// END KGU#375 2017-04-04
+    			//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
+    			analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			// END KGU#388 2017-09-16
+    			// END KGU#375 2017-04-04
     		}
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
@@ -3014,7 +3406,7 @@ public class Root extends Element {
     		if (eleClassName.equals("Instruction"))
     		{
     			@SuppressWarnings("unchecked")
-				HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
+    			HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
     			String[] keywords = CodeParser.getAllProperties();
     			StringList initVars = _vars.copy();
     			// START KGU#423 2017-09-13: Enh. #416 - cope with user-defined line breaks
@@ -3029,17 +3421,17 @@ public class Root extends Element {
     					myUsed = getUsedVarNames(line, keywords);
     					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
     					initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
-       				// START KGU#388 2017-09-13: Enh. #423
+    				// START KGU#388 2017-09-13: Enh. #423
     				}
     				// END KGU#388 2017-09-13
     			}
     		}
     		else {
     			myUsed = getUsedVarNames(ele, true, true);
-        		if (!eleClassName.equals("Repeat"))
-        		{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
-        		}
+    			if (!eleClassName.equals("Repeat"))
+    			{
+    				analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+    			}
     		}
     		// END KGU#375 2017-04-05
 
@@ -3071,11 +3463,11 @@ public class Root extends Element {
     		}
     		// CHECK: Correct usage of Jump, including return (#16) New!
     		// + CHECK #13: Competetive return mechanisms
-			else if (ele instanceof Jump)
-			{
-				analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
-			}
-			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
+    		else if (ele instanceof Jump)
+    		{
+    			analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
+    		}
+    		else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
 				analyse_13_16_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
@@ -3085,7 +3477,7 @@ public class Root extends Element {
 
     		// add detected vars to initialised vars
 //    		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
-			_vars.addIfNew(myVars);
+    		_vars.addIfNew(myVars);
 //    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
 //    			_vars.addIfNew(myVars);
 //    		}
@@ -3119,11 +3511,11 @@ public class Root extends Element {
     		{
     			analyse_17((Parallel) ele, _errors);
     		}
-			// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
+    		// START KGU#514 2018-04-03: Bugfix #528 (for Instructions, it has already been done above)
     		else if (check(24) && !eleClassName.equals("Instruction")) {
     			analyse_24(ele, _errors, _types);
     		}
-			// END KGU#514 2018-04-03
+    		// END KGU#514 2018-04-03
 
 
     		// continue analysis for subelements
@@ -3133,7 +3525,7 @@ public class Root extends Element {
     		
     			if (ele instanceof Repeat)
     			{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+    				analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
     			}
     		}
     		else if (eleClassName.equals("Parallel"))
@@ -3179,6 +3571,9 @@ public class Root extends Element {
     			Case caseEle = ((Case) ele);
 				int si = caseEle.qs.size();	// Number of branches
     			StringList initialVars = _vars.copy();
+    			// START KGU#758 2019-11-08: Enh. #770
+    			analyse_27_28(caseEle, _errors);
+    			// END KGU#758 2019-11-08
     			// This Hashtable will contain strings composed of as many '1' characters as
     			// branches initialise the respective new variable - so in the end we can see
     			// which variables aren't always initialised.
@@ -3204,12 +3599,12 @@ public class Root extends Element {
     			//System.out.println(myInitVars);
     			// walk trough the hash table and check
     			Enumeration<String> keys = myInitVars.keys();
-				// adapt size if no "default"
-				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
-				{
-					si--;
-				}
-				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
+    			// adapt size if no "default"
+    			if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
+    			{
+    				si--;
+    			}
+    			//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
     			while ( keys.hasMoreElements() )
     			{
     				String key = keys.nextElement();
@@ -3265,7 +3660,7 @@ public class Root extends Element {
         System.out.println("LOOP     : "+loopVars);
         /**/
 
-		if (loopVars.count()==0)
+		if (loopVars.isEmpty())
 		{
 			//error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error01_1,""), ele), 1);
@@ -3645,13 +4040,19 @@ public class Root extends Element {
 			//Function subroutine = new Function(text);
 			Function subroutine = ele.getCalledRoutine();
 			// END KGU 2017-04-11
+			// START KGU#689 2019-03-20: Bugfix #706 - subroutine may be null here
+			if (subroutine == null) {
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_1, ""), ele), 15);
+				return;
+			}
+			// END KGU#689 2019-03-20
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
 			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
 			{
 				int count = 0;	// Number of matching routines
 				if (Arranger.hasInstance()) {
-					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount).size();
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this).size();
 				}
 				if (count == 0) {
 					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
@@ -3680,7 +4081,11 @@ public class Root extends Element {
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		// START KGU#686 2019-03-18: Enh. #56
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		String preThrow = CodeParser.getKeywordOrDefault("preThrow", "throw");
+		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "», «" + preThrow + "»";
+		// END KGU#686 2019-03-18
 		String line = sl.get(0).trim();
 		String lineComp = line;
 
@@ -3689,11 +4094,17 @@ public class Root extends Element {
 			preReturn = preReturn.toLowerCase();
 			preLeave = preLeave.toLowerCase();
 			preExit = preExit.toLowerCase();
+			//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+			preThrow = preThrow.toLowerCase();
+			// END KGU#686 2019-03-18
 			lineComp = line.toLowerCase();
 		}
 		boolean isReturn = ele.isReturn();
 		boolean isLeave = ele.isLeave();
 		boolean isExit = ele.isExit();
+		//String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
+		boolean isThrow = ele.isThrow();
+		// END KGU#686 2019-03-18
 		boolean isJump = isLeave || isExit ||
 				lineComp.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 				lineComp.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3713,7 +4124,7 @@ public class Root extends Element {
 		boolean insideParallel = false;
 		
 		// CHECK: Incorrect Jump syntax?
-		if (sl.count() > 1 || !(isJump || isReturn || line.isEmpty()))
+		if (sl.count() > 1 || !(isJump || isReturn || isThrow || line.isEmpty()))
 		{
 			//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error16_1, jumpKeywords), ele), 16);
@@ -3818,7 +4229,7 @@ public class Root extends Element {
 		String patternLeave = Matcher.quoteReplacement(CodeParser.ignoreCase ? preLeave.toLowerCase() : preLeave);
 		String patternExit = Matcher.quoteReplacement(CodeParser.ignoreCase ? preExit.toLowerCase() : preExit);
 
-		for(int ls=0; ls<sl.count(); ls++)
+		for (int ls=0; ls < sl.count(); ls++)
 		{
 			String line = sl.get(ls).trim().toLowerCase();
 			// START KGU#78 2015-11-25: Make sure a potential result is following a return keyword
@@ -4042,11 +4453,26 @@ public class Root extends Element {
 	private void analyse_20(Vector<DetectedError> _errors)
 	{
 		StringList paramNames = new StringList();
-		StringList paramTypes = new StringList();
-		if (this.isSubroutine() && !this.collectParameters(paramNames, paramTypes))
+		// START KGU#371 2019-03-07: Enh. #385 - check default value contiguousness
+		//StringList paramTypes = new StringList();
+		//if (this.isSubroutine() && !this.collectParameters(paramNames, paramTypes, null))
+		StringList paramDefaults = new StringList();
+		if (this.isSubroutine() && !this.collectParameters(paramNames, null, paramDefaults))
+		// END KGU#371 2019-03-07
 		{
 			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
-			addError(_errors, new DetectedError(errorMsg(Menu.error20, ""), this), 20);								
+			addError(_errors, new DetectedError(errorMsg(Menu.error20_1, ""), this), 20);								
+		}
+		boolean hasDefaults = false;
+		for (int i = 0; i < paramDefaults.count(); i++) {
+			String deflt = paramDefaults.get(i);
+			if (!hasDefaults && deflt != null) {
+				hasDefaults = true;
+			}
+			else if (hasDefaults && deflt == null) {
+				// error "Parameters with default must be placed contiguously at the parameter list end."
+				addError(_errors, new DetectedError(errorMsg(Menu.error20_2, ""), this), 20);								
+			}
 		}
 	}
 	// END KGU#253 2016-09-22
@@ -4098,7 +4524,7 @@ public class Root extends Element {
 			else if (line.startsWith("type ") || isTypedef) {
 				if (!isTypedef) {
 					//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
-					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
+					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);
 				}
 				else {
 					StringList tokens = splitLexically(line, true);
@@ -4116,29 +4542,55 @@ public class Root extends Element {
 							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes);
-						for (int j = 0; j < compNames.count(); j++) {
-							String compName = compNames.get(j);
-							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
-								//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-								addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						String tag = typeSpec.substring(0, posBrace).toLowerCase();
+						if (tag.equals("enum")) {
+							HashMap<String,String> enumDefs = this.extractEnumerationConstants(line);
+							if (enumDefs == null) {
+								//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
 							}
-							String type = compTypes.get(j).trim();
-							// Clear off array specifiers, but the check is still too restrictive...
-							if (type != null) {
-								String typeLower;
-								if (type.endsWith("]") && type.contains("[")) {
-									type = type.substring(0, type.indexOf("[")).trim();
-								}
-								else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-									type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-								}
-								if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-									//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							else {
+								for (Entry<String, String> enumItem: enumDefs.entrySet()) {
+									String constName = enumItem.getKey();
+									String enumValue = enumItem.getValue();
+									String oldVal = _definedConsts.put(constName, enumValue);
+									if (oldVal != null && !oldVal.equals(enumValue)) {
+										//error  = new DetectedError("Attempt to modify the value of constant «"+varName+"»!", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error22_2, constName), _instr), 22);						
+									}
 								}
 							}
 						}
+						else {	// tag assumed to be "record" or "struct"
+						// END KGU#542 2019-11-17
+							this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+							for (int j = 0; j < compNames.count(); j++) {
+								String compName = compNames.get(j);
+								if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
+									//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+								}
+								String type = compTypes.get(j);
+								// Clear off array specifiers, but the check is still too restrictive...
+								if (type != null) {
+									type = type.trim();
+									String typeLower;
+									if (type.endsWith("]") && type.contains("[")) {
+										type = type.substring(0, type.indexOf("[")).trim();
+									}
+									else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+										type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+									}
+									if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+										//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+									}
+								}
+							}
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						}
+						// END KGU#542 2019-11-17
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
 					else if (Function.testIdentifier(typeSpec, null) && !_types.containsKey(":" + typeSpec)) {
@@ -4178,7 +4630,7 @@ public class Root extends Element {
 						else {
 							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType);
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
 							// END KGU#559 2018-07-20
 							Set<String> compNames = recType.getComponentInfo(true).keySet();
 							for (String compName: compNames) {
@@ -4261,7 +4713,7 @@ public class Root extends Element {
 				if (posBrack > 0) {
 					path += _tokens.concatenate("", posBrack, posDot);
 				}
-				//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
+				//error  = new DetectedError("Variable «"+varName+"» hasn't got a component «"+compName+"»!", _instr);
 				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
 				varType = null;
 				path += "." + after;
@@ -4317,7 +4769,7 @@ public class Root extends Element {
 			String name = includeList.get(i);
 			int count = 0;	// Number of matching routines
 			if (Arranger.hasInstance()) {
-				count = Arranger.getInstance().findIncludesByName(name).size();
+				count = Arranger.getInstance().findIncludesByName(name, this).size();
 			}
 			if (count == 0) {
 				//error  = new DetectedError("An includable diagram «<diagram_name>» is currently not available.", this);
@@ -4341,7 +4793,7 @@ public class Root extends Element {
 				addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), this), 23);    									
 			}
 			else if (Arranger.hasInstance()) {
-				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name);
+				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
 				if (roots.size() == 1) {
 					Root importedRoot = roots.get(0);
 					Vector<DetectedError> impErrors = new Vector<DetectedError>();
@@ -4366,19 +4818,19 @@ public class Root extends Element {
 					// END KGU#376 2017-04-20
 					if (subResultFlags[0]) {
 						//error  = new DetectedError("Diagram «%» is rather unsuited to be included as it makes use of return.",(Element) _node.getElement(i));
-						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);    				
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);
 					}
 					// Now associate all sub-analysis results with the Call element
 					for (DetectedError err: impErrors) {
 						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
-						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);    				
+						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);
 					}
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423
 					for (String key: importedTypes.keySet()) {
 						if (key.startsWith(":") && _types.containsKey(key)) {
 							//error  = new DetectedError("There is a name conflict between local and imported type definition «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);							
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);
 						}
 						else {
 							_types.put(key, importedTypes.get(key));
@@ -4389,7 +4841,7 @@ public class Root extends Element {
 						String varName = importedVars.get(j);
 						if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (int j = 0; j < importedUncVars.count(); j++) {
@@ -4398,14 +4850,14 @@ public class Root extends Element {
 						addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), this), 3);    						    					
 						if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
 						if (!_constants.containsKey(constEntry.getKey())) {
 							_constants.put(constEntry.getKey(), constEntry.getValue());
 							if (!this.constants.containsKey(constEntry.getKey())) {
-								this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
+								this.constants.put(constEntry.getKey(), constEntry.getValue());
 							}
 						}
 					}
@@ -4435,6 +4887,55 @@ public class Root extends Element {
 	}
 	// END KGU#514 2018-04-03
 	
+	// START KGU#758 2019-11-08: Enh. #770 - check CASE elements
+	private void analyse_27_28(Case _case, Vector<DetectedError> _errors)
+	{
+		HashSet<String> selectors = new HashSet<String>();
+		HashSet<Integer> values = new HashSet<Integer>();
+		StringList text = _case.getUnbrokenText();
+		StringList duplicates = new StringList();
+		String aNonNumber = null;
+		for (int i = 1; i < text.count(); i++) {
+			StringList items = Element.splitExpressionList(text.get(i), ",");
+			for (int j = 0; j < items.count(); j++) {
+				int val = 0;
+				String item = items.get(j);
+				// Check for duplicates (including the default label)
+				if (!selectors.add(item)) {
+					duplicates.addIfNew(item);
+				}
+				// Check for non-integers and non-characters (without the default branch label)
+				if (i < text.count()-1) {
+					String constVal = this.getConstValueString(item);
+					if (constVal == null) {
+						constVal = item;
+					}
+					// Check if it is not a character literal
+					if (!constVal.endsWith("'") || !(constVal.startsWith("'\\") && constVal.length() > 3 || constVal.startsWith("'") && constVal.length() == 3)) {
+						try {
+							val = Integer.parseInt(constVal);
+							if (!values.add(val)) {
+								duplicates.addIfNew(constVal);
+							}
+						}
+						catch (NumberFormatException ex) {
+							aNonNumber = item;
+						}
+					}
+				}
+			}
+		}
+		if (aNonNumber != null) {
+			//error  = new DetectedError("Some selector item seems not to be an integer constant.", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error27, aNonNumber), _case), 27);
+		}
+		if (!duplicates.isEmpty()) {
+			//error  = new DetectedError("There are multiple (conflicting) selector items (%) in the CASE element!", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error28, duplicates.concatenate(", ")), _case), 28);
+		}
+	}
+	// END KGU#758 2019-11-08
+	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**
 	 * Reports the active guide and performs the specified checks and steps
@@ -4453,35 +4954,35 @@ public class Root extends Element {
 			strings.add(new StringList(analyserCaptions));
 			addError(_errors, new DetectedError(errorMsg(Menu.warning_2, strings.toArray()), null), 0);
 			// Define the actual guide actions here 
-	        // START KGU#456 2017-11-04: Enh. #452 - charm initiative
-	        if (_isNameValid && this.children.getSize() == 0) {
-	        	String text = null;
-	        	switch (code) {
-	        	case 26: // hello world tour 
-	        		text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-	        		addError(_errors, new DetectedError(text, this.children), 26);
-	        		break;
-	        	case 25: // first IPO guide 
-	        		switch (this.diagrType) {
-	        		case DT_INCL:
-	        			text = errorMsg(Menu.hint25_5, "");
-	        			break;
-	        		case DT_MAIN:
-	        			text = errorMsg(Menu.hint25_1, new String[]{CodeParser.getKeyword("input"), (check(5) ? "X" : "x")});
-	        			//startNextTutorial(true);
-	        			break;
-	        		case DT_SUB:
-	        			text = errorMsg(Menu.hint25_4, "");
-	        			break;
-	        		default:
-	        			break;
-	        		}
-	        		if (text != null) {
-	            		addError(_errors, new DetectedError(text, this.children), 25);
-	        		}
-	        		break;
-	        	}
-	        }
+			// START KGU#456 2017-11-04: Enh. #452 - charm initiative
+			if (_isNameValid && this.children.getSize() == 0) {
+				String text = null;
+				switch (code) {
+				case 26: // hello world tour 
+					text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
+					addError(_errors, new DetectedError(text, this.children), 26);
+					break;
+				case 25: // first IPO guide 
+					switch (this.diagrType) {
+					case DT_INCL:
+						text = errorMsg(Menu.hint25_5, "");
+						break;
+					case DT_MAIN:
+						text = errorMsg(Menu.hint25_1, new String[]{CodeParser.getKeyword("input"), (check(5) ? "X" : "x")});
+						//startNextTutorial(true);
+						break;
+					case DT_SUB:
+						text = errorMsg(Menu.hint25_4, "");
+						break;
+					default:
+						break;
+					}
+					if (text != null) {
+						addError(_errors, new DetectedError(text, this.children), 25);
+					}
+					break;
+				}
+			}
 			switch (code) {
 			case 25:
 				guide_25(_errors);
@@ -4666,9 +5167,9 @@ public class Root extends Element {
     {
     	// this.getVarNames();
     	// START KGU#2 2015-11-29
-        //StringList vars = getVarNames(this,true,false);
-        StringList vars = new StringList();
-    	collectParameters(vars, null);
+    	//StringList vars = getVarNames(this,true,false);
+    	StringList vars = new StringList();
+    	collectParameters(vars, null, null);
     	return vars;
     	// END KGU#2 2015-11-29 
     }
@@ -4677,10 +5178,63 @@ public class Root extends Element {
     public StringList getParameterTypes()
     {
     	StringList types = new StringList();
-    	collectParameters(null, types);
+    	collectParameters(null, types, null);
     	return types;
     }
     // END KGU 2015-11-29
+    
+    // START KGU#371 2019-03-07: Enh. #385 - Allow parameter defaults
+    public StringList getParameterDefaults()
+    {
+    	StringList defaults = new StringList();
+    	collectParameters(null, null, defaults);
+    	return defaults;
+    }
+    
+    /**
+     * @return the minimum number of arguments this subroutine must obtain to be called.
+     */
+    public int getMinParameterCount()
+    {
+    	StringList params = new StringList();
+    	StringList defaults = new StringList();
+    	collectParameters(params, null, defaults);
+    	int minParams = params.count();
+    	while (minParams > 0) {
+    		if (defaults.get(minParams-1) != null) {
+    			minParams--;
+    		}
+    		else {
+    			break;
+    		}
+    	}
+    	return minParams;
+    }
+    
+    /**
+     * Checks whether a call with {@code nArgs} arguments may use this routine diagram. If so,
+     * returns the number of default values needed to fill all parameters (0 in case o an exact
+     * match), otherwise returns a negative number.
+     * @param nArgs - the number of given argument values
+     * @return number of available defaults to be used in order to satisfy all parameters or a negative number
+     */
+    public int acceptsArgCount(int nArgs)
+    {
+    	StringList params = new StringList();
+    	StringList defaults = new StringList();
+    	collectParameters(params, null, defaults);
+    	int nDefaults = params.count() - nArgs;
+    	for (int i = nArgs; nDefaults > 0 && i < defaults.count(); i++) {
+    		if (defaults.get(i) != null) {
+    			nDefaults--;
+    		}
+    		else {
+    			nDefaults = -1;
+    		}
+    	}
+    	return nDefaults;
+    }
+    // END KGU 2019-03-07
     
     /**
      * Extracts the diagram name from the Root text. Contained blanks are replaced with underscores.
@@ -4844,7 +5398,8 @@ public class Root extends Element {
      *  Extracts parameter names and types from the parenthesis content of the Root text
      *  and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
      * @param paramNames - {@link StringList} to be expanded by the found parameter names
-     * @param paramTypes - {@link StringList} to be expanded by the found parameter types
+     * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
+     * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
      * @return true iff the text contains a parameter list at all
      * @see #getParameterNames()
      * @see #getParameterTypes()
@@ -4855,14 +5410,46 @@ public class Root extends Element {
      */
     // START KGU#253 2016-09-22: Enh. #249 - Find out whether there is a parameter list
     //public void collectParameters(StringList paramNames, StringList paramTypes)
-    public boolean collectParameters(StringList paramNames, StringList paramTypes)
+    // START KGU#371 2019-03-07: Enh. #381 - Allow default parameters
+    //public boolean collectParameters(StringList paramNames, StringList paramTypes)
+    public boolean collectParameters(StringList paramNames, StringList paramTypes, StringList paramDefaults)
+    // END KGU#371 2019-03-07
     // END KGU#253 2016-09-22
     {
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
-    	boolean hasParamList = false;
+        boolean hasParamList = false;
         // END KGU#253 2016-09-22
         if (this.isSubroutine())
         {
+        	// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        	if (parameterList != null) {
+        		synchronized(this) {
+        			for (Param param: parameterList) {
+        				if (paramNames != null) {
+        					paramNames.add(param.name);
+        				}
+        				if (paramTypes != null) {
+        					paramTypes.add(param.type);
+        				}
+        				if (paramDefaults != null) {
+        					paramDefaults.add(param.defaultValue);
+        				}
+        			}
+        		}
+        		// Nothing more to do here
+        		return true;
+        	}
+        	// Compute the parameter list from scratch, make sure all three lists exist
+        	if (paramNames == null) {
+        		paramNames = new StringList();
+        	}
+        	if (paramTypes == null) {
+        		paramTypes = new StringList();
+        	}
+        	if (paramDefaults == null) {
+        		paramDefaults = new StringList();
+        	}
+        	// END KGU#371 2019-03-07
         	try
         	{
         		String rootText = this.getText().getText();
@@ -4873,13 +5460,14 @@ public class Root extends Element {
         			rootText = varMatcher.replaceAll("$1$2");
         		}
         		// END KGU#580
-        		if(rootText.indexOf("(")>=0)
+        		if (rootText.indexOf("(") >= 0)
         		{
-        			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-        			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-        	        // START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
+        			// FIXME: This is getting too simple now!
+        			rootText = rootText.substring(rootText.indexOf("(")+1).trim();
+        			rootText = rootText.substring(0,rootText.lastIndexOf(")")).trim();
+        			// START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
         			hasParamList = true;
-        		    // END KGU#253 2016-09-22
+        			// END KGU#253 2016-09-22
         		}
         		// START KGU#222 2016-07-28: If there is no parenthesis then we shouldn't add anything...
         		else
@@ -4888,7 +5476,15 @@ public class Root extends Element {
         		}
         		// END KGU#222 2016-07-28
 
-        		extractDeclarationsFromList(rootText, paramNames, paramTypes);
+        		extractDeclarationsFromList(rootText, paramNames, paramTypes, paramDefaults);
+        		// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        		parameterList = new ArrayList<Param>(paramNames.count());
+        		synchronized(this) {
+        			for (int i = 0; i < paramNames.count(); i++) {
+        				parameterList.add(new Param(paramNames.get(i), paramTypes.get(i), paramDefaults.get(i)));
+        			}
+        		}
+        		// END KGU#371 2019-03-07
         	}
         	catch (Exception ex)
         	{
@@ -4896,7 +5492,7 @@ public class Root extends Element {
         	}
         }
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
-    	return hasParamList;
+        return hasParamList;
         // START KGU#253 2016-09-22
     }
     // END KGU#78 2015-11-25
@@ -4916,7 +5512,12 @@ public class Root extends Element {
     public String getSignatureString(boolean _addPath) {
     	String presentation = this.getMethodName();
     	if (this.isSubroutine()) {
-    		presentation += "(" + this.getParameterNames().count() + ")";
+    		// START KGU#371 2019-03-07: Enh. #385: Default parameter values supported
+    		//presentation += "(" + this.getParameterNames().count() + ")";
+    		int maxArgs = this.getParameterNames().count();
+    		int minArgs = this.getMinParameterCount();
+    		presentation += "(" + ((minArgs < maxArgs) ? minArgs + "-" : "" ) + maxArgs + ")";
+    		// END KGU#371 2019-03-07
     	}
     	if (_addPath) {
     		// START KGU 2016-12-29: Show changed status
@@ -4945,9 +5546,26 @@ public class Root extends Element {
     public String proposeFileName()
     {
     	String fname = this.getMethodName();
-    	if (this.isSubroutine())
+    	// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    	//if (this.isSubroutine())
+    	if (E_FILENAME_WITH_ARGNUMBERS && this.isSubroutine())
+    	// END KGU#690 2019-03-21
     	{
-    		fname += "-" + this.getParameterNames().count();
+    		// START KGU#371 2019-03-07: Enh. #385 argument count range
+    		//fname += "-" + this.getParameterNames().count();
+    		int minArgs = this.getMinParameterCount();
+    		int maxArgs = this.getParameterNames().count();
+    		// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    		//fname += "-" + minArgs;
+    		fname += Character.toString(E_FILENAME_SIG_SEPARATOR) + minArgs;
+    		// END KGU#690 2019-03-21
+    		if (maxArgs > minArgs) {
+    			// START KGU#690 2019-03-21: Issue #707 - signature suffix ought to be configurable
+    			//fname += "-" + maxArgs;
+    			fname += Character.toString(E_FILENAME_SIG_SEPARATOR) + maxArgs;
+    			// END KGU#690 2019-03-21
+    		}
+    		// END KGU#371 2019-03-07
     	}
     	return fname;
     }
@@ -4955,13 +5573,13 @@ public class Root extends Element {
     
     public Vector<DetectedError> analyse()
     {
-    	structorizerKeywords.clear();
-    	structorizerKeywords.add("global");
-    	for (String keyword: CodeParser.getAllProperties()) {
-    		structorizerKeywords.add(keyword);
-    	}
-    	
-        this.getVarNames();	// also fills this.constants if not already done
+        structorizerKeywords.clear();
+        structorizerKeywords.add("global");
+        for (String keyword: CodeParser.getAllProperties()) {
+            structorizerKeywords.add(keyword);
+        }
+
+        this.retrieveVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
 
         Vector<DetectedError> errors = new Vector<DetectedError>();
@@ -4990,10 +5608,10 @@ public class Root extends Element {
 
         // START KGU#220 2016-07-27: Enh. #207
         // Warn in case of switched text/comments as first report
-        if (this.isSwitchTextAndComments())
+        if (isSwitchTextCommentMode())
         {
-        	String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
-        	String[] defaultNames = {"Diagram", "Switch text/comments?"};
+            String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
+            String[] defaultNames = {"Diagram", "Switch text/comments?"};
             // This is a general warning without associated element - put at top
             error = new DetectedError(errorMsg(Menu.warning_1, Menu.getLocalizedMenuPath(menuPath, defaultNames)), null);
             // Category 0 is not restricted to configuration (cannot be switched off)
@@ -5001,8 +5619,8 @@ public class Root extends Element {
         }
         // END KGU#220 2016-07-27
         
-		// START KGU#376 2017-04-20: Enh. #389 - alternative implementation approach
-//        for (String rootName: this.importedRoots) {
+        // START KGU#376 2017-04-20: Enh. #389 - alternative implementation approach
+//		for (String rootName: this.importedRoots) {
 //			// Get all lines of the imported root
 //			if (Arranger.hasInstance()) {
 //				Vector<Root> roots = Arranger.getInstance().findProgramsByName(rootName);
@@ -5013,25 +5631,25 @@ public class Root extends Element {
 //				}
 //				else {
 //					// The diagram «%» to be imported is currently not available.
-//		            addError(errors, new DetectedError(errorMsg(Menu.error15_4, rootName), this), 15);					
+//					addError(errors, new DetectedError(errorMsg(Menu.error15_4, rootName), this), 15);					
 //				}
 //			}		
-//        }
-		// END KGU#376 2017-04-11
+//		}
+        // END KGU#376 2017-04-11
 
-        
-    	// START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
+
+        // START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
         LinkedHashMap<String, String> importedConstants = new LinkedHashMap<String, String>();
-    	this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), typeDefinitions);
-    	// END KGU#376 2017-07-01
-    	
-    	vars.add(rootVars);
+        this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), typeDefinitions);
+        // END KGU#376 2017-07-01
+
+        vars.add(rootVars);
         HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
         for (int v = 0; v < vars.count(); v++) {
-        	String para = vars.get(v);
-        	if (this.constants.containsKey(para)) {
-        		definedConsts.put(para, this.constants.get(para));
-        	}
+            String para = vars.get(v);
+            if (this.constants.containsKey(para)) {
+                definedConsts.put(para, this.constants.get(para));
+            }
         }
 
         // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
@@ -5133,7 +5751,7 @@ public class Root extends Element {
         // END KGU#78 2015-11-25
 
         // CHECK: var = programname (#9)
-        if (!haveFunction && variables.contains(programName))
+        if (!haveFunction && getCachedVarNames().contains(programName))
         {
             //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
             error  = new DetectedError(errorMsg(Menu.error09,programName),this);
@@ -5171,10 +5789,10 @@ public class Root extends Element {
 //            }
             boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
             // END KGU#78 2015-11-25
-			// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+            // START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
             boolean doesReturn = vars.contains("§ANALYSER§RETURNS");
             boolean mayReturn = resultFlags[0];
-			// END KGU#343 2017-02-07
+            // END KGU#343 2017-02-07
             
             
             if (!setsResultCi && !setsProcNameCi && !doesReturn &&
@@ -5219,54 +5837,65 @@ public class Root extends Element {
 	private static final void initialiseKeyTables()
 	{
 		// Establish the primary lookup tables
-    	caseAwareKeywords = new Hashtable<String, StringList>();
-    	caseUnawareKeywords = new Hashtable<String, StringList>();
-    	// Now add the table entries for every generator
-    	for (GENPlugin plugin: Menu.generatorPlugins)
-    	{
-    		// The reserved words the generator will provide
-    		// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
-    		//String[] reserved = null;
-    		//boolean distinguishCase = true;
-    		String[] reserved = plugin.reservedWords/**/;
-    		// Case relevance the generator will provide
-    		boolean distinguishCase = plugin.caseMatters;
-    		if (reserved != null)
-    		{
-    			Hashtable<String, StringList> table =
-    					distinguishCase ? caseAwareKeywords : caseUnawareKeywords;
-    			for (int i = 0; i < reserved.length; i++)
-    			{
-    				String key = reserved[i];
-    				if (!distinguishCase)
-    				{
-    					key = key.toLowerCase();	// normalise key for the primary lookup
-    				}
-    				// Ensure an entry in the respective primary lookup
-    				StringList users = table.get(key);
-    				if (users == null)
-    				{
-    					// First occurrance of thís key word
-    					users = StringList.getNew(plugin.title);
-    					table.put(key, users);
-    				}
-    				else
-    				{
-    					// Other generators have already exposed this keyword
-    					users.add(plugin.title);
-    				}
-    			}
-    		}
-    	}
-    	// Now buy the GUI some time to accomplish its initialisation
-//    	try {
-//    	    Thread.sleep(500);
-//    	} catch(InterruptedException ex) {
-//    		System.out.println("Root.initialiseKeyTables(): sleep failed.");
-//    	    Thread.currentThread().interrupt();
-//    	}
+		caseAwareKeywords = new Hashtable<String, StringList>();
+		caseUnawareKeywords = new Hashtable<String, StringList>();
+		// Now add the table entries for every generator
+		for (GENPlugin plugin: Menu.generatorPlugins)
+		{
+			// The reserved words the generator will provide
+			// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
+			//String[] reserved = null;
+			//boolean distinguishCase = true;
+			String[] reserved = plugin.reservedWords/**/;
+			// Case relevance the generator will provide
+			boolean distinguishCase = plugin.caseMatters;
+			if (reserved != null)
+			{
+				Hashtable<String, StringList> table =
+						distinguishCase ? caseAwareKeywords : caseUnawareKeywords;
+				for (int i = 0; i < reserved.length; i++)
+				{
+					String key = reserved[i];
+					if (!distinguishCase)
+					{
+						key = key.toLowerCase();	// normalise key for the primary lookup
+					}
+					// Ensure an entry in the respective primary lookup
+					StringList users = table.get(key);
+					if (users == null)
+					{
+						// First occurrence of thís key word
+						users = StringList.getNew(plugin.title);
+						table.put(key, users);
+					}
+					else
+					{
+						// Other generators have already exposed this keyword
+						users.add(plugin.title);
+					}
+				}
+			}
+		}
+		// Now buy the GUI some time to accomplish its initialisation
+//		try {
+//			Thread.sleep(500);
+//		} catch(InterruptedException ex) {
+//			System.out.println("Root.initialiseKeyTables(): sleep failed.");
+//			Thread.currentThread().interrupt();
+//		}
 	}
 	// END KGU#239 2016-06-12
+	
+	// START KGU#466 2019-08-02: Issue #733
+	public static String[] getPreferenceKeys()
+	{
+		String[] prefKeys = new String[analyserChecks.length];
+		for (int i = 0; i < prefKeys.length; i++) {
+			prefKeys[i] = "check" + (i+1);
+		}
+		return prefKeys;
+	}
+	// END KGU#466 2019-08-02
     
     public static void saveToINI()
     {
@@ -5290,17 +5919,6 @@ public class Root extends Element {
     }
 
 
-    public boolean isSwitchTextAndComments()
-    {
-    	// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
-    	//return switchTextAndComments;
-    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
-    	//return Element.E_TOGGLETC;
-    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
-    	// END KGU#227
-    	// END KGU#91 2015-12-04
-    }
-
 // START KGU#91 2015-12-04: No longer needed
 //  public void setSwitchTextAndComments(boolean switchTextAndComments) {
 //      this.switchTextAndComments = switchTextAndComments;
@@ -5313,7 +5931,7 @@ public class Root extends Element {
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
 	 * @return either the text or the comment
 	 */
-    @Override
+	@Override
 	public StringList getText(boolean _alwaysTrueText)
 	{
 		StringList textToShow = super.getText(_alwaysTrueText);
@@ -5420,7 +6038,7 @@ public class Root extends Element {
 					results.add(varName);
 				}
 			}
-			if (results.count() == 0 && result != null) {
+			if (results.isEmpty() && result != null) {
 				results.add(result);
 			}
 			else if (results.count() > 1 && result == null) {
@@ -5644,11 +6262,16 @@ public class Root extends Element {
 	 * 7. Calls<br/>
 	 * 8. Jumps<br/>
 	 * 9. Parallel sections<br/>
+	 * 10. Try blocks<br/>
 	 * @return an integer array with element counts according to the index map above 
+	 * @see #getElementCount()
 	 */
 	public Integer[] getElementCounts()
 	{
-		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		// START KGU#686 2019-03-24: Enh. #56
+		//final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0};
+		final Integer[] counts = new Integer[]{0,0,0, 0,0,0, 0,0,0, 0,0};
+		// END KGU#686 2019-03-24
 		
 		IElementVisitor counter = new IElementVisitor() {
 
@@ -5684,7 +6307,12 @@ public class Root extends Element {
 				}
 				else if (_ele instanceof Parallel) {
 					counts[9]++;
-				}	
+				}
+				// START KGU#686 2019-03-24: Enh. #56
+				else if (_ele instanceof Try) {
+					counts[10]++;
+				}
+				// END KGU#686 2019-03-24
 				return true;
 			}
 
@@ -5700,6 +6328,23 @@ public class Root extends Element {
 	}
 	// END KGU#363 2017-05-08
 	
+	// START KGU#444/KGU#618 2018-12-18: Issue #417, #649 Auxiliary method to get the total element count
+	/**
+	 * @return the total number of elements comprised by this Root including itself
+	 * (and except Subqueues). Uses {@link #getElementCounts()}.
+	 * @see #getElementCounts()
+	 */
+	public int getElementCount()
+	{
+		Integer[] counts = getElementCounts();
+		int nElements = 0;
+		for (Integer count: counts) {
+			nElements += count;
+		}
+		return nElements + 1;
+	}
+	// END KGU#444/KGU#618 2018-12-18
+	
 	// START KGU#324 2017-05-30: Enh. #373, #415
 	/**
 	 * Provides a tree iterator for forward (pre-order top-down) or backward (post-order bottom-up)
@@ -5711,5 +6356,93 @@ public class Root extends Element {
 		return this.children.iterator(true);
 	}
 	// END KGU#363 2017-05-30
+
+	// START KGU#602 2018-10-25: Issue #419 - Tools to break very long lines is requested
+	/**
+	 * Breaks down all text lines longer than {@code maxLineLength} of all elements
+	 * along the tokens into continuated lines (i.e. broken lines end with backslash).
+	 * Already placed line breaks are preserved unless {@code rebreak} is true, in which
+	 * case broken lines are first concatenated in order to be broken according to
+	 * {@code maxLineLength}.<br/>
+	 * If a token is longer than {@code maxLineLength} (might be a string literal) then
+	 * it will not be broken or decomposed in any way such that the line length limit
+	 * may not always hold.<br/>
+	 * If this method led to a different text layout then the drawing info is invalidated
+	 * up-tree.
+	 * @param maxLineLength - the number of characters a line should not exceed
+	 * @param rebreak - if true then existing line breaks (end-standing backslashes) or not preserved
+	 * @return true if any text was effectively modified, false otherwise
+	 * @see Element#breakTextLines(int, boolean)
+	 */
+	public boolean breakElementTextLines(int maxLineLength, boolean rebreak)
+	{
+		boolean changed = false;
+		IElementSequence.Iterator iter = this.iterator();
+		while (iter.hasNext()) {
+			if (iter.next().breakTextLines(maxLineLength, rebreak)) {
+				changed = true;
+			}
+		}
+		return changed;
+	};
 	
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.children.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
+	
+	// START KGU#178/KGU#624 2018-12-26: Issues #160, #655; moved hitherto from class Generator
+	/**
+	 * Gathers all {@code Call} elements contained in this Root and not being disabled
+	 * @return the vector of all contained {@code Call} elements
+	 */
+	public Vector<Call> collectCalls()
+	{
+		return collectCalls(this);
+	}
+	
+	/**
+	 * Recursively gathers all {@code Call} elements in {@code _ele} and it's substructure
+	 * unless they are disabled.
+	 * @param _ele - an {@link Element}
+	 * @return a vector of found {@code Call} elements
+	 */
+	private Vector<Call> collectCalls(Element _ele)
+	{
+		final class CallCollector implements IElementVisitor
+		{
+			public Vector<Call> calls = new Vector<Call>();
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				// START KGU#632 2019-01-08: Nobody needs a disabled Call ...
+				//if (_ele instanceof Call) {
+				if (_ele instanceof Call && !_ele.isDisabled()) {
+				// END KGU#632 2019-01-08
+					calls.add((Call)_ele);
+				}
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+		};
+		CallCollector visitor = new CallCollector();
+		_ele.traverse(visitor);
+		return visitor.calls;
+	}
+	// END KGU#178/KGU#624 2018-12-26
+
 }

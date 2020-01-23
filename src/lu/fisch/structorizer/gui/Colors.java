@@ -32,17 +32,21 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.31      First Issue
- *      Kay Gürtzig     2017.01.11      Issue #81/#330. Scaling support
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced
- *      Kay Gürtzig     2018.07.02      KGU#245: Code revision - serial controls converted to arrays
+ *      Bob Fisch       2007-12-31      First Issue, created via JFormDesigner
+ *      Kay Gürtzig     2017-01-11      Issue #81/#330. Scaling support
+ *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced
+ *      Kay Gürtzig     2018-07-02      KGU#245: Code revision - serial controls converted to arrays
+ *      Kay Gürtzig     2018-12-20      Enh. #653: defaultColors aligned to those of Element, btnReset added
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      	Kay Gürtzig 2018.07.02
- *      	-	Eventually converted to arrays 
- *      	Bob Fisch 2007.12.31
+ *          Kay Gürtzig 2018-12-20
+ *          -   defaultColors replaced by an array equivalent to Element.defaultColors
+ *          -   Reset button introduced to restore the (new) default color set 
+ *      	Kay Gürtzig 2018-07-02
+ *      	-	Eventually converted to arrays, JFormDesigner stuff obsolete
+ *      	Bob Fisch 2007-12-31
  *      	-	I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************///
@@ -55,7 +59,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 /*
- * Created by JFormDesigner on Mon Dec 31 20:03:51 CET 2007
+ * Created by JFormDesigner on Mon Dec 31 20:03:51 CET 2007 (NO LONGER VALID!)
  */
 
 
@@ -69,7 +73,6 @@ public class Colors extends LangDialog {
 	public boolean OK = false;
 	// END KGU#393 2017-05-09
 	
-	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
 	protected JPanel contentPanel;
@@ -96,23 +99,25 @@ public class Colors extends LangDialog {
 //	protected JPanel color9;
 	protected final JLabel[] lblColors;
 	protected final JPanel[] colors;
-	// Note that the following default colors differ from those of Element...
-	private final Color[] defaultColors = {
+	// KGU#622 2018-12-20: Issue #653 the following default colors had differed from those of Element...
+	private final static Color[] defaultColors = {
 			Color.white,				// 0
-			new Color(255, 204, 204),	// 1
-			new Color(255, 255, 153),	// 2
-			new Color(153, 255, 153),	// 3
-			new Color(153, 204, 255),	// 4
-			new Color(153, 153, 255),	// 5
-			new Color(255, 153, 255),	// 6
-			new Color(204, 204, 204),	// 7
-			new Color(255, 153, 102),	// 8
-			new Color(153, 102, 255)	// 9
+			new Color(255, 128, 128),	//Color(255, 204, 204),	// 1
+			new Color(255, 255, 128),	//Color(255, 255, 153),	// 2
+			new Color(128, 255, 128),	//Color(153, 255, 153),	// 3
+			new Color(128, 255, 255),	//Color(153, 204, 255),	// 4
+			new Color(  0, 128, 255),	//Color(153, 153, 255),	// 5
+			new Color(255, 128, 192),	//Color(255, 153, 255),	// 6
+			new Color(192, 192, 192),	//Color(204, 204, 204),	// 7
+			new Color(255, 128,   0),	//Color(255, 153, 102),	// 8
+			new Color(128, 128, 255)	//Color(153, 102, 255)	// 9
 	};
 	// END KGU#245 2018-07-02
 	protected JPanel buttonBar;
 	protected JButton btnOK;
-	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#622 2018-12-20: Enh. #653 - Allow to reset the colours to the defaults
+	protected JButton btnReset;
+	// END KGU#622 2018-12-20
 
 	private Frame frame = null;
 
@@ -145,7 +150,6 @@ public class Colors extends LangDialog {
 	}*/
 
 	private void initComponents() {
-		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
 		// Generated using JFormDesigner Evaluation license - Robert Fisch
 		dialogPane = new JPanel();
 		contentPanel = new JPanel();
@@ -177,6 +181,9 @@ public class Colors extends LangDialog {
 		// END KGU#245 2018-07-02
 		buttonBar = new JPanel();
 		btnOK = new JButton();
+		// START KGU#622 2018-12-20: Enh. #653
+		btnReset = new JButton();
+		// END KGU#622 2018-12-20
 
 		//======== this ========
 		setResizable(false);
@@ -188,7 +195,6 @@ public class Colors extends LangDialog {
 		{
 			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-			// JFormDesigner evaluation mark
 			/*
 			dialogPane.setBorder(new javax.swing.border.CompoundBorder(
 				new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
@@ -357,14 +363,35 @@ public class Colors extends LangDialog {
 			{
 				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
 				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {80, 0, 80};
+				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {0.0, 1.0, 0.0};
 
 				//---- btnOK ----
 				btnOK.setText("OK");
-				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-					new Insets(0, 0, 0, 0), 0, 0));
+				
+				// START KGU#622 2018-12-20: Issue #653
+				//buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+				//		GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+				//		new Insets(0, 0, 0, 0), 0, 0));
+				//---- btnReset ----
+				btnReset.setText("Reset");
+				
+				GridBagConstraints gbc = new GridBagConstraints();
+				gbc.gridx = 0;
+				gbc.gridy = 0;
+				gbc.gridwidth = 1;
+				gbc.gridheight = 1;
+				gbc.weightx = 0.0;
+				gbc.weighty = 0.0;
+				//gbc.fill = GridBagConstraints.CENTER;
+				gbc.anchor = GridBagConstraints.WEST;
+				buttonBar.add(btnReset, gbc);
+				
+				gbc.gridx = 2;
+				gbc.anchor = GridBagConstraints.EAST;
+				
+				buttonBar.add(btnOK, gbc);
+				// END KGU#622 2018-12-20
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -375,8 +402,8 @@ public class Colors extends LangDialog {
         // END KGU#287 2017-01-11
 		
 		pack();
+		btnOK.requestFocusInWindow();
 		setLocationRelativeTo(getOwner());
-		// JFormDesigner - End of component initialization  //GEN-END:initComponents
 		
 		// Bob-thinks
 		// add the KEY-listeners
@@ -401,6 +428,7 @@ public class Colors extends LangDialog {
 			public void keyTyped(KeyEvent kevt) {}
 		};
 		btnOK.addKeyListener(keyListener);
+		btnReset.addKeyListener(keyListener);
 		
 		// add the ACTION-listeners
 		ActionListener actionListener = new ActionListener()
@@ -410,12 +438,20 @@ public class Colors extends LangDialog {
 				// START KGU#393 2017-05-09: Issue #400
 				if (event.getSource() == btnOK) {
 					OK = true;
+					setVisible(false);
 				}
-				// END KGU#393 2017-05-09		
-				setVisible(false);
+				// END KGU#393 2017-05-09
+				// START KGU#622 2018-12-20: Enh. #653
+				else if (event.getSource() == btnReset) {
+					resetColors();
+				}
+				// END KGU#622 2018-12-20
 			}
 		};
 		btnOK.addActionListener(actionListener);
+		// START KGU#622 2018-12-20: Enh. #653
+		btnReset.addActionListener(actionListener);
+		// END KGU#622 2018-12-20
 
 		final Frame fframe = this.frame;
 		MouseListener mouseListener = new MouseListener()
@@ -457,5 +493,12 @@ public class Colors extends LangDialog {
 		// END KGU#245 2018-07-02
 	}
 
+	// START KGU#622 2018-12-20: Enh. #653
+	protected void resetColors() {
+		for (int i = 0; i < defaultColors.length; i++) {
+			colors[i].setBackground(defaultColors[i]);
+		}
+	}
+	// END KGU#622 2018-12-20
 	
 }

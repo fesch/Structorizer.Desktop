@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -30,33 +30,47 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.27      First Issue
- *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
- *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
- *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
- *      Kay Gürtzig     2016.05.08      Issue #185: Capability of multi-routine import per file (KGU#194)
- *      Kay Gürtzig     2016.12.02      Enh. #300: Information about updates on start in interactive mode
+ *      Bob Fisch       2007-12-27      First Issue
+ *      Kay Gürtzig     2015-12-16      Bugfix #63 - no open attempt without need
+ *      Kay Gürtzig     2016-04-28      First draft for enh. #179 - batch generator mode (KGU#187)
+ *      Kay Gürtzig     2016-05-03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
+ *      Kay Gürtzig     2016-05-08      Issue #185: Capability of multi-routine import per file (KGU#194)
+ *      Kay Gürtzig     2016-12-02      Enh. #300: Information about updates on start in interactive mode
  *                                      Modification in command-line concatenation
- *      Kay Gürtzig     2016.12.12      Issue #306: multiple arguments in simple command line are now
+ *      Kay Gürtzig     2016-12-12      Issue #306: multiple arguments in simple command line are now
  *                                      interpreted as several files to be opened in series.
- *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
- *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
- *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
- *      Kay Gürtzig     2017.07.02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
- *      Kay Gürtzig     2017.11.06      Issue #455: Loading of argument files put in a sequential thread to overcome races
- *      Kay Gürtzig     2018.03.21      Issue #463: Logging configuration via file logging.properties
- *      Kay Gürtzig     2018.06.07      Issue #463: Logging configuration mechanism revised (to support WebStart)
- *      Kay Gürtzig     2018.06.08      Issue #536: Precaution against command line argument trouble
- *      Kay Gürtzig     2018.06.12      Issue #536: Experimental workaround for Direct3D trouble
- *      Kay Gürtzig     2018.06.25      Issue #551: No message informing about version check option on WebStart
- *      Kay Gürtzig     2018.07.01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
- *      Kay Gürtzig     2018.07.03      Bugfix #554: Now a specified parser will override the automatic search.
- *      Kay Gürtzig     2018.08.17      Help text for parser updated (now list is from parsers.xml).
- *      Kay Gürtzig     2018.08.18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
- *      Kay Gürtzig     2018.09.14      Issue #537: Apple-specific code revised such that build configuration can handle it
- *      Kay Gürtzig     2018.09.19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
- *      Kay Gürtzig     2018.09.27      Slight modification to verbose option (-v may also be used without argument)
- *      Kay Gürtzig     2018.10.08      Bugfix #620: Logging path setup revised
+ *      Kay Gürtzig     2017-01-27      Issue #306 + #290: Support for Arranger files in command line
+ *      Kay Gürtzig     2017-03-04      Enh. #354: Configurable set of import parsers supported now
+ *      Kay Gürtzig     2017-04-27      Enh. #354: Verbose option (-v with log directory) for batch import
+ *      Kay Gürtzig     2017-07-02      Enh. #354: Parser-specific options retrieved from Ini, parser cloned.
+ *      Kay Gürtzig     2017-11-06      Issue #455: Loading of argument files put in a sequential thread to overcome races
+ *      Kay Gürtzig     2018-03-21      Issue #463: Logging configuration via file logging.properties
+ *      Kay Gürtzig     2018-06-07      Issue #463: Logging configuration mechanism revised (to support WebStart)
+ *      Kay Gürtzig     2018-06-08      Issue #536: Precaution against command line argument trouble
+ *      Kay Gürtzig     2018-06-12      Issue #536: Experimental workaround for Direct3D trouble
+ *      Kay Gürtzig     2018-06-25      Issue #551: No message informing about version check option on WebStart
+ *      Kay Gürtzig     2018-07-01      Bugfix #554: Parser selection and instantiation for batch parsing was defective.
+ *      Kay Gürtzig     2018-07-03      Bugfix #554: Now a specified parser will override the automatic search.
+ *      Kay Gürtzig     2018-08-17      Help text for parser updated (now list is from parsers.xml).
+ *      Kay Gürtzig     2018-08-18      Bugfix #581: Loading of a list of .nsd/.arr/.arrz files as command line argument
+ *      Kay Gürtzig     2018-09-14      Issue #537: Apple-specific code revised such that build configuration can handle it
+ *      Kay Gürtzig     2018-09-19      Bugfix #484/#603: logging setup extracted to method, ini dir existence ensured
+ *      Kay Gürtzig     2018-09-27      Slight modification to verbose option (-v may also be used without argument)
+ *      Kay Gürtzig     2018-10-08      Bugfix #620: Logging path setup revised
+ *      Kay Gürtzig     2018-10-25      Enh. #416: New option -l maxlen for command line parsing, signatures of
+ *                                      export(...) and parse(...) modified.
+ *      Kay Gürtzig     2019-03-05      Deprecated method clazz.newInstance() replaced by clazz.getDeclaredConstructor().newInstance()
+ *      Kay Gürtzig     2019-03-13      Enh. #696: Batch code export for arrangement files (.arr/.arrz) implemented
+ *      Kay Gürtzig     2019-03-26      Enh. #697: Batch code parsing now produces arrangements for multi-routine sources
+ *                                      (file overwriting bug fixed on this occasion);
+ *                                      Bugfix #715: disambiguateParser() had only worked once in the loop
+ *      Kay Gürtzig     2019-07-28      Issue #551 / KGU#715: No hint about version check option on Windows installer either
+ *      Kay Gürtzig     2019-08-01      Issues #551, #733 - corrected directory retrieval
+ *      Bob Fisch       2019-08-04      Issue #537: ApplicationFactory replaced by OSXAdapter stuff
+ *      Kay Gürtzig     2019-08-05      Enh. #737: Possibility of providing a settings file for batch export
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Option -s now also respected for interactive mode,
+ *                                      Bugfix #742
+ *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *
  ******************************************************************************************************
  *
@@ -76,12 +90,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.security.CodeSource;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -94,13 +109,22 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import lu.fisch.structorizer.application.ApplicationFactory;
+//import lu.fisch.structorizer.application.ApplicationFactory;
+import lu.fisch.structorizer.archivar.Archivar;
+import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
+import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
+import lu.fisch.structorizer.archivar.ArchivarException;
+import lu.fisch.structorizer.archivar.ArchivePool;
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.io.ArrFilter;
+import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.StructogramFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.structorizer.parsers.GENParser;
 import lu.fisch.structorizer.parsers.NSDParser;
@@ -119,21 +143,26 @@ public class Structorizer
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
 		String parser = null;
-		String options = "";
-		String outFileName = null;
-		String charSet = "UTF-8";
+		StringList switches = new StringList();
+		//String outFileName = null;
+		//String charSet = "UTF-8";
 		// START KGU#354 2017-04-27: Enh. #354
-		String logDir = null;
+		//String logDir = null;
 		// END KGU#354 2017-04-27
 		// START KGU#538 2018-07-01: issue #554
-		String settingsFile = null;
+		//String settingsFile = null;
 		// END KGU#538 2018-07-01
+		HashMap<String, String> options = new HashMap<String, String>();
 		//System.out.println("arg 0: " + args[0]);
 		if (args.length == 1 && args[0].equals("-h"))
 		{
 			printHelp();
 			return;
 		}
+		// START KGU#722 2019-08-06: Enh. #741
+		File settings = null;
+		boolean openFound = false;
+		// END KGU#722 2019-08-06
 		for (int i = 0; i < args.length; i++)
 		{
 			//System.out.println("arg " + i + ": " + args[i]);
@@ -159,6 +188,11 @@ public class Structorizer
 				}
 				// END KGU#538 2018-07-01
 			}
+			// START KGU#722 2019-08-07: Enh. #741
+			else if (i == 0 && args[i].equals("-open")) {
+				openFound = true;
+			}
+			// END KGU#722 2019-08-07
 			// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced 
 			// Legacy support - parsers will now be derived from the file extensions 
 			//else if (i > 0 && (parser != null) && (args[i].equalsIgnoreCase("pas") || args[i].equalsIgnoreCase("pascal"))
@@ -169,25 +203,50 @@ public class Structorizer
 			else if (args[i].equals("-o") && i+1 < args.length)
 			{
 				// Output file name
-				outFileName = args[++i];
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
+				//outFileName = args[++i];
+				options.put("outFileName", args[++i]);
 			}
 			else if (args[i].equals("-e") && i+1 < args.length)
 			{
 				// Encoding
-				charSet = args[++i];
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
+				//charSet = args[++i];
+				options.put("charSet", args[++i]);
 			}
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
 			else if (args[i].equals("-v") && i+1 < args.length)
 			{
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
 				// START KGU#354 2018-09-27: More tolerance spent
 				//logDir = args[++i];
 				String dirName = args[i+1]; 
 				if (dirName.startsWith("-") || !(new File(dirName)).isDirectory()) {
 					// No valid path given, so use "."
-					logDir = ".";
+					//logDir = ".";
+					options.put("logDir", ".");
 				}
 				else {
-					logDir = args[++i];
+					//logDir = args[++i];
+					// START KGU#723 2019-08-07: Bugfix #742
+					//options.put("logDir", "args[++i]");
+					options.put("logDir", args[++i]);
+					// END KGU#723 2019-08-07
 				}
 				// END KGU#354 2018-09-27
 			}
@@ -195,32 +254,88 @@ public class Structorizer
 			// START KGU#538 2018-07-01: Issue #554 - new option for a settings file
 			else if (args[i].equals("-s") && i+1 < args.length)
 			{
-				settingsFile = args[++i];
+				//settingsFile = args[++i];
+				// START KGU#722 2019-08-06: Enh. #741
+				//options.put("settingsFile", args[++i]);
+				settings = new File(args[++i]);
+				try {
+					if (settings.canRead() || settings.createNewFile()) {
+						if (settings.canRead()) {
+							// FIXME check whether this resolves the path correctly
+							options.put("settingsFile", settings.getAbsolutePath());
+						}
+					}
+				} catch (IOException ex) {
+					System.err.println("*** Failure on ensuring specified settings file: " + ex.getMessage());
+					Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, "Option -s " + settings.getPath(), ex);
+					settings = null;
+				}
+				// END KGU#722 2019-08-06
 			}
 			// END KGU#538 2018-07-01
+			// START KGU#602 2018-10-25: Enh. #416
+			else if (args[i].equals("-l") && parser != null && i+1 < args.length) {
+				// START KGU#722 2019-08-07: Enh. #741
+				if (openFound || generator == null && parser == null) {
+					// Mark this as an illegal option
+					switches.add(args[i]);
+				}
+				// END KGU#722 2019-08-07
+				try {
+					short maxLen = Short.parseShort(args[i+1]);
+					if (maxLen == 0 || maxLen >= 20) {
+						options.put("maxLineLength", args[++i]);
+					}
+				}
+				catch (NumberFormatException ex) {}
+			}
+			// END KGU#602 2018-10-25
 			// Target standard output?
 			else if (args[i].equals("-")) {
-				options += "-";
+				switches.add("-");
 			}
 			// Other options
+			// START KGU#722 2019-08-07: Enh. #741
+			else if (args[i].equals("-open")) {
+				openFound = true;
+			}
+			// END KGU#722 2019-08-07
 			else if (args[i].startsWith("-")) {
-				options += args[i].substring(1);
+				switches.add(args[i].substring(1));
 			}
 			else
 			{
 				fileNames.add(args[i]);
 			}
 		}
+		// START KGU#722 2019-08-06: Enh. #741
+		if (settings != null) {
+			if (generator != null || parser != null) {
+				try {
+					Ini.getInstance().redirect(settings.getAbsolutePath(), generator != null || parser != null);
+				} catch (IOException ex) {
+					System.err.println("*** Failing to redirect settings file: " + ex.getMessage());
+					Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, "Option -s " + settings.getPath(), ex);
+					options.remove("settingsFile");
+				}
+			}
+			else if (!Ini.setIniPath(settings.getAbsolutePath())) {
+				options.remove("settingsFile");
+			}
+		}
+		// END KGU#722 2019-08-06
 		if (generator != null)
 		{
-			Structorizer.export(generator, fileNames, outFileName, options, charSet, null);
+			//Structorizer.export(generator, fileNames, outFileName, switches, charSet, null);
+			Structorizer.export(generator, fileNames, options, switches.concatenate());
 			return;
 		}
 		else if (parser != null)
 		{
 			// START KGU#354 2017-04-27: Enh. #354 verbose mode
 			//Structorizer.parse(parser, fileNames, outFileName, options, charSet);
-			Structorizer.parse(parser, fileNames, outFileName, options, charSet, settingsFile, logDir);
+			//Structorizer.parse(parser, fileNames, outFileName, switches, charSet, settingsFile, logDir);
+			Structorizer.parse(parser, fileNames, options, switches.concatenate());
 			// END KGU#354 2017-04-27
 			return;
 		}
@@ -244,49 +359,85 @@ public class Structorizer
 		final Mainform mainform = new Mainform();
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
-		String appPath = getApplicationPath();
-		mainform.isWebStart = appPath.endsWith("webstart");
+		File appDir = Ini.getInstallDirectory();
+		// START KGU#715 2019-07-28: 
+		//mainform.isAutoUpdating = appPath.endsWith("webstart");
+		File uplaFile = new File(appDir.getAbsolutePath() + File.separator + "upla.jar");
+		mainform.isAutoUpdating = getApplicationPath().endsWith("webstart") || uplaFile.exists();
+		// END KGU#715 2019-07-28
 		// END KGU#532 2018-06-25
 		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
-        try {
-        	EventQueue.invokeAndWait(new Runnable() {
-        		@Override
-        		public void run() {
-        // END KGU#440 2017-11-06
-        			//String s = new String();
-        			int start = 0;
-        			if (args.length > 0 && args[0].equals("-open")) {
-        				start = 1;
-        			}
-        			// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
-        			// them all ...
-    				String lastExt = "";	// Last file extension
-        			for (int i=start; i<args.length; i++)
-        			{
-        				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
-        				//s += args[i];
-        				String s = args[i].trim();
-        				if (!s.isEmpty())
-        				{
-        					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
-        						// Push the previously loaded diagram to Arranger
-        						mainform.diagram.arrangeNSD();
-        					}
-        					lastExt = mainform.diagram.openNsdOrArr(s);
-        					// START KGU#521 2018-06-08: Bugfix #536 (try)
-        					if (lastExt == "") {
-        						String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
-        						Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
-        						JOptionPane.showMessageDialog(mainform, msg,
-        								"Command line", JOptionPane.WARNING_MESSAGE);
-        					}
-        					// END KGU#521 2018-06-08
-        				}
-        				// END KGU#306 2016-12-12/2017-01-27
-        			}
-       	// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
-        		}
-        		// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
+		try {
+			EventQueue.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+		// END KGU#440 2017-11-06
+					//String s = new String();
+					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
+					//int start = 0;
+					//if (args.length > 0 && args[0].equals("-open")) {
+					//	start = 1;
+					//}
+					// END KGU#722 2019-08-07
+					
+					// START KGU#724 2019-09-16: Issue #744 - consider postponed openFile events on OS X
+					if (mainform.filesToOpen != null) {
+						fileNames.addAll(mainform.filesToOpen);
+						mainform.filesToOpen.clear();
+					}
+					// END KGU#724 2019-09-16
+
+					// If there are several .nsd, .arr, or .arrz files as arguments, then try to load
+					// them all ...
+					String lastExt = "";	// Last file extension
+					// START KGU#722 219-08-07: Enh. #741 - we know the potential file arguments already...
+					//for (int i = start; i < args.length; i++)
+					for (int i = 0; i < fileNames.size(); i++)
+					// END KGU#722 2019-08-07
+					{
+						// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
+						//s += args[i];
+						// START KGU#722 2019-08-07: Enh. #741 - we have the filenames already
+						//String s = args[i].trim();
+						String s = fileNames.get(i).trim();
+						// END KGU#722 219-08-07
+						if (!s.isEmpty())
+						{
+							if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
+								// Push the previously loaded diagram to Arranger
+								mainform.diagram.arrangeNSD();
+							}
+							lastExt = mainform.diagram.openNsdOrArr(s);
+							// START KGU#521 2018-06-08: Bugfix #536 (try)
+							if (lastExt == "") {
+								String msg = "Unsuited or misplaced command line argument \"" + s + "\" ignored.";
+								Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+								JOptionPane.showMessageDialog(mainform, msg,
+										"Command line", JOptionPane.WARNING_MESSAGE);
+							}
+							// END KGU#521 2018-06-08
+						}
+						// END KGU#306 2016-12-12/2017-01-27
+					}
+					// START KGU#722 2019-08-07: Enh. #741
+					if (!switches.isEmpty()) {
+						StringBuilder opts = new StringBuilder();
+						for (int i = 0; i < switches.count(); i++) {
+							String swtch = switches.get(i);
+							opts.append(" -");
+							if (!swtch.equals("-")) {
+								opts.append(swtch);
+							}
+							String msg = "Unsupported command line options " + opts.toString().trim() + " ignored.";
+							Logger.getLogger(Structorizer.class.getName()).log(Level.WARNING, msg);
+							JOptionPane.showMessageDialog(mainform, msg,
+									"Command line", JOptionPane.WARNING_MESSAGE);
+						}
+					}
+					// END KGU#722 2019-08-07
+		// START KGU#440 2017-11-06: Issue #455 Decisive measure against races on loading an drawing
+				}
+				// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
 //			s = s.trim();
 //			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
 //			//mainform.diagram.openNSD(s);
@@ -295,21 +446,24 @@ public class Structorizer
 //				mainform.diagram.openNSD(s);
 //			}
 //			// END KGU#111 2015-12-16
-        	// END KGU#306 2016-12-12
-        	});
-        } catch (InvocationTargetException e1) {
-        	e1.printStackTrace();
-        } catch (InterruptedException e1) {
-        	e1.printStackTrace();
-        }
-        // END KGU#440 2017-11-06
-        mainform.diagram.redraw();
+				// END KGU#306 2016-12-12
+			});
+		} catch (InvocationTargetException e1) {
+			e1.printStackTrace();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		// END KGU#440 2017-11-06
+		mainform.diagram.redraw();
 
-        if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
-        {
-        	// KGU 2018-09-14: Issue #537
-        	ApplicationFactory.getApplication("lu.fisch.structorizer.application.AppleStructorizerApplication").configureFor(mainform);
-        }
+		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+		{
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
+			System.setProperty("apple.awt.graphics.UseQuartz", "true");
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Structorizer");
+
+			mainform.doOSX();
+		}
 
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
@@ -391,10 +545,11 @@ public class Structorizer
 	
 	// START KGU#187 2016-05-02: Enh. #179
 	private static final String[] synopsis = {
-		"Structorizer [NSDFILE|ARRFILE|ARRZFILE]",
-		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [PARSER] [-f] [-v [LOGPATH]] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
-		"Structorizer -h"
+		"Structorizer [-s SETTINGSFILE] [-open] [NSDFILE|ARRFILE|ARRZFILE]...",
+		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -h",
+		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
 	};
 	// END KGU#187 2016-05-02
 	
@@ -402,41 +557,74 @@ public class Structorizer
 	/*****************************************
 	 * batch code export method
 	 * @param _generatorName - name of the target language or generator class
-	 * @param _nsdFileNames - vector of the diagram file names
-	 * @param _codeFileName - name or path of the code file to be created
-	 * @param _options - set of switches (on / off)
-	 * @param _charSet - the encoding to be used. 
-	 * @param _settingsFileName - path of a property file to be preferred against structorizer.ini
+	 * @param _nsdOrArrNames - vector of the diagram or archive file names
+	 * @param _options - map of non-binary command line options
+	 * @param _switches - set of switches (on / off)
 	 *****************************************/
-	public static void export(String _generatorName, Vector<String> _nsdFileNames, String _codeFileName, String _options, String _charSet, String _settingsFileName)
+	public static void export(String _generatorName, Vector<String> _nsdOrArrNames, HashMap<String, String> _options, String _switches)
 	{
 		Vector<Root> roots = new Vector<Root>();
-		for (String fName : _nsdFileNames)
+		// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+		HashMap<ArchivePool, Vector<Root>> pools = new LinkedHashMap<ArchivePool, Vector<Root>>();
+		Archivar archivar = new Archivar();
+		StringList poolFileNames = new StringList();
+		// END KGU#679 2019-02-13
+		String outFileName = _options.get("outFileName");
+		String codeFileName = outFileName;
+		// the encoding to be used. 
+		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// START KGU#720 2019-08-07: Enh. #737
+		// path of a property file to be preferred over structorizer.ini
+		boolean settingsGiven = _options.containsKey("settingsFile");
+		// END KGU#720 2019-08-07
+		for (String fName : _nsdOrArrNames)
 		{
-			Root root = null;
 			try
 			{
 				// Test the existence of the current NSD file
-				File f = new File(fName);
-				if (f.exists())
+				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+				//File f = new File(fName);
+				//if (f.exists())
+				StringList arrSpec = StringList.explode(fName, "!");
+				File f = new File(arrSpec.get(0));
+				boolean isArrz = false;
+				if (f.exists() && StructogramFilter.isNSD(fName))
+				// END KGU#679 2019-02-13
 				{
 					// open an existing file
 					NSDParser parser = new NSDParser();
 					// START KGU#363 2017-05-21: Issue #372 API change
 					//root = parser.parse(f.toURI().toString());
-					root = parser.parse(f);
+					Root root = parser.parse(f);
 					// END KGU#363 2017-05-21
 					root.filename = fName;
 					roots.add(root);
 					// If no output file name is given then derive one from the first NSD file
-					if (_codeFileName == null && _options.indexOf('-') < 0)
+					if (codeFileName == null && _switches.indexOf('-') < 0)
 					{
-						_codeFileName = f.getCanonicalPath();
+						codeFileName = f.getCanonicalPath();
 					}
 				}
+				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+				else if (f.exists() && (ArrFilter.isArr(arrSpec.get(0)) || (isArrz = ArrZipFilter.isArr(arrSpec.get(0))))) {
+					arrSpec.remove(0);
+					if (!addExportPool(pools, archivar, arrSpec, f, isArrz)) {
+						System.err.println("*** No starting diagrams in arrangement " + f.getAbsolutePath() + " found. Skipped.");
+					}
+					else 
+					{
+						String outFilePath = outFileName; 
+						// If no output file name is given then derive one from the arrangement file
+						if (outFilePath == null && _switches.indexOf('-') < 0) {
+							outFilePath = f.getCanonicalPath();
+						}
+						poolFileNames.add(outFilePath);
+					}
+				}
+				// END KGU#679 2019-02-13
 				else
 				{
-					System.err.println("*** File " + fName + " not found. Skipped.");
+					System.err.println("*** File " + fName + " not found or inappropriate. Skipped.");
 				}
 			}
 			catch (Exception e)
@@ -446,7 +634,10 @@ public class Structorizer
 		}
 		
 		String genClassName = null;
-		if (!roots.isEmpty())
+		// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+		//if (!roots.isEmpty())
+		if (!roots.isEmpty() || !pools.isEmpty())
+		// END KGU#679 2019-02-13
 		{
 			String usage = "Usage: " + synopsis[1] + "\nwith GENERATOR =";
 			// We just (ab)use some class residing in package gui to fetch the plugin configuration 
@@ -485,17 +676,38 @@ public class Structorizer
 			try
 			{
 				Class<?> genClass = Class.forName(genClassName);
-				Generator gen = (Generator) genClass.newInstance();
-				gen.exportCode(roots, _codeFileName, _options, _charSet);
+				Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
+				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+				//if (!roots.isEmpty())
+				//gen.exportCode(roots, codeFileName, _switches, charSet);
+				if (!roots.isEmpty()) {
+					// START KGU#720 2019-08-06: Enh. #737 - now with specific option file
+					//gen.exportCode(roots, codeFileName, _switches, charSet, null);
+					gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
+					// END KGU#720 2019-08-06
+				}
+				int i = 0;
+				for (Entry<ArchivePool, Vector<Root>> poolEntry: pools.entrySet()) {
+					// START KGU#720 2019-08-05: Enh. #737 - now with specific option file
+					//gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey(), null);
+					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, settingsGiven, poolEntry.getKey());
+					// END KGU#720 2019-08-05
+				}
+				// END KGU#679 2019-02-13
 			}
 			catch(java.lang.ClassNotFoundException ex)
 			{
 				System.err.println("*** Generator class " + ex.getMessage() + " not found!");
 				System.exit(3);
 			}
+			catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+				System.err.println("*** Error on instantiating " + _generatorName + "\n" + ex.getMessage());
+				ex.printStackTrace();
+				System.exit(3);
+			}
 			catch(Exception e)
 			{
-				System.err.println("*** Error while using " + _generatorName + "\n" + e.getMessage());
+				System.err.println("*** Error on using " + _generatorName + "\n" + e.getMessage());
 				e.printStackTrace();
 				System.exit(4);
 			}
@@ -507,25 +719,103 @@ public class Structorizer
 		}
 	}
 	// END KGU#187 2016-04-28
+
+	/**
+	 * Tries to form an {@link ArchivePool} from arrangement file {@code aFile} and
+	 * to identify the pool roots for export from the signature list {@code arrSpec}
+	 * or (if empty) all program roots form the pool.
+	 * @param pools - a map from {@link ArchivePool}s to start diagram sets - this is where the
+	 * {@link ArchivePool} derived from {@code aFile} will be added to.
+	 * @param archivar - the employed {@link Archivar}
+	 * @param arrSpec - the arrangement specification
+	 * @param f - the arrangement file (may be an archive - .arrz- or just a list - .arr -)
+	 * @param isArrz - indicates whether file {@code f} is a compressed arrangement archive
+	 * @throws Exception - if something goes wrong
+	 */
+	private static boolean addExportPool(HashMap<ArchivePool, Vector<Root>> pools, Archivar archivar, StringList arrSpec,
+			File f, boolean isArrz) throws Exception {
+		boolean done = false;
+		ArchiveIndex index = null;
+		if (isArrz) {
+			//index = archivar.getArrangementArchiveContent(f, null);
+			index = archivar.unzipArrangementArchive(f, null);
+		}
+		else {
+			index = archivar.makeNewIndexFor(f);
+		}
+		ArchivePool pool = new ArchivePool(index);
+		// Now collect the starting roots within the pool
+		Vector<Root> poolRoots = new Vector<Root>();
+		if (!arrSpec.isEmpty()) {
+			// Starting roots explicitly given
+			for (Iterator<ArchiveIndexEntry> iter = index.iterator(); iter.hasNext();)
+			{
+				ArchiveIndexEntry entry = iter.next();
+				if (entry.name == null) {
+					entry.getRoot(archivar);
+				}
+				String signature = entry.getSignature();
+				Root root = null;
+				if (arrSpec.contains(signature)) {
+					root = entry.getRoot(archivar);
+					if (root != null) {
+						poolRoots.add(root);
+					}
+					arrSpec.removeAll(signature);
+				}
+			}
+			for (int i = 0; i < arrSpec.count(); i++) {
+				System.err.println("*** No diagram " + arrSpec.get(i) + " in arrangement " + f.getAbsolutePath() + ". Skipped.");
+			}
+		}
+		else {
+			// Identify and collect all main diagrams of the pool
+			for (Iterator<ArchiveIndexEntry> iter = index.iterator(); iter.hasNext();)
+			{
+				ArchiveIndexEntry entry = iter.next();
+				Root root = null;
+				if (entry.name == null) {
+					entry.getRoot(archivar);
+				}
+				if (entry.name != null && entry.minArgs == -1) {
+					root = entry.getRoot(archivar);
+					if (root != null && root.isProgram()) {
+						poolRoots.add(root);
+					}
+				}
+			}
+		}
+		if (!poolRoots.isEmpty()) {
+			pools.put(pool, poolRoots);
+			done = true;
+		}
+		return done;
+	}
 	
-	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
+	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode, 2019-03-05 made public
 	/*****************************************
 	 * batch code import method
 	 * @param _parserName - name of a preferred default parser (just for the case of ambiguity)
 	 * @param _filenames - names of the files to be imported
-	 * @param _outFile - base name of the nsd file(s) to be created
-	 * @param _options - set of switches (either on or off)
-	 * @param _charSet - the encoding to be assumed or used 
-	 * @param _settingsFileName - path of a property file to be preferred against structorizer.ini 
-	 * @param _logDir - Path of the target folder for the parser log
+	 * @param _options - map of non-binary command line parameters
+	 * @param _switches - set of switches (either on or off)
 	 *****************************************/
-	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _settingsFileName, String _logDir)
+	public static void parse(String _parserName, Vector<String> _filenames, HashMap<String, String> _options, String _switches)
 	{
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
+		// base name of the nsd file(s) to be created
+		String outFile = _options.get("outFileName"); 
+		// the encoding to be assumed or used 
+		String charSet = _options.getOrDefault("charSet", "UTF-8");
+		// START KGU#722 2019-08-07: Enh. #741 - no longer needed, ini redirection already done
+		// path of a property file to be preferred against structorizer.ini
+		//String settingsFileName = _options.get("settingsFile");
+		// END KGU#722 2019-08-07
+		// Path of the target folder for the parser log
+		String _logDir = _options.get("logDir");
 
 		Vector<GENPlugin> plugins = null;
-		String fileExt = null;
 		// START KGU#354 2017-03-10: Enh. #354 configurable parser plugins
 		// Initialize the mapping file extensions -> CodeParser
 		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
@@ -547,13 +837,13 @@ public class Structorizer
 			try
 			{
 				Class<?> parsClass = Class.forName(className);
-				CodeParser parser = (CodeParser) parsClass.newInstance();
+				CodeParser parser = (CodeParser) parsClass.getDeclaredConstructor().newInstance();
 				parsers.put(parser, plugin);
 				usage += "\n\t";
 				for (String ext: parser.getFileExtensions()) {
 					usage += ext + ", ";
 				}
-				// Get rid of last ", " 
+				// Get rid of last ", "
 				if (usage.endsWith(", ")) {
 					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
 				}
@@ -586,15 +876,21 @@ public class Structorizer
 		// END KGU#538 2018-07-03
 		
 		// START KGU#193 2016-05-09: Output file name specification was ignored, option f had to be tuned.
-		boolean overwrite = _options.indexOf("f") >= 0 && 
-				!(_outFile != null && !_outFile.isEmpty() && _filenames.size() > 1);
+		boolean overwrite = _switches.indexOf("f") >= 0 && 
+				!(outFile != null && !outFile.isEmpty() && _filenames.size() > 1);
 		// END KGU#193 2016-05-09
+		// START KGU#678 2019-03-26: Enh. #697 - Allow to put results in arrangement archives
+		boolean asArchive = _switches.indexOf("z") >= 0;
+		// END KGU#678 2019-03-26
 		
 		// START KGU#354 2017-03-03: Enh. #354 - support several parser plugins
 		// While there was only one input language candidate, a single Parser instance had been enough
 		//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 		// END KGU#354 2017-03-04
 
+		// START KGU#696 2019-03-26: Bugfix #715 - standard input stream had accidently been closed
+		Scanner scnr = new Scanner(System.in);
+		// END KGU#696 2019-03-26
 		// START KGU#538 2018-07-01: Bugfix #554 - for the case there are alternatives
 		Vector<CodeParser> suitedParsers = new Vector<CodeParser>();
 		// END KGU#538 2018-07-01
@@ -635,7 +931,10 @@ public class Structorizer
 				}
 				// START KGU#538 2018-07-01: Bugfix #554
 				if (parser == null) {
-					parser = disambiguateParser(suitedParsers, filename);
+					// START KGU#696 2019-03-26: Bugfix #715 - standard input scanner shall not be closed
+					//parser = disambiguateParser(suitedParsers, filename);
+					parser = disambiguateParser(suitedParsers, filename, scnr);
+					// END KGU#696 2019-03-26
 				}
 				// END KGU#538 2018-07-01
 				// END KGU#416 2017-07-02
@@ -648,12 +947,29 @@ public class Structorizer
 			// START KGU#538 2018-07-01: Bugfix #554
 			System.out.println("--- Processing file \"" + filename + "\" with " + parser.getClass().getSimpleName() + " ...");
 			// Unfortunately, CodeParsers aren't reusable, so we better create a new instance in any case.
-			parser = cloneWithPluginOptions(parsers.get(parser), _settingsFileName);
+			// START KGU#722 2019-08-07: Enh. #741 - now ini will already have been associated with a differing settings file
+			//parser = cloneWithPluginOptions(parsers.get(parser), settingsFileName);
+			parser = cloneWithPluginOptions(parsers.get(parser), null);
+			// END KGU#722 2019-08-07
+			// START KGU#678 2019-03-26: fileExt had always remained null
+			StringList fileExts = new StringList(parser.getFileExtensions());
+			// END KGU#678 2019-03-26
 			// END KGU#538 2018-07-01
+			// START KGU#602 2018-10-25: Issue #416
+			if (_options.containsKey("maxLineLength")) {
+				try {
+					short maxLineLength = Short.parseShort(_options.get("maxLineLength"));
+					if (maxLineLength >= 0) {
+						parser.optionMaxLineLength = maxLineLength;
+					}
+				}
+				catch (NumberFormatException ex) {}		
+			}
+			// END KGU#602 2018-10-25
 			// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
 			// START KGU#354 2017-04-27: Enh. #354 pass in the log directory path
 			//newRoots = parser.parse(filename, _charSet);
-			newRoots = parser.parse(filename, _charSet, _logDir);
+			newRoots = parser.parse(filename, charSet, _logDir);
 			// END KGU#354 2017-04-27
 			// END KGU#194 2016-05-04
 			if (!parser.error.isEmpty())
@@ -665,13 +981,31 @@ public class Structorizer
 			// Now save the roots as NSD files. Derive the target file names from the source file name
 			// if _outFile isn't given.
 			// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
-			if (_outFile != null && !_outFile.isEmpty())
+			if (outFile != null && !outFile.isEmpty())
 			{
-				filename = _outFile;
+				filename = outFile;
 			}
 			// END KGU#193 2016-05-09
-			overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
+			// START KGU#678 2019-03-26: Enh. #697 Create an arrangement archive for multiple roots
+			// Moreover, the feedback of the overwrite variable seems to have been a refactoring defect
+			//overwrite = writeRootsToFiles(newRoots, filename, fileExt, overwrite);
+			if (newRoots.size() > 1 && asArchive) {
+				writeRootsToArchive(newRoots, filename, fileExts, overwrite);
+			}
+			else {
+				writeRootsToFiles(newRoots, filename, fileExts, overwrite);
+			}
+			/* If there are several source files and an out file name was given then we may
+			 * not of course allow that subsequent results overwrite the former ones.
+			 */
+			if (outFile != null && !outFile.isEmpty()) {
+				overwrite = false;
+			}
+			// END KGU#678 2019-03 26
 		}
+		// START KGU#696 2019-03-26: Bugfix #715 - Now the input scanner may be closed
+		scnr.close();
+		// END KGU#696 2019-03-26
 	}
 	// END KGU#187 2016-04-29
 
@@ -679,29 +1013,27 @@ public class Structorizer
 	/**
 	 * Generates the nsd files from the given list of {@link Root}s
 	 * @param newRoots - list of generated {@link Root}s
-	 * @param filename - the base file name for the resulting nsd files
-	 * @param fileExt - the file name extension to be used.
-	 * @param overwrite
-	 * @return
+	 * @param filename - the base file name for the resulting nsd files (may be
+	 * the source file name or a specified out file name)
+	 * @param fileExts - file name extensions to be replaced (typical extensions of the source file).
+	 * @param overwrite - whether existing files are to be overwritten - otherwise a number
+	 * will be appended to avoid name clashes.
 	 */
-	private static boolean writeRootsToFiles(List<Root> newRoots, String filename, String fileExt, boolean overwrite)
+	private static void writeRootsToFiles(List<Root> newRoots, String filename, StringList fileExts, boolean overwrite)
 	{
 		// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
 		//if (rootNew != null)
 		boolean multipleRoots = newRoots.size() > 1;
+		// START KGU#678 2019-03-26: Enh #697
+		Archivar.ArchiveIndex index = null;
+		if (multipleRoots) {
+			index = (new Archivar()).makeEmptyIndex();
+		}
+		// END KGU#678 2019-03-26
 		for (Root rootNew : newRoots)
 		// END KGU#194 2016-05-08
 		{
-			StringList nameParts = StringList.explode(filename, "[.]");
-			String ext = nameParts.get(nameParts.count()-1).toLowerCase();
-			if (ext.equals(fileExt))
-			{
-				nameParts.set(nameParts.count()-1, "nsd");
-			}
-			else if (!ext.equals("nsd"))
-			{
-				nameParts.add("nsd");
-			}
+			StringList nameParts = ensureFileExtension(filename, fileExts, "nsd");
 			// In case of multiple roots (subroutines) insert the routine's proposed file name
 			if (multipleRoots && !rootNew.isProgram())
 			{
@@ -710,24 +1042,7 @@ public class Structorizer
 			//System.out.println("File name raw: " + nameParts);
 			if (!overwrite)
 			{
-				int count = 0;
-				do {
-					File file = new File(nameParts.concatenate("."));
-					if (file.exists())
-					{
-						if (count == 0) {
-							nameParts.insert(Integer.toString(count), nameParts.count()-1);
-						}
-						else {
-							nameParts.set(nameParts.count()-2, Integer.toString(count));
-						}
-						count++;
-					}
-					else
-					{
-						overwrite = true;
-					}
-				} while (!overwrite);
+				makeUniqueFilename(nameParts);
 			}
 			String filenameToUse = nameParts.concatenate(".");
 			//System.out.println("Writing to " + filename);
@@ -742,26 +1057,130 @@ public class Structorizer
 				finally {
 					out.close();
 				}
-			}
-			catch (UnsupportedEncodingException e) {
-				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
+				// START KGU#678 2019-03-26: Enh #697
+				if (index != null) {
+					rootNew.filename = filenameToUse;
+					index.addEntryFor(rootNew, null);
+				}
+				// END KGU#678 2019-03-26
 			}
 			catch (IOException e) {
 				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 		}
-		return overwrite;
+		// START KGU#678 2019-03-26: Enh. #697 - write an arrangement list for multiple results
+		if (index != null) {
+			StringList lines = index.deriveArrangementList(false);
+			StringList nameParts = ensureFileExtension(filename, fileExts, "arr");
+			if (!overwrite)
+			{
+				makeUniqueFilename(nameParts);
+			}
+			try {
+				FileOutputStream fos = new FileOutputStream(nameParts.concatenate("."));
+				Writer out = null;
+				out = new OutputStreamWriter(fos, "UTF8");
+				try {
+					out.write(lines.getText());
+					out.write('\n');	// Issue #706
+				}
+				finally {
+					out.close();
+				}
+			}
+			catch (IOException e) {
+				System.err.println("*** " + e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		}
+		// END KGU#678 2019-03-26
+	}
+
+	// START KGU#678 2019-03-26: Enh. #697
+	private static void writeRootsToArchive(List<Root> roots, String filename, StringList fileExts, boolean overwrite) {
+		StringList nameParts = ensureFileExtension(filename, fileExts, "arrz");
+		if (!overwrite)
+		{
+			makeUniqueFilename(nameParts);
+		}
+		Archivar archivar = new Archivar();
+		filename = nameParts.concatenate(".");
+		StringList troubles = new StringList();
+		try {
+			archivar.zipArrangement(new File(filename), roots, false, troubles);
+			for (int i = 0; i < troubles.count(); i++) {
+				System.err.println("*** " + troubles.get(i));
+			}
+		} catch (ArchivarException e) {
+			System.err.println("*** Error on creating archive " + filename + ": " + e.toString());
+		}
+	}
+
+	/**
+	 * @param nameParts
+	 */
+	private static void makeUniqueFilename(StringList nameParts) {
+		boolean fileNameUnique = false;
+		int count = 0;
+		do {
+			File file = new File(nameParts.concatenate("."));
+			if (file.exists())
+			{
+				if (count == 0) {
+					nameParts.insert(Integer.toString(count), nameParts.count()-1);
+				}
+				else {
+					nameParts.set(nameParts.count()-2, Integer.toString(count));
+				}
+				count++;
+			}
+			else
+			{
+				fileNameUnique = true;
+			}
+		} while (!fileNameUnique);
 	}
 	
+	/**
+	 * Split the given file path at all dots and ensure a file name extension
+	 * {@code newExt} (as last name part of the resulting {@link StringList}.
+	 * If {@code filename} had ended with one of the old file extensions given
+	 * in {@code oldFileExts} then this extension will be eliminated before. 
+	 * @param filename - the file path or name to be prepared.
+	 * @param oldExts - a list of unwanted file name extensions (without dots!)
+	 * @param newExt - the new file name extension to be ensured (without dot!)
+	 * @return the split file name (should be concatenated with "." separator).
+	 * Last part will always be {@code newExt}.
+	 */
+	private static StringList ensureFileExtension(String filename, StringList oldExts, String newExt) {
+		StringList nameParts = StringList.explode(filename, "[.]");
+		String ext = nameParts.get(nameParts.count()-1).toLowerCase();
+		// START KGU#687 2019-03-26: Extended to an array of file extensions
+		//if (ext.equals(fileExt))
+		if (oldExts.contains(ext))
+		// END KGU#687 2019-03-26
+		{
+			// Replace the given source code file name extension by the extension newExt
+			nameParts.set(nameParts.count()-1, newExt);
+		}
+		else if (!ext.equals(newExt))
+		{
+			// Otherwise append extension newExt if this hasn't already been the extension
+			nameParts.add(newExt);
+		}
+		return nameParts;
+	}
+	// END KGU#678 2019-03-26
+
 	/**
 	 * Chooses the parser to be used among the {@code suitedParsers}. If there are many
 	 * then the user will be asked interactively.<br/>
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
+	 * @param scnr TODO
 	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
-	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename)
+	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename, Scanner scnr)
 	{
 		CodeParser parser = null;
 		if (suitedParsers.size() == 1) {
@@ -773,7 +1192,9 @@ public class Structorizer
 				System.out.println((i+1) + ": " + suitedParsers.get(i).getDialogTitle());
 			}
 			int chosen = -1;
-			Scanner scnr = new Scanner(System.in);
+			// START KGU#696 2019-03-26: Bugfix #715 We used the wrong method - didn't wait for user input
+			//Scanner scnr = new Scanner(System.in);
+			// END KGU#696 2019-03-26
 			try {
 				while (chosen < 0) {
 					System.out.print("Please select the number of your favourite (0 = skip file): ");
@@ -790,26 +1211,33 @@ public class Structorizer
 					}
 				}
 			}
-			finally {
-				scnr.close();
+			// START KGU#696 2019-03-26: Bugfix #715 We must not close input stream here but catch errors
+			//finally {
+			//	scnr.close();
+			//}
+			catch (Exception ex) {
+				ex.printStackTrace();
+				chosen = 1;
+				System.err.println("*** Option 1 set.");				
 			}
+			// END KGU#696 2019-03-26
 			if (chosen != 0) {
 				parser = suitedParsers.get(chosen-1);
 			}
 		}
 		return parser;
 	}
-	// END KGUä538 2018-07-01
+	// END KGU#538 2018-07-01
 	
 	// START KGU#416 2017-07-03: Enh. #354, #409
 	private static CodeParser cloneWithPluginOptions(GENPlugin plugin, String _settingsFile) {
 		CodeParser parser;
 		try {
-			// START KGU#538 2018-07-01: Bugfix #554 Instantioation failed (missing path)
+			// START KGU#538 2018-07-01: Bugfix #554 Instantiation failed (missing path)
 			//parser = (CodeParser)Class.forName(plugin.getKey()).newInstance();
-			parser = (CodeParser)Class.forName(plugin.className).newInstance();
+			parser = (CodeParser)Class.forName(plugin.className).getDeclaredConstructor().newInstance();
 			// END KGU#538 2018-07-01
-		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
+		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
 			System.err.println("Structorizer.CloneWithPluginSpecificOptions("
 					+ plugin.getKey()
 					+ "): " + ex.toString() + " on creating \"" + plugin.getKey()
@@ -910,6 +1338,7 @@ public class Structorizer
 				System.out.print(" | " + names.get(j).trim());
 			}
 		}
+		System.out.println("\n\tARRSPEC = (ARRFILE|ARRZFILE)!SIGNATURE...");
 		System.out.print("\n\tPARSER = ");
 		// Again we (ab)use some class residing in package gui to fetch the plugin configuration 
 		buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
@@ -924,25 +1353,27 @@ public class Structorizer
 			System.out.print( (i>0 ? " |" : "") + "\n\t\t" + className );
 			for (int j = 0; j < names.count(); j++)
 			{
-				System.err.print(" | " + names.get(j).trim());
+				System.out.print(" | " + names.get(j).trim());
 			}
 		}
 		System.out.println("");
 	}
 	// END KGU#187 2016-05-02
 	
-	/** @return the installation path of Structorizer */
-    public static String getApplicationPath()
-    {
-        CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
-        File rootPath = null;
-        try {
-            rootPath = new File(codeSource.getLocation().toURI().getPath());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }           
-        return rootPath.getParentFile().getPath();
-    }
+	/** @return the installation path of Structorizer (for webstart test) */
+	public static String getApplicationPath()
+	{
+		// FIXME Can all this be replaced by Ini.getInstallDirectory().getParent(); ?
+		CodeSource codeSource = Structorizer.class.getProtectionDomain().getCodeSource();
+		File rootPath = null;
+		try {
+			rootPath = new File(codeSource.getLocation().toURI().getPath());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return "";
+		}
+		return rootPath.getParentFile().getPath();
+	}
 		
 // START KGU#595 2018-10-07: Bugfix #620 - we must adapt the log pattern
 //	/**

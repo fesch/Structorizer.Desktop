@@ -9,8 +9,8 @@ This is just a little file that explains
 
 WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
 ===========================================
-Author:      Kay G�rtzig
-Last update: 2017-03-30
+Author:      Kay Gürtzig
+Last update: 2019-03-18
 
 There are two possible approaches to add a new generator to Structorizer:
 You might start from scratch or copy an existing generator for a language
@@ -75,11 +75,11 @@ and accomplish the outcome step by step, consider more export options etc.
 		marks the place where the transformed output expression (assume
 		a single expression here, see later below) is to be placed , e.g.
 		"std::cout << $1 << std::endl" for C++.
-	2.9	String[] getReservedWords()
-		Return a string array (type String[]) containing the reserved
-		words of the target language (also see isCaseSignificant()).
-		You may return an empty String array if you provide the set of
-		words in the plugin file generators.xml instead (see 7).
+	2.9	OverloadingLevel getOverloadingLevel()
+		Return the level of subroutine signature overloading this language allows:
+		OL_NO_OVERLOADING if subroutines may not share their name (e.g. C)
+		OL_DELEGATION if overloading is allowed but default arguments are not (e.g. Java)
+		OL_DEFAULT_ARGUMENTS if parameters may be given a default value (e.g. C++)
 	2.10	boolean isCaseSignificant()
 		Return true if case matters for identifying reserved words
 		(also see getReservedWords() above) in the target language 
@@ -99,6 +99,14 @@ and accomplish the outcome step by step, consider more export options etc.
 		placeholder is to indicate that only a single item may be inserted
 		at that very position (such that several lines will have to be
 		generated from this template for a list of items).
+	2.13	OverloadingLevel getOverloadingLevel()
+		Return an enumerator value indicating whether the language allows
+		to overload routines in general or even to specify optional
+		arguments (enh. #385, since version 3.29-05).
+	2.14	TryCatchSupportLevel getTryCatchLevel()
+		Return an enumerator value indicating whether the language doesn't
+		provide exception handling or allows try-catch blocks or even
+		finally blocks (enh. #56, since version 3.29-07).
 		
 3	Override the substantial generator methods.
 	3.0	General remarks
@@ -187,9 +195,10 @@ and accomplish the outcome step by step, consider more export options etc.
 	3.9	void generateCode(Jump _jump, String _indent)
 		Class Jump is going to offer the following classification
 		methods:
-		boolean isLeave() - returns true if it's a break/leave
-		boolean isReturn() - returns true if it's a function return
-		boolean isExit() - returns true if it's a program exit.
+		boolean isLeave() - returns true if it's a break/leave,
+		boolean isReturn() - returns true if it's a function return,
+		boolean isExit() - returns true if it's a program exit,
+		boolean isThrow() - returns true if it throws an exception.
 		The generator may still have to analyse the code lines and
 		identify the respective keywords in order to isolate values.
 		See section 4.1 how to getb the configured keywords.
@@ -204,7 +213,13 @@ and accomplish the outcome step by step, consider more export options etc.
 		a sequential concatenation of the parallel branches is to be
 		produced, ideally marked with bold comments (see examples in
 		the Generator subclasses).
-	3.11	void generateCode(Root, String _indent)
+	3.11	void generateCode(Try _try, String _indent)
+		Depending on whether the language supports exception handling
+		either a working try block (possibly with finally clause) is
+		to be produced or at least a sequential concatenation of the
+		try and the finally block with some bold comments (see examples
+		in the Generator subclasses).
+	3.12	void generateCode(Root, String _indent)
 		This method builds the outer code framework for the algorithm
 		(i.e. the program, procedure or function definition), usually
 		consisting of the header, a "preamble" (containing e.g. variable
@@ -240,6 +255,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		"preLeave" for leave (or break) instructions,
 		"preReturn" for return statements,
 		"preExit" for program exit instructions,
+		"preThrow" for raising exceptions,
 		"input", "output" for input and output instructions.
 	4.2	Export options
 		(TODO)

@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,19 +32,21 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.13      First Issue
- *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
- *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
- *      Kay Gürtzig     2017.03.03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
- *      Kay Gürtzig     2017.04.14      Issues #23,#380,#394: new jump analysis helper methods
- *      Kay Gürtzig     2017.06.09      Enh. #416: Adaptations for execution line continuation
+ *      Bob Fisch       2007-12-13      First Issue
+ *      Kay Gürtzig     2015-10-12      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 = KGU#82 in method copy()
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2016-01-03      Enh. #87 (KGU#122) -> getIcon()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #188: New copy constructor to support conversion (KGU#199)
+ *      Kay Gürtzig     2016-07-30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017-03-03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
+ *      Kay Gürtzig     2017-04-14      Issues #23,#380,#394: new jump analysis helper methods
+ *      Kay Gürtzig     2017-06-09      Enh. #416: Adaptations for execution line continuation
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Issue #56: New throw flavour implemented
  *
  ******************************************************************************************************
  *
@@ -111,6 +113,7 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -125,7 +128,10 @@ import lu.fisch.structorizer.parsers.CodeParser;
 public class Jump extends Instruction {
 
 	// START KGU#258 2016-09-26: Enh. #253
-	private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn"};
+	// START KGU#686 2019-03-18: Enh. #56
+	//private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn"};
+	private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn", "preThrow"};
+	// END KGU#686 2019-03-18
 	// END KGU#258 2016-09-25
 	
 	public Jump()
@@ -165,7 +171,7 @@ public class Jump extends Instruction {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
@@ -175,10 +181,14 @@ public class Jump extends Instruction {
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// START KGU 2016-07-30: Just delegate the basics to super
-		super.draw(_canvas, _top_left);
+		super.draw(_canvas, _top_left, _viewport, _inContention);
 		// END KGU 2016-07-30: Just delegate the basics to super
 
 		_canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.
@@ -324,6 +334,28 @@ public class Jump extends Instruction {
 	}
 	// END KGU#354 2017-03-03
 	
+	// START KGU#686 2019-03-18: Enh. #56 Support for try / catch / throw
+	/**
+	 * Checks whether this line contains a throw statement
+	 * @param line the text line to be analysed
+	 * @return true if the given line matches the exit syntax 
+	 */
+	public static boolean isThrow(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0);
+	}
+	/**
+	 * Checks whether this element contains an exit statement
+	 * @return true if this has one line and matches the exit syntax 
+	 */
+	public boolean isThrow()
+	{
+		StringList lines = this.getUnbrokenText();
+		return lines.count() == 1 && isThrow(lines.get(0));
+	}
+	// END KGU#686 2019-03-18
+
 	// START KGU#78/KGU#365 3017-04-14: Enh. #23, #380: leave analyses unified here
 	/**
 	 * In case of a leave jump returns the specified number of loop levels to leave,

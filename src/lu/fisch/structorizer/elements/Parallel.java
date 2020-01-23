@@ -54,6 +54,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -63,6 +65,7 @@ package lu.fisch.structorizer.elements;
 
 import java.util.Vector;
 import java.awt.Color;
+import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -119,7 +122,7 @@ public class Parallel extends Element
     		{
     			return StringList.getNew(this.getGenericText());
     		}
-    		else if (!this.isSwitchTextCommentMode())
+    		else if (!isSwitchTextCommentMode())
     		{
     			return this.getComment();
     		}
@@ -153,7 +156,7 @@ public class Parallel extends Element
 		//sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
 		StringList sl = StringList.getNew(this.getGenericText());
 		sl.add(COLLAPSED);
-    	if (this.isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
+    	if (isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
     	{
     		sl.set(0, this.getGenericText() + " - " + this.getComment().get(0));
     	}
@@ -188,7 +191,7 @@ public class Parallel extends Element
     	}
 
     	// we need at least one line
-    	if(text.count()>0)
+    	if (!text.isEmpty())
     	{
     		int count = 10;
     		try
@@ -252,9 +255,9 @@ public class Parallel extends Element
    public Rect prepareDraw(Canvas _canvas)
     {
             // START KGU#136 2016-03-01: Bugfix #97
-            if (this.isRectUpToDate) return rect0;
+            if (this.isRect0UpToDate) return rect0;
             
-    		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
             //this.x0Branches.clear();
             //this.y0Branches = 0;
             // END KGU#516 2018-04-04
@@ -265,12 +268,12 @@ public class Parallel extends Element
             {
                 rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
                 // START KGU#136 2016-03-01: Bugfix #97
-                isRectUpToDate = true;
+                isRect0UpToDate = true;
                 // END KGU#136 2016-03-01
                 return rect0;
             }
 
-    		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
             //rect0.top = 0;
             //rect0.left = 0;
             Rect rect0 = new Rect();
@@ -304,10 +307,10 @@ public class Parallel extends Element
 //            // END KGU#172 2016-04-01
             
             // Unless some of the comment modes requires this, the upper stripe remains empty
-            if ((Element.E_COMMENTSPLUSTEXT || this.isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
+            if ((Element.E_COMMENTSPLUSTEXT || isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
             {
-            	// In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
-            	// Otherwise ("switch text/comments") the comment will be added as text in normal font.
+                // In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
+                // Otherwise ("switch text/comments") the comment will be added as text in normal font.
                 StringList headerText = new StringList();	// No text in general
                 if (!Element.E_COMMENTSPLUSTEXT)
                 {
@@ -334,7 +337,7 @@ public class Parallel extends Element
             		x0Branches.addElement(fullWidth);
             		// END KGU#136 2016-03-01
             		Rect rtt = qs.get(i).prepareDraw(_canvas);
-                	// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+            		// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
             		//fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
             		fullWidth += Math.max(rtt.right, E_PADDING / 2);
             		// END KGU#151 2016-03-01
@@ -348,22 +351,29 @@ public class Parallel extends Element
             rect0.right = Math.max(rect0.right, fullWidth)+1;
             rect0.bottom = rect0.bottom + maxHeight;
 
-    		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+            // START KGU#516 2018-04-04: Issue #529 - reduced critical section
             this.rect0 = rect0;
             this.x0Branches = x0Branches;
             this.y0Branches = y0Branches;
             // END KGU#516 2018-04-04
-    		// START KGU#136 2016-03-01: Bugfix #97
-    		isRectUpToDate = true;
-    		// END KGU#136 2016-03-01
+            // START KGU#136 2016-03-01: Bugfix #97
+            isRect0UpToDate = true;
+            // END KGU#136 2016-03-01
             return rect0;
     }
 
-    public void draw(Canvas _canvas, Rect _top_left)
+    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
+           // START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+           if (!checkVisibility(_viewport, _top_left)) { return; }
+           // END KGU#502/KGU#524/KGU#553 2019-03-13
+
             if(isCollapsed(true)) 
             {
-                Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+                Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+                // START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+                wasDrawn = true;
+                // END KGU#502/KGU#524/KGU#553 2019-03-14
                 return;
             }
                 
@@ -372,11 +382,11 @@ public class Parallel extends Element
 
             // START KGU#227 2016-07-30: Enh. #128 - delegate as much as possible to Instruction
             StringList headerText = new StringList();
-            if (!Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
+            if (!Element.E_COMMENTSPLUSTEXT && isSwitchTextCommentMode())
             {
             	headerText = this.getComment();
             }
-            Instruction.draw(_canvas, _top_left, headerText, this);
+            Instruction.draw(_canvas, _top_left, headerText, this, _inContention);
             // END KGU227 2016-07-30
             
             // draw shape
@@ -457,7 +467,7 @@ public class Parallel extends Element
                             }
 
                             // draw child
-                            qs.get(i).draw(_canvas,myrect);
+                            qs.get(i).draw(_canvas, myrect, _viewport, _inContention);
 
                             // draw bottom up line
                             /*
@@ -480,6 +490,9 @@ public class Parallel extends Element
 
             _canvas.setColor(Color.BLACK);
             _canvas.drawRect(_top_left);
+            // START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+            wasDrawn = true;
+            // END KGU#502/KGU#524/KGU#553 2019-03-14
     }
 
 	// START KGU 2016-07-30: Adapt the runtime info position
@@ -746,4 +759,23 @@ public class Parallel extends Element
 		return mayPass;
 	}
 	// END KGU 2017-10-21
+
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		if (_includeSubstructure) {
+			for (Subqueue sq: this.qs) {
+				maxLen = Math.max(maxLen, sq.getMaxLineLength(true));
+			}
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

@@ -31,8 +31,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.12.14      First Issue on behalf of enhancement request #492
- *      Kay Gürtzig     2018.03.21      All direct console output replaced with logging
+ *      Kay Gürtzig     2017-12-14      First Issue on behalf of enhancement request #492
+ *      Kay Gürtzig     2018-03-21      All direct console output replaced with logging
+ *      Kay Gürtzig     2019-03-17      Enh. #56 New entries for new Element class Try added
+ *      Kay Gürtzig     2019-06-07      Issue #726: array ELEMENT_KEYS introduced
+ *      Kay Gürtzig     2019-06-10      Issue #726: All resolution methods equipped with an optional translations argument
+ *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *
  ******************************************************************************************************
  *
@@ -51,6 +55,7 @@ import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locale;
 
 /**
  * Lightweight class holding both user-specific GUI designations for Element types
@@ -75,6 +80,7 @@ import lu.fisch.structorizer.locales.LangTextHolder;
  * n - Main (Root type)<br/>
  * o - Sub (Root type)<br/>
  * p - Includable (Root type)<br/>
+ * q - Try<br/>
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -83,32 +89,50 @@ public class ElementNames extends Component {
 	// START#484 KGU 2018-03-22: Issue #463
 	public static final Logger logger = Logger.getLogger(ElementNames.class.getName());
 	// END KGU#484 2018-03-22
+	
+	// START KGU#709 2019-06-07: Issue #726 We needed an official list of key names for the Translator usability
+	/**
+	 * Keys used for element name place holders in messages
+	 */
+	public static final String[] ELEMENT_KEYS = {
+			"Instruction",
+			"Alternative",
+			"Case",
+			"For",
+			"For.COUNTER",
+			"For.TRAVERSAL",
+			"While",
+			"Repeat",
+			"Forever",
+			"Call",
+			"Jump",
+			"Parallel",
+			"Root",
+			"Root.DT_MAIN",
+			"Root.DT_SUB",
+			"Root.DT_INCL",
+			// START KGU#686 2019-03-17: Enh. #56
+			"Try"
+			// END KGU#686 2019-03-17
+	};
+	// END KGU#709 2019-06-07
 
 	private static ElementNames instance = null;
 	
+	/** Maps the Element class names (more correctly, the place holder keys) to their index */
 	private static HashMap<String, Integer> classNameLookUp = new HashMap<String, Integer>();
 	static {
-		classNameLookUp.put("Instruction", 0);
-		classNameLookUp.put("Alternative", 1);
-		classNameLookUp.put("Case", 2);
-		classNameLookUp.put("For", 3);
-		classNameLookUp.put("While", 6);
-		classNameLookUp.put("Repeat", 7);
-		classNameLookUp.put("Forever", 8);
-		classNameLookUp.put("Call", 9);
-		classNameLookUp.put("Jump", 10);
-		classNameLookUp.put("Parallel", 11);
-		classNameLookUp.put("Root", 12);
-		classNameLookUp.put("For.COUNTER", 4);
-		classNameLookUp.put("For.TRAVERSAL", 5);
-		classNameLookUp.put("Root.DT_MAIN", 13);
-		classNameLookUp.put("Root.DT_SUB", 14);
-		classNameLookUp.put("Root.DT_INCL", 15);
+		for (int i = 0; i < ELEMENT_KEYS.length; i++) {
+			classNameLookUp.put(ELEMENT_KEYS[i], i);
+		}
 	}
+	/** Flag indicating whether {@link #configuredNames} are to be used for place holder resolution */
 	public static boolean useConfiguredNames = true;
 	/**
-	 * Array of user-defined names for the different element types and flavours.<br/>
-	 * Indices must correspond with those of {@link #localizedNames}.
+	 * Array of user-defined names for the different element types and flavours. Will only be
+	 * considered for place holder resolution if {@link #useConfiguredNames} is enabled.
+	 * Configuration via GUI dialog {@link ElementNamePreferences}.<br/>
+	 * Indices must correspond to those of @{@link ELEMENT_KEYS} and {@link #localizedNames}.
 	 */
 	public static String[] configuredNames = {
 			null,	// Instruction
@@ -127,10 +151,14 @@ public class ElementNames extends Component {
 			null,	// Main (Root)
 			null,	// Sub (Root)
 			null,	// Includable (Root)
+			// START KGU#686 2019-03-17: Enh. #56
+			null,	// Try
+			// END KGU#686 2019-03-17
 	};
 	/**
-	 * Array of locale-defined names for element types and flavours.<br/>
-	 * Indices must correspond with those of {@link #configuredNames}.
+	 * Array of locale-defined names for element types and flavours.
+	 * Subject to locale-switching.<br/>
+	 * Indices must correspond to thoseof of @{@link ELEMENT_KEYS} and {@link #configuredNames}.
 	 */
 	public static LangTextHolder[] localizedNames = {
 			new LangTextHolder("Instruction"),	
@@ -149,6 +177,9 @@ public class ElementNames extends Component {
 			new LangTextHolder("Main program"),
 			new LangTextHolder("Sub-routine"),	
 			new LangTextHolder("Includable"),	
+			// START KGU#686 2019-03-17: Enh. #56
+			new LangTextHolder("TRY"),
+			// END KGU#686 2019-03-17
 	};
 
 	public static ElementNames getInstance()
@@ -166,9 +197,10 @@ public class ElementNames extends Component {
 	 * @param _index - the index into the name tables
 	 * @param _defaultOnly - if true then user-configured names otherwise prioritized will
 	 * be ignored.
+	 * @param _translations - Array of translated element names.
 	 * @return the element name for GUI purposes if available, null otherwise.
 	 */
-	public static String getElementName(int _index, boolean _defaultOnly)
+	public static String getElementName(int _index, boolean _defaultOnly, String[] _translations)
 	{
 		String name = null;
 		if (!_defaultOnly && useConfiguredNames && _index >= 0 && _index < configuredNames.length) {
@@ -178,24 +210,36 @@ public class ElementNames extends Component {
 			}
 		}
 		if (name == null && _index >= 0 && _index < localizedNames.length) {
-			name = localizedNames[_index].getText();
+			// START KGU#709 2019-06-08: Issue #726
+			//name = localizedNames[_index].getText();
+			if (_translations != null) {
+				name = _translations[_index];
+				if (name != null && name.trim().isEmpty()) {
+					name = null;
+				}
+			}
+			else {
+				name = localizedNames[_index].getText();
+			}
+			// END KGU#709 2019-06-08
 		}
 		return name;
 	}
 	
 	/**
 	 * Returns an external name for the element class or flavor encoded by placeholder
-	 * letter {@code _formatCode}, where user configuration has always priority over
-	 * locale default.
-	 * @param __formatCode - a letter in [a-p] according to the mapping listed in the 
+	 * letter {@code _formatCode}, where user configuration has priority over locale
+	 * default, unless {@code _defaultOnly} is true..
+	 * @param _formatCode - a letter in [a-p] according to the mapping listed in the 
 	 * {@link ElementNames} comment.
 	 * @param _defaultOnly - if true then user-configured names otherwise prioritized will
 	 * be ignored.
+	 * @param _translations - possibly an array of localised elements names (may be null).
 	 * @return the element name for GUI purposes if available, null otherwise.
 	 */
-	public static String getElementName(char _formatCode)
+	public static String getElementName(char _formatCode, boolean _defaultOnly, String[] _translations)
 	{
-		return getElementName((int)Character.toLowerCase(_formatCode) - (int)'a', false);
+		return getElementName((int)Character.toLowerCase(_formatCode) - (int)'a', false, _translations);
 	}
 	
 	/**
@@ -205,12 +249,13 @@ public class ElementNames extends Component {
 	 * @param _element - a Structorizer {@link Element} instance
 	 * @param _defaultOnly - if true then user-configurations otherwise prioritized will
 	 * be ignored.
+	 * @param _translations - a possible array of localized element names (may be null).
 	 * @return the element name for GUI purposes if available, null otherwise.
-	 * @see #getElementName(char)
-	 * @see #getElementName(int, boolean)
-	 * @see #resolveElementNames(String)
+	 * @see #getElementName(char, boolean, Locale)
+	 * @see #getElementName(int, boolean, Locale)
+	 * @see #resolveElementNames(String, Locale)
 	 */
-	public static String getElementName(Element _element, boolean _defaultOnly)
+	public static String getElementName(Element _element, boolean _defaultOnly, String[] _translations)
 	{
 		int index = classNameLookUp.get(_element.getClass().getSimpleName());
 		if (_element instanceof For) {
@@ -236,22 +281,24 @@ public class ElementNames extends Component {
 				index += 2;
 			}
 		}
-		return getElementName(index, _defaultOnly);
+		return getElementName(index, _defaultOnly, _translations);
 	}
 	
 	/**
 	 * Replaces all occurrences of placeholders {@code "@[a-p]"} in {@code _rawString}
-	 * with the respective Element type names according to the current locale and user
-	 * configuration (where user configuration overrides locale default).<br/>
+	 * with the respective Element type names according to the given _translations or the
+	 * current locale and the user configuration (where user configuration overrides the
+	 * current locale default unless {@code _translations} are explicitly given).<br/>
 	 * See {@link ElementNames} class comment for the mapping of letters to
 	 * element classes or flavours.
 	 * @param _rawString - the string with possibly unresolved placeholders
+	 * @param _translations - possible array of localised Element names (may be null).
 	 * @return the string with resolved element names.
-	 * @see #getElementName(char)
-	 * @see #getElementName(int, boolean)
-	 * @see #getElementName(Element, boolean)
+	 * @see #getElementName(char, boolean, Locale)
+	 * @see #getElementName(int, boolean, Locale)
+	 * @see #getElementName(Element, boolean, Locale)
 	 */
-	public static String resolveElementNames(String _rawString)
+	public static String resolveElementNames(String _rawString, String[] _translations)
 	{
 		if (!_rawString.contains("@")) {
 			return _rawString;
@@ -267,12 +314,12 @@ public class ElementNames extends Component {
 					int posBrace2 = part.indexOf('}');
 					Integer index = null;
 					if (posBrace2 > 0 && (index = classNameLookUp.get(part.substring(1, posBrace2))) != null) {
-						elName = getElementName(index, false);
+						elName = getElementName(index, _translations != null, _translations);
 						part = part.substring(posBrace2);
 					}
 				}
 				else if (Character.isAlphabetic(first)) {
-					elName = getElementName(part.charAt(0));
+					elName = getElementName(part.charAt(0), _translations != null, _translations);
 				}
 				if (elName != null) {
 					// Insert the found name
@@ -323,4 +370,10 @@ public class ElementNames extends Component {
 			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
+	// START KGU#466 2019-08-02: Issue #733 - Support selective preference export
+	public static String[] getPreferenceKeys()
+	{
+		return new String[] {"ElementNames.*"};
+	}
+	// END KGU#466 2019-08-02
 }

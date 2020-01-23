@@ -32,58 +32,68 @@ package lu.fisch.structorizer.generators;
  *
  *      Author              Date            Description
  *      ------              ----            -----------
- *      Bob Fisch           2007.12.27      First Issue
- *      Bob Fisch           2008.04.12      Added "Fields" section for generator to be used as plugin
- *      Bob Fisch           2008.11.17      Added Freepascal extensions
- *      Bob Fisch           2009.08.17      Bugfixes (see comment)
- *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
- *      Dirk Wilhelmi       2012.10.11      Added comments export
- *      Kay Gürtzig         2014.11.10      Conversion of C-like logical operators
- *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
- *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig         2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig         2015.11.30      Enh. #23: Jump generation modified, KGU#47: Parallel generation
+ *      Bob Fisch           2007-12-27      First Issue
+ *      Bob Fisch           2008-04-12      Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch           2008-11-17      Added Freepascal extensions
+ *      Bob Fisch           2009-08-17      Bugfixes (see comment)
+ *      Bob Fisch           2011-11-07      Fixed an issue while doing replacements
+ *      Dirk Wilhelmi       2012-10-11      Added comments export
+ *      Kay Gürtzig         2014-11-10      Conversion of C-like logical operators
+ *      Kay Gürtzig         2014-11-16      Conversion of C-like comparison operator, comment export
+ *      Kay Gürtzig         2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig         2015-10-18      Comment generation and indentation revised
+ *      Kay Gürtzig         2015-11-30      Enh. #23: Jump generation modified, KGU#47: Parallel generation
  *                                          added, Root generation fundamentally redesigned (decomposed)  
- *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
- *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
+ *      Bob Fisch           2015-12-10      Bugfix #50 --> grep & export function parameter types
+ *      Kay Gürtzig         2015-12-20      Bugfix #22 (KGU#74): Correct return mechanisms even with
  *                                          return instructions not placed in Jump elements
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig         2016.01.14      Enh. #84: array initialisation expressions decomposed (= KG#100)
- *      Kay Gürtzig         2016.01.17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig         2016-01-14      Enh. #84: array initialisation expressions decomposed (= KG#100)
+ *      Kay Gürtzig         2016-01-17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
  *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
- *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016.04.30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
- *      Kay Gürtzig         2016.05.05      Bugfix #51 - empty writeln instruction must not have parentheses 
- *      Kay Gürtzig         2016.07.20      Enh. #160 - optional export of called subroutines implemented
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
- *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
- *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
+ *      Kay Gürtzig         2016-03-16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
+ *      Kay Gürtzig         2016-05-05      Bugfix #51 - empty writeln instruction must not have parentheses 
+ *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done 
+ *      Kay Gürtzig         2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-12-26      Enh. #314: Makeshift additions to support the File API
+ *      Kay Gürtzig         2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support
  *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
- *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
- *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed
- *      Kay Gürtzig         2017.04.12      Enh. #388: Support for export of constant definitions added 
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.09.19      Enh. #423: Export of record types
- *      Kay Gürtzig         2017.09.21      Enh. #388, #389: Export strategy for Includables and structured constants
- *      Kay Gürtzig         2017.09.25      Enh. #388, #423: Positioning of declaration comments revised
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Case elements supported
- *      Kay Gürtzig         2018.03.13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
- *      Kay Gürtzig         2018.07.20      Enh. #563: support for simplified record initializers
- *      Kay Gürtzig         2018.07.22      Bugfix #564: defects with nested record/array initializers mended
- *      Kay Gürtzig         2018.10.05      Bugfix #619: Undue declaration of function result variable dropped
+ *      Kay Gürtzig         2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig         2017-02-01      Enh. #84: indexBase constant mechanism for array initializers disabled
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed
+ *      Kay Gürtzig         2017-04-12      Enh. #388: Support for export of constant definitions added 
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-09-19      Enh. #423: Export of record types
+ *      Kay Gürtzig         2017-09-21      Enh. #388, #389: Export strategy for Includables and structured constants
+ *      Kay Gürtzig         2017-09-25      Enh. #388, #423: Positioning of declaration comments revised
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2018-03-13      Bugfix #520,#521: Mode suppressTransform enforced for declarations
+ *      Kay Gürtzig         2018-07-20      Enh. #563: support for simplified record initializers
+ *      Kay Gürtzig         2018-07-22      Bugfix #564: defects with nested record/array initializers mended
+ *      Kay Gürtzig         2018-10-05      Bugfix #619: Undue declaration of function result variable dropped
+ *      Kay Gürtzig         2019-03-20      Enh. #56: Export of Try elements and of Jump elements with throw flavour
+ *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig         2019-10-01      Issue #754: Instruction with "return" and UNIT name for code preview fixed
+ *      Kay Gürtzig         2019-11-08      Bugfix #772: NullPointerExceptions in code preview, due to late typeMap init
+ *      Kay Gürtzig         2019-11-11      Bugfix #773: Mere declarations at top level exported, incomplete
+ *                                          declarations (defective type) no longer as comment but with FIXME! marker
+ *      Kay Gürtzig         2019-11-13      Bugfix #776: Mere global declarations (from includables must not be repeated
+ *                                          as local declarations in subroutines where the variables get assigned
+ *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
+ *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
  *
  ******************************************************************************************************
  *
  *      Comments:
  *      
- *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
  *      
@@ -91,19 +101,19 @@ package lu.fisch.structorizer.generators;
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
  *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters detection  
  *
- *      2015.10.18
+ *      2015-10-18
  *      - Indentation increment with +_indent.substring(0,1) worked only for single-character indentation units
  *      - Interface of comment insertion methods modified
  *
- *      2014.11.16 - Bugfix / Enhancement
+ *      2014-11-16 - Bugfix / Enhancement
  *      - Conversion of C-style unequality operator had to be added
  *      - Comments are now exported, too
  *       
- *      2014.11.10 - Enhancement
+ *      2014-11-10 - Enhancement
  *      - Conversion of C-style logical operators to the Pascal-like ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
- *      2009.08.17 - Bugfixes
+ *      2009-08-17 - Bugfixes
  *      - added automatic brackets for "while", "switch", "repeat" & "if"
  *
  ******************************************************************************************************///
@@ -118,6 +128,7 @@ import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 
 public class PasGenerator extends Generator 
@@ -177,7 +188,29 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
 
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// This might be disputable, but Delphi, FreePascal etc. support default arguments
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
 	
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
 //		"and", "array", "begin",
@@ -302,7 +335,7 @@ public class PasGenerator extends Generator
 	{
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
-			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, 0, false, true, false);
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
 			_typeDescr = transformTypeFromEntry(typeInfo, null);
 		}
 		return _typeDescr;
@@ -467,21 +500,21 @@ public class PasGenerator extends Generator
 			{
 				posDecl = code.indexOf(seekIndent + "var");
 				if (posDecl >= 0) {
-					code.insert("", posDecl);
-					code.insert(seekIndent + _category, posDecl);					
+					insertCode("", posDecl);
+					insertCode(seekIndent + _category, posDecl);
 				}
 				seekIndent += this.getIndent();
 			}
 		}
 		// END KGU#332 2017-01-30
-		code.insert(seekIndent + text, posDecl + 1);
+		insertCode(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
 
-    @Override
-    protected void generateCode(Instruction _inst, String _indent)
-    {
-		if (!insertAsComment(_inst, _indent)) {
+	@Override
+	protected void generateCode(Instruction _inst, String _indent)
+	{
+		if (!appendAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
 
@@ -495,7 +528,7 @@ public class PasGenerator extends Generator
 			StringList lines = _inst.getUnbrokenText();
 			// START KGU#424 2017-09-25: Put the comment if the element doesn't contain anything else
 			if (lines.getLongString().trim().isEmpty()) {
-				insertComment(_inst, _indent);
+				appendComment(_inst, _indent);
 				commentInserted = true;
 			}
 			// END KGU#424 2017-09-25
@@ -511,7 +544,7 @@ public class PasGenerator extends Generator
 					{
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
@@ -524,12 +557,15 @@ public class PasGenerator extends Generator
 					{
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
 						addCode("exit;", _indent, isDisabled);
 					}
+					// START KGU#737 2019-10-01: Issue #754
+					continue;	// There is nothing more t be done about this line!
+					// END KGU#737 2019-10-01
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)
 				//else	// no return
@@ -553,7 +589,7 @@ public class PasGenerator extends Generator
 						int posBrace = expr.indexOf("{");
 						// START KGU#424 2017-09-25: Put the comment on substantial content
 						if (!commentInserted) {
-							insertComment(_inst, _indent);
+							appendComment(_inst, _indent);
 							commentInserted = true;
 						}
 						// END KGU#424 2017-09-25
@@ -636,7 +672,7 @@ public class PasGenerator extends Generator
 						if (transline != null) {
 							// START KGU#424 2017-09-25: Put the comment on substantial content
 							if (!commentInserted) {
-								insertComment(_inst, _indent);
+								appendComment(_inst, _indent);
 								commentInserted = true;
 							}
 							// END KGU#424 2017-09-25
@@ -675,7 +711,7 @@ public class PasGenerator extends Generator
 			// starts with 1 but may vary widely). We solve the problem
 			// by providing a configurable start index constant
 			//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-			insertComment("Hint: Automatically decomposed array initialization", _indent);
+			appendComment("Hint: Automatically decomposed array initialization", _indent);
 			// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
 			//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
 			//		_indent.length());
@@ -723,7 +759,7 @@ public class PasGenerator extends Generator
 	//	HashMap<String, String> components = Instruction.splitRecordInitializer(_expr);
 	private void generateRecordInit(String _varName, String _expr, String _indent, boolean _forConstant, boolean _isDisabled, TypeMapEntry _typeEntry)
 	{
-		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry);
+		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry, false);
 	// END KGU#559 2018-07-20
 		if (_forConstant) {
 			String typeName = components.get("§TYPENAME§");
@@ -798,7 +834,7 @@ public class PasGenerator extends Generator
     	boolean isDisabled = _alt.isDisabled();
 
     	// START KGU 2014-11-16
-    	insertComment(_alt, _indent);
+    	appendComment(_alt, _indent);
     	// END KGU 2014-11-16
 
     	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -808,7 +844,7 @@ public class PasGenerator extends Generator
     		StringList tokens = Element.splitLexically(condition, true);
     		for (int i = 0; i < this.fileVarNames.count(); i++) {
     			if (tokens.contains(this.fileVarNames.get(i))) {
-    				this.insertComment("TODO: Consider replacing this file test using IOResult!", _indent);
+    				this.appendComment("TODO: Consider replacing this file test using IOResult!", _indent);
     			}
     		}
     	}
@@ -834,7 +870,7 @@ public class PasGenerator extends Generator
     	boolean isDisabled = _case.isDisabled();
 
     	// START KGU 2014-11-16
-    	insertComment(_case, _indent);
+    	appendComment(_case, _indent);
     	// END KGU 2014-11-16
 
     	// START KGU#453 2017-11-02: Issue #447
@@ -848,12 +884,12 @@ public class PasGenerator extends Generator
 
     	addCode("case "+condition+" of", _indent, isDisabled);
 
-    	for(int i=0;i<_case.qs.size()-1;i++)
+    	for (int i = 0; i < _case.qs.size()-1; i++)
     	{
-        	// START KGU#453 2017-11-02: Issue #447
+    		// START KGU#453 2017-11-02: Issue #447
     		//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
     		addCode(unbrokenText.get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
-        	// END KGU#453 2017-11-02
+    		// END KGU#453 2017-11-02
     		addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
     		generateCode(_case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
     		addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
@@ -862,7 +898,7 @@ public class PasGenerator extends Generator
     	// START KGU#453 2017-11-02: Issue #447
     	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
     	if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
-        // END KGU#453 2017-11-02
+    	// END KGU#453 2017-11-02
     	{
     		addCode("else", _indent+this.getIndent(), isDisabled);
     		generateCode(_case.qs.get(_case.qs.size()-1), _indent+this.getIndent()+this.getIndent());
@@ -874,7 +910,7 @@ public class PasGenerator extends Generator
     protected void generateCode(For _for, String _indent)
     {
     	// START KGU 2014-11-16
-    	insertComment(_for, _indent);
+    	appendComment(_for, _indent);
     	// END KGU 2014-11-16
 
     	// START KGU#61 2016-03-23: Enh. 84
@@ -946,10 +982,13 @@ public class PasGenerator extends Generator
 		if (items != null)
 		{
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try four types: boolean,
-			// integer, real and string, where we can only test literals.
+			// do if items are heterogenous? We will just try five types: boolean,
+			// common enum type, integer, real and string, where we can only test literals.
 			// If none of them match then we add a TODO comment.
 			int nItems = items.count();
+			// START KGU#542 2019-11-21: Enh. #739
+			String allEnum = "";
+			// END KGU#542 2019-11-21
 			boolean allBoolean = true;
 			boolean allInt = true;
 			boolean allReal = true;
@@ -957,6 +996,9 @@ public class PasGenerator extends Generator
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
+				// START KGU#542 2019-11-21: Enh. #739
+				TypeMapEntry tme = this.typeMap.get(item);
+				// END KGU#542 2019-11-21
 				if (allBoolean)
 				{
 					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
@@ -971,7 +1013,10 @@ public class PasGenerator extends Generator
 					}
 					catch (NumberFormatException ex)
 					{
-						allInt = false;
+						// START KGU#542 2019-11-21: Enh. #739 enum type support - it might be an enumerator constant
+						//allInt = false;
+						allInt = tme !=  null && tme.isEnum();
+						// END KGU#542 2019-11-21
 					}
 				}
 				if (allReal)
@@ -991,6 +1036,23 @@ public class PasGenerator extends Generator
 							item.startsWith("\'") && item.endsWith("\'") &&
 							!item.substring(1, item.length()-1).contains("\'");
 				}
+				// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
+				if (allEnum != null)
+				{
+					if (tme != null && tme.isEnum()) {
+						if (allEnum.isEmpty()) {
+							allEnum = tme.typeName;
+						}
+						else if (!allEnum.equals(tme.typeName)) {
+							allEnum = null;	// Game over for enumerator (different enumerators)
+						}
+					}
+					else {
+						// Obviously no enumerator constant
+						allEnum = null;
+					}
+				}
+				// END KGU#542 2019-11-21
 			}
 			
 			// Create some generic and unique variable names
@@ -1000,13 +1062,16 @@ public class PasGenerator extends Generator
 
 			String itemType = "";
 			if (allBoolean) itemType = "boolean";
+			// START KGU#542 2019-11-21: Enh. #739
+			else if (allEnum != null && !allEnum.isEmpty()) itemType = allEnum;
+			// END KGU#542 2019-11-21
 			else if (allInt) itemType = "integer";
 			else if (allReal) itemType = "real";
 			else if (allString) itemType = "string";
 			else {
 				itemType = "FIXME_" + postfix;
 				// We do a dummy type definition
-				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+				this.appendComment("TODO: Specify an appropriate element type for the array!", _indent);
 			}
 
 			// Insert the array and index declarations
@@ -1027,32 +1092,32 @@ public class PasGenerator extends Generator
 			}
 			
 			// Creation of the loop header
-    		addCode("for " + indexName + " := 1 to " + nItems + " do",
-    				_indent, isDisabled);
+			addCode("for " + indexName + " := 1 to " + nItems + " do",
+					_indent, isDisabled);
 
-    		// Creation of the loop body
-            addCode("begin", _indent, isDisabled);
-            addCode(var + " := " + arrayName + "[" + indexName + "];",
-            		_indent+this.getIndent(), isDisabled);
-            generateCode(_for.q, _indent+this.getIndent());
-            addCode("end;", _indent, isDisabled);
+			// Creation of the loop body
+			addCode("begin", _indent, isDisabled);
+			addCode(var + " := " + arrayName + "[" + indexName + "];",
+					_indent+this.getIndent(), isDisabled);
+			generateCode(_for.q, _indent+this.getIndent());
+			addCode("end;", _indent, isDisabled);
 
-            done = true;
+			done = true;
 		}
 		else
 		{
 			String valueList = _for.getValueList();
 			// We have no strategy here, no idea how to find out the number and type of elements,
 			// no idea how to iterate the members, so we leave it similar to Delphi and just add a TODO comment...
-			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+			this.appendComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
 
 			// Creation of the loop header
 			addCode("for " + var + " in " + transform(valueList, false) + " do",
 					_indent, isDisabled);
 			// Add the loop body as is
-            addCode("begin", _indent, isDisabled);
+			addCode("begin", _indent, isDisabled);
 			generateCode(_for.q, _indent + this.getIndent());
-            addCode("end;", _indent, isDisabled);
+			addCode("end;", _indent, isDisabled);
 			
 			done = true;
 		}
@@ -1065,7 +1130,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _while.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
@@ -1091,7 +1156,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _repeat.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_repeat.getUnbrokenText().getText()),"\n","").trim();
@@ -1116,7 +1181,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _forever.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 
 		addCode("while (true) do", _indent, isDisabled);
@@ -1138,7 +1203,7 @@ public class PasGenerator extends Generator
 	{
 		boolean isDisabled = _call.isDisabled();
 		// START KGU 2014-11-16
-		insertComment(_call, _indent);
+		appendComment(_call, _indent);
 		// END KGU 2014-11-16
 
 		StringList lines = _call.getUnbrokenText();
@@ -1151,11 +1216,11 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if (!insertAsComment(_jump, _indent)) {
+		if (!appendAsComment(_jump, _indent)) {
 			
 			boolean isDisabled = _jump.isDisabled();
 
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 
 			// KGU 2015-11-30: In Pascal, there is no break and no goto,
 			// so empty Jumps won't be allowed
@@ -1173,13 +1238,13 @@ public class PasGenerator extends Generator
 				String label = "StructorizerLabel_" + ref;
 				if (ref.intValue() < 0)
 				{
-					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-					insertComment(lines.getLongString(), _indent);
+					appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					appendComment(lines.getLongString(), _indent);
 					label = "__ERROR__";
 				}
 				else
 				{
-					insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+					appendComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
 				}
 				addCode("goto" + " " + label + ";", _indent, isDisabled);
 			}
@@ -1188,8 +1253,7 @@ public class PasGenerator extends Generator
 			// END KGU#142 2016-01-17
 				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 				String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
-				String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
-				String preExitMatch = getKeywordPattern(preExit)+"([\\W].*|$)";
+				String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 				for (int i = 0; isEmpty && i < lines.count(); i++) {
 					String line = transform(lines.get(i)).trim();
 					if (!line.isEmpty())
@@ -1198,7 +1262,7 @@ public class PasGenerator extends Generator
 					}
 					// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 					//code.add(_indent + line + ";");
-					if (line.matches(preReturnMatch))
+					if (Jump.isReturn(line))
 					{
 						String argument = line.substring(preReturn.length()).trim();
 						if (!argument.isEmpty())
@@ -1213,21 +1277,27 @@ public class PasGenerator extends Generator
 						}
 						// END KGU 2016-01-17
 					}
-					else if (line.matches(preExitMatch))
+					else if (Jump.isExit(line))
 					{
 						String argument = line.substring(preExit.length()).trim();
 						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
 						addCode("halt" + argument + ";", _indent, isDisabled);
 					}
+					// START KGU#686 2019-03-20: Enh. #56
+					else if (Jump.isThrow(line)) {
+						String what = line.substring(preThrow.length()).trim();
+						addCode("raise Exception.Create(" + what + ");", _indent, isDisabled);
+					}
+					// END KGU#686 2019-03-20
 					else if (!isEmpty)
 					{
-						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-						insertComment(line, _indent);
+						appendComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
+						appendComment(line, _indent);
 					}
 					// END KGU#74/KGU#78 2015-11-30
 				}
 				if (isEmpty) {
-					insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
+					appendComment("FIXME: An empty jump was found here! Cannot be translated to " +
 							this.getFileDescription(), _indent);
 				}
 			// START KGU#142 2016-01-17: Bugfix for enh. #23 (continued)
@@ -1242,34 +1312,88 @@ public class PasGenerator extends Generator
 		boolean isDisabled = _para.isDisabled();
 		
 		// START KGU 2014-11-16
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 		// END KGU 2014-11-16
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		addCode("begin", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
+			appendComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
 			addCode("begin", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
 			addCode("end;", _indent + this.getIndent(), isDisabled);
-			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			appendComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
 			addCode("", "", isDisabled);
 		}
 
 		addCode("end;", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-11-30
 
+	// START KGU#686 2019-03-20: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void generateCode(Try _try, String _indent)
+	{
+		boolean isDisabled = _try.isDisabled();
+		
+		appendComment(_try, _indent);
+
+		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
+		String indent0 = _indent;
+		
+		this.addCode("try", _indent, isDisabled);
+
+		if (_try.qFinally.getSize() > 0) {
+			indent0 += this.getIndent();
+			// Inner try instruction
+			this.addCode("try", indent0, isDisabled);
+		}
+		String indent1 = indent0 + this.getIndent();
+		
+		this.generateCode(_try.qTry, indent1);
+		
+		//indent1 = _indent + this.getIndent();
+		this.addCode("except", indent0, isDisabled);
+		String exName = _try.getExceptionVarName();
+		if (exName != null && !exName.isEmpty()) {
+			this.addCode("on Ex : Exception do", indent1, isDisabled);
+		}
+		else {
+			this.addCode("on Exception do", indent1, isDisabled);			
+		}
+		this.addCode("begin", indent1, isDisabled);
+		String indent2 = indent1 + this.getIndent();
+		if (exName != null && !exName.isEmpty()) {
+			this.appendComment("FIXME: Ensure a declaration for variable " + exName + " (String) in the VAR block!", indent2);
+			this.addCode(exName + " := Ex.Message;", indent2, isDisabled);
+		}
+		generateCode(_try.qCatch, indent2);
+		this.addCode("end;", indent1, isDisabled);
+		
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("end;", indent0, isDisabled);
+
+			this.addCode("finally", _indent, isDisabled);
+			
+			this.generateCode(_try.qFinally, indent0);
+		}
+
+		this.addCode("end;", _indent, isDisabled);	// Close the (outer) try block 
+	}
+	// END KGU#686 2019-03-20
 
 	// START KGU#74 2015-11-30 
 	/* (non-Javadoc)
@@ -1289,24 +1413,28 @@ public class PasGenerator extends Generator
 		}
 		// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - This is the unit comment, not the function comment
 		if (topLevel && _root.isSubroutine()) {
-			insertComment("Unit provides a routine with following functionality:", _indent);
+			appendComment("Unit provides a routine with following functionality:", _indent);
 		}
 		// END KGU#194/KGU#376 2017-09-22
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		if (topLevel)
 		{
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#351 2017-02-26: Enh. #346
 			// FIXME This may have little to do with whether it's a program
 			if (_root.isProgram()) {
-				this.insertUserIncludes(_indent);
+				this.appendUserIncludes(_indent);
 				// FIXME (#389): If Includables are to form separate UNITs then they are to be referenced here, too
 			}
 			// END KGU#351 2017-02-26
 		}
+		
+		// START KGU#757 2019-11-08: Bugfix #772 - had been in generatePreamble, which might cause NullPointerExceptions here
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#757 2019-11-08
 
 		String signature = _root.getMethodName();
 		if (!_root.isProgram()) {
@@ -1328,17 +1456,23 @@ public class PasGenerator extends Generator
 					}
 					unitName += ch;
 				}
+				if (unitName.isEmpty()) {
+					unitName = _root.proposeFileName().toUpperCase();
+					if (unitName.contains("-")) {
+						unitName = unitName.substring(0, unitName.indexOf('-'));
+					}
+				}
 				code.add(_indent + "UNIT " + unitName + ";");
 				// END KGU#194 2016-07-20
 
 				code.add(_indent);
 				code.add(_indent + "INTERFACE");
 				// STARTB KGU#351 2017-02-26: Enh. #346
-				this.insertUserIncludes(_indent);
+				this.appendUserIncludes(_indent);
 				// END KGU#351 2017-02-26
 				code.add(_indent);
 				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
-				insertComment(_root, _indent);
+				appendComment(_root, _indent);
 				// END KGU#194/KGU#376 2017-09-22
 			}
 			// END KGU#194 2016-05-07
@@ -1347,9 +1481,18 @@ public class PasGenerator extends Generator
 			// Compose the function header
 			signature += "(";
 			//insertComment("TODO: declare the parameters and specify the result type!", _indent);
+			// START KGU#371 2019-03-08: Enh. #385
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			// END KGU#371 2019-03-08
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? "; " : "");
 				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
+				// START KGU#371 2019-03-08: Enh. #385
+				if (p >= minArgs) {
+					signature += " = " + transform(argDefaults.get(p));
+				}
+				// END KGU#371 2019-03-08
 			}
 			signature += ")";
 			if (_resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
@@ -1428,8 +1571,11 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-        // START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
-		typeMap = _root.getTypeInfo();
+		// START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//typeMap = _root.getTypeInfo();
+		//typeMap = _root.getTypeInfo(routinePool); // KGU#757 2019-11-08 Bugfix #772 - moved to generateHeader()
+		// END KGU#676 2019-03-30
 		// END KGU#261 2017-01-30
 		// START KGU#388 2017-09-20: Enh. #423
 		StringList complexConsts = new StringList();
@@ -1440,7 +1586,7 @@ public class PasGenerator extends Generator
 		// END KGU#376 2017-09-21
 		
 		code.add("");
-        
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		// START KGU#376 2017-09-21: Enh. #389: Special care for an Includable at top level
 		//if (topLevel && _root.isProgram() && this.optionExportSubroutines())
@@ -1462,13 +1608,13 @@ public class PasGenerator extends Generator
 		//code.add(_indent + "begin");
 		if (!_root.isInclude()) {
 			code.add(_indent + "begin");
-    		// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
+			// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
 			if (_root.isProgram()) {
-        		for (Root incl: includes) {
-        			generateCode(incl.children, _indent + this.getIndent());
-        		}
+				for (Root incl: includes) {
+					generateCode(incl.children, _indent + this.getIndent());
+				}
 			}
-    		// END KGU#376 2017-09-21
+			// END KGU#376 2017-09-21
 		}
 		else {
 			code.add(_indent + "BEGIN");
@@ -1550,14 +1696,14 @@ public class PasGenerator extends Generator
 			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
 			for (Root incl: includes) {
 				if (incl != _root) {
-					this.insertPostponedInitialisations(incl, _indent + this.getIndent());
+					this.appendPostponedInitialisations(incl, _indent + this.getIndent());
 				}
 			}
 			// START KGU#504 2018-03-13: Bugfix #520, #521
 			//if (_varNames != null) {
 			if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 			// END KGU#504 2018-03-13
-				this.insertPostponedInitialisations(_root, _indent + this.getIndent());
+				this.appendPostponedInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#375 2017-09-20
 			code.add(_indent);
@@ -1566,16 +1712,38 @@ public class PasGenerator extends Generator
 		introPlaced = false;	// Has the TYPE keyword already been written?
 		for (Root incl: includes) {
 			if (incl != _root) {
-				introPlaced = generateVarDecls(incl, _indent, incl.getVarNames(), _complexConsts, introPlaced);
+				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), _complexConsts, introPlaced);
 			}
 		}
 		// START KGU#504 2018-03-13: Bugfix #520, #521
 		//if (_varNames != null) {
 		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 		// END KGU#504 2018-03-13
-			introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+			// START KGU#762 2019-11-13: Bugfix #776 - we must not repeat mere decalartions from Includables here
+			//introPlaced = generateVarDecls(_root, _indent, _varNames, _complexConsts, introPlaced);
+			StringList ownVarNames = _varNames.copy();
+			if (!topLevel && _root.includeList != null) {
+				for (Root incl: includedRoots) {
+					// Because of recursiveness of declaration retrieval, we may restrict to the
+					// directly included diagrams, this reduces the risk of eliminating variable
+					// names that are not included but locally defined.
+					if (_root.includeList.contains(incl.getMethodName())) {
+						StringList declNames = incl.getMereDeclarationNames();
+						for (int i = 0; i < declNames.count(); i++) {
+							ownVarNames.removeAll(declNames.get(i));
+						}
+					}
+				}
+			}
+			introPlaced = generateVarDecls(_root, _indent, ownVarNames, _complexConsts, introPlaced);
+			// END KGU#762 2019-11-13
 		}
 		// END KGU#375 2017-04-12
+		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
+		if (topLevel) {
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
+		}
+		// END KGU#759 2019-11-11
 		return includes;
 	}
 
@@ -1601,7 +1769,15 @@ public class PasGenerator extends Generator
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
 				//code.add(indentPlus1 + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");
-				String expr = transform(constEntry.getValue());
+				// START KGU#452 2019-11-17: Enh. #739 Skip enumerator values - they are to be handled in a type definition
+				//String expr = transform(constEntry.getValue());
+				//String expr = transform(constEntry.getValue());
+				String expr = constEntry.getValue();
+				if (expr != null && expr.startsWith(":")) {
+					continue;
+				}
+				expr = transform(expr);
+				// END KGU#452 2019-11-17
 				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
@@ -1610,7 +1786,7 @@ public class PasGenerator extends Generator
 						_sectionBegun = true;
 					}
 					// START KGU#424 2017-09-25
-					insertDeclComment(_root, indentPlus1, constName);
+					appendDeclComment(_root, indentPlus1, constName);
 					// END KGU#424 2017-09-25
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
 				}
@@ -1620,7 +1796,7 @@ public class PasGenerator extends Generator
 					if (expr.endsWith("}")) {
 						// Seems to be an initializer
 						// START KGU#424 2017-09-25
-						insertDeclComment(_root, "", constName);
+						appendDeclComment(_root, "", constName);
 						// END KGU#424 2017-09-25
 						if (constType.isArray()) {
 							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null), false);
@@ -1665,7 +1841,10 @@ public class PasGenerator extends Generator
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		String indentPlus3 = indentPlus2 + this.getIndent();
-		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		// START KGU#774 2019-11-29: Bugfix #787 - On top level, any Includable declared any types known to main
+		//for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+		// END KGU#774 2019-11-29
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
 				if (wasDefHandled(_root, key, true)) {
@@ -1676,7 +1855,7 @@ public class PasGenerator extends Generator
 					_sectionBegun = true;
 				}
 				// START KGU#424 2017-09-25
-				insertDeclComment(_root, indentPlus1, key);
+				appendDeclComment(_root, indentPlus1, key);
 				// END KGU#424 2017-09-25
 				TypeMapEntry type = typeEntry.getValue();
 				if (type.isRecord()) {
@@ -1686,6 +1865,23 @@ public class PasGenerator extends Generator
 					}
 					code.add(indentPlus2 + "END;");
 				}
+				// START KGU#542 2019-11-17: Enh. #739
+				else if (type.isEnum()) {
+					StringList items = type.getEnumerationInfo();
+					String itemList = items.concatenate(", ");
+					if (itemList.length() > 70) {
+						code.add(indentPlus1 + key.substring(1) + " = (");
+						for (int i = 0; i < items.count(); i++) {
+							// FIXME: We might have to transform the value...
+							code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
+						}
+						code.add(indentPlus2 + ");");
+					}
+					else {
+						code.add(indentPlus1 + key.substring(1) + " = (" + itemList + ");");
+					}
+				}
+				// END KGU#542 2019-11-17
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}
@@ -1740,7 +1936,7 @@ public class PasGenerator extends Generator
 				_sectionBegun = true;
 			}
 			// START KGU#424 2017-09-25
-			insertDeclComment(_root, indentPlus1, varName);
+			appendDeclComment(_root, indentPlus1, varName);
 			// END KGU#424 2017-09-25
 			TypeMapEntry typeInfo = typeMap.get(varName); 
 			StringList types = null;
@@ -1767,18 +1963,25 @@ public class PasGenerator extends Generator
 					type = type.substring(1);
 				}
 				type = prefix + type;
+				String comment = "";
 				if (type.contains("???")) {
-					insertComment(varName + ": " + type + ";", indentPlus1);
+					// START KGU#759 2019-12-02: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
+					//appendComment(varName + ": " + type + ";", indentPlus1);
+					comment = "\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight();
+					// END KGU#759 2019-12-02
 				}
-				else {
-					if (isComplexConst) {
-						varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
-					}
-					code.add(indentPlus1 + varName + ": " + type + ";");
+				//else {
+				if (isComplexConst) {
+					varName = this.commentSymbolLeft() + "const" + this.commentSymbolRight() + " " + varName;
 				}
+				addCode(varName + ": " + type + ";" + comment, indentPlus1, false);
+				//}
 			}
 			else {
-				insertComment(varName, indentPlus1);
+				// START KGU#759 2019-11-11: Issue #773 - it only irritates the user to outcomment this - the code isn't compilable anyway
+				//appendComment(varName, indentPlus1);
+				addCode(varName + ": ???;\t" + this.commentSymbolLeft() + " FIXME! " + this.commentSymbolRight(), indentPlus1, false);
+				// END KGU#759 2019-11-11
 			}
 			// END KGU#261 2017-01-16
 		// START KGU#375 2017-04-12: Enh. #388
@@ -1788,7 +1991,7 @@ public class PasGenerator extends Generator
 	}
 
 	// START KGU#375/KGU#376/KGU#388 2017-09-20: Enh. #388, #389, #423 
-	private void insertPostponedInitialisations(Root _root, String _indent) {
+	private void appendPostponedInitialisations(Root _root, String _indent) {
 		StringList initLines = this.structuredInitialisations.get(_root);
 		if (initLines != null) {
 			for (int i = 0; i < initLines.count(); i++) {
@@ -1812,7 +2015,7 @@ public class PasGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				varName = varNames.get(vx);
 				code.add(_indent);
-				insertComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
+				appendComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
 				code.add(_indent + this.getIndent() + _root.getMethodName() + " := " + varName + ";");
 			}
 		}

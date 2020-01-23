@@ -46,6 +46,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
+ *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
  *
  ******************************************************************************************************
  *
@@ -90,6 +93,7 @@ package lu.fisch.structorizer.elements;
  *****************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -97,6 +101,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.FindAndReplace;
@@ -132,16 +137,18 @@ public class Call extends Instruction {
 	/**
 	 * Provides a subclassable left offset for drawing the text
 	 */
+	@Override
 	protected int getTextDrawingOffset()
 	{
 		return (Element.E_PADDING/2);
 	}
 	// END KGU#227 2016-07-30
 
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
@@ -151,10 +158,14 @@ public class Call extends Instruction {
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	@Override
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
 		// START KGU 2016-07-30: Just delegate the basics to super
-		super.draw(_canvas, _top_left);
+		super.draw(_canvas, _top_left, _viewport, _inContention);
 		// END KGU 2016-07-30: Just delegate the basics to super
 		
 		// Now draw the Call-specific lines
@@ -178,6 +189,7 @@ public class Call extends Instruction {
 	 * @param _right - right border x coordinate
 	 * @param _top - upper border y coordinate
 	 */
+	@Override
 	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
 	{
 		super.writeOutRuntimeInfo(_canvas, _right - (Element.E_PADDING/2), _top);
@@ -208,6 +220,7 @@ public class Call extends Instruction {
 	}
 	// END KGU 2018-06-28
 
+	@Override
 	public Element copy()
 	{
 		Element ele = new Call(this.getText().copy());
@@ -246,10 +259,9 @@ public class Call extends Instruction {
 	/**
 	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
-	 * a procedure or function call syntax as described in the user guide. If the
-	 * call text matches the syntax of an import call then the returned signature
-	 * will just be a program name. Otherwise null will be returned.
-	 * @return signature string, e.g. "factorial(1)", "globalDefs", or null
+	 * a procedure or function call syntax as described in the user guide.
+	 * Otherwise null will be returned.
+	 * @return signature string, e.g. "factorial(1)", or null
 	 */
 	public String getSignatureString()
 	{
@@ -316,8 +328,14 @@ public class Call extends Instruction {
 			if (myRoot.getSignatureString(false).equals(signature)) {
 				typeSpec = myRoot.getResultType();
 			}
-			else if (Arranger.hasInstance()) {
-				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+			// START KGU#676 219-03-31: Issue #696 batch export
+			//else if (Arranger.hasInstance()) {
+			//	Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
+				IRoutinePool pool = myRoot.specialRoutinePool;
+				if (pool == null) { pool = Arranger.getInstance(); }
+				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+			// END KGU#676 2019.03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();
 				}

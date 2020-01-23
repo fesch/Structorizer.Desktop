@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -48,75 +48,84 @@
  *
  *      Author              Date        Description
  *      ------              ----        -----------
- *      Klaus-Peter Reimers 2008.01.14  First Issue
- *      Kay Gürtzig         2014.10.18  Linguistic flaws corrected
- *      Kay Gürtzig         2014.12.02  ExportOptionDialoge and further messages added
- *      Kay Gürtzig         2015.10.06  altPadRight added to Preferences dialog
- *      Kay Gürtzig         2015.10.14  InputBox.class_specific stuff added
- *      Kay Gürtzig         2015.11.01  InputBoxFor captions and Analyzer messages for FOR loops added
- *      Kay Gürtzig         2015.11.09  Additions for ParserPreferences (KGU#3 FOR loop enhancement)
- *      Kay Gürtzig         2015.11.15  Messages for Jump element modified or corrected
- *      Kay Gürtzig         2015.12.18  New messages for ExportOptionDialoge
- *      Kay Gürtzig         2016.01.04  Enh. #87: New messages for collapsing / expanding elements
- *      Kay Gürtzig         2016.03.21  Enh. #84: Messages related to FOR-IN loops added
- *      Kay Gürtzig         2016.03.31  Enh. #23: ParserPreferences for JUMP statements,
- *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
- *      Kay Gürtzig         2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
- *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
- *      Kay Gürtzig         2016.04.24  Issue #173: New mnemonic configurations added
- *      Kay Gürtzig         2016.07.07  Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig         2016.07.20  Enh. #160: New message for ExportOptionDialoge
- *      Kay Gürtzig         2016.07.26  Bugfix #149: Tags for ExportOptionDialoge corrected
- *      Kay Gürtzig         2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
- *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
- *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
- *      Kay Gürtzig         2016.08.02  Enh. #215: Menu messages for break trigger (and other dialog messages)
- *      Kay Gürtzig         2016.08.04  Enh. #222: Menu option to load translation from file
- *      Kay Gürtzig         2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig         2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig         2016.09.15  Issue #243: New message translations for Menu 
- *      Kay Gürtzig         2016.09.17  Issue #243: New message translations for Control 
- *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
+ *      Klaus-Peter Reimers 2008-01-14  First Issue
+ *      Kay Gürtzig         2014-10-18  Linguistic flaws corrected
+ *      Kay Gürtzig         2014-12-02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig         2015-10-06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig         2015-10-14  InputBox.class_specific stuff added
+ *      Kay Gürtzig         2015-11-01  InputBoxFor captions and Analyzer messages for FOR loops added
+ *      Kay Gürtzig         2015-11-09  Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig         2015-11-15  Messages for Jump element modified or corrected
+ *      Kay Gürtzig         2015-12-18  New messages for ExportOptionDialoge
+ *      Kay Gürtzig         2016-01-04  Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig         2016-03-21  Enh. #84: Messages related to FOR-IN loops added
+ *      Kay Gürtzig         2016-03-31  Enh. #23: ParserPreferences for JUMP statements,
+ *      Kay Gürtzig         2016-04-01  Enh. #144: New ExportOptionDialog and Menu messages
+ *      Kay Gürtzig         2016-04-04  Issue #149: New ExportOptionDialog messages for charset setting
+ *      Kay Gürtzig         2016-04-12  Issue #161: New Analyser error message for Jump
+ *      Kay Gürtzig         2016-04-24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig         2016-07-07  Enh. #188: Messages for transmute button and menu items
+ *      Kay Gürtzig         2016-07-20  Enh. #160: New message for ExportOptionDialoge
+ *      Kay Gürtzig         2016-07-26  Bugfix #149: Tags for ExportOptionDialoge corrected
+ *      Kay Gürtzig         2016-07-27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig         2016-07-28  Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig         2016-07-31  Enh. #128: New menu item captions for "Comments plus Text" mode
+ *      Kay Gürtzig         2016-08-02  Enh. #215: Menu messages for break trigger (and other dialog messages)
+ *      Kay Gürtzig         2016-08-04  Enh. #222: Menu option to load translation from file
+ *      Kay Gürtzig         2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig         2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig         2016-09-15  Issue #243: New message translations for Menu 
+ *      Kay Gürtzig         2016-09-17  Issue #243: New message translations for Control 
+ *      Kay Gürtzig         2016-09-22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
- *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
- *      Kay Gürtzig         2016.10.11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
- *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
- *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
- *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
- *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
- *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
- *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
- *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
- *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
- *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
- *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
- *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
- *      Kay Gürtzig         2017.01.07  Enh. #329: Messages for Analyser check 21
- *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
- *      Kay Gürtzig         2017.02.26  Enh. #346: Additions for ExportOptionDialoge
- *      Kay Gürtzig         2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
- *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
- *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
- *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
- *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
- *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
- *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig         2017.05.21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
- *      Kay Gürtzig         2017.06.19  Enh. #199, #415: Messages for toolbar and FindAndReplace
- *      Kay Gürtzig         2017.09.18  Enh. #423: New messages for record type handling introduced
- *      Kay Gürtzig         2017.10.16  Issues #437-#438: New Control messages
- *      Kay Gürtzig         2017.11.05  New texts for issues #448, #452, #454 added.
- *      Andreas Brusinsky   2017.12.10  Element names translated into German
- *      Kay Gürtzig         2017.12.14  German element name translation adapted
- *      Kay Gürtzig         2017.12.15  Element name placeholders introduced
- *      Kay Gürtzig         2018.01.18  DiagramControllerAliases added
- *      Kay Gürtzig         2018.02.17  Arranger captions added (on occasion of enh. #512)
- *      Kay Gürtzig         2018.06.27  Enh. #552: New messages in Menu, Editor, Arranger
- *      Kay Gürtzig         2018.07.01  Enh. #553: New messages for CodeImportMonitor
- *      Kay Gürtzig         2018.07.02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig         2018.07.17  Issue #561: Some AttributeInspector texts converted to tooltips
- *      Kay Gürtzig         2018.08.03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig         2016-09-25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
+ *      Kay Gürtzig         2016-10-11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016-10-13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig         2016-10-16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+ *      Kay Gürtzig         2016-10-18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig         2016-11-08  Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig         2016-11-10  Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig         2016-12-02  Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig         2016-12-02  Issue #307: New executor error message
+ *      Kay Gürtzig         2016-12-14  Issue #311: Menu re-organization
+ *      Kay Gürtzig         2016-12-15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig         2016-12-27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig         2016-12-29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig         2017-01-05  Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig         2017-01-07  Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig         2017-01-11  Issue #81/#330: Messages for scaling Preview
+ *      Kay Gürtzig         2017-02-26  Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig         2017-03-08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig         2017-03-12  Enh. #372: New saving options
+ *      Kay Gürtzig         2017-03-14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig         2017-03-27  Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig         2017-03-28  Issue #370: New Menu messages for enhanced refactoring options
+ *      Kay Gürtzig         2017-03-30  Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig         2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig         2017-05-21  Enh. #372: Messages for AttributeInspector, changes in InputBoxRoot
+ *      Kay Gürtzig         2017-06-19  Enh. #199, #415: Messages for toolbar and FindAndReplace
+ *      Kay Gürtzig         2017-09-18  Enh. #423: New messages for record type handling introduced
+ *      Kay Gürtzig         2017-10-16  Issues #437-#438: New Control messages
+ *      Kay Gürtzig         2017-11-05  New texts for issues #448, #452, #454 added.
+ *      Andreas Brusinsky   2017-12-10  Element names translated into German
+ *      Kay Gürtzig         2017-12-14  German element name translation adapted
+ *      Kay Gürtzig         2017-12-15  Element name placeholders introduced
+ *      Kay Gürtzig         2018-01-18  DiagramControllerAliases added
+ *      Kay Gürtzig         2018-02-17  Arranger captions added (on occasion of enh. #512)
+ *      Kay Gürtzig         2018-06-27  Enh. #552: New messages in Menu, Editor, Arranger
+ *      Kay Gürtzig         2018-07-01  Enh. #553: New messages for CodeImportMonitor
+ *      Kay Gürtzig         2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig         2018-07-17  Issue #561: Some AttributeInspector texts converted to tooltips
+ *      Kay Gürtzig         2018-08-03  Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig         2018-10-27  Enh. #619: New messages for word wrapping tool 
+ *      Kay Gürtzig         2018-12-16  Issue #644: New Control message msgInitializerAsArgument
+ *      Kay Gürtzig         2018-12-21  Enh. #655: New Arranger messages
+ *      Kay Gürtzig         2019-01-04  Enh. #657: Many new messages for Editor, Arranger, Surface
+ *      Kay Gürtzig         2019-02-16  Issue #682: Messages for redesigned welcome dialog
+ *      Kay Gürtzig         2019-02-17  Issue #684: New messages for ParserPreferences
+ *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
+ *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *
  ******************************************************************************************************
  *
@@ -152,6 +161,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -169,8 +179,8 @@ Menu.menuFileSaveAs.text=Speichern unter ...
 Menu.menuFileSaveAll.text=Alle speichern
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Bild ...
-Menu.menuFileExportCode.text=Quellcode ...
+Menu.menuFileExportPicture.text=Bild
+Menu.menuFileExportCode.text=Quellcode
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
 Menu.menuFileExportPictureEMF.text=
@@ -185,7 +195,7 @@ Menu.menuFileImportCode.text=Quell-Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileAttributes.text=Eigenschaften anzeigen ...
-Menu.menuFileTranslator.text=Übersetzer
+Menu.menuFileTranslator.text=Übersetzer ...
 Menu.menuFileQuit.text=Beenden
 
 // Menu "Edit"
@@ -197,15 +207,19 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
+Menu.menuEditSummonSub.text=Unterprogramm bearbeiten ...
+Menu.menuEditSummonSub.tooltip=Aufgerufenes Unterprogramm zur Bearbeitung heranziehen.
 Menu.menuEditFindReplace.text=Suchen/Ersetzen ...
 Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
-Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
+Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlbasierte Turtle-Befehle in den ausgewählten Elementen durch reellwertige.
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
-Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
+Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den ausgewählten Elementen durch ganzzahlbasierte.
+Menu.menuEditBreakLines.text=Textzeilen neu umbrechen ...
+Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der ausgewählten Elemente (und wahlweise ihrer Unterstruktur) auf eine vorgebbare Höchstlänge.  
 Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
-Menu.menuDiagram.text=Diagramme
+Menu.menuDiagram.text=Diagramm
 Menu.menuDiagram.mnemonic=g
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Hinzufügen
@@ -222,6 +236,7 @@ Menu.menuDiagramAddBeforeForever.text=@i-Schleife
 Menu.menuDiagramAddBeforeCall.text=@j-Anweisung
 Menu.menuDiagramAddBeforeJump.text=@k-Anweisung
 Menu.menuDiagramAddBeforePara.text=@l-Abschnitt
+Menu.menuDiagramAddBeforeTry.text=@q-Block
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Danach
 // Submenus for adding Elements "After"
@@ -235,12 +250,13 @@ Menu.menuDiagramAddAfterForever.text=@i-Schleife
 Menu.menuDiagramAddAfterCall.text=@j-Anweisung
 Menu.menuDiagramAddAfterJump.text=@k-Anweisung
 Menu.menuDiagramAddAfterPara.text=@l-Abschnitt
+Menu.menuDiagramAddAfterTry.text=@q-Block
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
-Menu.menuDiagramOutsource.text=Auslagern
+Menu.menuDiagramOutsource.text=Auslagern ...
 Menu.menuDiagramOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
@@ -255,10 +271,11 @@ Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
 Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
 Menu.menuDiagramHideDeclarations.text=Bloße Deklarationen verbergen?
-Menu.menuDiagramMarker.text=Hervorheben von Variablen?
+Menu.menuDiagramMarker.text=Variable hervorheben?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
+Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -295,13 +312,17 @@ Menu.menuPreferencesLanguageFromFile.tooltip=Sie können mit dem 'Übersetzer' i
 Menu.menuPreferencesWheel.text=Mausrad
 Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
 Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
+Menu.menuPreferencesWheelUnit.text=Mausrad-Scroll-Einheit ...
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
-Menu.menuPreferencesSave.text=Alle Einstellungen ...
-Menu.menuPreferencesSaveAll.text=Abspeichern
+Menu.menuPreferencesSave.text=Einstellungen sichern/laden
+Menu.menuPreferencesSaveAll.text=Jetzt abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
-Menu.menuPreferencesSaveLoad.text=Laden ...
+Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
+Menu.menuPreferencesSaveLoad.tooltip=Das Laden von Einstellungen aus einer INI Datei erstellt automatisch ein Backup der vorherigen Einstellungen in einer temporären Datei.
+Menu.menuPreferencesSaveRestore.text=Letztes Backup wiederherstellen
+Menu.menuPreferencesSaveRestore.tooltip=Stellt die Einstellungen aus dem Backup wieder her, das beim letzten Laden einer INI-Datei in dieser Sitzung angelegt wurde.
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -341,7 +362,7 @@ Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Hal
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
 Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
-Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
+Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br/>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
 Menu.msgTitleWarning.text=WARNUNG
 Menu.msgTitleLoadingError.text=Fehler beim Laden
@@ -359,12 +380,16 @@ Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
 Menu.msgErrorUsingGenerator.text=Fehler beim %-Export
 Menu.msgErrorNoFile.text=Datei nicht gefunden!
 Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
-Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurden ersetzt:%Sollen geöffnete Diagramme entsprechend angepasst werden?
+Menu.hdrRefactoringTable.0.text=Referenz
+Menu.hdrRefactoringTable.1.text=Alt
+Menu.hdrRefactoringTable.2.text=Neu
+Menu.msgRefactoringOffer1.text=Schlüsselwörter in den Parser-Einstellungen wurden ersetzt:
+Menu.msgRefactoringOffer2.text=Sollen geöffnete Diagramme entsprechend angepasst werden?
 Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
 Menu.msgDiscardParserPrefs.text=Wirklich alle neuen Parser-Einstellungen verwerfen?
-Menu.msgAdaptStructPrefs.text=Struktur-Einstellungen (Default-Texte) an neue Parser-Einstellungen anpassen?
+Menu.msgAdaptStructPrefs.text=Struktur-Einstellungen (Default-Texte) an neue Parser-Einstellungen anpassen?\n(z.B.: %)
 Menu.msgKeywordsDiffer.text=Ursprünglicher Schlüsselwortkontext des geladenen Diagramms wich von den aktuellen Parser-Einstellungen ab:%1\nDas automatische Anpassen beim Laden ist ausgestellt.\n\nSie haben nun folgende Möglichkeiten:\n%2
 Menu.msgRefactorNow.text=Das Diagramm kann jetzt an die Parser-Einstellungen angepasst werden (empfohlen)
 Menu.msgAdoptPreferences.text=Sie können die mit dem Diagramm geladenen Schlüsselwörter als neue Parser-Einstellungen übernehmen\n   (was allerdings das Anpassen aller anderen geladenen Diagramme bewirkt!)
@@ -377,7 +402,8 @@ Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um beim Start die Verfügbarkeit neuer Versionen angezeigt zu bekommen,\nkann mit Menüpunkt "%1" ► "%2"\ndie Online-Abfrage nach Updates auf der Structorizer-Homepage aktiviert werden.\n(Datenschutzhinweis: Für den Html-Request wird Ihre IP-Adresse übermittelt, aber nicht gespeichert.\nPersonenbezogene Daten werden darüber hinaus weder gesammelt noch übermittelt noch sonstwie verarbeitet.)
-Menu.msgWelcomeMessage.text=Willkommen beim Structorizer, Ihrem Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren, in Programmiersprachen exportieren und vieles mehr.\nEs wurde für einfache Handhabung entwickelt, ist aber schon um viele Extras erweitert.\n\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
+Menu.msgWelcomeMessage1.text=Willkommen beim Structorizer, Ihrem komfortablen freien Struktogramm-Editor.\nMit diesem Programm können Sie Algorithmen entwerfen, testen, analysieren,in Programmiersprachen\nexportieren und vieles mehr.\nBitte wählen Sie nun Ihre Dialogsprache (Sie können sie jederzeit über das Menü ändern):
+Menu.msgWelcomeMessage2.text=Structorizer wurde für intuitive Handhabung entwickelt, ist aber schon um viele Extras erweitert.\nHaben Sie noch wenig Erfahrung mit Algorithmen und Entwicklungsumgebungen?\nDann können Sie mit vereinfachter Werkzeugleiste beginnen und «%» aktivieren.\nWollen Sie zunächst im vereinfachten Einsteigermodus arbeiten?
 Menu.lblOk.text=OK
 Menu.lblYes.text=Ja
 Menu.lblNo.text=Nein
@@ -390,7 +416,7 @@ Menu.lblNoToAll.text=Nein für alle
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
-Menu.lblReduced.text=Ja, Einsteigerodus
+Menu.lblReduced.text=Ja, Einsteigermodus
 Menu.lblNormal.text=Nein, normaler Modus
 Menu.ttlCodeImport.text=Quellcode-Import
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%" ist nicht eindeutig.\nBitte geeignetste Import-Sprache / Parser wählen:
@@ -399,7 +425,7 @@ Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
 Menu.msgMustBeIdentifier.text=Der gewählte Name war nicht als Bezeichner geeignet!
 Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es @k-Anweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
-Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
+Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Diagramm-Editor\naus %\nerstellte Diagrammdateien
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
@@ -408,6 +434,25 @@ Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten 
 Menu.ttlGuidedTours.text=Geführte Kurse
 Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die konfigurierte Grenze (%) für direktes Darstellen.\nAlle erhaltenen Diagramme sofort speichern?
 Menu.lblAcceptProposedNames.text=Alle vorschlagenen Dateinamen akzeptieren. 
+Menu.ttlBreakTextLines.text=Begrenzung der Zeilenlänge mittels Wortumbruch
+Menu.msgMaxLineLengthSelected.text=Maximale Zeilenlänge in ausgewähltem Element: %
+Menu.msgMaxLineLengthSubstructure.text=Maximale Zeilenlänge einschl. Unterstrukturen: %
+Menu.lblNewMaxLineLength.text=Neue Höchstzeilenlänge:
+Menu.lblInvolveSubtree.text=Rekursiv auf Unterstrukturen anwenden
+Menu.lblPreserveContinuators.text=Bestehende Zeilensprünge beibehalten
+Menu.msgVetoClose.text=Structorizer ist dabei, sich zu beenden. Einspruch?
+Menu.msgSetAsPreferredGenerator.text=Sie haben die letzten %2 Male %1-Code exportiert.\nMöchten Sie %1 jetzt im Dateimenü als die bevorzugte Exportsprache setzen?
+Menu.msgChooseSubroutine.text=Bitte zu bearbeitendes Unterprogramm auswählen:
+Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
+Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
+Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
+Menu.msgAllPreferences.text=Alle Einstellungen
+Menu.msgInvertSelection.text=Auswahl umkehren
+Menu.msgIniBackupFailed.text=Die Erstellung einer Backup-Datei der aktuellen Einstellungen ist gescheitert.\nWollen Sie trotzdem "%" laden?
+Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
+Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
+Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -443,11 +488,11 @@ Menu.error13_2.text=Die Funktion gibt nicht in jedem Fall einen Wert zurück!
 Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen zugleich: «%»!
 Menu.error14_1.text=Die Einzelangaben der @d-Schleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
-Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FÜR-Schleifen!
+Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Schlüsselwörter für @d-Schleifen!
 Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error15_2.text=Das Diagramm der aufgerufenen Routine «%» ist zzt. nicht verfügbar.
 Menu.error15_3.text=Mehr als ein Diagramm passt zu Routinenaufruf «%».
-Menu.error16_1.text=Der @k muss leer sein oder mit einem der Schlüsselwörter % beginnen!
+Menu.error16_1.text=Der @k muss leer sein oder mit einem der Schlüsselwörter % beginnen, ggf. gefolgt von einem Wert!
 Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein @k-Element sein!
 Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als @k-Elemente zulässig!
 Menu.error16_4.text=Ein @k ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
@@ -459,7 +504,8 @@ Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable �
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
-Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 Menu.error22_1.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
 Menu.error22_2.text=Unzulässiger Versuch, die Konstante «%» zu ändern bzw. neu zu setzen.
@@ -485,11 +531,13 @@ Menu.hint25_3.text=Sie könnten Resultate ausgeben wollen, z.B. mit einer Anweis
 Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Anweisung.
 Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein Anweisungselement mit einer Typ- oder Konstantendefinition ein.
 Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%» zwischen Eingabe und Ausgabe platzieren.
-Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Enweisungstext «% \"Hallo Welt!\"» eingeben.");
+Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Anweisungstext «% "Hallo Welt!"» eingeben.
 Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %2".
 Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
 Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
+Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
+Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -523,6 +571,8 @@ AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehen
 AnalyserPreferences.checkboxes.24.text=Typedefinitionen und Zugriff auf Verbundkomponenten überprüfen.
 AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisungen (EVA-Prinzip)
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
+AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
+AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -533,7 +583,7 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagramms.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagramms.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagramms.
-Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
+Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme und Gruppen sichern.
 // InsertAfter
 Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
@@ -545,6 +595,7 @@ Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach (+Umschalt: 
 Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterTry.tooltip=Einfügen eines neuen @q-Blocks nach (+Umschalt: vor) dem ausgewählten Element.
 // undo & redo
 Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
 Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
@@ -603,6 +654,7 @@ Editor.popupAddBeforeForever.text=@i-Schleife
 Editor.popupAddBeforeCall.text=@j-Anweisung
 Editor.popupAddBeforeJump.text=@k-Anweisung
 Editor.popupAddBeforePara.text=@l-Abschnitt
+Editor.popupAddBeforeTry.text=@q-Block
 // After
 Editor.popupAddAfter.text=Danach
 // Submenus of "Add -> After"
@@ -616,6 +668,7 @@ Editor.popupAddAfterForever.text=@i-Schleife
 Editor.popupAddAfterCall.text=@j-Anweisung
 Editor.popupAddAfterJump.text=@k-Anweisung
 Editor.popupAddAfterPara.text=@l-Abschnitt
+Editor.popupAddAfterTry.text=@q-Block
 // Edit
 Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
@@ -624,6 +677,8 @@ Editor.popupMoveDown.text=Nach unten bewegen
 Editor.popupTransmute.text=Umwandeln
 Editor.popupOutsource.text=Auslagern
 Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues @o auslagern.
+Editor.popupEditSub.text=Unterprogramm bearbeiten ...
+Editor.popupEditSub.tooltip=Aufgerufenes Unterprogramm zur Bearbeitung heranziehen.
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
@@ -631,24 +686,23 @@ Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Debug
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
-// Arranger index
-Editor.popupIndexGet.text=Diagram holen
-Editor.popupIndexAttributes.text=Eigenschaften anzeigen ...
-Editor.popupIndexSave.text=Änderungen sichern
-Editor.popupIndexRemove.text=Entfernen
-Editor.popupIndexCovered.text=Testabdeckung an/aus
-Editor.popupIndexRemoveAll.text=Alle entfernen
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Arranger-Index
+Editor.pnlTabbed.tab.1=Code-Voransicht
+Editor.popupCodeExport.text=Exportieren ...
+Editor.popupCodeExport.tooltip=Den Code in eine Datei exportieren.
+Editor.popupCodeHide.text=Code-Voransicht verbergen
+Editor.ttPopupCodePreview.text=Stellt die Code-Voransicht nach % um und setzt % als bevorzugte Exportsprache.
 
 -----[ InputBox ]-----
-InputBox.title=Element bearbeiten
 InputBox.lblText.text=Einzugebender Text
 InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
 InputBox.lblComment.text=Einzugebender Kommentar
 InputBox.lblComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
 InputBox.txtText.tooltip=Der Inhalt dieses Elementes.
 InputBox.txtComment.tooltip=Der Kommentar zu diesem Element.
-InputBox.btnOK.text=Speichern
-InputBox.btnOK.tooltip=Speichern der Eintragungen.
+InputBox.btnOK.text=OK
+InputBox.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBox.chkDisabled.text=Ausführung und Export unterbunden
@@ -659,8 +713,7 @@ InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung
 InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
 InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
-InputBox.title[elementType:Root]=
-InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
+InputBox.lblText.text[elementType:Try]=Name der Ausnahme-Variablen
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue @a hinzufügen...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue @b-Anweisung hinzufügen...
 InputBox.title[elementType:Case,getInsertionType():insert]=Neue @c hinzufügen...
@@ -670,6 +723,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Neue @g-Schleife hin
 InputBox.title[elementType:Call,getInsertionType():insert]=@o-@j hinzufügen...
 InputBox.title[elementType:Jump,getInsertionType():insert]=@k-Anweisung hinzufügen...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Neues @l-Element hinzufügen...
+InputBox.title[elementType:Try,getInsertionType():insert]=Neuen @q-Block hinzufügen...
 InputBox.title[elementType:Instruction,getInsertionType():update]=@a bearbeiten...
 InputBox.title[elementType:Alternative,getInsertionType():update]=@b-Anweisung bearbeiten...
 InputBox.title[elementType:Case,getInsertionType():update]=@c bearbeiten...
@@ -679,6 +733,7 @@ InputBox.title[elementType:While,getInsertionType():update]=@g-Schleife bearbeit
 InputBox.title[elementType:Call,getInsertionType():update]=@o-@j bearbeiten...
 InputBox.title[elementType:Jump,getInsertionType():update]=@k-Anweisung bearbeiten...
 InputBox.title[elementType:Parallel,getInsertionType():update]=@l-Element bearbeiten...
+InputBox.title[elementType:Try,getInsertionType():update]=@q-Block bearbeiten...
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Neue @d-Schleife hinzufügen...
@@ -697,8 +752,8 @@ InputBoxFor.lblComment.text=Einzugebender Kommentar
 InputBoxFor.lblComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
 InputBoxFor.txtText.tooltip=Zählschleifenkopf als Textzeile.
 InputBoxFor.txtComment.tooltip=Der Kommentar zu diesem Element.
-InputBoxFor.btnOK.text=Speichern
-InputBoxFor.btnOK.tooltip=Speichern der Eintragungen.
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
@@ -715,15 +770,17 @@ InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die
 InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ InputBox Root ]-----
-InputBoxRoot.title=Angaben zum Diagramm bearbeiten...
+InputBoxRoot.title[elementType:Root]=Angaben zum @n bearbeiten
+InputBoxRoot.title[elementType:Function]=Angaben zum @o bearbeiten
+InputBoxRoot.title[elementType:Includable]=Angaben zum @pen Diagramm bearbeiten
 InputBoxRoot.lblIncludeList.text=Einzubeziehende Diagramme
 InputBoxRoot.txtIncludeList.tooltip=Namen von Diagrammen, die vor dem Start einzubinden sind (durch Kommas oder Zeilenschaltung getrennt).
 InputBoxRoot.lblText.text=Diagrammname / Funktionssignatur
 InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur (Name, Parameterliste, ggf. Rückggabetyp) eingeben
 InputBoxRoot.lblComment.text=Einzugebender Kommentar
-InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
-InputBoxRoot.btnOK.text=Speichern
-InputBoxRoot.btnOK.tooltip=Speichern der Eintragungen.
+InputBoxRoot.txtComment.tooltip=Z.B. Wozu dient der Algorithmus, wie ist er anzuwenden, wer hat ihn erstellt usw.
+InputBoxRoot.btnOK.text=OK
+InputBoxRoot.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxRoot.btnCancel.text=Abbrechen
 InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
@@ -752,6 +809,7 @@ AttributeInspector.lblForevers.tooltip=@i-Schleifen
 AttributeInspector.lblCalls.tooltip=@j
 AttributeInspector.lblJumps.tooltip=@k
 AttributeInspector.lblPars.tooltip=@l-Abschnitte
+AttributeInspector.lblTries.tooltip=@q-Blöcke
 AttributeInspector.btnShowLicense.text=Lizenztext
 AttributeInspector.btnShowLicense.tooltip=Diese Schaltfläche drücken, um den Text der gewählten Lizenz einzusehen, zu kopieren oder zu bearbeiten.
 AttributeInspector.cbLicenseName.tooltip=Eine verfügbare Lizenz unter den persönlichen Lizenz-Vorlagen oder die aktuelle wählen.
@@ -763,10 +821,15 @@ AttributeInspector.lblPrefsWhile.text=@g-Schleife
 AttributeInspector.lblPrefsRepeat.text=@h-Schleife
 AttributeInspector.lblPrefsIO.text=Ein-/Ausgabe
 AttributeInspector.lblPrefsJump.text=@k
+AttributeInspector.lblPrefsLeave.text=...Schleife
+AttributeInspector.lblPrefsReturn.text=...Routine
+AttributeInspector.lblPrefsExit.text=...Programm
+AttributeInspector.lblPrefsThrow.text=bei Fehler
 AttributeInspector.lblPrefsPre.text=Vor
 AttributeInspector.lblPrefsPost.text=Nach
 AttributeInspector.lblPrefsMore.text=(Zusatz)
 AttributeInspector.btnParserPrefs.text=Parser-Einstellungen
+AttributeInspector.btnParserPrefs.tooltip=Aktuelle Parser-Schlüsselwörter zum Vergleich anzeigen.
 AttributeInspector.btnOk.text=OK
 AttributeInspector.btnOk.tooltip=Eventuelle Änderungen übernehmen und Dialog schließen.
 AttributeInspector.btnCancel.text=Abbruch
@@ -826,7 +889,7 @@ Preferences.pnlCase.tooltip=Einstellungen zur @c-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
-Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements verringern (0 = aus)
+Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
@@ -842,6 +905,10 @@ Preferences.pnlRepeat.border=@h-Schleife
 Preferences.pnlRepeat.tooltip=Einstellungen zur @h-Schleife.
 Preferences.lblRepeat.text=Voreinstellungs-Text
 Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im @h-Schleifen-Fuß.
+Preferences.pnlTry.border=@q-Block-Beschriftungen
+Preferences.lblTry.tooltip=Markierung des Hauptanweisungsblocks im @q-Element
+Preferences.lblCatch.tooltip=Markierung des Ausahmebehandlungsblocks im @q-Element
+Preferences.lblFinal.tooltip=Markierung des Aufräumblocks im @q-Element
 Preferences.btnOK.text=Speichern
 Preferences.btnOK.tooltip=Speichern der Einstellungen.
 
@@ -852,7 +919,7 @@ About.pnlTabbed.tab.0=Beteiligte Personen
 About.pnlTabbed.tab.1=Änderungs-Protokoll
 About.pnlTabbed.tab.2=Lizenzen
 About.pnlTabbed.tab.3=Dateipfade
-About.msgPaths.text=Konfigurationsordner:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
+About.msgPaths.text=Konfigurationsdatei:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
 About.btnOK.text=Schließen
 About.btnOK.tooltip=Schließen des Fensters.
 
@@ -876,7 +943,8 @@ Colors.lblColors.*.tooltip=Die gewählte Farbe Nr. [#].
 Colors.colors.*.tooltip=Zum Bearbeiten: Anklicken ...
 Colors.btnOK.text=Speichern
 Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.
-
+Colors.btnReset.text=Standard
+Colors.btnReset.tooltip=Alle Farben auf Standardauswahl zurücksetzen.
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Farb-Einstellungen
@@ -889,38 +957,46 @@ ColorChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Parser-Einstellungen
 ParserPreferences.lblPre.text=Vor
-ParserPreferences.lblPre.tooltip=Kennwörter (im Anweisungskopf) vor der Haupteintragung.
+ParserPreferences.lblPre.tooltip=Schlüsselwörter (im Anweisungskopf) vor der Haupteintragung.
 ParserPreferences.lblPost.text=Nach
-ParserPreferences.lblPost.tooltip=Kennwörter (im Anweisungskopf) nach der Haupteintragung.
+ParserPreferences.lblPost.tooltip=Schlüsselwörter (im Anweisungskopf) nach der Haupteintragung.
 ParserPreferences.lblAlt.text=@b-Anweisung
-ParserPreferences.lblAlt.tooltip=Kennwörter um die Bedingung herum im @b-Anweisungskopf.
+ParserPreferences.lblAlt.tooltip=Schlüsselwörter um die Bedingung herum im @b-Anweisungskopf.
 ParserPreferences.lblCase.text=@c-Anweisung
-ParserPreferences.lblCase.tooltip=Kennwörter im @c-Anweisungskopf.
+ParserPreferences.lblCase.tooltip=Schlüsselwörter im @c-Anweisungskopf.
 ParserPreferences.lblFor.text=@e-Schleife
-ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im @e-Schleifenkopf.
+ParserPreferences.lblFor.tooltip=Gliedernde Schlüsselwörter im @e-Schleifenkopf.
 ParserPreferences.lblForStep.text=Schrittweite
 ParserPreferences.lblForIn.text=@f-Schleife
-ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von @f-Schleifen.
-ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein (oder leer bleiben mit gleicher Wirkung)
-ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Kennwörtern unterscheiden!
+ParserPreferences.lblForIn.tooltip=Gliedernde Schlüsselwörter im Schleifenkopf von @f-Schleifen.
+ParserPreferences.edtForInPre.tooltip=Kann gleich dem der @e-Schleife sein
+ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Schlüsselwörtern unterscheiden!
 ParserPreferences.lblWhile.text=@g-Schleife
-ParserPreferences.lblWhile.tooltip=Kennwörter im @g-Schleifenkopf.
+ParserPreferences.lblWhile.tooltip=Schlüsselwörter im @g-Schleifenkopf.
 ParserPreferences.lblRepeat.text=@h-Schleife
-ParserPreferences.lblRepeat.tooltip=Die Austrittsbedingung einrahmende Kennwörter.
+ParserPreferences.lblRepeat.tooltip=Die Austrittsbedingung einrahmende Schlüsselwörter.
 ParserPreferences.lblJump.text=@k-Anweisung
-ParserPreferences.lblJump.tooltip=Klassifizierende Kennwörter für die @k-Arten.
+ParserPreferences.lblJump.tooltip=Klassifizierende Schlüsselwörter für die @k-Arten.
 ParserPreferences.lblJumpLeave.text=aus Schleifen
 ParserPreferences.lblJumpReturn.text=aus Routinen
 ParserPreferences.lblJumpExit.text=aus dem Programm
+ParserPreferences.lblJumpThrow.text=bei Fehler
+ParserPreferences.lblInputOutput.text=E/A-Anweisungen
+ParserPreferences.lblInputOutput.tooltip=Klassifizierende Schlüsselwörter für Eingabe/Ausgabe.
 ParserPreferences.lblInput.text=Eingabe
-ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
+ParserPreferences.lblInput.tooltip=Schlüsselwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
-ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
+ParserPreferences.lblOutput.tooltip=Schlüsselwort für Ausgabe-Einweisungen.
 ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
+ParserPreferences.btnFromLocale.text=Sprachspezifische Standardwörter
+ParserPreferences.btnFromLocale.tooltip=Die Schlüsselwörter sind unabhängig von der Dialogsprache. Sie können lokalisierte Schlüsselwörter jeder der bei Drücken dieser Schaltfläche angebotenen Sprachen laden.
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
-ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für @f-Schleifen darf keinem anderen Parser-Kennwort gleichen!
+ParserPreferences.lblErrorSign2.text=Zwischen den rot markierten Schlüsselwörtern gibt es Namenskonflikte! Sie müssen sich alle unterscheiden.
+ParserPreferences.lblErrorSign3.text=Bei % der Pflichtfelder (siehe Hinweis im Dialogkopf) ist nichts eingetragen!
+ParserPreferences.ttlError.text=Fehler
+ParserPreferences.lblHeadline.text=Felder mit diesem Hintergrund müssen ausgefüllt sein
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht
@@ -953,6 +1029,7 @@ ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivier
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
@@ -963,7 +1040,7 @@ ImportOptionDialog.pnlPreference.border=Einstellungsdateien
 ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
-ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Schlüsselwörter anpassen zu lassen.
 ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
 ImportOptionDialog.chkVarDeclarations.tooltip=Ist dies Option gewählt, können Parser gefundene Variablendeklarationen in inaktive Anweisungselemente legen.
 ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
@@ -973,6 +1050,8 @@ ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
 ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Protokolldatei je Import erlauben
 ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
 ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
+ImportOptionDialog.lblMaxLen.text=Maximale Zeilenlänge (für automatischen Zeilenumbruch):
+ImportOptionDialog.spnMaxLen.tooltip=Länge 0 bedeutet: kein automatischer Zeilenumbruch
 ImportOptionDialog.lblLimit.text=Größte Anzahl importierter Diagramme für unmittelbare Anzeige:
 ImportOptionDialog.btnPluginOptions.text=Sprachspezifische Optionen
 ImportOptionDialog.msgOptionsForPlugin.text=Parser-Optionen für %
@@ -985,12 +1064,23 @@ SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren 
 SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
 SaveOptionDialog.pnlBackup.border=Backup-Dateien
 SaveOptionDialog.pnlFileInfo.border=Dateiinfo-Standardwerte
+SaveOptionDialog.pnlFileNames.border=Dateinamensvorschläge
+SaveOptionDialog.pnlArrFiles.border=Arranger-Dateien
 SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Debuggen?
 SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
 SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
+SaveOptionDialog.chkRelativeCoordinates.text=Mit relativen Koordinaten sichern?
+SaveOptionDialog.chkRelativeCoordinates.tooltip=Aktivieren, um Anordnungen (Schemata) mit auf die Ausdehnung der Auswahl/Gruppe bezogenen statt absoluten Koordinaten zu sichern.
 SaveOptionDialog.lblAuthorName.text=Autorname
 SaveOptionDialog.btnLicenseFile.text=Lizenzdatei
 SaveOptionDialog.btnLicenseFile.tooltip=Editor für den Text dieser Lizenz öffnen
+SaveOptionDialog.chkArgNumbers.text=Parameteranzahlen anhängen?
+SaveOptionDialog.chkArgNumbers.tooltip=Wenn aktiviert (Standard), werden die vorgeschlagenen Dateinamen für Routinen-Diagramme die (min. and max.) Parameterzahlen beinhalten, z.B. "foo-2-3.nsd", "bar-1.nsd"
+SaveOptionDialog.lblSeparator.text=Trennzeichen
+SaveOptionDialog.lblSeparator.tooltip=Das trennende Zeichen zwischen Digarammname und Parameteranzahl(en) im Dateinamensvorschlag
+SaveOptionDialog.msgNoFile.text=Kein Dateiname ausgewählt oder eingegeben!
+SaveOptionDialog.msgCantEdit.text=Für die ausgewählte Datei kann kein Editor geöffnet werden!
+SaveOptionDialog.msgRiskOfNameClash.text=Durch das Deaktivieren dieser Option erhöhen Sie das Risiko von Dateinamenskonflikten und versentlichem Datenverlust bei gleichnamigen Unterprogrammen!
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 
@@ -1009,8 +1099,10 @@ ElementNamePreferences.lblExplanation.text=Elementtypen für Anzeige umbezeichne
 ElementNamePreferences.chkUseConfNames.text=Individuelle Bezeichnungen erlauben
 ElementNamePreferences.lblLocalized.text=Lokalisierter Name
 ElementNamePreferences.lblIndividual.text=Individueller Name
+ElementNamePreferences.btnEnglishStd.text=Englisch (Standard)
+ElementNamePreferences.btnEnglishStd.tooltip=Die englischen Standardbezeichnungen der Elemente als individuelle Namen für alle Sprachen setzen.
 ElementNamePreferences.btnOK.text=Speichern
-ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen.
+ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen und Dialog schließen.
 
 -----[ DiagramControllerAliases ]-----
 // Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
@@ -1054,32 +1146,60 @@ FindAndReplace.lblSearchPattern.text=Suche:
 FindAndReplace.lblReplacePattern.text=Ersetze durch:
 FindAndReplace.pnlMode.border=Modus
 FindAndReplace.chkCaseSensitive.text=Beachte Groß/klein
+FindAndReplace.chkCaseSensitive.mnemonic=g
 FindAndReplace.chkWholeWord.text=Ganzes Wort
+FindAndReplace.chkWholeWord.mnemonic=w
 FindAndReplace.chkRegEx.text=Reguläre Ausdrücke
+FindAndReplace.chkRegEx.mnemonic=x
 FindAndReplace.rbDown.text=Abwärts
+FindAndReplace.rbDown.mnemonic=b
 FindAndReplace.rbUp.text=Aufwärts
+FindAndReplace.rbUp.mnemonic=f
 FindAndReplace.pnlScope.border=Suchbereich
 FindAndReplace.cmbScope.item.0=Ausgewählte Elemente
 FindAndReplace.cmbScope.item.1=Aktuelles Diagramm
 FindAndReplace.cmbScope.item.2=Geöffnete Diagramme
 FindAndReplace.pnlRootTypes.border=Diagrammtypen
-FindAndReplace.chkRootTypes.0.text=Hauptprogramme
-FindAndReplace.chkRootTypes.1.text=Unterprogramme
+FindAndReplace.chkRootTypes.0.text=@ne
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@oe
+FindAndReplace.chkRootTypes.1.mnemonic=u
 FindAndReplace.chkRootTypes.2.text=Include-Diagramme
+FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=In Texten
+FindAndReplace.chkInTexts.mnemonic=t
 FindAndReplace.chkInComments.text=In Kommentaren
+FindAndReplace.chkInComments.mnemonic=m
 FindAndReplace.pnlElements.border=Elementtypen
 FindAndReplace.btnAll.text=Alle
 FindAndReplace.btnNone.text=Keine
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
 FindAndReplace.chkDisabled.text=Deaktivierte Elemente
 FindAndReplace.pnlPreview.border=Inhalt
 FindAndReplace.txtText.border=Text
 FindAndReplace.txtComm.border=Kommentar
 FindAndReplace.chkElementwise.text=Elementweise
+FindAndReplace.chkElementwise.menmonic=e
 FindAndReplace.btnFind.text=Suchen
+FindAndReplace.btnFind.mnemonic=n
 FindAndReplace.btnReplace.text=Ersetzen
+FindAndReplace.btnReplace.mnemonic=r
 FindAndReplace.btnReplaceFind.text=Ersetzen/Weiter
+FindAndReplace.btnReplaceFind.mnemonic=z
 FindAndReplace.btnReplaceAll.text=Alle ersetzen
+FindAndReplace.btnReplaceAll.mnemonic=a
+FindAndReplace.btnReplaceAll.tooltip=Ersetzt alle restlichen Vorkommen des Suchmusters von der aktuellen Position aus in der gegeben Richtung.
 FindAndReplace.btnClose.text=Schließen
 FindAndReplace.msgRegexCorrupt.text=Der reguläre Ausdruck «%1» scheint inkorrekt: %2
 FindAndReplace.ttlSearchError.text=Suchfehler
@@ -1088,11 +1208,11 @@ FindAndReplace.ttlSearchError.text=Suchfehler
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Neues Diagramm
 Arranger.btnRemoveDiagram.text=Entfernen
-Arranger.btnRemove1Diagram.text=Entfernen
+Arranger.btnRemoveDiagrams.text=Entfernen
 Arranger.btnRemoveAllDiagrams.text=- Leeren -
 Arranger.btnExportPNG.text=PNG-Export
-Arranger.btnSaveArr.text=Liste sichern
-Arranger.btnLoadArr.text=Liste laden
+Arranger.btnSaveArr.text=Schema sichern
+Arranger.btnLoadArr.text=Schema laden
 Arranger.btnAddDiagram.tooltip=Ein neues, leeres Diagramm hinzufügen.
 Arranger.btnPinDiagram.text=Anheften
 Arranger.btnSetCovered.text=Getestet
@@ -1100,19 +1220,63 @@ Arranger.btnZoom.text=Ferner/Näher
 Arranger.btnSaveArr.tooltip=Diese Anordnung als Liste (*.arr) oder Archiv (*.arrz) sichern.
 Arranger.btnLoadArr.tooltip=Eine Anordnung von Liste (*.arr) oder Archiv (*.arrz) laden.
 Arranger.btnExportPNG.tooltip=Diese Anordnung als Bilddatei im PNG-Format ausgeben.
-Arranger.btnPinDiagram.tooltip=Diagramm anheften, um es gegen Ersetzung seitens Structorizer zu schützen.
-Arranger.btnSetCovered.tooltip=Unterprogrammdiagram für Routinenaufrufe als testabgedeckt markieren.
-Arranger.btnRemoveDiagram.tooltip=Entfernt das ausgewählte Diagramm - Umschalttaste gedrückt halten, um alle Diagramme zu entfernen.
+Arranger.btnPinDiagram.tooltip=Ausgewählte Diagramme anheften, um sie gegen Ersetzung seitens Structorizer zu schützen.
+Arranger.btnSetCovered.tooltip=Unterprogrammdiagrame der Auswahl für Routinenaufrufe als testabgedeckt markieren.
+Arranger.btnRemoveDiagram.tooltip=Entfernt die ausgewählten Diagramme - Umschalttaste gedrückt halten, um alle Diagramme zu entfernen.
 Arranger.btnZoom.tooltip=Umschalttaste gedrückt halten, um heranzuzoomen.
+Arranger.chkDrawGroups.text=Zeige Gruppen
+Arranger.chkSelectGroups.text=Gruppen selektieren
+Arranger.popupHitList.text=Berührte Diagramme / Gruppen
+Arranger.popupRemove.text=Gewählte Diagramme entfernen
+Arranger.popupRemoveAll.text=Alle Diagramme entfernen
+Arranger.popupExpandSelection.text=Auswahl vervollständigen
+Arranger.popupExpandSelection.tooltip=Fügt alle direkt oder indirekt aufgerufenen oder einbezogenen Diagramme zur derzeitigen Auswahl hinzu.
+Arranger.popupGroup.text=Ausgewählte Diagramme gruppieren ...
+Arranger.popupExpandGroup.text=Vervollständigen und gruppieren ...
+Arranger.popupAttributes.text=Eigenschaften anzeigen ...
+Arranger.popupAttributes.tooltip=Öffnet den Diagrammeigenschaften-Dialog für das ausgewählte Diagramm
+Arranger.popupHelp.text=Arranger-Hilfe ...
+Arranger.popupHelp.tooltip=Zeigt das Arranger-Kapitel des Online-Nutzerhandbuchs im Browser an
+Arranger.popupKeyBindings.text=Tastenkombinationen ...
+Arranger.popupKeyBindings.tooltip=Zeigt die im Arranger gültigen Tastenkombinationen auf der enstprechenden Nutzerhandbuchseite im Browser an
+Arranger.popupRearrange.text=Neu anordnen nach Gruppen
 Arranger.msgConfirmRemoveAll.text=Wollen Sie wirklich alle Diagramme aus Arranger entfernen?
 Arranger.msgTitleWarning.text=Warnung
+Arranger.msgTitleIllegal.text=Unzulässige Operation!
+Arranger.msgActionDelete.text=entfernen
+Arranger.msgActionCut.text=ausschneiden
+Arranger.msgActionCopy.text=kopieren
+Arranger.msgConfirmRemove.text=Wollen Sie wirklich die obigen Diagramme aus Arranger %1?
+Arranger.msgConfirmMultiple.text=Die folgenden %1 Diagramme (von insgesamt %2) sind ausgewählt:\n- %3\n\n%4
+Arranger.msgReadyToExport.text=Jetzt die angegebene Teil-Anordnung als PNG exportieren?
+Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Diagramm gleichzeitig zu %1. Sie haben %2 Diagramme ausgewählt:\n- %3
+Arranger.msgDiagramsSelected.text=Diagramme: %1, ausgewählt: %2
+Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Arranger.msgTitleURLError.text=URL-Fehler
+Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
+Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
+Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 mehrdeutige Signaturen in der Auswahl, zu denen also jeweils mehr als ein Diagramm passt:\n- %2
+Arranger.msgEmptySelection.text=Kann keine Diagramme %: nichts ausgewählt.
+Arranger.msgActionGroup.text=gruppieren
+Arranger.msgGroupName.text=%1Name der Gruppe, der die %2 ausgewählten Diagramme angehören sollen:
+Arranger.msgGroupNameRejected.text=Gruppenname "%" nicht akzeptiert.
+Arranger.msgGroupExists.text=Es gibt bereits eine Gruppen mit dem Namen "%". Was wollen Sie tun?
+Arranger.msgGroupingOptions.0.text=Diagramme hinzufügen
+Arranger.msgGroupingOptions.1.text=Gruppe überschreiben
+Arranger.msgGroupingOptions.2.text=Gruppennamen neu eingeben
+Arranger.msgGroupingOptions.3.text=Abbrechen
+Arranger.msgCongruentGroups.text=Der Satz der %1 ausgewählten Diagramme ist kongruent mit %2 existierenden Gruppe(n):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=Möchten Sie dennoch eine weitere Gruppe hinzufügen?
+
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=Dateiladefehler:
-Surface.msgSavePortable.text=Als portables komprimiertes Archiv sichern?
+Surface.msgSavePortable.text=Sie können diese Anordnung speichern:\n- entweder als portierbares komprimiertes Archiv (*.arrz)\n- oder als bloße Anordnungsliste mit Pfadverweisen (*.arr).
+Surface.lblSaveAsArrz.text=Als Archiv (*.arrz)
+Surface.lblSaveAsArr.text=Als Liste (*.arr)
 Surface.msgSaveDialogTitle.text=Speichere die Diagrammanordnung ...
 Surface.msgSaveError.text=Fehler beim Sichern der Anordnung:
 Surface.msgLoadDialogTitle.text=Gespeicherte Diagrammanordnung laden ...
-Surface.msgExtractDialogTitle.text=In ein Verzeichnis entpacken?
+Surface.msgExtractDialogTitle.text=In ein Verzeichnis entpacken (optional)?
 Surface.msgArrLoadError.text=Fehler beim Laden der Anordnung:
 Surface.msgExportDialogTitle.text=Exportiere Diagramm als PNG ...
 Surface.msgExportError.text=Fehler beim Erzeugen der Bilddatei!
@@ -1131,6 +1295,66 @@ Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des 
 Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
 Surface.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
 Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
+Surface.msgTooltipSelectThis.text=%1 auswählen (+Umschalttaste: zur Auswahl hinzufügen)%2 und nach vorn holen.
+Surface.msgGroupRemovalError.text=Fehler beim Entfernen von Gruppe «%»
+Surface.msgArrangementAlreadyLoaded.text=Die Anordnungsdatei "%1" ist bereits in die Gruppe «%2» geladen worden.\nSoll sie mit modifiziertem Gruppennamen erneut geladen werden?
+Surface.msgArrangementNotLoaded.text=Laden der Anordnungsdatei abgebrochen.
+Surface.msgSaveAsNewGroup.text=als neue Gruppe
+Surface.msgSelectGroup.text=Bitte festlegen, ob die Datei einer der bestehenden Gruppen aktualisiert oder eine neue Anordnung gespeichert werden soll:
+Surface.msgConfirmRemoveGroup.text=Gruppe «%» ist geleert worden. Soll sie jetzt gelöscht werden?
+Surface.msgSaveGroupChanges.text=Gruppe «%» hat ungesicherte Änderungen.\nSollen diese Änderungen jetzt gespeichert werden?
+Surface.msgUnsavedGroups.text=Folgende Gruppen konnten nicht gesichert werden:
+Surface.msgDiagram.text=Diagramm «%»
+Surface.msgGroup.text=Gruppe «%»
+Surface.msgGroupExists.text=Eine Gruppe namens «%» existiert bereits!
+Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
+Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
+Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
+Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
+Surface.msgFileMissing.text= fehlt!
+
+----[ ArrangerIndex ]----
+ArrangerIndex.popupIndexGet.text=Diagram holen
+ArrangerIndex.popupIndexAttributes.text=Eigenschaften anzeigen ...
+ArrangerIndex.popupIndexInfo.text=Diagramm-/Gruppen-Info ...
+ArrangerIndex.popupIndexSave.text=Änderungen sichern
+ArrangerIndex.popupIndexRemove.text=Entfernen
+ArrangerIndex.popupIndexCovered.text=Testabdeckung an/aus
+ArrangerIndex.popupIndexRemoveAll.text=Alle entfernen
+ArrangerIndex.popupIndexGroup.text=Gruppe erzeugen ...
+ArrangerIndex.popupIndexExpandGroup.text=Gruppe erweitern ...
+ArrangerIndex.popupIndexDissolve.text=Gruppe auflösen
+ArrangerIndex.popupIndexDetach.text=Aus Gruppe entfernen
+ArrangerIndex.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
+ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
+ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
+ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
+ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
+ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
+ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
+ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
+ArrangerIndex.lblSubroutines.text=Aufgerufene Unterprogramme
+ArrangerIndex.lblIncludables.text=Einbezogene Diagramme
+ArrangerIndex.lblDependingDiagrams.text=Abhängige Diagramme
+ArrangerIndex.lblStaleReferences.text=Unaufgelöste Diagrammverweise
+ArrangerIndex.lblModifications.text=Ungesicherte Änderungen
+ArrangerIndex.lblExternSubroutines.text=Verweise auf externe @oe
+ArrangerIndex.lblExternIncludables.text=Verweise auf externe @ps
+ArrangerIndex.btnShowGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger ein-/ausschalten
+ArrangerIndex.btnGroupColors.*.tooltip=Setzt die Farbe dieser Schaltfläche als Farbe der Gruppe
+ArrangerIndex.msgDefaultGroupName.text=(Auffanggruppe)
+ArrangerIndex.msgGroupsAndRootsSelected.text=Sowohl Gruppen als auch Diagramme ausgewählt. Gleichzeitiges Löschen auf beiden Ebenen könnte unerwartete Ergebnisse haben.
+ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen werden entfernt.\n\nDarin enthaltene Diagramme bleiben erhalten, soweit sie in weiteren Gruppen vorkommen.\n\nWas soll mit Diagrammen geschehen, die nicht in weiteren Gruppen enthalten sind: Aus Arranger entfernen?\n(Anderenfalls werden sie in die Auffanggruppe übernommen.)
+ArrangerIndex.msgConfirmDeleteRoots.text=Sie haben % Diagramm(e) zum Löschen ausgewählt\n\nSollen sie ggf. auch aus allen anderen Gruppen insgesamt entfernt werden?\n(Anderenfalls werden sie einfach nur aus der jeweiligen Gruppe gelöscht.)
+ArrangerIndex.msgAttachOptions.0.text=Zur Gruppe hinzufügen
+ArrangerIndex.msgAttachOptions.1.text=In die Gruppe verschieben
+ArrangerIndex.msgAttachOptions.2.text=Abbrechen
+ArrangerIndex.msgNumberOfSharedMembers.text=% Diagramme gemeinsam mit anderen Gruppen
+ArrangerIndex.msgMembersIncomplete.text=Gruppe ist unvollständig: Verweise auf %1 Diagramme außerhalb der Gruppe; %2 nicht auflösbare Verweise
+ArrangerIndex.msgMembersComplete.text=Gruppe ist vollständig: Keine Verweise nach außen
+ArrangerIndex.msgGroupMembersChanged.text=Die Menge der enthaltenen Diagramme hat sich geändert.
+ArrangerIndex.msgGroupMembersMoved.text=Die Koordinaten einiger enthaltener Diagramme wurden verändert.
+ArrangerIndex.msgNewGroupName.text=Neuer Name für die ausgewählte Gruppe:
 
 -----> Executor
 -----[ Control ]-----
@@ -1190,12 +1414,14 @@ Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!
 Control.msgUseStopButton.text=Ein Debugging ist in Ausführung oder pausierend!\nZum Abbrechen und Schließen bitte STOP-Taste verwenden.
 Control.msgConstantRedefinition.text=Unzulässiger Versuch, Konstante «%» neu zu setzen oder zu ändern!
 Control.msgConstantArrayElement.text=Ein Array-Element «%» kann nicht per Zuweisung zur Konstanten gemacht werden!
+Control.msgInvalidRecord.text=«%1» ist kein gültiger Verbund (%2)!
 Control.msgInvalidComponent.text=Es gibt keine Komponente «%1» in Verbundtyp oder -Variable «%2»!
 Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht mittels Zuweisung konstant gemacht werden!
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
 Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
+Control.msgInitializerAsArgument.text=Ein Array-Initialisierer kann nicht direkt als Argument an eine eingebaute Funktion übergeben werden.\nWeisen Sie das Array vorher einer Variablen zu und übergeben Sie diese.
 Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).
@@ -1203,6 +1429,8 @@ Control.msgFunctionConflict.text=\nFunktion «%1(%2)» von %3 verdrängt durch %
 Control.msgProcedureConflict.text=\nProzedur «%1(%2)» von %3 vedrängt durch %4
 Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählten Steuerungs-Plugins auf:%
 Control.msgGUISyncFault.text=Synchronisationsprobleme im Ausgabefenster bei Ausführung von «%».\nAbarbeitung versuchsweise fortsetzen?
+Control.msgErrorInSubroutine.text=Gefangener Fehler bei der Ausführung von «%1» in Tiefe %2:\n	%3
+Control.msgThrown.text=Ausnahme ausgelöst in «%1» in Tiefe %2: %3
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 
@@ -1238,3 +1466,26 @@ ElementNames.localizedNames.12.text=Diagramm
 ElementNames.localizedNames.13.text=Hauptprogramm
 ElementNames.localizedNames.14.text=Unterprogramm
 ElementNames.localizedNames.15.text=Einbeziehbar
+ElementNames.localizedNames.16.text=TRY
+
+
+-----> Keywords
+ParserKeywords.AltPre.text=wenn
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=für
+ParserKeywords.ForPost.text=bis
+ParserKeywords.ForStep.text=Schritt
+ParserKeywords.ForInPre.text=für alle
+ParserKeywords.ForInPost.text=in
+ParserKeywords.WhilePre.text=solange
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=bis
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=verlasse
+ParserKeywords.JumpReturn.text=zurück
+ParserKeywords.JumpExit.text=beende
+ParserKeywords.JumpThrow.text=eskaliere
+ParserKeywords.Input.text=Eingabe
+ParserKeywords.Output.text=Ausgabe

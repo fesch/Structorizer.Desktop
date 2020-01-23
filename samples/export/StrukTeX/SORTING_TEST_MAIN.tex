@@ -1,0 +1,235 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{german}
+\usepackage{mathcomp}
+
+\title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
+\author{Kay Gürtzig}
+\date{02.12.2019}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(121,94)[bubbleSort]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{values}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(ende\ \gets\ length(values)\ -\ 2\)}
+  \until{\(posSwapped\ <\ 0\)}
+    \assign{\(posSwapped\ \gets\ -1\)}
+    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(ende\)}
+      % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
+      \ifthenelse{3}{1}{\(values[i]\ >\ values[i+1]\)}{ja}{nein}
+        \assign{\(temp\ \gets\ values[i]\)}
+        \assign{\(values[i]\ \gets\ values[i+1]\)}
+        \assign{\(values[i+1]\ \gets\ temp\)}
+        \assign{\(posSwapped\ \gets\ i\)}
+      \change
+      \ifend
+    \whileend
+    \assign{\(ende\ \gets\ posSwapped\ -\ 1\)}
+  \untilend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(175,109)[maxHeapify]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{heap}}{type: \(null\)}
+      \description{\pVar{i}}{type: \(null\)}
+      \description{\pVar{range}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(right\ \gets\ (i+1)\ *\ 2\)}
+  \assign{\(left\ \gets\ right\ -\ 1\)}
+  \assign{\(max\ \gets\ i\)}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(left\ <\ range\ \wedge\ heap[left]\ >\ heap[i]\)}{ja}{nein}
+    \assign{\(max\ \gets\ left\)}
+  \change
+  \ifend
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(right\ <\ range\ \wedge\ heap[right]\ >\ heap[max]\)}{ja}{nein}
+    \assign{\(max\ \gets\ right\)}
+  \change
+  \ifend
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(max\ \neq\ i\)}{ja}{nein}
+    \assign{\(temp\ \gets\ heap[i]\)}
+    \assign{\(heap[i]\ \gets\ heap[max]\)}
+    \assign{\(heap[max]\ \gets\ temp\)}
+    \sub{\(maxHeapify(heap,\ max,\ range)\)}
+  \change
+  \ifend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(162,122)[partition]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{start}}{type: \(null\)}
+      \description{\pVar{stop}}{type: \(null\)}
+      \description{\pVar{p}}{type: \(null\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{int}{}
+    \end{declaration}
+  }
+  \assign{\(pivot\ \gets\ values[p]\)}
+  \assign{\(values[p]\ \gets\ values[start]\)}
+  \assign{\(values[start]\ \gets\ pivot\)}
+  \assign{\(p\ \gets\ start\)}
+  \assign{\(start\ \gets\ start\ +\ 1\)}
+  \assign{\(stop\ \gets\ stop\ -\ 1\)}
+  \while{\(stop\ \geq\ start\)}
+    \assign{\(seen\ \gets\ values[start]\)}
+    \ifthenelse{2}{4}{\(values[start]\ \leq\ pivot\)}{ja}{nein}
+      \assign{\(values[p]\ \gets\ seen\)}
+      \assign{\(values[start]\ \gets\ pivot\)}
+      \assign{\(p\ \gets\ p\ +\ 1\)}
+      \assign{\(start\ \gets\ start\ +\ 1\)}
+    \change
+      \assign{\(values[start]\ \gets\ values[stop]\)}
+      \assign{\(values[stop]\ \gets\ seen\)}
+      \assign{\(stop\ \gets\ stop\ -\ 1\)}
+    \ifend
+  \whileend
+  \assign{\(\)\pKey{return}\(\ p\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(131,69)[testSorted]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{numbers}}{type: \(null\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{bool}{}
+    \end{declaration}
+  }
+  \assign{\(isSorted\ \gets\ true\)}
+  \assign{\(i\ \gets\ 0\)}
+  \while{\(isSorted\ \wedge\ (i\ \leq\ length(numbers)-2)\)}
+    \ifthenelse{4}{2}{\(numbers[i]\ >\ numbers[i+1]\)}{ja}{nein}
+      \assign{\(isSorted\ \gets\ false\)}
+    \change
+      \assign{\(i\ \gets\ i\ +\ 1\)}
+    \ifend
+  \whileend
+  \assign{\(\)\pKey{return}\(\ isSorted\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(89,45)[buildMaxHeap]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{heap}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(lgth\ \gets\ length(heap)\)}
+  \while{\pKey{for}\(k\ \gets\ lgth\ div\ 2\ -\ 1\)\pKey{to}\(0\)\pKey{step}\(-1\)}
+    \sub{\(maxHeapify(heap,\ k,\ lgth)\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(181,82)[quickSort]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{start}}{type: \(null\)}
+      \description{\pVar{stop}}{type: \(null\)}
+    \end{declaration}
+  }
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(stop\ \geq\ start\ +\ 2\)}{ja}{nein}
+    \assign{\(p\ \gets\ random(stop-start)\ +\ start\)}
+    \sub{\(p\ \gets\ partition(values,\ start,\ stop,\ p)\)}
+    \inparallel{2} {quickSort(values,\ start,\ p)}
+    \task{quickSort(values,\ p+1,\ stop)}
+    \inparallelend
+  \change
+  \ifend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(108,68)[heapSort]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{values}}{type: \(null\)}
+    \end{declaration}
+  }
+  \sub{\(buildMaxHeap(values)\)}
+  \assign{\(heapRange\ \gets\ length(values)\)}
+  \while{\pKey{for}\(k\ \gets\ heapRange\ -\ 1\)\pKey{to}\(1\)\pKey{step}\(-1\)}
+    \assign{\(heapRange\ \gets\ heapRange\ -\ 1\)}
+    \assign{\(maximum\ \gets\ values[0]\)}
+    \assign{\(values[0]\ \gets\ values[heapRange]\)}
+    \assign{\(values[heapRange]\ \gets\ maximum\)}
+    \sub{\(maxHeapify(values,\ 0,\ heapRange)\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(247,204)[SORTING\_TEST\_MAIN]
+  \until{\(elementCount\ \geq\ 1\)}
+    \assign{\(\)\pKey{INPUT}\(\ elementCount\)}
+  \untilend
+  \until{\(modus\ =\ 1\ \vee\ modus\ =\ 2\ \vee\ modus\ =\ 3\)}
+    \assign{\(\)\pKey{INPUT}\(\ \)"{}Filling:\ 1\ =\ random,\ 2\ =\ increasing,\ 3\ =\ decreasing"{}\(,\ modus\)}
+  \untilend
+  \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount-1\)}
+    \case{6}{4}{\(modus\)}{1}
+        \assign{\(values1[i]\ \gets\ random(10000)\)}
+      \switch{2}
+        \assign{\(values1[i]\ \gets\ i\)}
+      \switch{3}
+        \assign{\(values1[i]\ \gets\ -i\)}
+     \caseend
+  \whileend
+  \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount-1\)}
+    \assign{\(values2[i]\ \gets\ values1[i]\)}
+    \assign{\(values3[i]\ \gets\ values1[i]\)}
+  \whileend
+  \inparallel{3} {bubbleSort(values1)}
+  \task{quickSort(values2,\ 0,\ elementCount)}
+  \task{heapSort(values3)}
+  \inparallelend
+  \sub{\(ok1\ \gets\ testSorted(values1)\)}
+  \sub{\(ok2\ \gets\ testSorted(values2)\)}
+  \sub{\(ok3\ \gets\ testSorted(values3)\)}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(!\ ok1\ \vee\ !\ ok2\ \vee\ !\ ok3\)}{ja}{nein}
+    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount-1\)}
+      % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
+      \ifthenelse{3}{1}{\(values1[i]\ \neq\ values2[i]\ \vee\ values1[i]\ \neq\ values3[i]\)}{ja}{nein}
+        \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Difference\ at\ ["{}\(,\ i,\ \)"{}]:\ "{}\(,\ values1[i],\ \)"{}\ <->\ "{}\(,\ values2[i],\ \)"{}\ <->\ "{}\(,\ values3[i]\)}
+      \change
+      \ifend
+    \whileend
+  \change
+  \ifend
+  \until{\(show\ =\ \)"{}yes"{}\(\ \vee\ show\ =\ \)"{}no"{}\(\)}
+    \assign{\(\)\pKey{INPUT}\(\ \)"{}Show\ arrays\ (yes/no)?"{}\(,\ show\)}
+  \untilend
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(show\ =\ \)"{}yes"{}\(\)}{ja}{nein}
+    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount\ -\ 1\)}
+      \assign{\(\)\pKey{OUTPUT}\(\ \)"{}["{}\(,\ i,\ \)"{}]:\t"{}\(,\ values1[i],\ \)"{}\t"{}\(,\ values2[i],\ \)"{}\t"{}\(,\ values3[i]\)}
+    \whileend
+  \change
+  \ifend
+\end{struktogramm}
+
+\end{document}

@@ -16,7 +16,6 @@
 
 import java.awt.Container;
 import java.awt.BorderLayout;
-import java.io.File;
 import javax.swing.JApplet;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -101,7 +100,10 @@ public class StructorizerApplet extends JApplet  implements NSDController
     
     public void setLookAndFeel(String _laf)
     {
-        laf=_laf;
+        // START KGU#661 2019-02-20: Issue #686
+        javax.swing.LookAndFeel currentLaf = UIManager.getLookAndFeel();
+        String currentLafName = currentLaf.getName();
+        // END KGU#661 2019-02-20
         UIManager.LookAndFeelInfo plafs[] = UIManager.getInstalledLookAndFeels();
         for(int j = 0; j < plafs.length; ++j)
         {
@@ -110,7 +112,13 @@ public class StructorizerApplet extends JApplet  implements NSDController
                 try
                 {
                     UIManager.setLookAndFeel(plafs[j].getClassName());
+                    // START KGU#661 2019-02-20: Issue #686
+                    laf = _laf;
+                    // END KGU#661 2019-02-20
                     SwingUtilities.updateComponentTreeUI(this);
+                    // START KGU#661 2019-02-20: Issue #686
+                    return;
+                    // END KGU#661 2019-02-20
                 }
                 catch (Exception e)
                 {
@@ -120,7 +128,15 @@ public class StructorizerApplet extends JApplet  implements NSDController
                             JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                 }
             }
+            // START KGU#661 2019-02-20: Issue #686
+            else if (plafs[j].getClassName().equals(currentLaf.getClass().getName())) {
+                currentLafName = plafs[j].getName();
+            }
+            // END KGU#661 2019-02-20
         }
+        // START KGU#661 2019-02-20: Issue #686
+        laf = currentLafName;
+        // END KGU#661 2019-02-20
     }
 
     public String getLookAndFeel()
@@ -163,15 +179,24 @@ public class StructorizerApplet extends JApplet  implements NSDController
             laf = ini.getProperty("laf","Mac OS X");
             setLookAndFeel(laf);
 
-            if(diagram!=null) 
+            if (diagram != null) 
             {
-                // current directories (KGU#95 2018-10-08: Issue #42 - defaults changed from root to home)
-                diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
-                // START KGU#354 2017-04-26: Enh. #354 Also retain the other directories
-                diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
-                diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
-                diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
-                // END KGU#354 2017-04-26
+                // START KGU#602 2018-10-28: outsourced to Diagrm.fetchIniProperties(Ini)
+//                // current directories (KGU#95 2018-10-08: Issue #42 - defaults changed from root to home)
+//                diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
+//                // START KGU#354 2017-04-26: Enh. #354 Also retain the other directories
+//                diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+//                diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+//                diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+//                // END KGU#354 2017-04-26
+//                // START KGU#602 2018-10-28: Enh. #419
+//                try {
+//                	diagram.lastWordWrapLimit = Short.parseShort(ini.getProperty("wordWrapLimit", "0"));
+//                }
+//                catch (NumberFormatException ex) {}
+//                // END KGU#602 2018-10-28
+                diagram.fetchIniProperties(ini);
+                // END KGU#602 2018-10-28
 
                 // din
                 if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -197,28 +222,30 @@ public class StructorizerApplet extends JApplet  implements NSDController
                  * */
             }
 
-            // recent files
-            try
-            {
-                if(diagram!=null)
-                {
-                    for (int i = 9; i >= 0; i--)
-                    {
-                        if (ini.keySet().contains("recent"+i))
-                        {
-                            if (!ini.getProperty("recent"+i,"").trim().equals(""))
-                            {
-                                diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
-                            }
-                        }
-                    }
-                }
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
-            }
+            // START KGU#602 2018-10-28: Outsourced to the method Diagram.fetchIniProperties(Ini) called above
+//            // recent files
+//            try
+//            {
+//                if(diagram!=null)
+//                {
+//                    for (int i = 9; i >= 0; i--)
+//                    {
+//                        if (ini.keySet().contains("recent"+i))
+//                        {
+//                            if (!ini.getProperty("recent"+i,"").trim().equals(""))
+//                            {
+//                                diagram.addRecentFile(ini.getProperty("recent"+i,""),false);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            catch(Exception e)
+//            {
+//                e.printStackTrace();
+//                System.out.println(e.getMessage());
+//            }
+            // END KGU#602 2018-10-28
 
             // analyser
             // START KGU#239 2016-08-12: Enh. #231 + Code revision

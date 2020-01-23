@@ -32,39 +32,43 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.10.11/13   Comment drawing unified, breakpoints supported, colouring modified
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Kay Gürtzig     2015-10-11/13   Comment drawing unified, breakpoints supported, colouring modified
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#124) collapsing of larger instruction elements,
  *                                      Enh. #87 (KGU#122) marking of collapsed elements with icon
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): fix accomplished
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.06      Enh. #188: New classification methods isAssignment() etc.,
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): fix accomplished
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-06      Enh. #188: New classification methods isAssignment() etc.,
  *                                      new copy constructor to support conversion (KGU#199)
- *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
- *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
- *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
- *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
- *      Kay Gürtzig     2016.11.22      Bugfix #296: Wrong transmutation of return and output statements
- *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
- *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
- *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017.04.11      Enh. #389: Methods isImportCall() introduced (2017-07-01 undone)
- *      Kay Gürtzig     2017.06.09      Enh. #416: drawing support for broken lines and is...() method adaptation
- *      Kay Gürtzig     2017.07.03      Enh. #423: Type definition concept for record/struct types begun
- *      Kay Gürtzig     2017.09.15-28   Enh. #423: Record type definition concept nearly accomplished
- *      Kay Gürtzig     2017.12.06      Enh. #487: Drawing supports hiding of declaration sequences 
- *      Kay Gürtzig     2017.12.10/11   Enh. #487: Run data support for new display mode "Hide declarations"
- *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
- *      Kay Gürtzig     2018.02.15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
- *      Kay Gürtzig     2018.07.12      Bugfix #557: potential endless loop in isDeclaration(String)
- *      Bob Fisch       2018.09.08      Issue #508: Reducing top padding from E_PADDING/2 to E_PADDING/3
- *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2016-07-30      Enh. #128: New mode "comments plus text" supported
+ *      Kay Gürtzig     2016-08-10      Issue #227: New classification methods for Input/Output
+ *      Kay Gürtzig     2016-09-25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016-10-15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
+ *      Kay Gürtzig     2016-11-22      Bugfix #296: Wrong transmutation of return and output statements
+ *      Kay Gürtzig     2017-01-26      Enh. #259: First retrieval approach for variable types
+ *      Kay Gürtzig     2017-01-30      Enh. #335: More sophisticated type and declaration support    
+ *      Kay Gürtzig     2017-02-20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Methods isImportCall() introduced (2017-07-01 undone)
+ *      Kay Gürtzig     2017-06-09      Enh. #416: drawing support for broken lines and is...() method adaptation
+ *      Kay Gürtzig     2017-07-03      Enh. #423: Type definition concept for record/struct types begun
+ *      Kay Gürtzig     2017-09-15-28   Enh. #423: Record type definition concept nearly accomplished
+ *      Kay Gürtzig     2017-12-06      Enh. #487: Drawing supports hiding of declaration sequences 
+ *      Kay Gürtzig     2017-12-10/11   Enh. #487: Run data support for new display mode "Hide declarations"
+ *      Kay Gürtzig     2018-01-21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018-02-15      Issue #508: Workaround for large-scaled collapse symbols eclipsing the text
+ *      Kay Gürtzig     2018-07-12      Bugfix #557: potential endless loop in isDeclaration(String)
+ *      Bob Fisch       2018-09-08      Issue #508: Reducing top padding from E_PADDING/2 to E_PADDING/3
+ *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2019-02-14      Enh. #680: Improved support for processing of input instructions
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
+ *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *
  ******************************************************************************************************
  *
@@ -75,8 +79,10 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -164,7 +170,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, false), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -204,13 +210,15 @@ public class Instruction extends Element {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 
 		// START KGU#477 2017-12-06: Enh. #487 - if being a hidden declaration, don't show
 		if (this != this.getDrawingSurrogate(false)) {
 			rect0 = new Rect(0, 0, 0, 0);
-			isRectUpToDate = true;
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRect0UpToDate = true;
+			// END KGU#136 2016-03-01
 			return rect0;
 		}
 		// END KGU#477 2017-12-06
@@ -231,12 +239,23 @@ public class Instruction extends Element {
 		// END KGU#124 2016-01-03
 
 		// START KGU#136 2016-03-01: Bugfix #97
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#136 2016-03-01
 		return rect0;
 	}
 
-	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
+	/**
+	 * Draws {@code _element} like an Instruction in the bounds of @{@link Rect} {@code _top_left}
+	 * with the given {@code _text} on the {@code _canvas}.<br/>
+	 * Sets {@link Element#rect} and {@link Element#topLeft} on {@code _element}, obeys the flags
+	 * {@link Element#rotated} and {@code Element#disabled}.
+	 * @param _canvas - The drawing {@link Canvas}
+	 * @param _top_left - the given shape and position
+	 * @param _text - the text to be written into the element area
+	 * @param _element - the originating {@link Element}.
+	 * @param _inContention - whether this drawing is done under heavy contention
+	 */
+	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element, boolean _inContention)
 	{
 		// Within the method we may reuse the matcher, as it is local
 		Matcher indentMatcher = INDENT_PATTERN.matcher("");
@@ -306,7 +325,7 @@ public class Instruction extends Element {
 		// END KGU#227 2016-07-30
 		
 		// START KGU#480 2018-01-21: Enh. #490
-		if (Element.E_APPLY_ALIASES && !_element.isSwitchTextCommentMode()) {
+		if (Element.E_APPLY_ALIASES && !isSwitchTextCommentMode()) {
 			_text = StringList.explode(Element.replaceControllerAliases(_text.getText(), true, Element.E_VARHIGHLIGHT), "\n");
 		}
 		// END KGU#480 2018-01-21
@@ -343,7 +362,8 @@ public class Instruction extends Element {
 					yTextline += fontHeight,
 					// END KGU#227 2016-07-30
 					text,
-					_element
+					_element,
+					_inContention
 					);  	
 
 		}
@@ -384,33 +404,43 @@ public class Instruction extends Element {
 			canvas.setTransform(oldTrans);
 		}
 	}
-                
-	public void draw(Canvas _canvas, Rect _top_left)
+
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
 		// START KGU#477 2017-12-06: Enh. #487: Don't draw at all if there is a drawing surrogate
 		if (E_HIDE_DECL && this != this.getDrawingSurrogate(false)) {
 			rect = new Rect(0,0,0,0);
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+			wasDrawn = true;
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			return;
 		}
 		// END KGU#477 2017-12-06
 		
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
-                //draw(_canvas, _top_left, getText(false), this);
-                        // START KGU#477 2017-12-06: Enh. #487
-                //if (isCollapsed() && getText(false).count() > 2)
-                if (isCollapsed(true) && getText(false).count() > 2)
-                // END KGU#477 2017-12-06
-                {
-                        draw(_canvas, _top_left, getCollapsedText(), this);
-                }
-                else
-                {
-                    draw(_canvas, _top_left, getText(false), this);
-                }
-                // END KGU#124 2016-01-03
+		//draw(_canvas, _top_left, getText(false), this);
+		// START KGU#477 2017-12-06: Enh. #487
+		//if (isCollapsed() && getText(false).count() > 2)
+		if (isCollapsed(true) && getText(false).count() > 2)
+			// END KGU#477 2017-12-06
+		{
+			draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+		}
+		else
+		{
+			draw(_canvas, _top_left, getText(false), this, _inContention);
+		}
+		// END KGU#124 2016-01-03
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#477 2017-12-06: Enh. #487
@@ -458,14 +488,14 @@ public class Instruction extends Element {
 	// END KGU#225 2016-07-29
 	{
 		super.copyDetails(_ele, _simplyCoveredToo);
-        if (Element.E_COLLECTRUNTIMEDATA)
-        {
-        	if (_forConversion)	// This distinction wasn't clear here: why?
-        	{
-        		_ele.execStepCount = this.execStepCount;
-        		_ele.execSubCount = this.execSubCount;
-        	}
-        }
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (_forConversion)	// This distinction wasn't clear here: why?
+			{
+				_ele.execStepCount = this.execStepCount;
+				_ele.execSubCount = this.execSubCount;
+			}
+		}
 		return _ele;
 	}
 
@@ -474,8 +504,8 @@ public class Instruction extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled()) {
 			// START KGU#413 2017-06-09: Enh. #416 cope with user-inserted line breaks
 			//_lines.add(this.getText());
@@ -487,12 +517,25 @@ public class Instruction extends Element {
 				if (!isTypeDefinition(line, null)) {
 					_lines.add(line);
 				}
+				// START KGU#542 2019-11-17: Enh. #739 special treatment for enum type definitions
+				else if (isEnumTypeDefinition(line)) {
+					Root myRoot = getRoot(this);
+					HashMap<String, String> constVals = myRoot.extractEnumerationConstants(line);
+					if (constVals != null) {
+						// FIXME If this interferes then we might generate singular constant definition lines
+						//this.constants.putAll(constVals);
+						for (Entry<String, String> enumItem: constVals.entrySet()) {
+							_lines.add("const " + enumItem.getKey() + " <- " + enumItem.getValue());
+						}
+					}
+				}
+				// END KGU#542 2019-11-17
 			}
 			// END KGU#388 2017-09-13
 			// END KGU#413 2017-06-09
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 
 	// START KGU#117 2016-03-10: Enh. #77
 	/* (non-Javadoc)
@@ -521,12 +564,25 @@ public class Instruction extends Element {
 	// START KGU#199 2016-07-06: Enh. #188 - new classification methods.
 	// There is always a pair of a static and an instance method, the former for
 	// a single line, the latter for the element as a whole.
+	/** @return true iff the given line contains an assignment symbol */
 	public static boolean isAssignment(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-    	unifyOperators(tokens, true);
-		return tokens.contains("<-");
+		StringList tokens = Element.splitLexically(line, true);
+		unifyOperators(tokens, true);
+		// START KGU#689 2019-03-21: Issue #706 we should better cope with named parameter assignment
+		//return tokens.contains("<-");
+		boolean isAsgnmt = tokens.contains("<-");
+		if (isAsgnmt) {
+			// First eliminate all index expressions, function arguments etc.
+			tokens = coagulateSubexpressions(tokens);
+			// Now try again
+			isAsgnmt = tokens.contains("<-");
+		}
+		return isAsgnmt;
+		// END KGU#689 2019-03-21
 	}
+	
+	/** @return true if this element consists of exactly one instruction line and the line complies to {@link #isAssignment(String)} */
 	public boolean isAssignment()
 	{
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
@@ -536,31 +592,39 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 	}
 	
+	/** @return true iff the given {@code line} starts with one of the configured EXIT keywords */
 	public static boolean isJump(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
+		// FIXME: These tests might be too simple if the keywords don't comply with identifier syntax
 		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0 ||
 				tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0 ||
+				// START KGU#686 2019-03-18: Enh. #56 new flavour, for try/catch
+				tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0 ||
+				// END KGU#686 2019-03-18
 				tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0
 				);
 	}
+	/** @return true if this element is empty or consists of exactly one line and the line complies to {@link #isJump(String)} */
 	public boolean isJump()
 	{
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
 		//return this.text.count() == 0 || this.text.count() == 1 && Instruction.isJump(this.text.get(0));
 		StringList lines = this.getUnbrokenText();
-		return lines.count() == 0 || lines.count() == 1 && Instruction.isJump(lines.get(0));
+		return lines.isEmpty() || lines.count() == 1 && Instruction.isJump(lines.get(0));
 		// END KGU#413 2017-06-09
 	}
 	
+	/** @return true iff the given {@code line} has the syntax of a procedure invocation */
 	public static boolean isProcedureCall(String line)
 	{
-    	// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
+		// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
 		//Function fct = new Function(line);
 		//return fct.isFunction();
 		return !isJump(line) && !isOutput(line) && Function.isFunction(line);
-    	// END KGU#298 2016-11-22
+		// END KGU#298 2016-11-22
 	}
+	/** @return true iff {@code this} has exactly one instruction line and the line complies to {@link #isProcedureCall(String)} */
 	public boolean isProcedureCall()
 	{
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
@@ -571,6 +635,7 @@ public class Instruction extends Element {
 	}
 
 	// START #274 2016-10-16 (KGU): Improved support for Code export
+	/** @return true iff the given {@code line} contains a {@code forward}, {@code backward}, {@code fd}, or {@code bk} procedure call */
 	public static boolean isTurtleizerMove(String line)
 	{
 		Function fct = new Function(line);
@@ -578,11 +643,12 @@ public class Instruction extends Element {
 	}
 	// END #274 2016-10-16
 	
+	/** @return true iff the given {@code line} is an assignment with a function invocation as expression */
 	public static boolean isFunctionCall(String line)
 	{
 		boolean isFunc = false;
-    	StringList tokens = Element.splitLexically(line, true);
-    	unifyOperators(tokens, true);
+		StringList tokens = Element.splitLexically(line, true);
+		unifyOperators(tokens, true);
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos > 0)
 		{
@@ -590,49 +656,24 @@ public class Instruction extends Element {
 		}
 		return isFunc;
 	}
+	/** @return true iff {@code this} consists of exactly one instruction line and the line complies to {@link #isFunctionCall(String)} */
 	public boolean isFunctionCall()
 	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
 		StringList lines = this.getUnbrokenText();
 		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0));
-		// END KGU#413 2017-06-09
 	}
 	// END KGU#199 2016-07-06
 	
-	// START KGU#376 2017-04-11: Enh. #389 / 2017-07-01 dismissed 
-//	public static boolean isImportCall(String line)
-//	{
-//		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
-//		return line.startsWith( importKey ) &&
-//				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
-//	}
-//	public boolean isImportCall()
-//	{
-//		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-//		//return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
-//		StringList lines = this.getUnbrokenText();
-//		return lines.count() == 1 && Instruction.isImportCall(lines.get(0));
-//		// END KGU#413 2017-06-09
-//	}
-	// END KGU#376 2017-04-11
-	
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
+	/** @return true iff the given {@code line} represents an output instruction */
 	public static boolean isOutput(String line)
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(CodeParser.getKeyword("output"), !CodeParser.ignoreCase) == 0);
 	}
+	/** @return true if at least one of the instruction lines of {@code this} complies to {@link #isOutput(String)} */
 	public boolean isOutput()
 	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//for (int i = 0; i < this.getText().count(); i++)
-		//{
-		//	if (isOutput(this.getText().get(i).trim()))
-		//	{
-		//		return true;
-		//	}
-		//}
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; i < lines.count(); i++)
 		{
@@ -641,25 +682,65 @@ public class Instruction extends Element {
 				return true;
 			}
 		}
-		// END KGU#413 2017-06-09
 		return false;
 	}
 	
+	// START KGU#653 2019-02-14: Enh. #680 - better support for input instructions
+	/**
+	 * Checks whether the given instruction line is an input instruction. If so, decomposes
+	 * into the specified input prompt (may be empty) and the expressions identifying the
+	 * target variables (the first variable description will be at index 1, the resulting
+	 * StringList of an empty input instruction will have length 1). Otherwise the result
+	 * will be null.
+	 * @param line - the instruction line (assumed to have been trimmed)
+	 * @return a {@link StringList} containing the input items (prompt + variables) or null
+	 * @see #isInput(String)
+	 * @see #isEmptyInput(String)
+	 */
+	public static StringList getInputItems(String line)
+	{
+		StringList inputItems = null;
+		StringList tokens = Element.splitLexically(line, true);
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("input"), false);
+		if (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0) {
+			// It is an input instruction
+			inputItems = new StringList();
+			tokens.remove(0, keyTokens.count());
+			tokens.removeAll(" ");
+			// Identify the prompt if any
+			if (tokens.isEmpty()) {
+				inputItems.add(""); 
+			}
+			else {
+				String token0 = tokens.get(0);
+				if (token0.length() > 1 &&
+						(token0.startsWith("\"") && token0.endsWith("\"") || token0.startsWith("'") && token0.endsWith("'"))) {
+					inputItems.add(token0);
+					tokens.remove(0);
+					if (tokens.count() > 0 && tokens.get(0).equals(",")) {
+						tokens.remove(0);
+					}
+				}
+				else {
+					inputItems.add("");
+				}
+			}
+			// Now extract the target variables
+			StringList exprs = Element.splitExpressionList(tokens, ",", false);
+			exprs.removeAll("");
+			inputItems.add(exprs);
+		}
+		return inputItems;
+	}
+	
+	/** @return true iff the given {@code line} is an input instruction */
 	public static boolean isInput(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(CodeParser.getKeyword("input"), !CodeParser.ignoreCase) == 0);
+		return getInputItems(line) != null;
 	}
+	/** @return true if at least one instruction line of {@code this} complies to {@link #isInput(String)} */
 	public boolean isInput()
 	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//for (int i = 0; i < this.getText().count(); i++)
-		//{
-		//	if (isInput(this.getText().get(i).trim()))
-		//	{
-		//		return true;
-		//	}
-		//}
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; i < lines.count(); i++)
 		{
@@ -668,36 +749,18 @@ public class Instruction extends Element {
 				return true;
 			}
 		}
-		// END KGU#413 2017-06-09
 		return false;
 	}
 
-	
+	/** @return true iff the given instruction {@code line} is an input instruction without target variables */
 	public static boolean isEmptyInput(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		// START KGU#281 2016-10-15: Enh. #271 - had turned out to be too simple.
-		//return (tokens.count() == 1 && tokens.indexOf(CodeParser.keywordMap.get("input"), !CodeParser.ignoreCase) == 0);
-		boolean isEmptyInp = false;
-		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("input"), false);
-		if (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0) {
-			tokens = tokens.subSequence(keyTokens.count(), tokens.count());
-			tokens.removeAll(" ");
-			isEmptyInp = tokens.count() == 0 || tokens.count() == 1 && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"));
-		}
-		return isEmptyInp;
-		// END KGU#281 2016-10-15
+		StringList tokens = getInputItems(line);
+		return tokens != null && tokens.count() <= 1;
 	}
+	/** @return true if at least on of the instruction lines of {@code this} complies to {@link #isEmptyInput(String)} */
 	public boolean isEmptyInput()
 	{
-		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
-		//for (int i = 0; i < this.getText().count(); i++)
-		//{
-		//	if (isEmptyInput(this.getText().get(i).trim()))
-		//	{
-		//		return true;
-		//	}
-		//}
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; i < lines.count(); i++)
 		{
@@ -706,7 +769,6 @@ public class Instruction extends Element {
 				return true;
 			}
 		}
-		// END KGU#413 2017-06-09
 		return false;
 	}	
 	// END KGU#236 2016-08-10
@@ -722,37 +784,37 @@ public class Instruction extends Element {
 	 */
 	public static boolean isDeclaration(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-    	unifyOperators(tokens, true);
-    	boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
-    	boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
-    	int posAsgn = tokens.indexOf("<-");
-    	boolean typeC = false;
-    	if (posAsgn > 1) {
-    		tokens = tokens.subSequence(0, posAsgn);
-    		int posLBrack = tokens.indexOf("[");
-    		if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
-    			tokens = tokens.subSequence(0, posLBrack);
-    		}
-    		tokens.removeAll(" ");
-    		// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
-    		if (tokens.contains(".")) {
-    			int i = 1;
-    			// FIXME (KGU#553): The exact idea here isn't so clear anymore
-    			while (i < tokens.count() - 1) {
-    				if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
-    					tokens.remove(i, i+2);
-    				}
-    				// START KGU#553 2018-07-12: Bugfix #557 We could get stuck in an endless loop here
-    				else {
-    					break;
-    				}
-    				// END KGU#553 2018-07-12
-    			}
-    		}
-    		// END KGU#388 2017-09-27
-    		typeC = tokens.count() > 1;
-    	}
+		StringList tokens = Element.splitLexically(line, true);
+		unifyOperators(tokens, true);
+		boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
+		boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
+		int posAsgn = tokens.indexOf("<-");
+		boolean typeC = false;
+		if (posAsgn > 1) {
+			tokens = tokens.subSequence(0, posAsgn);
+			int posLBrack = tokens.indexOf("[");
+			if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
+				tokens = tokens.subSequence(0, posLBrack);
+			}
+			tokens.removeAll(" ");
+			// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
+			if (tokens.contains(".")) {
+				int i = 1;
+				// FIXME (KGU#553): The exact idea here isn't so clear anymore
+				while (i < tokens.count() - 1) {
+					if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
+						tokens.remove(i, i+2);
+					}
+					// START KGU#553 2018-07-12: Bugfix #557 We could get stuck in an endless loop here
+					else {
+						break;
+					}
+					// END KGU#553 2018-07-12
+				}
+			}
+			// END KGU#388 2017-09-27
+			typeC = tokens.count() > 1;
+		}
 		return typeA || typeB || typeC;
 	}
 	/** @return true if all non-empty lines are declarations
@@ -773,7 +835,7 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 		return isDecl;
 	}
-	/** @return true if at least one line is a declaration
+	/** @return true if at least one line of {@code this} complies to {@link #isDeclaration(String)}
 	 * @see #isDeclaration(String) */
 	public boolean hasDeclarations()
 	{
@@ -795,16 +857,18 @@ public class Instruction extends Element {
 
 	// START KGU#388 2017-07-03: Enh. #423
 	/**
-	 * Returns true if the current line of code is a type definition of one of the following forms:<br>
+	 * Returns true if the given {@code line} of code is a type definition of one of the following forms:<br>
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
-	 * d)...f) same as a)...c) but with struct instead of record.<br/>
-	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * d)...f) same as a)...c) but with struct instead of record;<br/>
+	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
+	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String, HashMap)
 	 * @see #isTypeDefinition()
+	 * @see #isEnumTypeDefinition(String)
 	 */
 	public static boolean isTypeDefinition(String line)
 	{
@@ -816,8 +880,9 @@ public class Instruction extends Element {
 	 * a) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt;} };<br/>
 	 * b) type &lt;id&gt; = record{ &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; {; &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt;} };<br/>
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
-	 * d)...f) same as a)...c) but with struct instead of record.<br/>
-	 * e) type &lt;id&gt; = &lt;type&gt;<br/>
+	 * d)...f) same as a)...c) but with struct instead of record;<br/>
+	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
+	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
@@ -829,25 +894,29 @@ public class Instruction extends Element {
 	 */
 	public static boolean isTypeDefinition(String line, HashMap<String, TypeMapEntry> typeMap)
 	{
-    	StringList tokens = Element.splitLexically(line.trim(), true);
-    	if (tokens.count() == 0 || !tokens.get(0).equalsIgnoreCase("type")) {
-    		return false;
-    	}
-    	unifyOperators(tokens, true);
-    	int posDef = tokens.indexOf("=");
-    	if (posDef < 2) {
-    		return false;
-    	}
-    	// FIXME why would we allow to define multi-word type names?
+		StringList tokens = Element.splitLexically(line.trim(), true);
+		if (tokens.count() == 0 || !tokens.get(0).equalsIgnoreCase("type")) {
+			return false;
+		}
+		unifyOperators(tokens, true);
+		int posDef = tokens.indexOf("=");
+		if (posDef < 2 || posDef == tokens.count()-1) {
+			return false;
+		}
+		// FIXME why would we allow to define multi-word type names?
 		String typename = tokens.concatenate("", 1, posDef).trim();
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		tokens.removeAll(" ");
-		return Function.testIdentifier(typename, null) && 
-				((tokens.get(0).equalsIgnoreCase("record") || tokens.get(0).equalsIgnoreCase("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
-				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tokens.get(0)) || typeMap == null && Function.testIdentifier(tokens.get(0), null)));
+		String tag = tokens.get(0).toLowerCase();
+		return Function.testIdentifier(typename, null) &&
+				// START KGU#542 2019-11-17: Enh. #739 - also consider enumeration types
+				//((tag.equals("record") || tag.equals("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				((tag.equals("record") || tag.equals("struct") || tag.equals("enum")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				// END KGU#542 2019-11-17
+				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, null)));
 		
 	}
-	/** @return true if all non-empty lines are type definitions */
+	/** @return true if all non-empty lines comply to {@link #isTypeDefinition(String)} */
 	public boolean isTypeDefinition()
 	{
 		return isTypeDefinition(null, true);
@@ -879,12 +948,31 @@ public class Instruction extends Element {
 		}
 		return isTypeDef;
 	}
-	/** @return true if at least one line is a type definition */
+	/** @return true if at least one line complies to {@link #isTypeDefinition(String)} */
 	public boolean hasTypeDefinitions()
 	{
 		return isTypeDefinition(null, false);
 	}
 	// END KGU#388 2017-07-03
+	// START KGU#542 2019-11-17: Enh. #739 - identify enum type line
+	/**
+	 * Returns true if the given {@code line} of code is a type definition of the following form:<br>
+	 * type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} }.<br/>
+	 * @param line - String comprising one line of code
+	 * @return true iff line is of one of the forms a) through e)
+	 * @see #isTypeDefinition(String, HashMap)
+	 * @see #isTypeDefinition()
+	 */
+	public static boolean isEnumTypeDefinition(String line)
+	{
+		boolean isEnum = isTypeDefinition(line);
+		if (isEnum) {
+			int posEq = line.indexOf('=');
+			isEnum = posEq > 0 && TypeMapEntry.MATCHER_ENUM.reset(line.substring(posEq+1).trim()).matches();
+		}
+		return isEnum;
+	}
+	// END KGU#542 2019-11-17
 	
 	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
 	/** @return true iff this Instruction contains nothing but type definitions and
@@ -896,11 +984,17 @@ public class Instruction extends Element {
 		StringList lines = this.getUnbrokenText();
 		for (int i = 0; isHideable && i < lines.count(); i++) {
 			String line = lines.get(i);
-			isHideable = line.isEmpty() || isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+			isHideable = line.isEmpty() || isMereDeclaration(line);
 		}
 		return isHideable;
 	}
 	// END KGU#477 2017-12-06
+	// START KGU#772 2019-11-24: We want to be able to suppress expression of code for mere declarations
+	public static boolean isMereDeclaration(String line)
+	{
+		return isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
+	}
+	// END KGU#772 2019-11-24
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -908,9 +1002,11 @@ public class Instruction extends Element {
 	// may be transmuted.)
 	/**
 	 * Returns a Function object describing the signature of the called routine
-	 * if the text complies to the call syntax described in the user guide
+	 * if the text complies to the call syntax described in the user guide,
 	 * or null otherwise.
 	 * @return Function object or null.
+	 * @see #isFunctionCall()
+	 * @see #isProcedureCall()
 	 */
 	public Function getCalledRoutine()
 	{
@@ -940,6 +1036,15 @@ public class Instruction extends Element {
 	// END KGU#178 2016-07-19
 
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/**
+	 * Checks if this element contains a function or procedure call matching one of the given
+	 * subroutine signatures.
+	 * @param _signatures - a {@link StringList} of symbolic subroutine signatures {@code "<name>#<argcount>"}
+	 * @return true if this contains a call matching one of the signatures given.
+	 * @see #getCalledRoutine()
+	 * @see #isFunctionCall()
+	 * @see #isProcedureCall()
+	 */
 	public boolean isCallOfOneOf(StringList _signatures)
 	{
 		Function fct = this.getCalledRoutine();
@@ -1000,7 +1105,7 @@ public class Instruction extends Element {
 		boolean isDeclared = true;
 		unifyOperators(tokens, true);
 		tokens.removeAll(" ");
-		if (tokens.count() == 0) {
+		if (tokens.isEmpty()) {
 			return;
 		}
 		String token0 = tokens.get(0).toLowerCase();
@@ -1016,7 +1121,7 @@ public class Instruction extends Element {
 			for (int i = 0; i < varTokens.count(); i++)
 			{
 				if (Function.testIdentifier(varTokens.get(i), null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
-					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true, false);
+					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true);
 				}
 			}
 		}
@@ -1031,10 +1136,10 @@ public class Instruction extends Element {
 			// EMD KGU#375 2017-09-20
 			StringList leftSide = tokens.subSequence(0, posAsgnmt);
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
-			isAssigned = rightSide.count() > 0;
+			isAssigned = !rightSide.isEmpty();
 			// Isolate the variable name from the left-hand side of the assignment
-			varName = getAssignedVarname(leftSide);
-			// Without const, var, or dim a declaration must be a C-style declaration
+			varName = getAssignedVarname(leftSide, false);
+			// Without const, var, or dim, a declaration must be a C-style declaration
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
 			// If the target is a record component we won't add a type specification.
 			if (varName != null && !varName.contains(".")) {
@@ -1061,20 +1166,46 @@ public class Instruction extends Element {
 					}
 				}
 			}
-			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl, isCStyleDecl);
+			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isDeclared || isCStyleDecl);
 		}
 		// START KU#388 2017-08-07: Enh. #423
 		else if (isTypeDefinition(line, typeMap)) {
-			// FIXME: In future, array type definitions are also to be handled...
+			// START KGU#542 2019-11-17: Enh. #739
+			boolean isEnum = tokens.get(3).equalsIgnoreCase("enum");
+			// END KGU#542 2019-11-17
+			// FIXME: In future, array type definitions will also have to be handled...
 			String typename = tokens.get(1);
 			// Because of possible C-style declarations we must not glue the tokens together with "".
 			typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
 			int posBrace = typeSpec.indexOf("{");
 			if (posBrace > 0 && tokens.get(tokens.count()-1).equals("}")) {
-				StringList compNames = new StringList();
-				StringList compTypes = new StringList();
-				this.extractDeclarationsFromList(typeSpec.substring(posBrace+1,  typeSpec.length()-1), compNames, compTypes);
-				addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+				// START KGU#542 2019-11-17: Enh. #739 Handle enumeration tapes
+				if (isEnum) {
+					// first make sure the syntax is okay
+					if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches() ) {
+						Root root = getRoot(this);
+						if (root != null) {
+							TypeMapEntry enumType = new TypeMapEntry(typeSpec, typename, typeMap, this, lineNo, false, false);
+							typeMap.put(":" + typename, enumType);
+							HashMap<String, String> enumItems = root.extractEnumerationConstants(line);
+							if (enumItems != null) {
+								for (String constName: enumItems.keySet()) {
+									typeMap.put(constName, enumType);
+								}
+							}
+						}
+						
+					}
+				}
+				else {
+				// END KGU#542 2019-11-17
+					StringList compNames = new StringList();
+					StringList compTypes = new StringList();
+					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+					addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
+				// START KGU#542 2019-11-17: Enh. #739
+				}
+				// END KGU#542 2019-1-17
 			}
 			else {
 				// According to isTypeefinition() this must now be an alias for an existing type
@@ -1085,23 +1216,35 @@ public class Instruction extends Element {
 	}
 	
 	/**
-	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
-	 * the entire line of an assignment or just its left part.
+	 * Extracts the target variable name (or the the entire variable expression, see argument
+	 * {@code entireTarget} out of the given blank-free token sequence which may comprise
+	 * the entire line of an assignment or just its left part.<br/>
 	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
+	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
+	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
+	 * the result would be just "foo".
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
+	 * @param entireTarget if this is true then index expressions etc. will remain in the result
+	 * (so it is no longer the pure name)
 	 * @return the extracted variable name or null
 	 */
-	public String getAssignedVarname(StringList tokens) {
+	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
+	public static String getAssignedVarname(StringList tokens, boolean entireTarget) {
 		String varName = null;
+		// START KGU#689 2019-03-21: Issue #706 - get along with named parameter calls
+		tokens = coagulateSubexpressions(tokens.copy());		
+		// END KGU689 2019-03-21
 		int posAsgn = tokens.indexOf("<-");
 		if (posAsgn > 0) {
 			tokens = tokens.subSequence(0, posAsgn);
 		}
-		int posLBracket = tokens.indexOf("[");
-		if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
-			// If it's an array element access then cut of the index expression
-			tokens = tokens.subSequence(0, posLBracket);
-		}
+		// START KGU#689 2019-03-21: Issue #706 can no longer happen in this form due to coagulation
+		//int posLBracket = tokens.indexOf("[");
+		//if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
+		//	// If it's an array element access then cut off the index expression
+		//	tokens = tokens.subSequence(0, posLBracket);
+		//}
+		// END KGU#689 2019-03-21
 		// START KGU#388 2017-09-15: Enh. #423 avoid accidental return of type information
 		int posColon = tokens.indexOf(":");
 		if (posColon > 0 || (posColon = tokens.indexOf("as", false)) > 0) {
@@ -1109,21 +1252,58 @@ public class Instruction extends Element {
 			tokens = tokens.subSequence(0, posColon);
 		}
 		// END KGU#388 2017-09-15
-		// The last sequence of dot.separated ids should be the variable name
+		// The last sequence of dot-separated ids should be the variable name
 		if (tokens.count() > 0) {
 			int i = tokens.count()-1;
 			varName = tokens.get(i);
-			// START KGU#388 2017-09-14: Enh. #423
-			while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
-				varName = tokens.get(i-2) + "." + varName;
-				i -= 2;
+			// START KGU#780 2019-12-01: Bugfix - endstanding index access was erroneously returned
+			// FIXME But it might be even more complicated, e.g. foo[i].bar[j]!
+			while (varName.startsWith("[") && varName.endsWith("]") && i > 0) {
+				if (posColon >= 0) {
+					// Something is wrong here - there should not be be both a declaration and a bracket(?)
+					return null;
+				}
+				// It is a coagulated index access - skip it
+				varName = tokens.get(--i);
 			}
+			// END KGU#780 2019-12-01
+			// START KGU#388 2017-09-14: Enh. #423
+			// START KGU#780 2019-12-01: In cases like foo[i].bar[j] we want to return rather "foo" than "bar"
+			//while (i > 1 && tokens.get(i-1).equals(".") && Function.testIdentifier(tokens.get(i-2), null)) {
+			//	varName = tokens.get(i-2) + "." + varName;
+			//	i -= 2;
+			//}
+			while (i > 1 && varName != null && tokens.get(i-1).equals(".")) {
+				String preDotToken = tokens.get(i-2);
+				if (Function.testIdentifier(preDotToken, null)) {
+					varName = tokens.get(i-2) + "." + varName;
+					i -= 2;
+				}
+				else {
+					// We may expect either an index expression or an identifier (variable or component name)
+					while (i > 1 && preDotToken.startsWith("[") && preDotToken.endsWith("]")) {
+						// Skip index expressions (invalidate the name, it was a component of an array element)
+						varName = null;
+						preDotToken = tokens.get(--i - 2);
+					}
+					if (varName == null && Function.testIdentifier(preDotToken, null)) {
+						varName = preDotToken;	// Start again with the identifier prior to the indices
+						i -= 2;	// this ought to be the token index of varName
+					}
+				}
+			}
+			// END KGU#780 2019-12-01
 			// END KGU#388 2017-09-14
+			// START KGU#784 2019-12-02
+			if (entireTarget) {
+				varName = tokens.concatenate(null, i);
+			}
+			// END KGU#784 2019-12-02
 		}
 		return varName;
 	}
 	// END KGU#261 2017-01-26
-
+	
 	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
 	/**
 	 * Tries to extract type information from the right side of an assignment.
@@ -1153,6 +1333,17 @@ public class Instruction extends Element {
 			typeSpec += "[" + items.count() + "]";
 		}
 		else {
+			// START KGU#542 2019-11-17: Enh. #739 Check for enumerator constant
+			if (rightSide.count() == 1 && Function.testIdentifier(rightSide.get(0), null)) {
+				Root root = getRoot(this);
+				if (root != null) {
+					String constVal = root.constants.get(rightSide.get(0));
+					if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+						return constVal.substring(1, constVal.indexOf('€'));	// This is the type name
+					}
+				}
+			}
+			// END KGU#542 2019-11-17
 			// Try to derive the type from the expression
 			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
 		}
@@ -1171,24 +1362,24 @@ public class Instruction extends Element {
 	{
 		String typeSpec = "";
 		
-			// Try to derive the type from the expression
-			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
+		// Try to derive the type from the expression
+		typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
 		return typeSpec;
 	}
 	// END KGU#388 2017-08-07
-	
+
 	// START KGU#477 2017-12-06: Enh. #487 - new mode to hide declarations
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#getIcon()
-     */
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getIcon()
+	 */
 	@Override
-    public ImageIcon getIcon()
-    {
-    	if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
-    		return IconLoader.getIcon(85);
-    	}
-    	return super.getIcon();
-    }
+	public ImageIcon getIcon()
+	{
+		if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
+			return IconLoader.getIcon(85);
+		}
+		return super.getIcon();
+	}
 	/**
 	 * In active mode {@link Element#E_HIDE_DECL} detects whether this is a mere declaration element and
 	 * would be the first of a contiguous sequence of such elements (no matter if actually other declarations

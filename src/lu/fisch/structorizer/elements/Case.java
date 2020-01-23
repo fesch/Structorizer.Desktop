@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -31,35 +31,37 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2007.12.12      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.07.25      Issue #87: Icon for collapsed state corrected (KGU#217)
- *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code revised
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007-12-12      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015-11-14      Bugfix #39 (= KGU#91) in method draw()
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-07-25      Issue #87: Icon for collapsed state corrected (KGU#217)
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New mode "comments plus text" supported, drawing code revised
  *                                      (text placement improved, had sometimes exceeded the bounds)
- *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
- *      Kay Gürtzig     2016.11.22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
- *      Kay Gürtzig     2016.11.24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
- *      Kay Gürtzig     2016.02.08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016-11-22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
+ *      Kay Gürtzig     2016-11-24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
+ *      Kay Gürtzig     2016-02-08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
  *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
- *      Kay Gürtzig     2017.10.22      Enh. #128: Design for mode "comments plus text" revised to save space
- *      Kay Gürtzig     2017.11.01/02   Issue #447: Line continuation (backslash at line end) is to be supported
- *      Kay Gürtzig     2018.01.21      Enh. #490: Replacement of DiagramController aliases on drawing
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2017-10-22      Enh. #128: Design for mode "comments plus text" revised to save space
+ *      Kay Gürtzig     2017-11-01/02   Issue #447: Line continuation (backslash at line end) is to be supported
+ *      Kay Gürtzig     2018-01-21      Enh. #490: Replacement of DiagramController aliases on drawing
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -72,6 +74,7 @@ import java.util.HashMap;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 
@@ -129,7 +132,7 @@ public class Case extends Element implements IFork
 	{
     	// START KGU#172 2016-04-01: Bugfix #145
 		//return getComment();
-        if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+        if (!_alwaysTrueComment && isSwitchTextCommentMode())
         {
         	return StringList.getNew(text.get(0));
         }
@@ -231,9 +234,9 @@ public class Case extends Element implements IFork
     public Rect prepareDraw(Canvas _canvas)
     {
             // START KGU#136 2016-03-01: Bugfix #97
-            if (this.isRectUpToDate) return rect0;
+            if (this.isRect0UpToDate) return rect0;
             
-    		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
             //this.x0Branches.clear();
             //this.y0Branches = 0;
             // END KGU#516 2018-04-04
@@ -242,14 +245,14 @@ public class Case extends Element implements IFork
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
             if (isCollapsed(true)) 
             {
-            	rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-        		// START KGU#136 2016-03-01: Bugfix #97
-        		isRectUpToDate = true;
-        		// END KGU#136 2016-03-01
-            	return rect0;
+                rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+                // START KGU#136 2016-03-01: Bugfix #97
+                isRect0UpToDate = true;
+                // END KGU#136 2016-03-01
+                return rect0;
             }
 
-    		// START KGU#516 2018-04-04: Issue #529 Directly to work on field rect0 was not so good an idea for re-entrance
+            // START KGU#516 2018-04-04: Issue #529 Directly to work on field rect0 was not so good an idea for re-entrance
             //rect0.top = 0;
             //rect0.left = 0;
             Rect rect0 = new Rect();
@@ -260,10 +263,10 @@ public class Case extends Element implements IFork
             int fullWidth = 0, maxHeight = 0;
             // END KGU#516 2018-04-04
 
-    		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
-    		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
-    		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
-    		// END KGU#494 2018-09-11
+            // START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+            //FontMetrics fm = _canvas.getFontMetrics(Element.font);
+            int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+            // END KGU#494 2018-09-11
 
             // Lest the sum of the paddings per branch should gather too many lost remainders 
             int padding = 2 * (E_PADDING/2);
@@ -286,21 +289,21 @@ public class Case extends Element implements IFork
             StringList discrLines = new StringList();
             if (nBranches > 0)
             {
-            	if (getText().get(nBranches).equals("%")) nBranches--;
+                if (getText().get(nBranches).equals("%")) nBranches--;
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
-            	//discrLines.add(getText().get(0));
-            	discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
-            	// END KGU#453 2017-11-01
+                //discrLines.add(getText().get(0));
+                discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
+                // END KGU#453 2017-11-01
             }
-            if (this.isSwitchTextCommentMode())
+            if (isSwitchTextCommentMode())
             {
-            	discrLines = this.getComment();
+                discrLines = this.getComment();
             }
-    		// START KGU#480 2018-01-21: Enh. #490
+            // START KGU#480 2018-01-21: Enh. #490
             else if (Element.E_APPLY_ALIASES) {
-    			discrLines = StringList.explode(Element.replaceControllerAliases(discrLines.getText(), true, false), "\n");
-    		}
-    		// END KGU#480 2018-01-21
+                discrLines = StringList.explode(Element.replaceControllerAliases(discrLines.getText(), true, false), "\n");
+            }
+            // END KGU#480 2018-01-21
             // FIXME: The required extra padding must be proportional to the font size
             int extrapadding = padding + (discrLines.count()-1) * (3 * padding + fontHeight);
             // START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
@@ -310,20 +313,20 @@ public class Case extends Element implements IFork
             	// START KGU#435 2017-10-22: Enh. #128 revised
             	//commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
             	//rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
-          		commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
-          		if (commentRect.right > 0) {
-          			commentRect.bottom += E_PADDING/4;
-          			commentRect.right += 2 * (E_PADDING/2);
-          		}
-        		rect0.right = Math.max(rect0.right, commentRect.right);
-        		// END KGU#435 2017-10-22
+            	commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
+            	if (commentRect.right > 0) {
+            		commentRect.bottom += E_PADDING/4;
+            		commentRect.right += 2 * (E_PADDING/2);
+            	}
+            	rect0.right = Math.max(rect0.right, commentRect.right);
+            	// END KGU#435 2017-10-22
             }
-        	// END KGU#227 2016-07-31
-        	for (int i = 0; i < discrLines.count(); i++)
-        	{
-        		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, discrLines.get(i), this) + extrapadding);
-        	}
-        	// END KGU#172 2016-04-01
+            // END KGU#227 2016-07-31
+            for (int i = 0; i < discrLines.count(); i++)
+            {
+            	rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, discrLines.get(i), this) + extrapadding);
+            }
+            // END KGU#172 2016-04-01
             // Total width of the branches
             int width = 0;
             //int[] textWidths = new int[nBranches];
@@ -335,14 +338,14 @@ public class Case extends Element implements IFork
             	// FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
             	//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2;
-    			// START KGU#480 2018-01-21: Enh. #490
-    			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
-    			String selectors = unbrokenText.get(i+1);
-    	    	if (Element.E_APPLY_ALIASES) {
-    				selectors = Element.replaceControllerAliases(selectors, true, false);
-    			}
-    	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
-    			// END KGU#480 2018-01-21
+            	// START KGU#480 2018-01-21: Enh. #490
+            	//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+            	String selectors = unbrokenText.get(i+1);
+            	if (Element.E_APPLY_ALIASES) {
+            		selectors = Element.replaceControllerAliases(selectors, true, false);
+            	}
+            	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
+            	// END KGU#480 2018-01-21
             	if (brokenLine.length > nSelectorLines) {
             		nSelectorLines = brokenLine.length; 
             	}
@@ -357,19 +360,19 @@ public class Case extends Element implements IFork
             	// END KGU#453 2017-11-01
             	width += textWidths[i];
             }
-        	if (rect0.right < width)
-        	{
-        		rect0.right = width;
-        	}
+            if (rect0.right < width)
+            {
+            	rect0.right = width;
+            }
 
-        	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
+            // START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
             //rect0.bottom = 2 * (padding) + 2 * fontHeight;
-        	// START KGU#453 2017-11-01: Issue #447 - there may also be more selector lines
+            // START KGU#453 2017-11-01: Issue #447 - there may also be more selector lines
             //rect0.bottom = 2 * (padding) + (discrLines.count() + 1) * fontHeight;
             rect0.bottom = 2 * (padding) + (discrLines.count() + nSelectorLines) * fontHeight;
             // END KGU#453 2017-11-01
             // END KGU#172 2016-04-01
-        	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
+            // START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
             rect0.bottom += commentRect.bottom;
             // END KGU#227 2016-07-31
             // START KGU#136 2016-03-01: Bugfix #97
@@ -380,12 +383,12 @@ public class Case extends Element implements IFork
 
             fullWidth = 0;
             maxHeight = 0;
-    		// START KGU#401 2017-05-17: Issue #405
+            // START KGU#401 2017-05-17: Issue #405
             int rotatedWidth = 0;
             int rotatedHeight = 0;
             Vector<Integer> rotX0Branches = new Vector<Integer>();
             Vector<Boolean> rotFlags = new Vector<Boolean>();
-    		// END KGU#401 217-05-17
+            // END KGU#401 217-05-17
 
             if (qs.size() > 0)
             {
@@ -417,7 +420,7 @@ public class Case extends Element implements IFork
             	}
             }
 
-    		// START KGU#401 2017-05-17: Issue #405            
+            // START KGU#401 2017-05-17: Issue #405            
             if (caseShrinkByRot != 0 && nBranches > caseShrinkByRot && rotatedWidth < fullWidth) {
             	x0Branches = rotX0Branches;
             	fullWidth = rotatedWidth;
@@ -426,11 +429,11 @@ public class Case extends Element implements IFork
             		qs.get(i).setRotated(rotFlags.get(i));
             	}
             }
-    		// END KGU#401 217-05-17
+            // END KGU#401 217-05-17
             rect0.right = Math.max(rect0.right, fullWidth);
             rect0.bottom = rect0.bottom + maxHeight;
 
-    		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+            // START KGU#516 2018-04-04: Issue #529 - reduced critical section
             this.rect0 = rect0;
             this.commentRect = commentRect;
             this.x0Branches = x0Branches;
@@ -438,21 +441,27 @@ public class Case extends Element implements IFork
             this.textWidths = textWidths;
             this.fullWidth = fullWidth;
             // END KGU#516 2018-04-04
-            // START KGU#136 2016-03-01: Bugfix #97
-            isRectUpToDate = true;
+            // START KGU#136 2016-03-01: Bugfix #97  --> draw()
+            isRect0UpToDate = true;
             // END KGU#136 2016-03-01
             return rect0;
     }
 
-    public void draw(Canvas _canvas, Rect _top_left)
+    public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
+    	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+    	if (!checkVisibility(_viewport, _top_left)) { return; }
+    	// END KGU#502/KGU#524/KGU#553 2019-03-13
     	if(isCollapsed(true)) 
     	{
-    		Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+    		Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+    		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+    		wasDrawn = true;
+    		// END KGU#502/KGU#524/KGU#553 2019-03-14
     		return;
     	}
     	// START KGU#172 2016-04-01: Bugfix #145
-    	boolean isSwitchMode = this.isSwitchTextCommentMode();
+    	boolean isSwitchMode = isSwitchTextCommentMode();
     	// END KGU#172 2016-04-01
     	//boolean isHighlight = Element.getRoot(this).highlight;
 
@@ -460,10 +469,10 @@ public class Case extends Element implements IFork
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
     	Color drawColor = getFillColor();
     	// END KGU 2015-10-13
-		// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
-		//FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
-		// END KGU#494 2018-09-11
+    	// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+    	//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+    	int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+    	// END KGU#494 2018-09-11
 
     	Canvas canvas = _canvas;
     	canvas.setBackground(drawColor);
@@ -539,14 +548,14 @@ public class Case extends Element implements IFork
 //    			xStart = Math.min(xStart, x - commentRect.right/2);
 //    		}
     		this.writeOutCommentLines(_canvas,
-    		    	// START KGU#435 2017-10-22: Enh. #128 revised - triangle no longer includes comment
+    				// START KGU#435 2017-10-22: Enh. #128 revised - triangle no longer includes comment
     				//xStart,
     				//true, false);
     				//myrect.top + E_PADDING / 3,
     				myrect.left + E_PADDING / 2,
     				myrect.top + E_PADDING / 2,
     				true);
-    		    	// END KGU#435 2017-10-22
+    		// END KGU#435 2017-10-22
     	}
     	// END KGU#227 2016-07-31
 
@@ -583,14 +592,14 @@ public class Case extends Element implements IFork
     			// START KGU#480 2018-01-21: Enh. #490
     			//text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
     			String discr = unbrokenText.get(0);	// Text can't be empty, see setText()
-    	    	if (Element.E_APPLY_ALIASES) {
+    			if (Element.E_APPLY_ALIASES) {
     				discr = Element.replaceControllerAliases(discr, true, Element.E_VARHIGHLIGHT);
     			}
     			text = StringList.explode(discr, SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21
     		}
     		// END KGU#354 2017-11-01
-      		int divisor = 2;
+    		int divisor = 2;
     		if (nLines > 1 && hasDefaultBranch) divisor = nLines;
     		for (int ln = 0; ln < text.count(); ln++)
     		{
@@ -602,15 +611,16 @@ public class Case extends Element implements IFork
     			{
     				xStart = Math.min(xStart, x - textWidth / divisor);
     			}
-    	  		writeOutVariables(canvas,
-        				xStart,
-        				// START KGU#227 2016-07-31: Enh. #128 - consider comment
-        				//myrect.top + E_PADDING / 3 + (ln + 1) * fontHeight,
-        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fontHeight,
-        				// END KGU#227 2016-07-31
-        				text.get(ln), this
-        				);
-        			
+    			writeOutVariables(canvas,
+    					xStart,
+    					// START KGU#227 2016-07-31: Enh. #128 - consider comment
+    					//myrect.top + E_PADDING / 3 + (ln + 1) * fontHeight,
+    					myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fontHeight,
+    					// END KGU#227 2016-07-31
+    					text.get(ln), this,
+    					_inContention
+    					);
+
     		}
     		// END KGU#172 2016-04-01
 
@@ -625,6 +635,9 @@ public class Case extends Element implements IFork
     		// END KGU#435 2017-10-22
     		// END KGU#156 2016-03-11
 
+    		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+    		wasDrawn = true;
+    		// END KGU#502/KGU#524/KGU#553 2019-03-14
     	}
 
 
@@ -660,9 +673,9 @@ public class Case extends Element implements IFork
     		// START KGU#453 2017-11-01 - We should have calculated this already
     		//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
     		//lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
-      		lineWidth += Math.max(rtt.right, textWidths[i]);
-      		// END KGU#453 2017-11-01
-      		// END KGU#91 2015-12-01
+    		lineWidth += Math.max(rtt.right, textWidths[i]);
+    		// END KGU#453 2017-11-01
+    		// END KGU#91 2015-12-01
     	}
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
@@ -709,11 +722,11 @@ public class Case extends Element implements IFork
     		canvas.lineTo(bx, by);
     		canvas.lineTo(myrect.right, ay);
     	}
-		// START KGU#277 2016-10-13: Enh. #270
-		if (this.disabled) {
-			canvas.hatchRect(myrect, 5, 10);
-		}
-		// END KGU#277 2016-10-13
+    	// START KGU#277 2016-10-13: Enh. #270
+    	if (this.disabled) {
+    		canvas.hatchRect(myrect, 5, 10);
+    	}
+    	// END KGU#277 2016-10-13
 
 
     	// draw children
@@ -736,7 +749,7 @@ public class Case extends Element implements IFork
 
     		// FIXME
     		//myrect.bottom = _top_left.bottom;
-    		for(int i = 0; i < count ; i++)
+    		for (int i = 0; i < count ; i++)
     		{
     			// Should already have been cached, so it won't cost time
     			rtt = qs.get(i).prepareDraw(_canvas);
@@ -757,7 +770,7 @@ public class Case extends Element implements IFork
     			}
 
     			// draw child
-    			((Subqueue) qs.get(i)).draw(_canvas,myrect);
+    			((Subqueue) qs.get(i)).draw(_canvas, myrect, _viewport, _inContention);
 
     			// draw criterion text (selector)
 				// START KGU#453 2017-11-01: Cached textwidths contained padding
@@ -771,18 +784,19 @@ public class Case extends Element implements IFork
     			// START KGU#480 2018-01-21: Enh. #490
     			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
     			String selectors = unbrokenText.get(i+1);
-    	    	if (Element.E_APPLY_ALIASES) {
+    			if (Element.E_APPLY_ALIASES) {
     				selectors = Element.replaceControllerAliases(selectors, true, Element.E_VARHIGHLIGHT);
     			}
-    	    	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
+    			String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
     			// END KGU#480 2018-01-21
     			for (int j = 0; j < brokenLine.length; j++) {
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
     						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fontHeight,
-    						brokenLine[j], this);
+    						brokenLine[j], this,
+    						_inContention);
     			}
-				// END KGU#354 2017-11-01
+    			// END KGU#354 2017-11-01
 
     			// draw bottom up line
     			if ((i != qs.size()-2) && (i != count-1))
@@ -1086,7 +1100,7 @@ public class Case extends Element implements IFork
     public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
     {
     	String[] relevantKeywords = getRelevantParserKeys();
-    	if (text.count() > 0)
+    	if (!text.isEmpty())
     	{
     		text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
     		// START KGU#453 2017-11-02: Issue #447
@@ -1129,4 +1143,22 @@ public class Case extends Element implements IFork
 	}
 	// END KGU 2017-10-21
 
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = super.getMaxLineLength(false);
+		if (_includeSubstructure) {
+			for (Subqueue sq: this.qs) {
+				maxLen = Math.max(maxLen, sq.getMaxLineLength(true));
+			}
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

@@ -50,6 +50,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2019-03-17      Issue #56: Accordng to the user guide, Forever may not have a breakpoint
  *
  ******************************************************************************************************
  *
@@ -60,6 +63,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 
@@ -117,7 +121,7 @@ public class Forever extends Element implements ILoop {
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 		
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
@@ -125,11 +129,11 @@ public class Forever extends Element implements ILoop {
 		{
 			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
 			// START KGU#136 2016-03-01: Bugfix #97
-			isRectUpToDate = true;
+			isRect0UpToDate = true;
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
-            
+		
 		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
 		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
 		//rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
@@ -155,24 +159,31 @@ public class Forever extends Element implements ILoop {
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		this.rect0 = rect0;
 		this.pt0Body = pt0Body;
-        // END KGU#516 2018-04-04
+		// END KGU#516 2018-04-04
 		// START KGU#227 2016-07-30: Has not been done by Instruction
-		isRectUpToDate = true;
+		isRect0UpToDate = true;
 		// END KGU#227 2016-07-30
 		
 		return rect0;
 	}
 	
-	public void draw(Canvas _canvas, Rect _top_left)
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
+
 		if(isCollapsed(true)) 
 		{
-			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+			Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
+			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+			wasDrawn = true;
+			// END KGU#502/KGU#524/KGU#553 2019-03-14
 			return;
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible to Instruction
-		Instruction.draw(_canvas, _top_left, this.getText(false), this);
+		Instruction.draw(_canvas, _top_left, this.getText(false), this, _inContention);
 		// END KGU#227 2016-07-30
 		
 		// draw children
@@ -184,7 +195,10 @@ public class Forever extends Element implements ILoop {
 		myrect.top += pt0Body.y;
 		// END KGU#227 2016-07-30
 		myrect.bottom -= E_PADDING/*+1*/;	// KGU 2016-04-24: +1 led to line of double thickness
-		q.draw(_canvas,myrect);
+		q.draw(_canvas, myrect, _viewport, _inContention);
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 	
 	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
@@ -278,6 +292,14 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#43/KGU#686 2019-03-17: Issue #56 Breakpoint support denied
+	@Override
+	public void toggleBreakpoint()
+	{
+		// Forever itself may never have a breakpoint!
+		breakpoint = false;
+	}
+
 	// START KGU#117 2016-03-07: Enh. #77
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
@@ -340,7 +362,11 @@ public class Forever extends Element implements ILoop {
 		return this.q;
 	}
 	// END KGU 2015-11-30
-	
+	@Override
+	public Element getLoop() {
+		return this;
+	}
+
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
@@ -390,4 +416,20 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU 2017-10-21
 
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		if (_includeSubstructure) {
+			maxLen = Math.max(maxLen, this.q.getMaxLineLength(true));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

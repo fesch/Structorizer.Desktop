@@ -21,9 +21,9 @@ package lu.fisch.structorizer.locales;
 
 /******************************************************************************************************
  *
- *      Author:         kay
+ *      Author:         Kay Gürtzig
  *
- *      Description:    Abstract class for all Elements.
+ *      Description:    Event class to notify a locale (language) change.
  *
  ******************************************************************************************************
  *
@@ -31,7 +31,7 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      kay       08.10.2018      First Issue
+ *      Kay Gürtzig     2018-10-08      First Issue
  *
  ******************************************************************************************************
  *

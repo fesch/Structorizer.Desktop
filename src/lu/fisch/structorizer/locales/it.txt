@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -48,27 +48,28 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Andrea Maiani   2009.12.01      Created
- *      Kay Gürtzig     2015.10.06      Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
- *      Kay Gürtzig     2015.10.14      InputBox-specific part enhanced
- *      Kay Gürtzig     2015.10.14      FOR-specific part enhanced and Arranger buttons added
- *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added   
- *      Kay Gürtzig     2016.07.27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
- *      Andrea Maiani   2016.08.01      Updated
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22      Bugfix #241: Entries for InputBox and InputBoxFor finally revised
+ *      Andrea Maiani   2009-12-01      Created
+ *      Kay Gürtzig     2015-10-06      Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
+ *      Kay Gürtzig     2015-10-14      InputBox-specific part enhanced
+ *      Kay Gürtzig     2015-10-14      FOR-specific part enhanced and Arranger buttons added
+ *      Kay Gürtzig     2016-01-21      Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added   
+ *      Kay Gürtzig     2016-07-27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Andrea Maiani   2016-08-01      Updated
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13      Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22      Bugfix #241: Entries for InputBox and InputBoxFor finally revised
  *                                      AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.10.11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016-10-11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
  *                                      Enh. #268: Sub-section OutputConsole added
- *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
- *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
- *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2017.12.16      Element name place holders introduced
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
- *      Kay Gürtzig     2018.08.03      Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig     2016-11-08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
+ *      Kay Gürtzig     2016-11-10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
+ *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017-12-16      Element name place holders introduced
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2018-08-03      Enh. #577: OutputConsole keys renamed and new messages added
+ *      Kay Gürtzig     2019-06-16      Enh. #373: Translations for Find & Replace dialog added 
  *
  ******************************************************************************************************
  *
@@ -104,6 +105,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -120,8 +122,8 @@ Menu.menuFileSave.text=Salva
 Menu.menuFileSaveAs.text=Salva con nome...
 Menu.menuFileExport.text=Esporta
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Immagine ...
-Menu.menuFileExportCode.text=Codice ...
+Menu.menuFileExportPicture.text=Immagine
+Menu.menuFileExportCode.text=Codice
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=
 Menu.menuFileExportPictureEMF.text=
@@ -135,7 +137,7 @@ Menu.menuFileImport.text=Importa
 Menu.menuFileImportCode.text=Codice ...
 Menu.menuFilePrint.text=Stampa ...
 Menu.menuFileArrange.text=Collocare in Arranger
-Menu.menuFileTranslator.text=
+Menu.menuFileTranslator.text=Traduttore ...
 Menu.menuFileQuit.text=Esci
 // Menu "Edit"
 Menu.menuEdit.text=Modifica
@@ -146,6 +148,7 @@ Menu.menuEditRedo.text=Ripeti
 Menu.menuEditCut.text=Taglia
 Menu.menuEditCopy.text=Copia
 Menu.menuEditPaste.text=Incolla
+Menu.menuEditFindReplace.text=Ricercare/Sostituire ...
 Menu.menuEditCopyDiagramPNG.text=Copia immagine PNG
 Menu.menuEditCopyDiagramEMF.text=Copia immagine EMF
 // Menu "Diagram"
@@ -166,6 +169,7 @@ Menu.menuDiagramAddBeforeForever.text=Ciclo @{Forever}
 Menu.menuDiagramAddBeforeCall.text=@{Call}
 Menu.menuDiagramAddBeforeJump.text=@{Jump}
 Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=@{Try}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Dopo
 // Submenus for adding Elements "After"
@@ -179,17 +183,20 @@ Menu.menuDiagramAddAfterForever.text=Ciclo @{Forever}
 Menu.menuDiagramAddAfterCall.text=@{Call}
 Menu.menuDiagramAddAfterJump.text=@{Jump}
 Menu.menuDiagramAddAfterPara.text=@{Parallel}
+Menu.menuDiagramAddAfterTry.text=@{Try}
 Menu.menuDiagramEdit.text=Modifica
 Menu.menuDiagramDelete.text=Cancella
 Menu.menuDiagramMoveUp.text=Sposta in alto
 Menu.menuDiagramMoveDown.text=Sposta in basso
 Menu.menuDiagramTransmute.text=Trasmuta
+Menu.menuDiagramOutsource.text=Estrarre subroutine ...
 Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
+Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagramma senza comice?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
@@ -207,7 +214,9 @@ Menu.menuPreferencesColors.text=Colori ...
 Menu.menuPreferencesOptions.text=Strutture ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analizzatore ...
+Menu.menuPreferencesSaving.text=Archiviazione ...
 Menu.menuPreferencesExport.text=Esporta ...
+Menu.menuPreferencesImport.text=Importa ...
 Menu.menuPreferencesLanguage.text=Lingua
 Menu.menuPreferencesLanguageItems.en.text=Inglese
 Menu.menuPreferencesLanguageItems.de.text=Tedesco
@@ -231,10 +240,11 @@ Menu.menuPreferencesWheel.text=Rotella del mouse
 Menu.menuPreferencesWheelCollapse.text=Usa la rotella del mouse per collassare
 Menu.menuPreferencesWheelZoom.text=Invertire lo zoom a utilizzare ctrl + rotella
 
-Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
-Menu.menuPreferencesSaveAll.text=Salva
+Menu.menuPreferencesSave.text=Salva o carica ...
+Menu.menuPreferencesSaveAll.text=Salva adesso
 Menu.menuPreferencesSaveDump.text=Salva su file ...
 Menu.menuPreferencesSaveLoad.text=Carica da file ...
+Menu.menuPreferencesSaveRestore.text=Restaurare ultimo backup
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
@@ -286,6 +296,10 @@ Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Si, modo ridotto
+Menu.lblNormal.text=No, modo regolare
 
 // Error messages for analyser
 Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "%1 ► %2".
@@ -331,7 +345,8 @@ Menu.error17.text=Rischio consistente dovuto all'accesso simultaneo della variab
 Menu.error18.text=
 Menu.error19_1.text=
 Menu.error19_2.text=
-Menu.error20.text=
+Menu.error20_1.text=
+Menu.error20_2.text=
 Menu.error21.text=
 Menu.error22_1.text=
 Menu.error22_2.text=
@@ -382,9 +397,12 @@ Editor.btnAfterCall.tooltip=Inserisci una nuova @{Call} dopo (+shift: prima) l'e
 Editor.btnAfterJump.tooltip=Inserisci un nuovo @{Jump} dopo (+shift: prima) l'elemento selezionato.
 Editor.btnAfterCase.tooltip=Inserisci una nuova @{Case} dopo (+shift: prima) l'elemento selezionato.
 Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio @{Parallel} dopo (+shift: prima) l'elemento selezionato.
+Editor.btnAfterPara.tooltip=Inserisci un nuovo blocco @{Try} dopo (+shift: prima) l'elemento selezionato.
 // undo & redo
 Editor.btnUndo.tooltip=Annulla l'ultima azione.
 Editor.btnRedo.tooltip=Ripeti l'ultima azione.
+// find & replace
+Editor.btnFindReplace.tooltip=Apri il dialogo Ricercare & Sostituire.
 // copy & paste
 Editor.btnCut.tooltip=Taglia l'elemento selezionato.
 Editor.btnCopy.tooltip=Copia l'elemento selezionato.
@@ -393,6 +411,7 @@ Editor.btnPaste.tooltip=Incolla l'elemento selezionato.
 Editor.btnUnboxed.tooltip=Cambia il stile di visualizzazione del diagramma.
 Editor.btnFunction.tooltip=Sottoprogramma (angoli arrotondati).
 Editor.btnProgram.tooltip=Programma (angoli retti).
+Editor.btnInclude.tooltip=@p (2 angoli smussati).
 // editing
 Editor.btnEdit.tooltip=Modifica l'elemento selezionato.
 Editor.btnDelete.tooltip=Cancella l'elemento selezionato.
@@ -405,8 +424,9 @@ Editor.btnArrange.tooltip=Aggiungi il diagramma al pannello Arranger
 // font
 Editor.btnFontUp.tooltip=Aumenta la dimensione del carattere.
 Editor.btnFontDown.tooltip=Diminuisci la dimensione del carattere.
-// copyright
+// copyright & help
 Editor.btnAbout.tooltip=Mostra informazioni su Structorizer.
+Editor.btnHelp.tooltip=Mostra il manuale (in inglese) nella finestra del browser.
 // colors
 Editor.btnColors.*.tooltip=Colora l'elemento selezionato con questo colore.
 // collapsing
@@ -435,6 +455,7 @@ Editor.popupAddBeforeForever.text=Ciclo @{Forever}
 Editor.popupAddBeforeCall.text=@{Call}
 Editor.popupAddBeforeJump.text=@{Jump}
 Editor.popupAddBeforePara.text=@{Parallel}
+Editor.popupAddBeforeTry.text=@{Try}
 // After
 Editor.popupAddAfter.text=Dopo
 // Submenus of "Add -> After"
@@ -448,6 +469,7 @@ Editor.popupAddAfterForever.text=Ciclo @{Forever}
 Editor.popupAddAfterCall.text=@{Call}
 Editor.popupAddAfterJump.text=@{Jump}
 Editor.popupAddAfterPara.text=@{Parallel}
+Editor.popupAddAfterTry.text=@{Try}
 // Edit
 Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
@@ -463,7 +485,6 @@ Editor.popupBreakpoint.text=Alterna breakpoint
 Editor.popupBreakTrigger.text=
 
 -----[ InputBox ]-----
-InputBox.title=
 InputBox.lblText.text=Inserisci il testo
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Commento
@@ -481,8 +502,6 @@ InputBox.lblText.text[elementType:While]=Inserisci la condicione para entrar y q
 InputBox.lblText.text[elementType:Repeat]=Inserisci la conditione para salir
 InputBox.lblText.text[elementType:Case]=Inserisci l'espressione e le costanti della @{Alternative}
 InputBox.lblText.text[elementType:Parallel]=Nummero dei rami paralleli
-InputBox.title[elementType:Root]=
-InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Inseriscire istruzioni...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Inseriscire nuova @{Alternative}...
 InputBox.title[elementType:Case,getInsertionType():insert]=Inseriscire nuova @{Case}...
@@ -561,7 +580,7 @@ About.pnlTabbed.tab.0=Personi coinvolti
 About.pnlTabbed.tab.1=Changelog
 About.pnlTabbed.tab.2=Licenzi
 About.btnOK.text=OK
-About.btnOK.tooltip=Valida la tua scelta.
+About.btnOK.tooltip=Chiude la finestra.
 
 
 -----[ FontChooser ]-----
@@ -578,26 +597,8 @@ FontChooser.cbFixPadding.text=Margine fisso (indipendente da grandezza)
 
 -----[ Colors ]-----
 Colors.title=Opzioni sui colori
-Colors.lblColors.0.text=Colore 0
-Colors.lblColors.1.text=Colore 1
-Colors.lblColors.2.text=Colore 2
-Colors.lblColors.3.text=Colore 3
-Colors.lblColors.4.text=Colore 4
-Colors.lblColors.5.text=Colore 5
-Colors.lblColors.6.text=Colore 6
-Colors.lblColors.7.text=Colore 7
-Colors.lblColors.8.text=Colore 8
-Colors.lblColors.9.text=Colore 9
-Colors.lblColors.0.tooltip=La tua scelta per il colore n° 0.
-Colors.lblColors.1.tooltip=La tua scelta per il colore n° 1.
-Colors.lblColors.2.tooltip=La tua scelta per il colore n° 2.
-Colors.lblColors.3.tooltip=La tua scelta per il colore n° 3.
-Colors.lblColors.4.tooltip=La tua scelta per il colore n° 4.
-Colors.lblColors.5.tooltip=La tua scelta per il colore n° 5.
-Colors.lblColors.6.tooltip=La tua scelta per il colore n° 6.
-Colors.lblColors.7.tooltip=La tua scelta per il colore n° 7.
-Colors.lblColors.8.tooltip=La tua scelta per il colore n° 8.
-Colors.lblColors.9.tooltip=La tua scelta per il colore n° 9.
+Colors.lblColors.*.text=Colore [#]
+Colors.lblColors.*.tooltip=La tua scelta per il colore n° [#].
 Colors.colors.*.tooltip=Clicca per editare...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Valida la tua scelta.
@@ -637,15 +638,16 @@ ParserPreferences.lblJump.tooltip=Classifica le parole chiave per le istruzioni 
 ParserPreferences.lblJumpLeave.text=Dal ciclo (o i cicli)
 ParserPreferences.lblJumpReturn.text=dalla routine
 ParserPreferences.lblJumpExit.text=dal programma
-ParserPreferences.lblInput.text=Input
+ParserPreferences.lblInput.text=Input (invio)
 ParserPreferences.lblInput.tooltip=Aggiungi la parola chiave prima dell'istruzione di input
-ParserPreferences.lblOutput.text=Output
+ParserPreferences.lblOutput.text=Output (uscita)
 ParserPreferences.lblOutput.tooltip=Aggiungi la parola chiave prima dell'istruzione di output
-ParserPreferences.chkIgnoreCase.text=Ignora parentesi
+ParserPreferences.chkIgnoreCase.text=Ignora maiuscola/minuscola
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Valida la tua scelta.
 ParserPreferences.lblErrorSign.text=Non è possibile usare il carattere ':' in nessuna stringa del parser!
-ParserPreferences.lblErrorSign2.text=La seconda stringa del ciclo @{For.TRAVERSAL} deve essere diversa da ogni altro parser token!
+ParserPreferences.lblErrorSign2.text=Parechhie parole chiave rossi entrano in conflitto! Tutti le parole chiave devono essere diversi!
+ParserPreferences.lblInputOutput.text=Istruzioni I/U
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Anteprima di stampa
@@ -671,7 +673,72 @@ ExportOptionDialoge.jLabel1.text=Per favore seleziona le opzioni che vuoi attiva
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salva le impostazioni.
 
+-----[ FindAndReplace ]-----
+FindAndReplace.title=Ricercare / Sostituire
+FindAndReplace.lblSearchPattern.text=Trova:
+FindAndReplace.lblReplacePattern.text=Sostituisci con:
+FindAndReplace.pnlMode.border=Modo
+FindAndReplace.chkCaseSensitive.text=Discernere mai./min.
+FindAndReplace.chkCaseSensitive.mnemonic=c
+FindAndReplace.chkWholeWord.text=Parola intera
+FindAndReplace.chkWholeWord.mnemonic=w
+FindAndReplace.chkRegEx.text=Espressioni regolari
+FindAndReplace.chkRegEx.mnemonic=x
+FindAndReplace.rbDown.text=V. il basso
+FindAndReplace.rbDown.mnemonic=o
+FindAndReplace.rbUp.text=V. l'alto
+FindAndReplace.rbUp.mnemonic=u
+FindAndReplace.pnlScope.border=Ambito
+FindAndReplace.cmbScope.item.0=Selezione corrente
+FindAndReplace.cmbScope.item.1=Diagramma corrente
+FindAndReplace.cmbScope.item.2=Diagramme aperti
+FindAndReplace.pnlRootTypes.border=Tipi di diagramma
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkInTexts.text=nei testi
+FindAndReplace.chkInTexts.mnemonic=t
+FindAndReplace.chkInComments.text=nei commenti
+FindAndReplace.chkInComments.mnemonic=m
+FindAndReplace.pnlElements.border=Tipi di elementi
+FindAndReplace.btnAll.text=Tutti
+FindAndReplace.btnNone.text=Nessuno
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+FindAndReplace.chkDisabled.text=Elementi disattivati
+FindAndReplace.pnlPreview.border=Contenuto
+FindAndReplace.txtText.border=Testo
+FindAndReplace.txtComm.border=Commento
+FindAndReplace.chkElementwise.text=Elemento per elemento
+FindAndReplace.chkElementwise.menmonic=e
+FindAndReplace.btnFind.text=Ricerca
+FindAndReplace.btnFind.mnemonic=n
+FindAndReplace.btnReplace.text=Sostituisci
+FindAndReplace.btnReplace.mnemonic=r
+FindAndReplace.btnReplaceFind.text=Sostituisci/Ricerca
+FindAndReplace.btnReplaceFind.mnemonic=d
+FindAndReplace.btnReplaceAll.text=Sostituisci tutti
+FindAndReplace.btnReplaceAll.mnemonic=a8
+FindAndReplace.btnReplaceAll.tooltip=Rimpiazza tutti presenze successivi del modello di ricerca nella data direziona dalla posizione attuale.
+FindAndReplace.btnClose.text=Chiudere
+FindAndReplace.msgRegexCorrupt.text=Espressione regolare «%1» sembra invalida: %2
+FindAndReplace.ttlSearchError.text=Errore di ricerca
+
 -----> Arranger
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=
 Surface.msgSaveDialogTitle.text=
@@ -756,7 +823,8 @@ ElementNames.localizedNames.8.text=ENDLESS
 ElementNames.localizedNames.9.text=Chiamata
 ElementNames.localizedNames.10.text=Salto
 ElementNames.localizedNames.11.text=Parallelo
-ElementNames.localizedNames.12.text=Diagram
+ElementNames.localizedNames.12.text=Diagramma
 ElementNames.localizedNames.13.text=Principale
 ElementNames.localizedNames.14.text=Funzione
-ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.15.text=Includibile
+ElementNames.localizedNames.16.text=Try-Catch

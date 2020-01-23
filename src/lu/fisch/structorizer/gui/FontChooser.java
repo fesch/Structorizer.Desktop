@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
  *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
  *      Kay Gürtzig     2018.09.10      Issue #508: displays current size in label if not in list, re-pack after font change
+ *      Kay Gürtzig     2018.12.19      Bugfix #650: Fix #508 had to be revised for Java functionality changes 
  *
  ******************************************************************************************************
  *
@@ -374,17 +375,47 @@ public class FontChooser extends LangDialog
 		
 		lsNames.setSelectedValue(font.getName(), true);
 		lsNames.ensureIndexIsVisible(lsNames.getSelectedIndex());
-		lsSizes.setSelectedValue("" + font.getSize(), true);
-		lsSizes.ensureIndexIsVisible(lsSizes.getSelectedIndex());
-		// START KGU#494 2018-09-10: Issue #508 (font size is not necessarily in the choice list)
-		if (lsSizes.getSelectedIndex() < 0) {
-			// (in this case the listSelectionListener won't work)
-			fontSize = font.getSize();
-			lblSizeValue.setText(" (" + fontSize + ") ");
-			lblTest.setFont(font); 
-			pack();
+		// START KGU#494 2018-12-19: Issue #508 (previous workaround doesn't work anymore for Java > 1.8)
+		//lsSizes.setSelectedValue("" + font.getSize(), true);
+		// Ensure the current font size is in the item list
+		int currentFontSize = font.getSize();
+		int indexToInsert = sizes.length;
+		for (int i = 0; i < sizes.length; i++) {
+			int itemVal = Integer.parseInt(sizes[i]);
+			if (currentFontSize == itemVal) {
+				indexToInsert = -1;
+				break;
+			}
+			else if (currentFontSize < Integer.parseInt(sizes[i])) {
+				indexToInsert = i;
+				break;
+			}
 		}
-		// END KGU#494 2018-09-10
+		if (indexToInsert >= 0) {
+			String[] newSizes = new String[sizes.length+1];
+			for (int j = 0; j < indexToInsert; j++) {
+				newSizes[j] = sizes[j];
+			}
+			newSizes[indexToInsert] = Integer.toString(currentFontSize);
+			for (int j = indexToInsert; j < sizes.length; j++) {
+				newSizes[j+1] = sizes[j];
+			}
+			lsSizes.setListData(newSizes);
+		}
+		lsSizes.setSelectedValue("" + currentFontSize, true);
+		// END KGU#494 2018-12-19
+		lsSizes.ensureIndexIsVisible(lsSizes.getSelectedIndex());
+		// START KGU#619 2018-12-19: Bugfix #650 - Old workaround should no longer be necessary
+//		// START KGU#494 2018-09-10: Issue #508 (font size is not necessarily in the choice list)
+//		if (lsSizes.getSelectedIndex() < 0) {
+//			// (in this case the listSelectionListener won't work)
+//			fontSize = currentFontSize;
+//			lblSizeValue.setText(" (" + fontSize + ") ");
+//			lblTest.setFont(font);
+//			pack();
+//		}
+//		// END KGU#494 2018-09-10
+		// END KGU#619 2018-12-19
 		
 		//cbBold.setSelected(font.isBold());
 		//cbItalic.setSelected(font.isItalic());

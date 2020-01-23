@@ -1,6 +1,6 @@
 /*
     Structorizer 
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -48,16 +48,17 @@
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      PUC-Minas       2009.08.20  First Issue
- *      PUC-Minas       2009.10.20  Revised
- *      PUC-Minas       2016.07.30  Revised
- *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
- *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      PUC-Minas       2009-08-20  First Issue
+ *      PUC-Minas       2009-10-20  Revised
+ *      PUC-Minas       2016-07-30  Revised
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
  *
  ******************************************************************************************************
  *
@@ -93,6 +94,7 @@
  *        @n  = @{Root.DT_MAIN}     ->  ElementNames.localizedNames.13.text
  *        @o  = @{Root.DT_SUB}      ->  ElementNames.localizedNames.14.text
  *        @p  = @{Root.DT_INCL}     ->  ElementNames.localizedNames.15.text
+ *        @q  = @{Try}              ->  ElementNames.localizedNames.16.text
  *
  ******************************************************************************************************/
 >>>
@@ -111,8 +113,8 @@ Menu.menuFileSaveAs.text=Salvar como ...
 Menu.menuFileExport.text=Exportar
 
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=Figura ...
-Menu.menuFileExportCode.text=Código ...
+Menu.menuFileExportPicture.text=Figura
+Menu.menuFileExportCode.text=Código
 Menu.menuFileExportPicturePNG.text= 
 Menu.menuFileExportPicturePNGmulti.text= 
 Menu.menuFileExportPictureEMF.text= 
@@ -128,6 +130,7 @@ Menu.menuFileImportCode.text=Código ...
 
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Organizar
+Menu.menuFileTranslator.text=Tradutor ...
 Menu.menuFileQuit.text=Sair
 
 // Menu "Edit"
@@ -154,31 +157,31 @@ Menu.menuDiagramAdd.text=Inserir
 Menu.menuDiagramAddBefore.text=Antes
 
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instrução
-Menu.menuDiagramAddBeforeAlt.text=alternativa (IF)
-Menu.menuDiagramAddBeforeCase.text=alternativa (CASE)
-Menu.menuDiagramAddBeforeFor.text=repetição (FOR)
-Menu.menuDiagramAddBeforeWhile.text=repetição (WHILE)
-Menu.menuDiagramAddBeforeRepeat.text=repetição (REPEAT)
-Menu.menuDiagramAddBeforeForever.text=repetição (ENDLESS)
-Menu.menuDiagramAddBeforeCall.text=CALL
-Menu.menuDiagramAddBeforeJump.text=JUMP
-Menu.menuDiagramAddBeforePara.text=Paralelo
+Menu.menuDiagramAddBeforeInst.text=@{Instruction}
+Menu.menuDiagramAddBeforeAlt.text=alternativa (@{Alternative})
+Menu.menuDiagramAddBeforeCase.text=alternativa @{Case}
+Menu.menuDiagramAddBeforeFor.text=repetição @{For}
+Menu.menuDiagramAddBeforeWhile.text=repetição @{While}
+Menu.menuDiagramAddBeforeRepeat.text=repetição @{Repeat}
+Menu.menuDiagramAddBeforeForever.text=repetição @{Forever}
+Menu.menuDiagramAddBeforeCall.text=@{Call}
+Menu.menuDiagramAddBeforeJump.text=@{Jump}
+Menu.menuDiagramAddBeforePara.text=@{Parallel}
 
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Depois
 
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instrução
-Menu.menuDiagramAddAfterAlt.text=alternativa (IF)
-Menu.menuDiagramAddAfterCase.text=alternativa (CASE)
-Menu.menuDiagramAddAfterFor.text=repetição (FOR)
-Menu.menuDiagramAddAfterWhile.text=repetição (WHILE)
-Menu.menuDiagramAddAfterRepeat.text=repetição (REPEAT)
-Menu.menuDiagramAddAfterForever.text=repetição (ENLDESS)
-Menu.menuDiagramAddAfterCall.text=CALL
-Menu.menuDiagramAddAfterJump.text=JUMP
-Menu.menuDiagramAddAfterPara.text=Paralelo
+Menu.menuDiagramAddAfterInst.text=@{Instruction}
+Menu.menuDiagramAddAfterAlt.text=alternativa (@{Alternative})
+Menu.menuDiagramAddAfterCase.text=alternativa @{Case}
+Menu.menuDiagramAddAfterFor.text=repetição @{For}
+Menu.menuDiagramAddAfterWhile.text=repetição @{While}
+Menu.menuDiagramAddAfterRepeat.text=repetição @{Repeat}
+Menu.menuDiagramAddAfterForever.text=repetição @{Forever}
+Menu.menuDiagramAddAfterCall.text=@{Call}
+Menu.menuDiagramAddAfterJump.text=@{Jump}
+Menu.menuDiagramAddAfterPara.text=@{Parallel}
 Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Apagar
 Menu.menuDiagramMoveUp.text=Para cima
@@ -230,7 +233,7 @@ Menu.menuPreferencesWheel.text=Rolagem do mouse
 Menu.menuPreferencesWheelCollapse.text=Rolagem do mouse para colapsar?
 Menu.menuPreferencesWheelZoom.text=Inverter o zoom ao usar com Ctrl?
 
-Menu.menuPreferencesSave.text=Salvar preferências ...
+Menu.menuPreferencesSave.text=Salvar u carregar preferências
 Menu.menuPreferencesSaveAll.text=Salvar
 Menu.menuPreferencesSaveDump.text=Salvar no arquivo ...
 Menu.menuPreferencesSaveLoad.text=Carregar do arquivo ...
@@ -245,7 +248,7 @@ Menu.menuDebug.mnemonic=b
 Menu.menuDebugTurtle.text=Abrir Turtleizer ...
 Menu.menuDebugExecute.text=Abrir Executor ...
 Menu.menuDebugDropBrkpts.text=Remover todos os breakpoints.
-Menu.menuDebugBreakpoint.text=Aternar breakpoint
+Menu.menuDebugBreakpoint.text=Alternar breakpoint
 Menu.menuDebugBreakTrigger.text=
 Menu.menuDebugDisable.text=
 
@@ -257,6 +260,12 @@ Menu.menuHelp.mnemonic=h
 Menu.menuHelpAbout.text=Sobre ...
 Menu.menuHelpUpdate.text=Atualizar ...
 
+// Dialog messages
+Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
+Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
+Menu.lblReduced.text=Sim, modo reduzido
+Menu.lblNormal.text=Não, modo ordinário
+
 // Error messages for analyser
 Menu.error01_1.text=AVISO: Variável de controle não detectada ...
 Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada: «%»
@@ -264,7 +273,7 @@ Menu.error01_3.text=Não é permitido modificar a variável de controle "%" dent
 Menu.error02.text=Nenhuma variação detectada nas variáveis na condição. Possível repetição infita ...
 Menu.error03_1.text=A variável «%1» ainda não recebeu valor inicial%2!
 Menu.error03_2.text=A variável «%1» pode não ter recebido valor inicial%2!
-Menu.error04.text=Não é permitido usar uma alternativa vazia (IF) sem instrução!
+Menu.error04.text=Não é permitido usar uma alternativa vazia (@{Alternative}) sem instrução!
 Menu.error05.text=A variável «%» deve ser escrita em maiúsculas!
 Menu.error06.text=O nome do programa «%» deve ser escrito em maiúsculas!
 Menu.error07_1.text=«%» não é um nome válido para um programa ou método!
@@ -282,7 +291,7 @@ Menu.error12.text=O parâmetro «%» deve iniciar-se pela letra "p" seguida por 
 Menu.error13_1.text=A função não retorna qualquer resultado!
 Menu.error13_2.text=A função pode não ter retorno!
 Menu.error13_3.text=Suas funções parecem usar vários mecanismos de retorno concorrentes entre si: «%»!
-Menu.error14_1.text=Os parâmetros da repetição (FOR) não são consistentes com o texto do cabeçalho!
+Menu.error14_1.text=Os parâmetros da repetição (@{For}) não são consistentes com o texto do cabeçalho!
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!
 Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada como palavra-chave no cabeçalho da repetição (FOR)!
 Menu.error15_1.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» ou «import <prog_name>»!
@@ -327,17 +336,17 @@ Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
 
-// InsertAfter (+shif: Before)
-Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterFor.tooltip=Inserir uma nova repetição (FOR) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterWhile.tooltip=Inserir uma nova repetição (WHILE) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição (REPEAT) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterForever.tooltip=Inserir uma nova repetição (ENDLESS) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterPara.tooltip=Inserir um novo comando paralelo (PARALLEL) após o (+shift: antes do) elemento selecionado.
+// InsertAfter (+shift: Before)
+Editor.btnAfterInst.tooltip=Inserir uma nova @{Instruction} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (@{Alternative}) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterFor.tooltip=Inserir uma nova repetição @{For} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterWhile.tooltip=Inserir uma nova repetição @{While} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição @{Repeat} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterForever.tooltip=Inserir uma nova repetição @{Forever} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterCall.tooltip=Inserir uma nova chamada (@{Call}) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterJump.tooltip=Inserir um novo desvio (@{Jump}) após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterCase.tooltip=Inserir uma nova alternativa @{Case} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterPara.tooltip=Inserir um novo comando @{Parallel} após o (+shift: antes do) elemento selecionado.
 
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
@@ -358,7 +367,7 @@ Editor.btnEdit.tooltip=Editar o elemento selecionado.
 Editor.btnDelete.tooltip=Apagar o elemento selecionado.
 Editor.btnMoveUp.tooltip=Mover o elemento selecionado uma posição para cima.
 Editor.btnMoveDown.tooltip=Mover o elemento selecionado uma posição para baixo.
-Editor.btnTransmute.tooltip=Mudar instruções para chamadas (Calls) ou desvios (Jumps), para mesclar ou separar sequências
+Editor.btnTransmute.tooltip=Mudar instruções para chamadas (CALLs) ou desvios (JUMPs), para mesclar ou separar sequências
 
 //printing
 Editor.btnPrint.tooltip=Imprimir o diagrama.
@@ -393,31 +402,31 @@ Editor.popupAdd.text=Inserir
 Editor.popupAddBefore.text=Antes
 
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Instrução
-Editor.popupAddBeforeAlt.text=alternativa (IF)
-Editor.popupAddBeforeCase.text=alternativa (CASE)
-Editor.popupAddBeforeFor.text=repetição (FOR)
-Editor.popupAddBeforeWhile.text=repetição (WHILE)
-Editor.popupAddBeforeRepeat.text=repetição (REPEAT)
-Editor.popupAddBeforeForever.text=repetição (ENDLESS)
-Editor.popupAddBeforeCall.text=CALL
-Editor.popupAddBeforeJump.text=JUMP
-Editor.popupAddBeforePara.text=Paralelo
+Editor.popupAddBeforeInst.text=@{Instruction}
+Editor.popupAddBeforeAlt.text=alternativa (@{Alternative})
+Editor.popupAddBeforeCase.text=alternativa (@{Case})
+Editor.popupAddBeforeFor.text=repetição @{For}
+Editor.popupAddBeforeWhile.text=repetição @{While}
+Editor.popupAddBeforeRepeat.text=repetição @{Repeat}
+Editor.popupAddBeforeForever.text=repetição @{Forever}
+Editor.popupAddBeforeCall.text=@{Call}
+Editor.popupAddBeforeJump.text=@{Jump}
+Editor.popupAddBeforePara.text=@{Parallel}
 
 // After
 Editor.popupAddAfter.text=Depois
 
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instrução
-Editor.popupAddAfterAlt.text=alternativa (IF)
-Editor.popupAddAfterCase.text=alternativa (CASE)
-Editor.popupAddAfterFor.text=repetição (FOR)
-Editor.popupAddAfterWhile.text=repetição (WHILE)
-Editor.popupAddAfterRepeat.text=repetição (REPEAT)
-Editor.popupAddAfterForever.text=repetição (ENDLESS)
-Editor.popupAddAfterCall.text=CALL
-Editor.popupAddAfterJump.text=JUMP
-Editor.popupAddAfterPara.text=Paralelo
+Editor.popupAddAfterInst.text=@{Instruction}
+Editor.popupAddAfterAlt.text=alternativa (@{Alternative})
+Editor.popupAddAfterCase.text=alternativa (@{Case})
+Editor.popupAddAfterFor.text=repetição @{For}
+Editor.popupAddAfterWhile.text=repetição @{While}
+Editor.popupAddAfterRepeat.text=repetição @{Repeat}
+Editor.popupAddAfterForever.text=repetição @{Forever}
+Editor.popupAddAfterCall.text=@{Call}
+Editor.popupAddAfterJump.text=@{Jump}
+Editor.popupAddAfterPara.text=@{Parallel}
 
 // Edit
 Editor.popupEdit.text=Editar
@@ -434,7 +443,8 @@ Editor.popupExpand.text=Expandir
 Editor.popupBreakpoint.text=Alternar breakpoint
 
 -----[ InputBox ]-----
-InputBox.title=
+InputBox.title[getInsertionType():insert]=Inserir elemento...
+InputBox.title[getInsertionType():update]=Editar elemento...
 InputBox.lblText.text=Favor inserir texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentário
@@ -451,6 +461,24 @@ InputBox.lblText.text[elementType:While]=Favor inserir a condição para entrar
 InputBox.lblText.text[elementType:Repeat]=Favor inserir a condição para sair
 InputBox.lblText.text[elementType:Case]=Favor inserir a expressão para escolha e as constantes  para cada caso (uma por linha)
 InputBox.lblText.text[elementType:Parallel]=Número de threads paralelas
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Inserir elemento @a ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Inserir elemento @b ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Inserir elemento @c ...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Inserir elemento @i ...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Inserir elemento @h ...
+InputBox.title[elementType:While,getInsertionType():insert]=Inserir elemento @g ...
+InputBox.title[elementType:Call,getInsertionType():insert]=Inserir elemento @j ...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Inserir elemento @k ...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Inserir elemento @l ...
+InputBox.title[elementType:Instruction,getInsertionType():update]=Editar elemento @a ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=Editar elemento @b ...
+InputBox.title[elementType:Case,getInsertionType():update]=Editar elemento @c ...
+InputBox.title[elementType:Forever,getInsertionType():update]=Editar elemento @i ...
+InputBox.title[elementType:Repeat,getInsertionType():update]=Editar elemento @h ...
+InputBox.title[elementType:While,getInsertionType():update]=Editar elemento @g ...
+InputBox.title[elementType:Call,getInsertionType():update]=Editar elemento @j ...
+InputBox.title[elementType:Jump,getInsertionType():update]=Editar elemento @k ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Editar elemento @l ...
 
 
 -----[ InputBox For ]----- 
@@ -472,33 +500,38 @@ InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip= 
 InputBoxFor.chkBreakpoint.text= 
 
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=Editar @n
+InputBoxRoot.title[elementType:Function]=Editar @o
+InputBoxRoot.title[elementType:Includable]=Editar @p
+
 -----[ Preferences ]-----
 Preferences.title=Preferências de estruturas
-Preferences.pnlAlt.border=Alternativa (IF)
+Preferences.pnlAlt.border=Alternativa (@{Alternative})
 Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Rótulo (TRUE)
 Preferences.lblAltT.tooltip=O rótulo para o lado esquerdo.
 Preferences.lblAltF.text=Rótulo (FALSE)
 Preferences.lblAltF.tooltip=O rótulo para o lado direito.
 Preferences.lblAltContent.text=Conteúdo padrão
-Preferences.lblAltContent.tooltip=O conteúdo padrão de uma alternativa (IF).
+Preferences.lblAltContent.tooltip=O conteúdo padrão de uma alternativa (@{Alternative}).
 Preferences.altPadRight.text=Ampliar FALSE
-Preferences.pnlCase.border=Alternativa (CASE)
+Preferences.pnlCase.border=Alternativa @{Case}
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Conteúdo padrão
-Preferences.lblCase.tooltip=O conteúdo padrão de uma alternativa (CASE).
-Preferences.pnlFor.border=Repetição (FOR)
+Preferences.lblCase.tooltip=O conteúdo padrão de uma alternativa @{Case}.
+Preferences.pnlFor.border=Repetição @{For}
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Conteúdo padrão
-Preferences.lblFor.tooltip=Conteúdo padrão de uma repetição (FOR).
-Preferences.pnlWhile.border=Repetição (WHILE)
+Preferences.lblFor.tooltip=Conteúdo padrão de uma repetição @{For}.
+Preferences.pnlWhile.border=Repetição @{While}
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Conteúdo padrão
-Preferences.lblWhile.tooltip=Conteúdo padrão de uma repetição (WHILE).
-Preferences.pnlRepeat.border=Repetição (REPEAT)
+Preferences.lblWhile.tooltip=Conteúdo padrão de uma repetição @{While}.
+Preferences.pnlRepeat.border=Repetição @{Repeat}
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Conteúdo padrão
-Preferences.lblRepeat.tooltip=Conteúdo padrão de uma repetição (REPEAT).
+Preferences.lblRepeat.tooltip=Conteúdo padrão de uma repetição @{Repeat}.
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Confirmar escolha.
 
@@ -507,7 +540,7 @@ About.title=About
 About.pnlTabbed.tab.0=Pessoas envolvidas
 About.pnlTabbed.tab.1=Registro de alterações
 About.btnOK.text=OK
-About.btnOK.tooltip=Confirmar escolha.
+About.btnOK.tooltip=Fechar a janela.
 
 -----[ FontChooser ]-----
 FontChooser.title=Font
@@ -540,26 +573,26 @@ ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=Prefixo para a entrada principal
 ParserPreferences.lblPost.text=Pós
 ParserPreferences.lblPost.tooltip=Sufixo para a entrada principal
-ParserPreferences.lblAlt.text=alternativa (IF)
-ParserPreferences.lblAlt.tooltip=Sequência associada à condição no cabeçalho (IF)
-ParserPreferences.lblCase.text=alternativa (CASE)
-ParserPreferences.lblCase.tooltip=Sequência associada à expressão no cabeçalho (CASE)
-ParserPreferences.lblFor.text=repetição (FOR)
-ParserPreferences.lblFor.tooltip=Sequência para separar itens no cabeçalho (FOR)
+ParserPreferences.lblAlt.text=Alternativa (@{Alternative})
+ParserPreferences.lblAlt.tooltip=Sequência associada à condição no cabeçalho (@{Alternative})
+ParserPreferences.lblCase.text=Alternativa @{Case}
+ParserPreferences.lblCase.tooltip=Sequência associada à expressão no cabeçalho @{Case}
+ParserPreferences.lblFor.text=Repetição @{For.COUNTER}
+ParserPreferences.lblFor.tooltip=Sequência para separar itens no cabeçalho @{For.COUNTER}
 ParserPreferences.lblForStep.text=Separador para a variação 
-ParserPreferences.lblForIn.text=Repetição (FOR-IN) 
-ParserPreferences.lblForIn.tooltip=Sequência para separar itens no cabeçalho (FOR-IN) 
-ParserPreferences.edtForInPre.tooltip=Deve ser igual à da repetição (FOR) (ou vazia - para o mesmo efeito). 
+ParserPreferences.lblForIn.text=Repetição @{For.TRAVERSAL} 
+ParserPreferences.lblForIn.tooltip=Sequência para separar itens no cabeçalho @{For.TRAVERSAL} 
+ParserPreferences.edtForInPre.tooltip=Deve ser igual à da repetição @{For.COUNTER} (ou vazia - para o mesmo efeito). 
 ParserPreferences.edtForInPost.tooltip=Deve ser diferente de todas as outras palavras já configuradas aqui! 
-ParserPreferences.lblWhile.text=repetição (WHILE)
-ParserPreferences.lblWhile.tooltip=equência para separar itens no cabeçalho (WHILE)
-ParserPreferences.lblRepeat.text=repetição (REPEAT)
-ParserPreferences.lblRepeat.tooltip=equência para separar itens no cabeçalho (REPEAT)
-ParserPreferences.lblJump.text=Instrução para desvio (JUMP) 
+ParserPreferences.lblWhile.text=Repetição @{While}
+ParserPreferences.lblWhile.tooltip=Sequência para separar itens no cabeçalho @{While}
+ParserPreferences.lblRepeat.text=Repetição @{Repeat}
+ParserPreferences.lblRepeat.tooltip=Sequência para separar itens no cabeçalho @{Repeat}
+ParserPreferences.lblJump.text=Instrução para desvio @{Jump}
 ParserPreferences.lblJump.tooltip=Sequências para comandos de escape de bloco. 
 ParserPreferences.lblJumpLeave.text=da repetição/de repetições 
-ParserPreferences.lblJumpReturn.text=de subprograma 
-ParserPreferences.lblJumpExit.text=de programa 
+ParserPreferences.lblJumpReturn.text=do subprograma
+ParserPreferences.lblJumpExit.text=do programa
 ParserPreferences.lblInput.text=Entrada
 ParserPreferences.lblInput.tooltip=Prefixo para instruções de entrada
 ParserPreferences.lblOutput.text=Saída
@@ -568,7 +601,8 @@ ParserPreferences.chkIgnoreCase.text=Ignorar tamanho das letras
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Confirmar sua escolha.
 ParserPreferences.lblErrorSign.text=Não é permitido usar ':' em qualquer sentença do parser!
-ParserPreferences.lblErrorSign2.text=A segunda sequência na repetição (FOR-IN) deve ser diferente de qualquer outra já usada!
+ParserPreferences.lblErrorSign2.text=As sequências vermelhas estão em conflito! As sequências deven ser diferentes!
+ParserPreferences.lblInputOutput.text=Instruçãos entrada/saída
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Imprimir Visualização
@@ -594,3 +628,42 @@ ExportOptionDialoge.chkCharsetAll.text=Listar tudo?
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar ... 
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
+
+-----[ FindAndReplace ]-----
+FindAndReplace.chkRootTypes.0.text=@n
+FindAndReplace.chkRootTypes.0.mnemonic=p
+FindAndReplace.chkRootTypes.1.text=@o
+FindAndReplace.chkRootTypes.1.mnemonic=s
+FindAndReplace.chkRootTypes.2.text=@p
+FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkElementTypes.0.text=@{Root}
+FindAndReplace.chkElementTypes.1.text=@{Instruction}
+FindAndReplace.chkElementTypes.2.text=@{Alternative}
+FindAndReplace.chkElementTypes.3.text=@{Case}
+FindAndReplace.chkElementTypes.4.text=@{For}
+FindAndReplace.chkElementTypes.5.text=@{While}
+FindAndReplace.chkElementTypes.6.text=@{Repeat}
+FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.8.text=@{Call}
+FindAndReplace.chkElementTypes.9.text=@{Jump}
+FindAndReplace.chkElementTypes.10.text=@{Parallel}
+FindAndReplace.chkElementTypes.11.text=@{Try}
+
+-----> Elements
+ElementNames.localizedNames.0.text=Instrução
+ElementNames.localizedNames.1.text=IF
+ElementNames.localizedNames.2.text=CASE
+ElementNames.localizedNames.3.text=FOR
+ElementNames.localizedNames.4.text=FOR-TO
+ElementNames.localizedNames.5.text=FOR-IN
+ElementNames.localizedNames.6.text=WHILE
+ElementNames.localizedNames.7.text=REPEAT
+ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.9.text=CALL
+ElementNames.localizedNames.10.text=JUMP
+ElementNames.localizedNames.11.text=Paralelo
+ElementNames.localizedNames.12.text=Diagrama
+ElementNames.localizedNames.13.text=Programa principal
+ElementNames.localizedNames.14.text=Subprograma
+ElementNames.localizedNames.15.text=Inclução
+ElementNames.localizedNames.16.text=TRY

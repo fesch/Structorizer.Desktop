@@ -144,7 +144,7 @@ public class BTextfile
   */
   public void write(String mystring) throws IOException
   {
-   myfile_out.write(mystring,0,mystring.length());
+   myfile_out.write(mystring, 0, mystring.length());
   }
 
  /**
@@ -153,7 +153,7 @@ public class BTextfile
   */
   public void writeln(String mystring) throws IOException
   {
-   myfile_out.write(mystring+"\r\n",0,mystring.length()+2);
+   myfile_out.write(mystring+"\r\n", 0, mystring.length()+2);
   }
 
  /**
@@ -164,11 +164,11 @@ public class BTextfile
   {
    if (eof()==false)
    {
-    Integer ibuf = new Integer(myfile_in.read());
+    Integer ibuf = Integer.valueOf(myfile_in.read());
     byte[] bbuf = new byte[1];
     bbuf[0] = ibuf.byteValue();
 
-    if ((bbuf[0]==10)||(bbuf[0]==13)) {lineend=true;myfile_in.read();}
+    if ((bbuf[0]==10)||(bbuf[0]==13)) {lineend=true; myfile_in.read();}
      else {lineend=false;}
     if ((bbuf[0]==-1)) {fileend=true;}
      else {fileend=false;}

@@ -38,43 +38,52 @@ package lu.fisch.structorizer.generators;
  *
  *      Author				Date			Description
  *      ------				----			-----------
- *      Markus Grundner     2008.06.01		First Issue based on KSHGenerator from Jan Peter Kippel
- *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig         2014.11.16      Bugfixes in operator conversion and enhancements (see comments)
- *      Kay Gürtzig         2015.10.18      Indentation logic and comment insertion revised
+ *      Markus Grundner     2008-06-01		First Issue based on KSHGenerator from Jan Peter Kippel
+ *      Bob Fisch           2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014-11-16      Bugfixes in operator conversion and enhancements (see comments)
+ *      Kay Gürtzig         2015-10-18      Indentation logic and comment insertion revised
  *                                          generateCode(For, String) and generateCode(Root, String) modified
- *      Kay Gürtzig         2015.11.02      transform methods re-organised (KGU#18/KGU#23) using subclassing,
+ *      Kay Gürtzig         2015-11-02      transform methods re-organised (KGU#18/KGU#23) using subclassing,
  *                                          Pattern list syntax in Case Elements corrected (KGU#15).
  *                                          Bugfix KGU#60 (Repeat loop was incorrectly translated).
- *      Kay Gürtzig         2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93): String literals were spoiled
- *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KGU#114): Text transformation didn't work
- *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KGU#129): Variable names handled properly,
+ *      Kay Gürtzig         2015-12-19      Enh. #23 (KGU#78): Jump translation implemented
+ *      Kay Gürtzig         2015-12-21      Bugfix #41/#68/#69 (= KGU#93): String literals were spoiled
+ *      Kay Gürtzig         2015-12-22      Bugfix #71 (= KGU#114): Text transformation didn't work
+ *      Kay Gürtzig         2016-01-08      Bugfix #96 (= KGU#129): Variable names handled properly,
  *                                          KGU#132: Logical expressions (conditions) put into ((  )).
- *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KGU#61): Support for FOR-IN loops
- *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
- *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
+ *      Kay Gürtzig         2016-03-22      Enh. #84/#135 (= KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig         2016-03-24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
+ *      Kay Gürtzig         2016-03-29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
- *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016.04.05      Enh. #153 - Export of Parallel elements had been missing
- *      Kay Gürtzig         2016.04.05      KGU#150 - provisional support for chr and ord function
- *      Kay Gürtzig         2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
- *      Kay Gürtzig         2016.09.01      Issue #234: ord and chr function code generated only if needed and allowed
- *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
- *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
- *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
- *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
- *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.04.18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
- *      Kay Gürtzig         2017.05.05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
- *      Kay Gürtzig         2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017.05.19      Issue #237: Expression transformation heuristics improved
- *      Kay Gürtzig         2017.10.05      Enh. #423: First incomplete approach to handle record variables
- *      Kay Gürtzig         2017.10.24      Enh. #423: Record variable handling accomplished for release 3.27
- *      Kay Gürtzig         2017.11.02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-05      Enh. #153 - Export of Parallel elements had been missing
+ *      Kay Gürtzig         2016-04-05      KGU#150 - provisional support for chr and ord function
+ *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
+ *      Kay Gürtzig         2016-09-01      Issue #234: ord and chr function code generated only if needed and allowed
+ *      Kay Gürtzig         2016-09-21      Bugfix #247: Forever loops were exported with a defective condition.
+ *      Kay Gürtzig         2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016-10-15      Enh. #271: Support for input with prompt
+ *      Kay Gürtzig         2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016-11-06      Issue #279: Method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig         2017-01-05      Enh. #314: File API TODO comments added  
+ *      Kay Gürtzig         2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017-04-18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
+ *      Kay Gürtzig         2017-05-05      Issue #396: function calls should better be enclosed in $(...) than in back ticks
+ *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig         2017-05-19      Issue #237: Expression transformation heuristics improved
+ *      Kay Gürtzig         2017-10-05      Enh. #423: First incomplete approach to handle record variables
+ *      Kay Gürtzig         2017-10-24      Enh. #423: Record variable handling accomplished for release 3.27
+ *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Alternative and Case elements supported
+ *      Kay Gürtzig         2019-02-15      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
+ *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürttig         2019-10-15      Bugfix #765: Private field typeMap had to be made protected
+ *      Kay Gürtzig         2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
+ *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
+ *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
  *
  ******************************************************************************************************
  *
@@ -118,6 +127,7 @@ package lu.fisch.structorizer.generators;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -135,6 +145,7 @@ import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
@@ -172,13 +183,13 @@ public class BASHGenerator extends Generator {
 		return exts;
 	}
 	
-    // START KGU 2015-10-18: New pseudo field
-    @Override
-    protected String commentSymbolLeft()
-    {
-    	return "#";
-    }
-    // END KGU 2015-10-18
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "#";
+	}
+	// END KGU 2015-10-18
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
 	/* (non-Javadoc)
@@ -201,6 +212,32 @@ public class BASHGenerator extends Generator {
 		return ". %";
 	}
 	// END KGU#351 2017-02-26
+
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
+	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		/* The only theoretical approach coming near an exception handling
+		 * would require to entangle the tried commands with && but this
+		 * doesn't work recursively. */
+		return TryCatchSupportLevel.TC_NO_TRY;
+	}
+	// END KGU#686 2019-03-18
 
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	protected StringList occurringFunctions = new StringList();
@@ -225,7 +262,32 @@ public class BASHGenerator extends Generator {
 	
 	/************ Code Generation **************/
 	
-	private HashMap<String, TypeMapEntry> typeMap = null;
+	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
+	
+	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
+	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
+	protected String getEnumDeclarator()
+	{
+		return "declare -ri ";
+	}
+	
+	/** @return the shell-specific declarator for array variables (e.g. {@code "declare -a "} for bash) */
+	protected String getArrayDeclarator()
+	{
+		return "declare -a ";
+	}
+
+	/** @return the shell-specific declarator for associative arrays (maps, e.g. {@code "declare -A "} for bash) */
+	protected String getAssocDeclarator()
+	{
+		return "declare -A ";
+	}
+	// END KGU#542 2019-12-01
+	
+	// START KGU#753 2019-10-15: Bugfix #765 had to be made protected, since KSHGenerator must initialize it as well. 
+	//private HashMap<String, TypeMapEntry> typeMap = null;
+	protected HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#753 2019-10-15 
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -300,13 +362,8 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-    	// Trim the tokens at end (just for sure)
-    	int pos0 = 0;
-    	int posx = tokens.count();
-    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-    	while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
-    	tokens.remove(posx, tokens.count());
-    	tokens.remove(0, pos0);
+		// Trim the tokens at both ends (just for sure)
+		tokens = tokens.trim();
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
@@ -357,19 +414,19 @@ public class BASHGenerator extends Generator {
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
 		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = tokens.lastIndexOf("]", posAsgnOpr-1);
-    	for (int i = 0; i < varNames.count(); i++)
-    	{
-    		String varName = varNames.get(i);
-    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		// Transform the expression right of the assignment symbol
-    		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
-    		// Transform the index expression on the left side of the assignment symbol
-    		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
-    	}
+		for (int i = 0; i < varNames.count(); i++)
+		{
+			String varName = varNames.get(i);
+			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+			// Transform the expression right of the assignment symbol
+			transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
+			// Transform the index expression on the left side of the assignment symbol
+			transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
+		}
 
 		// Position of the assignment operator may have changed now
-    	posAsgnOpr = tokens.indexOf("<-");
+		posAsgnOpr = tokens.indexOf("<-");
 		// END KGU#96 2016-01-08
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
@@ -401,11 +458,8 @@ public class BASHGenerator extends Generator {
 				}
 			}
 		}
-    	// Trim the tokens at front
-    	pos0 = 0;
-    	posx = tokens.count();
-    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-    	tokens.remove(0, pos0);
+		// Trim the tokens (at front)
+		tokens = tokens.trim();
 		// Re-combine the rval expression to a string 
 		String expr = tokens.concatenate();
 		// If the expression is a function call, then convert it to shell syntax
@@ -433,7 +487,11 @@ public class BASHGenerator extends Generator {
 			//}
 			expr = transformExpression(fct);
 			// END KGU#405 2017-05-19
-			if (posAsgnOpr > 0)
+			// START KGU 2019-12-01: An evaluation should not apply for subroutines!
+			//if (posAsgnOpr > 0)
+			if (posAsgnOpr > 0 &&
+					(this.routinePool == null || this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty()))
+			// END KGU 2019-12-01
 			{
 				// START KGU#390 2017-05-05: Issue #396
 				//expr = "`" + expr + "`";
@@ -441,9 +499,10 @@ public class BASHGenerator extends Generator {
 				// END KGU#390 2017-05-05
 			}
 		}
+		// FIXME (KGU 2019-12-01) this looks too simplistic
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
 		{
-			lval = "declare -a " + lval;
+			lval = this.getArrayDeclarator() + lval;
 			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
 			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
 			for (int i = 0; i < items.count(); i++) {
@@ -457,8 +516,11 @@ public class BASHGenerator extends Generator {
 				&& tokens.get(1).equals("{") && expr.endsWith("}")
 				// START KGU#559 2018-07-20: Enh. #  Try to fetch sufficient type info
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
-				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)))) != null) {
+				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
+			// START KGU#388 2019-11-28: Bugfix #423 - record initializations must not be separated from the declaration
+			lval = this.getArrayDeclarator() + lval;
+			// END KGU#388 2019-11-28
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
 			for (Entry<String, String> entry: recordIni.entrySet()) {
@@ -468,8 +530,15 @@ public class BASHGenerator extends Generator {
 					sepa = " ";
 				}
 			}
-			sb.append(")");
-			expr = sb.toString();
+			// START KGU#771 2019-11-24: Bugfix #783 - fallback for the case of missing struct info
+			//sb.append(")");
+			//expr = sb.toString();
+			// If the type info was available or didn't provide any content then leave expr as is
+			if (sb.length() > 0) {
+				sb.append(")");
+				expr = sb.toString();
+			}
+			// END KGU#771 2019-11-24
 		}
 		// END KGU#388 2017-10-24
 		// The following is a very rough and vague heuristics to support arithmetic expressions 
@@ -518,14 +587,36 @@ public class BASHGenerator extends Generator {
 				exprTokens.contains("*") ||
 				exprTokens.contains("/") ||
 				exprTokens.contains("%");
+		// Avoid recursive enclosing in $(...)
 		if (isArithm) {
 			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
 			exprTokens.add(" ))");
 		}
+		// START KGU#772 2019-11-24: Bugfix #784 - avoid redundant enclosing with $(...)
+		//else if (isAssigned) {
+		//	exprTokens.insert("$(", 0);
+		//	exprTokens.add(")");
+		//}
 		else if (isAssigned) {
-			exprTokens.insert("$(", 0);
-			exprTokens.add(")");
+			boolean isVarAccess =
+					exprTokens.count() == 4 &&
+					exprTokens.get(0).equals("$") &&
+					exprTokens.get(1).equals("{") &&
+					this.varNames.contains(exprTokens.get(2)) &&
+					exprTokens.get(3).equals("}") ||
+					exprTokens.count() == 1 &&
+					VAR_ACCESS_MATCHER.reset(exprTokens.get(0)).matches() &&
+					this.varNames.contains(exprTokens.get(0).substring(2, exprTokens.get(0).length()-1));
+			if (isVarAccess) {
+				exprTokens.insert("\"", 0);
+				exprTokens.add("\"");
+			}
+			else {
+				exprTokens.insert("$(", 0);
+				exprTokens.add(")");
+			}
 		}
+		// END KGU#772 2019-11-24
 		return exprTokens.concatenate();
 	}
 	protected String transformExpression(String expr, boolean isAssigned)
@@ -714,10 +805,10 @@ public class BASHGenerator extends Generator {
 		// END KGU#162 2016-03-31
 		
 
-        // START KGU#114 2015-12-22: Bugfix #71
-        //return _input.trim();
-        return intermed.trim();
-        // END KGU#114 2015-12-22
+		// START KGU#114 2015-12-22: Bugfix #71
+		//return _input.trim();
+		return intermed.trim();
+		// END KGU#114 2015-12-22
 	}
 	
 	/* (non-Javadoc)
@@ -735,9 +826,9 @@ public class BASHGenerator extends Generator {
 	
 	protected void generateCode(Instruction _inst, String _indent) {
 		
-		if(!insertAsComment(_inst, _indent)) {
+		if(!appendAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
 			StringList text = _inst.getUnbrokenText(); 
@@ -747,17 +838,37 @@ public class BASHGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);
-				// START KGU#388 2017-10-24: Enh. #423 ignore type definitions
-				if (Instruction.isTypeDefinition(line)) {
+				// START KGU#653 2019-02-15: Enh. #680 - special treatment for mult-variable input instructions
+				StringList inputItems = Instruction.getInputItems(line);
+				if (inputItems != null && inputItems.count() > 2) {
+					String prompt = inputItems.get(0);
+					if (!prompt.isEmpty()) {
+						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, disabled);
+					}
+					for (int j = 1; j < inputItems.count(); j++) {
+						String item = transform(inputItems.get(j) + " <-");
+						int posEq = item.lastIndexOf("=");
+						if (posEq > 0) {
+							item = item.substring(0, posEq);
+						}
+						inputItems.set(j, item);
+					}
+					addCode(this.getInputReplacer(false).replace("$1", inputItems.concatenate(" ", 1)), _indent, disabled);
 					continue;
 				}
-				// END KGU#388 2017-10-24
+				// END KGU#653 2019-02-15
+				// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
+				//if (Instruction.isTypeDefinition(line)) {
+				if (Instruction.isMereDeclaration(line)) {
+					continue;
+				}
+				// END KGU#388/KGU#772 2017-10-24/2019-11-24
 				String codeLine = transform(line);
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {
 					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 						if (line.contains(Executor.fileAPI_names[j] + "(")) {
-							insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+							appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 							break;
 						}
 					}
@@ -785,7 +896,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 		// START KGU#132 2016-01-08: Bugfix #96 - approach with C-like syntax
 		//code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
@@ -799,7 +910,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -847,7 +958,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent+"case "+transform(_case.getText().get(0))+" in");
@@ -866,7 +977,11 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 			// START KGU#453 2017-11-02: Issue #447
 			//addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
-			addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			StringList items = Element.splitExpressionList(unbrokenText.get(i+1).trim(), ",");
+			addCode(this.getIndent() + items.concatenate("|") + ")", _indent, disabled);
+			// END KGU#755 2019-11-08
 			// END KGU#453 2017-11-02
 			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02
@@ -895,7 +1010,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 		// END KGU 2014-11-16
 		// START KGU#30 2015-10-18: This resulted in nonsense if the algorithm was a real counting loop
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
@@ -991,7 +1106,7 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 		// START KGU#132 2016-01-08: Bugfix #96 first approach with C-like syntax (( ))
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
@@ -1004,7 +1119,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1039,11 +1154,11 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 		}
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
 		// generate the loop body twice to preserve semantics!
-		insertComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
+		appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
 		generateCode(_repeat.q, _indent);		
 		// END KGU#60 2015-11-02
 		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
@@ -1057,7 +1172,7 @@ public class BASHGenerator extends Generator {
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1093,7 +1208,7 @@ public class BASHGenerator extends Generator {
 		}
 		// END KGU#277 2016-10-14
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent + "while [ 1 ]");
@@ -1111,14 +1226,14 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-		if(!insertAsComment(_call, _indent)) {
+		if(!appendAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _call.isDisabled();
 			// END KGU#277 2016-10-14
-			for(int i=0;i<_call.getText().count();i++)
+			for (int i = 0; i < _call.getText().count(); i++)
 			{
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_call.getText().get(i)));
@@ -1129,9 +1244,9 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
-		if(!insertAsComment(_jump, _indent)) {
+		if(!appendAsComment(_jump, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _jump.isDisabled();
@@ -1153,10 +1268,10 @@ public class BASHGenerator extends Generator {
 		// START KGU#277 2016-10-14: Enh. #270
 		boolean disabled = _para.isDisabled();
 		// END KGU#277 2016-10-14
-		insertComment(_para, _indent);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment(_para, _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		String indent1 = _indent + this.getIndent();
 		String varName = "pids" + Integer.toHexString(_para.hashCode());
 		// START KGU#277 2016-10-14: Enh. #270
@@ -1179,47 +1294,72 @@ public class BASHGenerator extends Generator {
 		// START KGU#277 2016-10-14: Enh. #270
 		addCode("wait ${" + varName + "}", _indent, disabled);
 		// END KGU#277 2016-10-14
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 	}
 	// END KGU#174 2016-04-05
+	
+//	public void generateCode(Try _try, String _indent)
+//	{
+//		// TODO
+//		// That is what we might achieve
+//		{ # try
+//
+//		    command1 &&
+//		    #save your output
+//
+//		} || { # catch
+//		    # save log for exception 
+//		}
+//	}
 
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {
 		
 		// START KGU#405 2017-05-19: Issue #237
-		typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//typeMap = _root.getTypeInfo();
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
+		// START KGU#705 2019-09-23: Enh. #738
+		int line0 = code.count();
+		if (codeMap!= null) {
+			// register the triple of start line no, end line no, and indentation depth
+			// (tab chars count as 1 char for the text positioning!)
+			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
+		}
+		// END KGU#705 2019-09-23
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
 			code.add("#!/bin/bash");
 			// STARTB KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes("");
+			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 		}
 		code.add("");
 
 		// START KGU 2014-11-16
-		insertComment(_root, _indent);
+		appendComment(_root, _indent);
 		// END KGU 2014-11-16
 		String indent = _indent;
 		if (topLevel)
 		{
-			insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
+			appendComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 
 			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 			if (this.usesFileAPI) {
 				code.add(_indent);
-				insertComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				insertComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				insertComment("     syntax for automatic conversion.", _indent);
-				insertComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				insertComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				insertComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
+				appendComment("     syntax for automatic conversion.", _indent);
+				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
+				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
+				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
 			}
 			// END KGU#311 2017-01-05
 			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
@@ -1240,7 +1380,7 @@ public class BASHGenerator extends Generator {
 				if (occurringFunctions.contains("chr"))
 				{
 			code.add(indent);
-			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+			appendComment("chr() - converts decimal value to its ASCII character representation", indent);
 			code.add(indent + "chr() {");
 			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
 			code.add(indent + "}");
@@ -1249,7 +1389,7 @@ public class BASHGenerator extends Generator {
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-			insertComment("ord() - converts ASCII character to its decimal value", indent);
+			appendComment("ord() - converts ASCII character to its decimal value", indent);
 			code.add(indent + "ord() {");
 			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
 			code.add(indent + "}");
@@ -1270,10 +1410,27 @@ public class BASHGenerator extends Generator {
 			code.add(header + " {");
 			indent = indent + this.getIndent();
 			StringList paraNames = _root.getParameterNames();
-			for (int i = 0; i < paraNames.count(); i++)
+			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			//for (int i = 0; i < paraNames.count(); i++)
+			//{
+			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			//}
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			for (int i = 0; i < minArgs; i++)
 			{
 				code.add(indent + paraNames.get(i) + "=$" + (i+1));
 			}
+			for (int i = minArgs; i < paraNames.count(); i++)
+			{
+				code.add(indent + "if [ $# -lt " + (i+1) + " ]");
+				code.add(indent + "then");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				code.add(indent + "else");
+				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+				code.add(indent + "fi");
+			}
+			// END KGU#371 2019-03-08
 			// END KGU#53 2015-10-18
 		} else {				
 			code.add("");
@@ -1281,28 +1438,76 @@ public class BASHGenerator extends Generator {
 		
 		code.add("");
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
-		varNames = _root.getVarNames();
-		insertComment("TODO: Check and revise the syntax of all expressions!", _indent);
+		varNames = _root.retrieveVarNames();
+		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		code.add("");
 		// END KGU#129 2016-01-08
+		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+			TypeMapEntry type = typeEntry.getValue();
+			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+				appendEnumeratorDef(type, _indent);
+			}
+		}
+		// END KGU#542 2019-12-01
 		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
+		// FIXME: We should only do so if they won't get initialized
 		for (int i = 0; i < varNames.count(); i++) {
 			String varName = varNames.get(i);
 			TypeMapEntry typeEntry = typeMap.get(varName);
 			if (typeEntry != null && typeEntry.isRecord()) {
-				addCode("declare -A " + varName, _indent, false);
+				addCode(this.getAssocDeclarator() + varName, _indent, false);
 			}
 		}
 		// END KGU#389 2017-10-23
 		generateCode(_root.children, indent);
 		
-		if( ! _root.isProgram() ) {
+		if (_root.isSubroutine()) {
 			code.add("}");
 		}
 		
+		// START KGU#705 2019-09-23: Enh. #738
+		if (codeMap != null) {
+			// Update the end line no relative to the start line no
+			codeMap.get(_root)[1] += (code.count() - line0);
+		}
+		// END KGU#705 2019-09-23
+
 		return code.getText();
 		
 	}
+
+	// START KGU#542 2019-12-01: Enh. #739 support for enumeration types
+	/**
+	 * Generates a shell equivalent for an enumeration type by declaring the
+	 * respective set of read-only integer variables.
+	 * @param _type - the {@link TpyeMapEntry} of the enumeration type
+	 * @param _indent - the current indentation string
+	 */
+	protected void appendEnumeratorDef(TypeMapEntry _type, String _indent) {
+		StringList enumItems = _type.getEnumerationInfo();
+		appendComment("START enumeration type " + _type.typeName, _indent);
+		// In vintage BASIC, we will just generate separate variable definitions
+		int offset = 0;
+		String lastVal = "";
+		for (int i = 0; i < enumItems.count(); i++) {
+			String[] itemSpec = enumItems.get(i).split("=", 2);
+			if (itemSpec.length > 1) {
+				lastVal = itemSpec[1].trim();
+				offset = 0;
+				try {
+					int code = Integer.parseUnsignedInt(lastVal);
+					lastVal = "";
+					offset = code;
+				}
+				catch (NumberFormatException ex) {}
+			}
+			addCode(this.getEnumDeclarator() + itemSpec[0] + "=" + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, false);
+			offset++;
+		}
+		appendComment("END enumeration type "+ _type.typeName, _indent);
+	}
+	// END KGU#542 2019-12-01
 	
 }
 

@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -31,9 +31,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.04.28      Created
- *      Kay Gürtzig     2017.05.20      First usable issue
- *      Kay Gürtzig     2018.07.17      Issue #561: Statistics panel refurbished (icon labels now)
+ *      Kay Gürtzig     2017-04-28      Created
+ *      Kay Gürtzig     2017-05-20      First usable issue
+ *      Kay Gürtzig     2018-07-17      Issue #561: Statistics panel refurbished (icon labels now)
+ *      Kay Gürtzig     2018-12-30      Issue #658: Text fields for Jump keywords enabled.
+ *      Kay Gürtzig     2019-03-05      Enh. #327: Adaptation in parserPrefsButtonActionPerformed(ActionEvent)
+ *      Kay Gürtzig     2019-03-24      Enh. #56: Try elements and Throw flavour of Jump elements introduced
  *
  ******************************************************************************************************
  *
@@ -134,6 +137,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JLabel lblCalls = new JLabel(IconLoader.getIcon(58));
 	protected final JLabel lblJumps = new JLabel(IconLoader.getIcon(59));
 	protected final JLabel lblPars = new JLabel(IconLoader.getIcon(91));
+	// START KGU#686 2019-03-24: Enh. #56
+	protected final JLabel lblTries = new JLabel(IconLoader.getIcon(120));
+	// END KGU#686 2019-03-24
 	protected final JLabel lblNoOfElements = new JLabel();
 	//protected final JLabel lblNoOfPaths = new JLabel();
 	protected final JLabel lblNoOfInstrs = new JLabel();
@@ -146,6 +152,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JLabel lblNoOfCalls = new JLabel();
 	protected final JLabel lblNoOfJumps = new JLabel();
 	protected final JLabel lblNoOfPars = new JLabel();
+	// START KGU#686 2019-03-24: Enh. #56
+	protected final JLabel lblNoOfTries = new JLabel();
+	// END KGU#686 2019-03-24
 	
 	protected final JLabel lblPrefsAlt = new JLabel("IF statement");
 	protected final JLabel lblPrefsCase = new JLabel("CASE statement");
@@ -161,7 +170,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JLabel lblPrefsLeave = new JLabel("...loop");
 	protected final JLabel lblPrefsReturn = new JLabel("...routine");
 	protected final JLabel lblPrefsExit = new JLabel("...program");
-	
+	// START KGU#686 2019-03-24: Enh. #56
+	protected final JLabel lblPrefsThrow = new JLabel("on error");
+	// END KGU#686 2019-0324
 	
 	protected final JTextField txtCreatedBy = new JTextField(20);
 	protected final JTextField txtCreatedOn = new JTextField(20);
@@ -193,6 +204,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	protected final JTextField txtJumpLeave = new JTextField(10);
 	protected final JTextField txtJumpReturn = new JTextField(10);
 	protected final JTextField txtJumpExit = new JTextField(10);
+	// START KGU#686 2019-03-24: Enh. #56
+	protected final JTextField txtJumpThrow = new JTextField(10);
+	// END KGU#686 2019-03-24
 	protected final JTextField txtCallImport = new JTextField(10);
 
 	// START KGU#363 2017-05-22: Enh. #372
@@ -271,16 +285,16 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 			public void keyTyped(KeyEvent kevt) {}
 		};
 
-        btnOk.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                okButtonActionPerformed(evt);
-            }
-        });
-        btnCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                okButtonActionPerformed(evt);
-            }
-        });
+		btnOk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				okButtonActionPerformed(evt);
+			}
+		});
+		btnCancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				okButtonActionPerformed(evt);
+			}
+		});
 
 		keyFieldMap.put("preAlt", this.txtAltPre);
 		keyFieldMap.put("postAlt", this.txtAltPost);
@@ -298,68 +312,77 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		keyFieldMap.put("preLeave", this.txtJumpLeave);
 		keyFieldMap.put("preReturn", this.txtJumpReturn);
 		keyFieldMap.put("preExit", this.txtJumpExit);
+		// START KGU#686 2019-03-24: Enh. #56
+		keyFieldMap.put("preThrow", this.txtJumpThrow);
+		// END KGU#686 2019-03-24
 		keyFieldMap.put("input", this.txtInput);
 		keyFieldMap.put("output", this.txtOutput);
 
-        lblRoot.setText(root.getSignatureString(false));
-        txtFilePath.setText(root.filename == null ? "" : root.filename);
-        txtFilePath.setEditable(false);
-        txtFilePath.addKeyListener(keyListener);
-        txtShadowPath.setText(root.shadowFilepath == null ? "" : root.shadowFilepath);
-        txtShadowPath.setEditable(false);
-        txtShadowPath.addKeyListener(keyListener);
-        
-        txtCreatedBy.setText(licenseInfo.authorName);
-        txtCreatedBy.addKeyListener(keyListener);
-        txtCreatedOn.setText(root.getCreatedString());
-        txtCreatedOn.setEditable(false);
-        txtCreatedOn.addKeyListener(keyListener);
-        txtModifiedBy.setText(root.getModifiedBy());
-        txtModifiedBy.setEditable(false);
-        txtModifiedBy.addKeyListener(keyListener);
-        txtModifiedOn.setText(root.getModifiedString());
-        txtModifiedOn.setEditable(false);
-        txtModifiedOn.addKeyListener(keyListener);
-        
-    	// START KGU#363 2017-05-22: Enh. #372
-        txtOrigin.setText(licenseInfo.origin != null ? licenseInfo.origin.trim() : "");
-        // It may contain a long file path, so make it a tooltip if it isn't empty
-        txtOrigin.setToolTipText(licenseInfo.origin);
-    	txtOrigin.setEditable(false);
-        txtOrigin.addKeyListener(keyListener);
-        btnClearOrigin.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                clearOrgButtonActionPerformed(evt);
-            }
-        });
-    	// END KGU#363 2017-05-22
+		lblRoot.setText(root.getSignatureString(false));
+		txtFilePath.setText(root.filename == null ? "" : root.filename);
+		txtFilePath.setEditable(false);
+		txtFilePath.addKeyListener(keyListener);
+		txtShadowPath.setText(root.shadowFilepath == null ? "" : root.shadowFilepath);
+		txtShadowPath.setEditable(false);
+		txtShadowPath.addKeyListener(keyListener);
 
-        final JLabel[] statLabels = new JLabel[]{
-                lblElements,
-                lblInstrs,
-                lblAlts,
-                lblCases,
-                lblFors,
-                lblWhiles,
-                lblRepeats,
-                lblForevers,
-                lblCalls,
-                lblJumps,
-                lblPars
-        };
-        final JLabel[] statNoLabels = new JLabel[]{
-                lblNoOfElements,
-                lblNoOfInstrs,
-                lblNoOfAlts,
-                lblNoOfCases,
-                lblNoOfFors,
-                lblNoOfWhiles,
-                lblNoOfRepeats,
-                lblNoOfForevers,
-                lblNoOfCalls,
-                lblNoOfJumps,
-                lblNoOfPars
-        };
+		txtCreatedBy.setText(licenseInfo.authorName);
+		txtCreatedBy.addKeyListener(keyListener);
+		txtCreatedOn.setText(root.getCreatedString());
+		txtCreatedOn.setEditable(false);
+		txtCreatedOn.addKeyListener(keyListener);
+		txtModifiedBy.setText(root.getModifiedBy());
+		txtModifiedBy.setEditable(false);
+		txtModifiedBy.addKeyListener(keyListener);
+		txtModifiedOn.setText(root.getModifiedString());
+		txtModifiedOn.setEditable(false);
+		txtModifiedOn.addKeyListener(keyListener);
+
+		// START KGU#363 2017-05-22: Enh. #372
+		txtOrigin.setText(licenseInfo.origin != null ? licenseInfo.origin.trim() : "");
+		// It may contain a long file path, so make it a tooltip if it isn't empty
+		txtOrigin.setToolTipText(licenseInfo.origin);
+		txtOrigin.setEditable(false);
+		txtOrigin.addKeyListener(keyListener);
+		btnClearOrigin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				clearOrgButtonActionPerformed(evt);
+			}
+		});
+		// END KGU#363 2017-05-22
+
+		final JLabel[] statLabels = new JLabel[]{
+				lblElements,
+				lblInstrs,
+				lblAlts,
+				lblCases,
+				lblFors,
+				lblWhiles,
+				lblRepeats,
+				lblForevers,
+				lblCalls,
+				lblJumps,
+				lblPars,
+				// START KGU#686 2019-03-24: Enh. #56
+				lblTries
+				// END KGU#686 2019-03-24
+		};
+		final JLabel[] statNoLabels = new JLabel[]{
+				lblNoOfElements,
+				lblNoOfInstrs,
+				lblNoOfAlts,
+				lblNoOfCases,
+				lblNoOfFors,
+				lblNoOfWhiles,
+				lblNoOfRepeats,
+				lblNoOfForevers,
+				lblNoOfCalls,
+				lblNoOfJumps,
+				lblNoOfPars,
+				// START KGU#686 2019-03-24: Enh. #56
+				lblNoOfTries,
+				// END KGU#686 2019-03-24
+		};
 
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
@@ -369,328 +392,334 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		pnDialogPane.setLayout(gblDialog);
 		pnDialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridy = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gbcDialog.insets = new Insets(0, 5, 5, 0);
-        gblDialog.setConstraints(lblType, gbcDialog);
-        pnDialogPane.add(lblType);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 2;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 2;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblRoot, gbcDialog);
-        pnDialogPane.add(lblRoot);
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 1;
+		gbcDialog.gridy = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gbcDialog.insets = new Insets(0, 5, 5, 0);
+		gblDialog.setConstraints(lblType, gbcDialog);
+		pnDialogPane.add(lblType);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblFilePath, gbcDialog);
-        pnDialogPane.add(lblFilePath);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 3;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 3;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtFilePath, gbcDialog);
-        pnDialogPane.add(txtFilePath);
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 2;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 2;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblRoot, gbcDialog);
+		pnDialogPane.add(lblRoot);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblShadowPath, gbcDialog);
-        pnDialogPane.add(lblShadowPath);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 3;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 3;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtShadowPath, gbcDialog);
-        pnDialogPane.add(txtShadowPath);
-        
-        // START KGU#363 2017-05-22
-        gbcDialog.gridy++;
+		gbcDialog.gridy++;
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblOrigin, gbcDialog);
-        pnDialogPane.add(lblOrigin);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 2;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 2;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtOrigin, gbcDialog);
-        pnDialogPane.add(txtOrigin);
-        
-        gbcDialog.gridx = 4;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(btnClearOrigin, gbcDialog);
-        pnDialogPane.add(btnClearOrigin);
-        
-        // END KGU#363 2017-05-22
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblFilePath, gbcDialog);
+		pnDialogPane.add(lblFilePath);
 
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 3;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 3;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtFilePath, gbcDialog);
+		pnDialogPane.add(txtFilePath);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblCreatedBy, gbcDialog);
-        pnDialogPane.add(lblCreatedBy);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtCreatedBy, gbcDialog);
-        pnDialogPane.add(txtCreatedBy);
-        
-        gbcDialog.gridx = 3;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblCreatedOn, gbcDialog);
-        pnDialogPane.add(lblCreatedOn);
-        
-        gbcDialog.gridx = 4;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtCreatedOn, gbcDialog);
-        pnDialogPane.add(txtCreatedOn);
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridy++;
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblModifiedBy, gbcDialog);
-        pnDialogPane.add(lblModifiedBy);
-        
-        gbcDialog.gridx = 2;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtModifiedBy, gbcDialog);
-        pnDialogPane.add(txtModifiedBy);
-        
-        gbcDialog.gridx = 3;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(lblModifiedOn, gbcDialog);
-        pnDialogPane.add(lblModifiedOn);
-        
-        gbcDialog.gridx = 4;
-        gbcDialog.gridwidth = 1;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 1;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(txtModifiedOn, gbcDialog);
-        pnDialogPane.add(txtModifiedOn);
-        
-        //================= COPYRIGHTS =================
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblShadowPath, gbcDialog);
+		pnDialogPane.add(lblShadowPath);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 4;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 4;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gbcDialog.insets.left = 0;
-        gbcDialog.insets.right = 0;
-        gblDialog.setConstraints(pnCopyrights, gbcDialog);
-        pnDialogPane.add(pnCopyrights);
-        
-        {
-        	pnCopyrights.setBorder(new TitledBorder("Copyrights"));
-        	pnCopyrights.setLayout(new GridLayout(0, 2, 5, 1));
-        	
-        	this.btnShowLicense.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    licButtonActionPerformed(evt);
-                }
-            });
-    		cbLicenseName = new JComboBox<String>();
-    		cbLicenseName.setToolTipText("Select an available license from the personal license pool or the current one to edit it.");
-        	this.updateLicenseChoice();
-        	    		
-    		pnCopyrights.add(btnShowLicense);
-    		pnCopyrights.add(cbLicenseName);
-        }
-        
-        //================= STATISTICS =================
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 3;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 3;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtShadowPath, gbcDialog);
+		pnDialogPane.add(txtShadowPath);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 4;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 4;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(pnStatistics, gbcDialog);
-        pnDialogPane.add(pnStatistics);
-        
-        {
-            Integer[] statistics = root.getElementCounts();
-            int nElements = 0;
-            for (int i = 0; i < statistics.length; i++) {
-            	nElements += statistics[i];
-            	statNoLabels[i + 1].setText(statistics[i].toString());
-            	statNoLabels[i + 1].setHorizontalAlignment(JLabel.CENTER);
-            }
-            lblNoOfElements.setText(Integer.toString(nElements));
-            lblNoOfElements.setHorizontalAlignment(JLabel.CENTER);
+		// START KGU#363 2017-05-22
+		gbcDialog.gridy++;
 
-            pnStatistics.setBorder(new TitledBorder("Statistics"));
-        	pnStatistics.setLayout(new GridLayout(0, statLabels.length, 0, 1));
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblOrigin, gbcDialog);
+		pnDialogPane.add(lblOrigin);
 
-        	for (JLabel label: statLabels) {
-        		pnStatistics.add(label);
-        	}
-        	for (JLabel label: statNoLabels) {
-        		pnStatistics.add(label);
-        	}
-        	
-        	// TODO: Add some software complexity measures!
-        }
-        
-        //================= KEYWORD SET =================
-        
-        gbcDialog.gridy++;
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 2;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 2;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtOrigin, gbcDialog);
+		pnDialogPane.add(txtOrigin);
 
-        gbcDialog.gridx = 1;
-        gbcDialog.gridwidth = 4;
-        gbcDialog.gridheight = 1;
-        gbcDialog.fill = GridBagConstraints.BOTH;
-        gbcDialog.weightx = 4;
-        gbcDialog.weighty = 1;
-        gbcDialog.anchor = GridBagConstraints.NORTH;
-        gblDialog.setConstraints(pnKeywordSet, gbcDialog);
-        pnDialogPane.add(pnKeywordSet);
-        
-        {
-        	JComponent[] keyComponents = new JComponent[] {
-        			this.btnParserPrefs, this.lblPrefsPre,	this.lblPrefsPost,	this.lblPrefsMore,
-        			this.lblPrefsAlt,	this.txtAltPre,		this.txtAltPost,	null,
-        			this.lblPrefsCase,	this.txtCasePre,	this.txtCasePost,	null,
-        			this.lblPrefsFor,	this.txtForPre,		this.txtForPost,	this.txtForStep,
-        			this.lblPrefsForIn,	this.txtForInPre,	this.txtForInPost,	null,
-        			this.lblPrefsWhile,	this.txtWhilePre,	this.txtWhilePost,	null,
-        			this.lblPrefsRepeat,this.txtRepeatPre,	this.txtRepeatPost,	null,
-//        			this.lblPrefsJump, 	this.lblPrefsLeave,	this.lblPrefsReturn,	this.lblPrefsExit,
-//        			null, 				this.txtJumpLeave,	this.txtJumpReturn,	this.txtJumpExit,
-        			this.lblPrefsIO,	this.txtInput,		this.txtOutput,		null
-        	};
-        	
-        	pnKeywordSet.setLayout(new GridLayout(0, 4, 5, 0));
-        	pnKeywordSet.setBorder(new TitledBorder("Cached differing keyword set"));
+		gbcDialog.gridx = 4;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(btnClearOrigin, gbcDialog);
+		pnDialogPane.add(btnClearOrigin);
 
-        	this.btnParserPrefs.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    parserPrefsButtonActionPerformed(evt);
-                }
-            });
-        	
-        	for (JComponent comp: keyComponents) {
-        		if (comp == null) {
-        			pnKeywordSet.add(new JLabel(""));
-        		}
-        		else {
-        			if (comp instanceof JTextField) {
-        				comp.setEnabled(false);
-        				//((JTextField)comp).setEditable(false);
-        			}
-        			pnKeywordSet.add(comp);
-        		}
-        	}
-            this.updateKeywordDisplay();
-        	
-        }
-        
-        //================= BUTTON BAR =================
+		// END KGU#363 2017-05-22
 
-        pnButtonBar.setLayout(new BorderLayout());
-        pnButtonBar.setBorder(new EmptyBorder(12,12,12,12));
-        
-        pnButtons.add(btnCancel);
-        pnButtons.add(btnOk);
-        
-        pnButtonBar.add(pnButtons, BorderLayout.EAST);
-        
-        contentPane.add(pnDialogPane, BorderLayout.CENTER);
-        contentPane.add(pnButtonBar, BorderLayout.SOUTH);
-        
+		gbcDialog.gridy++;
+
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblCreatedBy, gbcDialog);
+		pnDialogPane.add(lblCreatedBy);
+
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtCreatedBy, gbcDialog);
+		pnDialogPane.add(txtCreatedBy);
+
+		gbcDialog.gridx = 3;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblCreatedOn, gbcDialog);
+		pnDialogPane.add(lblCreatedOn);
+
+		gbcDialog.gridx = 4;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtCreatedOn, gbcDialog);
+		pnDialogPane.add(txtCreatedOn);
+
+		gbcDialog.gridy++;
+
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblModifiedBy, gbcDialog);
+		pnDialogPane.add(lblModifiedBy);
+
+		gbcDialog.gridx = 2;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtModifiedBy, gbcDialog);
+		pnDialogPane.add(txtModifiedBy);
+
+		gbcDialog.gridx = 3;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(lblModifiedOn, gbcDialog);
+		pnDialogPane.add(lblModifiedOn);
+
+		gbcDialog.gridx = 4;
+		gbcDialog.gridwidth = 1;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 1;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(txtModifiedOn, gbcDialog);
+		pnDialogPane.add(txtModifiedOn);
+
+		//================= COPYRIGHTS =================
+
+		gbcDialog.gridy++;
+
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 4;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 4;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gbcDialog.insets.left = 0;
+		gbcDialog.insets.right = 0;
+		gblDialog.setConstraints(pnCopyrights, gbcDialog);
+		pnDialogPane.add(pnCopyrights);
+
+		{
+			pnCopyrights.setBorder(new TitledBorder("Copyrights"));
+			pnCopyrights.setLayout(new GridLayout(0, 2, 5, 1));
+
+			this.btnShowLicense.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					licButtonActionPerformed(evt);
+				}
+			});
+			cbLicenseName = new JComboBox<String>();
+			cbLicenseName.setToolTipText("Select an available license from the personal license pool or the current one to edit it.");
+			this.updateLicenseChoice();
+
+			pnCopyrights.add(btnShowLicense);
+			pnCopyrights.add(cbLicenseName);
+		}
+
+		//================= STATISTICS =================
+
+		gbcDialog.gridy++;
+
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 4;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 4;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(pnStatistics, gbcDialog);
+		pnDialogPane.add(pnStatistics);
+
+		{
+			Integer[] statistics = root.getElementCounts();
+			int nElements = 0;
+			for (int i = 0; i < statistics.length; i++) {
+				nElements += statistics[i];
+				statNoLabels[i + 1].setText(statistics[i].toString());
+				statNoLabels[i + 1].setHorizontalAlignment(JLabel.CENTER);
+			}
+			lblNoOfElements.setText(Integer.toString(nElements));
+			lblNoOfElements.setHorizontalAlignment(JLabel.CENTER);
+
+			pnStatistics.setBorder(new TitledBorder("Statistics"));
+			pnStatistics.setLayout(new GridLayout(0, statLabels.length, 0, 1));
+
+			for (JLabel label: statLabels) {
+				pnStatistics.add(label);
+			}
+			for (JLabel label: statNoLabels) {
+				pnStatistics.add(label);
+			}
+
+			// TODO: Add some software complexity measures!
+		}
+
+		//================= KEYWORD SET =================
+
+		gbcDialog.gridy++;
+
+		gbcDialog.gridx = 1;
+		gbcDialog.gridwidth = 4;
+		gbcDialog.gridheight = 1;
+		gbcDialog.fill = GridBagConstraints.BOTH;
+		gbcDialog.weightx = 4;
+		gbcDialog.weighty = 1;
+		gbcDialog.anchor = GridBagConstraints.NORTH;
+		gblDialog.setConstraints(pnKeywordSet, gbcDialog);
+		pnDialogPane.add(pnKeywordSet);
+
+		{
+			JComponent[] keyComponents = new JComponent[] {
+					this.btnParserPrefs, this.lblPrefsPre,	this.lblPrefsPost,	this.lblPrefsMore,
+					this.lblPrefsAlt,	this.txtAltPre,		this.txtAltPost,	null,
+					this.lblPrefsCase,	this.txtCasePre,	this.txtCasePost,	null,
+					this.lblPrefsFor,	this.txtForPre,		this.txtForPost,	this.txtForStep,
+					this.lblPrefsForIn,	this.txtForInPre,	this.txtForInPost,	null,
+					this.lblPrefsWhile,	this.txtWhilePre,	this.txtWhilePost,	null,
+					this.lblPrefsRepeat,this.txtRepeatPre,	this.txtRepeatPost,	null,
+					// START KGU#686 2019-03-24: Enh. #56 - This had to be reorganised for throw
+					//this.lblPrefsJump, 	this.lblPrefsLeave,	this.lblPrefsReturn,	this.lblPrefsExit,
+					//null, 				this.txtJumpLeave,	this.txtJumpReturn,	this.txtJumpExit,
+					this.lblPrefsJump, 	this.txtJumpLeave,	this.lblPrefsLeave,	null,
+					null,				this.txtJumpReturn,	this.lblPrefsReturn,	null,
+					null, 				this.txtJumpExit,	this.lblPrefsExit,	null,
+					null,				this.txtJumpThrow,	this.lblPrefsThrow,	null,
+					// END KGU#686 2019-03-24
+					this.lblPrefsIO,	this.txtInput,		this.txtOutput,		null
+			};
+
+			pnKeywordSet.setLayout(new GridLayout(0, 4, 5, 0));
+			pnKeywordSet.setBorder(new TitledBorder("Cached differing keyword set"));
+
+			this.btnParserPrefs.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					parserPrefsButtonActionPerformed(evt);
+				}
+			});
+
+			for (JComponent comp: keyComponents) {
+				if (comp == null) {
+					pnKeywordSet.add(new JLabel(""));
+				}
+				else {
+					if (comp instanceof JTextField) {
+						comp.setEnabled(false);
+						//((JTextField)comp).setEditable(false);
+					}
+					pnKeywordSet.add(comp);
+				}
+			}
+			this.updateKeywordDisplay();
+
+		}
+
+		//================= BUTTON BAR =================
+
+		pnButtonBar.setLayout(new BorderLayout());
+		pnButtonBar.setBorder(new EmptyBorder(12,12,12,12));
+
+		pnButtons.add(btnCancel);
+		pnButtons.add(btnOk);
+
+		pnButtonBar.add(pnButtons, BorderLayout.EAST);
+
+		contentPane.add(pnDialogPane, BorderLayout.CENTER);
+		contentPane.add(pnButtonBar, BorderLayout.SOUTH);
+
 		// START KGU#287 2017-01-09: Issues #81, #330
 		GUIScaler.rescaleComponents(this);
 		// END KGU#287 2017-01-09
@@ -703,7 +732,7 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		// add the KEY-listeners
 		btnOk.requestFocus(true);
 		btnOk.addKeyListener(keyListener);
-        
+		
 	}
 
 	private void updateKeywordDisplay() {
@@ -743,6 +772,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		parserPreferences.edtJumpLeave.setText(CodeParser.getKeyword("preLeave"));
 		parserPreferences.edtJumpReturn.setText(CodeParser.getKeyword("preReturn"));
 		parserPreferences.edtJumpExit.setText(CodeParser.getKeyword("preExit"));
+		// START KGU#686 2019-03-24: Enh. #56
+		parserPreferences.edtJumpThrow.setText(CodeParser.getKeyword("preThrow"));
+		// END KGU#686 2019-03-24
 		parserPreferences.edtInput.setText(CodeParser.getKeyword("input"));
 		parserPreferences.edtOutput.setText(CodeParser.getKeyword("output"));
 		parserPreferences.chkIgnoreCase.setSelected(CodeParser.ignoreCase);
@@ -763,9 +795,15 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		parserPreferences.edtJumpLeave.setEnabled(false);
 		parserPreferences.edtJumpReturn.setEnabled(false);
 		parserPreferences.edtJumpExit.setEnabled(false);
+		// START KGU#686 2019-03-24: Enh. #56
+		parserPreferences.edtJumpThrow.setEnabled(false);
+		// END KGU#686 2019-03-24
 		parserPreferences.edtInput.setEnabled(false);
 		parserPreferences.edtOutput.setEnabled(false);
 		parserPreferences.chkIgnoreCase.setEnabled(false);
+		// START KGU#307 2019-03-05: Enh. #327
+		parserPreferences.btnFromLocale.setEnabled(false);
+		// END KGU#307 2019-03-05
 
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
@@ -777,45 +815,45 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	}
 
 	protected void licButtonActionPerformed(ActionEvent evt) {
-    	File licFile = null;
-    	String licName = (String)this.cbLicenseName.getSelectedItem();
-    	if (licName != null && licName.trim().isEmpty()) {
-    		licName = null;
-    	}
-    	if (licName != null && licName.endsWith(POOL_SUFFIX)) {
-    		String fileName = LicFilter.getNamePrefix() + licName.substring(0, licName.lastIndexOf(POOL_SUFFIX)) +
-    				"." + LicFilter.acceptedExtension();
-    		File[] licFiles = Ini.getIniDirectory().listFiles(new LicFilter());
-    		for (File file: licFiles) {
-    			if (fileName.equals(file.getName())) {
-    				licFile = file;
-    				break;
-    			}
-    		}
+		File licFile = null;
+		String licName = (String)this.cbLicenseName.getSelectedItem();
+		if (licName != null && licName.trim().isEmpty()) {
 			licName = null;
-    	}
-    	String oldText = this.licenseInfo.licenseText;
-    	LicenseEditor licEditor = new LicenseEditor(this.frame, licFile, this.licenseInfo, licName);
+		}
+		if (licName != null && licName.endsWith(POOL_SUFFIX)) {
+			String fileName = LicFilter.getNamePrefix() + licName.substring(0, licName.lastIndexOf(POOL_SUFFIX)) +
+					"." + LicFilter.acceptedExtension();
+			File[] licFiles = Ini.getIniDirectory().listFiles(new LicFilter());
+			for (File file: licFiles) {
+				if (fileName.equals(file.getName())) {
+					licFile = file;
+					break;
+				}
+			}
+			licName = null;
+		}
+		String oldText = this.licenseInfo.licenseText;
+		LicenseEditor licEditor = new LicenseEditor(this.frame, licFile, this.licenseInfo, licName);
 		licEditor.addWindowListener(this);
-    	licEditor.setVisible(true);
-    	if (licFile == null && this.licenseInfo.licenseText != null
-    			&& (oldText == null || !oldText.equals(this.licenseInfo.licenseText))) {
-    		this.rootLicTextChanged = true;
-    		if (licName == null) {
-    			licName = JOptionPane.showInputDialog(this, msgEnterLicenseName.getText(),
-    					this.getTitle(), JOptionPane.WARNING_MESSAGE);
-    			if (licName != null && !licName.trim().isEmpty()) {
-    				this.licenseInfo.licenseName = licName;
-    				this.updateLicenseChoice();
-    			}
-    			else {
-    	    		this.rootLicTextChanged = false;    				
-    			}
-    		}
-    	}
+		licEditor.setVisible(true);
+		if (licFile == null && this.licenseInfo.licenseText != null
+				&& (oldText == null || !oldText.equals(this.licenseInfo.licenseText))) {
+			this.rootLicTextChanged = true;
+			if (licName == null) {
+				licName = JOptionPane.showInputDialog(this, msgEnterLicenseName.getText(),
+						this.getTitle(), JOptionPane.WARNING_MESSAGE);
+				if (licName != null && !licName.trim().isEmpty()) {
+					this.licenseInfo.licenseName = licName;
+					this.updateLicenseChoice();
+				}
+				else {
+					this.rootLicTextChanged = false;    				
+				}
+			}
+		}
 	}
 
-    private String getLicenseTextFromPool(String licenseName) {
+	private String getLicenseTextFromPool(String licenseName) {
 		String content = "";
 		String error = null;
 		BufferedReader br = null;

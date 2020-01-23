@@ -32,12 +32,13 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2016.08.01      First Issue
- *      Kay Gürtzig     2016.08.04      Issue #220: Subsection header rows shouldn't be editable
- *      Kay Gürtzig     2016.08.08      Issue #220: Detect any substantial modification in a cell
- *      Kay Gürtzig     2016.09.06      KGU#244: Opportunity to reload a saved language file to resume editing it
+ *      Bob Fisch       2016-08-01      First Issue
+ *      Kay Gürtzig     2016-08-04      Issue #220: Subsection header rows shouldn't be editable
+ *      Kay Gürtzig     2016-08-08      Issue #220: Detect any substantial modification in a cell
+ *      Kay Gürtzig     2016-09-06      KGU#244: Opportunity to reload a saved language file to resume editing it
  *                                      Cell renderer shall highlight also deleted texts as modifications
- *      Kay Gürtzig     2017.12.12      Enh. #491: Tooltip for long master texts (otherwise not completely readable)
+ *      Kay Gürtzig     2017-12-12      Enh. #491: Tooltip for long master texts (otherwise not completely readable)
+ *      Kay Gürtzig     2019-06-06      Enh. #726: Fourth column with pull-down buttons for launching more powerful editor
  *
  ******************************************************************************************************
  *
@@ -49,11 +50,16 @@ import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+
+import lu.fisch.structorizer.gui.IconLoader;
 
 /**
  * This class represents tabs for the {@link Translator}, the main component is a
@@ -77,7 +83,16 @@ public class Tab extends javax.swing.JPanel {
         
         table.setModel(new TranslatorTableModel());
         DefaultTableModel model = ((DefaultTableModel)table.getModel());
-        model.setColumnCount(3);
+        // START KGU#709 2019-06-06: Issue #726
+        //model.setColumnCount(3);
+        model.setColumnCount(4);
+        TableColumn col3 = table.getColumnModel().getColumn(3);
+        col3.setHeaderValue(" ");
+        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
+        col3.setCellEditor(new BoardButtonEditor());
+        table.getColumnModel().getColumn(3).setMaxWidth(pulldownWidth);
+        table.getColumnModel().getColumn(3).setPreferredWidth(pulldownWidth);
+        // END KGU#709 2019-06-06
         model.setRowCount(0);
         table.getColumnModel().getColumn(0).setHeaderValue("String");
         
@@ -127,6 +142,52 @@ public class Tab extends javax.swing.JPanel {
 }
 
 
+/**
+ * Specific table cell editor for the pulldown buttons in the Translator Tabs
+ * @author Kay Gürtzig
+ */
+// FIXME: This code is identical with PullDownButtonCellEditor
+@SuppressWarnings("serial")
+class BoardButtonEditor extends DefaultCellEditor {
+	protected JButton button;
+	private JTable table;
+
+	public BoardButtonEditor() {
+		super(new javax.swing.JCheckBox());
+	}
+
+	public Component getTableCellEditorComponent(JTable _table, Object _value,
+			boolean _isSelected, int _row, int _column) {
+		if (_value instanceof JButton) {
+			table = _table;
+			button = (JButton)_value;
+			button.setForeground(table.getSelectionForeground());
+			button.setBackground(table.getSelectionBackground());
+		}
+		else {
+			button = null;
+		}
+		return button;
+	}
+
+	public Object getCellEditorValue() {
+		return button;
+	}
+
+	public boolean stopCellEditing() {
+		if (button != null && table != null) {
+			button.setForeground(table.getForeground());
+			button.setBackground(table.getBackground());
+		}
+		return super.stopCellEditing();
+	}
+
+	protected void fireEditingStopped() {
+		super.fireEditingStopped();
+	}
+}
+// END KGU#709 2019-06-06
+
 class BoardTableCellRenderer extends DefaultTableCellRenderer {
 
     Color backgroundColor = getBackground();
@@ -137,31 +198,35 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
         setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        
+        // START KGU#709 2019-06-06: Issue #726 - Better editing support for long messages
+        if (value instanceof JButton) {
+            return (JButton)value;
+        }
+        // END KGU#709 2019-06-06
         TableModel model = table.getModel();
         String key = (String) model.getValueAt(row, 0);
         
         if (key!=null && key.startsWith(Locale.startOfSubSection))
         {
-        	// START KGU 2016-08-04: Issue #220
-        	if (model instanceof TranslatorTableModel)
-        	{
-        		((TranslatorTableModel) model).forbidRowEditable(row);
-        	}
-        	// END KGU 2016-08-04
+            // START KGU 2016-08-04: Issue #220
+            if (model instanceof TranslatorTableModel)
+            {
+                ((TranslatorTableModel) model).forbidRowEditable(row);
+            }
+            // END KGU 2016-08-04
             if (!isSelected)
-                    c.setBackground(Color.cyan);
+                c.setBackground(Color.cyan);
             else
-                    c.setBackground(Color.blue);
+                c.setBackground(Color.blue);
         }
         else if ((value instanceof String && ((String) value).equals("")) || (value==null))
         {
             // START KGU#244 2016-09-06: Show an explicit deletion as well
             boolean isDeleted = col == 2 && Translator.loadedLocale.valueDiffersFrom(key, (String)value);
             // END KGU#244 2016-09-06
-        	if (!isSelected)
+            if (!isSelected)
                 //c.setBackground(Color.orange);
-        	    c.setBackground(isDeleted ? Color.red : Color.orange);
+                c.setBackground(isDeleted ? Color.red : Color.orange);
             else
                 c.setBackground(Color.yellow);
         }
@@ -181,14 +246,14 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         }
         // START KGU#481 2017-12-12: Enh. #491 - long texts in the central column couldn't read completely
         if (col == 1 && value instanceof String) {
-        	int length = c.getPreferredSize().width; 
-        	int width = table.getColumnModel().getColumn(1).getWidth();
-        	if (length > width) {
-        		((JLabel)c).setToolTipText((String)value);
-        	}
-        	else {
-        		((JLabel)c).setToolTipText(null);
-        	}
+            int length = c.getPreferredSize().width; 
+            int width = table.getColumnModel().getColumn(1).getWidth();
+            if (length > width) {
+                ((JLabel)c).setToolTipText((String)value);
+            }
+            else {
+                ((JLabel)c).setToolTipText(null);
+            }
         }
         // END KGU#481 2017-12-12
         return c;

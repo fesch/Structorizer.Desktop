@@ -20,12 +20,6 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.NoSuchElementException;
-import java.util.Stack;
-import java.util.Vector;
-
-//import lu.fisch.structorizer.gui.SelectedSequence;
-
 /******************************************************************************************************
 *
 *      Author:         Kay Guertzig
@@ -38,9 +32,12 @@ import java.util.Vector;
 *
 *      Author           Date            Description
 *      ------           ----            -----------
-*      Kay Gürtzig      2015.11.23      First issue (KGU#87).
-*      Kay Gürtzig      2016.10.13      Enh. #277: Method setDisabled(boolean) added
-*      Kay Gürtzig      2017.05.30      Enh. #415: Equipped with a tree-capable Iterator class
+*      Kay Gürtzig      2015-11-23      First issue (KGU#87).
+*      Kay Gürtzig      2016-10-13      Enh. #277: Method setDisabled(boolean) added
+*      Kay Gürtzig      2017-05-30      Enh. #415: Equipped with a tree-capable Iterator class
+*      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
+*      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
+*      Kay Gürtzig      2019-10-12      Bugfix #705/2: Retrieval mistake for CASE, PARALLEL branches in getNext(boolean)
 *
 ******************************************************************************************************
 *
@@ -48,9 +45,17 @@ import java.util.Vector;
 *
 ******************************************************************************************************///
 
+import java.util.NoSuchElementException;
+import java.util.Stack;
+import java.util.Vector;
+
+//import lu.fisch.structorizer.gui.SelectedSequence;
+
 /**
+ * Interface for linear NSD element sequences (e.g. subsequences of {@link Subqueue}s).
+ * Provides typical method signatures for collections and a fully implemented specific
+ * NSD tree iterator.
  * @author Kay Gürtzig
- *
  */
 public interface IElementSequence {
 
@@ -83,7 +88,7 @@ public interface IElementSequence {
 		public Element next() {
 			Element next = this.getNext(true);
 			if (next == null) {
-				throw new NoSuchElementException("Diagram subtree exhauseted");
+				throw new NoSuchElementException("Diagram subtree exhausted");
 			}
 			return next;
 		}
@@ -95,11 +100,15 @@ public interface IElementSequence {
 		public Element previous() {
 			Element prev = this.getPrevious(true);
 			if (prev == null) {
-				throw new NoSuchElementException("Diagram subtree exhauseted");
+				throw new NoSuchElementException("Diagram subtree exhausted");
 			}
 			return prev;
 		}
 		
+		/**
+		 * @param move - if true then actually moves forward, otherwise only "peeks".
+		 * @return the next element in the iteration or null
+		 */
 		private Element getNext(boolean move) {
 			Element next = null;
 			//IElementSequence seq = current;
@@ -141,11 +150,32 @@ public interface IElementSequence {
 						}
 					}
 				}
+				// START KGU#686 2019-03-17: Enh. #56 New element class Try
+				else if (el instanceof Try) {
+					if (((Try)el).qTry.getSize() > 0) {
+						next = ((Try)el).qTry.getElement(0);
+					}
+					else if (((Try)el).qCatch.getSize() > 0) {
+						next = ((Try)el).qCatch.getElement(0);
+					}
+					else if (((Try)el).qFinally.getSize() > 0) {
+						next = ((Try)el).qFinally.getElement(0);
+					}
+				}
+				// END KGU#686 2019-03-17
 			}
-			if (next != null && move) {
-				current = (Subqueue)next.parent;
-				positions.push(0);
+			// START KGU#750 2019-10-12: Bugfix #705/2 wrong consecution in case of move = false
+			//if (next != null && move) {
+			//	current = (Subqueue)next.parent;
+			//	positions.push(0);
+			//}
+			if (next != null) {
+				if (move) {
+					current = (Subqueue)next.parent;
+					positions.push(0);
+				}
 			}
+			// END KGU#750 2019-10-12
 			// el might still be atomic, so look for a successor (tree neighbour) 
 			else if (at < current.getSize()-1) {
 				next = current.getElement(at+1);
@@ -174,13 +204,19 @@ public interface IElementSequence {
 					Vector<Subqueue> subqueues = (el instanceof Case) ? ((Case)el).qs : ((Parallel)el).qs;
 					// First identify the current subqueue
 					boolean found = false;
-					for (int i = 0; next != null && i < subqueues.size(); i++) {
+					// START KGU#688 2019-03-17: Bugfix #705 - Wrong loop condition averted search.
+					//for (int i = 0; next != null && i < subqueues.size(); i++) {
+					for (int i = 0; next == null && i < subqueues.size(); i++) {
+					// END KGU#688 2019-03-17
 						if (!found && seq == subqueues.get(i)) {
 							found = true;
 						}
 						else if (found && subqueues.get(i).getSize() > 0) {
 							seq = subqueues.get(i);
-							next = current.getElement(0);
+							// START KGU#750 2019-10-12: Bugfix #705/2
+							//next = current.getElement(0);
+							next = seq.getElement(0);
+							// END KGU#750 2019-10-12
 							if (move) {
 								while (positions.size() > level) {
 									positions.pop();
@@ -191,6 +227,32 @@ public interface IElementSequence {
 						}
 					}
 				}
+				// START KGU#686 2019-03-17: Enh. #56 new element class Try
+				else if (el instanceof Try) {
+					Subqueue[] subqueues = new Subqueue[] {((Try)el).qTry, ((Try)el).qCatch, ((Try)el).qFinally};
+					boolean found = false;	// Current child subqueue identified?
+					for (int i = 0; next == null && i < subqueues.length; i++) {
+						if (!found && seq == subqueues[i]) {
+							found = true;	// Yes, so fetch the next non-empty sister subqueue in the next cycle
+						}
+						else if (found && subqueues[i].getSize() > 0) {
+							seq = subqueues[i];
+							// START KGU#750 2019-10-12: Bugfix #705/2
+							//next = current.getElement(0);
+							next = seq.getElement(0);
+							// END KGU#750 2019-10-12
+							if (move) {
+								while (positions.size() > level) {
+									positions.pop();
+								}
+								current = seq;
+								positions.push(0);
+							}
+						}
+					}
+				}
+				// END KGU#686 2019-03-17
+				
 				if (next == null) {
 					// Entire subqueue level up
 					seq = (Subqueue)((Subqueue)seq).parent.parent;
@@ -221,6 +283,7 @@ public interface IElementSequence {
 			int level = positions.size() - 1;
 			int at = (level >= 0) ? positions.peek() : -1;
 			if (at < 0 && top.getSize() > 0) {
+				// Wrap around if in virgin state
 				return getLastInSubtree(top, top.getSize()-1, move);
 			}
 			IElementSequence seq = current;
@@ -252,6 +315,20 @@ public interface IElementSequence {
 							}
 						}
 					}
+					// START KGU#686 2019-03-17: Enh. #56 new element class Try
+					else if (el instanceof Try) {
+						boolean found = false;
+						Subqueue[] subqueues = {((Try)el).qTry, ((Try)el).qCatch, ((Try)el).qFinally};
+						for (int i = subqueues.length-1; prev == null && i >= 0; i--) {
+							if (seq == subqueues[i]) {
+								found = true;
+							}
+							else if (found && subqueues[i].getSize() > 0) {
+								prev = getLastInSubtree(subqueues[i], subqueues[i].getSize()-1, move);
+							}
+						}
+					}
+					// END KGU#686 2019-03-17
 					// Nothing found on the half stage? Then get an entire subqueue level up
 					if (prev == null) {
 						seq = (Subqueue)((Subqueue)seq).parent.parent;
@@ -307,6 +384,17 @@ public interface IElementSequence {
 						if (subqueues.get(i).getSize() > 0) {
 							el = getLastInSubtree(subqueues.get(i), subqueues.get(i).getSize()-1, move);
 						}
+					}
+				}
+				else if (el instanceof Try) {
+					if (((Try)el).qFinally.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qFinally, ((Try)el).qFinally.getSize()-1, move);
+					}
+					else if (((Try)el).qCatch.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qCatch, ((Try)el).qCatch.getSize()-1, move);
+					}
+					else if (((Try)el).qTry.getSize() > 0) {
+						el = getLastInSubtree(((Try)el).qTry, ((Try)el).qTry.getSize()-1, move);
 					}
 				}
 			}
@@ -369,7 +457,7 @@ public interface IElementSequence {
 	
 	// START KGU#324 2017-05-30: Enh. #373, #415
 	/**
-	 * Provides an iterator for the scope this IElementSequence is establishng.
+	 * Provides an iterator for the scope this IElementSequence is establishing.
 	 * @param _subtree - specifies whether the iterator is to traverse in deep or shallow mode 
 	 * @return the provided iterator
 	 */

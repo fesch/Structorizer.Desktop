@@ -231,6 +231,11 @@ public class Function
     // END KGU#332 2017-01-29
     
     // START KGU 2017-02-21: signature string uniform with Root.getSignatureString(false)
+    /**
+     * Returns a string composed of the function name and the number of arguments in parentheses,
+     * e.g. {@code "sub0815(4)"}.
+     * @return the signature string
+     */
     public String getSignatureString()
     {
     	String sigStr = null;
@@ -399,8 +404,9 @@ public class Function
     // START KGU 2016-10-16: More informative self-description
     public String toString()
     {
+    	String paramNames = this.parameters == null ? "" : this.parameters.concatenate(", ");
     	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			": " + this.getName() + "(" + this.parameters.concatenate(", ") + ")";
+    			": " + this.getName() + "(" + paramNames + ")";
     }
     // END KGU# 2016-10-16
 

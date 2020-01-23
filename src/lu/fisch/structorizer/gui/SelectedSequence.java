@@ -23,10 +23,10 @@ package lu.fisch.structorizer.gui;
 /*
  ******************************************************************************************************
  *
- *      Author:         Kay Guertzig
+ *      Author:         Kay Gürtzig
  *
  *      Description:    This class is a kind of proxy for a selected subsequence of a Subqueue.
- *						It meets some editing purposes and contains mere references.
+ *                      It meets some editing purposes and contains mere references.
  *
  ******************************************************************************************************
  *
@@ -44,6 +44,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
  *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
+ *      Kay Gürtzig     2018.10.26      Enh. #619: New method getMaxLineLength(boolean) implemented
+ *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************
  *
@@ -55,6 +57,7 @@ package lu.fisch.structorizer.gui;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
@@ -157,7 +160,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	@Override
 	public Rect prepareDraw(Canvas _canvas) {
 		// START KGU#136 2016-03-01: Bugfix #97
-		if (this.isRectUpToDate) return rect0;
+		if (this.isRect0UpToDate) return rect0;
 		// END KGU#136 2016-03-01
 		
 		rect0.left = rect0.right = rect0.top = rect0.bottom = 0;
@@ -181,7 +184,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 			rect0.bottom = fm.getHeight() + 2* (Element.E_PADDING/2);
 		}
 		
-		this.isRectUpToDate = true;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRect0UpToDate = true;
+		// END KGU#136 2016-03-01
 		return rect0;
 	}
 
@@ -189,7 +194,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#draw(lu.fisch.graphics.Canvas, lu.fisch.graphics.Rect)
 	 */
 	@Override
-	public void draw(Canvas _canvas, Rect _top_left) {
+	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention) {
+		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+		if (!checkVisibility(_viewport, _top_left)) { return; }
+		// END KGU#502/KGU#524/KGU#553 2019-03-13
 		Rect myrect;
 		Rect subrect;
 		Color drawColor = getFillColor();
@@ -218,7 +226,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 				{
 					myrect.bottom = _top_left.bottom;
 				}
-				((Subqueue) parent).getElement(i).draw(_canvas, myrect);
+				((Subqueue) parent).getElement(i).draw(_canvas, myrect, null, _inContention);
 
 				//myrect.bottom-=1;
 				myrect.top += subrect.bottom;
@@ -243,6 +251,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 
 			canvas.drawRect(_top_left);
 		}
+		// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
+		wasDrawn = true;
+		// END KGU#502/KGU#524/KGU#553 2019-03-14
 	}
 
 	// START KGU#206 2016-07-21: Bugfix #197 for enh. #158 (cursor move didn't work due to wrong coordinates)
@@ -334,10 +345,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		// START KGU#207 2016-07-21: Method will hardly ever be used. But if so then it should at least work
-		if (!this.isRectUpToDate)
+		if (!this.isRect0UpToDate)
 		{
 			rect = this.getRect();
-			this.isRectUpToDate = true;
+			this.isRect0UpToDate = true;
 		}
 		// END KGU#207 2016-07-21
 		Element res = super.getElementByCoord(_x, _y, _forSelection);		
@@ -655,4 +666,26 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 		return null;
 	}
+
+	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
+	/**
+	 * Detects the maximum text line length either on this very element 
+	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
+	 * is to be involved
+	 * @return the maximum line length
+	 */
+	public int getMaxLineLength(boolean _includeSubstructure)
+	{
+		int maxLen = 0;
+		/* If this gets called with _includeSubstructure = false then it must have
+		 * been selected on the top level. So the immediate children will have been
+		 * meant
+		 */ 
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			maxLen = Math.max(maxLen, this.getElement(i).getMaxLineLength(_includeSubstructure));
+		}
+		return maxLen;
+	}
+	// END KGU#602 2018-10-25
 }

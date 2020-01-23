@@ -20,7 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
+/**
  ******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -33,13 +33,15 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.29      First Issue
- *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
- *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
- *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
- *      Kay Gürtzig     2018.03.21      Logger introduced, two file reading sequences extracted to method readTextFile()
- *      Kay Gürtzig     2018.07.30      Bugfix #571 - about -> license also showed the changelog.txt
- *      Kay Gürtzig     2018.10.08      Issue #620: a fourth tab "Paths" added.
+ *      Bob Fisch       2007-12-29      First Issue
+ *      Kay Gürtzig     2016-11-02      Issue #81: Scaling as workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2017-01-09      Bugfix #330: Scaling done by GUIScaler
+ *      Kay Gürtzig     2018-03-21      Logger introduced, two file reading sequences extracted to method readTextFile()
+ *      Kay Gürtzig     2018-07-30      Bugfix #571 - about -> license also showed the changelog.txt
+ *      Kay Gürtzig     2018-10-08      Issue #620: a fourth tab "Paths" added.
+ *      Kay Gürtzig     2019-08-01      Issue #733: Correct representation of the installation directory (URL to UTF-8)
+ *      Kay Gürtzig     2019-08-07      Enh. #741: Paths tab now shows the complete ini file path, not just the dir path
  *
  ******************************************************************************************************
  *
@@ -47,8 +49,7 @@ package lu.fisch.structorizer.gui;
  *      - 2007.12.29 Robert Fisch
  *      	I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 /*
  * Created by JFormDesigner on Sat Dec 29 21:36:58 CET 2007
@@ -61,7 +62,6 @@ import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangTextHolder;
 
 import java.io.*;
-import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
@@ -103,7 +103,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 	// START KGU#595 2018-10-08: Issue #620
 	protected JScrollPane scrollPane4;
 	protected JTextPane txtPaths;
-	public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// START KGU#722 2019-08-07: Enh. #741
+	//public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	public LangTextHolder msgPaths = new LangTextHolder("Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// END KGU#722 2019-08-07
 	// END KGU#595 2018-10-08
 	protected JPanel buttonBar;
 	protected JButton btnOK;
@@ -342,19 +345,14 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 	 * Sets (or updates) the content of {@link #txtPaths}.
 	 */
 	private void updatePaths() {
-		URL mySource = Ini.class.getProtectionDomain().getCodeSource().getLocation();
-		String prodPath = mySource.getPath();
-		try {
-			File sourceFile = new File(prodPath);
-			if (sourceFile.exists()) {
-				prodPath = sourceFile.getAbsolutePath();
-			}
-		}
-		catch (Exception ex) {}
+		File prodDir = Ini.getInstallDirectory();
 		txtPaths.setText(msgPaths.getText().
-				replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				// START KGU#722 2019-08-07: Enh. #741
+				//replace("%1", Ini.getIniDirectory().getAbsolutePath()).
+				replace("%1", Ini.getInstance().getIniFile().getAbsolutePath()).
+				// END KGU#722 2019-08-07
 				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
-				replace("%3", prodPath));
+				replace("%3", prodDir.getAbsolutePath()));
 		txtPaths.setCaretPosition(0);
 	}
 	// END KGU#595 2018-10-08

@@ -33,16 +33,24 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2016.08.01      First Issue
- *      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
- *      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
- *      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
+ *      Bob Fisch       2016-08-01      First Issue
+ *      Kay Gürtzig     2016-09-05      Structural redesign of locale button generation (no from the Locales list)
+ *      Kay Gürtzig     2016-09-06      Opportunity to reload a saved language file to resume editing it
+ *      Kay Gürtzig     2016-09-09      Handling of unsaved changes improved, loadLocale() API modified,
  *                                      command line parameter "-test" introduced to re-allow full consistency check
- *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as DPI awareness workaround
- *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
- *      Kay Gürtzig     2017.11.20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
- *      Kay Gürtzig     2017.12.11/12   Enh. #425: Support for Find mechanism
- *      Kay Gürtzig     2017.12.18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
+ *      Kay Gürtzig     2016-11-02      Issue #81: Scaling as DPI awareness workaround
+ *      Kay Gürtzig     2016-11-09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
+ *      Kay Gürtzig     2017-11-20      Issue #400: Ensures key listeners on buttons (also preparing enh. #425)
+ *      Kay Gürtzig     2017-12-11/12   Enh. #425: Support for Find mechanism
+ *      Kay Gürtzig     2017-12-18      Enh. #425: Missing key binding for Ctrl-F added to the tabs component
+ *      Kay Gürtzig     2019-02-05      Field NSDControl disabled (isn't actually need anymore)
+ *      Kay Gürtzig     2019-03-24      Issue #712: We should at least cache the last saving folder, then we
+ *                                      ought to have look whether Local filed cachedFilename might be set on
+ *                                      saving.
+ *      Kay Gürtzig     2019-03-28      Issue #712: Further usability improvements (current directory also
+ *                                      used for loading, save button coloured together with locale button)
+ *      Kay Gürtzig     2019-06-07/08   Enh. #726: Pull-down buttons opening new TranslatorRowEditor added
+ *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
  *
  ******************************************************************************************************
  *
@@ -68,12 +76,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
@@ -88,13 +105,15 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.gui.ElementNames;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
 /**
- *
+ * Localization tool for Structorizer
  * @author robertfisch
  */
 @SuppressWarnings("serial")
@@ -109,6 +128,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     private String loadedLocaleName = null;
     public static Locale loadedLocale = null;
+    // START KGU#694 2019-03-24: Issue #712
+    private File currentDirectory = null;
+    // END KGU#694 2019-03-24
     
     // START KGU 2016-08-04: Issue #220
     // Button colour for saved but still cached modifications
@@ -119,7 +141,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     private static Translator instance = null;
     
-    private NSDController NSDControl = null;
+    //private NSDController NSDControl = null;
 
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
@@ -183,6 +205,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         headerText.setEditable(false);
         // END KGU 2016-08-04
 
+        // START KGU#709 219-06-06: Issue #726 - Improved editing of long messages
+        ImageIcon pulldownIcon = IconLoader.getIcon(80);
+        ActionListener pulldownListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                launchRowEditor(event.getSource());
+            }};
+        // END KGU#709 2019-06-06
         // loop through all sections
         ArrayList<String> sectionNames = locales.getSectionNames();
         for (int i = 0; i < sectionNames.size(); i++) {
@@ -218,8 +248,21 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             ArrayList<String> keys = locales.getDefaultLocale().getKeyValues(sectionName);
             for (int j = 0; j < keys.size(); j++) {
                 String key = keys.get(j);
-                StringList parts = StringList.explodeFirstOnly(key.trim(),"=");
-                model.addRow(parts.toArray());
+                // START KGU#709 2019-06-06: Issue #726 - improved editing of long messages 
+                //model.addRow(key.trim().split("=", 2));
+                String[] parts = key.trim().split("=", 2);
+                //model.addRow(parts);
+                if (parts.length > 1) {
+                    JButton pulldown = new JButton();
+                    pulldown.setName(sectionName + ":" + parts[0]);
+                    pulldown.setIcon(pulldownIcon);
+                    pulldown.addActionListener(pulldownListener);
+                    model.addRow(new Object[] {parts[0], parts[1], null, pulldown});
+                }
+                else {
+                    model.addRow(parts);
+                }
+                // END KGU#709 2019-06-06
             }
         }
         
@@ -276,15 +319,39 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     }
     
-    public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
+    // START KGU#709 2019-06-07: Issue #726 - usability improvement, particularly for long lines
+    /**
+     * Action listener method for the pulldown buttons
+     * @param source
+     */
+    protected void launchRowEditor(Object source) {
+        if (source instanceof JButton) {
+            String[] nameParts = ((JButton)source).getName().split(":", 3);
+            JTable table = tables.get(nameParts[0]);
+            int row = table.getSelectedRow();
+            TranslatorRowEditor editor = new TranslatorRowEditor(
+                    this,
+                    (JButton)source, 
+                    this.loadedLocaleName,
+                    (String)table.getValueAt(row, 2));
+            editor.setLocationRelativeTo((JButton)source);
+            editor.setVisible(true);
+            if (editor.isCommitted()) {
+                table.setValueAt(editor.getText(), row, 2);
+            }
+        }
+    }
+    // END KGU#709 2019-06-07
+
+	public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
     {
         ((JButton)evt.getSource()).setName(localeName);
         //((JButton)evt.getSource()).setToolTipText(localeName);
         
         headerText.getDocument().removeDocumentListener(this);
 
-        // backup actual loadedLocale
-        if(loadedLocale != null && loadedLocaleName != null)
+        // backup current loadedLocale
+        if (loadedLocale != null && loadedLocaleName != null)
         {
             // Check if user wants to discard changes
             if (loadedLocaleName.equals(localeName)
@@ -330,12 +397,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // First check if we have some cached values
         // START KGU#231 2016-08-09: Issue #220
         // Take care of a modified header
-        if (loadedLocale.cachedHeader.count() > 0)
+        if (!loadedLocale.cachedHeader.isEmpty())
         {
             headerText.setText(loadedLocale.cachedHeader.getText());
         }
         // END KGU#231 2016-08-09
-        if(loadedLocale.values.size()!=0)
+        if (loadedLocale.values.size() > 0)
         {
             // Present a different column header if the locale data were from file
             String column2Header = localeName;
@@ -400,6 +467,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         // enable the buttons
         button_save.setEnabled(true);
+        // START KGU#694 2019-03-28: Issue #712 - save button should have same attention as locale button
+        if (loadedLocale.hasUnsavedChanges) {
+            button_save.setBackground(Color.GREEN);
+        } else {
+            button_save.setBackground(this.stdBackgroundColor);
+        }
+        // END KGU#694 2019-03-28
         tabs.setEnabled(true);
         headerText.setEditable(true);
         
@@ -446,6 +520,51 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }
     }
     // END KGU#231 2016-08-09
+    
+    // START KGU#709 2019-06-10: Issue #726
+    /**
+     * Retrieves the arrays of current (possibly modified) Element name translations
+     * for the current locale 
+     * @param _localeName - name of the interesting locale (null = loadedLocale)
+     * @param _preferCached - whether cached (modified) values are to be preferred
+     * @return the array of the retrieved translations
+     */
+    public String[] provideCurrentElementNames(String _localeName, boolean _preferCached)
+    {
+        String[] elementNames = new String[ElementNames.ELEMENT_KEYS.length];
+        Locale locale = null;
+        // fetch the "Elements" table
+        JTable table = tables.get("Elements");
+        // get a reference to the model
+        DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+        if (_preferCached && (_localeName == null || _localeName.equals(this.loadedLocaleName))) {
+            // get the strings and put them into the result array
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the value
+                elementNames[r] = ((String) model.getValueAt(r, 2)).trim();
+            }
+        }
+        else if (_preferCached && (locale = locales.getLocale(_localeName)) != null && locale.hasCachedChanges()) {
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // get the value
+                elementNames[r] = locale.values.get("Elements").get(key);
+            }
+        }
+        else if ((locale = locales.getLocale(_localeName)) != null) {
+            for (int r = 0; r < Math.min(model.getRowCount(), elementNames.length); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // get the value
+                elementNames[r] = locale.getValue("Elements", key);
+            }
+        }
+        
+        return elementNames;
+    }
+    // END KGU#709 2019-06-10
     
     // START KGU#244 2016-06-09: Allow to reload a translation file
     private boolean presentLocale(Locale locale)
@@ -627,8 +746,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
 			@Override
             public void keyPressed(KeyEvent evt) {
-            	int keyCode = evt.getKeyCode();
-            	int modifiers = evt.getModifiers();
+                int keyCode = evt.getKeyCode();
                 switch (keyCode) {
                 case KeyEvent.VK_ESCAPE:
                 {
@@ -636,36 +754,41 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
                 break;
                 case KeyEvent.VK_ENTER:
-                case KeyEvent.VK_ENTER | KeyEvent.SHIFT_DOWN_MASK:
                 {
-                	boolean shiftDown = (keyCode & KeyEvent.SHIFT_DOWN_MASK) != 0 || modifiers == KeyEvent.SHIFT_MASK;
                     Object source = evt.getSource();
                     if (source instanceof JButton) {
                         JButton button = (JButton)source;
                         ActionListener[] actLsnrs = button.getActionListeners();
                         int actionCode = ActionEvent.ACTION_PERFORMED;
-                        if (shiftDown) {
-                        	actionCode |= ActionEvent.SHIFT_MASK;
+                        if (evt.isShiftDown()) {
+                            actionCode |= ActionEvent.SHIFT_MASK;
                         }
                         for (ActionListener al: actLsnrs) {
                             al.actionPerformed(new ActionEvent(button, actionCode, loadedLocaleName));;
                         }
                     }
                 }
+                break;
                 case KeyEvent.VK_F:
-                case (KeyEvent.VK_F | KeyEvent.CTRL_DOWN_MASK):
                 {
-                	boolean ctrlDown = (keyCode & KeyEvent.CTRL_DOWN_MASK) != 0 || (modifiers == KeyEvent.CTRL_MASK);
-                	if (ctrlDown) {
-                		if (searchDialog == null) {
-                			searchDialog = new TranslatorFindDialog(Translator.this);
-                		}
-                		searchDialog.setVisible(true);
-                	}
+                    if (evt.isControlDown()) {
+                        if (searchDialog == null) {
+                            searchDialog = new TranslatorFindDialog(Translator.this);
+                        }
+                        searchDialog.setVisible(true);
+                    }
                 }
                 break;
+                // START KGU709 2019-06-10: Issue #726 - show the Help page
+                case KeyEvent.VK_F1:
+                {
+                    helpTranslator();
+                }
+                break;
+                // END KGU#709 2019-06-10
                 }
             }
+
 
             @Override
             public void keyTyped(KeyEvent evt) {}
@@ -826,15 +949,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         tabs.addTab("Header", jPanel2);
         // START KGU#418 2017-12-18: Issue #425 - we needed a key binding on the tabs
         tabs.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-        		KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), "openFindDialog");
         tabs.getActionMap().put("openFindDialog", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-        		if (searchDialog == null) {
-        			searchDialog = new TranslatorFindDialog(Translator.this);
-        		}
-        		searchDialog.setVisible(true);
-			}
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (searchDialog == null) {
+                    searchDialog = new TranslatorFindDialog(Translator.this);
+                }
+                searchDialog.setVisible(true);
+            }
         });
         // END KGU#418 2017-12-18
 
@@ -843,6 +966,57 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    // START KGU#709 2019-06-10: Issue #726 - Usability improvements
+    /**
+     * Opens the User Guide page for Translator in the browser if possible
+     */
+    private void helpTranslator() {
+    	String query = "?menu=115";
+        Logger logger = Logger.getLogger(Translator.class.getName());
+        String help = Element.E_HELP_PAGE + query;
+        boolean isLaunched = false;
+        try {
+        	isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
+        } catch (URISyntaxException ex) {
+        	logger.log(Level.WARNING, "Can't browse Translator help URL.", ex);
+        }
+        // The isLaunched mechanism above does not signal an unavailable help page.
+        // With the following code we can find out whether the help page was available...
+        // TODO In this case we might offer to download the PDF for offline use,
+        // otherwise we could try to open a possibly previously downloaded PDF ...
+        URL url;
+        HttpsURLConnection con = null;
+        try {
+        	isLaunched = false;
+        	url = new URL(help);
+        	con = (HttpsURLConnection)url.openConnection();
+        	if (con != null) {
+        		con.connect();
+        	}
+        	isLaunched = true;
+        } catch (SocketTimeoutException ex) {
+        	logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
+        } catch (MalformedURLException e1) {
+        	logger.log(Level.SEVERE, "Malformed URL " + help, e1);
+        } catch (IOException e) {
+        	logger.log(Level.WARNING, "Failed Access to " + help, e);
+        }
+        finally {
+        	if (con != null) {
+        		con.disconnect();
+        	}
+        }
+        if (!isLaunched)
+        {
+            String message = "Failed to show % in browser".replace("%", help);
+            JOptionPane.showMessageDialog(this,
+                    message,
+                    "URL Error",
+                    JOptionPane.ERROR_MESSAGE);
+            // TODO We might look for a downloaded PDF version and offer to open this instead...
+        }
+    }
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {
@@ -869,7 +1043,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         JFileChooser dlgOpen = new JFileChooser();
         dlgOpen.setDialogTitle("Load saved translations for <"+localeName+"> from...");
         // set directory
-        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // START KGU#694 2019-03-28: Enh. #712 - we ought to consider the last used directory
+        //dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        if (currentDirectory != null) {
+            dlgOpen.setCurrentDirectory(currentDirectory);
+        }
+        else {
+            dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        }
+        // END KGU#694 2019-03-28
         // config dialogue
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer language file", "txt");
         dlgOpen.addChoosableFileFilter(filter);
@@ -881,6 +1063,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
             // Create a new Locale from it
             extLocale = (new Locale(filename));
+            // START KGU#694 2019-03-28: Enh. #712 - we ought to remember the last used directory
+            currentDirectory = dlgOpen.getSelectedFile().getParentFile();
+            // END KGU#694 2019-03-28
         }
         return extLocale;
     }
@@ -932,6 +1117,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             proposedFilename = loadedLocaleName+".txt";
         }
+        // START KGU#694 2019-03-24: Issue #712
+        if (this.currentDirectory != null && this.currentDirectory.isDirectory()) {
+            fileChooser.setCurrentDirectory(this.currentDirectory);
+        }
+        // END KGU#694 2019-03-24
         fileChooser.setSelectedFile(new File(proposedFilename));
         int userSelection = fileChooser.showSaveDialog(this);
 
@@ -941,7 +1131,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             
             boolean save = true;
             
-            if(fileToSave.exists() && !fileToSave.isDirectory() && !fileToSave.getAbsolutePath().equals(loadedLocale.cachedFilename)) { 
+            if (fileToSave.exists() && !fileToSave.isDirectory() && !fileToSave.getAbsolutePath().equals(loadedLocale.cachedFilename)) { 
                 if (JOptionPane.showConfirmDialog(this, 
                     "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
                     JOptionPane.YES_NO_OPTION,
@@ -951,7 +1141,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
             }
             
-            if(save) try
+            if (save) try
             {
                 FileOutputStream fos = new FileOutputStream(fileToSave);
                 Writer out = new OutputStreamWriter(fos, "UTF8");
@@ -967,10 +1157,34 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 cacheUnsavedData();
                 loadedLocale.hasUnsavedChanges = false;
                 // END KGU 2016-08-04
+                // START KGU#694 2019-03-24/28: Issue #712
+                this.button_save.setBackground(stdBackgroundColor);
+                this.currentDirectory = fileToSave.getParentFile();
+                boolean updateTableHeader = loadedLocale.cachedFilename == null;
+                loadedLocale.cachedFilename = fileToSave.getAbsolutePath();
+                String column2Header = loadedLocaleName + " (" + loadedLocale.cachedFilename + ")";
+                if (updateTableHeader) {
+                    for (String sectionName: locales.getSectionNames()) {
+                        // fetch the corresponding table
+                        JTable table = tables.get(sectionName);
+                        // No need to trigger property change events here, we know what we do
+                        table.removePropertyChangeListener(this);
+
+                        // put the label on the column
+                        table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+                        table.getTableHeader().repaint();
+
+                        // Table header modified, from now on react to user manipulations again
+                        table.addPropertyChangeListener(this);
+                    }
+                }
+                // END KGU#694 2019-03-24/28
             }
             catch (IOException e)
             {
-                JOptionPane.showMessageDialog(this, "Error while saving language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Error while saving language file\n" + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }     
     }//GEN-LAST:event_button_saveActionPerformed
@@ -1010,8 +1224,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
     
     public void setNSDControl(NSDController NSDControl) {
-        this.NSDControl = NSDControl;
-        button_preview.setVisible(true);
+        //this.NSDControl = NSDControl;
+        //button_preview.setVisible(true);
+        button_preview.setVisible(NSDControl != null);
     }
     
     
@@ -1049,6 +1264,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             button.setBackground(Color.green);
         }
+        // START KGU#694 2019-03-28: Issue #712
+        // The save button needs at least as much attention as the locale butto now
+        button_save.setBackground(Color.GREEN);
+        // END KGU#694 2019 2019-03-28
     }
     // END KGU#231 2016-08-09
 
@@ -1199,7 +1418,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 		if (table != null) {
 			DefaultTableModel tableModel = (DefaultTableModel)table.getModel();
 			int nRows = table.getRowCount();
-			int nCols = table.getColumnCount();
+			// START KGU#709 2019-06-08: Issue #726 - there is an additional button column now...
+			//int nCols = table.getColumnCount();
+			int nCols = table.getColumnCount() - 1;
+			// END KGU#709 2019-06-08
 			int currRowIx = table.getSelectedRow();
 			boolean found = false;
 			int row = currRowIx;
@@ -1254,7 +1476,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 			}
 			else {
 				JOptionPane.showMessageDialog(this,
-						"No further occurrance of \"" + _pattern + "\" found.",
+						"No further occurrence of \"" + _pattern + "\" found.",
 						"Find failed", JOptionPane.INFORMATION_MESSAGE);
 			}
 		}

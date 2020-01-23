@@ -31,41 +31,51 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author                  Date            Description
- *      ------					----			-----------
- *      Daniel Spittank         2014.02.01      Starting from Java Generator
- *      Kay Gürtzig             2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
- *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
- *      Kay Gürtzig             2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *      ------                  ----            -----------
+ *      Daniel Spittank         2014-02-01      Starting from Java Generator
+ *      Kay Gürtzig             2014-11-16      Conversion of C-like logical operators and arcus functions (see comment)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015-12-12      bugfix #59 (KGU#104) with respect to ER #10
+ *      Kay Gürtzig             2015-12-17      Enh. #23 (KGU#78) jump generation revised; Root generation
  *                                              decomposed according to Generator.generateCode(Root, String);
  *                                              Enh. KGU#47: Dummy implementation for Parallel element
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig             2015.12.22      Bugfix #51/#54 (= KGU#108) empty input and output expression lists
- *      Kay Gürtzig             2016.01.14      Enh. #84 (= KGU#100) Array init. expr. support
- *      Kay Gürtzig             2016.01.17      Bugfix #61 (= KGU#109) Type names removed from assignments
- *      Kay Gürtzig             2016.03.16      Enh. #84: Support for FOREACH loops (KGU#61) 
- *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
+ *      Kay Gürtzig             2015-12-21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2015-12-22      Bugfix #51/#54 (= KGU#108) empty input and output expression lists
+ *      Kay Gürtzig             2016-01-14      Enh. #84 (= KGU#100) Array init. expr. support
+ *      Kay Gürtzig             2016-01-17      Bugfix #61 (= KGU#109) Type names removed from assignments
+ *      Kay Gürtzig             2016-03-16      Enh. #84: Support for FOREACH loops (KGU#61) 
+ *      Kay Gürtzig             2016-04-01      Enh. #144: Care for new option to suppress content conversion 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
- *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
- *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
- *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
- *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.03.10      Bugfix #378, #379: charset annotation / wrong inequality operator
- *      Kay Gürtzig             2017.05.16      Bugfix #51: an empty output instruction produced "print(, sep='')"
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.05.24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
- *      Kay Gürtzig             2017.10.02/03   Enh. #389, #423: Export of globals and mutable record types implemented
- *      Kay Gürtzig             2017.11.02      Issue #447: Line continuation and Case elements supported
- *      Kay Gürtzig             2018.07.20      Enh. #563 - support for simplified record initializers
- *      Kay Gürtzig             2018.10.17      Issue #623: Turtleizer support was defective (moves, color, new routines),
+ *      Kay Gürtzig             2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016-10-16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016-12-01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig             2016-12-27      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017-02-19      Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig             2017-02-23      Issue #350: getOutputReplacer() and Parallel export revised again
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-03-10      Bugfix #378, #379: charset annotation / wrong inequality operator
+ *      Kay Gürtzig             2017-05-16      Bugfix #51: an empty output instruction produced "print(, sep='')"
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-05-24      Bugfix #412: hash codes may be negative, therefore used in hexadecimal form now
+ *      Kay Gürtzig             2017-10-02/03   Enh. #389, #423: Export of globals and mutable record types implemented
+ *      Kay Gürtzig             2017-11-02      Issue #447: Line continuation and Case elements supported
+ *      Kay Gürtzig             2018-07-20      Enh. #563 - support for simplified record initializers
+ *      Kay Gürtzig             2018-10-17      Issue #623: Turtleizer support was defective (moves, color, new routines),
  *                                              bugfix #624 - FOR loop translation into range() fixed
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-21      Issue #706: Export of Calls with explicit argument assignments enabled
+ *      Kay Gürtzig             2019-03-21      Issue #707: Mechanism to adjust the file name proposal
+ *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
+ *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
+ *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
  *
  ******************************************************************************************************
  *
@@ -106,7 +116,6 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -119,6 +128,7 @@ import lu.fisch.turtle.TurtleBox;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 
 public class PythonGenerator extends Generator 
@@ -146,6 +156,17 @@ public class PythonGenerator extends Generator
 		return exts;
 	}
 
+	// START KGU#690 2019-03-21: Enh. #707 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#ensureFilenameConformity(java.lang.String)
+	 */
+	@Override
+	protected String ensureFilenameConformity(String proposedFilename) {
+		// Python file names must not contain hyphens, since the file name is the module name
+		return proposedFilename.replace('-', '_');
+	}
+	// END KGU#690 2019-03-21
+
 	// START KGU 2015-10-18: New pseudo field
 	@Override
 	protected String commentSymbolLeft()
@@ -164,6 +185,28 @@ public class PythonGenerator extends Generator
 		return true;
 	}
 	// END KGU#78 2015-12-18
+
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
 
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
 //    private static final String[] reservedWords = new String[]{
@@ -200,6 +243,10 @@ public class PythonGenerator extends Generator
 
 	/************ Code Generation **************/
 
+	// START KGU#542 2019-12-01: Enh. #739 - support for enumerator types
+	/** The currently exported {@link Root} */
+	private Root root = null;
+	// END KGU#542 2019-12-01
 	// START KGU#388 2017-10-02: Enh. #423 - Support for recordtypes
 	/** cache for the type map of the current Root */
 	private HashMap<String, TypeMapEntry> typeMap = null;
@@ -293,6 +340,7 @@ public class PythonGenerator extends Generator
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				// Handle DiagramController (more specifically: Turtleizer) routine calls
 				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
 				//String turtleMethod = null;
 				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
@@ -318,6 +366,14 @@ public class PythonGenerator extends Generator
 					}
 				}
 				// END KGU#480 2018-01-21
+				// START KGU#542 2019-12-01: Enh. #739 support for enumerators
+				else if (this.varNames.contains(token) && this.root != null && this.root.constants.get(token) != null) {
+					String constVal = this.root.constants.get(token);
+					if (constVal.startsWith(":") && constVal.contains("€")) {
+						tokens.set(i, constVal.substring(1, constVal.indexOf("€"))+ "." + token);
+					}
+				}
+				// END KGU#542 2019-12-01
 			}
 		}
 		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
@@ -330,7 +386,9 @@ public class PythonGenerator extends Generator
 		tokens.replaceAll("!"," not ");
 		tokens.replaceAll("xor","^");            
 		// END KGU 2014-11-16
-		tokens.replaceAll("div", "/");
+		// START KGU#708 2019-05-28: Issue #725 - special operator symbol for int division
+		tokens.replaceAll("div", "//");
+		// END KGU#708 2019-05-28
 		tokens.replaceAll("<-", "=");
 		// START KGU#388 2017-10-02: Enh. #423 - convert Structorizer record initializers to Python
 		transformRecordInitializers(tokens);
@@ -345,9 +403,9 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Record support
 	/**
-	 * Recursively looks for record initializers in the tokens and if there are some replaces
+	 * Recursively looks for record initializers in the tokens and, if there are some, replaces
 	 * the respective type name token by the entire transformed record initializer as single
-	 * string element and hence immune against further token manipulations.
+	 * string element (which is hence immune against further token manipulations).<br/>
 	 * @param tokens - the token list of the split line, will be modified.
 	 */
 	private void transformRecordInitializers(StringList tokens) {
@@ -365,7 +423,7 @@ public class PythonGenerator extends Generator
 				// We will now reorder the elements and drop the names
 				// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry);
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
 				String tail = comps.get("§TAIL§");	// String part beyond the initializer
@@ -439,12 +497,24 @@ public class PythonGenerator extends Generator
 			// START KGU#109 2016-01-17: Bugfix #61 - Remove type specifiers
 			// Could we also do it by replacing all inventable type names by empty strings
 			// in transformType()? Rather not.
-			_input = Element.unifyOperators(_input);
-			int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
-			if (asgnPos > 0)
+			// START KGU#689 2019-03-21: Bugfix #706
+			//_input = Element.unifyOperators(_input);
+			//int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
+			//if (asgnPos > 0)
+			//{
+			//	String lval = _input.substring(0, asgnPos).trim();
+			//	String expr = _input.substring(asgnPos + "<-".length()).trim();
+			if (Instruction.isAssignment(_input))
 			{
-				String lval = _input.substring(0, asgnPos).trim();
-				String expr = _input.substring(asgnPos + "<-".length()).trim();
+				StringList tokens = Element.splitLexically(_input, true);
+				// START KGU#698 2019-03-26: Bugfix #716
+				Element.unifyOperators(tokens, false);
+				// END KGU#698 2019-03-26
+				tokens = Element.coagulateSubexpressions(tokens);
+				int asgnPos = tokens.indexOf("<-");
+				String lval = tokens.concatenate("", 0, asgnPos).trim();
+				String expr = tokens.concatenate("", asgnPos + 1).trim();
+			// END KGU#689 2019-03-21
 				String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
 				String index = typeNameIndex[2];
 				if (!index.isEmpty()) index = "[" + index + "]";
@@ -458,9 +528,7 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU#162 2016-04-01
 
-		_input = super.transform(_input);
-
-		String s = _input;
+		String s = super.transform(_input);
 
 //		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
 //		_input=BString.replace(_input,"!="," <> ");
@@ -511,13 +579,14 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-		if(!insertAsComment(_inst, _indent)) {
+		if(!appendAsComment(_inst, _indent)) {
 			boolean isDisabled = _inst.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent);
+			appendComment(_inst, _indent);
 			// END KGU 2014-11-16
 			StringList lines = _inst.getUnbrokenText();
 			String tmpCol = null;
+			Root root = Element.getRoot(_inst);
 			for(int i = 0; i < lines.count(); i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -525,7 +594,23 @@ public class PythonGenerator extends Generator
 				String line = lines.get(i);
 				String codeLine = transform(line);
 				boolean done = false;
-				if (Instruction.isTurtleizerMove(line)) {
+
+				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
+				StringList inputItems = Instruction.getInputItems(line);
+				if (inputItems != null && inputItems.count() > 2) {
+					String inputKey = CodeParser.getKeyword("input") + " ";
+					String prompt = inputItems.get(0);
+					if (!prompt.isEmpty()) {
+						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, isDisabled);
+					}
+					for (int j = 1; j < inputItems.count(); j++) {
+						String item = inputItems.get(j);
+						addCode(transform(inputKey + "\"" + item + "\" " + item), _indent, isDisabled);
+					}
+					done = true;
+				}
+				// END KGU#653 2019-02-14
+				else if (Instruction.isTurtleizerMove(line)) {
 					// START KGU#599 2018-10-17: Bugfix #623 (turtle moves hadn't been exported)
 					//codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					//done = true;
@@ -542,9 +627,14 @@ public class PythonGenerator extends Generator
 				else if (Instruction.isTypeDefinition(line)) {
 					mtchTypename.reset(line).matches();
 					String typeName = mtchTypename.group(1);
-					done = this.generateTypeDef(Element.getRoot(_inst), typeName, null, _indent, isDisabled);
+					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
 				}
 				// END KGU#388 2017-10-02
+				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified oinitialisations
+				else if (Instruction.isMereDeclaration(line)) {
+					done = generateDeclaration(line, root, _indent, isDisabled);
+				}
+				// END KGU#767 2019-11-24
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -563,7 +653,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _alt.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent);
+		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
@@ -593,7 +683,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _case.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_case, _indent);
+		appendComment(_case, _indent);
 		// END KGU 2014-11-16
 
 		// START KGU#453 2017-11-02: Issue #447
@@ -606,7 +696,10 @@ public class PythonGenerator extends Generator
 		{
 			String caseline = _indent + ((i == 0) ? "if" : "elif") + " (";
 			// START KGU#15 2015-10-21: Support for multiple constants per branch
-			StringList constants = StringList.explode(lines.get(i+1), ",");
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//StringList constants = StringList.explode(lines.get(i+1), ",");
+			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++)
 			{
 				if (j > 0) caseline = caseline + " or ";
@@ -639,7 +732,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _for .isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_for, _indent);
+		appendComment(_for, _indent);
 		// END KGU 2014-11-16
 
 		String counterStr = _for.getCounterVar();
@@ -684,7 +777,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _while.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_while, _indent);
+		appendComment(_while, _indent);
 		// END KGU 2014-11-16
 
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
@@ -709,7 +802,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _repeat.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
+		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
 		addCode("while True:", _indent, isDisabled);
 		generateCode((Subqueue) _repeat. q,_indent + this.getIndent());
@@ -733,7 +826,7 @@ public class PythonGenerator extends Generator
 		boolean isDisabled = _forever.isDisabled();
 
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
+		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		addCode("while True:", _indent, isDisabled);
 		generateCode((Subqueue) _forever.q, _indent + this.getIndent());
@@ -748,11 +841,11 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		if(!insertAsComment(_call, _indent))
+		if(!appendAsComment(_call, _indent))
 		{
 			boolean isDisabled = _call.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_call, _indent);
+			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			StringList lines = _call.getText();
 			for(int i=0; i<lines.count(); i++)
@@ -767,11 +860,11 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if(!insertAsComment(_jump, _indent))
+		if(!appendAsComment(_jump, _indent))
 		{
 			boolean isDisabled = _jump.isDisabled();
 			// START KGU 2014-11-16
-			insertComment(_jump, _indent);
+			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 			// START KGU#78 2015-12-17: Enh. 38 - translate acceptable Jumps to break instructions
 			//for(int i=0;i<_jump.getText().count();i++)
@@ -784,20 +877,19 @@ public class PythonGenerator extends Generator
 			StringList lines = _jump.getUnbrokenText();
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
-			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
-			String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
+			String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
 				{
 					isEmpty = false;
 				}
-				if (line.matches(preReturnMatch))
+				if (Jump.isReturn(line))
 				{
 					addCode("return " + line.substring(preReturn.length()).trim(),
 							_indent, isDisabled);
 				}
-				else if (line.matches(preLeaveMatch))
+				else if (Jump.isLeave(line))
 				{
 					// We may only allow one-level breaks, i. e. there must not be an argument
 					// or the argument must be 1 and a legal label must be associated.
@@ -814,10 +906,15 @@ public class PythonGenerator extends Generator
 								_indent, isDisabled);
 					}
 				}
+				// START KGU#686 2019-03-21: Enh. #56
+				else if (Jump.isThrow(line)) {
+					this.addCode("raise Exception(" + line.substring(preThrow.length()) + ")", _indent, isDisabled);
+				}
+				// END KGU#686 2019-03-21
 				else if (!isEmpty)
 				{
-					insertComment("FIXME: unsupported jump/exit instruction!", _indent);
-					insertComment(line, _indent);
+					appendComment("FIXME: unsupported jump/exit instruction!", _indent);
+					appendComment(line, _indent);
 				}
 			}
 			if (isEmpty) {
@@ -836,12 +933,12 @@ public class PythonGenerator extends Generator
 
 		//String indentPlusOne = _indent + this.getIndent();
 		//String indentPlusTwo = indentPlusOne + this.getIndent();
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		//insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
 		//addCode("", indentPlusOne, isDisabled);
 
@@ -879,9 +976,9 @@ public class PythonGenerator extends Generator
 			String threadVar = "thr" + suffix + "_" + i;
 			addCode(threadVar + ".join()", _indent, isDisabled);
 		}
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", _indent, isDisabled);
 	}
 	// END KGU#47 2015-12-17
@@ -918,7 +1015,7 @@ public class PythonGenerator extends Generator
 					continue;
 				}
 				// Variables assigned here will be made global
-				StringList setVars = _root.getVarNames(sq, false);
+				StringList setVars = _root.getVarNames(sq, false).copy();
 				// Variables used here without being assigned will be made arguments
 				StringList usedVars = _root.getUsedVarNames(sq, false, false);
 				for (int v = 0; v < setVars.count(); v++) {
@@ -936,20 +1033,58 @@ public class PythonGenerator extends Generator
 			}
 		}
 		if (globals.count() > 0) {
-			code.insert(_indent + "", lineBefore);
+			insertCode(_indent + "", lineBefore);
 			for (int v = 0; v < globals.count(); v++) {
 				String varName = globals.get(v);
 				String end = varName.startsWith(this.commentSymbolLeft()) ? this.commentSymbolRight() : "";
-				code.insert(_indent + varName + " = 0" + end, lineBefore);
+				insertCode(_indent + varName + " = 0" + end, lineBefore);
 			}
-			code.insert(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
+			insertCode(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
 		}
 	}
 	// END KGU#47/KGU#348 2017-02-19
+	
+	// START KGU#686 2019-03-21: Enh. #56
+	protected void generateCode(Try _try, String _indent)
+	{
+		boolean isDisabled = _try.isDisabled();
+		this.appendComment(_try, _indent);
+		
+		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
+		String indent0 = _indent;
+		
+		this.addCode("try:", _indent, isDisabled);
+
+		if (_try.qFinally.getSize() > 0) {
+			indent0 += this.getIndent();
+			// Inner try instruction
+			this.addCode("try:", indent0, isDisabled);
+		}
+		String indent1 = indent0 + this.getIndent();
+		
+		this.generateCode(_try.qTry, indent1);
+		
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("finally:", indent0, isDisabled);			
+			this.generateCode(_try.qFinally, indent1);
+		}
+
+		indent1 = _indent + this.getIndent();
+		String exName = _try.getExceptionVarName();
+		if (exName != null && !exName.isEmpty()) {
+			this.addCode("except Exception, " + exName + ":", _indent, isDisabled);
+		}
+		else {
+			this.addCode("except Exception:", _indent, isDisabled);
+		}
+		generateCode(_try.qCatch, indent1);
+		addCode("", _indent, false);
+	}
+	// END KGU#686 2019-03-21
 
 	// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
 	/**
-	 * Inserts a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * Adds a typedef, struct, or enum definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
@@ -981,20 +1116,49 @@ public class PythonGenerator extends Generator
 			addCode(typeDef, _indent, _asComment);
 			done = true;
 		}
+		// START KGU#542 2019-12-01: Enh. #739 - Support for enumeration types (since Python 3.4)
+		else if (_type.isEnum()) {
+			String indentPlus1 = _indent + this.getIndent();
+			StringList enumItems = _type.getEnumerationInfo();
+			addCode("class " + _typeName + "(Enum):", _indent, _asComment);
+			int offset = 0;
+			String lastVal = "";
+			for (int i = 0; i < enumItems.count(); i++) {
+				String[] itemSpec = enumItems.get(i).split("=", 2);
+				if (itemSpec.length > 1) {
+					lastVal = itemSpec[1].trim();
+					offset = 0;
+					try {
+						int code = Integer.parseUnsignedInt(lastVal);
+						lastVal = "";
+						offset = code;
+					}
+					catch (NumberFormatException ex) {}
+				}
+				addCode(itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, indentPlus1, _asComment);
+				offset++;
+			}
+			addCode("", _indent, _asComment);
+			done = true;
+		}
+		// END KGU#542 2019-12-01
 		return done;
 	}
 
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#insertGlobalInitialisations(java.lang.String)
+	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
-	protected void insertGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
 			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				insertComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
-				typeMap = incl.getTypeInfo();	// This line is the difference to Generator!
+				appendComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+				//typeMap = incl.getTypeInfo();
+				typeMap = incl.getTypeInfo(routinePool);	// This line is the difference to Generator!
+				// END KGU#676 2019-03-30
 				generateCode(incl.children, _indent);
-				insertComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
+				appendComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
 			if (code.count() > startLine) {
 				code.add(_indent);
@@ -1006,38 +1170,84 @@ public class PythonGenerator extends Generator
 	 * Declares imported names as global
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
-	 * @see #insertGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(String)
+	 * @see #generateDeclaration(String, Root, String, boolean)
 	 */
-	private void insertGlobalDeclarations(Root _root, String _indent) {
-		if (_root.includeList != null) {
-			HashSet<String> declared = new HashSet<String>();
-			for (Root incl: this.includedRoots) {
-				if (_root.includeList.contains(incl.getMethodName())) {
-					// Start with the types
-					for (String name: incl.getTypeInfo().keySet()) {
-						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);								
-						}
-					}
-					// Now add the variables (including constants)
-					StringList names = incl.getVarNames();
-					for (int i = 0; i < names.count(); i++)
-					{
-						String name = names.get(i);
-						if (!declared.contains(name)) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);
-						}
-					}
+	private void appendGlobalDeclarations(Root _root, String _indent) {
+		// START KGU#767 2019-11-24: Bugfix #782 Fundamentally revised
+//		if (_root.includeList != null) {
+//			HashSet<String> declared = new HashSet<String>();
+//			for (Root incl: this.includedRoots) {
+//				if (_root.includeList.contains(incl.getMethodName())) {
+//					// Start with the types
+//					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+//					//for (String name: incl.getTypeInfo().keySet()) {
+//					for (String name: incl.getTypeInfo(routinePool).keySet()) {
+//					// END KGU#676 2019-03-30
+//						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);								
+//						}
+//					}
+//					// Now add the variables (including constants)
+//					StringList names = incl.retrieveVarNames();
+//					for (int i = 0; i < names.count(); i++)
+//					{
+//						String name = names.get(i);
+//						if (!declared.contains(name)) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);
+//						}
+//					}
+//				}
+//			}
+//			if (!declared.isEmpty()) {
+//				addCode("", _indent, false);
+//			}
+//		}
+		for (String name: this.typeMap.keySet()) {
+			if (this.wasDefHandled(_root, name, false, true) && !this.wasDefHandled(_root, name, true, false)) {
+				if (name.startsWith(":")) {
+					name = name.substring(1);
 				}
-			}
-			if (!declared.isEmpty()) {
-				addCode("", _indent, false);
+				addCode("global " + name, _indent, false);
 			}
 		}
+		// END KGU#767 2019-11-24
 	}
 	// END KGU#388 2017-10-02
+
+	// START KGU#767 2019-11-24: Bugfix #782 - wrong handling of global / local declarations
+	/**
+	 * Generates a declaration from the given line and registers it with the given root.
+	 * @param _line - the original line of the declaration
+	 * @param _root - the owning {@link Root} object
+	 * @param _indent - current indentation level
+	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to be a comment)
+	 * @return true iff all code generation for the instruction line is done
+	 */
+	private boolean generateDeclaration(String _line, Root _root, String _indent, boolean _isDisabled) {
+		StringList tokens = Element.splitLexically(_line + " <- 0", true);
+		tokens.removeAll(" ");
+		String varName = Instruction.getAssignedVarname(tokens, false);
+		if (this.wasDefHandled(_root, varName, false)) {
+			return true;
+		}
+		String typeComment = "";
+		TypeMapEntry type = this.typeMap.get(varName);
+		if (type != null) {
+			StringList typeNames = this.getTransformedTypes(type, true);
+			if (typeNames != null && !typeNames.isEmpty()) {
+				typeComment = "\t" + this.commentSymbolLeft() +
+						" meant to be of type " + typeNames.concatenate(" or ") + " " +
+						this.commentSymbolRight();
+			}
+		}
+		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
+		this.setDefHandled(_root.getSignatureString(false), varName);
+		return true;
+	}
+	// END KGU#767 2019-11-24
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -1053,19 +1263,29 @@ public class PythonGenerator extends Generator
 			// START KGU#366 2017-03-10: Issue #378 the used character set is to be named 
 			code.add(_indent + "# -*- coding: " + this.getExportCharset().toLowerCase() + " -*-");
 			// END KGU#366 2017-03-10
-			insertComment(_root.getText().get(0), _indent);
-			insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment(_root.getText().get(0), _indent);
+			appendComment("generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+			appendComment("You should have installed module recordtype: pip install recordtype", _indent);
+			appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
+			code.add(_indent + "from recordtype import recordtype");
+			// START KGU#542 2019-12-01: Enh. #739
+			code.add(_indent + "from enum import Enum");
+			this.generatorIncludes.add("enum");
+			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
 				code.add(_indent);
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
+			// START KGU#607 2018-10-30: Issue #346
+			this.generatorIncludes.add("math");		// Will be inserted later
+			// END KGU#607 2018-10-30
 			// START KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(indent);
+			this.appendUserIncludes(indent);
 			// END KGU#351 2017-02-26
 			// START KGU#600 2018-10-17: It is too cumbersome to check if math is actually needed
 			code.add(_indent + "import math");
@@ -1074,7 +1294,7 @@ public class PythonGenerator extends Generator
 			this.includeInsertionLine = code.count();
 			// END KGU#598 2018-10-17
 			// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
-			this.insertGlobalInitialisations(_indent);
+			this.appendGlobalInitialisations(_indent);
 			// END KGU#376 2017-10-02
 //			if (code.count() == this.includeInsertionLine) {
 //				code.add(_indent);
@@ -1089,16 +1309,34 @@ public class PythonGenerator extends Generator
 		code.add("");
 		// FIXME: How to handle includables here?
 		if (!_root.isSubroutine()) {
-			insertComment(_root, _indent);
+			appendComment(_root, _indent);
 		}
 		else {
 			indent = _indent + this.getIndent();
-			insertComment(_root, _indent);
-			code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
+			appendComment(_root, _indent);
+			// START KGU#371 2019-03-08: Enh. #385 deal with optional parameters
+			//code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
+			String header = _indent + "def " + _procName + "(";
+			int minArgs = _root.getMinParameterCount();
+			header += _paramNames.concatenate(", ", 0, minArgs);
+			if (minArgs < _paramNames.count()) {
+				StringList argDefaults = _root.getParameterDefaults();
+				for (int p = minArgs; p < _paramNames.count(); p++) {
+					header += (p > 0 ? ", " : "") + _paramNames.get(p) + " = " + transform(argDefaults.get(p));
+				}
+			}
+			code.add(header += ") :");
+			// END KGU#371 2019-03-08
 		}
 		// START KGU#388 2017-10-02: Enh. #423 type info will now be needed in deep contexts
-		this.typeMap = _root.getTypeInfo();
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = _root.getTypeInfo();
+		this.typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#676 2019-03-30
 		// END KGU#388 2017-10-02
+		// START KGU#542 2019-12-01: Enh. #739 - For enumerator transformation, we will also need _root in in deeper contexts
+		this.root = _root;
+		// END KGU#542 2019-12-01
 		return indent;
 	}
 
@@ -1109,7 +1347,9 @@ public class PythonGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// START KGU#376 2017-10-03: Enh. #389 - Variables and types of the included diagrams must be marked as global here
-		insertGlobalDeclarations(_root, _indent);
+		// START KGU#767 2019-11-24: Bugfix #782: Disabled, will now be done via generateDeclaration() from generateCode(Instruction...)
+		appendGlobalDeclarations(_root, _indent);
+		// END KGU#767 2019-11-24
 		// END KGU#376 2017-10-03
 		// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 		generateParallelThreadFunctions(_root, _indent);
@@ -1156,9 +1396,9 @@ public class PythonGenerator extends Generator
 
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {
-			code.insert("import turtle", this.includeInsertionLine);
-			code.insert("turtle.colormode(255)", this.includeInsertionLine+1);
-			code.insert("turtle.mode(\"logo\")", this.includeInsertionLine+2);
+			insertCode("import turtle", this.includeInsertionLine);
+			insertCode("turtle.colormode(255)", this.includeInsertionLine+1);
+			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine+2);
 			this.subroutineInsertionLine += 3;
 			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
 		}

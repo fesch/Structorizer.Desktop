@@ -33,6 +33,7 @@ package lu.fisch.structorizer.generators;
  *      Author                  Date            Description
  *      ------                  ----            -----------
  *      Simon Sobisch           2017.04.14      First Issue
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      
  ******************************************************************************************************
  *
@@ -42,13 +43,15 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Function;
-
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.utils.StringList;
 
 /**
@@ -89,37 +92,17 @@ public class COBOLGenerator extends Generator {
 	private final HashMap<Root, HashSet<String>> subMap = new HashMap<Root, HashSet<String>>();
 	private HashMap<String, TypeMapEntry> typeMap; 
 
+	// START KGU#686 2019-03-18: Enh. #56
 	/**
-	 * get start for COBOL source or comment line with correct length depending
-	 * on reference-format and optional line numbering for fixed-form reference
-	 * format
-	 * 
-	 * @return the complete start for the line, identical to _indent in
-	 *         free-form reference format
-	 * 
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
 	 */
-	protected String getLineStart(Boolean isCommentLine) {
-
-		String prefix;
-		// switching the reference format between free-form and fixed-form
-		if (!this.optionFixedSourceFormat()) {
-			prefix = this.getIndent();
-		} else {
-			if (this.optionCodeLineNumbering()) {
-				prefix = String.format("%5d", this.lineNumber) + " ";
-				this.lineNumber += this.lineIncrement;
-			} else {
-				prefix = "      ";
-			}
-			if (!isCommentLine) {
-				prefix += " ";
-			}
-		}
-		if (isCommentLine) {
-			prefix += this.commentSymbolLeft() + " ";
-		}
-		return prefix;
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_NO_TRY;
 	}
+	// END KGU#686 2019-03-18
 
 	/*
 	 * (non-Javadoc)
@@ -224,6 +207,49 @@ public class COBOLGenerator extends Generator {
 		return this.getLineStart(false) + "COPY %.";
 	}
 
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		// FIXME: No idea whether subroutine overloading is a sensible concept in COBOl at all.
+		return OverloadingLevel.OL_NO_OVERLOADING;
+	}
+	// END KGU#371 2019-03-07
+
+	/**
+	 * get start for COBOL source or comment line with correct length depending
+	 * on reference-format and optional line numbering for fixed-form reference
+	 * format
+	 * 
+	 * @return the complete start for the line, identical to _indent in
+	 *         free-form reference format
+	 * 
+	 */
+	protected String getLineStart(Boolean isCommentLine) {
+
+		String prefix;
+		// switching the reference format between free-form and fixed-form
+		if (!this.optionFixedSourceFormat()) {
+			prefix = this.getIndent();
+		} else {
+			if (this.optionCodeLineNumbering()) {
+				prefix = String.format("%5d", this.lineNumber) + " ";
+				this.lineNumber += this.lineIncrement;
+			} else {
+				prefix = "      ";
+			}
+			if (!isCommentLine) {
+				prefix += " ";
+			}
+		}
+		if (isCommentLine) {
+			prefix += this.commentSymbolLeft() + " ";
+		}
+		return prefix;
+	}
+
 	// include / import / uses config
 	/*
 	 * function for checking and inserting UserIncludes special case for COBOL
@@ -231,7 +257,7 @@ public class COBOLGenerator extends Generator {
 	 * inclusion should be done, for example
 	 * "WS: data1.cpy, data2.cpy; LS: localdata.copy; PD: helpers.cob"
 	 */
-	protected void insertUserIncludes(CodePart cp) {
+	protected void appendUserIncludes(CodePart cp) {
 		String includes = this.optionIncludeFiles().trim();
 		if (includes == null || includes.isEmpty()) {
 			return;
@@ -271,7 +297,7 @@ public class COBOLGenerator extends Generator {
 		if (asComment) {
 			// Indentation is intentionally put inside the comment (comment
 			// encloses entire line)
-			insertComment(_indent + text, "");
+			appendComment(_indent + text, "");
 		// START KGU 2017-05-11 At least in free format we shouldn't ignore the indentation
 		} else if (!this.optionFixedSourceFormat()) {
 			code.add(this.getLineStart(false) + _indent + text);			
@@ -286,11 +312,11 @@ public class COBOLGenerator extends Generator {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see lu.fisch.structorizer.generators.Generator#insertComment(java.lang.
+	 * @see lu.fisch.structorizer.generators.Generator#appendComment(java.lang.
 	 * String, java.lang.String)
 	 */
 	@Override
-	protected void insertComment(String _text, String _indent) {
+	protected void appendComment(String _text, String _indent) {
 		String[] lines = _text.split("\n");
 		for (String line : lines) {
 			code.add(this.getLineStart(true) + line);
@@ -301,14 +327,14 @@ public class COBOLGenerator extends Generator {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * lu.fisch.structorizer.generators.Generator#insertBlockComment(lu.fisch.
+	 * lu.fisch.structorizer.generators.Generator#appendBlockComment(lu.fisch.
 	 * utils.StringList, java.lang.String, java.lang.String, java.lang.String,
 	 * java.lang.String)
 	 */
 	@Override
-	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end) {
+	protected void appendBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end) {
 		int oldSize = code.count();
-		super.insertBlockComment(_sl, _indent, _start, _cont, _end);
+		super.appendBlockComment(_sl, _indent, _start, _cont, _end);
 		// Set indent for fixed-form reference-format and optional the line numbers afterwards,
 		// the super method wouldn't have done it
 		// FIXME: using optionBlockBraceNextLine as a dirty workaround for
@@ -376,8 +402,71 @@ public class COBOLGenerator extends Generator {
 	}
 	// END KGU#395 2017-05-11	
 	
+	/************ Code Generation **************/
+	
+	// START KGU#388/KGU#542 2019-12-04: Enh. #423, #739
+	@Override
+	protected String transformType(String _type, String _default)
+	{
+		if (_type == null) {
+			_type = _default;
+		}
+		else if (_type.equals("const")) {
+			_type = "78 ";
+		}
+		return _type;
+	}
+	
+	/**
+	 * Adds the type definitions for all types in {@code _root.getTypeInfo()}.
+	 * @param _root - originating Root
+	 * @param _indent - current indentation level (as String)
+	 */
+	protected void generateTypeDefs(Root _root, String _indent) {
+		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
+			String typeKey = typeEntry.getKey();
+			if (typeKey.startsWith(":")) {
+				generateTypeDef(_root, typeKey.substring(1), typeEntry.getValue(), _indent, false);
+			}
+		}
+	}
+
+	/**
+	 * Appends a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * if it hadn't been defined globally or in the preamble before.
+	 * @param _root - the originating Root
+	 * @param _type - the type map entry the definition for which is requested here
+	 * @param _indent - the current indentation
+	 * @param _asComment - if the type definition is only to be added as comment (disabled)
+	 */
+	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String typeKey = ":" + _typeName;
+		if (this.wasDefHandled(_root, typeKey, true)) {
+			return;
+		}
+		String indentPlus1 = _indent + this.getIndent();
+		appendDeclComment(_root, _indent, typeKey);
+		if (_type.isRecord()) {
+			addCode("struct " + _type.typeName + " {", _indent, _asComment);
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+						indentPlus1, _asComment);
+			}
+			addCode("};", _indent, _asComment);
+		}
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			appendComment("enum " + _type.typeName, _indent);
+			for (int i = 0; i < items.count(); i++) {
+				// FIXME: We might have to transform the value...
+				addCode(items.get(i) + (i < items.count() -1 ? "," : ""), indentPlus1, _asComment);
+			}
+		}
+	}
+	// END KGU#388/KGU#542 2019-12-04
+
 	// START KGU#375 2017-04-12: Enh. #388 common preparation of constants and variables
-	protected void insertDeclaration(Root _root, String _name, String _indent)
+	protected void appendDeclaration(Root _root, String _name, String _indent)
 	{
 		/* FIXME: replace declarations
 		 * numeric-only used variables can stay with USAGE binary-long (or smaller)
@@ -388,7 +477,7 @@ public class COBOLGenerator extends Generator {
 		String cobName = this.transformName(_name);
 		TypeMapEntry typeInfo = typeMap.get(_name);
 		StringList types = null;
-		String constValue = _root.constants.get(_name);
+		String constValue = _root.getConstValueString(_name);
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
 			 types = getTransformedTypes(typeInfo, false);
@@ -399,7 +488,7 @@ public class COBOLGenerator extends Generator {
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
-				typeMap.put(_name, new TypeMapEntry(type, null, _root, 0, true, false, true));
+				typeMap.put(_name, new TypeMapEntry(type, null, null, _root, 0, true, false));
 			}
 		}
 		// If the type is unambiguous and has no C-style declaration or may not be
@@ -430,7 +519,7 @@ public class COBOLGenerator extends Generator {
 			}
 			// END KGU#375 2017-04-12
 			if (decl.contains("???")) {
-				insertComment(decl + ".", _indent);
+				appendComment(decl + ".", _indent);
 			}
 			else {
 				addCode(decl + ".", _indent, false);
@@ -438,7 +527,7 @@ public class COBOLGenerator extends Generator {
 		}
 		// Add a comment if there is no type info
 		else if (types == null){
-			insertComment(cobName, _indent);
+			appendComment(cobName, _indent);
 		}
 		// END KGU#261/KGU#332 2017-01-16
 	}
@@ -456,8 +545,14 @@ public class COBOLGenerator extends Generator {
 		return _elementType;
 	}
 
-	/************ Code Generation **************/
-	
+	protected void generateCode(Try _try, String _indent)
+	{
+		/* FIXME this should somehow be converted to a "declarative procedure" declaration,
+		 * something like:
+		 * USE AFTER STANDARD EXCEPTION PROCEDURE ON ??? <PARAGR_NAME>
+		 * */
+		super.generateCode(_try, _indent);
+	}
 	
 	/**
 	 * Composes the heading for the program or function according to the
@@ -480,13 +575,13 @@ public class COBOLGenerator extends Generator {
 		if (!topLevel) {
 			addCode("", _indent, false);
 		}
-		this.insertComment(_root.getText(), _indent);
-		this.insertComment(_root.getComment(), _indent);
+		this.appendComment(_root.getText(), _indent);
+		this.appendComment(_root.getComment(), _indent);
 		if (topLevel) {
-			this.insertComment("", _indent);
-			this.insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			this.appendComment("", _indent);
+			this.appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 		}
-		insertCopyright(_root, _indent, true);
+		appendCopyright(_root, _indent, true);
 		// IMPORT diagrams go to storage only (copybook)?
 		if (!_root.isInclude()) {
 			addCode("IDENTIFICATION DIVISION.", _indent, false);
@@ -507,8 +602,8 @@ public class COBOLGenerator extends Generator {
 				addCode(".", _indent + this.getIndent(), false);
 			}
 		} else {
-			this.insertComment("IMPORT diagram: data declarations to be put in a copybook", _indent);
-			this.insertComment("", _indent);
+			this.appendComment("IMPORT diagram: data declarations to be put in a copybook", _indent);
+			this.appendComment("", _indent);
 		}
 		this.subroutineInsertionLine = code.count();
 		return _indent;
@@ -528,18 +623,21 @@ public class COBOLGenerator extends Generator {
 		addCode("", _indent, false);
 		addCode("DATA DIVISION.", _indent, false);
 		addCode("WORKING-STORAGE SECTION.", _indent, false);
-		insertComment("TODO: Check and accomplish variable declarations:", _indent);
-		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo().clone();
+		appendComment("TODO: Check and accomplish variable declarations:", _indent);
+		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//this.typeMap = (HashMap<String, TypeMapEntry>)_root.getTypeInfo().clone();
+		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo(routinePool).clone();
+		// END KGU#676 2019-03-30
 		// special treatment of constants
 		for (String constName: _root.constants.keySet()) {
-			insertDeclaration(_root, constName, _indent);			
+			appendDeclaration(_root, constName, _indent);			
 		}
-        // List the variables to be declared
+		// List the variables to be declared
 		for (int v = 0; v < varNames.count(); v++) {
 			//insertComment(varNames.get(v), _indent);
 			String varName = varNames.get(v);
 			if (!_root.constants.containsKey(varName)) {
-				insertDeclaration(_root, varName, _indent);
+				appendDeclaration(_root, varName, _indent);
 			}
 		}
 		//generateIOComment(_root, _indent);
@@ -563,7 +661,7 @@ public class COBOLGenerator extends Generator {
 				//insertComment(varNames.get(v), _indent);
 				String varName = params.get(v);
 				if (!_root.constants.containsKey(varName)) {
-					insertDeclaration(_root, varName, _indent);
+					appendDeclaration(_root, varName, _indent);
 				}
 			}
 		}

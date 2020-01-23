@@ -30,38 +30,44 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author         			Date			Description
- *      ------					----            -----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2010.08.07      C# Generator starting from C Generator & Java Generator
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16      Bugfixes and enhancements (see comment)
- *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation fixed, comment insertion interface modified
- *      Kay Gürtzig             2015.11.01      Inheritance changed and unnecessary overridings disabled
- *      Kay Gürtzig             2015.11.30      Sensible handling of return and exit/break instructions
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008-11-17      First Issue
+ *      Gunter Schillebeeckx    2010-08-07      C# Generator starting from C Generator & Java Generator
+ *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014-11-06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014-11-16      Bugfixes and enhancements (see comment)
+ *      Kay Gürtzig             2014-12-02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015-10-18      Indentation fixed, comment insertion interface modified
+ *      Kay Gürtzig             2015-11-01      Inheritance changed and unnecessary overridings disabled
+ *      Kay Gürtzig             2015-11-30      Sensible handling of return and exit/break instructions
  *                                              (issue #22 = KGU#47)
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016-03-23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              brace balance in non-program files fixed  
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
- *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
- *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
- *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with System.Threading
- *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig             2017.04.14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
- *      Kay Gürtzig             2017.05.16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
- *      Kay Gürtzig             2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig             2017.05.24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
- *      Kay Gürtzig             2017.09.28      Enh. #389, #423: Update for record types and includable diagrams
- *      Kay Gürtzig             2017.12.22      Issue #496: Autodoc comment style changed from /**... to ///...
- *      Kay Gürtzig             2018.02.22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
- *      Kay Gürtzig             2018.07.21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
+ *      Kay Gürtzig             2016-08-12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig             2016-10-14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016-10-15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2017-01-04      Bugfix #322: input and output code generation fixed 
+ *      Kay Gürtzig             2017-01-30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017-01-31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017-02-24      Enh. #348: Parallel sections translated with System.Threading
+ *      Kay Gürtzig             2017-02-27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017-04-14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
+ *      Kay Gürtzig             2017-05-16      Bugfix #51: Export of empty input instructions produced " = Console.ReadLine();"
+ *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig             2017-05-24      Bugfix: hashCode as suffix could get negative, therefore now hex string used
+ *      Kay Gürtzig             2017-09-28      Enh. #389, #423: Update for record types and includable diagrams
+ *      Kay Gürtzig             2017-12-22      Issue #496: Autodoc comment style changed from /**... to ///...
+ *      Kay Gürtzig             2018-02-22      Bugfix #517: Declarations/initializations from includables weren't handled correctly 
+ *      Kay Gürtzig             2018-07-21      Ebh. #563 (smarter record initializers), bugfix #564 (array initializer trouble)
+ *      Kay Gürtzig             2019-02-14      Enh. #680: Support for input instructions with several variables
+ *      Kay Gürtzig             2019-03-08      Enh. #385: Support for parameter default values
+ *      Kay Gürtzig             2019-03-20      Enh. #56: Export of Try elements and support of throw Jumps
+ *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
+ *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *
  ******************************************************************************************************
  *
@@ -97,24 +103,24 @@ package lu.fisch.structorizer.generators;
  *      - Enhancement #10 (KGU#3): FOR loops now provide themselves more reliable loop parameters 
  *      - Enhancement KGU#15: Support for the gathering of several case values in CASE instructions
  *
- *      2015.10.18 - Bugfix
+ *      2015-10-18 - Bugfix
  *      - Indentation wasn't done properly (_indent+this.getIndent() works only for single-character indents)
  *      
- *      2014.11.16 - Bugfixes / Enhancements
+ *      2014-11-16 - Bugfixes / Enhancements
  *      - conversion of comparison and logical operators had still been flawed
  *      - element comment export added
  *      
- *      2014.11.06 - Enhancement (Kay Gürtzig)
+ *      2014-11-06 - Enhancement (Kay Gürtzig)
  *      - Pascal-style logical operators "and", "or", and "not" supported 
  *      
- *      2010.09.10 - Bugfixes
+ *      2010-09-10 - Bugfixes
  *      - Code generator for the Case structure (switch) had missed to add the case keywords
  *      - Comparison and assignment operator conversion was incomplete
  *      - Missing parentheses around negated condition of "do while" added
  *      - logical flaw in the automatic addition of brackets for "if", "while", and "switch" mended
  *      - "cosmetic" changes to the block ends of "switch" and "do while" 
  *      		
- *      2010.08.07 - Bugfixes
+ *      2010-08-07 - Bugfixes
  *      - none
  *
  ******************************************************************************************************///
@@ -129,6 +135,7 @@ import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 
@@ -152,8 +159,31 @@ public class CSharpGenerator extends CGenerator
 		return exts;
 	}
 
+	// START KGU#371 2019-03-07: Enh. #385
+	/**
+	 * @return The level of subroutine overloading support in the target language
+	 */
+	@Override
+	protected OverloadingLevel getOverloadingLevel() {
+		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;
+	}
+	// END KGU#371 2019-03-07
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/**
+	 * Subclassable method to specify the degree of availability of a try-catch-finally
+	 * construction in the target language.
+	 * @return a {@link TryCatchSupportLevel} value
+	 * @see #appendCatchHeading(Try, String)
+	 */
+	protected TryCatchSupportLevel getTryCatchLevel()
+	{
+		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+	}
+	// END KGU#686 2019-03-18
+
 //	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
-//    private static final String[] reservedWords = new String[]{
+//	private static final String[] reservedWords = new String[]{
 //		"abstract", "as", "base", "bool", "break", "byte",
 //		"case", "catch", "char", "checked", "class", "const", "continue",
 //		"decimal", "default", "delegate", "do", "double",
@@ -197,6 +227,12 @@ public class CSharpGenerator extends CGenerator
 		return false;
 	}
 	// END KGU#560 2018-07-22
+
+	@Override
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return true;
+	}
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -322,18 +358,18 @@ public class CSharpGenerator extends CGenerator
 	 * The exit code will be passed to the generated code.
 	 */
 	@Override
-	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		Jump dummy = new Jump();
-		insertBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
-		insertComment("WinForms app", _indent + this.getIndent());
+		appendBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
+		appendComment("WinForms app", _indent + this.getIndent());
 		addCode(this.getIndent() + "System.Windows.Forms.Application.Exit();", _indent, isDisabled);
-		insertBlockTail(dummy, null, _indent);
+		appendBlockTail(dummy, null, _indent);
 
-		insertBlockHeading(dummy, "else", _indent); 
-		insertComment("Console app", _indent + this.getIndent());
+		appendBlockHeading(dummy, "else", _indent); 
+		appendComment("Console app", _indent + this.getIndent());
 		addCode(this.getIndent() + "System.Environment.Exit(" + _exitCode + ");", _indent, isDisabled);
-		insertBlockTail(dummy, null, _indent);
+		appendBlockTail(dummy, null, _indent);
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -351,6 +387,18 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#332 2017-04-14
 
+	// START KGU#784 2019-12-02
+	@Override
+	protected String transformType(String _type, String _default)
+	{
+		if (_type != null && (_type.equals("String") || _type.equals("Object"))) {
+			_type = _type.toLowerCase();
+		}
+		return super.transformType(_type, _default);
+	}
+	// END KGU#784 2019-12-02
+
+	
 	// START KGU#388 2017-09-28: Enh. #423
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordInit(java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
@@ -360,13 +408,14 @@ public class CSharpGenerator extends CGenerator
 		// This is practically identical to Java
 		// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
+			TypeMapEntry compType = compEntry.getValue();
 			String compVal = comps.get(compName);
 			if (isFirst) {
 				isFirst = false;
@@ -378,12 +427,12 @@ public class CSharpGenerator extends CGenerator
 				if (compVal == null) {
 					recordInit += "null";
 				}
-				else if (compEntry.getValue().isRecord()) {
-					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				else if (compType != null && compType.isRecord()) {
+					recordInit += transformRecordInit(compVal, compType);
 				}
 				// START KGU#561 2018-07-21: Bugfix #564
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
-					String elemType = compEntry.getValue().getCanonicalType(true, false).substring(1);
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					String elemType = compType.getCanonicalType(true, false).substring(1);
 					recordInit += "new " + this.transformType(elemType, "object") + "[]" + compVal;
 				}
 				// END KGU#561 2018-07-21
@@ -430,18 +479,26 @@ public class CSharpGenerator extends CGenerator
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
-	protected String generateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
+	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
-		if (_isDecl) {
-			return this.transform("{" + _arrayItems.concatenate(", ") + "}");
-		}
-		else if (_elemType != null) {
-			return "new " + this.transformType(_elemType, "object") + "[]{" + _arrayItems.concatenate(", ") + "}";
-		}
-		else {
-			super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		// START KGU#732 2019-10-03: Bugfix #755 - The operator new is always to be used.
+		//if (_isDecl) {
+		//	return this.transform("{" + _arrayItems.concatenate(", ") + "}");
+		//}
+		//else if (_elemType != null) {
+		//	return "new " + this.transformType(_elemType, "object") + "[]{" + _arrayItems.concatenate(", ") + "}";
+		//}
+		//else {
+		//	super.generateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, null, false);
+		//}
+		//return null;
+		// The C-like initializer
+		String initializerC = super.transformOrGenerateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, _elemType, true);
+		if (initializerC != null) {
+			return "new " + this.transformType(_elemType, "object") + "[]" + initializerC;
 		}
 		return null;
+		// END KGU#732 2019-10-03
 	}
 	// END KGU#560 2018-07-21
 
@@ -455,7 +512,7 @@ public class CSharpGenerator extends CGenerator
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
-		insertDeclComment(_root, _indent, typeKey);
+		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
 			String indentPlus1 = _indent + this.getIndent();
 			String indentPlus2 = indentPlus1 + this.getIndent();
@@ -491,19 +548,31 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#388 2017-09-28
 
+	// START KGU#653 2019-02-14: Enh. #680
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653 2019-02-14
+
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
-	 * We try our very best to create a working loop from a FOR-IN construct
-	 * This will only work, however, if we can get reliable information about
-	 * the size of the value list, which won't be the case if we obtain it e.g.
-	 * via a variable.
+	 * We try our very best to create a working loop from a FOR-IN construct.
 	 * @param _for - the element to be exported
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
 	protected boolean generateForInCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -512,7 +581,6 @@ public class CSharpGenerator extends CGenerator
 		String itemType = null;
 		if (items != null)
 		{
-			valueList = "{" + items.concatenate(", ") + "}";
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogeneous? We will just try four ways: int,
 			// double, String, and derived type name. If none of them match we use
@@ -553,7 +621,23 @@ public class CSharpGenerator extends CGenerator
 					allString = item.startsWith("\"") && item.endsWith("\"") &&
 							!item.substring(1, item.length()-1).contains("\"");
 				}
+				// START KGU#388 2019-10-02: Enh. #423 (had been forgotten in 2017)
+				if (allCommon)
+				{
+					String itType = Element.identifyExprType(this.typeMap, item, true);
+					if (i == 0) {
+						commonType = itType;
+					}
+					if (!commonType.equals(itType)) {
+						allCommon = false;
+					}
+				}
+				// END KGU#388 2019-10-02
+				// START KGU#732 2019-10-02: Bugfix #755 - transformation of the items is necessary
+				items.set(i, transform(item));
+				// END KGU#732 2019-10-02
 			}
+			valueList = "{" + items.concatenate(", ") + "}";
 			// START KGU#388 2017-09-28: Enh. #423
 			//if (allInt) itemType = "int";
 			if (allCommon) itemType = commonType;
@@ -561,21 +645,25 @@ public class CSharpGenerator extends CGenerator
 			// END KGU#388 2017-09-28
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
-			String arrayName = "array20160322";
-			
-			// Extra block to encapsulate the additional variable declarations
-			addCode("{", _indent , isDisabled);
-			indent += this.getIndent();
+			// START KGU#732 2019-10-02: Bugfix #755 part 1 - no need to define an extra variable, initializer was wrong
+			//String arrayName = "array20160322";
+			//
+			//addCode("{", _indent , isDisabled);
+			//indent += this.getIndent();
+			// END KGU#732 2019-10-02
 			
 			if (itemType == null)
 			{
 				itemType = "object";
-				this.insertComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
+				this.appendComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
 				
 			}
-			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
-			
-			valueList = arrayName;
+			// START KGU#732 2019-10-02: Bugfix #755 part 2
+			//addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
+			//
+			//valueList = arrayName;
+			valueList = "new " + itemType + "[]" + valueList;
+			// END KGU#732 2019-10-02
 		}
 		else
 		{
@@ -586,29 +674,32 @@ public class CSharpGenerator extends CGenerator
 			if (listType != null && listType.isArray() && (itemType = listType.getCanonicalType(true, false)) != null
 					&& itemType.startsWith("@"))
 			{
-				itemType = this.transformType(itemType.substring(1), "Object");	
+				itemType = this.transformType(itemType.substring(1), "object");	
 			}
 			else {
 				itemType = "Object";
-				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
+				this.appendComment("TODO: Select a more sensible item type than object", indent);
+				this.appendComment("      and/or prepare the elements of the array.", indent);
 			}
 			// END KGU#388 2017-09-28
 			valueList = transform(valueList, false);
 		}
 
 		// Creation of the loop header
-		insertBlockHeading(_for, "foreach (" + itemType + " " + var + " in " +	valueList + ")", indent);
+		appendBlockHeading(_for, "foreach (" + itemType + " " + var + " in " +	valueList + ")", indent);
 
 		// Add the loop body as is
 		generateCode(_for.q, indent + this.getIndent());
 
 		// Accomplish the loop
-		insertBlockTail(_for, null, indent);
+		appendBlockTail(_for, null, indent);
 
-		if (items != null)
-		{
-			addCode("}", _indent, isDisabled);
-		}
+		// START KGU#732 2019-10-02: Bugfix #755 part 3
+		//if (items != null)
+		//{
+		//	addCode("}", _indent, isDisabled);
+		//}
+		// END KGU#732 2019-10-02
 		
 		return true;
 	}
@@ -624,12 +715,12 @@ public class CSharpGenerator extends CGenerator
 		String indentPlusOne = _indent + this.getIndent();
 		String suffix = Integer.toHexString(_para.hashCode());
 
-		insertComment(_para, _indent);
+		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================= START PARALLEL SECTION =================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================= START PARALLEL SECTION =================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("{", _indent, isDisabled);
 		
 		StringList[] asgndVars = new StringList[_para.qs.size()];
@@ -666,13 +757,13 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		addCode("}", _indent, isDisabled);
-		insertComment("==========================================================", _indent);
-		insertComment("================== END PARALLEL SECTION ==================", _indent);
-		insertComment("==========================================================", _indent);
+		appendComment("==========================================================", _indent);
+		appendComment("================== END PARALLEL SECTION ==================", _indent);
+		appendComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 
-	// Inserts class definitions for workers to be used by the threads to this.subClassDefinitions
+	// Adds class definitions for workers to be used by the threads to this.subClassDefinitions
 	private StringList generateParallelThreadWorkers(Root _root, String _indent)
 	{
 		StringList codeBefore = this.code;
@@ -696,13 +787,16 @@ public class CSharpGenerator extends CGenerator
 				}
 			});
 			if (!containedParallels.isEmpty()) {
-				insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+				appendComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 			}
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
 				String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
 				Root root = Element.getRoot(par);
-				HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+				//HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+				HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo(routinePool);
+				// END KGU#676 2019-03-30
 				int i = 0;
 				// We still don't care for synchronisation, mutual exclusion etc.
 				for (Subqueue sq: par.qs) {
@@ -720,10 +814,10 @@ public class CSharpGenerator extends CGenerator
 					}
 					addCode("class " + worker + "{", _indent, isDisabled);
 					if (setVars.count() > 0 || usedVars.count() > 0) {
-						insertComment("TODO: Check and accomplish the member declarations here", indentPlusOne);
+						appendComment("TODO: Check and accomplish the member declarations here", indentPlusOne);
 					}
 					if (setVars.count() > 0) {
-						insertComment("TODO: Maybe you must care for an initialization of the public members, too", indentPlusOne);
+						appendComment("TODO: Maybe you must care for an initialization of the public members, too", indentPlusOne);
 					}
 					StringList argList = this.makeArgList(setVars, typeMap);
 					for (int j = 0; j < argList.count(); j++) {
@@ -751,7 +845,7 @@ public class CSharpGenerator extends CGenerator
 				}
 			}
 			if (!containedParallels.isEmpty()) {
-				insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+				appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
 			}
 			code.add(_indent);
 		}
@@ -761,17 +855,28 @@ public class CSharpGenerator extends CGenerator
 		return workerDefinitions;
 	}
 	
+	/**
+	 * Generates an argument list for a worker thread routine as branch of a parallel section.
+	 * Types for the variable names in {@code varNames} are retrieved from {@code typeMap}. If
+	 * no associated type can be identified then a comment {@code "type?"} will be inserted.
+	 * @param varNames - list of variable names to be passed in
+	 * @param typeMap - maps variable names and type names to type specifications
+	 * @return a list of argument declarations
+	 */
 	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
 	{
 		StringList argList = new StringList();
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			if (typeEntry != null) {
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList.add(typeSpec + " " + varName);
@@ -779,6 +884,51 @@ public class CSharpGenerator extends CGenerator
 		return argList;
 	}
 	// END KGU#47/KGU#348 2017-02-24
+
+	// START KGU#686 2019-03-18: Enh. #56
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeExceptionFrom(java.lang.String)
+	 */
+	@Override
+	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
+		// If it isn't a rethrow then fake some text (a rethrow doesn't require an argument)
+		boolean warn = false;
+		if (_thrown.isEmpty() && this.caughtException == null) {
+			_thrown = "new System.Exception(\"unspecified error\")";
+			warn = true;
+		}
+		else if (!_thrown.isEmpty()) {
+			// _thrown is supposed to be a string expression...
+			_thrown = "new System.Exception(" + _thrown + ")";
+			warn = true;
+		}
+		if (warn) {
+			appendComment("FIXME: You should replace System.Exception by an own subclass!", _indent);
+		}
+		// In case of an empty argument with non-null caughtException we assume a rethrow
+		addCode(("throw " + _thrown).trim() + ";", _indent, _asComment);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#appendCatchHeading(lu.fisch.structorizer.elements.Try, java.lang.String)
+	 */
+	@Override
+	protected void appendCatchHeading(Try _try, String _indent) {
+		
+		boolean isDisabled = _try.isDisabled();
+		String varName = _try.getExceptionVarName();
+		String head = "catch ()";
+		String exName = "ex" + Integer.toHexString(_try.hashCode());
+		if (varName != null && !varName.isEmpty()) {
+			head = "catch(Exception " + exName + ")";
+		}
+		this.appendBlockHeading(_try, head, _indent);
+		if (exName != null) {
+			this.addCode("string " + varName + " = " + exName + ".ToString()", _indent + this.getIndent(), isDisabled);
+		}
+		this.caughtException = exName;
+	}
+	// END KGU#686 2019-03-18
 
 	/**
 	 * Composes the heading for the program or function according to the
@@ -800,13 +950,13 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
-			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
-			insertCopyright(_root, _indent, true);
+			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			if (!_root.isProgram()) {
-				insertGlobalDefinitions(_root, indentPlus1, true);
+				appendGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
 			code.add("");
@@ -820,21 +970,23 @@ public class CSharpGenerator extends CGenerator
 		// END KGU#178 2016-07-20
 		
 		if (_root.isProgram()) {
-			code.add(_indent + "using System;");
+			this.generatorIncludes.add("System");
 			// START KGU#348 2017-02-24: Enh. #348
 			if (this.hasParallels) {
-				code.add(_indent + "using System.Threading;");
+				this.generatorIncludes.add("System.Threading");
 			}
 			// END KGU#348 2017-02-24
+			this.appendGeneratorIncludes(_indent, false);
+			code.add(_indent);
 			// STARTB KGU#351 2017-02-26: Enh. #346
-			this.insertUserIncludes(_indent);
+			this.appendUserIncludes(_indent);
 			// END KGU#351 2017-02-26
-			code.add(_indent + "");
+			code.add(_indent);
 			// START KGU 2015-10-18
-			insertBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
+			appendBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18
 
-			insertBlockHeading(_root, "public class "+ _procName, _indent);
+			appendBlockHeading(_root, "public class "+ _procName, _indent);
 			code.add(_indent);
 			// START KGU#348 2017-02-24: Enh.#348
 			this.subClassInsertionLine = code.count();
@@ -847,11 +999,11 @@ public class CSharpGenerator extends CGenerator
 			// END KU#311 2017-01-05
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", indentPlus1);
-			insertGlobalDefinitions(_root, indentPlus1, true);
+			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add(_indent);
 			code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
-			insertBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
+			appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
 			code.add("");
 		}
 		else {
@@ -866,7 +1018,7 @@ public class CSharpGenerator extends CGenerator
 				this.subClassInsertionLine = code.count();
 			}
 			// END KGU#348 2017-02-24
-			insertBlockComment(_root.getComment(), indentPlus1, "/// <summary>", "/// ", "/// </summary>");
+			appendBlockComment(_root.getComment(), indentPlus1, "/// <summary>", "/// ", "/// </summary>");
 			for (String param: _paramNames.toArray()) {
 				code.add(indentPlus1 + "/// <param name=\"" + param + "\"> TODO </param>");
 			}
@@ -887,27 +1039,36 @@ public class CSharpGenerator extends CGenerator
 			String fnHeader = (topLevel ? "public" : "private") + " static "
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
+			// START KGU#371 2019-03-07: Enh. #385 Care for default values
+			StringList defaultVals = _root.getParameterDefaults();
+			// END KGU#371 2019-03-07
 			for (int p = 0; p < _paramNames.count(); p++) {
 				if (p > 0) { fnHeader += ", "; }
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
+				// START KGU#371 2019-03-07: Enh. #385
+				String defVal = defaultVals.get(p);
+				if (defVal != null) {
+					fnHeader += " = " + transform(defVal);
+				}
+				// END KGU#371 2019-03-07
 			}
 			fnHeader += ")";
-			insertBlockHeading(_root, fnHeader, indentPlus1);
+			appendBlockHeading(_root, fnHeader, indentPlus1);
 		}
 
-		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		insertGlobalInitialisations(indentPlus2);
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		appendGlobalInitialisations(indentPlus2);
 		// END KGU#376 2017-09-26
 
 		// START KGU#348 2017-02-24: Enh. #348 - Actual translation of Parallel sections
 		StringList workers = this.generateParallelThreadWorkers(_root, indentPlus1);
 		boolean moveSubroutineInsertions = this.subroutineInsertionLine > this.subClassInsertionLine;
 		for (int i = 0; i < workers.count(); i++) {
-			this.code.insert(workers.get(i), this.subClassInsertionLine++);
+			insertCode(workers.get(i), this.subClassInsertionLine++);
 			if (moveSubroutineInsertions) this.subroutineInsertionLine++;
 		}
 		// END KGU#348 2017-02-24
@@ -970,7 +1131,7 @@ public class CSharpGenerator extends CGenerator
 		while (_elementType.startsWith("@")) {
 			_elementType = _elementType.substring(1) + ",";
 		}
-		return (_elementType + sepa + _varName).trim(); 
+		return (transformType(_elementType, _elementType) + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
@@ -978,9 +1139,10 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			code.add(_indent);
-			insertComment("TODO: You may have to modify input instructions,", _indent);			
-			insertComment("      possibly by enclosing Console.ReadLine() calls with Parse methods", _indent);
-			insertComment("      according to the variable type, e.g. \"i = int.Parse(Console.ReadLine());\".", _indent);			
+			appendComment("TODO: You may have to modify input instructions,", _indent);
+			appendComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
+			appendComment("      Parse methods according to the variable type, e.g.:", _indent);
+			appendComment("         i = int.Parse(Console.ReadLine());", _indent);
 		}
 		// END KGU#236 2016-12-22
 	}
@@ -1040,5 +1202,5 @@ public class CSharpGenerator extends CGenerator
 		}
 	}
 	// END KGU 2015-12-15
-    	
+
 }

@@ -94,6 +94,8 @@ public interface ILoop {
 		}	
 	}
 
+	/** @return this loop as Element (mere type bridging) */
+	public Element getLoop();
 	/** @return the {@link Subqueue} representing the body of this loop */
 	public Subqueue getBody();
 	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
