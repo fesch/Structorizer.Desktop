@@ -15,6 +15,8 @@ set -e
 #      Bob Fisch                      2008.10.04   First Issue
 #      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
 #      Simon Sobisch                  2017.03.06   Check for jar
+#      Simon Sobisch                  2020.01.20   added handling for nostart argument,
+#                                                  default to detached start
 #
 ################################################################################
 
@@ -27,11 +29,33 @@ jar 2>/dev/null 1>&2 || \
 # delete the old archive (if present)
 [ -f structorizer.jar ] && rm structorizer.jar
 
+start_compiled="x"
+case "$1" in
+  nostart | no-start | no_start)
+    start_compiled=""
+    shift
+    ;;
+  start | no-sync | no_sync | detached)
+    start_compiled="x"
+    shift
+    ;;
+  start-sync | sync | start_sync )
+    start_compiled="s"
+    shift
+    ;;
+esac
+
 # create a new archive
 echo "Create archive..."
 jar cmf structorizer.manifest structorizer.jar -C bin/ .
 echo "Done"
 
-# execute the archive
-echo "Running Structorizer from jar"
-java -jar structorizer.jar
+if test -n "$start_compiled"; then
+  # execute the archive
+  echo; echo "Running Structorizer from jar"
+  if test "$start_compiled" = "s"; then
+    java -jar structorizer.jar
+  else
+    java -jar structorizer.jar &
+  fi
+fi  # start block end

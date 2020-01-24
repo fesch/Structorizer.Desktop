@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/bash
 set -e
 ################################################################################
 #
@@ -23,6 +23,8 @@ set -e
 #                                                  available;
 #                                                  changed script output
 #      Kay Gürtzig                    2018.09.18   bsh-2.0b4.jar replaced with bsh-2.0b6.jar
+#      Simon Sobisch                  2020.01.20   added handling for nostart argument,
+#                                                  default to detached start
 #
 ################################################################################
 
@@ -41,6 +43,22 @@ mkdir jar
 
 # copy libs
 cp -R lib/* jar
+
+start_compiled="x"
+case "$1" in
+  nostart | no-start | no_start)
+    start_compiled=""
+    shift
+    ;;
+  start | no-sync | no_sync | detached)
+    start_compiled="x"
+    shift
+    ;;
+  start-sync | sync | start_sync )
+    start_compiled="s"
+    shift
+    ;;
+esac
 
 # change into jar directory
 pushd jar >/dev/null
@@ -95,6 +113,12 @@ echo "Done"
 # remove the jar-directory
 rm -R jar/
 
-# execute the archive
-echo; echo "Running Structorizer from all-in-one jar"
-java -jar structorizer.jar
+if test -n "$start_compiled"; then
+  # execute the archive
+  echo; echo "Running Structorizer from all-in-one jar"
+  if test "$start_compiled" = "s"; then
+    java -jar structorizer.jar
+  else
+    java -jar structorizer.jar &
+  fi
+fi  # start block end
