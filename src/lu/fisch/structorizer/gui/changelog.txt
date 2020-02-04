@@ -12,7 +12,7 @@ Known issues:
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
 
-Current development version: 3.30-05 (2020-01-21)
+Current development version: 3.30-05 (2020-02-04)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -52,6 +52,7 @@ Current development version: 3.30-05 (2020-01-21)
 - 04: Bugfix #794: Code preview fails with error if license is not configured <2>
 - 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
 - 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
+- 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

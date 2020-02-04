@@ -2116,7 +2116,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// START KGU#705 2019-09-24: Enh. #738
 		diagram.setCodePreviewTooltip();
 		// END KGU#705 2019-09-24
-
+		
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
+		// END KGU#792 2020-02-04 
 	}
 	// END KGU#235 2016-08-09
 	
@@ -2140,7 +2143,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
 			sl.loadFromFile(filename);
 			// paste it's content to the "external" locale
-			Locales.getInstance().setExternal(sl,filename);
+			Locales.getInstance().setExternal(sl, filename);
+			// START KGU#792 2020-02-04: Bugfix #805
+			Ini.getInstance().setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
+			// END KGU#792 2020-02-04 
 		}
 		// START KGU#235 2016-08-09: Bugfix #225
 		doButtons();

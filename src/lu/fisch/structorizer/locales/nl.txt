@@ -273,10 +273,10 @@ Menu.menuDebugDisable.text=Aan/Uit
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
-Menu.menuHelpOnline.text=User Guide
-Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing (slechts in Engels) openen in de browser
-Menu.menuHelpDownload.text=Download de Guide als PDF
-Menu.menuHelpDownload.tooltip=Download de nieuwste User Guide als PDF-bestand, om later te kunnen gebruiken zonder verbinding te hebben met het internet.
+Menu.menuHelpOnline.text=Gebruiksaanwijzing (eng)
+Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing (slechts in engels) openen in de browser
+Menu.menuHelpDownload.text=Download de gebr.-aanw. als PDF
+Menu.menuHelpDownload.tooltip=Download de nieuwste gebruiksaanwijzing als PDF-bestand, om later te kunnen gebruiken zonder verbinding te hebben met het internet.
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -313,7 +313,7 @@ Menu.msgErrorImageSave.text=Fout bij opslaan van de afbeelding(en)!
 Menu.msgErrorUsingGenerator.text=Fout bij gebruik van % generator
 Menu.msgErrorNoFile.text=Bestand niet gevonden!
 Menu.msgBrowseFailed.text=Tonen "%" in de browser is mislukt.
-Menu.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade User Guide in uw PDF-lezer weergegeven.
+Menu.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade gebruiksaanwijzing in uw PDF-lezer weergegeven.
 Menu.msgDownloadFailed.text=Het downloaden van de User Guide is mislukt:\n%
 Menu.msgHostNotAvailable.text=Extern adres "%" is niet bereikbaar.
 Menu.hdrRefactoringTable.0.text=Referentie

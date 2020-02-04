@@ -110,6 +110,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
  *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
  *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
+ *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
+ *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *
  ******************************************************************************************************
  *
@@ -287,9 +289,9 @@ public abstract class Element {
 	" - Javascript: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"Import grammars and parsers written and maintained by\n"+
 	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
-	" - COBOL: Simon Sobisch, Kay Gürtzig"+
-	" - Struktogrammeditor: Kay Gürtzig"+
-	" - hus-Struktogrammer: Kay Gürtzig"+
+	" - COBOL: Simon Sobisch, Kay Gürtzig\n"+
+	" - Struktogrammeditor: Kay Gürtzig\n"+
+	" - hus-Struktogrammer: Kay Gürtzig\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -2434,6 +2436,10 @@ public abstract class Element {
 	}
 	// END KGU#466 2019-08-02
 	
+	/**
+	 * Saves most Element-based settings to the INI file.
+	 * @see #cacheToIni()
+	 */
 	public static void saveToINI()
 	{
 		try
@@ -2441,51 +2447,7 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			ini.setProperty("IfTrue", preAltT);
-			ini.setProperty("IfFalse", preAltF);
-			ini.setProperty("If", preAlt);
-			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
-			ini.setProperty("altPadRight", String.valueOf(altPadRight));
-			// END KGU 2016-01-16
-			StringList sl = new StringList();
-			sl.setText(preCase);
-			ini.setProperty("Case", sl.getCommaText());
-			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
-			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
-			// END KGU#401 2017-05-18
-			ini.setProperty("For", preFor);
-			ini.setProperty("While", preWhile);
-			ini.setProperty("Repeat", preRepeat);
-			// START KGU#686 2019-03-22: Enh. #56
-			ini.setProperty("Try", preTry);
-			ini.setProperty("Catch", preCatch);
-			ini.setProperty("Finally", preFinally);
-			//END KGU#686 2019-03-22
-			// START KGU#376 2017-07-02: Enh. #389
-			ini.setProperty("Import", preImport);
-			// END KGU#376 2017-07-02
-			// font
-			// START KGU#264 2016-09-28: font name property renamed 
-			//ini.setProperty("Name",getFont().getFamily());
-			ini.setProperty("Font", getFont().getFamily());
-			// END KGU#264 2016-09-28
-			ini.setProperty("Size", Integer.toString(getFont().getSize()));
-			// colors
-			// START KGU#245 2018-07-02
-//			ini.setProperty("color0", getHexColor(color0));
-//			ini.setProperty("color1", getHexColor(color1));
-//			ini.setProperty("color2", getHexColor(color2));
-//			ini.setProperty("color3", getHexColor(color3));
-//			ini.setProperty("color4", getHexColor(color4));
-//			ini.setProperty("color5", getHexColor(color5));
-//			ini.setProperty("color6", getHexColor(color6));
-//			ini.setProperty("color7", getHexColor(color7));
-//			ini.setProperty("color8", getHexColor(color8));
-//			ini.setProperty("color9", getHexColor(color9));
-			for (int i = 0; i < colors.length; i++) {
-				ini.setProperty("color" + i, getHexColor(colors[i]));
-			}
-			// END KGU#245 2018-07-02
+			cacheToIni();
 
 			ini.save();
 		}
@@ -2494,6 +2456,49 @@ public abstract class Element {
 			logger.log(Level.SEVERE, "Error", e);
 		}
 	}
+	
+	// START KGU#792 2020-02-04: Bugfix #805
+	/**
+	 * Caches most Element-based preferences as properties to the Ini instance.
+	 * @see #saveToINI()
+	 */
+	public static void cacheToIni() {
+		Ini ini = Ini.getInstance();
+		ini.setProperty("IfTrue", preAltT);
+		ini.setProperty("IfFalse", preAltF);
+		ini.setProperty("If", preAlt);
+		// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+		ini.setProperty("altPadRight", String.valueOf(altPadRight));
+		// END KGU 2016-01-16
+		StringList sl = new StringList();
+		sl.setText(preCase);
+		ini.setProperty("Case", sl.getCommaText());
+		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+		ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
+		// END KGU#401 2017-05-18
+		ini.setProperty("For", preFor);
+		ini.setProperty("While", preWhile);
+		ini.setProperty("Repeat", preRepeat);
+		// START KGU#686 2019-03-22: Enh. #56
+		ini.setProperty("Try", preTry);
+		ini.setProperty("Catch", preCatch);
+		ini.setProperty("Finally", preFinally);
+		//END KGU#686 2019-03-22
+		// START KGU#376 2017-07-02: Enh. #389
+		ini.setProperty("Import", preImport);
+		// END KGU#376 2017-07-02
+		// font
+		// START KGU#264 2016-09-28: font name property renamed 
+		//ini.setProperty("Name",getFont().getFamily());
+		ini.setProperty("Font", getFont().getFamily());
+		// END KGU#264 2016-09-28
+		ini.setProperty("Size", Integer.toString(getFont().getSize()));
+		// colors
+		for (int i = 0; i < colors.length; i++) {
+			ini.setProperty("color" + i, getHexColor(colors[i]));
+		}
+	}
+	// END KGU#792 2020-02-04
 
 	/**
 	 * Returns the {@link Root} the given Element {@code _element} is residing in.

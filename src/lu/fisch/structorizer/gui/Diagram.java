@@ -193,6 +193,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2019-11-24      New method setRootForce() introduced as interface for Unimozer (c)
  *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled
  *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
+ *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cahced to the ini instance when modified
  *
  ******************************************************************************************************
  *
@@ -7303,6 +7304,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setRetrieveVersion(boolean _retrieveVersion)
 	{
 		retrieveVersion = _retrieveVersion;
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("retrieveVersion", Boolean.toString(Diagram.retrieveVersion));
+		// END KGU#792 2020-02-04
 	}
 	// END KGU#300 2016-12-02
 
@@ -8805,6 +8809,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void toggleWheelMode()
 	{
 		Element.E_WHEELCOLLAPSE = !Element.E_WHEELCOLLAPSE;
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("wheelToCollapse", (Element.E_WHEELCOLLAPSE ? "1" : "0"));
+		// END KGU#792 2020-02-04
 	}
 	// END KGU#123 2016-01-04
 	
@@ -8817,6 +8824,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void toggleCtrlWheelMode()
 	{
 		Element.E_WHEEL_REVERSE_ZOOM = !Element.E_WHEEL_REVERSE_ZOOM;
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
+		// END KGU#792 2020-02-04
 	}
 	// END KGU#503 2018-03-14
 	
@@ -8843,6 +8853,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (Arranger.hasInstance()) {
 				Arranger.getInstance().adaptScrollUnits();
 			}
+			// START KGU#792 2020-02-04: Bugfix #805
+			Ini.getInstance().setProperty("wheelScrollUnit", Integer.toString(Element.E_WHEEL_SCROLL_UNIT));
+			// END KGU#792 2020-02-04
 		}
 	}
 	// END KGU#699 2019-03-27
@@ -10100,6 +10113,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					toolbar.setExpertVisibility(!_simplified);
 				}
 			}
+			Element.cacheToIni();
 		}
 	}
 
@@ -10244,6 +10258,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_APPLY_ALIASES = apply;
 		this.resetDrawingInfo();
 		redraw();
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("applyAliases", apply ? "1" : "0");
+		// END KGU#792 2020-02-04
 	}
 	// END KGU#480 2018-01-18
 	
