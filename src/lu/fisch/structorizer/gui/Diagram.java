@@ -193,7 +193,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2019-11-24      New method setRootForce() introduced as interface for Unimozer (c)
  *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled
  *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
- *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cahced to the ini instance when modified
+ *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cached to the Ini instance when modified
  *
  ******************************************************************************************************
  *

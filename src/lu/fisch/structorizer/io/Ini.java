@@ -817,7 +817,9 @@ public class Ini {
 	public void setProperty(String _name, String _value) {
 		String oldVal = p.getProperty(_name);
 		p.setProperty(_name, _value);
-		this.wasChanged = oldVal == null || !oldVal.equals(_value);
+		if (oldVal == null || !oldVal.equals(_value)) {
+			this.wasChanged = true;
+		}
 	}
 
 	// START KGU#456 2017-11-05: Issue #452
