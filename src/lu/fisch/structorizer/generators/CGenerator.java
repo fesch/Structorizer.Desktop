@@ -98,6 +98,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
+ *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.
  *
  ******************************************************************************************************
  *
@@ -915,6 +916,9 @@ public class CGenerator extends Generator {
 		// 4. Input / output
 		boolean isDisabled = _inst.isDisabled(); 
 		StringList tokens = Element.splitLexically(line.trim(), true);
+		// START KGU#796 2020-02-10: Bugfix #808
+		Element.unifyOperators(tokens, false);
+		// END KGU#796 2020-02-10
 		StringList pureTokens = tokens.copy();	// will not contain separating space
 		StringList exprTokens = null;	// Tokens of the expression in case of an assignment
 		StringList pureExprTokens = null;	// as before, will not contain separating space

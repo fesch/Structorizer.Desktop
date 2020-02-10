@@ -983,14 +983,15 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		this.statementRuleIds.add(_ruleId);
 	}
 	/**
-	 * Retrieves comments associated to Tokens in the subtree rooted by the given
-	 * Reduction {@code _reduction} if {@link #optionImportComments} is set, otherwise
-	 * or there hasn't been a comment in the code returns null<br/>
+	 * Retrieves comments associated to {@link Token}s in the subtree rooted by the given
+	 * {@link Reduction} {@code _reduction} if {@link #optionImportComments} is set, returns
+	 * null otherwise or if there hasn't been a comment in the code. The returned string
+	 * may contain newline characters.<br/>
 	 * NOTE: For a sensible limitation of the search depth the set of statement rule ids
 	 * must have been configured before. Otherwise the comments of substructure statements
 	 * might also be concatenated to the enclosing structured statement's comment.
-	 * @param _reduction
-	 * @return strung comprising the collected comment lines
+	 * @param _reduction - the individual {@link Reduction} associated comments are requested for
+	 * @return string comprising the collected comment lines
 	 * @throws ParserCancelled
 	 * @see #registerStatementRuleId(int)
 	 * @see #registerStatementRuleIds(int[])
@@ -999,7 +1000,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	protected String retrieveComment(Reduction _reduction) throws ParserCancelled
 	{
 		// START KGU#537 2018-06-30: Enh. #553
-        this.checkCancelled();
+		this.checkCancelled();
 		// END KGU#537 2018-06-30
 		if (this.optionImportComments) {
 			//System.out.println("START SEARCH FOR " + _reduction);
