@@ -12,7 +12,7 @@ Known issues:
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
 
-Current development version: 3.30-05 (2020-02-10)
+Current development version: 3.30-05 (2020-02-11)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -53,9 +53,11 @@ Current development version: 3.30-05 (2020-02-10)
 - 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
 - 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
 - 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
-- 05: Bugfix #806: Format string splitting on C99 import improved [Rolf Schmidt]2
+- 05: Issue #806: Format string splitting on C99 import improved [Rolf Schmidt]2
+- 05: Issue #806: More sensible printf/scanf format strings on C export [R. Schmidt]2
 - 05: Bugfix #808: Missing C, Js export of var declarations with ':=' [Rolf Schmidt]2
 - 05: Bugfix #809: C99 import flaws: typename replacement in comments, return 0; <2>
+- 05: Bugfix #810: Javascript export produced nonsense for multi-variable input <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -1453,7 +1453,7 @@ public abstract class CPreParser extends CodeParser
 		if (_args != null) {
 			int nExpr = _args.count();
 			// Find the format mask
-			if (nExpr > 1 && (_name.equals("printf") || _name.equals("printf_s")) && _args.get(0).matches("^[\"].*[\"]$")) {
+			if (nExpr >= 1 && (_name.equals("printf") || _name.equals("printf_s")) && _args.get(0).matches("^[\"].*[\"]$")) {
 				// We try to split the string by the "%" signs which is of course dirty.
 				// Unfortunately, we can't use split because it eats empty chunks
 				StringList newExprList = new StringList();

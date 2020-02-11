@@ -17,7 +17,7 @@ import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Root;
 
 /**
- *
+ * OBSOLETE APPROACH TO SOLVE CHARACTER ENCODING WITHIN A SPECIFIC GENERATOR
  * @author robertfisch
  */
 public class OberonGeneratorUTF8 extends OberonGenerator
