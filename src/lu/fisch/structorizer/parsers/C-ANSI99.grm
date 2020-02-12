@@ -74,10 +74,12 @@
 !   * Forgotten empty block (without <BlockItemList>) as possible
 !     <Compound Stmt> added.
 !   * Identifiers allowed as CASE selectors.
+! Modified 2020-02-12
+!   * FloatLiteral variant without decimal point added
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.3'
+"Version"  = '1.4'
 "About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
@@ -108,7 +110,7 @@
 DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
 OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
 HexLiteral       = 0[xX]{Hex Digit}+([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
-FloatLiteral     = {Digit}*'.'{Digit}+([eE]('+'|'-')?{Digit}+)?[fFlL]?
+FloatLiteral     = ({Digit}*'.'{Digit}+([eE]('+'|'-')?{Digit}+)? | {Digit}+[eE]('+'|'-')?{Digit}+)[fFlL]?
 
 StringLiteral    = 'L'? ( '"'( {String Ch} | '\'{Printable} )* '"' {Whitespace}* )+
 CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
