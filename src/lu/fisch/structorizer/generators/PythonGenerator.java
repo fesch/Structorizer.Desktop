@@ -76,6 +76,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
  *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
+ *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
  *
  ******************************************************************************************************
  *
@@ -337,6 +338,12 @@ public class PythonGenerator extends Generator
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, null)) {
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				// Check for a preceding dot
+				int k = i;
+				while (k > 0 && tokens.get(--k).trim().isEmpty());
+				boolean isComponent = k >= 0 && tokens.get(k).equals(".");
+				// END KGU#795 2020-02-12
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
@@ -366,10 +373,20 @@ public class PythonGenerator extends Generator
 					}
 				}
 				// END KGU#480 2018-01-21
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				else if (isComponent) {
+					tokens.set(k++, "[");
+					tokens.set(i, "]");
+					tokens.insert("'" + token + "'", i);
+					tokens.remove(k, i);
+					i += (k - i) + 1;	// This corrects the current index w.r.t. insertions and deletions 
+				}
+				// END KGU#795 2020-02-12
 				// START KGU#542 2019-12-01: Enh. #739 support for enumerators
 				else if (this.varNames.contains(token) && this.root != null && this.root.constants.get(token) != null) {
 					String constVal = this.root.constants.get(token);
 					if (constVal.startsWith(":") && constVal.contains("€")) {
+						// Enumerator entry
 						tokens.set(i, constVal.substring(1, constVal.indexOf("€"))+ "." + token);
 					}
 				}
@@ -427,17 +444,29 @@ public class PythonGenerator extends Generator
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
 				String tail = comps.get("§TAIL§");	// String part beyond the initializer
-				String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				//String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
+				String sepa = "{";	// initial "separator" is the opening brace, then it will be comma
+				prevToken = "";
+				// END KGU#795 2020-02-12
 				for (String compName: compDefs.keySet()) {
 					if (comps.containsKey(compName)) {
-						prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
+						// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+						//prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
+						prevToken += sepa + "'" + compName + "': " + transformTokens(Element.splitLexically(comps.get(compName), true));
+						// END KGU#795 2020-02-12
 					}
-					else {
-						prevToken += sepa + "None";
-					}
+					// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+					//else {
+					//	prevToken += sepa + "None";
+					//}
+					// END KGU#795 2020-02-12
 					sepa = ", ";
 				}
-				prevToken += ")";
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				//prevToken += ")";
+				prevToken += "}";
+				// END KGU#795 2020-02-12
 				tokens.set(pos, prevToken);
 				tokens.remove(pos+1, tokens.count());
 				if (tail != null) {
@@ -1108,12 +1137,14 @@ public class PythonGenerator extends Generator
 		}
 		setDefHandled(_root.getSignatureString(false), typeKey);
 		if (_type.isRecord()) {
-			String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
-			for (String compName: _type.getComponentInfo(false).keySet()) {
-				typeDef += compName + " ";
-			}
-			typeDef = typeDef.trim() + "\")";
-			addCode(typeDef, _indent, _asComment);
+			// START KGU#795 2020-02-12: Issue #807 Use dictionaries instead of external library recordtype
+			//String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
+			//for (String compName: _type.getComponentInfo(false).keySet()) {
+			//	typeDef += compName + " ";
+			//}
+			//typeDef = typeDef.trim() + "\")";
+			//addCode(typeDef, _indent, _asComment);
+			// END KGU#795 2020-02-12
 			done = true;
 		}
 		// START KGU#542 2019-12-01: Enh. #739 - Support for enumeration types (since Python 3.4)
@@ -1208,6 +1239,11 @@ public class PythonGenerator extends Generator
 		for (String name: this.typeMap.keySet()) {
 			if (this.wasDefHandled(_root, name, false, true) && !this.wasDefHandled(_root, name, true, false)) {
 				if (name.startsWith(":")) {
+					// START KGU#795 2020-02-12: Issue #807: Don't declare record types anymore
+					if (this.typeMap.get(name).isRecord()) {
+						continue;
+					}
+					// END KGU#795 2020-02-12
 					name = name.substring(1);
 				}
 				addCode("global " + name, _indent, false);

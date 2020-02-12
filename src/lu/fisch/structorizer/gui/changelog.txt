@@ -55,6 +55,7 @@ Current development version: 3.30-05 (2020-02-12)
 - 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
 - 05: Issue #806: Format string splitting on C99 import improved [Rolf Schmidt]2
 - 05: Issue #806: More sensible printf/scanf format strings on C export [R. Schmidt]2
+- 05: Issue #807: Python 'recordtype' ref library replaced by dictionary [R. Schmidt]2
 - 05: Bugfix #808: Missing C, Js export of var declarations with ':=' [Rolf Schmidt]2
 - 05: Bugfix #809: C99 import flaws: typename replacement in comments, return 0; <2>
 - 05: Bugfix #810: Javascript export produced nonsense for multi-variable input <2>
