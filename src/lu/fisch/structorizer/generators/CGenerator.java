@@ -100,6 +100,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
  *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.
  *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
+ *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
  *
  ******************************************************************************************************
  *
@@ -1311,7 +1312,10 @@ public class CGenerator extends Generator {
 		if (this.getClass().getSimpleName().equals("CGenerator")) {
 			this.appendComment("TODO: check format specifiers, replace all '?'!", _indent);
 		}
-		if (_inputItems.count() > 2) {
+		// START KGU#794 2020-02-13: Issue #806
+		//if (_inputItems.count() > 2) {
+		if (_inputItems.count() > 2 || this.getClass().getSimpleName().equals("CGenerator") && _inputItems.count() == 2) {
+		// END KGU#794 2020-02-13
 			String inputKey = CodeParser.getKeyword("input") + " ";
 			String prompt = _inputItems.get(0);
 			if (!prompt.isEmpty()) {
@@ -2204,6 +2208,11 @@ public class CGenerator extends Generator {
 				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 			}
+			// START KGU#800 2020-02-15: Issue #814
+			if (_paramNames.isEmpty()) {
+				fnHeader += "void";
+			}
+			// END KGU#800 2020-02-15
 			fnHeader += ")";
 			appendComment("TODO: Revise the return type and declare the parameters.", _indent);
 			// START KGU#140 2017-01-31: Enh. #113

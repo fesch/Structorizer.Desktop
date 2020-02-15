@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
+ *      Kay Gürtzig             2020-02-15      KGU#801: Correction in generateParallelThreadWorkers() (had inflated the header)
  *
  ******************************************************************************************************
  *
@@ -846,8 +847,8 @@ public class CSharpGenerator extends CGenerator
 			}
 			if (!containedParallels.isEmpty()) {
 				appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+				code.add(_indent);
 			}
-			code.add(_indent);
 		}
 		finally {
 			this.code = codeBefore;

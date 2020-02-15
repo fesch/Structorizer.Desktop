@@ -83,6 +83,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-14      Bugfix #779 Correct handling of input and output in case of program diagrams
  *      Kay Gürtzig             2019-11-14      Issue #780: Definitions and calls of parameterless procedures omit parentheses
  *      Kay Gürtzig             2019-11-21      Enh. #739: enum type inference for FOR-IN loops and output
+ *      Kay Gürtzig             2019-02-15      Issue #814: Unidentified parameter type marker changed: (*type?*) --> ???
  *
  ******************************************************************************************************
  *
@@ -1435,14 +1436,20 @@ public class OberonGenerator extends Generator {
 			String paramList = "";
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
-				String type = transformType(_paramTypes.get(p), "(*type?*)");
+				// START KGU#800 2020-02-15: Type name surrogate unified to ???
+				//String type = transformType(_paramTypes.get(p), "(*type?*)");
+				String type = transformType(_paramTypes.get(p), "???");
+				// END KGU#800 2020-02-15
 				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				//if (p == 0) {
 				//	header += "(";
 				//}
 				//else if (type.equals("(*type?*)") || !type.equals(lastType)) {
 				if (p > 0) {
-					if (type.equals("(*type?*)") || !type.equals(lastType)) {
+					// START KGU#800 2020-02-15: Type name surrogate unified to ???
+					//if (type.equals("(*type?*)") || !type.equals(lastType)) {
+					if (type.equals("???") || !type.equals(lastType)) {
+					// END KGU#800 2020-02-15
 				// END KGU#140 2017-01-31
 						paramList += ": " + lastType + "; ";
 						// START KGU#332 2017-01-31: Enh. #335 Improved type support

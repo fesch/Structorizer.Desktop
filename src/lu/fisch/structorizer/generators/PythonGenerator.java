@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
  *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
  *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
+ *      Kay Gürtzig             2020-02-13      Bugfix #812: Defective solution for #782 (global references) mended
  *
  ******************************************************************************************************
  *
@@ -255,6 +256,9 @@ public class PythonGenerator extends Generator
 	private static final Pattern PTRN_TYPENAME = Pattern.compile("type (\\w+)\\s*=.*");
 	private static Matcher mtchTypename = PTRN_TYPENAME.matcher("");
 	// END KGU#388 2017-10-02
+	// START KGU#799 2020-02-13: Bugfix #812
+	private static final Matcher MTCH_IDENTIFIER = Pattern.compile("([A-Za-z_]\\w*).*").matcher("");
+	// END KGU#799 2020-02-13
 
 	// START KGU#598 2018-10-17: Enh. #490 Improved support for Turtleizer export
 	/**
@@ -626,6 +630,19 @@ public class PythonGenerator extends Generator
 
 				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
 				StringList inputItems = Instruction.getInputItems(line);
+				// START KGU#799 2020-02-13: Bugfix #812
+				if (inputItems != null && root.isInclude()) {
+					for (int j = 1; j < inputItems.count(); j++) {
+						String var = inputItems.get(j);
+						if (!Function.testIdentifier(var, null) && MTCH_IDENTIFIER.reset(var).matches()) {
+							var = MTCH_IDENTIFIER.group(1);
+						}
+						if (var != null) {
+							this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
+						}
+					}
+				}
+				// END KGU#799 2020-02-13
 				if (inputItems != null && inputItems.count() > 2) {
 					String inputKey = CodeParser.getKeyword("input") + " ";
 					String prompt = inputItems.get(0);
@@ -664,6 +681,14 @@ public class PythonGenerator extends Generator
 					done = generateDeclaration(line, root, _indent, isDisabled);
 				}
 				// END KGU#767 2019-11-24
+				// START KGU#799 2020-02-13: Bugfix #812
+				else if (Instruction.isAssignment(line) && root.isInclude()) {
+					String var = this.getAssignedVarname(line, true);
+					if (var != null) {
+						this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
+					}
+				}
+				// END KGUU#799 2020-02-13
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -1236,10 +1261,15 @@ public class PythonGenerator extends Generator
 //				addCode("", _indent, false);
 //			}
 //		}
+		// START KGU#799 2020-02-12: Bugfix #812 A main program does not need to use global declarations
+		if (_root.isProgram()) {
+			return;
+		}
+		// END KGU#799 2020-02-12
 		for (String name: this.typeMap.keySet()) {
 			if (this.wasDefHandled(_root, name, false, true) && !this.wasDefHandled(_root, name, true, false)) {
 				if (name.startsWith(":")) {
-					// START KGU#795 2020-02-12: Issue #807: Don't declare record types anymore
+					// START KGU#795 2020-02-12: Issue #807: There are no named record types anymore on export
 					if (this.typeMap.get(name).isRecord()) {
 						continue;
 					}
@@ -1304,9 +1334,11 @@ public class PythonGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			appendComment("You should have installed module recordtype: pip install recordtype", _indent);
-			appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
-			code.add(_indent + "from recordtype import recordtype");
+			// START KGU#795 2020-02-12: Issue #807 - no longer needed, now dictionaries are used instead
+			//appendComment("You should have installed module recordtype: pip install recordtype", _indent);
+			//appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
+			//code.add(_indent + "from recordtype import recordtype");
+			// END KGU#795 2020-02-12
 			// START KGU#542 2019-12-01: Enh. #739
 			code.add(_indent + "from enum import Enum");
 			this.generatorIncludes.add("enum");
@@ -1441,5 +1473,24 @@ public class PythonGenerator extends Generator
 		// END KGU#598 2018-10-17
 	}
 	// END KGU 2015-12-15
+	
+	// START KGU#799 2020-02-13: Auxiliary fpor bugfix #812
+	private String getAssignedVarname(String line, boolean pureBasename)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		tokens.removeAll(" ");
+		Element.unifyOperators(tokens, true);
+		String var = Instruction.getAssignedVarname(tokens, false);
+		if (var != null && !Function.testIdentifier(var, "")) {
+			if (MTCH_IDENTIFIER.reset(var).matches()) {
+				var = MTCH_IDENTIFIER.group(0);
+			}
+			else {
+				var = null;
+			}
+		}
+		return var;
+	}
+	// END KGU#799 2020-02-13
 
 }

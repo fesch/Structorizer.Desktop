@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *                                          as local declarations in subroutines where the variables get assigned
  *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
  *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
+ *      Kay Gürtzig         2019-02-15      Issue #814: Unidentified parameter type marker changed: {type?} --> ???
  *
  ******************************************************************************************************
  *
@@ -1487,7 +1488,10 @@ public class PasGenerator extends Generator
 			// END KGU#371 2019-03-08
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? "; " : "");
-				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
+				// START KGU#800 2020-02-15: Type name surrogate unified to ???
+				//signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
+				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "???")).trim();
+				// END KGU#800 2020-02-15
 				// START KGU#371 2019-03-08: Enh. #385
 				if (p >= minArgs) {
 					signature += " = " + transform(argDefaults.get(p));
