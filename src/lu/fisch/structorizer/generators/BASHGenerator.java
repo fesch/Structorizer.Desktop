@@ -85,6 +85,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
  *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
  *      Kay Gürtzig         2020-02-16      Issue #816: Function calls and value return mechanism revised
+ *      Kay Gürtzig         2020-02-17      Issue #816: Efforts to label local variables in routines accordingly
  *
  ******************************************************************************************************
  *
@@ -855,6 +856,20 @@ public class BASHGenerator extends Generator {
 				String line = text.get(i);
 				// START KGU#653 2019-02-15: Enh. #680 - special treatment for mult-variable input instructions
 				StringList inputItems = Instruction.getInputItems(line);
+				// START KGU#803 2020-02-17: Issue #816 ensure local declaration where necessary
+				if (inputItems != null) {
+					for (int j = 1; j < inputItems.count(); j++) {
+						String target = inputItems.get(j);
+						int cutPos = Math.min((target+".").indexOf("."), (target+"[").indexOf("["));
+						if (Function.testIdentifier(target.substring(cutPos), null)
+								&& !this.wasDefHandled(root, target, !disabled)
+								&& root.isSubroutine()
+								&& !disabled) {
+							addCode("local " + target, _indent, false);
+						}
+					}
+				}
+				// END KGU#803 2020-02-17
 				if (inputItems != null && inputItems.count() > 2) {
 					String prompt = inputItems.get(0);
 					if (!prompt.isEmpty()) {
@@ -875,14 +890,15 @@ public class BASHGenerator extends Generator {
 				// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
 				//if (Instruction.isTypeDefinition(line)) {
 				if (Instruction.isMereDeclaration(line)) {
+					// FIXME: consider a local declaration
 					continue;
 				}
 				// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
 				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
 					String expr = line.substring(preReturn.length()).trim();
 					addCode(transform("result" + Integer.toHexString(root.hashCode()) + "<-" + expr), _indent, disabled);
+					// In case of an endstanding return we don't need a formal return command
 					if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
-						// In case of an endstanding return we don't need a formal return command
 						addCode("return 0", _indent, disabled);
 					}
 					continue;
@@ -1315,8 +1331,8 @@ public class BASHGenerator extends Generator {
 				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
 					String expr = line.substring(preReturn.length()).trim();
 					addCode(transform("result" + Integer.toHexString(root.hashCode()) + "<-" + expr), _indent, disabled);
+					// In case of an endstanding return we don't need a formal return command
 					if (i < jumpText.count()-1 || root.children.getElement(root.children.getSize()-1) != _jump) {
-						// In case of an endstanding return we don't need a formal return command
 						addCode("return 0", _indent, disabled);
 					}
 				}
@@ -1392,6 +1408,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#676 2019-03-30
 		// START KGU#803 2020-02-16: Issue #816
 		boolean alwaysReturns = mapJumps(_root.children);
+		boolean isSubroutine = _root.isSubroutine();
 		// END KGU#803 2020-02-16
 		// START KGU#705 2019-09-23: Enh. #738
 		int line0 = code.count();
@@ -1474,7 +1491,7 @@ public class BASHGenerator extends Generator {
 			subroutineInsertionLine = code.count();
 		}
 		
-		if( _root.isSubroutine() ) {
+		if (isSubroutine) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
@@ -1490,15 +1507,25 @@ public class BASHGenerator extends Generator {
 			StringList argDefaults = _root.getParameterDefaults();
 			for (int i = 0; i < minArgs; i++)
 			{
-				code.add(indent + paraNames.get(i) + "=$" + (i+1));
+				// START KGU#803 2020-02-17: Issue #816
+				//code.add(indent + paraNames.get(i) + "=$" + (i+1));
+				code.add(indent + "local " + paraNames.get(i) + "=$" + (i+1));
+				this.setDefHandled(_root.getSignatureString(false), paraNames.get(i));
+				// END KGU#803 2020-02-17
 			}
 			for (int i = minArgs; i < paraNames.count(); i++)
 			{
 				code.add(indent + "if [ $# -lt " + (i+1) + " ]");
 				code.add(indent + "then");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				// START KGU#803 2020-02-17: Issue #816
+				//code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				code.add(indent + this.getIndent() + "local " + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+				// END KGU#803 2020-02-17
 				code.add(indent + "else");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+				// START KGU#803 2020-02-17: Issue #816
+				code.add(indent + this.getIndent() + "local " + paraNames.get(i) + "=$" + (i+1));
+				this.setDefHandled(_root.getSignatureString(false), paraNames.get(i));
+				// END KGU#803 2020-02-17
 				code.add(indent + "fi");
 			}
 			// END KGU#371 2019-03-08
@@ -1527,6 +1554,11 @@ public class BASHGenerator extends Generator {
 			String varName = varNames.get(i);
 			TypeMapEntry typeEntry = typeMap.get(varName);
 			if (typeEntry != null && typeEntry.isRecord()) {
+				// START KGU#803 2020-02-17: Issue #816
+				if (isSubroutine && !this.wasDefHandled(_root, varName, true)) {
+					addCode("local " + varName, _indent, false);
+				}
+				// END KGU#803 2020-02-17
 				addCode(this.getAssocDeclarator() + varName, _indent, false);
 			}
 		}

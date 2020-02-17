@@ -123,7 +123,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group used to fail.
  *      Kay Gürtzig     2019-10-15      Bugfix #763: On resaving stale diagrams, the shadow path had to be cleared.
  *      Kay Gürtzig     2019-11-28      Bugfix #788: Offered arrz extraction to user-chosen folder was ignored
- *      Kay Gürtrzig    2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
+ *      Kay Gürtzig     2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
+ *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
  *
  ******************************************************************************************************
  *
@@ -2543,11 +2544,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			rec = rec.scale(1/this.zoomFactor);
 			// END KGU#497 2018-12-23
 			this.scrollRectToVisible(rec.getRectangle());
-			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
-			if (form != null)
-			{
-				diagram.isPinned = true;
-			}
+			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null (KGU#804 2020-02-17: now done in both cases)
+			//if (form != null)
+			//{
+			//	diagram.isPinned = true;
+			//}
 			// END KGU#88 2015-12-20
 			// START KGU#626 2019-01-01: Enh. #657 Moved behind the alternative (to be done in both branches)
 //			// START KGU#278 2016-10-11: Enh. #267
@@ -2595,6 +2596,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#626 201-01-01
 		}
 		// END KGU#119 2016-01-02
+		// START KGU#88/KGU#804 2020-02-17: Bugfix #818 It ought to be pinned if form wasn't null
+		if (form != null)
+		{
+			diagram.isPinned = true;
+		}
+		// END KGU#88/KGU#804 2020-02-17
 		// START KGU#626 2018-12-28: Enh. #657 Group management
 		if (owningGroup == null && diagram.getGroupNames().length == 0) {
 			owningGroup = this.groups.get(Group.DEFAULT_GROUP_NAME);	// Default group
@@ -3896,11 +3903,27 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#630 2019-01-09
 
 	/**
-	 * Repaints the given {@link Root} (which reported to have been subject to changes).
+	 * Repaints the given {@link Root} (as reported to have been subject to changes).
 	 * Also notifies all registered {@link IRoutinePoolListener}s.
+	 * Reorganizes some mappings and cached references if necessary.
 	 * @param source - the structogram that reported to have been modified
 	 */
 	public void update(Root source)
+	// START KGU#804 2020-02-17: Bugfix #818
+	{
+		update(source, false);
+	}
+	
+	/**
+	 * Repaints the given {@link Root} (as reported to have been subject to changes).
+	 * Also notifies all registered {@link IRoutinePoolListener}s.
+	 * Reorganizes some mappings and cached references if necessary.
+	 * @param source - the structogram that reported to have been modified
+	 * @param replaced - whether it is rather a replacement than a modification
+	 * @see #update(Root)
+	 */
+	private void update(Root source, boolean replaced)
+	// END KGU#884 2020-02-17
 	{
 		// START KGU#85 2015-11-18
 		adaptLayout();
@@ -3927,7 +3950,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (String groupName: diagr.getGroupNames()) {
 					Group group = this.groups.get(groupName);
 					if (group != null) {
-						group.updateSortedRoots(false);
+						// START KGU#804 2020-02-17: Bugfix #818
+						//group.updateSortedRoots(false);
+						group.updateSortedRoots(replaced);
+						// END KGU#804 2020-02-17
 					}
 				}
 				// END KGU#626 2018-12-31
@@ -4093,10 +4119,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				owner.root = newRoot;
 				owner.root.addUpdater(this);
 			}
-			// START KGU#85 2015-11-18
-			adaptLayout();
-			// END KGU#85 2015-11-18
-			this.repaint();
+			// START KGU#804 2020-02-17: Bugfix #818 - We must adapt all maps now!
+			//// START KGU#85 2015-11-18
+			//adaptLayout();
+			//// END KGU#85 2015-11-18
+			//this.repaint();
+			this.rootMap.remove(oldRoot);
+			this.rootMap.put(owner.root, owner);
+			this.update(owner.root, true);
+			// END KGU#804 2020-02-17
 			// START KGU#278 2016-10-11: Enh. #267
 			//notifyChangeListeners();
 			// END KGU#278 2016-10-11
