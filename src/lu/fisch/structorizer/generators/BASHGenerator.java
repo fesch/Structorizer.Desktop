@@ -84,6 +84,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
  *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
+ *      Kay Gürtzig         2020-02-16      Issue #816: Function calls and value return mechanism revised
  *
  ******************************************************************************************************
  *
@@ -126,6 +127,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -487,17 +489,25 @@ public class BASHGenerator extends Generator {
 			//}
 			expr = transformExpression(fct);
 			// END KGU#405 2017-05-19
-			// START KGU 2019-12-01: An evaluation should not apply for subroutines!
 			//if (posAsgnOpr > 0)
-			if (posAsgnOpr > 0 &&
-					(this.routinePool == null || this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty()))
+			boolean isRoutine = this.routinePool != null 
+					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty();
+			// START KGU#803 2020-02-16: Issue #816 don't assign the result of functions directly
+			//if (posAsgnOpr > 0 && !isRoutine)
 			// END KGU 2019-12-01
-			{
-				// START KGU#390 2017-05-05: Issue #396
-				//expr = "`" + expr + "`";
-				expr = "$(" + expr + ")";
-				// END KGU#390 2017-05-05
+			//{
+			//	expr = "$(" + expr + ")";
+			//}
+			if (posAsgnOpr > 0) {
+				// KGU 2019-12-01: An evaluation should not apply for subroutines!
+				if (isRoutine) {
+					lval = "";	// Assignment is to be handled by the CALL element afterwards
+				}
+				else {
+					expr = "$( " + expr + " )";
+				}
 			}
+			// END KGU#803 2020-02-16
 		}
 		// FIXME (KGU 2019-12-01) this looks too simplistic
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
@@ -612,8 +622,8 @@ public class BASHGenerator extends Generator {
 				exprTokens.add("\"");
 			}
 			else {
-				exprTokens.insert("$(", 0);
-				exprTokens.add(")");
+				exprTokens.insert("$( ", 0);
+				exprTokens.add(" )");
 			}
 		}
 		// END KGU#772 2019-11-24
@@ -625,7 +635,7 @@ public class BASHGenerator extends Generator {
 			expr = this.transformExpression(new Function(expr));
 			if (isAssigned)
 			{
-				expr = "$(" + expr + ")";
+				expr = "$( " + expr + " )";
 			}
 		}
 		else {
@@ -792,6 +802,7 @@ public class BASHGenerator extends Generator {
 			}
 			else if (intermed.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))
 			{
+				// FIXME KGU#803 2020-02-16: Issue #816 - should only be reached within a main or includable diagram now
 				intermed = "return " + intermed.substring(preReturn.length());
 			}
 			else if (intermed.matches("^" + Matcher.quoteReplacement(preExit) + "(\\W.*|$)"))
@@ -832,6 +843,10 @@ public class BASHGenerator extends Generator {
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
 			StringList text = _inst.getUnbrokenText(); 
+			// START KGU#803 2020-02-16: Issue #816
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+			Root root = Element.getRoot(_inst);
+			// END KGU#803 2020-02-16
 			int nLines = text.count();
 			for (int i = 0; i < nLines; i++)
 			{
@@ -862,8 +877,24 @@ public class BASHGenerator extends Generator {
 				if (Instruction.isMereDeclaration(line)) {
 					continue;
 				}
+				// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
+				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
+					String expr = line.substring(preReturn.length()).trim();
+					addCode(transform("result" + Integer.toHexString(root.hashCode()) + "<-" + expr), _indent, disabled);
+					if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
+						// In case of an endstanding return we don't need a formal return command
+						addCode("return 0", _indent, disabled);
+					}
+					continue;
+				}
+				// END KGU#803 2020-02-16
 				// END KGU#388/KGU#772 2017-10-24/2019-11-24
 				String codeLine = transform(line);
+				/* FIXME KGU#803 2020-02-16: Issue #816 - we should mark local variables as local
+				 * This requires to check whether line is an assignment, that the target variable
+				 * is not a parameter or input variable (how to declare these?) and it hasn't been
+				 * assigned or input before. Then "local " could be put as prefix to codeLine.
+				 */
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {
 					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1114,7 +1145,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
-		String condition = transform(_while.getText().getLongString()).trim();
+		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1167,7 +1198,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
-		String condition = transform(_repeat.getText().getLongString()).trim();
+		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1226,19 +1257,39 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-		if(!appendAsComment(_call, _indent)) {
+		if (!appendAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
 			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _call.isDisabled();
 			// END KGU#277 2016-10-14
-			for (int i = 0; i < _call.getText().count(); i++)
+			Root root = Element.getRoot(_call);
+			StringList callText = _call.getUnbrokenText();
+			for (int i = 0; i < callText.count(); i++)
 			{
+				String line = callText.get(i);
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_call.getText().get(i)));
-				addCode(transform(_call.getText().get(i)), _indent, disabled);
+				addCode(transform(line), _indent, disabled);
 				// END KGU#277 2016-10-14
+				// START KGU#803 2020-02-16: Issue #816
+				Function fct = _call.getCalledRoutine();
+				if (fct != null && fct.isFunction() && Instruction.isAssignment(line)) {
+					if (this.routinePool != null) {
+						Root routine = null;
+						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+						if (cands.size() >= 1) {
+							routine = cands.firstElement();
+							StringList tokens = Element.splitLexically(line, true);
+							Element.unifyOperators(tokens, true);
+							String var = "${result" + Integer.toHexString(routine.hashCode()) + "}";
+							addCode(transform(tokens.concatenate("", 0, tokens.indexOf("<-")+1) + var),
+									_indent, disabled);
+								}
+					}
+				}
+				// END KGU#803 2020-02-16
 			}
 		}
 	}
@@ -1251,12 +1302,29 @@ public class BASHGenerator extends Generator {
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _jump.isDisabled();
 			// END KGU#277 2016-10-14
-			for(int i=0;i<_jump.getText().count();i++)
+			// START KGU#803 2020-02-16: Issue #816
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+			Root root = Element.getRoot(_jump);
+			// END KGU#803 2020-02-16
+			StringList jumpText = _jump.getUnbrokenText();
+			for (int i=0; i < jumpText.count(); i++)
 			{
+				String line = jumpText.get(i);
 				// FIXME (KGU 2016-03-25): Handle the kinds of exiting jumps!
+				// START KGU#803 2020-02-16: Issue #816
+				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
+					String expr = line.substring(preReturn.length()).trim();
+					addCode(transform("result" + Integer.toHexString(root.hashCode()) + "<-" + expr), _indent, disabled);
+					if (i < jumpText.count()-1 || root.children.getElement(root.children.getSize()-1) != _jump) {
+						// In case of an endstanding return we don't need a formal return command
+						addCode("return 0", _indent, disabled);
+					}
+				}
+				else
+				// END KGU#803 2020-02-16
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_jump.getText().get(i)));
-				addCode(transform(_jump.getText().get(i)), _indent, disabled);
+				addCode(transform(line), _indent, disabled);
 				// END KGU#277 2016-10-14
 			}
 		}
@@ -1322,6 +1390,9 @@ public class BASHGenerator extends Generator {
 		//typeMap = _root.getTypeInfo();
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
+		// START KGU#803 2020-02-16: Issue #816
+		boolean alwaysReturns = mapJumps(_root.children);
+		// END KGU#803 2020-02-16
 		// START KGU#705 2019-09-23: Enh. #738
 		int line0 = code.count();
 		if (codeMap!= null) {
@@ -1462,6 +1533,10 @@ public class BASHGenerator extends Generator {
 		// END KGU#389 2017-10-23
 		generateCode(_root.children, indent);
 		
+		// START KGU#803 2020-02-16: Issue #816
+		generateResult(_root, _indent, alwaysReturns, varNames);
+		// END KGU#803 2020-02-16
+
 		if (_root.isSubroutine()) {
 			code.add("}");
 		}
@@ -1508,7 +1583,29 @@ public class BASHGenerator extends Generator {
 		appendComment("END enumeration type "+ _type.typeName, _indent);
 	}
 	// END KGU#542 2019-12-01
-	
+
+	// START KGU#803 2020-02-16: Issue #816
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (_root.isSubroutine())
+		{
+			if (!alwaysReturns)
+			{
+				String varName = _root.getMethodName();
+				if (isResultSet && !isFunctionNameSet) {
+					int vx = varNames.indexOf("result", false);
+					varName = varNames.get(vx);
+				}
+				if (isResultSet || isFunctionNameSet) {
+					code.add(_indent + "result" + Integer.toHexString(_root.hashCode()) + "=" + varName);
+				}
+			}
+		}
+		return _indent;
+	}
+	// END KGU#803 2020-02-16
+
 }
 
 

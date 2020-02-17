@@ -126,6 +126,7 @@
  *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
+ *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -344,6 +345,8 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpOnline.tooltip=Öffnen des Online-Nutzerhandbuchs
+Menu.menuHelpDownload.text=Guide als PDF herunterladen
+Menu.menuHelpDownload.tooltip=Aktuellstes PDF-Nutzerhandbuch herunterladen für Hilfeanzeige bei unterbrochener Netzverbindung
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -379,7 +382,10 @@ Menu.msgSaveChanges.text=Möchten Sie die aktuelle Diagramm-Datei speichern?
 Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
 Menu.msgErrorUsingGenerator.text=Fehler beim %-Export
 Menu.msgErrorNoFile.text=Datei nicht gefunden!
-Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Menu.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert
+Menu.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (im PDF-Betrachter).
+Menu.msgDownloadFailed.text=Das Herunterladen des Nutzerhandbuchs als PDF ist gescheitert:\n%
+Menu.msgHostNotAvailable.text=Die Adresse "%" ist nicht erreichbar.
 Menu.hdrRefactoringTable.0.text=Referenz
 Menu.hdrRefactoringTable.1.text=Alt
 Menu.hdrRefactoringTable.2.text=Neu
@@ -1251,7 +1257,8 @@ Arranger.msgConfirmMultiple.text=Die folgenden %1 Diagramme (von insgesamt %2) s
 Arranger.msgReadyToExport.text=Jetzt die angegebene Teil-Anordnung als PNG exportieren?
 Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Diagramm gleichzeitig zu %1. Sie haben %2 Diagramme ausgewählt:\n- %3
 Arranger.msgDiagramsSelected.text=Diagramme: %1, ausgewählt: %2
-Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Arranger.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert.
+Arranger.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (PDF-Betrachter).\nBitte zum Abschnitt "Arranger" in Kapitel "Features" gehen.
 Arranger.msgTitleURLError.text=URL-Fehler
 Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
 Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2

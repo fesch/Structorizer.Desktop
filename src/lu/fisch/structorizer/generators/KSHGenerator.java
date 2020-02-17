@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürtzig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens()
  *      Kay Gürtzig             2019-12-01      Enh. #739: At least minimum support for enum types, array declarations mended
+ *      Kay Gürtzig             2020-02-16      Issue #816: Function calls and value return mechanism revised
  *
  ******************************************************************************************************
  *
@@ -170,6 +171,9 @@ public class KSHGenerator extends BASHGenerator {
 		// START KGU#753 2019-10-15: Bugfix #765 - superclass methods need an initialized typeMap
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#753 2019-10-15
+		// START KGU#803 2020-02-16: Issue #816
+		boolean alwaysReturns = mapJumps(_root.children);
+		// END KGU#803 2020-02-16
 		
 		// START KGU#178 2016-07-20: Enh. #160
 		
@@ -287,6 +291,10 @@ public class KSHGenerator extends BASHGenerator {
 		//code.add("");
 		generateCode(_root.children, _root.isProgram() ? _indent : _indent + this.getIndent());
 		
+		// START KGU#803 2020-02-16: Issue #816
+		generateResult(_root, _indent, alwaysReturns, varNames);
+		// END KGU#803 2020-02-16
+
 		if( _root.isSubroutine() ) {
 			code.add("}");
 		}

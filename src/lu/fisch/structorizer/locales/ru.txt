@@ -68,6 +68,7 @@
  *      Kay Gürtzig     2018-08-03  Enh. #577: OutputConsole keys renamed
  *      Kay Gürtzig     2019-02-16  Enh. #682: Welcome message translated
  *      Kay Gürtzig     2019-02-17  Issue #684: New and missing messages for ParserPreferences added
+ *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -161,7 +162,6 @@ Menu.menuEditBreakLines.text=Изменить верстку
 Menu.menuEditBreakLines.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
 Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
-
 // Menu "Diagram"
 Menu.menuDiagram.text=Схема
 Menu.menuDiagram.mnemonic=с
@@ -253,7 +253,7 @@ Menu.menuPreferencesLanguageItems.cz.text=Чeшский
 Menu.menuPreferencesLanguageItems.ru.text=Русский
 Menu.menuPreferencesLanguageItems.pl.text=Польский
 Menu.menuPreferencesLanguageFromFile.text=Из файла ...
-Menu.menuPreferencesLanguageFromFile.tooltip=
+Menu.menuPreferencesLanguageFromFile.tooltip=Можете переводительный файл с помощю 'Переводчика' (через меню 'Файл')
 Menu.menuPreferencesLookAndFeel.text=Внешний вид
 Menu.menuPreferencesWheel.text=Kолеса
 Menu.menuPreferencesWheelCollapse.text=Сжать/увеличить элементы с колесой?
@@ -289,6 +289,8 @@ Menu.menuHelp.mnemonic=п
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Руководство пользователя ...
 Menu.menuHelpOnline.tooltip=Показать руководство по обслуживанию в браузере.
+Menu.menuHelpDownload.text=Скачать PDF-документ руководства
+Menu.menuHelpDownload.tooltip=Скачать актуальный руководство как PDF-документ в возмещение онлайновой версии
 Menu.menuHelpAbout.text=О программе ...
 Menu.menuHelpUpdate.text=Обновления ...
 
@@ -314,9 +316,9 @@ Menu.msgTitleLoadingError.text=
 Menu.msgTitleParserError.text=
 Menu.msgTitleURLError.text=
 Menu.msgTitleQuestion.text=
-Menu.msgTitleOpen.text=
-Menu.msgTitleSave.text=
-Menu.msgTitleSaveAs.text=
+Menu.msgTitleOpen.text=Открыть файл ...
+Menu.msgTitleSave.text=Сохранить файл ...
+Menu.msgTitleSaveAs.text=Сохранить файл как ...
 Menu.msgTitleImport.text=
 Menu.msgTitleNSDImport.text=
 Menu.msgTitleWrongInput.text=
@@ -324,7 +326,13 @@ Menu.msgSaveChanges.text=
 Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
-Menu.msgBrowseFailed.text=
+Menu.msgBrowseFailed.text=Не удался показать "%" в браузер.
+Menu.msgShowingOfflineGuide.text=Недавно ​скачанный PDF-документ руководства показывается (в вашем PDF-Reader).
+Menu.msgDownloadFailed.text=Не удался скачать руководство:\n%
+Menu.msgHostNotAvailable.text=Веб-сайт "%" нет доступным.
+Menu.hdrRefactoringTable.0.text=
+Menu.hdrRefactoringTable.1.text=
+Menu.hdrRefactoringTable.2.text=
 Menu.msgRefactoringOffer1.text=
 Menu.msgRefactoringOffer2.text=
 Menu.lblRefactorNone.text=
@@ -363,7 +371,7 @@ Menu.lblNormal.text=Нет, нормальный вид
 Menu.ttlCodeImport.text=
 Menu.msgSelectParser.text=
 Menu.msgImportCancelled.text=
-Menu.msgSubroutineName.text=
+Menu.msgSubroutineName.text=Название новой подпрограммы
 Menu.msgIncludableName.text=
 Menu.msgMustBeIdentifier.text=
 Menu.msgJumpsOutwardsScope.text=
@@ -385,10 +393,7 @@ Menu.lblPreserveContinuators.text=Сохранить существующие в
 Menu.msgVetoClose.text=
 Menu.msgSetAsPreferredGenerator.text=Вы экспортировали %2. раз на %1 -\nхочете применить его предпочтительным вывозным языком?
 Menu.msgChooseSubroutine.text=
-Menu.msgCreateSubroutine.text=
-// Table column headers for DiagramControllerAliases
-Menu.msgTabHdrSignature.text=
-Menu.msgTabHdrAlias.text=
+Menu.msgCreateSubroutine.text=Производить новую подпрограмму «%»?
 Menu.ttlMouseScrollUnit.text=Шаг прокруткы с колесой
 Menu.msgSelectPreferences.text=Вывозимые настройки (категории)
 Menu.msgAllPreferences.text=Все настройки
@@ -397,6 +402,10 @@ Menu.ttDiagramMenuSettings.text=Настройки из меню "%"
 Menu.msgIniBackupFailed.text=Хранение резерва актуальных настроек обрушился.\nВсё-таки ввезти "%"?
 Menu.msgIniRestoreFailed.text=Не был возможно восстановить последный резерв%
 Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=
+Menu.msgTabHdrAlias.text=
 
 // Error messages for analyser
 Menu.warning_1.text=ВНИМАНИЕ: ТЕКСТЫ ОБМЕНЕНЫ С КОММЕНТАРИЯМИ! → меню "%1 ► %2"
@@ -772,6 +781,7 @@ AttributeInspector.lblPrefsPre.text=
 AttributeInspector.lblPrefsPost.text=
 AttributeInspector.lblPrefsMore.text=
 AttributeInspector.btnParserPrefs.text=
+AttributeInspector.btnParserPrefs.tooltip=
 AttributeInspector.btnOk.text=ОК
 AttributeInspector.btnOk.tooltip=
 AttributeInspector.btnCancel.text=Отменить
@@ -1040,6 +1050,8 @@ ElementNamePreferences.lblExplanation.text=
 ElementNamePreferences.chkUseConfNames.text=
 ElementNamePreferences.lblLocalized.text=
 ElementNamePreferences.lblIndividual.text=
+ElementNamePreferences.btnEnglishStd.text=
+ElementNamePreferences.btnEnglishStd.tooltip=
 ElementNamePreferences.btnOK.text=ОК
 ElementNamePreferences.btnOK.tooltip=Сохранить настройки.
 
@@ -1085,10 +1097,15 @@ FindAndReplace.lblSearchPattern.text=
 FindAndReplace.lblReplacePattern.text=
 FindAndReplace.pnlMode.border=
 FindAndReplace.chkCaseSensitive.text=
+FindAndReplace.chkCaseSensitive.mnemonic=
 FindAndReplace.chkWholeWord.text=
+FindAndReplace.chkWholeWord.mnemonic=
 FindAndReplace.chkRegEx.text=
+FindAndReplace.chkRegEx.mnemonic=
 FindAndReplace.rbDown.text=
+FindAndReplace.rbDown.mnemonic=
 FindAndReplace.rbUp.text=
+FindAndReplace.rbUp.mnemonic=
 FindAndReplace.pnlScope.border=
 FindAndReplace.cmbScope.item.0=
 FindAndReplace.cmbScope.item.1=
@@ -1101,7 +1118,9 @@ FindAndReplace.chkRootTypes.1.mnemonic=s
 FindAndReplace.chkRootTypes.2.text=@p
 FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=
+FindAndReplace.chkInTexts.mnemonic=
 FindAndReplace.chkInComments.text=
+FindAndReplace.chkInComments.mnemonic=
 FindAndReplace.pnlElements.border=
 FindAndReplace.btnAll.text=
 FindAndReplace.btnNone.text=
@@ -1122,10 +1141,16 @@ FindAndReplace.pnlPreview.border=
 FindAndReplace.txtText.border=
 FindAndReplace.txtComm.border=
 FindAndReplace.chkElementwise.text=
+FindAndReplace.chkElementwise.menmonic=
 FindAndReplace.btnFind.text=
+FindAndReplace.btnFind.mnemonic=
 FindAndReplace.btnReplace.text=
+FindAndReplace.btnReplace.mnemonic=
 FindAndReplace.btnReplaceFind.text=
+FindAndReplace.btnReplaceFind.mnemonic=
 FindAndReplace.btnReplaceAll.text=
+FindAndReplace.btnReplaceAll.mnemonic=
+FindAndReplace.btnReplaceAll.tooltip=
 FindAndReplace.btnClose.text=
 FindAndReplace.msgRegexCorrupt.text=
 FindAndReplace.ttlSearchError.text=
@@ -1177,7 +1202,8 @@ Arranger.msgConfirmMultiple.text=
 Arranger.msgReadyToExport.text=
 Arranger.msgCantDoWithMultipleRoots.text=
 Arranger.msgDiagramsSelected.text=
-Arranger.msgBrowseFailed.text=
+Arranger.msgBrowseFailed.text=Не удался показать "%" в браузер.
+Arranger.msgShowingOfflineGuide.text=Недавно ​скачанный PDF-документ руководства показывается (в вашем PDF-Reader).\nПереместись к разделу "Arranger" в главе "Features".
 Arranger.msgTitleURLError.text=
 Arranger.msgSelectionExpanded.text=
 Arranger.msgMissingDiagrams.text=
@@ -1237,6 +1263,7 @@ Surface.titleRenameGroup.text=
 Surface.msgRenameArrFile.text=
 Surface.msgRenamingFailed.text=
 Surface.msgSharedDiagrams.text=
+Surface.msgFileMissing.text=
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Принести схему

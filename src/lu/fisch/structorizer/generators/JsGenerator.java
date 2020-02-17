@@ -35,6 +35,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-09-30      Array and record initializer handling added...
  *      Kay Gürtzig     2019-10-03      ... and improved (still not clean - we need a new recursive approach)
  *      Kay Gürtzig     2019-11-24      Bugfix #783 - Workaround for record initializers without known type
+ *      Kay Gürtzig     2020-02-11      Bugfix #810 - multiple-input instruction export wasn't properly configured
  *
  ******************************************************************************************************
  *
@@ -289,6 +290,22 @@ public class JsGenerator extends CGenerator {
 		appendComment("type " + _typeName + ": " + _type.getCanonicalType(false, false).replace("$", "object"), _indent);
 	}
 	
+	// START KGU#653/KGU#797 2020-02-11: Enh. #680, bugfix #810
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653/KGU#797 2020-02-11
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#generateInstructionLine(lu.fisch.structorizer.elements.Instruction, java.lang.String, boolean, java.lang.String)
 	 */

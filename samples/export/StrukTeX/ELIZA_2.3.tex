@@ -6,12 +6,12 @@
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
 \author{Kay Gürtzig}
-\date{29.11.2019}
+\date{13.02.2020}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(171,114)[adjustSpelling]
+\begin{struktogramm}(138,101)[adjustSpelling]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -44,7 +44,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(183,68)[checkGoodBye]
+\begin{struktogramm}(151,60)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -67,7 +67,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(169,95)[checkRepetition]
+\begin{struktogramm}(140,83)[checkRepetition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{history}}{type: \(History\)}
@@ -100,7 +100,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(265,102)[conjugateStrings]
+\begin{struktogramm}(218,90)[conjugateStrings]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -133,7 +133,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(220,99)[findKeyword]
+\begin{struktogramm}(182,86)[findKeyword]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{keyMap}}{type: \(const\ array\ of\ KeyMapEntry\)}
@@ -162,7 +162,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(238,69)[normalizeInput]
+\begin{struktogramm}(196,60)[normalizeInput]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -184,7 +184,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(186,31)[setupGoodByePhrases]
+\begin{struktogramm}(154,27)[setupGoodByePhrases]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -197,7 +197,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(125,150)[setupKeywords]
+\begin{struktogramm}(104,130)[setupKeywords]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of KeyMapEntry}{}
@@ -251,7 +251,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(114,90)[setupReflexions]
+\begin{struktogramm}(93,80)[setupReflexions]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -272,7 +272,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(154,549)[setupReplies]
+\begin{struktogramm}(129,481)[setupReplies]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array of string}{}
@@ -318,7 +318,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(302,347)[ELIZA]
+\begin{struktogramm}(258,305)[ELIZA]
   \assign{%
     \begin{declaration}[Requires:]
       \description{History, KeyMapEntry}{}
@@ -393,7 +393,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(152,39)[History]
+\begin{struktogramm}(127,33)[History]
   \assign{%
     \begin{declaration}[type:]
       \description{History}{record\ \{\ histArray\ :\ array\ of\ string\ ;\ histIndex\ :\ int\ \}}
@@ -403,7 +403,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(142,25)[KeyMapEntry]
+\begin{struktogramm}(119,25)[KeyMapEntry]
   \assign{%
     \begin{declaration}[type:]
       \description{KeyMapEntry}{record\ \{\ keyword\ :\ string\ ;\ index\ :\ int\ \}}

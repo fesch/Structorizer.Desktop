@@ -688,7 +688,7 @@ public class Instruction extends Element {
 	// START KGU#653 2019-02-14: Enh. #680 - better support for input instructions
 	/**
 	 * Checks whether the given instruction line is an input instruction. If so, decomposes
-	 * into the specified input prompt (may be empty) and the expressions identifying the
+	 * it into the specified input prompt (may be empty) and the expressions identifying the
 	 * target variables (the first variable description will be at index 1, the resulting
 	 * StringList of an empty input instruction will have length 1). Otherwise the result
 	 * will be null.
@@ -705,8 +705,8 @@ public class Instruction extends Element {
 		if (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0) {
 			// It is an input instruction
 			inputItems = new StringList();
-			tokens.remove(0, keyTokens.count());
-			tokens.removeAll(" ");
+			tokens.remove(0, keyTokens.count());	// Remove the keyword
+			tokens.removeAll(" ");					// remove whitespace
 			// Identify the prompt if any
 			if (tokens.isEmpty()) {
 				inputItems.add(""); 
@@ -722,6 +722,7 @@ public class Instruction extends Element {
 					}
 				}
 				else {
+					// No prompt string
 					inputItems.add("");
 				}
 			}

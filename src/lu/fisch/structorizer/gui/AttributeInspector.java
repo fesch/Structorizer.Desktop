@@ -823,7 +823,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		if (licName != null && licName.endsWith(POOL_SUFFIX)) {
 			String fileName = LicFilter.getNamePrefix() + licName.substring(0, licName.lastIndexOf(POOL_SUFFIX)) +
 					"." + LicFilter.acceptedExtension();
-			File[] licFiles = Ini.getIniDirectory().listFiles(new LicFilter());
+			// START KGU#789 2020-01-20: Bugfix #802: Wrong ini directory checked
+			//File[] licFiles = Ini.getIniDirectory().listFiles(new LicFilter());
+			File[] licFiles = Ini.getIniDirectory(true).listFiles(new LicFilter());
+			// END KGU#789 2020-01-20
 			for (File file: licFiles) {
 				if (fileName.equals(file.getName())) {
 					licFile = file;
@@ -857,7 +860,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		String content = "";
 		String error = null;
 		BufferedReader br = null;
-		File licDir = Ini.getIniDirectory();
+		// START KGU#789 2020-01-20: Bugfix #802
+		//File licDir = Ini.getIniDirectory();
+		File licDir = Ini.getIniDirectory(true);
+		// END KGU#789 2020-01-20
 		String fileName = licDir.getAbsolutePath() + File.separator + LicFilter.getNamePrefix() +
 				licenseName + "." + LicFilter.acceptedExtension();
 		try {
@@ -885,16 +891,19 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	}
 
 	private void updateLicenseChoice()
-    {
-    	String oldSel = licenseInfo.licenseName;
-    	int selIx = cbLicenseName.getSelectedIndex();
-    	if (selIx >= 0) {
-    		oldSel = cbLicenseName.getItemAt(selIx);
-    	}
-    	selIx = -1;
-    	cbLicenseName.setSelectedIndex(selIx);
-    	cbLicenseName.removeAllItems();
-		File licDir = Ini.getIniDirectory();
+	{
+		String oldSel = licenseInfo.licenseName;
+		int selIx = cbLicenseName.getSelectedIndex();
+		if (selIx >= 0) {
+			oldSel = cbLicenseName.getItemAt(selIx);
+		}
+		selIx = -1;
+		cbLicenseName.setSelectedIndex(selIx);
+		cbLicenseName.removeAllItems();
+		// START KGU#789 2020-01-20: Bugfix #802
+		//File licDir = Ini.getIniDirectory();
+		File licDir = Ini.getIniDirectory(true);
+		// END KGU#789 2020-01-20
 		File[] licFiles = licDir.listFiles(new LicFilter());
 		String prefix = LicFilter.getNamePrefix();
 		String ext = LicFilter.acceptedExtension();
@@ -921,7 +930,7 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		if (selIx >= 0) {
 			cbLicenseName.setSelectedIndex(selIx);
 		}
-    }
+	}
 
 	protected void okButtonActionPerformed(ActionEvent evt) {
 		if (evt.getSource() == this.btnOk) {

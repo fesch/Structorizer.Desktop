@@ -11,8 +11,9 @@ Known issues:
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
 - Shell export does not cope with nested array/record initializers and component access.
+- Shell function variables are still not exported as local - so side effects are likely.
 
-Current development version: 3.30-04 (2019-12-11)
+Current development version: 3.30-05 (2020-02-17)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -50,6 +51,20 @@ Current development version: 3.30-04 (2019-12-11)
 - 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
 - 04: Bugfix #793: Wrong Perl export of initialized explicit var declarations <2>
 - 04: Bugfix #794: Code preview fails with error if license is not configured <2>
+- 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
+- 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
+- 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
+- 05: Issue #806: Format string splitting on C99 import improved [Rolf Schmidt]2
+- 05: Issue #806: More sensible printf/scanf format strings on C export [R. Schmidt]2
+- 05: Issue #807: Python 'recordtype' lib ref replaced by dictionary [R. Schmidt]2
+- 05: Bugfix #808: Missing C, Js export of var declarations with ':=' [Rolf Schmidt]2
+- 05: Bugfix #809: C99 import flaws: typename replacement in comments, return 0; <2>
+- 05: Bugfix #810: Javascript export produced nonsense for multi-variable input <2>
+- 05: Bugfix #811: C99 import of floating-point number literals like 123e4 fixed <2>
+- 05: Bugfix #812: Defective declaration of global variables on Python export <2>
+- 05: Issue #814: Empty parameter lists are now exported to C as ...(void) <2>
+- 05: Issue #815: Combined file filters introduced in open dialogs [Rolf Schmidt]2
+- 05: Issue #816: Function calls in exported bash, ksh code revised [Rolf Schmidt]2
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

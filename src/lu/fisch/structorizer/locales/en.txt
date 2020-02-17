@@ -121,6 +121,7 @@
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
+ *      Kay Gürtzig     2020-01-20      Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -342,6 +343,8 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpOnline.tooltip=Open the online User Guide in the browser
+Menu.menuHelpDownload.text=Download Guide as PDF
+Menu.menuHelpDownload.tooltip=Download the most up-to-date Guide as PDF file as help fallback in offline mode
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -377,7 +380,10 @@ Menu.msgSaveChanges.text=Do you want to save the current NSD file?
 Menu.msgErrorImageSave.text=Error on saving the image(s)!
 Menu.msgErrorUsingGenerator.text=Error while using % generator
 Menu.msgErrorNoFile.text=File not found!
-Menu.msgBrowseFailed.text=Failed to show % in browser
+Menu.msgBrowseFailed.text=Failed to show "%" in browser
+Menu.msgShowingOfflineGuide.text=A recently downloaded User Guide is shown by your PDF reader instead.
+Menu.msgDownloadFailed.text=Failed to download the User Guide:\n%
+Menu.msgHostNotAvailable.text=Host "%" not accessible.
 Menu.hdrRefactoringTable.0.text=Reference
 Menu.hdrRefactoringTable.1.text=Old
 Menu.hdrRefactoringTable.2.text=New
@@ -1250,7 +1256,8 @@ Arranger.msgConfirmMultiple.text=The following %1 diagram(s) out of %2 are selec
 Arranger.msgReadyToExport.text=Are you ready to export this sub-arrangement to PNG?
 Arranger.msgCantDoWithMultipleRoots.text=It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3
 Arranger.msgDiagramsSelected.text=diagrams: %1, selected: %2
-Arranger.msgBrowseFailed.text=Failed to show % in browser
+Arranger.msgBrowseFailed.text=Failed to show "%" in browser.
+Arranger.msgShowingOfflineGuide.text=A recently downloaded User Guide is shown by your PDF reader instead.\nPlease go to section "Arranger" in chapter "Features".
 Arranger.msgTitleURLError.text=URL Error
 Arranger.msgSelectionExpanded.text=% referenced diagram(s) added to selection.
 Arranger.msgMissingDiagrams.text=\n\n%1 referenced diagram(s) not found:\n- %2

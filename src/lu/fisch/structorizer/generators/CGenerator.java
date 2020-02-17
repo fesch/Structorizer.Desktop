@@ -98,6 +98,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
+ *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.
+ *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
+ *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
  *
  ******************************************************************************************************
  *
@@ -344,9 +347,15 @@ public class CGenerator extends Generator {
 	@Override
 	protected String getInputReplacer(boolean withPrompt) {
 		if (withPrompt) {
-			return "printf($1); scanf(\"TODO: specify format\", &$2)";
+			// START KGU#794 2020-02-11: Issue #806
+			//return "printf($1); scanf(\"TODO: specify format\", &$2)";
+			return "printf($1); scanf($2)";
+			// END KGU#794 2020-02-11
 		}
-		return "scanf(\"TODO: specify format\", &$1)";
+		// START KGU#794 2020-02-11: Issue #806
+		//return "scanf(\"TODO: specify format\", &$1)";
+		return "scanf($1)";
+		// END KGU#794 2020-02-11
 	}
 	// END KGU#281 2016-10-15
 
@@ -524,8 +533,82 @@ public class CGenerator extends Generator {
 
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
 		if (_doInputOutput) {
-			_input = _input.replace("scanf(\"TODO: specify format\", &)", "getchar()");
-			_input = _input.replace("printf(\"TODO: specify format\", ); ", "");
+			// START KGU#794 2020-02-11: Issue #806 - more intelligent format string handling
+			//_input = _input.replace("scanf(\"TODO: specify format\", &)", "getchar()");
+			//_input = _input.replace("printf(\"TODO: specify format\", ); ", "");
+			_input = _input.replace("scanf()", "getchar()").replace("§$§$§", "\"");
+			//_input = _input.replace("printf(\"TODO: specify format\\n\", )", "printf(\"\\n\")");
+			if (_input.startsWith("printf(\"TODO: specify format\\n\",")) {
+				// Decompose the output items and try to derive sensible format specifiers
+				StringList exprs = Element.splitExpressionList(_input.substring("printf(\"TODO: specify format\\n\",".length()), ",", true);
+				if (exprs.isEmpty()) {
+					_input = "printf(\"\\n\")";
+				}
+				else {
+					String tail = exprs.get(exprs.count() - 1);
+					exprs.remove(exprs.count()-1);
+					exprs.removeAll("");
+					_input = "printf(\"";
+					for (int i = 0; i < exprs.count(); i++) {
+						String expr = exprs.get(i);
+						StringList tokens = Element.splitLexically(expr, true);
+						tokens.removeAll(" ");
+						String fSpec = "?";
+						if (tokens.count() == 1) {
+							String token = tokens.get(0);
+							if (token.startsWith("\"") && token.endsWith("\"")) {
+								fSpec = "s";
+							}
+							else if (token.startsWith("'") && token.endsWith("'")) {
+								int len = token.length();
+								if (len == 3 || len == 4 && token.charAt(1) == '\\') {
+									fSpec = "c";
+								}
+								else {
+									fSpec = "s";
+								}
+							}
+							else if (token.equals("false") || token.equals("true")) {
+								fSpec = "d";
+							}
+							else if (typeMap.containsKey(token)) {
+								TypeMapEntry type = typeMap.get(token);
+								String typeName = transformTypeFromEntry(type, null);
+								if (type.isEnum()) {
+									fSpec = "d";
+								}
+								else if (typeName != null) {
+									if (typeName.endsWith("int") || typeName.endsWith("short") || typeName.endsWith("long")) {
+										fSpec = "d";
+									}
+									else if (typeName.equals("double") || typeName.equals("float")) {
+										fSpec = "g";
+									}
+									else if (typeName.equals("char*")) {
+										fSpec = "s";
+									}
+									else if (typeName.equals("char")) {
+										fSpec = "c";
+									}
+								}
+							}
+							else {
+								try {
+									Double.parseDouble(token);
+									fSpec = "g";
+									Integer.parseInt(token);
+									fSpec = "d";
+								}
+								catch (NumberFormatException ex) {}
+							}
+						}
+						_input += "%" + fSpec;
+					}
+					_input +="\\n\"" + (exprs.isEmpty() ? "" : ", ")
+							+ exprs.concatenate(", ") + tail;
+				}
+			}
+			// END KGU#794 2020-02-11
 		}
 		// END KGU#108 2015-12-13
 
@@ -915,6 +998,9 @@ public class CGenerator extends Generator {
 		// 4. Input / output
 		boolean isDisabled = _inst.isDisabled(); 
 		StringList tokens = Element.splitLexically(line.trim(), true);
+		// START KGU#796 2020-02-10: Bugfix #808
+		Element.unifyOperators(tokens, false);
+		// END KGU#796 2020-02-10
 		StringList pureTokens = tokens.copy();	// will not contain separating space
 		StringList exprTokens = null;	// Tokens of the expression in case of an assignment
 		StringList pureExprTokens = null;	// as before, will not contain separating space
@@ -1201,6 +1287,11 @@ public class CGenerator extends Generator {
 				commentInserted = true;
 			}
 			// END KGU#424 2017-09-26
+			// START KGU#794 2020-02-11: Issue #806
+			if (codeLine.startsWith("printf(")) {
+				this.appendComment("TODO: check format specifiers, replace all '?'!", _indent);
+			}
+			// END KGU#794 2020-02-11
 			addCode(codeLine + lineEnd, _indent, isDisabled);
 		}
 		// END KGU#261 2017-01-26
@@ -1218,7 +1309,13 @@ public class CGenerator extends Generator {
 	 */
 	private boolean generateMultipleInput(StringList _inputItems, String _indent, boolean _isDisabled, StringList _comment) {
 		boolean done = false;
-		if (_inputItems.count() > 2) {
+		if (this.getClass().getSimpleName().equals("CGenerator")) {
+			this.appendComment("TODO: check format specifiers, replace all '?'!", _indent);
+		}
+		// START KGU#794 2020-02-13: Issue #806
+		//if (_inputItems.count() > 2) {
+		if (_inputItems.count() > 2 || this.getClass().getSimpleName().equals("CGenerator") && _inputItems.count() == 2) {
+		// END KGU#794 2020-02-13
 			String inputKey = CodeParser.getKeyword("input") + " ";
 			String prompt = _inputItems.get(0);
 			if (!prompt.isEmpty()) {
@@ -1252,16 +1349,68 @@ public class CGenerator extends Generator {
 	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
 	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
 	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
-	 * This instance concatenates all elements with commas and address symbols (as needed for scanf).
+	 * This instance concatenates all elements with commas and address operators and inserts a draft format string
+	 * at the beginning (as needed for {@code scanf)).
 	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
 	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
 	 */
 	@Override
 	protected String composeInputItems(StringList _inputVarItems)
 	{
-		return _inputVarItems.concatenate(", &");
+		// START KGU#794 2020-02-11: Issue #806 - more intelligent format preparation
+		//return _inputVarItems.concatenate(", &");
+		StringList format = new StringList();
+		StringList items = new StringList();
+		for (int i = 0; i < _inputVarItems.count(); i++) {
+			String varItem = _inputVarItems.get(i);
+			String[] formatAndItem = this.makeScanfFormatVarPair(varItem);
+			format.add(formatAndItem[0]);
+			items.add(formatAndItem[1]);
+		}
+		items.insert("§$§$§" + format.concatenate(" ") + "§$§$§", 0);
+		return items.concatenate(", ");
+		// END KGU#794 2020-02-11
 	}
 	// END KGU#653 2019-02-14
+	
+	// START KGU#794 2020-02-11: Issue #806
+	private String[] makeScanfFormatVarPair(String inputItem)
+	{
+		String[] pair = new String[] {
+				"%?",
+				"&" + inputItem
+		};
+		TypeMapEntry type = this.typeMap.get(inputItem);
+		if (type != null) {
+			String typeName = this.transformTypeFromEntry(type, null);
+			if (typeName.equals("char*")) {
+				pair[0] = "%s";
+				pair[1] = inputItem;	// No address operator!
+			}
+			else {
+				if (typeName.startsWith("unsigned")) {
+					pair[0] ="%u";
+				}
+				else if (typeName.endsWith("int") || typeName.endsWith("long") || typeName.endsWith("short")) {
+					pair[0] = "%i";
+				}
+				else if (typeName.equalsIgnoreCase("bool")) {
+					pair[0] = "%d";
+				}
+				else if (typeName.endsWith("double")) {
+					pair[0] = "%lg";
+				}
+				else if (typeName.equals("float")) {
+					pair[0] = "%g";
+				}
+				else if (typeName.endsWith("char")) {
+					pair[0] = "%c1";
+				}
+			}
+		}
+		return pair;
+	}
+	// END KGU#794 2020-02-11
 
 	protected String enhanceWithColor(String _codeLine, Instruction _inst) {
 		return _codeLine + "; " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
@@ -2059,6 +2208,11 @@ public class CGenerator extends Generator {
 				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// END KGU#140 2017-01-31
 			}
+			// START KGU#800 2020-02-15: Issue #814
+			if (_paramNames.isEmpty()) {
+				fnHeader += "void";
+			}
+			// END KGU#800 2020-02-15
 			fnHeader += ")";
 			appendComment("TODO: Revise the return type and declare the parameters.", _indent);
 			// START KGU#140 2017-01-31: Enh. #113

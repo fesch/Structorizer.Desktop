@@ -42,6 +42,9 @@ package lu.fisch.structorizer.parsers;
  *                                      KGU#550 through KGU#552: Macro replacement refined, new options use_XXX_defines
  *      Kay Gürtzig     2018-09-25      Bugfix #608 Makeshift fix for a broken comment block issue in preproc. lines
  *      Kay Gürtzig     2019-02-13      Issue #679: importInput() was defective, support for more input an output functions
+ *      Kay Gürtzig     2020-03-10      Bugfix #806: Import of printf instructions improved (handling of format strings). 
+ *                                      Bugfix #809: retrieveComment(Reduction) overridden to reinstate type names in comments,
+ *                                      Elimination of trailing "return 0" elements in main diagrams
  *
  ******************************************************************************************************
  *
@@ -69,9 +72,11 @@ import com.creativewidgetworks.goldparser.engine.Token;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.StringList;
 
 /**
@@ -278,7 +283,8 @@ public abstract class CPreParser extends CodeParser
 	 * Reads all plugin-specific options of kind "use_XXX_defines" to make use of predefined
 	 * types or preprocessor defines for the respective library and adds them either to
 	 * {@link #typedefs} or to {@link #defines}, depending on the value mapped in the
-	 * associated resource file.
+	 * associated resource file ("type"&nbsp;-&gt;&nbsp;{@link #typedefs}, any other string&nbsp;-&gt;&nbsp;
+	 * {@link #defines}).
 	 */
 	private void applyUseDefinesOptions() {
 		for (String libName: standardLibs) {
@@ -288,6 +294,15 @@ public abstract class CPreParser extends CodeParser
 			}
 			InputStream istr = getClass().getResourceAsStream("defsImportC_" + libName + ".txt");
 			if (istr != null) {
+				/* The lines of the file are expected to look like this:
+				 * <key>=<value>
+				 * where <key> is an identifier designating either a #define or a typedef. In
+				 * case of a typedef the <value> ought to be "type" (without quotes), in case of
+				 * a #define <value> is to be the string associated to the symbol, usually either
+				 * a built-in type specification (like "int", "unsigned short", or "char*") or an
+				 * empty string (in which case <key> will just be eliminated from the source code
+				 * in case it was embedded like an identifier.
+				 */
 				Properties defs = new Properties();
 				try {
 					defs.load(istr);
@@ -525,7 +540,7 @@ public abstract class CPreParser extends CodeParser
 	 * there is a pending open comment block.
 	 * @param trimmed - a string array with the trimmed input string - content may be modified!
 	 * @param inComment - true if the line started within an comment block
-	 * @return whether the line ends with an opened comment block
+	 * @return true if the line ends with an opened comment block, false otherwise.
 	 */
 	private boolean checkComments(String[] trimmed, boolean inComment)
 	{
@@ -1212,9 +1227,9 @@ public abstract class CPreParser extends CodeParser
 	 * Part of the file preprocessing, is to replace all occurrences of any of the keys
 	 * of string map {@code defines} by their corresponding values within the target
 	 * string {@code toReplace}. 
-	 * @param toReplace - The string representation of (a part of) the input file.
+	 * @param toReplace - the string representation of (a part of) the input file.
 	 * @param defines - maps certain defined identifiers to more acceptable other ones.
-	 * @return The resulting string.
+	 * @return the resulting string.
 	 * @throws ParserCancelled 
 	 */
 	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) throws ParserCancelled {
@@ -1438,21 +1453,35 @@ public abstract class CPreParser extends CodeParser
 		if (_args != null) {
 			int nExpr = _args.count();
 			// Find the format mask
-			if (nExpr > 1 && (_name.equals("printf") || _name.equals("printf_s")) && _args.get(0).matches("^[\"].*[\"]$")) {
-				// We try to split the string by the "%" signs which is of course dirty
+			if (nExpr >= 1 && (_name.equals("printf") || _name.equals("printf_s")) && _args.get(0).matches("^[\"].*[\"]$")) {
+				// We try to split the string by the "%" signs which is of course dirty.
 				// Unfortunately, we can't use split because it eats empty chunks
 				StringList newExprList = new StringList();
 				String formatStr = _args.get(0);
-				int posPerc = -1;
+				int posPerc = -1;	// Position of a percent character.
 				formatStr = formatStr.substring(1, formatStr.length()-1);
 				int i = 1;
 				while ((posPerc = formatStr.indexOf('%')) >= 0 && i < _args.count()) {
-					newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
+					// START KGU#794 2020-02-10: Issue #806
+					//newExprList.add('"' + formatStr.substring(0, posPerc) + '"');
+					String part = formatStr.substring(0, posPerc);
+					if (!part.isEmpty()) {
+						newExprList.add('"' + part + '"');
+					}
+					// END KGU#794 2020-02-10
 					formatStr = formatStr.substring(posPerc+1).replaceFirst(".*?[idxucsefg](.*)", "$1");
 					newExprList.add(_args.get(i++));
 				}
 				if (!formatStr.isEmpty()) {
-					newExprList.add('"' + formatStr + '"');
+					// START KGU#794 2020-02-10: Issue #806
+					//newExprList.add('"' + formatStr + '"');
+					if (formatStr.endsWith("\\n")) {
+						formatStr = formatStr.substring(0, formatStr.length() - 2);
+					}
+					if (!formatStr.isEmpty()) {
+						newExprList.add('"' + formatStr + '"');
+					}
+					// END KGU#794 2020-02-10
 				}
 				if (i < _args.count()) {
 					newExprList.add(_args.subSequence(i, _args.count()).concatenate(", "));
@@ -1664,6 +1693,16 @@ public abstract class CPreParser extends CodeParser
 				this.importingRoots.clear();
 				// END KGU#376 2017-07-01
 			}
+			// START KGU#793 2020-02-10: Issue #809
+			// A trailing "return 0;" should be eliminated in main programs
+			int lastIx = aRoot.children.getSize() - 1;
+			if (lastIx >= 0) {
+				Element last = aRoot.children.getElement(lastIx);
+				if (last instanceof Jump && last.getText().getLongString().trim().equalsIgnoreCase(getKeyword("preReturn") + " 0")) {
+					aRoot.children.removeElement(lastIx);
+				}
+			}
+			// END KGU#793 2020-02-10
 		}
 	}
 
@@ -1696,6 +1735,23 @@ public abstract class CPreParser extends CodeParser
 			this.importingRoots.clear();
 		}
 	}
+
+	// START KGU#793 2020-02-10: Bugfix #809
+	@Override
+	protected String retrieveComment(Reduction _reduction) throws ParserCancelled
+	{
+		String comment = super.retrieveComment(_reduction);
+		if (comment != null) {
+			// This is necessary because method prepareTypedefs(...) also substitutes within comments
+			StringList commentLines = StringList.explode(comment, "\n");
+			for (int i = 0; i < commentLines.count(); i++) {
+				commentLines.set(i, this.undoIdReplacements(commentLines.get(i)));
+			}
+			comment = commentLines.getText();
+		}
+		return comment;
+	}
+	// END KGU#793 2020-02-10
 
 
 }
