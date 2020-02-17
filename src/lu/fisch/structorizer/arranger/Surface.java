@@ -123,6 +123,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group used to fail.
  *      Kay Gürtzig     2019-10-15      Bugfix #763: On resaving stale diagrams, the shadow path had to be cleared.
  *      Kay Gürtzig     2019-11-28      Bugfix #788: Offered arrz extraction to user-chosen folder was ignored
+ *      Kay Gürtrzig    2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
  *
  ******************************************************************************************************
  *
@@ -254,6 +255,7 @@ import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
+import lu.fisch.structorizer.io.ArrangerFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.io.StructogramFilter;
@@ -744,7 +746,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#111 2015-12-17
 		}
 		// START KGU#289 2016-11-14: Enh. #289
-		else if (ArrFilter.isArr(filename) || ArrZipFilter.isArr(filename))
+		else if (ArrangerFilter.isArr(filename))
 		{
 			// FIXME KGU#679 2019-03-12: The first argument became superfluous
 			errorMessage = loadArrFile(form, file);
@@ -1516,13 +1518,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			dlgOpen.setDialogTitle(msgLoadDialogTitle.getText());
 			// START KGU#100 2016-01-15: Enh. #62 - select the provided filter
 			//dlgOpen.addChoosableFileFilter(new ArrFilter());
-			// START KGU#110 2016-07-01: Enh. #62 - Add the zipped filter
-			dlgOpen.addChoosableFileFilter(new ArrZipFilter());
-			// END KGU#110 2016-07-01
-			ArrFilter filter = new ArrFilter();
+			// START KGU#802 2020-02-16: Issue #815
+			//ArrFilter filter = new ArrFilter();
+			ArrangerFilter filter = new ArrangerFilter();
+			// END KGU#802 2020-02-16
 			dlgOpen.addChoosableFileFilter(filter);
 			dlgOpen.setFileFilter(filter);
 			// END KGU#110 2016-01-15: Enh. #62
+			// START KGU#802 2020-02-16: Issue #815 No longer the favourite filter
+			dlgOpen.addChoosableFileFilter(new ArrFilter());
+			// END KGU#802 2020-02-16
+			// START KGU#110 2016-07-01: Enh. #62 - Add the zipped filter
+			dlgOpen.addChoosableFileFilter(new ArrZipFilter());
+			// END KGU#110 2016-07-01
 
 			dlgOpen.setCurrentDirectory(currentDirectory);
 

@@ -83,17 +83,17 @@ public class StructogramFilter extends ExtFileFilter {
         return "NSD Files";
     }
 	
-    public boolean accept(File f) 
+	public boolean accept(File f) 
 	{
-        if (f.isDirectory()) 
+		if (f.isDirectory()) 
 		{
-            return true;
-        }
+			return true;
+		}
 		
 //        String extension = getExtension(f);
 //        if (extension != null) 
 //		{
-            return isNSD(f.getName());
+		return isNSD(f.getName());
 //		}
 //		
 //        return false;

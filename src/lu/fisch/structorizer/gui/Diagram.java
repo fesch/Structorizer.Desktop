@@ -194,6 +194,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-11-29      Bugfix #777: Concurrent favourite export language modification now properly handled
  *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cached to the Ini instance when modified
+ *      Kay Gürtzig     2020-02-16      Issue #815: Combined file filter (StructorizerFilter) preferred in openNSD()
  *
  ******************************************************************************************************
  *
@@ -2050,8 +2051,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// config dialogue
 		// START KGU 2016-01-15: Enh. #110 - select the provided filter
 		//dlgOpen.addChoosableFileFilter(new StructogramFilter());
-		StructogramFilter filter = new StructogramFilter();
+		// START KGU#802 2020-02-16: Issue #815
+		//StructogramFilter filter = new StructogramFilter();
+		//dlgOpen.addChoosableFileFilter(filter);
+		StructorizerFilter filter = new StructorizerFilter();
 		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.addChoosableFileFilter(new StructogramFilter());
+		// END KGU#802 2020-02-16
 		// START KGU#289 2016-11-15: Enh. #290 (allow arrangement files to be selected)
 		dlgOpen.addChoosableFileFilter(new ArrFilter());
 		dlgOpen.addChoosableFileFilter(new ArrZipFilter());

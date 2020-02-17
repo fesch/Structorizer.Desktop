@@ -1272,13 +1272,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * OVERRIDE this! (Method just returns the re-concatenated tokens)
 	 * This method is called by {@link #transform(String, boolean)} but may
 	 * also be used elsewhere for a specific token list.
+	 * @param tokens - Sequence of tokens representing the unified line (intermediate syntax)
+	 * @return transformed string
 	 * @see #transform(String, boolean)
 	 * @see #transformInput(String)
 	 * @see #transformOutput(String)
 	 * @see #transformType(String, String)
 	 * @see #suppressTransformation
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
 	 */
 	protected String transformTokens(StringList tokens)
 	{

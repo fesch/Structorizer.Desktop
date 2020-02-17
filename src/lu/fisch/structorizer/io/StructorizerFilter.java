@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -16,86 +16,62 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ */
 package lu.fisch.structorizer.io;
 
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Input filter for Arranger files.
+ *      Description:    Input filter for both structogram and arrangement files for Structorizer.
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date			Description
+ *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2015-12-20      First Issue
- *      Kay Gürtzig     2018-06-08      Inheritance changed
- *      Kay Gürtzig     2020-02-16      Description revised
+ *      Kay Gürtzig     2020-02-16      First version for issue #815
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:
+ *      It was too inconvenient always having to switch among nsd, arr, and arrz filter
  *
  ******************************************************************************************************///
 
 import java.io.File;
 
 /**
- * Input filter for arrangement list files (related to {@link Arranger})
+ * Input filter for both structogram and arrangement files for Structorizer
  * @author Kay Gürtzig
- * @see ArrZipFilter
- * @see ArrangerFilter
  */
-public class ArrFilter extends ExtFileFilter {
+public class StructorizerFilter extends ExtFileFilter {
 
-	public static boolean isArr(String _filename)
+	public static boolean isStructorizerFile(String _filename)
 	{
-		return (getExtension(_filename).equals("arr"));
+		String ext = getExtension(_filename);
+		return ext.equals("nsd") || ext.equals("arr") || ext.equals("arrz");
 	}
-
-//	public static String getExtension(String s) 
-//	{
-//		String ext = null;
-//		int i = s.lastIndexOf('.');
-//
-//		if (i > 0 &&  i < s.length() - 1) 
-//		{
-//			ext = s.substring(i+1).toLowerCase();
-//		}
-//		return ext;
-//	}
-//
-//	public static String getExtension(File f) 
-//	{
-//		return getExtension(f.getName());
-//	}
-
-	public String getDescription() 
-	{
-		// START KGU#802 2020-02-16: Issue #815
-		//return "Arranger Files";
-		return "Arrangement List Files";
-		// END KGU#802 2020-02-16
-	}
-
-	public boolean accept(File f) 
-	{
+	
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
+	 */
+	@Override
+	public boolean accept(File f) {
 		if (f.isDirectory()) 
 		{
 			return true;
 		}
+		return isStructorizerFile(f.getName());
+	}
 
-//		String extension = getExtension(f);
-//		if (extension != null) 
-//		{
-			return isArr(f.getName());
-//		}
-//
-//		return false;
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#getDescription()
+	 */
+	@Override
+	public String getDescription() {
+		return "All Structorizer Files (NSD, Arrangements)";
 	}
 
 }
