@@ -1470,7 +1470,7 @@ public class CGenerator extends Generator {
 			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
 			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++) {
-				code.add(_indent + "case " + constants.get(j).trim() + ":");
+				addCode("case " + constants.get(j).trim() + ":", _indent, isDisabled);
 			}
 			// END KGU#15 2015-10-21
 			// START KGU#380 2017-04-14: Bugfix #394 - Avoid redundant break instructions

@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens()
  *      Kay Gürtzig             2019-12-01      Enh. #739: At least minimum support for enum types, array declarations mended
  *      Kay Gürtzig             2020-02-16      Issue #816: Function calls and value return mechanism revised
+ *      Kay Gürtzig             2020-02-18      Enh. #388: Support for constants
  *
  ******************************************************************************************************
  *
@@ -123,7 +124,7 @@ public class KSHGenerator extends BASHGenerator {
 	 * @see lu.fisch.structorizer.generators.BASHGenerator#getArrayDeclarator()
 	 */
 	@Override
-	protected String getArrayDeclarator()
+	protected String getArrayDeclarator(boolean isConst)
 	{
 		return "set -A ";
 	}
@@ -132,12 +133,72 @@ public class KSHGenerator extends BASHGenerator {
 	 * @see lu.fisch.structorizer.generators.BASHGenerator#getAssocDeclarator()
 	 */
 	@Override
-	protected String getAssocDeclarator()
+	protected String getAssocDeclarator(boolean isConst)
 	{
-		return "typeset -A ";
+		return isConst ? "typeset -A -r " : "typeset -A ";
 	}
 	// END KGU#542 2019-12-01
 	
+	// START KGU#803/KGU#806 2020-02-18: Issues #388, #816
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getConstDeclarator()
+	 */
+	@Override
+	protected String getConstDeclarator()
+	{
+		return "typeset -r ";
+	}
+
+	@Override
+	protected String getNameRefDeclarator(boolean isConst)
+	{
+		if (isConst) {
+			return "typeset -nr ";
+		}
+		return "typeset -n ";
+	}
+	
+	@Override
+	protected String getLocalDeclarator(boolean isConst, TypeMapEntry type)
+	{
+		if (type != null) {
+			if (type.isRecord()) {
+				return this.getAssocDeclarator(isConst);
+			}
+			else if (type.isArray()) {
+				return this.getArrayDeclarator(isConst);
+			}
+			String typeName = type.getCanonicalType(true, true);
+			if (typeName.equals("int")) {
+				return "typeset -i" + (isConst ? "r" : "") + " ";
+			}
+			else if (typeName.equals("double")) {
+				return "typeset -E" + (isConst ? "r" : "") + " ";
+			}
+		}
+		if (isConst) {
+			return getConstDeclarator();
+		}
+		return "typeset ";
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#makeArrayCopy(java.lang.String, java.lang.String)
+	 */
+	@Override
+	protected String makeArrayCopy(String tgtVar, String srcVar)
+	{
+		return tgtVar + " ${" + srcVar + "[*]}";
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getArrayInitOperator()
+	 */
+	@Override
+	protected String getArrayInitOperator()
+	{
+		return " ";
+	}
+	// END KGU#803/KGU#806 2020-02-18
 
 	//	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
 //	@Override
@@ -168,6 +229,7 @@ public class KSHGenerator extends BASHGenerator {
 	public String generateCode(Root _root, String _indent) {
 
 		String indent = _indent;
+		root = _root;
 		// START KGU#753 2019-10-15: Bugfix #765 - superclass methods need an initialized typeMap
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#753 2019-10-15
@@ -246,31 +308,37 @@ public class KSHGenerator extends BASHGenerator {
 		if( _root.isSubroutine() ) {
 			// START KGU#53 2015-11-02: Shell functions obtain their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
-			String header = _root.getMethodName() + "()";
-			code.add(header + " {");
+			// START KGU#803 2020-02-18: Issue #816 - make sure declarations make variables local
+			//String header = _root.getMethodName() + "()";
+			//code.add(header + " {");
+			addCode("function " + _root.getMethodName() + " {", "", false);
+			// END KGU#803 2020-02-18
 			indent = indent + this.getIndent();
-			StringList paraNames = _root.getParameterNames();
-			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
-			//for (int i = 0; i < paraNames.count(); i++)
+			// START KGU#803 2020-02-18: Issue #816 - outsourced to enhanced method
+			//StringList paraNames = _root.getParameterNames();
+			//// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			////for (int i = 0; i < paraNames.count(); i++)
+			////{
+			////	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			////}
+			//int minArgs = _root.getMinParameterCount();
+			//StringList argDefaults = _root.getParameterDefaults();
+			//for (int i = 0; i < minArgs; i++)
 			//{
 			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
 			//}
-			int minArgs = _root.getMinParameterCount();
-			StringList argDefaults = _root.getParameterDefaults();
-			for (int i = 0; i < minArgs; i++)
-			{
-				code.add(indent + paraNames.get(i) + "=$" + (i+1));
-			}
-			for (int i = minArgs; i < paraNames.count(); i++)
-			{
-				code.add(indent + "if [ ${#} -lt " + (i+1) + " ]");
-				code.add(indent + "then");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
-				code.add(indent + "else");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
-				code.add(indent + "fi");
-			}
-			// END KGU#371 2019-03-08
+			//for (int i = minArgs; i < paraNames.count(); i++)
+			//{
+			//	code.add(indent + "if [ ${#} -lt " + (i+1) + " ]");
+			//	code.add(indent + "then");
+			//	code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+			//	code.add(indent + "else");
+			//	code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+			//	code.add(indent + "fi");
+			//}
+			//// END KGU#371 2019-03-08
+			this.generateArgAssignments(_root, indent);
+			// END KGU#803 2020-02-18
 			// END KGU#53 2015-11-02
 		}
 		

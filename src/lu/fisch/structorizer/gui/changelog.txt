@@ -10,10 +10,10 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
-- Shell export does not cope with nested array/record initializers and component access.
-- Shell function variables are still not exported as local - so side effects are likely.
+- Shell export does not cope with nested array/record initializers and component access,
+  neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-06 (2020-02-17)
+Current development version: 3.30-06 (2020-02-20)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -65,7 +65,13 @@ Current development version: 3.30-06 (2020-02-17)
 - 05: Issue #814: Empty parameter lists are now exported to C as ...(void) <2>
 - 05: Issue #815: Combined file filters introduced in open dialogs [Rolf Schmidt]2
 - 05: Issue #816: Function calls in exported bash, ksh code revised [Rolf Schmidt]2
+- 06: Issue #816: Local declarations of variables/constants bash/ksh functions <2>
+- 06: Issue #816: Passing of arrays/records to/from bash/ksh functions revised <2>
 - 06: Bugfix #818: Replacement of diagrams unpinned in Arranger caused trouble <2>
+- 06: Bugfix #820: Try didn't respect exit but averted later error reporting <2>
+- 06: Bugfix #821: Shell function arguments and array items wrongly put in $( ) <2>
+- 06: Issue #822: Executor no longer aborts on empty instruction lines [R. Schmidt]2
+- 06: Bugfix #823: Executor accidently mutilated expressions (all space gone) <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

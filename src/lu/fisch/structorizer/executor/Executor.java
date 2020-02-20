@@ -187,6 +187,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-17      Enh. #739 - Support for enum type definitions
  *      Kay Gürtzig     2019-11-20/21   Enh. #739 - Several fixes and improvements for enh. #739 (enum types)
  *      Kay Gürtzig     2019-11-28      Bugfix #773: component access within index expressions caused trouble in some cases
+ *      Kay Gürtzig     2020-02-20      Bugfix #820: Try hadn't respected an exit and didn't reset isErrorReported
+ *                                      issue #822: Empty instruction lines are now ignored, missing exit args too.
+ *                                      Fixed #823 (defective execution of assignments in some cases)
  *
  ******************************************************************************************************
  *
@@ -4415,6 +4418,13 @@ public class Executor implements Runnable
 				boolean isTypeDef = false;
 				// END KGU#508 2018-03-19
 				
+				// START KGU#809 2020-02-20: Issue #822 (derived from #819) Just skip empty lines
+				if (cmd.isBlank()) {
+					i++;
+					continue;
+				}
+				// END KGU#809 2020-02-20
+				
 				// START KGU#490 2018-02-07: Bugfix #503 - we should first rule out input, output instructions, and JUMPs
 				//if (!Instruction.isTypeDefinition(cmd, context.dynTypeMap)) {
 				//	cmd = convert(cmd).trim();
@@ -4738,41 +4748,43 @@ public class Executor implements Runnable
 			// START KGU#365/KGU#380 2017-04-14: Issues #380, #394 Allow arbitrary integer expressions now
 			//tokens.removeAll("");
 			tokens.remove(0);	// Get rid of the keyword...
-			String expr = tokens.concatenate();
+			String expr = tokens.concatenate().trim();
 			// END KGU#380 2017-04-14
 			// Get exit value
 			int exitValue = 0;
-			try {
-				// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
-				//Object n = interpreter.eval(tokens.get(1));
-				// START KGU#417 2017-06-30: Enh. #424
-				expr = this.evaluateDiagramControllerFunctions(expr);
-				// END KGU#417 2017-06-30
-				Object n = this.evaluateExpression(expr, false, false);
-				// END KGU 2017-04-14
-				if (n instanceof Integer)
-				{
-					exitValue = ((Integer) n).intValue();
+			if (!expr.isEmpty()) {	// KGU 2020-02-20 issue #   we tolerate omitted exit value (defaults to 0)
+				try {
+					// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
+					//Object n = interpreter.eval(tokens.get(1));
+					// START KGU#417 2017-06-30: Enh. #424
+					expr = this.evaluateDiagramControllerFunctions(expr);
+					// END KGU#417 2017-06-30
+					Object n = this.evaluateExpression(expr, false, false);
+					// END KGU 2017-04-14
+					if (n instanceof Integer)
+					{
+						exitValue = ((Integer) n).intValue();
+					}
+					else
+					{
+						// START KGU#197 2016-07-27: More localization support
+						//trouble = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
+						trouble = control.msgWrongExit.getText().replace("%1",
+								"<" + (n == null ? expr : n.toString()) + ">");
+						// END KGU#197 2016-07-27
+						// START KGU#686 2019-03-18: Enh. #56 must not be caught
+						// END KGU#686 2019-03-18
+					}
 				}
-				else
+				catch (EvalError ex)
 				{
-					// START KGU#197 2016-07-27: More localization support
-					//trouble = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
-					trouble = control.msgWrongExit.getText().replace("%1",
-							"<" + (n == null ? expr : n.toString()) + ">");
+					// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
+					//trouble = "Wrong exit value: " + ex.getMessage();
+					String exMessage = ex.getLocalizedMessage();
+					if (exMessage == null) exMessage = ex.getMessage();
+					trouble = control.msgWrongExit.getText().replace("%1", exMessage);
 					// END KGU#197 2016-07-27
-					// START KGU#686 2019-03-18: Enh. #56 must not be caught
-					// END KGU#686 2019-03-18
 				}
-			}
-			catch (EvalError ex)
-			{
-				// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
-				//trouble = "Wrong exit value: " + ex.getMessage();
-				String exMessage = ex.getLocalizedMessage();
-				if (exMessage == null) exMessage = ex.getMessage();
-				trouble = control.msgWrongExit.getText().replace("%1", exMessage);
-				// END KGU#197 2016-07-27
 			}
 			if (trouble.isEmpty())
 			{
@@ -4784,6 +4796,9 @@ public class Executor implements Runnable
 				// START KGU#117 2016-03-07: Enh. #77
 				element.checkTestCoverage(true);
 				// END KGU#117 2016-03-07
+				// START KGU#808 2020-02-20: Bugfix #820 this flag must be set lest a try block should catch it
+				this.isExited = true;
+				// END KGU#808 2020-02-20
 			}
 			done = true;
 		}
@@ -4983,7 +4998,10 @@ public class Executor implements Runnable
 			}
 			// END KGU#388 2017-09-13
 		}
-		String expression = tokens.concatenate().trim();
+		// START KGU#810 2020-02-20 Bugfix #823 - necessary gaps could vanish here
+		//String expression = tokens.concatenate().trim();
+		String expression = tokens.concatenate(null).trim();
+		// END KGU#81ß0 2020-02-20
 		// END KGU#375 2017-03-30
 		if (instr instanceof Call)
 		{
@@ -5600,7 +5618,7 @@ public class Executor implements Runnable
 						{
 							trouble = trouble + "\n";
 						}
-						trouble = trouble + "PARAM " + (p+1) + ": "
+						trouble += "PARAM " + (p+1) + ": "
 								+ control.msgInvalidExpr.getText().replace("%1", f.getParam(p));
 					}
 //					else
@@ -5611,7 +5629,7 @@ public class Executor implements Runnable
 				{
 					String exMessage = ex.getLocalizedMessage();
 					if (exMessage == null) exMessage = ex.getMessage();
-					trouble = trouble + (!trouble.isEmpty() ? "\n" : "") +
+					trouble += (!trouble.isEmpty() ? "\n" : "") +
 							"PARAM " + (p+1) + ": " + exMessage;
 				}
 			}
@@ -6699,6 +6717,9 @@ public class Executor implements Runnable
 					}
 					setVar(varName, trouble);
 				}
+				// START KGU#806 2020-02-20: Bugfix #820 From now on new errors may occur
+				this.isErrorReported = false;
+				// END KGU#806 2020-02-20
 				/* Normally the catch block will clear the trouble, but if it causes
 				 * trouble itself (e.g. by rethrowing) than this will be the new
 				 * trouble */
@@ -6728,8 +6749,13 @@ public class Executor implements Runnable
 			// Execute the finally block
 			String finalTrouble = stepSubqueue(element.qFinally, true);
 			if (!finalTrouble.isEmpty() && !isExited) {
-				// An error out of the finally block overrides a possible previous trouble
-				trouble = finalTrouble;
+				// An error out of the finally block adds to a possible previous trouble
+				if (!trouble.isEmpty()) {
+					trouble = "1. " + trouble + "\n2. " + finalTrouble;
+				}
+				else {
+					trouble = finalTrouble;
+				}
 			}
 		} catch (EvalError ex) {
 			if (!isExited && (trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
