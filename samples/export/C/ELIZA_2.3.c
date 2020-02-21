@@ -56,10 +56,10 @@ char* adjustSpelling(char* sentence)
 		insert(uppercase(start), result, 1);
 	}
 	{
-		char* array178851e9[2] = {" i ", " i\'"};
-		int index178851e9;
-		for (index178851e9 = 0; index178851e9 < 2; index178851e9++) {
-			char* word = array178851e9[index178851e9];
+		char* arrayca33e61b[2] = {" i ", " i\'"};
+		int indexca33e61b;
+		for (indexca33e61b = 0; indexca33e61b < 2; indexca33e61b++) {
+			char* word = arrayca33e61b[indexca33e61b];
 			position = pos(word, result);
 			while (position > 0) {
 				delete(result, position+1, 1);
@@ -90,10 +90,10 @@ bool checkGoodBye(char* text, char* phrases[][2])
 	
 	{
 	// TODO: Find out and fill in the number of elements of the array phrases here! 
-		int count292fa421 = ???;
-		int index292fa421;
-		for (index292fa421 = 0; index292fa421 < count292fa421; index292fa421++) {
-			char* pair[] = phrases[index292fa421];
+		int countd84a3816 = ???;
+		int indexd84a3816;
+		for (indexd84a3816 = 0; indexd84a3816 < countd84a3816; indexd84a3816++) {
+			char* pair[] = phrases[indexd84a3816];
 			if (pos(pair[0], text) > 0) {
 				// TODO: check format specifiers, replace all '?'! 
 				printf("%?\n", pair[1]);
@@ -145,10 +145,10 @@ char* conjugateStrings(char* sentence, char* key, int keyPos, char* flexions[][2
 	result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
 	{
 	// TODO: Find out and fill in the number of elements of the array flexions here! 
-		int count90ebc6c1 = ???;
-		int index90ebc6c1;
-		for (index90ebc6c1 = 0; index90ebc6c1 < count90ebc6c1; index90ebc6c1++) {
-			char* pair[] = flexions[index90ebc6c1];
+		int counta56ff7f1 = ???;
+		int indexa56ff7f1;
+		for (indexa56ff7f1 = 0; indexa56ff7f1 < counta56ff7f1; indexa56ff7f1++) {
+			char* pair[] = flexions[indexa56ff7f1];
 			left = "";
 			right = result;
 			position = pos(pair[0], right);
@@ -220,10 +220,10 @@ char* normalizeInput(char* sentence)
 	
 	sentence = lowercase(sentence);
 	{
-		char arrayc5f63e40[5] = {'.', ',', ';', '!', '?'};
-		int indexc5f63e40;
-		for (indexc5f63e40 = 0; indexc5f63e40 < 5; indexc5f63e40++) {
-			char symbol = arrayc5f63e40[indexc5f63e40];
+		char array8749c1b0[5] = {'.', ',', ';', '!', '?'};
+		int index8749c1b0;
+		for (index8749c1b0 = 0; index8749c1b0 < 5; index8749c1b0++) {
+			char symbol = array8749c1b0[index8749c1b0];
 			position = pos(symbol, sentence);
 			while (position > 0) {
 				sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -648,7 +648,7 @@ int main(void)
 			// TODO: check format specifiers, replace all '?'! 
 			printf("%s\n", reply);
 		}
-	} while (!(isGone));
+	} while (! (isGone));
 	
 	return 0;
 }

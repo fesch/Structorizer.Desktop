@@ -357,10 +357,13 @@ public class KSHGenerator extends BASHGenerator {
 		code.add("");
 		//insertComment("TODO declare your variables here", _indent);
 		//code.add("");
-		generateCode(_root.children, _root.isProgram() ? _indent : _indent + this.getIndent());
+		// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
+		generateDeclarations(indent);
+		// END KGU#389/KGU#803/KGU#806
+		generateCode(_root.children, indent);
 		
 		// START KGU#803 2020-02-16: Issue #816
-		generateResult(_root, _indent, alwaysReturns, varNames);
+		generateResult(_root, indent, alwaysReturns, varNames);
 		// END KGU#803 2020-02-16
 
 		if( _root.isSubroutine() ) {

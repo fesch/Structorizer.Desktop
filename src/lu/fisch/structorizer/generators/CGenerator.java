@@ -1785,11 +1785,15 @@ public class CGenerator extends Generator {
 		// START KGU#301 2016-12-01: Bugfix #301
 		//insertBlockTail(_repeat, "while (!(" 
 		//		+ transform(_repeat.getText().getLongString()).trim() + "))", _indent);
-		String condition = transform(_repeat.getText().getLongString()).trim();
-		if (!isParenthesized(condition)) {
-			condition = "(" + condition + ")";
-		}
-		appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		// START KGU#811 2020-02-21: Use existing base technology
+		//String condition = transform(_repeat.getText().getLongString()).trim();
+		//if (!isParenthesized(condition)) {
+		//	condition = "(" + condition + ")";
+		//}
+		//appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
+		appendBlockTail(_repeat, "while (" + transform(condition) + ")", _indent);
+		// END KGU#811 2020-02-21
 		// END KGU#301 2016-12-01
 	}
 

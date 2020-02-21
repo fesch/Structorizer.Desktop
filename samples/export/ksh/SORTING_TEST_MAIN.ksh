@@ -20,35 +20,18 @@ function bubbleSort {
 
  typeset ende=$(( length(${values}) - 2 ))
 
- # NOTE: This is an automatically inserted copy of the loop body below. 
- # The index of the most recent swapping (-1 means no swapping done). 
- typeset posSwapped=$(( -1 ))
-
- for (( i=0; i<=${ende}; i++ ))
- do
-
-  if [[ $(( ${values[${i}]} > ${values[${i}+1]} )) ]]
-  then
-   typeset temp=${values[${i}]}
-   values[${i}]=$(( ${values[${i}+1]} ))
-   values[${i}+1]=${temp}
-   posSwapped=${i}
-  fi
-
- done
-
- ende=$(( ${posSwapped} - 1 ))
- while [[ ${posSwapped} < 0 ]]
+ # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+ while :
  do
   # The index of the most recent swapping (-1 means no swapping done). 
-  posSwapped=$(( -1 ))
+  typeset posSwapped=$(( -1 ))
 
   for (( i=0; i<=${ende}; i++ ))
   do
 
    if [[ $(( ${values[${i}]} > ${values[${i}+1]} )) ]]
    then
-    temp=${values[${i}]}
+    typeset temp=${values[${i}]}
     values[${i}]=$(( ${values[${i}+1]} ))
     values[${i}+1]=${temp}
     posSwapped=${i}
@@ -57,6 +40,7 @@ function bubbleSort {
   done
 
   ende=$(( ${posSwapped} - 1 ))
+  [[ ! (${posSwapped} < 0) ]] || break
  done
 
 }
@@ -143,7 +127,7 @@ function partition {
 
  done
 
- result42be43dc=p
+ result6c06397d=p
 }
 
 # Checks whether or not the passed-in array is (ascendingly) sorted. 
@@ -155,7 +139,7 @@ function testSorted {
  typeset i=0
 
  # As we compare with the following element, we must stop at the penultimate index 
- while [[ $(( ${isSorted} && (${i} <= length(${numbers})-2) )) ]]
+ while (( $(( ${isSorted} && (${i} <= length(${numbers})-2) )) ))
  do
 
   # Is there an inversion? 
@@ -169,7 +153,7 @@ function testSorted {
 
  done
 
- resultdd94d0f8=isSorted
+ result52c06b75=isSorted
 }
 
 # Runs through the array heap and converts it to a max-heap 
@@ -207,23 +191,23 @@ function quickSort {
   # Partition the array into smaller and greater elements 
   # Get the resulting (and final) position of the pivot element 
   partition "${values}" "${start}" "${stop}" "${p}"
-  p=${result42be43dc}
+  p=${result6c06397d}
   # Sort subsequances separately and independently ... 
   # ========================================================== 
   # ================= START PARALLEL SECTION ================= 
   # ========================================================== 
-  pids2de8335a=""
+  pids6a64ce6d=""
   (
    # Sort left (lower) array part 
    quickSort "${values}" "${start}" "${p}"
   ) &
-  pids2de8335a="${pids2de8335a} $!"
+  pids6a64ce6d="${pids6a64ce6d} $!"
   (
    # Sort right (higher) array part 
    quickSort "${values}" $(( ${p}+1 )) "${stop}"
   ) &
-  pids2de8335a="${pids2de8335a} $!"
-  wait ${pids2de8335a}
+  pids6a64ce6d="${pids6a64ce6d} $!"
+  wait ${pids6a64ce6d}
   # ========================================================== 
   # ================== END PARALLEL SECTION ================== 
   # ========================================================== 
@@ -258,18 +242,18 @@ function heapSort {
 # Requested input data are: Number of elements (size) and filing mode. 
 # TODO: Check and revise the syntax of all expressions! 
 
-# NOTE: This is an automatically inserted copy of the loop body below. 
-read elementCount
-while [[ ${elementCount} >= 1 ]]
+# NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+while :
 do
  read elementCount
+ (( ! (${elementCount} >= 1) )) || break
 done
 
-# NOTE: This is an automatically inserted copy of the loop body below. 
-echo -n "Filling: 1 = random, 2 = increasing, 3 = decreasing" ; read modus
-while [[ ${modus} == 1 || ${modus} == 2 || ${modus} == 3 ]]
+# NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+while :
 do
  echo -n "Filling: 1 = random, 2 = increasing, 3 = decreasing" ; read modus
+ [[ ! (${modus} == 1 || ${modus} == 2 || ${modus} == 3) ]] || break
 done
 
 for (( i=0; i<=$(( ${elementCount}-1 )); i++ ))
@@ -302,29 +286,29 @@ done
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids50ebbce7=""
+pids7feeee28=""
 (
  bubbleSort values1
 ) &
-pids50ebbce7="${pids50ebbce7} $!"
+pids7feeee28="${pids7feeee28} $!"
 (
  quickSort values2 0 "${elementCount}"
 ) &
-pids50ebbce7="${pids50ebbce7} $!"
+pids7feeee28="${pids7feeee28} $!"
 (
  heapSort values3
 ) &
-pids50ebbce7="${pids50ebbce7} $!"
-wait ${pids50ebbce7}
+pids7feeee28="${pids7feeee28} $!"
+wait ${pids7feeee28}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 testSorted values1
-ok1=${resultdd94d0f8}
+ok1=${result52c06b75}
 testSorted values2
-ok2=${resultdd94d0f8}
+ok2=${result52c06b75}
 testSorted values3
-ok3=${resultdd94d0f8}
+ok3=${result52c06b75}
 
 if [[ ! ${ok1} || ! ${ok2} || ! ${ok3} ]]
 then
@@ -341,11 +325,11 @@ then
 
 fi
 
-# NOTE: This is an automatically inserted copy of the loop body below. 
-echo -n "Show arrays (yes/no)?" ; read show
-while [[ ${show} == "yes" || ${show} == "no" ]]
+# NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+while :
 do
  echo -n "Show arrays (yes/no)?" ; read show
+ [[ ! (${show} == "yes" || ${show} == "no") ]] || break
 done
 
 if [[ ${show} == "yes" ]]

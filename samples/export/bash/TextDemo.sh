@@ -1283,34 +1283,8 @@ showTurtle
 penDown
 y=0
 
-# NOTE: This is an automatically inserted copy of the loop body below. 
-echo -n "Enter some text (empty string to exit)" ; read text
-# Make sure the content is interpreted as string 
-text=$(( "" + ${text} ))
-
-if [[ ${text} != "" ]]
-then
-
- # NOTE: This is an automatically inserted copy of the loop body below. 
- echo -n "Height of the text (pixels)" ; read height
- while [[ ${height} >= 5 ]]
- do
-  echo -n "Height of the text (pixels)" ; read height
- done
-
- # NOTE: This is an automatically inserted copy of the loop body below. 
- echo -n "Colour (1=black, 2=red, 3=yellow, 4=green, 5=cyan, 6=blue, 7=pink, 8=gray, 9=orange, 10=violet)" ; read colour
- while [[ ${colour} >= 1 && ${colour} <= 10 ]]
- do
-  echo -n "Colour (1=black, 2=red, 3=yellow, 4=green, 5=cyan, 6=blue, 7=pink, 8=gray, 9=orange, 10=violet)" ; read colour
- done
-
- y=$(( ${y} + ${height} + 2 ))
- gotoXY 0 $(( ${y} - 2 ))
- drawText "${text}" "${height}" "${colour}"
-fi
-
-while [[ ${text} == "" ]]
+# NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+while :
 do
  echo -n "Enter some text (empty string to exit)" ; read text
  # Make sure the content is interpreted as string 
@@ -1319,18 +1293,18 @@ do
  if [[ ${text} != "" ]]
  then
 
-  # NOTE: This is an automatically inserted copy of the loop body below. 
-  echo -n "Height of the text (pixels)" ; read height
-  while [[ ${height} >= 5 ]]
+  # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+  while :
   do
    echo -n "Height of the text (pixels)" ; read height
+   (( ! (${height} >= 5) )) || break
   done
 
-  # NOTE: This is an automatically inserted copy of the loop body below. 
-  echo -n "Colour (1=black, 2=red, 3=yellow, 4=green, 5=cyan, 6=blue, 7=pink, 8=gray, 9=orange, 10=violet)" ; read colour
-  while [[ ${colour} >= 1 && ${colour} <= 10 ]]
+  # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+  while :
   do
    echo -n "Colour (1=black, 2=red, 3=yellow, 4=green, 5=cyan, 6=blue, 7=pink, 8=gray, 9=orange, 10=violet)" ; read colour
+   (( ! (${colour} >= 1 && ${colour} <= 10) )) || break
   done
 
   y=$(( ${y} + ${height} + 2 ))
@@ -1338,6 +1312,7 @@ do
   drawText "${text}" "${height}" "${colour}"
  fi
 
+ [[ ! (${text} == "") ]] || break
 done
 
 gotoXY 0 $(( ${y} + 15 ))

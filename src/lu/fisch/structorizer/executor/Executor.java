@@ -190,6 +190,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-02-20      Bugfix #820: Try hadn't respected an exit and didn't reset isErrorReported
  *                                      issue #822: Empty instruction lines are now ignored, missing exit args too.
  *                                      Fixed #823 (defective execution of assignments in some cases)
+ *      Kay Gürtzig     2020-02-21      Issue #826: Raw input is to cope with backslashes as in Windows file paths
  *
  ******************************************************************************************************
  *
@@ -3220,14 +3221,23 @@ public class Executor implements Runnable
 				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
-					this.evaluateExpression(target + " = " + rawInput, false, false);
-					varName = setVar(target, context.interpreter.get(target));
+					// START KGU#813 2020-02-21: Bugfix #826 - Strings with backslashes used to cause eval errors
+					//this.evaluateExpression(target + " = " + rawInput, false, false);
+					//varName = setVar(target, context.interpreter.get(target));
+					if (strInput.startsWith("'") && strInput.length() > 3 && strInput.charAt(1) != '\\') {
+						strInput = "\"" + strInput.substring(1, strInput.length()-1) + "\"";
+					}
+					varName = evaluateRawString(target, strInput);
+					// END KGU#813 2020-02-21
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
-					this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
+					// START KGU#813 2020-02-21: Bugfix #826 - Strings with backslashes used to cause eval errors
+					//this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
+					evaluateRawString(target, "\"" + rawInput + "\"");
+					// END KGU#813 2020-02-21
 					varName = setVar(target, context.interpreter.get(target));					
 				}
 				// END KGU#285 2016-10-16
@@ -3314,6 +3324,35 @@ public class Executor implements Runnable
 			throw finalError;
 		}
 		return varName;
+	}
+
+	// START KGU#813 2020-02-21: Auxiliary method introduced for bugfix #826
+	/**
+	 * Tries to evaluate the given string quoted raw string (looks like a string literal
+	 * but might contain "sharp" escape characters, i.e. sequences like \n but also direct \.
+	 * If some illegal backslash sequence is detected then evaluation with doubled backslashes
+	 * is attempted.
+	 * @param target - string specifying the assignment target (possibly with index or component access)
+	 * @param rawInput - a quoted raw string from input
+	 * @return the base variable name of the assignment target if evaluation succeeded
+	 * @throws EvalError if evaluation failed.
+	 */
+	private String evaluateRawString(String target, String rawInput) throws EvalError {
+		try {
+			this.evaluateExpression(target + " = " + rawInput, false, false);
+		}
+		catch (EvalError ex) {
+			String msg = ex.getMessage();
+			int idx = -1;
+			if (msg != null && (idx = msg.indexOf("Lexical error ")) >= 0 && msg.substring(idx).contains("\\")) {
+				// Apparently the backslash(es) weren't meant to be escape characters.
+				this.evaluateExpression(target + " = " + rawInput.replace("\\", "\\\\"), false, false);
+			}
+			else {
+				throw ex;
+			}
+		}
+		return setVar(target, context.interpreter.get(target));					
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
@@ -4419,7 +4458,7 @@ public class Executor implements Runnable
 				// END KGU#508 2018-03-19
 				
 				// START KGU#809 2020-02-20: Issue #822 (derived from #819) Just skip empty lines
-				if (cmd.isBlank()) {
+				if (cmd.trim().isEmpty()) {
 					i++;
 					continue;
 				}

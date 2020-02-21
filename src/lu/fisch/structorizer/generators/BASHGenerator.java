@@ -26,6 +26,8 @@
 
 package lu.fisch.structorizer.generators;
 
+import java.util.Arrays;
+
 /******************************************************************************************************
  *
  *      Author:         Markus Grundner
@@ -88,6 +90,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-02-17/18   Issue #816: Efforts to label local variables in routines appropriately
  *      Kay Gürtzig         2020-02-18      Enh. #388: Support for constants
  *      Kay Gürtzig         2020-02-20      Issues #816, #821: More sophisticated approach to pass records/arrays (see comment)
+ *      Kay Gürtzig         2020-02-21      Bugfix #824: The condition of the Repeat loop wasn't negated,
+ *                                          several absurd bugs in finishCondition() fixed
  *
  ******************************************************************************************************
  *
@@ -166,7 +170,9 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -308,7 +314,10 @@ public class BASHGenerator extends Generator {
 	protected Root root = null;
 	
 	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
-	
+
+	private final Set<String> compOprs = new HashSet<String>(
+			Arrays.asList(new String[]{/*"==",*/ "<", ">", "<=", ">=", /*"!=", "<>"*/}));
+
 	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
 	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
 	protected String getEnumDeclarator()
@@ -646,6 +655,7 @@ public class BASHGenerator extends Generator {
 		// FIXME (KGU 2019-12-01) this looks too simplistic
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
 		{
+			// Array initializer
 			declarator = this.getArrayDeclarator(isConst);
 			boolean isAssignment = lval.endsWith("=");
 			if (isAssignment) {
@@ -672,6 +682,7 @@ public class BASHGenerator extends Generator {
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
 				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
+			// Record initializer
 			// START KGU#388 2019-11-28: Bugfix #423 - record initializations must not be separated from the declaration
 			declarator = this.getAssocDeclarator(false);	// Repetition of declaration doesn't cause harm
 			// END KGU#388 2019-11-28
@@ -680,7 +691,10 @@ public class BASHGenerator extends Generator {
 			for (Entry<String, String> entry: recordIni.entrySet()) {
 				String key = entry.getKey();
 				if (!key.startsWith("§")) {
-					sb.append(sepa + '[' + key + "]=" + entry.getValue());
+					// START KGU#807 2020-02-21 Bugfix #821 - we must do specific expression transformation
+					//sb.append(sepa + '[' + key + "]=" + entry.getValue());
+					sb.append(sepa + '[' + key + "]=" + this.transformExpression(entry.getValue(), true, false));
+					// END KGU#807 2020-02-21
 					sepa = " ";
 				}
 			}
@@ -736,10 +750,11 @@ public class BASHGenerator extends Generator {
 	 * arguments of a routine CALL, in which case array and record variables have
 	 * to be passed by name, such that "dollaring" must be undone.
 	 * @param exprTokens - the lexically split expression, may contain blanks
+	 * @param isAssigned TODO
 	 * @param asArgument - if the expression is an argument for a routine CALL
 	 * @return the transformed expression
 	 */
-	protected String transformExpression(StringList exprTokens, boolean asArgument)
+	protected String transformExpression(StringList exprTokens, boolean isAssigned, boolean asArgument)
 	{
 		// FIXME: Check the operands - they must be literals (type detectable),
 		// variables (consult typeMap), built-in functions (type known), or
@@ -754,10 +769,7 @@ public class BASHGenerator extends Generator {
 				exprTokens.contains("%");
 		// Avoid recursive enclosing in $(...)
 		if (isArithm) {
-			// START KGU#803 2020-02-20: Issue #816 isAssigned had always been true
-			//exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
-			exprTokens.insert("$(( ", 0);
-			// END KGU#803 2020-02-20
+			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
 			exprTokens.add(" ))");
 		}
 		// START KGU#772 2019-11-24: Bugfix #784 - avoid redundant enclosing with $(...)
@@ -825,7 +837,7 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		else {
-			expr = transformExpression(Element.splitLexically(expr, true), asArgument);
+			expr = transformExpression(Element.splitLexically(expr, true), isAssigned, asArgument);
 		}
 		return expr;
 	}
@@ -835,37 +847,49 @@ public class BASHGenerator extends Generator {
 		for (int p = 0; p < fct.paramCount(); p++)
 		{
 			String param = fct.getParam(p);
-			param = this.transformExpression(param, true, true);
+			param = this.transformExpression(param, false, true);
 			expr += (" " + param);
 		}
 		return expr;
 	}
+	/**
+	 * Tries to find out whether the condition might involve a numerical comparison and
+	 * encloses it with (( )) in this case, otherwise with [[ ]].
+	 * @param condition the transformed condition
+	 * @return the enclosed condition
+	 */
 	private String finishCondition(String condition) {
+		// KGU#811 2020-02-21: Bugfix #824 - many absurd bugs found and fixed
 		if (!this.suppressTransformation && !(condition.trim().matches("^\\(\\(.*?\\)\\)$")))
 		{
-			final String[] compOprs = new String[]{"==", "<", ">", "<=", ">=", "!=", "<>"};
 			StringList condTokens = Element.splitLexically(condition, true);
 			condTokens.removeAll(" ");
 			boolean isNumber = false;
-			for (int i = 0; i < condTokens.count(); i++) {
-				for (int j = 1; j < compOprs.length-1; j++) {
-					if (condTokens.get(i).equals(compOprs[j])) {
-						// FIXME this is too vague again
-						int k = i-1;
-						String leftOpnd = condTokens.get(k);
-						while (k >= 0 && leftOpnd.equals(")") || leftOpnd.equals("}")) {
-							leftOpnd = condTokens.get(k--);
-						}
-						k = i+1;
-						String rightOpnd = condTokens.get(k);
-						while (j < condTokens.count() && rightOpnd.equals("$") || rightOpnd.equals("(") || rightOpnd.equals("{")) {
-							rightOpnd = condTokens.get(j++);
-						}
-						String typeLeft = Element.identifyExprType(typeMap, leftOpnd, true);
-						String typeRight = Element.identifyExprType(typeMap, rightOpnd, true);
-						if ((typeLeft.equals("int") || typeLeft.equals("double")) && (typeRight.equals("int") || typeRight.equals("double"))) {
-							isNumber = true;
-						}
+			for (int i = 1; !isNumber && i < condTokens.count()-1; i++) {
+				String token = condTokens.get(i);
+				// Check for comparison operator
+				if (compOprs.contains(token)) {
+					// FIXME this is too vague again
+					int k = i-1;
+					// fetch some operand-like token to the left
+					String leftOpnd = condTokens.get(k);
+					while ((leftOpnd.equals(")") || leftOpnd.equals("}"))
+							&& k > 0) {
+						leftOpnd = condTokens.get(--k);
+					}
+					// fetch some operand-like token to the right
+					k = i+1;
+					String rightOpnd = condTokens.get(k);
+					while ((rightOpnd.isEmpty() || rightOpnd.equals("$") || rightOpnd.equals("(") || rightOpnd.equals("{"))
+							&& k < condTokens.count()-1) {
+						rightOpnd = condTokens.get(++k);
+					}
+					String typeLeft = Element.identifyExprType(typeMap, leftOpnd, true);
+					String typeRight = Element.identifyExprType(typeMap, rightOpnd, true);
+					if (!(typeLeft.isEmpty() && typeRight.isEmpty())
+							&& (typeLeft.equals("int") || typeLeft.equals("double") || typeLeft.isEmpty())
+							&& (typeRight.equals("int") || typeRight.equals("double") || typeRight.isEmpty())) {
+						isNumber = true;
 					}
 				}
 			}
@@ -1160,7 +1184,8 @@ public class BASHGenerator extends Generator {
 				return;
 			}
 		}
-		addCode(resultName + "=" + transformExpression(expr, true, false), _indent, disabled);
+		String codeLine = transform(resultName + " <- " + expr);
+		addCode(resultName + codeLine.substring(codeLine.indexOf("=")), _indent, disabled);
 	}
 
 	protected void generateCode(Alternative _alt, String _indent) {
@@ -1352,7 +1377,7 @@ public class BASHGenerator extends Generator {
 			//		counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
 			//		incrStr + " ))");
 			addCode("for (( "+counterStr+"="+startValueStr+"; "+
-					counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
+					counterStr + ((stepValue > 0) ? "<" : ">") + "=$" + endValueStr + "; " +
 					incrStr + " ))", _indent, disabled);
 			// END KGU#277 2016-10-13
 			// END KGU#30 2015-10-18
@@ -1430,18 +1455,22 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
-		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
-		// generate the loop body twice to preserve semantics!
-		appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
-		generateCode(_repeat.q, _indent);		
-		// END KGU#60 2015-11-02
-		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
-		//code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
-		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
-		//code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
-		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
-		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
-		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
+		// START KGU#812 2020-02-21: Bugfix #824 - we do no longer duplicate the body
+		//appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
+		//generateCode(_repeat.q, _indent);
+		appendComment("NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end.", _indent);
+		// END KGU#812 2020-02-21
+		// START KGU#811 2020-02-21: Bugfix #824? We had forgotten to invert the condition
+		//String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
+		String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
+		condition = transform(condition);
+		// END KGU#811 2020-02-21
+		// START KGU#811 2020-02-201: Bugfix #824 - put a conditional exit to the end instead
+		//addCode("while " + this.finishCondition(condition), _indent, disabled);
+		addCode("while :", _indent, disabled);
+		// END KGU#811 2020-02-21
+		addCode("do", _indent, disabled);
+		generateCode(_repeat.q, _indent + this.getIndent());
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1452,23 +1481,11 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		// END KGU#311 2017-01-05
-		// START KGU#277 2016-10-14: Enh. #270
-		//code.add(_indent + "while " + condition);
-		addCode("while " + this.finishCondition(condition), _indent, disabled);
-		// END KGU#277 2016-10-14
-		// END KGU#132/KGU#144 2016-03-31
-		// END KGU#132 2016-03-24
-		// END KGU#131 2016-01-08
-		// START KGU#277 2016-10-14: Enh. #270
-		//code.add(_indent + "do");
-		//generateCode(_repeat.q, _indent + this.getIndent());
-		//code.add(_indent + "done");
-		//code.add("");
-		addCode("do", _indent, disabled);
-		generateCode(_repeat.q, _indent + this.getIndent());
+		// START KGU#811 2020-02-21: Bugfix #824
+		addCode(this.finishCondition(condition) + " || break", _indent + getIndent(), disabled);
+		// END KGU#811 2020-02-21
 		addCode("done", _indent, disabled);
 		addCode("", "", disabled);
-		// END KGU#277 2016-10-14
 		
 	}
 
@@ -1490,7 +1507,7 @@ public class BASHGenerator extends Generator {
 		//generateCode(_forever.q, _indent + this.getIndent());
 		//code.add(_indent + "done");
 		//code.add("");
-		addCode("while [ 1 ]", _indent, disabled);
+		addCode("while :", _indent, disabled);
 		addCode("do", _indent, disabled);
 		generateCode(_forever.q, _indent + this.getIndent());
 		addCode("done", _indent, disabled);

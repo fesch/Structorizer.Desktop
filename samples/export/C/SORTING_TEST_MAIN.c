@@ -46,7 +46,7 @@ void bubbleSort(??? values)
 			}
 		}
 		ende = posSwapped - 1;
-	} while (!(posSwapped < 0));
+	} while (! (posSwapped < 0));
 }
 
 // function maxHeapify(heap, i, range) 
@@ -283,11 +283,11 @@ int main(void)
 	do {
 		// TODO: check format specifiers, replace all '?'! 
 		scanf("%?", &elementCount);
-	} while (!(elementCount >= 1));
+	} while (! (elementCount >= 1));
 	do {
 		// TODO: check format specifiers, replace all '?'! 
 		printf("Filling: 1 = random, 2 = increasing, 3 = decreasing"); scanf("%?", &modus);
-	} while (!(modus == 1 || modus == 2 || modus == 3));
+	} while (! (modus == 1 || modus == 2 || modus == 3));
 	for (i = 0; i <= elementCount-1; i += (1)) {
 		switch (modus) {
 		case 1:
@@ -352,7 +352,7 @@ int main(void)
 	do {
 		// TODO: check format specifiers, replace all '?'! 
 		printf("Show arrays (yes/no)?"); scanf("%?", &show);
-	} while (!(show == "yes" || show == "no"));
+	} while (! (show == "yes" || show == "no"));
 	if (show == "yes") {
 		for (i = 0; i <= elementCount - 1; i += (1)) {
 			// TODO: check format specifiers, replace all '?'! 

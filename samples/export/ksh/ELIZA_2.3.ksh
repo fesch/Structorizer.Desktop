@@ -16,12 +16,12 @@ function adjustSpelling {
  typeset result=${sentence}
  typeset position=1
 
- while [[ (${position} <= length(${sentence})) && (copy(${sentence}, ${position}, 1) == " ") ]]
+ while (( (${position} <= length(${sentence})) && (copy(${sentence}, ${position}, 1) == " ") ))
  do
   position=$(( ${position} + 1 ))
  done
 
- if [[ ${position} <= length(${sentence}) ]]
+ if (( ${position} <= length(${sentence}) ))
  then
   typeset start=$( copy "${sentence}" 1 "${position}" )
   delete "${result}" 1 "${position}"
@@ -58,13 +58,13 @@ function checkGoodBye {
   if [[ pos(${pair[0]}, ${text}) > 0 ]]
   then
    echo ${pair[1]}
-   resulte80b2554=true
+   result6b4b0065=true
    return 0
   fi
 
  done
 
- resulte80b2554=false
+ result6b4b0065=false
 }
 
 # Checks whether newInput has occurred among the recently cached 
@@ -94,7 +94,7 @@ function checkRepetition {
   history[histIndex]=(${history[histIndex]} + 1) % (${histDepth})
  fi
 
- result6e47b21e=hasOccurred
+ result849245ea=hasOccurred
 }
 
 function conjugateStrings {
@@ -148,7 +148,7 @@ function findKeyword {
  set -A result $(( -1 )) 0
  typeset i=0
 
- while [[ (${result[0]} < 0) && (${i} < length(${keyMap})) ]]
+ while (( (${result[0]} < 0) && (${i} < length(${keyMap})) ))
  do
   typeset entry=${keyMap[${i}]}
   typeset position=$( pos ${entry[keyword]} "${sentence}" )
@@ -193,7 +193,7 @@ function setupGoodByePhrases {
 
  set -A phrases[0] " shut" "Okay. If you feel that way I\'ll shut up. ... Your choice."
  set -A phrases[1] "bye" "Well, let\'s end our talk for now. See you later. Bye."
- resulta05da56b="${phrases[@]}"
+ result579872e8="${phrases[@]}"
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -243,7 +243,7 @@ function setupKeywords {
  typeset -A keywords[36]=([keyword]="smartphone" [index]=27)
  typeset -A keywords[37]=([keyword]="father " [index]=28)
  typeset -A keywords[38]=([keyword]="mother " [index]=28)
- result50199686="${keywords[@]}"
+ result99faf64b="${keywords[@]}"
 }
 
 # Returns an array of pairs of mutualy substitutable  
@@ -260,7 +260,7 @@ function setupReflexions {
  set -A reflexions[7] " my " " your "
  set -A reflexions[8] " i " " you "
  set -A reflexions[9] " am " " are "
- result3d0d0756="${reflexions[@]}"
+ resultdcf43a2f="${reflexions[@]}"
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -334,101 +334,39 @@ echo "**********************************"
 # the second component is the rolling (over-)write index. 
 typeset -A history=([histArray]={"", "", "", "", ""} [histIndex]=0)
 setupReplies
-typeset -r replies=${resultd4cc0d0a}
+typeset -r replies=${resultda3811c7}
 setupReflexions
-typeset -r reflexions=${result3d0d0756}
+typeset -r reflexions=${resultdcf43a2f}
 setupGoodByePhrases
-typeset -r byePhrases=${resulta05da56b}
+typeset -r byePhrases=${result579872e8}
 setupKeywords
-typeset -r keyMap=${result50199686}
+typeset -r keyMap=${result99faf64b}
 offsets[length(${keyMap})-1]=0
 isGone=0
 # Starter 
 echo "Hi! I\'m your new therapist. My name is Eliza. What\'s your problem?"
 
-# NOTE: This is an automatically inserted copy of the loop body below. 
-read userInput
-# Converts the input to lowercase, cuts out interpunctation 
-# and pads the string 
-normalizeInput "${userInput}"
-userInput=${resultbe5fb171}
-checkGoodBye "${userInput}" byePhrases
-isGone=${resulte80b2554}
-
-if [[ ! ${isGone} ]]
-then
- reply="Please don\'t repeat yourself!"
- checkRepetition history "${userInput}"
- isRepeated=${result6e47b21e}
-
- if [[ ! ${isRepeated} ]]
- then
-  findKeyword keyMap "${userInput}"
-  findInfo=${result418f2b24}
-  keyIndex=${findInfo[0]}
-
-  if [[ ${keyIndex} < 0 ]]
-  then
-   # Should never happen... 
-   keyIndex=$(( length(${keyMap})-1 ))
-  fi
-
-  entry=${keyMap[${keyIndex}]}
-  # Variable part of the reply 
-  varPart=""
-
-  if [[ length(${entry[keyword]}) > 0 ]]
-  then
-   conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
-   varPart=${result3ff10c65}
-  fi
-
-  replyRing=${replies[${entry[index]}]}
-  reply=${replyRing[${offsets[${keyIndex}]}]}
-  offsets[${keyIndex}]=(${offsets[${keyIndex}]} + 1) % length(${replyRing})
-  posAster=$( pos "*" "${reply}" )
-
-  if (( ${posAster} > 0 ))
-  then
-
-   if [[ ${varPart} == " " ]]
-   then
-    reply="You will have to elaborate more for me to help you."
-
-   else
-    delete "${reply}" "${posAster}" 1
-    insert "${varPart}" "${reply}" "${posAster}"
-   fi
-
-  fi
-
-  adjustSpelling "${reply}"
-  reply=${resulta50bae6e}
- fi
-
- echo ${reply}
-fi
-
-while [[ ${isGone} ]]
+# NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
+while :
 do
  read userInput
  # Converts the input to lowercase, cuts out interpunctation 
  # and pads the string 
  normalizeInput "${userInput}"
- userInput=${resultbe5fb171}
+ userInput=${resultd1172a16}
  checkGoodBye "${userInput}" byePhrases
- isGone=${resulte80b2554}
+ isGone=${result6b4b0065}
 
  if [[ ! ${isGone} ]]
  then
   reply="Please don\'t repeat yourself!"
   checkRepetition history "${userInput}"
-  isRepeated=${result6e47b21e}
+  isRepeated=${result849245ea}
 
   if [[ ! ${isRepeated} ]]
   then
    findKeyword keyMap "${userInput}"
-   findInfo=${result418f2b24}
+   findInfo=${resultb94921ed}
    keyIndex=${findInfo[0]}
 
    if [[ ${keyIndex} < 0 ]]
@@ -441,10 +379,10 @@ do
    # Variable part of the reply 
    varPart=""
 
-   if [[ length(${entry[keyword]}) > 0 ]]
+   if (( length(${entry[keyword]}) > 0 ))
    then
     conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
-    varPart=${result3ff10c65}
+    varPart=${result7ef9a742}
    fi
 
    replyRing=${replies[${entry[index]}]}
@@ -467,11 +405,12 @@ do
    fi
 
    adjustSpelling "${reply}"
-   reply=${resulta50bae6e}
+   reply=${result8f1b1ce3}
   fi
 
   echo ${reply}
  fi
 
+ [[ ! (${isGone}) ]] || break
 done
 
