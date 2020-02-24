@@ -137,7 +137,7 @@ function partition {
 
  done
 
- result6dcaf524=${p}
+ result9814701f=${p}
 }
 
 # Checks whether or not the passed-in array is (ascendingly) sorted. 
@@ -165,7 +165,7 @@ function testSorted {
 
  done
 
- resultae9b9b06=${isSorted}
+ result964b5ab5=${isSorted}
 }
 
 # Runs through the array heap and converts it to a max-heap 
@@ -207,23 +207,23 @@ function quickSort {
   # Partition the array into smaller and greater elements 
   # Get the resulting (and final) position of the pivot element 
   partition "${values}" "${start}" "${stop}" "${p}"
-  p=${result6dcaf524}
+  p=${result9814701f}
   # Sort subsequances separately and independently ... 
   # ========================================================== 
   # ================= START PARALLEL SECTION ================= 
   # ========================================================== 
-  pids192d4db4=""
+  pidsf405fbf2=""
   (
    # Sort left (lower) array part 
    quickSort "${values}" "${start}" "${p}"
   ) &
-  pids192d4db4="${pids192d4db4} $!"
+  pidsf405fbf2="${pidsf405fbf2} $!"
   (
    # Sort right (higher) array part 
    quickSort "${values}" $(( ${p}+1 )) "${stop}"
   ) &
-  pids192d4db4="${pids192d4db4} $!"
-  wait ${pids192d4db4}
+  pidsf405fbf2="${pidsf405fbf2} $!"
+  wait ${pidsf405fbf2}
   # ========================================================== 
   # ================== END PARALLEL SECTION ================== 
   # ========================================================== 
@@ -305,29 +305,29 @@ done
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids946732e7=""
+pids9e0b603e=""
 (
  bubbleSort values1
 ) &
-pids946732e7="${pids946732e7} $!"
+pids9e0b603e="${pids9e0b603e} $!"
 (
  quickSort values2 0 "${elementCount}"
 ) &
-pids946732e7="${pids946732e7} $!"
+pids9e0b603e="${pids9e0b603e} $!"
 (
  heapSort values3
 ) &
-pids946732e7="${pids946732e7} $!"
-wait ${pids946732e7}
+pids9e0b603e="${pids9e0b603e} $!"
+wait ${pids9e0b603e}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 testSorted values1
-ok1=${resultae9b9b06}
+ok1=${result964b5ab5}
 testSorted values2
-ok2=${resultae9b9b06}
+ok2=${result964b5ab5}
 testSorted values3
-ok3=${resultae9b9b06}
+ok3=${result964b5ab5}
 
 if [[ ! ${ok1} || ! ${ok2} || ! ${ok3} ]]
 then

@@ -111,11 +111,11 @@ package lu.fisch.structorizer.generators;
  *        a) Returning an array:
  *        	routineA() {
  *        		...
- *        		result0815="${array[@]}"
+ *        		declare -ag result0815=("${array[@]}")
  *        	}
  *          CALL:
  *        	routineA ...
- *        	declare -a res=($result0815)
+ *        	declare -a res=("${result0815[@]}")
  *        b) Returning a record:
  *        	routineR() {
  *        		...
@@ -392,16 +392,31 @@ public class BASHGenerator extends Generator {
 
 	/**
 	 * Returns an array assignment among array variables. A possible declarator (like
-	 * {@code declare -a} in bash or {@code set -A} in ksh should precede if necesary -
-	 * it will not be created here.
-	 * @param tgtVar - the target array variable (left-hand side) of the assignment
+	 * {@code declare -a} in bash or {@code set -A} in ksh will be put as prefix if
+	 * {@code tgtVar} is given, with the respective options according to the flags
+	 * {@code asConstant}, {@code as Global}.<br/>
+	 * If {@code tgtVar} is null then only the right-hand side of the assigment (an
+	 * expression) will be returned).
+	 * @param tgtVar - the target array variable (left-hand side) of the assignment or null
 	 * @param srcVar - the source array variable (right-hand side) of the assignment
-	 * @return the assignment string without declarator
+	 * @param getKeys - whether rather the keys/indices are to be collected
+	 * @param asConstant - whether a read-only declaratioin is to be effectuated 
+	 * @param asGlobal - whether an export declaration is to be effectuated
+	 * @return the assignment string with declarator or just the rval without declarator
+	 * (in this case the flags {@code asConstant} and {@code asGlobal} will be ignored.)
 	 * @see #getArrayDeclarator(boolean)
 	 */
-	protected String makeArrayCopy(String tgtVar, String srcVar)
+	protected String makeArrayCopyAssignment(String tgtVar, String srcVar, boolean getKeys, boolean asConstant, boolean asGlobal)
 	{
-		return tgtVar + "=(${" + srcVar + "[*]})";
+		String prefix = "";
+		if (tgtVar != null) {
+			prefix = this.getArrayDeclarator(asConstant);
+			if (asGlobal) {
+				prefix += "-g ";
+			}
+			prefix += tgtVar + this.getArrayInitOperator();
+		}
+		return prefix + "(\"${" + (getKeys ? "!" : "") + srcVar + "[@]}\")";
 	}
 	
 	/**
@@ -676,7 +691,7 @@ public class BASHGenerator extends Generator {
 			// START KGU#803 2020-02-20: Issue #816, #423
 			//expr = "(" + items.getLongString() + ")";
 			expr = items.getLongString();
-			if (!(isAssignment && this.getClass().getSimpleName().equals("KSHGenerator"))) {
+			if (!(isAssignment && this.getArrayInitOperator().equals(" ") /* indicator for ksh */)) {
 				expr = "(" + expr + ")";
 			}
 			// END KGU#803 2020-02-20
@@ -747,7 +762,7 @@ public class BASHGenerator extends Generator {
 				TypeMapEntry type2 = typeMap.get(origExpr);
 				if (type1 != null && type2 != null) {
 					if (type1.isArray() && type2.isArray()) {
-						expr = "(\"${" + origExpr + "[@]}\")";
+						expr = makeArrayCopyAssignment(null, origExpr, false, false, false);
 					}
 					else if (type1.isRecord() && type2.isRecord()) {
 						// Now this is getting tricky as we'd need to copy the associative array in one line
@@ -1200,12 +1215,12 @@ public class BASHGenerator extends Generator {
 				}
 			}
 			if (isArray) {
-				addCode(resultName + "=\"${" + varName + "[@]}\"", _indent, disabled);
+				addCode(makeArrayCopyAssignment(resultName, varName, false, false, true), _indent, disabled);
 				return;
 			}
 			else if (isRecord) {
-				addCode("declare -ag " + resultName + "keys=(\"${!" + varName + "[@]}\")", _indent, disabled);
-				addCode("declare -ag " + resultName + "values=(\"${" + varName + "[@]}\")", _indent, disabled);
+				addCode(makeArrayCopyAssignment(resultName+"keys", varName, true, false, true), _indent, disabled);
+				addCode(makeArrayCopyAssignment(resultName+"values", varName, false, false, true), _indent, disabled);
 				return;
 			}
 		}
@@ -1366,7 +1381,7 @@ public class BASHGenerator extends Generator {
 				else if (varNames.contains(valueList))
 				{
 					// Must be an array variable
-					valueList = "${" + valueList + "[@]}";
+					valueList = "\"${" + valueList + "[@]}\"";
 				}
 				else
 				{
@@ -1590,11 +1605,8 @@ public class BASHGenerator extends Generator {
 									}
 								}
 								if (isArray) {
-									String decl = "";
-									if (!wasDefHandled(root, target, true)) {
-										decl = this.getArrayDeclarator(root.constants.containsKey(target));
-									}
-									addCode(decl + target + "=(" + source + ")", _indent, disabled);
+									addCode(makeArrayCopyAssignment(target, resultName, false, root.constants.containsKey(target), false), _indent, disabled);
+									wasDefHandled(root, target, true); 	// Set the handled flag
 									done = true;
 								}
 								else if (isRecord) {

@@ -185,9 +185,18 @@ public class KSHGenerator extends BASHGenerator {
 	 * @see lu.fisch.structorizer.generators.BASHGenerator#makeArrayCopy(java.lang.String, java.lang.String)
 	 */
 	@Override
-	protected String makeArrayCopy(String tgtVar, String srcVar)
+	protected String makeArrayCopyAssignment(String tgtVar, String srcVar, boolean getKeys, boolean asConstant, boolean asGlobal)
 	{
-		return tgtVar + " ${" + srcVar + "[*]}";
+		String prefix = "";
+		String postfix = "";
+		if (tgtVar != null) {
+			prefix = this.getArrayDeclarator(asConstant);
+			if (asGlobal) {
+				postfix += "; export " + tgtVar;
+			}
+			prefix += tgtVar + this.getArrayInitOperator();
+		}
+		return prefix + "\"${" + (getKeys ? "!" : "") + srcVar + "[@]}\"" + postfix;
 	}
 	
 	/* (non-Javadoc)

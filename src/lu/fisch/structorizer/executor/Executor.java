@@ -2643,7 +2643,7 @@ public class Executor implements Runnable
     		{
     			// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			//subroutine = candidates.get(c);
-				Root cand = candidates.get(c);
+    			Root cand = candidates.get(c);
     			if (diagr == null) {
     				diagr = cand;
     			}
