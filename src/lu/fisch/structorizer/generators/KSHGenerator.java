@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-12-01      Enh. #739: At least minimum support for enum types, array declarations mended
  *      Kay Gürtzig             2020-02-16      Issue #816: Function calls and value return mechanism revised
  *      Kay Gürtzig             2020-02-18      Enh. #388: Support for constants
+ *      Kay Gürtzig             2020-02-24      Issues #816,#821: generateCode(Root) decomposed
  *
  ******************************************************************************************************
  *
@@ -72,7 +73,6 @@ import java.util.Map.Entry;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.TypeMapEntry;
-import lu.fisch.utils.StringList;
 
 
 public class KSHGenerator extends BASHGenerator {
@@ -260,41 +260,7 @@ public class KSHGenerator extends BASHGenerator {
 			// END KGU#351 2017-02-26
 			subroutineInsertionLine = code.count();
 			code.add("");
-			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-			if (this.usesFileAPI) {
-				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				appendComment("     syntax for automatic conversion.", _indent);
-				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
-			}
-			// END KGU#311 2017-01-05
-			// START KGU#150/KGU#241 2017-01-05: Issue #234 - Provisional support for chr and ord functions
-			if (!this.suppressTransformation)
-			{
-				boolean builtInAdded = false;
-				if (occurringFunctions.contains("chr"))
-				{
-					code.add(indent);
-					appendComment("chr() - converts decimal value to its ASCII character representation", indent);
-					code.add(indent + "chr() {");
-					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (occurringFunctions.contains("ord"))
-				{
-					code.add(indent);
-					appendComment("ord() - converts ASCII character to its decimal value", indent);
-					code.add(indent + "ord() {");
-					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (builtInAdded) code.add(indent);
-			}
-			// END KGU#150/KGU#241 2017-01-05
+			appendAuxiliaryCode(_indent);
 		}
 		else
 		{
@@ -360,6 +326,12 @@ public class KSHGenerator extends BASHGenerator {
 		// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
 		generateDeclarations(indent);
 		// END KGU#389/KGU#803/KGU#806
+		// START KGU#803 2020-02-24: Issue #816
+		if (_root.isSubroutine()) {
+			this.isResultSet = varNames.contains("result", false);
+			this.isFunctionNameSet = varNames.contains(_root.getMethodName());
+		}
+		// END KGU#803 2020-02-24
 		generateCode(_root.children, indent);
 		
 		// START KGU#803 2020-02-16: Issue #816
@@ -380,7 +352,7 @@ public class KSHGenerator extends BASHGenerator {
 		return code.getText();
 		
 	}
-	
+
 }
 
 

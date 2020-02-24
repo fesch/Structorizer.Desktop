@@ -13,8 +13,12 @@ function adjustSpelling {
  typeset sentence=$1
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset result=${sentence}
- typeset position=1
+ typeset word
+ typeset start
+ typeset result
+ typeset -i position
+ result=${sentence}
+ position=1
 
  while (( (${position} <= length(${sentence})) && (copy(${sentence}, ${position}, 1) == " ") ))
  do
@@ -23,7 +27,7 @@ function adjustSpelling {
 
  if (( ${position} <= length(${sentence}) ))
  then
-  typeset start=$( copy "${sentence}" 1 "${position}" )
+  start=$( copy "${sentence}" 1 "${position}" )
   delete "${result}" 1 "${position}"
   insert $( uppercase "${start}" ) "${result}" 1
  fi
@@ -41,6 +45,7 @@ function adjustSpelling {
 
  done
 
+ result4b85c9e1=${result}
 }
 
 # Checks whether the given text contains some kind of 
@@ -52,19 +57,21 @@ function checkGoodBye {
  typeset -n phrases=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset pair
+
  for pair in ${phrases[@]}
  do
 
   if [[ pos(${pair[0]}, ${text}) > 0 ]]
   then
    echo ${pair[1]}
-   result6b4b0065=true
+   resultac821d99=1
    return 0
   fi
 
  done
 
- result6b4b0065=false
+ resultac821d99=0
 }
 
 # Checks whether newInput has occurred among the recently cached 
@@ -74,13 +81,16 @@ function checkRepetition {
  typeset newInput=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset hasOccurred=0
+ typeset -i i
+ typeset -i histDepth
+ typeset hasOccurred
+ hasOccurred=0
 
  if [[ length(${newInput}) > 4 ]]
  then
-  typeset histDepth=$( length ${history[histArray]} )
+  histDepth=$( length ${history[histArray]} )
 
-  for (( i=0; i<=$(( ${histDepth}-1 )); i++ ))
+  for (( i=0; i<=(( ${histDepth}-1 )); i++ ))
   do
 
    if [[ ${newInput} == ${history[histArray]}[${i}] ]]
@@ -94,7 +104,7 @@ function checkRepetition {
   history[histIndex]=(${history[histIndex]} + 1) % (${histDepth})
  fi
 
- result849245ea=hasOccurred
+ result25fac4b1=${hasOccurred}
 }
 
 function conjugateStrings {
@@ -104,13 +114,18 @@ function conjugateStrings {
  typeset -n flexions=$4
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset result=" " + copy(${sentence}, ${keyPos} + length(${key}), length(${sentence})) + " "
+ typeset right
+ typeset result
+ typeset -i position
+ typeset pair
+ typeset left
+ result=" " + copy(${sentence}, ${keyPos} + length(${key}), length(${sentence})) + " "
 
  for pair in ${flexions[@]}
  do
-  typeset left=""
-  typeset right=${result}
-  typeset position=$( pos ${pair[0]} "${right}" )
+  left=""
+  right=${result}
+  position=$( pos ${pair[0]} "${right}" )
 
   while (( ${position} > 0 ))
   do
@@ -131,6 +146,7 @@ function conjugateStrings {
   position=$( pos "  " "${result}" )
  done
 
+ resultac580eb3=${result}
 }
 
 # Looks for the occurrence of the first of the strings 
@@ -144,14 +160,18 @@ function findKeyword {
  typeset sentence=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ set -A result
+ typeset -i position
+ typeset -i i
+ typeset -A entry
  # Contains the index of the keyword and its position in sentence 
  set -A result $(( -1 )) 0
- typeset i=0
+ i=0
 
  while (( (${result[0]} < 0) && (${i} < length(${keyMap})) ))
  do
-  typeset entry=${keyMap[${i}]}
-  typeset position=$( pos ${entry[keyword]} "${sentence}" )
+  entry=${keyMap[${i}]}
+  position=$( pos ${entry[keyword]} "${sentence}" )
 
   if (( ${position} > 0 ))
   then
@@ -162,6 +182,7 @@ function findKeyword {
   i=$(( ${i}+1 ))
  done
 
+ result5f20906f="${result[@]}"
 }
 
 # Converts the sentence to lowercase, eliminates all 
@@ -171,11 +192,14 @@ function normalizeInput {
  typeset sentence=$1
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset symbol
+ typeset result
+ typeset -i position
  sentence=$( lowercase "${sentence}" )
 
  for symbol in '.' ',' ';' '!' '?'
  do
-  typeset position=$( pos "${symbol}" "${sentence}" )
+  position=$( pos "${symbol}" "${sentence}" )
 
   while (( ${position} > 0 ))
   do
@@ -185,15 +209,17 @@ function normalizeInput {
 
  done
 
- typeset result=" " + ${sentence} + " "
+ result=" " + ${sentence} + " "
+ resultb26e5771=${result}
 }
 
 function setupGoodByePhrases {
 # TODO: Check and revise the syntax of all expressions! 
 
+ set -A phrases
  set -A phrases[0] " shut" "Okay. If you feel that way I\'ll shut up. ... Your choice."
  set -A phrases[1] "bye" "Well, let\'s end our talk for now. See you later. Bye."
- result579872e8="${phrases[@]}"
+ result401dc033="${phrases[@]}"
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -202,6 +228,7 @@ function setupGoodByePhrases {
 function setupKeywords {
 # TODO: Check and revise the syntax of all expressions! 
 
+ set -A keywords
  # The empty key string (last entry) is the default clause - will always be found 
  typeset -A keywords[39]=([keyword]="" [index]=29)
  typeset -A keywords[0]=([keyword]="can you " [index]=0)
@@ -243,13 +270,14 @@ function setupKeywords {
  typeset -A keywords[36]=([keyword]="smartphone" [index]=27)
  typeset -A keywords[37]=([keyword]="father " [index]=28)
  typeset -A keywords[38]=([keyword]="mother " [index]=28)
- result99faf64b="${keywords[@]}"
+ resultfe334c2c="${keywords[@]}"
 }
 
 # Returns an array of pairs of mutualy substitutable  
 function setupReflexions {
 # TODO: Check and revise the syntax of all expressions! 
 
+ set -A reflexions
  set -A reflexions[0] " are " " am "
  set -A reflexions[1] " were " " was "
  set -A reflexions[2] " you " " I "
@@ -260,7 +288,7 @@ function setupReflexions {
  set -A reflexions[7] " my " " your "
  set -A reflexions[8] " i " " you "
  set -A reflexions[9] " am " " are "
- resultdcf43a2f="${reflexions[@]}"
+ resultac471e2f="${reflexions[@]}"
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -269,6 +297,8 @@ function setupReflexions {
 function setupReplies {
 # TODO: Check and revise the syntax of all expressions! 
 
+ set -A setupReplies
+ set -A replies
  # We start with the highest index for performance reasons 
  # (is to avoid frequent array resizing) 
  set -A replies[29] "Say, do you have any psychological problems?" "What does that suggest to you?" "I see." "I'm not sure I understand you fully." "Come come elucidate your thoughts." "Can you elaborate on that?" "That is quite interesting."
@@ -301,7 +331,19 @@ function setupReplies {
  set -A replies[26] "Do computers worry you?" "Are you talking about me in particular?" "Are you frightened by machines?" "Why do you mention computers?" "What do you think machines have to do with your problem?" "Don't you think computers can help people?" "What is it about machines that worries you?"
  set -A replies[27] "Do you sometimes feel uneasy without a smartphone?" "Have you had these phantasies before?" "Does the world seem more real for you via apps?"
  set -A replies[28] "Tell me more about your family." "Who else in your family*?" "What does family relations mean for you?" "Come on, How old are you?"
- typeset setupReplies=${replies}
+ setupReplies=("${replies[@]}")
+ result890ea6="${setupReplies[@]}"
+}
+
+
+# auxCopyAssocArray() - copies an associative array via name references 
+auxCopyAssocArray() {
+ typeset -n target=$1
+ typeset -n source=$2
+ typeset key
+ for key in "${!source[@]}"; do
+  target[$key]="${source[$key]}"
+ done
 }
 
 # Concept and lisp implementation published by Joseph Weizenbaum (MIT): 
@@ -317,6 +359,8 @@ function setupReplies {
 # 2019-11-28 New global type "History" (to ensure a homogenous array) 
 # TODO: Check and revise the syntax of all expressions! 
 
+typeset -A history
+typeset -A entry
 # Title information 
 echo "************* ELIZA **************"
 echo "* Original design by J. Weizenbaum"
@@ -334,13 +378,13 @@ echo "**********************************"
 # the second component is the rolling (over-)write index. 
 typeset -A history=([histArray]={"", "", "", "", ""} [histIndex]=0)
 setupReplies
-typeset -r replies=${resultda3811c7}
+set -A replies=(${result890ea6})
 setupReflexions
-typeset -r reflexions=${resultdcf43a2f}
+set -A reflexions=(${resultac471e2f})
 setupGoodByePhrases
-typeset -r byePhrases=${result579872e8}
+set -A byePhrases=(${result401dc033})
 setupKeywords
-typeset -r keyMap=${result99faf64b}
+set -A keyMap=(${resultfe334c2c})
 offsets[length(${keyMap})-1]=0
 isGone=0
 # Starter 
@@ -353,20 +397,20 @@ do
  # Converts the input to lowercase, cuts out interpunctation 
  # and pads the string 
  normalizeInput "${userInput}"
- userInput=${resultd1172a16}
+ userInput=${resultb26e5771}
  checkGoodBye "${userInput}" byePhrases
- isGone=${result6b4b0065}
+ isGone=${resultac821d99}
 
  if [[ ! ${isGone} ]]
  then
   reply="Please don\'t repeat yourself!"
   checkRepetition history "${userInput}"
-  isRepeated=${result849245ea}
+  isRepeated=${result25fac4b1}
 
   if [[ ! ${isRepeated} ]]
   then
    findKeyword keyMap "${userInput}"
-   findInfo=${resultb94921ed}
+   set -A findInfo=(${result5f20906f})
    keyIndex=${findInfo[0]}
 
    if [[ ${keyIndex} < 0 ]]
@@ -382,7 +426,7 @@ do
    if (( length(${entry[keyword]}) > 0 ))
    then
     conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
-    varPart=${result7ef9a742}
+    varPart=${resultac580eb3}
    fi
 
    replyRing=${replies[${entry[index]}]}
@@ -405,7 +449,7 @@ do
    fi
 
    adjustSpelling "${reply}"
-   reply=${result8f1b1ce3}
+   reply=${result4b85c9e1}
   fi
 
   echo ${reply}

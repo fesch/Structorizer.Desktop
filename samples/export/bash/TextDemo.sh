@@ -502,7 +502,7 @@ function polygonPart() {
  # TODO: Check and revise the syntax of all expressions! 
 
  local rotAngle
- local k
+ declare -i k
  rotAngle=$(( 360.0/${n} ))
 
  if [[ ${ctrclkws} ]]
@@ -600,7 +600,7 @@ function exclMk() {
 
  local width
  local rotAngle2
- local rotAngle
+ declare -i rotAngle
  local length2
  local length1
  local hypo
@@ -716,7 +716,7 @@ function letterC() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Octagon edge length 
@@ -829,7 +829,7 @@ function letterJ() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Achteck-Kantenlänge 
@@ -923,7 +923,7 @@ function letterQ() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Achteck-Kantenlänge 
@@ -963,7 +963,7 @@ function letterR() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Achteck-Kantenlänge 
@@ -992,7 +992,7 @@ function letterS() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Achteck-Kantenlänge 
@@ -1026,7 +1026,7 @@ function letterU() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # edge length of a regular octagon 
@@ -1060,7 +1060,7 @@ function qstnMk() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local rotAngle
+ declare -i rotAngle
  local c
  local b
  # Achteck-Kantenlänge 
@@ -1121,7 +1121,7 @@ function drawText() {
  # TODO: Check and revise the syntax of all expressions! 
 
  local letter
- local k
+ declare -i k
  local gap
  gap=$(( ${h}/10.0 ))
 

@@ -26,7 +26,7 @@ function bubbleSort() {
 
  local temp
  local posSwapped
- local i
+ declare -i i
  local ende
  ende=$(( length(${values}) - 2 ))
 
@@ -39,7 +39,7 @@ function bubbleSort() {
   for (( i=0; i<=${ende}; i++ ))
   do
 
-   if [[ $(( ${values[${i}]} > ${values[${i}+1]} )) ]]
+   if (( ${values[${i}]} > ${values[${i}+1]} ))
    then
     temp=${values[${i}]}
     values[${i}]=$(( ${values[${i}+1]} ))
@@ -145,7 +145,7 @@ function partition() {
 
  done
 
- result6c06397d=p
+ result6dcaf524=${p}
 }
 
 # Checks whether or not the passed-in array is (ascendingly) sorted. 
@@ -155,16 +155,16 @@ function testSorted() {
  # TODO: Check and revise the syntax of all expressions! 
 
  local isSorted
- local i
+ declare -i i
  isSorted=1
  i=0
 
  # As we compare with the following element, we must stop at the penultimate index 
- while (( $(( ${isSorted} && (${i} <= length(${numbers})-2) )) ))
+ while (( ${isSorted} && (${i} <= length(${numbers})-2) ))
  do
 
   # Is there an inversion? 
-  if [[ $(( ${numbers[${i}]} > ${numbers[${i}+1]} )) ]]
+  if (( ${numbers[${i}]} > ${numbers[${i}+1]} ))
   then
    isSorted=0
 
@@ -174,7 +174,7 @@ function testSorted() {
 
  done
 
- result52c06b75=isSorted
+ resultae9b9b06=${isSorted}
 }
 
 # Runs through the array heap and converts it to a max-heap 
@@ -186,11 +186,11 @@ function buildMaxHeap() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local lgth
- local k
+ declare -i lgth
+ declare -i k
  lgth=$( length "${heap}" )
 
- for (( k=$(( ${lgth} / 2 - 1 )); k>=0; k-- ))
+ for (( k=(( ${lgth} / 2 - 1 )); k>=0; k-- ))
  do
   maxHeapify "${heap}" "${k}" "${lgth}"
  done
@@ -210,7 +210,7 @@ function quickSort() {
  local p
 
  # At least 2 elements? (Less don't make sense.) 
- if [[ $(( ${stop} >= ${start} + 2 )) ]]
+ if (( ${stop} >= ${start} + 2 ))
  then
   # Select a pivot element, be p its index. 
   # (here: randomly chosen element out of start ... stop-1) 
@@ -218,23 +218,23 @@ function quickSort() {
   # Partition the array into smaller and greater elements 
   # Get the resulting (and final) position of the pivot element 
   partition "${values}" "${start}" "${stop}" "${p}"
-  p=${result6c06397d}
+  p=${result6dcaf524}
   # Sort subsequances separately and independently ... 
   # ========================================================== 
   # ================= START PARALLEL SECTION ================= 
   # ========================================================== 
-  pids6a64ce6d=""
+  pids192d4db4=""
   (
    # Sort left (lower) array part 
    quickSort "${values}" "${start}" "${p}"
   ) &
-  pids6a64ce6d="${pids6a64ce6d} $!"
+  pids192d4db4="${pids192d4db4} $!"
   (
    # Sort right (higher) array part 
    quickSort "${values}" $(( ${p}+1 )) "${stop}"
   ) &
-  pids6a64ce6d="${pids6a64ce6d} $!"
-  wait ${pids6a64ce6d}
+  pids192d4db4="${pids192d4db4} $!"
+  wait ${pids192d4db4}
   # ========================================================== 
   # ================== END PARALLEL SECTION ================== 
   # ========================================================== 
@@ -250,12 +250,12 @@ function heapSort() {
  # TODO: Check and revise the syntax of all expressions! 
 
  local maximum
- local k
- local heapRange
+ declare -i k
+ declare -i heapRange
  buildMaxHeap values
  heapRange=$( length values )
 
- for (( k=$(( ${heapRange} - 1 )); k>=1; k-- ))
+ for (( k=(( ${heapRange} - 1 )); k>=1; k-- ))
  do
   heapRange=$(( ${heapRange} - 1 ))
   # Swap the maximum value (root of the heap) to the heap end 
@@ -284,7 +284,7 @@ do
  [[ ! (${modus} == 1 || ${modus} == 2 || ${modus} == 3) ]] || break
 done
 
-for (( i=0; i<=$(( ${elementCount}-1 )); i++ ))
+for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
 do
 
  case ${modus} in
@@ -305,7 +305,7 @@ do
 done
 
 # Copy the array for exact comparability 
-for (( i=0; i<=$(( ${elementCount}-1 )); i++ ))
+for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
 do
  values2[${i}]=${values1[${i}]}
  values3[${i}]=${values1[${i}]}
@@ -314,34 +314,34 @@ done
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids7feeee28=""
+pids946732e7=""
 (
  bubbleSort values1
 ) &
-pids7feeee28="${pids7feeee28} $!"
+pids946732e7="${pids946732e7} $!"
 (
  quickSort values2 0 "${elementCount}"
 ) &
-pids7feeee28="${pids7feeee28} $!"
+pids946732e7="${pids946732e7} $!"
 (
  heapSort values3
 ) &
-pids7feeee28="${pids7feeee28} $!"
-wait ${pids7feeee28}
+pids946732e7="${pids946732e7} $!"
+wait ${pids946732e7}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 testSorted values1
-ok1=${result52c06b75}
+ok1=${resultae9b9b06}
 testSorted values2
-ok2=${result52c06b75}
+ok2=${resultae9b9b06}
 testSorted values3
-ok3=${result52c06b75}
+ok3=${resultae9b9b06}
 
 if [[ ! ${ok1} || ! ${ok2} || ! ${ok3} ]]
 then
 
- for (( i=0; i<=$(( ${elementCount}-1 )); i++ ))
+ for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
  do
 
   if [[ ${values1[${i}]} != ${values2[${i}]} || ${values1[${i}]} != ${values3[${i}]} ]]
@@ -363,7 +363,7 @@ done
 if [[ ${show} == "yes" ]]
 then
 
- for (( i=0; i<=$(( ${elementCount} - 1 )); i++ ))
+ for (( i=0; i<=(( ${elementCount} - 1 )); i++ ))
  do
   echo "[" ${i} "]:\t" ${values1[${i}]} "\t" ${values2[${i}]} "\t" ${values3[${i}]}
  done

@@ -26,8 +26,6 @@
 
 package lu.fisch.structorizer.generators;
 
-import java.util.Arrays;
-
 /******************************************************************************************************
  *
  *      Author:         Markus Grundner
@@ -86,10 +84,10 @@ import java.util.Arrays;
  *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
  *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
- *      Kay Gürtzig         2020-02-16      Issue #816: Function calls and value return mechanism revised
+ *      Kay Gürtzig         2020-02-16/24   Issue #816: Function calls and value return mechanism revised
  *      Kay Gürtzig         2020-02-17/18   Issue #816: Efforts to label local variables in routines appropriately
  *      Kay Gürtzig         2020-02-18      Enh. #388: Support for constants
- *      Kay Gürtzig         2020-02-20      Issues #816, #821: More sophisticated approach to pass records/arrays (see comment)
+ *      Kay Gürtzig         2020-02-20/24   Issues #816, #821: More sophisticated approach to pass records/arrays (see comment)
  *      Kay Gürtzig         2020-02-21      Bugfix #824: The condition of the Repeat loop wasn't negated,
  *                                          several absurd bugs in finishCondition() fixed
  *
@@ -169,6 +167,7 @@ import java.util.Arrays;
  *
  ******************************************************************************************************///
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -313,8 +312,13 @@ public class BASHGenerator extends Generator {
 	/** Currently exported {@link Root} */
 	protected Root root = null;
 	
+	/** Matcher for simple variable access consisting of a dollar sign and an identifier within braces */
 	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
 
+	/** Name of an auxiliary function to copy associative arrays */
+	private static final String FN_COPY_ASSOC_ARRAY = "auxCopyAssocArray";
+
+	/** Set of comparison operators requiring arithmetic evaluation if placed among numeric operands */
 	private final Set<String> compOprs = new HashSet<String>(
 			Arrays.asList(new String[]{/*"==",*/ "<", ">", "<=", ">=", /*"!=", "<>"*/}));
 
@@ -491,6 +495,7 @@ public class BASHGenerator extends Generator {
 		boolean isConst = false;
 		String declarator = "";
 		String varName = "";
+		String origExpr = "";
 		// END KGU#803 2020-02-18
 		// Trim the tokens at both ends (just for sure)
 		tokens = tokens.trim();
@@ -533,6 +538,7 @@ public class BASHGenerator extends Generator {
 				}
 			}
 			// END KGU#388 2017-10-05
+			origExpr = tokens.concatenate(null, posAsgnOpr + 1).trim();
 		}
 		// END KGU#388 2017-10-24
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
@@ -565,8 +571,8 @@ public class BASHGenerator extends Generator {
 		// END KGU#96 2016-01-08
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
-		tokens.replaceAllCi("false", "0");	// FIXME: Is this correct?
-		tokens.replaceAllCi("true", "1");	// FIXME: Is this correct?
+		tokens.replaceAllCi("false", "0");
+		tokens.replaceAllCi("true", "1");
 		// START KGU#164 2016-03-29: Bugfix #138 - function calls weren't handled
 		//return tokens.concatenate();
 		String lval = "";
@@ -580,7 +586,7 @@ public class BASHGenerator extends Generator {
 			// We don't know whether we might process a call here, so better don't set handled entry
 			if (Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)
 					&& root.isSubroutine()) {
-				declarator = this.getLocalDeclarator(isConst, null);
+				declarator = this.getLocalDeclarator(isConst, typeMap.get(varName));
 			}
 			// END KGU#803 2020-02-18
 		}
@@ -733,9 +739,27 @@ public class BASHGenerator extends Generator {
 //				expr = "\"" + expr + "\"";
 //			}
 			// END KGU 2016-03-31
+			// START KGU#807 2020-02-24: Issue #821 Care for result assignments from complex variable
+			// FIXME: This is of course a very limited partial workaround and should be revised with #800
+			if (varNames.contains(origExpr) && root.isSubroutine()
+					&& (varName.equalsIgnoreCase("result") || varName.equals(root.getMethodName()))) {
+				TypeMapEntry type1 = typeMap.get(varName);
+				TypeMapEntry type2 = typeMap.get(origExpr);
+				if (type1 != null && type2 != null) {
+					if (type1.isArray() && type2.isArray()) {
+						expr = "(\"${" + origExpr + "[@]}\")";
+					}
+					else if (type1.isRecord() && type2.isRecord()) {
+						// Now this is getting tricky as we'd need to copy the associative array in one line
+						lval = varName + "; ";
+						expr = FN_COPY_ASSOC_ARRAY + " " + varName + " " + origExpr;
+					}
+				}
+			}
+			// END KGU#807 2020-02-24
 		}
 		if (!declarator.isEmpty() && Function.testIdentifier(varName, null)) {
-			wasDefHandled(root, varName, true);
+			wasDefHandled(root, varName, true);	// Set the handled flag
 		}
 		return declarator + lval + expr;
 		// END KGU#164 2016-03-29
@@ -769,7 +793,7 @@ public class BASHGenerator extends Generator {
 				exprTokens.contains("%");
 		// Avoid recursive enclosing in $(...)
 		if (isArithm) {
-			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
+			exprTokens.insert(((isAssigned || asArgument) ? "$(( " : "(( "), 0);
 			exprTokens.add(" ))");
 		}
 		// START KGU#772 2019-11-24: Bugfix #784 - avoid redundant enclosing with $(...)
@@ -832,7 +856,7 @@ public class BASHGenerator extends Generator {
 		if (Function.isFunction(expr)) {
 			// It cannot be a diagram call here, so it must be some built-in function
 			expr = this.transformExpression(new Function(expr));
-			if (isAssigned) {
+			if (isAssigned || asArgument) {
 				expr = "$( " + expr + " )";
 			}
 		}
@@ -1144,11 +1168,12 @@ public class BASHGenerator extends Generator {
 	}
 
 	/**
-	 * @param expr
-	 * @param _indent
-	 * @param disabled
+	 * Auxiliary method for transforming result mechanism into some sensible shell code.
+	 * @param expr - the transformed result expression
+	 * @param _indent - the current indentation string
+	 * @param disabled - whether the element is disabled, i.e. the code is to be commented out
 	 */
-	public void generateResultVariables(String expr, String _indent, boolean disabled) {
+	private void generateResultVariables(String expr, String _indent, boolean disabled) {
 		String resultName = "result" + Integer.toHexString(root.hashCode());
 		// Check for array or record
 		String varName = expr;
@@ -1377,7 +1402,7 @@ public class BASHGenerator extends Generator {
 			//		counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
 			//		incrStr + " ))");
 			addCode("for (( "+counterStr+"="+startValueStr+"; "+
-					counterStr + ((stepValue > 0) ? "<" : ">") + "=$" + endValueStr + "; " +
+					counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
 					incrStr + " ))", _indent, disabled);
 			// END KGU#277 2016-10-13
 			// END KGU#30 2015-10-18
@@ -1544,6 +1569,7 @@ public class BASHGenerator extends Generator {
 							String resultName = "result" + routineId;
 							String source = "${" + resultName + "}";
 							StringList tokens = Element.splitLexically(line, true);
+							tokens.removeAll(" ");
 							Element.unifyOperators(tokens, true);
 							String target = Instruction.getAssignedVarname(tokens, true);
 							boolean done = false;
@@ -1552,7 +1578,7 @@ public class BASHGenerator extends Generator {
 								TypeMapEntry resTypeEntry = this.typeMap.get(target);
 								boolean isArray = (resTypeEntry != null && resTypeEntry.isArray());
 								boolean isRecord = (resTypeEntry != null && resTypeEntry.isRecord());
-								if (resultType != null && !resultType.trim().isEmpty()) {
+								if (resTypeEntry == null && resultType != null && !resultType.trim().isEmpty()) {
 									resTypeEntry = this.typeMap.get(":" + resultType);
 									if (resTypeEntry != null && resTypeEntry.isArray()
 											|| resultType.startsWith("@") || resultType.startsWith("array ")) {
@@ -1564,11 +1590,18 @@ public class BASHGenerator extends Generator {
 									}
 								}
 								if (isArray) {
-									addCode(target + "=(" + source + ")", _indent, disabled);
+									String decl = "";
+									if (!wasDefHandled(root, target, true)) {
+										decl = this.getArrayDeclarator(root.constants.containsKey(target));
+									}
+									addCode(decl + target + "=(" + source + ")", _indent, disabled);
 									done = true;
 								}
 								else if (isRecord) {
-									addCode("declare -A " + target, _indent, disabled);
+									if (!wasDefHandled(root, target, true)) {
+										// We must ignore if target is a constant, otherwise we couldn't fill it
+										addCode(this.getAssocDeclarator(false) + target, _indent, disabled);
+									}
 									addCode("for index" + routineId + " in \"${" + source + "keys[@]}\"; do", _indent, disabled);
 									addCode(target + "[${" + resultName + "keys[$index" + routineId + "]}]=${" + resultName + "values[$index" + routineId + "]}", _indent+this.getIndent(), disabled);
 									addCode("done", _indent, disabled);
@@ -1576,7 +1609,7 @@ public class BASHGenerator extends Generator {
 								}
 							}
 							if (!done) {
-								addCode(transform(tokens.concatenate("", 0, tokens.indexOf("<-")+1) + source),
+								addCode(transform(tokens.concatenate(null, 0, tokens.indexOf("<-")+1) + source),
 										_indent, disabled);
 							}
 						}
@@ -1716,65 +1749,8 @@ public class BASHGenerator extends Generator {
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 
-			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-			if (this.usesFileAPI) {
-				code.add(_indent);
-				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				appendComment("     syntax for automatic conversion.", _indent);
-				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
-			}
-			// END KGU#311 2017-01-05
-			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
-			// START KGU#241 2016-09-01: Issue #234 - Mechanism to introduce these definitions on demand only
-//			code.add(indent);
-//			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-//			code.add(indent + "chr() {");
-//			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-//			code.add(indent + "}");
-//			insertComment("ord() - converts ASCII character to its decimal value", indent);
-//			code.add(indent + "ord() {");
-//			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-//			code.add(indent + "}");
-//			code.add(indent);
-			if (!this.suppressTransformation)
-			{
-				boolean builtInAdded = false;
-				if (occurringFunctions.contains("chr"))
-				{
-					code.add(indent);
-					appendComment("chr() - converts decimal value to its ASCII character representation", indent);
-					code.add(indent + "chr() {");
-					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (occurringFunctions.contains("ord"))
-				{
-					code.add(indent);
-					appendComment("ord() - converts ASCII character to its decimal value", indent);
-					code.add(indent + "ord() {");
-					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-//				if (occurringFunctions.contains("length"))
-//				{
-//					// FIXME: How to distinguish arrays? Can they be passed in at all?
-//					code.add(indent);
-//					appendComment("length() - retrieves the length of some array or string", indent);
-//					code.add(indent + "length() {");
-//					code.add(indent + this.getIndent() + "declare -n var=\"$1\"");
-//					code.add(indent + this.getIndent() + "printf '%d' ${#var}");
-//					code.add(indent + "}");
-//					builtInAdded = true;
-//				}
-				if (builtInAdded) code.add(indent);
-			}
-			// END KGU#241 2016-09-01
-			// END KGU#150 2016-04-05
+			// START KGU#311/KGU#150/KGU#241 2017-01-05/2016-09-01/2020-02-24: Issues #314, #234
+			appendAuxiliaryCode(_indent);
 			
 			subroutineInsertionLine = code.count();
 		}
@@ -1840,6 +1816,67 @@ public class BASHGenerator extends Generator {
 	}
 
 	/**
+	 * @param _indent
+	 */
+	protected void appendAuxiliaryCode(String _indent) {
+		String indentPlus1 = _indent + getIndent();
+		String indentPlus2 = indentPlus1 + getIndent();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+			appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
+			appendComment("     syntax for automatic conversion.", _indent);
+			appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
+			appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
+			appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+		}
+		// END KGU#311 2017-01-05
+		// START KGU#150/KGU#241 2017-01-05: Issue #234 - Provisional support for chr and ord functions
+		if (!this.suppressTransformation)
+		{
+			boolean builtInAdded = false;
+			if (occurringFunctions.contains("chr"))
+			{
+				code.add(_indent);
+				appendComment("chr() - converts decimal value to its ASCII character representation", _indent);
+				code.add(_indent + "chr() {");
+				code.add(indentPlus1 + "printf \\\\$(printf '%03o' $1)");
+				code.add(_indent + "}");
+				builtInAdded = true;
+			}
+			if (occurringFunctions.contains("ord"))
+			{
+				code.add(_indent);
+				appendComment("ord() - converts ASCII character to its decimal value", _indent);
+				code.add(_indent + "ord() {");
+				code.add(indentPlus1 + "printf '%d' \"'$1\"");
+				code.add(_indent + "}");
+				builtInAdded = true;
+			}
+			// START KGU#803/KGU#807 2020-02-24: Issues #816, #821 - provide a routine to copy associative arrays
+			for (TypeMapEntry type: typeMap.values()) {
+				if (type.isRecord()) {
+					code.add(_indent);
+					appendComment(FN_COPY_ASSOC_ARRAY + "() - copies an associative array via name references", _indent);
+					addCode("auxCopyAssocArray() {", _indent, false);
+					addCode(this.getNameRefDeclarator(false) + "target=$1", indentPlus1, false);
+					addCode(this.getNameRefDeclarator(false) + "source=$2", indentPlus1, false);
+					addCode(this.getLocalDeclarator(false, null) + "key", indentPlus1, false);
+					addCode("for key in \"${!source[@]}\"; do", indentPlus1, false);
+					addCode("target[$key]=\"${source[$key]}\"", indentPlus2, false);					
+					addCode("done", indentPlus1, false);
+					addCode("}", _indent, false);
+					builtInAdded = true;
+					break;
+				}
+			}
+			// END KGU#803/KGU#807 2020-02-24
+			if (builtInAdded) code.add(_indent);
+		}
+		// END KGU#150/KGU#241 2017-01-05
+	}
+	
+	/**
 	 * Generates declarations for the variables and constants of {@link #root} as
 	 * far as needed.
 	 * If {@link #root} is a subroutine then its variables wil be declared as local
@@ -1856,13 +1893,16 @@ public class BASHGenerator extends Generator {
 			//if (typeEntry != null && typeEntry.isRecord()) {
 			//	addCode(this.getAssocDeclarator() + varName, declIndent, false);
 			//}
-			if (!this.wasDefHandled(root, varName, true)) {
+			if (!this.wasDefHandled(root, varName, false)) {
 				if (typeEntry != null && typeEntry.isRecord()) {
 					// The declare command makes the declaration local by default
 					addCode(this.getAssocDeclarator(false) + varName, _indent, false);
+					this.wasDefHandled(root, varName, true);
 				}
+				// Don't declare constants here as they must be 
 				else if (isSubroutine && !isConst) {
-					addCode(getLocalDeclarator(false, null) + varName, _indent, false);
+					addCode(getLocalDeclarator(false, typeEntry) + varName, _indent, false);
+					this.wasDefHandled(root, varName, true);
 				}
 			}
 			// END KGU#803 2020-02-17
@@ -1990,7 +2030,8 @@ public class BASHGenerator extends Generator {
 					varName = varNames.get(vx);
 				}
 				if (isResultSet || isFunctionNameSet) {
-					code.add(_indent + "result" + Integer.toHexString(_root.hashCode()) + "=" + varName);
+					//code.add(_indent + "result" + Integer.toHexString(_root.hashCode()) + "=" + varName);
+					generateResultVariables(varName, _indent, false);
 				}
 			}
 			// Otherwise the Jump generator method will have done all what's needed

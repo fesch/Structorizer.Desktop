@@ -14,7 +14,8 @@ function blank {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  penUp
  right 90
  forward "${width}" # color = ffffff
@@ -78,9 +79,12 @@ function letterA {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
+ rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
  right "${rotAngle}"
  forward $(( ${hypo}/2.0 )) "${colorNo}"
  right $(( 90 - ${rotAngle} ))
@@ -102,7 +106,8 @@ function letterE {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  forward "${h}" "${colorNo}"
  right 90
  forward "${width}" "${colorNo}"
@@ -128,7 +133,8 @@ function letterF {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  forward "${h}" "${colorNo}"
  right 90
  forward "${width}" "${colorNo}"
@@ -154,7 +160,8 @@ function letterH {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  forward "${h}" "${colorNo}"
  penUp
  right 90
@@ -179,10 +186,12 @@ function letterI {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the corner triangle outside the octagon 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  penUp
  right 90
  forward "${c}" # color = ffffff
@@ -212,8 +221,10 @@ function letterK {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset diag=$(( ${h}/sqrt(2.0) ))
+ typeset width
+ typeset diag
+ width=$(( ${h}/2.0 ))
+ diag=$(( ${h}/sqrt(2.0) ))
  forward "${h}" "${colorNo}"
  penUp
  right 90
@@ -233,7 +244,8 @@ function letterL {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  forward "${h}" "${colorNo}"
  penUp
  backward "${h}" # color = ffffff
@@ -250,9 +262,12 @@ function letterM {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
+ rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
  forward "${h}" "${colorNo}"
  left "${rotAngle}"
  forward $(( -${hypo} )) "${colorNo}"
@@ -269,9 +284,12 @@ function letterN {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+ rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
  forward "${h}" "${colorNo}"
  left "${rotAngle}"
  forward $(( -${hypo} )) "${colorNo}"
@@ -289,7 +307,8 @@ function letterT {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
+ typeset width
+ width=$(( ${h}/2.0 ))
  penUp
  forward "${h}" # color = ffffff
  penDown
@@ -314,9 +333,12 @@ function letterV {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
+ rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
  penUp
  forward "${h}" # color = ffffff
  left "${rotAngle}"
@@ -337,10 +359,14 @@ function letterW {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset width_3=$(( ${width}/3.0 ))
- typeset hypo=$( sqrt $(( ${width_3}*${width_3} + ${h}*${h} )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width_3}/${h} )) ) )
+ typeset width_3
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ width_3=$(( ${width}/3.0 ))
+ hypo=$( sqrt $(( ${width_3}*${width_3} + ${h}*${h} )) )
+ rotAngle=$( toDegrees $( atan $(( ${width_3}/${h} )) ) )
  penUp
  forward "${h}" # color = ffffff
  left "${rotAngle}"
@@ -369,9 +395,12 @@ function letterX {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+ rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
  right "${rotAngle}"
  forward "${hypo}" "${colorNo}"
  penUp
@@ -390,9 +419,12 @@ function letterY {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
+ rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
  penUp
  forward "${h}" # color = ffffff
  left "${rotAngle}"
@@ -418,9 +450,12 @@ function letterZ {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h}/2.0 ))
- typeset hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
- typeset rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+ typeset width
+ typeset -E rotAngle
+ typeset -E hypo
+ width=$(( ${h}/2.0 ))
+ hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+ rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
  penUp
  forward "${h}" # color = ffffff
  right 90
@@ -443,7 +478,9 @@ function polygonPart {
  typeset -i color=$5
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset rotAngle=$(( 360.0/${n} ))
+ typeset rotAngle
+ typeset -i k
+ rotAngle=$(( 360.0/${n} ))
 
  if [[ ${ctrclkws} ]]
  then
@@ -465,12 +502,16 @@ function charDummy {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset width=$(( ${h} / 2.0 ))
+ typeset width
+ typeset d
+ typeset c
+ typeset b
+ width=$(( ${h} / 2.0 ))
  # Octagon edge length (here: edge lengzh of the square) 
- typeset b=$(( ${width} / (sqrt(2.0) + 1) ))
+ b=$(( ${width} / (sqrt(2.0) + 1) ))
  # Cathetus of the corner triangle outside the octagon 
- typeset c=$(( (${width} - ${b}) / 2.0 ))
- typeset d=$(( ${b} / sqrt(2.0) ))
+ c=$(( (${width} - ${b}) / 2.0 ))
+ d=$(( ${b} / sqrt(2.0) ))
  penUp
  forward $(( ${h}/2.0-${b}/2.0 )) # color = ffffff
  right 90
@@ -494,12 +535,16 @@ function comma {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -E rotAngle
+ typeset hypo
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
- typeset rotAngle=$( toDegrees $( atan 0.5 ) )
- typeset hypo=$(( ${c} * sqrt(1.25) ))
+ c=$(( ${b} / sqrt(2.0) ))
+ rotAngle=$( toDegrees $( atan 0.5 ) )
+ hypo=$(( ${c} * sqrt(1.25) ))
  penUp
  right 90
  forward $(( (${c}+${b})/2.0 + ${c} )) # color = ffffff
@@ -527,17 +572,25 @@ function exclMk {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset width
+ typeset -E rotAngle2
+ typeset -i rotAngle
+ typeset length2
+ typeset length1
+ typeset -E hypo
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
- typeset width=$(( ${h}/2.0 ))
- typeset length1=$(( ${h} - (${b}+${c})/2.0 ))
- typeset length2=$(( ${length1} - 2*${c} ))
- typeset hypo=$( sqrt $(( ${width}*${width}/16.0 + ${length2}*${length2} )) )
+ c=$(( ${b} / sqrt(2.0) ))
+ width=$(( ${h}/2.0 ))
+ length1=$(( ${h} - (${b}+${c})/2.0 ))
+ length2=$(( ${length1} - 2*${c} ))
+ hypo=$( sqrt $(( ${width}*${width}/16.0 + ${length2}*${length2} )) )
  # 360°/8 
- typeset rotAngle=45
- typeset rotAngle2=$( toDegrees $( atan $(( ${width}/4.0/${length2} )) ) )
+ rotAngle=45
+ rotAngle2=$( toDegrees $( atan $(( ${width}/4.0/${length2} )) ) )
  penUp
  forward "${length1}" # color = ffffff
  right 90
@@ -575,10 +628,12 @@ function fullSt {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  penUp
  right 90
  forward $(( (${c}+${b})/2.0 + ${c} )) # color = ffffff
@@ -599,10 +654,12 @@ function letterB {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the outer corner triangle of the octagon 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  forward "${h}" "${colorNo}"
  right 90
  forward $(( ${c}+${b} )) "${colorNo}"
@@ -630,12 +687,15 @@ function letterC {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the outer trinagle at the octagon corner 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -666,10 +726,12 @@ function letterD {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  forward "${h}" "${colorNo}"
  right 90
  forward $(( ${c}+${b} )) "${colorNo}"
@@ -695,10 +757,12 @@ function letterG {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the corner triangle outside the octagon. 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -733,12 +797,15 @@ function letterJ {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -760,10 +827,12 @@ function letterO {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the corner triangle outside the octagon 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -791,10 +860,12 @@ function letterP {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset c
+ typeset b
  # Octagon edge length 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Cathetus of the corner triangle outside the octagon 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  forward "${h}" "${colorNo}"
  right 90
  forward $(( ${c}+${b} )) "${colorNo}"
@@ -817,12 +888,15 @@ function letterQ {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -853,12 +927,15 @@ function letterR {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  forward "${h}" "${colorNo}"
  right 90
  forward $(( ${c}+${b} )) "${colorNo}"
@@ -878,12 +955,15 @@ function letterS {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -908,12 +988,15 @@ function letterU {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # edge length of a regular octagon 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward "${c}" # color = ffffff
  penDown
@@ -938,12 +1021,15 @@ function qstnMk {
  typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
+ typeset -i rotAngle
+ typeset c
+ typeset b
  # Achteck-Kantenlänge 
- typeset b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
+ b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
  # Eckenlänge außen am Achteck 
- typeset c=$(( ${b} / sqrt(2.0) ))
+ c=$(( ${b} / sqrt(2.0) ))
  # 360°/8 
- typeset rotAngle=45
+ rotAngle=45
  penUp
  forward $(( ${h}-${c} )) # color = ffffff
  penDown
@@ -994,11 +1080,14 @@ function drawText {
  typeset -i c=$3
 # TODO: Check and revise the syntax of all expressions! 
 
- typeset gap=$(( ${h}/10.0 ))
+ typeset letter
+ typeset -i k
+ typeset gap
+ gap=$(( ${h}/10.0 ))
 
  for (( k=1; k<=length "${text}"; k++ ))
  do
-  typeset letter=$( uppercase $( copy "${text}" "${k}" 1 ) )
+  letter=$( uppercase $( copy "${text}" "${k}" 1 ) )
 
   if [[ ${letter} == "," ]]
   then

@@ -20,6 +20,17 @@
 # http://www.gnu.de/documents/gpl.de.html 
 #  
 
+# auxCopyAssocArray() - copies an associative array via name references 
+auxCopyAssocArray() {
+ declare -n target=$1
+ declare -n source=$2
+ local key
+ for key in "${!source[@]}"; do
+  target[$key]="${source[$key]}"
+ done
+}
+
+
 # Cares for correct letter case among others 
 function adjustSpelling() {
  local sentence=$1
@@ -29,7 +40,7 @@ function adjustSpelling() {
  local word
  local start
  local result
- local position
+ declare -i position
  result=${sentence}
  position=1
 
@@ -58,7 +69,7 @@ function adjustSpelling() {
 
  done
 
- result8f1b1ce3=result
+ result4b85c9e1=${result}
 }
 
 # Checks whether the given text contains some kind of 
@@ -79,13 +90,13 @@ function checkGoodBye() {
   if [[ pos(${pair[0]}, ${text}) > 0 ]]
   then
    echo ${pair[1]}
-   result6b4b0065=true
+   resultac821d99=1
    return 0
   fi
 
  done
 
- result6b4b0065=false
+ resultac821d99=0
 }
 
 # Checks whether newInput has occurred among the recently cached 
@@ -96,8 +107,8 @@ function checkRepetition() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local i
- local histDepth
+ declare -i i
+ declare -i histDepth
  local hasOccurred
  hasOccurred=0
 
@@ -105,7 +116,7 @@ function checkRepetition() {
  then
   histDepth=$( length ${history[histArray]} )
 
-  for (( i=0; i<=$(( ${histDepth}-1 )); i++ ))
+  for (( i=0; i<=(( ${histDepth}-1 )); i++ ))
   do
 
    if [[ ${newInput} == ${history[histArray]}[${i}] ]]
@@ -119,7 +130,7 @@ function checkRepetition() {
   history[histIndex]=(${history[histIndex]} + 1) % (${histDepth})
  fi
 
- result849245ea=hasOccurred
+ result25fac4b1=${hasOccurred}
 }
 
 function conjugateStrings() {
@@ -132,7 +143,7 @@ function conjugateStrings() {
 
  local right
  local result
- local position
+ declare -i position
  local pair
  local left
  result=" " + copy(${sentence}, ${keyPos} + length(${key}), length(${sentence})) + " "
@@ -162,7 +173,7 @@ function conjugateStrings() {
   position=$( pos "  " "${result}" )
  done
 
- result7ef9a742=result
+ resultac580eb3=${result}
 }
 
 # Looks for the occurrence of the first of the strings 
@@ -177,9 +188,9 @@ function findKeyword() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local result
- local position
- local i
+ declare -a result
+ declare -i position
+ declare -i i
  declare -A entry
  # Contains the index of the keyword and its position in sentence 
  declare -a result=($(( -1 )) 0)
@@ -199,7 +210,7 @@ function findKeyword() {
   i=$(( ${i}+1 ))
  done
 
- resultb94921ed=result
+ result5f20906f="${result[@]}"
 }
 
 # Converts the sentence to lowercase, eliminates all 
@@ -212,7 +223,7 @@ function normalizeInput() {
 
  local symbol
  local result
- local position
+ declare -i position
  sentence=$( lowercase "${sentence}" )
 
  for symbol in '.' ',' ';' '!' '?'
@@ -228,17 +239,17 @@ function normalizeInput() {
  done
 
  result=" " + ${sentence} + " "
- resultd1172a16=result
+ resultb26e5771=${result}
 }
 
 function setupGoodByePhrases() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local phrases
+ declare -a phrases
  declare -a phrases[0]=(" shut" "Okay. If you feel that way I\'ll shut up. ... Your choice.")
  declare -a phrases[1]=("bye" "Well, let\'s end our talk for now. See you later. Bye.")
- result579872e8="${phrases[@]}"
+ result401dc033="${phrases[@]}"
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -248,7 +259,7 @@ function setupKeywords() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local keywords
+ declare -a keywords
  # The empty key string (last entry) is the default clause - will always be found 
  declare -A keywords[39]=([keyword]="" [index]=29)
  declare -A keywords[0]=([keyword]="can you " [index]=0)
@@ -290,7 +301,7 @@ function setupKeywords() {
  declare -A keywords[36]=([keyword]="smartphone" [index]=27)
  declare -A keywords[37]=([keyword]="father " [index]=28)
  declare -A keywords[38]=([keyword]="mother " [index]=28)
- result99faf64b="${keywords[@]}"
+ resultfe334c2c="${keywords[@]}"
 }
 
 # Returns an array of pairs of mutualy substitutable  
@@ -298,7 +309,7 @@ function setupReflexions() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local reflexions
+ declare -a reflexions
  declare -a reflexions[0]=(" are " " am ")
  declare -a reflexions[1]=(" were " " was ")
  declare -a reflexions[2]=(" you " " I ")
@@ -309,7 +320,7 @@ function setupReflexions() {
  declare -a reflexions[7]=(" my " " your ")
  declare -a reflexions[8]=(" i " " you ")
  declare -a reflexions[9]=(" am " " are ")
- resultdcf43a2f="${reflexions[@]}"
+ resultac471e2f="${reflexions[@]}"
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -319,8 +330,8 @@ function setupReplies() {
 
  # TODO: Check and revise the syntax of all expressions! 
 
- local setupReplies
- local replies
+ declare -a setupReplies
+ declare -a replies
  # We start with the highest index for performance reasons 
  # (is to avoid frequent array resizing) 
  declare -a replies[29]=("Say, do you have any psychological problems?" "What does that suggest to you?" "I see." "I'm not sure I understand you fully." "Come come elucidate your thoughts." "Can you elaborate on that?" "That is quite interesting.")
@@ -353,8 +364,8 @@ function setupReplies() {
  declare -a replies[26]=("Do computers worry you?" "Are you talking about me in particular?" "Are you frightened by machines?" "Why do you mention computers?" "What do you think machines have to do with your problem?" "Don't you think computers can help people?" "What is it about machines that worries you?")
  declare -a replies[27]=("Do you sometimes feel uneasy without a smartphone?" "Have you had these phantasies before?" "Does the world seem more real for you via apps?")
  declare -a replies[28]=("Tell me more about your family." "Who else in your family*?" "What does family relations mean for you?" "Come on, How old are you?")
- setupReplies=${replies}
- resultda3811c7=setupReplies
+ setupReplies=("${replies[@]}")
+ result890ea6="${setupReplies[@]}"
 }
 
 
@@ -379,13 +390,13 @@ echo "**********************************"
 # the second component is the rolling (over-)write index. 
 declare -A history=([histArray]={"", "", "", "", ""} [histIndex]=0)
 setupReplies
-declare -r replies=${resultda3811c7}
+declare -ar replies=(${result890ea6})
 setupReflexions
-declare -r reflexions=${resultdcf43a2f}
+declare -ar reflexions=(${resultac471e2f})
 setupGoodByePhrases
-declare -r byePhrases=${result579872e8}
+declare -ar byePhrases=(${result401dc033})
 setupKeywords
-declare -r keyMap=${result99faf64b}
+declare -ar keyMap=(${resultfe334c2c})
 offsets[length(${keyMap})-1]=0
 isGone=0
 # Starter 
@@ -398,20 +409,20 @@ do
  # Converts the input to lowercase, cuts out interpunctation 
  # and pads the string 
  normalizeInput "${userInput}"
- userInput=${resultd1172a16}
+ userInput=${resultb26e5771}
  checkGoodBye "${userInput}" byePhrases
- isGone=${result6b4b0065}
+ isGone=${resultac821d99}
 
  if [[ ! ${isGone} ]]
  then
   reply="Please don\'t repeat yourself!"
   checkRepetition history "${userInput}"
-  isRepeated=${result849245ea}
+  isRepeated=${result25fac4b1}
 
   if [[ ! ${isRepeated} ]]
   then
    findKeyword keyMap "${userInput}"
-   findInfo=${resultb94921ed}
+   declare -a findInfo=(${result5f20906f})
    keyIndex=${findInfo[0]}
 
    if [[ ${keyIndex} < 0 ]]
@@ -427,7 +438,7 @@ do
    if (( length(${entry[keyword]}) > 0 ))
    then
     conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
-    varPart=${result7ef9a742}
+    varPart=${resultac580eb3}
    fi
 
    replyRing=${replies[${entry[index]}]}
@@ -450,7 +461,7 @@ do
    fi
 
    adjustSpelling "${reply}"
-   reply=${result8f1b1ce3}
+   reply=${result4b85c9e1}
   fi
 
   echo ${reply}

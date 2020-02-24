@@ -6,7 +6,7 @@
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
 \author{Kay Gürtzig}
-\date{13.02.2020}
+\date{24.02.2020}
 
 \begin{document}
 
@@ -44,7 +44,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(151,60)[checkGoodBye]
+\begin{struktogramm}(151,54)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -56,7 +56,6 @@
   }
   \while{\(\forall pair\in phrases\)}
     \ifthenelse{5}{1}{\(pos(pair[0],\ text)\ >\ 0\)}{ja}{nein}
-      \assign{\(saidBye\ \gets\ true\)}
       \assign{\(\)\pKey{OUTPUT}\(\ pair[1]\)}
       \exit{\(\)\pKey{return}\(\ true\)}
     \change
