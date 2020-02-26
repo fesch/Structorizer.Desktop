@@ -340,7 +340,7 @@ echo "* - Paul Hashfield";
 echo "**********************************";
 echo "* Adapted for Structorizer by";
 echo "* - Kay Gürtzig / FH Erfurt 2016";
-echo "* Version: 2.3 (2019-11-28)";
+echo "* Version: 2.3 (2020-02-24)";
 echo "* (Requires at least Structorizer 3.30-03 to run)";
 echo "**********************************";
 // Stores the last five inputs of the user in a ring buffer, 

@@ -260,7 +260,7 @@ print("* - Paul Hashfield", sep='')
 print("**********************************", sep='')
 print("* Adapted for Structorizer by", sep='')
 print("* - Kay Gürtzig / FH Erfurt 2016", sep='')
-print("* Version: 2.3 (2019-11-28)", sep='')
+print("* Version: 2.3 (2020-02-24)", sep='')
 print("* (Requires at least Structorizer 3.30-03 to run)", sep='')
 print("**********************************", sep='')
 # Stores the last five inputs of the user in a ring buffer, 

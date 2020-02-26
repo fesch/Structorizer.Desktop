@@ -90,7 +90,7 @@ public class ELIZA {
 		System.out.println("**********************************");
 		System.out.println("* Adapted for Structorizer by");
 		System.out.println("* - Kay Gürtzig / FH Erfurt 2016");
-		System.out.println("* Version: 2.3 (2019-11-28)");
+		System.out.println("* Version: 2.3 (2020-02-24)");
 		System.out.println("* (Requires at least Structorizer 3.30-03 to run)");
 		System.out.println("**********************************");
 		// Stores the last five inputs of the user in a ring buffer, 

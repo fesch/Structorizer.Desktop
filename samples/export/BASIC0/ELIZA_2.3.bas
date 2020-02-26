@@ -30,7 +30,7 @@
 300 PRINT "**********************************"
 310 PRINT "* Adapted for Structorizer by"
 320 PRINT "* - Kay Gürtzig / FH Erfurt 2016"
-330 PRINT "* Version: 2.3 (2019-11-28)"
+330 PRINT "* Version: 2.3 (2020-02-24)"
 340 PRINT "* (Requires at least Structorizer 3.30-03 to run)"
 350 PRINT "**********************************"
 360 REM Stores the last five inputs of the user in a ring buffer, 
@@ -101,8 +101,8 @@
 1010     delete(result, 1, position)
 1020     insert(uppercase(start), result, 1)
 1030   END IF
-1040   DIM arrayf495991d() AS String = {" i ", " i\'"}
-1050   FOR EACH word IN arrayf495991d
+1040   DIM array8b8c3e4b() AS String = {" i ", " i\'"}
+1050   FOR EACH word IN array8b8c3e4b
 1060     LET position = pos(word, result)
 1070     DO WHILE position > 0
 1080       delete(result, position+1, 1)
@@ -207,8 +207,8 @@
 2070   REM TODO: add the respective type suffixes to your variable names if required 
 2080   LET sentence = lowercase(sentence)
 2090   REM TODO: Specify an appropriate element type for the array! 
-2100   DIM arraydcd7c362() AS FIXME_dcd7c362 = {'.', ',', ';', '!', '?'}
-2110   FOR EACH symbol IN arraydcd7c362
+2100   DIM array4d0fb3ef() AS FIXME_4d0fb3ef = {'.', ',', ';', '!', '?'}
+2110   FOR EACH symbol IN array4d0fb3ef
 2120     LET position = pos(symbol, sentence)
 2130     DO WHILE position > 0
 2140       LET sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))

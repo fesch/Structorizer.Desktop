@@ -524,7 +524,7 @@ int main(void)
 	std::cout << "**********************************" << std::endl;
 	std::cout << "* Adapted for Structorizer by" << std::endl;
 	std::cout << "* - Kay Gürtzig / FH Erfurt 2016" << std::endl;
-	std::cout << "* Version: 2.3 (2019-11-28)" << std::endl;
+	std::cout << "* Version: 2.3 (2020-02-24)" << std::endl;
 	std::cout << "* (Requires at least Structorizer 3.30-03 to run)" << std::endl;
 	std::cout << "**********************************" << std::endl;
 	// Stores the last five inputs of the user in a ring buffer, 

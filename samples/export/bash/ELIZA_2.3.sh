@@ -69,7 +69,7 @@ function adjustSpelling() {
 
  done
 
- result9c83b677=${result}
+ result10201170=${result}
 }
 
 # Checks whether the given text contains some kind of 
@@ -90,13 +90,13 @@ function checkGoodBye() {
   if [[ pos(${pair[0]}, ${text}) > 0 ]]
   then
    echo ${pair[1]}
-   result6170f456=1
+   resulta3a49bba=1
    return 0
   fi
 
  done
 
- result6170f456=0
+ resulta3a49bba=0
 }
 
 # Checks whether newInput has occurred among the recently cached 
@@ -130,7 +130,7 @@ function checkRepetition() {
   history[histIndex]=(${history[histIndex]} + 1) % (${histDepth})
  fi
 
- resultf6beb9f6=${hasOccurred}
+ resulta1887981=${hasOccurred}
 }
 
 function conjugateStrings() {
@@ -173,7 +173,7 @@ function conjugateStrings() {
   position=$( pos "  " "${result}" )
  done
 
- resulted54f74d=${result}
+ result5c7e139a=${result}
 }
 
 # Looks for the occurrence of the first of the strings 
@@ -210,7 +210,7 @@ function findKeyword() {
   i=$(( ${i}+1 ))
  done
 
- declare -a -g resultd45fe0c0=("${result[@]}")
+ declare -a -g result88893bc7=("${result[@]}")
 }
 
 # Converts the sentence to lowercase, eliminates all 
@@ -239,7 +239,7 @@ function normalizeInput() {
  done
 
  result=" " + ${sentence} + " "
- result2c10858f=${result}
+ result21021fd3=${result}
 }
 
 function setupGoodByePhrases() {
@@ -249,7 +249,7 @@ function setupGoodByePhrases() {
  declare -a phrases
  declare -a phrases[0]=(" shut" "Okay. If you feel that way I\'ll shut up. ... Your choice.")
  declare -a phrases[1]=("bye" "Well, let\'s end our talk for now. See you later. Bye.")
- declare -a -g result9c2258a=("${phrases[@]}")
+ declare -a -g resultad526ca8=("${phrases[@]}")
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -301,7 +301,7 @@ function setupKeywords() {
  declare -A keywords[36]=([keyword]="smartphone" [index]=27)
  declare -A keywords[37]=([keyword]="father " [index]=28)
  declare -A keywords[38]=([keyword]="mother " [index]=28)
- declare -a -g resultb3a40d92=("${keywords[@]}")
+ declare -a -g result8f04fedc=("${keywords[@]}")
 }
 
 # Returns an array of pairs of mutualy substitutable  
@@ -320,7 +320,7 @@ function setupReflexions() {
  declare -a reflexions[7]=(" my " " your ")
  declare -a reflexions[8]=(" i " " you ")
  declare -a reflexions[9]=(" am " " are ")
- declare -a -g result9074cbd7=("${reflexions[@]}")
+ declare -a -g resultca6e5061=("${reflexions[@]}")
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -365,7 +365,7 @@ function setupReplies() {
  declare -a replies[27]=("Do you sometimes feel uneasy without a smartphone?" "Have you had these phantasies before?" "Does the world seem more real for you via apps?")
  declare -a replies[28]=("Tell me more about your family." "Who else in your family*?" "What does family relations mean for you?" "Come on, How old are you?")
  setupReplies=("${replies[@]}")
- declare -a -g result6c114c30=("${setupReplies[@]}")
+ declare -a -g result2929bbd3=("${setupReplies[@]}")
 }
 
 
@@ -383,20 +383,20 @@ echo "* - Paul Hashfield"
 echo "**********************************"
 echo "* Adapted for Structorizer by"
 echo "* - Kay Gürtzig / FH Erfurt 2016"
-echo "* Version: 2.3 (2019-11-28)"
+echo "* Version: 2.3 (2020-02-24)"
 echo "* (Requires at least Structorizer 3.30-03 to run)"
 echo "**********************************"
 # Stores the last five inputs of the user in a ring buffer, 
 # the second component is the rolling (over-)write index. 
 declare -A history=([histArray]={"", "", "", "", ""} [histIndex]=0)
 setupReplies
-declare -ar replies=("${result6c114c30[@]}")
+declare -ar replies=("${result2929bbd3[@]}")
 setupReflexions
-declare -ar reflexions=("${result9074cbd7[@]}")
+declare -ar reflexions=("${resultca6e5061[@]}")
 setupGoodByePhrases
-declare -ar byePhrases=("${result9c2258a[@]}")
+declare -ar byePhrases=("${resultad526ca8[@]}")
 setupKeywords
-declare -ar keyMap=("${resultb3a40d92[@]}")
+declare -ar keyMap=("${result8f04fedc[@]}")
 offsets[length(${keyMap})-1]=0
 isGone=0
 # Starter 
@@ -409,20 +409,20 @@ do
  # Converts the input to lowercase, cuts out interpunctation 
  # and pads the string 
  normalizeInput "${userInput}"
- userInput=${result2c10858f}
+ userInput=${result21021fd3}
  checkGoodBye "${userInput}" byePhrases
- isGone=${result6170f456}
+ isGone=${resulta3a49bba}
 
  if [[ ! ${isGone} ]]
  then
   reply="Please don\'t repeat yourself!"
   checkRepetition history "${userInput}"
-  isRepeated=${resultf6beb9f6}
+  isRepeated=${resulta1887981}
 
   if [[ ! ${isRepeated} ]]
   then
    findKeyword keyMap "${userInput}"
-   declare -a findInfo=("${resultd45fe0c0[@]}")
+   declare -a findInfo=("${result88893bc7[@]}")
    keyIndex=${findInfo[0]}
 
    if [[ ${keyIndex} < 0 ]]
@@ -438,7 +438,7 @@ do
    if (( length(${entry[keyword]}) > 0 ))
    then
     conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
-    varPart=${resulted54f74d}
+    varPart=${result5c7e139a}
    fi
 
    replyRing=${replies[${entry[index]}]}
@@ -461,7 +461,7 @@ do
    fi
 
    adjustSpelling "${reply}"
-   reply=${result9c83b677}
+   reply=${result10201170}
   fi
 
   echo ${reply}

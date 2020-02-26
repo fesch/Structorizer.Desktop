@@ -47,7 +47,7 @@ PRINT "* - Paul Hashfield"
 PRINT "**********************************"
 PRINT "* Adapted for Structorizer by"
 PRINT "* - Kay Gürtzig / FH Erfurt 2016"
-PRINT "* Version: 2.3 (2019-11-28)"
+PRINT "* Version: 2.3 (2020-02-24)"
 PRINT "* (Requires at least Structorizer 3.30-03 to run)"
 PRINT "**********************************"
 Rem Stores the last five inputs of the user in a ring buffer, 
@@ -122,8 +122,8 @@ Function adjustSpelling(sentence AS String) As String
     delete(result, 1, position)
     insert(uppercase(start), result, 1)
   End If
-  Dim arrayf495991d() As String = {" i ", " i\'"}
-  For Each word In arrayf495991d
+  Dim array8b8c3e4b() As String = {" i ", " i\'"}
+  For Each word In array8b8c3e4b
     position = pos(word, result)
     Do While position > 0
       delete(result, position+1, 1)
@@ -246,8 +246,8 @@ Function normalizeInput(sentence AS String) As String
   Rem  
   sentence = lowercase(sentence)
   Rem TODO: Specify an appropriate element type for the array! 
-  Dim arraydcd7c362() As FIXME_dcd7c362 = {'.', ',', ';', '!', '?'}
-  For Each symbol In arraydcd7c362
+  Dim array4d0fb3ef() As FIXME_4d0fb3ef = {'.', ',', ';', '!', '?'}
+  For Each symbol In array4d0fb3ef
     position = pos(symbol, sentence)
     Do While position > 0
       sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))

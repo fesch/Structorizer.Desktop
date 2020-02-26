@@ -96,12 +96,12 @@ function maxHeapify() {
 
 }
 
-# Partitions array values between indices start und stop-1 with 
-# respect to the pivot element initially at index p into smaller 
+# Partitions array 'values´ between indices 'start´ und 'stop´-1 with 
+# respect to the pivot element initially at index 'p´ into smaller 
 # and greater elements. 
 # Returns the new (and final) index of the pivot element (which 
-# separates the sequence of smaller from the sequence of greater 
-# elements). 
+# separates the sequence of smaller elements from the sequence 
+# of greater elements). 
 # This is not the most efficient algorithm (about half the swapping 
 # might still be avoided) but it is pretty clear. 
 function partition() {
@@ -114,38 +114,49 @@ function partition() {
 
  local seen
  local pivot
+ # Cache the pivot element 
  pivot=${values[${p}]}
- # Tausche das Pivot-Element an den start 
+ # Exchange the pivot element with the start element 
  values[${p}]=${values[${start}]}
  values[${start}]=${pivot}
  p=${start}
- # Beginning and end of the remaining unknown range 
+ # Beginning and end of the remaining undiscovered range 
  start=$(( ${start} + 1 ))
  stop=$(( ${stop} - 1 ))
 
  # Still unseen elements? 
- while [[ ${stop} >= ${start} ]]
+ # Loop invariants: 
+ # 1. p = start - 1 
+ # 2. pivot = values[p] 
+ # 3. i < start → values[i] ≤ pivot 
+ # 4. stop < i → pivot < values[i] 
+ while [[ ${start} <= ${stop} ]]
  do
+  # Fetch the first element of the undiscovered area 
   seen=${values[${start}]}
 
-  if [[ ${values[${start}]} <= ${pivot} ]]
+  # Does the checked element belong to the smaller area? 
+  if [[ ${seen} <= ${pivot} ]]
   then
-   # Swap pivot element with start element 
+   # Insert the seen element between smaller area and pivot element 
    values[${p}]=${seen}
    values[${start}]=${pivot}
+   # Shift the border between lower and undicovered area, 
+   # update pivot position. 
    p=$(( ${p} + 1 ))
    start=$(( ${start} + 1 ))
 
   else
-   # Put the found element to the end of the unknown area 
+   # Insert the checked element between undiscovered and larger area 
    values[${start}]=${values[${stop}]}
    values[${stop}]=${seen}
+   # Shift the border between undiscovered and larger area 
    stop=$(( ${stop} - 1 ))
   fi
 
  done
 
- result9814701f=${p}
+ resulte6c4d9c8=${p}
 }
 
 # Checks whether or not the passed-in array is (ascendingly) sorted. 
@@ -174,7 +185,7 @@ function testSorted() {
 
  done
 
- result964b5ab5=${isSorted}
+ result35eb15c9=${isSorted}
 }
 
 # Runs through the array heap and converts it to a max-heap 
@@ -218,23 +229,23 @@ function quickSort() {
   # Partition the array into smaller and greater elements 
   # Get the resulting (and final) position of the pivot element 
   partition "${values}" "${start}" "${stop}" "${p}"
-  p=${result9814701f}
+  p=${resulte6c4d9c8}
   # Sort subsequances separately and independently ... 
   # ========================================================== 
   # ================= START PARALLEL SECTION ================= 
   # ========================================================== 
-  pidsf405fbf2=""
+  pids87dcc0ed=""
   (
    # Sort left (lower) array part 
    quickSort "${values}" "${start}" "${p}"
   ) &
-  pidsf405fbf2="${pidsf405fbf2} $!"
+  pids87dcc0ed="${pids87dcc0ed} $!"
   (
    # Sort right (higher) array part 
    quickSort "${values}" $(( ${p}+1 )) "${stop}"
   ) &
-  pidsf405fbf2="${pidsf405fbf2} $!"
-  wait ${pidsf405fbf2}
+  pids87dcc0ed="${pids87dcc0ed} $!"
+  wait ${pids87dcc0ed}
   # ========================================================== 
   # ================== END PARALLEL SECTION ================== 
   # ========================================================== 
@@ -314,29 +325,29 @@ done
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids9e0b603e=""
+pids882e3cf9=""
 (
  bubbleSort values1
 ) &
-pids9e0b603e="${pids9e0b603e} $!"
+pids882e3cf9="${pids882e3cf9} $!"
 (
  quickSort values2 0 "${elementCount}"
 ) &
-pids9e0b603e="${pids9e0b603e} $!"
+pids882e3cf9="${pids882e3cf9} $!"
 (
  heapSort values3
 ) &
-pids9e0b603e="${pids9e0b603e} $!"
-wait ${pids9e0b603e}
+pids882e3cf9="${pids882e3cf9} $!"
+wait ${pids882e3cf9}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 testSorted values1
-ok1=${result964b5ab5}
+ok1=${result35eb15c9}
 testSorted values2
-ok2=${result964b5ab5}
+ok2=${result35eb15c9}
 testSorted values3
-ok3=${result964b5ab5}
+ok3=${result35eb15c9}
 
 if [[ ! ${ok1} || ! ${ok2} || ! ${ok3} ]]
 then

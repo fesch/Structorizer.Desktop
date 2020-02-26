@@ -90,7 +90,7 @@ public class ELIZA {
 		Console.WriteLine("**********************************");
 		Console.WriteLine("* Adapted for Structorizer by");
 		Console.WriteLine("* - Kay Gürtzig / FH Erfurt 2016");
-		Console.WriteLine("* Version: 2.3 (2019-11-28)");
+		Console.WriteLine("* Version: 2.3 (2020-02-24)");
 		Console.WriteLine("* (Requires at least Structorizer 3.30-03 to run)");
 		Console.WriteLine("**********************************");
 		// Stores the last five inputs of the user in a ring buffer, 

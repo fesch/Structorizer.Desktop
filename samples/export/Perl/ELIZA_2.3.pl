@@ -36,8 +36,8 @@ sub adjustSpelling {
     }
 
 
-    my @arrayf495991d = (" i ", " i\'")
-    foreach $word (@arrayf495991d) {
+    my @array8b8c3e4b = (" i ", " i\'")
+    foreach $word (@array8b8c3e4b) {
         $position = pos($word, $result);
 
         while ( $position > 0 ) {
@@ -192,8 +192,8 @@ sub normalizeInput {
     
     $sentence = lowercase($sentence);
 
-    my @arraydcd7c362 = ('.', ',', ';', '!', '?')
-    foreach $symbol (@arraydcd7c362) {
+    my @array4d0fb3ef = ('.', ',', ';', '!', '?')
+    foreach $symbol (@array4d0fb3ef) {
         $position = pos($symbol, $sentence);
 
         while ( $position > 0 ) {
@@ -369,7 +369,7 @@ print "* - Paul Hashfield", "\n";
 print "**********************************", "\n";
 print "* Adapted for Structorizer by", "\n";
 print "* - Kay Gürtzig / FH Erfurt 2016", "\n";
-print "* Version: 2.3 (2019-11-28)", "\n";
+print "* Version: 2.3 (2020-02-24)", "\n";
 print "* (Requires at least Structorizer 3.30-03 to run)", "\n";
 print "**********************************", "\n";
 # Stores the last five inputs of the user in a ring buffer, 

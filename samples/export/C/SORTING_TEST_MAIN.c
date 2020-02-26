@@ -84,12 +84,12 @@ void maxHeapify(??? heap, ??? i, ??? range)
 }
 
 // function partition(values, start, stop, p): int 
-// Partitions array values between indices start und stop-1 with 
-// respect to the pivot element initially at index p into smaller 
+// Partitions array 'values´ between indices 'start´ und 'stop´-1 with 
+// respect to the pivot element initially at index 'p´ into smaller 
 // and greater elements. 
 // Returns the new (and final) index of the pivot element (which 
-// separates the sequence of smaller from the sequence of greater 
-// elements). 
+// separates the sequence of smaller elements from the sequence 
+// of greater elements). 
 // This is not the most efficient algorithm (about half the swapping 
 // might still be avoided) but it is pretty clear. 
 // TODO: Revise the return type and declare the parameters. 
@@ -100,28 +100,39 @@ int partition(??? values, ??? start, ??? stop, ??? p)
 	??? pivot;
 	
 	
+	// Cache the pivot element 
 	pivot = values[p];
-	// Tausche das Pivot-Element an den start 
+	// Exchange the pivot element with the start element 
 	values[p] = values[start];
 	values[start] = pivot;
 	p = start;
-	// Beginning and end of the remaining unknown range 
+	// Beginning and end of the remaining undiscovered range 
 	start = start + 1;
 	stop = stop - 1;
 	// Still unseen elements? 
-	while (stop >= start) {
+	// Loop invariants: 
+	// 1. p = start - 1 
+	// 2. pivot = values[p] 
+	// 3. i < start → values[i] ≤ pivot 
+	// 4. stop < i → pivot < values[i] 
+	while (start <= stop) {
+		// Fetch the first element of the undiscovered area 
 		seen = values[start];
-		if (values[start] <= pivot) {
-			// Swap pivot element with start element 
+		// Does the checked element belong to the smaller area? 
+		if (seen <= pivot) {
+			// Insert the seen element between smaller area and pivot element 
 			values[p] = seen;
 			values[start] = pivot;
+			// Shift the border between lower and undicovered area, 
+			// update pivot position. 
 			p = p + 1;
 			start = start + 1;
 		}
 		else {
-			// Put the found element to the end of the unknown area 
+			// Insert the checked element between undiscovered and larger area 
 			values[start] = values[stop];
 			values[stop] = seen;
+			// Shift the border between undiscovered and larger area 
 			stop = stop - 1;
 		}
 	}

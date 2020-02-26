@@ -1,5 +1,5 @@
 MODULE ELIZA;
-IMPORT dummy0815;
+IMPORT ;
 IMPORT In, Out;
 (*
  * Concept and lisp implementation published by Joseph Weizenbaum (MIT):
@@ -42,12 +42,12 @@ TYPE
     END;
 
 VAR
-  indexdcd7c362: INTEGER;
-  arraydcd7c362: ARRAY 5 OF ARRAY 100 OF CHAR;
-  index6e1b1af0: INTEGER;
-  index66b1b313: INTEGER;
-  indexf495991d: INTEGER;
-  arrayf495991d: ARRAY 2 OF ARRAY 100 OF CHAR;
+  indexe86f2b61: INTEGER;
+  arraye86f2b61: ARRAY 5 OF ARRAY 100 OF CHAR;
+  indexe331e8b1: INTEGER;
+  index3de92e72: INTEGER;
+  index2d79da01: INTEGER;
+  array2d79da01: ARRAY 2 OF ARRAY 100 OF CHAR;
   (* TODO: check and accomplish variable declarations *)
   varPart: ARRAY 100 OF CHAR;
   (* Converts the input to lowercase, cuts out interpunctation *)
@@ -89,10 +89,10 @@ BEGIN
     delete(result, 1, position);
     insert(CAP(start), result, 1);
   END;
-  arrayf495991d[0] := " i ";
-  arrayf495991d[1] := " i\'";
-  FOR indexf495991d := 0 TO 1 DO
-    word := arrayf495991d[indexf495991d];
+  array2d79da01[0] := " i ";
+  array2d79da01[1] := " i\'";
+  FOR index2d79da01 := 0 TO 1 DO
+    word := array2d79da01[index2d79da01];
     position := pos(word, result);
     WHILE position > 0 DO
       delete(result, position+1, 1);
@@ -114,8 +114,8 @@ VAR
   (* TODO: check and accomplish variable declarations *)
   pair: ARRAY OF ARRAY 100 OF CHAR;
 BEGIN
-  FOR index66b1b313 := 0 TO LEN(phrases)-1 DO
-    pair := phrases[index66b1b313];
+  FOR index3de92e72 := 0 TO LEN(phrases)-1 DO
+    pair := phrases[index3de92e72];
     IF pos(pair[0], text) > 0 THEN
       (* TODO: Replace "TYPE" by the the actual Out procedure name for this type and add a length argument where needed! *)
       Out.TYPE(pair[1]);
@@ -162,8 +162,8 @@ VAR
   left: ARRAY 100 OF CHAR;
 BEGIN
   result := " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
-  FOR index6e1b1af0 := 0 TO LEN(flexions)-1 DO
-    pair := flexions[index6e1b1af0];
+  FOR indexe331e8b1 := 0 TO LEN(flexions)-1 DO
+    pair := flexions[indexe331e8b1];
     left := "";
     right := result;
     position := pos(pair[0], right);
@@ -234,13 +234,13 @@ VAR
   position: INTEGER;
 BEGIN
   sentence := lowercase(sentence);
-  arraydcd7c362[0] := '.';
-  arraydcd7c362[1] := ',';
-  arraydcd7c362[2] := ';';
-  arraydcd7c362[3] := '!';
-  arraydcd7c362[4] := '?';
-  FOR indexdcd7c362 := 0 TO 4 DO
-    symbol := arraydcd7c362[indexdcd7c362];
+  arraye86f2b61[0] := '.';
+  arraye86f2b61[1] := ',';
+  arraye86f2b61[2] := ';';
+  arraye86f2b61[3] := '!';
+  arraye86f2b61[4] := '?';
+  FOR indexe86f2b61 := 0 TO 4 DO
+    symbol := arraye86f2b61[indexe86f2b61];
     position := pos(symbol, sentence);
     WHILE position > 0 DO
       sentence := copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -600,7 +600,7 @@ BEGIN
   Out.Ln;
   Out.String("* - Kay Gürtzig / FH Erfurt 2016");
   Out.Ln;
-  Out.String("* Version: 2.3 (2019-11-28)");
+  Out.String("* Version: 2.3 (2020-02-24)");
   Out.Ln;
   Out.String("* (Requires at least Structorizer 3.30-03 to run)");
   Out.Ln;

@@ -56,10 +56,10 @@ char* adjustSpelling(char* sentence)
 		insert(uppercase(start), result, 1);
 	}
 	{
-		char* arrayca33e61b[2] = {" i ", " i\'"};
-		int indexca33e61b;
-		for (indexca33e61b = 0; indexca33e61b < 2; indexca33e61b++) {
-			char* word = arrayca33e61b[indexca33e61b];
+		char* array8b8c3e4b[2] = {" i ", " i\'"};
+		int index8b8c3e4b;
+		for (index8b8c3e4b = 0; index8b8c3e4b < 2; index8b8c3e4b++) {
+			char* word = array8b8c3e4b[index8b8c3e4b];
 			position = pos(word, result);
 			while (position > 0) {
 				delete(result, position+1, 1);
@@ -90,10 +90,10 @@ bool checkGoodBye(char* text, char* phrases[][2])
 	
 	{
 	// TODO: Find out and fill in the number of elements of the array phrases here! 
-		int countd84a3816 = ???;
-		int indexd84a3816;
-		for (indexd84a3816 = 0; indexd84a3816 < countd84a3816; indexd84a3816++) {
-			char* pair[] = phrases[indexd84a3816];
+		int count238e9224 = ???;
+		int index238e9224;
+		for (index238e9224 = 0; index238e9224 < count238e9224; index238e9224++) {
+			char* pair[] = phrases[index238e9224];
 			if (pos(pair[0], text) > 0) {
 				// TODO: check format specifiers, replace all '?'! 
 				printf("%?\n", pair[1]);
@@ -145,10 +145,10 @@ char* conjugateStrings(char* sentence, char* key, int keyPos, char* flexions[][2
 	result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
 	{
 	// TODO: Find out and fill in the number of elements of the array flexions here! 
-		int counta56ff7f1 = ???;
-		int indexa56ff7f1;
-		for (indexa56ff7f1 = 0; indexa56ff7f1 < counta56ff7f1; indexa56ff7f1++) {
-			char* pair[] = flexions[indexa56ff7f1];
+		int countcfc9aa6c = ???;
+		int indexcfc9aa6c;
+		for (indexcfc9aa6c = 0; indexcfc9aa6c < countcfc9aa6c; indexcfc9aa6c++) {
+			char* pair[] = flexions[indexcfc9aa6c];
 			left = "";
 			right = result;
 			position = pos(pair[0], right);
@@ -220,10 +220,10 @@ char* normalizeInput(char* sentence)
 	
 	sentence = lowercase(sentence);
 	{
-		char array8749c1b0[5] = {'.', ',', ';', '!', '?'};
-		int index8749c1b0;
-		for (index8749c1b0 = 0; index8749c1b0 < 5; index8749c1b0++) {
-			char symbol = array8749c1b0[index8749c1b0];
+		char array4d0fb3ef[5] = {'.', ',', ';', '!', '?'};
+		int index4d0fb3ef;
+		for (index4d0fb3ef = 0; index4d0fb3ef < 5; index4d0fb3ef++) {
+			char symbol = array4d0fb3ef[index4d0fb3ef];
 			position = pos(symbol, sentence);
 			while (position > 0) {
 				sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -587,7 +587,7 @@ int main(void)
 	// TODO: check format specifiers, replace all '?'! 
 	printf("%s\n", "* - Kay Gürtzig / FH Erfurt 2016");
 	// TODO: check format specifiers, replace all '?'! 
-	printf("%s\n", "* Version: 2.3 (2019-11-28)");
+	printf("%s\n", "* Version: 2.3 (2020-02-24)");
 	// TODO: check format specifiers, replace all '?'! 
 	printf("%s\n", "* (Requires at least Structorizer 3.30-03 to run)");
 	// TODO: check format specifiers, replace all '?'! 

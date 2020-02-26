@@ -48,10 +48,10 @@ const
   keyMap = setupKeywords();
 
 var
-  indexdcd7c362: 1..5;
-  arraydcd7c362: array [1..5] of string;
-  indexf495991d: 1..2;
-  arrayf495991d: array [1..2] of string;
+  index4d0fb3ef: 1..5;
+  array4d0fb3ef: array [1..5] of string;
+  index8b8c3e4b: 1..2;
+  array8b8c3e4b: array [1..2] of string;
   varPart: String;
   { Converts the input to lowercase, cuts out interpunctation }
   { and pads the string }
@@ -93,11 +93,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  arrayf495991d[1] := ' i ';
-  arrayf495991d[2] := ' i\''';
-  for indexf495991d := 1 to 2 do
+  array8b8c3e4b[1] := ' i ';
+  array8b8c3e4b[2] := ' i\''';
+  for index8b8c3e4b := 1 to 2 do
   begin
-    word := arrayf495991d[indexf495991d];
+    word := array8b8c3e4b[index8b8c3e4b];
     position := pos(word, result);
     while (position > 0) do
     begin
@@ -254,14 +254,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  arraydcd7c362[1] := '.';
-  arraydcd7c362[2] := ',';
-  arraydcd7c362[3] := ';';
-  arraydcd7c362[4] := '!';
-  arraydcd7c362[5] := '?';
-  for indexdcd7c362 := 1 to 5 do
+  array4d0fb3ef[1] := '.';
+  array4d0fb3ef[2] := ',';
+  array4d0fb3ef[3] := ';';
+  array4d0fb3ef[4] := '!';
+  array4d0fb3ef[5] := '?';
+  for index4d0fb3ef := 1 to 5 do
   begin
-    symbol := arraydcd7c362[indexdcd7c362];
+    symbol := array4d0fb3ef[index4d0fb3ef];
     position := pos(symbol, sentence);
     while (position > 0) do
     begin
@@ -601,7 +601,7 @@ begin
   writeln('**********************************');
   writeln('* Adapted for Structorizer by');
   writeln('* - Kay Gürtzig / FH Erfurt 2016');
-  writeln('* Version: 2.3 (2019-11-28)');
+  writeln('* Version: 2.3 (2020-02-24)');
   writeln('* (Requires at least Structorizer 3.30-03 to run)');
   writeln('**********************************');
   { Stores the last five inputs of the user in a ring buffer, }
