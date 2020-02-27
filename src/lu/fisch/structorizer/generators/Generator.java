@@ -98,6 +98,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
  *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
  *      Kay Gürtzig     2019-12-11      Bugfix #794: Code preview crash with unconfigured license preference
+ *      Kay Gürtzig     2020-02-20      Typo fixed in generateCode(Try)
  *
  ******************************************************************************************************
  *
@@ -2478,7 +2479,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateCode(_try.qTry, _indent + this.getIndent());
 		appendComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
 		generateCode(_try.qCatch, _indent + this.getIndent());
-		appendComment("fimally (FIXME!)", _indent);
+		appendComment("finally (FIXME!)", _indent);
 		generateCode(_try.qFinally, _indent + this.getIndent());
 		appendComment("end try (FIXME!)", _indent);
 	}

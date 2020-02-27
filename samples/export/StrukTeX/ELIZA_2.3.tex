@@ -6,7 +6,7 @@
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
 \author{Kay Gürtzig}
-\date{13.02.2020}
+\date{26.02.2020}
 
 \begin{document}
 
@@ -26,7 +26,7 @@
     \assign{\(position\ \gets\ position\ +\ 1\)}
   \whileend
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(position\ \leq\ length(sentence)\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(position\ \leq\ length(sentence)\)}{T}{F}
     \assign{\(start\ \gets\ copy(sentence,\ 1,\ position)\)}
     \assign{\(delete(result,\ 1,\ position)\)}
     \assign{\(insert(uppercase(start),\ result,\ 1)\)}
@@ -44,7 +44,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(151,60)[checkGoodBye]
+\begin{struktogramm}(151,54)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -55,8 +55,7 @@
     \end{declaration}
   }
   \while{\(\forall pair\in phrases\)}
-    \ifthenelse{5}{1}{\(pos(pair[0],\ text)\ >\ 0\)}{ja}{nein}
-      \assign{\(saidBye\ \gets\ true\)}
+    \ifthenelse{5}{1}{\(pos(pair[0],\ text)\ >\ 0\)}{T}{F}
       \assign{\(\)\pKey{OUTPUT}\(\ pair[1]\)}
       \exit{\(\)\pKey{return}\(\ true\)}
     \change
@@ -67,7 +66,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(140,83)[checkRepetition]
+\begin{struktogramm}(135,83)[checkRepetition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{history}}{type: \(History\)}
@@ -82,11 +81,11 @@
   }
   \assign{\(hasOccurred\ \gets\ false\)}
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(length(newInput)\ >\ 4\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(length(newInput)\ >\ 4\)}{T}{F}
     \assign{\(histDepth\ \gets\ length(history.histArray)\)}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(histDepth-1\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(newInput\ =\ history.histArray[i]\)}{ja}{nein}
+      \ifthenelse{3}{1}{\(newInput\ =\ history.histArray[i]\)}{T}{F}
         \assign{\(hasOccurred\ \gets\ true\)}
       \change
       \ifend
@@ -151,7 +150,7 @@
   \while{\((result[0]\ <\ 0)\ \wedge\ (i\ <\ length(keyMap))\)}
     \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[i]\)}
     \assign{\(position\ \gets\ pos(entry.keyword,\ sentence)\)}
-    \ifthenelse{5}{1}{\(position\ >\ 0\)}{ja}{nein}
+    \ifthenelse{5}{1}{\(position\ >\ 0\)}{T}{F}
       \assign{\(result[0]\ \gets\ i\)}
       \assign{\(result[1]\ \gets\ position\)}
     \change
@@ -318,7 +317,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(258,305)[ELIZA]
+\begin{struktogramm}(241,305)[ELIZA]
   \assign{%
     \begin{declaration}[Requires:]
       \description{History, KeyMapEntry}{}
@@ -333,7 +332,7 @@
   \assign{\(\)\pKey{OUTPUT}\(\ \)"{}**********************************"{}\(\)}
   \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Adapted\ for\ Structorizer\ by"{}\(\)}
   \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(\)}
-  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Version:\ 2.3\ (2019-11-28)"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Version:\ 2.3\ (2020-02-24)"{}\(\)}
   \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ (Requires\ at\ least\ Structorizer\ 3.30-03\ to\ run)"{}\(\)}
   \assign{\(\)\pKey{OUTPUT}\(\ \)"{}**********************************"{}\(\)}
   \assign{\(history\ \gets\ History\{\{\)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(\},\ 0\}\)}
@@ -348,22 +347,22 @@
     \assign{\(\)\pKey{INPUT}\(\ userInput\)}
     \sub{\(userInput\ \gets\ normalizeInput(userInput)\)}
     \sub{\(isGone\ \gets\ checkGoodBye(userInput,\ byePhrases)\)}
-    \ifthenelse{5}{1}{\(!\ isGone\)}{ja}{nein}
+    \ifthenelse{5}{1}{\(!\ isGone\)}{T}{F}
       \assign{\(reply\ \gets\ \)"{}Please\ don\'{}t\ repeat\ yourself!"{}\(\)}
       \sub{\(isRepeated\ \gets\ checkRepetition(history,\ userInput)\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(!\ isRepeated\)}{ja}{nein}
+      \ifthenelse{3}{1}{\(!\ isRepeated\)}{T}{F}
         \sub{\(findInfo\ \gets\ findKeyword(keyMap,\ userInput)\)}
         \assign{\(keyIndex\ \gets\ findInfo[0]\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(keyIndex\ <\ 0\)}{ja}{nein}
+        \ifthenelse{1}{1}{\(keyIndex\ <\ 0\)}{T}{F}
           \assign{\(keyIndex\ \gets\ length(keyMap)-1\)}
         \change
         \ifend
         \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[keyIndex]\)}
         \assign{\(varPart\ \gets\ \)"{}"{}\(\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(length(entry.keyword)\ >\ 0\)}{ja}{nein}
+        \ifthenelse{1}{1}{\(length(entry.keyword)\ >\ 0\)}{T}{F}
           \sub{\(varPart\ \gets\ conjugateStrings(userInput,\ entry.keyword,\ findInfo[1],\ reflexions)\)}
         \change
         \ifend
@@ -372,9 +371,9 @@
         \assign{\(offsets[keyIndex]\ \gets\ (offsets[keyIndex]\ +\ 1)\ \)\pKey{mod}\(\ length(replyRing)\)}
         \assign{\(posAster\ \gets\ pos(\)"{}*"{}\(,\ reply)\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(posAster\ >\ 0\)}{ja}{nein}
+        \ifthenelse{1}{1}{\(posAster\ >\ 0\)}{T}{F}
           % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-          \ifthenelse{1}{1}{\(varPart\ =\ \)"{}\ "{}\(\)}{ja}{nein}
+          \ifthenelse{1}{1}{\(varPart\ =\ \)"{}\ "{}\(\)}{T}{F}
             \assign{\(reply\ \gets\ \)"{}You\ will\ have\ to\ elaborate\ more\ for\ me\ to\ help\ you."{}\(\)}
           \change
             \assign{\(delete(reply,\ posAster,\ 1)\)}

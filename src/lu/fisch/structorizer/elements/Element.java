@@ -117,10 +117,10 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:
  *      
- *      2018-07-20: Enh.
+ *      2018-07-20 (Kay Gürtzig): Enh. #563
  *      - splitRecordInitializer can now also associate bare initializers (i.e. without explicit component names),
  *        provided that it obtains a valid record type entry as parameter.
- *      2016-07-28: Bugfix #210 (KGU#225)
+ *      2016-07-28 (Kay Gürtzig): Bugfix #210 (KGU#225)
  *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
  *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
  *        in Fibonacci, QuickSort, or binary search trees, all attempts to combine the counts from the
@@ -130,7 +130,7 @@ package lu.fisch.structorizer.elements;
  *        the diagram!) look via the shared index into the same vector slot and increment it when executed,
  *        at what call level ever. Still, the differences in run data copying between the element classes
  *        must still be put under scrutinous analysis. Not all differences seem plausible.
- *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
+ *      2016-03-06 / 2016-03-12 (Kay Gürtzig): Enhancements #77, #124 (KGU#117/KGU#156)
  *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
  *        white-box test completeness) was implemented. A green background colour was proposed and used
  *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
@@ -153,7 +153,7 @@ package lu.fisch.structorizer.elements;
  *        time estimation. Both count numbers (execution counter / instruction load) are now written
  *        to the upper right corner of any element, and additionally a scaled colouring from deep
  *        blue to hot red is used to visualize the hot spots and the lonesome places.
- *      2016-02-25 / 2016-03-02 Bugfix #97 (KGU#136)
+ *      2016-02-25 / 2016-03-02 (Kay Gürtzig): Bugfix #97 (KGU#136)
  *      - Methods prepareDraw() and draw() used the same field rect for temporary calculations but in
  *        a slightly different way: draw() left a bounding rec related to the Root coordinates whereas
  *        prepareDraw() always produced a (0,0)-bound rectangle i. e. with (0,0) as upper left corner.
@@ -166,28 +166,28 @@ package lu.fisch.structorizer.elements;
  *      - Field rect was also converted to a (0,0)-bound and hence position-independent bounds rectangle
  *        (in contrast to rect0 representing actual context-sensitive drawing extension (important for
  *        selection).
- *      2015.12.01 (KGU#91/KGU#92)
+ *      2015.12.01 (Kay Gürtzig: KGU#91/KGU#92)
  *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
  *      - Operator unification enhanced (issue #41)
- *      2015.11.03 (KGU#18/KGU#23/KGU#63)
+ *      2015.11.03 (Kay Gürtzig: KGU#18/KGU#23/KGU#63)
  *      - Methods writeOutVariables() and getWidthOutVariables re-merged, lexical splitter extracted from
  *        them.
- *      2015.11.01 (KGU#18/KGU#23)
+ *      2015.11.01 (Kay Gürtzig: KGU#18/KGU#23)
  *      - Methods unifyOperators(), transformIntermediate() and getIntermediateText() now support different
  *        activities like code generation and execution in a unique way.
- *      2015.10.11/13 (KGU#41 + KGU#43)
+ *      2015.10.11/13 (Kay Gürtzig: KGU#41 + KGU#43)
  *      - New fields added to distinguish states of selection from those of current execution, this way
  *        inducing more stable colouring and execution path tracking
  *      - a field and several methods introduced to support the setting of breakpoints for execution (it had
  *        always been extremely annoying that for the investigation of some issues near the end of the diagram
  *        either the entire execution had to be started in step more or you had to be utterly quick to pause
  *        in the right moment. Now breakpoints allow to catch the execution wherever necessary.
- *      2015.10.09
+ *      2015.10.09 (Kay Gürtzig)
  *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
  *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
  *        to the nearly identical method selectElementByCoord), both methods were merged by means of a
  *        discriminating additional parameter to identifyElementByCoord(_x, _y, _forSelection)
- *      2014.10.18 / 2014.11.11
+ *      2014.10.18 / 2014.11.11 (Kay Gürtzig)
  *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
@@ -269,7 +269,7 @@ public abstract class Element {
 	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-05";
+	public static final String E_VERSION = "3.30-06";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+

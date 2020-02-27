@@ -152,6 +152,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
+ *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
  *      
  ******************************************************************************************************
  *
@@ -3624,6 +3625,38 @@ public class Root extends Element {
     			}
     			// look at the comment for the IF-structure
     		}
+    		// START KGU#812 2020-02-21: Bugfix #825 forgotten to descend recursively
+    		else if (eleClassName.equals("Try")) {
+    			StringList tVars = _vars.copy();
+    			StringList cVars = _vars.copy();
+    			StringList fVars = _vars.copy();
+
+    			cVars.addIfNew(((Try)ele).getText().trim());
+    			
+    			analyse(((Try)ele).qTry, _errors, tVars, _uncertainVars, _constants, _resultFlags, _types);
+    			analyse(((Try)ele).qCatch, _errors, cVars, _uncertainVars, _constants, _resultFlags, _types);
+
+    			for(int v = 0; v < tVars.count(); v++)
+    			{
+    				String varName = tVars.get(v);
+    				if (!_vars.contains(varName)) { _uncertainVars.add(varName); }
+    			}
+    			for(int v = 0; v < cVars.count(); v++)
+    			{
+    				String varName = cVars.get(v);
+    				if (!_vars.contains(varName)) { _uncertainVars.add(varName); }
+    			}
+    			
+    			analyse(((Try)ele).qFinally, _errors, fVars, _uncertainVars, _constants, _resultFlags, _types);
+
+    			for(int v = 0; v < fVars.count(); v++)
+    			{
+    				String varName = fVars.get(v);
+    				_vars.addIfNew(varName);
+    			}
+
+    		}
+    		// END KGU#812 2020-02-21
     		// START KGU#376 2017-04-11: Enh. #389 - revised 2017-04-20 - disabled 2017-07-01
     		//else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
     		//	analyse_23((Call)ele, _errors, _vars, _uncertainVars, _constants);
@@ -3801,6 +3834,12 @@ public class Root extends Element {
 	 */
 	private void analyse_5_7_13(Element ele, Vector<DetectedError> _errors, StringList _myVars, boolean[] _resultFlags)
 	{
+		// START KGU#812 2020-02-21: Bugfix #825 We check the error variable of a TRY block too
+		if (ele instanceof Try) {
+			_myVars = _myVars.copy();
+			_myVars.addIfNew(((Try)ele).getExceptionVarName());			
+		}
+		// END KGU#812 2020-02-21
 		for (int j=0; j<_myVars.count(); j++)
 		{
 			String myVar = _myVars.get(j);

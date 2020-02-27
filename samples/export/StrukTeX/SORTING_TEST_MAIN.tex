@@ -6,12 +6,12 @@
 
 \title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
 \author{Kay Gürtzig}
-\date{02.12.2019}
+\date{26.02.2020}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(121,94)[bubbleSort]
+\begin{struktogramm}(94,68)[bubbleSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -22,7 +22,7 @@
     \assign{\(posSwapped\ \gets\ -1\)}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(ende\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(values[i]\ >\ values[i+1]\)}{ja}{nein}
+      \ifthenelse{3}{1}{\(values[i]\ >\ values[i+1]\)}{T}{F}
         \assign{\(temp\ \gets\ values[i]\)}
         \assign{\(values[i]\ \gets\ values[i+1]\)}
         \assign{\(values[i+1]\ \gets\ temp\)}
@@ -36,7 +36,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(175,109)[maxHeapify]
+\begin{struktogramm}(140,83)[maxHeapify]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{heap}}{type: \(null\)}
@@ -48,17 +48,17 @@
   \assign{\(left\ \gets\ right\ -\ 1\)}
   \assign{\(max\ \gets\ i\)}
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(left\ <\ range\ \wedge\ heap[left]\ >\ heap[i]\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(left\ <\ range\ \wedge\ heap[left]\ >\ heap[i]\)}{T}{F}
     \assign{\(max\ \gets\ left\)}
   \change
   \ifend
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(right\ <\ range\ \wedge\ heap[right]\ >\ heap[max]\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(right\ <\ range\ \wedge\ heap[right]\ >\ heap[max]\)}{T}{F}
     \assign{\(max\ \gets\ right\)}
   \change
   \ifend
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(max\ \neq\ i\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(max\ \neq\ i\)}{T}{F}
     \assign{\(temp\ \gets\ heap[i]\)}
     \assign{\(heap[i]\ \gets\ heap[max]\)}
     \assign{\(heap[max]\ \gets\ temp\)}
@@ -69,7 +69,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(162,122)[partition]
+\begin{struktogramm}(119,81)[partition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -87,9 +87,9 @@
   \assign{\(p\ \gets\ start\)}
   \assign{\(start\ \gets\ start\ +\ 1\)}
   \assign{\(stop\ \gets\ stop\ -\ 1\)}
-  \while{\(stop\ \geq\ start\)}
+  \while{\(start\ \leq\ stop\)}
     \assign{\(seen\ \gets\ values[start]\)}
-    \ifthenelse{2}{4}{\(values[start]\ \leq\ pivot\)}{ja}{nein}
+    \ifthenelse{2}{4}{\(seen\ \leq\ pivot\)}{T}{F}
       \assign{\(values[p]\ \gets\ seen\)}
       \assign{\(values[start]\ \gets\ pivot\)}
       \assign{\(p\ \gets\ p\ +\ 1\)}
@@ -105,7 +105,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(131,69)[testSorted]
+\begin{struktogramm}(101,52)[testSorted]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{numbers}}{type: \(null\)}
@@ -117,7 +117,7 @@
   \assign{\(isSorted\ \gets\ true\)}
   \assign{\(i\ \gets\ 0\)}
   \while{\(isSorted\ \wedge\ (i\ \leq\ length(numbers)-2)\)}
-    \ifthenelse{4}{2}{\(numbers[i]\ >\ numbers[i+1]\)}{ja}{nein}
+    \ifthenelse{4}{2}{\(numbers[i]\ >\ numbers[i+1]\)}{T}{F}
       \assign{\(isSorted\ \gets\ false\)}
     \change
       \assign{\(i\ \gets\ i\ +\ 1\)}
@@ -128,7 +128,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(89,45)[buildMaxHeap]
+\begin{struktogramm}(71,31)[buildMaxHeap]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{heap}}{type: \(null\)}
@@ -142,7 +142,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(181,82)[quickSort]
+\begin{struktogramm}(148,47)[quickSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -151,7 +151,7 @@
     \end{declaration}
   }
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(stop\ \geq\ start\ +\ 2\)}{ja}{nein}
+  \ifthenelse{10}{2}{\(stop\ \geq\ start\ +\ 2\)}{T}{F}
     \assign{\(p\ \gets\ random(stop-start)\ +\ start\)}
     \sub{\(p\ \gets\ partition(values,\ start,\ stop,\ p)\)}
     \inparallel{2} {quickSort(values,\ start,\ p)}
@@ -163,7 +163,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(108,68)[heapSort]
+\begin{struktogramm}(90,53)[heapSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -182,7 +182,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(247,204)[SORTING\_TEST\_MAIN]
+\begin{struktogramm}(194,170)[SORTING\_TEST\_MAIN]
   \until{\(elementCount\ \geq\ 1\)}
     \assign{\(\)\pKey{INPUT}\(\ elementCount\)}
   \untilend
@@ -209,11 +209,11 @@
   \sub{\(ok1\ \gets\ testSorted(values1)\)}
   \sub{\(ok2\ \gets\ testSorted(values2)\)}
   \sub{\(ok3\ \gets\ testSorted(values3)\)}
-  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(!\ ok1\ \vee\ !\ ok2\ \vee\ !\ ok3\)}{ja}{nein}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(!\ ok1\ \vee\ !\ ok2\ \vee\ !\ ok3\)}{T}{F}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount-1\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(values1[i]\ \neq\ values2[i]\ \vee\ values1[i]\ \neq\ values3[i]\)}{ja}{nein}
+      \ifthenelse{3}{1}{\(values1[i]\ \neq\ values2[i]\ \vee\ values1[i]\ \neq\ values3[i]\)}{T}{F}
         \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Difference\ at\ ["{}\(,\ i,\ \)"{}]:\ "{}\(,\ values1[i],\ \)"{}\ <->\ "{}\(,\ values2[i],\ \)"{}\ <->\ "{}\(,\ values3[i]\)}
       \change
       \ifend
@@ -223,8 +223,8 @@
   \until{\(show\ =\ \)"{}yes"{}\(\ \vee\ show\ =\ \)"{}no"{}\(\)}
     \assign{\(\)\pKey{INPUT}\(\ \)"{}Show\ arrays\ (yes/no)?"{}\(,\ show\)}
   \untilend
-  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(show\ =\ \)"{}yes"{}\(\)}{ja}{nein}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(show\ =\ \)"{}yes"{}\(\)}{T}{F}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount\ -\ 1\)}
       \assign{\(\)\pKey{OUTPUT}\(\ \)"{}["{}\(,\ i,\ \)"{}]:\t"{}\(,\ values1[i],\ \)"{}\t"{}\(,\ values2[i],\ \)"{}\t"{}\(,\ values3[i]\)}
     \whileend

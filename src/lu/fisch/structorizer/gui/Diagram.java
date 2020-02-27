@@ -1818,8 +1818,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					codePreview.scrollRectToVisible(viewRect);
 				}
 				catch (BadLocationException e) {
-					// FIXME DEBUG
+					// FIXME DEBUG (should not occur)
 					e.printStackTrace();
+				}
+				catch (NullPointerException ex) {
+					// Nothing we could do here, symptom for racing hazard
 				}
 			}
 		}

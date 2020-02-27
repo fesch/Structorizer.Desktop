@@ -1470,7 +1470,7 @@ public class CGenerator extends Generator {
 			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
 			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++) {
-				code.add(_indent + "case " + constants.get(j).trim() + ":");
+				addCode("case " + constants.get(j).trim() + ":", _indent, isDisabled);
 			}
 			// END KGU#15 2015-10-21
 			// START KGU#380 2017-04-14: Bugfix #394 - Avoid redundant break instructions
@@ -1785,11 +1785,15 @@ public class CGenerator extends Generator {
 		// START KGU#301 2016-12-01: Bugfix #301
 		//insertBlockTail(_repeat, "while (!(" 
 		//		+ transform(_repeat.getText().getLongString()).trim() + "))", _indent);
-		String condition = transform(_repeat.getText().getLongString()).trim();
-		if (!isParenthesized(condition)) {
-			condition = "(" + condition + ")";
-		}
-		appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		// START KGU#811 2020-02-21: Use existing base technology
+		//String condition = transform(_repeat.getText().getLongString()).trim();
+		//if (!isParenthesized(condition)) {
+		//	condition = "(" + condition + ")";
+		//}
+		//appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
+		appendBlockTail(_repeat, "while (" + transform(condition) + ")", _indent);
+		// END KGU#811 2020-02-21
 		// END KGU#301 2016-12-01
 	}
 

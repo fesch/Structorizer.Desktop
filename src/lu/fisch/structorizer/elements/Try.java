@@ -31,7 +31,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2019-03-15      First Issue (implementing an idea of Bob Fisch)
+ *      Kay Gürtzig     2019-03-15      First Issue (implementing an idea of Bob Fisch, enh. requ. #56)
  *      Kay Gürtzig     2019-09-17      Bugfix #749: Width for FINALLY section wasn't properly reserved
  *      Kay Gürtzig     2019-09-24      Bugfix #749: Text content and width in collapsed mode fixed
  *
@@ -113,7 +113,7 @@ public class Try extends Element {
 		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-		if(isCollapsed(true)) 
+		if (isCollapsed(true)) 
 		{
 			StringList collapsedText = getCollapsedText();
 			rect0 = Instruction.prepareDraw(_canvas, collapsedText, this);
