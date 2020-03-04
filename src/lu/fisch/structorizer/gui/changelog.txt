@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-06 (2020-02-24)
+Current development version: 3.30-07 (2020-03-04)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -75,6 +75,7 @@ Current development version: 3.30-06 (2020-02-24)
 - 06: Bugfix #824: Shell export of REPEAT loops was flawed in several aspects <2>
 - 06: Bugfix #825: Analyser had ignored the interior of TRY elements <2>
 - 06: Issue #826: User input is to accept backslashes as in Windows file paths <2>
+- 07: Bugfix #228: Code export error for routines with Pascal result mechanism <2> 
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

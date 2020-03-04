@@ -32,9 +32,10 @@ package lu.fisch.structorizer.generators;
 *
 *      Author          Date            Description
 *      ------          ----            -----------
-*      Kay Gürtzig     2016.07.19      First issue (for enh. #160)
-*      Kay Gürtzig     2016.08.10      Modification for bugfix #228 (KGU#237)
+*      Kay Gürtzig     2016-07-19      First issue (for enh. #160)
+*      Kay Gürtzig     2016-08-10      Modification for bugfix #228 (KGU#237)
 *      Kay Gürtzig     2019-12-03      Issue #766: Sorted caller set to achieve deterministic routine order
+*      Kay Gürtzig     2020-03-03      Fix for defective bugfix #228
 *
 ******************************************************************************************************
 *
@@ -60,7 +61,10 @@ final class SubTopoSortEntry {
 	
 	SubTopoSortEntry(Root _caller)
 	{
-		callers.add(_caller);
+		// START KGU#237 2020-03-03: Bugfix #228 - apparently forgotten precaution (caused NullPointerException)
+		//callers.add(_caller);
+		addCaller(_caller);
+		// END KGU#237 2020-03-03
 	}
 	
 	public void addCaller(Root _caller)
