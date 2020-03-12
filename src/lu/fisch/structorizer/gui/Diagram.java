@@ -8225,6 +8225,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#407 2017-06-22: Enh. #420
             iod.chkCommentImport.setSelected(ini.getProperty("impComments", "false").equals("true"));
             // END KGU#407 2017-06-22
+            // START KGU#821 2020-03-09: Issue #833
+            iod.chkInsertOptKeywords.setSelected(ini.getProperty("impOptKeywords", "false").equals("true"));
+            // END KGU#821 2020-03-09
             // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
             iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
             // END KGU#354 2017-03-08
@@ -8269,6 +8272,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#407 2017-06-22: Enh. #420
                 ini.setProperty("impComments", String.valueOf(iod.chkCommentImport.isSelected()));
                 // END KGU#407 2017-06-22
+                // START KGU#821 2020-03-09: Issue #833
+                ini.setProperty("impOptKeywords", String.valueOf(iod.chkInsertOptKeywords.isSelected()));
+                // END KGU#821 2020-03-09
                 // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
                 ini.setProperty("impSaveParseTree", String.valueOf(iod.chkSaveParseTree.isSelected()));
                 // END KGU#354 2017-03-08

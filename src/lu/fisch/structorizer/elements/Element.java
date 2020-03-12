@@ -4198,9 +4198,10 @@ public abstract class Element {
 	}
 	
 	/**
-     * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
-     * provided by _prefNames. If there is such a token sequence then it will be
-     * replaced throughout my text by the associated current parser preference for the respective name
+     * Looks up the associated token sequence in _splitOldKeys for any of the parser
+     * preference names provided by _prefNames. If there is such a token sequence
+     * then it will be replaced throughout {@code _line} by the associated current
+     * parser preference for the respective name.
 	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element

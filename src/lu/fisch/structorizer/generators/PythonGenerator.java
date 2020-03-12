@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
  *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
  *      Kay Gürtzig             2020-02-13      Bugfix #812: Defective solution for #782 (global references) mended
+ *      Kay Gürtzig             2020-03-08      Bugfix #831: Obsolete shebang and defective export of CALLs as parallel branch
  *
  ******************************************************************************************************
  *
@@ -1008,15 +1009,22 @@ public class PythonGenerator extends Generator
 			for (int v = 0; v < asgnd.count(); v++) {
 				used.removeAll(asgnd.get(v));
 			}
-			String args = used.concatenate(",");
-			if (used.count() == 1) {
-				args += ",";
-			}
 			if (sq.getSize() == 1) {
 				Element el = sq.getElement(0);
 				if (el instanceof Call && ((Call)el).isProcedureCall()) {
 					threadFunc = ((Call)el).getCalledRoutine().getName();
+					// START KGU#819 2020-03-08: Bugfix #831 - In case of a call we can (and must) simply copy the arg list.
+					String line = ((Call)el).getUnbrokenText().get(0);
+					used = Element.splitExpressionList(line.substring(line.indexOf("(")+1), ",");
+					for (int j = 0; j < used.count(); j++) {
+						used.set(j, transform(used.get(j)));
+					}
+					// END KGU#819 2020-03-08
 				}
+			}
+			String args = used.concatenate(",");
+			if (used.count() == 1) {
+				args += ",";
 			}
 			addCode(threadVar + " = Thread(target=" + threadFunc + ", args=(" + args + "))", _indent, isDisabled);
 			addCode(threadVar + ".start()", _indent, isDisabled);
@@ -1325,7 +1333,10 @@ public class PythonGenerator extends Generator
 		String indent = "";
 		if (topLevel)
 		{
-			code.add(_indent + "#!/usr/bin/env python");
+			// START KGU#819 2020-03-08: Bugfix #831
+			//code.add(_indent + "#!/usr/bin/env python");
+			code.add(_indent + "#!/usr/bin/python3");
+			// END KGU#819 2020-03-08
 			// START KGU#366 2017-03-10: Issue #378 the used character set is to be named 
 			code.add(_indent + "# -*- coding: " + this.getExportCharset().toLowerCase() + " -*-");
 			// END KGU#366 2017-03-10

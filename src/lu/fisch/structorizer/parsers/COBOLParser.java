@@ -9457,7 +9457,7 @@ public class COBOLParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
+	protected boolean subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
 		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 		if (aRoot.getMethodName().equals("???")) {
 			if (aRoot.getParameterNames().count() == 0) {	// How could there be arguments?
@@ -9493,6 +9493,7 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
+		return false;
 	}
 
 	// START KGU 2017-05-28: Now we try to resolve internal calls

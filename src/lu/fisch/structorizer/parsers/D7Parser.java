@@ -66,6 +66,8 @@ package lu.fisch.structorizer.parsers;
  *                                      Workaround #615: Replace comment delimiters (* *) with { } in preparation phase
  *      Kay Gürtzig     2019-03-23      Enh. #56: Import of Try and Raise instructions implemented.
  *      Kay Gürtzig     2019-11-19      Enh. #739: Genuine enumeration type import (revision of #558)
+ *      Kay Gürtzig     2020-03-08      Bugfix #833: Parameter parentheses ensured, superfluous Includable suppressed
+ *      Kay Gürtzig     2020-03-09      Bugfix #835: Structure preference kywords must not be glued to expressions
  *
  ******************************************************************************************************
  *
@@ -871,6 +873,14 @@ public class D7Parser extends CodeParser
 	private String unitName = null;
 	// END KGU#194 2016-05-08
 	
+	// START KGU#821 2020-03-07: Issue #833 We must process parameterless routines
+	/** List of the names of detected parameterless routines (in order to add parentheses) */
+	private StringList paramlessRoutineNames = new StringList();
+	
+	/** Registers all occurring USES clauses in order to add them to the comments of imported {@link Root}s. */
+	private StringList usesClauses = new StringList();
+	// END KGU#821 2020-03-07
+	
 	public String filterNonAscii(String inString) 
 	{
 		// Create the encoder and decoder for the character encoding
@@ -1124,7 +1134,9 @@ public class D7Parser extends CodeParser
 				//System.out.println(ruleHead + ": " + content);
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				//_parentNode.addElement(new Instruction(translateContent(content)));
-				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				// START KGU#821 2020-03-08: Issue #833 - check parameterless routine calls
+				//_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction));
+				_parentNode.addElement(this.equipWithSourceComment(new Instruction(translateContentWithCalls(content)), _reduction));
 				// END KGU#407 2017-06-22
 			}
 			// START KGU#358 2017-03-29: Enh. #368
@@ -1282,14 +1294,21 @@ public class D7Parser extends CodeParser
 			// END KGU#388 2017-09-22
 			else if (
 					 ruleHead.equals("<UsesClause>")
-					 // START KGU#358 2017-03-29: Enh. #368 we do no longer ignore const/var declarations
-					 //||
-					 //ruleHead.equals("<VarSection>")
-					 //||
-					 //ruleHead.equals("<ConstSection>")
-					 //||
-					 //ruleHead.equals("<TypeSection>")
-					 ||
+			// START KGU#821 2020-03-08: Issue #833 Register uses clauses to add them as comments to all Roots
+			//		 // START KGU#358 2017-03-29: Enh. #368 we do no longer ignore const/var declarations
+			//		 //||
+			//		 //ruleHead.equals("<VarSection>")
+			//		 //||
+			//		 //ruleHead.equals("<ConstSection>")
+			//		 //||
+			//		 //ruleHead.equals("<TypeSection>")
+			//		 ||
+					 ) {
+				String usesClause = this.getContent_R(_reduction, "");
+				this.usesClauses.add(usesClause);
+			}
+			else if (
+			// END KGU#821 2020-03-08
 					 ruleHead.equals("<LabelSection>")
 					 // END KGU#358 2017-03-29
 					 // START KGU#194 2016-05-08: Bugfix #185
@@ -1396,6 +1415,12 @@ public class D7Parser extends CodeParser
 				{
 					content = getContent_R(secReduc,content);
 				}
+				// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
+				else {
+					paramlessRoutineNames.add(content);
+					content += "()";
+				}
+				// END KGU#821 2020-03-08
 				
 				if (ruleHead.equals("<FuncHeading>"))
 				{
@@ -1436,7 +1461,12 @@ public class D7Parser extends CodeParser
 			{
 				content = new String();
 				content = getContent_R(_reduction.get(1).asReduction(), content);
-				While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
+				// START KGU#8222020-03-09: Issue #835
+				//While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
+				While ele = new While(getOptKeyword("preWhile", false, true)
+						+ translateContent(content)
+						+ getOptKeyword("postWhile", true, false));
+				// END KGU#822 2020-03-09
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -1451,7 +1481,12 @@ public class D7Parser extends CodeParser
 			{
 				content = new String();
 				content = getContent_R(_reduction.get(3).asReduction(), content);
-				Repeat ele = new Repeat(getKeyword("preRepeat")+translateContent(content)+getKeyword("postRepeat"));
+				// START KGU#822 2020-03-09: Issue #835
+				//Repeat ele = new Repeat(getKeyword("preRepeat")+translateContent(content)+getKeyword("postRepeat"));
+				Repeat ele = new Repeat(getOptKeyword("preRepeat", false, true)
+						+ translateContent(content)
+						+ getOptKeyword("postRepeat", true, false));
+				// END KGU#822 2020-03-09
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -1498,7 +1533,12 @@ public class D7Parser extends CodeParser
 				content = new String();
 				content = getContent_R(_reduction.get(1).asReduction(), content);
 				
-				Alternative ele = new Alternative(getKeyword("preAlt") + translateContent(content)+getKeyword("postAlt"));
+				// START KGU#822 2020-03-09: Issue #835
+				//Alternative ele = new Alternative(getKeyword("preAlt") + translateContent(content)+getKeyword("postAlt"));
+				Alternative ele = new Alternative(getOptKeyword("preAlt", false, true)
+						+ translateContent(content)
+						+ getOptKeyword("postAlt", true,false));
+				// END KGU#822 2020-03-09
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -1539,7 +1579,12 @@ public class D7Parser extends CodeParser
 					 )
 			{
 				content = "";
-				content = getKeyword("preCase") + getContent_R(_reduction.get(1).asReduction(), content) + getKeyword("postCase");
+				// START KGU#822 2020-03-09: Issue #835
+				//content = getKeyword("preCase") + getContent_R(_reduction.get(1).asReduction(), content) + getKeyword("postCase");
+				content = getOptKeyword("preCase", false, true)
+						+ getContent_R(_reduction.get(1).asReduction(), content)
+						+ getOptKeyword("postCase", true, false);
+				// END KGU#822 2020-03-09
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
@@ -1647,7 +1692,10 @@ public class D7Parser extends CodeParser
 					if (secRuleId == RuleConstants.PROD_EXCEPTIONBLOCK_SEMI
 							|| elseRuleId == RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE) {
 						// Create a case structure with minimum content
-						Case select = new Case((getKeyword("preCase") + " ??? " + getKeyword("postCase")).trim() + "\n!!\nelse");
+						// START KGU#822 2020-03-09: Issue #835
+						//Case select = new Case((getKeyword("preCase") + " ??? " + getKeyword("postCase")).trim() + "\n!!\nelse");
+						Case select = new Case((getOptKeyword("preCase", false, true) + "???" + getOptKeyword("postCase", true, false)).trim() + "\n!!\nelse");
+						// END KGU#821 2020-03-09
 						select.setComment("FIXME: This case selection just reflects the exception type discrimination\nIt won't be executable in this form.");
 						while (secRuleId == RuleConstants.PROD_EXCEPTIONBLOCK_SEMI) {
 							exVarName = insertExceptionBlock(select, secReduc.get(2).asReduction(), exVarName);
@@ -1660,7 +1708,7 @@ public class D7Parser extends CodeParser
 							buildNSD_R(elseReduc, select.qs.lastElement());
 						}
 						else {
-							select.qs.lastElement().addElement(new Jump(getKeyword("preThrow")));
+							select.qs.lastElement().addElement(new Jump(getKeywordOrDefault("preThrow", "throw")));
 						}
 						ele.qCatch.addElement(select);
 						if (exVarName != null) {
@@ -1691,7 +1739,7 @@ public class D7Parser extends CodeParser
 						ele = encapsulated;
 					}
 					else {
-						ele.qCatch.addElement(new Jump(getKeyword("preThrow")));
+						ele.qCatch.addElement(new Jump(getKeywordOrDefault("preThrow", "throw")));
 					}
 					buildNSD_R(secReduc, ele.qFinally);					
 				}
@@ -1889,6 +1937,27 @@ public class D7Parser extends CodeParser
 		return _content.trim();
 	}
 	
+	// START KGU#821 2020-03-08: Issue #833 - Identify and modify references to parameterless routines
+	private String translateContentWithCalls(String _content)
+	{
+		String translated = this.translateContent(_content);
+		StringList tokens = Element.splitLexically(translated, true);
+		int posAsgn = tokens.indexOf("<-");
+		for (int i = 0; i < paramlessRoutineNames.count(); i++) {
+			String routineName = paramlessRoutineNames.get(i);
+			int pos = posAsgn;
+			while ((pos = tokens.indexOf(routineName, pos+1)) >= 0) {
+				int parPos = pos;
+				while (parPos < tokens.count() && tokens.get(++parPos).trim().isEmpty());
+				if (parPos >= tokens.count() || !tokens.get(parPos).equals("(")) {
+					tokens.set(pos, routineName + "()");
+				}
+			}
+		}
+		return tokens.concatenate();
+	}
+	// END KGU#821 2020-03-08
+	
 	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
 		// START KGU#537 2018-07-01: Enh. #553
@@ -1954,13 +2023,20 @@ public class D7Parser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled {
+	protected boolean subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled {
+		// START KGU#821 2020-03-08: Issue #833 - Need a chance to get rid of superfluous diagrams
+		boolean isSuperfluous = false;
 		getLogger().config(root.getSignatureString(false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
 			root.setInclude();
 			root.getComment().insert("(UNIT " + unitName + ")", 0);
 		}
+		// START KGU#821 2020-03-08: Issue #833
+		if (!usesClauses.isEmpty()) {
+			root.getComment().add(usesClauses);
+		}
+		// END KGU#821 2020-03-08
 		// START KGU#586 2018-09-28: Bugfix #613 check the established inclusions for necessity
 		if (root.isInclude() && root.children.getSize() == 0) {
 			StringList comment = root.getComment();
@@ -1971,6 +2047,7 @@ public class D7Parser extends CodeParser
 					includer.comment.add(comment);
 				}
 			}
+			isSuperfluous = true;
 		}
 		// END KGU#586 2018-09-28
 		// START KGU#587 2018-09-28: Issue #614 - remove redundant result instruction
@@ -1984,6 +2061,9 @@ public class D7Parser extends CodeParser
 			}
 		}
 		// END KGU#587 2018-09-28
+		// START KGU#821 2020-03-08: Issue #833 see above
+		return isSuperfluous;
+		// END KGU#821 2020-03-08
 	}
 
 	
