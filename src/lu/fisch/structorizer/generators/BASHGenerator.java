@@ -79,17 +79,65 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig         2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig         2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürttig         2019-10-15      Bugfix #765: Private field typeMap had to be made protected
+ *      Kay Gürtzig         2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig         2019-11-24      Bugfix #783 - Workaround for record initializers without known type
+ *      Kay Gürtzig         2019-11-24      Bugfix #784 - Suppression of mere declarations and fix in transformExpression()
+ *      Kay Gürtzig         2019-12-01      Enh. #739: Support for enum types, $() around calls removed, array decl subclassable
+ *      Kay Gürtzig         2020-02-16/24   Issue #816: Function calls and value return mechanism revised
+ *      Kay Gürtzig         2020-02-17/18   Issue #816: Efforts to label local variables in routines appropriately
+ *      Kay Gürtzig         2020-02-18      Enh. #388: Support for constants
+ *      Kay Gürtzig         2020-02-20/24   Issues #816, #821: More sophisticated approach to pass records/arrays (see comment)
+ *      Kay Gürtzig         2020-02-21      Bugfix #824: The condition of the Repeat loop wasn't negated,
+ *                                          several absurd bugs in finishCondition() fixed
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
  *      
- *      2016.04.05 - Enhancement #153 (Kay Gürtzig / Rolf Schmidt)
+ *      2020-02-20 Passing arrays and records into and out of routines (Kay Gürtzig)
+ *      - There is no easy way to copy arrays and records, and in most cases these are not even desired
+ *      - ksh and bash 4.* allow a name reference (local -n / typeset -n / declare -n) that can be used
+ *        to pass an array orc record (= associate array) into a function but it requires that the argument
+ *        is a variable (this is in mostly the case, particularly as Structorizer doesn't support nested
+ *        CALLs, but does not cover component or array element access - though nested data structures are
+ *        not supported by the shells anyway) and then to pass the un-dollared name of the array/record.
+ *      - The pass an array or record out of a routine is more tricky. As we converted value return to
+ *        a mechanism using a uniquely named generic global variable, we must copy the actual value into
+ *        this global value in general, which can be done via "${array[&commat;]}" in case of an array and
+ *        requires a loop in case of a record. A global name reference (declare -ng) wouldn't make sense
+ *        as it would usually refer to a local name. The folowing paradigms for the return of arrays and
+ *        records are tested for viability and implemented as far as possible:
+ *        a) Returning an array:
+ *        	routineA() {
+ *        		...
+ *        		declare -ag result0815=("${array[@]}")
+ *        	}
+ *          CALL:
+ *        	routineA ...
+ *        	declare -a res=("${result0815[@]}")
+ *        b) Returning a record:
+ *        	routineR() {
+ *        		...
+ *        		declare -ag result4711keys=("${!record[@]}")
+ *        		declare -ag result4711values=("${record[@]}")
+ *        	}
+ *          CALL:
+ *        	routineR ...
+ *        	declare -A res
+ *        	for index4711 in ${!result4711keys[@]}; do
+ *        		res[${result4711keys[$index4711]}]="result4711values[$index4711]}"
+ *        	done
+ *        For putting array or record variables into an array or record initializer, an
+ *        executable reconstruction command will be created at runtime and placed instead.
+ *        In the exported code, these artefacts look like "$(typeset -p varname)".
+ *      
+ *      2016-04-05 - Enhancement #153 (Kay Gürtzig / Rolf Schmidt)
  *      - Parallel elements hat just been ignored by previous versions Now an easy way could be
  *        implemented. It's working rather well, provided that the commands within the
  *        branches are convertible. Delivered with version 3.24-06. 
  *      
- *      2016.03.21/22 - Enhancement #84/#135 (Kay Gürtzig / Rolf Schmidt)
+ *      2016-03-21/22 - Enhancement #84/#135 (Kay Gürtzig / Rolf Schmidt)
  *      - Besides the working (but rather rarely used) C-like "three-expression" FOR loop, FOR-IN loops
  *        were to be enabled in a consistent way, i.e. the syntax must also be accepted by Editors and
  *        Executor as well as other code generators.
@@ -98,30 +146,35 @@ package lu.fisch.structorizer.generators;
  *        item1, item2, item3 -->   item1 item2 item3
  *        {val1..val2} and {val1..val2..step} would be left as is but not explicitly created
  *      
- *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
  *      
- *      2015-11-02 - Code revision / enhancements
+ *      2015-11-02 - Code revision / enhancements (Kay Gürtzig)
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
  *      - Enhancement #10 (KGU#3): FOR loops now provide themselves more reliable loop parameters  
  *      - Case enabled to combine several constants/patterns in one branch (KGU#15)
  *      - The Repeat loop had been implememed in an incorrect way  
  *      
- *      2015.10.18 - Bugfixes (KGU#53, KGU#30)
+ *      2015-10-18 - Bugfixes (KGU#53, KGU#30)
  *      - Conversion of functions improved by producing headers according to BASH syntax
  *      - Conversion of For loops slightly improved (not robust, may still fail with complex expressions as loop parameters
  *      
- *      2014.11.16 - Bugfixes / Enhancement
+ *      2014-11-16 - Bugfixes / Enhancement
  *      - conversion of Pascal-like logical operators "and", "or", and "not" supported 
  *      - conversion of comparison and operators accomplished
  *      - comment export introduced 
  *
  ******************************************************************************************************///
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Vector;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -256,7 +309,129 @@ public class BASHGenerator extends Generator {
 	
 	/************ Code Generation **************/
 	
-	private HashMap<String, TypeMapEntry> typeMap = null;
+	/** Currently exported {@link Root} */
+	protected Root root = null;
+	
+	/** Matcher for simple variable access consisting of a dollar sign and an identifier within braces */
+	protected static final Matcher VAR_ACCESS_MATCHER = Pattern.compile("[$]\\{[A-Za-z][A-Za-z0-9_]*\\}").matcher("");
+
+	/** Name of an auxiliary function to copy associative arrays */
+	private static final String FN_COPY_ASSOC_ARRAY = "auxCopyAssocArray";
+
+	/** Set of comparison operators requiring arithmetic evaluation if placed among numeric operands */
+	private final Set<String> compOprs = new HashSet<String>(
+			Arrays.asList(new String[]{/*"==",*/ "<", ">", "<=", ">=", /*"!=", "<>"*/}));
+
+	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
+	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
+	protected String getEnumDeclarator()
+	{
+		return "declare -ri ";
+	}
+	
+	/** @param isConst - whether the respective variable is to be declared read-only
+	 * @return the shell-specific declarator for array variables (e.g. {@code "declare -a "} for bash) */
+	protected String getArrayDeclarator(boolean isConst)
+	{
+		return isConst ? "declare -ar " : "declare -a ";
+	}
+
+	/** @param isConst - whether the respective variable is to be declared read-only
+	 * @return the shell-specific declarator for associative arrays (maps, e.g. {@code "declare -A "} for bash) */
+	protected String getAssocDeclarator(boolean isConst)
+	{
+		return isConst ? "declare -Ar " : "declare -A ";
+	}
+	// END KGU#542 2019-12-01
+	
+	// START KGU#803/KGU#806 2020-02-18: Issues #388, #816
+	/**
+	 * @return the shell-specific declarator for read-only variables
+	 */
+	protected String getConstDeclarator()
+	{
+		return "declare -r ";
+	}
+
+	/**
+	 * @param isConst - whether the reference is to be readonly
+	 * @return a declarator prefix for a name reference
+	 */
+	protected String getNameRefDeclarator(boolean isConst)
+	{
+		if (isConst) {
+			return "declare -nr ";
+		}
+		return "declare -n ";
+	}
+
+	/**
+	 * @param isConst - whether the subject to be declared is a constant
+	 * @param type - a {@link TypeMapEntry} if available for the subject, otherwise null
+	 * @return the shell-specific declarator for general local variables
+	 */
+	protected String getLocalDeclarator(boolean isConst, TypeMapEntry type)
+	{
+		if (type != null) {
+			if (type.isRecord()) {
+				return this.getAssocDeclarator(isConst);
+			}
+			else if (type.isArray()) {
+				return this.getArrayDeclarator(isConst);
+			}
+			String typeName = type.getCanonicalType(true, true);
+			if (typeName.equals("int")) {
+				return "declare -i" + (isConst ? "r" : "") + " ";
+			}
+		}
+		if (isConst) {
+			return this.getConstDeclarator();
+		}
+		return "local ";
+	}
+
+	/**
+	 * Returns an array assignment among array variables. A possible declarator (like
+	 * {@code declare -a} in bash or {@code set -A} in ksh will be put as prefix if
+	 * {@code tgtVar} is given, with the respective options according to the flags
+	 * {@code asConstant}, {@code as Global}.<br/>
+	 * If {@code tgtVar} is null then only the right-hand side of the assigment (an
+	 * expression) will be returned).
+	 * @param tgtVar - the target array variable (left-hand side) of the assignment or null
+	 * @param srcVar - the source array variable (right-hand side) of the assignment
+	 * @param getKeys - whether rather the keys/indices are to be collected
+	 * @param asConstant - whether a read-only declaratioin is to be effectuated 
+	 * @param asGlobal - whether an export declaration is to be effectuated
+	 * @return the assignment string with declarator or just the rval without declarator
+	 * (in this case the flags {@code asConstant} and {@code asGlobal} will be ignored.)
+	 * @see #getArrayDeclarator(boolean)
+	 */
+	protected String makeArrayCopyAssignment(String tgtVar, String srcVar, boolean getKeys, boolean asConstant, boolean asGlobal)
+	{
+		String prefix = "";
+		if (tgtVar != null) {
+			prefix = this.getArrayDeclarator(asConstant);
+			if (asGlobal) {
+				prefix += "-g ";
+			}
+			prefix += tgtVar + this.getArrayInitOperator();
+		}
+		return prefix + "(\"${" + (getKeys ? "!" : "") + srcVar + "[@]}\")";
+	}
+	
+	/**
+	 * @return the operator symbol for array initialization
+	 */
+	protected String getArrayInitOperator()
+	{
+		return "=";
+	}
+	// END KGU#803/#806 2020-02-18
+	
+	// START KGU#753 2019-10-15: Bugfix #765 had to be made protected, since KSHGenerator must initialize it as well. 
+	//private HashMap<String, TypeMapEntry> typeMap = null;
+	protected HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#753 2019-10-15 
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -331,13 +506,14 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-		// Trim the tokens at end (just for sure)
-		int pos0 = 0;
-		int posx = tokens.count();
-		while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-		while (pos0 < posx && tokens.get(posx-1).equals(" ")) { posx--; }
-		tokens.remove(posx, tokens.count());
-		tokens.remove(0, pos0);
+		// START KGU#803 2020-02-18: Enh. #388 (constant handling)
+		boolean isConst = false;
+		String declarator = "";
+		String varName = "";
+		String origExpr = "";
+		// END KGU#803 2020-02-18
+		// Trim the tokens at both ends (just for sure)
+		tokens = tokens.trim();
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
@@ -345,8 +521,13 @@ public class BASHGenerator extends Generator {
 		if (posAsgnOpr > 0) {
 			// FIXME: Consider using lValueToTypeNameIndexComp(String) rather than reinventing all
 			String token0 = tokens.get(0);
+			// START KGU#803 2020-02-18: Enh. #388 - handling of constants
+			if (isConst = token0.equalsIgnoreCase("const")) {
+				declarator = this.getConstDeclarator();
+			}
+			// END KGU#803 2020-02-18
 			int posColon = -1;
-			if (token0.equalsIgnoreCase("var") || token0.equalsIgnoreCase("const")) {
+			if (token0.equalsIgnoreCase("var") || isConst) {
 				tokens.remove(0);
 				posAsgnOpr--;
 				posColon = tokens.indexOf(":");
@@ -372,6 +553,7 @@ public class BASHGenerator extends Generator {
 				}
 			}
 			// END KGU#388 2017-10-05
+			origExpr = tokens.concatenate(null, posAsgnOpr + 1).trim();
 		}
 		// END KGU#388 2017-10-24
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
@@ -388,32 +570,40 @@ public class BASHGenerator extends Generator {
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
 		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = tokens.lastIndexOf("]", posAsgnOpr-1);
-    	for (int i = 0; i < varNames.count(); i++)
-    	{
-    		String varName = varNames.get(i);
-    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		// Transform the expression right of the assignment symbol
-    		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
-    		// Transform the index expression on the left side of the assignment symbol
-    		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
-    	}
+		for (int i = 0; i < varNames.count(); i++)
+		{
+			String var = varNames.get(i);
+			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+			// Transform the expression right of the assignment symbol
+			transformVariableAccess(var, tokens, posAsgnOpr+1, tokens.count());
+			// Transform the index expression on the left side of the assignment symbol
+			transformVariableAccess(var, tokens, posBracket1+1, posBracket2+1);
+		}
 
 		// Position of the assignment operator may have changed now
-    	posAsgnOpr = tokens.indexOf("<-");
+		posAsgnOpr = tokens.indexOf("<-");
 		// END KGU#96 2016-01-08
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
-		tokens.replaceAllCi("false", "0");	// FIXME: Is this correct?
-		tokens.replaceAllCi("true", "1");	// FIXME: Is this correct?
+		tokens.replaceAllCi("false", "0");
+		tokens.replaceAllCi("true", "1");
 		// START KGU#164 2016-03-29: Bugfix #138 - function calls weren't handled
 		//return tokens.concatenate();
 		String lval = "";
 		if (posAsgnOpr > 0)
 		{
 			// Separate lval and assignment operator from the expression tokens
-			lval += tokens.concatenate("", 0, posAsgnOpr).trim() + "=";
+			varName = tokens.concatenate("", 0, posAsgnOpr).trim();
+			lval += varName + "=";
 			tokens = tokens.subSequence(posAsgnOpr+1, tokens.count());
+			// START KGU#803 2020-02-18: Issues #388, #816
+			// We don't know whether we might process a call here, so better don't set handled entry
+			if (Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)
+					&& root.isSubroutine()) {
+				declarator = this.getLocalDeclarator(isConst, typeMap.get(varName));
+			}
+			// END KGU#803 2020-02-18
 		}
 		else if (tokens.count() > 0)
 		{
@@ -432,11 +622,8 @@ public class BASHGenerator extends Generator {
 				}
 			}
 		}
-    	// Trim the tokens at front
-    	pos0 = 0;
-    	posx = tokens.count();
-    	while (pos0 < posx && tokens.get(pos0).equals(" ")) { pos0++; }
-    	tokens.remove(0, pos0);
+		// Trim the tokens (at front)
+		tokens = tokens.trim();
 		// Re-combine the rval expression to a string 
 		String expr = tokens.concatenate();
 		// If the expression is a function call, then convert it to shell syntax
@@ -464,43 +651,83 @@ public class BASHGenerator extends Generator {
 			//}
 			expr = transformExpression(fct);
 			// END KGU#405 2017-05-19
-			if (posAsgnOpr > 0)
-			{
-				// START KGU#390 2017-05-05: Issue #396
-				//expr = "`" + expr + "`";
-				expr = "$(" + expr + ")";
-				// END KGU#390 2017-05-05
+			//if (posAsgnOpr > 0)
+			boolean isRoutine = this.routinePool != null 
+					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty();
+			// START KGU#803 2020-02-16: Issue #816 don't assign the result of functions directly
+			//if (posAsgnOpr > 0 && !isRoutine)
+			// END KGU 2019-12-01
+			//{
+			//	expr = "$(" + expr + ")";
+			//}
+			if (posAsgnOpr > 0) {
+				// KGU 2019-12-01: An evaluation should not apply for subroutines!
+				if (isRoutine) {
+					lval = "";	// Assignment is to be handled by the CALL element afterwards
+					declarator = "";
+				}
+				else {
+					/* FIXME This would just collect all (console) output of the function */
+					expr = "$( " + expr + " )";
+				}
 			}
+			// END KGU#803 2020-02-16
 		}
+		// FIXME (KGU 2019-12-01) this looks too simplistic
 		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
 		{
-			lval = "declare -a " + lval;
+			// Array initializer
+			declarator = this.getArrayDeclarator(isConst);
+			boolean isAssignment = lval.endsWith("=");
+			if (isAssignment) {
+				lval = lval.substring(0, lval.length()-1) + this.getArrayInitOperator();
+			}
 			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
 			// START KGU#405 2017-05-19: Bugfix #237 - was too simple an analysis
 			for (int i = 0; i < items.count(); i++) {
-				items.set(i, transformExpression(items.get(i), true));
+				items.set(i, transformExpression(items.get(i), true, false));
 			}
 			// END KGU#405 2017-05-19
-			expr = "(" + items.getLongString() + ")";
+			// START KGU#803 2020-02-20: Issue #816, #423
+			//expr = "(" + items.getLongString() + ")";
+			expr = items.getLongString();
+			if (!(isAssignment && this.getArrayInitOperator().equals(" ") /* indicator for ksh */)) {
+				expr = "(" + expr + ")";
+			}
+			// END KGU#803 2020-02-20
 		}
 		// START KGU#388 2017-10-24: Enh. #423
 		else if (tokens.count() > 2 && Function.testIdentifier(tokens.get(0), null)
 				&& tokens.get(1).equals("{") && expr.endsWith("}")
 				// START KGU#559 2018-07-20: Enh. #  Try to fetch sufficient type info
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
-				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)))) != null) {
+				&& (recordIni = Element.splitRecordInitializer(expr, this.typeMap.get(":"+tokens.get(0)), false)) != null) {
 				// END KGU#559 2018-07-20
+			// Record initializer
+			// START KGU#388 2019-11-28: Bugfix #423 - record initializations must not be separated from the declaration
+			declarator = this.getAssocDeclarator(false);	// Repetition of declaration doesn't cause harm
+			// END KGU#388 2019-11-28
 			StringBuilder sb = new StringBuilder(15 * recordIni.size());
 			String sepa = "(";
 			for (Entry<String, String> entry: recordIni.entrySet()) {
 				String key = entry.getKey();
 				if (!key.startsWith("§")) {
-					sb.append(sepa + '[' + key + "]=" + entry.getValue());
+					// START KGU#807 2020-02-21 Bugfix #821 - we must do specific expression transformation
+					//sb.append(sepa + '[' + key + "]=" + entry.getValue());
+					sb.append(sepa + '[' + key + "]=" + this.transformExpression(entry.getValue(), true, false));
+					// END KGU#807 2020-02-21
 					sepa = " ";
 				}
 			}
-			sb.append(")");
-			expr = sb.toString();
+			// START KGU#771 2019-11-24: Bugfix #783 - fallback for the case of missing struct info
+			//sb.append(")");
+			//expr = sb.toString();
+			// If the type info was available or didn't provide any content then leave expr as is
+			if (sb.length() > 0) {
+				sb.append(")");
+				expr = sb.toString();
+			}
+			// END KGU#771 2019-11-24
 		}
 		// END KGU#388 2017-10-24
 		// The following is a very rough and vague heuristics to support arithmetic expressions 
@@ -518,7 +745,7 @@ public class BASHGenerator extends Generator {
 				//{
 				//	expr = "$" + expr;
 				//}
-				expr = transformExpression(expr, posAsgnOpr > 0);
+				expr = transformExpression(expr, posAsgnOpr > 0, false);
 				// END KGU#405 2017-05-19
 			}
 			// START KGU 2016-03-31: Issue #135+#144 - quoting wasn't actually helpful
@@ -527,8 +754,29 @@ public class BASHGenerator extends Generator {
 //				expr = "\"" + expr + "\"";
 //			}
 			// END KGU 2016-03-31
+			// START KGU#807 2020-02-24: Issue #821 Care for result assignments from complex variable
+			// FIXME: This is of course a very limited partial workaround and should be revised with #800
+			if (varNames.contains(origExpr) && root.isSubroutine()
+					&& (varName.equalsIgnoreCase("result") || varName.equals(root.getMethodName()))) {
+				TypeMapEntry type1 = typeMap.get(varName);
+				TypeMapEntry type2 = typeMap.get(origExpr);
+				if (type1 != null && type2 != null) {
+					if (type1.isArray() && type2.isArray()) {
+						expr = makeArrayCopyAssignment(null, origExpr, false, false, false);
+					}
+					else if (type1.isRecord() && type2.isRecord()) {
+						// Now this is getting tricky as we'd need to copy the associative array in one line
+						lval = varName + "; ";
+						expr = FN_COPY_ASSOC_ARRAY + " " + varName + " " + origExpr;
+					}
+				}
+			}
+			// END KGU#807 2020-02-24
 		}
-		return lval + expr;
+		if (!declarator.isEmpty() && Function.testIdentifier(varName, null)) {
+			wasDefHandled(root, varName, true);	// Set the handled flag
+		}
+		return declarator + lval + expr;
 		// END KGU#164 2016-03-29
 	}
 	// END KGU#93 2015-12-21
@@ -536,7 +784,16 @@ public class BASHGenerator extends Generator {
 	// END KGU#18/KGU#23 2015-11-01
 	
 	// START KGU#405 2017-05-19: Issue #237
-	protected String transformExpression(StringList exprTokens, boolean isAssigned)
+	/**
+	 * Does some specific transformation for expressions, possibly being used as
+	 * arguments of a routine CALL, in which case array and record variables have
+	 * to be passed by name, such that "dollaring" must be undone.
+	 * @param exprTokens - the lexically split expression, may contain blanks
+	 * @param isAssigned TODO
+	 * @param asArgument - if the expression is an argument for a routine CALL
+	 * @return the transformed expression
+	 */
+	protected String transformExpression(StringList exprTokens, boolean isAssigned, boolean asArgument)
 	{
 		// FIXME: Check the operands - they must be literals (type detectable),
 		// variables (consult typeMap), built-in functions (type known), or
@@ -549,27 +806,77 @@ public class BASHGenerator extends Generator {
 				exprTokens.contains("*") ||
 				exprTokens.contains("/") ||
 				exprTokens.contains("%");
+		// Avoid recursive enclosing in $(...)
 		if (isArithm) {
-			exprTokens.insert((isAssigned ? "$(( " : "(( "), 0);
+			exprTokens.insert(((isAssigned || asArgument) ? "$(( " : "(( "), 0);
 			exprTokens.add(" ))");
 		}
-		else if (isAssigned) {
-			exprTokens.insert("$(", 0);
-			exprTokens.add(")");
+		// START KGU#772 2019-11-24: Bugfix #784 - avoid redundant enclosing with $(...)
+		//else if (isAssigned) {
+		//	exprTokens.insert("$(", 0);
+		//	exprTokens.add(")");
+		//}
+		// START KGU#807 2020-02-20: Bugfix #821 - assigned or not doesn't seem to play a role here
+//		else if (isAssigned) {
+		else {
+		// END KGU#807 2020-02-20
+			String varName = null;
+			boolean isVarAccess =
+					exprTokens.count() == 4 &&
+					exprTokens.get(0).equals("$") &&
+					exprTokens.get(1).equals("{") &&
+					this.varNames.contains(varName = exprTokens.get(2)) &&
+					exprTokens.get(3).equals("}") ||
+					exprTokens.count() == 1 &&
+					VAR_ACCESS_MATCHER.reset(exprTokens.get(0)).matches() &&
+					this.varNames.contains(varName = exprTokens.get(0).substring(2, exprTokens.get(0).length()-1));
+			if (isVarAccess) {
+				// START KGU#803 2020-02-19: Issue #816
+				//exprTokens.insert("\"", 0);
+				//exprTokens.add("\"");
+				TypeMapEntry typeEntry = this.typeMap.get(varName);
+				if (typeEntry != null && (typeEntry.isArray() || typeEntry.isRecord())) {
+					// We have to prepare a name reference, so undo the "dollaring"
+					exprTokens.clear();
+					exprTokens.add(varName);
+					// START KGU#807 2020-02-20: Issue #821
+					if (!asArgument) {
+						/* This is a rather desperate approach to conserve as much information
+						 * as possible - we produce a reconstruction command, though with the
+						 * original variable name, which is a rather poor idea
+						 */
+						exprTokens.add(")\"");
+						exprTokens.insert("\"$(typeset -p ", 0);
+					}
+					// END KGU#807 2020-02-20
+				}
+				else {
+					exprTokens.insert("\"", 0);
+					exprTokens.add("\"");
+				}
+				// END KGU#803 2020-02-19
+			}
+			// KGU#807 2020-02-20 Bugfix #821 disabled as it is nonsense in most cases, especially for literals
+			//else {
+			//	exprTokens.insert("$( ", 0);
+			//	exprTokens.add(" )");
+			//}
+			// KGU#807 2020-02-20
 		}
+		// END KGU#772 2019-11-24
 		return exprTokens.concatenate();
 	}
-	protected String transformExpression(String expr, boolean isAssigned)
+	protected String transformExpression(String expr, boolean isAssigned, boolean asArgument)
 	{
 		if (Function.isFunction(expr)) {
+			// It cannot be a diagram call here, so it must be some built-in function
 			expr = this.transformExpression(new Function(expr));
-			if (isAssigned)
-			{
-				expr = "$(" + expr + ")";
+			if (isAssigned || asArgument) {
+				expr = "$( " + expr + " )";
 			}
 		}
 		else {
-			expr = transformExpression(Element.splitLexically(expr, true), isAssigned);
+			expr = transformExpression(Element.splitLexically(expr, true), isAssigned, asArgument);
 		}
 		return expr;
 	}
@@ -579,37 +886,49 @@ public class BASHGenerator extends Generator {
 		for (int p = 0; p < fct.paramCount(); p++)
 		{
 			String param = fct.getParam(p);
-			param = this.transformExpression(param, true);
+			param = this.transformExpression(param, false, true);
 			expr += (" " + param);
 		}
 		return expr;
 	}
+	/**
+	 * Tries to find out whether the condition might involve a numerical comparison and
+	 * encloses it with (( )) in this case, otherwise with [[ ]].
+	 * @param condition the transformed condition
+	 * @return the enclosed condition
+	 */
 	private String finishCondition(String condition) {
+		// KGU#811 2020-02-21: Bugfix #824 - many absurd bugs found and fixed
 		if (!this.suppressTransformation && !(condition.trim().matches("^\\(\\(.*?\\)\\)$")))
 		{
-			final String[] compOprs = new String[]{"==", "<", ">", "<=", ">=", "!=", "<>"};
 			StringList condTokens = Element.splitLexically(condition, true);
 			condTokens.removeAll(" ");
 			boolean isNumber = false;
-			for (int i = 0; i < condTokens.count(); i++) {
-				for (int j = 1; j < compOprs.length-1; j++) {
-					if (condTokens.get(i).equals(compOprs[j])) {
-						// FIXME this is too vague again
-						int k = i-1;
-						String leftOpnd = condTokens.get(k);
-						while (k >= 0 && leftOpnd.equals(")") || leftOpnd.equals("}")) {
-							leftOpnd = condTokens.get(k--);
-						}
-						k = i+1;
-						String rightOpnd = condTokens.get(k);
-						while (j < condTokens.count() && rightOpnd.equals("$") || rightOpnd.equals("(") || rightOpnd.equals("{")) {
-							rightOpnd = condTokens.get(j++);
-						}
-						String typeLeft = Element.identifyExprType(typeMap, leftOpnd, true);
-						String typeRight = Element.identifyExprType(typeMap, rightOpnd, true);
-						if ((typeLeft.equals("int") || typeLeft.equals("double")) && (typeRight.equals("int") || typeRight.equals("double"))) {
-							isNumber = true;
-						}
+			for (int i = 1; !isNumber && i < condTokens.count()-1; i++) {
+				String token = condTokens.get(i);
+				// Check for comparison operator
+				if (compOprs.contains(token)) {
+					// FIXME this is too vague again
+					int k = i-1;
+					// fetch some operand-like token to the left
+					String leftOpnd = condTokens.get(k);
+					while ((leftOpnd.equals(")") || leftOpnd.equals("}"))
+							&& k > 0) {
+						leftOpnd = condTokens.get(--k);
+					}
+					// fetch some operand-like token to the right
+					k = i+1;
+					String rightOpnd = condTokens.get(k);
+					while ((rightOpnd.isEmpty() || rightOpnd.equals("$") || rightOpnd.equals("(") || rightOpnd.equals("{"))
+							&& k < condTokens.count()-1) {
+						rightOpnd = condTokens.get(++k);
+					}
+					String typeLeft = Element.identifyExprType(typeMap, leftOpnd, true);
+					String typeRight = Element.identifyExprType(typeMap, rightOpnd, true);
+					if (!(typeLeft.isEmpty() && typeRight.isEmpty())
+							&& (typeLeft.equals("int") || typeLeft.equals("double") || typeLeft.isEmpty())
+							&& (typeRight.equals("int") || typeRight.equals("double") || typeRight.isEmpty())) {
+						isNumber = true;
 					}
 				}
 			}
@@ -732,6 +1051,7 @@ public class BASHGenerator extends Generator {
 			}
 			else if (intermed.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))
 			{
+				// FIXME KGU#803 2020-02-16: Issue #816 - should only be reached within a main or includable diagram now
 				intermed = "return " + intermed.substring(preReturn.length());
 			}
 			else if (intermed.matches("^" + Matcher.quoteReplacement(preExit) + "(\\W.*|$)"))
@@ -745,10 +1065,10 @@ public class BASHGenerator extends Generator {
 		// END KGU#162 2016-03-31
 		
 
-        // START KGU#114 2015-12-22: Bugfix #71
-        //return _input.trim();
-        return intermed.trim();
-        // END KGU#114 2015-12-22
+		// START KGU#114 2015-12-22: Bugfix #71
+		//return _input.trim();
+		return intermed.trim();
+		// END KGU#114 2015-12-22
 	}
 	
 	/* (non-Javadoc)
@@ -772,6 +1092,9 @@ public class BASHGenerator extends Generator {
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
 			StringList text = _inst.getUnbrokenText(); 
+			// START KGU#803 2020-02-16: Issue #816
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+			// END KGU#803 2020-02-16
 			int nLines = text.count();
 			for (int i = 0; i < nLines; i++)
 			{
@@ -780,6 +1103,19 @@ public class BASHGenerator extends Generator {
 				String line = text.get(i);
 				// START KGU#653 2019-02-15: Enh. #680 - special treatment for mult-variable input instructions
 				StringList inputItems = Instruction.getInputItems(line);
+				// START KGU#803 2020-02-17: Issue #816 ensure local declaration where necessary
+				if (inputItems != null) {
+					for (int j = 1; j < inputItems.count(); j++) {
+						String target = inputItems.get(j);
+						int cutPos = Math.min((target+".").indexOf("."), (target+"[").indexOf("["));
+						if (Function.testIdentifier(target.substring(cutPos), null)
+								&& !this.wasDefHandled(root, target, !disabled)
+								&& root.isSubroutine()) {
+							addCode(getLocalDeclarator(false, typeMap.get(target)) + target, _indent, disabled);
+						}
+					}
+				}
+				// END KGU#803 2020-02-17
 				if (inputItems != null && inputItems.count() > 2) {
 					String prompt = inputItems.get(0);
 					if (!prompt.isEmpty()) {
@@ -797,12 +1133,30 @@ public class BASHGenerator extends Generator {
 					continue;
 				}
 				// END KGU#653 2019-02-15
-				// START KGU#388 2017-10-24: Enh. #423 ignore type definitions
-				if (Instruction.isTypeDefinition(line)) {
+				// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
+				//if (Instruction.isTypeDefinition(line)) {
+				if (Instruction.isMereDeclaration(line)) {
+					// local declaration should have been handled by generateCode(Root)
 					continue;
 				}
-				// END KGU#388 2017-10-24
+				// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
+				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
+					String expr = line.substring(preReturn.length()).trim();
+					generateResultVariables(expr, _indent, disabled);
+					// In case of an endstanding return we don't need a formal return command
+					if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
+						addCode("return 0", _indent, disabled);
+					}
+					continue;
+				}
+				// END KGU#803 2020-02-16
+				// END KGU#388/KGU#772 2017-10-24/2019-11-24
 				String codeLine = transform(line);
+				/* FIXME KGU#803 2020-02-16: Issue #816 - we should mark local variables as local
+				 * This requires to check whether line is an assignment, that the target variable
+				 * is not a parameter or input variable (how to declare these?) and it hasn't been
+				 * assigned or input before. Then "local " could be put as prefix to codeLine.
+				 */
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI) {
 					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -826,6 +1180,52 @@ public class BASHGenerator extends Generator {
 			}
 		}
 
+	}
+
+	/**
+	 * Auxiliary method for transforming result mechanism into some sensible shell code.
+	 * @param expr - the transformed result expression
+	 * @param _indent - the current indentation string
+	 * @param disabled - whether the element is disabled, i.e. the code is to be commented out
+	 */
+	private void generateResultVariables(String expr, String _indent, boolean disabled) {
+		String resultName = "result" + Integer.toHexString(root.hashCode());
+		// Check for array or record
+		String varName = expr;
+		if (varName.startsWith("${") && varName.endsWith("}")) {
+			varName = varName.substring(2, varName.length()-1);
+		}
+		else if (varName.startsWith("$")) {
+			varName = varName.substring(1);
+		}
+		if (varNames.contains(varName)) {
+			TypeMapEntry typeEntry = this.typeMap.get(varName);
+			String resultType = root.getResultType();
+			TypeMapEntry resTypeEntry = null;
+			boolean isArray = typeEntry != null && typeEntry.isArray()
+					|| resultType != null && (resultType.startsWith("@") || resultType.startsWith("array "));
+			boolean isRecord = typeEntry != null && typeEntry.isRecord();
+			if (resultType != null && !resultType.trim().isEmpty()
+					&& (resTypeEntry = this.typeMap.get(":"+resultType)) != null) {
+				if (resTypeEntry.isArray()) {
+					isArray = true;
+				}
+				else if (resTypeEntry.isRecord()) {
+					isRecord = true;
+				}
+			}
+			if (isArray) {
+				addCode(makeArrayCopyAssignment(resultName, varName, false, false, true), _indent, disabled);
+				return;
+			}
+			else if (isRecord) {
+				addCode(makeArrayCopyAssignment(resultName+"keys", varName, true, false, true), _indent, disabled);
+				addCode(makeArrayCopyAssignment(resultName+"values", varName, false, false, true), _indent, disabled);
+				return;
+			}
+		}
+		String codeLine = transform(resultName + " <- " + expr);
+		addCode(resultName + codeLine.substring(codeLine.indexOf("=")), _indent, disabled);
 	}
 
 	protected void generateCode(Alternative _alt, String _indent) {
@@ -916,7 +1316,11 @@ public class BASHGenerator extends Generator {
 			addCode("", "", disabled);
 			// START KGU#453 2017-11-02: Issue #447
 			//addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
-			addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			StringList items = Element.splitExpressionList(unbrokenText.get(i+1).trim(), ",");
+			addCode(this.getIndent() + items.concatenate("|") + ")", _indent, disabled);
+			// END KGU#755 2019-11-08
 			// END KGU#453 2017-11-02
 			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02
@@ -977,7 +1381,7 @@ public class BASHGenerator extends Generator {
 				else if (varNames.contains(valueList))
 				{
 					// Must be an array variable
-					valueList = "${" + valueList + "[@]}";
+					valueList = "\"${" + valueList + "[@]}\"";
 				}
 				else
 				{
@@ -1049,7 +1453,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
-		String condition = transform(_while.getText().getLongString()).trim();
+		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1091,18 +1495,22 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
-		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
-		// generate the loop body twice to preserve semantics!
-		appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
-		generateCode(_repeat.q, _indent);		
-		// END KGU#60 2015-11-02
-		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
-		//code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
-		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
-		//code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
-		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
-		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
-		String condition = transform(_repeat.getText().getLongString()).trim();
+		// START KGU#812 2020-02-21: Bugfix #824 - we do no longer duplicate the body
+		//appendComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
+		//generateCode(_repeat.q, _indent);
+		appendComment("NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end.", _indent);
+		// END KGU#812 2020-02-21
+		// START KGU#811 2020-02-21: Bugfix #824? We had forgotten to invert the condition
+		//String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
+		String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
+		condition = transform(condition);
+		// END KGU#811 2020-02-21
+		// START KGU#811 2020-02-201: Bugfix #824 - put a conditional exit to the end instead
+		//addCode("while " + this.finishCondition(condition), _indent, disabled);
+		addCode("while :", _indent, disabled);
+		// END KGU#811 2020-02-21
+		addCode("do", _indent, disabled);
+		generateCode(_repeat.q, _indent + this.getIndent());
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
@@ -1113,23 +1521,11 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		// END KGU#311 2017-01-05
-		// START KGU#277 2016-10-14: Enh. #270
-		//code.add(_indent + "while " + condition);
-		addCode("while " + this.finishCondition(condition), _indent, disabled);
-		// END KGU#277 2016-10-14
-		// END KGU#132/KGU#144 2016-03-31
-		// END KGU#132 2016-03-24
-		// END KGU#131 2016-01-08
-		// START KGU#277 2016-10-14: Enh. #270
-		//code.add(_indent + "do");
-		//generateCode(_repeat.q, _indent + this.getIndent());
-		//code.add(_indent + "done");
-		//code.add("");
-		addCode("do", _indent, disabled);
-		generateCode(_repeat.q, _indent + this.getIndent());
+		// START KGU#811 2020-02-21: Bugfix #824
+		addCode(this.finishCondition(condition) + " || break", _indent + getIndent(), disabled);
+		// END KGU#811 2020-02-21
 		addCode("done", _indent, disabled);
 		addCode("", "", disabled);
-		// END KGU#277 2016-10-14
 		
 	}
 
@@ -1151,7 +1547,7 @@ public class BASHGenerator extends Generator {
 		//generateCode(_forever.q, _indent + this.getIndent());
 		//code.add(_indent + "done");
 		//code.add("");
-		addCode("while [ 1 ]", _indent, disabled);
+		addCode("while :", _indent, disabled);
 		addCode("do", _indent, disabled);
 		generateCode(_forever.q, _indent + this.getIndent());
 		addCode("done", _indent, disabled);
@@ -1161,19 +1557,77 @@ public class BASHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-		if(!appendAsComment(_call, _indent)) {
+		if (!appendAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
 			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _call.isDisabled();
 			// END KGU#277 2016-10-14
-			for(int i=0;i<_call.getText().count();i++)
+			StringList callText = _call.getUnbrokenText();
+			for (int i = 0; i < callText.count(); i++)
 			{
+				String line = callText.get(i);
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_call.getText().get(i)));
-				addCode(transform(_call.getText().get(i)), _indent, disabled);
+				addCode(transform(line), _indent, disabled);
 				// END KGU#277 2016-10-14
+				// START KGU#803 2020-02-16: Issue #816
+				Function fct = _call.getCalledRoutine();
+				if (fct != null && fct.isFunction() && Instruction.isAssignment(line)) {
+					if (this.routinePool != null) {
+						Root routine = null;
+						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+						if (cands.size() >= 1) {
+							routine = cands.firstElement();
+							String routineId = Integer.toHexString(routine.hashCode());
+							String resultName = "result" + routineId;
+							String source = "${" + resultName + "}";
+							StringList tokens = Element.splitLexically(line, true);
+							tokens.removeAll(" ");
+							Element.unifyOperators(tokens, true);
+							String target = Instruction.getAssignedVarname(tokens, true);
+							boolean done = false;
+							if (target != null && this.varNames.contains(target)) {
+								String resultType = routine.getResultType();
+								TypeMapEntry resTypeEntry = this.typeMap.get(target);
+								boolean isArray = (resTypeEntry != null && resTypeEntry.isArray());
+								boolean isRecord = (resTypeEntry != null && resTypeEntry.isRecord());
+								if (resTypeEntry == null && resultType != null && !resultType.trim().isEmpty()) {
+									resTypeEntry = this.typeMap.get(":" + resultType);
+									if (resTypeEntry != null && resTypeEntry.isArray()
+											|| resultType.startsWith("@") || resultType.startsWith("array ")) {
+										isArray = true;
+									}
+									if (resTypeEntry != null && resTypeEntry.isRecord()
+											|| resultType.startsWith("$")) {
+										isRecord = true;
+									}
+								}
+								if (isArray) {
+									addCode(makeArrayCopyAssignment(target, resultName, false, root.constants.containsKey(target), false), _indent, disabled);
+									wasDefHandled(root, target, true); 	// Set the handled flag
+									done = true;
+								}
+								else if (isRecord) {
+									if (!wasDefHandled(root, target, true)) {
+										// We must ignore if target is a constant, otherwise we couldn't fill it
+										addCode(this.getAssocDeclarator(false) + target, _indent, disabled);
+									}
+									addCode("for index" + routineId + " in \"${" + source + "keys[@]}\"; do", _indent, disabled);
+									addCode(target + "[${" + resultName + "keys[$index" + routineId + "]}]=${" + resultName + "values[$index" + routineId + "]}", _indent+this.getIndent(), disabled);
+									addCode("done", _indent, disabled);
+									done = true;
+								}
+							}
+							if (!done) {
+								addCode(transform(tokens.concatenate(null, 0, tokens.indexOf("<-")+1) + source),
+										_indent, disabled);
+							}
+						}
+					}
+				}
+				// END KGU#803 2020-02-16
 			}
 		}
 	}
@@ -1186,12 +1640,28 @@ public class BASHGenerator extends Generator {
 			// START KGU#277 2016-10-14: Enh. #270
 			boolean disabled = _jump.isDisabled();
 			// END KGU#277 2016-10-14
-			for(int i=0;i<_jump.getText().count();i++)
+			// START KGU#803 2020-02-16: Issue #816
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+			// END KGU#803 2020-02-16
+			StringList jumpText = _jump.getUnbrokenText();
+			for (int i=0; i < jumpText.count(); i++)
 			{
+				String line = jumpText.get(i);
 				// FIXME (KGU 2016-03-25): Handle the kinds of exiting jumps!
+				// START KGU#803 2020-02-16: Issue #816
+				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
+					String expr = line.substring(preReturn.length()).trim();
+					generateResultVariables(expr, _indent, disabled);
+					// In case of an endstanding return we don't need a formal return command
+					if (i < jumpText.count()-1 || root.children.getElement(root.children.getSize()-1) != _jump) {
+						addCode("return 0", _indent, disabled);
+					}
+				}
+				else
+				// END KGU#803 2020-02-16
 				// START KGU#277 2016-10-14: Enh. #270
 				//code.add(_indent+transform(_jump.getText().get(i)));
-				addCode(transform(_jump.getText().get(i)), _indent, disabled);
+				addCode(transform(line), _indent, disabled);
 				// END KGU#277 2016-10-14
 			}
 		}
@@ -1252,11 +1722,16 @@ public class BASHGenerator extends Generator {
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {
 		
+		root = _root;
 		// START KGU#405 2017-05-19: Issue #237
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//typeMap = _root.getTypeInfo();
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
+		// START KGU#803 2020-02-16: Issue #816
+		boolean alwaysReturns = mapJumps(_root.children);
+		boolean isSubroutine = _root.isSubroutine();
+		// END KGU#803 2020-02-16
 		// START KGU#705 2019-09-23: Enh. #738
 		int line0 = code.count();
 		if (codeMap!= null) {
@@ -1286,86 +1761,22 @@ public class BASHGenerator extends Generator {
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 
-			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-			if (this.usesFileAPI) {
-				code.add(_indent);
-				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				appendComment("     syntax for automatic conversion.", _indent);
-				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
-			}
-			// END KGU#311 2017-01-05
-			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
-			// START KGU#241 2016-09-01: Issue #234 - Mechanism to introduce these definitions on demand only
-//			code.add(indent);
-//			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-//			code.add(indent + "chr() {");
-//			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-//			code.add(indent + "}");
-//			insertComment("ord() - converts ASCII character to its decimal value", indent);
-//			code.add(indent + "ord() {");
-//			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-//			code.add(indent + "}");
-//			code.add(indent);
-			if (!this.suppressTransformation)
-			{
-				boolean builtInAdded = false;
-				if (occurringFunctions.contains("chr"))
-				{
-			code.add(indent);
-			appendComment("chr() - converts decimal value to its ASCII character representation", indent);
-			code.add(indent + "chr() {");
-			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-			code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (occurringFunctions.contains("ord"))
-				{
-					code.add(indent);
-			appendComment("ord() - converts ASCII character to its decimal value", indent);
-			code.add(indent + "ord() {");
-			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-			code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (builtInAdded) code.add(indent);
-			}
-			// END KGU#241 2016-09-01
-			// END KGU#150 2016-04-05
+			// START KGU#311/KGU#150/KGU#241 2017-01-05/2016-09-01/2020-02-24: Issues #314, #234
+			appendAuxiliaryCode(_indent);
 			
 			subroutineInsertionLine = code.count();
 		}
 		
-		if( _root.isSubroutine() ) {
+		if (isSubroutine) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
-			code.add(header + " {");
+			// START KGU#803 2020-02-18: Issue #816 - make sure declarations make variables local
+			//addCode(header + " {", "", false);
+			addCode("function " + header + " {", "", false);
+			// END KGU#803 2020-02-18
 			indent = indent + this.getIndent();
-			StringList paraNames = _root.getParameterNames();
-			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
-			//for (int i = 0; i < paraNames.count(); i++)
-			//{
-			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
-			//}
-			int minArgs = _root.getMinParameterCount();
-			StringList argDefaults = _root.getParameterDefaults();
-			for (int i = 0; i < minArgs; i++)
-			{
-				code.add(indent + paraNames.get(i) + "=$" + (i+1));
-			}
-			for (int i = minArgs; i < paraNames.count(); i++)
-			{
-				code.add(indent + "if [ $# -lt " + (i+1) + " ]");
-				code.add(indent + "then");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
-				code.add(indent + "else");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
-				code.add(indent + "fi");
-			}
-			// END KGU#371 2019-03-08
+			generateArgAssignments(_root, indent);
 			// END KGU#53 2015-10-18
 		} else {				
 			code.add("");
@@ -1374,21 +1785,34 @@ public class BASHGenerator extends Generator {
 		code.add("");
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
-		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
+		appendComment("TODO: Check and revise the syntax of all expressions!", indent);
 		code.add("");
 		// END KGU#129 2016-01-08
-		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
-		for (int i = 0; i < varNames.count(); i++) {
-			String varName = varNames.get(i);
-			TypeMapEntry typeEntry = typeMap.get(varName);
-			if (typeEntry != null && typeEntry.isRecord()) {
-				addCode("declare -A " + varName, _indent, false);
+		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+			TypeMapEntry type = typeEntry.getValue();
+			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+				appendEnumeratorDef(type, indent);
 			}
 		}
+		// END KGU#542 2019-12-01
+		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
+		generateDeclarations(indent);
 		// END KGU#389 2017-10-23
+		// START KGU#803 2020-02-18: Issue #816
+		if (isSubroutine) {
+			this.isResultSet = varNames.contains("result", false);
+			this.isFunctionNameSet = varNames.contains(_root.getMethodName());
+		}
+		// END KGU#803 2020-02-18
+		
 		generateCode(_root.children, indent);
 		
-		if( ! _root.isProgram() ) {
+		// START KGU#803 2020-02-16: Issue #816
+		generateResult(_root, indent, alwaysReturns, varNames);
+		// END KGU#803 2020-02-16
+
+		if (_root.isSubroutine()) {
 			code.add("}");
 		}
 		
@@ -1402,7 +1826,232 @@ public class BASHGenerator extends Generator {
 		return code.getText();
 		
 	}
+
+	/**
+	 * @param _indent
+	 */
+	protected void appendAuxiliaryCode(String _indent) {
+		String indentPlus1 = _indent + getIndent();
+		String indentPlus2 = indentPlus1 + getIndent();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+			appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
+			appendComment("     syntax for automatic conversion.", _indent);
+			appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
+			appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
+			appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+		}
+		// END KGU#311 2017-01-05
+		// START KGU#150/KGU#241 2017-01-05: Issue #234 - Provisional support for chr and ord functions
+		if (!this.suppressTransformation)
+		{
+			boolean builtInAdded = false;
+			if (occurringFunctions.contains("chr"))
+			{
+				code.add(_indent);
+				appendComment("chr() - converts decimal value to its ASCII character representation", _indent);
+				code.add(_indent + "chr() {");
+				code.add(indentPlus1 + "printf \\\\$(printf '%03o' $1)");
+				code.add(_indent + "}");
+				builtInAdded = true;
+			}
+			if (occurringFunctions.contains("ord"))
+			{
+				code.add(_indent);
+				appendComment("ord() - converts ASCII character to its decimal value", _indent);
+				code.add(_indent + "ord() {");
+				code.add(indentPlus1 + "printf '%d' \"'$1\"");
+				code.add(_indent + "}");
+				builtInAdded = true;
+			}
+			// START KGU#803/KGU#807 2020-02-24: Issues #816, #821 - provide a routine to copy associative arrays
+			for (TypeMapEntry type: typeMap.values()) {
+				if (type.isRecord()) {
+					code.add(_indent);
+					appendComment(FN_COPY_ASSOC_ARRAY + "() - copies an associative array via name references", _indent);
+					addCode("auxCopyAssocArray() {", _indent, false);
+					addCode(this.getNameRefDeclarator(false) + "target=$1", indentPlus1, false);
+					addCode(this.getNameRefDeclarator(false) + "source=$2", indentPlus1, false);
+					addCode(this.getLocalDeclarator(false, null) + "key", indentPlus1, false);
+					addCode("for key in \"${!source[@]}\"; do", indentPlus1, false);
+					addCode("target[$key]=\"${source[$key]}\"", indentPlus2, false);					
+					addCode("done", indentPlus1, false);
+					addCode("}", _indent, false);
+					builtInAdded = true;
+					break;
+				}
+			}
+			// END KGU#803/KGU#807 2020-02-24
+			if (builtInAdded) code.add(_indent);
+		}
+		// END KGU#150/KGU#241 2017-01-05
+	}
 	
+	/**
+	 * Generates declarations for the variables and constants of {@link #root} as
+	 * far as needed.
+	 * If {@link #root} is a subroutine then its variables wil be declared as local
+	 * @param _indent - current indentation string
+	 */
+	public void generateDeclarations(String _indent) {
+		boolean isSubroutine = root.isSubroutine();
+		// FIXME: We should only do so if they won't get initialized
+		for (int i = 0; i < varNames.count(); i++) {
+			String varName = varNames.get(i);
+			boolean isConst = root.constants.containsKey(varName);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			// START KGU#803 2020-02-18: Issue #816
+			//if (typeEntry != null && typeEntry.isRecord()) {
+			//	addCode(this.getAssocDeclarator() + varName, declIndent, false);
+			//}
+			if (!this.wasDefHandled(root, varName, false)) {
+				if (typeEntry != null && typeEntry.isRecord()) {
+					// The declare command makes the declaration local by default
+					addCode(this.getAssocDeclarator(false) + varName, _indent, false);
+					this.wasDefHandled(root, varName, true);
+				}
+				// Don't declare constants here as they must be 
+				else if (isSubroutine && !isConst) {
+					addCode(getLocalDeclarator(false, typeEntry) + varName, _indent, false);
+					this.wasDefHandled(root, varName, true);
+				}
+			}
+			// END KGU#803 2020-02-17
+		}
+	}
+
+	// START KGU#803 2020-02-18: Issue #816 - facilitate subclassing
+	/**
+	 * Generates the parameter declarations and assignments
+	 * @param _root - the (function) diagram being exported
+	 * @param indent - the appropriate indentation level
+	 */
+	protected void generateArgAssignments(Root _root, String indent) {
+		StringList paraNames = _root.getParameterNames();
+		// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+		//for (int i = 0; i < paraNames.count(); i++)
+		//{
+		//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+		//}
+		int minArgs = _root.getMinParameterCount();
+		StringList argDefaults = _root.getParameterDefaults();
+		for (int i = 0; i < minArgs; i++)
+		{
+			// START KGU#803 2020-02-18: Issue #816
+			//code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			String parName = paraNames.get(i);
+			TypeMapEntry typeEntry = typeMap.get(parName);
+			boolean isConst = _root.constants.containsKey(parName);
+			if (typeEntry != null && (typeEntry.isArray() || typeEntry.isRecord())) {
+				addCode(this.getNameRefDeclarator(isConst) + parName + "=" + argVar(i),
+							indent, false);
+			}
+			else {
+				String modifier = getLocalDeclarator(isConst, typeEntry);
+				addCode(modifier + parName + "=" + argVar(i), indent, false);
+			}
+			this.setDefHandled(_root.getSignatureString(false), parName);
+			// END KGU#803 2020-02-18
+		}
+		for (int i = minArgs; i < paraNames.count(); i++)
+		{
+			// START KGU#803 2020-02-18: Issue #816
+			String parName = paraNames.get(i);
+			TypeMapEntry typeEntry = typeMap.get(parName);
+			boolean isConst = _root.constants.containsKey(parName);
+			String modifier = getLocalDeclarator(isConst, typeEntry);
+			// END KGU#803 2020-02-18
+			addCode("if [ $# -lt " + (i+1) + " ]", indent, false);
+			addCode("then", indent, false);
+			// START KGU#803 2020-02-18: Issue #816
+			//code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+			addCode(modifier + parName + "=" + transform(argDefaults.get(i)), indent + this.getIndent(), false);
+			// END KGU#803 2020-02-18
+			addCode("else", indent, false);
+			// START KGU#803 2020-02-18: Issue #816
+			if (typeEntry != null && (typeEntry.isArray() || typeEntry.isRecord())) {
+				modifier = this.getNameRefDeclarator(isConst);
+			}
+			addCode(modifier + parName + "=" + argVar(i), indent + this.getIndent(), false);
+			this.setDefHandled(_root.getSignatureString(false), paraNames.get(i));
+			// END KGU#803 2020-02-18
+			addCode("fi", indent, false);
+		}
+		// END KGU#371 2019-03-08
+	}
+	
+	/** @return the (index+1)th argument access notation, e.g. $2 for index 1 or ${13} for index 12 */
+	private String argVar(int index)
+	{
+		index++;
+		if (index < 10) {
+			return "$" + Integer.toString(index);
+		}
+		return "${" + Integer.toString(index) + "}";
+	}
+	// END KGU#803 2020-02-18
+
+	// START KGU#542 2019-12-01: Enh. #739 support for enumeration types
+	/**
+	 * Generates a shell equivalent for an enumeration type by declaring the
+	 * respective set of read-only integer variables.
+	 * @param _type - the {@link TpyeMapEntry} of the enumeration type
+	 * @param _indent - the current indentation string
+	 */
+	protected void appendEnumeratorDef(TypeMapEntry _type, String _indent) {
+		StringList enumItems = _type.getEnumerationInfo();
+		appendComment("START enumeration type " + _type.typeName, _indent);
+		// In vintage BASIC, we will just generate separate variable definitions
+		int offset = 0;
+		String lastVal = "";
+		for (int i = 0; i < enumItems.count(); i++) {
+			String[] itemSpec = enumItems.get(i).split("=", 2);
+			if (itemSpec.length > 1) {
+				lastVal = itemSpec[1].trim();
+				offset = 0;
+				try {
+					int code = Integer.parseUnsignedInt(lastVal);
+					lastVal = "";
+					offset = code;
+				}
+				catch (NumberFormatException ex) {}
+			}
+			addCode(this.getEnumDeclarator() + itemSpec[0] + "=" + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, false);
+			offset++;
+		}
+		appendComment("END enumeration type "+ _type.typeName, _indent);
+	}
+	// END KGU#542 2019-12-01
+
+	// START KGU#803 2020-02-16: Issue #816 - specific return mechanism via a global variable required
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateResult(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (_root.isSubroutine())
+		{
+			if (!alwaysReturns)
+			{
+				String varName = _root.getMethodName();	// for Pascal style result
+				if (isResultSet && !isFunctionNameSet) {
+					// retrieve the exact spelling of the used result variable
+					int vx = varNames.indexOf("result", false);	// case-ignorant search
+					varName = varNames.get(vx);
+				}
+				if (isResultSet || isFunctionNameSet) {
+					//code.add(_indent + "result" + Integer.toHexString(_root.hashCode()) + "=" + varName);
+					generateResultVariables(varName, _indent, false);
+				}
+			}
+			// Otherwise the Jump generator method will have done all what's needed
+		}
+		return _indent;
+	}
+	// END KGU#803 2020-02-16
+
 }
 
 

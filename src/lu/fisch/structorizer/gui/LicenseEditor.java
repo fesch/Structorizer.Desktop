@@ -207,7 +207,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		licenseFile = _licenseFile;
 		if (licenseFile == null) {
 			// case 3 or 6
-			licenseFile = Ini.getIniDirectory();
+			// START KGU#789 2020-01-20: Bugfix #802 - get licenses from standard ini directory (not redirected)
+			//licenseFile = Ini.getIniDirectory();
+			licenseFile = Ini.getIniDirectory(true);
+			// END KGU#789 2020-01-20
 		}
 
 		initComponents();
@@ -609,7 +612,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		if (!newLicName.equalsIgnoreCase(this.getLicenseName(true))) {
 			File oldFile = this.licenseFile;
 			String fileName = LicFilter.getNamePrefix() + newLicName + "." + LicFilter.acceptedExtension();
-			this.licenseFile = new File(Ini.getIniDirectory().getAbsolutePath() + File.separator + fileName);
+			// START KGU#789 2020-01-20: Bugfix #802 - write into the standard ini folder, not to a redirected one
+			//this.licenseFile = new File(Ini.getIniDirectory().getAbsolutePath() + File.separator + fileName);
+			this.licenseFile = new File(Ini.getIniDirectory(true).getAbsolutePath() + File.separator + fileName);
+			// END KGU#789 2020-01-20
 			if (!save(false)) {
 				this.licenseFile = oldFile;
 			}

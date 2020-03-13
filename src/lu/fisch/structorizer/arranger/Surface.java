@@ -118,7 +118,13 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-05-14      Bugfix #722: Drawing within a BufferedImage (PNG export) failed.
  *      Kay Gürtzig     2019-07-31      Bugfix #731: File renaming failure on Linux made arrz files vanish
  *      Kay Gürtzig     2019-07-31      Bugfix #732: Diagrams cloned had shared the position rather than copied.
- *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Manforms impaired functioning
+ *      Kay Gürtzig     2019-10-05      Bugfix #759: Missing reaction to closed Mainforms impaired functioning
+ *      Kay Gürtzig     2019-10-13      Bugfix #763: Handling of stale file connections on saving and loading arrangements
+ *      Kay Gürtzig     2019-10-14      Bugfix #764: Updating the .arr file of a modified group used to fail.
+ *      Kay Gürtzig     2019-10-15      Bugfix #763: On resaving stale diagrams, the shadow path had to be cleared.
+ *      Kay Gürtzig     2019-11-28      Bugfix #788: Offered arrz extraction to user-chosen folder was ignored
+ *      Kay Gürtzig     2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
+ *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
  *
  ******************************************************************************************************
  *
@@ -225,7 +231,6 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -251,6 +256,7 @@ import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
+import lu.fisch.structorizer.io.ArrangerFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.io.StructogramFilter;
@@ -390,6 +396,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#680 2019-03-11: Bugfix #699
 	public static final LangTextHolder msgSharedDiagrams = new LangTextHolder("The following diagrams will now be shared with the listed groups\n - %1\n\nBe aware that any modification to them will have an impact on all these groups\nand archive %2, even if the latter isn't loaded anymore!");
 	// END KGU#680 2019-03-11
+	// START KGU#749 2019-10-13: Bugfix #763
+	public static final LangTextHolder msgFileMissing = new LangTextHolder(" missing!");
+	// END KGU#749 2019-10-13
 
 	@Override
 	public void paintComponent(Graphics g)
@@ -738,7 +747,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#111 2015-12-17
 		}
 		// START KGU#289 2016-11-14: Enh. #289
-		else if (ArrFilter.isArr(filename) || ArrZipFilter.isArr(filename))
+		else if (ArrangerFilter.isArr(filename))
 		{
 			// FIXME KGU#679 2019-03-12: The first argument became superfluous
 			errorMessage = loadArrFile(form, file);
@@ -951,7 +960,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		else {
 			// The group originates from or has been saved to a file
 			File file = group.getFile();
-			File arrzFile = group.getArrzFile();
+			File arrzFile = group.getArrzFile(false);
 			if (arrzFile != null) {
 				portable = true;
 				extension += "z";
@@ -994,7 +1003,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#626 2019-01-02
 		// START KGU#679 2019-03-12: Enh. #698 - Inform associated Mainforms about the new file
-		File file = group.getArrzFile();
+		File file = group.getArrzFile(false);
 		if (done && !goingToClose && (file != null || (file = group.getFile()) != null)) {
 			for (Diagram diagr: group.getDiagrams()) {
 				if (diagr.mainform != null) {
@@ -1064,7 +1073,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				tempDir = dir.getParentFile();
 			}
 		}
-
+		LinkedList<Root> savedRoots = null;
 		try
 		{
 			// Prepare to save the arr file (if portable is false then this is the outfile)
@@ -1079,7 +1088,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// name for the arr file to be zipped into the target file
 				arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
 				// START KGU#650 2019-02-11: Issue #677 save all virgin group members to the temp dir
-				saveVirginRootsToTempDir(group, tempDir);
+				savedRoots = saveVirginRootsToTempDir(group, tempDir);
 				// END KGU#650 2019-02-11
 			}
 			else if (file.exists())
@@ -1122,7 +1131,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 			}
 			Archivar archivar = new Archivar();
-			tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			// START KGU#752 2019-10-14: Bugfix #764 - the update of the arr file if portable==false was averted
+			//tmpFilename = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			String tmpArrzName = archivar.saveArrangement(itemsToSave, arrFilename, (portable ? file : null), (portable ? tempDir : null), offset, null);
+			if (portable) {
+				tmpFilename = tmpArrzName;
+			}
+			// END KGU#752 2019-10-14
 			// END KGU#679 2019-03-11
 
 			// START KGU#682 2019-03-15: Bugfix #703 - group change status must get a chance to be reset.
@@ -1219,6 +1234,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					else if (diagr.root.shadowFilepath == null) {
 						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
 								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
+						if (savedRoots.contains(diagr.root)) {
+							for (String grName: diagr.getGroupNames()) {
+								Group gr = this.groups.get(grName);
+								if (gr != null && gr.getFile() != null && gr.getArrzFile(false) == null) {
+									// The arrangement list file is out of date (new diagram file path).
+									gr.membersChanged = true;
+								}
+							}
+						}
 					}
 				}
 				// Ensure all new copies are saved somewhere such that they will get a virtual path later
@@ -1237,7 +1261,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							msgSharedDiagrams.getText().replace("%1", sharedDiagrams.concatenate("\n - ")).replace("%2", (new File(outFilename).getName())),
 							this.msgSaveDialogTitle.getText(), JOptionPane.WARNING_MESSAGE);
 				}
-				// START KGU#682 2019-03-15: Issue #704 grop change status must be reset.
+				// START KGU#682 2019-03-15: Issue #704 group change status must be reset.
 				group.membersChanged = false;
 				// END KGU#682 2019-03-15
 			}
@@ -1261,13 +1285,35 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 
 	// START KGU#650 2019-02-11: Issue #677 - Inconveniences on saving arrangement archives
-	/** Tries to save all unsaved group members in the given temporary directory with a unique name */
+	/** Tries to save all unsaved group members in the given temporary directory, ensuring
+	 * unique names. Raises a message box with the names of all diagrams the saving attempt
+	 * for which failed.
+	 * @param group - the {@link Group} the diagrams of which are to be saved if not already associated to a file
+	 * @param tempDir - the target directory
+	 * @return a list of the {@link Root} objects that were successfully saved
+	 */
 	private LinkedList<Root> saveVirginRootsToTempDir(Group group, File tempDir) {
 		LinkedList<Root> savedRoots = new LinkedList<Root>();
 		StringList unsaved = new StringList();
 		StringList errors = new StringList();
 		for (Diagram diagr: group.getDiagrams()) {
-			if (diagr.root.getFile() == null) {
+			// START KGU#749 2019-10-13: Bugfix #763 - Diagrams with inaccessible files must also be saved
+			//if (diagr.root.getFile() == null) {
+			File assocFile = diagr.root.getFile();
+			// START KGU#749 2019-10-15: Bugfix #763 We must make sure that there is no obsolete shadow file path
+			// If there is a valid shadow file path then don't save it with a new file but wipe the file name
+			if (assocFile == null && diagr.root.shadowFilepath != null) {
+				assocFile = new File(diagr.root.shadowFilepath);
+				diagr.root.filename = assocFile.getAbsolutePath();
+				diagr.root.shadowFilepath = null;
+				if (assocFile.canRead()) {
+					// Formally this is a change as if the diagram had been saved again
+					savedRoots.add(diagr.root);
+				}
+			}
+			// END KGU#749 2019-10-15
+			if (assocFile == null || !assocFile.canRead()) {
+			// END KGU#749 2019-10-13
 				String filename = tempDir.getAbsolutePath() + File.separator + diagr.root.proposeFileName();
 				File file = new File(filename + ".nsd");
 				int count = 1;
@@ -1288,7 +1334,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						diagr.mainform.doButtons();
 					}
 				} catch (IOException ex) {
-					unsaved.add(diagr.root.proposeFileName());
+					// START KGU#749 2019-10-13: Bugfix #763
+					//unsaved.add(diagr.root.proposeFileName());
+					if (assocFile != null) {
+						unsaved.add(assocFile.getAbsolutePath());
+					}
+					else {
+						unsaved.add(diagr.root.proposeFileName());
+					}
+					// END KGU#749 2019-10-13
 					errors.add(ex.toString());
 				}
 				finally {
@@ -1465,13 +1519,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			dlgOpen.setDialogTitle(msgLoadDialogTitle.getText());
 			// START KGU#100 2016-01-15: Enh. #62 - select the provided filter
 			//dlgOpen.addChoosableFileFilter(new ArrFilter());
-			// START KGU#110 2016-07-01: Enh. #62 - Add the zipped filter
-			dlgOpen.addChoosableFileFilter(new ArrZipFilter());
-			// END KGU#110 2016-07-01
-			ArrFilter filter = new ArrFilter();
+			// START KGU#802 2020-02-16: Issue #815
+			//ArrFilter filter = new ArrFilter();
+			ArrangerFilter filter = new ArrangerFilter();
+			// END KGU#802 2020-02-16
 			dlgOpen.addChoosableFileFilter(filter);
 			dlgOpen.setFileFilter(filter);
 			// END KGU#110 2016-01-15: Enh. #62
+			// START KGU#802 2020-02-16: Issue #815 No longer the favourite filter
+			dlgOpen.addChoosableFileFilter(new ArrFilter());
+			// END KGU#802 2020-02-16
+			// START KGU#110 2016-07-01: Enh. #62 - Add the zipped filter
+			dlgOpen.addChoosableFileFilter(new ArrZipFilter());
+			// END KGU#110 2016-07-01
 
 			dlgOpen.setCurrentDirectory(currentDirectory);
 
@@ -1577,7 +1637,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// Warn and ask for confirmation if this group has already been loaded
 				Group oldGroup = groups.get(groupName);
 				File oldFile = null;
-				if ((oldFile = oldGroup.getArrzFile()) != null && unzippedFrom != null && oldFile.compareTo(unzippedFrom) == 0 ||
+				if ((oldFile = oldGroup.getArrzFile(false)) != null && unzippedFrom != null && oldFile.compareTo(unzippedFrom) == 0 ||
 						(oldFile = oldGroup.getFile()) != null && oldFile.compareTo(arrFile) == 0) {
 					if (JOptionPane.showConfirmDialog(frame,
 							msgArrangementAlreadyLoaded.getText()
@@ -1680,7 +1740,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList problems = new StringList();
 			List<ArchiveRecord> records = (new Archivar()).loadArrangement(arrFile, unzippedFrom, currentDirectory, problems);
 			if (!problems.isEmpty()) {
-				errorMessage = problems.getText();
+				errorMessage = problems.getText().replace(" MISSING!", msgFileMissing.getText());
 			}
 			Mainform form = (frame instanceof Mainform) ? (Mainform)frame : null;
 			for (ArchiveRecord record: records) {
@@ -1863,7 +1923,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //		}
 //		return arrFile;
 		Archivar archivar = new Archivar();
-		ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, null);
+		// START KGU#775 2019-11-29: Bugfix #788 - the extraction target dir was ignored
+		//ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, null);
+		ArchiveIndex archiveIndex = archivar.unzipArrangementArchive(arrzFile, targetDir);
+		// END KGU#775 2019-11-29
 		return archiveIndex.arrFile;
 	}
 
@@ -2481,11 +2544,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			rec = rec.scale(1/this.zoomFactor);
 			// END KGU#497 2018-12-23
 			this.scrollRectToVisible(rec.getRectangle());
-			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
-			if (form != null)
-			{
-				diagram.isPinned = true;
-			}
+			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null (KGU#804 2020-02-17: now done in both cases)
+			//if (form != null)
+			//{
+			//	diagram.isPinned = true;
+			//}
 			// END KGU#88 2015-12-20
 			// START KGU#626 2019-01-01: Enh. #657 Moved behind the alternative (to be done in both branches)
 //			// START KGU#278 2016-10-11: Enh. #267
@@ -2533,6 +2596,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#626 201-01-01
 		}
 		// END KGU#119 2016-01-02
+		// START KGU#88/KGU#804 2020-02-17: Bugfix #818 It ought to be pinned if form wasn't null
+		if (form != null)
+		{
+			diagram.isPinned = true;
+		}
+		// END KGU#88/KGU#804 2020-02-17
 		// START KGU#626 2018-12-28: Enh. #657 Group management
 		if (owningGroup == null && diagram.getGroupNames().length == 0) {
 			owningGroup = this.groups.get(Group.DEFAULT_GROUP_NAME);	// Default group
@@ -3128,7 +3197,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Diagram diagram = iter.next();
 				Mainform form = diagram.mainform;
 				// START KGU#650 2019-02-11: Issue #677 - Ensure a Mainform if we have to archive diagrams
-				boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				// START KGU#749 2019-10-13: Bugfix #763 - make sure the file actually exists
+				//boolean hasFile = diagram.root.filename != null && !diagram.root.filename.trim().isEmpty();
+				boolean hasFile = diagram.root.getFile() != null;
+				// END KGU#749 2019-10-13
 				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
 					form = someMainform = tempMainform = new Mainform(false);
 				}
@@ -3175,6 +3247,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// START KGU#650 2019-02-11: Issue #677
 			if (tempMainform != null) {
+				// START KGU#745 2019-10-14: Bugfix #759 - we must also remove it from the listeners (had added itself)
+				removeChangeListener(tempMainform);
+				// END KGU#745 2019-10-14
 				tempMainform.dispose();
 			}
 			// END KGU#650 2019-02-11
@@ -3828,11 +3903,27 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#630 2019-01-09
 
 	/**
-	 * Repaints the given {@link Root} (which reported to have been subject to changes).
+	 * Repaints the given {@link Root} (as reported to have been subject to changes).
 	 * Also notifies all registered {@link IRoutinePoolListener}s.
+	 * Reorganizes some mappings and cached references if necessary.
 	 * @param source - the structogram that reported to have been modified
 	 */
 	public void update(Root source)
+	// START KGU#804 2020-02-17: Bugfix #818
+	{
+		update(source, false);
+	}
+	
+	/**
+	 * Repaints the given {@link Root} (as reported to have been subject to changes).
+	 * Also notifies all registered {@link IRoutinePoolListener}s.
+	 * Reorganizes some mappings and cached references if necessary.
+	 * @param source - the structogram that reported to have been modified
+	 * @param replaced - whether it is rather a replacement than a modification
+	 * @see #update(Root)
+	 */
+	private void update(Root source, boolean replaced)
+	// END KGU#884 2020-02-17
 	{
 		// START KGU#85 2015-11-18
 		adaptLayout();
@@ -3859,7 +3950,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (String groupName: diagr.getGroupNames()) {
 					Group group = this.groups.get(groupName);
 					if (group != null) {
-						group.updateSortedRoots(false);
+						// START KGU#804 2020-02-17: Bugfix #818
+						//group.updateSortedRoots(false);
+						group.updateSortedRoots(replaced);
+						// END KGU#804 2020-02-17
 					}
 				}
 				// END KGU#626 2018-12-31
@@ -3870,7 +3964,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				for (String groupName: diagr.getGroupNames()) {
 					Group group = this.groups.get(groupName);
 					File arrzFile = null;
-					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile()) != null) {
+					if (group != null && !group.membersChanged && (arrzFile = group.getArrzFile(false)) != null) {
 						if (!source.getPath(true).equals(arrzFile.getAbsolutePath())) {
 							group.membersChanged = true;
 						}
@@ -4025,10 +4119,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				owner.root = newRoot;
 				owner.root.addUpdater(this);
 			}
-			// START KGU#85 2015-11-18
-			adaptLayout();
-			// END KGU#85 2015-11-18
-			this.repaint();
+			// START KGU#804 2020-02-17: Bugfix #818 - We must adapt all maps now!
+			//// START KGU#85 2015-11-18
+			//adaptLayout();
+			//// END KGU#85 2015-11-18
+			//this.repaint();
+			this.rootMap.remove(oldRoot);
+			this.rootMap.put(owner.root, owner);
+			this.update(owner.root, true);
+			// END KGU#804 2020-02-17
 			// START KGU#278 2016-10-11: Enh. #267
 			//notifyChangeListeners();
 			// END KGU#278 2016-10-11
@@ -5229,7 +5328,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (group.getFile() != null) {
 			String ext = ".arrz";
 			File arrFile = group.getFile();
-			File file = group.getArrzFile();
+			File file = group.getArrzFile(true);
 			if (file == null) {
 				ext = ".arr";
 				file = arrFile;

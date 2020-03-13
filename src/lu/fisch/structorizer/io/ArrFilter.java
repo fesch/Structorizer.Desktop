@@ -32,8 +32,9 @@ package lu.fisch.structorizer.io;
  *
  *      Author          Date			Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2015.12.20      First Issue
- *      Kay Gürtzig     2018.06.08      Inheritance changed
+ *      Kay Gürtzig     2015-12-20      First Issue
+ *      Kay Gürtzig     2018-06-08      Inheritance changed
+ *      Kay Gürtzig     2020-02-16      Description revised
  *
  ******************************************************************************************************
  *
@@ -43,6 +44,12 @@ package lu.fisch.structorizer.io;
 
 import java.io.File;
 
+/**
+ * Input filter for arrangement list files (related to {@link Arranger})
+ * @author Kay Gürtzig
+ * @see ArrZipFilter
+ * @see ArrangerFilter
+ */
 public class ArrFilter extends ExtFileFilter {
 
 	public static boolean isArr(String _filename)
@@ -69,7 +76,10 @@ public class ArrFilter extends ExtFileFilter {
 
 	public String getDescription() 
 	{
-		return "Arranger Files";
+		// START KGU#802 2020-02-16: Issue #815
+		//return "Arranger Files";
+		return "Arrangement List Files";
+		// END KGU#802 2020-02-16
 	}
 
 	public boolean accept(File f) 

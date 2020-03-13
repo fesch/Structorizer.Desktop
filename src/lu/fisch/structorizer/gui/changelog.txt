@@ -9,7 +9,77 @@ Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
 - COBOL import may fail if certain single-letter identifiers are used (rename them!).
 - COBOL import doesn't cope with some statement variants and variable redefinitions.
-- Javascript generator still incomplete and deficient.
+- The Javascript generator is just a prototype and may be deficient.
+- Shell export does not cope with nested array/record initializers and component access,
+  neither with clean parameter handling for usual arrays and associative arrays.
+
+Current development version: 3.30-07 (2020-03-11)
+- 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
+- 01: Bugfix #761: Code preview defect flooded the log stream. <2>
+- 01: Precautions against empty error messages on startup <2>
+- 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
+- 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
+- 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
+- 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
+- 01: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
+- 02: Bugfix #752: Incomplete declarations in C, Java etc. no longer outcommented <2>
+- 02: Issue #766: Deterministic order of subroutines on code export <2>
+- 02: Bugfix #769: String literals containing commas in CASE branch selectors <2>
+- 02: Enh. #770: New Analyser checks for CASE elements (selector consistency) <2>
+- 02: Bugfix #771: Unhandled syntax errors during execution (e.g. type names) <2>
+- 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
+- 02: Bugfix #773: Export of declarations to Oberon, Pascal [K.-P. Reimers]2
+- 03: Enh. #388: Support for constants on Perl export (had been missing) <2>
+- 03: Enh. #423: Support for record types on Perl export (had been missing) <2>
+- 03: Enh. #739: Enum type definitions introduced (incl. C99, Pascal import) <2>
+- 03: Issue #766: Deterministic export order had not worked for deep hierarchies <2>
+- 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
+- 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
+- 03: Bugfix #776: Global variables are locally eclipsed on Pascal/Oberon export <2>
+- 03: Bugfix #777: Concurrently changed favourite export language handled. <2>
+- 03: Bugfix #778: License text was not exported with "fresh" diagrams <2>
+- 03: Bugfix #779: Defective Oberon export of main program diagrams with I/O <2>
+- 03: Issue #780: Parameterless procedures in Oberon without parentheses [K.-P. R.]2
+- 03: Bugfix #782: Code export of global (included) declarations was wrong. <2>
+- 03: Bugfix #783: No or nonsense code export for assignments of unknown structs <2>
+- 03: Bugfix #784: Suppression of mere variable declarations on bash/ksh export <2>
+- 03: Bugfix #786: Record access in index expressions used to fail on execution <2>
+- 03: Bugfix #787: Multiplied top-level type definitions on Pascal export <2>
+- 03: Bugfix #788: Arrz file extraction to a user-specific folder did not work. <2>
+- 03: Bugfix #789: Wrong BASIC export of function calls (started with "CALL") <2>
+- 03: Bugfix #790: BASIC export failed with line continuation and initializers <2>
+- 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
+- 04: Bugfix #793: Wrong Perl export of initialized explicit var declarations <2>
+- 04: Bugfix #794: Code preview fails with error if license is not configured <2>
+- 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
+- 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
+- 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
+- 05: Issue #806: Format string splitting on C99 import improved [Rolf Schmidt]2
+- 05: Issue #806: More sensible printf/scanf format strings on C export [R. Schmidt]2
+- 05: Issue #807: Python 'recordtype' lib ref replaced by dictionary [R. Schmidt]2
+- 05: Bugfix #808: Missing C, Js export of var declarations with ':=' [Rolf Schmidt]2
+- 05: Bugfix #809: C99 import flaws: typename replacement in comments, return 0; <2>
+- 05: Bugfix #810: Javascript export produced nonsense for multi-variable input <2>
+- 05: Bugfix #811: C99 import of floating-point number literals like 123e4 fixed <2>
+- 05: Bugfix #812: Defective declaration of global variables on Python export <2>
+- 05: Issue #814: Empty parameter lists are now exported to C as ...(void) <2>
+- 05: Issue #815: Combined file filters introduced in open dialogs [Rolf Schmidt]2
+- 05: Issue #816: Function calls in exported bash, ksh code revised [Rolf Schmidt]2
+- 06: Issue #816: Local variable/constant declarations in bash/ksh functions <2>
+- 06: Issue #816: Passing of arrays/records to/from bash/ksh functions revised <2>
+- 06: Bugfix #818: Replacement of diagrams unpinned in Arranger caused trouble <2>
+- 06: Bugfix #820: Try didn't respect exit but averted later error reporting <2>
+- 06: Bugfix #821: Shell function arguments and array items wrongly put in $( ) <2>
+- 06: Issue #822: Executor no longer aborts on empty instruction lines [R. Schmidt]2
+- 06: Bugfix #823: Executor accidently mutilated expressions (all spaces gone) <2>
+- 06: Bugfix #824: Shell export of REPEAT loops was flawed in several aspects <2>
+- 06: Bugfix #825: Analyser had ignored the interior of TRY elements <2>
+- 06: Issue #826: User input is to accept backslashes as in Windows file paths <2>
+- 07: Bugfix #228: Code export error for routines with Pascal result mechanism <2>
+- 07: Bugfix #831: Wrong shebang and thread arguments on Python export [R.Schmidt]2
+- 07: Bugfix #833: Pascal import now ensures parentheses at subroutines [K.-P. R.]2
+- 07: Issue #834: Tooltip help for menu item Diagram > DIN? (in EN, DE, ES) <2>
+- 07: Bugfix #835: Structure preference keywords compromised imported conditions <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -120,13 +190,12 @@ Version: 3.30 (2019-10-06)
 - 14: Messages in diagram editor and Structure preferences corrected (EN, DE) <2>
 - 14: Enh. #738: Code preview in right window part (tabbed with Arranger index) <2>
 - 14: Bugfix #752: Workarounds for deficient declaration export to C/Java <2>
-- 14: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
 - 14: Default mode for setting DIN 66261 (FOR loop design) changed to true <2>.
 - 14: Issue #753: Irrelevant structure preference adaptation requests avoided <2>
 - 14: Bugfix #754: 2 Pascal code generator flaws (return instr. / UNIT name) <2>
 - 14: Enh. #721: Javascript export prototype [A. Brusinsky]2
 - 14: Bugfix #755: Defective Java/C# export of array initializers <2>
-- 14: Bugfix #756: Defects in expression export to C language family <2>
+- 14: Bugfix #756: Expression export defects to C language family <2>
 - 14: Bugfix #757: Include list text area was too small under Windows 10 <2>
 - 14: Bugfix #758: "Edit subroutine" didn't reliably arrange the new routine <2>
 - 14: Bugfix #759: Closing Structorizer sub-instances impaired functioning <2>

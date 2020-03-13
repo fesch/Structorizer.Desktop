@@ -107,15 +107,20 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-29      Issue #718: Breakthrough in drawing speed with syntax highlighting
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
+ *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
+ *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
+ *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
+ *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
- *      2018-07-20: Enh.
+ *      2018-07-20 (Kay Gürtzig): Enh. #563
  *      - splitRecordInitializer can now also associate bare initializers (i.e. without explicit component names),
  *        provided that it obtains a valid record type entry as parameter.
- *      2016-07-28: Bugfix #210 (KGU#225)
+ *      2016-07-28 (Kay Gürtzig): Bugfix #210 (KGU#225)
  *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
  *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
  *        in Fibonacci, QuickSort, or binary search trees, all attempts to combine the counts from the
@@ -125,7 +130,7 @@ package lu.fisch.structorizer.elements;
  *        the diagram!) look via the shared index into the same vector slot and increment it when executed,
  *        at what call level ever. Still, the differences in run data copying between the element classes
  *        must still be put under scrutinous analysis. Not all differences seem plausible.
- *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
+ *      2016-03-06 / 2016-03-12 (Kay Gürtzig): Enhancements #77, #124 (KGU#117/KGU#156)
  *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
  *        white-box test completeness) was implemented. A green background colour was proposed and used
  *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
@@ -148,7 +153,7 @@ package lu.fisch.structorizer.elements;
  *        time estimation. Both count numbers (execution counter / instruction load) are now written
  *        to the upper right corner of any element, and additionally a scaled colouring from deep
  *        blue to hot red is used to visualize the hot spots and the lonesome places.
- *      2016-02-25 / 2016-03-02 Bugfix #97 (KGU#136)
+ *      2016-02-25 / 2016-03-02 (Kay Gürtzig): Bugfix #97 (KGU#136)
  *      - Methods prepareDraw() and draw() used the same field rect for temporary calculations but in
  *        a slightly different way: draw() left a bounding rec related to the Root coordinates whereas
  *        prepareDraw() always produced a (0,0)-bound rectangle i. e. with (0,0) as upper left corner.
@@ -161,28 +166,28 @@ package lu.fisch.structorizer.elements;
  *      - Field rect was also converted to a (0,0)-bound and hence position-independent bounds rectangle
  *        (in contrast to rect0 representing actual context-sensitive drawing extension (important for
  *        selection).
- *      2015.12.01 (KGU#91/KGU#92)
+ *      2015.12.01 (Kay Gürtzig: KGU#91/KGU#92)
  *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
  *      - Operator unification enhanced (issue #41)
- *      2015.11.03 (KGU#18/KGU#23/KGU#63)
+ *      2015.11.03 (Kay Gürtzig: KGU#18/KGU#23/KGU#63)
  *      - Methods writeOutVariables() and getWidthOutVariables re-merged, lexical splitter extracted from
  *        them.
- *      2015.11.01 (KGU#18/KGU#23)
+ *      2015.11.01 (Kay Gürtzig: KGU#18/KGU#23)
  *      - Methods unifyOperators(), transformIntermediate() and getIntermediateText() now support different
  *        activities like code generation and execution in a unique way.
- *      2015.10.11/13 (KGU#41 + KGU#43)
+ *      2015.10.11/13 (Kay Gürtzig: KGU#41 + KGU#43)
  *      - New fields added to distinguish states of selection from those of current execution, this way
  *        inducing more stable colouring and execution path tracking
  *      - a field and several methods introduced to support the setting of breakpoints for execution (it had
  *        always been extremely annoying that for the investigation of some issues near the end of the diagram
  *        either the entire execution had to be started in step more or you had to be utterly quick to pause
  *        in the right moment. Now breakpoints allow to catch the execution wherever necessary.
- *      2015.10.09
+ *      2015.10.09 (Kay Gürtzig)
  *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
  *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
  *        to the nearly identical method selectElementByCoord), both methods were merged by means of a
  *        discriminating additional parameter to identifyElementByCoord(_x, _y, _forSelection)
- *      2014.10.18 / 2014.11.11
+ *      2014.10.18 / 2014.11.11 (Kay Gürtzig)
  *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
@@ -260,7 +265,11 @@ public abstract class Element {
 	public static final String E_HOME_PAGE = "https://structorizer.fisch.lu";
 	public static final String E_HELP_PAGE = "https://help.structorizer.fisch.lu/index.php";
 	// END KGU#563 2018-007-26
-	public static final String E_VERSION = "3.30";
+	// START KGU#791 2020-01-20: Enh. #801 - support for offline help
+	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
+	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
+	// END KGU#791 2020-01-20
+	public static final String E_VERSION = "3.30-07";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -277,9 +286,12 @@ public abstract class Element {
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
+	" - Javascript: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"Import grammars and parsers written and maintained by\n"+
 	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
-	" - COBOL: Simon Sobisch, Kay Gürtzig"+
+	" - COBOL: Simon Sobisch, Kay Gürtzig\n"+
+	" - Struktogrammeditor: Kay Gürtzig\n"+
+	" - hus-Struktogrammer: Kay Gürtzig\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -811,6 +823,13 @@ public abstract class Element {
 	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention);
 	
+	/**
+	 * Copies this element. Implementing subclasses may make use of some helper methods
+	 * like {@link #copyDetails(Element, boolean)} to ensure that all relevant associated
+	 * data will be copied (possibly depending on the context).
+	 * @return a copy of this element.
+	 * @see #copyDetails(Element, boolean)
+	 */
 	public abstract Element copy();
 	
 	/**
@@ -827,7 +846,7 @@ public abstract class Element {
 	
 	// START KGU#156 2016-03-11: Enh. #124
 	/**
-	 * Copies the runtime data tha is to be cloned - Usually this comprises the deep
+	 * Copies the runtime data that is to be cloned - Usually this comprises the deep
 	 * coverage status and the execution counter index. Only for certain kinds of elements
 	 * the shallow coverage status is to be copied as well - therefore the argument.
 	 * @param _target - target element of the copy operation
@@ -852,6 +871,14 @@ public abstract class Element {
 	// END KGU#156 2016-03-11
 	
 	// START KGU#213 2016-08-01: Enh. #215 - derived from Instruction
+	/**
+	 * Copies important attributes of this element and associated data to the target
+	 * element {@code _ele}.
+	 * @param _ele - the target element
+	 * @param _simplyCoveredToo - whether on copying runtime data the shallow coverage
+	 * status is to be copied, too
+	 * @see #copyRuntimeData(Element, boolean)
+	 */
 	protected void copyDetails(Element _ele, boolean _simplyCoveredToo)
 	{
 		// START KGU#261 2017-01-19: Enh. #259 (type map)
@@ -2409,6 +2436,10 @@ public abstract class Element {
 	}
 	// END KGU#466 2019-08-02
 	
+	/**
+	 * Saves most Element-based settings to the INI file.
+	 * @see #cacheToIni()
+	 */
 	public static void saveToINI()
 	{
 		try
@@ -2416,51 +2447,7 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			ini.setProperty("IfTrue", preAltT);
-			ini.setProperty("IfFalse", preAltF);
-			ini.setProperty("If", preAlt);
-			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
-			ini.setProperty("altPadRight", String.valueOf(altPadRight));
-			// END KGU 2016-01-16
-			StringList sl = new StringList();
-			sl.setText(preCase);
-			ini.setProperty("Case", sl.getCommaText());
-			// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
-			ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
-			// END KGU#401 2017-05-18
-			ini.setProperty("For", preFor);
-			ini.setProperty("While", preWhile);
-			ini.setProperty("Repeat", preRepeat);
-			// START KGU#686 2019-03-22: Enh. #56
-			ini.setProperty("Try", preTry);
-			ini.setProperty("Catch", preCatch);
-			ini.setProperty("Finally", preFinally);
-			//END KGU#686 2019-03-22
-			// START KGU#376 2017-07-02: Enh. #389
-			ini.setProperty("Import", preImport);
-			// END KGU#376 2017-07-02
-			// font
-			// START KGU#264 2016-09-28: font name property renamed 
-			//ini.setProperty("Name",getFont().getFamily());
-			ini.setProperty("Font", getFont().getFamily());
-			// END KGU#264 2016-09-28
-			ini.setProperty("Size", Integer.toString(getFont().getSize()));
-			// colors
-			// START KGU#245 2018-07-02
-//			ini.setProperty("color0", getHexColor(color0));
-//			ini.setProperty("color1", getHexColor(color1));
-//			ini.setProperty("color2", getHexColor(color2));
-//			ini.setProperty("color3", getHexColor(color3));
-//			ini.setProperty("color4", getHexColor(color4));
-//			ini.setProperty("color5", getHexColor(color5));
-//			ini.setProperty("color6", getHexColor(color6));
-//			ini.setProperty("color7", getHexColor(color7));
-//			ini.setProperty("color8", getHexColor(color8));
-//			ini.setProperty("color9", getHexColor(color9));
-			for (int i = 0; i < colors.length; i++) {
-				ini.setProperty("color" + i, getHexColor(colors[i]));
-			}
-			// END KGU#245 2018-07-02
+			cacheToIni();
 
 			ini.save();
 		}
@@ -2469,6 +2456,49 @@ public abstract class Element {
 			logger.log(Level.SEVERE, "Error", e);
 		}
 	}
+	
+	// START KGU#792 2020-02-04: Bugfix #805
+	/**
+	 * Caches most Element-based preferences as properties to the Ini instance.
+	 * @see #saveToINI()
+	 */
+	public static void cacheToIni() {
+		Ini ini = Ini.getInstance();
+		ini.setProperty("IfTrue", preAltT);
+		ini.setProperty("IfFalse", preAltF);
+		ini.setProperty("If", preAlt);
+		// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+		ini.setProperty("altPadRight", String.valueOf(altPadRight));
+		// END KGU 2016-01-16
+		StringList sl = new StringList();
+		sl.setText(preCase);
+		ini.setProperty("Case", sl.getCommaText());
+		// START KGU#401 2017-05-18: Issue #405 - allow to reduce CASE width by branch element rotation
+		ini.setProperty("CaseShrinkRot", Integer.toString(Element.caseShrinkByRot));
+		// END KGU#401 2017-05-18
+		ini.setProperty("For", preFor);
+		ini.setProperty("While", preWhile);
+		ini.setProperty("Repeat", preRepeat);
+		// START KGU#686 2019-03-22: Enh. #56
+		ini.setProperty("Try", preTry);
+		ini.setProperty("Catch", preCatch);
+		ini.setProperty("Finally", preFinally);
+		//END KGU#686 2019-03-22
+		// START KGU#376 2017-07-02: Enh. #389
+		ini.setProperty("Import", preImport);
+		// END KGU#376 2017-07-02
+		// font
+		// START KGU#264 2016-09-28: font name property renamed 
+		//ini.setProperty("Name",getFont().getFamily());
+		ini.setProperty("Font", getFont().getFamily());
+		// END KGU#264 2016-09-28
+		ini.setProperty("Size", Integer.toString(getFont().getSize()));
+		// colors
+		for (int i = 0; i < colors.length; i++) {
+			ini.setProperty("color" + i, getHexColor(colors[i]));
+		}
+	}
+	// END KGU#792 2020-02-04
 
 	/**
 	 * Returns the {@link Root} the given Element {@code _element} is residing in.
@@ -3030,7 +3060,8 @@ public abstract class Element {
 	/**
 	 * Extracts the parameter or component declarations from the parameter list (or
 	 * record type definition, respectively) given by {@code declText} and adds their names
-	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.
+	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.<br/>
+	 * CAUTION: Some elements of {@code declTypes} may be null on return!
 	 * @param declText - the text of the declaration inside the parentheses or braces
 	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or null
 	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or null
@@ -3197,12 +3228,16 @@ public abstract class Element {
 	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
 	 * name of {@code _typeInfo} then unprefixed component values will be associated
 	 * to the component names of the type in order of occurrence unless an explicit
-	 * component name prefix occurs. 
+	 * component name prefix occurs.<br/>
+	 * If {@code _typeInfo} is null and {@code generateDummyCompNames} is true then generic
+	 * component names of form {@code "FIXME_<typename>_<i>"} may be provided for components
+	 * with missing names in the {@code _text}.
 	 * @param _text - the initializer expression with or without typename but with braces.
 	 * @param _typeInfo - the type map entry for the corresponding record type if available
+	 * @param _generateDummyCompNames - if true then missing component names (not retrievable) will be replaced by generic ones
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo)
+	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo, boolean _generateDummyCompNames)
 	{
 		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
 		//HashMap<String, String> components = new HashMap<String, String>();
@@ -3251,6 +3286,11 @@ public abstract class Element {
 				components.put(compNames[i], parts.get(i));
 			}
 			// END KGU#559 2018-07-20
+			// START KGU#711 2019-11-24: Bugfix #783 workaround for missing type info
+			else if (compNames == null && !typename.isEmpty()) {
+				components.put("FIXME_" + typename + "_" + i, parts.get(i));
+			}
+			// END KGU#711 2019-11-24
 		}
 		return components;
 	}
@@ -3294,6 +3334,11 @@ public abstract class Element {
 		else if (Function.isFunction(expr)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
+		// START KGU#782 2019-12-02 For certain purposes, e.g. export of FOR-IN loops char detection may be essential
+		else if (expr.startsWith("'") && expr.endsWith("'") && (expr.length() == 3 || expr.length() == 4 && expr.charAt(1) == '\\')) {
+			typeSpec = "char";
+		}
+		// END KGU#782 2019-12-02
 		else if (STRING_PATTERN.matcher(expr).matches()) {
 			typeSpec = "String";
 		}
@@ -3421,6 +3466,9 @@ public abstract class Element {
 						specialSigns.add("record");
 						specialSigns.add("struct");
 						// END KGU#388 2017-09-13
+						// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
+						specialSigns.add("enum");
+						// END KGU#542 2019-11-17
 						specialSigns.add("mod");
 						specialSigns.add("div");
 						// START KGU#331 2017-01-13: Enh. #333
@@ -4150,9 +4198,10 @@ public abstract class Element {
 	}
 	
 	/**
-     * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
-     * provided by _prefNames. If there is such a token sequence then it will be
-     * replaced throughout my text by the associated current parser preference for the respective name
+     * Looks up the associated token sequence in _splitOldKeys for any of the parser
+     * preference names provided by _prefNames. If there is such a token sequence
+     * then it will be replaced throughout {@code _line} by the associated current
+     * parser preference for the respective name.
 	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
@@ -4337,9 +4386,8 @@ public abstract class Element {
 	 * @param lineNo - number of the element text line containing the type description
 	 * @param isAssigned - is to indicate whether a value is assigned here
 	 * @param explicitly - whether the type association was an explicit declaration or just guessed
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 */
-	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly, boolean isCStyle)
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean explicitly)
 	{
 		if (varName != null && !typeSpec.isEmpty()) {
 			TypeMapEntry entry = typeMap.get(varName);
@@ -4354,7 +4402,7 @@ public abstract class Element {
 				}
 				else {
 					// Add a new entry to the type map
-					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly, isCStyle));
+					typeMap.put(varName, new TypeMapEntry(typeSpec, null, null, this, lineNo, isAssigned, explicitly));
 				}
 			}
 			else if (typeEntry == null || !typeEntry.isRecord()) {
@@ -4364,7 +4412,7 @@ public abstract class Element {
 				}
 				// END KGU#593 2018-10-05
 				// add an alternative declaration to the type map entry
-				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
+				entry.addDeclaration(typeSpec, this, lineNo, isAssigned);
 			}
 		}				
 	}
@@ -4377,10 +4425,8 @@ public abstract class Element {
 	 * @param typeName - name of the new defined type
 	 * @param typeSpec - a type-describing string as found in the definition
 	 * @param compNames - list of the component identifiers (strings)
-	 * @param compTypes - list of type-describing strings (a type name or a type construction)
+	 * @param compTypes - list of type-describing strings (a type name or a type construction or null!)
 	 * @param lineNo - number of the element text line containing the type description
-	 * @param isAssigned - is to indicate whether a value is assigned here
-	 * @param isCStyle - additional indication whether the type description a C-like syntax
 	 * @return true if the {@code typeName} was new and could be placed in the {@code typeMap}.
 	 */
 	protected boolean addRecordTypeToTypeMap(HashMap<String,TypeMapEntry> typeMap, String typeName, String typeSpec, StringList compNames, StringList compTypes, int lineNo)
@@ -4409,14 +4455,14 @@ public abstract class Element {
 									}
 									else {
 										// Create a named dummy entry
-										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true, false);
+										compEntry = new TypeMapEntry(type, type, typeMap, this, lineNo, false, true);
 									}
 								}
 							}
 							// FIXME KGU#687 2019-03-16: Issue #408 - no longer needed?
 							else {
 								// Create an unnamed dummy entry
-								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true, false);
+								compEntry = new TypeMapEntry(type, null, null, this, lineNo, false, true);
 							}
 						}
 					}

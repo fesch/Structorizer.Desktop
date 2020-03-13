@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class makes it easy to drag and drop files from the operating
@@ -43,6 +41,7 @@ import java.util.logging.Logger;
  * </p>
  * <p><em>Original author: Robert Harder, rharder@usa.net</em></p>
  * <p>2007-09-12 Nathan Blomquist -- Linux (KDE/Gnome) support added.</p>
+ * <p>2019-11-21 Kay Gürtzig -- Warnings eliminated by modernizing the code.</p>
  *
  * @author  Robert Harder
  * @author  rharder@users.sf.net
@@ -314,9 +313,9 @@ public class FileDrop
                             log( out, "FileDrop: file list accepted." );
 
                             // Get a useful list
-                            java.util.List fileList = (java.util.List) 
+                            java.util.List<?> fileList = (java.util.List<?>) 
                                 tr.getTransferData(java.awt.datatransfer.DataFlavor.javaFileListFlavor);
-                            java.util.Iterator iterator = fileList.iterator();
+                            //java.util.Iterator<?> iterator = fileList.iterator();
 
                             // Convert list to array
                             java.io.File[] filesTemp = new java.io.File[ fileList.size() ];
@@ -426,13 +425,13 @@ public class FileDrop
         {   
             boolean support = false;
             try
-            {   Class arbitraryDndClass = Class.forName( "java.awt.dnd.DnDConstants" );
+            {   Class.forName( "java.awt.dnd.DnDConstants" );
                 support = true;
             }   // end try
             catch( Exception e )
             {   support = false;
             }   // end catch
-            supportsDnD = new Boolean( support );
+            supportsDnD = Boolean.valueOf( support );
         }   // end if: first time through
         return supportsDnD.booleanValue();
     }   // end supportsDnD
@@ -443,7 +442,7 @@ public class FileDrop
      private static File[] createFileArray(BufferedReader bReader, PrintStream out)
      {
         try { 
-            java.util.List list = new java.util.ArrayList();
+            java.util.List<File> list = new java.util.ArrayList<File>();
             java.lang.String line = null;
             while ((line = bReader.readLine()) != null) {
                 try {
@@ -625,7 +624,7 @@ public class FileDrop
         }); // end FileDrop.Listener
 
         frame.setBounds( 100, 100, 300, 400 );
-        frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE );
+        frame.setDefaultCloseOperation( javax.swing.JFrame.EXIT_ON_CLOSE );
         //frame.show();
     }   // end main
 

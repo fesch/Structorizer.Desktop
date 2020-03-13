@@ -404,8 +404,9 @@ public class Function
     // START KGU 2016-10-16: More informative self-description
     public String toString()
     {
+    	String paramNames = this.parameters == null ? "" : this.parameters.concatenate(", ");
     	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			": " + this.getName() + "(" + this.parameters.concatenate(", ") + ")";
+    			": " + this.getName() + "(" + paramNames + ")";
     }
     // END KGU# 2016-10-16
 

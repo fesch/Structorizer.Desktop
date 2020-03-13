@@ -147,6 +147,12 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-30      Issues #699, #718, #720 Handling of includeList and cached info
  *      Kay Gürtzig     2019-03-31      Issue #696 - field specialRoutinePool added, type retrieval may use it
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2019-10-13/15   Bugfix #763: Test for stale file association in getFile(), new method copyWithFilepaths()
+ *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
+ *      Kay Gürtzig     2019-11-13      New method getMereDeclarationNames() for bugfix #776
+ *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
+ *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
+ *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
  *      
  ******************************************************************************************************
  *
@@ -571,7 +577,8 @@ public class Root extends Element {
 	// END KGU#363 2017-05-21
 
 	/**
-	 * Names of variables defined within this diagram (may be null after changes!)
+	 * Names of variables defined within this diagram (may be null after changes,
+	 * lazy initialization!)
 	 * @see #getCachedVarNames()
 	 */
 	// START KGU#444/KGU#618 2018-12-18 - Issues #417, #649 We want to distinguish empty from invalid
@@ -615,7 +622,9 @@ public class Root extends Element {
 	
 	// START KGU#375 2017-03-31: Enh. #388
 	/**
-	 * Names and cached value expressions of detected constants among the {@link #variables} 
+	 * Names and cached value expressions of detected constants among the {@link #variables}.
+	 * For enumeration type constants, the actual value is prefixed with ":" + typename + "€".
+	 * @see #getConstValueString(String) 
 	 */
 	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
 	// END KGU#375 2017-03-31
@@ -646,7 +655,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false									// 26
+		false,	true,	true					// 26 .. 28
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -1754,7 +1763,22 @@ public class Root extends Element {
 		return _sel ? this : null;
 	}
 
+	// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
+	/**
+	 * Like {@link #copy()} but also copies the file paths (particularly important
+	 * for recursive execution to avoid eternal saving requests).
+	 * @return the copied {@link Root}
+	 */
+	public Root copyWithFilepaths()
+	{
+		Root cpy = (Root)this.copy();
+		cpy.filename = this.filename;
+		cpy.shadowFilepath = this.shadowFilepath;
+		return cpy;
+	}
+	// END KGU#749 2019-10-15
 
+    @Override
     public Element copy()
     {
             Root ele = new Root(this.getText().copy());
@@ -2295,9 +2319,15 @@ public class Root extends Element {
     		// START KGU#316 2017-01-03: Issue #318 - we must not return a virtual path
     		//return new File(filename);
     		File myFile = new File(filename);
+    		//File myFile = new File("N:\\doof\\dumm\\duemmer.nsd");
     		while (myFile != null && !myFile.exists()) {
     			myFile = myFile.getParentFile();
     		}
+    		// START KGU#749 2019-10-13: Bugfix #763
+    		if (myFile != null && myFile.isDirectory()) {
+    			myFile = null;
+    		}
+    		// END KGU#749 2019-10-13
     		return myFile;
     		// END KGU#316 2017-01-03
     	}
@@ -2322,7 +2352,7 @@ public class Root extends Element {
      * Returns the absolute file path as string if this diagram is associated to a file,
      * or an empty string otherwise.<br/>
      * If the file resides within an arrz archive, the path may be a symbolic path into
-     * the arrz archive unless {@code pathOfrigin} is true, in which case it will be the
+     * the arrz archive unless {@code pathOfOrigin} is true, in which case it will be the
      * archive path itself instead.<br/>
      * {@code getPath(true)} is equivalent to {@code getFile().getAbsolutePath()} if this
      * is associated to a file at all.
@@ -2343,7 +2373,7 @@ public class Root extends Element {
     		File f = new File(filename);
     		// START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     		if (pathOfOrigin && this.shadowFilepath != null) {
-    			while(f != null && !f.isFile()) {
+    			while (f != null && !f.isFile()) {
     				f = f.getParentFile();
     			}
     			// No Zip file found?
@@ -2731,7 +2761,7 @@ public class Root extends Element {
 		int posBrace = 0;
 		while ((posBrace = tokens.indexOf("{", posBrace+1)) > 0) {
 			if (Function.testIdentifier(tokens.get(posBrace-1), null)) {
-				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null);
+				HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), null, false);
 				if (components != null) {
 					// Remove all tokens from the type name on (they are in the HashMap now)
 					tokens.remove(posBrace-1, tokens.count());
@@ -2754,6 +2784,26 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#388 2017-10-09
+	
+	// START KGU#542 2019-11-17: Enh. #739 Support for enumeration type values
+	/**
+	 * Returns the value string (cached literal or expression) associated to constant
+	 * {@code constName} (if it was defined) or null (otherwise). In case of enumeration
+	 * constants, wipes off the typename prefix ({@code ":" + <typename> + "€"}).
+	 * @param constName - name of the constant
+	 * @return value string for the constant (cleaned in case of an enumerator) or null
+	 * @see #constants
+	 */
+	public String getConstValueString(String constName)
+	{
+		String valString = this.constants.get(constName);
+		if (valString != null && valString.startsWith(":") && valString.contains("€")) {
+			// Skim off the enumerator type name
+			valString = valString.substring(valString.indexOf('€')+1);
+		}
+		return valString;
+	}
+	// END KGU#542 2019-11-17
 
     // KGU 2016-03-29 Rewritten based on tokens
     /**
@@ -2891,15 +2941,17 @@ public class Root extends Element {
 
     /**
      * Provides all variable names of the entire program if cached, otherwise retrieves and
-     * stores them in this.variables.
+     * stores them in {@link #variables}.
      * @return list of variable names
      * @see #retrieveVarNames()
+     * @see #getMereDeclarationNames()
      */
     public StringList getVarNames() {
     	//System.out.println("getVarNames() called...");
     	if (this.variables != null) {
     		return this.variables;
     	}
+    	// This is the same as retrieveVarNames()
     	return getVarNames(this, false, false, true);
     }
     
@@ -2959,6 +3011,15 @@ public class Root extends Element {
                     	int i = 0;
                     	while (i < lines.count()) {
                     		if (Instruction.isTypeDefinition(lines.get(i), null)) {
+                    			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
+                    			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
+                    			if (constVals != null) {
+                    				// We simply generate singular constant definition lines
+                    				for (Entry<String, String> enumItem: constVals.entrySet()) {
+                    					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
+                    				}
+                    			}
+                    			// END KGU#542 2019-11-17
                     			lines.remove(i);
                     		}
                     		else {
@@ -2992,6 +3053,93 @@ public class Root extends Element {
             //System.out.println(varNames.getCommaText());
             return varNames;
     }
+    
+    /**
+     * Retrieves all constants from the given type definition list if it is an
+     * enumeration type list and returns their name-value map.<br/>
+     * The associated values will be prefixed with {@code ":" + <typename> + "€"} and may be
+     * constant expressions, particularly of kind {@code <something>+<number>}.
+     * @param _typeDefLine - the (unbroken) line of the enum type definition
+     * @returns a map of the enumeration constants to their prefixed values strings or null
+     */
+    public LinkedHashMap<String,String> extractEnumerationConstants(String _typeDefLine)
+    {
+    	LinkedHashMap<String,String> enumConstants = null;
+    	StringList tokens = Element.splitLexically(_typeDefLine, true);
+    	tokens.removeAll(" ");
+    	if (!tokens.get(3).equalsIgnoreCase("enum")) {
+    		return null;
+    	}
+    	String typename = tokens.get(1);
+    	String typeSpec = tokens.concatenate(null, 3, tokens.count()).trim();
+    	// Confirm that the syntax is okay
+    	if (TypeMapEntry.MATCHER_ENUM.reset(typeSpec).matches()) {
+    		enumConstants = new LinkedHashMap<String, String>();
+    		int val = 0;
+    		String valStr = "";
+    		int posBrace = typeSpec.indexOf('{');
+    		StringList items = StringList.explode(typeSpec.substring(posBrace+1, typeSpec.length()-1), ",");
+    		for (int i = 0; i < items.count(); i++, val++) {
+    			String item = items.get(i);
+    			int posEq = item.indexOf('=');
+    			if (posEq >= 0) {
+    				// Get the value string
+    				valStr = item.substring(posEq+1).trim();
+    				val = 0;
+    				// Reduce item to the pure constant name
+    				item = item.substring(0, posEq);
+    				// FIXME: We should be able to evaluate constant expressions, e.g. "MONDAY+1"!
+    				if (this.constants.containsKey(valStr)) {
+    					// Is an already defined constant, get the associated value string
+    					valStr = this.getConstValueString(valStr);
+    				}
+    				else if (valStr.contains("+")) {
+    					int posPlus = valStr.lastIndexOf('+');
+    					try {
+    						int offset = Integer.parseInt(valStr.substring(posPlus+1));
+    						valStr = valStr.substring(0, posPlus).trim();
+    						val = offset;
+    					}
+    					catch (NumberFormatException ex) {}
+    				}
+    				try {
+    					int val0 = Integer.parseInt(valStr);
+    					// Don't accept negative values
+    					if (val0 >= 0) {
+    						val = val0;
+    						valStr = "";
+    					}
+    				}
+    				catch (NumberFormatException ex) {
+    					// Just ignore the explicit value and use the standard
+    				}
+    			}
+    			enumConstants.put(item, ":" + typename + "€" + valStr + (!valStr.isEmpty() ? "+" : "") + val);
+    		}
+    	}
+    	return enumConstants;
+    }
+
+    // START KGU#672 2019-11-13: Introduced for Bugfix #762
+    /**
+     * @return A list of the names of uninitialized, i.e. merely declared, variables
+     * (of this diagram and all included diagrams).
+     * @see #getVarNames()
+     * @see #getTypeInfo()
+     */
+    public StringList getMereDeclarationNames()
+    {
+    	StringList declNames = new StringList();	// Result
+    	StringList varNames = this.getVarNames();	// Names of initialized variables
+    	for (String name: this.getTypeInfo().keySet()) {
+    		// Ignore type names and omit initialized variables (which should also include constants)
+    		if (!name.startsWith(":") && !varNames.contains(name)) {
+    			declNames.add(name);
+    		}
+    	}
+    	return declNames;
+    }
+    // END KGU#672 2019-11-13
     
     // START KGU#261 2017-01-20: Enh. #259
     /**
@@ -3110,7 +3258,7 @@ public class Root extends Element {
 		String typeSpec = null;
 		for (Param par: parameters) {
 			if ((typeSpec = par.getType()) != null) {
-				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true, false);
+				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true);
 			}
 		}
 		if (this.isSubroutine()) {
@@ -3122,7 +3270,7 @@ public class Root extends Element {
 				// consideration where we check whether an explicit variable declaration will come (mostly C++,
 				// C#, Java) we drive better if we don't set the "explicitly" flag here.
 				//this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, true, false);
-				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false, false);
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
 				// END KGU#593 2018-10-05
 			}
 		}
@@ -3424,6 +3572,9 @@ public class Root extends Element {
     			Case caseEle = ((Case) ele);
 				int si = caseEle.qs.size();	// Number of branches
     			StringList initialVars = _vars.copy();
+    			// START KGU#758 2019-11-08: Enh. #770
+    			analyse_27_28(caseEle, _errors);
+    			// END KGU#758 2019-11-08
     			// This Hashtable will contain strings composed of as many '1' characters as
     			// branches initialise the respective new variable - so in the end we can see
     			// which variables aren't always initialised.
@@ -3449,12 +3600,12 @@ public class Root extends Element {
     			//System.out.println(myInitVars);
     			// walk trough the hash table and check
     			Enumeration<String> keys = myInitVars.keys();
-				// adapt size if no "default"
-				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
-				{
-					si--;
-				}
-				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
+    			// adapt size if no "default"
+    			if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
+    			{
+    				si--;
+    			}
+    			//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
     			while ( keys.hasMoreElements() )
     			{
     				String key = keys.nextElement();
@@ -3474,6 +3625,38 @@ public class Root extends Element {
     			}
     			// look at the comment for the IF-structure
     		}
+    		// START KGU#812 2020-02-21: Bugfix #825 forgotten to descend recursively
+    		else if (eleClassName.equals("Try")) {
+    			StringList tVars = _vars.copy();
+    			StringList cVars = _vars.copy();
+    			StringList fVars = _vars.copy();
+
+    			cVars.addIfNew(((Try)ele).getText().trim());
+    			
+    			analyse(((Try)ele).qTry, _errors, tVars, _uncertainVars, _constants, _resultFlags, _types);
+    			analyse(((Try)ele).qCatch, _errors, cVars, _uncertainVars, _constants, _resultFlags, _types);
+
+    			for(int v = 0; v < tVars.count(); v++)
+    			{
+    				String varName = tVars.get(v);
+    				if (!_vars.contains(varName)) { _uncertainVars.add(varName); }
+    			}
+    			for(int v = 0; v < cVars.count(); v++)
+    			{
+    				String varName = cVars.get(v);
+    				if (!_vars.contains(varName)) { _uncertainVars.add(varName); }
+    			}
+    			
+    			analyse(((Try)ele).qFinally, _errors, fVars, _uncertainVars, _constants, _resultFlags, _types);
+
+    			for(int v = 0; v < fVars.count(); v++)
+    			{
+    				String varName = fVars.get(v);
+    				_vars.addIfNew(varName);
+    			}
+
+    		}
+    		// END KGU#812 2020-02-21
     		// START KGU#376 2017-04-11: Enh. #389 - revised 2017-04-20 - disabled 2017-07-01
     		//else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
     		//	analyse_23((Call)ele, _errors, _vars, _uncertainVars, _constants);
@@ -3651,6 +3834,12 @@ public class Root extends Element {
 	 */
 	private void analyse_5_7_13(Element ele, Vector<DetectedError> _errors, StringList _myVars, boolean[] _resultFlags)
 	{
+		// START KGU#812 2020-02-21: Bugfix #825 We check the error variable of a TRY block too
+		if (ele instanceof Try) {
+			_myVars = _myVars.copy();
+			_myVars.addIfNew(((Try)ele).getExceptionVarName());			
+		}
+		// END KGU#812 2020-02-21
 		for (int j=0; j<_myVars.count(); j++)
 		{
 			String myVar = _myVars.get(j);
@@ -4374,7 +4563,7 @@ public class Root extends Element {
 			else if (line.startsWith("type ") || isTypedef) {
 				if (!isTypedef) {
 					//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
-					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
+					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);
 				}
 				else {
 					StringList tokens = splitLexically(line, true);
@@ -4392,29 +4581,55 @@ public class Root extends Element {
 							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
 							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
 						}
-						this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
-						for (int j = 0; j < compNames.count(); j++) {
-							String compName = compNames.get(j);
-							if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
-								//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-								addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						String tag = typeSpec.substring(0, posBrace).toLowerCase();
+						if (tag.equals("enum")) {
+							HashMap<String,String> enumDefs = this.extractEnumerationConstants(line);
+							if (enumDefs == null) {
+								//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
 							}
-							String type = compTypes.get(j).trim();
-							// Clear off array specifiers, but the check is still too restrictive...
-							if (type != null) {
-								String typeLower;
-								if (type.endsWith("]") && type.contains("[")) {
-									type = type.substring(0, type.indexOf("[")).trim();
-								}
-								else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-									type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-								}
-								if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-									//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+							else {
+								for (Entry<String, String> enumItem: enumDefs.entrySet()) {
+									String constName = enumItem.getKey();
+									String enumValue = enumItem.getValue();
+									String oldVal = _definedConsts.put(constName, enumValue);
+									if (oldVal != null && !oldVal.equals(enumValue)) {
+										//error  = new DetectedError("Attempt to modify the value of constant «"+varName+"»!", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error22_2, constName), _instr), 22);						
+									}
 								}
 							}
 						}
+						else {	// tag assumed to be "record" or "struct"
+						// END KGU#542 2019-11-17
+							this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+							for (int j = 0; j < compNames.count(); j++) {
+								String compName = compNames.get(j);
+								if (!Function.testIdentifier(compName, null) || compNames.subSequence(0, j-1).contains(compName)) {
+									//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+								}
+								String type = compTypes.get(j);
+								// Clear off array specifiers, but the check is still too restrictive...
+								if (type != null) {
+									type = type.trim();
+									String typeLower;
+									if (type.endsWith("]") && type.contains("[")) {
+										type = type.substring(0, type.indexOf("[")).trim();
+									}
+									else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+										type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+									}
+									if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+										//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
+									}
+								}
+							}
+						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+						}
+						// END KGU#542 2019-11-17
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
 					else if (Function.testIdentifier(typeSpec, null) && !_types.containsKey(":" + typeSpec)) {
@@ -4454,7 +4669,7 @@ public class Root extends Element {
 						else {
 							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType);
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
 							// END KGU#559 2018-07-20
 							Set<String> compNames = recType.getComponentInfo(true).keySet();
 							for (String compName: compNames) {
@@ -4642,19 +4857,19 @@ public class Root extends Element {
 					// END KGU#376 2017-04-20
 					if (subResultFlags[0]) {
 						//error  = new DetectedError("Diagram «%» is rather unsuited to be included as it makes use of return.",(Element) _node.getElement(i));
-						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);    				
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), this), 23);
 					}
 					// Now associate all sub-analysis results with the Call element
 					for (DetectedError err: impErrors) {
 						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
-						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);    				
+						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);
 					}
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423
 					for (String key: importedTypes.keySet()) {
 						if (key.startsWith(":") && _types.containsKey(key)) {
 							//error  = new DetectedError("There is a name conflict between local and imported type definition «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);							
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_7, key.substring(1)), this), 23);
 						}
 						else {
 							_types.put(key, importedTypes.get(key));
@@ -4665,7 +4880,7 @@ public class Root extends Element {
 						String varName = importedVars.get(j);
 						if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (int j = 0; j < importedUncVars.count(); j++) {
@@ -4674,14 +4889,14 @@ public class Root extends Element {
 						addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), this), 3);    						    					
 						if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
 							//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);    						    					
+							addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), this), 23);
 						}
 					}
 					for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
 						if (!_constants.containsKey(constEntry.getKey())) {
 							_constants.put(constEntry.getKey(), constEntry.getValue());
 							if (!this.constants.containsKey(constEntry.getKey())) {
-								this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
+								this.constants.put(constEntry.getKey(), constEntry.getValue());
 							}
 						}
 					}
@@ -4710,6 +4925,55 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#514 2018-04-03
+	
+	// START KGU#758 2019-11-08: Enh. #770 - check CASE elements
+	private void analyse_27_28(Case _case, Vector<DetectedError> _errors)
+	{
+		HashSet<String> selectors = new HashSet<String>();
+		HashSet<Integer> values = new HashSet<Integer>();
+		StringList text = _case.getUnbrokenText();
+		StringList duplicates = new StringList();
+		String aNonNumber = null;
+		for (int i = 1; i < text.count(); i++) {
+			StringList items = Element.splitExpressionList(text.get(i), ",");
+			for (int j = 0; j < items.count(); j++) {
+				int val = 0;
+				String item = items.get(j);
+				// Check for duplicates (including the default label)
+				if (!selectors.add(item)) {
+					duplicates.addIfNew(item);
+				}
+				// Check for non-integers and non-characters (without the default branch label)
+				if (i < text.count()-1) {
+					String constVal = this.getConstValueString(item);
+					if (constVal == null) {
+						constVal = item;
+					}
+					// Check if it is not a character literal
+					if (!constVal.endsWith("'") || !(constVal.startsWith("'\\") && constVal.length() > 3 || constVal.startsWith("'") && constVal.length() == 3)) {
+						try {
+							val = Integer.parseInt(constVal);
+							if (!values.add(val)) {
+								duplicates.addIfNew(constVal);
+							}
+						}
+						catch (NumberFormatException ex) {
+							aNonNumber = item;
+						}
+					}
+				}
+			}
+		}
+		if (aNonNumber != null) {
+			//error  = new DetectedError("Some selector item seems not to be an integer constant.", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error27, aNonNumber), _case), 27);
+		}
+		if (!duplicates.isEmpty()) {
+			//error  = new DetectedError("There are multiple (conflicting) selector items (%) in the CASE element!", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error28, duplicates.concatenate(", ")), _case), 28);
+		}
+	}
+	// END KGU#758 2019-11-08
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**

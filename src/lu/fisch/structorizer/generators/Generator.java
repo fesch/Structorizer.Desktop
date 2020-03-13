@@ -92,6 +92,13 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-08-07      Enh. #741: Modified API for batch export (different ini path mechanism)
  *      Kay Gürtzig     2019-09-23      Enh. #738: First code preview implementation
  *      Kay Gürtzig     2019-10-04      Enh. #738: Code preview accomplished and released.
+ *      Kay Gürtzig     2019-10-06      Bugfix #761: Duplicated code lines in generateCode(Root,String) caused
+ *                                      wrong Root line range in the codeMap (and consecutive errors)
+ *      Kay Gürtzig     2019-11-11      Issue #766: Approach to achieve deterministic routine order on export
+ *      Kay Gürtzig     2019-11-13      Bugfix #778: License text of new diagrams wasn't exported to code
+ *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
+ *      Kay Gürtzig     2019-12-11      Bugfix #794: Code preview crash with unconfigured license preference
+ *      Kay Gürtzig     2020-02-20      Typo fixed in generateCode(Try)
  *
  ******************************************************************************************************
  *
@@ -133,6 +140,8 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -148,6 +157,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -180,6 +191,7 @@ import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.BTextfile;
@@ -276,7 +288,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#74 2015-11-29
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
 	/** Recursive usage map of called subroutines */
-	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #766 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Line number where to insert subroutine definitions */
 	protected int subroutineInsertionLine = 0;
 	/** Indentation level (string) for subroutine definitions to be inserted */
@@ -288,7 +303,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#178 2016-07-19
 	// START KGU#376 2017-09-20: Enh. #389
 	/** Recursive usage map of diagram includes */
-	protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	// START KGU#754 2019-11-11: Issue #766 - We want a deterministic subroutine order
+	//protected Hashtable<Root, SubTopoSortEntry> includeMap = new Hashtable<Root, SubTopoSortEntry>();
+	protected TreeMap<Root, SubTopoSortEntry> includeMap = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+	// END KGU#754 2019-11-11
 	/** Topologically sorted Queue of all diagrams recursively included by the Roots to be exported. */
 	protected Queue<Root> includedRoots = new LinkedList<Root>();
 	// END KGU#376 2017-09-20
@@ -429,7 +447,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract String commentSymbolLeft();
 	/**
 	 * Right delimiter of a both-end delimited comment. In case commentSymbolLeft()
-	 * returns a line-comment symbol, then here should the epty string be returned
+	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
 	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
@@ -717,13 +735,35 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
+	 * @see #setDefHandled(String, String)
 	 */
+	// START KGU#767 2019-11-24: Bugfix #782 for Python - we need to tell included from own declarations
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot)
+	{
+		return wasDefHandled(_root, _id, _setDefinedIfNot, true);
+	}
+
+	/**
+	 * Checks whether the given {@code _id} has already been defined<b/>
+	 * 1. by diagram {@code _root} itself or
+	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
+	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * in {@link #declaredStuff}.
+	 * @param _root - the currently exported {@link Root}
+	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
+	 * @param _involveIncludables - whether the included diagrams are also to be consulted
+	 * @return true if there had already been a definition before
+	 * @see #setDefHandled(String, String)
+	 */
+	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
+	// END KGU#767 2019-11-24
 	{
 		String signature = _root.getSignatureString(false);
 		StringList definedIds = this.declaredStuff.get(signature);
 		boolean handled = definedIds != null && definedIds.contains(_id);
-		if (_root.includeList != null) {
+		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
 				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
@@ -744,8 +784,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Registers the declaration of entity {@code _id} as handled in the code for the {@link Root}
 	 * with signature {@code _signature}. Returns whether the 
-	 * @param _signature
-	 * @param _id
+	 * @param _signature - signature of the responsible {@link Root}
+	 * @param _id - the identifier (or ':'-prefixed type key) of the declared entity
+	 * @see #wasDefHandled(Root, String, boolean)
+	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 */
 	protected void setDefHandled(String _signature, String _id) {
 		StringList definedIds;
@@ -1170,7 +1212,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// but it's still needed for the meaningful ones.
 		String[] keywords = CodeParser.getAllProperties();
 		for (int kw = 0; kw < keywords.length; kw++)
-		{    				
+		{
 			if (keywords[kw].trim().length() > 0)
 			{
 				StringList keyTokens = this.splitKeywords.elementAt(kw);
@@ -1231,13 +1273,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * OVERRIDE this! (Method just returns the re-concatenated tokens)
 	 * This method is called by {@link #transform(String, boolean)} but may
 	 * also be used elsewhere for a specific token list.
+	 * @param tokens - Sequence of tokens representing the unified line (intermediate syntax)
+	 * @return transformed string
 	 * @see #transform(String, boolean)
 	 * @see #transformInput(String)
 	 * @see #transformOutput(String)
 	 * @see #transformType(String, String)
 	 * @see #suppressTransformation
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
 	 */
 	protected String transformTokens(StringList tokens)
 	{
@@ -1874,7 +1916,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _referenceMap - the map from referred Roots to referring Roots
 	 * @return the {@code _referred} Root if it hadn't been in {@code _referenceMap} before 
 	 */
-	private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap) {
+	// START KGU#754 2019-11-11: Issue #766 - we want deterministic routine orders
+	//private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap)
+	private Root putRootsToMap(Root _referred, Root _caller, SortedMap<Root, SubTopoSortEntry> _referenceMap)
+	// END KGU#754 2019-11-11
+	{
 		// Is there already an entry for this root?
 		Root newSub = null;
 		SubTopoSortEntry entry = _referenceMap.get(_referred);
@@ -1948,7 +1994,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#237 2016-08-10
 	
 	// START KGU#376 2017-09-20: Enh. #389
-	private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	// START KGU#754 2019-11-11: Issue #766
+	//private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
+	private void registerIncludedRoots(Root _root, SortedMap<Root, SubTopoSortEntry> _includedRoots)
+	// END KGU#754 2019-11-11
 	{
 		if (_root.includeList != null && (routinePool != null)) {
 			for (int i = 0; i < _root.includeList.count(); i++)
@@ -1975,7 +2024,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 
-	private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap) {
+	// START KGU#754 2019-11-11: Issue #766 - aimed at deterministic order
+	//private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap)
+	private Root getAmongExportedRoots(String includeName, SortedMap<Root, SubTopoSortEntry> _includeMap)
+	// END KGU#754 2019-11-11
+	{
 		for (Root included: _includeMap.keySet()) {
 			if (includeName.equals(included.getMethodName())) {
 				return included;
@@ -2426,7 +2479,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		generateCode(_try.qTry, _indent + this.getIndent());
 		appendComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
 		generateCode(_try.qCatch, _indent + this.getIndent());
-		appendComment("fimally (FIXME!)", _indent);
+		appendComment("finally (FIXME!)", _indent);
 		generateCode(_try.qFinally, _indent + this.getIndent());
 		appendComment("end try (FIXME!)", _indent);
 	}
@@ -2626,13 +2679,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		// END KGU#705 2019-09-23
 
-		// START KGU#705 2019-09-23: Enh. #738
-		if (codeMap != null) {
-			// Update the end line no relative to the start line no
-			codeMap.get(_root)[1] += (code.count() - line0);
-		}
-		// END KGU#705 2019-09-23
-
 		return code.getText();
 	}
 	
@@ -2726,7 +2772,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
-	 * @param _root - the diagram the declarations and definitions of are to be inserted
+	 * @param _root - the diagram the declarations and definitions of which are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
@@ -2774,8 +2820,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (this.optionExportLicenseInfo()) {
 			this.appendComment("", _indent);
 			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
-			if (_root.licenseName != null) {
+			// START KGU#763 2019-12-11: Bugfix #794 - for an empty license name, we don't need to check
+			//if (_root.licenseName != null) {
+			if (_root.licenseName != null && !_root.licenseName.trim().isEmpty()) {
+			// END KGU#763 2019-12-11
 				this.appendComment("License: " + _root.licenseName, _indent);
+				// START KGU#763 2019-11-13: Bugfix #778
+				if (_fullText && _root.licenseText == null) {
+					String licText = this.loadLicenseText(_root.licenseName);
+					if (licText != null) {
+						this.appendComment(StringList.explode(licText, "\n"), _indent);
+					}
+				}
+				// END KGU#763 2019-11-13
 			}
 			if (_fullText && _root.licenseText != null) {
 				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
@@ -3183,7 +3240,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _dependencyMap - the dependency graph of the routines as map - will be emptied!
 	 * @return queue of the sorted diagrams (independent first, dependent ones following)
 	 */
-	protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap) {
+	// START KGU#754 2019-11-11: Issue #766 - we want to achieve deterministic routine order
+	//protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap)
+	protected Queue<Root> sortTopologically(SortedMap<Root, SubTopoSortEntry> _dependencyMap)
+	// END KGU#754 2019-11-11
+	{
 		Queue<Root> sortedRoots = new LinkedList<Root>();
 		Queue<Root> roots = new LinkedList<Root>();
 		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
@@ -3764,6 +3825,67 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
 	}
+	
+	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
+	/**
+	 * Retrieves the license text associated to license name {@code licName} from
+	 * the license pool directory
+	 * @param licName - name of the license (file name will be drived from it)
+	 * @return the text content of the license file (if existent), may be null
+	 */
+	protected String loadLicenseText(String licName) {
+		String error = null;
+		String content = "";
+		// START KGU#789 2020-01-20: Bugfix #802: Must use standard ini directory
+		//File licDir = Ini.getIniDirectory();
+		File licDir = Ini.getIniDirectory(true);
+		// END KGU#789 2020-01-20
+		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+		File[] licFiles = licDir.listFiles(new LicFilter());
+		File licFile = null; 
+		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+				licFile = licFiles[i];
+			}		
+		}
+		BufferedReader br = null;
+		// START KGU#763 2019-12-11: Bugfix #794 part 1
+		if (licFile != null) {
+		// END KGU#763 2019-12-11
+			try {
+				InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+				br = new BufferedReader(isr);
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					content += line + '\n';
+				};
+			} catch (UnsupportedEncodingException e) {
+				error = e.getMessage();
+			} catch (FileNotFoundException e) {
+				error = e.getMessage();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		// START KGU#763 2019-12-11: Bugfix #794 part 2
+		}
+		// END KGU#763 2019-12-11
+		if (br != null) {
+			try {
+				br.close();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		}
+		if (error != null) {
+			getLogger().log(Level.WARNING, "{0}", error);
+		}
+		if (content.trim().isEmpty()) {
+			content = null;
+		}
+		return content;	
+	}
+	// END KGU#763 2019-11-13
+
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)

@@ -55,7 +55,8 @@
  *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
- *      Jaap Woldringh  2019-06-10      Translation updated and accomplished
+ *      Jaap Woldringh  2019-06-10      Translation updated and completed
+ *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -272,8 +273,10 @@ Menu.menuDebugDisable.text=Aan/Uit
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
-Menu.menuHelpOnline.text=Gebruiksaanwijzing
-Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing openen in de browser
+Menu.menuHelpOnline.text=Gebruiksaanwijzing (eng)
+Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing (slechts in engels) openen in de browser
+Menu.menuHelpDownload.text=Download de gebr.-aanw. als PDF
+Menu.menuHelpDownload.tooltip=Download de nieuwste gebruiksaanwijzing als PDF-bestand, om later te kunnen gebruiken zonder verbinding te hebben met het internet.
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -309,7 +312,10 @@ Menu.msgSaveChanges.text=Wilt u het huidige NSD- (PSD-) bestand opslaan?
 Menu.msgErrorImageSave.text=Fout bij opslaan van de afbeelding(en)!
 Menu.msgErrorUsingGenerator.text=Fout bij gebruik van % generator
 Menu.msgErrorNoFile.text=Bestand niet gevonden!
-Menu.msgBrowseFailed.text=In browser is % niet te zien
+Menu.msgBrowseFailed.text=Tonen "%" in de browser is mislukt.
+Menu.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade gebruiksaanwijzing in uw PDF-lezer weergegeven.
+Menu.msgDownloadFailed.text=Het downloaden van de User Guide is mislukt:\n%
+Menu.msgHostNotAvailable.text=Extern adres "%" is niet bereikbaar.
 Menu.hdrRefactoringTable.0.text=Referentie
 Menu.hdrRefactoringTable.1.text=Oude sleutel
 Menu.hdrRefactoringTable.2.text=Nieuwe sleutel
@@ -463,6 +469,8 @@ Menu.hint26.1.text=U kunt nu bijv. uw diagram uitproberen: → Menu "%1 ► %2"
 Menu.hint26.2.text=U kunt nu bijv. uw diagram opslaan: → Menu "%1 ► %2"
 Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaal: → Menu "%1 ► %2 ► %3" 
 Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3" 
+Menu.error27.text=Enkele keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
+Menu.error28.text=Enkele waarden (%) komen vaker voor in de (meerdere) keuzelijsten!
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
@@ -496,6 +504,8 @@ AnalyserPreferences.checkboxes.23.text=Controle op verkeerde importen van diagra
 AnalyserPreferences.checkboxes.24.text=Controle op type-definities en toegang tot record-componenten.
 AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies (IPO-model)
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
+AnalyserPreferences.checkboxes.27.text=Controle of de keuzewaarden gehele getallen zijn.
+AnalyserPreferences.checkboxes.28.text=Controle of de keuzelijsten gemeenschappelijke elementen hebben.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -1175,7 +1185,8 @@ Arranger.msgConfirmMultiple.text=De volgende %1 diagram(men) van de %2 zijn gese
 Arranger.msgReadyToExport.text=Bent u gereed om deze subrangschikking naar PNG te exporteren?
 Arranger.msgCantDoWithMultipleRoots.text=Het is onmogelijk meer dan een diagram tegelijk te %1. U selecteerde %2 diagram(men):\n-%3
 Arranger.msgDiagramsSelected.text=diagrammen: %1, geselecteerd: %2
-Arranger.msgBrowseFailed.text=Tonen % 2 in de browser is mislukt
+Arranger.msgBrowseFailed.text=Tonen "%" in de browser is mislukt.
+Arranger.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade User Guide in uw PDF-lezer weergegeven.\nZie de sectie "Arranger" in het hoofdstuk "Features".
 Arranger.msgTitleURLError.text=URL-fout
 Arranger.msgSelectionExpanded.text=% naar verwezen diagram(men) aan selectie toegevoegd.
 Arranger.msgMissingDiagrams.text=\n\n%1 naar verwezen diagram(men) niet gevonden:\n-%2
@@ -1231,7 +1242,7 @@ Surface.msgUnsavedGroups.text=Kon deze groepen (rangschikkingen) niet opslaan:
 Surface.msgDiagram.text=diagram «%»
 Surface.msgGroup.text=groep «%»
 Surface.msgGroupExists.text=Groep met naam «%» bestaat al!
-Surface.titleRenameGroup.text=Groeo "%1" hernoemen naar "%2"?
+Surface.titleRenameGroup.text=Groep "%1" hernoemen naar "%2"?
 Surface.msgRenameArrFile.text=Rangschikkingsbestand\n"%1"\nto "%2"?
 Surface.msgRenamingFailed.text=Kon rangschikkingsbestand niet hernoemen naar "%"!\nActie wordt geannuleerd.
 Surface.msgSharedDiagrams.text=De volgende diagrammen worden nu gedeeld met de groepen in de lijst\n - %1\n\nLet erop dat elke verandering erin invloed heeft op al deze groepen\nen archief %2, ook al is deze laatste niet meer ingelzen!

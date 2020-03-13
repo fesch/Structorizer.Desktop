@@ -73,6 +73,12 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-26      Bugfix #716: Assignments were transformed defectively
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-05-28      Issue #725: Smarter export of division operator
+ *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2019-11-24      Bugfix #782: Declaration of global variables corrected
+ *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
+ *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
+ *      Kay Gürtzig             2020-02-13      Bugfix #812: Defective solution for #782 (global references) mended
+ *      Kay Gürtzig             2020-03-08      Bugfix #831: Obsolete shebang and defective export of CALLs as parallel branch
  *
  ******************************************************************************************************
  *
@@ -113,7 +119,6 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -241,6 +246,10 @@ public class PythonGenerator extends Generator
 
 	/************ Code Generation **************/
 
+	// START KGU#542 2019-12-01: Enh. #739 - support for enumerator types
+	/** The currently exported {@link Root} */
+	private Root root = null;
+	// END KGU#542 2019-12-01
 	// START KGU#388 2017-10-02: Enh. #423 - Support for recordtypes
 	/** cache for the type map of the current Root */
 	private HashMap<String, TypeMapEntry> typeMap = null;
@@ -248,6 +257,9 @@ public class PythonGenerator extends Generator
 	private static final Pattern PTRN_TYPENAME = Pattern.compile("type (\\w+)\\s*=.*");
 	private static Matcher mtchTypename = PTRN_TYPENAME.matcher("");
 	// END KGU#388 2017-10-02
+	// START KGU#799 2020-02-13: Bugfix #812
+	private static final Matcher MTCH_IDENTIFIER = Pattern.compile("([A-Za-z_]\\w*).*").matcher("");
+	// END KGU#799 2020-02-13
 
 	// START KGU#598 2018-10-17: Enh. #490 Improved support for Turtleizer export
 	/**
@@ -331,9 +343,16 @@ public class PythonGenerator extends Generator
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, null)) {
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				// Check for a preceding dot
+				int k = i;
+				while (k > 0 && tokens.get(--k).trim().isEmpty());
+				boolean isComponent = k >= 0 && tokens.get(k).equals(".");
+				// END KGU#795 2020-02-12
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
+				// Handle DiagramController (more specifically: Turtleizer) routine calls
 				// START KGU#480 2018-01-21: Enh. 490 - more precise detection
 				//String turtleMethod = null;
 				//if (j+1 < tokens.count() && tokens.get(j).equals("(") && (turtleMethod = Turtleizer.checkRoutine(token)) != null) {
@@ -359,6 +378,24 @@ public class PythonGenerator extends Generator
 					}
 				}
 				// END KGU#480 2018-01-21
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				else if (isComponent) {
+					tokens.set(k++, "[");
+					tokens.set(i, "]");
+					tokens.insert("'" + token + "'", i);
+					tokens.remove(k, i);
+					i += (k - i) + 1;	// This corrects the current index w.r.t. insertions and deletions 
+				}
+				// END KGU#795 2020-02-12
+				// START KGU#542 2019-12-01: Enh. #739 support for enumerators
+				else if (this.varNames.contains(token) && this.root != null && this.root.constants.get(token) != null) {
+					String constVal = this.root.constants.get(token);
+					if (constVal.startsWith(":") && constVal.contains("€")) {
+						// Enumerator entry
+						tokens.set(i, constVal.substring(1, constVal.indexOf("€"))+ "." + token);
+					}
+				}
+				// END KGU#542 2019-12-01
 			}
 		}
 		// START KGU 2014-11-16: C comparison operator required conversion before logical ones
@@ -388,9 +425,9 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Record support
 	/**
-	 * Recursively looks for record initializers in the tokens and if there are some replaces
+	 * Recursively looks for record initializers in the tokens and, if there are some, replaces
 	 * the respective type name token by the entire transformed record initializer as single
-	 * string element and hence immune against further token manipulations.
+	 * string element (which is hence immune against further token manipulations).<br/>
 	 * @param tokens - the token list of the split line, will be modified.
 	 */
 	private void transformRecordInitializers(StringList tokens) {
@@ -408,21 +445,33 @@ public class PythonGenerator extends Generator
 				// We will now reorder the elements and drop the names
 				// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry);
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
 				String tail = comps.get("§TAIL§");	// String part beyond the initializer
-				String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				//String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
+				String sepa = "{";	// initial "separator" is the opening brace, then it will be comma
+				prevToken = "";
+				// END KGU#795 2020-02-12
 				for (String compName: compDefs.keySet()) {
 					if (comps.containsKey(compName)) {
-						prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
+						// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+						//prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
+						prevToken += sepa + "'" + compName + "': " + transformTokens(Element.splitLexically(comps.get(compName), true));
+						// END KGU#795 2020-02-12
 					}
-					else {
-						prevToken += sepa + "None";
-					}
+					// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+					//else {
+					//	prevToken += sepa + "None";
+					//}
+					// END KGU#795 2020-02-12
 					sepa = ", ";
 				}
-				prevToken += ")";
+				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
+				//prevToken += ")";
+				prevToken += "}";
+				// END KGU#795 2020-02-12
 				tokens.set(pos, prevToken);
 				tokens.remove(pos+1, tokens.count());
 				if (tail != null) {
@@ -571,6 +620,7 @@ public class PythonGenerator extends Generator
 			// END KGU 2014-11-16
 			StringList lines = _inst.getUnbrokenText();
 			String tmpCol = null;
+			Root root = Element.getRoot(_inst);
 			for(int i = 0; i < lines.count(); i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -581,6 +631,19 @@ public class PythonGenerator extends Generator
 
 				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
 				StringList inputItems = Instruction.getInputItems(line);
+				// START KGU#799 2020-02-13: Bugfix #812
+				if (inputItems != null && root.isInclude()) {
+					for (int j = 1; j < inputItems.count(); j++) {
+						String var = inputItems.get(j);
+						if (!Function.testIdentifier(var, null) && MTCH_IDENTIFIER.reset(var).matches()) {
+							var = MTCH_IDENTIFIER.group(1);
+						}
+						if (var != null) {
+							this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
+						}
+					}
+				}
+				// END KGU#799 2020-02-13
 				if (inputItems != null && inputItems.count() > 2) {
 					String inputKey = CodeParser.getKeyword("input") + " ";
 					String prompt = inputItems.get(0);
@@ -611,9 +674,22 @@ public class PythonGenerator extends Generator
 				else if (Instruction.isTypeDefinition(line)) {
 					mtchTypename.reset(line).matches();
 					String typeName = mtchTypename.group(1);
-					done = this.generateTypeDef(Element.getRoot(_inst), typeName, null, _indent, isDisabled);
+					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
 				}
 				// END KGU#388 2017-10-02
+				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified oinitialisations
+				else if (Instruction.isMereDeclaration(line)) {
+					done = generateDeclaration(line, root, _indent, isDisabled);
+				}
+				// END KGU#767 2019-11-24
+				// START KGU#799 2020-02-13: Bugfix #812
+				else if (Instruction.isAssignment(line) && root.isInclude()) {
+					String var = this.getAssignedVarname(line, true);
+					if (var != null) {
+						this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
+					}
+				}
+				// END KGUU#799 2020-02-13
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -675,7 +751,10 @@ public class PythonGenerator extends Generator
 		{
 			String caseline = _indent + ((i == 0) ? "if" : "elif") + " (";
 			// START KGU#15 2015-10-21: Support for multiple constants per branch
-			StringList constants = StringList.explode(lines.get(i+1), ",");
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//StringList constants = StringList.explode(lines.get(i+1), ",");
+			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+			// END KGU#755 2019-11-08
 			for (int j = 0; j < constants.count(); j++)
 			{
 				if (j > 0) caseline = caseline + " or ";
@@ -930,15 +1009,22 @@ public class PythonGenerator extends Generator
 			for (int v = 0; v < asgnd.count(); v++) {
 				used.removeAll(asgnd.get(v));
 			}
-			String args = used.concatenate(",");
-			if (used.count() == 1) {
-				args += ",";
-			}
 			if (sq.getSize() == 1) {
 				Element el = sq.getElement(0);
 				if (el instanceof Call && ((Call)el).isProcedureCall()) {
 					threadFunc = ((Call)el).getCalledRoutine().getName();
+					// START KGU#819 2020-03-08: Bugfix #831 - In case of a call we can (and must) simply copy the arg list.
+					String line = ((Call)el).getUnbrokenText().get(0);
+					used = Element.splitExpressionList(line.substring(line.indexOf("(")+1), ",");
+					for (int j = 0; j < used.count(); j++) {
+						used.set(j, transform(used.get(j)));
+					}
+					// END KGU#819 2020-03-08
 				}
+			}
+			String args = used.concatenate(",");
+			if (used.count() == 1) {
+				args += ",";
 			}
 			addCode(threadVar + " = Thread(target=" + threadFunc + ", args=(" + args + "))", _indent, isDisabled);
 			addCode(threadVar + ".start()", _indent, isDisabled);
@@ -1060,7 +1146,7 @@ public class PythonGenerator extends Generator
 
 	// START KGU#388 2017-10-02: Enh. #423 Translate record types to mutable recordtypes
 	/**
-	 * Adds a typedef or struct definition for the type passed in by {@code _typeEnry}
+	 * Adds a typedef, struct, or enum definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
 	 * @param _type - the type map entry the definition for which is requested here
@@ -1084,14 +1170,42 @@ public class PythonGenerator extends Generator
 		}
 		setDefHandled(_root.getSignatureString(false), typeKey);
 		if (_type.isRecord()) {
-			String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
-			for (String compName: _type.getComponentInfo(false).keySet()) {
-				typeDef += compName + " ";
-			}
-			typeDef = typeDef.trim() + "\")";
-			addCode(typeDef, _indent, _asComment);
+			// START KGU#795 2020-02-12: Issue #807 Use dictionaries instead of external library recordtype
+			//String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
+			//for (String compName: _type.getComponentInfo(false).keySet()) {
+			//	typeDef += compName + " ";
+			//}
+			//typeDef = typeDef.trim() + "\")";
+			//addCode(typeDef, _indent, _asComment);
+			// END KGU#795 2020-02-12
 			done = true;
 		}
+		// START KGU#542 2019-12-01: Enh. #739 - Support for enumeration types (since Python 3.4)
+		else if (_type.isEnum()) {
+			String indentPlus1 = _indent + this.getIndent();
+			StringList enumItems = _type.getEnumerationInfo();
+			addCode("class " + _typeName + "(Enum):", _indent, _asComment);
+			int offset = 0;
+			String lastVal = "";
+			for (int i = 0; i < enumItems.count(); i++) {
+				String[] itemSpec = enumItems.get(i).split("=", 2);
+				if (itemSpec.length > 1) {
+					lastVal = itemSpec[1].trim();
+					offset = 0;
+					try {
+						int code = Integer.parseUnsignedInt(lastVal);
+						lastVal = "";
+						offset = code;
+					}
+					catch (NumberFormatException ex) {}
+				}
+				addCode(itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, indentPlus1, _asComment);
+				offset++;
+			}
+			addCode("", _indent, _asComment);
+			done = true;
+		}
+		// END KGU#542 2019-12-01
 		return done;
 	}
 
@@ -1121,40 +1235,93 @@ public class PythonGenerator extends Generator
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
 	 * @see #appendGlobalInitialisations(String)
+	 * @see #generateDeclaration(String, Root, String, boolean)
 	 */
 	private void appendGlobalDeclarations(Root _root, String _indent) {
-		if (_root.includeList != null) {
-			HashSet<String> declared = new HashSet<String>();
-			for (Root incl: this.includedRoots) {
-				if (_root.includeList.contains(incl.getMethodName())) {
-					// Start with the types
-					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
-					//for (String name: incl.getTypeInfo().keySet()) {
-					for (String name: incl.getTypeInfo(routinePool).keySet()) {
-					// END KGU#676 2019-03-30
-						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);								
-						}
+		// START KGU#767 2019-11-24: Bugfix #782 Fundamentally revised
+//		if (_root.includeList != null) {
+//			HashSet<String> declared = new HashSet<String>();
+//			for (Root incl: this.includedRoots) {
+//				if (_root.includeList.contains(incl.getMethodName())) {
+//					// Start with the types
+//					// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+//					//for (String name: incl.getTypeInfo().keySet()) {
+//					for (String name: incl.getTypeInfo(routinePool).keySet()) {
+//					// END KGU#676 2019-03-30
+//						if (name.startsWith(":") && !declared.contains((name = name.substring(1)))) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);								
+//						}
+//					}
+//					// Now add the variables (including constants)
+//					StringList names = incl.retrieveVarNames();
+//					for (int i = 0; i < names.count(); i++)
+//					{
+//						String name = names.get(i);
+//						if (!declared.contains(name)) {
+//							addCode("global " + name, _indent, false);
+//							declared.add(name);
+//						}
+//					}
+//				}
+//			}
+//			if (!declared.isEmpty()) {
+//				addCode("", _indent, false);
+//			}
+//		}
+		// START KGU#799 2020-02-12: Bugfix #812 A main program does not need to use global declarations
+		if (_root.isProgram()) {
+			return;
+		}
+		// END KGU#799 2020-02-12
+		for (String name: this.typeMap.keySet()) {
+			if (this.wasDefHandled(_root, name, false, true) && !this.wasDefHandled(_root, name, true, false)) {
+				if (name.startsWith(":")) {
+					// START KGU#795 2020-02-12: Issue #807: There are no named record types anymore on export
+					if (this.typeMap.get(name).isRecord()) {
+						continue;
 					}
-					// Now add the variables (including constants)
-					StringList names = incl.retrieveVarNames();
-					for (int i = 0; i < names.count(); i++)
-					{
-						String name = names.get(i);
-						if (!declared.contains(name)) {
-							addCode("global " + name, _indent, false);
-							declared.add(name);
-						}
-					}
+					// END KGU#795 2020-02-12
+					name = name.substring(1);
 				}
-			}
-			if (!declared.isEmpty()) {
-				addCode("", _indent, false);
+				addCode("global " + name, _indent, false);
 			}
 		}
+		// END KGU#767 2019-11-24
 	}
 	// END KGU#388 2017-10-02
+
+	// START KGU#767 2019-11-24: Bugfix #782 - wrong handling of global / local declarations
+	/**
+	 * Generates a declaration from the given line and registers it with the given root.
+	 * @param _line - the original line of the declaration
+	 * @param _root - the owning {@link Root} object
+	 * @param _indent - current indentation level
+	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to be a comment)
+	 * @return true iff all code generation for the instruction line is done
+	 */
+	private boolean generateDeclaration(String _line, Root _root, String _indent, boolean _isDisabled) {
+		StringList tokens = Element.splitLexically(_line + " <- 0", true);
+		tokens.removeAll(" ");
+		String varName = Instruction.getAssignedVarname(tokens, false);
+		if (this.wasDefHandled(_root, varName, false)) {
+			return true;
+		}
+		String typeComment = "";
+		TypeMapEntry type = this.typeMap.get(varName);
+		if (type != null) {
+			StringList typeNames = this.getTransformedTypes(type, true);
+			if (typeNames != null && !typeNames.isEmpty()) {
+				typeComment = "\t" + this.commentSymbolLeft() +
+						" meant to be of type " + typeNames.concatenate(" or ") + " " +
+						this.commentSymbolRight();
+			}
+		}
+		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
+		this.setDefHandled(_root.getSignatureString(false), varName);
+		return true;
+	}
+	// END KGU#767 2019-11-24
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -1166,7 +1333,10 @@ public class PythonGenerator extends Generator
 		String indent = "";
 		if (topLevel)
 		{
-			code.add(_indent + "#!/usr/bin/env python");
+			// START KGU#819 2020-03-08: Bugfix #831
+			//code.add(_indent + "#!/usr/bin/env python");
+			code.add(_indent + "#!/usr/bin/python3");
+			// END KGU#819 2020-03-08
 			// START KGU#366 2017-03-10: Issue #378 the used character set is to be named 
 			code.add(_indent + "# -*- coding: " + this.getExportCharset().toLowerCase() + " -*-");
 			// END KGU#366 2017-03-10
@@ -1175,13 +1345,22 @@ public class PythonGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+			// START KGU#795 2020-02-12: Issue #807 - no longer needed, now dictionaries are used instead
+			//appendComment("You should have installed module recordtype: pip install recordtype", _indent);
+			//appendComment(this.getIndent() + "See https://pypi.org/project/recordtype", _indent);
+			//code.add(_indent + "from recordtype import recordtype");
+			// END KGU#795 2020-02-12
+			// START KGU#542 2019-12-01: Enh. #739
+			code.add(_indent + "from enum import Enum");
+			this.generatorIncludes.add("enum");
+			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
 				code.add(_indent);
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
-			// START KGU#607 2018-10-30:Issue #346
+			// START KGU#607 2018-10-30: Issue #346
 			this.generatorIncludes.add("math");		// Will be inserted later
 			// END KGU#607 2018-10-30
 			// START KGU#351 2017-02-26: Enh. #346
@@ -1234,6 +1413,9 @@ public class PythonGenerator extends Generator
 		this.typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
 		// END KGU#388 2017-10-02
+		// START KGU#542 2019-12-01: Enh. #739 - For enumerator transformation, we will also need _root in in deeper contexts
+		this.root = _root;
+		// END KGU#542 2019-12-01
 		return indent;
 	}
 
@@ -1244,7 +1426,9 @@ public class PythonGenerator extends Generator
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// START KGU#376 2017-10-03: Enh. #389 - Variables and types of the included diagrams must be marked as global here
+		// START KGU#767 2019-11-24: Bugfix #782: Disabled, will now be done via generateDeclaration() from generateCode(Instruction...)
 		appendGlobalDeclarations(_root, _indent);
+		// END KGU#767 2019-11-24
 		// END KGU#376 2017-10-03
 		// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 		generateParallelThreadFunctions(_root, _indent);
@@ -1300,5 +1484,24 @@ public class PythonGenerator extends Generator
 		// END KGU#598 2018-10-17
 	}
 	// END KGU 2015-12-15
+	
+	// START KGU#799 2020-02-13: Auxiliary fpor bugfix #812
+	private String getAssignedVarname(String line, boolean pureBasename)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		tokens.removeAll(" ");
+		Element.unifyOperators(tokens, true);
+		String var = Instruction.getAssignedVarname(tokens, false);
+		if (var != null && !Function.testIdentifier(var, "")) {
+			if (MTCH_IDENTIFIER.reset(var).matches()) {
+				var = MTCH_IDENTIFIER.group(0);
+			}
+			else {
+				var = null;
+			}
+		}
+		return var;
+	}
+	// END KGU#799 2020-02-13
 
 }

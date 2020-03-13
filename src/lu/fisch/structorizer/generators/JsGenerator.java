@@ -34,6 +34,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-05-21      First Issue (#721)
  *      Kay Gürtzig     2019-09-30      Array and record initializer handling added...
  *      Kay Gürtzig     2019-10-03      ... and improved (still not clean - we need a new recursive approach)
+ *      Kay Gürtzig     2019-11-24      Bugfix #783 - Workaround for record initializers without known type
+ *      Kay Gürtzig     2020-02-11      Bugfix #810 - multiple-input instruction export wasn't properly configured
  *
  ******************************************************************************************************
  *
@@ -198,7 +200,10 @@ public class JsGenerator extends CGenerator {
 	protected String transformRecordInit(String constValue, TypeMapEntry typeInfo) {
 		// START KGU#559 2018-07-20: Enh. #563 - smarter initializer evaluation
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		// START KGU#771 2019 11-24: Bugfix #783 - precaution against unknown type
+		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, true);
+		// END KGU#771 2019-11-24
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo;
 		if (typeInfo != null) {
@@ -215,6 +220,7 @@ public class JsGenerator extends CGenerator {
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
 			String compVal = comps.get(compName);
+			TypeMapEntry compType = compEntry.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
 				if (isFirst) {
 					isFirst = false;
@@ -223,11 +229,14 @@ public class JsGenerator extends CGenerator {
 					recordInit.append(", ");
 				}
 				recordInit.append(compName + ":");
-				if (compEntry.getValue() != null && compEntry.getValue().isRecord()) {
-					recordInit.append(transformRecordInit(compVal, compEntry.getValue()));
+				if (compType != null && compType.isRecord()) {
+					recordInit.append(transformRecordInit(compVal, compType));
 				}
 				// START KGU#732 2019-10-03: Bugfix #755 FIXME - nasty workaround
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				// START KGU#771 2019-11-24: Bugfix #783 Caused a NullPointer exception on missing type info
+				//else if (compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+				// END KGU#771 2019-11-24
 					StringList items = Element.splitExpressionList(compVal.substring(1), ",", true);
 					items.delete(items.count()-1);
 					for (int i = 0; i < items.count(); i++) {
@@ -281,6 +290,22 @@ public class JsGenerator extends CGenerator {
 		appendComment("type " + _typeName + ": " + _type.getCanonicalType(false, false).replace("$", "object"), _indent);
 	}
 	
+	// START KGU#653/KGU#797 2020-02-11: Enh. #680, bugfix #810
+	/**
+	 * Subclassable method possibly to obtain a suited transformed argument list string for the given series of
+	 * input items (i.e. expressions designating an input target variable each) to be inserted in the input replacer
+	 * returned by {@link #getInputReplacer(boolean)}, this allowing to generate a single input instruction only.<br/>
+	 * This instance just returns null (forcing the generate method to produce consecutive lines).
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @return either a syntactically converted combined string with suited operator or separator symbols, or null.
+	 */
+	@Override
+	protected String composeInputItems(StringList _inputVarItems)
+	{
+		return null;
+	}
+	// END KGU#653/KGU#797 2020-02-11
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#generateInstructionLine(lu.fisch.structorizer.elements.Instruction, java.lang.String, boolean, java.lang.String)
 	 */
@@ -492,7 +517,7 @@ public class JsGenerator extends CGenerator {
 		if (wasDefHandled(_root, _name, false)) {
 			return;
 		}
-		String constValue = _root.constants.get(_name);
+		String constValue = _root.getConstValueString(_name);
 		String decl = "var " + _name;
 		if (_root.constants.containsKey(_name) && constValue != null) {
 			decl = "const " + _name;

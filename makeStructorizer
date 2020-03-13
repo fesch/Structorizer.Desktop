@@ -31,13 +31,31 @@ set -e
 #      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
 #      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt resources
 #      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers (#665)
+#      Simon Sobisch                  2020-01-20   added handling for nostart argument,
+#                                                  default to detached start
 #
 ################################################################################
 
 # check for javac in PATH
 javac -version 2>/dev/null || \
   (rc=$? && echo 'javac not found in $PATH' && exit $rc)
-  
+
+start_compiled="x"
+case "$1" in
+  nostart | no-start | no_start)
+    start_compiled=""
+    shift
+    ;;
+  start | no-sync | no_sync | detached)
+    start_compiled="x"
+    shift
+    ;;
+  start-sync | sync | start_sync )
+    start_compiled="s"
+    shift
+    ;;
+esac
+
 # common javac opts
 str_javac_opts="-d ../bin/ -encoding utf8 $*"
 
@@ -86,7 +104,6 @@ find src -name '*.class' -exec rm {} \;
 echo "Done"
 
 # change into the "src" directory
-# // echo "Changing into src directory"
 pushd src >/dev/null
 
 # compile the generator classes (non-dependant classes)
@@ -137,13 +154,20 @@ cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.nsd ../bin/lu/fisch/structorizer/parsers/
 echo "Done"
 
-# changing into binary directory
-# // echo "Changing into binary directory"
-cd ../bin/
+if test -n "$start_compiled"; then
 
-# run the application
-echo; echo "Running Structorizer from compiled class files"
-java -cp $str_classpath Structorizer
+  # changing into binary directory
+  cd ../bin/
+
+  # run the application
+  echo; echo "Running Structorizer from compiled class files"
+  if test "$start_compiled" = "s"; then
+    java -cp $str_classpath Structorizer
+  else
+    java -cp $str_classpath Structorizer &
+  fi
+
+fi  # start block end
 
 # move back into the folder where we started
 popd >/dev/null

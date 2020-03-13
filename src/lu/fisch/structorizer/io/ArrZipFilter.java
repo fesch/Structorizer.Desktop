@@ -24,7 +24,7 @@ package lu.fisch.structorizer.io;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Input filter for Arranger Zip files. They contain nsd files and an arr file
+ *      Description:    Input filter for Arranger Zip files. They contain .nsd files and an .arr file
  *
  ******************************************************************************************************
  *
@@ -32,8 +32,9 @@ package lu.fisch.structorizer.io;
  *
  *      Author          Date			Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.06.29      First Issue
- *      Kay Gürtzig     2018.06.08      Inheritance changed
+ *      Kay Gürtzig     2016-06-29      First Issue
+ *      Kay Gürtzig     2018-06-08      Inheritance changed
+ *      Kay Gürtzig     2020-02-16      Description revised
  *
  ******************************************************************************************************
  *
@@ -43,6 +44,13 @@ package lu.fisch.structorizer.io;
 
 import java.io.File;
 
+/**
+ * Input filter for arrangement archive files, comprising an .arr file and
+ * several .nsd files (related to {@link Arranger}).
+ * @author Kay Gürtzig
+ * @see ArrFilter
+ * @see ArrangerFilter
+ */
 public class ArrZipFilter extends ExtFileFilter {
 
 	public static boolean isArr(String _filename)
@@ -69,7 +77,10 @@ public class ArrZipFilter extends ExtFileFilter {
 
 	public String getDescription() 
 	{
-		return "Portable Arranger Zip Files";
+		// START KGU#802 2020-02-16: Issue #815
+		//return "Portable Arranger Zip Files";
+		return "Arrangement Archive Files (portable)";
+		// END KGU#802 2020-02-16
 	}
 
 	public boolean accept(File f) 

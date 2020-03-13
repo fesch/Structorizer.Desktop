@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.elements;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -43,6 +41,8 @@ import java.util.HashMap;
  *      Kay Gürtzig     2017.09.22      Bugfix #428 Defective replacement pattern for "short" in canonicalizeType(String)
  *      Kay Gürtzig     2017.09.29      Regex stuff revised (final Strings -> final Patterns)
  *      Kay Gürtzig     2018.07.12      Canonicalisation of type name "unsigned short" added.
+ *      Kay Gürtzig     2019-11-17      Field isCStyle removed, several method signatures accordingly reduced,
+ *                                      Enh. #739: Support for enum types
  *
  ******************************************************************************************************
  *
@@ -65,6 +65,7 @@ import java.util.HashMap;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -104,6 +105,10 @@ public class TypeMapEntry {
 	private static final Pattern ARRAY_PATTERN5 = Pattern.compile("(.*?)\\[.*?\\]$");
 	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
+	// START KGU#542 2019-11-17: Enh. #739
+	public static final Matcher MATCHER_ENUM = Pattern.compile("^" + BString.breakup("enum") 
+	+ "\\s*[{]\\s*[A-Za-z_][A-Za-z_0-9]*\\s*([=]\\s*[^=,}]*?)?(,\\s*[A-Za-z_][A-Za-z_0-9]*(\\s*[=]\\s*[^=,}]*?)?)*\\s*[}]$").matcher("");
+	// END KGU#542 2019-11-17
 	
 	// START KGU#686 2019-03-16: Enh. #56 - facilitate type retrieval by a backlink to the type map
 	private HashMap<String, TypeMapEntry> typeMap = null;
@@ -123,27 +128,88 @@ public class TypeMapEntry {
 		// START KGU#388 2017-07-04: Enh. #423 New structure for record types  
 		public LinkedHashMap<String, TypeMapEntry> components = null;
 		// END KGU#388 2017-07-04
-		public boolean isCStyle = false;
+		// START KGU#542 2019-11-17: Enh. #739 Support for enumeration types
+		public StringList valueNames = null;	// enumerated value names (to be retrieved from Root.constants)
+		// END KGU#542 2019-11-17
 		
-		public VarDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle)
+		/**
+		 * Creates a new declaration for non-record type (may be an array type or an
+		 * enum type). For record types please preprocess the component info and use
+		 * {@link VarDeclaration#VarDeclaration(String, Element, int, LinkedHashMap)}
+		 * instead. For enum types, the values must be extracted and assigned to the
+		 * {@link Root} constants map by the caller.<br/>
+		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
+		 * constructors or methods referred to below.
+		 * @param _descriptor
+		 * @param _element
+		 * @param _lineNo
+		 * @see VarDeclaration#VarDeclaration(String, Element, int, LinkedHashMap)
+		 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)
+		 * @see TypeMapEntry#addDeclaration(String, Element, int, boolean)
+		 */
+		public VarDeclaration(String _descriptor, Element _element, int _lineNo)
 		{
 			typeDescriptor = _descriptor.trim();
 			definingElement = _element;
 			lineNo = _lineNo;
+			// FIXME: shouldn't we apply the ARRAY_PATTERNs here?
 			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array") + "($|\\W.*)"));
 			if (isArray) {
 				this.setElementType();
 				this.setIndexRanges();
 			}
-			isCStyle = _cStyle;
+			// START KGU#542 2019-11-17
+			else if (MATCHER_ENUM.reset(typeDescriptor).matches()) {
+				int start = typeDescriptor.indexOf('{') + 1;
+				this.valueNames = StringList.explode(typeDescriptor.substring(start, typeDescriptor.length()-1), "\\s*,\\s*");
+//				Root root = null;
+//				if (_element != null) {
+//					root = Element.getRoot(_element);
+//				}
+//				int val = 0;
+//				for (int i = 0; i < this.valueNames.count(); i++, val++) {
+//					String item = this.valueNames.get(i);
+//					int posEq = item.indexOf('=');
+//					if (posEq >= 0) {
+//						// Remove the value itst
+//						this.valueNames.set(i, item.substring(0, posEq));
+//						String valStr = item.substring(posEq+1).trim();
+//						if (valStr.startsWith("=")) {
+//							valStr = valStr.substring(1);
+//						}
+//						if (root != null) {
+//							if (root.constants.containsKey(valStr)) {
+//								valStr = root.constants.get(valStr);
+//								if (valStr.startsWith(":") && valStr.contains("€")) {
+//									valStr = valStr.substring(valStr.indexOf('€', 1));
+//								}
+//							}
+//							try {
+//								val = Integer.parseInt(valStr);
+//								root.constants.put(key, value)
+//							}
+//							catch (NumberFormatException ex) {
+//								// Just ignore the value
+//							}
+//						}
+//					}
+//				}
+			}
+			// END KGU#542 2019-11-17
 		}
 		
 		/**
-		 * Creates a new Type definition for a record type
+		 * Creates a new type definition for a record type (for non-record types use
+		 * {@link VarDeclaration#VarDeclaration(String, Element, int)}.<br/>
+		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
+		 * constructors or methods referred to below.
 		 * @param _descriptor - textual description of the type
 		 * @param _element - originating element (should be an Instruction with a type definition)
 		 * @param _lineNo - line no within the element
 		 * @param _components - the ordered map of declared components
+		 * @see VarDeclaration#VarDeclaration(String, Element, int)
+		 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int)
+		 * @see TypeMapEntry#addDeclaration(String, Element, int, boolean)
 		 */
 		public VarDeclaration(String _descriptor, Element _element, int _lineNo,
 				LinkedHashMap<String, TypeMapEntry> _components)
@@ -151,12 +217,14 @@ public class TypeMapEntry {
 			typeDescriptor = _descriptor.trim();
 			definingElement = _element;
 			lineNo = _lineNo;
-			components = _components; 
+			components = _components;
 		}
 		
 		/**
 		 * Indicates whether this declaration bears some evidence of an array structure
 		 * @return true if this refers to an indexed type.
+		 * @see #isEnum()
+		 * @see #isRecord()
 		 */
 		public boolean isArray()
 		{
@@ -167,6 +235,8 @@ public class TypeMapEntry {
 		/**
 		 * Indicates whether this declaration represents a record structure
 		 * @return true if this refers to a structured type.
+		 * @see #isArray()
+		 * @see #isEnum()
 		 */
 		public boolean isRecord()
 		{
@@ -174,10 +244,26 @@ public class TypeMapEntry {
 		}
 		// END KGU#388 2017-07-04
 		
+		// START KGU#542 2019-11-17: Enh- #739 - support for enumerator types
+		/**
+		 * Indicates whether this declaration represents an enumerator type
+		 * @return true if this refers to an enumerator type
+		 * @see #isArray()
+		 * @see #isRecord()
+		 */
+		public boolean isEnum()
+		{
+			return this.valueNames != null;
+		}
+		// END KGU#542 2019-11-17
+		
 		/**
 		 * Returns a type string with canonicalized structure information, i.e.
 		 * the original element type name, prefixed with as many '&#64;' characters
-		 * as there are index levels if it is an array type.
+		 * as there are index levels if it is an array type. If it is a record type then
+		 * it will enumerate semicolon-separated name:type_name pairs within braces after
+		 * a '$' prefix. An enumerator type will enumerate the value names (constant ids)
+		 * separated by commas within braces after an '€' sign.
 		 * @see TypeMapEntry#getTypes()
 		 * @return type string, possibly prefixed with one or more '&#64;' characters. 
 		 */
@@ -193,7 +279,10 @@ public class TypeMapEntry {
 		 * possible, i.e. type names like "integer", "real" etc. apparently designating
 		 * standard types will be replaced by corresponding Java type names), all
 		 * prefixed with as many '&#64;' characters as there are index levels if it
-		 * is an array type.
+		 * is an array type. If it is a record type then it will enumerate semicolon-
+		 * separated name:type_name pairs within braces after a '$' prefix. An enumerator
+		 * type will enumerate the value names (constant ids) separated by commas within
+		 * braces following an '€' prefix.
 		 * @param canonicalizeTypeNames - specifies whether type names are to be unified, too
 		 * @see TypeMapEntry#getTypes()
 		 * @return type string, possibly prefixed with one or more '&#64;' characters. 
@@ -216,6 +305,12 @@ public class TypeMapEntry {
 				type = "${" + compDescr.concatenate(";") + "}";
 			}
 			// END KGU#388 2017-07-04
+			// START KGU#542 2019-11-17: Enh. #739
+			else if (this.isEnum()) {
+				type = "€{" + this.valueNames.concatenate(",") + "}";
+				canonicalizeTypeNames = false;	// Nothing to canonicalize
+			}
+			// END KGU#542 2019-11-17
 			if (canonicalizeTypeNames) {
 				type = canonicalizeType(type);
 			}
@@ -335,18 +430,20 @@ public class TypeMapEntry {
 	
 	/**
 	 * Analyses the given declaration information and creates a corresponding
-	 * entry (with a single declaration record).
-	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
+	 * entry (with a single declaration object).<br/>
+	 * NOTE: For record types use {@link TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int)}
+	 * instead.
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition, null otherwise (enh. #423, 2017-07-12)
-	 * @param _owningMap TODO
+	 * @param _owningMap - the type map this entry is to be added to (or null if not known)
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
 	 * @param _initialized - whether the variable is initialized or assigned here
 	 * @param _explicit - whether this is an explicit variable declaration (or just derived from value)
-	 * @param _cStyle - whether it's a C-style declaration or initialization
+	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized)
+	 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int) 
 	 */
-	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap, Element _element, int _lineNo, boolean _initialized, boolean _explicit, boolean _cStyle)
+	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap, Element _element, int _lineNo, boolean _initialized, boolean _explicit)
 	{
 		// START KGU#388 2017-07-12: Enh. #423
 		this.typeName = _typeName;
@@ -354,7 +451,7 @@ public class TypeMapEntry {
 		// START KGU#687 2019-03-16: Issue #408
 		this.typeMap = _owningMap;
 		// END KGU#687 2019-03-16
-		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
+		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo));
 		if (_initialized) {
 			modifiers.add(_element);
 		}
@@ -363,14 +460,17 @@ public class TypeMapEntry {
 	
 	// START KGU#388 2017-07-12: Enh. #423
 	/**
-	 * Creates a record type entry as explicitly declared (with a single declaration record).
-	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
+	 * Creates a record type entry as explicitly declared (with a single declaration record).<br/>
+	 * For non-record types use {@link TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)}
+	 * instead.
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition (mandatory!)
 	 * @param _owningMap - the type map this entry is going to be put to
 	 * @param _components - the component type map - FIXME - may we replace this by a simple type name list now?
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
+	 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)
+	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized) 
 	 */
 	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap,
 			LinkedHashMap<String, TypeMapEntry> _components, Element _element, int _lineNo)
@@ -499,15 +599,17 @@ public class TypeMapEntry {
 	 * Analyses the given declaration information and adds a corresponding
 	 * declaration info to this entry if it differs.
 	 * It will even be added if this entry is marked as (explicitly) declared
-	 * such that analysis may find out potential conflicts
+	 * such that analysis may find out potential conflicts.<br/>
+	 * Note that in case of an enumeration type, the caller must add the respective
+	 * constant values to the {@link Root#constants} map if {@code _element} isn't
+	 * given or isn't linked to its owning {@link Root}.
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
 	 * @param _initialized - whether the variable is initialized or assigned here
-	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 * @return indicates whether the new declaration substantially differs from previous ones
 	 */
-	public boolean addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle)
+	public boolean addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized)
 	{
 		boolean differs = false;
 		boolean isNew = true;
@@ -522,7 +624,7 @@ public class TypeMapEntry {
 			}
 		}
 		if (isNew) {
-			declarations.addLast(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
+			declarations.addLast(new VarDeclaration(_descriptor, _element, _lineNo));
 		}
 		if (_initialized) {
 			modifiers.add(_element);
@@ -612,7 +714,7 @@ public class TypeMapEntry {
 	/**
 	 * If this is a defined record type, returns the component-type map
 	 * @param _merge - whether concurring definitions are to be merged.
-	 * @return an ordered table mapping component names to defining TypeMapEntries
+	 * @return an ordered table, mapping component names to defining TypeMapEntries, or null
 	 */
 	public LinkedHashMap<String, TypeMapEntry> getComponentInfo(boolean _merge)
 	{
@@ -638,30 +740,30 @@ public class TypeMapEntry {
 		return componentInfo;
 	}
 	// END KGU#388 2017-09-13
-
-	/**
-	 * Checks if there is a C-style declaration for this variable in _element
-	 * or in the first declaring element (if _element = null)
-	 * @param _element - the interesting element or null
-	 * @return true if the first matching declaration uses C syntax 
-	 */
-	public boolean isCStyleDeclaredAt(Element _element)
-	{
-		for (VarDeclaration currDecl: declarations) {
-			if (_element == null || currDecl.definingElement == _element) {
-				return currDecl.isCStyle;
-			}			
-		}
-		return false;
-	}
 	
+	// START KGU#542 2019-11-17: Enh. #739 - Support for enum types
+	public StringList getEnumerationInfo()
+	{
+		if (this.isEnum()) {
+			for (VarDeclaration varDecl: this.declarations) {
+				if (varDecl.isEnum()) {
+					if (varDecl.valueNames != null) {
+						return varDecl.valueNames.copy();
+					}
+				} //if (varDecl.isEnum())
+			} // for (VarDeclaration varDecl: this.declarations)
+		}
+		return null;
+	}
+	// END KGU#542v 2019-11-17
+
 	/**
 	 * Indicates whether at least the first declaration states that the type
 	 * is an array (this may be in conflict with other declarations, though)
+	 * @return true if there is some evidence of an array structure
 	 * @see #isArray(boolean)
 	 * @see #isRecord()
-	 * @see #isRecord(boolean)
-	 * @return true if there is some evidence of an array structure
+	 * @see #isEnum()
 	 */
 	public boolean isArray()
 	{
@@ -674,8 +776,8 @@ public class TypeMapEntry {
 	 * the found declarations support the array property, otherwise it would be
 	 * enough that one of the declarations shows array structure. 
 	 * @see #isArray()
-	 * @see #isRecord()
 	 * @see #isRecord(boolean)
+	 * @see #isEnum(boolean)
 	 * @_allDeclarations - whether all declarations must support the assumption 
 	 * @return true if there is enough evidence of an array structure
 	 */
@@ -696,8 +798,10 @@ public class TypeMapEntry {
 	/**
 	 * Indicates whether at least the first declaration states that the type
 	 * is a record (this may be in conflict with other declarations, though)
-	 * @see #isRecord(boolean)
 	 * @return true if there is some evidence of an array structure
+	 * @see #isRecord(boolean)
+	 * @see #isArray()
+	 * @see #isEnum()
 	 */
 	public boolean isRecord()
 	{
@@ -709,9 +813,10 @@ public class TypeMapEntry {
 	 * _allDeclarations is true then the result will only be true if all of
 	 * the found declarations support the record property, otherwise it would be
 	 * enough that one of the declarations shows array structure. 
-	 * @see #isArray()
 	 * @see #isRecord()
 	 * @see #isArray(boolean)
+	 * @see #isArray(boolean)
+	 * @see #isEnum(boolean)
 	 * @_allDeclarations - whether all declarations must support the assumption 
 	 * @return true if there is enough evidence of an array structure
 	 */
@@ -722,6 +827,43 @@ public class TypeMapEntry {
 				return false;
 			}
 			else if (!_allDeclarations && decl.isRecord()) {
+				return true;
+			}
+		}
+		return !_allDeclarations;
+	}
+	
+	/**
+	 * Indicates whether at least the first declaration states that the type
+	 * is an enumerator type (this may be in conflict with other declarations, though)
+	 * @return true if there is some evidence of an enumeration
+	 * @see #isEnum(boolean)
+	 * @see #isArray()
+	 * @see #isRecord()
+	 */
+	public boolean isEnum()
+	{
+		return !this.declarations.isEmpty() && this.declarations.element().isEnum();
+	}
+	
+	/**
+	 * Indicates whether there is some evidence for an enumeration type. If
+	 * _allDeclarations is true then the result will only be true if all of
+	 * the found declarations support the enum property, otherwise it would be
+	 * enough that one of the declarations shows enumeration characteristics.
+	 * @see #isEnum() 
+	 * @see #isArray(boolean)
+	 * @see #isRecord(boolean)
+	 * @_allDeclarations - whether all declarations must support the assumption 
+	 * @return true if there is enough evidence of an array structure
+	 */
+	public boolean isEnum(boolean _allDeclarations)
+	{
+		for (VarDeclaration decl: this.declarations) {
+			if (_allDeclarations && !decl.isEnum()) {
+				return false;
+			}
+			else if (!_allDeclarations && decl.isEnum()) {
 				return true;
 			}
 		}

@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
+ *      Kay Gürtzig             2019-10-18      Enh. #739: Support for enum types (debugged on 2019-11-30)
  *
  ******************************************************************************************************
  *
@@ -254,6 +255,11 @@ public class JavaGenerator extends CGenerator
 
 	/************ Code Generation **************/
 	
+	// START KGU#542 2019-11-18: Enh. #739 - we need the current root for token transformation
+	/** Currently exported {@link Root} object */
+	protected Root root = null;
+	// END KGU#542 2019-11-18
+	
 	// START KGU#560 2018-07-22 Bugfix #564
 	@Override
 	protected boolean wantsSizeInArrayType()
@@ -261,6 +267,12 @@ public class JavaGenerator extends CGenerator
 		return false;
 	}
 	// END KGU#560 2018-07-22
+
+	@Override
+	protected boolean arrayBracketsAtTypeName()
+	{
+		return true;
+	}
 
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
@@ -352,6 +364,9 @@ public class JavaGenerator extends CGenerator
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, null)) {
+				// START KGU#542 2019-11-30: Enh. #739 - support for enum types
+				String constVal = null;	// Will be needed on enum test
+				// END KGU#542 2019-11-30
 				int j = i;
 				// Skip all whitespace
 				while (j+2 < tokens.count() && tokens.get(++j).trim().isEmpty());
@@ -374,6 +389,16 @@ public class JavaGenerator extends CGenerator
 					}
 				}
 				// END KGU#480 2018-01-21
+				// START KGU#542 2019-11-18: Enh. #739 - support for enum types
+				else if (this.root != null && (constVal = this.root.constants.get(token)) != null) {
+					int posEu = constVal.indexOf('€');
+					if (constVal.startsWith(":") && posEu > 1) {
+						// In general, the enum constant names are to be qualified
+						// (This is not true in case clause of switch instructions, however...
+						tokens.set(i, constVal.substring(1, posEu) + "." + token);
+					}
+				}
+				// END KGU#542 2019-11-18
 			}
 		}
 		return super.transformTokens(tokens);
@@ -528,13 +553,14 @@ public class JavaGenerator extends CGenerator
 		// This is practically identical to C#
 		// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 		//HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue);
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(constValue, typeInfo, false);
 		// END KGU#559 2018-07-20
 		LinkedHashMap<String, TypeMapEntry> compInfo = typeInfo.getComponentInfo(true);
 		String recordInit = "new " + typeInfo.typeName + "(";
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
+			TypeMapEntry compType = compEntry.getValue();
 			String compVal = comps.get(compName);
 			if (isFirst) {
 				isFirst = false;
@@ -546,12 +572,12 @@ public class JavaGenerator extends CGenerator
 				if (compVal == null) {
 					recordInit += "null";
 				}
-				else if (compEntry.getValue().isRecord()) {
-					recordInit += transformRecordInit(compVal, compEntry.getValue());
+				else if (compType != null && compType.isRecord()) {
+					recordInit += transformRecordInit(compVal, compType);
 				}
 				// START KGU#561 2018-07-21: Bugfix #564
-				else if (compEntry.getValue().isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
-					String elemType = compEntry.getValue().getCanonicalType(true, false).substring(1);
+				else if (compType != null && compType.isArray() && compVal.startsWith("{") && compVal.endsWith("}")) {
+					String elemType = compType.getCanonicalType(true, false).substring(1);
 					recordInit += "new " + this.transformType(elemType, "object") + "[]" + compVal;
 				}
 				// END KGU#561 2018-07-21
@@ -674,6 +700,26 @@ public class JavaGenerator extends CGenerator
 			addCode("}", indentPlus1, _asComment);
 			addCode("};", _indent, _asComment);
 		}
+		// START KGU#542 2019-11-17: Enh. #739
+		else if (_type.isEnum()) {
+			String indentPlus1 = subroutineIndent;
+			String indentPlus2 = indentPlus1 + this.getIndent();
+			StringList items = _type.getEnumerationInfo();
+			String itemList = items.concatenate(", ");
+			if (itemList.length() > 70) {
+				this.insertCode(indentPlus1 + "private enum " + _type.typeName + " {", subroutineInsertionLine++);
+				for (int i = 0; i < items.count(); i++) {
+					// FIXME: We might have to transform the value...
+					insertCode(indentPlus2 + items.get(i) + (i < items.count() -1 ? "," : ""), subroutineInsertionLine++);
+				}
+				insertCode(indentPlus1 + "};", subroutineInsertionLine++);
+			}
+			else {
+				insertCode(indentPlus1 + "private enum " + _type.typeName + "{" + itemList + "};", subroutineInsertionLine++);
+			}
+			insertCode("", subroutineInsertionLine++);
+		}
+		// END KGU#542 2019-11-17
 		else {
 			// FIXME: What do we here in Java? Replace this type name all over the code?
 			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
@@ -1020,11 +1066,14 @@ public class JavaGenerator extends CGenerator
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			if (typeEntry != null) {
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList.add(typeSpec + " " + varName);
@@ -1086,6 +1135,9 @@ public class JavaGenerator extends CGenerator
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
+		// START KGU#542 2019-11-18: Enh. #739
+		this.root = _root;
+		// END KGU#542 2019-11-18
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		// START KGU#178 2016-07-20: Enh. #160
@@ -1141,6 +1193,10 @@ public class JavaGenerator extends CGenerator
 			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
 			code.add("");
+			// START KGU#542 2019-11-17: Enh. #739 - Temporarily we mark this position for enum type insertion
+			subroutineInsertionLine = code.count();
+			subroutineIndent = indentPlus1;
+			// END KGU#542 2019-11-17
 			code.add(indentPlus1 + "/**");
 			code.add(indentPlus1 + " * @param args");
 			code.add(indentPlus1 + " */");
@@ -1190,7 +1246,7 @@ public class JavaGenerator extends CGenerator
 					// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
 					//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 					//		_paramNames.get(p)).trim();
-					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 					// END KGU#140 2017-02-01
 				}
 				fnHeader += ")";
@@ -1250,6 +1306,16 @@ public class JavaGenerator extends CGenerator
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return structName;
 	}
+
+	// START KGU#542 2019-11-17: Enh. #739
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformEnumTypeRef(java.lang.String)
+	 */
+	@Override
+	protected String transformEnumTypeRef(String enumName) {
+		return enumName;
+	}
+	// END KGU#542 2019-11-17
 
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
@@ -1316,6 +1382,7 @@ public class JavaGenerator extends CGenerator
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position
 			subroutineInsertionLine = code.count();
+			subroutineIndent = _indent;
 			// END KGU#178 2016-07-20
 			
 			// Close class block

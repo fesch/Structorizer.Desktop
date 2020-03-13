@@ -109,6 +109,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-17      Issues #747/#748: Menu items for Try elements, shortcuts for Try, Parallel, Forever
  *      Kay Gürtzig     2019-09-24      Enh. #738: New menu items for code preview
  *      Kay Gürtzig     2019-09-30      KGU#736 Precaution against newlines in tooltips
+ *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
+ *      Kay Gürtzig     2020-01-20      Rnh. #801: Messages and a new menu item for offline help support
  *
  ******************************************************************************************************
  *
@@ -417,6 +419,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#208 2016-07-22: Enh. #199
 	protected final JMenuItem menuHelpOnline = new JMenuItem("User Guide",IconLoader.getIcon(110));
 	// END KGU#208 2016-07-22
+	// START KGU#791 2020-01-20: Enh. #791
+	protected final JMenuItem menuHelpDownload = new JMenuItem("Download Guide as PDF", IconLoader.getIcon(123));
+	// END KGU#791 2020-01-20
 	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(17));
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.getIcon(52));
 
@@ -558,6 +563,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			new LangTextHolder("Now you may e.g. export your diagram as graphics file: → Menu \"%1 ► %2 ► %3\"")
 	};
 	// END KGU#456 2017-11-01
+	// START KGU#758 2019-11-08: Enh. #770
+	public static final LangTextHolder error27 = new LangTextHolder("Some selector items (e.g. «%») don't seem to be integer constants.");
+	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
+	// END KGU#758 2019-11-08
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
 	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");
@@ -590,6 +599,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#509 2018-03-20: Bugfix #526
 	public static final LangTextHolder msgErrorFileRename = new LangTextHolder("Error(s) on renaming the saved file:\n%1Look for file \"%2\" and move/rename it yourself."); 
 	// END KGU#509 2018-03-20
+	// START KGU#747 2019-10-07: Try to avoid empty error boxes on start
+	public static final LangTextHolder msgErrorSettingLaF = new LangTextHolder("Problem on changing Look & Feel to %1: %2");
+	// END KGU#747 2019-10-07
 	// START KGU#232 2016-08-02: Enh. #222
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
@@ -620,8 +632,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
 	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates<br/>and news about Structorizer.");
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
-	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser.");
 	// END KGU#247 2016-09-17
+	// START KGU#791 2020-01-20: Enh. #801: Offline help mechanism
+	public static final LangTextHolder msgShowingOfflineGuide = new LangTextHolder("A recently downloaded User Guide is shown by your PDF reader instead.");
+	public static final LangTextHolder msgDownloadFailed = new LangTextHolder("Failed to download the User Guide:\n%");
+	public static final LangTextHolder msgHostNotAvailable = new LangTextHolder("Host \"%\" not accessible.");
+	// END KGU#791 2020-01-20
 	// START KGU#258 2016-10-03: Enh. #253: Diagram keyword refactoring
 	// START KGU#718 2019-08-01: Modified layout for the refactoring proposal
 	//public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
@@ -824,7 +841,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.getIcon(0), this.importpluginItems);
 		// END KGU#386 2017-04-26
 		// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
-		this.msgImportTooltip.addLangEventListener(this);
+		msgImportTooltip.addLangEventListener(this);
 		// END KGU#725 2019-09-13
 
 		menuFile.add(menuFileExport);
@@ -1596,6 +1613,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				} catch (Exception ex) {
 					logger.log(Level.WARNING, "Error restoring the configuration backup ...", ex);
 					trouble = ex.getMessage();
+					if (trouble == null || trouble.isEmpty()) {
+						trouble = ex.toString();
+					}
 				}
 				if (!done) {
 					JOptionPane.showMessageDialog(NSDControl.getFrame(),
@@ -1653,6 +1673,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuHelpOnline.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.helpNSD(); } } );
 		menuHelpOnline.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		// END KGU#208 2016-07-22
+
+		// START KGU#791 2020-01-20: Enh. #791
+		menuHelp.add(menuHelpDownload);
+		menuHelpDownload.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.downloadHelpPDF(true); } } );
+		// END KGU#791 2020-01-20
 
 		menuHelp.add(menuHelpAbout);
 		menuHelpAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.aboutNSD(); } } );
@@ -2091,7 +2116,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// START KGU#705 2019-09-24: Enh. #738
 		diagram.setCodePreviewTooltip();
 		// END KGU#705 2019-09-24
-
+		
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
+		// END KGU#792 2020-02-04 
 	}
 	// END KGU#235 2016-08-09
 	
@@ -2115,7 +2143,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
 			sl.loadFromFile(filename);
 			// paste it's content to the "external" locale
-			Locales.getInstance().setExternal(sl,filename);
+			Locales.getInstance().setExternal(sl, filename);
+			// START KGU#792 2020-02-04: Bugfix #805
+			Ini.getInstance().setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
+			// END KGU#792 2020-02-04 
 		}
 		// START KGU#235 2016-08-09: Bugfix #225
 		doButtons();

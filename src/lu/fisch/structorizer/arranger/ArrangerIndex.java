@@ -857,7 +857,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 				Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
 				// Now update the list of recent files in case the saving was successful
 				if (resultGroup != null) {
-					File groupFile = resultGroup.getArrzFile();
+					File groupFile = resultGroup.getArrzFile(true);
 					if (groupFile != null || (groupFile = resultGroup.getFile()) != null) {
 						this.diagram.addRecentFile(groupFile.getAbsolutePath());
 					}

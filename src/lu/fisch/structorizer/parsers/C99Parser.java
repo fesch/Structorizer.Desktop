@@ -56,6 +56,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-02-28      Bugfix #690 - workaround for struct types in function headers
  *      Kay Gürtzig     2019-03-01      Bugfix #692 - failed constant recognition
  *      Kay Gürtzig     2019-03-29      KGU#702: Index range exception in method getPointers() fixed.
+ *      Kay Gürtzig     2019-11-18      Enh. #739: Direct enum type import
+ *      Kay Gürtzig     2020-03-09      Issue #835: Revised mechanism for the insertion of optional structure keywords
  *
  ******************************************************************************************************
  *
@@ -856,7 +858,12 @@ public class C99Parser extends CPreParser
 			{
 				String content = new String();
 				content = getContent_R(_reduction.get(2).asReduction(), content);
-				While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				// STARTG KGU#822 2020-03-09: Issue #835
+				//While ele = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+				While ele = new While((getOptKeyword("preWhile", false, true)
+						+ translateContent(content)
+						+ getOptKeyword("postWhile", true, false)).trim());
+				// END KGU#822 2020-03-09
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -875,7 +882,12 @@ public class C99Parser extends CPreParser
 				// FIXME We might look for kinds of expressions with direct negation possibility,
 				// e.g. PROD_OPEQUATE_EQEQ, PROD_OPEQUATE_EXCLAMEQ, PROD_OPCOMPARE_LT, PROD_OPCOMPARE_GT
 				// etc. where we could try to replace the reduction by its opposite.
-				Repeat ele = new Repeat((getKeyword("preRepeat").trim() + " not (" + content + ") " + getKeyword("postRepeat").trim()).trim());
+				// START KGU#822 2020-03-09: Issue #835
+				//Repeat ele = new Repeat((getKeyword("preRepeat").trim() + " not (" + content + ") " + getKeyword("postRepeat").trim()).trim());
+				Repeat ele = new Repeat((getOptKeyword("preRepeat", false, true)
+						+ Element.negateCondition(content)
+						+ getOptKeyword("postRepeat", true, false)).trim());
+				// END KGU#822 2020-03-09
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				this.equipWithSourceComment(ele, _reduction);
 				// END KGU#407 2017-06-22
@@ -928,7 +940,12 @@ public class C99Parser extends CPreParser
 						body = loop.getBody();
 					}
 					else {
-						While loop = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+						// START KGU#822 2020-03-09: Issue #835
+						//While loop = new While((getKeyword("preWhile").trim() + " " + translateContent(content) + " " + getKeyword("postWhile").trim()).trim());
+						While loop = new While((getOptKeyword("preWhile", false, true)
+								+ translateContent(content)
+								+ getOptKeyword("postWhile", true, false)).trim());
+						// END KGU#822 2020-03-09
 						ele = loop;
 						body = loop.getBody();
 					}
@@ -1290,7 +1307,12 @@ public class C99Parser extends CPreParser
 	{
 		String content = new String();
 		// Put the discriminator into the first line of content
-		content = getKeyword("preCase")+getContent_R(_reduction.get(2).asReduction(), content)+getKeyword("postCase");
+		// START KGU#822 2020-03-09: Issue #835
+		//content = getKeyword("preCase")+getContent_R(_reduction.get(2).asReduction(), content)+getKeyword("postCase");
+		content = getOptKeyword("preCase", false, true)
+				+ getContent_R(_reduction.get(2).asReduction(), content)
+				+ getOptKeyword("postCase", true, false);
+		// END KGU#822 2020-03-09
 
 		// How many branches has the CASE element? We must count the non-empty statement lists!
 		Reduction sr = _reduction.get(5).asReduction();
@@ -1978,23 +2000,41 @@ public class C99Parser extends CPreParser
 						if (names.count() > 0 && _parentNode != null) {
 							names = names.reverse();
 							values = values.reverse();
-							int val = 0;
-							String baseVal = "";
+							//int val = 0;
+							//String baseVal = "";
 							for (int i = 0; i < names.count(); i++) {
-								if (!values.get(i).isEmpty()) {
-									baseVal = values.get(i);
-									try {
-										val = Integer.parseInt(baseVal);
-										baseVal = "";	// If the value was an int literal, we don't need an expr. string
-									}
-									catch (NumberFormatException ex) {
-										val = 0;
-									}
+								// START KGU#542 2019-11-18: Enh. #739 - true enum type import
+								//if (!values.get(i).isEmpty()) {
+								//	baseVal = values.get(i);
+								//	try {
+								//		val = Integer.parseInt(baseVal);
+								//		baseVal = "";	// If the value was an int literal, we don't need an expr. string
+								//	}
+								//	catch (NumberFormatException ex) {
+								//		val = 0;
+								//	}
+								//}
+								//names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
+								//val++;
+								String valStr = values.get(i).trim();
+								if (!valStr.isEmpty()) {
+									names.set(i, names.get(i) + " = " + valStr);
 								}
-								names.set(i, "const " + names.get(i) + " <- " + baseVal + (baseVal.isEmpty() ? "" : " + ") + val);
-								val++;
+								// END KGU#542 2019-11-18
 							}
-							Instruction enumDef = new Instruction(names);
+							// START KGU#542 2019-11-18: Enh. #739
+							//Instruction enumDef = new Instruction(names);
+							String sepa = ", ";
+							// FIXME: Tune the threshold if necessary
+							if (names.count() > 10) {
+								sepa = ",\\\n";
+							}
+							if (typeName == null) {
+								typeName = "Enum" + Math.abs(System.nanoTime());
+							}
+							Instruction enumDef = new Instruction(
+									StringList.explode("type " + typeName + " = enum{" + names.concatenate(sepa) + "}", "\n"));
+							// END KGU#542 2019-11-18
 							this.equipWithSourceComment(enumDef, prefix.asReduction());
 							if (typeName != null) {
 								enumDef.getComment().add("Enumeration type " + typeName);

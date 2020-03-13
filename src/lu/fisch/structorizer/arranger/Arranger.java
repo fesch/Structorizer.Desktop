@@ -76,6 +76,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-27  Issue #717: Configurable base scroll unit (adaptScrollUnits())
  *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
  *      Kay Gürtzig     2019-10-05  Bugfix #759: Exception catch in routinePoolChanged() as emergency workaround
+ *      Kay Gürtzig     2020-01-20  Enh. #801: Key F1 now tries to open the PDF help file if offline
  *
  ******************************************************************************************************
  *
@@ -132,6 +133,7 @@ import lu.fisch.structorizer.locales.LangEvent;
 import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.Desktop;
 import lu.fisch.utils.StringList;
 
 /**
@@ -175,7 +177,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgReadyToExport = new LangTextHolder("Are you ready to export this sub-arrangement to PNG?");
 	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3");
 	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("diagrams: %1, selected: %2");
-	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show \"%\" in browser");
+	// START KGU#789 2020-01-20: Enh. #801
+	public static final LangTextHolder msgShowingOfflineGuide = new LangTextHolder("A recently downloaded User Guide is shown by your PDF reader instead.\nPlease go to section \"Arranger\" in chapter \"Features\".");
+	// END KGU#789 2020-01-20
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
 	public static final LangTextHolder msgSelectionExpanded = new LangTextHolder("% referenced diagram(s) added to selection.");
 	public static final LangTextHolder msgMissingDiagrams = new LangTextHolder("\n\n%1 referenced diagram(s) not found:\n- %2");
@@ -1692,6 +1697,12 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		if (!isLaunched)
 		{
 			String message = msgBrowseFailed.getText().replace("%", help);
+			// START KGU#789 2020-01-20: Enh. #801
+			boolean asPdf = showHelpPDF();
+			if (asPdf) {
+				message += "\n\n" + msgShowingOfflineGuide.getText();
+			}
+			// END KGU#789 2020-01-20
 			JOptionPane.showMessageDialog(this,
 			message,
 			msgTitleURLError.getText(),
@@ -1700,6 +1711,23 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END KGU#624 2018-12-24
+
+    // START KGU#789 2020-01-20: Enh. #801
+    /**
+     * Tries to present a downloaded PDF version of the user guide from the ini directory.
+     * @return true if a user guide file is present and  could be shown.
+     */
+    private boolean showHelpPDF()
+    {
+        String helpFileName = Element.E_HELP_FILE;;
+        File helpDir = Ini.getIniDirectory(true);
+        File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
+        if (helpFile.canRead()) {
+            return Desktop.open(helpFile);
+        }
+        return false;
+    }
+    // END KGU#791 2020-01-20
 
     // START KGU#2 2015-11-24
     /* (non-Javadoc)

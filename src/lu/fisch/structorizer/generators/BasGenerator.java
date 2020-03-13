@@ -57,12 +57,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017-02-27      Enh. #346: Formal adaptation
  *      Kay Gürtzig         2017-03-15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *      Kay Gürtzig         2017-05-16      Enh. #372: Export of copyright information
- *      Kay Gürtzig         2017-11-02      Issue #447: Line continuation in Case elements supported
+ *      Kay Gürtzig         2017-11-02      Issues #416, #447: Line continuation in Case elements supported
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-13      Enh. #696: All references to Arranger replaced by routinePool
  *      Kay Gürtzig         2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig         2019-03-18      Enh. #56: Export of Try blocks implemented
  *      Kay Gürtzig         2019-03-28      Enh. #657: Retrieval for subroutines now with group filter
+ *      Kay Gürtzig         2019-12-01      Bugfix #789 (function calls); keyword case modified for non-vintage BASIC,
+ *                                          bugfix #790 line continuation according to #416 hadn't been considered,
+ *                                          array initializers and record types hadn't been handled correctly
  *
  ******************************************************************************************************
  *
@@ -79,6 +82,10 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -93,6 +100,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Try;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
@@ -142,7 +150,7 @@ public class BasGenerator extends Generator
     @Override
     protected String commentSymbolLeft()
     {
-    	return "REM";
+    	return transformKeyword("REM");
     }
     // END KGU 2015-10-18
 
@@ -248,6 +256,26 @@ public class BasGenerator extends Generator
 		return "PRINT $1";
 	}
 
+	// START KGU 2019-12-01 - Use different case styles for Vintage BASIC and modern BASIC
+	private String transformKeyword(String keyword)
+	{
+		if (this.optionCodeLineNumbering()) {
+			keyword = keyword.toUpperCase();
+		}
+		else {
+			String[] parts = keyword.split(" ", -2);
+			for (int i = 0; i < parts.length; i++) {
+				String part = parts[i];
+				if (!part.isEmpty()) {
+					parts[i] = Character.toUpperCase(part.charAt(0)) + part.substring(1).toLowerCase();
+				}
+			}
+			keyword = (new StringList(parts)).concatenate(" ");
+		}
+		return keyword;
+	}
+	// END KGU 2019-12-01
+	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 //	/**
 //	 * Transforms assignments in the given intermediate-language code line.
@@ -299,13 +327,18 @@ public class BasGenerator extends Generator
 			}
 		}
 		// END KGU#150 2016-04-04
+		// START KGU 2019-12-01 In vintage BASIC there is no "const"
+		if (this.optionCodeLineNumbering()) {
+			tokens.removeAll("const");
+		}
+		// END KGU 2019-12-01
 		if (tokens.contains("<-") && this.optionCodeLineNumbering())
 		{
 			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
 			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
-			tokens.insert("LET", 0);
+			tokens.insert(transformKeyword("LET"), 0);
 		}
-		// START KGU#100 2016-01-22: Enh #84 - Array initialisiation for Visual/modern BASIC
+		// START KGU#100 2016-01-22: Enh #84 - Array initialisation for Visual/modern BASIC
 		if (!this.optionCodeLineNumbering())
 		{
 			tokens.replaceAll("{", "Array(");
@@ -336,29 +369,29 @@ public class BasGenerator extends Generator
 		return prefix;
 	}
 
-    protected void placeJumpTarget(ILoop _loop, String _indent)
-    {
-        if (this.jumpTable.containsKey(_loop.getLoop()))
-        {
-            if (this.optionCodeLineNumbering())
-            {
-            	// Associate label number with line number of the following dummy comment 
-            	this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
-            	appendComment("Exit point from above loop.", _indent);
-            }
-            else
-            {
-            	// START KGU#277 2016-10-13: Enh. #270
-            	//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
-            	//		this.commentSymbolLeft() + " Exit point from above loop.");
-            	addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
-            			this.commentSymbolLeft() + " Exit point from above loop.",
-            			_indent, _loop.isDisabled());
-            	// END KGU#277 2016-10-13
-            }
-        }
+	protected void placeJumpTarget(ILoop _loop, String _indent)
+	{
+		if (this.jumpTable.containsKey(_loop.getLoop()))
+		{
+			if (this.optionCodeLineNumbering())
+			{
+				// Associate label number with line number of the following dummy comment 
+				this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
+				appendComment("Exit point from above loop.", _indent);
+			}
+			else
+			{
+				// START KGU#277 2016-10-13: Enh. #270
+				//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
+				//		this.commentSymbolLeft() + " Exit point from above loop.");
+				addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
+						this.commentSymbolLeft() + " Exit point from above loop.",
+						_indent, _loop.isDisabled());
+				// END KGU#277 2016-10-13
+			}
+		}
 
-    }
+	}
 	
 	// We need an overridden fundamental comment method here to be able to insert line numbers.
 	/* (non-Javadoc)
@@ -424,7 +457,7 @@ public class BasGenerator extends Generator
 		// START KGU#108 2015-12-19: Bugfix #51/Enh. #271: Cope with empty input
 		if (interm.trim().equals("INPUT") || interm.endsWith(": INPUT"))
 		{
-			interm = interm.replace("INPUT", "SLEEP");	// waits for key hit (according to https://en.wikibooks.org/wiki/BASIC_Programming/Beginning_BASIC/User_Input)
+			interm = interm.replace("INPUT", transformKeyword("SLEEP"));	// waits for key hit (according to https://en.wikibooks.org/wiki/BASIC_Programming/Beginning_BASIC/User_Input)
 		}
 		// END KGU#108 2015-12-19
 
@@ -476,59 +509,77 @@ public class BasGenerator extends Generator
 			// START KGU 2014-11-16
 			appendComment(_inst, _indent);
 			// END KGU 2014-11-16
-			for(int i=0; i<_inst.getText().count(); i++)
+			// START KGU#779 2019-12-01: Bugfix #790 (enh. #416)
+			//for(int i=0; i<_inst.getText().count(); i++)
+			Root root = Element.getRoot(_inst);
+			StringList lines = _inst.getUnbrokenText();
+			for (int i = 0; i < lines.count(); i++)
+			// END KGU#779 2019-12-01
 			{
+				// START KGU#779 2019-12-01: Bugfix #790 (enh. #416)
+				String line = lines.get(i);
+				StringList tokens = Element.splitLexically(line, true);
+				Element.unifyOperators(tokens, false);
+				boolean isRecordInit = false;
+				// END KGU#779 2019-12-01
 				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
 				boolean isArrayInit = false;
-				// START KGU#171 2016-03-31: Enh. #144
+				// START KGU#171 2016-03-31: Enh. #144 / KGU#779 2019-12-01: bugfix #790 
 				//if (this.optionBasicLineNumbering())
-				if (!this.suppressTransformation && this.optionCodeLineNumbering())
-				// END KGU#171 2016-03-31
+				if (!this.suppressTransformation /*&& this.optionCodeLineNumbering()*/)
+				// END KGU#171 2016-03-31 / KGU#779 2019-12-01
 				{
+					// START KGU#779 2019-12-01
+					if (Instruction.isTypeDefinition(line)) {
+						generateTypeDef(tokens, root, _indent, disabled);
+						continue;
+					}
 					// The crux is: we don't know the index range!
 					// So we'll invent an index base variable easy to be modified in code
 					//code.add(_indent + transform(line) + ";");
-					String uniline = Element.unifyOperators(_inst.getText().get(i));
-					int asgnPos = uniline.indexOf("<-");
-					if (asgnPos >= 0 && uniline.contains("{") && uniline.contains("}"))
+					int asgnPos = tokens.indexOf("<-");
+					if (asgnPos >= 0)
 					{
-						String varName = transform(uniline.substring(0, asgnPos).trim());
-						String expr = uniline.substring(asgnPos+2).trim();
-						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						StringList leftSide = tokens.subSequence(0, asgnPos);
+						leftSide.removeAll(" ");
+						String varName = Instruction.getAssignedVarname(leftSide, false);
+						StringList exprTokens = tokens.subSequence(asgnPos+1, tokens.count()).trim();
+						isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
+						// START KGU#780 2019-12-01 - trouble with complicated left sides fixed
+						int posColon = leftSide.indexOf(":");
+						int posAs = leftSide.indexOf("as", false);
+						if (posColon > 0) {
+							leftSide = leftSide.subSequence(0, posColon);
+						}
+						if (posAs > 0 && posAs < leftSide.count()) {
+							leftSide = leftSide.subSequence(0, posAs);
+						}
+						String target = leftSide.concatenate(null);
+						varName = transform(target.substring(target.indexOf(varName)));
+						// END KGU#780 2019-12-01
 						if (isArrayInit)
 						{
-							StringList elements = Element.splitExpressionList(
-									expr.substring(1, expr.length()-1), ",");
-							// In order to be consistent with possible index access
-							// at other positions in code, we use the standard Java
-							// index range here (though in Pascal indexing usually 
-							// starts with 1 but may vary widely). We solve the problem
-							// by providing a configurable start index variable 
-							appendComment("TODO: Check indexBase value (automatically generated)", _indent);
-							// START KGU#277 2016-10-13: Enh. #270
-							//code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
-							addCode("LET indexBase = 0", _indent, disabled);
-							// END KGU#277 2016-10-13
-							for (int el = 0; el < elements.count(); el++)
-							{
-								// START KGU#277 2016-10-13: Enh. #270
-								//code.add(this.getLineNumber() + _indent + "LET " + varName + 
-								//		"(indexBase + " + el + ") = " + 
-								//		transform(elements.get(el)));
-								addCode("LET " + varName + "(indexBase + " + el + ") = " + 
-										transform(elements.get(el)), _indent, disabled);
-								// END KGU#277 2016-10-13
-							}
+							generateArrayInit(varName, exprTokens, _indent, disabled);
 						}
-
+						StringList compList = null;
+						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), null)
+								&& exprTokens.get(exprTokens.count()-1).equals("}")
+								&& !(compList = exprTokens.subSequence(1, exprTokens.count()).trim()).isEmpty()
+								&& compList.get(0).equals("{");
+						if (isRecordInit) {
+							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
+							if (type != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, true)) {
+								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
+							}
+							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);
+						}
 					}
 				}
-				if (!isArrayInit)
+				if (!isArrayInit && !isRecordInit)
 				{
 				// END KGU#100 2016-01-22
 					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 					//code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
-					String line = _inst.getText().get(i);
 					String codeLine = transform(line);
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine += " : " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
@@ -541,6 +592,150 @@ public class BasGenerator extends Generator
 			}
 		}
 	}
+
+	/**
+	 * @param _targetVar
+	 * @param _exprTokens
+	 * @param _indent
+	 * @param _disabled
+	 */
+	private void generateArrayInit(String _targetVar, StringList _exprTokens, String _indent, boolean _disabled) {
+		StringList elements = Element.splitExpressionList(
+				_exprTokens.concatenate(null, 1), ",");
+		if (this.optionCodeLineNumbering()) {
+			// In order to be consistent with possible index access
+			// at other positions in code, we use the standard Java
+			// index range here (though in Pascal indexing usually 
+			// starts with 1 but may vary widely). We solve the problem
+			// by providing a configurable start index variable 
+			appendComment("TODO: Check indexBase value (automatically generated)", _indent);
+			// START KGU#277 2016-10-13: Enh. #270
+			//code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
+			addCode(transformKeyword("LET") + " indexBase = 0", _indent, _disabled);
+			// END KGU#277 2016-10-13
+			for (int el = 0; el < elements.count(); el++)
+			{
+				// START KGU#277 2016-10-13: Enh. #270
+				//code.add(this.getLineNumber() + _indent + "LET " + varName + 
+				//		"(indexBase + " + el + ") = " + 
+				//		transform(elements.get(el)));
+				addCode(transformKeyword("LET ") + _targetVar + "(indexBase + " + el + ") = " + 
+						transform(elements.get(el)), _indent, _disabled);
+				// END KGU#277 2016-10-13
+			}
+		}
+		else {
+			addCode(transformKeyword("LET ") + _targetVar + " = " + 
+					transform(_exprTokens.concatenate(null)), _indent, _disabled);
+		}
+	}
+
+	// START KGU#779 2019-12-01: Issue #790 Type (record/enum) definitions hadn't been handled at all
+	/**
+	 * Generates a type definition (as well as possible) from the given token list, depending on
+	 * the export preferences (vintage BASIC / modern BASIC)
+	 * @param _tokens - the lexically split type definition line
+	 * @param _root - the owning Root
+	 * @param _indent - the current indentation level
+	 * @param _disabled - whether the element is disabled
+	 */
+	private boolean generateTypeDef(StringList _tokens, Root _root, String _indent, boolean _disabled) {
+		_tokens.removeAll(" ");
+		String typeName = _tokens.get(1);
+		String typeKey = ":" + typeName;
+		TypeMapEntry type = _root.getTypeInfo(routinePool).get(typeKey);
+		String indentPlus1 = _indent + this.getIndent();
+		if (type == null) {
+			return false;
+		}
+		else if (this.wasDefHandled(_root, typeKey, false)) {
+			// Nothing to do
+			return true;
+		}
+		if (type.isRecord()) {
+			Map<String, TypeMapEntry> compSpecs = type.getComponentInfo(true);
+			if (this.optionCodeLineNumbering()) {
+				// We apply a QBASIC construct (see https://en.wikibooks.org/wiki/QBasic/Arrays_and_Types)
+				addCode(transformKeyword("TYPE ") + typeName, _indent, _disabled);
+				for (Entry<String, TypeMapEntry> entry: compSpecs.entrySet()) {
+					String compTypeName = "???";
+					if (entry.getValue() != null) {
+						compTypeName = entry.getValue().getCanonicalType(true, true);
+					}
+					addCode(entry.getKey() + transformKeyword(" AS ") + transformType(compTypeName, "???"), indentPlus1, _disabled);
+				}
+				addCode(transformKeyword("END TYPE"), _indent, _disabled);
+			}
+		}
+		else if (type.isEnum()) {
+			StringList enumItems = type.getEnumerationInfo();
+			if (this.optionCodeLineNumbering()) {
+				appendComment(_tokens.concatenate(null).replace("==", "="), _indent);
+				// In vintage BASIC, we will just generate separate variable definitions
+				int offset = 0;
+				String lastVal = "";
+				for (int i = 0; i < enumItems.count(); i++) {
+					String[] itemSpec = enumItems.get(i).split("=", 2);
+					if (itemSpec.length > 1) {
+						lastVal = itemSpec[1].trim();
+						offset = 0;
+						try {
+							int code = Integer.parseUnsignedInt(lastVal);
+							lastVal = "";
+							offset = code;
+						}
+						catch (NumberFormatException ex) {}
+					}
+					addCode(transformKeyword("LET ") + itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, _disabled);
+					offset++;
+				}
+				appendComment("end type "+ typeName, _indent);
+			}
+			else {
+				// We use a VisualBasic feature here (see https://docs.microsoft.com/de-de/dotnet/visual-basic/language-reference/statements/enum-statement)
+				addCode(transformKeyword("ENUM ") + typeName, _indent, _disabled);
+				for (int i = 0; i < enumItems.count(); i++) {
+					addCode(transform(enumItems.get(i)), indentPlus1, _disabled);
+				}
+				addCode(transformKeyword("END ENUM"), _indent, _disabled);
+			}
+		}
+		this.setDefHandled(_root.getSignatureString(false), typeKey);
+		return true;
+	}
+
+	// START KGU#388 2019-12-01: Enh. #423
+	/**
+	 * Generates code that decomposes a record initializer into separate component assignments if
+	 * necessary or converts it into the appropriate target language.
+	 * @param _lValue - the left side of the assignment (without modifiers!)
+	 * @param _recordValue - the record initializer according to Structorizer syntax
+	 * @param _indent - current indentation level (as String)
+	 * @param _isDisabled - indicates whether the code is o be commented out
+	 * @param _typeEntry - used to interpret a simplified record initializer (may be null)
+	 */
+	// START KGU#559 2018-07-20: Enh. #563
+	//protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
+	//	HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, null);
+	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
+	{
+		// START KGU#771 2019-11-24: Bugfix #783 In case of an unknown record type we should at least write the original content
+		if (_typeEntry == null) {
+			addCode(transformKeyword("LET ") + transform(_lValue) + " = " + _recordValue + "\t" + this.commentSymbolLeft() + " FIXME: missing type information for struct! " + this.commentSymbolRight(),
+					_indent, false);
+			return;
+		}
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
+		for (Entry<String, String> comp: comps.entrySet()) {
+			String compName = comp.getKey();
+			String compVal = comp.getValue();
+			if (!compName.startsWith("§") && compVal != null) {
+				// FIXME (KGU#560) 2018-07-21: how can we fix recursive initializers? See CGenerator
+				addCode(transformKeyword("LET ") + transform(_lValue) + "." + compName + " = " + transform(compVal), _indent, _isDisabled);
+			}
+		}
+	}
+	// END KGU#388 2019-12-01
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
@@ -556,20 +751,20 @@ public class BasGenerator extends Generator
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "IF " + condition + " THEN");
     	boolean disabled = _alt.isDisabled();
-    	addCode("IF " + condition + " THEN", _indent, disabled);
+    	addCode(transformKeyword("IF ") + condition + " " + transformKeyword("THEN"), _indent, disabled);
     	// END KGU#277 2016-10-13
     	generateCode(_alt.qTrue, indentPlusOne);
     	if(_alt.qFalse.getSize() > 0)
     	{
     		// START KGU#277 2016-10-13: Enh. #270
     		//code.add(this.getLineNumber() + _indent + "ELSE");
-    		addCode("ELSE", _indent, disabled);
+    		addCode(transformKeyword("ELSE"), _indent, disabled);
     		// END KGU#277 2016-10-13
     		generateCode(_alt.qFalse, indentPlusOne);
     	}
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "END IF");
-    	addCode("END IF", _indent, disabled);
+    	addCode(transformKeyword("END IF"), _indent, disabled);
     	// END KGU#277 2016-10-13
     }
 
@@ -591,7 +786,7 @@ public class BasGenerator extends Generator
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "SELECT CASE " + selection);
         boolean disabled =_case.isDisabled(); 
-        addCode("SELECT CASE " + discriminator, _indent, disabled);
+        addCode(transformKeyword("SELECT CASE ") + discriminator, _indent, disabled);
         // END KGU#277 2016-10-13
 
         for (int i=0; i<_case.qs.size()-1; i++)
@@ -600,7 +795,7 @@ public class BasGenerator extends Generator
         	//code.add(this.getLineNumber() + indentPlusOne + "CASE " + _case.getText().get(i+1).trim());
         	// START KGU#453 2017-11-02: Issue #447
         	//addCode("CASE " + _case.getText().get(i+1).trim(), indentPlusOne, disabled);
-        	addCode("CASE " + unbrokenText.get(i+1).trim(), indentPlusOne, disabled);
+        	addCode(transformKeyword("CASE ") + unbrokenText.get(i+1).trim(), indentPlusOne, disabled);
         	// END KGU#453 2017-11-02
         	// END KGU#277 2016-10-13
         	//    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
@@ -615,13 +810,13 @@ public class BasGenerator extends Generator
         {
         	// START KGU#277 2016-10-13: Enh. #270
         	//code.add(this.getLineNumber() + indentPlusOne + "CASE ELSE");
-        	addCode("CASE ELSE", indentPlusOne, disabled);
+        	addCode(transformKeyword("CASE ELSE"), indentPlusOne, disabled);
         	// END KGU#277 2016-10-13
         	generateCode((Subqueue)_case.qs.get(_case.qs.size()-1), indentPlusTwo);
         }
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "END SELECT");
-        addCode("END SELECT", _indent, disabled);
+        addCode(transformKeyword("END SELECT"), _indent, disabled);
         // END KGU#277 2016-10-13
     }
 
@@ -642,20 +837,20 @@ public class BasGenerator extends Generator
 
     	String[] parts = _for.splitForClause();
     	String increment = "";
-    	if (!parts[3].trim().equals("1")) increment = " STEP " + parts[3];
+    	if (!parts[3].trim().equals("1")) increment = transformKeyword(" STEP ") + parts[3];
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "FOR " +
     	//		parts[0] + " = " + transform(parts[1], false) +
     	//		" TO " + transform(parts[2], false) + increment);
     	boolean disabled = _for.isDisabled();
-    	addCode("FOR " + parts[0] + " = " + transform(parts[1], false) +
-    			" TO " + transform(parts[2], false) + increment, _indent, disabled);
+    	addCode(transformKeyword("FOR ") + parts[0] + " = " + transform(parts[1], false) +
+    			transformKeyword(" TO ") + transform(parts[2], false) + increment, _indent, disabled);
     	// END KGU#277 2016-10-13
     	// END KGU 2015-11-02
     	generateCode(_for.q, _indent + this.getIndent());
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "NEXT " + parts[0]);
-    	addCode("NEXT " + parts[0], _indent, disabled);
+    	addCode(transformKeyword("NEXT ") + parts[0], _indent, disabled);
     	// END KGU#277 2016-10-13
     	
     	// START KGU#78 2015-12-18: Enh. #23
@@ -757,7 +952,7 @@ public class BasGenerator extends Generator
 			// START KGU#277 2016-10-13: Enh. #270
 			//code.add(this.getLineNumber() + _indent + "DIM " + arrayName + "() AS " + itemType + " = {" + 
 			//		items.concatenate(", ") + "}");
-			addCode("DIM " + arrayName + "() AS " + itemType + " = {" + 
+			addCode(transformKeyword("DIM ") + arrayName + "() " + transformKeyword("AS ") + itemType + " = {" + 
 					items.concatenate(", ") + "}", _indent, disabled);
 			// END KGU#277 2016-10-13
 			valueList = arrayName;
@@ -766,14 +961,14 @@ public class BasGenerator extends Generator
 		// Creation of the loop header
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(this.getLineNumber() + _indent + "FOR EACH " + var + " IN " + valueList);
-		addCode("FOR EACH " + var + " IN " + valueList, _indent, disabled);
+		addCode(transformKeyword("FOR EACH ") + var + transformKeyword(" IN ") + valueList, _indent, disabled);
 		// END KGU#277 2016-10-13
 
 		// Creation of the loop body
     	generateCode(_for.q, _indent + this.getIndent());
 		// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "NEXT " + var);
-    	addCode("NEXT " + var, _indent, disabled);
+    	addCode(transformKeyword("NEXT ") + var, _indent, disabled);
 		// END KGU#277 2016-10-13
     	
 		this.placeJumpTarget(_for, _indent);	// Enh. #23: Takes care for correct jumps
@@ -786,8 +981,10 @@ public class BasGenerator extends Generator
     @Override
     protected void generateCode(While _while, String _indent)
     {
-
-            String condition = transform(_while.getText().getLongString(), false).trim();
+            // START KGU#779 2019-12-01: Bugfix #790 (enh. #416)
+            //String condition = transform(_while.getText().getLongString(), false).trim();
+            String condition = transform(_while.getUnbrokenText().getLongString(), false).trim();
+            // END KGU#779 2019-12-01
 
             // START KGU 2015-11-02
             appendComment(_while, _indent);
@@ -797,12 +994,12 @@ public class BasGenerator extends Generator
             // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "DO WHILE " + condition);
             boolean disabled = _while.isDisabled();
-            addCode("DO WHILE " + condition, _indent, disabled);
+            addCode(transformKeyword("DO WHILE ") + condition, _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_while.q, _indent+this.getIndent());
             // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP");
-            addCode("LOOP", _indent, disabled);
+            addCode(transformKeyword("LOOP"), _indent, disabled);
             // END KGU#277 2016-10-13
 
             // START KGU#78 2015-12-18: Enh. #23
@@ -813,8 +1010,10 @@ public class BasGenerator extends Generator
     @Override
     protected void generateCode(Repeat _repeat, String _indent)
     {
-
-            String condition = transform(_repeat.getText().getLongString()).trim();
+            // START KGU#779 2019-12-01: Bugfix #790 (enh. #416)
+            //String condition = transform(_repeat.getText().getLongString()).trim();
+            String condition = transform(_repeat.getUnbrokenText().getLongString(), false).trim();
+            // END KGU#779 2019-12-01
 
             // START KGU 2015-11-02
             appendComment(_repeat, _indent);
@@ -823,12 +1022,12 @@ public class BasGenerator extends Generator
             // START KGU#277 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "DO");
             boolean disabled = _repeat.isDisabled();
-            addCode("DO", _indent, disabled);
+            addCode(transformKeyword("DO"), _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_repeat.q, _indent + this.getIndent());
             // START KGU#277 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP UNTIL " + condition);
-            addCode("LOOP UNTIL " + condition, _indent, disabled);
+            addCode(transformKeyword("LOOP UNTIL ") + condition, _indent, disabled);
             // END KGU#277 2016-10-13
 
             // START KGU#78 2015-12-18: Enh. #23
@@ -846,12 +1045,12 @@ public class BasGenerator extends Generator
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "DO");
         boolean disabled = _forever.isDisabled();
-        addCode("DO", _indent, disabled);
+        addCode(transformKeyword("DO"), _indent, disabled);
         // END KGU#277 2016-10-13
         generateCode(_forever.q, _indent+this.getIndent());
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "LOOP");
-        addCode("LOOP", _indent, disabled);
+        addCode(transformKeyword("LOOP"), _indent, disabled);
         // END KGU#277 2016-10-13
 
         // START KGU#78 2015-12-18: Enh. #23
@@ -867,13 +1066,15 @@ public class BasGenerator extends Generator
 			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			Root owningRoot = Element.getRoot(_call);
-			for (int i=0; i<_call.getUnbrokenText().count(); i++)
+			StringList lines = _call.getUnbrokenText();
+			for (int i=0; i < lines.count(); i++)
 			{
 				// START KGU#2 2015-12-18: Enh. #9 This may require a CALL command prefix
 				//code.add(_indent+transform(_call.getText().get(i)));
 				// START KGU#371 2019-03-08: Enh. #385 Support for declared optional arguments
 				//String line = transform(_call.getText().get(i));
-				String line = _call.getUnbrokenText().get(i);
+				String line = lines.get(i);
+				boolean isAsgnmt = Instruction.isAssignment(line);
 				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null)
 						&& line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
@@ -891,9 +1092,12 @@ public class BasGenerator extends Generator
 					}
 				}
 				// END KGU#371 2019-03-08
-				if (!line.startsWith("LET") || line.indexOf(" = ") < 0)
+				// START KGU#778 2019-12-01: Bugfix #789 - The detection of function calls was corrupted by patch #385
+				//if (!line.startsWith("LET") || line.indexOf(" = ") < 0)
+				if (!isAsgnmt)
+				// END KGU#778 2019-12-01
 				{
-					line = "CALL " + line;
+					line = transformKeyword("CALL ") + line;
 				}
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(this.getLineNumber() + _indent + line);
@@ -922,7 +1126,10 @@ public class BasGenerator extends Generator
 			//}
 			boolean isEmpty = true;
 
-			StringList lines = _jump.getText();
+			// START KGU#779 2019-12-01: Bugfix #790 (enh. #416)
+			//StringList lines = _jump.getText();
+			StringList lines = _jump.getUnbrokenText();
+			// END KGU#779 2019-12-01
 			String preReturn  = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preThrow   = CodeParser.getKeywordOrDefault("preThrow", "throw");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
@@ -941,7 +1148,7 @@ public class BasGenerator extends Generator
 						//code.add(_indent + this.getLineNumber() + this.procName + " = " + argument + " : END");
 						// START KGU#277 2016-10-13: Enh. #270
 						//code.add(this.getLineNumber() + _indent + "RETURN " + argument);
-						addCode( "RETURN " + argument, _indent, disabled);
+						addCode(transformKeyword("RETURN ") + argument, _indent, disabled);
 						// END KGU#277 2016-10-13
 					}
 				}
@@ -949,7 +1156,7 @@ public class BasGenerator extends Generator
 				{
 					// START KGU#277 2016-10-13: Enh. #270
 					//code.add(this.getLineNumber() + _indent + "STOP");
-					addCode("STOP", _indent, disabled);
+					addCode(transformKeyword("STOP"), _indent, disabled);
 					// END KGU#277 2016-10-13
 				}
 				// START KGU#686 2019-03-18: Enh. #56
@@ -976,7 +1183,7 @@ public class BasGenerator extends Generator
 					}
 					// START KGU#277 2016-10-13: Enh. #270
 					//code.add(this.getLineNumber() + _indent + "GOTO " + label);
-					addCode("GOTO " + label, _indent, disabled);
+					addCode(transformKeyword("GOTO ") + label, _indent, disabled);
 					// END KGU#277 2016-10-13
 					isEmpty = false;	// Leave the above loop now 
 				}
@@ -998,7 +1205,7 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(this.getLineNumber() + _indent + "GOTO " + label);
-				addCode("GOTO " + label, _indent, disabled);
+				addCode(transformKeyword("GOTO ") + label, _indent, disabled);
 				// END KGU#277 2016-10-13
 				isEmpty = false;	// Leave the above loop now 
 			}
@@ -1160,7 +1367,7 @@ public class BasGenerator extends Generator
 		String signature = _root.getMethodName();
 		if (_root.isSubroutine()) {
 			boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
-			pr = isFunction ? "FUNCTION" : "SUB";
+			pr = transformKeyword(isFunction ? "FUNCTION" : "SUB");
 
 			// Compose the function header
 			signature += "(";
@@ -1196,12 +1403,12 @@ public class BasGenerator extends Generator
 			signature += ")";
 			if (_resultType != null)
 			{
-				signature += " AS " + transformType(_resultType, "Real");
+				signature += transformKeyword(" AS ") + transformType(_resultType, "Real");
 			}
 			furtherIndent += this.getIndent();
-        }
-        code.add(this.getLineNumber() + _indent + pr + " " + signature);
-       
+		}
+		code.add(this.getLineNumber() + _indent + pr + " " + signature);
+
 		return furtherIndent;
 	}
 	
@@ -1214,10 +1421,29 @@ public class BasGenerator extends Generator
 		// Old BASIC dialocts with line numbers usually don't support declarations
 		if (!this.optionCodeLineNumbering())
 		{
-			String indentPlusOne = _indent + this.getIndent();
-			appendComment("TODO: declare your variables here:", _indent );
+			appendComment("TODO: Check and accomplish your variable declarations here:", _indent );
 			for (int v = 0; v < _varNames.count(); v++) {
-				appendComment("DIM " + _varNames.get(v) + " AS <type>", indentPlusOne);
+				// START KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
+				//appendComment(transformKeyword("DIM ") + _varNames.get(v) + transformKeyword(" AS") + " <type>", indentPlusOne);
+				String varName = _varNames.get(v);
+				String constVal = null;
+				if (((constVal = _root.constants.get(varName)) == null || !constVal.startsWith(":"))
+						&& !this.wasDefHandled(_root, varName, true)) {
+					TypeMapEntry type = _root.getTypeInfo().get(varName);
+					String typeName = "???";
+					if (type != null) {
+						StringList typeNames = this.getTransformedTypes(type, true);
+						if (typeNames.count() == 1) {
+							typeName = typeNames.get(0);
+						}
+						while (typeName.startsWith("@")) {
+							varName += "()";
+							typeName = typeName.substring(1);
+						}
+					}
+					addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + typeName, _indent, false);
+				}
+				// END KGU#542 2019-12-01
 			}
 			appendComment("", _indent);
 		}
@@ -1246,7 +1472,7 @@ public class BasGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(this.getLineNumber() + _indent + "RETURN " + result);
+			code.add(this.getLineNumber() + _indent + transformKeyword("RETURN ") + result);
 		}
 		return _indent;
 	}
@@ -1269,7 +1495,7 @@ public class BasGenerator extends Generator
 				endPhrase += " SUB";
 			}
 		}
-		code.add(_indent + this.getLineNumber() + endPhrase);
+		code.add(_indent + this.getLineNumber() + transformKeyword(endPhrase));
 		
 		if (this.optionCodeLineNumbering())
 		{

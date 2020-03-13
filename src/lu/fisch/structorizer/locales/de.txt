@@ -126,6 +126,7 @@
  *      Kay Gürtzig         2019-03-03  Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
+ *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
  *
  ******************************************************************************************************
  *
@@ -273,6 +274,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abw�
 Menu.menuDiagramHideDeclarations.text=Bloße Deklarationen verbergen?
 Menu.menuDiagramMarker.text=Variable hervorheben?
 Menu.menuDiagramDIN.text=DIN 66261?
+Menu.menuDiagramDIN.tooltip=Wechselt das Erscheiningsbild von @d-Schleifen zwischen DIN 66261 (Form wie @g-Schleife) und Nicht-Standard (Form wie @i-Schleife).
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
 Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
@@ -344,6 +346,8 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpOnline.tooltip=Öffnen des Online-Nutzerhandbuchs
+Menu.menuHelpDownload.text=Guide als PDF herunterladen
+Menu.menuHelpDownload.tooltip=Aktuellstes PDF-Nutzerhandbuch herunterladen für Hilfeanzeige bei unterbrochener Netzverbindung
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -379,7 +383,10 @@ Menu.msgSaveChanges.text=Möchten Sie die aktuelle Diagramm-Datei speichern?
 Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
 Menu.msgErrorUsingGenerator.text=Fehler beim %-Export
 Menu.msgErrorNoFile.text=Datei nicht gefunden!
-Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Menu.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert
+Menu.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (im PDF-Betrachter).
+Menu.msgDownloadFailed.text=Das Herunterladen des Nutzerhandbuchs als PDF ist gescheitert:\n%
+Menu.msgHostNotAvailable.text=Die Adresse "%" ist nicht erreichbar.
 Menu.hdrRefactoringTable.0.text=Referenz
 Menu.hdrRefactoringTable.1.text=Alt
 Menu.hdrRefactoringTable.2.text=Neu
@@ -444,9 +451,6 @@ Menu.msgVetoClose.text=Structorizer ist dabei, sich zu beenden. Einspruch?
 Menu.msgSetAsPreferredGenerator.text=Sie haben die letzten %2 Male %1-Code exportiert.\nMöchten Sie %1 jetzt im Dateimenü als die bevorzugte Exportsprache setzen?
 Menu.msgChooseSubroutine.text=Bitte zu bearbeitendes Unterprogramm auswählen:
 Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
-// Table column headers for DiagramControllerAliases
-Menu.msgTabHdrSignature.text=Routinensignatur
-Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
 Menu.msgAllPreferences.text=Alle Einstellungen
@@ -454,6 +458,11 @@ Menu.msgInvertSelection.text=Auswahl umkehren
 Menu.msgIniBackupFailed.text=Die Erstellung einer Backup-Datei der aktuellen Einstellungen ist gescheitert.\nWollen Sie trotzdem "%" laden?
 Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
 Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
+Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routinensignatur
+Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".
@@ -534,6 +543,8 @@ Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %
 Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
 Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
+Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
+Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -567,6 +578,8 @@ AnalyserPreferences.checkboxes.23.text=Prüfen, dass die Liste der einzubeziehen
 AnalyserPreferences.checkboxes.24.text=Typedefinitionen und Zugriff auf Verbundkomponenten überprüfen.
 AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisungen (EVA-Prinzip)
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
+AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
+AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -1036,8 +1049,11 @@ ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Schlüsselwörter anpassen zu lassen.
 ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
-ImportOptionDialog.chkVarDeclarations.tooltip=Ist dies Option gewählt, können Parser gefundene Variablendeklarationen in inaktive Anweisungselemente legen.
+ImportOptionDialog.chkVarDeclarations.tooltip=Ist diese Option gewählt, können Parser gefundene Variablendeklarationen in @{Instruction}selemente legen.
 ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
+ImportOptionDialog.chkCommentImport.tooltip=Diese Option erlaubt dem Parser, die Elemente der generierten Diagramme mit den am nächsten im Quellcode gefundenen Kommentaren auszustatten.
+ImportOptionDialog.chkInsertOptKeywords.text=Optionale Schlüsselwörter um Bedingungen herum setzen
+ImportOptionDialog.chkInsertOptKeywords.tooltip=Erlaubt die Dekoration importierter Bedingungen (z.B. in @{Alternative}) mit den redundanten Vor-/Nach-Schlüsselwörtern aus den Parser-Einstellungen.
 ImportOptionDialog.chkSaveParseTree.text=Nach dem Import Syntaxbaum als Textdatei speichern.
 ImportOptionDialog.chkSaveParseTree.tooltip=Nach erfolgreichem Code-Import kann der Syntaxbaum der Quelldatei in eine Textdatei "*.parsetree.txt" gesichert werden.
 ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
@@ -1245,7 +1261,8 @@ Arranger.msgConfirmMultiple.text=Die folgenden %1 Diagramme (von insgesamt %2) s
 Arranger.msgReadyToExport.text=Jetzt die angegebene Teil-Anordnung als PNG exportieren?
 Arranger.msgCantDoWithMultipleRoots.text=Es ist nicht möglich, mehr als ein Diagramm gleichzeitig zu %1. Sie haben %2 Diagramme ausgewählt:\n- %3
 Arranger.msgDiagramsSelected.text=Diagramme: %1, ausgewählt: %2
-Arranger.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Arranger.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert.
+Arranger.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (PDF-Betrachter).\nBitte zum Abschnitt "Arranger" in Kapitel "Features" gehen.
 Arranger.msgTitleURLError.text=URL-Fehler
 Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
 Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
@@ -1305,6 +1322,7 @@ Surface.titleRenameGroup.text=Gruppe «%1» in «%2» umbenennen
 Surface.msgRenameArrFile.text=Anordnungsdatei\n"%1"\numbenennen in "%2"?
 Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt werden!\nVorgang abgebrochen!
 Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
+Surface.msgFileMissing.text= fehlt!
 
 ----[ ArrangerIndex ]----
 ArrangerIndex.popupIndexGet.text=Diagram holen

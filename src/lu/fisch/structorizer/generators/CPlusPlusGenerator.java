@@ -58,6 +58,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-02-14      Enh. #680: Support for input instructions with several variables
  *      Kay Gürtzig     2019-03-08      Enh. #385: Support for parameter default values
  *      Kay Gürtzig     2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
+ *      Kay Gürtzig     2019-10-18      Enh. #739: Support for enum types
+ *      Kay Gürtzig     2019-12-02      KGU#784 Defective type descriptions in argument lists and thread function operators
  *
  ******************************************************************************************************
  *
@@ -72,7 +74,6 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -288,37 +289,39 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#653 2019-02-14
 
-	// START KGU#388 2017-09-27: Enh.#423
-	/**
-	 * Adds a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
-	 * globally or in the preamble before.
-	 * @param _root - the originating Root
-	 * @param _type - the type map entry the definition for which is requested here
-	 * @param _indent - the current indentation
-	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
-	 */
-	@Override
-	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
-		String typeKey = ":" + _typeName;
-		if (this.wasDefHandled(_root, typeKey, true)) {
-			return;
-		}
-		appendDeclComment(_root, _indent, typeKey);
-		if (_type.isRecord()) {
-			String indentPlus1 = _indent + this.getIndent();
-			addCode("struct " + _typeName + " {", _indent, _asComment);
-			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
-						indentPlus1, _asComment);
-			}
-			addCode("};", _indent, _asComment);
-		}
-		else {
-			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
-					_indent, _asComment);					
-		}
-	}
-	// END KGU#388 2017-09-27
+// START KGU#542 2019-11-17: Enh. #739: This code was identical to that of super
+//	// START KGU#388 2017-09-27: Enh.#423
+//	/**
+//	 * Adds a typedef for the type passed in by {@code _typeEnry} if it hadn't been defined
+//	 * globally or in the preamble before.
+//	 * @param _root - the originating Root
+//	 * @param _type - the type map entry the definition for which is requested here
+//	 * @param _indent - the current indentation
+//	 * @param _asComment - if the type deinition is only to be added as comment (disabled)
+//	 */
+//	@Override
+//	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+//		String typeKey = ":" + _typeName;
+//		if (this.wasDefHandled(_root, typeKey, true)) {
+//			return;
+//		}
+//		appendDeclComment(_root, _indent, typeKey);
+//		if (_type.isRecord()) {
+//			String indentPlus1 = _indent + this.getIndent();
+//			addCode("struct " + _typeName + " {", _indent, _asComment);
+//			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+//				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+//						indentPlus1, _asComment);
+//			}
+//			addCode("};", _indent, _asComment);
+//		}
+//		else {
+//			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
+//					_indent, _asComment);					
+//		}
+//	}
+//	// END KGU#388 2017-09-27
+// END KGU#542 2019-11-17
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -485,13 +488,21 @@ public class CPlusPlusGenerator extends CGenerator {
 		for (int v = 0; v < varNames.count(); v++) {
 			String varName = varNames.get(v);
 			TypeMapEntry typeEntry = typeMap.get(varName);
-			String typeSpec = "/*type?*/";
+			String typeSpec = "???";
 			boolean isArray = false;
 			if (typeEntry != null) {
 				isArray = typeEntry.isArray();
 				StringList typeSpecs = this.getTransformedTypes(typeEntry, false);
 				if (typeSpecs.count() == 1) {
-					typeSpec = typeSpecs.get(0);
+					// START KGU#784 2019-12-02
+					//typeSpec = typeSpecs.get(0);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					int posBrack = typeSpec.indexOf("[");
+					if (posBrack > 0) {
+						varName += typeSpec.substring(posBrack);
+						typeSpec = typeSpec.substring(0, posBrack);
+					}
+					// END KGU#784 2019-12-02
 				}
 			}
 			argList += (v > 0 ? ", " : "") + typeSpec + (isArray ? " " : "& ") + varName;
@@ -628,7 +639,7 @@ public class CPlusPlusGenerator extends CGenerator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);
 				if (defVal != null) {
@@ -675,6 +686,16 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return structName + (isRecursive ? " * " : "");
 	}
+
+	// START KGU#542 2019-11-17: Enh. #739
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformEnumTypeRef(java.lang.String)
+	 */
+	@Override
+	protected String transformEnumTypeRef(String enumName) {
+		return enumName;
+	}
+	// END KGU#542 2019-11-17
 
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

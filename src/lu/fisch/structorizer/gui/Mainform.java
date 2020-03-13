@@ -88,6 +88,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
  *      Kay Gürtzig     2019-09-19      Bugfix #744: OSX configuration order changed: file handler first
  *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
+ *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
+ *      Kay Gürtzig     2020-02-04      Bugfix #805: Have ini saved recent property changes in create() before loading from ini
  *
  ******************************************************************************************************
  *
@@ -208,6 +210,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		/******************************
 		 * Load values from INI
 		 ******************************/
+		// START KGU#792 2020-02-04: Bugfix #805
+		if (!this.isStandalone && Ini.getInstance().hasUnsavedChanges()) {
+			try {
+				Ini.getInstance().save();
+			} catch (IOException ex) {
+				logger.log(Level.WARNING, "Ini", ex);
+			}
+		}
+		// END KGU#792 2020-02-04
 		// This is required at an early moment e.g. to ensure correct scaling etc.
 		// But it doesn't reach components like Editor, Menu and Diagram, which are
 		// created later
@@ -905,7 +916,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#300 2016-12-02
 		
 			// =========================== language ==========================
-			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
+			ini.setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
 			
 			// ==================== diagram menu settings ====================
 			// DIN, comments
@@ -1084,9 +1095,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					catch (Exception e)
 					{
 						// show error
-						JOptionPane.showOptionDialog(null,e.getMessage(),
-													 "Error ...",
-													 JOptionPane.OK_OPTION, JOptionPane.ERROR_MESSAGE,null,null,null);
+						String message = e.getMessage();
+						if (message == null || message.isEmpty()) message = e.toString();
+						JOptionPane.showOptionDialog(null,
+								Menu.msgErrorSettingLaF.getText().replace("%1", _laf).replace("%2", message),
+								Menu.msgTitleError.getText(),
+								JOptionPane.OK_OPTION, 
+								JOptionPane.ERROR_MESSAGE,
+								null,null,null);
 					}
 				}
 				// START KGU#661 2019-02-20: Issue #686
@@ -1098,6 +1114,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#661 2019-02-20: Issue #686
 			laf = currentLafName;
 			// END KGU#661 2019-02-20
+			// START KGU#792 2020-02-04: Bugfix #805
+			Ini.getInstance().setProperty("laf", laf);
+			// END KGU#792 2020-02-04
 		}
 	}
 	
@@ -1361,7 +1380,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		if (diagram != null) {
 			diagram.analyse();
 		}
-		doButtons();	// This ensures the correct language menu item i the preferences menu gets selected
+		doButtons();	// This ensures the correct language menu item if the preferences menu gets selected
+
+		// START KGU#792 2020-02-04: Bugfix #805
+		Ini.getInstance().setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
+		// END KGU#792 2020-02-04 
 	}
 	// END KGU#655 2019-02-16
 

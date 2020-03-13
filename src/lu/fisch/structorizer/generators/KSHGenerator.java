@@ -52,6 +52,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017-05-16      Enh. #372: Export of copyright information
  *      Kay Gürtzig             2019-03-08      Enh. #385: Optional function arguments with defaults
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürtzig             2019-10-15      Bugfix #765: Field typeMap had to be initialized, e.g. for transformTokens()
+ *      Kay Gürtzig             2019-12-01      Enh. #739: At least minimum support for enum types, array declarations mended
+ *      Kay Gürtzig             2020-02-16      Issue #816: Function calls and value return mechanism revised
+ *      Kay Gürtzig             2020-02-18      Enh. #388: Support for constants
+ *      Kay Gürtzig             2020-02-24      Issues #816,#821: generateCode(Root) decomposed
  *
  ******************************************************************************************************
  *
@@ -63,10 +68,11 @@ package lu.fisch.structorizer.generators;
  *      
  ******************************************************************************************************///
 
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
-import lu.fisch.utils.StringList;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 
 
 public class KSHGenerator extends BASHGenerator {
@@ -103,7 +109,107 @@ public class KSHGenerator extends BASHGenerator {
 
 	/************ Code Generation **************/
 	
-//	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
+	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getEnumDeclarator()
+	 */
+	@Override
+	protected String getEnumDeclarator()
+	{
+		return "";	// ksh doesn't know a declare command (as far as we know)
+	}
+
+	// On this occasion, we also repair the array declaration, which differes from bash
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getArrayDeclarator()
+	 */
+	@Override
+	protected String getArrayDeclarator(boolean isConst)
+	{
+		return "set -A ";
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getAssocDeclarator()
+	 */
+	@Override
+	protected String getAssocDeclarator(boolean isConst)
+	{
+		return isConst ? "typeset -A -r " : "typeset -A ";
+	}
+	// END KGU#542 2019-12-01
+	
+	// START KGU#803/KGU#806 2020-02-18: Issues #388, #816
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getConstDeclarator()
+	 */
+	@Override
+	protected String getConstDeclarator()
+	{
+		return "typeset -r ";
+	}
+
+	@Override
+	protected String getNameRefDeclarator(boolean isConst)
+	{
+		if (isConst) {
+			return "typeset -nr ";
+		}
+		return "typeset -n ";
+	}
+	
+	@Override
+	protected String getLocalDeclarator(boolean isConst, TypeMapEntry type)
+	{
+		if (type != null) {
+			if (type.isRecord()) {
+				return this.getAssocDeclarator(isConst);
+			}
+			else if (type.isArray()) {
+				return this.getArrayDeclarator(isConst);
+			}
+			String typeName = type.getCanonicalType(true, true);
+			if (typeName.equals("int")) {
+				return "typeset -i" + (isConst ? "r" : "") + " ";
+			}
+			else if (typeName.equals("double")) {
+				return "typeset -E" + (isConst ? "r" : "") + " ";
+			}
+		}
+		if (isConst) {
+			return getConstDeclarator();
+		}
+		return "typeset ";
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#makeArrayCopy(java.lang.String, java.lang.String)
+	 */
+	@Override
+	protected String makeArrayCopyAssignment(String tgtVar, String srcVar, boolean getKeys, boolean asConstant, boolean asGlobal)
+	{
+		String prefix = "";
+		String postfix = "";
+		if (tgtVar != null) {
+			prefix = this.getArrayDeclarator(asConstant);
+			if (asGlobal) {
+				postfix += "; export " + tgtVar;
+			}
+			prefix += tgtVar + this.getArrayInitOperator();
+		}
+		return prefix + "\"${" + (getKeys ? "!" : "") + srcVar + "[@]}\"" + postfix;
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.BASHGenerator#getArrayInitOperator()
+	 */
+	@Override
+	protected String getArrayInitOperator()
+	{
+		return " ";
+	}
+	// END KGU#803/KGU#806 2020-02-18
+
+	//	// START KGU 2016-01-08: Possible replacement (portable shell code) for the inherited modern BASH code
 //	@Override
 //	protected void generateCode(For _for, String _indent) {
 //
@@ -132,6 +238,14 @@ public class KSHGenerator extends BASHGenerator {
 	public String generateCode(Root _root, String _indent) {
 
 		String indent = _indent;
+		root = _root;
+		// START KGU#753 2019-10-15: Bugfix #765 - superclass methods need an initialized typeMap
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#753 2019-10-15
+		// START KGU#803 2020-02-16: Issue #816
+		boolean alwaysReturns = mapJumps(_root.children);
+		// END KGU#803 2020-02-16
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		
 		// START KGU#705 2019-09-23: Enh. #738
@@ -155,41 +269,7 @@ public class KSHGenerator extends BASHGenerator {
 			// END KGU#351 2017-02-26
 			subroutineInsertionLine = code.count();
 			code.add("");
-			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-			if (this.usesFileAPI) {
-				appendComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
-				appendComment("     Unfortunately there are no comparable constructs in shell", _indent);
-				appendComment("     syntax for automatic conversion.", _indent);
-				appendComment("     The respective lines are marked with a TODO File API comment.", _indent);
-				appendComment("     You might try something like \"echo value >> filename\" for output", _indent);
-				appendComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
-			}
-			// END KGU#311 2017-01-05
-			// START KGU#150/KGU#241 2017-01-05: Issue #234 - Provisional support for chr and ord functions
-			if (!this.suppressTransformation)
-			{
-				boolean builtInAdded = false;
-				if (occurringFunctions.contains("chr"))
-				{
-					code.add(indent);
-					appendComment("chr() - converts decimal value to its ASCII character representation", indent);
-					code.add(indent + "chr() {");
-					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (occurringFunctions.contains("ord"))
-				{
-					code.add(indent);
-					appendComment("ord() - converts ASCII character to its decimal value", indent);
-					code.add(indent + "ord() {");
-					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-					code.add(indent + "}");
-					builtInAdded = true;
-				}
-				if (builtInAdded) code.add(indent);
-			}
-			// END KGU#150/KGU#241 2017-01-05
+			appendAuxiliaryCode(_indent);
 		}
 		else
 		{
@@ -203,34 +283,48 @@ public class KSHGenerator extends BASHGenerator {
 		if( _root.isSubroutine() ) {
 			// START KGU#53 2015-11-02: Shell functions obtain their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
-			String header = _root.getMethodName() + "()";
-			code.add(header + " {");
+			// START KGU#803 2020-02-18: Issue #816 - make sure declarations make variables local
+			//String header = _root.getMethodName() + "()";
+			//code.add(header + " {");
+			addCode("function " + _root.getMethodName() + " {", "", false);
+			// END KGU#803 2020-02-18
 			indent = indent + this.getIndent();
-			StringList paraNames = _root.getParameterNames();
-			// START KGU#371 2019-03-08: Enh. #385 support optional arguments
-			//for (int i = 0; i < paraNames.count(); i++)
+			// START KGU#803 2020-02-18: Issue #816 - outsourced to enhanced method
+			//StringList paraNames = _root.getParameterNames();
+			//// START KGU#371 2019-03-08: Enh. #385 support optional arguments
+			////for (int i = 0; i < paraNames.count(); i++)
+			////{
+			////	code.add(indent + paraNames.get(i) + "=$" + (i+1));
+			////}
+			//int minArgs = _root.getMinParameterCount();
+			//StringList argDefaults = _root.getParameterDefaults();
+			//for (int i = 0; i < minArgs; i++)
 			//{
 			//	code.add(indent + paraNames.get(i) + "=$" + (i+1));
 			//}
-			int minArgs = _root.getMinParameterCount();
-			StringList argDefaults = _root.getParameterDefaults();
-			for (int i = 0; i < minArgs; i++)
-			{
-				code.add(indent + paraNames.get(i) + "=$" + (i+1));
-			}
-			for (int i = minArgs; i < paraNames.count(); i++)
-			{
-				code.add(indent + "if [ ${#} -lt " + (i+1) + " ]");
-				code.add(indent + "then");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
-				code.add(indent + "else");
-				code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
-				code.add(indent + "fi");
-			}
-			// END KGU#371 2019-03-08
+			//for (int i = minArgs; i < paraNames.count(); i++)
+			//{
+			//	code.add(indent + "if [ ${#} -lt " + (i+1) + " ]");
+			//	code.add(indent + "then");
+			//	code.add(indent + this.getIndent() + paraNames.get(i) + "=" + transform(argDefaults.get(i)));
+			//	code.add(indent + "else");
+			//	code.add(indent + this.getIndent() + paraNames.get(i) + "=$" + (i+1));
+			//	code.add(indent + "fi");
+			//}
+			//// END KGU#371 2019-03-08
+			this.generateArgAssignments(_root, indent);
+			// END KGU#803 2020-02-18
 			// END KGU#53 2015-11-02
 		}
 		
+		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+			TypeMapEntry type = typeEntry.getValue();
+			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+				appendEnumeratorDef(type, _indent);
+			}
+		}
+		// END KGU#542 2019-12-01
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
 		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
@@ -238,8 +332,21 @@ public class KSHGenerator extends BASHGenerator {
 		code.add("");
 		//insertComment("TODO declare your variables here", _indent);
 		//code.add("");
-		generateCode(_root.children, _root.isProgram() ? _indent : _indent + this.getIndent());
+		// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
+		generateDeclarations(indent);
+		// END KGU#389/KGU#803/KGU#806
+		// START KGU#803 2020-02-24: Issue #816
+		if (_root.isSubroutine()) {
+			this.isResultSet = varNames.contains("result", false);
+			this.isFunctionNameSet = varNames.contains(_root.getMethodName());
+		}
+		// END KGU#803 2020-02-24
+		generateCode(_root.children, indent);
 		
+		// START KGU#803 2020-02-16: Issue #816
+		generateResult(_root, indent, alwaysReturns, varNames);
+		// END KGU#803 2020-02-16
+
 		if( _root.isSubroutine() ) {
 			code.add("}");
 		}
@@ -254,7 +361,7 @@ public class KSHGenerator extends BASHGenerator {
 		return code.getText();
 		
 	}
-	
+
 }
 
 
