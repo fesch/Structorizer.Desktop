@@ -589,7 +589,7 @@ public class TexGenerator extends Generator {
 //		}
 //	}
 	
-	public String generateCode(Root _root, String _indent)
+	public String generateCode(Root _root, String _indent, boolean _public)
 	{
 		/*
 		s.add(makeIndent(_indent)+'\begin{struktogramm}('+inttostr(round(self.height/72*25.4))+','+inttostr(round(self.width/72*25.4))+')['+ss+']');
@@ -667,7 +667,10 @@ public class TexGenerator extends Generator {
 			if (this.optionExportSubroutines()) {
 				while (!this.includedRoots.isEmpty()) {
 					Root incl = this.includedRoots.remove();
-					if (incl != _root) {
+					// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+					//if (incl != _root) {
+					if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+					// END KGU#815/KGU#824 2020-03-18
 						this.appendDefinitions(incl, _indent, null, true);
 					}
 				}
@@ -732,7 +735,7 @@ public class TexGenerator extends Generator {
 		boolean wasTopLevel = topLevel;
 		try {
 			topLevel = false;
-			generateCode(_root, _indent);
+			generateCode(_root, _indent, false);
 		}
 		finally {
 			topLevel = wasTopLevel;

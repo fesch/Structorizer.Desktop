@@ -89,10 +89,24 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
  *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
  *      Kay Gürtzig         2019-02-15      Issue #814: Unidentified parameter type marker changed: {type?} --> ???
+ *      Kay Gürtzig         2020-03-17/22   Enh. #828: Modification in generatePreamble()
  *
  ******************************************************************************************************
  *
  *      Comments:
+ *      
+ *      2020-03-22 - File API Issues #314 + #828 + #836 (Kay Gürtzig)
+ *      - The introduction of arrangement group export with enh. #828 has further complicated the File API
+ *        handling (enh. #314), where code preview and batch code export have also to be considered.
+ *        Basically there are three different approaches:
+ *        1. Program export (single file): type definitions (section 1) and procedure definitions (section 2)
+ *        2. Subroutine export (single UNIT): both types and procedures may be copied into the IMPLEMENTATION
+ *        3. Library UNIT export: If only library routines need the file API (internally) then approach 2
+ *           could be adopted, but if dependent modules require the fileAPI as well then it will be more
+ *           sensible to copy the entire fileAPI resource (UNIT) and reference it with a USING clause in the
+ *           both the library and the requiring library client modules (won't cause harm to have redundant
+ *           USES clauses). We ensure that the File API is copied by providing a conditioned implementation
+ *           of copyFileAPIResources
  *      
  *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
@@ -244,10 +258,16 @@ public class PasGenerator extends Generator
 	// END KGU#351 2017-02-26
 
 	// START KGU#311 2016-12-26: Enh.#314 File API support
+	/** Names of the three FileAPI functions to open a file for a) reading, b) writing, c) appending */
 	private static final String[] openAPINames = {"fileOpen", "fileCreate", "fileAppend"};
+	/** Names of the three Pascal procedures to open a file for a) reading, b) writing, c) appending */
 	private static final String[] openProcNames = {"open", "rewrite", "append"};
+	/** Gathers all file variable names (triggered by the detection of a file open routine call) found in the code */
 	private StringList fileVarNames = new StringList();
 	// END KGU#311 2016-12-26
+	// START KGU#311/KGU#828 2020-03-22: Enh. #314, #828
+	private static final String FILE_API_UNIT_NAME = "StructorizerFileAPI";
+	// END KGU#311/KGU#828 2020-03-22
 	
 	/************ Code Generation **************/
 	
@@ -282,6 +302,62 @@ public class PasGenerator extends Generator
 	{
 		return "writeln($1)";
 	}
+
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
+	 */
+	@Override
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		String signature = _root.getMethodName();
+		StringList paramNames = new StringList();
+		StringList paramTypes = new StringList();
+		_root.collectParameters(paramNames, paramTypes, null);
+		String resultType = _root.getResultType();
+		String pr = "program";
+		if (!_root.isProgram()) {
+			pr = "function";
+			// Compose the function header
+			signature += "(";
+			//insertComment("TODO: declare the parameters and specify the result type!", _indent);
+			// START KGU#371 2019-03-08: Enh. #385
+			int minArgs = _root.getMinParameterCount();
+			StringList argDefaults = _root.getParameterDefaults();
+			// END KGU#371 2019-03-08
+			for (int p = 0; p < paramNames.count(); p++) {
+				signature += ((p > 0) ? "; " : "");
+				// START KGU#800 2020-02-15: Type name surrogate unified to ???
+				//signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
+				signature += (paramNames.get(p) + ": " + transformType(paramTypes.get(p), "???")).trim();
+				// END KGU#800 2020-02-15
+				// START KGU#371 2019-03-08: Enh. #385
+				if (p >= minArgs) {
+					signature += " = " + transform(argDefaults.get(p));
+				}
+				// END KGU#371 2019-03-08
+			}
+			signature += ")";
+			if (resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			{
+				resultType = transformType(_root.getResultType(), "Integer");
+				signature += ": " + resultType;
+			}
+			else 
+			{
+				pr = "procedure";
+			}
+		}
+		signature = pr + " " + signature + ";";
+		int lines = 0;
+		if (_withComment) {
+			insertCode("", _atLine);
+			lines += 1 + insertComment(_root, _indent, _atLine + 1);
+		}
+		insertCode(signature, _atLine + lines);
+		return lines + 1;
+	}
+	// END KGU #815/KGU#824 2020-03-19
 
 	// START KGU#16 2015-11-30
 	/**
@@ -414,12 +490,12 @@ public class PasGenerator extends Generator
         tokens.replaceAll(">>"," shr ");
 		tokens.replaceAll("<-", ":=");
 		// START KGU#311 2016-12-26: Enh. #314 - Support for File API
-		if (this.usesFileAPI) {
+		//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Bugfix #840 transform even for disabled elements
 			tokens.replaceAll("fileWrite", "write");
 			tokens.replaceAll("fileWriteLine", "writeln");
 			tokens.replaceAll("fileEOF", "eof");
 			tokens.replaceAll("fileClose", "closeFile");
-		}
+		//}
 		// END KGU#311 2016-12-26
 		// START KGU#190 2016-04-30: Bugfix #181 - String delimiters must be converted to '
 		for (int i = 0; i < tokens.count(); i++)
@@ -625,7 +701,10 @@ public class PasGenerator extends Generator
 					{
 						// START KGU#311 2016-12-26: Enh. #314 - File API support
 						// If FileAPI is used then this isn't supposed to be suppressed on export
-						if (this.usesFileAPI && asgnPos > 0) {
+						// START KGU#832 2020-03-22: Bugfix #840 even on disabled File API elements transform the text
+						//if (this.usesFileAPI && asgnPos > 0) {
+						if (asgnPos > 0) {
+						// END KGU#832 202-03-23
 							boolean doneFileAPI = false;
 							String expr = transline.substring(asgnPos+1).trim();
 							String var = transline.substring(0, asgnPos).trim();
@@ -1402,61 +1481,27 @@ public class PasGenerator extends Generator
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
-		String pr = "program";
-
 		this.procName = _procName;	// Needed for value return mechanisms
 
-		if (!topLevel)
-		{
-			code.add(_indent);
-		}
-		// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - This is the unit comment, not the function comment
-		if (topLevel && _root.isSubroutine()) {
-			appendComment("Unit provides a routine with following functionality:", _indent);
-		}
-		// END KGU#194/KGU#376 2017-09-22
-		appendComment(_root, _indent);
 		if (topLevel)
 		{
-			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
-			// START KGU#363 2017-05-16: Enh. #372
-			appendCopyright(_root, _indent, true);
-			// END KGU#363 2017-05-16
-			// START KGU#351 2017-02-26: Enh. #346
-			// FIXME This may have little to do with whether it's a program
-			if (_root.isProgram()) {
-				this.appendUserIncludes(_indent);
-				// FIXME (#389): If Includables are to form separate UNITs then they are to be referenced here, too
+			// START KGU#311/KGU#815/KGU#836 2020-03-22: Enh. #314, #828, bugfix #836
+			if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
+				this.generatorIncludes.addIfNew(FILE_API_UNIT_NAME);
 			}
-			// END KGU#351 2017-02-26
-		}
-		
-		// START KGU#757 2019-11-08: Bugfix #772 - had been in generatePreamble, which might cause NullPointerExceptions here
-		typeMap = _root.getTypeInfo(routinePool);
-		// END KGU#757 2019-11-08
-
-		String signature = _root.getMethodName();
-		if (!_root.isProgram()) {
-			// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
-			if (topLevel)
-			{
+			// END KGU#311/KGU#815/KGU#836 2020-03-22
+			if (_root.isProgram()) {
+				code.add(_indent + "program " + _procName + ";");				
+			}
+			else {
 				// START KGU#194 2016-07-20: Bugfix #185 - Though the UNIT name is to be the same as the file name
 				// (or vice versa),
 				// we must not allow non-identifier characters. so convert all characters that are neither letters
 				// nor digits into underscores.
 				//code.add(_indent + "UNIT " + pureFilename + ";");
-				String unitName = "";
-				for (int i = 0; i < pureFilename.length(); i++)
-				{
-					char ch = pureFilename.charAt(i);
-					if (!Character.isAlphabetic(ch) && !Character.isDigit(ch))
-					{
-						ch = '_';
-					}
-					unitName += ch;
-				}
+				String unitName = this.getModuleName();
 				if (unitName.isEmpty()) {
 					unitName = _root.proposeFileName().toUpperCase();
 					if (unitName.contains("-")) {
@@ -1465,89 +1510,126 @@ public class PasGenerator extends Generator
 				}
 				code.add(_indent + "UNIT " + unitName + ";");
 				// END KGU#194 2016-07-20
+			}
+			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			// START KGU#363 2017-05-16: Enh. #372
+			appendCopyright(_root, _indent, true);
+			// END KGU#363 2017-05-16
+			if (!_root.isSubroutine() && !_root.getComment().getLongString().trim().isEmpty()) {
+				addSepaLine();
+				this.appendComment(_root, _indent);
+			}
+			addSepaLine();
+			// START KGU#351 2017-02-26: Enh. #346
+			if (_root.isProgram()) {
+				// For non-programs this is done in another branch
+				if (this.appendUserIncludes(_indent) > 0
+						|| this.appendGeneratorIncludes(_indent, false) > 0) {
+					addSepaLine();
+				}
+				// FIXME (#389): If Includables are to form separate UNITs then they are to be referenced here, too
+			}
+			// END KGU#351 2017-02-26
+		}
 
-				code.add(_indent);
+		// START KGU#757 2019-11-08: Bugfix #772 - had been in generatePreamble, which might cause NullPointerExceptions here
+		typeMap = _root.getTypeInfo(routinePool);
+		// END KGU#757 2019-11-08
+
+		if (!_root.isProgram()) {
+
+			// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
+			if (topLevel)
+			{
+
+				addSepaLine();
 				code.add(_indent + "INTERFACE");
-				// STARTB KGU#351 2017-02-26: Enh. #346
+				// START KGU#351 2017-02-26: Enh. #346
 				this.appendUserIncludes(_indent);
 				// END KGU#351 2017-02-26
-				code.add(_indent);
+				// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836 had been missing
+				this.appendGeneratorIncludes(_indent, false);
+				// END KGU#815/KGU#824 2020-03-19
+				addSepaLine();
 				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
-				appendComment(_root, _indent);
-				// END KGU#194/KGU#376 2017-09-22
-			}
-			// END KGU#194 2016-05-07
-
-			pr = "function";
-			// Compose the function header
-			signature += "(";
-			//insertComment("TODO: declare the parameters and specify the result type!", _indent);
-			// START KGU#371 2019-03-08: Enh. #385
-			int minArgs = _root.getMinParameterCount();
-			StringList argDefaults = _root.getParameterDefaults();
-			// END KGU#371 2019-03-08
-			for (int p = 0; p < _paramNames.count(); p++) {
-				signature += ((p > 0) ? "; " : "");
-				// START KGU#800 2020-02-15: Type name surrogate unified to ???
-				//signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
-				signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "???")).trim();
-				// END KGU#800 2020-02-15
-				// START KGU#371 2019-03-08: Enh. #385
-				if (p >= minArgs) {
-					signature += " = " + transform(argDefaults.get(p));
+				if (!_root.isInclude() && _public) {
+					appendComment(_root, _indent);
 				}
-				// END KGU#371 2019-03-08
-			}
-			signature += ")";
-			if (_resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
-			{
-				_resultType = transformType(_root.getResultType(), "Integer");
-				signature += ": " + _resultType;
-			}
-			else 
-			{
-				pr = "procedure";
-			}
-			// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
-			// START KGU#376 2017-09-21: Enh. #389
-			//if (topLevel)
-			if (topLevel && !_root.isInclude())
-			// END KGU#376 2017-09-21
-			{
-				code.add(_indent + pr + " " + signature + ";");
+				// END KGU#194/KGU#376 2017-09-22
 
-				code.add(_indent);
+				// START KGU#815 2020-03-16: Enh. #828
+				//code.add(_indent + pr + " " + signature + ";");
+				if (_root.isInclude() || this.isLibraryModule()) {
+					// We must place all declarations in the interface if we are creating a library
+					this.generateDeclarations(_root, _indent, this.varNames);
+				}
+				
+				this.interfaceInsertionLine = code.count();
+				if (_public && _root.isSubroutine()) {
+					this.insertPrototype(_root, _indent, true, code.count());
+				}
+				// END KGU#815 2020-03-16
+				addSepaLine();
 				code.add(_indent + "IMPLEMENTATION");
 
 				// START KGU#388 2017-09-21: Enh. #423
-				StringList complexConsts = new StringList();
-				generateDeclarations(_root, _indent, null, complexConsts);
+				// START KGU#815 2020-03-16: Enh. #828
+				generateDeclarations(_root, _indent, null);
+				//if (!_root.isInclude() && !this.isLibraryModule()) {
+				//	this.generateDeclarations(_root, _indent, null);
+				//}
 				// END KGU#388 2017-09-21
-								
+
 				// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines here
 				subroutineInsertionLine = code.count();
 				subroutineIndent = _indent;
 				// END KGU#178 2016-07-20
+
 				// START KGU#311 2016-12-26: Enh. #314
 				if (this.usesFileAPI) {
-					this.insertFileAPI("pas");
+					// START KGU#815/KGU#836 2020-03-22: Enh. #828, bugfix #836 turend out to be too simple
+					//this.insertFileAPI("pas");
+					//addSepaLine();
+					if (!this.generatorIncludes.contains(FILE_API_UNIT_NAME)) {
+						// The type definitions will already have been inserted in generateDeclarations()
+						this.insertFileAPI("pas", 2);	// The routine implementations
+						addSepaLine();
+					}
+					// END KGU#815/KGU#836 2020-03-22
 				}
 				// END KGU#311 2016-12-26
-				code.add(_indent);
-				//insertComment("TODO: Repeat the parameter and result type specifications of the INTERFACE section!", _indent);
+
+				addSepaLine();
 			}
 			// END KGU#194 2016-05-07
+			// START KGU#815 2020-03-16: Enh. #828 group export requires interface with more than one signature
+			else if (_public) {
+				// FIXME This can't be sensible, not at least at this position!
+				//StringList complexConsts = new StringList();
+				//int codeEnd = code.count();
+				//generateDeclarations(_root, subroutineIndent, null, complexConsts);
+				//// Now move the added code to the subroutine insertion line
+				//StringList addedCode = code.subSequence(codeEnd, code.count());
+				//code.remove(codeEnd, code.count());
+				//for (int i = 0; i < addedCode.count(); i++) {
+				//	insertCode(addedCode.get(i), this.subroutineInsertionLine);
+				//}
+			}
 
+			// Now write the routine signature into the IMPLEMENTATION section
+			// START KGU#376 2017-09-21: Enh. #389
+			//code.add(_indent + pr + " " + signature + ";");
+			if (_root.isSubroutine()) {
+				// For public routines the comment is already placed in the INTERFACE
+				insertPrototype(_root, _indent, !_public, code.count());
+			}
+			// END KGU#376 2017-09-21
 		}
-		// START KGU#376 2017-09-21: Enh. #389
-		//code.add(_indent + pr + " " + signature + ";");
-		if (!_root.isInclude()) code.add(_indent + pr + " " + signature + ";");
-		// END KGU#376 2017-09-21
 
 		if (this.labelCount > 0)
 		{
 			// Declare the used labels
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "label");
 			for (int lb = 0; lb < this.labelCount; lb++)
 			{
@@ -1556,12 +1638,15 @@ public class PasGenerator extends Generator
 		}
 
 		// START KGU#311 2016-12-26: Enh. #314
-		if (topLevel && _root.isProgram() && this.usesFileAPI) {
+		// START KGU#815/KGUZ#824 2020-03-22: Enh. #828, bugfix #836 group export may require a separate UNIT
+		//if (topLevel && _root.isProgram() && this.usesFileAPI) {
+		if (topLevel && _root.isProgram() && this.usesFileAPI && !this.generatorIncludes.contains(FILE_API_UNIT_NAME)) {
+		// END KGU#815/KGUZ#824 2020-03-22: Enh. #828, bugfix #836 group export may require a separate UNIT
 			this.insertFileAPI("pas", code.count(), _indent, 1);
 		}
 		// END KGU#311 2016-12-26
 
-		code.add("");
+		addSepaLine();
 		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
 		//code.add(_indent + "var");
 		// END KGU#375 2017-04-12
@@ -1582,35 +1667,49 @@ public class PasGenerator extends Generator
 		// END KGU#676 2019-03-30
 		// END KGU#261 2017-01-30
 		// START KGU#388 2017-09-20: Enh. #423
-		StringList complexConsts = new StringList();
+		//StringList complexConsts = new StringList();	// KGU#815/KGU#824 2020-03-19: No longer needed 
 		// END KGU#388 2017-09-20
 
 		// START KGU#376 2017-09-21: Enh. #389 Concentrate all included definitions here
-		Root[] includes = generateDeclarations(_root, _indent, _varNames, complexConsts);
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		//Root[] includes = generateDeclarations(_root, _indent, _varNames, complexConsts);
+		Root[] includes = new Root[]{};
+		if (!(topLevel && (_root.isInclude() || this.isLibraryModule()))) {
+			includes = generateDeclarations(_root, _indent, _varNames);
+		}
+		else if (topLevel) {
+			includes = this.includedRoots.toArray(includes);
+		}
+		// END KGU#815/KGU#824 2020-03-19
 		// END KGU#376 2017-09-21
-		
-		code.add("");
 		
 		// START KGU#178 2016-07-20: Enh. #160
 		// START KGU#376 2017-09-21: Enh. #389: Special care for an Includable at top level
 		//if (topLevel && _root.isProgram() && this.optionExportSubroutines())
-		if (topLevel && !_root.isSubroutine() && this.optionExportSubroutines())
+		// START KGU#815 2020-03-17: Enh. #828 - the mode restriction seemed useless
+		//if (topLevel && !_root.isSubroutine() && this.optionExportSubroutines())
+		if (topLevel && !_root.isSubroutine())
+		// END KGU#815 2020-03-17
 		// END KGU#376 2017-09-21
 		{
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
 			// START KGU#311 2016-12-26: Enh. #314
-			if (this.usesFileAPI) {
+			// START KGU#815/KGU#824 2020-03-22: Enh. #828, bugfix #836
+			//if (this.usesFileAPI) {
+			if (this.usesFileAPI && !generatorIncludes.contains(FILE_API_UNIT_NAME)) {
+			// END KGU#815/KGU#824 2020-03-22
 				this.insertFileAPI("pas", 2);
 			}
 			// END KGU#311 2016-12-26
-			code.add("");
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
 
 		// START KGU#376 2017-09-21: Enh. #389 Includables cannot have an own body
 		//code.add(_indent + "begin");
 		if (!_root.isInclude()) {
+			addSepaLine();
 			code.add(_indent + "begin");
 			// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
 			if (_root.isProgram()) {
@@ -1621,6 +1720,8 @@ public class PasGenerator extends Generator
 			// END KGU#376 2017-09-21
 		}
 		else {
+			libraryInsertionLine = code.count();
+			addSepaLine();
 			code.add(_indent + "BEGIN");
 		}
 		// END KGU#376 2017-09-21
@@ -1648,21 +1749,31 @@ public class PasGenerator extends Generator
 	 * null - in this case it is assumed that we are in the IMPLEMENTATION part of a UNIT
 	 * outside of any function.
 	 * @param _root - the currently processed diagram (usually at top level)
-	 * @param _indent - the indentation stringmof the current nesting level
+	 * @param _indent - the indentation string of the current nesting level
 	 * @param _varNames - list of variable names if this is within preamble, otherwise null
 	 * @param _complexConsts - a StringList being filled with the names of those structured
 	 * constants that cannot be converted to structured Pascal constants but are to
 	 * be deconstructed as mere variables in the body (shouldn't be used anymore).
-	 * @return
+	 * @return array of the included {@link Root}s
 	 */
-	protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames, StringList _complexConsts) {
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836 last argument not needed externally
+	//protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames, StringList complexConsts) {
+	protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames) {
+		/* A StringList being filled with the names of those structured
+		 * constants that cannot be converted to structured Pascal constants but are to
+		 * be deconstructed as mere variables in the body. */
+		StringList complexConsts = new StringList();
+	// END KGU#815/KGU#824 2020-03-19
 		Root[] includes = new Root[]{};
 		boolean introPlaced = false;	// Has the CONST keyword already been written?
 		if (topLevel) {
 			includes = includedRoots.toArray(includes);
 			for (Root incl: includes) {
-				if (incl != _root) {
-					introPlaced = generateConstDefs(incl, _indent, _complexConsts, introPlaced);
+				// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+				//if (incl != _root) {
+				if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+				// END KGU#815/KGU#824 2020-03-18
+					introPlaced = generateConstDefs(incl, _indent, complexConsts, introPlaced);
 				}
 			}
 		}
@@ -1672,13 +1783,22 @@ public class PasGenerator extends Generator
 		//if (_varNames != null) {
 		if (_varNames != null && (!this.suppressTransformation || _root.isInclude())) {
 		// END KGU#504 2018-03-13
-			generateConstDefs(_root, _indent, _complexConsts, introPlaced);
+			generateConstDefs(_root, _indent, complexConsts, introPlaced);
 		}
 		
 		// START KGU#376 2017-09-21: Enh. #389 Concentrate all included definitions here
 		introPlaced = false;	// Has the TYPE keyword already been written?
+		// START KGU#815/KGU#836 2020-03-22: Enh. #828, bugfix #836
+		if (topLevel && this.usesFileAPI && !generatorIncludes.contains(FILE_API_UNIT_NAME) && _varNames == null) {
+			this.insertFileAPI("pas", code.count(), _indent, 1);
+			introPlaced = true;	// Includes the TYPE keyword
+		}
+		// END KGU#815/KGU#836 2020-03-22
 		for (Root incl: includes) {
-			if (incl != _root) {
+			// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+			//if (incl != _root) {
+			if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+			// END KGU#815/KGU#824 2020-03-18
 				introPlaced = generateTypeDefs(incl, _indent, introPlaced);
 			}
 		}
@@ -1699,7 +1819,10 @@ public class PasGenerator extends Generator
 			// START KGU#375 2017-09-20: Enh. #388 initialization of structured constants AFTER type definitions
 			// (Only if structured constants are allowed, which is the case in most newer Pascal dialects)
 			for (Root incl: includes) {
-				if (incl != _root) {
+				// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+				//if (incl != _root) {
+				if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+				// END KGU#815/KGU#824 2020-03-18
 					this.appendPostponedInitialisations(incl, _indent + this.getIndent());
 				}
 			}
@@ -1710,13 +1833,16 @@ public class PasGenerator extends Generator
 				this.appendPostponedInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#375 2017-09-20
-			code.add(_indent);
+			addSepaLine();
 		}
 		
-		introPlaced = false;	// Has the TYPE keyword already been written?
+		introPlaced = false;	// Has the VAR keyword already been written?
 		for (Root incl: includes) {
-			if (incl != _root) {
-				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), _complexConsts, introPlaced);
+			// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+			//if (incl != _root) {
+			if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+			// END KGU#815/KGU#824 2020-03-18
+				introPlaced = generateVarDecls(incl, _indent, incl.retrieveVarNames(), complexConsts, introPlaced);
 			}
 		}
 		// START KGU#504 2018-03-13: Bugfix #520, #521
@@ -1739,7 +1865,7 @@ public class PasGenerator extends Generator
 					}
 				}
 			}
-			introPlaced = generateVarDecls(_root, _indent, ownVarNames, _complexConsts, introPlaced);
+			introPlaced = generateVarDecls(_root, _indent, ownVarNames, complexConsts, introPlaced);
 			// END KGU#762 2019-11-13
 		}
 		// END KGU#375 2017-04-12
@@ -1829,7 +1955,7 @@ public class PasGenerator extends Generator
 				}
 				// END KGU#388 2017-09-19
 			}
-			code.add("");
+			addSepaLine();
 		}
 		return _sectionBegun;
 	}
@@ -1889,7 +2015,7 @@ public class PasGenerator extends Generator
 				else {
 					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}
-				code.add("");
+				addSepaLine();
 			}
 		}
 		return _sectionBegun;
@@ -2018,7 +2144,7 @@ public class PasGenerator extends Generator
 			{
 				int vx = varNames.indexOf("result", false);
 				varName = varNames.get(vx);
-				code.add(_indent);
+				addSepaLine();
 				appendComment("Automatically inserted to ensure Pascal value return. May be dropped on Structorizer reimport.", _indent);
 				code.add(_indent + this.getIndent() + _root.getMethodName() + " := " + varName + ";");
 			}
@@ -2033,33 +2159,73 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-    	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
-        if (_root.isSubroutine()) {
-        	code.add(_indent);
-        	code.add(_indent + "end;");
-        	if (topLevel)
-        	{
-        		code.add(_indent);
-        		code.add(_indent + "BEGIN");
-        		// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
-        		while (!includedRoots.isEmpty()) {
-        			generateCode(includedRoots.remove().children, _indent + this.getIndent());
-        		}
-        		// END KGU#376 2017-09-21
-        		code.add(_indent + "END.");
-        	}
-        }
-        // START KGU#376 2017-09-21: Enh. #389
-        else if (_root.isInclude()) {
-    		code.add(_indent + "END.");
-        }
-        // END KGU#376 2017-09-12
-        else
-    	// END KGU#194 2016-05-07
-        {
-        	code.add(_indent + "end.");
-        }
+		// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
+		if (_root.isSubroutine()) {
+			addSepaLine();
+			code.add(_indent + "end;");
+			if (topLevel)
+			{
+				addSepaLine();
+				libraryInsertionLine = code.count();
+				code.add("");	// addSepaLine() wouldn't help here
+				code.add(_indent + "BEGIN");
+				// START KGU#376 2017-09-21: Enh. #389 - code of includes is to be produced here
+				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+				//while (!includedRoots.isEmpty()) {
+				//	generateCode(includedRoots.remove().children, _indent + this.getIndent());
+				//}
+				this.appendGlobalInitialisations(_indent + this.getIndent());
+				// END KGU#815/KGU#824 2020-03-18
+				// END KGU#376 2017-09-21
+				code.add(_indent + "END.");
+			}
+		}
+		// START KGU#376 2017-09-21: Enh. #389
+		else if (_root.isInclude()) {
+			code.add(_indent + "END.");
+		}
+		// END KGU#376 2017-09-12
+		else
+		// END KGU#194 2016-05-07
+		{
+			code.add(_indent + "end.");
+		}
 	}
 	// END KGU#74 2015-11-30
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getModuleName()
+	 */
+	@Override
+	protected String getModuleName()
+	{
+		String unitName = "";
+		for (int i = 0; i < pureFilename.length(); i++)
+		{
+			char ch = pureFilename.charAt(i);
+			if (!Character.isAlphabetic(ch) && !Character.isDigit(ch))
+			{
+				ch = '_';
+			}
+			unitName += ch;
+		}
+		return unitName;
+	}
+	
+	// START KGU#311/KGU#815 2020-03-22: Enh. #314 + enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function wil only be called if at least one of the modules required
+		 * the file API, so all requiring modules will have put "StructorizerFileAPI"
+		 * to their USES list. No we have to make sure it gets provided.
+		 */
+		return this.importedLibRoots == null || copyFileAPIResource("pas", FILE_API_UNIT_NAME+".pas", _filePath);
+	}
+	// END KGU#311/KGU#815 2020-03-22
+
 }

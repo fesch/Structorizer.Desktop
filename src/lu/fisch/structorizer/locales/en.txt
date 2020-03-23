@@ -123,6 +123,7 @@
  *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig     2020-01-20      Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09      Issue #835: New ImportOptionDialog messages
+ *      Kay Gürtzig     2020-03-17      New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *
  ******************************************************************************************************
  *
@@ -1037,6 +1038,8 @@ ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
 ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...
@@ -1340,6 +1343,7 @@ ArrangerIndex.popupIndexAttach.text=Add/move to group ...
 ArrangerIndex.popupIndexDrawGroup.text=Show bounds of the group
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individual visibility of the selected group in Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Rename group ...
+ArrangerIndex.popupIndexExport.text=Export diagram/group
 ArrangerIndex.popupIndexRenameGroup.tooltip=Allows to rename the selected group, optionally including the associated file
 ArrangerIndex.popupIndexHide.text=Hide Arranger index
 ArrangerIndex.lblSelectTargetGroup.text=Select the target group:

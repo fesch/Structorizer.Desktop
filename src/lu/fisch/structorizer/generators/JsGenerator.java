@@ -399,14 +399,15 @@ public class JsGenerator extends CGenerator {
 	 * @param _root - The diagram root
 	 * @param _indent - the initial indentation string
 	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
+	 * @param _public - whether the resulting functions are to be public
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		currentRoot = _root;
 		if (topLevel)
@@ -414,7 +415,7 @@ public class JsGenerator extends CGenerator {
 			code.add("<script>");
 		}
 		else {
-			code.add("");
+			addSepaLine();
 		}
 		String pr = "program";
 		if (_root.isSubroutine()) {
@@ -431,20 +432,20 @@ public class JsGenerator extends CGenerator {
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			code.add("");
+			addSepaLine();
 //			if (this.usesFileAPI) {
 //				this.generatorIncludes.add("<stlib.h>");
 //				this.generatorIncludes.add("<string.h>");
 //				this.generatorIncludes.add("<errno.h>");
 //			}
 			this.appendGeneratorIncludes("", false);
-			code.add("");
+			addSepaLine();
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.appendUserIncludes("");
 			// START KGU#446 2017-10-27: Enh. #441
 			this.includeInsertionLine = code.count();
 			// END KGU#446 2017-10-27
-			code.add("");
+			addSepaLine();
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-26: Enh. #389 - definitions from all included diagrams will follow
 			appendGlobalDefinitions(_root, _indent, false);
@@ -499,7 +500,7 @@ public class JsGenerator extends CGenerator {
 			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
 		}
 		//generateIOComment(_root, _indent);
-		code.add(_indent);
+		addSepaLine();
 		return _indent;
 	}
 
@@ -563,7 +564,7 @@ public class JsGenerator extends CGenerator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
@@ -583,6 +584,9 @@ public class JsGenerator extends CGenerator {
 		}
 
 		if (topLevel) {
+			// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+			libraryInsertionLine = code.count();
+			// END KGU#815/KGU#824 2020-03-19
 			code.add("</script>");
 		}
 //		if (topLevel && this.usesFileAPI) {

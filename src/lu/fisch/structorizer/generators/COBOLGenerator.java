@@ -277,7 +277,7 @@ public class COBOLGenerator extends Generator {
 					for (String copy : copies) {
 						copy = copy.trim();
 						if (!copy.isEmpty()) {
-							code.add(_indent + pattern.replace("%", prepareIncludeItem(copy)));
+							code.add(_indent + pattern.replace("%", prepareUserIncludeItem(copy)));
 						}
 					}
 				}
@@ -567,7 +567,7 @@ public class COBOLGenerator extends Generator {
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		if (topLevel && !this.optionFixedSourceFormat()) {
 			code.add("       >> SOURCE FORMAT IS FREE");
@@ -605,7 +605,10 @@ public class COBOLGenerator extends Generator {
 			this.appendComment("IMPORT diagram: data declarations to be put in a copybook", _indent);
 			this.appendComment("", _indent);
 		}
-		this.subroutineInsertionLine = code.count();
+		if (topLevel) {
+			// line indices like this must not be manipulated except in topLevel mode!
+			this.subroutineInsertionLine = code.count();
+		}
 		return _indent;
 	}
 
@@ -721,8 +724,15 @@ public class COBOLGenerator extends Generator {
 			addCode("", _indent, false);
 			// FIXME: in COBOL all mains and subs are programs, functions are special programs that have a RETURNING clause and return something
 			addCode("END " + (_root.isProgram() ? "PROGRAM " : "FUNCTION ") + this.transformName(_root.getMethodName()) + ".", _indent, false);
-		}		
-		this.subroutineInsertionLine = code.count();
+		}
+		
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			// line indices like this must not be manipulated except in topLevel mode!
+			this.subroutineInsertionLine = code.count();
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
 	}
 
 }

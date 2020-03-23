@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-16      Issue #816: Function calls and value return mechanism revised
  *      Kay Gürtzig             2020-02-18      Enh. #388: Support for constants
  *      Kay Gürtzig             2020-02-24      Issues #816,#821: generateCode(Root) decomposed
+ *      Kay Gürtzig             2020-03-18      Bugfix #839 - sticky returns flag mended
  *
  ******************************************************************************************************
  *
@@ -235,14 +236,18 @@ public class KSHGenerator extends BASHGenerator {
 //	}
 //	// END KGU 2016-01-08
 
-	public String generateCode(Root _root, String _indent) {
+	public String generateCode(Root _root, String _indent, boolean _public) {
 
 		String indent = _indent;
 		root = _root;
 		// START KGU#753 2019-10-15: Bugfix #765 - superclass methods need an initialized typeMap
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#753 2019-10-15
+		
 		// START KGU#803 2020-02-16: Issue #816
+		// START KGU#828 2020-03-18: Bugfix #839: Some fields had been forgotten to reset
+		this.returns = false;
+		// END KGU#828 2020-03-18
 		boolean alwaysReturns = mapJumps(_root.children);
 		// END KGU#803 2020-02-16
 		
@@ -268,12 +273,12 @@ public class KSHGenerator extends BASHGenerator {
 			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 			subroutineInsertionLine = code.count();
-			code.add("");
+			addSepaLine();
 			appendAuxiliaryCode(_indent);
 		}
 		else
 		{
-			code.add("");
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
 
@@ -329,9 +334,9 @@ public class KSHGenerator extends BASHGenerator {
 		varNames = _root.retrieveVarNames();
 		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
 		// END KGU#129 2016-01-08
-		code.add("");
+		addSepaLine();
 		//insertComment("TODO declare your variables here", _indent);
-		//code.add("");
+		//addSepaLine();
 		// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
 		generateDeclarations(indent);
 		// END KGU#389/KGU#803/KGU#806
@@ -351,6 +356,12 @@ public class KSHGenerator extends BASHGenerator {
 			code.add("}");
 		}
 		
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
+
 		// START KGU#705 2019-09-23: Enh. #738
 		if (codeMap != null) {
 			// Update the end line no relative to the start line no

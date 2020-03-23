@@ -1337,7 +1337,7 @@ public class BasGenerator extends Generator
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String furtherIndent = _indent;
 		this.labelMap = new int[this.labelCount];
@@ -1521,6 +1521,9 @@ public class BasGenerator extends Generator
 		if (topLevel)
 		{
 			subroutineInsertionLine = code.count();
+			// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+			libraryInsertionLine = code.count();
+			// END KGU#815/KGU#824 2020-03-19
 		}
 	}
 	// END KGU#74 2015-12-18

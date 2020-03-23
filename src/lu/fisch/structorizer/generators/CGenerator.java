@@ -101,6 +101,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.
  *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
  *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
+ *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
+ *      Kay Gürtzig             2020-03-20      Enh. #828 bugfix #836: Group export implemented, batch export improved
+ *      Kay Gürtzig             2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *
  ******************************************************************************************************
  *
@@ -172,6 +175,8 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.TreeMap;
+import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -303,6 +308,15 @@ public class CGenerator extends Generator {
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
+
+	// START KGU#311/KGU#828 2020-03-22: Enh. #314, #828
+	protected static final String FILE_API_CLASS_NAME = "StructorizerFileAPI";
+	// END KGU#311/KGU#828 2020-03-22
+
+	// START KGU#815 2020-03-20: Enh. #828
+	/** Holds the name of a required library module during group export of depending modules */
+	protected String libModuleName = null;
+	// END KGU#815 2020-03-20
 	
 	// START KGU#686 2019-03-18: Enh. #56
 	/** Contains the declaration or name of the caught exception of the closest surrounding try block */
@@ -367,6 +381,71 @@ public class CGenerator extends Generator {
 		return "printf(\"TODO: specify format\\n\", $1)";
 	}
 
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
+	 */
+	@Override
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		int lines = 0;	// Result value = number of inserted lines
+		String fnHeader = "int main(void)";
+		boolean returnsArray = false;
+		if (!_root.isProgram()) {
+			String fnName = _root.getMethodName();
+			StringList paramNames = new StringList();
+			StringList paramTypes = new StringList();
+			_root.collectParameters(paramNames, paramTypes, null);
+			fnHeader = transformTypeWithLookup(_root.getResultType(),
+					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
+			returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
+			if (returnsArray) {
+				fnHeader = transformArrayDeclaration(fnHeader, "");
+			}
+			// END KGU#140 2017-01-31
+			fnHeader += " " + fnName + "(";
+			for (int p = 0; p < paramNames.count(); p++) {
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(
+						transformTypeWithLookup(paramTypes.get(p), "???").trim(),
+						paramNames.get(p));
+				// END KGU#140 2017-01-31
+			}
+			// START KGU#800 2020-02-15: Issue #814
+			if (paramNames.isEmpty()) {
+				fnHeader += "void";
+			}
+			// END KGU#800 2020-02-15
+			fnHeader += ")";
+		}
+		if (_withComment) {
+			insertCode("", _atLine);
+			lines += 1 + insertComment(_root, _indent, _atLine + 1);
+			/* If we are in the library module then the comment is only placed in the header file,
+			 * so it is to be a mere prototyp
+			 */
+			if (this.isLibraryModule()) {
+				fnHeader += ";";
+			}
+		}
+		if (_root.isSubroutine()) {
+			lines += insertComment("TODO: Revise the return type and declare the parameters.", _indent, _atLine + lines);
+			// START KGU#140 2017-01-31: Enh. #113
+			if (returnsArray) {	// Tries to return an array
+				lines += insertComment("      C does not permit to return arrays - find an other way to pass the result!",
+						_indent, _atLine + lines);
+			}
+			// END KGU#140 2017-01-31
+		}
+		insertCode(fnHeader, _atLine + lines);
+		return lines + 1;
+	}
+	// END KGU #815/KGU#824 2020-03-19
+
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * Method pre-processes an include file name for the #include
@@ -375,14 +454,40 @@ public class CGenerator extends Generator {
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
-	protected String prepareIncludeItem(String _includeFileName)
+	protected String prepareUserIncludeItem(String _includeFileName)
 	{
-		if (!(_includeFileName.startsWith("<") && _includeFileName.endsWith(">"))) {
+		boolean isQuoted = _includeFileName.startsWith("<") && _includeFileName.endsWith(">")
+				|| _includeFileName.startsWith("\"") && _includeFileName.endsWith("\"");
+		if (!isQuoted) {
 			_includeFileName = "\"" + _includeFileName + "\"";
 		}
 		return _includeFileName;
 	}
 	// END KGU#351 2017-02-26
+	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * This version adds a ".h" suffix if there was neither {@code <...>} nor {@code "..."} around
+	 * it and it it didn't end with ".h". Will then call {@link #prepareUserIncludeItem(String)}. 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		_includeName = _includeName.trim();
+		boolean isQuoted = _includeName.startsWith("<") && _includeName.endsWith(">")
+				|| _includeName.startsWith("\"") && _includeName.endsWith("\"");
+		if (!isQuoted && !_includeName.endsWith(".h")) {
+			_includeName = this.prepareUserIncludeItem(_includeName + ".h");
+		}
+		return _includeName;
+	}
+	// END KGU#815/KGU#826 2020-03-17
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -433,9 +538,10 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#150 2016-04-03
 		// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
-		if (this.usesFileAPI) {
-			transformFileAPITokens(tokens);
-		}
+		// KGU#832 2020-03-23: Bugfix #840 Even in case of disabled File API elements the code should be transformed
+		//if (this.usesFileAPI) {
+		transformFileAPITokens(tokens);
+		//}
 		// END KGU#311 2016-12-22
 		// START KGU#342 2017-02-07: Bugfix #343
 		for (int i = 0; i < tokens.count(); i++) {
@@ -2121,14 +2227,24 @@ public class CGenerator extends Generator {
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		// START KGU#178 2016-07-20: Enh. #160
 		if (!topLevel)
 		{
-			code.add("");					
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
+		// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
+		else if (this.isLibraryModule()) {
+			appendScissorLine(true, this.pureFilename + ".h");
+			String guardName = deriveIncludeGuardName(this.pureFilename + ".h");
+			code.add("#ifndef " + guardName);
+			code.add("#define " + guardName);
+		}
+		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// KGU#815/KGU#824 2020-03-20
+
 		String pr = "program";
 		if (_root.isSubroutine()) {
 			pr = "function";
@@ -2144,10 +2260,10 @@ public class CGenerator extends Generator {
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			code.add("");
+			addSepaLine();
 			// START KGU#236 2016-08-10: Issue #227
 			//code.add("#include <stdio.h>");
-			//code.add("");
+			//addSepaLine();
 			if (this.hasInput() || this.hasOutput() || this.usesFileAPI)
 			{
 				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
@@ -2162,23 +2278,42 @@ public class CGenerator extends Generator {
 			this.generatorIncludes.add("<stdbool.h>");
 			// END KGU#607 2018-10-30
 			this.appendGeneratorIncludes("", false);
-			code.add("");
+			addSepaLine();
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
 			this.appendUserIncludes("");
 			// START KGU#446 2017-10-27: Enh. #441
 			this.includeInsertionLine = code.count();
 			// END KGU#446 2017-10-27
-			code.add("");
+			addSepaLine();
 			// END KGU#351 2017-02-26
 			// START KGU#376 2017-09-26: Enh. #389 - definitions from all included diagrams will follow
 			appendGlobalDefinitions(_root, _indent, false);
 			// END KGU#376 2017-09-26
+			// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
+			interfaceInsertionLine = code.count();
+			if (this.isLibraryModule()) {
+				addSepaLine();
+				this.insertPrototype(_root, _indent, true, code.count());
+				interfaceInsertionLine = code.count();
+				addSepaLine();
+				code.add("#endif /*" + this.deriveIncludeGuardName(this.pureFilename + ".h") + "*/");
+				addSepaLine();
+				appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
+				addSepaLine();
+				appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+				appendCopyright(_root, _indent, true);
+				addSepaLine();
+				addCode("#include \"" + this.pureFilename + ".h\"", _indent, false);
+				addSepaLine();
+			}
+			// END KGU#815/KGU#824 2020-03-20
 			// END KGU#236 2016-08-10
-			// START KGU#178 2016-07-20: Enh. #160
+		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
 			
 			// START KGU#311 2016-12-22: Enh. #314 - insert File API routines if necessary
+			// FIXME (#828): Decompose this for group export!
 			if (this.usesFileAPI) {
 				this.insertFileAPI("c");
 			}
@@ -2186,46 +2321,20 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#178 2016-07-20
 
-		appendComment(_root, _indent);
-		if (_root.isProgram())
-			code.add("int main(void)");
-		else {
-			// Compose the function header
-			// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
-			//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
-			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
-			// END KGU#676 2019-03-30
-			String fnHeader = transformTypeWithLookup(_root.getResultType(),
-					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
-			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
-			boolean returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
-			if (returnsArray) {
-				fnHeader = transformArrayDeclaration(fnHeader, "");
-			}
-			// END KGU#140 2017-01-31
-			fnHeader += " " + _procName + "(";
-			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0) { fnHeader += ", "; }
-				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
-				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformTypeWithLookup(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
-				// END KGU#140 2017-01-31
-			}
-			// START KGU#800 2020-02-15: Issue #814
-			if (_paramNames.isEmpty()) {
-				fnHeader += "void";
-			}
-			// END KGU#800 2020-02-15
-			fnHeader += ")";
-			appendComment("TODO: Revise the return type and declare the parameters.", _indent);
-			// START KGU#140 2017-01-31: Enh. #113
-			if (returnsArray) {
-				appendComment("      C does not permit to return arrays - find an other way to pass the result!", _indent);
-			}
-			// END KGU#140 2017-01-31
-			code.add(fnHeader);
-		}
+		// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836 This call replaces the function header code
+		//appendComment(_root, _indent);
+		//if (_root.isProgram()) {
+		//	code.add("int main(void)");
+		//}
+		//else {
+		//	// Compose the function header
+		//	// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
+		//	//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
+		//	this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		//	// END KGU#676 2019-03-30
+		//}
+		this.insertPrototype(_root, _indent, !this.isLibraryModule(), code.count());
+		// END KGU#815/KGU#824 2020-03-20
 		code.add(_indent + "{");
 		
 		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
@@ -2234,6 +2343,49 @@ public class CGenerator extends Generator {
 		
 		return _indent + this.getIndent();
 	}
+
+	// START KGU#815 2020-03-20: New auxiliary method for enh.#828
+	/**
+	 * Just derives a C preprocessor symbol from given {@code headerFilename} in
+	 * order to form an include guard
+	 * @param headerFileName - name of the header file
+	 * @return the appropriate {@code #define} symbol.
+	 */
+	protected String deriveIncludeGuardName(String headerFileName) {
+		char[] guard = headerFileName.toUpperCase().toCharArray();
+		for (int i = 0; i < guard.length; i++) {
+			if (!Character.isDigit(guard[i]) && (guard[i] < 'A' || guard[i] > 'Z')) {
+				guard[i] = '_';
+			}
+		}
+		return String.copyValueOf(guard);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
+	 */
+	protected void appendGlobalInitialisations(String _indent) {
+		if (topLevel) {
+			if (this.libModuleName != null) {
+				appendGlobalInitialisationsLib(_indent);
+			}
+			else {
+				super.appendGlobalInitialisations(_indent);
+			}
+		}
+	}
+	
+	/**
+	 * Special handling for the global initialsations in case these were outsourced to
+	 * an external library {@link #libModuleName}
+	 * @param _indent - current indentation
+	 * @see #appendGlobalInitialisations(String)
+	 */
+	protected void appendGlobalInitialisationsLib(String _indent) {
+		// We simply call the global initialisation function of the library
+		addCode(this.libModuleName + "();", _indent, false);
+	}
+	// END KGU#815 2020-03-20
 
 	/**
 	 * Generates some preamble (i.e. comments, language declaration section etc.)
@@ -2257,7 +2409,7 @@ public class CGenerator extends Generator {
 		// START KGU#332 2017-01-30: Decomposed to ease sub-classing
 		generateIOComment(_root, _indent);
 		// END KGU#332 2017-01-30
-		code.add(_indent);
+		addSepaLine();
 		return _indent;
 	}
 
@@ -2311,7 +2463,7 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#376 2017-09-28
 		if (code.count() > lastLine) {
-			code.add(_indent);
+			addSepaLine();
 		}
 	}
 	// END KGU#376 2017-09-26
@@ -2636,7 +2788,7 @@ public class CGenerator extends Generator {
 		// START KGU#236 2016-08-10: Issue #227 - don't express this information if not needed
 		if (this.hasInput(_root)) {
 		// END KGU#236 2016-08-10
-			code.add(_indent);
+			addSepaLine();
 			appendComment("TODO:", _indent);
 			appendComment(
 					"For any input using the 'scanf' function you need to fill the first argument.",
@@ -2648,7 +2800,7 @@ public class CGenerator extends Generator {
 		}
 		if (this.hasOutput(_root)) {
 		// END KGU#236 2016-08-10
-		code.add(_indent);
+		addSepaLine();
 		appendComment("TODO:", _indent);
 		appendComment(
 				"For any output using the 'printf' function you need to fill the first argument:",
@@ -2675,7 +2827,7 @@ public class CGenerator extends Generator {
 	{
 		if (_root.isProgram() && !alwaysReturns)
 		{
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return 0;");
 		}
 		else if (_root.isSubroutine() &&
@@ -2691,7 +2843,7 @@ public class CGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
@@ -2705,8 +2857,26 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-		code.add(_indent + "}");		
+		code.add(_indent + "}");
+		// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-20
 	}
 
+	// START KGU#815 2020-03-20: Enh. #828 - Expanded support for code export of arrangement groups
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateModule(java.util.Vector, java.util.TreeMap, boolean, java.util.Vector, java.lang.String)
+	 */
+	@Override
+	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
+		// We must cache this library name for the global initialisations
+		this.libModuleName = _libName;
+		boolean needsFileAPI = super.generateModule(_roots, _dependencyTree, _batchMode, _entryPoints, _libName);
+		this.libModuleName = null;
+		return needsFileAPI;
+	}
+	// END KGU#815 2020-03-20
 	
 }

@@ -127,6 +127,7 @@
  *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
+ *      Kay Gürtzig         2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *
  ******************************************************************************************************
  *
@@ -1037,6 +1038,8 @@ ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Als Exportverzeichnis ggf. den Ablageorder des Diagramms vorschlagen
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anderenfalls wird immer der Ordner des letzten Exports vorgeschlagen.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
@@ -1340,6 +1343,7 @@ ArrangerIndex.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
 ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
+ArrangerIndex.popupIndexExport.text=Diagramm/Gruppe exportieren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
 ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:

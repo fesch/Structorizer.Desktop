@@ -162,7 +162,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             String varName = model.getValueAt(row, 0).toString();
-        	// START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
+            // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
             //if (Executor.getInstance().isConstant(varName)) {
             if (Executor.getInstance().isConstant(varName) && column != 1) {
             // END KGU#443 2017-10-16

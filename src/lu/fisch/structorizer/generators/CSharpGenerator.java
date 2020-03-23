@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *      Kay Gürtzig             2020-02-15      KGU#801: Correction in generateParallelThreadWorkers() (had inflated the header)
+ *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *
  ******************************************************************************************************
  *
@@ -235,6 +236,28 @@ public class CSharpGenerator extends CGenerator
 		return true;
 	}
 
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatesClass()
+	 */
+	@Override
+	protected boolean allowsMixedModule()
+	{
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
+	 */
+	@Override
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		// We don't need prototypes
+		return 0;
+	}
+	// END KGU#815/KGU#824 2020-03-19
+	
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
@@ -342,16 +365,32 @@ public class CSharpGenerator extends CGenerator
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * Method preprocesses an include file name for the #include
-	 * clause. This version surrounds a string not enclosed in angular
-	 * brackets by quotes.
+	 * clause. This version does nothing.
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
-	protected String prepareIncludeItem(String _includeFileName)
+	protected String prepareUserIncludeItem(String _includeFileName)
 	{
 		return _includeFileName;
 	}
 	// END KGU#351 2017-02-26
+	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * This version does not do anything. 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return _includeName;
+	}
+	// END KGU#815/KGU#826 2020-03-17
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -811,7 +850,7 @@ public class CSharpGenerator extends CGenerator
 						usedVars.removeAll(varName);
 					}
 					if (i > 0) {
-						code.add(_indent);
+						addSepaLine();
 					}
 					addCode("class " + worker + "{", _indent, isDisabled);
 					if (setVars.count() > 0 || usedVars.count() > 0) {
@@ -847,7 +886,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			if (!containedParallels.isEmpty()) {
 				appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
-				code.add(_indent);
+				addSepaLine();
 			}
 		}
 		finally {
@@ -937,14 +976,15 @@ public class CSharpGenerator extends CGenerator
 	 * @param _root - The diagram root
 	 * @param _indent - the initial indentation string
 	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
+	 * @param _public - whether the resulting method is to be public
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
@@ -960,13 +1000,13 @@ public class CSharpGenerator extends CGenerator
 				appendGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
-			code.add("");
+			addSepaLine();
 			subroutineInsertionLine = code.count();	// default position for subroutines
 			subroutineIndent = _indent;
 		}
 		else
 		{
-			code.add("");
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
 		
@@ -978,34 +1018,34 @@ public class CSharpGenerator extends CGenerator
 			}
 			// END KGU#348 2017-02-24
 			this.appendGeneratorIncludes(_indent, false);
-			code.add(_indent);
+			addSepaLine();
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes(_indent);
 			// END KGU#351 2017-02-26
-			code.add(_indent);
+			addSepaLine();
 			// START KGU 2015-10-18
 			appendBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18
 
 			appendBlockHeading(_root, "public class "+ _procName, _indent);
-			code.add(_indent);
+			addSepaLine();
 			// START KGU#348 2017-02-24: Enh.#348
 			this.subClassInsertionLine = code.count();
 			// END KGU#348 2017-02-24
 			// START KGU#311 2017-01-05: Enh. #314 File API
 			if (this.usesFileAPI) {
 				this.insertFileAPI("cs", code.count(), _indent, 0);
-				code.add(_indent);
+				addSepaLine();
 			}
 			// END KU#311 2017-01-05
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", indentPlus1);
 			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
-			code.add(_indent);
+			addSepaLine();
 			code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
 			appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
-			code.add("");
+			addSepaLine();
 		}
 		else {
 			// START KGU#311 2017-01-05: Enh. #314 File API
@@ -1037,7 +1077,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
 			//String fnHeader = "public static " + _resultType + " " + _procName + "(";
-			String fnHeader = (topLevel ? "public" : "private") + " static "
+			String fnHeader = ((topLevel || _public) ? "public" : "private") + " static "
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			// START KGU#371 2019-03-07: Enh. #385 Care for default values
@@ -1089,14 +1129,14 @@ public class CSharpGenerator extends CGenerator
 //	@Override
 //	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 //	{
-//		code.add("");
+//		addSepaLine();
 //		// Variable declaration proposals (now with all used variables listed)
 //		insertComment("TODO: Declare local variables here:", _indent);
 //		for (int v = 0; v < varNames.count(); v++)
 //		{
 //			insertComment(varNames.get(v), _indent);
 //		}
-//		code.add("");
+//		addSepaLine();
 //		return _indent;
 //	}
 	
@@ -1139,7 +1179,7 @@ public class CSharpGenerator extends CGenerator
 	{
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
-			code.add(_indent);
+			addSepaLine();
 			appendComment("TODO: You may have to modify input instructions,", _indent);
 			appendComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
 			appendComment("      Parse methods according to the variable type, e.g.:", _indent);
@@ -1172,7 +1212,7 @@ public class CSharpGenerator extends CGenerator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
@@ -1190,7 +1230,19 @@ public class CSharpGenerator extends CGenerator
 		// Method block close
 		super.generateFooter(_root, _indent + this.getIndent());
 
-		if (_root.isProgram())
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
+
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
+
+		if (_root.isProgram())	// Should automatically be topLevel, too
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position
@@ -1198,7 +1250,7 @@ public class CSharpGenerator extends CGenerator
 			// END KGU#178 2016-07-20
 			
 			// Close class block
-			code.add("");
+			addSepaLine();
 			code.add(_indent + "}");
 		}
 	}

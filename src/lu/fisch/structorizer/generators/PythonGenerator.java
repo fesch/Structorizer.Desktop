@@ -1090,7 +1090,7 @@ public class PythonGenerator extends Generator
 					addCode("global " + varName, indentPlusOne, isDisabled);
 				}
 				generateCode(sq, indentPlusOne);
-				code.add(_indent);
+				addSepaLine(_indent);
 				i++;
 			}
 		}
@@ -1214,8 +1214,13 @@ public class PythonGenerator extends Generator
 	 */
 	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
-			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+				// Don't add initialisation code for an imported module
+				if (importedLibRoots != null && importedLibRoots.contains(incl)) {
+					continue;
+				}
+				// END KGU#815/KGU#824 2020-03-18
 				appendComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 				//typeMap = incl.getTypeInfo();
@@ -1224,9 +1229,7 @@ public class PythonGenerator extends Generator
 				generateCode(incl.children, _indent);
 				appendComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
-			if (code.count() > startLine) {
-				code.add(_indent);
-			}
+			addSepaLine(_indent);
 		}
 	}
 
@@ -1328,7 +1331,7 @@ public class PythonGenerator extends Generator
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String indent = "";
 		if (topLevel)
@@ -1356,7 +1359,7 @@ public class PythonGenerator extends Generator
 			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
-				code.add(_indent);
+				addSepaLine(_indent);
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
@@ -1376,7 +1379,7 @@ public class PythonGenerator extends Generator
 			this.appendGlobalInitialisations(_indent);
 			// END KGU#376 2017-10-02
 //			if (code.count() == this.includeInsertionLine) {
-//				code.add(_indent);
+//				addSepaLine();
 //			}
 			subroutineInsertionLine = code.count();
 			// START KGU#311 2016-12-27: Enh. #314: File API support
@@ -1385,7 +1388,7 @@ public class PythonGenerator extends Generator
 			}
 			// END KGU#311 2016-12-27
 		}
-		code.add("");
+		addSepaLine(_indent);;
 		// FIXME: How to handle includables here?
 		if (!_root.isSubroutine()) {
 			appendComment(_root, _indent);
@@ -1454,7 +1457,7 @@ public class PythonGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine(_indent);;
 			code.add(_indent + "return " + result);
 		}
 		return _indent;
@@ -1476,9 +1479,8 @@ public class PythonGenerator extends Generator
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {
 			insertCode("import turtle", this.includeInsertionLine);
-			insertCode("turtle.colormode(255)", this.includeInsertionLine+1);
-			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine+2);
-			this.subroutineInsertionLine += 3;
+			insertCode("turtle.colormode(255)", this.includeInsertionLine);
+			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine);
 			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
 		}
 		// END KGU#598 2018-10-17

@@ -129,6 +129,7 @@
  *      Kay Gürtzig     2019-09-12  Standard parser keywords for input / output modified (#327)
  *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09  Issue #835: New ImportOptionDialog messages
+ *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *
  ******************************************************************************************************
  *
@@ -1039,6 +1040,8 @@ ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres de archivos o modules para los quales directivas de inclusión deben ser insertadas.
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Proponer el directorio del diagrama como directorio para la exportación
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=De otro modo el directorio de la exportación más recente será propuesto siempre.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...
@@ -1057,7 +1060,7 @@ ImportOptionDialog.chkCommentImport.tooltip=Con esta preferencia elementos gener
 ImportOptionDialog.chkInsertOptKeywords.text=Poner palabras claves optionales alrededor de condiciones
 ImportOptionDialog.chkInsertOptKeywords.tooltip=Preferncia permite decorar condiciones importadas (p.ej. de @{Alternative}s) con loas palabras claves opcionales configuradas en las preferencias del Analizador.
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
-ImportOptionDialog.chkSaveParseTree.tooltip=Después del logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.chkSaveParseTree.tooltip=Después del logrado importe Structorizer puede grabar el árbol de sintaxis como texto en un archivo "*.parsetree.txt".
 ImportOptionDialog.chkLogDir.text=Protocolar (a directorio)
 ImportOptionDialog.chkLogDir.tooltip=Permitir a guardar un protocolo durante importación
 ImportOptionDialog.txtLogDir.tooltip=El camino vacío significa el mismo directorio donde reside el archivo código, "." significa el directorio activo.
@@ -1325,6 +1328,7 @@ ArrangerIndex.popupIndexAttach.text=Añadir/mover a un grupo ...
 ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
 ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
+ArrangerIndex.popupIndexExport.text=Exportar diagrama/grupo
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
 ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:

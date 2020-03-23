@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw-flavour Jumps
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *
  ******************************************************************************************************
  *
@@ -289,11 +290,11 @@ public class PHPGenerator extends Generator
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
 		// START KGU#311 2017-01-03: Enh. #314 File API
-		if (this.usesFileAPI) {
+		//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Issue #840 We should even transform disabled code
 			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
 				tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
 			}
-		}
+		//}
 		// END KGU#311 2017-01-03
 		return tokens.concatenate();
 	}
@@ -681,7 +682,7 @@ public class PHPGenerator extends Generator
 	// END KGU#686 2019-03-21
 
     @Override
-    public String generateCode(Root _root, String _indent)
+    public String generateCode(Root _root, String _indent, boolean _public)
     {
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
         varNames = _root.retrieveVarNames();
@@ -729,7 +730,7 @@ public class PHPGenerator extends Generator
             }
             // END KGU#311 2017-01-03
         }
-        code.add("");
+        addSepaLine();
         if (!topLevel || !subroutines.isEmpty())
         {
             appendComment(pr + " " + procName, _indent);
@@ -740,11 +741,11 @@ public class PHPGenerator extends Generator
         // END KGU 2014-11-16
         if (_root.isProgram() == true)
         {
-            code.add("");
+            addSepaLine();
             appendComment("TODO declare your variables here if necessary", _indent);
-            code.add("");
+            addSepaLine();
             appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
-            code.add("");
+            addSepaLine();
             generateCode(_root.children, _indent);
         }
         else
@@ -785,9 +786,9 @@ public class PHPGenerator extends Generator
             code.add("function " + fnHeader);
             code.add("{");
             appendComment("TODO declare your variables here if necessary", _indent + this.getIndent());
-            code.add(_indent+"");
+            addSepaLine();
             appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent + this.getIndent());
-            code.add("");
+            addSepaLine();
             generateCode(_root.children, _indent + this.getIndent());
             // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
             if (!this.suppressTransformation) {
@@ -842,7 +843,7 @@ public class PHPGenerator extends Generator
 					result = "$" + result;
 				}
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
