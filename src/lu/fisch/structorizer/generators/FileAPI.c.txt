@@ -1,6 +1,6 @@
 /*
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -9,7 +9,7 @@
     the Free Software Foundation, either version 3 of the License, or any
     later version.
 
-    This program is distributed in the hope that it will be useful,
+    This library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
@@ -37,12 +37,12 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.12.22      First Issue
+ *      Kay Gürtzig     2016-12-22      First Issue
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      - The API is not exactly equivalent to the Structorizer File API used in Executor
+ *      - The API is not exactly equivalent to the Structorizer File API used in Executor.
  *      - First, the fileRead function returns a pointer rather than object references. This
  *        pointer is of void* type such that it must first be casted to some meaningful
  *        pointer type in order to fetch the variable value. Unfortunately, there is no
@@ -111,7 +111,6 @@ int fileOpen(char* filePath)
 /**
  * Tries to create a text file with given filePath for writing. Is file exists then it will
  * be cleared (without warning!).
- * A NULL return value indicates failure.
  * @param filePath - the path of the file (may be absolute or relative to the current directory)
  * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */
@@ -133,7 +132,6 @@ int fileCreate(char* filePath)
 /**
  * Tries to create or open a text file with given filePath for writing. If the file exists then
  * it will not be cleared but writing starts at previous end.
- * A NULL return value indicates failure.
  * @param filePath - the path of the file (may be absolute or relative to the current directory
  * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */

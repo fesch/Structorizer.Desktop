@@ -1,9 +1,9 @@
 #pragma once
-#ifndef STRUCTORIZERFILEAPI_H
-#define STRUCTORIZERFILEAPI_H
+#ifndef STRUCTORIZERFILEAPI_HPP
+#define STRUCTORIZERFILEAPI_HPP
 /*
    Structorizer
-   A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+   A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
    Copyright (C) 2009  Bob Fisch
 
@@ -29,7 +29,7 @@
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    File API for the JavaGenerator.
+ *      Description:    File API header for the CPlusPlusGenerator.
  *
  ******************************************************************************************************
  *
@@ -37,7 +37,8 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.12.23      First Issue
+ *      Kay Gürtzig     2016-12-23      First Issue
+ *      Kay Gürtzig     2020-03-23      Include guard symbol name modified from "..._H" to "..._HPP"
  *
  ******************************************************************************************************
  *
@@ -292,4 +293,4 @@ std::basic_ostream<_Elem, _Traits>& operator<<(std::basic_ostream<_Elem, _Traits
 	return stream << (const std::string)value;
 }
 
-#endif /*STRUCTORIZERFILEAPI_H*/
+#endif /*STRUCTORIZERFILEAPI_HPP*/

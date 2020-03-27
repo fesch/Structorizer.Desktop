@@ -1771,6 +1771,11 @@ public class BASHGenerator extends Generator {
 			
 			subroutineInsertionLine = code.count();
 		}
+		// START KGU#815 2020-03-26: Enh. #828
+		else if (_public) {
+			appendCopyright(_root, _indent, false);
+		}
+		// END KGU#815 2020-03-26
 		
 		if (isSubroutine) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.

@@ -797,6 +797,16 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#653 2019-02-14
 
+	// START KGU#815 2020-03-26: Enh. #828 support for library references
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeLibCallName(java.lang.String)
+	 */
+	@Override
+	protected String makeLibCallName(String name) {
+		return this.libModuleName + "." + name;
+	}
+	// END KGU#815 2020-03-26
+
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
 	 * We try our very best to create a working loop from a FOR-IN construct.

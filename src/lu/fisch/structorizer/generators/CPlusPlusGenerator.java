@@ -60,7 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-03-30      Issue #696: Type retrieval had to consider an alternative pool
  *      Kay Gürtzig     2019-10-18      Enh. #739: Support for enum types
  *      Kay Gürtzig     2019-12-02      KGU#784 Defective type descriptions in argument lists and thread function operators
- *      Kay Gürtzig     2020-03-20/21   Enh. #828 bugfix #836: Group export implemented, batch export improved
+ *      Kay Gürtzig     2020-03-20/23   Enh. #828 bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig     2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *
  ******************************************************************************************************
@@ -193,6 +193,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
 		if (!_root.isProgram()) {
+			// This is explicitly also to be done for Includables (resulting in an initialisation function)
 			String fnName = _root.getMethodName();
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
@@ -230,9 +231,13 @@ public class CPlusPlusGenerator extends CGenerator {
 			insertCode("", _atLine);
 			lines += 1 + insertComment(_root, _indent, _atLine + 1);
 			/* If we are in the library module then the comment is only placed in the header file,
-			 * so it is to be a mere prototyp
+			 * so it is to be a mere prototype
 			 */
 			if (this.isLibraryModule()) {
+				if (topLevel) {
+					lines += insertSepaLine("", _atLine + lines);
+					lines += insertComment("Initialisation function for this library.", _indent, _atLine + lines);
+				}
 				fnHeader += ";";
 			}
 		}
@@ -590,7 +595,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected void generateThrowWith(String _thrown, String _indent, boolean _asComment) {
 		// If it isn't a rethrow then fake some text
 		if (_thrown.isEmpty() && this.caughtException == null) {
-			_thrown = "new std::string(\"unspecified error\")";
+			_thrown = "new string(\"unspecified error\")";
 		}
 		addCode(("throw " + _thrown).trim() + ";", _indent, _asComment);
 	}
@@ -603,7 +608,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		String varName = _try.getExceptionVarName();
 		String head = "catch (...)";
 		if (varName != null && !varName.isEmpty()) {
-			head = "catch(std::string " + varName + ")";
+			head = "catch(string " + varName + ")";
 		}
 		this.appendBlockHeading(_try, head, _indent);
 		this.caughtException = head;	// No matter what is contains but it must not be null
@@ -652,6 +657,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#236 2016-08-10: Issue #227
+			generatorIncludes.add("<string>");
 			//code.add("#include <iostream>");
 			// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 			//if (this.hasInput && this.hasOutput)
@@ -670,6 +676,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			// START KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
+			code.add(_indent + "using std::string;");
 			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow
 			appendGlobalDefinitions(_root, _indent, true);
 			// END KGU#376 2017-09-27
@@ -725,11 +732,18 @@ public class CPlusPlusGenerator extends CGenerator {
 		// START KGU#815 2020-03-20: Enh. #828 - signature code extracted to insertPrototype()
 		this.insertPrototype(_root, _indent, !this.isLibraryModule(), code.count());
 		// END KGU#815 2020-03-20
+		// START KGU#815 2020-03-26: Enh. #828
+		if (!topLevel && _public) {
+			appendCopyright(_root, _indent, false);
+		}
+		// END KGU#815 2020-03-26
 		
 		code.add("{");
 
 		// START KGU#376 2017-09-28: Enh. #389 - add the initialization code of the includables
-		appendGlobalInitialisations(_indent + this.getIndent());
+		// START KGU#815/KGU#824/KGU#834 2020-03-26: Moved to generateBody(Root, _indent)
+		//appendGlobalInitialisations(_indent + this.getIndent());
+		// END KGU#815/KGU#824/KGU#834 2020-03-26
 		// END KGU#376 2017-09-28
 
 		return _indent + this.getIndent();
@@ -763,6 +777,9 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#542 2019-11-17
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#generateIOComment(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
 	{
@@ -771,6 +788,10 @@ public class CPlusPlusGenerator extends CGenerator {
 // END KGU#332 2017-01-30
 	
 	// START KGU#311 2016-12-24: Enh. #314
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
 	protected boolean copyFileAPIResources(String _filePath)
 	{
 		boolean isDone1 = copyFileAPIResource("hpp", FILE_API_CLASS_NAME + ".h", _filePath);

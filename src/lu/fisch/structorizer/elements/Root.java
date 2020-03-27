@@ -301,7 +301,7 @@ public class Root extends Element {
 	// END KGU#624 2018-12-22
 	
 	// START KGU#676 2019-03-31: Enh. #696 - We need pool access for batch export
-	/** A routine to be used for retrieval of includables and subroutines instead of Arranger if not null */
+	/** A routine pool to be used for retrieval of includables and subroutines instead of Arranger if not null */
 	public IRoutinePool specialRoutinePool = null;
 	// END KGU#676 2019-03-31
 	
@@ -2944,7 +2944,7 @@ public class Root extends Element {
      * stores them in {@link #variables}.
      * @return list of variable names
      * @see #retrieveVarNames()
-     * @see #getMereDeclarationNames()
+     * @see #getMereDeclarationNames(boolean)
      */
     public StringList getVarNames() {
     	//System.out.println("getVarNames() called...");
@@ -3120,20 +3120,22 @@ public class Root extends Element {
     	return enumConstants;
     }
 
-    // START KGU#672 2019-11-13: Introduced for Bugfix #762
+    // START KGU#672 2019-11-13: Introduced for Bugfix #776
     /**
+     * @param allowMethodName if true then the method name will be included if among the keys in {@link #getTypeInfo()}, with false it will be suppressed
      * @return A list of the names of uninitialized, i.e. merely declared, variables
      * (of this diagram and all included diagrams).
      * @see #getVarNames()
      * @see #getTypeInfo()
      */
-    public StringList getMereDeclarationNames()
+    public StringList getMereDeclarationNames(boolean allowMethodName)
     {
     	StringList declNames = new StringList();	// Result
     	StringList varNames = this.getVarNames();	// Names of initialized variables
+    	String methName = this.getMethodName();
     	for (String name: this.getTypeInfo().keySet()) {
     		// Ignore type names and omit initialized variables (which should also include constants)
-    		if (!name.startsWith(":") && !varNames.contains(name)) {
+    		if (!name.startsWith(":") && !varNames.contains(name) && (allowMethodName || !methName.equals(name))) {
     			declNames.add(name);
     		}
     	}

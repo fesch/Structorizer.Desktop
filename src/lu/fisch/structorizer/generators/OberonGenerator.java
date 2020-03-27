@@ -273,6 +273,38 @@ public class OberonGenerator extends Generator {
 		// END KGU#236 2016-10-16
 	}
 
+	// START KGU#815 2020-03-26: Enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#appendComment(lu.fisch.utils.StringList, java.lang.String)
+	 */
+	@Override
+	protected void appendComment(StringList _sl, String _indent)
+	{
+		if (!_sl.getLongString().trim().isEmpty()) {
+			if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
+				this.appendComment(_sl.get(0), _indent);
+			}
+			else {
+				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), " * ", " " + this.commentSymbolRight());
+			}
+		}
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#insertComment(lu.fisch.utils.StringList, java.lang.String, int)
+	 */
+	@Override
+	protected int insertComment(StringList _sl, String _indent, int _atLine)
+	{
+		if (_sl.getLongString().trim().isEmpty()) {
+			return 0;
+		}
+		else if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
+			return this.insertComment(_sl.get(0), _indent, _atLine);
+		}
+		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), " * ", " " + this.commentSymbolRight(), _atLine);
+	}
+	// END KGU#815 2020-03-26
+	
 	// START KGU#16 2015-11-30
 	/**
 	 * Transforms type identifier into the target language (as far as possible)
@@ -1798,7 +1830,7 @@ public class OberonGenerator extends Generator {
 					// directly included diagrams, this reduces the risk of eliminating variable
 					// names that are not included but locally defined.
 					if (_root.includeList.contains(incl.getMethodName())) {
-						StringList declNames = incl.getMereDeclarationNames();
+						StringList declNames = incl.getMereDeclarationNames(true);
 						for (int i = 0; i < declNames.count(); i++) {
 							ownVarNames.removeAll(declNames.get(i));
 						}
@@ -1811,7 +1843,7 @@ public class OberonGenerator extends Generator {
 		// END KGU#375 2017-04-12
 		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
 		if (topLevel) {
-			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(this.isFunctionNameSet), new StringList(), introPlaced);
 		}
 		// END KGU#759 2019-11-11
 		return includes;

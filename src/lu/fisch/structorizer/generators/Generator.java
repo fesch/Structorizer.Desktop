@@ -409,7 +409,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected int includeInsertionLine = -1;
 	// END KGU#446 2017-10-27
 	// START KGU#501 2018-02-22: Bugfix #517
-	private boolean includeInitialisation;
+	private boolean includeInitialisation;	// status flag for initialization code generation
+	/** @return true if the generator is inserting initialization code for Includables */
 	protected boolean isInitializingIncludes() {
 		return this.includeInitialisation;
 	}
@@ -505,7 +506,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
-	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
+	 * @return right comment delimiter if required, e.g. "*&frasl;", "}", "*)"
 	 */
 	protected String commentSymbolRight() { return ""; }
 	// END KGU 2015-10-18
@@ -578,13 +579,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#815 2020-03-17: Enh. #828
 	/**
-	 * Overridable method expressing the capability of the generator to combine a program
-	 * (i.e. a main method) and several other entry point routines (static methods) within
-	 * a class or module, which can make the creation of a library module superfluous.
+	 * Overridable configuration method expressing the capability of the generator to
+	 * combine a program (i.e. a main method) and several other entry point routines
+	 * (static methods) within a class or module, which can make the creation of a
+	 * library module superfluous.
 	 * @return true if a generated class may provide several entry points in addition to a
 	 * main method.
+	 * @see #allowsLibraryInitializer()
 	 */
-	protected boolean allowsMixedModule() {
+	protected boolean allowsMixedModule()
+	{
 		// TODO To be overridden by suited subclasses
 		return false;
 	}
@@ -952,6 +956,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * Appends all lines of the given StringList as a series of single comment lines to the exported code
+	 * Subclasses might reimplement this using {@link #appendBlockComment(StringList, String, String, String, String)}.
 	 * @see #appendComment(Element, String)
 	 * @see #appendAsComment(Element, String)
 	 * @see #appendComment(String, String)
@@ -981,8 +986,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #appendAsComment(Element, String)
 	 * @see #appendComment(String, String)
 	 * @see #appendComment(StringList, String)
+	 * @see #insertBlockComment(StringList, String, String, String, String, int)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _sl - the StringList to be written as commment
+	 * @param _sl - the StringList to be written as commment. Even if {@code _sl} is empty, a comment
+	 * will be generated if {@code _start} or {@code _stop} are not {@code null}!
 	 * @param _indent - the basic indentation 
 	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
 	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
@@ -1004,6 +1011,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			String commentLine = _sl.get(i);
 			// Skip an initial empty comment line
 			if (i > 0 || !commentLine.isEmpty()) {
+				// START KGU 2020-03-26: Precaution against inadvertently broken comment block
+				String csr = this.commentSymbolRight();
+				if (csr != null && !csr.isEmpty()) {
+					commentLine = commentLine.replace(csr, this.commentSymbolLeft() + csr);
+				}
+				if (_end != null && !_end.equals(csr)) {
+					commentLine = commentLine.replace(_end, "!");
+				}
+				// END KGU 2020-03-26
 				code.add(_indent + _cont + commentLine);
 			}
 		}
@@ -1110,7 +1126,60 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		return lineNo - _atLine;
 	}
-	// END KGU#815 2020-03-16
+
+	/**
+	 * Appends a multi-line comment with configurable comment delimiters for the starting line, the
+	 * continuation lines, and the trailing line. 
+	 * @see #insertComment(Element, String)
+	 * @see #insertComment(String, String)
+	 * @see #insertComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
+	 * @see #insertCode(String, String, int)
+	 * @param _sl - the StringList to be written as commment. Even if {@code _sl} is empty, a comment
+	 * will be generated if {@code _start} or {@code _stop} are not {@code null}!
+	 * @param _indent - the basic indentation 
+	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
+	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
+	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
+	 * @param _atLine - line number where to insert
+	 * @return number of inserted lines 
+	 */
+	protected int insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end, int _atLine)
+	{
+		int lineNo = _atLine;
+		// START KGU#199 2016-07-07: Precaution against enh. #188 (multi-line StringList elements)
+		_sl = StringList.explode(_sl,  "\n");
+		// END KGU#199 2016-07-07
+		if (_start != null)
+		{
+			this.insertCode(_indent + _start, lineNo++);
+		}
+		for (int i = 0; i < _sl.count(); i++)
+		{
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				// START KGU 2020-03-26: Precaution against inadvertently broken comment block
+				String csr = this.commentSymbolRight();
+				if (csr != null && !csr.isEmpty()) {
+					commentLine = commentLine.replace(csr, this.commentSymbolLeft() + csr);
+				}
+				if (_end != null && !_end.equals(csr)) {
+					commentLine = commentLine.replace(_end, "!");
+				}
+				// END KGU 2020-03-20
+				insertCode(_indent + _cont + commentLine, lineNo++);
+			}
+		}
+		if (_end != null)
+		{
+			insertCode(_indent + _end, lineNo++);
+		}
+		return lineNo - _atLine;
+	}
+	//	END KGU#815 2020-03-16
 	
 	// START KGU#607 2018-10-30: (Issue #346)
 	/**
@@ -3148,7 +3217,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void appendGlobalDefinitions(Root _root, String _indent, boolean _force) {
 		boolean thisDone = false;
-		addSepaLine(_indent);;
+		addSepaLine(_indent);
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 			// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
 			// Don't add initialisation code for an imported module
@@ -3156,6 +3225,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				continue;
 			}
 			// END KGU#815/KGU#836 2020-03-18
+			// START KGU#834 2020-03-26: Give subclasses a chance to initialise a static flag
+			String flagDecl = this.makeStaticInitFlagDeclaration(incl);
+			if (flagDecl != null) {
+				code.add(_indent + flagDecl);
+				this.setDefHandled(incl.getSignatureString(false), this.getInitFlagName(incl));
+			}
+			// END KGU#834 2020-03-26
 			appendDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
@@ -3165,7 +3241,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			appendDefinitions(_root, _indent, this.varNames, true);				
 		}
 	}
-	
+
 	/**
 	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
 	 * @param _root - the diagram the declarations and definitions of which are to be inserted
@@ -3178,7 +3254,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Generates the (initialisation) code of all includable diagrams recursively required by
+	 * Generates the (initialization) code of all includable diagrams recursively required by
 	 * the roots to be exported in topological order 
 	 * @param _indent - current indentation string
 	 */
@@ -3187,26 +3263,53 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 				// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
 				// Don't add initialisation code for an imported module
-				if (importedLibRoots != null && importedLibRoots.contains(incl)) {
+				if (importedLibRoots != null && importedLibRoots.contains(incl) || incl.children.getSize() == 0) {
 					continue;
 				}
 				// END KGU#815/KGU#836 2020-03-18
-				appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = true;
 				// END KGU#501 2018-02-22
-				generateCode(incl.children, _indent);
+				// START KGU#834 2020-03-26: We must ensure that initialization code is executed at most once
+				//appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				//generateCode(incl.children, _indent);
+				//appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				if (this.wasDefHandled(incl, this.getInitFlagName(incl), false)) {
+					// We fake a call here to be language-independent
+					Call initCall = new Call(this.getInitRoutineName(incl) + "()");
+					initCall.parent = incl;	// It should have been this root but it doesn't matter.
+					generateCode(initCall, _indent);
+				}
+				else {
+					appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+					generateCode(incl.children, _indent);
+					appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				}
+				// END KGU#834 2020-03-26
 				// START KGU#501 2018-02-22: Bugfix #517
 				this.includeInitialisation = false;
 				// END KGU#501 2018-02-22
-				appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
 			}
 			addSepaLine(_indent);
 		}
 	}
 	// END KGU#376 2017-09-28
-
 	
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/**
+	 * Subclasses may return an initialized declaration of a status flag for the
+	 * corresponding one-time initialization (for the given Includable {@code inlc}).<br/>
+	 * The flag variable name should be obtained from {@link #getInitFlagName(Root)}.
+	 * @param incl - the includable diagram the initialization code of which is to be
+	 * controlled here.<br/>
+	 * This base version just returns null.
+	 * @return a ready-to-insert declaration initialized to false or null
+	 */
+	protected String makeStaticInitFlagDeclaration(Root incl) {
+		return null;
+	}
+	// END KGU#834 2020-03-26
+
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
 	 * Appends the copyright information (author name, license name and text) if the respective option
@@ -3239,6 +3342,57 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			this.addCode("", _indent, false);
 		}
 	}
+	
+	// START KGU#834 2020-03-26: Support for ensuring initializations won't get done twice
+	/**
+	 * Generates an initialization routine for Includable {@code incl} trying to ensure
+	 * its one-time effect. In order to work, there must be static variable with name
+	 * {@link #getInitFlagName(Root)} initialized to {@code false}. In order to be able
+	 * to detect its existence here, it must have been declared via
+	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or {@link #setDefHandled(String, String)}.
+	 * @param incl - the {@link Root} of type Includable (other kinds of {@link Root}
+	 * are ignored
+	 * @param _indent - relevant indentation
+	 * @return true if an initialization routine was generated.
+	 */
+	protected boolean generateInitRoutine(Root incl, String _indent) {
+		boolean done = false;
+		if (incl.isInclude() && this.wasDefHandled(incl, this.getInitFlagName(incl), false)) {
+			// Produce a temporary routine object and generate its code
+			Root init = new Root();
+			init.setText(this.getInitRoutineName(incl) + "()");
+			init.setComment("Automatically created initialization procedure for " + incl.getMethodName());
+			init.setProgram(false);
+			this.includeInitialisation = true;
+			// In order to be target-language-independent, we fake an Alternative
+			Alternative alt = new Alternative("not " + this.getInitFlagName(incl));
+			alt.qTrue = (Subqueue)incl.children.copy();
+			alt.qTrue.parent = alt;
+			alt.parent = incl;
+			init.children.addElement(alt);
+			// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
+			generateCode(init, _indent, false);
+			this.includeInitialisation = false;
+			done = true;
+		}
+		return done;
+	}
+	/** @return name of the flag variable ensuring one-time initialization for Includable {@code incl} */
+	protected String getInitFlagName(Root incl) {
+		if (incl.isInclude()) {
+			return "initDone_" + incl.getMethodName();
+		}
+		return null;
+	}
+	/** @return the name of the one-time initialization routine for Includable {@code incl} */
+	protected String getInitRoutineName(Root incl) {
+		if (incl.isInclude()) {
+			return "initialize_" + incl.getMethodName();
+		}
+		return null;
+	}
+	// END KGU#834 2020-03-26
+
 	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
@@ -3629,6 +3783,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		code = code.subSequence(0, this.subroutineInsertionLine);
 		boolean oldLevel = topLevel;
 		topLevel = false;
+		// FIXME: Experimental 
+		for (Root incl: includedRoots) {
+			if (this.wasDefHandled(incl, this.getInitFlagName(incl), false)
+					&& (_suppressedRoots == null || !_suppressedRoots.contains(incl))) {
+				this.generateInitRoutine(incl, subroutineIndent);
+			}
+		}
+		
 		Vector<Root> roots = new Vector<Root>(sortTopologically(subroutines));
 		for (Root sub: roots)
 		{
@@ -3660,9 +3822,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Inserts the generated code sequence for subroutine diagram {@code _root} at the appropriate
 	 * line in {@link #code}
-	 * @param _root
-	 * @param _indent
-	 * @param _public
+	 * @param _root - the library routine diagram to be inserted
+	 * @param _indent - the indentation string
+	 * @param _public - if true then the routine shall be accessible outside the library
 	 */
 	protected int insertLibraryRoutine(Root _root, String _indent, boolean _public)
 	{
@@ -4416,9 +4578,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean[] libUserFlags = new boolean[_entryPoints.size()];	// Registers which Roots refer to the library
 		HashSet<Root> commonSubs = new HashSet<Root>();
 		int nMains = 0;	// Count the mains
+		int nRedundant = 0;
 		for (Root root: _entryPoints)
 		{
-			libUserFlags[subTrees.size()] = false;
 			if (root.isProgram()) {
 				nMains++;
 			}
@@ -4428,9 +4590,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			 * and includables before we actually produce code */
 			// First add to the general dependency forest
 			boolean wasAdded = false;
-			// Precaution for recursive top-level routine
 			if (!root.isProgram() && !subroutines.containsKey(root))
 			{
+				// Precaution for recursive top-level routine
 				subroutines.put(root, new SubTopoSortEntry(null));
 				wasAdded = true;
 			}
@@ -4441,72 +4603,86 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				// Remove it - if the routine is called elsewhere then it will reappear
 				subroutines.remove(root);
 			}
-			// Now do it again separately if the subroutine hadn't already been in the general forest
+		}
+		// Now do it again separately if the subroutine hadn't already been in the general forest
+		for (Root root: _entryPoints) {
+			libUserFlags[subTrees.size()] = false;
 			TreeMap<Root, SubTopoSortEntry> includes = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
-			if (root.isProgram() || wasAdded || root.isInclude() && !subroutines.containsKey(root)) {
-				// The original subroutines map is cached in generalSubs, so we may reassign it here
-				this.subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
-				wasAdded = false;
+			// The original subroutines map is cached in generalSubs, so we may reassign it here
+			this.subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+			boolean wasAdded = false;
+			if (root.isSubroutine())
+			{
 				// Precaution for recursive top-level routine
-				if (root.isSubroutine())
-				{
-					subroutines.put(root, new SubTopoSortEntry(null));
-					wasAdded = true;
-				}
-				registerCalledSubroutines(root);
-				this.registerIncludedRoots(root, includes);
-				if (wasAdded)
-				{
-					subroutines.remove(root);
-				}
-				// Unite the intersections
-				for (int j = 0; j < subTrees.size(); j++) {
-					if (subTrees.get(j) != null) {
-						HashSet<Root> intersection = new HashSet<Root>(subroutines.keySet());
-						intersection.retainAll(subTrees.get(j).keySet());
-						if (!intersection.isEmpty()) {
-							libUserFlags[subTrees.size()] = true;
-							libUserFlags[j] = true;
-							commonSubs.addAll(intersection);
-						}
-					}
-					HashSet<Root> intersection = new HashSet<Root>(includes.keySet());
-					intersection.retainAll(inclTrees.get(j).keySet());
+				subroutines.put(root, new SubTopoSortEntry(null));
+				wasAdded = true;
+			}
+			registerCalledSubroutines(root);
+			this.registerIncludedRoots(root, includes);
+			if (wasAdded)
+			{
+				subroutines.remove(root);
+			}
+			// Unite the intersections
+			for (int j = 0; j < subTrees.size(); j++) {
+				if (subTrees.get(j) != null) {
+					HashSet<Root> intersection = new HashSet<Root>(subroutines.keySet());
+					intersection.retainAll(subTrees.get(j).keySet());
 					if (!intersection.isEmpty()) {
 						libUserFlags[subTrees.size()] = true;
 						libUserFlags[j] = true;
 						commonSubs.addAll(intersection);
 					}
 				}
+				HashSet<Root> intersection = new HashSet<Root>(includes.keySet());
+				intersection.retainAll(inclTrees.get(j).keySet());
+				if (!intersection.isEmpty()) {
+					libUserFlags[subTrees.size()] = true;
+					libUserFlags[j] = true;
+					commonSubs.addAll(intersection);
+				}
+			}
+			// For independent entry points add the dependencies, for dependent (redundant) ones add null
+			if (root.isProgram() || !generalSubs.containsKey(root)) {
 				subTrees.add(new TreeMap<Root, SubTopoSortEntry>(subroutines));
-				// Restore the general forest
-				this.subroutines = generalSubs;
 			}
 			else {
 				subTrees.add(null);
+				commonSubs.add(root);
+				nRedundant++;
 			}
 			inclTrees.add(includes);
 			// END KGU#824 2020-03-15
 		}
-		
+		// Restore the general forest
+		this.subroutines = generalSubs;
 		// Now we will first export the library if necessary
 		boolean allowsMixed = allowsMixedModule();
-		boolean mayBeCombined = nMains == 1 && allowsMixed;
-		if (mayBeCombined && !commonSubs.isEmpty()) {
-			// We check whether there are entry points not covered by the involved routines
-			for (int i = 0; i < _entryPoints.size() && mayBeCombined; i++) {
-				Root root = _entryPoints.get(i);
-				if (!root.isProgram() && !this.subroutines.containsKey(root)) {
-					mayBeCombined = false;
-				}
-			}
-		}
+		boolean mayBeCombined =	//nMains == 0 ||	// FIXME: In this case we must ensure sound includable handling!
+				nMains == 1
+				&& (
+						allowsMixed
+						|| _entryPoints.size() == 1
+					)
+				|| !_batchMode && nRedundant + 1 == _entryPoints.size();
+//		if (mayBeCombined && !commonSubs.isEmpty()) {
+//			// We check whether there are entry points not covered by the involved routines
+//			for (int i = 0; i < _entryPoints.size() && mayBeCombined; i++) {
+//				Root root = _entryPoints.get(i);
+//				if (!root.isProgram() && !this.subroutines.containsKey(root)) {
+//					// This is a subroutine not required by any other entry point, so it commands an own module
+//					mayBeCombined = false;
+//				}
+//			}
+//		}
 		// In order to build the library or a stand-alone module, there are no external dependencies
 		this.importedLibRoots = null;
 		if (mayBeCombined) {
 			// Now we can put all diagrams together and generate a common module
-			if (!_batchMode) {
-				// In case of group export (_batchMode = false) the main could be the only entry point
+			if (!_batchMode && nMains == 1 && _entryPoints.size() > 1) {
+				/* In case of group export (_batchMode = false) the main (if there is one) can
+				 * be made the only entry point, we just have to find it again first
+				 */
 				for (Root root: _entryPoints) {
 					if (root.isProgram()) {
 						_entryPoints.clear();
@@ -4520,16 +4696,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		else {
 			// Create a topologically sorted list of library members
 			Vector<Root> sortedLibMembers = new Vector<Root>();
-			/* In case the target language may not form a mixed module then we will
-			 * have to put all subroutines being entry points into the library
-			 */
-			if (!allowsMixed) {
+			if (!allowsMixed || nMains == 0 && !_batchMode) {
+				/* In case the target language may not form a mixed module then we have
+				 * two alternatives with respect to subroutines among the entry points:
+				 * 1. We may simply put them into the common library (and thus skip them as
+				 *    separate entryPoints later on since they will be publicly available
+				 *    in the library then)
+				 *    or
+				 * 2. We just let them be entry points such that they will form further
+				 *    libraries or UNITs
+				 */
 				for (Root root: _entryPoints) {
-					if (root.isSubroutine()) {
+					if (root.isSubroutine() && !subroutines.containsKey(root)) {
+						// We simply put the independent entry point to the common library
 						commonSubs.add(root);
-						if (!subroutines.containsKey(root)) {
-							subroutines.put(root, new SubTopoSortEntry(null));
-						}
+						subroutines.put(root, new SubTopoSortEntry(null));
 					}
 				}
 			}

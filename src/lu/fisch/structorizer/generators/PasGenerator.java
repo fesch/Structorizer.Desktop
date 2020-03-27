@@ -303,6 +303,38 @@ public class PasGenerator extends Generator
 		return "writeln($1)";
 	}
 
+	// START KGU#815 2020-03-26: Enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#appendComment(lu.fisch.utils.StringList, java.lang.String)
+	 */
+	@Override
+	protected void appendComment(StringList _sl, String _indent)
+	{
+		if (!_sl.getLongString().trim().isEmpty()) {
+			if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
+				this.appendComment(_sl.get(0), _indent);
+			}
+			else {
+				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight());
+			}
+		}
+	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#insertComment(lu.fisch.utils.StringList, java.lang.String, int)
+	 */
+	@Override
+	protected int insertComment(StringList _sl, String _indent, int _atLine)
+	{
+		if (_sl.getLongString().trim().isEmpty()) {
+			return 0;
+		}
+		else if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
+			return this.insertComment(_sl.get(0), _indent, _atLine);
+		}
+		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight(), _atLine);
+	}
+	// END KGU#815 2020-03-26
+
 	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
@@ -1858,7 +1890,7 @@ public class PasGenerator extends Generator
 					// directly included diagrams, this reduces the risk of eliminating variable
 					// names that are not included but locally defined.
 					if (_root.includeList.contains(incl.getMethodName())) {
-						StringList declNames = incl.getMereDeclarationNames();
+						StringList declNames = incl.getMereDeclarationNames(true);
 						for (int i = 0; i < declNames.count(); i++) {
 							ownVarNames.removeAll(declNames.get(i));
 						}
@@ -1871,7 +1903,7 @@ public class PasGenerator extends Generator
 		// END KGU#375 2017-04-12
 		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
 		if (topLevel) {
-			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
+			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(true), new StringList(), introPlaced);
 		}
 		// END KGU#759 2019-11-11
 		return includes;
@@ -2038,7 +2070,10 @@ public class PasGenerator extends Generator
 		// END KGU#261 2017-01-16
 		// START KGU#593 2018-10-05: Bugfix #619 - the function result variable must not be declared (again) here!
 		String functionName = null;
-		if (_root.getResultType() != null) {
+		// START KGU 2020-03-25: This seemed to be too slacky
+		//if (_root.getResultType() != null) {
+		if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet) {
+		// END KGU 2020-03-25
 			functionName = _root.getMethodName();
 		}
 		// END KGU#593 2018-10-05
@@ -2220,9 +2255,9 @@ public class PasGenerator extends Generator
 	protected boolean copyFileAPIResources(String _filePath)
 	{
 		/* If importedLibRoots is not null then we had a multi-module export,
-		 * this function wil only be called if at least one of the modules required
+		 * this function will only be called if at least one of the modules required
 		 * the file API, so all requiring modules will have put "StructorizerFileAPI"
-		 * to their USES list. No we have to make sure it gets provided.
+		 * to their USES list. Now we have to make sure it gets provided.
 		 */
 		return this.importedLibRoots == null || copyFileAPIResource("pas", FILE_API_UNIT_NAME+".pas", _filePath);
 	}

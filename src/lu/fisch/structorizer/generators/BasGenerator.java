@@ -1361,6 +1361,11 @@ public class BasGenerator extends Generator
 		{
 			appendComment("", _indent);
 			appendComment(_root, _indent);
+			// START KGU#815 2020-03-26: Enh. #828
+			if (_public) {
+				appendCopyright(_root, _indent, false);
+			}
+			// END KGU#815 2020-03-26
 		}
 		// END KGU#178 2016-07-20
 

@@ -102,8 +102,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
  *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
- *      Kay Gürtzig             2020-03-20      Enh. #828 bugfix #836: Group export implemented, batch export improved
- *      Kay Gürtzig             2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig             2020-03-20/27   Enh. #828 bugfix #836: Group export implemented, batch export improved
+ *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
  *
  ******************************************************************************************************
  *
@@ -392,6 +392,7 @@ public class CGenerator extends Generator {
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
 		if (!_root.isProgram()) {
+			// This is explicitly also to be done for Includables (resulting in an initialisation function)
 			String fnName = _root.getMethodName();
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
@@ -426,9 +427,13 @@ public class CGenerator extends Generator {
 			insertCode("", _atLine);
 			lines += 1 + insertComment(_root, _indent, _atLine + 1);
 			/* If we are in the library module then the comment is only placed in the header file,
-			 * so it is to be a mere prototyp
+			 * so it is to be a mere prototype
 			 */
 			if (this.isLibraryModule()) {
+				if (topLevel) {
+					lines += insertSepaLine("", _atLine + lines);
+					lines += insertComment("Initialisation function for this library.", _indent, _atLine + lines);
+				}
 				fnHeader += ";";
 			}
 		}
@@ -1406,7 +1411,7 @@ public class CGenerator extends Generator {
 
 	// START KGU#653 2019-02-14: Enh. #680 - auxiliary methods for handling multi-item input instructions
 	/**
-	 * Generates a series of code lines representing a decomposed mult-item input instruction
+	 * Generates a series of code lines representing a decomposed multi-item input instruction
 	 * @param _inputItems - list of input items (first the prompt string, then the lvar expressions)
 	 * @param _indent - current code indentation
 	 * @param _isDisabled - whether the containing instruction is disabled (i.e. is to be commented out)
@@ -1937,19 +1942,32 @@ public class CGenerator extends Generator {
 //				else
 //				// END KGU#376 2017-04-13
 				// START KGU#371 2019-03-07: Enh. #385 Support for declared optional arguments
-				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
-					Function call = _call.getCalledRoutine();
+				boolean mustHealDefaults = line.endsWith(")") && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING;
+				if ((routinePool != null) && (mustHealDefaults || this.importedLibRoots != null)) {
+					Function call = _call.getCalledRoutine(i);
 					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);
-						StringList defaults = new StringList();
-						called.collectParameters(null, null, defaults);
-						if (defaults.count() > call.paramCount()) {
-							// We just add the list of default values for the missing arguments
-							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
-									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+						if (mustHealDefaults) {
+							StringList defaults = new StringList();
+							called.collectParameters(null, null, defaults);
+							if (defaults.count() > call.paramCount()) {
+								// We just add the list of default values for the missing arguments
+								line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+										defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+							}
 						}
+						// START KGU#815 2020-03-26: Enh. #828 we have to cope with class methods from a foreign library
+						if (this.importedLibRoots != null && this.importedLibRoots.contains(called)) {
+							StringList tokens = Element.splitLexically(line, true);
+							Element.unifyOperators(tokens, true);
+							int posAsgn = tokens.indexOf("<-");
+							int posCall = tokens.indexOf(call.getName(), posAsgn+1);
+							tokens.set(posCall, this.makeLibCallName(call.getName()));
+							line = tokens.concatenate();
+						}
+						// END KGU#815 2020-03-26
 					}
 				}
 				// END KGU#371 2019-03-07
@@ -1968,39 +1986,17 @@ public class CGenerator extends Generator {
 		
 	}
 
-	// FIXME: Will have to be replaced by e.g. #include directives
-//	// START KGU#376 2017-04-13: Enh. #389 support for import CALLS
-//	/**
-//	 * Subclassable code generator for an import CALL line. The CGenerator will
-//	 * rely on the preamble generator to have already coded the important constant
-//	 * definitions and variable declarations. So it just creates a comment line.
-//	 * Subclasses may do something more meaningful here.
-//	 * @param _call - the origination CALL element
-//	 * @param _line - the current line with import CALL syntax
-//	 * @param _indent - indentation string
-//	 */
-//	protected void generateImportCode(Call _call, String _line, String _indent) {
-//		// Do nothing but place it as comment here. The important contents
-//		// (constant definitions and variable declarations) will already have
-//		// been put to the preamble.
-//		boolean done = false;
-//		String diagrName = _call.getSignatureString();
-//		if (this.isInternalDeclarationAllowed() && Arranger.hasInstance()) {
-//			Vector<Root> roots = Arranger.getInstance().findDiagramsByName(diagrName);
-//			if (roots.size() == 1) {
-//				Root imported = roots.get(0);
-//				imported.getVarNames();	// This also initializes the constants information we may need here
-//				appendComment("*** START " + _line + " *** ", _indent);		
-//				generateCode(imported.children, _indent);
-//				appendComment("*** END " + _line + " *** ", _indent);		
-//				done = true;
-//			}
-//		}
-//		if (!done) {
-//			appendComment(_line, _indent);		
-//		}
-//	}
-//	// END KGU#376 2017-04-13
+	// START KGU#815 2020-03-26: Enh. #828 support for library references
+	/**
+	 * Returns the language-specifically qualified name for the call of routine {@code name}
+	 * from the external library {@link #libModuleName}.
+	 * @param name - pure (unqualified) routine name
+	 * @return the transformed name
+	 */
+	protected String makeLibCallName(String name) {
+		return name;
+	}
+	// END KGU#815 2020-03-26
 
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
@@ -2256,6 +2252,11 @@ public class CGenerator extends Generator {
 		if (topLevel)
 		{
 		// END KGU#178 2016-07-20
+			// START KGU#815/KGU#824 2020-03-23: Enh. #828, bugfix #836
+			if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
+				generatorIncludes.addIfNew("FileAPI.h");
+			}
+			// END KGU#815/KGU#824 2020-03-23
 			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
@@ -2267,15 +2268,18 @@ public class CGenerator extends Generator {
 			if (this.hasInput() || this.hasOutput() || this.usesFileAPI)
 			{
 				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
-				this.generatorIncludes.add("<stdio.h>");
-				if (this.usesFileAPI) {
-					this.generatorIncludes.add("<stdlib.h>");
-					this.generatorIncludes.add("<string.h>");
-					this.generatorIncludes.add("<errno.h>");
+				this.generatorIncludes.addIfNew("<stdio.h>");
+				// START KGU#815/KGU#824 2020-03-23: Enh. #828, bugfix #836
+				//if (this.usesFileAPI) {
+				if (this.usesFileAPI && !generatorIncludes.contains("FileAPI.h")) {
+				// END KGU#815/KGU#824 2020-03-23
+					this.generatorIncludes.addIfNew("<stdlib.h>");
+					this.generatorIncludes.addIfNew("<string.h>");
+					this.generatorIncludes.addIfNew("<errno.h>");
 				}
 			}
 			// START KGU#607 2018-10-30: Issue 346
-			this.generatorIncludes.add("<stdbool.h>");
+			this.generatorIncludes.addIfNew("<stdbool.h>");
 			// END KGU#607 2018-10-30
 			this.appendGeneratorIncludes("", false);
 			addSepaLine();
@@ -2313,13 +2317,20 @@ public class CGenerator extends Generator {
 			subroutineIndent = _indent;
 			
 			// START KGU#311 2016-12-22: Enh. #314 - insert File API routines if necessary
-			// FIXME (#828): Decompose this for group export!
-			if (this.usesFileAPI) {
+			// KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836: Decomposed for group export!
+			//if (this.usesFileAPI) {
+			if (this.usesFileAPI && !generatorIncludes.contains("FileAPI.h")) {
+			// END KGU#815/KGU#824 2020-03-20
 				this.insertFileAPI("c");
 			}
 			// END KGU#311 2016-12-22
 		}
 		// END KGU#178 2016-07-20
+		// START KGU#815 2020-03-26: Enh. #828
+		else if (_public) {
+			appendCopyright(_root, _indent, false);
+		}
+		// END KGU#815 2020-03-26
 
 		// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836 This call replaces the function header code
 		//appendComment(_root, _indent);
@@ -2338,7 +2349,9 @@ public class CGenerator extends Generator {
 		code.add(_indent + "{");
 		
 		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-		appendGlobalInitialisations(_indent + this.getIndent());
+		// START KGU#815/KGU#824/KGU#834 2020-03-26: Moved to generateBody(Root, _indent)
+		//appendGlobalInitialisations(_indent + this.getIndent());
+		// END KGU#815/KGU#824 2020-03-20
 		// END KGU#376 2017-09-26
 		
 		return _indent + this.getIndent();
@@ -2364,9 +2377,11 @@ public class CGenerator extends Generator {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
+	@Override
 	protected void appendGlobalInitialisations(String _indent) {
 		if (topLevel) {
 			if (this.libModuleName != null) {
+				// Multi-module export with a common library - insert its initialization function call
 				appendGlobalInitialisationsLib(_indent);
 			}
 			else {
@@ -2375,9 +2390,20 @@ public class CGenerator extends Generator {
 		}
 	}
 	
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected String makeStaticInitFlagDeclaration(Root incl) {
+		return "static bool " + this.getInitFlagName(incl) + " = false;";
+	}
+	// END KGU#834 2020-03-26
+
+	// START KGU#815 2020-03-20: Enh. #828
 	/**
-	 * Special handling for the global initialsations in case these were outsourced to
-	 * an external library {@link #libModuleName}
+	 * Special handling for the global initializations in case these were outsourced to
+	 * an external library {@link #libModuleName}.
 	 * @param _indent - current indentation
 	 * @see #appendGlobalInitialisations(String)
 	 */
@@ -2814,6 +2840,43 @@ public class CGenerator extends Generator {
 	}
 	// START KGU#332 2017-01-30
 	
+	// START KGU#815/KGU#824/KGU#834 2020-03-26: Enh. #828, bugfix #826
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateBody(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		String indentBody = _indent;
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// This is the initialization code for the library
+			addCode("static bool initDone_" + this.pureFilename + " = false;", _indent, false);
+			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			if (!this.optionBlockBraceNextLine()) {
+				addCode(cond + " {", _indent, false);
+			}
+			else {
+				addCode(cond, _indent, false);
+				addCode("{", _indent, false);
+			}
+			indentBody += this.getIndent();			
+		}
+		// END KGU#815/KGU#824 2020-03-20
+		
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		appendGlobalInitialisations(indentBody);
+		// END KGU#376 2017-09-26
+		
+		boolean done = super.generateBody(_root, indentBody);
+		
+		if (!indentBody.equals(_indent)) {
+			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
+			addCode("}", _indent, false);
+		}
+		return done;
+	}
+	// START KGU#815/KGU#824/KGU#834 2020-03-26
+	
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
 	 * (after the algorithm code of the body) to this.code)
@@ -2871,7 +2934,7 @@ public class CGenerator extends Generator {
 	 */
 	@Override
 	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
-		// We must cache this library name for the global initialisations
+		// We must cache this library name for the global initializations
 		this.libModuleName = _libName;
 		boolean needsFileAPI = super.generateModule(_roots, _dependencyTree, _batchMode, _entryPoints, _libName);
 		this.libModuleName = null;
@@ -2879,4 +2942,24 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#815 2020-03-20
 	
+	// START KGU#311/KGU#815/KGU#824 2020-03-23: Enh. #314, #828, issue #836
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function will only be called if at least one of the modules required
+		 * the file API, so all requiring modules will have included "FileAPI.h".
+		 * Now we simply have to make sure it gets provided.
+		 */
+		boolean isDone = true;	// By default nothing is to be done and that is okay
+		if (this.importedLibRoots != null) {
+			isDone = copyFileAPIResource("c", null, _filePath);
+			isDone = copyFileAPIResource("h", null, _filePath) && isDone;
+		}
+		return isDone;
+	}
+	// END KGU#311/KGU#815/KGU#824 2020-03-23
 }

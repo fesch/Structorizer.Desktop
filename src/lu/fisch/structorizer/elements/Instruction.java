@@ -1009,16 +1009,24 @@ public class Instruction extends Element {
 	 * @see #isFunctionCall()
 	 * @see #isProcedureCall()
 	 */
-	public Function getCalledRoutine()
+	public Function getCalledRoutine() {
+		if (this.getUnbrokenText().count() == 1) {
+			return getCalledRoutine(0);
+		}
+		return null;
+	}
+	
+	// Undocumented version of getCalledRoutine() coping with multiple call lines per element
+	public Function getCalledRoutine(int lineNo)
 	{
 		Function called = null;
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
 		//StringList lines = this.text;
 		StringList lines = this.getUnbrokenText();
 		// END KGU#413 2017-06-09
-		if (lines.count() == 1)
+		if (lines.count() > 0 && lineNo < lines.count())
 		{
-			String potentialCall = lines.get(0);
+			String potentialCall = lines.get(lineNo);
 			StringList tokens = Element.splitLexically(potentialCall, true);
 			unifyOperators(tokens, true);
 			int asgnPos = tokens.indexOf("<-");

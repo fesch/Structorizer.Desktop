@@ -1,0 +1,246 @@
+MODULE StructorizerFileAPI
+IMPORT Files;
+(*
+    Structorizer
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
+
+    Copyright (C) 2020  Bob Fisch
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This module is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*)
+(******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    File API for the OberonGenerator.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2020-03-25      First Issue
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      Parts of the API are directly transformed by the PasGenerator. To replace function calls by
+ *      procedure calls, however, is not possible in general. So we provide adapters for the fileRead
+ *      functions here. 
+ *
+ ******************************************************************************************************}
+
+CONST
+	MAX_FILES = 20;
+
+TYPE
+	FileEntry = RECORD
+		fileId: LONGINT;
+		handle: Files.File;
+		rider: Files.Rider;	(* We allow only one Rider per file *)
+	END;
+
+VAR
+	nOpenFiles: INTEGER;	(* Current number of open files = effective length of the fileMap *)
+	nextFileId: LONGINT;	(* Files numbers are uniquely assigned, starting at 1 *)
+	index: INTEGER;			(* loop index within the fileMap *)
+	fileMap: ARRAY MAX_FILES OF FileEntry;
+
+PROCEDURE getHandleIndex(fileId: LONGINT): INTEGER;
+(* Internal helper function of Structorizer File API, not for customer use!
+ * Identifies the file entry with the given fileId in the fileMap via binary
+ * search and returns its index if found or -1 otherwise.
+ *)
+VAR
+	index, low, high, peek: INTEGER;
+	refId: LONGINT;
+	
+BEGIN
+	index := -1;
+	low := 0;
+	high := nOpenFiles;
+	WHILE (index < 0 & low < high) DO
+		peek := (low + high) DIV 2;
+		refId = fileMap[peek].fileId;
+		IF (fileNo < refNo) THEN
+			high := peek;
+		END
+		ELSEIF (fileNo > refNo) THEN
+			low := peek + 1;
+		END
+		ELSE
+			index := peek;
+		END;
+	END;
+	RETURN index;
+END getHandleIndex;
+
+PROCEDURE fileOpen*(path: ARRAY OF CHAR): LONGINT;
+(*
+ * Tries to open a text file with given filePath for reading. File must exist.
+ * A NULL return value indicates failure.
+ * @param filePath - the path of the file (may be absolute or relative to the current directory)
+ * @return a valid file handle (> 0) on success or a (negative) error code or 0 otherwise 
+ *)
+VAR
+	fileId: LONGINT;
+	file: Files.File;
+BEGIN
+	fileId := 0;
+	IF (nOpenFiles < MAX_FILES) THEN
+		file := Files.Old(path);
+		IF (file # NIL) THEN
+			Files.Register(file);	(* Necessary? *)
+			WITH fileMap[nOpenFiles] DO
+				fileId := nextFileId;
+				handle := file;
+				rider.eof := Files.Length(file) = 0;
+				rider.res := 0;
+			END;
+			nextFileId := nextFileId + 1;
+			nOPenFiles := nOPenFiles + 1;
+		END
+		ELSE
+			fileId := -2;
+		END;
+	END;
+	RETURN fileId;
+END fileOpen;
+
+PROCEDURE fileCreate*(path: ARRAY OF CHAR): LONGINT;
+(*
+ * Tries to create a text file with given filePath for writing. Is file exists then it will
+ * be cleared (without warning!).
+ * @param filePath - the path of the file (may be absolute or relative to the current directory)
+ * @return a valid file handle (> 0) on success or a (negative) error code otherwise  
+ *)
+VAR
+  structorizerFileAPI_buffer: ARRAY 1024 OF CHAR;
+  fileCreate: INTEGER;
+
+BEGIN
+	fileId := 0;
+	IF (nOpenFiles < MAX_FILES) THEN
+		file := Files.New(path);
+		IF (file # NIL) THEN
+			Files.Register(file);	(* Necessary? *)
+			WITH fileMap[nOpenFiles] DO
+				fileId := nextFileId;
+				handle := file;
+				rider.eof := TRUE;
+				rider.res := 0;
+			END;
+			nextFileId := nextFileId + 1;
+			nOPenFiles := nOPenFiles + 1;
+		END
+		ELSE
+			fileId := -2;
+		END;
+	END;
+	RETURN fileId;
+END fileCreate;
+
+PROCEDURE fileAppend*(path: ARRAY OF CHAR): LONGINT;
+
+BEGIN
+	RETURN 0;
+END fileAppend;
+
+PROCEDURE fileEOF*(handle: LONGINT): BOOLEAN;
+
+BEGIN
+	RETURN FALSE;
+END fileEOF;
+
+PROCEDURE fileRead*(handle: LONGINT): Object;
+
+BEGIN
+	RETURN NIL;
+END fileRead;
+
+PROCEDURE fileReadChar*(handle: LONGINT): CHAR;
+
+BEGIN
+	RETURN Chr(0);
+END fileReadChar;
+
+PROCEDURE fileReadInt*(handle: LONGINT): INTEGER;
+
+BEGIN
+	RETURN 0;
+END fileReadInt;
+
+PROCEDURE fileReadDouble*(handle: LONGINT): REAL;
+
+BEGIN
+	RETURN 0.0;
+END fileReadDouble;
+
+PROCEDURE fileReadLine*(handle: LONGINT): ARRAY OF CHAR;
+
+BEGIN
+	RETURN "";
+END fileReadLine;
+
+PROCEDURE fileWrite*(handle: LONGINT; value: ARRAY OF CHAR);
+
+BEGIN
+END fileWrite;
+
+PROCEDURE fileWriteChar*(handle: LONGINT; value: CHAR);
+
+BEGIN
+END fileWriteChar;
+
+PROCEDURE fileWriteInt*(handle: LONGINT; value: INTEGER);
+
+BEGIN
+END fileWriteInt;
+
+PROCEDURE fileWriteDouble*(handle: LONGINT; value: REAL);
+
+BEGIN
+END fileWriteDouble;
+
+PROCEDURE fileWriteLine*(handle: LONGINT; value: ARRAY OF CHAR);
+
+BEGIN
+END fileWriteLine;
+
+PROCEDURE fileWriteLineChar*(handle: LONGINT; value: CHAR);
+
+BEGIN
+END fileWriteChar;
+
+PROCEDURE fileWriteLineInt*(handle: LONGINT; value: INTEGER);
+
+BEGIN
+END fileWriteInt;
+
+PROCEDURE fileWriteLineDouble*(handle: LONGINT; value: REAL);
+
+BEGIN
+END fileWriteLineDouble;
+
+PROCEDURE fileClose*(handle: LONGINT);
+
+BEGIN
+END fileWriteChar;
+
+BEGIN
+	(* Initialization *)
+	nOpenFiles := 0;
+	nextFileId := 1;
+END StructorizerFileAPI.

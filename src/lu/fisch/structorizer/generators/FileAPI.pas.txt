@@ -1,7 +1,7 @@
 UNIT StructorizerFileAPI;
 {
     Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
 
@@ -10,7 +10,7 @@ UNIT StructorizerFileAPI;
     the Free Software Foundation, either version 3 of the License, or any
     later version.
 
-    This program is distributed in the hope that it will be useful,
+    This unit is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
@@ -31,8 +31,8 @@ UNIT StructorizerFileAPI;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     26.12.2016      First Issue
- *      Kay Gürtzig     27.12.2016      fileRead function enhanced roughly to handle quoted strings
+ *      Kay Gürtzig     2016-12-26      First Issue
+ *      Kay Gürtzig     2016-12-27      fileRead function enhanced roughly to handle quoted strings
  *
  ******************************************************************************************************
  *
