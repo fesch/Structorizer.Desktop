@@ -85,7 +85,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-21      Enh. #739: enum type inference for FOR-IN loops and output
  *      Kay Gürtzig             2019-02-15      Issue #814: Unidentified parameter type marker changed: (*type?*) --> ???
  *      Kay Gürtzig             2020-03-17      Bugfix #838: Generator include mechanism was buggy.
- *      Kay Gürtzig             2020-03-18      Bugfix #828/#836 (includables had been wrongly handled) bugfix #839, fix for issue #780 revised
+ *      Kay Gürtzig             2020-03-18      Issues #828/#836 Group export enabled, includables had been wrongly handled
+ *                                              bugfix #839, fix for issue #780 revised
+ *      Kay Gürtzig             2020-03-26      Bugfix KGU#833: The function name got declared as variable without need.
  *
  ******************************************************************************************************
  *
@@ -1830,7 +1832,10 @@ public class OberonGenerator extends Generator {
 					// directly included diagrams, this reduces the risk of eliminating variable
 					// names that are not included but locally defined.
 					if (_root.includeList.contains(incl.getMethodName())) {
+						// START KGU#833 2020-03-26: Avoid the function name being declared unless it was used for result
+						//StringList declNames = incl.getMereDeclarationNames();
 						StringList declNames = incl.getMereDeclarationNames(true);
+						// END KGU#833 2020-03-26
 						for (int i = 0; i < declNames.count(); i++) {
 							ownVarNames.removeAll(declNames.get(i));
 						}
@@ -1843,7 +1848,10 @@ public class OberonGenerator extends Generator {
 		// END KGU#375 2017-04-12
 		// START KGU#759 2019-11-11: Bugfix #773 - Specific care for merely declared (uninitialized) variables
 		if (topLevel) {
+			// START KGU#833 2020-03-26: Avoid the function name being declared unless it was used for result
+			//generateVarDecls(_root, _indent, _root.getMereDeclarationNames(), new StringList(), introPlaced);
 			generateVarDecls(_root, _indent, _root.getMereDeclarationNames(this.isFunctionNameSet), new StringList(), introPlaced);
+			// END KGU#833 2020-03-26
 		}
 		// END KGU#759 2019-11-11
 		return includes;

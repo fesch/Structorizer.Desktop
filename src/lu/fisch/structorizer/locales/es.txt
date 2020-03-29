@@ -517,6 +517,7 @@ Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en leng
 Menu.error19_2.text=¡El nombre «%1» está reservado en Structorizer y puede provocar problemas on ejecución!
 Menu.error20_1.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
 Menu.error20_2.text=Parámetros con valores de incumplimiento tenien que estar puestos anéxamente al fin de la lista.
+Menu.error20_3.text=Un diagrama del tipo %1 no debe tener una lista de parámetros. ¿Cambiar tipo a %2?
 Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
 Menu.error22_1.text=Constante «%1» depende de valor(es) «%2» que no aparece(n) constante(s).
 Menu.error22_2.text=¡Modificar el valor de constante «%» no es permitido!

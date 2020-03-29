@@ -92,6 +92,7 @@ package lu.fisch.structorizer.generators;
  *                                          several absurd bugs in finishCondition() fixed
  *      Kay Gürtzig         2020-03-18      Bugfix #839: sticky returns flag mended
  *      Kay Gürtzig         2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig         2020-03-27/29   Enh. #828: Modifications tpo supporet group export
  *
  ******************************************************************************************************
  *
@@ -324,6 +325,25 @@ public class BASHGenerator extends Generator {
 	private final Set<String> compOprs = new HashSet<String>(
 			Arrays.asList(new String[]{/*"==",*/ "<", ">", "<=", ">=", /*"!=", "<>"*/}));
 
+	// START KGU#815 2020-03-27: Enh. #828 export of group modules
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * This version adds a ".sh" suffix (more precisely the first filename extension method
+	 * {@link #getFileExtensions()} provides). 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return _includeName + "." + this.getFileExtensions()[0];
+	}
+	// END KGU#815 2020-03-27
+	
 	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
 	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
 	protected String getEnumDeclarator()
@@ -1723,7 +1743,6 @@ public class BASHGenerator extends Generator {
 
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent, boolean _public) {
-		
 		root = _root;
 		// START KGU#405 2017-05-19: Issue #237
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
@@ -1748,8 +1767,16 @@ public class BASHGenerator extends Generator {
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
+			// START KGU#815 2020-03-27: Enh. #828 group export
+			if (this.isLibraryModule()) {
+				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
+			}
+			// END KGU#815 2020-03-27
 			code.add("#!/bin/bash");
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#815 2020-03-27: Enh. #828
+			this.appendGeneratorIncludes("", false);
+			// END KGU#815 2020-03-27
+			// START KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 		}
@@ -1816,7 +1843,7 @@ public class BASHGenerator extends Generator {
 		}
 		// END KGU#803 2020-02-18
 		
-		generateCode(_root.children, indent);
+		generateBody(_root, indent);
 		
 		// START KGU#803 2020-02-16: Issue #816
 		generateResult(_root, indent, alwaysReturns, varNames);

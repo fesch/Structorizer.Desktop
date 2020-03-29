@@ -153,6 +153,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
  *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
+ *      Kay Gürtzig     2020-03-29      Bugfix #841: Analyser check for missing or misplaced parameter list didn't work
  *      
  ******************************************************************************************************
  *
@@ -225,6 +226,8 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
@@ -4504,6 +4507,23 @@ public class Root extends Element {
 			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
 			addError(_errors, new DetectedError(errorMsg(Menu.error20_1, ""), this), 20);								
 		}
+		// START KGU#836 2020-03-29: Issue #841 In case of a non-subroutine a parameter list should also be wrong
+		else if (!this.isSubroutine() && this.getText().getText().indexOf("(") >= 0) {
+			Locale loc = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
+			Locale loc0 = Locales.getInstance().getDefaultLocale();
+			String key1 = "ElementNames.localizedNames." + (this.isProgram() ? 13 : 15) + ".text";
+			String key2 = "ElementNames.localizedNames.14.text";
+			String elName = loc.getValue("Elements", key1);
+			if (elName.isEmpty()) {
+				elName = loc0.getValue("Elements", key1);
+			}
+			String subName = loc.getValue("Elements", key2);
+			if (subName.isEmpty()) {
+				subName = loc0.getValue("Elements", key2);
+			}
+			addError(_errors, new DetectedError(errorMsg(Menu.error20_3, new String[] {elName, subName}), this), 20);
+		}
+		// END KGU#836 2020-03-29
 		boolean hasDefaults = false;
 		for (int i = 0; i < paramDefaults.count(); i++) {
 			String deflt = paramDefaults.get(i);
@@ -5462,7 +5482,7 @@ public class Root extends Element {
         // END KGU#253 2016-09-22
         if (this.isSubroutine())
         {
-        	// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        	// START KGU#371 2019-03-07: Enh. #385 Use cached values if available, otherwise fill cache
         	if (parameterList != null) {
         		synchronized(this) {
         			for (Param param: parameterList) {
@@ -5478,7 +5498,12 @@ public class Root extends Element {
         			}
         		}
         		// Nothing more to do here
-        		return true;
+        		// START KGU#836 2020-03-29: Bugfix #841
+        		//return true;
+        		String rootText = this.getText().getLongString();
+        		int posPar1 = rootText.indexOf("(");
+        		return posPar1 >= 0 && rootText.indexOf(")", posPar1+1) >= 0;
+        		// END KGU#836 2020-03-29
         	}
         	// Compute the parameter list from scratch, make sure all three lists exist
         	if (paramNames == null) {

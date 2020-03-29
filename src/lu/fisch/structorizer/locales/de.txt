@@ -514,6 +514,7 @@ Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservi
 Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
 Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
+Menu.error20_3.text=Ein Diagramm des Typs %1 sollte keine Parameterliste haben. Zu %2 ändern?
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 Menu.error22_1.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
 Menu.error22_2.text=Unzulässiger Versuch, die Konstante «%» zu ändern bzw. neu zu setzen.

@@ -3692,7 +3692,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				gatherElementInformationRoot(incl);
 			}
 
-			code = generateCode(_root, "", false);
+			code = generateCode(_root, "", true);
 		}
 		catch (Exception e)
 		{

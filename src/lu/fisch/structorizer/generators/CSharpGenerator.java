@@ -358,7 +358,7 @@ public class CSharpGenerator extends CGenerator
 	protected void transformFileAPITokens(StringList tokens)
 	{
 		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI." + Executor.fileAPI_names[i]);
+			tokens.replaceAll(Executor.fileAPI_names[i], FILE_API_CLASS_NAME + "." + Executor.fileAPI_names[i]);
 		}
 	}
 	// END KGU#311 2017-01-05
@@ -1293,7 +1293,7 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU 2015-12-15
 
-	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the file than the content
+	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#updateLineMarkers(int, int)
 	 */
@@ -1307,7 +1307,9 @@ public class CSharpGenerator extends CGenerator
 	
 	/**
 	 * Special handling for the global initializations in case these were outsourced to
-	 * an external library {@link #libModuleName}.
+	 * an external library {@link #libModuleName}. (The inherited method would suggest a
+	 * constructor call but then we would have to care for an instantiation, certainly as
+	 * singleton, rather than relying on static methods.
 	 * @param _indent - current indentation
 	 * @see #appendGlobalInitialisations(String)
 	 */

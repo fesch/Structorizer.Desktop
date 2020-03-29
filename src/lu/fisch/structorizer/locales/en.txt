@@ -513,6 +513,7 @@ Menu.error19_1.text=Variable name «%1» may collide with reserved names in lang
 Menu.error19_2.text=Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!
 Menu.error20_1.text=A @o header must have a (possibly empty) parameter list within parentheses.
 Menu.error20_2.text=Parameters with default must be placed contiguously at the parameter list end.
+Menu.error20_3.text=A diagram of type %1 should not have a parameter list. Change type to %2?
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
 Menu.error22_1.text=Constant «%1» depends on apparently non-constant value(s): «%2».
 Menu.error22_2.text=Attempt to modify the value of constant «%»!

@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-07 (2020-03-27)
+Current development version: 3.30-07 (2020-03-30)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -86,6 +86,7 @@ Current development version: 3.30-07 (2020-03-27)
 - 07: Bugfix #838: Defective IMPORT line generation on Oberon export <2>
 - 07: Bugfix #839: Procedures exported after functions were faked as functions <2>
 - 07: Bugfix #840: Code export wrongly used information from disabled elements <2>
+- 07: Bugfix #841: Analyser check against missing parameter list did not work <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

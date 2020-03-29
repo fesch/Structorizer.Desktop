@@ -110,7 +110,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-24      Enh. #738: New menu items for code preview
  *      Kay Gürtzig     2019-09-30      KGU#736 Precaution against newlines in tooltips
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
- *      Kay Gürtzig     2020-01-20      Rnh. #801: Messages and a new menu item for offline help support
+ *      Kay Gürtzig     2020-01-20      Enh. #801: Messages and a new menu item for offline help support
+ *      Kay Gürtzig     2020-03-29      Issue #841: New message error20_3
  *
  ******************************************************************************************************
  *
@@ -518,6 +519,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error20_1 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
 	public static final LangTextHolder error20_2 = new LangTextHolder("Parameters with default must be placed contiguously at the parameter list end.");
 	// END KGU#371 2019-03-07
+	// START KGU#836 2020-03-29: Issue #841 - New check against subroutine syntax on Mains or Includables
+	public static final LangTextHolder error20_3 = new LangTextHolder("A diagram of type %1 should not have a parameter list. Change type to %2?");
+	// END KGU#836 2020-03-29
 	// END KGU#253 2016-09-21
 	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
 	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
