@@ -105,6 +105,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-03-19      Fixes for KGU#830 (methods adSepaLine(), insertSepaLine())
  *      Kay Gürtzig     2020-03-23      Issue #840: Code to intercept data collection from disabled elements/
  *                                      subtrees armed despite of a potential conflict of aims.
+ *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
  *
  ******************************************************************************************************
  *
@@ -317,7 +318,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected String labelBaseName = "StructorizerLabel_";
 	/**
 	 * maps loops and Jump elements to label counts (neg. number means illegal jump target)
-	 * such that goto mechanisms mght be used to circumvent missing leave instructions in
+	 * such that goto mechanisms might be used to circumvent missing leave instructions in
 	 * the target language. Automatically filled before actual code export starts.
 	 */
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
@@ -1966,7 +1967,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * to be able to place equivalent goto instructions and their target labels
 	 * on demand.
 	 * Maps Jump instructions and Loops (as potential jump targets) to unique
-	 * numbers used for the creation of unambiguous goto or break labels.
+	 * numbers used for the creation of unambiguous goto or break labels.<br/>
 	 * 
 	 * The mapping is gathered in {@link #jumpTable}.
 	 * If a return instruction with value is encountered, this.returns will be set true
@@ -2468,6 +2469,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376 2017-09-20
 
 	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
+	/**
+	 * Retrieves important structure information for the given {@link Root} {@code _root},
+	 * its elements, its called subroutines and its included Includables. Uses methods
+	 * {@link #checkElementInformation(Element)} and {@link #registerIncludedRoots(Root, SortedMap)}<br>
+	 * Overwrites the following (internal!) fields:
+	 * <ul>
+	 * <li>{@link #hasEmptyInput}, use {@link #hasEmptyInput(Root)} for test</li>
+	 * <li>{@link #hasInput}, use {@link #hasInput(Root)} for test</li>
+	 * <li>{@link #hasOutput}, use {@link #hasOutput(Root)} for test</li>
+	 * </ul>
+	 * Updates at least the following fields:
+	 * <ul>
+	 * <li>{@link #declarationCommentMap} (may add entries)</li>
+	 * <li>{@link #includeMap} (may add entries)</li>
+	 * <li>{@link #rootsWithInput} (may add entries)</li>
+	 * <li>{@link #rootsWithEmptyInput} (may add entries)</li>
+	 * <li>{@link #rootsWithOutput} (may add entries)</li>
+	 * <li>{@link #hasParallels} towards {@code true}</li>
+	 * <li>{@link #hasTryBlocks} towards {@code true}</li>
+	 * <li>{@link #usesFileAPI} towards {@code true}</li>
+	 * </ul>
+	 * Subclasses might affect further own fields.
+	 * @param _root
+	 */
 	private final void gatherElementInformationRoot(Root _root)
 	{
 		hasOutput = hasInput = hasEmptyInput = false;
@@ -2508,7 +2533,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * on any kind of element. Is guaranteed to be called on every single
 	 * element of the diagram before code export is started.
 	 * Must not be recursive! 
-	 * @param _ele - the currently inpected element
+	 * @param _ele - the currently inspected element
 	 * @return whether the traversal is to be continued or not
 	 */
 	protected boolean checkElementInformation(Element _ele)
@@ -3370,6 +3395,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			alt.qTrue.parent = alt;
 			alt.parent = incl;
 			init.children.addElement(alt);
+			StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false));
+			if (doneDecls != null) {
+				this.declaredStuff.put(init.getSignatureString(false), doneDecls);
+			}
 			// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
 			generateCode(init, _indent, false);
 			this.includeInitialisation = false;
@@ -3771,10 +3800,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
 	 * the top-level diagram code has been created and generates and adds the code
 	 * sequences of the called subroutines in topologically sorted order.<br/>
-	 * Subroutines contained in {@code _suppressedRoots} are skipped.
+	 * Subroutines contained in {@code _suppressedRoots} are skipped.<br/>
+	 * Side effects: {@link #subroutines} will be cleared.
 	 * @param _suppressedRoots - Roots not to be generated among the subroutines or null
 	 * @param _publicRoots - Roots to be marked as public if possible
-	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
+	 * @return the entire code for this {@code Root} including the subroutine diagrams
+	 * as one string (with newlines)
 	 * @see #sortTopologically(Hashtable)
 	 */
 	protected final String generateSubroutineCode(Set<Root> _suppressedRoots, Vector<Root> _publicRoots)
@@ -3790,7 +3821,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				this.generateInitRoutine(incl, subroutineIndent);
 			}
 		}
-		
+		// Note: The following routine call will clear this.subroutines
 		Vector<Root> roots = new Vector<Root>(sortTopologically(subroutines));
 		for (Root sub: roots)
 		{
@@ -4598,7 +4629,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			registerCalledSubroutines(root);
 			registerIncludedRoots(root, subroutines);
-			if (wasAdded)
+			if (wasAdded && subroutines.get(root).nReferingTo == 0)
 			{
 				// Remove it - if the routine is called elsewhere then it will reappear
 				subroutines.remove(root);
@@ -4619,7 +4650,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			registerCalledSubroutines(root);
 			this.registerIncludedRoots(root, includes);
-			if (wasAdded)
+			if (wasAdded && subroutines.get(root).nReferingTo == 0)
 			{
 				subroutines.remove(root);
 			}
@@ -4691,6 +4722,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					}
 				}
 			}
+			// Note: this.subroutines is likely to be consumed by method generateModule()!
 			_someRootUsesFileAPI = generateModule(_entryPoints, this.subroutines, _batchMode, null, null);
 		}
 		else {
@@ -4701,26 +4733,43 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				 * two alternatives with respect to subroutines among the entry points:
 				 * 1. We may simply put them into the common library (and thus skip them as
 				 *    separate entryPoints later on since they will be publicly available
-				 *    in the library then)
+				 *    in the library then; a possible consequence is that no further modules
+				 *    may remain),
 				 *    or
 				 * 2. We just let them be entry points such that they will form further
 				 *    libraries or UNITs
+				 * The chosen strategy is 1.
+				 * What about Includables among the entry points, though, if they are not
+				 * required by any other group member? In this case they will be skipped as
+				 * irrelevant.
 				 */
 				for (Root root: _entryPoints) {
+					/* Any entry point not having been substructure of other entry points
+					 * is made a public library member by putting it to the shared set.
+					 * After the loop there won't be any subroutine among the entry points
+					 * not also being in this.subroutines. 
+					 */
 					if (root.isSubroutine() && !subroutines.containsKey(root)) {
-						// We simply put the independent entry point to the common library
 						commonSubs.add(root);
 						subroutines.put(root, new SubTopoSortEntry(null));
 					}
 				}
 			}
-			for (Root root: this.sortTopologically(this.subroutines)) {
+			for (java.util.Map.Entry<Root,SubTopoSortEntry> entry: this.subroutines.entrySet()) {
+				System.out.println(entry.getKey() + "\t" + entry.getValue().toString());
+			}
+			// Now we produce a topologically sorted list of all public library members
+			// Since method sortTopologically() clears its argument map, we must work on a copy.
+			for (Root root: this.sortTopologically(new TreeMap<Root, SubTopoSortEntry>(this.subroutines))) {
 				if (commonSubs.contains(root)) {
 					sortedLibMembers.add(root);
+					this.subroutines.remove(root);
 				}
 			}
 			if (!commonSubs.isEmpty()) {
+				// Now we produce the library module from all shared stuff (if there is any).
 				this.isLibModule = true;
+				// Note: this.subroutines is likely to be consumed by method generateModule()!
 				_someRootUsesFileAPI = generateModule(sortedLibMembers, this.subroutines, _batchMode, null, null);
 				firstExport = false;
 			}
@@ -4763,19 +4812,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Generates the code for a module headed by the given {@link Root}s {@code _roots}.
 	 * Depending on whether this is for a _batch export or not, certain scissor lines
-	 * may be inserted among the produced routines or not.
+	 * may be inserted among the produced routines or not.<br/>
 	 * The module always provides a common topologically sorted subroutine bundle
-	 * (if subroutine involvement is intended).
+	 * (if subroutine involvement is intended).<br/>
+	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap}, {@link #rootsWithEmptyInput},
+	 * {@link #rootsWithInput}, {@link #rootsWithOutput} will be modified.
 	 * @param _roots - the top diagrams of the module
-	 * @param _dependencyTree - diagrams required by the given entry point(s)
+	 * @param _dependencyTree - diagrams required by the given entry point(s); NOTE:
+	 * this tree map is likely to be modified (even cleared) by this method!
 	 * @param _batchMode - true if the module export is done in batch mode, false otherwise
 	 * @param _entryPoints - list of diagrams meant to be public (exported) or null (if all {@code _roots} be public)
 	 * @param _libName - name of the module the {@code _libMembers} are to be found in
 	 * @return true if the module requires the File API
 	 */
 	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
-		boolean _someRootUsesFileAPI = false;
+		boolean someRootUsesFileAPI = false;
+		boolean someRootHasParallel = false;
+		boolean someRootHasTryBlcks = false;
 		boolean firstExport = true;
+		// These fields must be cleared lest they should contaminate the diagram analysis to be performed here 
 		this.includedRoots.clear();
 		this.includeMap.clear();
 		this.rootsWithEmptyInput.clear();
@@ -4795,11 +4850,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
 			this.hasParallels = false;
 			// END KGU#348 2017-09-25
+			// START KGU#815 2020-03-30: Reset the need for TRY mechanisms before each export
+			this.hasTryBlocks = false;
+			// END KGU#815 2020-03-30
 			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
 			this.usesFileAPI = false;
 			gatherElementInformationRoot(root);
 			// END KGU#311 2016-12-27#
-			if (this.usesFileAPI) { _someRootUsesFileAPI = true; }
+			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			if (this.hasParallels) { someRootHasParallel = true; }
+			if (this.hasTryBlocks) { someRootHasTryBlcks = true; }
 
 			// START KGU#676 2019-03-13: Enh. #696 - Postpone code generation until we have all subroutine information
 			//generateCode(root, "");
@@ -4831,8 +4891,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						sub.specialRoutinePool = routinePool;
 					}
 					// END KGU#676 2020-03-15
-					// FIXME to exclude library routines from analysis might break Jump relations
-					gatherElementInformationRoot(sub);
+					else if (!_roots.contains(sub)) {	// Is this check redundant?
+						// FIXME to exclude library routines from analysis might break Jump relations
+						gatherElementInformationRoot(sub);
+					}
 				}
 				else {
 					// The entry point obviously refers to some library subroutine
@@ -4840,13 +4902,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 				// Remove possible includables from the dependencyTree now
 				if (sub.isInclude()) {
+					// ATTENTION: We modify the collection we are iterating along!
 					SubTopoSortEntry entry = _dependencyTree.remove(sub);
 					// If the Includable is among the entry points then ensure its export in the correct way
+					// (According to the strategy in generatePartitionedCode() this should only happen in batch mode)
 					if (_roots.contains(sub) && !this.includeMap.containsKey(sub)) {
 						this.includeMap.put(sub, entry);
 					}
 				}
 			}
+			// Note: the following instruction clears this.includeMap!
 			includedRoots = sortTopologically(includeMap);
 			for (Root incl: includedRoots.toArray(new Root[]{})) {
 				if (/*_batchMode ||*/ importedLibRoots == null || !importedLibRoots.contains(incl)) {
@@ -4856,8 +4921,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						incl.specialRoutinePool = routinePool;
 					}
 					// END KGU#676 2020-03-15
-					// It is unlikely that this call can add dependencies to includedMap
-					gatherElementInformationRoot(incl);
+					if (!_roots.contains(incl)) {
+						// This call might re-add dependencies to includedMap
+						gatherElementInformationRoot(incl);
+					}
 				}
 				else {
 					// The entry point obviously refers to some library includable
@@ -4870,7 +4937,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					_roots.remove(incl);
 				}
 			}
-			int subroutineLine = code.count();
+			//int subroutineLine = code.count();
 			firstExport = true;
 			
 			// In case of a library we fake a "top" includable which includes all real
@@ -4880,13 +4947,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				topRoot.setText(this.pureFilename);
 				topRoot.setComment(LIB_COMMENT);
 				topRoot.setInclude();
-				for (Root incl: this.includeMap.keySet()) {
+				for (Root incl: this.includedRoots) {
 					topRoot.addToIncludeList(incl);
 				}
 				_roots.insertElementAt(topRoot, 0);
 			}
 			
-			this.usesFileAPI = _someRootUsesFileAPI;
+			this.usesFileAPI = someRootUsesFileAPI;
 			
 			for (Root root: _roots) {
 				/* If importedLibRoots is null then we are creating the library module
@@ -4901,8 +4968,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					}
 					//generateCode(root, "", true);
 					if (firstExport) {
+						this.hasParallels = someRootHasParallel;
+						this.hasTryBlocks = someRootHasTryBlcks;
 						generateCode(root, "", _entryPoints == null || _entryPoints.contains(root));
-						subroutineLine = this.subroutineInsertionLine;	// FIXME!
 						firstExport = false;
 						if (!_batchMode) {
 							this.topLevel = false;
@@ -4914,20 +4982,29 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 			}
 			// The cached first subroutine insertion line will now be used.
-			this.subroutineInsertionLine = subroutineLine;		// FIXME we might need some nextRoutineLine
-			if (subroutines.isEmpty() && this.importedLibRoots != null) {
+			// FIXME: This dependency on the emptiness of this.subroutines is utterly obscure!
+			if (/*subroutines.isEmpty() &&*/ this.importedLibRoots != null) {
+				// We need the subroutines map for generateSubroutineCode()
 				subroutines = _dependencyTree;
 			}
 			if (!firstExport && !subroutines.isEmpty() && _batchMode) {
+				int subroutineLine = this.subroutineInsertionLine;	// FIXME!
 				insertScissorLine(false, null, subroutineLine);
 				// insertScissorLine() has incremented the line number, so restore it (routines are to be inserted before)
 				this.subroutineInsertionLine = subroutineLine;
 			}
+//			// FIXME DEBUG
+//			Root testSub = new Root();
+//			testSub.setText("BIGGEST_NONSENSE_EVER(MUMPITZ)");
+//			testSub.setProgram(false);
+//			testSub.setComment("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//			this.subroutines.put(testSub, new SubTopoSortEntry(null));
 			// Generate the code of all subroutines except the library members
+			// (Be aware that method generateSubroutineCode() clears this.subroutines.)
 			generateSubroutineCode(importedLibRoots, _entryPoints == null ? _roots : _entryPoints);
 		}
 		this.topLevel = true;
-		return _someRootUsesFileAPI;
+		return someRootUsesFileAPI;
 	} 
 	// END KGU#815 2020-03-13
 	

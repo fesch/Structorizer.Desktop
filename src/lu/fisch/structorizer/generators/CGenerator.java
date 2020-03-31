@@ -1012,8 +1012,23 @@ public class CGenerator extends Generator {
 		if (_type.isRecord()) {
 			addCode("struct " + _type.typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
-						indentPlus1, _asComment);
+				// START KGU#837 2020-03-30: Inconsistent (not recursive) approach to place an array length correctly
+				//addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+				//		indentPlus1, _asComment);
+				TypeMapEntry compType = compEntry.getValue();
+				String transType = transformTypeFromEntry(compType, _type).trim();
+				int posBrack0 = -1, posBrack1 = -1;
+				String bracks = "";
+				if (compType.isArray() && transType != null
+						&& !this.arrayBracketsAtTypeName()
+						&& (posBrack0 = transType.indexOf("[")) > 0
+						&& (posBrack1 = transType.lastIndexOf("]")) > posBrack0
+						&& posBrack1 + 1 == transType.length()) {
+					bracks = transType.substring(posBrack0, posBrack1+1);
+					transType = transType.substring(0, posBrack0);
+				}
+				addCode(transType + "\t" + compEntry.getKey() + bracks + ";", indentPlus1, _asComment);
+				// END KGU#837 2020-03-30
 			}
 			addCode("};", _indent, _asComment);
 		}

@@ -89,7 +89,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-21      Enh. #739: enum type inference for FOR-IN loops
  *      Kay Gürtzig         2019-11-29      Bugfix 787: multiple global type definitions (as many times as includables involved)
  *      Kay Gürtzig         2019-02-15      Issue #814: Unidentified parameter type marker changed: {type?} --> ???
- *      Kay Gürtzig         2020-03-17/22   Enh. #828: Modification in generatePreamble()
+ *      Kay Gürtzig         2020-03-17/30   Enh. #828: Modification in generatePreamble(), insertion lines
+ *                                          corrected
  *
  ******************************************************************************************************
  *
@@ -1752,6 +1753,9 @@ public class PasGenerator extends Generator
 			// END KGU#376 2017-09-21
 		}
 		else {
+			if (code.count() == subroutineInsertionLine) {
+				code.add("");	// Make sure the subroutines are inserted before library entry points
+			}
 			libraryInsertionLine = code.count();
 			addSepaLine();
 			code.add(_indent + "BEGIN");
@@ -1966,7 +1970,7 @@ public class PasGenerator extends Generator
 						else {
 							generateRecordInit(constEntry.getKey(), expr, "", true, false, constType);
 						}
-						generatedInit = code.subSequence(lineNo, code.count());						
+						generatedInit = code.subSequence(lineNo, code.count());
 						code.remove(lineNo, code.count());
 					}
 					else {
@@ -2217,6 +2221,11 @@ public class PasGenerator extends Generator
 		}
 		// START KGU#376 2017-09-21: Enh. #389
 		else if (_root.isInclude()) {
+			// START KGU#815 2020-03-30: Enh. #828
+			if (topLevel) {
+				this.appendGlobalInitialisations(_indent + this.getIndent());
+			}
+			// END KGU#815 2020-03-30
 			code.add(_indent + "END.");
 		}
 		// END KGU#376 2017-09-12
