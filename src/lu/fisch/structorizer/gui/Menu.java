@@ -111,6 +111,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-30      KGU#736 Precaution against newlines in tooltips
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2020-01-20      Enh. #801: Messages and a new menu item for offline help support
+ *      Kay Gürtzig     2020-03-03      Enh. #440: New export menu entries for PapDesigner export
  *      Kay Gürtzig     2020-03-29      Issue #841: New message error20_3
  *
  ******************************************************************************************************
@@ -188,6 +189,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.getIcon(88));
 	// END KGU#486 2018-01-18
+	// START KGU#396 2020-03-03: Enh. #440
+	protected final JMenu menuFileExportPap = new JMenu("PapDesigner");
+	protected final JMenuItem menuFileExportPap1966 = new JMenuItem("DIN 66001 / 1966 ...");
+	protected final JMenuItem menuFileExportPap1982 = new JMenuItem("DIN 66001 / 1982 ...");
+	// END KGU#396 2020-03-03
 	protected final JMenu menuFileExportCode = new JMenu("Code");
 	// START KGU#171 2016-04-01: Enh. #144 - new menu item for Favourite Code Export
 	protected static final LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
@@ -945,6 +951,22 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				});
 		// END KGU#171 2016-04-01
 
+		// START KGU#396 2020-03-03_: Enh. #440 Allow export as PAP
+		menuFileExport.add(menuFileExportPap);
+		try {
+			URL iconFile = this.getClass().getResource("icons/editor_pap.png");
+			if (iconFile != null) {
+				menuFileExportPap.setIcon(IconLoader.getIconImage("editor_pap.png"));
+			}
+		}
+		catch (Exception ex) {}
+		menuFileExportPap.add(menuFileExportPap1966);
+		menuFileExportPap1966.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPap(false); doButtons(); } } );
+		menuFileExportPap.add(menuFileExportPap1982);
+		menuFileExportPap1982.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPap(true); doButtons(); } } );
+		// END KGU#396 2020-03-03
+
+		
 		menuFile.addSeparator();
 
 		menuFile.add(menuFilePrint);
@@ -2190,11 +2212,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			ImageIcon icon = _defaultIcon;	// The default icon
 			if (plugin.icon != null && !plugin.icon.isEmpty()) {
 				try {
-					URL iconFile = this.getClass().getResource(plugin.icon);
+					URL iconFile = this.getClass().getResource("icons/" + plugin.icon);
 					if (iconFile != null) {
 						// START KGU#287 2018-02-07: Enh. #81 
 						//icon = new ImageIcon(this.getClass().getResource(plugin.icon));
-						icon = IconLoader.getIconImage(this.getClass().getResource(plugin.icon));
+						icon = IconLoader.getIconImage(plugin.icon);
 						// END KGU#287 2018-02-07
 					}
 				}

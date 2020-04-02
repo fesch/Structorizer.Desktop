@@ -39,7 +39,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-03-01      Enh. #691: Group renaming enabled (new context menu item + accelerator)
  *      Kay Gürtzig     2019-03-30      Enh. #720: tree node for dependent diagrams (includers/callers) added
- *      Kay Gürtzig     2020-03-16      Enh. #828: New popup menu for code export of a group (or diagram)
+ *      Kay Gürtzig     2020-03-16      Enh. #828: New popup submenu for code export of a group (or diagram)
+ *      Kay Gürtzig     2020-04-01      Enh. #440: Group export to PapDesigner inserted in popup menu
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -148,6 +150,11 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	// START KGU#815 2020-03-16: Enh. #828 group export
 	protected final JMenu popupIndexExport = new JMenu("Export diagram/group");
 	// END KGU#815 2020-03-16
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828 FIXME - to be converted into a plugin mechanism
+	protected final JMenu popupIndexExportPap = new JMenu("PapDesigner");
+	protected final JMenuItem popupIndexExportPap1966 = new JMenuItem("DIN 66001 / 1966 ...");
+	protected final JMenuItem popupIndexExportPap1982 = new JMenuItem("DIN 66001 / 1982 ...");
+	// END KGU#396/KGU#815 2020-04-01
 	// START KGU#626 2019-01-03: Enh. #657
 	protected final JMenuItem popupIndexGroup = new JMenuItem("Create group ...", IconLoader.getIcon(94));
 	protected final JMenuItem popupIndexExpandGroup = new JMenuItem("Expand group ...", IconLoader.getIcon(117));
@@ -587,9 +594,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 				ImageIcon icon = defaultIcon;	// The default icon
 				if (plugin.icon != null && !plugin.icon.isEmpty()) {
 					try {
-						URL iconFile = Menu.class.getResource(plugin.icon);
+						URL iconFile = IconLoader.class.getResource(plugin.icon);
 						if (iconFile != null) {
-							icon = IconLoader.getIconImage(iconFile);
+							icon = IconLoader.getIconImage(plugin.icon);
 						}
 					}
 					catch (Exception ex) {}
@@ -599,6 +606,28 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 				popupIndexExport.add(pluginItem);
 				pluginItem.addActionListener(exportListener);
 			}
+			// START KGU#396 2020-04-01: Enh. #440 Add PapDesigner export
+			ActionListener exportPapListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Object item = e.getSource();
+					if (item instanceof JMenuItem) {
+						arrangerIndexExportPap(item == popupIndexExportPap1982);
+					}
+				}
+			};
+			ImageIcon icon = defaultIcon;	// The default icon
+			URL iconFile = IconLoader.class.getResource("icons/editor_pap.png");
+			if (iconFile != null) {
+				icon = IconLoader.getIconImage("editor_pap.png");
+			}
+			popupIndexExportPap.setIcon(icon);
+			popupIndexExport.add(popupIndexExportPap);
+			popupIndexExportPap.add(popupIndexExportPap1966);
+			popupIndexExportPap.add(popupIndexExportPap1982);
+			popupIndexExportPap1966.addActionListener(exportPapListener);
+			popupIndexExportPap1982.addActionListener(exportPapListener);
+			// END KGU#396 2020-04-01
 		}
 		// END KGU#815 2020-03-16
 		
@@ -1061,7 +1090,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
 		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
 		if (selectedGroup != null) {
-			diagram.exportGroup(selectedGroup, generatorName);
+			diagram.exportGroup(selectedGroup, generatorName, null);
 			this.repaint();
 		}
 		else if (selectedRoot != null) {
@@ -1069,6 +1098,26 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#815 2020-03-16
+	
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828
+	/**
+	 * Provisional action method for PapDesigner export menu items
+	 * @param generatorName - class name of the selected code generator
+	 */
+	protected void arrangerIndexExportPap(boolean din66001_1982) {
+		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
+		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
+		if (selectedGroup != null) {
+			HashMap<String, Object> options = new HashMap<String, Object>();
+			options.put("din66001_1982", din66001_1982);
+			diagram.exportGroup(selectedGroup, "lu.fisch.structorizer.generators.PapGenerator", options);
+			this.repaint();
+		}
+		else if (selectedRoot != null) {
+			diagram.exportPap(selectedRoot, din66001_1982);
+		}
+	}
+	// END KGU#396/KGU#815 2020-04-01
 
 	// START KGU#626 2019-01-05: Enh. #657
 	protected void arrangerIndexInfo() {

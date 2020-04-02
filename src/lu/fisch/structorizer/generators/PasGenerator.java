@@ -510,17 +510,17 @@ public class PasGenerator extends Generator
 		// (lest neighbouring identifiers be glued to them on concatenating)
 		// The correct way would of course be to add blank tokens where needed
 		// but this seemed too expensive here.
-        tokens.replaceAll("==", "=");
-        tokens.replaceAll("!=","<>");
-        tokens.replaceAll("%"," mod ");
-        tokens.replaceAll("&&"," and");
-        tokens.replaceAll("||"," or ");
-        tokens.replaceAll("!"," not ");
-        tokens.replaceAll("&"," and");
-        tokens.replaceAll("|"," or ");
-        tokens.replaceAll("~"," not ");
-        tokens.replaceAll("<<"," shl ");
-        tokens.replaceAll(">>"," shr ");
+		tokens.replaceAll("==", "=");
+		tokens.replaceAll("!=","<>");
+		tokens.replaceAll("%"," mod ");
+		tokens.replaceAll("&&"," and ");
+		tokens.replaceAll("||"," or ");
+		tokens.replaceAll("!"," not ");
+		tokens.replaceAll("&"," and ");
+		tokens.replaceAll("|"," or ");
+		tokens.replaceAll("~"," not ");
+		tokens.replaceAll("<<"," shl ");
+		tokens.replaceAll(">>"," shr ");
 		tokens.replaceAll("<-", ":=");
 		// START KGU#311 2016-12-26: Enh. #314 - Support for File API
 		//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Bugfix #840 transform even for disabled elements
@@ -552,7 +552,6 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
-    
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
@@ -1574,7 +1573,6 @@ public class PasGenerator extends Generator
 			// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
 			if (topLevel)
 			{
-
 				addSepaLine();
 				code.add(_indent + "INTERFACE");
 				// START KGU#351 2017-02-26: Enh. #346

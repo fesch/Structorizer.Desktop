@@ -2865,8 +2865,8 @@ public class CGenerator extends Generator {
 		String indentBody = _indent;
 		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
 			// This is the initialization code for the library
-			addCode("static bool initDone_" + this.pureFilename + " = false;", _indent, false);
-			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			addCode("static bool initDone_" + this.getModuleName() + " = false;", _indent, false);
+			String cond = "if (!initDone_"  + this.getModuleName() + ")";
 			if (!this.optionBlockBraceNextLine()) {
 				addCode(cond + " {", _indent, false);
 			}

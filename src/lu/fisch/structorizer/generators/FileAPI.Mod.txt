@@ -31,31 +31,48 @@ IMPORT Files;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-03-25      First Issue
+ *      Kay Gürtzig     2020-04-01      First Issue (addressing enhancement requests #314 and #828)
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      Parts of the API are directly transformed by the PasGenerator. To replace function calls by
- *      procedure calls, however, is not possible in general. So we provide adapters for the fileRead
- *      functions here. 
+ *      2020-03-31 Kay Gürtzig
+ *      This is **not** a functional equivalent to the Structorizer API as the latter deals with text
+ *      files whereas the Oberon Files module we rely on here uses a binary file format. We could have
+ *      tried to write a functional adapter based on text files (and possibly will do some day, perhaps
+ *      taking the Oberon-07 modules Oberon and Texts into consideration), but this first prototype rather
+ *      provides a quick and dirty **similar** API on the surface based on binary files. It does no error
+ *      handling at all.
+ *      The function fileRead(fileNo: INTEGER): Object cannot be implemented sensibly under the limit-
+ *      ations mentioned above (unless we construct some wild workaround with a record type comprising
+ *      several pointers to dynamically assigned values of alternative data types, but then how to avert
+ *      storage lecks?). Module Texts might some day get us closer to the goal.
+ *      Likewise, function fileReadLine cannot sensibly work either as we have no clear concept of lines
+ *      in a binary file and we cannot actually return a string (i.e. an array of unspecified size) in
+ *      Oberon. Instead, we would have to implement a procedure with a character array as reference
+ *      argument that might be too small for the read line as well.)
  *
  ******************************************************************************************************}
 
 CONST
 	MAX_FILES = 20;
+	MAX_BUF_LEN = 1024;
 
 TYPE
 	FileEntry = RECORD
-		fileId: LONGINT;
-		handle: Files.File;
-		rider: Files.Rider;	(* We allow only one Rider per file *)
+		fileId:	LONGINT;
+		handle:	Files.File;
+		write:	BOOL;	(* TRUE is opened for writing *)
+		rider:	Files.Rider;	(* We allow only one Rider per file *)
 	END;
-
+	
+	Object = RECORD
+		line: POINTER TO ARRAY OF CHAR;	(* Just a read line as dummy *)
+	END;
+	
 VAR
 	nOpenFiles: INTEGER;	(* Current number of open files = effective length of the fileMap *)
 	nextFileId: LONGINT;	(* Files numbers are uniquely assigned, starting at 1 *)
-	index: INTEGER;			(* loop index within the fileMap *)
 	fileMap: ARRAY MAX_FILES OF FileEntry;
 
 PROCEDURE getHandleIndex(fileId: LONGINT): INTEGER;
@@ -88,156 +105,411 @@ BEGIN
 END getHandleIndex;
 
 PROCEDURE fileOpen*(path: ARRAY OF CHAR): LONGINT;
-(*
- * Tries to open a text file with given filePath for reading. File must exist.
+(**
+ * Tries to open a file with given file path for reading. File must exist.
  * A NULL return value indicates failure.
- * @param filePath - the path of the file (may be absolute or relative to the current directory)
- * @return a valid file handle (> 0) on success or a (negative) error code or 0 otherwise 
+ * Parameter path - the path of the file (may be absolute or relative to the current directory).
+ * Returns a valid file id (> 0) on success or a (negative) error code or 0 otherwise.
  *)
 VAR
 	fileId: LONGINT;
 	file: Files.File;
+
 BEGIN
-	fileId := 0;
+	fileId := 0;	(* Return code for too many files *)
 	IF (nOpenFiles < MAX_FILES) THEN
 		file := Files.Old(path);
 		IF (file # NIL) THEN
 			Files.Register(file);	(* Necessary? *)
-			WITH fileMap[nOpenFiles] DO
-				fileId := nextFileId;
-				handle := file;
-				rider.eof := Files.Length(file) = 0;
-				rider.res := 0;
-			END;
+			fileMap[nOpenFiles].fileId := nextFileId;
+			fileMap[nOpenFiles].handle := file;
+			fileMap[nOpenFiles].write := FALSE;
+			Files.Set(fileMap[nOpenFiles].rider, file, 0); 
+			fileMap[nOpenFiles].rider.eof := Files.Length(file) = 0;
 			nextFileId := nextFileId + 1;
-			nOPenFiles := nOPenFiles + 1;
+			nOpenFiles := nOpenFiles + 1;
 		END
 		ELSE
-			fileId := -2;
+			fileId := -2;	(* Return code for failed opening attempt *)
 		END;
 	END;
 	RETURN fileId;
 END fileOpen;
 
 PROCEDURE fileCreate*(path: ARRAY OF CHAR): LONGINT;
-(*
- * Tries to create a text file with given filePath for writing. Is file exists then it will
+(**
+ * Tries to create a file with given file path for writing. If the file exists then it will
  * be cleared (without warning!).
- * @param filePath - the path of the file (may be absolute or relative to the current directory)
- * @return a valid file handle (> 0) on success or a (negative) error code otherwise  
+ * Parameter path - the path of the file (may be absolute or relative to the current directory).
+ * Returns a valid file id (> 0) on success or a (negative) error code or 0 otherwise.  
  *)
 VAR
-  structorizerFileAPI_buffer: ARRAY 1024 OF CHAR;
-  fileCreate: INTEGER;
+	fileId: LONGINT;
+	file: Files.File;
 
 BEGIN
-	fileId := 0;
+	fileId := 0;	(* Return code for too many files *)
 	IF (nOpenFiles < MAX_FILES) THEN
 		file := Files.New(path);
 		IF (file # NIL) THEN
 			Files.Register(file);	(* Necessary? *)
-			WITH fileMap[nOpenFiles] DO
-				fileId := nextFileId;
-				handle := file;
-				rider.eof := TRUE;
-				rider.res := 0;
-			END;
+			fileMap[nOpenFiles].fileId := nextFileId;
+			fileMap[nOpenFiles].handle := file;
+			fileMap[nOpenFiles].write := TRUE;
+			Files.Set(fileMap[nOpenFiles].rider, file, 0); 
+			fileMap[nOpenFiles].rider.eof := TRUE;
 			nextFileId := nextFileId + 1;
-			nOPenFiles := nOPenFiles + 1;
+			nOpenFiles := nOpenFiles + 1;
 		END
 		ELSE
-			fileId := -2;
+			fileId := -2;	(* Return code for failed creation attempt *)
 		END;
 	END;
 	RETURN fileId;
 END fileCreate;
 
 PROCEDURE fileAppend*(path: ARRAY OF CHAR): LONGINT;
+(**
+ * Tries to create or open a text file with given file path for writing. If the file exists
+ * then it will not be cleared but writing starts at previous end.
+ * Parameter path - the path of the file (may be absolute or relative to the current directory).
+ * Returns a valid file id (> 0) on success or a (negative) error code or 0 otherwise.
+ *)
+VAR
+	fileId: LONGINT;
+	file: Files.File;
 
 BEGIN
-	RETURN 0;
+	fileId := 0;
+	IF (nOpenFiles < MAX_FILES) THEN
+		file := Files.Old(path);
+		if (file = NIL) THEN
+			(* Try to create the file if it does not exist *)
+			file := Files.New(path);
+		END
+		IF (file # NIL) THEN
+			Files.Register(file);	(* Necessary? *)
+			fileMap[nOpenFiles].fileId := nextFileId;
+			fileMap[nOpenFiles].handle := file;
+			fileMap[nOpenFiles].write := TRUE;
+			(* Move to file end *)
+			Files.Set(fileMap[nOpenFiles].rider, file, Files.Length(file)-1); 
+			fileMap[nOpenFiles].rider.eof := TRUE;
+			nextFileId := nextFileId + 1;
+			nOpenFiles := nOpenFiles + 1;
+		END
+		ELSE
+			fileId := -2;	(* Return code for failed opening attempt *)
+		END;
+	END;
+	RETURN fileId;
 END fileAppend;
 
-PROCEDURE fileEOF*(handle: LONGINT): BOOLEAN;
+PROCEDURE fileEOF*(fileId: LONGINT): BOOLEAN;
+(**
+ * Checks whether the input file with given hFie handle is exhausted i.e. provides no
+ * readable content beyond the current reading position.
+ * Parameter fileNo - file handle as obtained by fileOpen before.
+ * Returns true iff end of file has been reached.
+ *)
 
+VAR
+	index: INTEGER;
+	
 BEGIN
-	RETURN FALSE;
+	index := getHandleIndex(fileId);
+	(* In case of index < 0 we should throw sort of exception *)
+	IF index >= 0 THEN
+		RETURN fileMap[index].rider.eof;
+	END;
+	RETURN TRUE;	(* In case of doubt or error EOF is quite a next-best answer *)
 END fileEOF;
 
-PROCEDURE fileRead*(handle: LONGINT): Object;
+PROCEDURE fileRead*(handle: LONGINT): POINTER TO Object;
+(**
+ * This Structorizer API function cannot be supported sensibly with Oberon module
+ * Files. (We might have to make use of the more complex modules Oberon and Texts.)
+ * So we just try to read a line from the file and return a pointer to a record
+ * containing this line or just NIL if the fileId was stale or the file was exhausted
+ * the reading attempt failed.
+ *)
+
+VAR
+	index: INTEGER;
+	pObj: POINTER TO Object;
 
 BEGIN
-	RETURN NIL;
+	pObj := NIL;
+	index := getHandleIndex(handle);
+	IF index >= 0 & ~fileMap[index].write THEN
+		NEW(pObj);
+		pObj.line := NIL;
+		IF ~ fileMap[index].rider.eof THEN
+			NEW(pObj.line, MAX_BUF_LEN);
+			Files.ReadString(fileMap[index].rider, pObj.line);
+		END;
+	END;
+	RETURN pObj;
 END fileRead;
 
-PROCEDURE fileReadChar*(handle: LONGINT): CHAR;
-
+PROCEDURE fileReadChar*(fileId: LONGINT): CHAR;
+(**
+ * Reads the next character from the text file given by file id fileId and returns it.
+ * Parameter fileId - file id as obtained by fileOpen before
+ * Returns the current character from the file or CHR(0).
+ *)
+VAR
+	index: INTEGER;
+	ch: CHAR;
+	b: SYSTEM.BYTE;
+	
 BEGIN
-	RETURN Chr(0);
+	ch := CHR(0);
+	index := getHandleIndex(fileId);
+	IF index >= 0 & ~fileMap[index].write & ~fileMap[index].rider.eof THEN
+		Files.Read(fileMap[index].rider, b);
+		ch := CHR(b);
+	END;
+	RETURN ch;
 END fileReadChar;
 
-PROCEDURE fileReadInt*(handle: LONGINT): INTEGER;
-
+PROCEDURE fileReadInt*(fileId: LONGINT): INTEGER;
+(**
+ * Reads the next integer value from the text file given by fileNo handle and returns it.
+ * Parameter fileId - file handle as obtained by fileOpen before
+ * Returns the current int number from file.
+ *)
+VAR
+	result: INTEGER;
+	index: INTEGER;
 BEGIN
-	RETURN 0;
+	result := 0;
+	index := getHandleIndex(fileId);
+	IF index >= 0 & ~fileMap[index].write & ~fileMap[index].rider.eof THEN
+		Files.ReadInt(fileMap[index].rider, result);
+	END;
+	RETURN result;
 END fileReadInt;
 
-PROCEDURE fileReadDouble*(handle: LONGINT): REAL;
-
+PROCEDURE fileReadDouble*(fileId: LONGINT): REAL;
+(*
+ * Reads the next floating-point value from the text file given by id fileId and
+ * returns it as double.
+ * Parameter fileId - file handle as obtained by fileOpen before
+ * Returns the current floating-point value from file input character sequence.
+ *)
+VAR
+	(* TODO: check and accomplish variable declarations *)
+	result: LONGREAL;
+	index: INTEGER;
+	hFile: FILE *;
 BEGIN
-	RETURN 0.0;
+	result := 0.0;
+	index := structorizerFileAPI_getHandleIndex(fileNo);
+	IF index >= 0 & ~fileMap[index].write & ~fileMap[index].rider.eof THEN
+		Files.ReadLReal(fileMap[index].rider, result);
+	END;
+	RETURN result;
 END fileReadDouble;
 
-PROCEDURE fileReadLine*(handle: LONGINT): ARRAY OF CHAR;
+PROCEDURE fileReadLine*(fileId: LONGINT): POINTER TO ARRAY OF CHAR;
+(**
+ * Reads the next text line (or the rest of the line), i.e. a character sequence
+ * up to a carriage return character (0DX) from the text file
+ * given by file id fileId and returns it.
+ * This is not actually equivalent to reading a line but it turns out to difficult
+ * to guess the newline coding in Oberon so we just read towards a CHR(0) byte.
+ * We will provide a pointer to a text buffer of certain maximum length here.
+ * Parameter fileId - file id as obtained by fileOpen before
+ * Returns the pointer to a text buffer with the current line from file or NIL
+ * (be aware of possible memory leaks if no garbage collector is implemented).
+ *)
 
+VAR
+	pResult: POINTER TO ARRAY OF CHAR;
+	index: INTEGER;
+	count: INTEGER;
+	byte: SYSTEM.BYTE;
+	eol: BOOLEAN;
+	
 BEGIN
-	RETURN "";
+	pResult := NIL;
+	count := 0;
+	byte := 0;
+	eol := FALSE;
+	index := getHandleIndex(fileId);
+	IF index >= 0 & ~fileMap[index].write & ~fileMap[index].rider.eof THEN
+		NEW(pResult, MAX_BUF_LEN);
+		(* We must leave one place in the array for the terminating 0 character *)
+		WHILE ~eol & count+1 <_MAX_BUF_LEN DO
+			Files.Read(fileMap[index].rider, byte);
+			IF ~fileMap[index].rider.eof THEN
+				pResult1[count] := CHR(byte);
+				eol := byte = 13;	(* Carriage Return *)
+			END
+			ELSE
+				eol := TRUE;
+				count := count - 1;	(* Compensate the increment below *)
+			END;
+			count := count + 1;
+		END;
+		pResult[count] := CHR(0);	(* Place the string terminator *)
+	END;
+	RETURN pResult;
 END fileReadLine;
 
-PROCEDURE fileWrite*(handle: LONGINT; value: ARRAY OF CHAR);
-
+PROCEDURE fileWrite*(fileId: LONGINT; str: ARRAY OF CHAR);
+(**
+ * Writes the given C-string str to the file given by argument fileId if it
+ * is associated to an open text output file.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter str - the string to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteString(fileMap[index].rider, str);
+	END;
 END fileWrite;
 
-PROCEDURE fileWriteChar*(handle: LONGINT; value: CHAR);
-
+PROCEDURE fileWriteChar*(fileId: LONGINT; value: CHAR);
+(**
+ * Writes the given character value to the file given by argument fileId if it
+ * is associated to an open text output file.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter value - the character to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.Write(fileMap[index].rider, ORD(value));
+	END;
 END fileWriteChar;
 
-PROCEDURE fileWriteInt*(handle: LONGINT; value: INTEGER);
-
+PROCEDURE fileWriteInt*(fileId: LONGINT; value: INTEGER);
+(**
+ * Writes the given value as character sequence to the file given by id fileId
+ * if the given handle is associated to an open text output file.
+ * Parameter fileId - file handle as obtained by fileCreate or fileAppend before
+ * Parameger value - the INTEGER value to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteInt(fileMap[index].rider, value);
+	END;
 END fileWriteInt;
 
-PROCEDURE fileWriteDouble*(handle: LONGINT; value: REAL);
-
+PROCEDURE fileWriteDouble*(fileId: LONGINT; value: REAL);
+(**
+ * Writes the given value as character sequence to the file given by id fileId
+ * if the given handle is associated to an open text output file.
+ * Parameter fileId - file handle as obtained by fileCreate or fileAppend before
+ * Parameter value - the REAL value to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteReal(fileMap[index].rider, value);
+	END;
 END fileWriteDouble;
 
-PROCEDURE fileWriteLine*(handle: LONGINT; value: ARRAY OF CHAR);
-
+PROCEDURE fileWriteLine*(fileId: LONGINT; str: ARRAY OF CHAR);
+(**
+ * Writes the given C-string str to the file given by argument fileId (and
+ * then adds a newline) if it is associated to an open text output file.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter str - the string to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteString(fileMap[index].rider, str);
+		Files.write(fileMap[index].rider, 13H);
+	END;
 END fileWriteLine;
 
-PROCEDURE fileWriteLineChar*(handle: LONGINT; value: CHAR);
-
+PROCEDURE fileWriteLineChar*(fileId: LONGINT; value: CHAR);
+(**
+ * Writes the given character value to the file given by argument fileId if it
+ * is associated to an open text output file. Adds a newline character.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter value - the character to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.Write(fileMap[index].rider, ORD(value));
+		Files.Write(fileMap[index].rider, 13);
+	END;
 END fileWriteChar;
 
-PROCEDURE fileWriteLineInt*(handle: LONGINT; value: INTEGER);
-
+PROCEDURE fileWriteLineInt*(fileId: LONGINT; value: INTEGER);
+(**
+ * Writes the given INTEGER value to the file given by argument fileId if it
+ * is associated to an open text output file. Adds a newline character.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter value - the integer to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteInt(fileMap[index].rider, value);
+		Files.Write(fileMap[index].rider, 13);
+	END;
 END fileWriteInt;
 
-PROCEDURE fileWriteLineDouble*(handle: LONGINT; value: REAL);
-
+PROCEDURE fileWriteLineDouble*(fileId: LONGINT; value: REAL);
+(**
+ * Writes the given REAL value to the file given by argument fileId if it
+ * is associated to an open text output file. Adds a newline character.
+ * Parameter fileId - file id as obtained by fileCreate or fileAppend before
+ * Parameter value - the integer to be written to file.
+ *)
+VAR
+	index: INTEGER;
 BEGIN
+	index := getHandleIndex(fileId);
+	IF index >= 0 & fileMap[index].write THEN
+		Files.WriteReal(fileMap[index].rider, value);
+		Files.Write(fileMap[index].rider, 13);
+	END;
 END fileWriteLineDouble;
 
-PROCEDURE fileClose*(handle: LONGINT);
-
+PROCEDURE fileClose*(fileId: LONGINT);
+(**
+ * Closes the file with given fileNo fileId. If fileNo is not associated with an open file
+ * then an IOException will be thrown.
+ * Parameter fileId - file id as obtained by fileOpen, fileCreate or fileAppend before
+ *)
+VAR
+	index: INTEGER;
+	i: INTEGER;
 BEGIN
-END fileWriteChar;
+	index := structorizerFileAPI_getHandleIndex(fileId);
+	IF index >= 0 THEN
+		Files.Close(fileMap[index].handle);
+		nOpenFiles := nOpenFiles - 1;
+		(* Defragment the array *)
+		FOR i := index TO nOpenFiles - 1 DO
+			fileMap[i] := fileMap[i + 1];
+		END;
+	END;
+END fileClose;
 
 BEGIN
 	(* Initialization *)

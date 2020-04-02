@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *      Kay Gürtzig             2019-10-18      Enh. #739: Support for enum types (debugged on 2019-11-30)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
+ *      Kay Gürtzig             2020-04-01      Enh. #348: Parallel code generation refined (result mechanism)
  *
  ******************************************************************************************************
  *
@@ -964,7 +965,7 @@ public class JavaGenerator extends CGenerator
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
 		int nThreads = _para.qs.size();
-		StringList[] asgnd = new StringList[nThreads];
+		StringList[] asgnd = new StringList[nThreads];	// assigned variables per thread
 		String suffix = Integer.toHexString(_para.hashCode());
 
 		appendComment(_para, _indent);
@@ -976,6 +977,7 @@ public class JavaGenerator extends CGenerator
 		addCode("try {", _indent, isDisabled);
 		addCode("ExecutorService pool = Executors.newFixedThreadPool(" + nThreads + ");", indentPlusOne, isDisabled);
 
+		boolean expectResults = false;
 		for (int i = 0; i < nThreads; i++) {
 			addCode("", _indent, isDisabled);
 			appendComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
@@ -984,6 +986,7 @@ public class JavaGenerator extends CGenerator
 			String worker = "Worker" + suffix + "_" + i;
 			StringList used = root.getUsedVarNames(sq, false, false).reverse();
 			asgnd[i] = root.getVarNames(sq, false, false).reverse();
+			if (!asgnd[i].isEmpty()) {expectResults = true;}
 			for (int v = 0; v < asgnd[i].count(); v++) {
 				used.removeAll(asgnd[i].get(v));
 			}
@@ -992,7 +995,10 @@ public class JavaGenerator extends CGenerator
 		}
 
 		addCode("", _indent, isDisabled);
-		addCode("Object[] results;", indentPlusOne, isDisabled);
+		String results = "results" + suffix;	// Name of the temporary results array
+		if (expectResults) {
+			addCode("Object[] " + results +";", indentPlusOne, isDisabled);
+		}
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo(routinePool);
@@ -1000,7 +1006,7 @@ public class JavaGenerator extends CGenerator
 		for (int i = 0; i < nThreads; i++) {
 			appendComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
 			String future = "future" + suffix + "_" + i;
-			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
+			addCode((asgnd[i].isEmpty() ? "" : results + " = ") + future + ".get();", indentPlusOne, isDisabled);
 			for (int v = 0; v < asgnd[i].count(); v++) {
 				String varName = asgnd[i].get(v);
 				TypeMapEntry typeEntry = typeMap.get(varName);
@@ -1011,7 +1017,7 @@ public class JavaGenerator extends CGenerator
 						typeSpec = typeSpecs.get(0);
 					}
 				}
-				addCode(varName + " = (" + typeSpec + ")(results[" + v + "]);", indentPlusOne, isDisabled);
+				addCode(varName + " = (" + typeSpec + ")(" + results + "[" + v + "]);", indentPlusOne, isDisabled);
 			}
 		}
 
@@ -1089,8 +1095,7 @@ public class JavaGenerator extends CGenerator
 				// Call method
 				addCode("public Object[] call() throws Exception {", indentPlusOne, isDisabled);
 				generateCode(sq, indentPlusTwo);
-				addCode ("Object[] results = new Object[]{" + setVars.concatenate(",") + "};", indentPlusTwo, isDisabled);
-				addCode("return results;", indentPlusTwo, isDisabled);
+				addCode ("return new Object[]{" + setVars.concatenate(",") + "};", indentPlusTwo, isDisabled);
 				addCode("}", indentPlusOne, isDisabled);
 				addCode("};", _indent, isDisabled);
 				i++;
@@ -1212,6 +1217,7 @@ public class JavaGenerator extends CGenerator
 			}
 			// END KGU#376 2017-09-28
 			addSepaLine();
+			// This is just pro forma, may be overwritten in generateFooter().
 			subroutineInsertionLine = code.count();	// default position for subroutines
 			subroutineIndent = _indent;
 		}
@@ -1220,8 +1226,11 @@ public class JavaGenerator extends CGenerator
 			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
-		if (_root.isProgram()) {
-			if (topLevel) {
+		// START KGU#815 2020-04-01: Enh. #828
+		//if (_root.isProgram()) {
+		if (topLevel && (_root.isProgram() || this.isLibraryModule())) {
+		// END KGU#815 2020-04-01
+			//if (topLevel) {
 				if (this.hasInput()) {
 					this.generatorIncludes.add("java.util.Scanner");
 				}
@@ -1242,12 +1251,18 @@ public class JavaGenerator extends CGenerator
 				// START KGU#446 2017-10-27: Enh. #441
 				this.includeInsertionLine = code.count();
 				// END KGU#446 2017-10-27
-			}
+			//}
 			appendBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			appendBlockHeading(_root, "public class " + _procName, _indent);
 
 			addSepaLine();
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #initialize_" + this.getModuleName() +"()}\n runs just one time.", "\n"),
+						indentPlus1, "/**", " * ", " */");
+				addCode("private static bool initDone_" + this.getModuleName() + " = false;", indentPlus1, false);
+				addSepaLine();
+			}
 			//insertComment("TODO Declare and initialise class variables here", this.getIndent());
 			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
@@ -1256,12 +1271,23 @@ public class JavaGenerator extends CGenerator
 			subroutineInsertionLine = code.count();
 			subroutineIndent = indentPlus1;
 			// END KGU#542 2019-11-17
+			// START KGU#815 2020-04-01: Enh. #828 Group export - the following is only for programs
+		}
+		if (_root.isProgram()) {
+			// END KGU#815 2020-04-01
 			code.add(indentPlus1 + "/**");
 			code.add(indentPlus1 + " * @param args");
 			code.add(indentPlus1 + " */");
 
 			appendBlockHeading(_root, "public static void main(String[] args)", indentPlus1);
 		}
+		// START KGU#815 2020-04-02: Enh. #828
+		else if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			this.includeInsertionLine = code.count();
+			appendBlockComment(StringList.explode("Initialisation method for this library class", "\n"), indentPlus1, "/**", " * ", " */");
+			appendBlockHeading(_root, "public static void initialize_" + this.getModuleName() + "()",  indentPlus1);
+		}
+		// END KGU#815 2020-04-02
 		else {
 			// START KGU#446 2018-01-21: Enh. #441
 			this.includeInsertionLine = code.count();
@@ -1279,8 +1305,9 @@ public class JavaGenerator extends CGenerator
 				// END KGU#140 2017-02-01
 			}
 			else {
-				_resultType = "void";		        	
+				_resultType = "void";
 			}
+			// Now we must generate as many delegation methods as there are optional arguments
 			while (minArgs <= _paramNames.count()) {
 			// END KGU#371 2019-03-07
 				appendBlockComment(_root.getComment(), indentPlus1, "/**", " * ", null);
@@ -1442,7 +1469,10 @@ public class JavaGenerator extends CGenerator
 		// END KGU#815/KGU#824 2020-03-19
 		
 		// Don't close class block if we haven't opened any
-		if (_root.isProgram())	// Should automatically be topLevel too
+		// START KGU#815 2020-04-01: Enh. #828 Group export
+		//if (_root.isProgram())	// Should automatically be topLevel too
+		if (topLevel &&  (_root.isProgram() || this.isLibraryModule()))
+		// END KGU#815 2020-04-01
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position
@@ -1486,9 +1516,45 @@ public class JavaGenerator extends CGenerator
 	 */
 	protected void appendGlobalInitialisationsLib(String _indent) {
 		// We simply call the global initialisation function of the library
-		addCode("initialize_" + this.libModuleName + "();", _indent, false);
+		addCode(this.libModuleName + ".initialize" + this.libModuleName + "();", _indent, false);
 	}
 
+	// START KGU#815/KGU#824/KGU#834 2020-03-26: Enh. #828, bugfix #826
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateBody(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		String indentBody = _indent;
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// This is the initialization code for the library
+			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			if (!this.optionBlockBraceNextLine()) {
+				addCode(cond + " {", _indent, false);
+			}
+			else {
+				addCode(cond, _indent, false);
+				addCode("{", _indent, false);
+			}
+			indentBody += this.getIndent();			
+		}
+		// END KGU#815/KGU#824 2020-03-20
+		
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		appendGlobalInitialisations(indentBody);
+		// END KGU#376 2017-09-26
+		
+		boolean done = super.generateBody(_root, indentBody);
+		
+		if (!indentBody.equals(_indent)) {
+			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
+			addCode("}", _indent, false);
+		}
+		return done;
+	}
+	// START KGU#815/KGU#824/KGU#834 2020-03-26
+	
 	// 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)

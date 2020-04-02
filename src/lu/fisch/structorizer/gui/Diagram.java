@@ -195,13 +195,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cached to the Ini instance when modified
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined file filter (StructorizerFilter) preferred in openNSD()
+ *      Kay Gürtzig     2020-03-03      Enh. #440: New method to support PapDesigner export
  *      Kay Gürtzig     2020-03-16/17   Enh. #828: New method to export an arrangement group
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
- *      2016.07.31 (Kay Gürtzig, #158)
+ *      2016-07-31 (Kay Gürtzig, #158)
  *      - It turned out that circular horizontal selection move is not sensible. It compromises usability
  *        rather than it helps. With active horizontal mouse scrolling the respective diagram margin is
  *        so quickly reached that a breathtaking rotation evolves - no positioning is possible. Even with
@@ -263,6 +264,8 @@ import javax.swing.text.Highlighter.HighlightPainter;
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
+
+import com.sun.tools.javac.jvm.Gen;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
@@ -712,7 +715,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (int i = 0; i < files.length; i++)
 					{
 						String filename = files[i].toString();
-						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArg() instead
+						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArr() instead
 						//String filenameLower = filename.toLowerCase();
 						//if(filenameLower.endsWith(".nsd"))
 						//{
@@ -6132,6 +6135,54 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	// START KGU#396 2020-03-03: Enh. #440 Specific export interface for PapDesigner
+	/**
+	 * Exports the current diagram (possibly with all referenced subdiagrams) as PAP
+	 * flowcharts compatible with PapDesigner.
+	 * @param din66001_1982 - whether the newer DIN 66001 (from 1982) is to be applied
+	 * (otherwise the obsolete standard version from 1966 will be adhered to)
+	 * @see #exportPap(Root, boolean)
+	 */
+	public void exportPap(boolean din66001_1982) {
+		exportPap(root, din66001_1982);
+	}
+	/**
+	 * Exports the given diagram {@code _root}  (possibly with all referenced subdiagrams)
+	 * as PAP flowchart compatible with PapDesigner
+	 * @param _root - the top level {@link Root} to be exported
+	 * @param din66001_1982 - whether the newer DIN 66001 (from 1982) is to be applied
+	 * (otherwise the obsolete standard version from 1966 will be adhered to)
+	 * #see {@link #exportPap(boolean)}
+	 */
+	public void exportPap(Root _root, boolean din66001_1982) {
+		try
+		{
+			Generator gen = new PapGenerator();
+			gen.setPluginOption("din66001_1982", din66001_1982);
+			pop.setVisible(false);	// Hide the current comment popup if visible
+			File exportDir =
+					gen.exportCode(_root,
+							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
+							NSDControl.getFrame(),
+							(Arranger.hasInstance() ? Arranger.getInstance() : null));
+			if (exportDir != null) {
+				this.lastCodeExportDir = exportDir;
+			}
+			// END KGU#654 2019-02-15/16
+		}
+		catch(Exception ex)
+		{
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
+			JOptionPane.showMessageDialog(this.getFrame(),
+					Menu.msgErrorUsingGenerator.getText().replace("%", PapGenerator.class.getSimpleName())+"\n" + message,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	// END KGU#396 2020-03-03
+
 
 	/*========================================
 	 * Import method for foreign diagrams
@@ -6851,9 +6902,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Export the group represented by the programming language associated to the generator {@code _generatorClassName}
 	 * @param group - The {@link Group} to be exported
-	 * @param generatorName - class name of the ganreator to be used
+	 * @param generatorName - class name of the generator to be used
+	 * @param extraOptions - a possible extra option map (handled like plugin options) or null
 	 */
-	public void exportGroup(Group group, String generatorName) {
+	public void exportGroup(Group group, String generatorName, Map<String, Object> extraOptions) {
 		pop.setVisible(false);	// Hide the current comment popup if visible (issue #143)
 		File groupFile = group.getFile();
 		File targetDir = lastCodeExportDir;
@@ -6879,6 +6931,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				options = new Vector<HashMap<String, String>>();
 			}
 			this.setPluginSpecificOptions(gen, generatorName, options);
+			// START KGU#396 2020-04-01: Temporary extra mechanism for #440
+			if (extraOptions != null) {
+				for (Map.Entry<String, Object> option: extraOptions.entrySet()) {
+					gen.setPluginOption(option.getKey(), option.getValue());
+				}
+			}
+			// END KGU#396 2020-04-01
 			
 			File exportDir = gen.exportCode(group.getSortedRoots(), groupName, 
 					targetDir,

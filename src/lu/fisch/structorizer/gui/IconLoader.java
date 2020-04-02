@@ -705,7 +705,7 @@ public class IconLoader {
 	 * @see #setScaleFactor(double)
 	 */
 	public static ImageIcon getIconImage(String fileName)
-	// START KGU#486 2018-02-06: Issue #4 new opportunity to scecify an extra factor
+	// START KGU#486 2018-02-06: Issue #4 new opportunity to specify an extra factor
 	{
 		return getIconImage(fileName, 1.0);
 	}

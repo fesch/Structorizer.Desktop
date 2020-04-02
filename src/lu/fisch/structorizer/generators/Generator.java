@@ -106,6 +106,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-03-23      Issue #840: Code to intercept data collection from disabled elements/
  *                                      subtrees armed despite of a potential conflict of aims.
  *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
+ *      Kay Gürtzig     2020-04-01      Enh. #440, #828: Support for Group export to PapGenerator
  *
  ******************************************************************************************************
  *
@@ -594,6 +595,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return false;
 	}
 	// EMD KGU#815 2020-03-17
+	
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828
+	/**
+	 * @return true if the target language accepts maximum 1 main per module
+	 */
+	protected boolean max1MainPerModule()
+	{
+		return true;
+	}
+	// END KGU#396/KGU#815 2020-04-01
 	
 	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
 	/**
@@ -2599,7 +2610,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return true;
 	}
 	// END KGU#236 2016-08-10
- 	
+
 	/**
 	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
@@ -3263,7 +3274,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 		}
 		if (_root.isInclude() && !thisDone) {
-			appendDefinitions(_root, _indent, this.varNames, true);				
+			appendDefinitions(_root, _indent, this.varNames, true);
 		}
 	}
 
@@ -3275,7 +3286,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
 	 */
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
-		// TODO To be overridden by subclasses
+		// To be overridden by subclasses
 	}
 
 	/**
@@ -4502,7 +4513,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				this.usesFileAPI = this.generatePartitionedCode(_roots, false);
 				
-				
 				BTextfile outp = new BTextfile(filename);
 				// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
 				//outp.rewrite();
@@ -4608,12 +4618,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		Vector<TreeMap<Root, SubTopoSortEntry>> inclTrees = new Vector<TreeMap<Root, SubTopoSortEntry>>();
 		boolean[] libUserFlags = new boolean[_entryPoints.size()];	// Registers which Roots refer to the library
 		HashSet<Root> commonSubs = new HashSet<Root>();
-		int nMains = 0;	// Count the mains
+		Vector<Integer> mainIndices = new Vector<Integer>();	// Collect the mains
 		int nRedundant = 0;
 		for (Root root: _entryPoints)
 		{
 			if (root.isProgram()) {
-				nMains++;
+				mainIndices.add(subTrees.size());
 			}
 			// START KGU#824 2020-03-15: Bugfix #836
 			/* For the export of archives we must consider subroutines and includes here too.
@@ -4689,28 +4699,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.subroutines = generalSubs;
 		// Now we will first export the library if necessary
 		boolean allowsMixed = allowsMixedModule();
-		boolean mayBeCombined =	//nMains == 0 ||	// FIXME: In this case we must ensure sound includable handling!
-				nMains == 1
+		boolean mayBeCombined =	!this.max1MainPerModule() && allowsMixed ||
+				mainIndices.size() == 1
 				&& (
 						allowsMixed
 						|| _entryPoints.size() == 1
 					)
 				|| !_batchMode && nRedundant + 1 == _entryPoints.size();
-//		if (mayBeCombined && !commonSubs.isEmpty()) {
-//			// We check whether there are entry points not covered by the involved routines
-//			for (int i = 0; i < _entryPoints.size() && mayBeCombined; i++) {
-//				Root root = _entryPoints.get(i);
-//				if (!root.isProgram() && !this.subroutines.containsKey(root)) {
-//					// This is a subroutine not required by any other entry point, so it commands an own module
-//					mayBeCombined = false;
-//				}
-//			}
-//		}
 		// In order to build the library or a stand-alone module, there are no external dependencies
 		this.importedLibRoots = null;
 		if (mayBeCombined) {
 			// Now we can put all diagrams together and generate a common module
-			if (!_batchMode && nMains == 1 && _entryPoints.size() > 1) {
+			if (!_batchMode && mainIndices.size() == 1 && _entryPoints.size() > 1) {
 				/* In case of group export (_batchMode = false) the main (if there is one) can
 				 * be made the only entry point, we just have to find it again first
 				 */
@@ -4722,13 +4722,32 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					}
 				}
 			}
+			// Specific mechanism for generators accepting more than 1 main per module
+			else if (mainIndices.size() > 1 && !this.max1MainPerModule()) {
+				// Put the main with the largest subroutine coverage first
+				int maxIx = mainIndices.firstElement();
+				for (int i = 1; i < mainIndices.size(); i++) {
+					int index = mainIndices.get(i);
+					if (subTrees.get(index).size() > subTrees.get(maxIx).size()) {
+						maxIx = index;
+					}
+				}
+				// Move the main with most requirements to top
+				Root main = _entryPoints.remove(maxIx);
+				_entryPoints.insertElementAt(main, 0);
+				// Now we must make sure that this.subroutines does not contain entry points
+				// (or the other way round). Order does not matter much for Generators of this kind
+				for (Root root: _entryPoints) {
+					this.subroutines.remove(root);
+				}
+			}
 			// Note: this.subroutines is likely to be consumed by method generateModule()!
 			_someRootUsesFileAPI = generateModule(_entryPoints, this.subroutines, _batchMode, null, null);
 		}
 		else {
 			// Create a topologically sorted list of library members
 			Vector<Root> sortedLibMembers = new Vector<Root>();
-			if (!allowsMixed || nMains == 0 && !_batchMode) {
+			if (!allowsMixed || mainIndices.isEmpty() && !_batchMode) {
 				/* In case the target language may not form a mixed module then we have
 				 * two alternatives with respect to subroutines among the entry points:
 				 * 1. We may simply put them into the common library (and thus skip them as
@@ -4755,9 +4774,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					}
 				}
 			}
-			for (java.util.Map.Entry<Root,SubTopoSortEntry> entry: this.subroutines.entrySet()) {
-				System.out.println(entry.getKey() + "\t" + entry.getValue().toString());
-			}
+//			for (java.util.Map.Entry<Root,SubTopoSortEntry> entry: this.subroutines.entrySet()) {
+//				System.out.println(entry.getKey() + "\t" + entry.getValue().toString());
+//			}
 			// Now we produce a topologically sorted list of all public library members
 			// Since method sortTopologically() clears its argument map, we must work on a copy.
 			for (Root root: this.sortTopologically(new TreeMap<Root, SubTopoSortEntry>(this.subroutines))) {

@@ -38,6 +38,7 @@
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2016-12-22      First Issue
+ *      Kay Gürtzig     2020-03-31      Several comments corrected
  *
  ******************************************************************************************************
  *
@@ -109,7 +110,7 @@ int fileOpen(char* filePath)
 }
 
 /**
- * Tries to create a text file with given filePath for writing. Is file exists then it will
+ * Tries to create a text file with given filePath for writing. If the file exists then it will
  * be cleared (without warning!).
  * @param filePath - the path of the file (may be absolute or relative to the current directory)
  * @return a valid file handle (> 0) on success or a (negative) error code otherwise
@@ -132,7 +133,7 @@ int fileCreate(char* filePath)
 /**
  * Tries to create or open a text file with given filePath for writing. If the file exists then
  * it will not be cleared but writing starts at previous end.
- * @param filePath - the path of the file (may be absolute or relative to the current directory
+ * @param filePath - the path of the file (may be absolute or relative to the current directory)
  * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */
 int fileAppend(char* filePath)
@@ -338,7 +339,7 @@ int fileReadChar(int fileNo)
  * If the file input stream was exhausted (was at end of file) or if the token at reading
  * was not interpretable as integral literal, then the program will be aborted with code EOF.
  * @param fileNo - file handle as obtained by fileOpen before
- * @return the current int number as interpreted from file input character sequence.
+ * @return the current int number as interpreted from the file input character sequence.
  */
 int fileReadInt(int fileNo)
 {
@@ -366,7 +367,7 @@ int fileReadInt(int fileNo)
  *  If the file input stream was exhausted (was at end of file) or if the token at reading
  * was not interpretable as double literal, then the program will be aborted with code EOF.
  * @param fileNo - file handle as obtained by fileOpen before
- * @return the current floating point-value from file input character sequence.
+ * @return the current floating-point value from the file input character sequence.
  */
 double fileReadDouble(int fileNo)
 {
