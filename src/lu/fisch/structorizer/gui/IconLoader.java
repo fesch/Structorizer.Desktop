@@ -76,6 +76,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-10      Enh. #657, #662/2: variant of generateIcon(Color) with insets
  *      Kay Gürtzig     2019-01-12      Enh. #622/3: 119_rearrange added
  *      Kay Gürtzig     2020-01-20      Enh. #801: 123_help_book added
+ *      Kay Gürtzig     2020-04-02      Issue #4 deprecated static field turtle removed, set the from field deprecated.
  *
  ******************************************************************************************************
  *
@@ -96,6 +97,7 @@ import lu.fisch.structorizer.locales.Locales;
 
 public class IconLoader {
 
+	@Deprecated
 	private static String from = new String("");
 
 	protected static double scaleFactor = 1;
@@ -425,12 +427,14 @@ public class IconLoader {
 //	public static ImageIcon ico115 = getIconImage(getURI(from+"icons/115_up.png"));
 //	// END KGU#213 2017-12-11
 
-	/**
-	 * This still holds the obsolete traditional turtle icon.
-	 * Use {@link #getIcon(int)} with argument 54 to obtain the topical tortoise. 
-	 */
-	@Deprecated 
-	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
+	// START KGU 2020-04-02: Eventually removed
+//	/**
+//	 * This still holds the obsolete traditional turtle icon.
+//	 * Use {@link #getIcon(int)} with argument 54 to obtain the topical tortoise. 
+//	 */
+//	@Deprecated 
+//	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
+	// END KGU 2020-04-02
 	
 	// START KGU#242 2016-09-05
 	public static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
@@ -686,7 +690,9 @@ public class IconLoader {
 		// Take advantage of the lazy initialization mechanism in getIcon(int) 
 		icons = null;
 
-		turtle = getIconImage(getURI(from + "icons/turtle.png"));
+		// START KGU 2020-04-02 Disabled now
+		//turtle = getIconImage(getURI(from + "icons/turtle.png"));
+		// END KGU 2020-04-02
 
 		// START KGU#242 2016-09-05
 		for (String key: icoLocales.keySet())
@@ -975,6 +981,7 @@ public class IconLoader {
 	 * @param _from - an absolute or relative file path to the parent directory of
 	 * the icons and icons_&lt;pixels&gt; folder(s).
 	 */
+	@Deprecated
 	public static void setFrom(String _from)
 	{
 		from = _from;

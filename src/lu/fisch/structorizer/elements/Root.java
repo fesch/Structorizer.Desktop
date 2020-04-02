@@ -3468,7 +3468,7 @@ public class Root extends Element {
     			analyse_15((Call)ele, _errors);
     		}
     		// CHECK: Correct usage of Jump, including return (#16) New!
-    		// + CHECK #13: Competetive return mechanisms
+    		// + CHECK #13: Competitive return mechanisms
     		else if (ele instanceof Jump)
     		{
     			analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
@@ -4309,12 +4309,12 @@ public class Root extends Element {
 							ls == sl.count()-1 && _isLastElement)))
 					)
 			{
-				//error = new DetectedError("An exit, leave or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
-				//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
 				if (isReturn) {
+					//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
 					addError(_errors, new DetectedError(errorMsg(Menu.error16_2, preReturn), ele), 16);
 				}
 				else {
+					//error = new DetectedError("An exit, leave, or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
 					addError(_errors, new DetectedError(errorMsg(Menu.error16_3, new String[]{preLeave, preExit}), ele), 16);
 				}
 			}

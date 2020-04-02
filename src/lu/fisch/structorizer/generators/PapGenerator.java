@@ -33,6 +33,7 @@ package lu.fisch.structorizer.generators;
  *      ------          ----            -----------
  *      Kay Gürtzig     2020-02-27      First Issue for Enhancement request #440
  *      Kay Gürtzig     2020-03-07      PapItem and PapElement classes integrated
+ *      Kay Gürtzig     2020-04-02      PapParallel fundamentally rewritten, provisional Jump mechanism implemented
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -287,13 +289,25 @@ public class PapGenerator extends Generator {
 		boolean anchor = false;
 		int row, col;
 
-		public PapFigure(int _row, int _column, Type paploopstart, String _text, PapFigure _assocWith)
+		/**
+		 * Creates a new PapFigure element, i.e. a node in the flowchart. Exports itself Via
+		 * {@link #generateCode(StringList, String, String)} into a .pap file text.
+		 * rows and columns, can be translated via # 
+		 * @param _row - the vertical coordinate
+		 * @param _column - the horizontal coordinate
+		 * @param _figureType - the {@link Type} of the figure
+		 * @param _text - the text content for the node (may contain newlines)
+		 * @param _assocWith - possibly another PapFigure as association partner (to be used among
+		 * {@link Type.PapLoopStart} and {@link Type.PapLoopEnd} figures. Automatically establishes
+		 * a symmetric relation if not {@code null}.
+		 */
+		public PapFigure(int _row, int _column, Type _figureType, String _text, PapFigure _assocWith)
 		{
 			super(_text);
 			row = _row;
 			col = _column;
-			type = paploopstart;
-			anchor = (paploopstart == Type.PapTitle);
+			type = _figureType;
+			anchor = (_figureType == Type.PapTitle);
 			if (_assocWith != null) {
 				_assocWith.idAssociate = this.getId();
 				this.idAssociate = _assocWith.getId();
@@ -312,6 +326,15 @@ public class PapGenerator extends Generator {
 			_code.add(indent2 + "<TEXT><![CDATA[" + this.text + "]]></TEXT>");
 			_code.add(indent1 + "</FIGURE>");
 			_code.add(_indent + "</ENTRY>");
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return this.getClass().getSimpleName() + "(" + this.getId() + ", " + this.type + ", [" + row + "," + col + "])";
 		}
 
 	}
@@ -366,13 +389,22 @@ public class PapGenerator extends Generator {
 			_code.add(_indent + "<CONNECTION FORMAT=\"" + String.format(Locale.US, "%.2f", this.format) + "\" ID=\"" + this.getId()
 			+ "\" FROM=\"" + this.from + "\" TO=\"" + this.to + "\" TEXT=\"" + this.text + "\" />");
 		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return this.getClass().getSimpleName() + "(" + from + " --> " + to + ")";
+		}
 	}
 	
 	// ============= Internal Helper Classes for Structorizer elements ===============
 	
 	/**
 	 * Base element conversion helper class, handles Instruction offsprings directly and
-	 * serves as inheritence root for more specific Element subclasses.
+	 * serves as inheritance root for more specific Element subclasses.
 	 * @author Kay Gürtzig
 	 */
 	private class PapElement {
@@ -406,6 +438,11 @@ public class PapGenerator extends Generator {
 					}
 				}
 			}
+			// START KGU#396 2020-04-02: Issue #440 Makeshift approach for Jump elements
+			else if (element instanceof Jump) {
+				height++;
+			}
+			// END KGU396 2020-04-02
 		}
 		
 		/** @return the number of occupied raster columns */
@@ -452,7 +489,39 @@ public class PapGenerator extends Generator {
 				papType = PapFigure.Type.PapModule;
 			}
 			else if (element instanceof Jump) {
-				// FIXME: EXIT node found - still no idea how to handle it! (Named connectors might help)
+				boolean isRegularReturn = false;
+				// FIXME: EXIT node found - Prepare a routing from this figure to the target figure!
+				// START KGU#496 2020-04-02: Enh. #440 Provisional approach
+				// As a first shot, we just build a dead end, i.e. a blind connector without exit link (ironically)
+				String label = CodeParser.getKeywordOrDefault("preLeave", "break");
+				if (!text.isEmpty()) {
+					// Not a default leave, check whether the line contains arguments
+					if (((Jump) element).isReturn()) {
+						label = CodeParser.getKeywordOrDefault("preReturn", "break");
+						Element pe = element.parent;
+						if (pe != null && pe instanceof Subqueue && pe.parent instanceof Root
+								&& ((Subqueue)pe).getElement(((Subqueue)pe).getSize()-1) == element) {
+							isRegularReturn = true;
+						}
+					}
+					else if (((Jump) element).isExit()) {
+						label = CodeParser.getKeywordOrDefault("preExit", "exit");
+					}
+					else if (((Jump) element).isThrow()) {
+						label = CodeParser.getKeywordOrDefault("preThrow", "throw");
+					}
+				}
+				PapFigure lastFigure = new PapFigure(row++, column0, PapFigure.Type.PapActivity, text.getText(), null);
+				firstId = lastFigure.getId();
+				figures.add(lastFigure);
+				lastFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);
+				figures.add(lastFigure);
+				connections.add(new PapConnection(firstId, lastFigure.getId(), label));
+				if (isRegularReturn) {
+					prevId = lastFigure.getId();
+				}
+				return new long[]{firstId, prevId};
+				// END KGU#496 2020-04-02
 			}
 			else if (element instanceof Instruction) {
 				StringList lines = element.getUnbrokenText();
@@ -505,6 +574,15 @@ public class PapGenerator extends Generator {
 				}
 			}
 			return new long[]{firstId, prevId};
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return this.getClass().getSimpleName() + "(" + element + ")";
 		}
 	}
 	
@@ -565,7 +643,9 @@ public class PapGenerator extends Generator {
 			// Generate the start node
 			lastFigure = new PapFigure(row++, column0, PapFigure.Type.PapEnd, "End", null);
 			figures.add(lastFigure);
-			connections.add(new PapConnection(idPair[1], lastFigure.getId()));
+			if (idPair[1] >= 0) {
+				connections.add(new PapConnection(idPair[1], lastFigure.getId()));
+			}
 			
 			return new long[]{prevId, lastFigure.getId()};
 		}
@@ -627,12 +707,10 @@ public class PapGenerator extends Generator {
 				if (firstId < 0) {
 					firstId = elemIds[0];
 				}
-				if (elemIds[1] >= 0) {
-					if (lastId >= 0) {
-						connections.add(new PapConnection(lastId, elemIds[0]));
-					}
-					lastId = elemIds[1];
+				if (elemIds[0] >= 0 && lastId >= 0) {
+					connections.add(new PapConnection(lastId, elemIds[0]));
 				}
+				lastId = elemIds[1];
 			}
 			return new long[] {firstId, lastId};
 		}
@@ -799,22 +877,26 @@ public class PapGenerator extends Generator {
 			PapFigure joinFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);
 			figures.add(joinFigure);
 			long lastId = joinFigure.getId();
-			if (colTrue < 0) {
-				// Set a bend below the TRUE branch
+			if (colTrue < 0 && idsTrue[1] >= 0) {
+				// Set a bend below the TRUE branch if the branch did not exit
 				figures.add(lastFigure = new PapFigure(row, column0 + colTrue, PapFigure.Type.PapConnector, "", null));
 				// Connect the lowest TRUE branch node with the lower left bend
 				connections.add(new PapConnection(idsTrue[1], lastFigure.getId()));
 				idsTrue[1] = lastFigure.getId();	// Cache the lower left bend id
 			}
-			if (colFalse > 0) {
-				// Set a bend below the FALSE branch
+			if (colFalse > 0 && idsFalse[1] >= 0) {
+				// Set a bend below the FALSE branch if the branch did not exit
 				figures.add(lastFigure = new PapFigure(row, column0 + colFalse, PapFigure.Type.PapConnector, "", null));
 				// Connect the lowest FALSE branch node with the lower right bend
 				connections.add(new PapConnection(idsFalse[1], lastFigure.getId()));
 				idsFalse[1] = lastFigure.getId();	// Cache the lower right bend id
 			}
-			connections.add(new PapConnection(idsTrue[1], lastId, colTrue == 0 && sequTrue == null ? "true" : ""));
-			connections.add(new PapConnection(idsFalse[1], lastId, colFalse == 0 && sequFalse == null ? "false" : ""));
+			if (idsTrue[1] >= 0) {
+				connections.add(new PapConnection(idsTrue[1], lastId, colTrue == 0 && sequTrue == null ? "true" : ""));
+			}
+			if (idsFalse[1] >= 0) {
+				connections.add(new PapConnection(idsFalse[1], lastId, colFalse == 0 && sequFalse == null ? "false" : ""));
+			}
 			return new long[]{firstId, lastId};
 		}
 		
@@ -966,16 +1048,21 @@ public class PapGenerator extends Generator {
 					branchIds[1] = firstFigure.getId();
 				}
 				if (i > 0) {
-					firstFigure = new PapFigure(row0+height-1 , column0 + colBranches[i], PapFigure.Type.PapConnector, "", null);
-					figures.add(firstFigure);
-					connections.add(new PapConnection(branchIds[1], firstFigure.getId()));				
-					connections.add(new PapConnection(firstFigure.getId(), lastFigure.getId()));
-					lastFigure = firstFigure;
+					if (branchIds[1] >= 0) {
+						// place a join connector beneath the branch
+						firstFigure = new PapFigure(row0+height-1 , column0 + colBranches[i], PapFigure.Type.PapConnector, "", null);
+						figures.add(firstFigure);
+						// The branch did not exit at end, so connect its end with the join connector
+						connections.add(new PapConnection(branchIds[1], firstFigure.getId()));
+						// Connect the join connector with its neighbour to the left
+						connections.add(new PapConnection(firstFigure.getId(), lastFigure.getId()));
+						lastFigure = firstFigure;
+					}
 				}
-				else {
+				else if (branchIds[1] >= 0) {
+					// Connect the first branch with the confluence connector if it did not jump off
 					connections.add(new PapConnection(branchIds[1], lastId));
 				}
-				
 			}
 			
 			return new long[] {firstId, lastId};
@@ -1102,7 +1189,10 @@ public class PapGenerator extends Generator {
 				// Connect the loop control items with the loop body or bridge it if empty.
 				if (idsBody[0] >= 0) {
 					connections.add(new PapConnection(firstId, idsBody[0]));
-					connections.add(new PapConnection(idsBody[1], lastId));
+					// Connect the body's bottom with the loop end node if the body did not exit
+					if (idsBody[1] >= 0) {
+						connections.add(new PapConnection(idsBody[1], lastId));
+					}
 				}
 				else {
 					connections.add(new PapConnection(firstId, lastId));
@@ -1129,7 +1219,10 @@ public class PapGenerator extends Generator {
 				lastFigure = new PapFigure(row, column0, PapFigure.Type.PapCondition, text, null);
 				figures.add(lastFigure);
 				lastId = lastFigure.getId();
-				connections.add(new PapConnection(idsBody[1], lastId));
+				// Connect the body's bottom with the connector if the body did not jump off
+				if (idsBody[1] >= 0) {
+					connections.add(new PapConnection(idsBody[1], lastId));
+				}
 				
 				// Place the comment if necessary
 				if (!comment.isEmpty()) {
@@ -1184,7 +1277,10 @@ public class PapGenerator extends Generator {
 				// Create the backlink
 				firstFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);	// below body
 				figures.add(firstFigure);
-				connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				// Connect the body's bottom with the connector if the body did not jump off
+				if (idsBody[1] >= 0) {
+					connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				}
 				idsBody[1] = firstFigure.getId();
 				firstFigure = new PapFigure(row, column0 + colBypassLeft, PapFigure.Type.PapConnector, "", null);	// bottom left
 				figures.add(firstFigure);
@@ -1255,7 +1351,10 @@ public class PapGenerator extends Generator {
 				// Add the incrementation
 				firstFigure = new PapFigure(row++, column0, PapFigure.Type.PapActivity, increment, null);	// below body
 				figures.add(firstFigure);
-				connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				// Connect the body's bottom with the connector if the body did not jump off
+				if (idsBody[1] >= 0) {
+					connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				}
 				idsBody[1] = firstFigure.getId();
 				
 				// Create the backlink
@@ -1309,7 +1408,10 @@ public class PapGenerator extends Generator {
 				// Create the backlink
 				firstFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);	// below body
 				figures.add(firstFigure);
-				connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				// Connect the body's bottom with the connector if the body did not jump off
+				if (idsBody[1] >= 0) {
+					connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
+				}
 				idsBody[1] = firstFigure.getId();
 				firstFigure = new PapFigure(row, column0 + colBypassLeft, PapFigure.Type.PapConnector, "", null);	// bottom left
 				figures.add(firstFigure);
@@ -1336,34 +1438,59 @@ public class PapGenerator extends Generator {
 	private class PapParallel extends PapElement {
 
 		private ArrayList<PapSequence> branches = new ArrayList<PapSequence>();
+		private int[] branchCols = null;	// relative column displacements of the branch anchors
 
 		/**
 		 * Creates a new PapParallel object from the given {@link Parallel} element {@code para}.
 		 * @param para
 		 */
 		public PapParallel(Parallel para) {
+			
 			// FIXME: For the time being there is no support for Parallel element in PapDesigner
 			super(para);
-			height++;
+			/* We will place the branches side by side and create a distributor connector above them
+			 * since the import interface obviously does not reject it though it can't be produced
+			 * manually via the GUI.
+			 * So the total width will be the sum of the widths of the branches.
+			 * We will then need three extra rows
+			 * 1. for the horizontal distribution to the branches;
+			 * 2. for rejoining the branches
+			 * 3. for the loop end figure
+			 */
+			height++;	// This is for the loop end figure
+			branchCols = new int[para.qs.size()];
+			int maxBranchHeight = 0;
+			int totalWidth = 0;
 			for (int i = 0; i < para.qs.size(); i++) {
 				PapSequence sequ = new PapSequence(para.qs.get(i));
 				branches.add(sequ);
-				left = Math.max(left, sequ.left);
-				right = Math.max(right, sequ.right);
-				// We'll insert a comment before each "branch"
-				height += sequ.getHeight() + 1;
+				branchCols[i] = totalWidth + sequ.left;
+				totalWidth += sequ.getWidth();
+				maxBranchHeight = Math.max(maxBranchHeight, sequ.getHeight());
 			}
-			if (right < 1) right++;	// For the comments
+			if (branchCols.length > 1) {
+				left = (totalWidth-1) / 2;
+				height += maxBranchHeight + 2;
+			}
+			else {
+				left = branches.get(0).left;
+			}
+			right = Math.max(right, totalWidth - left - 1);
+			for (int i = 0; i < branchCols.length; i++) {
+				branchCols[i] -= left;
+			}
 		}
 
 		@Override
 		public int setAxisTop(int row, int column)
 		{
 			int bottom = super.setAxisTop(row, column);
-			int currRow = row0 + 2;
+			row ++;
+			if (branchCols.length > 1) {
+				row ++;
+			}
 			for (int i = 0; i < branches.size(); i++) {
-				branches.get(i).setAxisTop(currRow, column);
-				currRow += branches.get(i).getHeight() + 1;
+				branches.get(i).setAxisTop(row, column + branchCols[i]);
 			}
 			return bottom;
 		}
@@ -1371,45 +1498,93 @@ public class PapGenerator extends Generator {
 		@Override
 		public long[] generateItems(List<PapFigure> figures, List<PapConnection> connections)
 		{
-			// FIXME: This is only a poor serializing workaround!
-			int row = row0;
+			// FIXME: We do something here that is not supported by the PapDesigner GUI!!
+			int distRow = row0 + 1;
+			int joinRow = row0 + height - 2;
+			boolean moreThan1 = branchCols.length > 1;
+			long[] distIds = new long[branchCols.length];
+			long[] joinIds = new long[branchCols.length];
 			
 			String comment = element.getComment().getText().trim();
 
-			PapFigure figure = new PapFigure(row, column0, PapFigure.Type.PapLoopStart,
+			PapFigure figure = new PapFigure(row0, column0, PapFigure.Type.PapLoopStart,
 					("(=== START PARALLEL SECTION ===)"), null);
 			figures.add(figure);
 			PapFigure firstFigure = figure;
 			long firstId = figure.getId();
-			long lastId = firstId;
+			figure = new PapFigure(row0 + height-1, column0, PapFigure.Type.PapLoopEnd,
+					"true (=== END PARALLEL SECTION ===)", firstFigure);
+			figures.add(figure);
+			long lastId = figure.getId();
 			
 			// Place the comment at top 
 			if (!comment.isEmpty()) {
-				figures.add(new PapFigure(row, column0 + 1, PapFigure.Type.PapComment, comment, null));
+				figures.add(new PapFigure(row0, column0 + 1, PapFigure.Type.PapComment, comment, null));
 			}
-			row++;
+			
+			// Generate the distribution and junction networks
+			if (moreThan1) {
+				// Distributor node
+				figures.add(figure = new PapFigure(distRow, column0, PapFigure.Type.PapConnector, "", null));
+				long distId = figure.getId();
+				connections.add(new PapConnection(firstId, distId));
+				// Join node
+				figures.add(figure = new PapFigure(joinRow, column0, PapFigure.Type.PapConnector, "", null));
+				long joinId = figure.getId();
+				connections.add(new PapConnection(joinId, lastId));
+				
+				for (int i = 0; i < branchCols.length; i++) {
+					int colOffset = branchCols[i];
+					if (colOffset == 0) {
+						distIds[i] = distId;
+						joinIds[i] = joinId;
+					}
+					else {
+						figures.add(figure = new PapFigure(distRow, column0 + colOffset, PapFigure.Type.PapConnector, "", null));
+						distIds[i] = figure.getId();
+						figures.add(figure = new PapFigure(joinRow, column0 + colOffset, PapFigure.Type.PapConnector, "", null));
+						joinIds[i] = figure.getId();
+					}
+					if (i > 0) {
+						if (colOffset > 0 && branchCols[i-1] >= 0) {
+							connections.add(new PapConnection(distIds[i-1], distIds[i]));
+							connections.add(new PapConnection(joinIds[i], joinIds[i-1]));
+						}
+						else if (branchCols[i-1] < 0 && colOffset <= 0) {
+							connections.add(new PapConnection(distIds[i], distIds[i-1]));
+							connections.add(new PapConnection(joinIds[i-1], joinIds[i]));
+						}
+						else {
+							// the neighbouring branches are at either side of the central axis
+							connections.add(new PapConnection(distId, distIds[i-1]));
+							connections.add(new PapConnection(distId, distIds[i]));
+							connections.add(new PapConnection(joinIds[i-1], joinId));
+							connections.add(new PapConnection(joinIds[i], joinId));
+						}
+					}
+				}
+			}
+			else if (branchCols.length == 1) {
+				distIds[0] = firstId;
+				joinIds[0] = lastId;
+			}
 			
 			// Generate the branches
 			for (int i = 0; i < branches.size(); i++) {
-				
-				figures.add(new PapFigure(row++, column0+1, PapFigure.Type.PapComment, "--- START BRANCH " + (i+1) + " ---" , null));
-				
 				PapSequence branch = branches.get(i);
 				long[] idsBranch = branch.generateItems(figures, connections);
 
-				row += branch.getHeight();
-				
 				if (idsBranch[0] >= 0) {
-					connections.add(new PapConnection(lastId, idsBranch[0]));
-					lastId = idsBranch[1];
+					connections.add(new PapConnection(distIds[i], idsBranch[0]));
+					if (idsBranch[1] >= 0) {
+						connections.add(new PapConnection(idsBranch[1], joinIds[i]));
+					}
 				}
+				else {
+					connections.add(new PapConnection(distIds[i], joinIds[i]));
+				}
+				
 			}
-			
-			figure = new PapFigure(row, column0, PapFigure.Type.PapLoopEnd,
-					"true (=== END PARALLEL SECTION ===)", firstFigure);
-			figures.add(figure);
-			connections.add(new PapConnection(lastId, figure.getId()));
-			lastId = figure.getId();
 
 			return new long[] {firstId, lastId};
 			
@@ -1486,7 +1661,9 @@ public class PapGenerator extends Generator {
 					"Exception\n" + element.getUnbrokenText().getLongString() + "\ncaught?", null);
 			figures.add(lastFigure);
 			lastId = lastFigure.getId();
-			connections.add(new PapConnection(sectionIds[1], lastId));
+			if (sectionIds[1] >= 0) {
+				connections.add(new PapConnection(sectionIds[1], lastId));
+			}
 			// Connector above the catch branch
 			PapFigure connector = new PapFigure(row++, column0 + colCatch, PapFigure.Type.PapConnector, "", null);
 			figures.add(connector);
@@ -1502,7 +1679,9 @@ public class PapGenerator extends Generator {
 			row += sections[1].getHeight();
 			// Connector below the catch branch
 			figures.add(connector = new PapFigure(row, column0 + colCatch, PapFigure.Type.PapConnector, "", null));
-			connections.add(new PapConnection(sectionIds[1], connector.getId()));
+			if (sectionIds[1] >= 0) {
+				connections.add(new PapConnection(sectionIds[1], connector.getId()));
+			}
 			// Confluence connector
 			figures.add(lastFigure = new PapFigure(row++, column0, PapFigure.Type.PapConnector, "", null));
 			connections.add(new PapConnection(connector.getId(), lastFigure.getId()));
@@ -1520,7 +1699,9 @@ public class PapGenerator extends Generator {
 			row += sections[2].getHeight();
 			lastFigure = new PapFigure(row, column0, PapFigure.Type.PapLoopEnd, "true (=== END TRY ===)", firstFigure);
 			figures.add(lastFigure);
-			connections.add(new PapConnection(sectionIds[1], lastFigure.getId()));
+			if (sectionIds[1] >= 0) {
+				connections.add(new PapConnection(sectionIds[1], lastFigure.getId()));
+			}
 			
 			return new long[] {firstId, lastFigure.getId()};
 		}	
