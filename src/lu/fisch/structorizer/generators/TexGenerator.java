@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
  *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
  *      Kay Gürtzig     2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürtzig     2020-04-03      Enh. #828: Configuration for group export
  *
  ******************************************************************************************************
  *
@@ -676,6 +677,12 @@ public class TexGenerator extends Generator {
 				}
 			}
 			// END KGU#483
+			
+			// START KGU#815 2020-04-03: Enh. #828 group export
+			this.libraryInsertionLine = code.count();
+			addSepaLine();
+			// END KGU#815 2020-04-03
+			
 			code.add("\\end{document}");
 		}
 		// END KGU#178 2016-07-20
@@ -743,16 +750,24 @@ public class TexGenerator extends Generator {
 	}
 	// END KGU#483 2018-01-02
 
-
-//	@Override - obsolete since 3.27
-//	public String[] getReservedWords() {
-//		return null;
-//	}
-//
-//	@Override
-//	public boolean isCaseSignificant() {
-//		return false;
-//	}
+	// START KGU#815 2020-04-03: Enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatesClass()
+	 */
+	@Override
+	protected boolean allowsMixedModule()
+	{
+		return true;
+	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#max1MainPerModule()
+	 */
+	@Override
+	protected boolean max1MainPerModule()
+	{
+		return false;
+	}
+	// END KGU#815 2020-04-03
 	
 }

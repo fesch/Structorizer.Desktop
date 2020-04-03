@@ -273,7 +273,7 @@ public class Jump extends Instruction {
 	 */
 	public static boolean isReturn(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
@@ -295,7 +295,7 @@ public class Jump extends Instruction {
 	 */
 	public static boolean isLeave(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
@@ -317,7 +317,7 @@ public class Jump extends Instruction {
 	 */
 	public static boolean isExit(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
@@ -342,7 +342,7 @@ public class Jump extends Instruction {
 	 */
 	public static boolean isThrow(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0);
 	}
 	/**

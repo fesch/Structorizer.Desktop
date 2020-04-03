@@ -130,6 +130,7 @@ import java.util.Map.Entry;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
@@ -457,6 +458,13 @@ public class JavaGenerator extends CGenerator
 	@Override
 	protected void transformFileAPITokens(StringList tokens)
 	{
+		// START KGU#815 2020-04-03: Enh. #828 group export
+		if (generatorIncludes.contains("lu.fisch.structorizer.generators." + FILE_API_CLASS_NAME)) {
+			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+				tokens.replaceAll(Executor.fileAPI_names[i], FILE_API_CLASS_NAME + "." + Executor.fileAPI_names[i]);
+			}
+		}
+		// END KGU#815 2020-04-03
 	}
 	// END KGU#311 2017-01-05
 
@@ -1256,13 +1264,15 @@ public class JavaGenerator extends CGenerator
 			appendBlockHeading(_root, "public class " + _procName, _indent);
 
 			addSepaLine();
-			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
+			// START KGU#815 2020-04-02: Enh. #828
 			if (topLevel && this.isLibraryModule() && _root.isInclude()) {
-				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #initialize_" + this.getModuleName() +"()}\n runs just one time.", "\n"),
+				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #" + this.getInitRoutineName(_root) +"()}\n runs just one time.", "\n"),
 						indentPlus1, "/**", " * ", " */");
-				addCode("private static bool initDone_" + this.getModuleName() + " = false;", indentPlus1, false);
+				addCode(this.makeStaticInitFlagDeclaration(_root), indentPlus1, false);
 				addSepaLine();
 			}
+			// END KGU#815 2020-04-02: Enh. #828
+			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", this.getIndent());
 			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
@@ -1285,7 +1295,7 @@ public class JavaGenerator extends CGenerator
 		else if (topLevel && this.isLibraryModule() && _root.isInclude()) {
 			this.includeInsertionLine = code.count();
 			appendBlockComment(StringList.explode("Initialisation method for this library class", "\n"), indentPlus1, "/**", " * ", " */");
-			appendBlockHeading(_root, "public static void initialize_" + this.getModuleName() + "()",  indentPlus1);
+			appendBlockHeading(_root, "public static void " + this.getInitRoutineName(_root) + "()",  indentPlus1);
 		}
 		// END KGU#815 2020-04-02
 		else {
@@ -1349,8 +1359,13 @@ public class JavaGenerator extends CGenerator
 			// END KGU#371 2019-03-97
 		}
 
-		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		appendGlobalInitialisations(indentPlus2);
+		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+		// START KGU#815 2020-03-27: Enh. #828 for library top level now done in generateBody()
+		//appendGlobalInitialisations(indentPlus2);
+		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
+			appendGlobalInitialisations(indentPlus2);
+		}
+		// END KGU#815 2020-03-27
 		// END KGU#376 2017-09-26
 
 		return indentPlus2;
@@ -1380,7 +1395,8 @@ public class JavaGenerator extends CGenerator
 	@Override
 	protected String getModifiers(Root _root, String _name) {
 		if (_root.isInclude()) {
-			return "private static ";
+			// FIXME In case of a library there might be external references (how can we know for sure?)
+			return (this.isLibraryModule() ? "public" : "private") + " static ";
 		}
 		return "";
 	}
@@ -1424,6 +1440,16 @@ public class JavaGenerator extends CGenerator
 		// END KGU#236 2016-12-22
 	}
 // END KGU#332 2017-01-30
+
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected String makeStaticInitFlagDeclaration(Root incl) {
+		return "private static boolean " + this.getInitFlagName(incl) + " = false;";
+	}
+	// END KGU#834 2020-03-26
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
@@ -1538,14 +1564,14 @@ public class JavaGenerator extends CGenerator
 				addCode("{", _indent, false);
 			}
 			indentBody += this.getIndent();			
+			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+			appendGlobalInitialisations(indentBody);
+			// END KGU#376 2017-09-26
 		}
 		// END KGU#815/KGU#824 2020-03-20
-		
-		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-		appendGlobalInitialisations(indentBody);
-		// END KGU#376 2017-09-26
-		
-		boolean done = super.generateBody(_root, indentBody);
+				
+		this.generateCode(_root.children, indentBody);
+		boolean done = true;
 		
 		if (!indentBody.equals(_indent)) {
 			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
@@ -1553,7 +1579,7 @@ public class JavaGenerator extends CGenerator
 		}
 		return done;
 	}
-	// START KGU#815/KGU#824/KGU#834 2020-03-26
+	// END KGU#815/KGU#824/KGU#834 2020-03-26
 	
 	// 
 	/* (non-Javadoc)

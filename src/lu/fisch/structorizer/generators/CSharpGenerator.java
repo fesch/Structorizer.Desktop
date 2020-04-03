@@ -1074,6 +1074,10 @@ public class CSharpGenerator extends CGenerator
 			}
 			else {
 				// Obviously it is the library initialization routine
+				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #initialize_" + this.getModuleName() +"()}\n runs just one time.", "\n"),
+						indentPlus1, "/**", " * ", " */");
+				addCode(this.makeStaticInitFlagDeclaration(_root), indentPlus1, false);
+				addSepaLine();
 				appendBlockHeading(_root, "public static void " + this.getInitRoutineName(_root) + "()", indentPlus1);
 			}
 			// END KGU#815 2020-03-26
@@ -1144,8 +1148,11 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-		// START KGU#815 2020-03-27: Enh. #828 now done in generateBody()
+		// START KGU#815 2020-03-27: Enh. #828 for library top level now done in generateBody()
 		//appendGlobalInitialisations(indentPlus2);
+		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
+			appendGlobalInitialisations(indentPlus2);
+		}
 		// END KGU#815 2020-03-27
 		// END KGU#376 2017-09-26
 
@@ -1189,7 +1196,7 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String getModifiers(Root _root, String _name) {
 		if (_root.isInclude()) {
-			return "private static ";
+			return (this.isLibraryModule() ? "public " : "private ") + "static ";
 		}
 		return "";
 	}
@@ -1230,6 +1237,53 @@ public class CSharpGenerator extends CGenerator
 		// END KGU#236 2016-12-22
 	}
 // END KGU#332 2017-01-30
+
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected String makeStaticInitFlagDeclaration(Root incl) {
+		return "private static boolean " + this.getInitFlagName(incl) + " = false;";
+	}
+	// END KGU#834 2020-03-26
+
+	// START KGU#815/KGU#824/KGU#834 2020-03-26: Enh. #828, bugfix #826
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateBody(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		String indentBody = _indent;
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// This is the initialization code for the library
+			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			if (!this.optionBlockBraceNextLine()) {
+				addCode(cond + " {", _indent, false);
+			}
+			else {
+				addCode(cond, _indent, false);
+				addCode("{", _indent, false);
+			}
+			indentBody += this.getIndent();			
+			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+			appendGlobalInitialisations(indentBody);
+			// END KGU#376 2017-09-26
+		}
+		// END KGU#815/KGU#824 2020-03-20
+		
+		
+		this.generateCode(_root.children, indentBody);
+		boolean done = true;
+		
+		if (!indentBody.equals(_indent)) {
+			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
+			addCode("}", _indent, false);
+		}
+		return done;
+	}
+	// END KGU#815/KGU#824/KGU#834 2020-03-26
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it

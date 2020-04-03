@@ -2673,7 +2673,7 @@ public class CGenerator extends Generator {
 
 	// START KGU#501 2018-02-22: Bugfix #517
 	/**
-	 * Returns modifiers to be placed in front of the declaration OF {@code _name} for the
+	 * Returns modifiers to be placed in front of the declaration of {@code _name} for the
 	 * diagram {@code _root}.<br/>
 	 * Method is intended to be overridden by sub-classes. If the result is non-empty then
 	 * it ought to be padded at the end.

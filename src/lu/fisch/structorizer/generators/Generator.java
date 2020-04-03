@@ -429,14 +429,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** Internal Flag for library module creation
 	 * @see #isLibraryModule() */
 	private boolean isLibModule = false;
+	/** Internal flag registering the placement of scissor lines */
+	private boolean isFilePartitioned = false;
 	/** @return true if the generator is generating a library module, false otherwise */
 	protected boolean isLibraryModule() {
 		return isLibModule;
 	}
 	// END KGU#815 2020-03-17
 	
-	/************ Abstract Methods *************/
+	/*=========== Logger initializer ============*/
+	
 	// START KGU#484 2018-03-22: Issue #463
+	/** @return the cached logger for this class (retrieves it if none is cached) */
 	protected Logger getLogger()
 	{
 		if (this.logger == null) {
@@ -445,6 +449,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return this.logger;
 	}
 	// END KGU#484 2018-03-22
+
+	/*=========== Abstract Methods ============*/
+	
 	/**
 	 * Should provide a string to be used as title for the export FileChooser
 	 * dialog, e.g. something like "Export Pascal Code ..."
@@ -579,6 +586,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract TryCatchSupportLevel getTryCatchLevel();
 	// END KGU#686 2019-0318
 
+	/*============= Configuration Methods ============*/
+
+	
 	// START KGU#815 2020-03-17: Enh. #828
 	/**
 	 * Overridable configuration method expressing the capability of the generator to
@@ -1476,6 +1486,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			line = line.substring(0, insPos) + " " + fileName + " "
 					+ line.substring(Math.min(insPos + insLen, sciLen));
 		}
+		this.isFilePartitioned = true;
 		return line;
 	}
 	// END KGU#815/KGU#824 2020-03-20
@@ -3263,6 +3274,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// END KGU#815/KGU#836 2020-03-18
 			// START KGU#834 2020-03-26: Give subclasses a chance to initialise a static flag
 			String flagDecl = this.makeStaticInitFlagDeclaration(incl);
+			// We cannot ask wasDefHandled(...) since the flag is not a registered variable
 			if (flagDecl != null) {
 				code.add(_indent + flagDecl);
 				this.setDefHandled(incl.getSignatureString(false), this.getInitFlagName(incl));
@@ -4418,6 +4430,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	public File exportCode(Vector<Root> _roots, String _fileName, File _proposedDirectory, Frame _frame, IRoutinePool _routinePool)
 	{
 		File exportDir = _proposedDirectory;
+		isFilePartitioned = false;
 
 		routinePool = _routinePool;
 		
@@ -4475,7 +4488,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 		if (file != null && file.exists())
 		{
-			int response = JOptionPane.showConfirmDialog (null,
+			int response = JOptionPane.showConfirmDialog (_frame,
 					"Overwrite existing file?","Confirm Overwrite",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE);
@@ -4531,6 +4544,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (this.usesFileAPI) {
 					copyFileAPIResources(filename);
 				}
+				
+				// START KGU#815 2020-04-03: Enh. #828 Want to inform the user that they have to cut the file
+				if (isFilePartitioned && _frame != null) {
+					JOptionPane.showMessageDialog(_frame,
+							"The generated text file consists of several modules.\nIt needs to be cut into separate code files at the lines looking like:\n"
+									+ this.commentSymbolLeft() + " " + SCISSOR_LINE_FULL + this.commentSymbolRight(),
+							"Export", JOptionPane.INFORMATION_MESSAGE);
+				}
 			}
 			catch (Exception e)
 			{
@@ -4542,14 +4563,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (message == null) {
 					message = e.getClass().getSimpleName();
 				}
-				JOptionPane.showMessageDialog(null,
+				JOptionPane.showMessageDialog(_frame,
 						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
 			// START KGU#178 2016-07-20: Enh. #160
 			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
 			{
-				JOptionPane.showMessageDialog(null,
+				JOptionPane.showMessageDialog(_frame,
 						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
 			}
@@ -4809,10 +4830,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (!commonSubs.contains(root) && subTrees.get(i) != null) {
 					if (!firstExport) {
 						// Mark a new module section in the file
-						addSepaLine();
 						// ======= 8< ===========================================================
-						this.appendComment(SCISSOR_LINE_FULL, "");
-						addSepaLine();
+						this.appendScissorLine(true, null);
 						// For the case this module needs a (different) module name
 						this.pureFilename = root.getMethodName();
 					}

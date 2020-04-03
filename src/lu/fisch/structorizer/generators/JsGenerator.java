@@ -36,6 +36,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-10-03      ... and improved (still not clean - we need a new recursive approach)
  *      Kay Gürtzig     2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *      Kay Gürtzig     2020-02-11      Bugfix #810 - multiple-input instruction export wasn't properly configured
+ *      Kay Gürtzig     2020-04-03      Enh. #828 - configuration and modifications for group export
  *
  ******************************************************************************************************
  *
@@ -173,6 +174,26 @@ public class JsGenerator extends CGenerator {
 	protected OverloadingLevel getOverloadingLevel() {
 		return OverloadingLevel.OL_DEFAULT_ARGUMENTS;	// Both overloading and default arguments (ES6/ES2015)
 	}
+
+	// START KGU#815 2020-04-03: Enh. #828 configuration for group export
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
+	 */
+	@Override
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#prepareGeneratorIncludeItem(java.lang.String)
+	 */
+	@Override
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return "./" + _includeName + ".js";
+	}
+	// END KGU#815 2020-04-03
 
 	/**
 	 * Generates code that decomposes an array initializer into a series of element assignments if there no
@@ -412,6 +433,11 @@ public class JsGenerator extends CGenerator {
 		currentRoot = _root;
 		if (topLevel)
 		{
+			// START KGU#815 2020-04-03: Enh. #828 group export
+			if (this.isLibraryModule()) {
+				appendScissorLine(true, this.pureFilename + ".js");
+			}
+			// END KGU#815 2020-04-03
 			code.add("<script>");
 		}
 		else {
@@ -464,7 +490,18 @@ public class JsGenerator extends CGenerator {
 		// END KGU#178 2016-07-20
 
 		appendComment(_root, _indent);
-		if (_root.isSubroutine()) {
+		// START KGU#815 2020-04-03: Enh. #828 group export
+		//if (_root.isSubroutine()) {
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// Obviously it is the library initialization routine
+			addSepaLine();
+			appendBlockComment(StringList.explode("Flag ensures that initialisation function " + this.getModuleName() +"() runs just one time.", "\n"),
+					_indent, this.commentSymbolLeft(),  this.commentSymbolLeft(), null);
+			addCode(this.makeStaticInitFlagDeclaration(_root), _indent, false);
+			addSepaLine();
+		}
+		if (_root.isSubroutine() || topLevel && this.isLibraryModule() && _root.isInclude()) {
+		// END KGU#815 2020-04-03
 			//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
 			String fnHeader = "function " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
@@ -472,16 +509,35 @@ public class JsGenerator extends CGenerator {
 				fnHeader += _paramNames.get(p);
 			}
 			fnHeader += ") {";
+			// START KGU#815 2020-03
+			if (this.isLibraryModule() || _public) {
+				fnHeader = "export " + fnHeader;
+			}
 			code.add(_indent + fnHeader);
 			_indent += this.getIndent();
 		}
 		
 		// START KGU#376 2017-09-26: Enh. #389 - insert the initialization code of the includables
-		appendGlobalInitialisations(_indent);
+		// START KGU#815 2020-04-03: Enh. #828 for library top level now done in generateBody()
+		//appendGlobalInitialisations(_indent);
+		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
+			appendGlobalInitialisations(_indent);
+		}
+		// END KGU#815 2020-04-03
 		// END KGU#376 2017-09-26
 		
 		return _indent;
 	}
+
+	// START KGU#834 2020-04-03: Mechanism to ensure one-time initialisation
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected String makeStaticInitFlagDeclaration(Root incl) {
+		return "var " + this.getInitFlagName(incl) + " = false;";
+	}
+	// END KGU#834 2020-04-03
 
 	/**
 	 * Generates some preamble (i.e. comments, language declaration section etc.)
@@ -539,6 +595,59 @@ public class JsGenerator extends CGenerator {
 		setDefHandled(_root.getSignatureString(false), _name);
 		// END KGU#424 2017-09-26
 	}
+	
+	// START KGU#815 2020-04-03: Enh. #828 group export
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#getModifiers(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected String getModifiers(Root _root, String _name) {
+		/* FIXME The crux is we don't know for sure which includables of the library are
+		 * referenced from outside and which are not. So we will have to export all as it
+		 * could be needed outside.
+		 */
+		if (topLevel & this.isLibraryModule() && _root.isInclude()) {
+			return "export ";
+		}
+		return "";
+	}
+	// END KGU#815 2020-04-03
+
+	// START KGU#815/KGU#824/KGU#834 2020-04-03: Enh. #828, bugfix #826
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateBody(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		String indentBody = _indent;
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// This is the initialization code for the library
+			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			if (!this.optionBlockBraceNextLine()) {
+				addCode(cond + " {", _indent, false);
+			}
+			else {
+				addCode(cond, _indent, false);
+				addCode("{", _indent, false);
+			}
+			indentBody += this.getIndent();			
+			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+			appendGlobalInitialisations(indentBody);
+			// END KGU#376 2017-09-26
+		}
+		// END KGU#815/KGU#824 2020-03-20
+				
+		this.generateCode(_root.children, indentBody);
+		boolean done = true;
+		
+		if (!indentBody.equals(_indent)) {
+			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
+			addCode("}", _indent, false);
+		}
+		return done;
+	}
+	// END KGU#815/KGU#824/KGU#834 2020-04-03
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
@@ -579,7 +688,10 @@ public class JsGenerator extends CGenerator {
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
-		if (_root.isSubroutine()) {
+		// START KGU#815 2020-04-03: Enh. #828: Group export
+		//if (_root.isSubroutine()) {
+		if (_root.isSubroutine() || topLevel && this.isLibraryModule() && _root.isInclude()) {
+		// END KGU#815 2020-04-03
 			code.add(_indent + "}");
 		}
 

@@ -440,7 +440,9 @@ public class PapGenerator extends Generator {
 			}
 			// START KGU#396 2020-04-02: Issue #440 Makeshift approach for Jump elements
 			else if (element instanceof Jump) {
-				height++;
+				if (!(((Jump) element).isReturn() && this.isLastElementOfRoot())) {
+					height++;
+				}
 			}
 			// END KGU396 2020-04-02
 		}
@@ -497,10 +499,8 @@ public class PapGenerator extends Generator {
 				if (!text.isEmpty()) {
 					// Not a default leave, check whether the line contains arguments
 					if (((Jump) element).isReturn()) {
-						label = CodeParser.getKeywordOrDefault("preReturn", "break");
-						Element pe = element.parent;
-						if (pe != null && pe instanceof Subqueue && pe.parent instanceof Root
-								&& ((Subqueue)pe).getElement(((Subqueue)pe).getSize()-1) == element) {
+						label = CodeParser.getKeywordOrDefault("preReturn", "return");
+						if (isLastElementOfRoot()) {
 							isRegularReturn = true;
 						}
 					}
@@ -514,11 +514,13 @@ public class PapGenerator extends Generator {
 				PapFigure lastFigure = new PapFigure(row++, column0, PapFigure.Type.PapActivity, text.getText(), null);
 				firstId = lastFigure.getId();
 				figures.add(lastFigure);
-				lastFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);
-				figures.add(lastFigure);
-				connections.add(new PapConnection(firstId, lastFigure.getId(), label));
 				if (isRegularReturn) {
-					prevId = lastFigure.getId();
+					prevId = firstId;
+				}
+				else {
+					lastFigure = new PapFigure(row, column0, PapFigure.Type.PapConnector, "", null);
+					figures.add(lastFigure);
+					connections.add(new PapConnection(firstId, lastFigure.getId(), label));
 				}
 				return new long[]{firstId, prevId};
 				// END KGU#496 2020-04-02
@@ -576,6 +578,18 @@ public class PapGenerator extends Generator {
 			return new long[]{firstId, prevId};
 		}
 
+		/**
+		 * @return true if the incorporated {@link #element} is the last element of
+		 * the main sequence of the owing {@link Root}.
+		 */
+		protected boolean isLastElementOfRoot()
+		{
+			Element parent = element.parent;
+			Subqueue sq = null;
+			return (parent != null && parent instanceof Subqueue && parent.parent instanceof Root
+					&& ((Subqueue)parent).getElement(((Subqueue)parent).getSize()-1) == element);
+		}
+		
 		/* (non-Javadoc)
 		 * @see java.lang.Object#toString()
 		 */
@@ -1130,7 +1144,8 @@ public class PapGenerator extends Generator {
 					rowBody = 3;
 				}
 				else if (loop instanceof Forever) {
-					extraRows++;
+					// TODO We will re-introduce an (isolated) end connector for later leave mechanism
+					//extraRows++;
 				}
 				left = -colBypassLeft;
 			}
@@ -1196,6 +1211,10 @@ public class PapGenerator extends Generator {
 				}
 				else {
 					connections.add(new PapConnection(firstId, lastId));
+				}
+				// TODO Modify this when we implement a leave connection
+				if (element instanceof Forever) {
+					lastId = -1;	// Avert the connection with following elements
 				}
 			}
 			// DIN 660001 1966 - decomposed loops
@@ -1422,10 +1441,10 @@ public class PapGenerator extends Generator {
 				connections.add(new PapConnection(idsBody[1], firstFigure.getId()));
 				connections.add(new PapConnection(firstFigure.getId(), firstId));
 				
-				// Produce an unreachable node for the successor element
-				lastFigure = new PapFigure(row+1, column0, PapFigure.Type.PapConnector, "", null);	// below body
-				figures.add(lastFigure);
-				lastId = lastFigure.getId();
+				// TODO Produce an unreachable node for the successor element (or a possible leave)
+				//lastFigure = new PapFigure(row+1, column0, PapFigure.Type.PapConnector, "", null);	// below body
+				//figures.add(lastFigure);
+				//lastId = lastFigure.getId();
 			}
 			return new long[] {firstId, lastId};
 		}
