@@ -887,7 +887,7 @@ public class Instruction extends Element {
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
-	 * an appropriate syntax is okay.
+	 * an appropriate syntax is sufficient).
 	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String)
 	 * @see #isTypeDefinition(HashMap, boolean)
@@ -976,8 +976,10 @@ public class Instruction extends Element {
 	// END KGU#542 2019-11-17
 	
 	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
-	/** @return true iff this Instruction contains nothing but type definitions and
-	 * (uninitialized) variable declarations, i.e. hidable stuff. 
+	/**
+	 * @return true iff this Instruction contains nothing but type definitions and
+	 * (uninitialized) variable declarations, i.e. stuff that can be hidden.
+	 * @see #isMereDeclaration(String) 
 	 */
 	public boolean isMereDeclaratory()
 	{
@@ -991,6 +993,15 @@ public class Instruction extends Element {
 	}
 	// END KGU#477 2017-12-06
 	// START KGU#772 2019-11-24: We want to be able to suppress expression of code for mere declarations
+	/**
+	 * Checks whether the given {@code _line} of code is either a type definition or
+	 * a variable declaration without initialization.
+	 * @param line - instruction line
+	 * @return true if the line is a mere declaration
+	 * @see #isTypeDefinition(String)
+	 * @see #isDeclaration(String)
+	 * @see #isAssignment(String)
+	 */
 	public static boolean isMereDeclaration(String line)
 	{
 		return isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));

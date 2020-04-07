@@ -623,6 +623,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 			}
 			popupIndexExportPap.setIcon(icon);
 			popupIndexExport.add(popupIndexExportPap);
+			popupIndexExportPap.setToolTipText(Menu.msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
 			popupIndexExportPap.add(popupIndexExportPap1966);
 			popupIndexExportPap.add(popupIndexExportPap1982);
 			popupIndexExportPap1966.addActionListener(exportPapListener);

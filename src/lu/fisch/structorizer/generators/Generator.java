@@ -3267,7 +3267,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		addSepaLine(_indent);
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 			// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
-			// Don't add initialisation code for an imported module
+			// Don't add declarations or initialisation code for an imported module
 			if (importedLibRoots != null && importedLibRoots.contains(incl)) {
 				continue;
 			}

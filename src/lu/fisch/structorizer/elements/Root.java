@@ -2938,8 +2938,8 @@ public class Root extends Element {
      */
     public StringList retrieveVarNames()
     {
-            //System.out.println("getVarNames() called...");
-            return getVarNames(this, false, false, true);
+    	//System.out.println("getVarNames() called...");
+    	return getVarNames(this, false, false, true);
     }
 
     /**

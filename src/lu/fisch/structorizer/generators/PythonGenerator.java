@@ -677,7 +677,7 @@ public class PythonGenerator extends Generator
 					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
 				}
 				// END KGU#388 2017-10-02
-				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified oinitialisations
+				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified initialisations
 				else if (Instruction.isMereDeclaration(line)) {
 					done = generateDeclaration(line, root, _indent, isDisabled);
 				}
@@ -1336,6 +1336,11 @@ public class PythonGenerator extends Generator
 		String indent = "";
 		if (topLevel)
 		{
+			// START KGU#815 2020-04-07: Enh. #828 group export
+			if (this.isLibraryModule()) {
+				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
+			}
+			// END KGU#815 2020-04-07
 			// START KGU#819 2020-03-08: Bugfix #831
 			//code.add(_indent + "#!/usr/bin/env python");
 			code.add(_indent + "#!/usr/bin/python3");
@@ -1355,7 +1360,7 @@ public class PythonGenerator extends Generator
 			// END KGU#795 2020-02-12
 			// START KGU#542 2019-12-01: Enh. #739
 			code.add(_indent + "from enum import Enum");
-			this.generatorIncludes.add("enum");
+			//this.generatorIncludes.add("enum");
 			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
@@ -1370,7 +1375,7 @@ public class PythonGenerator extends Generator
 			this.appendUserIncludes(indent);
 			// END KGU#351 2017-02-26
 			// START KGU#600 2018-10-17: It is too cumbersome to check if math is actually needed
-			code.add(_indent + "import math");
+			this.appendGeneratorIncludes(_indent, true);
 			// END KGU#600 2018-10-17
 			// START KGU#598 2018-10-17: Enh. #623
 			this.includeInsertionLine = code.count();
@@ -1475,6 +1480,11 @@ public class PythonGenerator extends Generator
 	{
 		// Just pro forma
 		super.generateFooter(_root, _indent + this.getIndent());
+		
+		// START KGU#815 2020-04-07: Enh. #828 - group export
+		addSepaLine();
+		this.libraryInsertionLine = code.count();
+		// END KGU#815 2020-04-07
 
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {

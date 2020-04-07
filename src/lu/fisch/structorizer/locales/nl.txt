@@ -361,6 +361,7 @@ Menu.msgSubroutineName.text=Naam van de nieuwe subroutine
 Menu.msgIncludableName.text=Naam van een (nieuw) insluitbaar diagram waarnaar gedeelde types kunnen worden verplaatst
 Menu.msgMustBeIdentifier.text=De naam die u koos is ongeschikt als naam!
 Menu.msgJumpsOutwardsScope.text=Er zijn JMP-instructies in de geselecteerde elementen naar buiten.\nDoor die over te hevelen wordt de logica van het programma, of de programmacode, aangetast!\nDe betreffende JUMPs staan hieronder en zijn met ROOD weergegeven in het diagram:\n%\n\nWilt u werkelijk nu nog verdergaan?
+Menu.msgExportTooltip.text=<html>Exporteren als diagrambestanden voor de bewerker<br/>van <a href="%">%</a></html>
 Menu.msgImportTooltip.text=<html>Diagrambestanden aangemaakt met de bewerker<br/>van <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Bestand "%" bestaat niet of is onleesbaar.
 Menu.msgUnsupportedFileFormat.text=Deze bestanden konden niet worden ingelezen, omdat hun bestandstype niet bekend is, of ondersteund:\n%

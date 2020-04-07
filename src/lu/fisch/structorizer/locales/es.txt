@@ -437,6 +437,7 @@ Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tip
 Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
 Menu.msgImportTooltip.text=<html>Diagramas guardados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
+Menu.msgExportTooltip.text=<html>Generar archivos de diagramas aceptados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
