@@ -112,6 +112,8 @@ import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.LangTree;
 import lu.fisch.structorizer.parsers.GENParser;
@@ -123,7 +125,7 @@ import lu.fisch.utils.StringList;
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
-public class ArrangerIndex extends LangTree implements MouseListener {
+public class ArrangerIndex extends LangTree implements MouseListener, LangEventListener {
 	
 	private Diagram diagram = null;
 	private final DefaultMutableTreeNode arrangerIndexTop;
@@ -621,6 +623,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 			if (iconFile != null) {
 				icon = IconLoader.getIconImage("editor_pap.png");
 			}
+			// FIXME: This should be based on a plugin definition like for Menu.importPluginItems
 			popupIndexExportPap.setIcon(icon);
 			popupIndexExport.add(popupIndexExportPap);
 			popupIndexExportPap.setToolTipText(Menu.msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
@@ -629,6 +632,9 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 			popupIndexExportPap1966.addActionListener(exportPapListener);
 			popupIndexExportPap1982.addActionListener(exportPapListener);
 			// END KGU#396 2020-04-01
+			// START KGU#396/KGU#725 2020-04-08: Enh. #440, #746 - for later re-translation if necessary
+			Menu.msgExportTooltip.addLangEventListener(this);
+			// END KGU#396 2020-04-08
 		}
 		// END KGU#815 2020-03-16
 		
@@ -1546,5 +1552,14 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#643 2019-01-28
+
+	// START KGU#396/KGU#815 2020-04-08: Enh. #440, #828 - group export to PapDesigner files
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == Menu.msgExportTooltip) {
+			popupIndexExportPap.setToolTipText(Menu.msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
+		}		
+	}
+	// END KGU#396/KGU#815 2020-04-08
 
 }

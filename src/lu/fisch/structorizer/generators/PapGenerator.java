@@ -585,7 +585,6 @@ public class PapGenerator extends Generator {
 		protected boolean isLastElementOfRoot()
 		{
 			Element parent = element.parent;
-			Subqueue sq = null;
 			return (parent != null && parent instanceof Subqueue && parent.parent instanceof Root
 					&& ((Subqueue)parent).getElement(((Subqueue)parent).getSize()-1) == element);
 		}
@@ -1170,7 +1169,7 @@ public class PapGenerator extends Generator {
 			long lastId = -1;
 			int row = row0;
 			PapFigure firstFigure = null, lastFigure = null;
-			String text = element.getBrokenText().getText().trim();
+			String text = transform(element.getBrokenText().getText().trim());
 			String comment = element.getComment().getText().trim();
 			if (din66001_1982 || element instanceof For && ((For)element).isForInLoop()) {
 				// Generate the opening loop item

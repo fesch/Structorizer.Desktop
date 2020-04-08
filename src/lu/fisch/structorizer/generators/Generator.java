@@ -1406,7 +1406,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected void addSepaLine()
 	{
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
-			code.add("");
+			addCode("", "", false);
 		}
 	}
 	/**
@@ -1420,7 +1420,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected void addSepaLine(String _indent)
 	{
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
-			code.add(_indent);
+			addCode("", _indent, false);
 		}
 	}
 	/**

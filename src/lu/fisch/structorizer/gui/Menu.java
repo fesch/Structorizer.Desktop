@@ -963,13 +963,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			}
 		}
 		catch (Exception ex) {}
+		// FIXME: This should be based on a plugin definition like for this.importPluginItems
 		menuFileExportPap.setToolTipText(msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
 		menuFileExportPap.add(menuFileExportPap1966);
 		menuFileExportPap1966.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPap(false); doButtons(); } } );
 		menuFileExportPap.add(menuFileExportPap1982);
 		menuFileExportPap1982.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPap(true); doButtons(); } } );
 		// END KGU#396 2020-03-03
-
+		// START KGU#396/KGU#725 2020-04-08: Enh. #440, #746 - for later re-translation if necessary
+		msgExportTooltip.addLangEventListener(this);
+		// END KGU#396 2020-04-08
 		
 		menuFile.addSeparator();
 
@@ -2326,6 +2329,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				// END KGU#736 2019-09-30
 			}
 		}
+		// START KGU#396 2020-04-08: Enh. #440 - export to flowchart editor files
+		else if (evt.getSource() == msgExportTooltip) {
+			// FIXME: This should be based on a plugin definition like for this.importPluginItems
+			this.menuFileExportPap.setToolTipText(msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
+		}
+		// END KGU#396 2020-04-08
 	}
 	// END KGU#725 2019-09-13
 	

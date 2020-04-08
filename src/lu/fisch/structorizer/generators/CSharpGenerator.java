@@ -1347,7 +1347,7 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU 2015-12-15
 
-	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
+	// START KGU#815 2020-03-26: Enh. #828 - group export
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#updateLineMarkers(int, int)
 	 */
@@ -1371,7 +1371,9 @@ public class CSharpGenerator extends CGenerator
 		// We simply call the global initialisation function of the library
 		addCode("initialize_" + this.libModuleName + "();", _indent, false);
 	}
+	// END KGU#815 2020-03-26
 
+	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)
 	 */

@@ -445,7 +445,6 @@ public class PHPGenerator extends Generator
 	// END KGU#840 2020-04-06
 	
 	// START KGU#815/#839 2020-04-07: Enh. #828, bugfix #843 group export / global declarations
-	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#updateLineMarkers(int, int)
 	 */
@@ -960,6 +959,12 @@ public class PHPGenerator extends Generator
             // START KGU#363 2017-05-16: Enh. #372
             appendCopyright(_root, _indent, true);
             // END KGU#363 2017-05-16
+            // START KGU#815 2020-04-08: Enh. #828 group export may require to share the entire module - so better copy the file
+            //if (this.usesFileAPI) {
+            if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
+                generatorIncludes.add("StructorizerFileAPI");
+            }
+            // END KGU#815 2020-04-08
             // START KGU#815 2020-04-05: Enh. #828: For group export generatoir includes are essential
             this.appendGeneratorIncludes("", false);
             // END KGU#815 2020-04-05: 
@@ -975,7 +980,10 @@ public class PHPGenerator extends Generator
             // END KGU#767 2020-04-05
             subroutineInsertionLine = code.count();
             // START KGU#311 2017-01-03: Enh. #314 File API support
-            if (this.usesFileAPI) {
+            // START KGU#815 2020-04-08: Enh. #828 group export may require to share the entire module - so better copy the file
+            //if (this.usesFileAPI) {
+            if (this.usesFileAPI && !(this.isLibraryModule() || this.importedLibRoots != null)) {
+            // END KGU#815 2020-04-08
                 this.insertFileAPI("php");
             }
             // END KGU#311 2017-01-03
@@ -1160,4 +1168,22 @@ public class PHPGenerator extends Generator
 	}
 	// END KGU#74/KGU#78 2016-12-30
 
+	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function will only be called if at least one of the modules required
+		 * the file API, so all requiring modules will be using "FileAPI.CS".
+		 * Now we simply have to make sure it gets provided.
+		 */
+		if (this.importedLibRoots != null) {
+			return copyFileAPIResource("php",  "StructorizerFileAPI.php", _filePath);
+		}
+		return true;	// By default, nothing is to be done and that is okay
+	}
+	// END KGU#815 2020-03-26
 }
