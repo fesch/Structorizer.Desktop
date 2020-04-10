@@ -2211,7 +2211,7 @@ public class PasGenerator extends Generator
 				//while (!includedRoots.isEmpty()) {
 				//	generateCode(includedRoots.remove().children, _indent + this.getIndent());
 				//}
-				this.appendGlobalInitialisations(_indent + this.getIndent());
+				this.appendGlobalInitialisations(_root, _indent + this.getIndent());
 				// END KGU#815/KGU#824 2020-03-18
 				// END KGU#376 2017-09-21
 				code.add(_indent + "END.");
@@ -2221,7 +2221,7 @@ public class PasGenerator extends Generator
 		else if (_root.isInclude()) {
 			// START KGU#815 2020-03-30: Enh. #828
 			if (topLevel) {
-				this.appendGlobalInitialisations(_indent + this.getIndent());
+				this.appendGlobalInitialisations(_root, _indent + this.getIndent());
 			}
 			// END KGU#815 2020-03-30
 			code.add(_indent + "END.");

@@ -1212,7 +1212,7 @@ public class PythonGenerator extends Generator
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
-	protected void appendGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(Root _root, String _indent) {
 		if (topLevel) {
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
@@ -1237,7 +1237,7 @@ public class PythonGenerator extends Generator
 	 * Declares imported names as global
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
-	 * @see #appendGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(Root, String)
 	 * @see #generateDeclaration(String, Root, String, boolean)
 	 */
 	private void appendGlobalDeclarations(Root _root, String _indent) {
@@ -1381,7 +1381,7 @@ public class PythonGenerator extends Generator
 			this.includeInsertionLine = code.count();
 			// END KGU#598 2018-10-17
 			// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
-			this.appendGlobalInitialisations(_indent);
+			this.appendGlobalInitialisations(_root, _indent);
 			// END KGU#376 2017-10-02
 //			if (code.count() == this.includeInsertionLine) {
 //				addSepaLine();

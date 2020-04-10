@@ -659,7 +659,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#178 2016-07-19: Enh. #160 - recursive implication of subroutines
 	/**
-	 * Returns the value of the export option recursively to involve all available
+	 * Returns the value of the export option to recursively involve all available
 	 * subroutines (i.e. other diagrams) called by the diagrams to be exported. 
 	 * @return true if subroutines are to be implicated.
 	 */
@@ -860,10 +860,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Checks whether the given {@code _id} has already been defined<b/>
-	 * 1. by diagram {@code _root} itself or
-	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
-	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * Checks whether the given {@code _id} has already been defined
+	 * <ol>
+	 * <li>by diagram {@code _root} itself or</li>
+	 * <li>by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.</li>
+	 * </ol>
+	 * If not and {@code _setDefinedIfNot} is true then registers the {@code _id} with {@code _root}
 	 * in {@link #declaredStuff}.
 	 * @param _root - the currently exported {@link Root}
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
@@ -3273,7 +3275,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			// END KGU#815/KGU#836 2020-03-18
 			// START KGU#834 2020-03-26: Give subclasses a chance to initialise a static flag
-			String flagDecl = this.makeStaticInitFlagDeclaration(incl);
+			String flagDecl = this.makeStaticInitFlagDeclaration(incl, true);
 			// We cannot ask wasDefHandled(...) since the flag is not a registered variable
 			if (flagDecl != null) {
 				code.add(_indent + flagDecl);
@@ -3304,42 +3306,63 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Generates the (initialization) code of all includable diagrams recursively required by
 	 * the roots to be exported in topological order 
+	 * @param _root TODO
 	 * @param _indent - current indentation string
 	 */
-	protected void appendGlobalInitialisations(String _indent) {
-		if (topLevel) {
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
-				// Don't add initialisation code for an imported module
-				if (importedLibRoots != null && importedLibRoots.contains(incl) || incl.children.getSize() == 0) {
-					continue;
-				}
-				// END KGU#815/KGU#836 2020-03-18
-				// START KGU#501 2018-02-22: Bugfix #517
-				this.includeInitialisation = true;
-				// END KGU#501 2018-02-22
+	protected void appendGlobalInitialisations(Root _root, String _indent) {
+		// START KGU#815 2020-04-09: Enh. #828 group export - in case of initialization flags we may/must do it in all routines
+		//if (topLevel) {
+		if (!topLevel && _root.includeList == null) {
+			return;	// Nothing to do
+		}
+		// END KGU#815 2020-04-09
+		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
+			// Don't add initialisation code for an imported module
+			if (importedLibRoots != null && importedLibRoots.contains(incl) || incl.children.getSize() == 0) {
+				continue;
+			}
+			// And don't add initialisation code if there is no direct reference being at lower level
+			else if (!topLevel && !_root.includeList.contains(incl.getMethodName())) {
+				continue;
+			}
+			// END KGU#815/KGU#836 2020-03-18
+			// START KGU#501 2018-02-22: Bugfix #517
+			this.includeInitialisation = true;
+			try {
+			// END KGU#501 2018-02-22
 				// START KGU#834 2020-03-26: We must ensure that initialization code is executed at most once
 				//appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
 				//generateCode(incl.children, _indent);
 				//appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
-				if (this.wasDefHandled(incl, this.getInitFlagName(incl), false)) {
+				if (this.wasDefHandled(incl, this.getInitFlagName(incl), false) && this.optionExportSubroutines()
+						// The following is sort of forecast that the initRoutine will be created with internal flag decl.
+						|| topLevel && this.makeStaticInitFlagDeclaration(incl, false) != null) {
 					// We fake a call here to be language-independent
 					Call initCall = new Call(this.getInitRoutineName(incl) + "()");
 					initCall.parent = incl;	// It should have been this root but it doesn't matter.
 					generateCode(initCall, _indent);
 				}
-				else {
+				// START KGU#815 2020-04-09: Enh. #828 group export - in this case it is indeed only to be done at top level
+				//else {
+				else if (topLevel) {
+				// END KGU#815 2020-04-09
 					appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
 					generateCode(incl.children, _indent);
 					appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
 				}
 				// END KGU#834 2020-03-26
-				// START KGU#501 2018-02-22: Bugfix #517
+			// START KGU#501 2018-02-22: Bugfix #517
+			}
+			finally {
 				this.includeInitialisation = false;
-				// END KGU#501 2018-02-22
+			}
+			// END KGU#501 2018-02-22
 			}
 			addSepaLine(_indent);
-		}
+		// START KGU#815 2020-04-09: Issue #828 see above
+		//}
+		// END KGU#815 2020-04-09
 	}
 	// END KGU#376 2017-09-28
 	
@@ -3348,12 +3371,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Subclasses may return an initialized declaration of a status flag for the
 	 * corresponding one-time initialization (for the given Includable {@code inlc}).<br/>
 	 * The flag variable name should be obtained from {@link #getInitFlagName(Root)}.
+	 * A non-null declaration string should be returned at most for one value of
+	 * {@code inGlobalDecl}, not for both. 
 	 * @param incl - the includable diagram the initialization code of which is to be
-	 * controlled here.<br/>
+	 * controlled here.
+	 * @param inGlobalDecl - true if the method is called within the insertion of global
+	 * declarations, false otherwise (within initializer routine definition).
+	 * @return a ready-to-insert declaration initialized to false or null<br/>
 	 * This base version just returns null.
-	 * @return a ready-to-insert declaration initialized to false or null
 	 */
-	protected String makeStaticInitFlagDeclaration(Root incl) {
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
 		return null;
 	}
 	// END KGU#834 2020-03-26
@@ -3394,10 +3421,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#834 2020-03-26: Support for ensuring initializations won't get done twice
 	/**
 	 * Generates an initialization routine for Includable {@code incl} trying to ensure
-	 * its one-time effect. In order to work, there must be static variable with name
+	 * its one-time effect. In order to work, there must be a static variable with name
 	 * {@link #getInitFlagName(Root)} initialized to {@code false}. In order to be able
-	 * to detect its existence here, it must have been declared via
-	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or {@link #setDefHandled(String, String)}.
+	 * to detect its existence here, it must either have been declared via
+	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or {@link #setDefHandled(String, String)}
+	 * or method {@link #makeStaticInitFlagDeclaration(Root, boolean)} must return a non-null
+	 * result for argument {@code inGlobalDecl = false}.
 	 * @param incl - the {@link Root} of type Includable (other kinds of {@link Root}
 	 * are ignored
 	 * @param _indent - relevant indentation
@@ -3405,26 +3434,48 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected boolean generateInitRoutine(Root incl, String _indent) {
 		boolean done = false;
-		if (incl.isInclude() && this.wasDefHandled(incl, this.getInitFlagName(incl), false)) {
-			// Produce a temporary routine object and generate its code
+		String flagDecl = this.makeStaticInitFlagDeclaration(incl, false);
+		if (incl.isInclude() && (this.wasDefHandled(incl, this.getInitFlagName(incl), false) || flagDecl != null)) {
+			/* Produce a temporary routine object and generate its code. This has to be done
+			 * in peaces, however, in order to avoid unwelcome text transformation
+			 */
 			Root init = new Root();
-			init.setText(this.getInitRoutineName(incl) + "()");
+			String initName = this.getInitRoutineName(incl);
+			String flagName = this.getInitFlagName(incl);
+			init.setText(initName + "()");
 			init.setComment("Automatically created initialization procedure for " + incl.getMethodName());
 			init.setProgram(false);
-			this.includeInitialisation = true;
-			// In order to be target-language-independent, we fake an Alternative
-			Alternative alt = new Alternative("not " + this.getInitFlagName(incl));
-			alt.qTrue = (Subqueue)incl.children.copy();
-			alt.qTrue.parent = alt;
-			alt.parent = incl;
-			init.children.addElement(alt);
-			StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false));
-			if (doneDecls != null) {
-				this.declaredStuff.put(init.getSignatureString(false), doneDecls);
+			/* Since this initialisation procedure is not used for a library as a whole,
+			 * it will never required to be public - the library initialisation routine
+			 * will call the specific initialisation procedures for all involved Includables
+			 * internally.
+			 */
+			String bodyIndent = generateHeader(init, _indent, initName, new StringList(), null, null, false);
+			if (flagDecl != null && !wasDefHandled(incl, flagName, true, false)) {
+				addCode(flagDecl, bodyIndent, false);
 			}
-			// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
-			generateCode(init, _indent, false);
-			this.includeInitialisation = false;
+			this.includeInitialisation = true;
+			try {
+				// In order to be target-language-independent, we fake an Alternative
+				Alternative alt = new Alternative("not " + flagName);
+				alt.qTrue = (Subqueue)incl.children.copy();
+				Instruction instr = new Instruction(flagName + " <- true");
+				alt.qTrue.addElement(instr);
+				alt.qTrue.parent = alt;
+				//alt.parent = incl;
+				init.children.addElement(alt);
+				StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false));
+				if (doneDecls != null) {
+					this.declaredStuff.put(init.getSignatureString(false), doneDecls);
+				}
+				this.setDefHandled(init.getSignatureString(false), flagName);
+				// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
+				generateCode(alt, bodyIndent);
+			}
+			finally {
+				this.includeInitialisation = false;
+			}
+			generateFooter(init, _indent);
 			done = true;
 		}
 		return done;
@@ -3839,8 +3890,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		topLevel = false;
 		// FIXME: Experimental 
 		for (Root incl: includedRoots) {
-			if (this.wasDefHandled(incl, this.getInitFlagName(incl), false)
-					&& (_suppressedRoots == null || !_suppressedRoots.contains(incl))) {
+			if (_suppressedRoots == null || !_suppressedRoots.contains(incl)) {
 				this.generateInitRoutine(incl, subroutineIndent);
 			}
 		}

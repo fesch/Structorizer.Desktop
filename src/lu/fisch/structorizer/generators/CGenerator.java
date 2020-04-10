@@ -2359,6 +2359,9 @@ public class CGenerator extends Generator {
 		//	this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
 		//	// END KGU#676 2019-03-30
 		//}
+		if (subroutineInsertionLine == code.count()) {
+			code.add("");
+		}
 		this.insertPrototype(_root, _indent, !this.isLibraryModule(), code.count());
 		// END KGU#815/KGU#824 2020-03-20
 		code.add(_indent + "{");
@@ -2393,15 +2396,13 @@ public class CGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
 	@Override
-	protected void appendGlobalInitialisations(String _indent) {
-		if (topLevel) {
-			if (this.libModuleName != null) {
-				// Multi-module export with a common library - insert its initialization function call
-				appendGlobalInitialisationsLib(_indent);
-			}
-			else {
-				super.appendGlobalInitialisations(_indent);
-			}
+	protected void appendGlobalInitialisations(Root _root, String _indent) {
+		if (topLevel && this.libModuleName != null) {
+			// Multi-module export with a common library - insert its initialization function call
+			appendGlobalInitialisationsLib(_indent);
+		}
+		else {
+			super.appendGlobalInitialisations(_root, _indent);
 		}
 	}
 	
@@ -2410,8 +2411,11 @@ public class CGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
 	 */
 	@Override
-	protected String makeStaticInitFlagDeclaration(Root incl) {
-		return "static bool " + this.getInitFlagName(incl) + " = false;";
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
+		if (!inGlobalDecl) {
+			return "static bool " + this.getInitFlagName(incl) + " = false;";
+		}
+		return null;
 	}
 	// END KGU#834 2020-03-26
 
@@ -2420,7 +2424,7 @@ public class CGenerator extends Generator {
 	 * Special handling for the global initializations in case these were outsourced to
 	 * an external library {@link #libModuleName}.
 	 * @param _indent - current indentation
-	 * @see #appendGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(Root, String)
 	 */
 	protected void appendGlobalInitialisationsLib(String _indent) {
 		// We simply call the global initialisation function of the library
@@ -2879,7 +2883,7 @@ public class CGenerator extends Generator {
 		// END KGU#815/KGU#824 2020-03-20
 		
 		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-		appendGlobalInitialisations(indentBody);
+		appendGlobalInitialisations(_root, indentBody);
 		// END KGU#376 2017-09-26
 		
 		boolean done = super.generateBody(_root, indentBody);

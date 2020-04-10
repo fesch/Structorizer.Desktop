@@ -1,0 +1,72 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{german}
+\usepackage{mathcomp}
+
+\title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
+\author{Kay Gürtzig}
+\date{10.04.2020}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(180,108)[readNumbers]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{fileName}}{type: \(string\)}
+      \description{\pVar{numbers}}{type: \(array\ of\ integer\)}
+      \description{\pVar{maxNumbers}}{type: \(integer\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{integer}{}
+    \end{declaration}
+  }
+  \assign{\(nNumbers\ \gets\ 0\)}
+  \assign{\(fileNo\ \gets\ fileOpen(fileName)\)}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(fileNo\ \leq\ 0\)}{T}{F}
+    \exit{\(\)\pKey{throw}\(\ \)"{}File\ could\ not\ be\ opened!"{}\(\)}
+  \change
+  \ifend
+  % try (FIXME!) 
+    \while{\(!\ fileEOF(fileNo)\ \wedge\ nNumbers\ <\ maxNumbers\)}
+      \assign{\(number\ \gets\ fileReadInt(fileNo)\)}
+      \assign{\(numbers[nNumbers]\ \gets\ number\)}
+      \assign{\(nNumbers\ \gets\ nNumbers\ +\ 1\)}
+    \whileend
+  % catch error (FIXME!) 
+    \exit{\(\)\pKey{throw}\(\)}
+  % finally (FIXME!) 
+    \assign{\(fileClose(fileNo)\)}
+  % end try (FIXME!) 
+  \exit{\(\)\pKey{return}\(\ nNumbers\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(141,158)[ComputeSum]
+  \assign{\(fileNo\ \gets\ 1000\)}
+  \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
+  \ifthenelse{10}{2}{\(fileNo\ >\ 0\)}{T}{F}
+    \assign{\(values\ \gets\ \{\}\)}
+    \assign{\(nValues\ \gets\ 0\)}
+    % try (FIXME!) 
+      \sub{\(nValues\ \gets\ readNumbers(file\_name,\ values,\ 1000)\)}
+    % catch failure (FIXME!) 
+      \assign{\(\)\pKey{OUTPUT}\(\ failure\)}
+      \exit{\(\)\pKey{exit}\(\ -7\)}
+    % finally (FIXME!) 
+    % end try (FIXME!) 
+    \assign{\(sum\ \gets\ 0.0\)}
+    \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
+      \assign{\(sum\ \gets\ sum\ +\ values[k]\)}
+    \whileend
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}sum\ =\ "{}\(,\ sum\)}
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}average\ =\ "{}\(,\ sum\ /\ nValues\)}
+  \change
+  \ifend
+\end{struktogramm}
+
+\end{document}

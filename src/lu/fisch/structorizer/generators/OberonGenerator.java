@@ -1712,7 +1712,7 @@ public class OberonGenerator extends Generator {
 			//for (Root incl: includes) {
 			//	generateCode(incl.children, _indent + this.getIndent());
 			//}
-			this.appendGlobalInitialisations(indentPlusOne);
+			this.appendGlobalInitialisations(_root, indentPlusOne);
 			// END KGU#815/KGU#824 2020-03-18
 		}
 		// END KGU#376 2017-10-24
@@ -1939,8 +1939,9 @@ public class OberonGenerator extends Generator {
 					continue;
 				}
 				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+				String typeName = key.substring(1);
 				if (topLevel && _root.isInclude() && this.importedLibRoots == null) {
-					key += "*";	// Mark the type as global (this is only a vague heuristics, though)
+					typeName += "*";	// Mark the type as global (this is only a vague heuristics, though)
 				}
 				// END KGU#815/KGU#824 2020-03-18
 				if (!_sectionBegun) {
@@ -1950,7 +1951,7 @@ public class OberonGenerator extends Generator {
 				appendDeclComment(_root, indentPlus1, key);
 				TypeMapEntry type = typeEntry.getValue();
 				if (type.isRecord()) {
-					String lastLine = indentPlus1 + key.substring(1) + " = RECORD";
+					String lastLine = indentPlus1 + typeName + " = RECORD";
 					code.add(lastLine);
 					for (Entry<String, TypeMapEntry> compEntry: type.getComponentInfo(false).entrySet()) {
 						lastLine = indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null) + ";";
@@ -1963,7 +1964,7 @@ public class OberonGenerator extends Generator {
 				}
 				// START KGU#542 2019-11-17: Enh. #739
 				else if (type.isEnum()) {
-					code.add(indentPlus1 + key.substring(1) + " = ENUM");
+					code.add(indentPlus1 + typeName + " = ENUM");
 					StringList items = type.getEnumerationInfo();
 					for (int i = 0; i < items.count(); i++) {
 						// FIXME: We might have to transform the value...
@@ -1973,7 +1974,7 @@ public class OberonGenerator extends Generator {
 				}
 				// END KGU#542 2019-11-17
 				else {
-					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
+					code.add(indentPlus1 + typeName + " = " + this.transformTypeFromEntry(type, null) + ";");					
 				}
 				addSepaLine();
 			}
@@ -2189,13 +2190,13 @@ public class OberonGenerator extends Generator {
 			}
 			// START KGU#816/KGU#824 2020-03-18: Enh. #828, bugfix #837
 			String indentPlusOne = _indent + this.getIndent();
-			this.appendGlobalInitialisations(indentPlusOne);
+			this.appendGlobalInitialisations(_root, indentPlusOne);
 			if (_root.isInclude() && !includedRoots.contains(_root)) {
 				Queue<Root> origIncludes = includedRoots;
 				try {
 					includedRoots = new LinkedList<Root>();
 					includedRoots.add(_root);
-					this.appendGlobalInitialisations(indentPlusOne);
+					this.appendGlobalInitialisations(_root, indentPlusOne);
 				}
 				finally {
 					includedRoots = origIncludes;

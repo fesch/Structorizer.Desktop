@@ -497,7 +497,7 @@ public class JsGenerator extends CGenerator {
 			addSepaLine();
 			appendBlockComment(StringList.explode("Flag ensures that initialisation function " + this.getModuleName() +"() runs just one time.", "\n"),
 					_indent, this.commentSymbolLeft(),  this.commentSymbolLeft(), null);
-			addCode(this.makeStaticInitFlagDeclaration(_root), _indent, false);
+			addCode(this.makeStaticInitFlagDeclaration(_root, true), _indent, false);
 			addSepaLine();
 		}
 		if (_root.isSubroutine() || topLevel && this.isLibraryModule() && _root.isInclude()) {
@@ -521,7 +521,7 @@ public class JsGenerator extends CGenerator {
 		// START KGU#815 2020-04-03: Enh. #828 for library top level now done in generateBody()
 		//appendGlobalInitialisations(_indent);
 		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
-			appendGlobalInitialisations(_indent);
+			appendGlobalInitialisations(_root, _indent);
 		}
 		// END KGU#815 2020-04-03
 		// END KGU#376 2017-09-26
@@ -534,8 +534,11 @@ public class JsGenerator extends CGenerator {
 	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
 	 */
 	@Override
-	protected String makeStaticInitFlagDeclaration(Root incl) {
-		return "var " + this.getInitFlagName(incl) + " = false;";
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
+		if (inGlobalDecl) {
+			return "var " + this.getInitFlagName(incl) + " = false;";
+		}
+		return null;
 	}
 	// END KGU#834 2020-04-03
 
@@ -633,7 +636,7 @@ public class JsGenerator extends CGenerator {
 			}
 			indentBody += this.getIndent();			
 			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-			appendGlobalInitialisations(indentBody);
+			appendGlobalInitialisations(_root, indentBody);
 			// END KGU#376 2017-09-26
 		}
 		// END KGU#815/KGU#824 2020-03-20

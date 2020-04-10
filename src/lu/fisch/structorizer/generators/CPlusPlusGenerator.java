@@ -748,7 +748,7 @@ public class CPlusPlusGenerator extends CGenerator {
 
 		return _indent + this.getIndent();
 	}
-	
+
 // START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)

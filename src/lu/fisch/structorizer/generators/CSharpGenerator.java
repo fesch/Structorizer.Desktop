@@ -1076,7 +1076,7 @@ public class CSharpGenerator extends CGenerator
 				// Obviously it is the library initialization routine
 				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #initialize_" + this.getModuleName() +"()}\n runs just one time.", "\n"),
 						indentPlus1, "/**", " * ", " */");
-				addCode(this.makeStaticInitFlagDeclaration(_root), indentPlus1, false);
+				addCode(this.makeStaticInitFlagDeclaration(_root, true), indentPlus1, false);
 				addSepaLine();
 				appendBlockHeading(_root, "public static void " + this.getInitRoutineName(_root) + "()", indentPlus1);
 			}
@@ -1151,7 +1151,7 @@ public class CSharpGenerator extends CGenerator
 		// START KGU#815 2020-03-27: Enh. #828 for library top level now done in generateBody()
 		//appendGlobalInitialisations(indentPlus2);
 		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
-			appendGlobalInitialisations(indentPlus2);
+			appendGlobalInitialisations(_root, indentPlus2);
 		}
 		// END KGU#815 2020-03-27
 		// END KGU#376 2017-09-26
@@ -1243,8 +1243,11 @@ public class CSharpGenerator extends CGenerator
 	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
 	 */
 	@Override
-	protected String makeStaticInitFlagDeclaration(Root incl) {
-		return "private static boolean " + this.getInitFlagName(incl) + " = false;";
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
+		if (inGlobalDecl) {
+			return "private static boolean " + this.getInitFlagName(incl) + " = false;";
+		}
+		return null;
 	}
 	// END KGU#834 2020-03-26
 
@@ -1268,7 +1271,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			indentBody += this.getIndent();			
 			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-			appendGlobalInitialisations(indentBody);
+			appendGlobalInitialisations(_root, indentBody);
 			// END KGU#376 2017-09-26
 		}
 		// END KGU#815/KGU#824 2020-03-20
@@ -1365,7 +1368,7 @@ public class CSharpGenerator extends CGenerator
 	 * constructor call but then we would have to care for an instantiation, certainly as
 	 * singleton, rather than relying on static methods.
 	 * @param _indent - current indentation
-	 * @see #appendGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(Root, String)
 	 */
 	protected void appendGlobalInitialisationsLib(String _indent) {
 		// We simply call the global initialisation function of the library

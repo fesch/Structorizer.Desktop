@@ -975,7 +975,7 @@ public class PHPGenerator extends Generator
             // START KGU#767 2020-04-05: Issue #782
             this.appendGlobalDefinitions(_root, _indent, false);
             if (_root.isProgram() || this.isLibraryModule()) {
-                this.appendGlobalInitialisations(_indent);
+                this.appendGlobalInitialisations(_root, _indent);
             }
             // END KGU#767 2020-04-05
             subroutineInsertionLine = code.count();
