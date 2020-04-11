@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <plugins>
     
-	<plugin title="Struktogrammeditor" 	class="lu.fisch.structorizer.parsers.StrkParser" icon="icons/editor_strk.png" info="http://www.whiledo.de/index.php?p=struktogrammeditor" />
-	<plugin title="hus-Struktogrammer" 	class="lu.fisch.structorizer.parsers.StgrImporter" icon="icons/editor_husJ.png" info="http://www.struktogrammer.ch/JavaVersion/jstgr.html" />
+	<plugin title="Struktogrammeditor" 	class="lu.fisch.structorizer.parsers.StrkParser" icon="editor_strk.png" info="http://www.whiledo.de/index.php?p=struktogrammeditor" />
+	<plugin title="hus-Struktogrammer" 	class="lu.fisch.structorizer.parsers.StgrImporter" icon="editor_husJ.png" info="http://www.struktogrammer.ch/JavaVersion/jstgr.html" />
     
 </plugins>

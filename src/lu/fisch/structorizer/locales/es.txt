@@ -128,6 +128,8 @@
  *      Kay Gürtzig     2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig     2019-09-12  Standard parser keywords for input / output modified (#327)
  *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
+ *      Kay Gürtzig     2020-03-09  Issue #835: New ImportOptionDialog messages
+ *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *
  ******************************************************************************************************
  *
@@ -276,6 +278,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto
 Menu.menuDiagramHideDeclarations.text=¿Esconder puras declaraciónes?
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
+Menu.menuDiagramDIN.tooltip=Cambia la apariencia de ciclos @d entre norma DIN 66261 (dibujo como ciclo @g) y no estándar (dibujo como ciclo @i).
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
 Menu.menuDiagramPreview.text=¿Mostrar prevista de código?
@@ -433,7 +436,8 @@ Menu.msgSubroutineName.text=Nombre del nuevo subprograma
 Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
 Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
-Menu.msgImportTooltip.text=Diagramas guardados por editor Nassi-Shneiderman\ndesde %
+Menu.msgImportTooltip.text=<html>Diagramas guardados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
+Menu.msgExportTooltip.text=<html>Generar archivos de diagramas aceptados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
 Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
@@ -514,6 +518,7 @@ Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en leng
 Menu.error19_2.text=¡El nombre «%1» está reservado en Structorizer y puede provocar problemas on ejecución!
 Menu.error20_1.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
 Menu.error20_2.text=Parámetros con valores de incumplimiento tenien que estar puestos anéxamente al fin de la lista.
+Menu.error20_3.text=Un diagrama del tipo %1 no debe tener una lista de parámetros. ¿Cambiar tipo a %2?
 Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
 Menu.error22_1.text=Constante «%1» depende de valor(es) «%2» que no aparece(n) constante(s).
 Menu.error22_2.text=¡Modificar el valor de constante «%» no es permitido!
@@ -1037,6 +1042,8 @@ ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres de archivos o modules para los quales directivas de inclusión deben ser insertadas.
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Proponer el directorio del diagrama como directorio para la exportación
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=De otro modo el directorio de la exportación más recente será propuesto siempre.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...
@@ -1051,8 +1058,11 @@ ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el cont
 ImportOptionDialog.chkVarDeclarations.text=Importar declaraciones de variables
 ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe va a hacer elementos inactivos de decalaraciones de variables desde el código leído.
 ImportOptionDialog.chkCommentImport.text=Importar comentarios del código
+ImportOptionDialog.chkCommentImport.tooltip=Con esta preferencia elementos generados serán proveídos de los comentarios encontrados mas cerco en el código leído.
+ImportOptionDialog.chkInsertOptKeywords.text=Poner palabras claves optionales alrededor de condiciones
+ImportOptionDialog.chkInsertOptKeywords.tooltip=Preferncia permite decorar condiciones importadas (p.ej. de @{Alternative}s) con loas palabras claves opcionales configuradas en las preferencias del Analizador.
 ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
-ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
+ImportOptionDialog.chkSaveParseTree.tooltip=Después del logrado importe Structorizer puede grabar el árbol de sintaxis como texto en un archivo "*.parsetree.txt".
 ImportOptionDialog.chkLogDir.text=Protocolar (a directorio)
 ImportOptionDialog.chkLogDir.tooltip=Permitir a guardar un protocolo durante importación
 ImportOptionDialog.txtLogDir.tooltip=El camino vacío significa el mismo directorio donde reside el archivo código, "." significa el directorio activo.
@@ -1320,6 +1330,7 @@ ArrangerIndex.popupIndexAttach.text=Añadir/mover a un grupo ...
 ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
 ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
+ArrangerIndex.popupIndexExport.text=Exportar diagrama/grupo
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
 ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:

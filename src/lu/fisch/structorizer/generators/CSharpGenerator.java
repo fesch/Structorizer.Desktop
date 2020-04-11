@@ -69,6 +69,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-02      Bugfix #755: Defective conversion of For-In loops with explicit array initializer
  *      Kay Gürtzig             2019-10-03      Bugfix #755: Further provisional fixes for nested Array initializers
  *      Kay Gürtzig             2020-02-15      KGU#801: Correction in generateParallelThreadWorkers() (had inflated the header)
+ *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
+ *      Kay Gürtzig             2020-03-27      Enh. #828: Group export support accomplished
  *
  ******************************************************************************************************
  *
@@ -235,6 +237,28 @@ public class CSharpGenerator extends CGenerator
 		return true;
 	}
 
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatesClass()
+	 */
+	@Override
+	protected boolean allowsMixedModule()
+	{
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
+	 */
+	@Override
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		// We don't need prototypes
+		return 0;
+	}
+	// END KGU#815/KGU#824 2020-03-19
+	
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#getInputReplacer(boolean)
@@ -334,7 +358,7 @@ public class CSharpGenerator extends CGenerator
 	protected void transformFileAPITokens(StringList tokens)
 	{
 		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI." + Executor.fileAPI_names[i]);
+			tokens.replaceAll(Executor.fileAPI_names[i], FILE_API_CLASS_NAME + "." + Executor.fileAPI_names[i]);
 		}
 	}
 	// END KGU#311 2017-01-05
@@ -342,16 +366,32 @@ public class CSharpGenerator extends CGenerator
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/**
 	 * Method preprocesses an include file name for the #include
-	 * clause. This version surrounds a string not enclosed in angular
-	 * brackets by quotes.
+	 * clause. This version does nothing.
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
-	protected String prepareIncludeItem(String _includeFileName)
+	protected String prepareUserIncludeItem(String _includeFileName)
 	{
 		return _includeFileName;
 	}
 	// END KGU#351 2017-02-26
+	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * This version does not do anything. 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return _includeName;
+	}
+	// END KGU#815/KGU#826 2020-03-17
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -564,6 +604,16 @@ public class CSharpGenerator extends CGenerator
 		return null;
 	}
 	// END KGU#653 2019-02-14
+
+	// START KGU#815 2020-03-26: Enh. #828 support for library references
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#makeLibCallName(java.lang.String)
+	 */
+	@Override
+	protected String makeLibCallName(String name) {
+		return this.libModuleName + "." + name;
+	}
+	// END KGU#815 2020-03-26
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -811,7 +861,7 @@ public class CSharpGenerator extends CGenerator
 						usedVars.removeAll(varName);
 					}
 					if (i > 0) {
-						code.add(_indent);
+						addSepaLine();
 					}
 					addCode("class " + worker + "{", _indent, isDisabled);
 					if (setVars.count() > 0 || usedVars.count() > 0) {
@@ -847,7 +897,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			if (!containedParallels.isEmpty()) {
 				appendComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
-				code.add(_indent);
+				addSepaLine();
 			}
 		}
 		finally {
@@ -937,20 +987,29 @@ public class CSharpGenerator extends CGenerator
 	 * @param _root - The diagram root
 	 * @param _indent - the initial indentation string
 	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
+	 * @param _public - whether the resulting method is to be public
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String indentPlus1 = _indent + this.getIndent();
 		String indentPlus2 = indentPlus1 + this.getIndent();
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
+			// START KGU#815/KGU#824 2020-03-25: Enh. #828, bugfix #836
+			if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
+				/* In case of a library we will rather work with a copied FileAPI file than
+				 * with copied code, so ensure the using clause for the namespace
+				 */
+				generatorIncludes.addIfNew("FileAPI.CS");
+			}
+			// END KGU#815/KGU#824 2020-03-25
 			appendComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
@@ -960,17 +1019,20 @@ public class CSharpGenerator extends CGenerator
 				appendGlobalDefinitions(_root, indentPlus1, true);
 			}
 			// END KGU#376 2017-09-28
-			code.add("");
+			addSepaLine();
 			subroutineInsertionLine = code.count();	// default position for subroutines
 			subroutineIndent = _indent;
 		}
 		else
 		{
-			code.add("");
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
 		
-		if (_root.isProgram()) {
+		// START KGU#815 2020-03-26: Enh. #828 group export may produce libraries
+		//if (_root.isProgram()) {
+		if (_root.isProgram() || topLevel && this.isLibraryModule()) {
+		// END KGU#815 2020-03-26
 			this.generatorIncludes.add("System");
 			// START KGU#348 2017-02-24: Enh. #348
 			if (this.hasParallels) {
@@ -978,44 +1040,68 @@ public class CSharpGenerator extends CGenerator
 			}
 			// END KGU#348 2017-02-24
 			this.appendGeneratorIncludes(_indent, false);
-			code.add(_indent);
+			addSepaLine();
 			// STARTB KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes(_indent);
 			// END KGU#351 2017-02-26
-			code.add(_indent);
+			addSepaLine();
 			// START KGU 2015-10-18
 			appendBlockComment(_root.getComment(), _indent, "/// <summary>", "/// ", "/// </summary>");
 			// END KGU 2015-10-18
 
 			appendBlockHeading(_root, "public class "+ _procName, _indent);
-			code.add(_indent);
+			addSepaLine();
 			// START KGU#348 2017-02-24: Enh.#348
 			this.subClassInsertionLine = code.count();
 			// END KGU#348 2017-02-24
 			// START KGU#311 2017-01-05: Enh. #314 File API
-			if (this.usesFileAPI) {
+			if (this.usesFileAPI && !generatorIncludes.contains("FileAPI.CS")) {
 				this.insertFileAPI("cs", code.count(), _indent, 0);
-				code.add(_indent);
+				addSepaLine();
 			}
 			// END KU#311 2017-01-05
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			//insertComment("TODO Declare and initialise class variables here", indentPlus1);
 			appendGlobalDefinitions(_root, indentPlus1, true);
 			// END KGU#376 2017-09-28
-			code.add(_indent);
-			code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
-			appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
-			code.add("");
+			addSepaLine();
+			// START KGU#815 2020-03-26: Enh. #828
+			//code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
+			//appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
+			if (_root.isProgram()) {
+				code.add(indentPlus1 + "/// <param name=\"args\"> array of command line arguments </param>");
+				appendBlockHeading(_root, "public static void Main(string[] args)", indentPlus1);
+			}
+			else {
+				// Obviously it is the library initialization routine
+				appendBlockComment(StringList.explode("Flag ensures that initialisation method {@link #initialize_" + this.getModuleName() +"()}\n runs just one time.", "\n"),
+						indentPlus1, "/**", " * ", " */");
+				addCode(this.makeStaticInitFlagDeclaration(_root, true), indentPlus1, false);
+				addSepaLine();
+				appendBlockHeading(_root, "public static void " + this.getInitRoutineName(_root) + "()", indentPlus1);
+			}
+			// END KGU#815 2020-03-26
+			addSepaLine();
 		}
 		else {
+			// Not at top level or some subroutine ...
+			
 			// START KGU#311 2017-01-05: Enh. #314 File API
-			if (this.topLevel && this.usesFileAPI) {
+			// START KGU#815 2020-03-26: Enh. #828 - in case of an involved library we will share the copied file
+			//if (this.topLevel && this.usesFileAPI) {
+			if (this.topLevel && this.usesFileAPI && this.importedLibRoots == null) {
+			// END KGU#815 2020-03-26
 				this.insertFileAPI("cs", code.count(), _indent, 0);
-				code.add(indentPlus1);
+				addSepaLine();
 			}
 			// END KU#311 2017-01-05
 			// START KGU#348 2017-02-24: Enh.#348
 			if (this.topLevel) {
+				// START KGU#815 2020-03-26: Enh. #828
+				if (this.importedLibRoots != null) {
+					appendBlockHeading(_root, "public class "+ _procName, _indent);					
+				}
+				// END KGU#815 2020-03-26
 				this.subClassInsertionLine = code.count();
 			}
 			// END KGU#348 2017-02-24
@@ -1037,7 +1123,7 @@ public class CSharpGenerator extends CGenerator
 			}
 			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
 			//String fnHeader = "public static " + _resultType + " " + _procName + "(";
-			String fnHeader = (topLevel ? "public" : "private") + " static "
+			String fnHeader = ((topLevel || _public) ? "public" : "private") + " static "
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			// START KGU#371 2019-03-07: Enh. #385 Care for default values
@@ -1062,15 +1148,18 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
-		appendGlobalInitialisations(indentPlus2);
+		// START KGU#815 2020-03-27: Enh. #828 for library top level now done in generateBody()
+		//appendGlobalInitialisations(indentPlus2);
+		if (!(topLevel && this.isLibraryModule() && _root.isInclude())) {
+			appendGlobalInitialisations(_root, indentPlus2);
+		}
+		// END KGU#815 2020-03-27
 		// END KGU#376 2017-09-26
 
 		// START KGU#348 2017-02-24: Enh. #348 - Actual translation of Parallel sections
 		StringList workers = this.generateParallelThreadWorkers(_root, indentPlus1);
-		boolean moveSubroutineInsertions = this.subroutineInsertionLine > this.subClassInsertionLine;
 		for (int i = 0; i < workers.count(); i++) {
-			insertCode(workers.get(i), this.subClassInsertionLine++);
-			if (moveSubroutineInsertions) this.subroutineInsertionLine++;
+			insertCode(workers.get(i), this.subClassInsertionLine);
 		}
 		// END KGU#348 2017-02-24
 		
@@ -1089,14 +1178,14 @@ public class CSharpGenerator extends CGenerator
 //	@Override
 //	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 //	{
-//		code.add("");
+//		addSepaLine();
 //		// Variable declaration proposals (now with all used variables listed)
 //		insertComment("TODO: Declare local variables here:", _indent);
 //		for (int v = 0; v < varNames.count(); v++)
 //		{
 //			insertComment(varNames.get(v), _indent);
 //		}
-//		code.add("");
+//		addSepaLine();
 //		return _indent;
 //	}
 	
@@ -1107,7 +1196,7 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String getModifiers(Root _root, String _name) {
 		if (_root.isInclude()) {
-			return "private static ";
+			return (this.isLibraryModule() ? "public " : "private ") + "static ";
 		}
 		return "";
 	}
@@ -1139,7 +1228,7 @@ public class CSharpGenerator extends CGenerator
 	{
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
-			code.add(_indent);
+			addSepaLine();
 			appendComment("TODO: You may have to modify input instructions,", _indent);
 			appendComment("      possibly by enclosing Console.ReadLine() calls with", _indent);
 			appendComment("      Parse methods according to the variable type, e.g.:", _indent);
@@ -1148,6 +1237,56 @@ public class CSharpGenerator extends CGenerator
 		// END KGU#236 2016-12-22
 	}
 // END KGU#332 2017-01-30
+
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#makeStaticInitFlagDeclaration(lu.fisch.structorizer.elements.Root)
+	 */
+	@Override
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
+		if (inGlobalDecl) {
+			return "private static boolean " + this.getInitFlagName(incl) + " = false;";
+		}
+		return null;
+	}
+	// END KGU#834 2020-03-26
+
+	// START KGU#815/KGU#824/KGU#834 2020-03-26: Enh. #828, bugfix #826
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateBody(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		String indentBody = _indent;
+		if (topLevel && this.isLibraryModule() && _root.isInclude()) {
+			// This is the initialization code for the library
+			String cond = "if (!initDone_"  + this.pureFilename + ")";
+			if (!this.optionBlockBraceNextLine()) {
+				addCode(cond + " {", _indent, false);
+			}
+			else {
+				addCode(cond, _indent, false);
+				addCode("{", _indent, false);
+			}
+			indentBody += this.getIndent();			
+			// START KGU#376 2017-09-26: Enh. #389 - add the initialization code of the includables
+			appendGlobalInitialisations(_root, indentBody);
+			// END KGU#376 2017-09-26
+		}
+		// END KGU#815/KGU#824 2020-03-20
+		
+		
+		this.generateCode(_root.children, indentBody);
+		boolean done = true;
+		
+		if (!indentBody.equals(_indent)) {
+			addCode("initDone_" + this.pureFilename + " = true;", indentBody, false);
+			addCode("}", _indent, false);
+		}
+		return done;
+	}
+	// END KGU#815/KGU#824/KGU#834 2020-03-26
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
@@ -1172,7 +1311,7 @@ public class CSharpGenerator extends CGenerator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
@@ -1190,7 +1329,14 @@ public class CSharpGenerator extends CGenerator
 		// Method block close
 		super.generateFooter(_root, _indent + this.getIndent());
 
-		if (_root.isProgram())
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
+
+		// If we declared a class in generateHeader then we must close the block here
+		if (_root.isProgram() || topLevel && (this.isLibraryModule() || this.importedLibRoots != null))
 		{
 			// START KGU#178 2016-07-20: Enh. #160
 			// Modify the subroutine insertion position
@@ -1198,10 +1344,54 @@ public class CSharpGenerator extends CGenerator
 			// END KGU#178 2016-07-20
 			
 			// Close class block
-			code.add("");
+			addSepaLine();
 			code.add(_indent + "}");
 		}
 	}
 	// END KGU 2015-12-15
 
+	// START KGU#815 2020-03-26: Enh. #828 - group export
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#updateLineMarkers(int, int)
+	 */
+	@Override
+	protected void updateLineMarkers(int atLine, int nLines) {
+		super.updateLineMarkers(atLine, nLines);
+		if (this.subClassInsertionLine >= atLine) {
+			this.subClassInsertionLine += nLines;
+		}
+	}
+	
+	/**
+	 * Special handling for the global initializations in case these were outsourced to
+	 * an external library {@link #libModuleName}. (The inherited method would suggest a
+	 * constructor call but then we would have to care for an instantiation, certainly as
+	 * singleton, rather than relying on static methods.
+	 * @param _indent - current indentation
+	 * @see #appendGlobalInitialisations(Root, String)
+	 */
+	protected void appendGlobalInitialisationsLib(String _indent) {
+		// We simply call the global initialisation function of the library
+		addCode("initialize_" + this.libModuleName + "();", _indent, false);
+	}
+	// END KGU#815 2020-03-26
+
+	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function will only be called if at least one of the modules required
+		 * the file API, so all requiring modules will be using "FileAPI.CS".
+		 * Now we simply have to make sure it gets provided.
+		 */
+		if (this.importedLibRoots != null) {
+			return copyFileAPIResource("cs", FILE_API_CLASS_NAME + ".cs", _filePath);
+		}
+		return true;	// By default, nothing is to be done and that is okay
+	}
+	// END KGU#815 2020-03-26
 }

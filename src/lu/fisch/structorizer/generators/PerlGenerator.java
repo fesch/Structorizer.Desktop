@@ -81,6 +81,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-11-21  Enh. #423, #739: Enumerator stuff as well as record initializer handling revised
  *      Kay Gürtzig         2019-11-28  Issue #388: "use constant" approach withdrawn (except for enums), wrong lval references avoided
  *      Kay Gürtzig         2019-12-03  Bugfix #793: var initializations like "var v: type <- val" were incorrectly translated
+ *      Kay Gürtzig         2020-03-20  Enh. #828, bugfix #836: Prepared for group and improved batch export
+ *      Kay Gürtzig         2020-03-23  Bugfix #840 Conditions for code transformation w.r.t File API modified
  *
  ******************************************************************************************************
  *
@@ -615,7 +617,7 @@ public class PerlGenerator extends Generator {
 				}
 				if (!text.endsWith(";")) { text += ";"; }
 				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-				if (this.usesFileAPI) {
+				//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Bugfix #840 - transform even in disabled case
 					if (text.contains("fileOpen(")) {
 						String pattern = "(.*?)\\s*=\\s*fileOpen\\((.*)\\)(.*);";
 						if (text.matches(pattern)) {
@@ -624,7 +626,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "open($1, \\\"<\\\", $2)$3 or die \\\"Failed to open $2\\\";");
 							text = text.replaceAll("(.*or die \\\"Failed to open )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileOpen call by something like «open(my $fHandle, \"<\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
@@ -636,7 +638,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "open($1, \\\">\\\", $2)$3 or die \\\"Failed to create $2\\\";");
 							text = text.replaceAll("(.*or die \\\"Failed to create )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileCreate call by something like «open(my $fHandle, \">\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
@@ -648,7 +650,7 @@ public class PerlGenerator extends Generator {
 							text = text.replaceAll(pattern, "open($1, \\\">>\\\", $2)$3 or die \\\"Failed to append to $2\\\";");
 							text = text.replaceAll("(.*or die \\\"Failed to append to )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileAppend call by something like «open(my $fHandle, \">>\", \"filename\") or die \"error message\";»", _indent);
 						}
 					}
@@ -661,7 +663,7 @@ public class PerlGenerator extends Generator {
 							}
 							text = text.replaceAll(pattern, "$1 = <$2> $3");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileRead" + fctName + " call by something like «<$fileHandle>\";»", _indent);							
 						}
 					}
@@ -670,7 +672,7 @@ public class PerlGenerator extends Generator {
 						if (text.matches(pattern)) {
 							text = text.replaceAll(pattern, "$1 = gect\\($2\\)$3");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileReadChar* call by something like «getc($fileHandle)\";»", _indent);
 						}
 					}
@@ -679,7 +681,7 @@ public class PerlGenerator extends Generator {
 						if (text.matches(pattern)) {
 							text = text.replaceAll(pattern, "print $2 $3 $4");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileWrite call by something like «print $fileHandle value;»", _indent);
 						}
 					}
@@ -688,14 +690,14 @@ public class PerlGenerator extends Generator {
 						if (text.matches(pattern)) {
 							text = text.replaceAll(pattern, "print $2 $3; print $2 \\\"\\\\n\\\" $4");
 						}
-						else {
+						else if (!isDisabled) {
 							this.appendComment("TODO FileAPI: Replace the fileWriteLine call by something like «print $fileHandle value; print $fileHandle \"\\n\";»", _indent);
 						}
 					}
 					if (text.contains("fileClose(")) {
 						text = text.replace("fileClose(", "close(");
 					}
-				}
+				//}
 				// END KGU#311 2017-01-04
 				
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -722,7 +724,7 @@ public class PerlGenerator extends Generator {
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !isDisabled) {
 			if (condition.contains("fileEOF(")) {
 				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
@@ -906,7 +908,7 @@ public class PerlGenerator extends Generator {
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !isDisabled) {
 			if (condition.contains("fileEOF(")) {
 				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
@@ -945,7 +947,7 @@ public class PerlGenerator extends Generator {
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
 		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !isDisabled) {
 			if (condition.contains("fileEOF(")) {
 				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
@@ -1197,7 +1199,7 @@ public class PerlGenerator extends Generator {
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String indent = _indent;
 		// START KGU#542 2019-11-20: Enh. #739 - Support enum types
@@ -1236,7 +1238,7 @@ public class PerlGenerator extends Generator {
 				generatorIncludes.add("threads::shared");
 			}
 			// END KGU#348 2017-02-25
-			code.add("");
+			addSepaLine();
 			this.appendGeneratorIncludes(_indent, false);
 			// END KGU#686 2019-03-21
 			// START KGU#351 2017-02-26: Enh. #346
@@ -1244,13 +1246,13 @@ public class PerlGenerator extends Generator {
 			// END KGU#351 2017-02-26
 			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
 			if (this.usesFileAPI) {
-				code.add(_indent);
+				addSepaLine();
 				this.appendComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
 				this.appendComment("      which cannot not be translated completely.", _indent);
 				this.appendComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
 				this.appendComment("      the code according to the recommendations.", _indent);
 				this.appendComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
-				code.add(_indent);
+				addSepaLine();
 			}
 			// END KGU#311 2017-01-04
 			// START KGU#686 2019-03-21: Enh. #56 We better prepare for finally actions
@@ -1264,7 +1266,7 @@ public class PerlGenerator extends Generator {
 		}
 		else
 		{
-			code.add("");
+			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
 		appendComment(_root, _indent);
@@ -1293,7 +1295,7 @@ public class PerlGenerator extends Generator {
 			// END KGU#371 2019-03-08
 		}
 	
-		code.add("");
+		addSepaLine();
 		
 		return indent;
 	}
@@ -1336,7 +1338,7 @@ public class PerlGenerator extends Generator {
 			// END KGU#375/KGU#542 2019-11-19
 		}
 		// END KGU#352 2017-02-26
-		code.add(_indent);
+		addSepaLine();
 		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames(); // in contrast to super we need the parameter names included again.
 		// END KGU 2015-11-02
@@ -1387,7 +1389,7 @@ public class PerlGenerator extends Generator {
 				result = prefix + result;
 			}
 			// END KGU#62 2017-02-26
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
@@ -1400,11 +1402,16 @@ public class PerlGenerator extends Generator {
 	protected void generateFooter(Root _root, String _indent)
 	{
 		if (_root.isSubroutine()) code.add(_indent + "}");		
-		// START KGU#686 2019-03-21: Enh. #56 We better prepare for finally actions
+		// START KGU#686 2019-03-21: Enh. #56 We better prepare for "finally" actions
 		if (this.topLevel && this.hasTryBlocks) {
 			this.addFinallyPackage(_indent);
 		}
 		// END KGU#66 2019-03-21
+		// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-20
 	}
 	// END KGU#78 2015-12-17
 	
@@ -1418,7 +1425,7 @@ public class PerlGenerator extends Generator {
 	 */
 	private void addFinallyPackage(String _indent)
 	{
-		code.add("");
+		addSepaLine();
 		appendComment("----------------------------------------------------------------------", _indent);
 		appendComment(" Finally class, introduced to handle finally blocks via RAII", _indent);
 		appendComment("----------------------------------------------------------------------", _indent);

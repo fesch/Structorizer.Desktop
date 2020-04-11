@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-06 (2020-02-24)
+Current development version: 3.30-07 (2020-04-11)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -75,6 +75,22 @@ Current development version: 3.30-06 (2020-02-24)
 - 06: Bugfix #824: Shell export of REPEAT loops was flawed in several aspects <2>
 - 06: Bugfix #825: Analyser had ignored the interior of TRY elements <2>
 - 06: Issue #826: User input is to accept backslashes as in Windows file paths <2>
+- 07: Bugfix #228: Code export error for routines with Pascal result mechanism <2>
+- 07: Enh. #440 part 1: Diagram export to PapDesigner files <2>
+- 07: Enh. #828: New feature allowing code export for an arrangement group <2>
+- 07: Issue #829: Debugger doesn't automatically close anymore [mawa290669]2
+- 07: Bugfix #831: Wrong shebang and thread arguments on Python export [R.Schmidt]2
+- 07: Bugfix #833: Pascal import now ensures parentheses at subroutines [K.-P. R.]2
+- 07: Issue #834: Tooltip help for menu item Diagram > DIN? (in EN, DE, ES) <2>
+- 07: Bugfix #835: Structure preference keywords compromised imported conditions <2>
+- 07: Bugfix #836: Consistency lacks with batch code export (combined with #828) <2>
+- 07: Enh. #837: New export option to control the code export directory proposal <2>
+- 07: Bugfix #838: Defective IMPORT line generation on Oberon export <2>
+- 07: Bugfix #839: Procedures exported after functions were faked as functions <2>
+- 07: Bugfix #840: Code export wrongly used information from disabled elements <2>
+- 07: Bugfix #841: Analyser check against missing parameter list did not work <2>
+- 07: Bugfix #843: Handling of global declarations in PHP export was missing <2>
+- 07: Bugfix #844: Sensible export of arrays and record types/vars to PHP <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -51,6 +51,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
  *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
  *      Kay Gürtzig     2019-11-20      New methods count(String), count(String, boolean), insert(StringList, int)
+ *      Kay Gürtzig     2020-03-18      Internal bugfix KGU#827 in toString, getCommaText() - caused errors with null elements
  *
  ******************************************************************************************************
  *
@@ -1040,13 +1041,28 @@ public class StringList {
 
 		for (int i = 0; i<strings.size(); i++)
 		{
+			// START KGU#827 2020-02-18: Bugfix for the case of null elements
+			String elem = get(i);
+			if (elem == null) {
+				elem = "null";
+			}
+			else {
+				elem = "\"" + elem.replace("\"", "\"\"") + "\"";
+			}
+			// END KGU#827 2020-02-18
 			if (i==0)
 			{
-				res+= "\"" + get(i).replace("\"", "\"\"") + "\"";
+				// START KGU#827 2020-02-18: Bugfix for the case of null elements
+				//res+= "\"" + get(i).replace("\"", "\"\"") + "\"";
+				res += elem;
+				// END KGU#827 2020-02-18
 			}
 			else
 			{
-				res+= ",\"" + get(i).replace("\"", "\"\"") + "\"";
+				// START KGU#827 2020-02-18: Bugfix for the case of null elements
+				//res+= ",\"" + elem.replace("\"", "\"\"") + "\"";
+				res += "," + elem;
+				// END KGU#827 2020-02-18
 			}
 		}
 
@@ -1339,7 +1355,10 @@ public class StringList {
     @Override
     public String toString()
     {
-    	return getCommaText();
+    	// START KGU#827 2020-03-18 - result should be paranthesized
+    	//return getCommaText();
+    	return "[" + getCommaText() + "]";
+    	// END KGU#827 2020-03-18
     }
     
     // START KGU 2015-11-24

@@ -66,6 +66,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-12-01      Bugfix #789 (function calls); keyword case modified for non-vintage BASIC,
  *                                          bugfix #790 line continuation according to #416 hadn't been considered,
  *                                          array initializers and record types hadn't been handled correctly
+ *      Kay Gürtzig         2020-04-08      Issue #828 modifications supporting group export
  *
  ******************************************************************************************************
  *
@@ -1337,7 +1338,7 @@ public class BasGenerator extends Generator
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String furtherIndent = _indent;
 		this.labelMap = new int[this.labelCount];
@@ -1354,20 +1355,34 @@ public class BasGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			subroutineInsertionLine = code.count();	// (this will be revised in line nmbering mode)
+			subroutineInsertionLine = code.count();	// (this will be revised in line numbering mode)
 			appendComment("", _indent);
 		}
 		else
 		{
 			appendComment("", _indent);
 			appendComment(_root, _indent);
+			// START KGU#815 2020-03-26: Enh. #828
+			if (_public) {
+				appendCopyright(_root, _indent, false);
+			}
+			// END KGU#815 2020-03-26
 		}
 		// END KGU#178 2016-07-20
 
 		String signature = _root.getMethodName();
-		if (_root.isSubroutine()) {
+		// START KGU#815 2020-04-08: Enh. #828
+		//if (_root.isSubroutine()) {
+		if (_root.isSubroutine() || this.isLibraryModule() && topLevel && _root.isInclude()) {
+		// END KGU#815 2020-04-08
 			boolean isFunction = _resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet; 
 			pr = transformKeyword(isFunction ? "FUNCTION" : "SUB");
+			
+			// START KGU#815 2020-04-08: Enh. #828 - group export
+			if (this.isLibraryModule() && _public && !this.optionCodeLineNumbering()) {
+				pr = "Public " + pr;
+			}
+			// END KGU#815 2020-04-08
 
 			// Compose the function header
 			signature += "(";
@@ -1407,6 +1422,7 @@ public class BasGenerator extends Generator
 			}
 			furtherIndent += this.getIndent();
 		}
+
 		code.add(this.getLineNumber() + _indent + pr + " " + signature);
 
 		return furtherIndent;
@@ -1521,6 +1537,9 @@ public class BasGenerator extends Generator
 		if (topLevel)
 		{
 			subroutineInsertionLine = code.count();
+			// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+			libraryInsertionLine = code.count();
+			// END KGU#815/KGU#824 2020-03-19
 		}
 	}
 	// END KGU#74 2015-12-18

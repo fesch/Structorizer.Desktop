@@ -191,6 +191,7 @@ package lu.fisch.structorizer.executor;
  *                                      issue #822: Empty instruction lines are now ignored, missing exit args too.
  *                                      Fixed #823 (defective execution of assignments in some cases)
  *      Kay Gürtzig     2020-02-21      Issue #826: Raw input is to cope with backslashes as in Windows file paths
+ *      Kay Gürtzig     2020-04-04      Issue #829 Control should not automatically close after debugging [mawa290669]
  *
  ******************************************************************************************************
  *
@@ -2244,7 +2245,7 @@ public class Executor implements Runnable
 //		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
 //		arrayView.setSize(300, 300);
 		ValuePresenter arrayView = new ValuePresenter(_title, _arrayOrRecord, false, btnPause);
-    	arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		arrayView.setLocationRelativeTo(control);
 		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
 		arrayView.setVisible(true);
@@ -2565,23 +2566,23 @@ public class Executor implements Runnable
 				// END KGU#201 2016-07-25
 			}
 			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
-		    stackView.setSize(300, 300);
-		    stackView.setLocationRelativeTo(control);
-		    stackView.setModalityType(ModalityType.APPLICATION_MODAL);
-		    stackView.setVisible(true);
+			stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
+			stackView.setSize(300, 300);
+			stackView.setLocationRelativeTo(control);
+			stackView.setModalityType(ModalityType.APPLICATION_MODAL);
+			stackView.setVisible(true);
 // START KGU#159 2016-03-17: A listview is always the better choice
 //		}		
 // END KGU#159 2016-03-17
 	}
 	// END KGU#2 2015-11-24
 	
-    /**
-     * Searches all known pools for a unique includable diagram with given name 
-     * @param name - diagram name
-     * @return a Root of type INCLUDABLE with given name if uniquely found, null otherwise
-     * @throws Exception
-     */
+	/**
+	 * Searches all known pools for a unique includable diagram with given name 
+	 * @param name - diagram name
+	 * @return a Root of type INCLUDABLE with given name if uniquely found, null otherwise
+	 * @throws Exception
+	 */
 	public Root findIncludableWithName(String name) throws Exception
 	{
 		return findDiagramWithSignature(name, -2);
@@ -2669,7 +2670,7 @@ public class Executor implements Runnable
     }
 	// END KGU#2 (#9) 2015-11-13
 
-    // KGU#448 2017-10-28: Replaced former method getExec(String) in the only remained reference 
+	// KGU#448 2017-10-28: Replaced former method getExec(String) in the only remained reference 
 	public String initRootExecDelay()
 	{
 		String trouble = "";
@@ -2736,15 +2737,15 @@ public class Executor implements Runnable
 //	}
 
 	// START KGU#448 2017-10-28: Enh. #443 replaces getExec(String) and getExec(String, Color)
-    /**
-     * Executes the procedure {@code procName} with arguments {@code arguments} on
-     * the given {@link DiagramController} {@code controller}.
-     * As the operation is regarded as a diagram step, the specified delay is applied.
-     * @param controller - the facade for the controlled device
-     * @param procName - the name of the operation
-     * @param arguments - the arguments for the operation
-     * @return
-     */
+	/**
+	 * Executes the procedure {@code procName} with arguments {@code arguments} on
+	 * the given {@link DiagramController} {@code controller}.
+	 * As the operation is regarded as a diagram step, the specified delay is applied.
+	 * @param controller - the facade for the controlled device
+	 * @param procName - the name of the operation
+	 * @param arguments - the arguments for the operation
+	 * @return
+	 */
 	public String getExec(DiagramController controller, String procName, Object[] arguments)
 	{
 		String trouble = "";
@@ -3069,7 +3070,10 @@ public class Executor implements Runnable
 		// closes after execution.
 		control.setVisible(false);
 		// START KGU#157 2016-03-16: Bugfix #131 - postponed Control start?
-		boolean reopen = false;
+		// START KGU#817 2020-04-04: Issue #829 mawa290669 requested to keep control always open
+		//boolean reopen = false;
+		boolean reopen = true;
+		// END KGU#817 2020-04-04
 		if (this.reopenFor != null)
 		{
 			this.diagram = this.reopenFor;

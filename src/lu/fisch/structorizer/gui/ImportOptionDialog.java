@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-07-13  Issue #557: New limitation option for the number of imported roots to be displayed
  *      Kay Gürtzig     2018-10-26  Enh. #419: New line length limitation option
  *      Kay Gürtzig     2019-03-29  Issue #557, #718: Limit for the max. number of roots could be enlarged
+ *      Kay Gürtzig     2020-03-09  Issue #833: New option for the insertion of optional keywords (e.g. "preAlt")
  *
  ******************************************************************************************************
  *
@@ -156,6 +157,9 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
         chkCommentImport = new javax.swing.JCheckBox();
         // END KGU#407 2017-06-22
+        // START KGU#821 2020-03-09: Issue #833 - new option to control the insertion of optional keywords
+        chkInsertOptKeywords = new javax.swing.JCheckBox();
+        // END KGU#821 2020-03-09
         // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
         chkSaveParseTree = new javax.swing.JCheckBox();
         // END KGU#354 2017-03-08
@@ -203,6 +207,10 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#407 2017-06-22: Enh. #420
         chkCommentImport.setText("Import source code comments");
         chkCommentImport.setToolTipText("With this option enabled, parser may equip derived elements with comments found closest in the source code.");
+        // END KGU#407 2017-06-22
+        // START KGU#821 2020-03-09: Issue #833
+        chkInsertOptKeywords.setText("Place configured optional keywords around conditions");
+        chkInsertOptKeywords.setToolTipText("Allows to decorate imported conditions (e.g. of alternatives) with the redundant pre/post keywords from the parser preferences.");
         // END KGU#407 2017-06-22
         // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
         chkSaveParseTree.setText("Write parse tree to file after import");
@@ -351,6 +359,9 @@ public class ImportOptionDialog extends LangDialog {
                         )
                 .add(chkVarDeclarations)
                 .add(chkCommentImport)
+                // START KGU#821 2020-03-09: Issue #833
+                .add(chkInsertOptKeywords)
+                // END KGU#821 2020-03-09
                 .add(chkSaveParseTree)
                 // START KGU#553 2018-07-13: Issue #557
                 .add(pnlLimit)
@@ -378,6 +389,9 @@ public class ImportOptionDialog extends LangDialog {
                         )
                 .add(chkVarDeclarations)
                 .add(chkCommentImport)
+                // START KGU#821 2020-03-09: Issue #833
+                .add(chkInsertOptKeywords)
+                // END KGU#821 2020-03-09
                 .add(chkSaveParseTree)
                 // START KGU#553 2018-07-13: Issue #557
                 .add(pnlLimit)
@@ -460,6 +474,9 @@ public class ImportOptionDialog extends LangDialog {
         chkSaveParseTree.addKeyListener(keyListener);
         chkVarDeclarations.addKeyListener(keyListener);
         chkCommentImport.addKeyListener(keyListener);
+        // START KGU#821 2020-03-09: Issue #833
+        chkInsertOptKeywords.addKeyListener(keyListener);
+        // END KGU#821 2020-03-09
         chkRefactorOnLoading.addKeyListener(keyListener);
         // END KGU#393 2017-05-09		
         // START KGU#416 2017-06-20: Enh. #354. #357
@@ -695,6 +712,9 @@ public class ImportOptionDialog extends LangDialog {
     // START KGU#407 2017-06-22: Enh. #420 - new option to import statement comments
     public javax.swing.JCheckBox chkCommentImport;
     // END KGU#407 2017-06-22
+    // START KGU#821 2020-03-09: Issue #833 - new option whether to insert optional keywords from the parser preferences
+    public javax.swing.JCheckBox chkInsertOptKeywords;
+    // END KGU#821 2020-03-09
     // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
     public javax.swing.JCheckBox chkSaveParseTree;
     // END KGU#354 2017-03-08

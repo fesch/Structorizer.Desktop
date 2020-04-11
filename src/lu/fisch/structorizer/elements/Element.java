@@ -269,7 +269,7 @@ public abstract class Element {
 	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-06";
+	public static final String E_VERSION = "3.30-07";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -4198,9 +4198,10 @@ public abstract class Element {
 	}
 	
 	/**
-     * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
-     * provided by _prefNames. If there is such a token sequence then it will be
-     * replaced throughout my text by the associated current parser preference for the respective name
+     * Looks up the associated token sequence in _splitOldKeys for any of the parser
+     * preference names provided by _prefNames. If there is such a token sequence
+     * then it will be replaced throughout {@code _line} by the associated current
+     * parser preference for the respective name.
 	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
@@ -4529,5 +4530,5 @@ public abstract class Element {
 			this.rect0 = new Rect(rect0.left, rect0.top, rect0.bottom, rect0.right);
 		}
 	}
-
+	
 }

@@ -1646,7 +1646,7 @@ public abstract class CPreParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
+	protected boolean subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
 		if (aRoot.getMethodName().equals("main")) {
 			String fileName = new File(textToParse).getName();
 			if (fileName.contains(".")) {
@@ -1704,6 +1704,7 @@ public abstract class CPreParser extends CodeParser
 			}
 			// END KGU#793 2020-02-10
 		}
+		return false;
 	}
 
 	/* (non-Javadoc)

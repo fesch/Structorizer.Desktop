@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-12-01      Enh. #739: Support for enumerator types
  *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
  *      Kay Gürtzig             2020-02-13      Bugfix #812: Defective solution for #782 (global references) mended
+ *      Kay Gürtzig             2020-03-08      Bugfix #831: Obsolete shebang and defective export of CALLs as parallel branch
  *
  ******************************************************************************************************
  *
@@ -676,7 +677,7 @@ public class PythonGenerator extends Generator
 					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
 				}
 				// END KGU#388 2017-10-02
-				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified oinitialisations
+				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified initialisations
 				else if (Instruction.isMereDeclaration(line)) {
 					done = generateDeclaration(line, root, _indent, isDisabled);
 				}
@@ -1008,15 +1009,22 @@ public class PythonGenerator extends Generator
 			for (int v = 0; v < asgnd.count(); v++) {
 				used.removeAll(asgnd.get(v));
 			}
-			String args = used.concatenate(",");
-			if (used.count() == 1) {
-				args += ",";
-			}
 			if (sq.getSize() == 1) {
 				Element el = sq.getElement(0);
 				if (el instanceof Call && ((Call)el).isProcedureCall()) {
 					threadFunc = ((Call)el).getCalledRoutine().getName();
+					// START KGU#819 2020-03-08: Bugfix #831 - In case of a call we can (and must) simply copy the arg list.
+					String line = ((Call)el).getUnbrokenText().get(0);
+					used = Element.splitExpressionList(line.substring(line.indexOf("(")+1), ",");
+					for (int j = 0; j < used.count(); j++) {
+						used.set(j, transform(used.get(j)));
+					}
+					// END KGU#819 2020-03-08
 				}
+			}
+			String args = used.concatenate(",");
+			if (used.count() == 1) {
+				args += ",";
 			}
 			addCode(threadVar + " = Thread(target=" + threadFunc + ", args=(" + args + "))", _indent, isDisabled);
 			addCode(threadVar + ".start()", _indent, isDisabled);
@@ -1082,7 +1090,7 @@ public class PythonGenerator extends Generator
 					addCode("global " + varName, indentPlusOne, isDisabled);
 				}
 				generateCode(sq, indentPlusOne);
-				code.add(_indent);
+				addSepaLine(_indent);
 				i++;
 			}
 		}
@@ -1204,10 +1212,15 @@ public class PythonGenerator extends Generator
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
-	protected void appendGlobalInitialisations(String _indent) {
+	protected void appendGlobalInitialisations(Root _root, String _indent) {
 		if (topLevel) {
-			int startLine = code.count();
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+				// Don't add initialisation code for an imported module
+				if (importedLibRoots != null && importedLibRoots.contains(incl)) {
+					continue;
+				}
+				// END KGU#815/KGU#824 2020-03-18
 				appendComment("BEGIN (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 				//typeMap = incl.getTypeInfo();
@@ -1216,9 +1229,7 @@ public class PythonGenerator extends Generator
 				generateCode(incl.children, _indent);
 				appendComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
-			if (code.count() > startLine) {
-				code.add(_indent);
-			}
+			addSepaLine(_indent);
 		}
 	}
 
@@ -1226,7 +1237,7 @@ public class PythonGenerator extends Generator
 	 * Declares imported names as global
 	 * @param _root - the Root being exported
 	 * @param _indent - the current indentation level
-	 * @see #appendGlobalInitialisations(String)
+	 * @see #appendGlobalInitialisations(Root, String)
 	 * @see #generateDeclaration(String, Root, String, boolean)
 	 */
 	private void appendGlobalDeclarations(Root _root, String _indent) {
@@ -1320,12 +1331,20 @@ public class PythonGenerator extends Generator
 	 */
 	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		String indent = "";
 		if (topLevel)
 		{
-			code.add(_indent + "#!/usr/bin/env python");
+			// START KGU#815 2020-04-07: Enh. #828 group export
+			if (this.isLibraryModule()) {
+				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
+			}
+			// END KGU#815 2020-04-07
+			// START KGU#819 2020-03-08: Bugfix #831
+			//code.add(_indent + "#!/usr/bin/env python");
+			code.add(_indent + "#!/usr/bin/python3");
+			// END KGU#819 2020-03-08
 			// START KGU#366 2017-03-10: Issue #378 the used character set is to be named 
 			code.add(_indent + "# -*- coding: " + this.getExportCharset().toLowerCase() + " -*-");
 			// END KGU#366 2017-03-10
@@ -1341,11 +1360,11 @@ public class PythonGenerator extends Generator
 			// END KGU#795 2020-02-12
 			// START KGU#542 2019-12-01: Enh. #739
 			code.add(_indent + "from enum import Enum");
-			this.generatorIncludes.add("enum");
+			//this.generatorIncludes.add("enum");
 			// END KGU#542 2019-12-01
 			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
 			if (this.hasParallels) {
-				code.add(_indent);
+				addSepaLine(_indent);
 				code.add(_indent + "from threading import Thread");
 			}
 			// END KGU#348 2017-02-19
@@ -1356,16 +1375,16 @@ public class PythonGenerator extends Generator
 			this.appendUserIncludes(indent);
 			// END KGU#351 2017-02-26
 			// START KGU#600 2018-10-17: It is too cumbersome to check if math is actually needed
-			code.add(_indent + "import math");
+			this.appendGeneratorIncludes(_indent, true);
 			// END KGU#600 2018-10-17
 			// START KGU#598 2018-10-17: Enh. #623
 			this.includeInsertionLine = code.count();
 			// END KGU#598 2018-10-17
 			// START KGU#376 2017-10-02: Enh. #389 - insert the code of the includables first
-			this.appendGlobalInitialisations(_indent);
+			this.appendGlobalInitialisations(_root, _indent);
 			// END KGU#376 2017-10-02
 //			if (code.count() == this.includeInsertionLine) {
-//				code.add(_indent);
+//				addSepaLine();
 //			}
 			subroutineInsertionLine = code.count();
 			// START KGU#311 2016-12-27: Enh. #314: File API support
@@ -1374,7 +1393,7 @@ public class PythonGenerator extends Generator
 			}
 			// END KGU#311 2016-12-27
 		}
-		code.add("");
+		addSepaLine(_indent);;
 		// FIXME: How to handle includables here?
 		if (!_root.isSubroutine()) {
 			appendComment(_root, _indent);
@@ -1443,7 +1462,7 @@ public class PythonGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			addSepaLine(_indent);;
 			code.add(_indent + "return " + result);
 		}
 		return _indent;
@@ -1461,13 +1480,17 @@ public class PythonGenerator extends Generator
 	{
 		// Just pro forma
 		super.generateFooter(_root, _indent + this.getIndent());
+		
+		// START KGU#815 2020-04-07: Enh. #828 - group export
+		addSepaLine();
+		this.libraryInsertionLine = code.count();
+		// END KGU#815 2020-04-07
 
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {
 			insertCode("import turtle", this.includeInsertionLine);
-			insertCode("turtle.colormode(255)", this.includeInsertionLine+1);
-			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine+2);
-			this.subroutineInsertionLine += 3;
+			insertCode("turtle.colormode(255)", this.includeInsertionLine);
+			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine);
 			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
 		}
 		// END KGU#598 2018-10-17

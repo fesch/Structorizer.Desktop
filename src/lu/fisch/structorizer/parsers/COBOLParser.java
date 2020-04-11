@@ -7850,11 +7850,15 @@ public class COBOLParser extends CodeParser
 			//System.out.println("\tEVALUATE: PROD_EVALUATE_SUBJECT_LIST");
 			StringList caseText = StringList.getNew(this.getContent_R(subjlRed, ""));
 			int caseVarStringLength = 0;
-			if (caseText != null) {
-				String possibleVarName = caseText.toString();
-				if (possibleVarName.matches("\".+\"")) {
-					possibleVarName = possibleVarName.substring(1, possibleVarName.length()-1);
-				}
+			// START KGU#827 2020-03-18 Bugfix caseText cannot be null here, but possibly empty
+//			if (caseText != null) {
+//				String possibleVarName = caseText.toString();
+//				if (possibleVarName.matches("\".+\"")) {
+//					possibleVarName = possibleVarName.substring(1, possibleVarName.length()-1);
+//				}
+			if (!caseText.isEmpty()) {
+				String possibleVarName = caseText.get(0);
+			// END KGU#827 2020-03-18: toString() was not a sensible method to evaluate a StringList content
 				CobVar caseVar = currentProg.getCobVar(possibleVarName);
 				String type = CobTools.getTypeString(caseVar, false);
 				if (type != null && type.equals("String")) {
@@ -9457,7 +9461,7 @@ public class COBOLParser extends CodeParser
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
 	@Override
-	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
+	protected boolean subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled {
 		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 		if (aRoot.getMethodName().equals("???")) {
 			if (aRoot.getParameterNames().count() == 0) {	// How could there be arguments?
@@ -9493,6 +9497,7 @@ public class COBOLParser extends CodeParser
 				}
 			}
 		}
+		return false;
 	}
 
 	// START KGU 2017-05-28: Now we try to resolve internal calls
@@ -10944,6 +10949,7 @@ class CobTools {
 		public String getValueComparisonString() {
 			boolean firstValue = true;
 			String valueComparison = "";
+			// FIXME: Why not declare value as String rightaway since this.values is a String[]?
 			for (Object value : this.values) {
 				if (firstValue) {
 					firstValue = false;

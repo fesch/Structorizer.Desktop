@@ -68,6 +68,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-03-21      Enh. #56: Export of Try elements and throw-flavour Jumps
  *      Kay Gürtzig             2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
+ *      Kay Gürtzig             2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig             2020-04-05      Enh. #828: Preparations for group export (modified include mechanism)
+ *      Kay Gürtzig             2020-04-06/07   Bugfixes #843, #844: Global declarations and record/array types
  *
  ******************************************************************************************************
  *
@@ -125,8 +128,13 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+
+import java.util.HashMap;
+import java.util.Map.Entry;
+
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
 // FIXME (KGU 2014-11-11): Variable names will have to be accomplished by a '$' prefix - this requires
@@ -234,12 +242,22 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String getIncludePattern()
 	{
-		return "include '%';";
+		// START KGU#815 2020-04-05: Enh. #828 It makes more sense to use "require_once", particularly for libraries with initialisation
+		//return "include '%';";
+		return "require_once '%';";
+		// END KGU#815 2020-04-05
 	}
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
 
+	// START KGU#839/KGU#840 2020-04-06: Bugfixes #843 (#389, #782), #844 (#423)
+	/** Line number for the insertion of 'global' declarations */
+	private int declarationInsertionLine = 0;
+	/** Gathered type information for the currently exported {@link Root} */
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	// END KGU#839/KGU#840 2010-04-06
+	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getInputReplacer(boolean)
@@ -277,6 +295,29 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#840 2020-04-06: Bugfix #844 array and record initializers had not been transformed at all
+		if (tokens.contains("{") && tokens.contains("}")) {
+			tokens = transformInitializers(tokens);
+		}
+		// Now convert all qualified names into array access via string key
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (Function.testIdentifier(token, null)) {
+				// Check for a preceding dot
+				int k = i;
+				while (k > 0 && tokens.get(--k).trim().isEmpty());
+				boolean isComponent = k >= 0 && tokens.get(k).equals(".");
+				if (isComponent) {
+					tokens.set(k++, "[");
+					tokens.set(i, "]");
+					tokens.insert("'" + token + "'", i);
+					tokens.remove(k, i);
+					i += (k - i) + 1;	// This corrects the current index w.r.t. insertions and deletions 
+				}
+			}
+			
+		}
+		// END KGU#840 2020-04-06
 		// START KGU#62 2015-12-19: Bugfix #57 - We must work based on a lexical analysis
 		for (int i = 0; i < varNames.count(); i++)
 		{
@@ -289,25 +330,143 @@ public class PHPGenerator extends Generator
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
 		// START KGU#311 2017-01-03: Enh. #314 File API
-		if (this.usesFileAPI) {
-			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-				tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
-			}
+		//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Issue #840 We should even transform disabled code
+		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
 		}
+		//}
 		// END KGU#311 2017-01-03
-		return tokens.concatenate();
+		return tokens.concatenate(null);
 	}
 	// END KGU#93 2015-12-21
 	
 	// END KGU#18/KGU#23 2015-11-01
 
-    @Override
-    protected void generateCode(Instruction _inst, String _indent)
-    {
-    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+	// START KGU#840 2020-04-06: Bugfix #844 (enh. #423) - support for record types and array initializers
+	/**
+	 * Recursively transforms all record and array initializers within the token sequence
+	 * {@code _tokens}
+	 * @param tokens - the lexically split instruction line (may be partially transformed)
+	 * @return the tokens sequence with transformed initializer expressions
+	 */
+	private StringList transformInitializers(StringList tokens) {
+		StringList newTokens = new StringList();
+		int posBraceL = -1;
+		while ((posBraceL = tokens.indexOf("{")) >= 0 && tokens.indexOf("}", posBraceL+1) >= 0) {
+			int posPrev = posBraceL - 1;
+			String prevToken = "";
+			// Find the previous non-blank token in order to decide whether it is a record type name
+			while (posPrev >= 0 && (prevToken = tokens.get(posPrev--).trim()).isEmpty());
+			StringList exprs = Element.splitExpressionList(tokens.subSequence(posBraceL+1, tokens.count()), ",", true);
+			String tail = "";
+			if (exprs.count() > 0 && (tail = exprs.get(exprs.count()-1).trim()).startsWith("}")) {
+				exprs = exprs.subSequence(0, exprs.count()-1);
+				// Syntax is principally okay, so decide whether it is a record or array initilaizer
+				TypeMapEntry type = this.typeMap.get(":" + prevToken);
+				if (!prevToken.isEmpty() && type != null && type.isRecord()) {
+					newTokens.add(tokens.subSequence(0, posPrev + 1));
+					newTokens.add(this.transformRecordInit(prevToken + "{" + exprs.concatenate(",") + "}", type));
+				}
+				else {
+					newTokens.add(tokens.subSequence(0, posBraceL));
+					newTokens.add(this.transformArrayInit(exprs));
+				}
+				tokens = Element.splitLexically(tail.substring(1), true);
+			}
+			else {
+				// Pass all tokens upto and including the found closing brace
+				int posBraceR = tokens.indexOf("}", posBraceL+1);
+				newTokens.add(tokens.subSequence(0, posBraceR + 1));
+				tokens.remove(0, posBraceR + 1);
+			}
+		}
+		// No more braces found, so append the remaining tokens as are
+		newTokens.add(tokens);
+		return newTokens;
+	}
+
+	/**
+	 * Transforms the given list of array element expressions {@code exprs} into a
+	 * PHP array value, thereby recursively transforming further initializers possibly
+	 * contained in the elements of {@code exprs}
+	 * @param exprs a {@link StringList} with each element being a (partially transformed)
+	 * expression
+	 * @return a token sequence representing the equivalent PHP array initializer
+	 */
+	private StringList transformArrayInit(StringList exprs) {
+		StringList result = new StringList();
+		result.add("array(");
+		for (int i = 0; i < exprs.count(); i++) {
+			StringList tokens = Element.splitLexically(exprs.get(i), true);
+			if (tokens.contains("{")) {
+				tokens = this.transformInitializers(tokens);
+			}
+			if (i > 0) {
+				result.add(",");
+			}
+			result.add(tokens);
+		}
+		result.add(")");
+		return result;
+	}
+
+	/**
+	 * Transforms the record initializer into an adequate PHP code.
+	 * @param _recordValue - the record initializer according to Structorizer syntax
+	 * @param _typeEntry - used to interpret a simplified record initializer (may be null)
+	 * @return a string representing an adequate Perl code for the initialisation. May contain
+	 * indentation and newline characters
+	 */
+	protected StringList transformRecordInit(String _recordValue, TypeMapEntry _typeEntry)
+	{
+		StringList result = new StringList();
+		result.add("array(");
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
+		for (Entry<String, String> comp: comps.entrySet()) {
+			String compName = comp.getKey();
+			String compVal = comp.getValue();
+			if (!compName.startsWith("§") && compVal != null) {
+				result.add("\"" + compName + "\"");
+				result.add(" "); result.add("=>"); result.add(" ");
+				StringList tokens = Element.splitLexically(compVal, true);
+				if (tokens.contains("{")) {
+					tokens = transformInitializers(tokens);
+				}
+				result.add(tokens);
+				result.add(",");
+			}
+		}
+		if (!result.isEmpty() && result.get(result.count()-1).equals(",")) {
+			result.remove(result.count()-1);
+		}
+		result.add(")");
+		return result;
+	}
+	// END KGU#840 2020-04-06
+	
+	// START KGU#815/#839 2020-04-07: Enh. #828, bugfix #843 group export / global declarations
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#updateLineMarkers(int, int)
+	 */
+	@Override
+	protected void updateLineMarkers(int atLine, int nLines) {
+		super.updateLineMarkers(atLine, nLines);
+		if (this.declarationInsertionLine >= atLine) {
+			this.declarationInsertionLine += nLines;
+		}
+	}
+	
+	// END KGU#815/KGU#839 2020-04-07
+	
+	@Override
+	protected void generateCode(Instruction _inst, String _indent)
+	{
+		// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
 		if (!appendAsComment(_inst, _indent)) {
 			
 			boolean isDisabled = _inst.isDisabled();
+			Root root = Element.getRoot(_inst);
+			StringList declVars = root.getMereDeclarationNames(false);
 			
 			appendComment(_inst, _indent);
 
@@ -317,7 +476,7 @@ public class PHPGenerator extends Generator
 				// START KGU#281 2016-10-16: Enh. #271
 				//addCode(transform(_inst.getText().get(i))+";",
 				//		_indent, isDisabled);
-				// START KGU#653 2019-02-14: Enh. #680 - support fr multi-var input
+				// START KGU#653 2019-02-14: Enh. #680 - support for multi-var input
 				String line = lines.get(i);
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 1) {
@@ -333,6 +492,11 @@ public class PHPGenerator extends Generator
 						addCode(transform(subLine) + ";", _indent, isDisabled);
 					}
 				}
+				// START KGU#840 2020-04-06: Bugfix #844 type definitions had just slipped through
+				else if (Instruction.isTypeDefinition(line)) {
+					this.appendComment(line, _indent);
+				}
+				// END KGU#840 2020-04-06
 				else {
 				// END KGU#653 2019-02-14
 					String transf = transform(line) + ";";
@@ -340,10 +504,83 @@ public class PHPGenerator extends Generator
 						transf = "dummyInputVar " + transf;
 					}
 					// START KGU#284 2016-10-16: Enh. #274
-					else if (Instruction.isTurtleizerMove(lines.get(i))) {
+					else if (Instruction.isTurtleizerMove(line)) {
 						transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					}
 					// END KGU#284 2016-10-16
+					// START KGU#839 2020-04-06: Bugfix #843 (issues #389, #782)
+					else if (Instruction.isDeclaration(line)) {
+						StringList tokens = Element.splitLexically(transf, true);
+						// identify declared variable - the token will start with a dollar
+						int posVar = 0;
+						boolean mereDecl = Instruction.isMereDeclaration(line);
+						while (posVar < tokens.count() && !tokens.get(posVar).startsWith("$")) {
+							posVar++;
+						}
+						if (posVar >= tokens.count() && mereDecl) {
+							posVar = 0;
+							while (posVar < tokens.count() && !varNames.contains(tokens.get(posVar)) && !declVars.contains(tokens.get(posVar))) {
+								posVar++;
+							}
+						}
+						int posEqu = tokens.indexOf("=");
+						String varName = null;
+						if (posVar < tokens.count() && (posEqu < 0 || posEqu > posVar)) {
+							varName = tokens.get(posVar);
+							if (varName.startsWith("$")) { varName = varName.substring(1); }
+							wasDefHandled(Element.getRoot(_inst), varName, true, false);
+						}
+						if (mereDecl) {
+							TypeMapEntry type = null;
+							if (varName != null) {
+								type = this.typeMap.get(varName);
+							}
+							if (type != null) {
+								if ((type.isRecord() || type.isArray())) {
+									transf = "$" + varName + " = array();";
+								}
+								else {
+									String typeSpec = type.getCanonicalType(true, false);
+									if (typeSpec.equalsIgnoreCase("string")) {
+										transf = "$" + varName + " = \"\";";
+									}
+									else if (typeSpec.equals("int") || typeSpec.equals("long")) {
+										transf = "$" + varName + " = 0;";
+									}
+									else if (typeSpec.equals("double") || typeSpec.equals("float")) {
+										transf = "$" + varName + " = 0.0;";
+									}
+									else if (typeSpec.equals("boolean")) {
+										transf = "$" + varName + " = False;";
+									}
+									else {
+										// We can't do so much more.
+										type = null;
+									}
+								}
+							}
+							if (type == null) {
+								appendComment(line, _indent);
+							}
+							else {
+								addCode(transf, _indent, isDisabled);
+							}
+							continue;	// No further action here
+						}
+						// Now we cut off all remnants of the declaration.
+						posEqu -= (posVar);	// Should still be >= 0 as there must be an assignment
+						tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim"
+						int posColon = tokens.indexOf(":");
+						if (posColon < 0 || posColon > posEqu) {
+							posColon = tokens.indexOf("as", false);
+						}
+						if (posColon > 0 && posColon < posEqu) {
+							tokens.remove(posColon, posEqu);
+							tokens.insert(" ", posColon);
+						}
+						transf = tokens.concatenate(null);
+					}
+					// END KGU#839 2020-04-06
 					addCode(transf,	_indent, isDisabled);
 					// END KGU#281 2016-10-16
 				// START KGU#653 2019-02-14: Enh. #680 (part 2)
@@ -353,197 +590,197 @@ public class PHPGenerator extends Generator
 
 		}
 		// END KGU 2015-10-18
-    }
+	}
 
-    @Override
-    protected void generateCode(Alternative _alt, String _indent)
-    {
-    	boolean isDisabled = _alt.isDisabled();
-    	
+	@Override
+	protected void generateCode(Alternative _alt, String _indent)
+	{
+		boolean isDisabled = _alt.isDisabled();
+
 		// START KGU 2014-11-16
 		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
 
-    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
-    	// START KGU#301 2016-12-01: Bugfix #301
-    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
-    	// END KGU#301 2016-12-01
+		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+		if (!isParenthesized(condition)) condition = "(" + condition + ")";
+		// END KGU#301 2016-12-01
 
-    	addCode("if "+condition+"", _indent, isDisabled);
-        addCode("{", _indent, isDisabled);
-        generateCode(_alt.qTrue,_indent+this.getIndent());
-        if(_alt.qFalse.getSize()!=0)
-        {
-                addCode("}", _indent, isDisabled);
-                addCode("else", _indent, isDisabled);
-                addCode("{", _indent, isDisabled);
-                generateCode(_alt.qFalse,_indent+this.getIndent());
-        }
-        addCode("}", _indent, isDisabled);
-    }
+		addCode("if "+condition+"", _indent, isDisabled);
+		addCode("{", _indent, isDisabled);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
+		if(_alt.qFalse.getSize()!=0)
+		{
+			addCode("}", _indent, isDisabled);
+			addCode("else", _indent, isDisabled);
+			addCode("{", _indent, isDisabled);
+			generateCode(_alt.qFalse,_indent+this.getIndent());
+		}
+		addCode("}", _indent, isDisabled);
+	}
 
-    @Override
-    protected void generateCode(Case _case, String _indent)
-    {
-    	boolean isDisabled = _case.isDisabled();
-    	
-    	// START KGU 2014-11-16
-    	appendComment(_case, _indent);
-    	// END KGU 2014-11-16
+	@Override
+	protected void generateCode(Case _case, String _indent)
+	{
+		boolean isDisabled = _case.isDisabled();
 
-    	// START KGU#453 2017-11-02: Issue #447
-    	//StringList lines = _case.getText();
-    	StringList lines = _case.getUnbrokenText();
-    	// END KGU#453 2017-11-02
-    	String condition = transform(_case.getText().get(0));
-    	// START KGU#301 2016-12-01: Bugfix #301
-    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
-    	// END KGU#301 2016-12-01
+		// START KGU 2014-11-16
+		appendComment(_case, _indent);
+		// END KGU 2014-11-16
 
-    	addCode("switch "+condition+" ", _indent, isDisabled);
-    	addCode("{", _indent, isDisabled);
+		// START KGU#453 2017-11-02: Issue #447
+		//StringList lines = _case.getText();
+		StringList lines = _case.getUnbrokenText();
+		// END KGU#453 2017-11-02
+		String condition = transform(_case.getText().get(0));
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+		if (!isParenthesized(condition)) condition = "(" + condition + ")";
+		// END KGU#301 2016-12-01
 
-    	for (int i=0; i<_case.qs.size()-1; i++)
-    	{
-    		// START KGU#15 2015-11-02: Support for multiple constants per branch
-    		//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
-    		// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
-    		//StringList constants = StringList.explode(lines.get(i+1), ",");
-    		StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
-    		// END KGU#755 2019-11-08
-    		for (int j = 0; j < constants.count(); j++)
-    		{
-    			addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
-    		}
-    		// END KGU#15 2015-11-02
-    		generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
-    		addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
-    	}
+		addCode("switch "+condition+" ", _indent, isDisabled);
+		addCode("{", _indent, isDisabled);
 
-    	// START KGU#453 2017-11-02: Issue #447
-    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-    	if(!lines.get(_case.qs.size()).trim().equals("%"))
-    	// END KGU#453 2017-11-02
-    	{
-    		addCode("default:", _indent+this.getIndent(), isDisabled);
-    		generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
-    	}
-    	addCode("}", _indent, isDisabled);
-    }
+		for (int i=0; i<_case.qs.size()-1; i++)
+		{
+			// START KGU#15 2015-11-02: Support for multiple constants per branch
+			//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
+			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
+			//StringList constants = StringList.explode(lines.get(i+1), ",");
+			StringList constants = Element.splitExpressionList(lines.get(i + 1), ",");
+			// END KGU#755 2019-11-08
+			for (int j = 0; j < constants.count(); j++)
+			{
+				addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
+			}
+			// END KGU#15 2015-11-02
+			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+			addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+		}
 
-    @Override
-    protected void generateCode(For _for, String _indent)
-    {
-    	boolean isDisabled = _for.isDisabled();
-    	
-    	// START KGU 2014-11-16
-    	appendComment(_for, _indent);
-    	// END KGU 2014-11-16
+		// START KGU#453 2017-11-02: Issue #447
+		//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		if(!lines.get(_case.qs.size()).trim().equals("%"))
+		// END KGU#453 2017-11-02
+		{
+			addCode("default:", _indent+this.getIndent(), isDisabled);
+			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+		}
+		addCode("}", _indent, isDisabled);
+	}
 
-    	// START KGU#3 2015-11-02: Now we have a more reliable mechanism
-    	String var = _for.getCounterVar();
-    	// START KGU#162 2016-04-01: Enh. #144 more tentative mode of operation
-    	if (!var.startsWith("$"))
-    	{
-    		var = "$" + var;
-    	}
-    	// END KGU#162 2016-04-01
-    	// START KGU#61 2016-03-23: Enh. #84 - support for FOREACH loop
-    	if (_for.isForInLoop())
-    	{
-    		String valueList = _for.getValueList();
-    		StringList items = this.extractForInListItems(_for);
-    		if (items != null)
-    		{
-    			valueList = "array(" + transform(items.concatenate(", "), false) + ")";
-    		}
-    		else
-    		{
-    			valueList = transform(valueList, false);
-    		}
-    		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
-    		//code.add(_indent + "foreach (" + valueList + " as $" + var + ")");
-    		addCode("foreach (" + valueList + " as " + var + ")", _indent, isDisabled);
-    		// END KGU#162 2016-04-01
-    	
-    	}
-    	else
-    	{
-    		int step = _for.getStepConst();
-    		// START KGU#204 2016-07-19: Bugfix #191 - operators confused
-    		//String compOp = (step > 0) ? " >= " : " <= ";
-    		String compOp = (step > 0) ? " <= " : " >= ";
-    		// END KGU#204 2016-07-19
-    		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
-//    		String increment = "$" + var + " += (" + step + ")";
-//    		code.add(_indent + "for ($" +
-//    				var + " = " + transform(_for.getStartValue(), false) + "; $" +
-//    				var + compOp + transform(_for.getEndValue(), false) + "; " +
-//    				increment +
-//    				")");
-    		String increment = var + " += (" + step + ")";
-    		addCode("for (" +
-    				var + " = " + transform(_for.getStartValue(), false) + "; " +
-    				var + compOp + transform(_for.getEndValue(), false) + "; " +
-    				increment +
-    				")", _indent, isDisabled);
-    		// END KGU#162 2016-04-01
-    	}
-    	// END KGU#61 2016-03-23
-    	// END KGU#3 2015-11-02
-    	addCode("{", _indent, isDisabled);
-    	generateCode(_for.q,_indent+this.getIndent());
-    	addCode("}", _indent, isDisabled);
-    }
+	@Override
+	protected void generateCode(For _for, String _indent)
+	{
+		boolean isDisabled = _for.isDisabled();
 
-    @Override
-    protected void generateCode(While _while, String _indent)
-    {
-    	boolean isDisabled = _while.isDisabled();
+		// START KGU 2014-11-16
+		appendComment(_for, _indent);
+		// END KGU 2014-11-16
 
-    	// START KGU 2014-11-16
-    	appendComment(_while, _indent);
-    	// END KGU 2014-11-16
+		// START KGU#3 2015-11-02: Now we have a more reliable mechanism
+		String var = _for.getCounterVar();
+		// START KGU#162 2016-04-01: Enh. #144 more tentative mode of operation
+		if (!var.startsWith("$"))
+		{
+			var = "$" + var;
+		}
+		// END KGU#162 2016-04-01
+		// START KGU#61 2016-03-23: Enh. #84 - support for FOREACH loop
+		if (_for.isForInLoop())
+		{
+			String valueList = _for.getValueList();
+			StringList items = this.extractForInListItems(_for);
+			if (items != null)
+			{
+				valueList = "array(" + transform(items.concatenate(", "), false) + ")";
+			}
+			else
+			{
+				valueList = transform(valueList, false);
+			}
+			// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
+			//code.add(_indent + "foreach (" + valueList + " as $" + var + ")");
+			addCode("foreach (" + valueList + " as " + var + ")", _indent, isDisabled);
+			// END KGU#162 2016-04-01
 
-    	String condition = transform(_while.getUnbrokenText().getLongString()).trim();
-    	// START KGU#301 2016-12-01: Bugfix #301
-    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
-    	// END KGU#301 2016-12-01
+		}
+		else
+		{
+			int step = _for.getStepConst();
+			// START KGU#204 2016-07-19: Bugfix #191 - operators confused
+			//String compOp = (step > 0) ? " >= " : " <= ";
+			String compOp = (step > 0) ? " <= " : " >= ";
+			// END KGU#204 2016-07-19
+			// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
+//			String increment = "$" + var + " += (" + step + ")";
+//			code.add(_indent + "for ($" +
+//					var + " = " + transform(_for.getStartValue(), false) + "; $" +
+//					var + compOp + transform(_for.getEndValue(), false) + "; " +
+//					increment +
+//					")");
+			String increment = var + " += (" + step + ")";
+			addCode("for (" +
+					var + " = " + transform(_for.getStartValue(), false) + "; " +
+					var + compOp + transform(_for.getEndValue(), false) + "; " +
+					increment +
+					")", _indent, isDisabled);
+			// END KGU#162 2016-04-01
+		}
+		// END KGU#61 2016-03-23
+		// END KGU#3 2015-11-02
+		addCode("{", _indent, isDisabled);
+		generateCode(_for.q,_indent+this.getIndent());
+		addCode("}", _indent, isDisabled);
+	}
 
-    	addCode("while "+condition+" ", _indent, isDisabled);
-    	addCode("{", _indent, isDisabled);
-    	generateCode(_while.q,_indent+this.getIndent());
-    	addCode("}", _indent, isDisabled);
-    }
+	@Override
+	protected void generateCode(While _while, String _indent)
+	{
+		boolean isDisabled = _while.isDisabled();
 
-    @Override
-    protected void generateCode(Repeat _repeat, String _indent)
-    {
-        boolean isDisabled = _repeat.isDisabled();
-        
-        // START KGU 2014-11-16
-        appendComment(_repeat, _indent);
-        // END KGU 2014-11-16
+		// START KGU 2014-11-16
+		appendComment(_while, _indent);
+		// END KGU 2014-11-16
 
-        addCode("do", _indent, isDisabled);
-        addCode("{", _indent, isDisabled);
-        generateCode(_repeat.q,_indent+this.getIndent());
-        // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
-        //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
-        String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
-        // START KGU#301 2016-12-01: Bugfix #301
-        //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
-        if (!this.suppressTransformation || !isParenthesized(condition))
-        // END KGU#301 2016-12-01
-        {
-        	condition = "( " + condition + " )";
-        }
-        addCode("} while (!" + condition + ");", _indent, isDisabled);
-        // END KGU#162 2016-04-01
-    }
+		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+		if (!isParenthesized(condition)) condition = "(" + condition + ")";
+		// END KGU#301 2016-12-01
+
+		addCode("while "+condition+" ", _indent, isDisabled);
+		addCode("{", _indent, isDisabled);
+		generateCode(_while.q,_indent+this.getIndent());
+		addCode("}", _indent, isDisabled);
+	}
+
+	@Override
+	protected void generateCode(Repeat _repeat, String _indent)
+	{
+		boolean isDisabled = _repeat.isDisabled();
+
+		// START KGU 2014-11-16
+		appendComment(_repeat, _indent);
+		// END KGU 2014-11-16
+
+		addCode("do", _indent, isDisabled);
+		addCode("{", _indent, isDisabled);
+		generateCode(_repeat.q,_indent+this.getIndent());
+		// START KGU#162 2016-04-01: Enh. #144 - more tentative approach
+		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(condition))
+		// END KGU#301 2016-12-01
+		{
+			condition = "( " + condition + " )";
+		}
+		addCode("} while (!" + condition + ");", _indent, isDisabled);
+		// END KGU#162 2016-04-01
+	}
 
     @Override
     protected void generateCode(Forever _forever, String _indent)
@@ -560,24 +797,24 @@ public class PHPGenerator extends Generator
         addCode("}", _indent, isDisabled);
     }
 
-    @Override
-    protected void generateCode(Call _call, String _indent)
-    {
-        boolean isDisabled = _call.isDisabled();
-    
-        // START KGU 2014-11-16
-        appendComment(_call, _indent);
-        // END KGU 2014-11-16
+	@Override
+	protected void generateCode(Call _call, String _indent)
+	{
+		boolean isDisabled = _call.isDisabled();
 
-        StringList lines = _call.getUnbrokenText();
-        for(int i=0;i<lines.count();i++)
-        {
-        	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
-        	//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
-        	addCode(transform(lines.get(i))+";", _indent, isDisabled);
-        	// END KGU#319 2017-01-03
-        }
-    }
+		// START KGU 2014-11-16
+		appendComment(_call, _indent);
+		// END KGU 2014-11-16
+
+		StringList lines = _call.getUnbrokenText();
+		for(int i=0;i<lines.count();i++)
+		{
+			// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
+			//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
+			addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			// END KGU#319 2017-01-03
+		}
+	}
 
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
@@ -681,7 +918,7 @@ public class PHPGenerator extends Generator
 	// END KGU#686 2019-03-21
 
     @Override
-    public String generateCode(Root _root, String _indent)
+    public String generateCode(Root _root, String _indent, boolean _public)
     {
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
         varNames = _root.retrieveVarNames();
@@ -692,6 +929,9 @@ public class PHPGenerator extends Generator
         this.isResultSet = varNames.contains("result", false);
         this.isFunctionNameSet = varNames.contains(procName);
         // END KGU#74/KGU#78 2016-12-30
+        // START KGU#676/KGU#840 2020-04-06: Bugfix #844 (enh. #696) type information, from special pool in case of batch export
+        this.typeMap = _root.getTypeInfo(routinePool);
+        // END KGU#676/KGU#840 2020-04-06
         
         String pr = "program";
         if (_root.isSubroutine()) {
@@ -719,17 +959,36 @@ public class PHPGenerator extends Generator
             // START KGU#363 2017-05-16: Enh. #372
             appendCopyright(_root, _indent, true);
             // END KGU#363 2017-05-16
+            // START KGU#815 2020-04-08: Enh. #828 group export may require to share the entire module - so better copy the file
+            //if (this.usesFileAPI) {
+            if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
+                generatorIncludes.add("StructorizerFileAPI");
+            }
+            // END KGU#815 2020-04-08
+            // START KGU#815 2020-04-05: Enh. #828: For group export generatoir includes are essential
+            this.appendGeneratorIncludes("", false);
+            // END KGU#815 2020-04-05: 
             // START KGU#351 2017-02-26: Enh. #346
             this.appendUserIncludes("");
             // END KGU#351 2017-02-26
+            addSepaLine();
+            // START KGU#767 2020-04-05: Issue #782
+            this.appendGlobalDefinitions(_root, _indent, false);
+            if (_root.isProgram() || this.isLibraryModule()) {
+                this.appendGlobalInitialisations(_root, _indent);
+            }
+            // END KGU#767 2020-04-05
             subroutineInsertionLine = code.count();
             // START KGU#311 2017-01-03: Enh. #314 File API support
-            if (this.usesFileAPI) {
+            // START KGU#815 2020-04-08: Enh. #828 group export may require to share the entire module - so better copy the file
+            //if (this.usesFileAPI) {
+            if (this.usesFileAPI && !(this.isLibraryModule() || this.importedLibRoots != null)) {
+            // END KGU#815 2020-04-08
                 this.insertFileAPI("php");
             }
             // END KGU#311 2017-01-03
         }
-        code.add("");
+        addSepaLine();
         if (!topLevel || !subroutines.isEmpty())
         {
             appendComment(pr + " " + procName, _indent);
@@ -738,13 +997,18 @@ public class PHPGenerator extends Generator
         // START KGU 2014-11-16
         appendComment(_root, "");
         // END KGU 2014-11-16
-        if (_root.isProgram() == true)
+        // START KGU#815 2020-04-06: Enh. #828 group export
+        //if (_root.isProgram() == true)
+        if (_root.isProgram() || topLevel && _root.isInclude())
+        // END KGU#815 2020-04-06
         {
-            code.add("");
-            appendComment("TODO declare your variables here if necessary", _indent);
-            code.add("");
-            appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
-            code.add("");
+            //addSepaLine();
+            //appendComment("TODO declare your variables here if necessary", _indent);
+            addSepaLine();
+            if (this.hasInput(_root)) {
+                appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
+                addSepaLine();
+            }
             generateCode(_root.children, _indent);
         }
         else
@@ -784,10 +1048,13 @@ public class PHPGenerator extends Generator
             // END KGU#62 2016-12-30
             code.add("function " + fnHeader);
             code.add("{");
-            appendComment("TODO declare your variables here if necessary", _indent + this.getIndent());
-            code.add(_indent+"");
+            //appendComment("TODO declare your variables here if necessary", _indent + this.getIndent());
+            // START KGU#839 2020-04-06: Bugfix #843 (#389, #782)
+            this.declarationInsertionLine = code.count();
+            // END KGU#839 2020-04-06
+            addSepaLine();
             appendComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent + this.getIndent());
-            code.add("");
+            addSepaLine();
             generateCode(_root.children, _indent + this.getIndent());
             // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
             if (!this.suppressTransformation) {
@@ -795,27 +1062,79 @@ public class PHPGenerator extends Generator
             }
             // END KGU#74/KGU#78 2016-12-30
             code.add("}");
+            // START KGU#839 2020-04-06: Bugfix #843 (#389, #782)
+            this.insertGlobalClause(_root, _indent + this.getIndent());
+            // END KGU#839 2020-04-06
+
         }
 
         // START KGU#178 2016-07-20: Enh. #160
         //code.add("?>");
         if (topLevel)
         {
+            // START KGU#815 2020-04-05: Enh. #828: Group export
+            this.libraryInsertionLine = code.count();
+            addSepaLine();
+            // END KGU#815 2020-04-05
             code.add("?>");
         }
         // END KGU#178 2016-07-20
 
         // START KGU#705 2019-09-23: Enh. #738
         if (codeMap != null) {
-        	// Update the end line no relative to the start line no
-        	codeMap.get(_root)[1] += (code.count() - line0);
+            // Update the end line no relative to the start line no
+            codeMap.get(_root)[1] += (code.count() - line0);
         }
         // END KGU#705 2019-09-23
 
         return code.getText();
     }
 
-    // START KGU#74/KGU#78 2016-12-30: Issues #22/#23 hadn't been solved for PHP...
+	private void insertGlobalClause(Root _root, String _indent) {
+		if (_root.includeList != null) {
+			int nVarsPerLine = 5;
+			// Gather global variables
+			StringList globVars = new StringList();
+			for (Root incl: this.includedRoots) {
+				if (_root.includeList.contains(incl.getMethodName())) {
+					globVars.addIfNew(incl.getVarNames());
+					globVars.addIfNew(incl.getMereDeclarationNames(false));
+				}
+			}
+			for (int i = globVars.count() - 1; i >= 0; i--) {
+				if (wasDefHandled(_root, globVars.get(i), false, false)) {
+					// Variable was locally overridden, it seems, so drop it
+					globVars.remove(i);
+				}
+			}
+			// Now we insert global declarations 5 by 5
+			int start = 0;
+			while (start+1 < globVars.count()) {
+				insertCode(_indent + "global $"
+						+ globVars.concatenate(", $", start, Math.min(start+nVarsPerLine, globVars.count())) + ";",
+						declarationInsertionLine);
+				start += nVarsPerLine;
+			}
+		}
+	}
+
+	// START KGU#839 2020-04-06: Enh. #389 + issue #782
+	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
+		if (topLevel) {
+			for (int i = 0; i < _varNames.count(); i++) {
+				String varName = _varNames.get(i);
+				if (_root.constants.containsKey(varName)) {
+					// This should also solve the enumerator type problem - does it?
+					code.add(_indent + "define('" + varName + "', " + this.transform(_root.getConstValueString(varName))+ ")");
+				}
+				// Simply declare it formally
+				this.wasDefHandled(_root, varName, true);
+			}
+		}
+	}
+	// END KGU#483 2018-01-02
+
+	// START KGU#74/KGU#78 2016-12-30: Issues #22/#23 hadn't been solved for PHP...
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
 	 * (after the algorithm code of the body) to this.code)
@@ -842,11 +1161,29 @@ public class PHPGenerator extends Generator
 					result = "$" + result;
 				}
 			}
-			code.add(_indent);
+			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}
 		return _indent;
 	}
 	// END KGU#74/KGU#78 2016-12-30
 
+	// START KGU#815 2020-03-26: Enh. #828 - group export, for libraries better copy the FileAPI file than the content
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function will only be called if at least one of the modules required
+		 * the file API, so all requiring modules will be using "FileAPI.CS".
+		 * Now we simply have to make sure it gets provided.
+		 */
+		if (this.importedLibRoots != null) {
+			return copyFileAPIResource("php",  "StructorizerFileAPI.php", _filePath);
+		}
+		return true;	// By default, nothing is to be done and that is okay
+	}
+	// END KGU#815 2020-03-26
 }

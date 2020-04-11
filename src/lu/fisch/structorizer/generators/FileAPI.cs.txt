@@ -1,8 +1,8 @@
 ﻿/*
 	Structorizer
-	A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+	A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
-	Copyright (C) 2009  Bob Fisch
+	Copyright (C) 2009, 2020  Bob Fisch
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ using System.Threading.Tasks;
  
 /******************************************************************************************************
  *
- *	  Author:		 Kay Gürtzig
+ *	  Author:		Kay Gürtzig
  *
  *	  Description:	File API for the CSharpGenerator.
  *
@@ -38,8 +38,8 @@ using System.Threading.Tasks;
  *
  *	  Author          Date        Description
  *	  ------          ----        -----------
- *	  Kay Gürtzig     04.01.2017  First Issue
- *    Kay Gürtzig     05.01.2017  Functional improvements (in StructorizerFileAPI class)
+ *	  Kay Gürtzig     2017-01-04  First Issue
+ *    Kay Gürtzig     2017-01-05  Functional improvements (in StructorizerFileAPI class)
  *
  ******************************************************************************************************
  *

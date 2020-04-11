@@ -49,6 +49,8 @@ package lu.fisch.structorizer.parsers;
  *                                      Issue #630: New member class FilePreparationException
  *      Kay Gürtzig     2019-02-19      Bugfix #684 (empty FOR-In loop keyword on loading preferences mutilated
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2020-03-08      Issue #833: Modified API for new mechanism to get rid of superfluous roots
+ *      Kay Gürtzig     2020-03-09      Issue #835: New import option and method for insertion of structure preference keywords
  *
  ******************************************************************************************************
  *
@@ -124,12 +126,14 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return this.logger;
 	}
 	// END KGU#484 2018-03-22
+
 	/**
 	 * String field holding the message of error occurred during parsing or build phase
 	 * for later evaluation (empty if there was no error)
 	 * @see #exception
 	 */
 	public String error;
+
 	// START KGU#604 2018-10-29: Enh. #627
 	/**
 	 * An exception object having caused the failing of the parsing process and may be
@@ -138,6 +142,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 */
 	public Exception exception;
 	// END KGU#604 2018-10-29
+
 	/**
 	 * Maximum width for displaying parsing errors in a dialog (used for
 	 * line wrapping)
@@ -148,39 +153,60 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * The generic LALR(1) parser providing the parse tree
 	 */
 	protected AuParser parser;
+
 	/**
 	 *  Currently built diagram Root
 	 */
 	protected Root root = null;
+
 	/**
 	 * List of the Roots of (all) imported diagrams - we may obtain a collection
 	 * of Roots (unit or program with subroutines)!
 	 */
 	private List<Root> subRoots = new LinkedList<Root>();
+
 	// START KGU#407 2017-06-22: Enh. #420 Optional comment import
 	/**
 	 * Value of the import option to import source code comments
 	 * The option is supported by method {@link #retrieveComment(Reduction)}
 	 * @see #optionSaveParseTree()
 	 * @see #optionImportVarDecl
+	 * @see #optionInsertOptKeywords
 	 * @see #optionMaxLineLength
 	 * @see #retrieveComment(Reduction)
 	 */
 	protected boolean optionImportComments = false;
 	// END KGU#407 2017-06-22
+
+	// START KGU#822 2020-03-09: Issue #835
+	/**
+	 * Value of the import option to insert optional Structure Preference keywords
+	 * around conditions etc.
+	 * The option is supported by method {@link #getOptKeyword(String,boolean,boolean)}
+	 * @see #optionSaveParseTree()
+	 * @see #optionImportVarDecl
+	 * @see #optionMaxLineLength
+	 * @see #retrieveComment(Reduction)
+	 */
+	protected boolean optionInsertOptKeywords = false;
+	// END KGU#822 2020-03-09
+	
 	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
 	/**
 	 * Value of the import option to import mere variable declarations
 	 * @see #optionImportComments
+	 * @see #optionInsertOptKeywords
 	 * @see #optionMaxLineLength
 	 * @see #optionSaveParseTree()
 	 */
 	protected boolean optionImportVarDecl = false;
+
 	/**
 	 * Returns the value of the import option to save the obtained parse tree
 	 * @return true iff the parse tree is to be saved as text file
 	 * @see #optionImportComments
 	 * @see #optionImportVarDecl
+	 * @see #optionInsertOptKeywords
 	 * @see #optionMaxLineLength
 	 */
 	protected boolean optionSaveParseTree()
@@ -188,6 +214,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+
 	// START KGU#602 2018-10-25: Enh. #419 Optional line length limitation
 	/**
 	 * Value of the import option to limit the length of the text lines
@@ -213,6 +240,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		this.subRoots.add(newRoot);
 		this.firePropertyChange("root_count", oldCount, this.subRoots.size());
 	}
+
 	/**
 	 * Adds all the given {@link Root}s to {@link #subRoots} and notifies about the new
 	 * Root count. There is no check for duplicity!
@@ -226,6 +254,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		this.subRoots.addAll(roots);
 		this.firePropertyChange("root_count", oldCount, this.subRoots.size());
 	}
+
 	/**
 	 * @return - the current number of created sub-{@link Root}s
 	 * @see #addRoot(Root)
@@ -767,34 +796,57 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			//	Thread.sleep(random.nextInt(1000));
 			//} catch (InterruptedException ignore) {}
 			// END KGU#537 2018-06-30
+			// START KGU#821 2020-03-08: Issue #833 Subclasses might detect missing relevance of a diagram
+			List<Root> superfluousRoots = new LinkedList<Root>();
+			// END KGU#821 2020-03-08
 			// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
 			StringList signatures = new StringList();
 			for (Root subroutine : subRoots)
 			{
 				// START KGU#354 2017-03-10: Hook for subclass postprocessing
-				this.subclassUpdateRoot(subroutine, _textToParse);
+				boolean noNeed = this.subclassUpdateRoot(subroutine, _textToParse);
 				// END KGU#354 2017-03-10
-				if (subroutine.isSubroutine())
+				// START KGU#821 2020-03-08: Issue #833 - Give a chance to withdraw diagrams
+				//if (subroutine.isSubroutine())
+				if (noNeed) {
+					superfluousRoots.add(subroutine);
+				}
+				else if (subroutine.isSubroutine())
+				// END KGU#821 2020-03-10
 				{
 					signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
 				}
 			}
 			// END KGU#194 2016-07-07
+			// START KGU#821 2020-03-08: Issue #833
+			boolean forgetMainRoot = false;
+			// END KGU#821 2020-03-08
 			// START KGU#354 2017-03-10: Hook for subclass postprocessing
 			if (!subRoots.contains(root)) {
-				this.subclassUpdateRoot(root, _textToParse);
+				// START KGU#821 2020-03-08: Issue #833
+				//this.subclassUpdateRoot(root, _textToParse);
+				forgetMainRoot = this.subclassUpdateRoot(root, _textToParse);
+				// END KGU#821 2020-03-08
 			}
 			// END KGU#354 2017-03-10
 
 			// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
 			//return root;
-			if (subRoots.isEmpty() || root.children.getSize() > 0)
+			if (subRoots.isEmpty() || root.children.getSize() > 0 && !forgetMainRoot)
 			{
 				subRoots.add(0, root);
 				// START KGU#537 2018-07-01: Enh. #533
 				this.firePropertyChange("root_count", subRoots.size()-1, this.subRoots.size());
 				// END KGU#537 2017-07-01
 			}
+			
+			// START KGU#821 2020-03-08: Issue #833
+			for (Root sfRoot: superfluousRoots) {
+				if (subRoots.remove(sfRoot)) {
+					this.firePropertyChange("root_count", subRoots.size()+1, this.subRoots.size());
+				}
+			}
+			// END KGU#821 2020-03-08
 			
 			// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
 			for (Root aRoot : subRoots)
@@ -1165,9 +1217,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * postprocessing for individual created Roots.
 	 * @param root - one of the build diagrams
 	 * @param sourceFileName - the name of the originating source file
+	 * @return true if the diagram turned out to be neglectible (superfluous)
 	 * @throws ParserCancelled when cancelled by the user
 	 */
-	protected abstract void subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
+	protected abstract boolean subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
 
 	/**
 	 * Allows subclasses to do some finishing work after all general stuff after parsing and
@@ -1235,28 +1288,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	@Override
 	public final String getDescription()
 	{
-        return getFileDescription();
-    }
+		return getFileDescription();
+	}
 
 	/* (non-Javadoc)
 	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 	 */
 	@Override
-    public final boolean accept(File f)
+	public final boolean accept(File f)
 	{
-        if (f.isDirectory())
+		if (f.isDirectory())
 		{
-            return true;
-        }
-
-        String extension = getExtension(f);
-        if (extension != null)
-		{
-            return isOK(f.getName());
+			return true;
 		}
 
-        return false;
-    }
+		String extension = getExtension(f);
+		if (extension != null)
+		{
+			return isOK(f.getName());
+		}
+
+		return false;
+	}
 
 
     /**
@@ -1295,6 +1348,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		// END KGU#358 2017-03-06
 		// START KGU#407 2017-06-22
 		this.optionImportComments = Ini.getInstance().getProperty("impComments", "false").equals("true");
+		// END KGU#407 2017-06-22
+		// START KGU#407 2017-06-22
+		this.optionInsertOptKeywords = Ini.getInstance().getProperty("impOptKeywords", "false").equals("true");
 		// END KGU#407 2017-06-22
 		root.setProgram(true);
 		// Allow subclasses to adjust things before the recursive build process is going off.
@@ -1379,6 +1435,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 	// END KGU#466 2019-08-02
 
+	/**
+	 * Loads the parser-related preferences (i.e. chiefly the configured parser keywords)
+	 * from the Ini file into the internal cache.
+	 * @see #getPropertyMap(boolean)
+	 * @see #saveToINI()
+	 */
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
@@ -1436,6 +1498,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 	}
 	
+	/**
+	 * Saves the parser-related preferences, i.e. chiefly the configured keywords to the
+	 * Ini file.
+	 * @see #getPropertyMap(boolean)
+	 * @see #loadFromINI()
+	 */
 	public static void saveToINI()
 	{
 		try
@@ -1458,7 +1526,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#163 2016-03-25: For syntax analysis purposes
 	/**
-	 * Returns the complete set of configurable parser keywords for Elements
+	 * Returns the complete set of configurable parser keywords for {@link Element}s
 	 * @return array of current keyword strings
 	 */
 	public static String[] getAllProperties()
@@ -1470,7 +1538,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
 	/**
-	 * Returns a Hashmap mapping parser preference labels like "preAlt" to the
+	 * Returns a {@link Hashmap} mapping parser preference labels like "preAlt" to the
 	 * configured parser preference keywords.
 	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
 	 * @return the hash table with the current settings
@@ -1490,8 +1558,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#288 2016-11-06: New methods to facilitate bugfix #278, #279
 	/**
-	 * Returns the set of the parser preference names
-	 * @return
+	 * @return the set of the (internal) parser preference names (the keys of the map)
 	 */
 	public static Set<String> keywordSet()
 	{
@@ -1499,9 +1566,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Returns the cached keyword for parser preference _key or null
+	 * Returns the cached keyword for parser preference {@code _key} or {@code null}
 	 * @param _key - the name of the requested parser preference
-	 * @return the cached keyword or null
+	 * @return the cached keyword or {@code null}
 	 */
 	public static String getKeyword(String _key)
 	{
@@ -1509,8 +1576,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Returns the cached keyword for parser preference _key or the given _defaultVal if no
-	 * entry or only an empty entry is found for _key.
+	 * Returns the cached keyword for parser preference {@code _key} or the given {@code _defaultVal}
+	 * if no entry or only an empty entry is found for {@code _key}.
 	 * @param _key - the name of the requested parser preference
 	 * @param _defaultVal - a default keyword to be returned if there is no non-empty cached value
 	 * @return the cached or default keyword
@@ -1527,10 +1594,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Replaces the cached parser preference _key with the new keyword _keyword for this session.
+	 * Replaces the cached parser preference {@code _key} with the new keyword
+	 * {@code _keyword} for this session.<br/>
 	 * Note:
-	 * 1. This does NOT influence the Ini file!
-	 * 2. Only for existing keys a new mapping may be set
+	 * <ol>
+	 * <li>
+	 * This does NOT influence the Ini file, not even the Ini properties!
+	 * </li>
+	 * <li>
+	 * Only for existing keys a new mapping may be set
+	 * </li>
+	 * </ol>
 	 * @param _key - name of the parser preference
 	 * @param _keyword - new value of the parser preference or null
 	 */
@@ -1546,4 +1620,35 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 	// END KGU#288 2016-11-06
 	
+	// START KGU#822 2020-03-09: Issue #835 - convenience method for the optional insertion of keywords
+	/**
+	 * Retrieves the configured keyword specified by the internal {@code _key} if the
+	 * insertion of optional structure preference keys is enabled, otherwise an empty
+	 * string. Depending on {@code _padBefore} and {@code _padAfter}, a space will be added
+	 * before and/or after the retrieved keyword if it is not empty.
+	 * @param _key - the internal structure preferences reference
+	 * @param _padBefore - whether to insert a space before it
+	 * @param _padAfter - whether to append a space after it
+	 * @return the (padded) optional keyword if enabled and specified.
+	 */
+	protected String getOptKeyword(String _key, boolean _padBefore, boolean _padAfter)
+	{
+		String prefix = "";
+		if (this.optionInsertOptKeywords) {
+			prefix = getKeyword(_key);
+			if (prefix == null) {
+				prefix = "";
+			}
+			else if (!(prefix = prefix.trim()).isEmpty()) {
+				if (_padBefore) {
+					prefix = " " + prefix;
+				}
+				if (_padAfter) {
+					prefix += " ";
+				}
+			}
+		}
+		return prefix;
+	}
+	// END KGU#822 2020-03-09
 }

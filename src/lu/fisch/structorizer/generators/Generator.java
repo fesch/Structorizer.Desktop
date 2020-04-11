@@ -99,6 +99,14 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-24      Bugfix #782: Diversification of method wasDefHandled() to facilitate patch
  *      Kay Gürtzig     2019-12-11      Bugfix #794: Code preview crash with unconfigured license preference
  *      Kay Gürtzig     2020-02-20      Typo fixed in generateCode(Try)
+ *      Kay Gürtzig     2020-03-15/18   Enh. #828: Complex reorganisation of exportCode(...) to support group export,
+ *                                      Bugfixes #836 (batch export inconsistencies) and #838 (generator include stuff)
+ *      Kay Gürtzig     2020-03-18      Bugfix #839 - sticky returns flag mended
+ *      Kay Gürtzig     2020-03-19      Fixes for KGU#830 (methods adSepaLine(), insertSepaLine())
+ *      Kay Gürtzig     2020-03-23      Issue #840: Code to intercept data collection from disabled elements/
+ *                                      subtrees armed despite of a potential conflict of aims.
+ *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
+ *      Kay Gürtzig     2020-04-01      Enh. #440, #828: Support for Group export to PapGenerator
  *
  ******************************************************************************************************
  *
@@ -168,6 +176,7 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import lu.fisch.structorizer.archivar.ArchivePool;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -198,6 +207,12 @@ import lu.fisch.utils.BTextfile;
 import lu.fisch.utils.StringList;
 
 
+/**
+ * Abstract parent class for any code generator in Structorizer.<br/>
+ * See the howto.txt file in this source path for a guideline to
+ * derive a new Generator subclass to support some additional export language.
+ * @author Bob Fisch
+ */
 public abstract class Generator extends javax.swing.filechooser.FileFilter implements IPluginClass
 {
 	// START KGU#371 2019-03-07: Enh. #385 - Support for default subroutine arguments
@@ -213,7 +228,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * that a single definition may declare several signatures.</li>
 	 * </ul>
 	 * Note: In programming languages overloading usually also means distinction by argument types.
-	 * Since declarations of variables aren't mandatory in Structorizer, tyoe inference is weak and
+	 * Since declarations of variables aren't mandatory in Structorizer, type inference is weak and
 	 * vague at most. So it isn't actually possible to distinguish parameter lists by argument types
 	 * in Structorizer. Hence executable diagrams won't make use of it. So, export should be
 	 * relatively safe.
@@ -235,8 +250,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #getTryCatchLevel()
 	 * @author Kay Gürtzig
 	 */
-	public enum TryCatchSupportLevel {TC_NO_TRY, TC_TRY_CATCH, TC_TRY_CATCH_FINALLY};
+	public enum TryCatchSupportLevel {TC_NO_TRY, TC_TRY_CATCH, TC_TRY_CATCH_FINALLY}
 	// END KGU#686 2019-03-18
+	// START KGU#815/#824 2020-03-20: Enh. #828, bugfix #836
+	/** Full scissor line for batch or group export */
+	private static final String SCISSOR_LINE_FULL =   "======= 8< ===========================================================";
+	/** Dashed scissor line for batch or group export */
+	private static final String SCISSOR_LINE_DASHED = "= = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =";
+	/**
+	 * Standard comment for multi-module export files with a leading library module
+	 */
+	private static final StringList LIB_COMMENT = StringList.explode(
+			"NOTE:\n"
+			+ "This first module of the file is a library module providing common resources\n"
+			+ "for the following modules, which are separated by comment lines like\n"
+			+ "\"" + SCISSOR_LINE_FULL.substring(0, 2 * SCISSOR_LINE_FULL.indexOf("8<") + 2) + "...\".\n"
+			+ "You may have to cut this file apart at these lines in order to get the parts\n"
+			+ "running, since the following modules may form sort of mutually independent\n"
+			+ "applications or programs the coexistence of which in a single file might not\n"
+			+ "be sensible.",
+			"\n");
+	// END  KGU#815/#824 2020-03-20
 
 	
 	/************ Fields ***********************/
@@ -259,6 +293,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#363 2017-05-11: Enh. #372 - license and author info ought to be exportable as well
 	private boolean exportAuthorLicense = false;
 	// END KGU#363 2017-05-11
+	// START KGU#816 2020-03-17: Enh. #837 - allow two different strategies to propose the directory
+	private boolean proposeDirectoryFromNsd = true;
+	// START KGU#816 2020-03-17
 	// START KGU#395 2017-05-11: Enh. #357 - generator-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
 	// END KGU#395 2017-05-11
@@ -269,6 +306,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected StringList code = new StringList();
 	
 	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
+	/** Provides subclasses the access to the file name (without path and type) */
 	protected String pureFilename = "";
 	// END KGU#194 2016-05-07
 
@@ -281,11 +319,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected String labelBaseName = "StructorizerLabel_";
 	/**
 	 * maps loops and Jump elements to label counts (neg. number means illegal jump target)
-	 * such that goto mechanisms mght be used to circumvent missing leave instructions in
+	 * such that goto mechanisms might be used to circumvent missing leave instructions in
 	 * the target language. Automatically filled before actual code export starts.
 	 */
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
 	// END KGU#74 2015-11-29
+	// START KGU#815 2020-03-16: Enh. #828 Prepare group export
+	/** Line number for insertion of routine signatures to the interface section of a unit */
+	protected int interfaceInsertionLine = 0;
+	/** Line number for insertion of a routine into the implementation section of a unit */
+	protected int libraryInsertionLine = 0;
+	// END KGU#815 2020-03-16
 	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
 	/** Recursive usage map of called subroutines */
 	// START KGU#754 2019-11-11: Issue #766 - We want a deterministic subroutine order
@@ -367,7 +411,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected int includeInsertionLine = -1;
 	// END KGU#446 2017-10-27
 	// START KGU#501 2018-02-22: Bugfix #517
-	private boolean includeInitialisation;
+	private boolean includeInitialisation;	// status flag for initialization code generation
+	/** @return true if the generator is inserting initialization code for Includables */
 	protected boolean isInitializingIncludes() {
 		return this.includeInitialisation;
 	}
@@ -376,9 +421,26 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/** A list of generator-induced includes to be intersected or united with the configured user includes */
 	protected StringList generatorIncludes = new StringList();
 	// END KGU#607 2018-10-30
+	// START KGU#815 2020-03-17: Enh. #828 Preparation for group export
+	/** List of {@link Root}s to be declared at topLevel in the module interface */
+	protected Vector<Root> moduleRoots = null;
+	/** Set of possibly required Roots being imported from another module or null */
+	protected HashSet<Root> importedLibRoots = null;
+	/** Internal Flag for library module creation
+	 * @see #isLibraryModule() */
+	private boolean isLibModule = false;
+	/** Internal flag registering the placement of scissor lines */
+	private boolean isFilePartitioned = false;
+	/** @return true if the generator is generating a library module, false otherwise */
+	protected boolean isLibraryModule() {
+		return isLibModule;
+	}
+	// END KGU#815 2020-03-17
 	
-	/************ Abstract Methods *************/
+	/*=========== Logger initializer ============*/
+	
 	// START KGU#484 2018-03-22: Issue #463
+	/** @return the cached logger for this class (retrieves it if none is cached) */
 	protected Logger getLogger()
 	{
 		if (this.logger == null) {
@@ -387,6 +449,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return this.logger;
 	}
 	// END KGU#484 2018-03-22
+
+	/*=========== Abstract Methods ============*/
+	
 	/**
 	 * Should provide a string to be used as title for the export FileChooser
 	 * dialog, e.g. something like "Export Pascal Code ..."
@@ -450,7 +515,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * returns a line-comment symbol, then the empty string should be returned
 	 * (the default).
 	 * @see #commentSymbolLeft()
-	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
+	 * @return right comment delimiter if required, e.g. "*&frasl;", "}", "*)"
 	 */
 	protected String commentSymbolRight() { return ""; }
 	// END KGU 2015-10-18
@@ -521,6 +586,36 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected abstract TryCatchSupportLevel getTryCatchLevel();
 	// END KGU#686 2019-0318
 
+	/*============= Configuration Methods ============*/
+
+	
+	// START KGU#815 2020-03-17: Enh. #828
+	/**
+	 * Overridable configuration method expressing the capability of the generator to
+	 * combine a program (i.e. a main method) and several other entry point routines
+	 * (static methods) within a class or module, which can make the creation of a
+	 * library module superfluous.
+	 * @return true if a generated class may provide several entry points in addition to a
+	 * main method.
+	 * @see #allowsLibraryInitializer()
+	 */
+	protected boolean allowsMixedModule()
+	{
+		// TODO To be overridden by suited subclasses
+		return false;
+	}
+	// EMD KGU#815 2020-03-17
+	
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828
+	/**
+	 * @return true if the target language accepts maximum 1 main per module
+	 */
+	protected boolean max1MainPerModule()
+	{
+		return true;
+	}
+	// END KGU#396/KGU#815 2020-04-01
+	
 	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
 	/**
 	 * Returns the currently configured character set name for the file export
@@ -564,7 +659,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#178 2016-07-19: Enh. #160 - recursive implication of subroutines
 	/**
-	 * Returns the value of the export option recursively to involve all available
+	 * Returns the value of the export option to recursively involve all available
 	 * subroutines (i.e. other diagrams) called by the diagrams to be exported. 
 	 * @return true if subroutines are to be implicated.
 	 */
@@ -690,6 +785,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected boolean hasOutput()
 	{
+		// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+		if (importedLibRoots != null && !importedLibRoots.isEmpty()) {
+			for (Root root: rootsWithOutput) {
+				if (!importedLibRoots.contains(root)) {
+					return true;
+				}
+			}
+			return !rootsWithOutput.isEmpty();
+		}
+		// END KGU#815/KGU#824 2020-03-18
 		return !rootsWithOutput.isEmpty();
 	}
 	/**
@@ -705,6 +810,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected boolean hasInput()
 	{
+		// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+		if (importedLibRoots != null && !importedLibRoots.isEmpty()) {
+			for (Root root: rootsWithInput) {
+				if (!importedLibRoots.contains(root)) {
+					return true;
+				}
+			}
+			return !rootsWithOutput.isEmpty();
+		}
+		// END KGU#815/KGU#824 2020-03-18
 		return !rootsWithInput.isEmpty();
 	}
 	/**
@@ -745,10 +860,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Checks whether the given {@code _id} has already been defined<b/>
-	 * 1. by diagram {@code _root} itself or
-	 * 2. by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.
-	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id} with {@code _root}
+	 * Checks whether the given {@code _id} has already been defined
+	 * <ol>
+	 * <li>by diagram {@code _root} itself or</li>
+	 * <li>by one of the diagrams included by {@code _root} if {@code _involveIncludables} is true.</li>
+	 * </ol>
+	 * If not and {@code _setDefinedIfNot} is true then registers the {@code _id} with {@code _root}
 	 * in {@link #declaredStuff}.
 	 * @param _root - the currently exported {@link Root}
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
@@ -863,6 +980,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	/**
 	 * Appends all lines of the given StringList as a series of single comment lines to the exported code
+	 * Subclasses might reimplement this using {@link #appendBlockComment(StringList, String, String, String, String)}.
 	 * @see #appendComment(Element, String)
 	 * @see #appendAsComment(Element, String)
 	 * @see #appendComment(String, String)
@@ -892,8 +1010,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #appendAsComment(Element, String)
 	 * @see #appendComment(String, String)
 	 * @see #appendComment(StringList, String)
+	 * @see #insertBlockComment(StringList, String, String, String, String, int)
 	 * @see #addCode(String, String, boolean) 
-	 * @param _sl - the StringList to be written as commment
+	 * @param _sl - the StringList to be written as commment. Even if {@code _sl} is empty, a comment
+	 * will be generated if {@code _start} or {@code _stop} are not {@code null}!
 	 * @param _indent - the basic indentation 
 	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
 	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
@@ -915,6 +1035,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			String commentLine = _sl.get(i);
 			// Skip an initial empty comment line
 			if (i > 0 || !commentLine.isEmpty()) {
+				// START KGU 2020-03-26: Precaution against inadvertently broken comment block
+				String csr = this.commentSymbolRight();
+				if (csr != null && !csr.isEmpty()) {
+					commentLine = commentLine.replace(csr, this.commentSymbolLeft() + csr);
+				}
+				if (_end != null && !_end.equals(csr)) {
+					commentLine = commentLine.replace(_end, "!");
+				}
+				// END KGU 2020-03-26
 				code.add(_indent + _cont + commentLine);
 			}
 		}
@@ -925,6 +1054,157 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU 2015-10-18
 
+	// START KGU#815 2020-03-16: Enh. #828 Needed for group export as code module.
+	/**
+	 * Inserts the comment part of _element into the code from line {@code _atLine} on, using delimiters
+	 * this.commentSymbolLeft and this.commentSymbolRight (if given) to enclose the comment lines, with
+	 * indentation {@code _indent}.<br/>
+	 * Increments other known cached insertion line numbers greater than or equal to
+	 * {@code _atLine} accordingly.
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(Element, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
+	 * @see #insertComment(String, String, int)
+	 * @see #insertComment(StringList, String, int)
+	 * @see #addCode(String, String, boolean) 
+	 * @param _element current NSD element
+	 * @param _indent indentation string
+	 * @param _atLine - line number where to insert
+	 * @return the number of inserted lines
+	 */
+	protected int insertComment(Element _element, String _indent, int _atLine)
+	{
+		return this.insertComment(_element.getComment(), _indent, _atLine);
+	}
+
+	/**
+	 * Inserts the given String as single comment line into the exported code
+	 * before line {@code _atLine}.<br/>
+	 * Increments other known cached insertion line numbers greater than or equal to
+	 * {@code _atLine} accordingly.
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(String, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
+	 * @see #insertComment(Element, String, int)
+	 * @see #insertComment(StringList, String, int)
+	 * @see #addCode(String, String, boolean) 
+	 * @param _text - the text to be added as comment
+	 * @param _indent - indentation string
+	 * @param _atLine - line number where to insert
+	 * @return the number of inserted lines
+	 */
+	protected int insertComment(String _text, String _indent, int _atLine)
+	{
+		if (_atLine > code.count()) {
+			_atLine = code.count();
+		}
+		String[] lines = _text.split("\n");
+		int nLines = lines.length;
+		updateLineMarkers(_atLine, nLines);
+		if (codeMap != null) {
+			for (int[] entry: codeMap.values()) {
+				if (entry[0] >= _atLine) {
+					entry[0] += nLines;
+					entry[1] += nLines;
+				}
+				else if (entry[1] >= _atLine) {
+					entry[1] += nLines;
+				}
+			}
+		}
+		for (int i = 0; i < nLines; i++)
+		{
+			code.insert(_indent + commentSymbolLeft() + " " + lines[i] + " " + commentSymbolRight(), _atLine++);
+		}
+		return nLines;
+	}
+
+	/**
+	 * Inserts all lines of the given StringList as a series of single comment lines into the
+	 * exported code from line {@code _atLine} on.
+	 * Increments other known cached insertion line numbers greater than or equal to
+	 * {@code _atLine} accordingly.
+	 * @see #appendAsComment(Element, String)
+	 * @see #appendComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
+	 * @see #insertComment(Element, String, int)
+	 * @see #insertComment(String, String, int)
+	 * @see #addCode(String, String, boolean) 
+	 * @param _sl - the text to be added as comment
+	 * @param _indent - indentation string
+	 * @param _atLine - line number where to insert
+	 * @return number of inserted lines
+	 */
+	protected int insertComment(StringList _sl, String _indent, int _atLine)
+	{
+		int lineNo = _atLine;	// Line index for insertion
+		for (int i = 0; i < _sl.count(); i++)
+		{
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				lineNo += insertComment(commentLine, _indent, lineNo);
+			}
+		}
+		return lineNo - _atLine;
+	}
+
+	/**
+	 * Appends a multi-line comment with configurable comment delimiters for the starting line, the
+	 * continuation lines, and the trailing line. 
+	 * @see #insertComment(Element, String)
+	 * @see #insertComment(String, String)
+	 * @see #insertComment(StringList, String)
+	 * @see #appendBlockComment(StringList, String, String, String, String)
+	 * @see #insertCode(String, String, int)
+	 * @param _sl - the StringList to be written as commment. Even if {@code _sl} is empty, a comment
+	 * will be generated if {@code _start} or {@code _stop} are not {@code null}!
+	 * @param _indent - the basic indentation 
+	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; omitted if being null)
+	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
+	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then no trailing line is generated)
+	 * @param _atLine - line number where to insert
+	 * @return number of inserted lines 
+	 */
+	protected int insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end, int _atLine)
+	{
+		int lineNo = _atLine;
+		// START KGU#199 2016-07-07: Precaution against enh. #188 (multi-line StringList elements)
+		_sl = StringList.explode(_sl,  "\n");
+		// END KGU#199 2016-07-07
+		if (_start != null)
+		{
+			this.insertCode(_indent + _start, lineNo++);
+		}
+		for (int i = 0; i < _sl.count(); i++)
+		{
+			// The following splitting is just to avoid empty comment lines and broken
+			// comment lines (though the latter shouldn't be possible here)
+			String commentLine = _sl.get(i);
+			// Skip an initial empty comment line
+			if (i > 0 || !commentLine.isEmpty()) {
+				// START KGU 2020-03-26: Precaution against inadvertently broken comment block
+				String csr = this.commentSymbolRight();
+				if (csr != null && !csr.isEmpty()) {
+					commentLine = commentLine.replace(csr, this.commentSymbolLeft() + csr);
+				}
+				if (_end != null && !_end.equals(csr)) {
+					commentLine = commentLine.replace(_end, "!");
+				}
+				// END KGU 2020-03-20
+				insertCode(_indent + _cont + commentLine, lineNo++);
+			}
+		}
+		if (_end != null)
+		{
+			insertCode(_indent + _end, lineNo++);
+		}
+		return lineNo - _atLine;
+	}
+	//	END KGU#815 2020-03-16
+	
 	// START KGU#607 2018-10-30: (Issue #346)
 	/**
 	 * This is a service method inheriting generators may call at the appropriate
@@ -934,7 +1214,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * argument {@code skipUserIncludes} should be set true in oder to skip them here.
 	 * Otherwise the argument should be set false lest items of the intersection of both
 	 * sets should be omitted by both this method and {@link #appendUserIncludes(String)}.<br/>
-	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
+	 * The method calls a subclassable method {@link #prepareUserIncludeItem(String)}
 	 * (empty at {@link Generator} level) for every configured item before the
 	 * insertion takes place - if some pre-processing of the items is necessary
 	 * then the generator subclass ought to override the preparation method.<br/>
@@ -943,7 +1223,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * and are not to be repeated inadvertently here.
 	 * @return number of inserted lines
 	 * @see #getIncludePattern()
-	 * @see #prepareIncludeItem(String)
+	 * @see #prepareUserIncludeItem(String)
 	 * @see #optionIncludeFiles()
 	 * @see #insertUserIncludes(String, boolean)
 	 * @see #generatorIncludes
@@ -955,16 +1235,38 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		HashSet<String> userIncludes = new HashSet<String>();
 		if (skipUserIncludes) {
 			for (String item: this.optionIncludeFiles().split(",")) {
-				userIncludes.add(item.trim());
+				// START KGU#826 2020-03-17: Bugfix #838
+				//userIncludes.add(item.trim());
+				userIncludes.add(this.prepareUserIncludeItem(item.trim()));
+				// END KGU#826 2020-03-17
 			}
 		}
+		// START KGU#826 2020-03-17: Bugfix #838
+		//for (int i = 0; i < this.generatorIncludes.count(); i++) {
+		//	String incl = this.generatorIncludes.get(i);
+		//	if (!userIncludes.contains(incl)) {
+		//		code.add(_indent + pattern.replace("%", prepareUserIncludeItem(incl)));
+		//		nInserted++;
+		//	}
+		//}
+		StringList genIncludes = new StringList();
 		for (int i = 0; i < this.generatorIncludes.count(); i++) {
-			String incl = this.generatorIncludes.get(i);
+			String incl = this.generatorIncludes.get(i).trim();
 			if (!userIncludes.contains(incl)) {
-				code.add(_indent + pattern.replace("%", prepareIncludeItem(incl)));
-				nInserted++;
+				if (pattern.contains("%%")) {
+					genIncludes.add(incl);
+				}
+				else {
+					code.add(_indent + pattern.replace("%", incl));
+					nInserted++;
+				}
 			}
 		}
+		if (!genIncludes.isEmpty()) {
+			code.add(_indent + pattern.replace("%%", genIncludes.concatenate(",")));
+			nInserted++;
+		}
+		// END KGU#826 2020-03-17
 		return nInserted;
 	}
 	// END KGU#607 2018-10-30
@@ -976,8 +1278,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * language.<br/>
 	 * Include items that have already been enqueued for code insertion by the
 	 * generator itself in {@link #generatorIncludes} will be spared here.<br/>
-	 * The method calls a subclassable method {@link #prepareIncludeItem(String)}
-	 * (empty at {@link CodeGnerator} level) for every item configured before the
+	 * The method calls a subclassable method {@link #prepareUserIncludeItem(String)}
+	 * (empty at {@link Generator} level) for every item configured before the
 	 * insertion takes place - if some pre-processing of the items is necessary
 	 * then the generator subclass may override this method.<br/>
 	 * The configured list of include items may also be retrieved directly via
@@ -985,7 +1287,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _indent - indentation for the directives
 	 * @return number of inserted lines
 	 * @see #getIncludePattern()
-	 * @see #prepareIncludeItem(String)
+	 * @see #prepareUserIncludeItem(String)
 	 * @see #optionIncludeFiles()
 	 * @see #appendGeneratorIncludes(String, boolean)
 	 * @see #generatorIncludes
@@ -1000,6 +1302,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			StringList items = new StringList(includes.split(","));
 			for (int i = items.count()-1; i >= 0; i--) {
 				String item = items.get(i).trim();
+				// START KGU#826 2020-03-17: Bugfix #838
+				items.set(i, this.prepareUserIncludeItem(item));
+				// END KGU#826 2020-03-17
 				if (this.generatorIncludes.contains(item)) {
 					items.remove(i);
 				}
@@ -1009,8 +1314,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			if (pattern.contains("%%")) {
 				// START KGU#607 2018-10-30: Issue #346
 				//code.add(_indent + pattern.replace("%%", includes));
-				code.add(_indent + pattern.replace("%%", items.concatenate(",")));
-				nAdded++;
+				// START KGU#826 2020-03-17: Bugfix #838 items list may have become empty
+				//code.add(_indent + pattern.replace("%%", items.concatenate(",")));
+				//nAdded++;
+				if (!items.isEmpty()) {
+					code.add(_indent + pattern.replace("%%", items.concatenate(",")));
+					nAdded++;
+				}
+				// END KGU#826 2020-03-17
 				// END KGU#607 2018-10-30
 			}
 			// .. otherwise produce a single line for every item
@@ -1018,7 +1329,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				for (int i = 0; i < items.count(); i++) {
 					String item = items.get(i).trim();
 					if (!item.isEmpty()) {
-						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));
+						code.add(_indent + pattern.replace("%", item));
 						nAdded++;
 					}
 				}
@@ -1028,19 +1339,37 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	/**
 	 * Method may pre-process an include file or module name for the import / use
-	 * clause. This version is called by {@link #appendUserIncludes(String)} and does nothing but
-	 * may be overridden. 
+	 * clause. Called by {@link #appendUserIncludes(String)}.<br/>
+	 * The base version does nothing but may be overridden by subclasses. 
 	 * @see #getIncludePattern()
 	 * @see #optionIncludeFiles()
 	 * @see #appendUserIncludes(String)
+	 * @see #prepareGeneratorIncludeItem(String)
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
-	protected String prepareIncludeItem(String _includeFileName)
+	protected String prepareUserIncludeItem(String _includeFileName)
 	{
 		return _includeFileName;
 	}
 	// END KGU#351 2017-02-26
+	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * TODO: To be be overridden by subclasses on demand. 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return _includeName;
+	}
+	// END KGU#815/KGU#826 2020-03-17
 
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
@@ -1070,6 +1399,100 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#277 2016-10-13
 	
+	// START KGU#830 2020-03-19 New mechanism to avoid accumulation of empty lines
+	/**
+	 * Controlled addition of a single empty separator line only in case the previous
+	 * line was not also a blank line.
+	 * @see #addSepaLine(String)
+	 */
+	protected void addSepaLine()
+	{
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", false);
+		}
+	}
+	/**
+	 * Controlled addition of a single indented separator line only in case the previous
+	 * line was not also a blank line. This version of {@link #addSepaLine()} should be
+	 * preferred for languages (like Python) where indentation matters for structure
+	 * detection.
+	 * @param _indent - current indentation string
+	 * @see #addSepaLine()
+	 */
+	protected void addSepaLine(String _indent)
+	{
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", _indent, false);
+		}
+	}
+	/**
+	 * Controlled insertion of a single indented separator line only in case the previous
+	 * line is not also a blank line. The argument {@code _indent} is intended for languages
+	 * (like Python) where indentation matters for structure detection.<br/>
+	 * Affected line markers will be updated appropriately.
+	 * @param _indent - current indentation string
+	 * @param _atLine - index of the line where to insert the blank line
+	 * @return the number of actually inserted lines.
+	 * @see #addSepaLine(String)
+	 */
+	protected int insertSepaLine(String _indent, int _atLine)
+	{
+		int inserted = 0;
+		if (_atLine > 0 && !code.get(_atLine - 1).trim().isEmpty()) {
+			insertCode(_indent, _atLine);
+			inserted++;
+		}
+		return inserted;
+	}
+	// END KGU#830 2020-03-19
+	
+	// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
+	/**
+	 * Appends a full or dashed scissor line (with a preceding and following empty line)
+	 * to mark the cut points in batch or group export, where a file name proposal may
+	 * be inserted
+	 * @param full - if true then a solid line will be added otherwise a dashed line
+	 * @param fileName - a proposed file name to be inserted into the line or null
+	 */
+	protected void appendScissorLine(boolean full, String fileName)
+	{
+		addSepaLine();
+		appendComment(prepareScissorLine(full, fileName), "");
+		addSepaLine();
+	}
+	/**
+	 * Inserts a full or dashed scissor line at line indes {@code atLine} to mark a
+	 * cut point in the file on batch or group export, where a file name proposal may
+	 * be inserted.<br/>
+	 * Will update all line markers greater than or equal to {@code atLine}
+	 * @param full - if true then a solid line will be added otherwise a dashed line
+	 * @param fileName - a proposed file name to be inserted into the line or null
+	 * @param atLine - line index of the insertion position
+	 * @return number of actually inserted lines.
+	 */
+	protected int insertScissorLine(boolean full, String fileName, int atLine)
+	{
+		int nLines = insertSepaLine("", atLine);
+		nLines += insertComment(prepareScissorLine(full, fileName), "", atLine + nLines);
+		nLines += insertSepaLine("", atLine + nLines);
+		return nLines;
+	}
+	/** Internal method to prepare the scissor line for {@link #appendScissorLine(boolean, String)}
+	 * and {@link #insertScissorLine(boolean, String, int)} */
+	private String prepareScissorLine(boolean full, String fileName) {
+		String line = full ? SCISSOR_LINE_FULL : SCISSOR_LINE_DASHED;
+		if (fileName != null && !fileName.trim().isEmpty()) {
+			int insPos = line.indexOf("8<") + 10;
+			int insLen = fileName.length() + 2;
+			int sciLen = line.length();
+			line = line.substring(0, insPos) + " " + fileName + " "
+					+ line.substring(Math.min(insPos + insLen, sciLen));
+		}
+		this.isFilePartitioned = true;
+		return line;
+	}
+	// END KGU#815/KGU#824 2020-03-20
+	
 	// START KGU#705 2019-09-24: Enh. #738
 	/**
 	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which is supposed
@@ -1081,8 +1504,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void insertCode(String text, int atLine)
 	{
-		code.insert(text,  atLine);
+		code.insert(text, atLine);
 		// Now update the line number references >= atLine
+		// START KGU#815 2020-03-16: Enh. #828
+		updateLineMarkers(atLine, 1);
+		// END KGU#815 2020-03-16
 		if (codeMap != null) {
 			for (int[] entry: codeMap.values()) {
 				if (entry[0] >= atLine) {
@@ -1096,6 +1522,29 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	// END KGU#705 2019-09-24
+	
+	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+	/**
+	 * Auxiliary routine for the insertion of subroutines in languages where a
+	 * routine prototype (signature) is expected in a specific interface section
+	 * apart from the implementation. The insertion takes place at line {@code _atLine}.<br/>
+	 * Increments {@link #subroutineInsertionLine}, {@link #interfaceInsertionLine},
+	 * and {@link #includeInsertionLine} accordingly if these are greater than or
+	 * equal to {@code _atLine}.<br/>
+	 * TODO: The basic version does not do anything, subclasses are to override
+	 * this if their target language supports interface sections or header files
+	 * or the like.
+	 * @param _root - the diagram the routine prototype for which is to be inserted
+	 * @param _indent TODO
+	 * @param _withComment - whether the routine comment is to be placed before it
+	 * @param _atLine TODO
+	 * @return the number of inserted lines.
+	 */
+	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
+	{
+		return 0;
+	}
+	// END KGU#815/KGU#824 2020-03-19
 
 	// START KGU#376/KGU#388 2017-09-25: Enh. #389, #423
 	/**
@@ -1542,7 +1991,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * to be able to place equivalent goto instructions and their target labels
 	 * on demand.
 	 * Maps Jump instructions and Loops (as potential jump targets) to unique
-	 * numbers used for the creation of unambiguous goto or break labels.
+	 * numbers used for the creation of unambiguous goto or break labels.<br/>
 	 * 
 	 * The mapping is gathered in {@link #jumpTable}.
 	 * If a return instruction with value is encountered, this.returns will be set true
@@ -2044,6 +2493,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376 2017-09-20
 
 	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
+	/**
+	 * Retrieves important structure information for the given {@link Root} {@code _root},
+	 * its elements, its called subroutines and its included Includables. Uses methods
+	 * {@link #checkElementInformation(Element)} and {@link #registerIncludedRoots(Root, SortedMap)}<br>
+	 * Overwrites the following (internal!) fields:
+	 * <ul>
+	 * <li>{@link #hasEmptyInput}, use {@link #hasEmptyInput(Root)} for test</li>
+	 * <li>{@link #hasInput}, use {@link #hasInput(Root)} for test</li>
+	 * <li>{@link #hasOutput}, use {@link #hasOutput(Root)} for test</li>
+	 * </ul>
+	 * Updates at least the following fields:
+	 * <ul>
+	 * <li>{@link #declarationCommentMap} (may add entries)</li>
+	 * <li>{@link #includeMap} (may add entries)</li>
+	 * <li>{@link #rootsWithInput} (may add entries)</li>
+	 * <li>{@link #rootsWithEmptyInput} (may add entries)</li>
+	 * <li>{@link #rootsWithOutput} (may add entries)</li>
+	 * <li>{@link #hasParallels} towards {@code true}</li>
+	 * <li>{@link #hasTryBlocks} towards {@code true}</li>
+	 * <li>{@link #usesFileAPI} towards {@code true}</li>
+	 * </ul>
+	 * Subclasses might affect further own fields.
+	 * @param _root
+	 */
 	private final void gatherElementInformationRoot(Root _root)
 	{
 		hasOutput = hasInput = hasEmptyInput = false;
@@ -2084,11 +2557,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * on any kind of element. Is guaranteed to be called on every single
 	 * element of the diagram before code export is started.
 	 * Must not be recursive! 
-	 * @param _ele - the currently inpected element
+	 * @param _ele - the currently inspected element
 	 * @return whether the traversal is to be continued or not
 	 */
 	protected boolean checkElementInformation(Element _ele)
 	{
+		// START KGU#832 2020-03-23: Bugfix #840 We must not analyse disabled elements!
+		/*
+		 * It is disputable whether or not module import directives for disabled elements
+		 * ought to be placed in the code. On the one hand it inflates the code unnecessarily
+		 * for disabled code, on the other hand it will facilitate the uncommenting of some
+		 * disabled code lines with external references.
+		 * So will wait to arm the following three lines prepared until some customer complains. 
+		 */
+		if (_ele.isDisabled()) {
+			return true;
+		}
+		// END KGU#832 2020-03-23
 		if (_ele instanceof Instruction)
 		{
 			Instruction instr = (Instruction)_ele;
@@ -2138,7 +2623,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return true;
 	}
 	// END KGU#236 2016-08-10
- 	
+
 	/**
 	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
@@ -2154,7 +2639,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
 	 * @see #appendAsComment(Element, String)
@@ -2185,7 +2670,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2218,7 +2703,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2254,7 +2739,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2285,7 +2770,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2316,7 +2801,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2347,7 +2832,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2376,7 +2861,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
@@ -2402,7 +2887,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
@@ -2432,7 +2917,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Try, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2467,7 +2952,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @param _try - the {@link lu.fisch.structorizer.elements.Try}
@@ -2500,7 +2985,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
@@ -2586,7 +3071,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
-	 * @see #generateCode(Root, String)
+	 * @see #generateCode(Root, String, boolean)
 	 * @param _subqueue - the {@link lu.fisch.structorizer.elements.Subqueue}
 	 * @param _indent - the indentation string valid for the given element's level
 	 */
@@ -2604,33 +3089,37 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/******** Public Methods *************/
-
+	
 	/**
 	 * This method builds the outer code framework for the algorithm
 	 * (i.e. the program, procedure or function definition), usually
 	 * consisting of the header, a "preamble" (containing e.g. variable
 	 * declarations), the implementation part, the result compilation,
-	 * and a footer. See {@link Generator#generateCode(Root, String)} for the
+	 * and a footer. See {@link Generator#generateCode(Root, String, boolean)} for the
 	 * general template. Now you have two options:<br/>
-	 * a)	Either you may override {@link #generateCode(Root, String)} as a
+	 * a)	Either you may override {@link #generateCode(Root, String, boolean)} as a
 	 * 		whole if the substructure template doesn't suit your
 	 * 		target language needs,<br/>
 	 * b)	or you may leave the base method as is and override the
 	 * 		submethods (see their Java doc and the examples you may
 	 * 		find in various Generator subclasses):<br/>
-	 * 		{@link #generateHeader(Root, String, String, StringList, StringList, String)}<br/>
+	 * 		{@link #generateHeader(Root, String, String, StringList, StringList, String, boolean)}<br/>
 	 * 		{@link #generatePreamble(Root, String, StringList)}<br/>
 	 *		{@link #generateResult(Root, String, boolean, StringList)}<br/>
 	 *		{@link #generateFooter(Root, String)}.<br/>
 	 * @param _root - the diagram to be exported
 	 * @param _indent - the indentation for this diagram
+	 * @param _public - whether diagram {@code _root} is a public API
 	 * @return the entire code for this Root as one string (with newlines)
 	 */
-	public String generateCode(Root _root, String _indent)
+	public String generateCode(Root _root, String _indent, boolean _public)
 	{
 		// START KGU#74 2015-11-30: General pre-processing phase 1
 		// Code analysis and Header analysis
 		String procName = _root.getMethodName();
+		// START KGU#828 2020-03-18: Bugfix #839: Some fields had been forgotten to reset
+		this.returns = false;
+		// END KGU#828 2020-03-18
 		boolean alwaysReturns = mapJumps(_root.children);
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
@@ -2660,13 +3149,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			codeMap.put(_root, new int[]{line0, line0, _indent.length()});
 		}
 		// END KGU#705 2019-09-23
-		String preaIndent = generateHeader(_root, _indent, procName, paramNames, paramTypes, resultType);
+		String preaIndent = generateHeader(_root, _indent, procName, paramNames, paramTypes, resultType, _public);
 		String bodyIndent = generatePreamble(_root, preaIndent, varNames);
 		// END KGU#74 2015-11-30
 		
-		// code.add("");
-		generateCode(_root.children, bodyIndent);
-		// code.add("");
+		// addSepaLine();
+		// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
+		//generateCode(_root.children, bodyIndent);
+		generateBody(_root, bodyIndent);
+		// END KGU#815/KGU#824 2020-03-18
+		// addSepaLine();
 		
 		// START KGU#74 2015-11-30: Result preprocessing
 		generateResult(_root, preaIndent, alwaysReturns, varNames);
@@ -2695,17 +3187,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _paramNames - list of the argument names
 	 * @param _paramTypes - list of corresponding type names (possibly null) 
 	 * @param _resultType - result type name (possibly null)
+	 * @param _public TODO
 	 * @return the default indentation string for the preamble stuff following
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
-			StringList _paramNames, StringList _paramTypes, String _resultType)
+			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
 		return _indent + this.getIndent();
 	}
 	/**
 	 * Generates some preamble (i.e. comments, language declaration section etc.)
 	 * and adds it to this.code.
-	 * @see #generateHeader(Root, String, String, StringList, StringList, String)
+	 * @see #generateHeader(Root, String, String, StringList, StringList, String, boolean)
 	 * @see #generateResult(Root, String, boolean, StringList)
 	 * @see #generateFooter(Root, String)
 	 * @param _root - the diagram root element
@@ -2717,10 +3210,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		return _indent;
 	}
+	// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #826
+	/**
+	 * Creates the appropriate code for the diagram body but allows subclasses e.g. to suppress
+	 * the export of the body depending on some context-sensitive properties of {@code _root}.
+	 * TODO: Base version exports the children as Subqueue in the ordinary way.
+	 * @param _root - the diagram currently being exported
+	 * @param _indent - current indentation level
+	 * @return true if something was written to {@link #code}, otherwise false
+	 */
+	protected boolean generateBody(Root _root, String _indent)
+	{
+		this.generateCode(_root.children, _indent);
+		return true;
+	}
+	// START KGU#815/KGU#824 2020-03-18
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
 	 * (after the algorithm code of the body) to this.code)
-	 * @see #generateHeader(Root, String, String, StringList, StringList, String)
+	 * @see #generateHeader(Root, String, String, StringList, StringList, String, boolean)
 	 * @see #generatePreamble(Root, String, StringList)
 	 * @see #generateResult(Root, String, boolean, StringList)
 	 * @see #generateFooter(Root, String)
@@ -2736,7 +3244,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	/**
 	 * Method is to finish up after the text insertions of the diagram, i.e. to close an open block. 
-	 * @see #generateHeader(Root, String, String, StringList, StringList, String)
+	 * @see #generateHeader(Root, String, String, StringList, StringList, String, boolean)
 	 * @see #generatePreamble(Root, String, StringList)
 	 * @see #generateResult(Root, String, boolean, StringList)
 	 * @param _root - the diagram root element 
@@ -2758,18 +3266,32 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void appendGlobalDefinitions(Root _root, String _indent, boolean _force) {
 		boolean thisDone = false;
-		code.add("");
+		addSepaLine(_indent);
 		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
+			// Don't add declarations or initialisation code for an imported module
+			if (importedLibRoots != null && importedLibRoots.contains(incl)) {
+				continue;
+			}
+			// END KGU#815/KGU#836 2020-03-18
+			// START KGU#834 2020-03-26: Give subclasses a chance to initialise a static flag
+			String flagDecl = this.makeStaticInitFlagDeclaration(incl, true);
+			// We cannot ask wasDefHandled(...) since the flag is not a registered variable
+			if (flagDecl != null) {
+				code.add(_indent + flagDecl);
+				this.setDefHandled(incl.getSignatureString(false), this.getInitFlagName(incl));
+			}
+			// END KGU#834 2020-03-26
 			appendDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
 			if (incl == _root) {
 				thisDone = true;
 			}
 		}
 		if (_root.isInclude() && !thisDone) {
-			appendDefinitions(_root, _indent, this.varNames, true);				
+			appendDefinitions(_root, _indent, this.varNames, true);
 		}
 	}
-	
+
 	/**
 	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
 	 * @param _root - the diagram the declarations and definitions of which are to be inserted
@@ -2778,36 +3300,91 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _force - true means that the insertion is forced even if option {@link #isInternalDeclarationAllowed()} is set 
 	 */
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
-		// TODO To be overridden by subclasses
+		// To be overridden by subclasses
 	}
 
 	/**
-	 * Generates the (initialisation) code of all includable diagrams recursively required by
+	 * Generates the (initialization) code of all includable diagrams recursively required by
 	 * the roots to be exported in topological order 
+	 * @param _root TODO
 	 * @param _indent - current indentation string
 	 */
-	protected void appendGlobalInitialisations(String _indent) {
-		if (topLevel) {
-			int startLine = code.count();
-			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
-				appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
-				// START KGU#501 2018-02-22: Bugfix #517
-				this.includeInitialisation = true;
-				// END KGU#501 2018-02-22
-				generateCode(incl.children, _indent);
-				// START KGU#501 2018-02-22: Bugfix #517
-				this.includeInitialisation = false;
-				// END KGU#501 2018-02-22
-				appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
-			}
-			if (code.count() > startLine) {
-				code.add(_indent);
-			}
+	protected void appendGlobalInitialisations(Root _root, String _indent) {
+		// START KGU#815 2020-04-09: Enh. #828 group export - in case of initialization flags we may/must do it in all routines
+		//if (topLevel) {
+		if (!topLevel && _root.includeList == null) {
+			return;	// Nothing to do
 		}
+		// END KGU#815 2020-04-09
+		for (Root incl: this.includedRoots.toArray(new Root[]{})) {
+			// START KGU#815/KGU#836 2020-03-18: Enh. #828, bugfix #836
+			// Don't add initialisation code for an imported module
+			if (importedLibRoots != null && importedLibRoots.contains(incl) || incl.children.getSize() == 0) {
+				continue;
+			}
+			// And don't add initialisation code if there is no direct reference being at lower level
+			else if (!topLevel && !_root.includeList.contains(incl.getMethodName())) {
+				continue;
+			}
+			// END KGU#815/KGU#836 2020-03-18
+			// START KGU#501 2018-02-22: Bugfix #517
+			this.includeInitialisation = true;
+			try {
+			// END KGU#501 2018-02-22
+				// START KGU#834 2020-03-26: We must ensure that initialization code is executed at most once
+				//appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+				//generateCode(incl.children, _indent);
+				//appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				if (this.wasDefHandled(incl, this.getInitFlagName(incl), false) && this.optionExportSubroutines()
+						// The following is sort of forecast that the initRoutine will be created with internal flag decl.
+						|| topLevel && this.makeStaticInitFlagDeclaration(incl, false) != null) {
+					// We fake a call here to be language-independent
+					Call initCall = new Call(this.getInitRoutineName(incl) + "()");
+					initCall.parent = incl;	// It should have been this root but it doesn't matter.
+					generateCode(initCall, _indent);
+				}
+				// START KGU#815 2020-04-09: Enh. #828 group export - in this case it is indeed only to be done at top level
+				//else {
+				else if (topLevel) {
+				// END KGU#815 2020-04-09
+					appendComment("BEGIN initialization for \"" + incl.getMethodName() + "\"", _indent);
+					generateCode(incl.children, _indent);
+					appendComment("END initialization for \"" + incl.getMethodName() + "\"", _indent);
+				}
+				// END KGU#834 2020-03-26
+			// START KGU#501 2018-02-22: Bugfix #517
+			}
+			finally {
+				this.includeInitialisation = false;
+			}
+			// END KGU#501 2018-02-22
+			}
+			addSepaLine(_indent);
+		// START KGU#815 2020-04-09: Issue #828 see above
+		//}
+		// END KGU#815 2020-04-09
 	}
 	// END KGU#376 2017-09-28
-
 	
+	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
+	/**
+	 * Subclasses may return an initialized declaration of a status flag for the
+	 * corresponding one-time initialization (for the given Includable {@code inlc}).<br/>
+	 * The flag variable name should be obtained from {@link #getInitFlagName(Root)}.
+	 * A non-null declaration string should be returned at most for one value of
+	 * {@code inGlobalDecl}, not for both. 
+	 * @param incl - the includable diagram the initialization code of which is to be
+	 * controlled here.
+	 * @param inGlobalDecl - true if the method is called within the insertion of global
+	 * declarations, false otherwise (within initializer routine definition).
+	 * @return a ready-to-insert declaration initialized to false or null<br/>
+	 * This base version just returns null.
+	 */
+	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
+		return null;
+	}
+	// END KGU#834 2020-03-26
+
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
 	 * Appends the copyright information (author name, license name and text) if the respective option
@@ -2818,7 +3395,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void appendCopyright(Root _root, String _indent, boolean _fullText) {
 		if (this.optionExportLicenseInfo()) {
-			this.appendComment("", _indent);
+			this.addCode("", _indent, false);
 			this.appendComment("Copyright (C) " + _root.getCreatedString() + " " + _root.getAuthor(), _indent);
 			// START KGU#763 2019-12-11: Bugfix #794 - for an empty license name, we don't need to check
 			//if (_root.licenseName != null) {
@@ -2837,9 +3414,88 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			if (_fullText && _root.licenseText != null) {
 				this.appendComment(StringList.explode(_root.licenseText, "\n"), _indent);
 			}
-			this.appendComment("", _indent);
+			this.addCode("", _indent, false);
 		}
 	}
+	
+	// START KGU#834 2020-03-26: Support for ensuring initializations won't get done twice
+	/**
+	 * Generates an initialization routine for Includable {@code incl} trying to ensure
+	 * its one-time effect. In order to work, there must be a static variable with name
+	 * {@link #getInitFlagName(Root)} initialized to {@code false}. In order to be able
+	 * to detect its existence here, it must either have been declared via
+	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or {@link #setDefHandled(String, String)}
+	 * or method {@link #makeStaticInitFlagDeclaration(Root, boolean)} must return a non-null
+	 * result for argument {@code inGlobalDecl = false}.
+	 * @param incl - the {@link Root} of type Includable (other kinds of {@link Root}
+	 * are ignored
+	 * @param _indent - relevant indentation
+	 * @return true if an initialization routine was generated.
+	 */
+	protected boolean generateInitRoutine(Root incl, String _indent) {
+		boolean done = false;
+		String flagDecl = this.makeStaticInitFlagDeclaration(incl, false);
+		if (incl.isInclude() && (this.wasDefHandled(incl, this.getInitFlagName(incl), false) || flagDecl != null)) {
+			/* Produce a temporary routine object and generate its code. This has to be done
+			 * in peaces, however, in order to avoid unwelcome text transformation
+			 */
+			Root init = new Root();
+			String initName = this.getInitRoutineName(incl);
+			String flagName = this.getInitFlagName(incl);
+			init.setText(initName + "()");
+			init.setComment("Automatically created initialization procedure for " + incl.getMethodName());
+			init.setProgram(false);
+			/* Since this initialisation procedure is not used for a library as a whole,
+			 * it will never required to be public - the library initialisation routine
+			 * will call the specific initialisation procedures for all involved Includables
+			 * internally.
+			 */
+			String bodyIndent = generateHeader(init, _indent, initName, new StringList(), null, null, false);
+			if (flagDecl != null && !wasDefHandled(incl, flagName, true, false)) {
+				addCode(flagDecl, bodyIndent, false);
+			}
+			this.includeInitialisation = true;
+			try {
+				// In order to be target-language-independent, we fake an Alternative
+				Alternative alt = new Alternative("not " + flagName);
+				alt.qTrue = (Subqueue)incl.children.copy();
+				Instruction instr = new Instruction(flagName + " <- true");
+				alt.qTrue.addElement(instr);
+				alt.qTrue.parent = alt;
+				//alt.parent = incl;
+				init.children.addElement(alt);
+				StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false));
+				if (doneDecls != null) {
+					this.declaredStuff.put(init.getSignatureString(false), doneDecls);
+				}
+				this.setDefHandled(init.getSignatureString(false), flagName);
+				// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
+				generateCode(alt, bodyIndent);
+			}
+			finally {
+				this.includeInitialisation = false;
+			}
+			generateFooter(init, _indent);
+			done = true;
+		}
+		return done;
+	}
+	/** @return name of the flag variable ensuring one-time initialization for Includable {@code incl} */
+	protected String getInitFlagName(Root incl) {
+		if (incl.isInclude()) {
+			return "initDone_" + incl.getMethodName();
+		}
+		return null;
+	}
+	/** @return the name of the one-time initialization routine for Includable {@code incl} */
+	protected String getInitRoutineName(Root incl) {
+		if (incl.isInclude()) {
+			return "initialize_" + incl.getMethodName();
+		}
+		return null;
+	}
+	// END KGU#834 2020-03-26
+
 	
 	/**
 	 * Entry point for interactively commanded code export. Retrieves export options,
@@ -2849,7 +3505,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
-	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
+	 * @see #exportCode(Vector, String, String, String, boolean, IRoutinePool)
+	 * @see #exportCode(Vector, String, File, Frame, IRoutinePool)
 	 */
 	// START KGU 2017-04-26
 	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
@@ -2858,30 +3515,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#676 2019-03-13
 	// END KGU 2017-04-26
 	{
-		// START KGU 2017-04-26
-		File exportDir = _proposedDirectory;
-		// END KGU 2017-04-26
-		// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
-		routinePool = _routinePool;
-		// END KGU#676 2019-03-13
-		
 		//=============== Get export options ======================
 		getExportOptions(true);
 
-		//=============== Request output file path (interactively) ======================
-		JFileChooser dlgSave = new JFileChooser();
-		dlgSave.setDialogTitle(getDialogTitle());
-
-		// set directory
-		if (_root.getFile() != null)
+		//============== Adjust directory =========================
+		// START KGU#816 2020-03-17: Enh. #837
+		//if (_root.getFile() != null)
+		if ((_proposedDirectory == null || this.proposeDirectoryFromNsd) && _root.getFile() != null)
+		// END KGU#816 2020-03-17
 		{
-			dlgSave.setCurrentDirectory(_root.getFile());
+			_proposedDirectory = _root.getFile();
 		}
-		else
-		{
-			dlgSave.setCurrentDirectory(_proposedDirectory);
-		}
-
 		// propose name
 		// START KGU 2015-10-18: Root has got a mechanism for this!
 		//		String nsdName = _root.getText().get(0);
@@ -2904,196 +3548,213 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
 		nsdName = this.ensureFilenameConformity(nsdName);
 		// END KGU#690 2019-03-21
-		// END KGU 2015-10-18
-		dlgSave.setSelectedFile(new File(nsdName));
 
-		// START KGU 2016-04-01: Enh. #110 - select the provided filter
-		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
-		dlgSave.setFileFilter((javax.swing.filechooser.FileFilter) this);
-		// END KGU 2016-04-01
-		int result = dlgSave.showSaveDialog(_frame);
-
-		/***** file_exists check here!
-		 if(file.exists())
-		 {
-		 JOptionPane.showMessageDialog(null,file);
-		 int response = JOptionPane.showConfirmDialog (null,
-		 "Overwrite existing file?","Confirm Overwrite",
-		 JOptionPane.OK_CANCEL_OPTION,
-		 JOptionPane.QUESTION_MESSAGE);
-		 if (response == JOptionPane.CANCEL_OPTION)
-		 {
-		 return;
-		 }
-		 else
-		 */
-		String filename = new String();
-
-		File file = null;
-
-		if (result == JFileChooser.APPROVE_OPTION) 
-		{
-			filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if (!isOK(filename))
-			{
-				filename += "."+getFileExtensions()[0];
-			}
-			file = new File(filename);
-		}
-
-		//System.out.println(filename);
-
-		if (file != null && file.exists())
-		{
-			int response = JOptionPane.showConfirmDialog (null,
-					"Overwrite existing file?","Confirm Overwrite",
-					JOptionPane.YES_NO_OPTION,
-					JOptionPane.QUESTION_MESSAGE);
-			if (response == JOptionPane.NO_OPTION)
-			{
-				file = null;	// We might as well return here
-			}
-		}
-			
-		//=============== Actual code generation ======================
-		if (file != null)
-		{
-			// START KGU 2017-04-26
-			exportDir = file.getParentFile();
-			// END KGU 2017-04-26
-			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
-			pureFilename = file.getName();
-			int dotPos = pureFilename.indexOf(".");
-			if (dotPos >= 0)
-			{
-				pureFilename = pureFilename.substring(0, dotPos);
-			}
-			// END KGU#194 2016-05-07
-
-			// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
-			this.splitKeywords.clear();
-			String[] keywords = CodeParser.getAllProperties();
-			for (int k = 0; k < keywords.length; k++)
-			{
-				this.splitKeywords.add(Element.splitLexically(keywords[k], false));
-			}
-			// END KGU 2016-03-29
-
-			try
-			{
-				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
-				if (this.optionExportSubroutines())
-				{
-					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
-					if (!_root.isProgram())
-					{
-						subroutines.put(_root, new SubTopoSortEntry(null));
-					}
-					// END KGU#237 2016-08-10
-					registerCalledSubroutines(_root);
-					// START KGU#237 2016-08-10: Bugfix #228
-					if (!_root.isProgram())
-					{
-						subroutines.remove(_root);
-					}
-					// END KGU#237 2016-08-10
-				}
-				// END KGU#178 2016-07-20
-				
-				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
-				// START KGU#311 2016-12-22: Issue #227, Enh. #314
-				//gatherElementInformation(_root);
-				gatherElementInformationRoot(_root);
-				// END KGU#311 2016-12-22
-				
-				if (this.optionExportSubroutines())
-				{
-					for (Root sub: subroutines.keySet())
-					{
-						// START KGU#311 2016-12-22: Issue #227, Enh. #314
-						//gatherElementInformation(sub);
-						gatherElementInformationRoot(sub);
-						// END KGU#311 2016-12-22
-					}		
-				}
-				// END KGU#236 2016-08-10
-				
-				// START KGU#376 2017-09-25: Enh. #389 Set up the topologically sorted include list
-				includedRoots = sortTopologically(includeMap);
-				// END KGU#376 2017-09-25
-				// START KGU#424 2017-09-25: Care for the mapping of appropriate comments
-				for (Root incl: includedRoots.toArray(new Root[]{})) {
-					gatherElementInformationRoot(incl);
-				}
-				// END KGU#424 2017-09-25
-
-				// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
-				// (And with them possibly any such characters that had not been there for indentation!)
-				//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
-				String code = generateCode(_root, "");
-				// END KGU 2015-10-18
-
-				// START KGU#178 2016-07-20: #160 - Sort and export required subroutines
-				if (this.optionExportSubroutines())
-				{
-					code = generateSubroutineCode(_root);
-				}
-				// END KGU#178 2016-07-20
-				
-//				for (String charsetName : Charset.availableCharsets().keySet())
+		// START KGU#676 2019-03-13: Enh. #696 Allow to specify the routine pool to be used
+		routinePool = _routinePool;
+		// END KGU#676 2019-03-13
+		
+// START KGU#815 2020-03-16: Enh. #828 group export
+//		//=============== Request output file path (interactively) ======================
+//		JFileChooser dlgSave = new JFileChooser();
+//		dlgSave.setDialogTitle(getDialogTitle());
+//
+//		// set directory
+//		dlgSave.setCurrentDirectory(_proposedDirectory);
+//
+//		// END KGU 2015-10-18
+//		dlgSave.setSelectedFile(new File(nsdName));
+//
+//		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+//		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
+//		dlgSave.setFileFilter((javax.swing.filechooser.FileFilter) this);
+//		// END KGU 2016-04-01
+//		int result = dlgSave.showSaveDialog(_frame);
+//
+//		/***** file_exists check here!
+//		 if(file.exists())
+//		 {
+//		 JOptionPane.showMessageDialog(null,file);
+//		 int response = JOptionPane.showConfirmDialog (null,
+//		 "Overwrite existing file?","Confirm Overwrite",
+//		 JOptionPane.OK_CANCEL_OPTION,
+//		 JOptionPane.QUESTION_MESSAGE);
+//		 if (response == JOptionPane.CANCEL_OPTION)
+//		 {
+//		 return;
+//		 }
+//		 else
+//		 */
+//		String filename = new String();
+//
+//		File file = null;
+//
+//		if (result == JFileChooser.APPROVE_OPTION) 
+//		{
+//			filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+//			if (!isOK(filename))
+//			{
+//				filename += "."+getFileExtensions()[0];
+//			}
+//			file = new File(filename);
+//		}
+//
+//		//System.out.println(filename);
+//
+//		if (file != null && file.exists())
+//		{
+//			int response = JOptionPane.showConfirmDialog (null,
+//					"Overwrite existing file?","Confirm Overwrite",
+//					JOptionPane.YES_NO_OPTION,
+//					JOptionPane.QUESTION_MESSAGE);
+//			if (response == JOptionPane.NO_OPTION)
+//			{
+//				file = null;	// We might as well return here
+//			}
+//		}
+//			
+//		//=============== Actual code generation ======================
+//		if (file != null)
+//		{
+//			// START KGU 2017-04-26
+//			exportDir = file.getParentFile();
+//			// END KGU 2017-04-26
+//			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
+//			pureFilename = file.getName();
+//			int dotPos = pureFilename.indexOf(".");
+//			if (dotPos >= 0)
+//			{
+//				pureFilename = pureFilename.substring(0, dotPos);
+//			}
+//			// END KGU#194 2016-05-07
+//
+//			// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
+//			this.splitKeywords.clear();
+//			String[] keywords = CodeParser.getAllProperties();
+//			for (int k = 0; k < keywords.length; k++)
+//			{
+//				this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+//			}
+//			// END KGU 2016-03-29
+//
+//			try
+//			{
+//				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
+//				if (this.optionExportSubroutines())
 //				{
-//					System.out.println(charsetName);
+//					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
+//					if (!_root.isProgram())
+//					{
+//						subroutines.put(_root, new SubTopoSortEntry(null));
+//					}
+//					// END KGU#237 2016-08-10
+//					registerCalledSubroutines(_root);
+//					// START KGU#237 2016-08-10: Bugfix #228
+//					if (!_root.isProgram())
+//					{
+//						subroutines.remove(_root);
+//					}
+//					// END KGU#237 2016-08-10
 //				}
-//				System.out.println("Default: " + Charset.defaultCharset().name());
-				
-				BTextfile outp = new BTextfile(filename);
-				// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
-				//outp.rewrite();
-				outp.rewrite(exportCharset);
-				// END KGU#168 2016-04-04
-				outp.write(code);
-				// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
-				if (!code.isEmpty()) {
-					outp.write("\n");
-				}
-				// END KGU#689 2019-03-21
-				outp.close();
-				
-				if (this.usesFileAPI) {
-					copyFileAPIResources(filename);
-				}
-			}
-			catch (Exception e)
-			{
-				String message = e.getMessage();
-				// START KGU#484 2018-04-05: Issue #463
-				//e.printStackTrace();
-				getLogger().log(Level.WARNING, "Error on saving file!", e);
-				// END KGU#484 2018-04-05
-				if (message == null) {
-					message = e.getClass().getSimpleName();
-				}
-				JOptionPane.showMessageDialog(null,
-						"Error while saving the file!\n" + message,
-						"Error", JOptionPane.ERROR_MESSAGE);
-			}
-			// START KGU#178 2016-07-20: Enh. #160
-			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
-			{
-				JOptionPane.showMessageDialog(null,
-						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
-						"Warning", JOptionPane.WARNING_MESSAGE);		    		
-			}
-			// END KGU#178 2016-07-20
-		} // if (file != null)
-		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
-		else {
-			exportDir = null;
-		}
-		// END KGU#654 2019-02-16
-		// START KGU 2017-04-26
-		return exportDir;
-		// END KGU 2017-04-26
+//				// END KGU#178 2016-07-20
+//				
+//				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
+//				// START KGU#311 2016-12-22: Issue #227, Enh. #314
+//				//gatherElementInformation(_root);
+//				gatherElementInformationRoot(_root);
+//				// END KGU#311 2016-12-22
+//				
+//				if (this.optionExportSubroutines())
+//				{
+//					for (Root sub: subroutines.keySet())
+//					{
+//						// START KGU#311 2016-12-22: Issue #227, Enh. #314
+//						//gatherElementInformation(sub);
+//						gatherElementInformationRoot(sub);
+//						// END KGU#311 2016-12-22
+//					}		
+//				}
+//				// END KGU#236 2016-08-10
+//				
+//				// START KGU#376 2017-09-25: Enh. #389 Set up the topologically sorted include list
+//				includedRoots = sortTopologically(includeMap);
+//				// END KGU#376 2017-09-25
+//				// START KGU#424 2017-09-25: Care for the mapping of appropriate comments
+//				for (Root incl: includedRoots.toArray(new Root[]{})) {
+//					gatherElementInformationRoot(incl);
+//				}
+//				// END KGU#424 2017-09-25
+//
+//				// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+//				// (And with them possibly any such characters that had not been there for indentation!)
+//				//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+//				String code = generateCode(_root, "", false);
+//				// END KGU 2015-10-18
+//
+//				// START KGU#178 2016-07-20: #160 - Sort and export required subroutines
+//				if (this.optionExportSubroutines())
+//				{
+//					code = generateSubroutineCode(_root);
+//				}
+//				// END KGU#178 2016-07-20
+//				
+////				for (String charsetName : Charset.availableCharsets().keySet())
+////				{
+////					System.out.println(charsetName);
+////				}
+////				System.out.println("Default: " + Charset.defaultCharset().name());
+//				
+//				BTextfile outp = new BTextfile(filename);
+//				// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
+//				//outp.rewrite();
+//				outp.rewrite(exportCharset);
+//				// END KGU#168 2016-04-04
+//				outp.write(code);
+//				// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+//				if (!code.isEmpty()) {
+//					outp.write("\n");
+//				}
+//				// END KGU#689 2019-03-21
+//				outp.close();
+//				
+//				if (this.usesFileAPI) {
+//					copyFileAPIResources(filename);
+//				}
+//			}
+//			catch (Exception e)
+//			{
+//				String message = e.getMessage();
+//				// START KGU#484 2018-04-05: Issue #463
+//				//e.printStackTrace();
+//				getLogger().log(Level.WARNING, "Error on saving file!", e);
+//				// END KGU#484 2018-04-05
+//				if (message == null) {
+//					message = e.getClass().getSimpleName();
+//				}
+//				JOptionPane.showMessageDialog(null,
+//						"Error while saving the file!\n" + message,
+//						"Error", JOptionPane.ERROR_MESSAGE);
+//			}
+//			// START KGU#178 2016-07-20: Enh. #160
+//			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+//			{
+//				JOptionPane.showMessageDialog(null,
+//						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
+//						"Warning", JOptionPane.WARNING_MESSAGE);		    		
+//			}
+//			// END KGU#178 2016-07-20
+//		} // if (file != null)
+//		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
+//		else {
+//			exportDir = null;
+//		}
+//		// END KGU#654 2019-02-16
+//		// START KGU 2017-04-26
+//		return exportDir;
+//		// END KGU 2017-04-26
+		Vector<Root> oneRoot = new Vector<Root>();
+		oneRoot.add(_root);
+		return this.exportCode(oneRoot, nsdName, _proposedDirectory, _frame, _routinePool);
+// END KGU#815 2020-03-16
 	}
 	
 	// START KGU#705 2019-09-23: Enh. #738
@@ -3134,7 +3795,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				gatherElementInformationRoot(incl);
 			}
 
-			code = generateCode(_root, "");
+			code = generateCode(_root, "", true);
 		}
 		catch (Exception e)
 		{
@@ -3165,14 +3826,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			Ini ini = Ini.getInstance();
 			ini.load();
 
-			exportAsComments = ini.getProperty("genExportComments","0").equals("true");
-			startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
-			generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
+			exportAsComments = ini.getProperty("genExportComments","false").equals("true");
+			startBlockNextLine = !ini.getProperty("genExportBraces", "false").equals("true");
+			generateLineNumbers = ini.getProperty("genExportLineNumbers", "false").equals("true");
 			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
-			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
-			exportSubroutines = considerSubroutineOption && ini.getProperty("genExportSubroutines", "0").equals("true");
+			suppressTransformation = ini.getProperty("genExportnoConversion", "false").equals("true");
+			exportSubroutines = considerSubroutineOption && ini.getProperty("genExportSubroutines", "false").equals("true");
 			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
-			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
+			exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "false").equals("true");
+			// START KGU#816 2020-03-17: Enh. #837
+			proposeDirectoryFromNsd = ini.getProperty("genExportDirFromNsd", "true").equals("true");
+			// END KGU#816 2020-03-17
 
 		} 
 		catch (IOException ex)
@@ -3209,28 +3873,115 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
 	 * the top-level diagram code has been created and generates and adds the code
-	 * sequences of the called subroutines of {@code _root}in topologically sorted order.
-	 * @param _root - the top-level diagram root.
-	 * @return the entire code for this {@code Root} including the subroutine diagrams as one string (with newlines)
+	 * sequences of the called subroutines in topologically sorted order.<br/>
+	 * Subroutines contained in {@code _suppressedRoots} are skipped.<br/>
+	 * Side effects: {@link #subroutines} will be cleared.
+	 * @param _suppressedRoots - Roots not to be generated among the subroutines or null
+	 * @param _publicRoots - Roots to be marked as public if possible
+	 * @return the entire code for this {@code Root} including the subroutine diagrams
+	 * as one string (with newlines)
 	 * @see #sortTopologically(Hashtable)
 	 */
-	protected final String generateSubroutineCode(Root _root)
+	protected final String generateSubroutineCode(Set<Root> _suppressedRoots, Vector<Root> _publicRoots)
 	{
 		StringList outerCodeTail = code.subSequence(this.subroutineInsertionLine, code.count());
 		code = code.subSequence(0, this.subroutineInsertionLine);
+		boolean oldLevel = topLevel;
 		topLevel = false;
-		Queue<Root> roots = sortTopologically(subroutines);
-		while (!roots.isEmpty())
+		// FIXME: Experimental 
+		for (Root incl: includedRoots) {
+			if (_suppressedRoots == null || !_suppressedRoots.contains(incl)) {
+				this.generateInitRoutine(incl, subroutineIndent);
+			}
+		}
+		// Note: The following routine call will clear this.subroutines
+		Vector<Root> roots = new Vector<Root>(sortTopologically(subroutines));
+		for (Root sub: roots)
 		{
-			Root sub = roots.remove();	// get the next routine
-			generateCode(sub, subroutineIndent);	// add its code
+			// START KGU#815/KGU#824 2020-03-17: Enh. #828, bugfix #836
+			//generateCode(sub, subroutineIndent, false);	// add its code
+			if (_suppressedRoots == null || !_suppressedRoots.contains(sub)) {
+				// add its code
+				generateCode(sub, subroutineIndent, _publicRoots != null && _publicRoots.contains(sub));
+			}
+			// END KGU#815/KGU#824 2020-03-17
 		}
 
 		code.add(outerCodeTail);
 		
-		topLevel = true;
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		for (Root sub: roots) {
+			if ((_suppressedRoots == null || !_suppressedRoots.contains(sub))
+					&& _publicRoots != null && _publicRoots.contains(sub)) {
+				// insert its interface
+				insertPrototype(sub, subroutineIndent, _publicRoots != null && _publicRoots.contains(sub), 
+						interfaceInsertionLine);
+			}
+		}
+		// END KGU#815/KGU#824 2020-03-19
 		
+		topLevel = oldLevel;
 		return code.getText();
+	}
+	/**
+	 * Inserts the generated code sequence for subroutine diagram {@code _root} at the appropriate
+	 * line in {@link #code}
+	 * @param _root - the library routine diagram to be inserted
+	 * @param _indent - the indentation string
+	 * @param _public - if true then the routine shall be accessible outside the library
+	 */
+	protected int insertLibraryRoutine(Root _root, String _indent, boolean _public)
+	{
+		StringList outerCodeTail = code.subSequence(this.libraryInsertionLine, code.count());
+		code = code.subSequence(0, this.libraryInsertionLine);
+		boolean oldLevel = topLevel;
+		topLevel = false;
+
+		addSepaLine();
+		generateCode(_root, _indent, _public);
+		
+		int nLines = code.count() - this.libraryInsertionLine;
+
+		code.add(outerCodeTail);
+		
+		/* Be aware that generateCode() may have incremented this.libraryInsertionLine
+		 * (and larger line markers as well!) as it may (ab)use insertPrototype() to
+		 * actually append the function header. So the correct number of added lines
+		 * (minus the ones inserted in previous file regions) is obtained by subtracting
+		 * the new libraryInsertionLine value from the code size.
+		 * it may cause defective line markers if we update them with
+		 * this value. Instead we must reduce it by the bias between the current value
+		 * of this.libraryInsertionLine and its former value atLine. */
+		updateLineMarkers(this.libraryInsertionLine, nLines);
+
+		if (_public) {
+			nLines += insertPrototype(_root, _indent, _public, this.interfaceInsertionLine);
+		}
+
+		topLevel = oldLevel;
+		
+		return nLines;
+	}
+
+	/**
+	 * Increments cached line indices greater than or equal to line index {@code atLine}
+	 * by the number {@code nLines} of inserted lines.
+	 * @param atLine - line index of the insertion
+	 * @param nLines - number of inserted lines
+	 */
+	protected void updateLineMarkers(int atLine, int nLines) {
+		if (this.subroutineInsertionLine >= atLine) {
+			this.subroutineInsertionLine += nLines;
+		}
+		if (this.includeInsertionLine >= atLine) {
+			this.includeInsertionLine += nLines;
+		}
+		if (this.interfaceInsertionLine >= atLine) {
+			this.interfaceInsertionLine += nLines;
+		}
+		if (this.libraryInsertionLine >= atLine) {
+			this.libraryInsertionLine += nLines;
+		}
 	}
 
 	/**
@@ -3324,7 +4075,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected void insertFileAPI(String _language, int _sectionCount)
 	{
-		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent, _sectionCount);	
+		this.subroutineInsertionLine = insertFileAPI(_language, 
+				this.subroutineInsertionLine, this.subroutineIndent, _sectionCount);
 	}
 	
 	/**
@@ -3354,7 +4106,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				if (line.contains("===== STRUCTORIZER FILE API START =====")){
 					sectNo++;
 					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
-					insertCode(_indentation, _atLine++);
+					_atLine += insertSepaLine(_indentation, _atLine);
 				}
 				if (doInsert) {
 					// Unify indentation and replace dummy messages by localized ones
@@ -3506,7 +4258,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#187 2016-04-28: Enh. 179 batch mode
 	/*****************************************
-	 * batch code export methods
+	 * batch and group code export methods
 	 *****************************************/
 
 	/**
@@ -3529,7 +4281,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		// START KGU#676 2019-03-13: Enh. #696
 		routinePool = _routinePool;
-		this.exportSubroutines = _routinePool != null;
 		this.pureFilename = "";
 		this.hasParallels = false;
 		this.usesFileAPI = false;
@@ -3538,9 +4289,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.hasOutput = false;
 		this.code.clear();
 		// END KGU#676 2019-03-13
-		// START KGU#311 2016-12-27: Enh. #314
-		boolean someRootUsesFileAPI = false;
-		// END KGU#311 2016-12-27
 		
 		if (Charset.isSupported(_charSet))
 		{
@@ -3554,26 +4302,31 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//=============== Get export options ======================
 		// START KGU#720/KGU#722 2019-08-07: Enh. #737, #741 - option to load settings from extra settings file
 		if (_settingsFromFile) {
-			try
-			{
-				Ini ini = Ini.getInstance();
-				ini.load();
-				exportAsComments = ini.getProperty("genExportComments","0").equals("true");
-				startBlockNextLine = !ini.getProperty("genExportBraces", "0").equals("true");
-				generateLineNumbers = ini.getProperty("genExportLineNumbers", "0").equals("true");
-				exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
-				suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
-				includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
-				exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "0").equals("true");
-			} 
-			catch (IOException ex)
-			{
-				this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
-			}
+			// START KGU#816 2020-03-17: unified on occasion of enh. #837 
+			//try
+			//{
+			//	Ini ini = Ini.getInstance();
+			//	ini.load();
+			//	exportAsComments = ini.getProperty("genExportComments","false").equals("true");
+			//	startBlockNextLine = !ini.getProperty("genExportBraces", "false").equals("true");
+			//	generateLineNumbers = ini.getProperty("genExportLineNumbers", "false").equals("true");
+			//	exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
+			//	suppressTransformation = ini.getProperty("genExportnoConversion", "false").equals("true");
+			//	includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			//	exportAuthorLicense = ini.getProperty("genExportLicenseInfo", "false").equals("true");
+			//} 
+			//catch (IOException ex)
+			//{
+			//	this.getLogger().log(Level.WARNING, "Trouble getting export options.", ex);
+			//}
+			this.getExportOptions(false);
+			// END KGU#816 2020-03-17
 		}
 		// END KGU#720/KGU#722 2019-08-07
+		this.exportSubroutines = _routinePool != null;
 
 		boolean overwrite = false;
+		// Explicit options override the preferences from the settings file
 		if (_options != null)
 		{
 			for (int i = 0; i < _options.length(); i++)
@@ -3582,30 +4335,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				switch (ch)
 				{
 				// START KGU#363 2017-05-11: Enh. #372
-				//case 'A':
+				case 'A': // the opposite of 'a'
 				case 'a':
-					exportAuthorLicense = true;
+					exportAuthorLicense = ch == 'a';
 					break;
 				// END KGU#363 2017-05-11
-				//case 'C':
+				case 'C': // the opposite of 'c'
 				case 'c':
-					exportAsComments = true;
+					exportAsComments = ch == 'c';
 					break;
-				//case 'B':
+				case 'B': // the opposite of 'b'
 				case 'b':
-					startBlockNextLine = true;
+					startBlockNextLine = ch == 'b';
 					break;
-				//case 'F':
+				//case 'F':	// There is no opposite of 'f'
 				case 'f':
 					overwrite = true;
 					break;
-				//case 'L':
+				case 'L': // The opposite of 'l'
 				case 'l':
-					generateLineNumbers = true;
+					generateLineNumbers = ch == 'l';
 					break;
-				//case 'T':
+				case 'T': // The opposite of 't'
 				case 't':
-					suppressTransformation = true;
+					suppressTransformation = ch == 't';
 					break;
 				case '-':	// Handled separately
 					break;
@@ -3654,6 +4407,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				} while (!overwrite);
 			}
 			_targetFile = nameParts.concatenate(".");
+			// START KGU#815/KGU#824 2020-03-21: Enh. #828, bugfx #836
+			this.pureFilename = new File(_targetFile).getName();
+			int posDot = this.pureFilename.indexOf(".");
+			if (posDot >= 0) {
+				this.pureFilename = this.pureFilename.substring(0, posDot);
+			}
+			// END KGU#815/KGU#824 2020-03-21
 		}
 
 		CodeParser.loadFromINI();
@@ -3664,109 +4424,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			this.splitKeywords.add(Element.splitLexically(keywords[k], false));
 		}
 
-		boolean firstExport = true;
-		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
-		this.subroutines.clear();
-		this.includedRoots.clear();
-		this.includeMap.clear();
-		if (this.optionExportSubroutines()) {
-			if (routinePool.getName() != null) {
-				this.pureFilename = routinePool.getName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
-			}
-		}
-		// END KGU#676 2019-03-13
-		for (Root root : _roots)
-		{
-			// START KGU#676 2019-03-31: Isse #696
-			root.specialRoutinePool = routinePool;
-			// END KGU#676 2019-03-31
-			if (firstExport || routinePool != null)
-			{
-				firstExport = false;
-			}
-			else
-			{
-				code.add("");
-				this.appendComment("=======8<=====================================================", "");
-				code.add("");
-			}
-
-			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
-			if (this.optionExportSubroutines()) {
-				boolean wasAdded = false;
-				// Precaution for recursive top-level routine
-				if (!root.isProgram() && !subroutines.containsKey(root))
-				{
-					subroutines.put(root, new SubTopoSortEntry(null));
-					wasAdded = true;
-				}
-				registerCalledSubroutines(root);
-				if (wasAdded)
-				{
-					subroutines.remove(root);
-				}
-				if (this.usesFileAPI) { someRootUsesFileAPI = true; }
-			}
-			else {
-			// END KGU#676 2019-03-13
-				// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
-				this.hasParallels = false;
-				// START KGU#348 2017-09-25
-				// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
-				this.usesFileAPI = false;
-			// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
-			}
-			// END KGU#676 2019-03-13
-			gatherElementInformationRoot(root);
-			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
-			if (this.pureFilename.isEmpty()) {
-				this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
-			}
-			// END KGU#311 2016-12-27
-
-			// START KGU#676 2019-03-13: Enh. #696 Postpone this until we have all subroutine information
-			//generateCode(root, "");
-			if (!this.optionExportSubroutines()) {
-				generateCode(root, "");
-			}
-			// END KGU#678 2019-03-13
-			
-		}
-		// START KGU#676 2019-03-13: Enh. #696 Now that we can export archives we must consider subroutines and includes here to
-		if (this.optionExportSubroutines()) {
-			for (Root sub: subroutines.keySet())
-			{
-				gatherElementInformationRoot(sub);
-			}
-			includedRoots = sortTopologically(includeMap);
-			for (Root incl: includedRoots.toArray(new Root[]{})) {
-				gatherElementInformationRoot(incl);
-			}
-			int subroutineLine = code.count();
-			firstExport = true;
-			for (Root root: _roots) {
-				if (!subroutines.containsKey(root) && !includedRoots.contains(root)) {
-					if (!firstExport) {
-						code.add("");
-						this.appendComment("=======8<=====================================================", "");
-						code.add("");
-					}
-					generateCode(root, "");
-					if (firstExport) {
-						subroutineLine = this.subroutineInsertionLine;
-						firstExport = false;
-					}
-				}
-			}
-			this.subroutineInsertionLine = subroutineLine;
-			if (!firstExport && !subroutines.isEmpty()) {
-				insertCode("", subroutineLine);
-				insertCode(this.commentSymbolLeft() + " = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = =" + this.commentSymbolRight(), subroutineLine);
-				insertCode("", subroutineLine);
-			}
-			generateSubroutineCode(null);
-		}
-		// END KGU#676 2019-03-13
+		/* START KGU#676 2019-03-13: Enh. #696 Now that we can export archives
+		 * we must consider subroutines and includes here too */
+		boolean someRootUsesFileAPI = generatePartitionedCode(_roots, true);
+		/* END KGU#676 2019-03-13 */
 
 		// Did the user want the code directed to standard output?
 		if (_options.indexOf('-') >= 0)
@@ -3799,7 +4460,641 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			getLogger().log(Level.WARNING, "*** Error while saving the file \"{0}\"!\n{1}", new Object[]{_targetFile, e.getMessage()});
 		}
+	}
+
+	// START KGU#815 2020-03-13: Enh. #828 New entry point
+	/**
+	 * Entry point for interactively commanded code export from an arrangement group.
+	 * Retrieves export options, opens a file selection dialog, and effectuates the actual
+	 * code export.
+	 * @param _roots - The list of diagrams to be exported together, more diagrams might be involved
+	 * if the respective option is set.
+	 * @param _fileName - an proposed export file name (without path)
+	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
+	 * @param _frame - the GUI Frame object responsible for this action
+	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
+	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @see #exportCode(Root, File, Frame, IRoutinePool)
+	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
+	 */
+	public File exportCode(Vector<Root> _roots, String _fileName, File _proposedDirectory, Frame _frame, IRoutinePool _routinePool)
+	{
+		File exportDir = _proposedDirectory;
+		isFilePartitioned = false;
+
+		routinePool = _routinePool;
+		
+		//=============== Get export options ======================
+		getExportOptions(true);
+		
+		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
+		_fileName = this.ensureFilenameConformity(_fileName);
+		
+		/* If subroutines are not to be involved but moree than one Root is designated
+		 * for export then we simply form a temporary routine pool around the specified
+		 * diagrams and switch subroutine involvement mode on such that potential
+		 * dependencies among the diagrams can be detected and handled by topological sorting.
+		 */
+		if (!this.optionExportSubroutines() && _roots.size() > 1) {
+			ArchivePool limitedPool = new ArchivePool(_fileName);
+			for (Root root: _roots) {
+				limitedPool.addDiagram(root);
+			}
+			routinePool = limitedPool;
+			this.exportSubroutines = true;
+		}
+
+		//=============== Request output file path (interactively) ======================
+		JFileChooser dlgSave = new JFileChooser();
+		dlgSave.setDialogTitle(getDialogTitle());
+
+		// set directory
+		dlgSave.setCurrentDirectory(_proposedDirectory);
+
+		// set proposed name
+		dlgSave.setSelectedFile(new File(_fileName));
+
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
+		dlgSave.setFileFilter((javax.swing.filechooser.FileFilter) this);
+		// END KGU 2016-04-01
+		int result = dlgSave.showSaveDialog(_frame);
+
+		String filename = new String();
+
+		File file = null;
+
+		if (result == JFileChooser.APPROVE_OPTION) 
+		{
+			filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!isOK(filename))
+			{
+				filename += "."+getFileExtensions()[0];
+			}
+			file = new File(filename);
+		}
+
+		//System.out.println(filename);
+
+		if (file != null && file.exists())
+		{
+			int response = JOptionPane.showConfirmDialog (_frame,
+					"Overwrite existing file?","Confirm Overwrite",
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE);
+			if (response == JOptionPane.NO_OPTION)
+			{
+				file = null;	// We might as well return here
+			}
+		}
+			
+		//=============== Actual code generation ======================
+		if (file != null)
+		{
+			// START KGU 2017-04-26
+			exportDir = file.getParentFile();
+			// END KGU 2017-04-26
+			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
+			pureFilename = file.getName();
+			int dotPos = pureFilename.indexOf(".");
+			if (dotPos >= 0)
+			{
+				pureFilename = pureFilename.substring(0, dotPos);
+			}
+			// END KGU#194 2016-05-07
+
+			// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
+			this.splitKeywords.clear();
+			String[] keywords = CodeParser.getAllProperties();
+			for (int k = 0; k < keywords.length; k++)
+			{
+				this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+			}
+			// END KGU 2016-03-29
+
+			try
+			{
+				this.usesFileAPI = this.generatePartitionedCode(_roots, false);
+				
+				BTextfile outp = new BTextfile(filename);
+				// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
+				//outp.rewrite();
+				outp.rewrite(exportCharset);
+				// END KGU#168 2016-04-04
+				String codeText = code.getText();
+				outp.write(codeText);
+				// START KGU#689 2019-03-21: Issue #706 - a non-empty text file should end with a newline
+				if (!codeText.isEmpty() && !codeText.endsWith("\n")) {
+					outp.write("\n");
+				}
+				// END KGU#689 2019-03-21
+				outp.close();
+				
+				// This is for generators that cannot (or don't want to) generate inline code for file API
+				if (this.usesFileAPI) {
+					copyFileAPIResources(filename);
+				}
+				
+				// START KGU#815 2020-04-03: Enh. #828 Want to inform the user that they have to cut the file
+				if (isFilePartitioned && _frame != null) {
+					JOptionPane.showMessageDialog(_frame,
+							"The generated text file consists of several modules.\nIt needs to be cut into separate code files at the lines looking like:\n"
+									+ this.commentSymbolLeft() + " " + SCISSOR_LINE_FULL + this.commentSymbolRight(),
+							"Export", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+			catch (Exception e)
+			{
+				String message = e.getMessage();
+				// START KGU#484 2018-04-05: Issue #463
+				//e.printStackTrace();
+				getLogger().log(Level.WARNING, "Error on saving file!", e);
+				// END KGU#484 2018-04-05
+				if (message == null) {
+					message = e.getClass().getSimpleName();
+				}
+				JOptionPane.showMessageDialog(_frame,
+						"Error while saving the file!\n" + message,
+						"Error", JOptionPane.ERROR_MESSAGE);
+			}
+			// START KGU#178 2016-07-20: Enh. #160
+			if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+			{
+				JOptionPane.showMessageDialog(_frame,
+						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
+						"Warning", JOptionPane.WARNING_MESSAGE);		    		
+			}
+			// END KGU#178 2016-07-20
+		} // if (file != null)
+		// START KGU#654 2019-02-16: Enh. #681 - we want to inform the caller if the export failed
+		else {
+			exportDir = null;
+		}
+		// END KGU#654 2019-02-16
+		// START KGU 2017-04-26
+		return exportDir;
+		// END KGU 2017-04-26
+	}
+	
+	/**
+	 * Depending on {@link #optionExportSubroutines()} and {@code _batchMode} first analyses
+	 * the dependency trees rooted by the given {@code _entryPoints}, splits the set of involved
+	 * diagrams into modules if necessary and the exports the found diagrams module by module
+	 * in topological order.<br/>
+	 * These are the rules:
+	 * <ul>
+	 * <li>
+	 * If {@link #optionExportSubroutines()} is false or {@link #routinePool} is {@code null}
+	 * then just the given {@code _entryPoints} will be exported in topological order if they
+	 * are depending on one another.
+	 * </li>
+	 * <li>
+	 * Otherwise the complete dependency trees are extracted from {@link #routinePool} and
+	 * compared. The union of all pairwise intersection sets will be exported as a library/unit
+	 * module named by {@code _libraryName} if given or by the routine pool otherwise.
+	 * </li>
+	 * <li>
+	 * Afterwards, the remaining entry points (not being member of the common library) will be
+	 * exported as applications or libraries (according to the root type) named by their root
+	 * together with their unshared dependency tree members and a library reference if necessary.
+	 * </li>
+	 * </ul>
+	 * The splitting into several modules may break Jump (EXIT) dependencies, though.
+	 * @param _entryPoints - The {@link Root}s to be exported in any case
+	 * @param _batchMode - true if this routine is used in batch mode, false otherwise
+	 * case the routine pool name would be used as default)
+	 * @return true if some exported {@link Root}s requires the File API
+	 */
+	protected boolean generatePartitionedCode(Vector<Root> _entryPoints, boolean _batchMode) {
+		// FIXME: Check top-level soundness, particularly for Pascal export
+		boolean _someRootUsesFileAPI = false;
+		boolean firstExport = true;
+		if (this.optionExportSubroutines()) {
+			// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			if (pureFilename == null || pureFilename.isEmpty()) {
+				if (routinePool != null) {
+					pureFilename = routinePool.getName();
+				}
+				if (pureFilename == null || pureFilename.equals("Arranger")) {
+					pureFilename = "lib" + Integer.toHexString(this.hashCode());
+				}
+			}
+		}
+		// START KGU#824 2020-03-15: Bugfix #836
+		//_someRootUsesFileAPI = generateModule(_roots, _batchMode, firstExport);
+		// Collect the dependency trees
+		// this.subroutines will collect all dependencies, depTrees will collect them separately
+		TreeMap<Root, SubTopoSortEntry> generalSubs = this.subroutines;
+		Vector<TreeMap<Root, SubTopoSortEntry>> subTrees = new Vector<TreeMap<Root, SubTopoSortEntry>>();
+		Vector<TreeMap<Root, SubTopoSortEntry>> inclTrees = new Vector<TreeMap<Root, SubTopoSortEntry>>();
+		boolean[] libUserFlags = new boolean[_entryPoints.size()];	// Registers which Roots refer to the library
+		HashSet<Root> commonSubs = new HashSet<Root>();
+		Vector<Integer> mainIndices = new Vector<Integer>();	// Collect the mains
+		int nRedundant = 0;
+		for (Root root: _entryPoints)
+		{
+			if (root.isProgram()) {
+				mainIndices.add(subTrees.size());
+			}
+			// START KGU#824 2020-03-15: Bugfix #836
+			/* For the export of archives we must consider subroutines and includes here too.
+			 * If subroutines are to be involved, we will first gather all referenced subroutines
+			 * and includables before we actually produce code */
+			// First add to the general dependency forest
+			boolean wasAdded = false;
+			if (!root.isProgram() && !subroutines.containsKey(root))
+			{
+				// Precaution for recursive top-level routine
+				subroutines.put(root, new SubTopoSortEntry(null));
+				wasAdded = true;
+			}
+			registerCalledSubroutines(root);
+			registerIncludedRoots(root, subroutines);
+			if (wasAdded && subroutines.get(root).nReferingTo == 0)
+			{
+				// Remove it - if the routine is called elsewhere then it will reappear
+				subroutines.remove(root);
+			}
+		}
+		// Now do it again separately if the subroutine hadn't already been in the general forest
+		for (Root root: _entryPoints) {
+			libUserFlags[subTrees.size()] = false;
+			TreeMap<Root, SubTopoSortEntry> includes = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+			// The original subroutines map is cached in generalSubs, so we may reassign it here
+			this.subroutines = new TreeMap<Root, SubTopoSortEntry>(Root.SIGNATURE_ORDER);
+			boolean wasAdded = false;
+			if (root.isSubroutine())
+			{
+				// Precaution for recursive top-level routine
+				subroutines.put(root, new SubTopoSortEntry(null));
+				wasAdded = true;
+			}
+			registerCalledSubroutines(root);
+			this.registerIncludedRoots(root, includes);
+			if (wasAdded && subroutines.get(root).nReferingTo == 0)
+			{
+				subroutines.remove(root);
+			}
+			// Unite the intersections
+			for (int j = 0; j < subTrees.size(); j++) {
+				if (subTrees.get(j) != null) {
+					HashSet<Root> intersection = new HashSet<Root>(subroutines.keySet());
+					intersection.retainAll(subTrees.get(j).keySet());
+					if (!intersection.isEmpty()) {
+						libUserFlags[subTrees.size()] = true;
+						libUserFlags[j] = true;
+						commonSubs.addAll(intersection);
+					}
+				}
+				HashSet<Root> intersection = new HashSet<Root>(includes.keySet());
+				intersection.retainAll(inclTrees.get(j).keySet());
+				if (!intersection.isEmpty()) {
+					libUserFlags[subTrees.size()] = true;
+					libUserFlags[j] = true;
+					commonSubs.addAll(intersection);
+				}
+			}
+			// For independent entry points add the dependencies, for dependent (redundant) ones add null
+			if (root.isProgram() || !generalSubs.containsKey(root)) {
+				subTrees.add(new TreeMap<Root, SubTopoSortEntry>(subroutines));
+			}
+			else {
+				subTrees.add(null);
+				commonSubs.add(root);
+				nRedundant++;
+			}
+			inclTrees.add(includes);
+			// END KGU#824 2020-03-15
+		}
+		// Restore the general forest
+		this.subroutines = generalSubs;
+		// Now we will first export the library if necessary
+		boolean allowsMixed = allowsMixedModule();
+		boolean mayBeCombined =	!this.max1MainPerModule() && allowsMixed ||
+				mainIndices.size() == 1
+				&& (
+						allowsMixed
+						|| _entryPoints.size() == 1
+					)
+				|| !_batchMode && nRedundant + 1 == _entryPoints.size();
+		// In order to build the library or a stand-alone module, there are no external dependencies
+		this.importedLibRoots = null;
+		if (mayBeCombined) {
+			// Now we can put all diagrams together and generate a common module
+			if (!_batchMode && mainIndices.size() == 1 && _entryPoints.size() > 1) {
+				/* In case of group export (_batchMode = false) the main (if there is one) can
+				 * be made the only entry point, we just have to find it again first
+				 */
+				for (Root root: _entryPoints) {
+					if (root.isProgram()) {
+						_entryPoints.clear();
+						_entryPoints.add(root);
+						break;
+					}
+				}
+			}
+			// Specific mechanism for generators accepting more than 1 main per module
+			else if (mainIndices.size() > 1 && !this.max1MainPerModule()) {
+				// Put the main with the largest subroutine coverage first
+				int maxIx = mainIndices.firstElement();
+				for (int i = 1; i < mainIndices.size(); i++) {
+					int index = mainIndices.get(i);
+					if (subTrees.get(index).size() > subTrees.get(maxIx).size()) {
+						maxIx = index;
+					}
+				}
+				// Move the main with most requirements to top
+				Root main = _entryPoints.remove(maxIx);
+				_entryPoints.insertElementAt(main, 0);
+				// Now we must make sure that this.subroutines does not contain entry points
+				// (or the other way round). Order does not matter much for Generators of this kind
+				for (Root root: _entryPoints) {
+					this.subroutines.remove(root);
+				}
+			}
+			// Note: this.subroutines is likely to be consumed by method generateModule()!
+			_someRootUsesFileAPI = generateModule(_entryPoints, this.subroutines, _batchMode, null, null);
+		}
+		else {
+			// Create a topologically sorted list of library members
+			Vector<Root> sortedLibMembers = new Vector<Root>();
+			if (!allowsMixed || mainIndices.isEmpty() && !_batchMode) {
+				/* In case the target language may not form a mixed module then we have
+				 * two alternatives with respect to subroutines among the entry points:
+				 * 1. We may simply put them into the common library (and thus skip them as
+				 *    separate entryPoints later on since they will be publicly available
+				 *    in the library then; a possible consequence is that no further modules
+				 *    may remain),
+				 *    or
+				 * 2. We just let them be entry points such that they will form further
+				 *    libraries or UNITs
+				 * The chosen strategy is 1.
+				 * What about Includables among the entry points, though, if they are not
+				 * required by any other group member? In this case they will be skipped as
+				 * irrelevant.
+				 */
+				for (Root root: _entryPoints) {
+					/* Any entry point not having been substructure of other entry points
+					 * is made a public library member by putting it to the shared set.
+					 * After the loop there won't be any subroutine among the entry points
+					 * not also being in this.subroutines. 
+					 */
+					if (root.isSubroutine() && !subroutines.containsKey(root)) {
+						commonSubs.add(root);
+						subroutines.put(root, new SubTopoSortEntry(null));
+					}
+				}
+			}
+//			for (java.util.Map.Entry<Root,SubTopoSortEntry> entry: this.subroutines.entrySet()) {
+//				System.out.println(entry.getKey() + "\t" + entry.getValue().toString());
+//			}
+			// Now we produce a topologically sorted list of all public library members
+			// Since method sortTopologically() clears its argument map, we must work on a copy.
+			for (Root root: this.sortTopologically(new TreeMap<Root, SubTopoSortEntry>(this.subroutines))) {
+				if (commonSubs.contains(root)) {
+					sortedLibMembers.add(root);
+					this.subroutines.remove(root);
+				}
+			}
+			if (!commonSubs.isEmpty()) {
+				// Now we produce the library module from all shared stuff (if there is any).
+				this.isLibModule = true;
+				// Note: this.subroutines is likely to be consumed by method generateModule()!
+				_someRootUsesFileAPI = generateModule(sortedLibMembers, this.subroutines, _batchMode, null, null);
+				firstExport = false;
+			}
+			// Now export the remaining entryPoints
+			this.isLibModule = false;
+			String _libraryName = null;
+			if (_entryPoints.size() > 1 || !firstExport) {
+				// Save and provide the library module name since this.pureFilename will be overwritten now
+				_libraryName = this.getModuleName();	// The converted pureFilename
+			}
+			// For the remaining modules we must provide the knowledge about imported diagrams
+			this.importedLibRoots = commonSubs;
+			for (int i = 0; i < _entryPoints.size(); i++) {
+				Root root = _entryPoints.get(i);
+				/* If the subTrees entry is null then the entry point gets exported as local
+				 * requirement, so we skip it here
+				 */
+				if (!commonSubs.contains(root) && subTrees.get(i) != null) {
+					if (!firstExport) {
+						// Mark a new module section in the file
+						// ======= 8< ===========================================================
+						this.appendScissorLine(true, null);
+						// For the case this module needs a (different) module name
+						this.pureFilename = root.getMethodName();
+					}
+					Vector<Root> oneRoot = new Vector<Root>();
+					oneRoot.add(root);
+					_someRootUsesFileAPI = generateModule(oneRoot, subTrees.get(i), _batchMode, _entryPoints, _libraryName)
+							|| _someRootUsesFileAPI;
+					firstExport = false;
+				}
+			}
+		}
+		// END KGU#824 2020-03-15
+		return _someRootUsesFileAPI;
+	}
+	
+	/**
+	 * Generates the code for a module headed by the given {@link Root}s {@code _roots}.
+	 * Depending on whether this is for a _batch export or not, certain scissor lines
+	 * may be inserted among the produced routines or not.<br/>
+	 * The module always provides a common topologically sorted subroutine bundle
+	 * (if subroutine involvement is intended).<br/>
+	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap}, {@link #rootsWithEmptyInput},
+	 * {@link #rootsWithInput}, {@link #rootsWithOutput} will be modified.
+	 * @param _roots - the top diagrams of the module
+	 * @param _dependencyTree - diagrams required by the given entry point(s); NOTE:
+	 * this tree map is likely to be modified (even cleared) by this method!
+	 * @param _batchMode - true if the module export is done in batch mode, false otherwise
+	 * @param _entryPoints - list of diagrams meant to be public (exported) or null (if all {@code _roots} be public)
+	 * @param _libName - name of the module the {@code _libMembers} are to be found in
+	 * @return true if the module requires the File API
+	 */
+	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
+		boolean someRootUsesFileAPI = false;
+		boolean someRootHasParallel = false;
+		boolean someRootHasTryBlcks = false;
+		boolean firstExport = true;
+		// These fields must be cleared lest they should contaminate the diagram analysis to be performed here 
+		this.includedRoots.clear();
+		this.includeMap.clear();
+		this.rootsWithEmptyInput.clear();
+		this.rootsWithInput.clear();
+		this.rootsWithOutput.clear();
+		boolean importClause = false;
+		
+		// First loop - depending on subroutine mode either just gathers common information or generates code
+		for (Root root: _roots)
+		{
+			if (_batchMode) {
+				// START KGU#676 2019-03-31: Issue #696
+				root.specialRoutinePool = routinePool;
+				// END KGU#676 2019-03-31
+			}
+
+			// START KGU#348 2017-09-25: Reset the need for thread libraries before each export
+			this.hasParallels = false;
+			// END KGU#348 2017-09-25
+			// START KGU#815 2020-03-30: Reset the need for TRY mechanisms before each export
+			this.hasTryBlocks = false;
+			// END KGU#815 2020-03-30
+			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+			this.usesFileAPI = false;
+			gatherElementInformationRoot(root);
+			// END KGU#311 2016-12-27#
+			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			if (this.hasParallels) { someRootHasParallel = true; }
+			if (this.hasTryBlocks) { someRootHasTryBlcks = true; }
+
+			// START KGU#676 2019-03-13: Enh. #696 - Postpone code generation until we have all subroutine information
+			//generateCode(root, "");
+			if (!this.optionExportSubroutines()) {
+				// If subroutines are not be involved then we may generate the code right away
+				this.generatorIncludes.clear();
+				if (_batchMode && !firstExport) {
+					// ======= 8< ===========================================================
+					this.appendComment(SCISSOR_LINE_FULL, "");
+				}
+				generateCode(root, "", true);
+				firstExport = false;
+			}
+			// END KGU#678 2019-03-13
+			
+		}
+		
+		// START KGU#676 2019-03-13: Enh. #696 arrangement batch export
+		// Now that we can export archives we must consider subroutines and includes here, too
+		if (this.optionExportSubroutines()) {
+			// In this mode code generation hasn't taken place (was postponed above), so prepare it now
+			// First we provide the dependency substructure with element information, too
+			for (Root sub: new Vector<Root>(_dependencyTree.keySet())) {
+				// Analyse all routines not imported from a separate library module
+				if (/*_batchMode ||*/ importedLibRoots == null || !importedLibRoots.contains(sub)) {
+					// START KGU#676 2020-03-15: Issue #696
+					if (_batchMode) {
+						// This is needed for recursive type retrieval etc. in batch mode
+						sub.specialRoutinePool = routinePool;
+					}
+					// END KGU#676 2020-03-15
+					else if (!_roots.contains(sub)) {	// Is this check redundant?
+						// FIXME to exclude library routines from analysis might break Jump relations
+						gatherElementInformationRoot(sub);
+					}
+				}
+				else {
+					// The entry point obviously refers to some library subroutine
+					importClause = true;
+				}
+				// Remove possible includables from the dependencyTree now
+				if (sub.isInclude()) {
+					// ATTENTION: We modify the collection we are iterating along!
+					SubTopoSortEntry entry = _dependencyTree.remove(sub);
+					// If the Includable is among the entry points then ensure its export in the correct way
+					// (According to the strategy in generatePartitionedCode() this should only happen in batch mode)
+					if (_roots.contains(sub) && !this.includeMap.containsKey(sub)) {
+						this.includeMap.put(sub, entry);
+					}
+				}
+			}
+			// Note: the following instruction clears this.includeMap!
+			includedRoots = sortTopologically(includeMap);
+			for (Root incl: includedRoots.toArray(new Root[]{})) {
+				if (/*_batchMode ||*/ importedLibRoots == null || !importedLibRoots.contains(incl)) {
+					// START KGU#676 2020-03-15: Issue #696
+					if (_batchMode) {
+						// This is needed for recursive type retrieval etc. in batch mode
+						incl.specialRoutinePool = routinePool;
+					}
+					// END KGU#676 2020-03-15
+					if (!_roots.contains(incl)) {
+						// This call might re-add dependencies to includedMap
+						gatherElementInformationRoot(incl);
+					}
+				}
+				else {
+					// The entry point obviously refers to some library includable
+					importClause = true;
+				}
+				/* As the includable is somehow requested by some entry point, there is
+				 * no need to keep it as entry point itself
+				 */
+				if (_roots.contains(incl) && _roots.size() > 1) {
+					_roots.remove(incl);
+				}
+			}
+			//int subroutineLine = code.count();
+			firstExport = true;
+			
+			// In case of a library we fake a "top" includable which includes all real
+			// involved includables and ensures the initialisation etc.
+			if (this.isLibraryModule() && _roots.size() > 1) {
+				Root topRoot = new Root();
+				topRoot.setText(this.pureFilename);
+				topRoot.setComment(LIB_COMMENT);
+				topRoot.setInclude();
+				for (Root incl: this.includedRoots) {
+					topRoot.addToIncludeList(incl);
+				}
+				_roots.insertElementAt(topRoot, 0);
+			}
+			
+			this.usesFileAPI = someRootUsesFileAPI;
+			
+			for (Root root: _roots) {
+				/* If importedLibRoots is null then we are creating the library module
+				 * such that all given entry points are to be exported as their necessity
+				 * has already been identified
+				 */
+				if (importedLibRoots == null || !_dependencyTree.containsKey(root) && !includedRoots.contains(root)) {
+					// Reset generatorIncludes (get filled by generateCode(Root,...)) and ensure the module import
+					this.generatorIncludes.clear();
+					if (importClause) {
+						this.generatorIncludes.add(this.prepareGeneratorIncludeItem(_libName));
+					}
+					//generateCode(root, "", true);
+					if (firstExport) {
+						this.hasParallels = someRootHasParallel;
+						this.hasTryBlocks = someRootHasTryBlcks;
+						generateCode(root, "", _entryPoints == null || _entryPoints.contains(root));
+						firstExport = false;
+						if (!_batchMode) {
+							this.topLevel = false;
+						}
+					}
+					else {
+						insertLibraryRoutine(root, this.subroutineIndent, _entryPoints == null || _entryPoints.contains(root));
+					}
+				}
+			}
+			// The cached first subroutine insertion line will now be used.
+			// FIXME: This dependency on the emptiness of this.subroutines is utterly obscure!
+			if (/*subroutines.isEmpty() &&*/ this.importedLibRoots != null) {
+				// We need the subroutines map for generateSubroutineCode()
+				subroutines = _dependencyTree;
+			}
+			if (!firstExport && !subroutines.isEmpty() && _batchMode) {
+				int subroutineLine = this.subroutineInsertionLine;	// FIXME!
+				insertScissorLine(false, null, subroutineLine);
+				// insertScissorLine() has incremented the line number, so restore it (routines are to be inserted before)
+				this.subroutineInsertionLine = subroutineLine;
+			}
+//			// FIXME DEBUG
+//			Root testSub = new Root();
+//			testSub.setText("BIGGEST_NONSENSE_EVER(MUMPITZ)");
+//			testSub.setProgram(false);
+//			testSub.setComment("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//			this.subroutines.put(testSub, new SubTopoSortEntry(null));
+			// Generate the code of all subroutines except the library members
+			// (Be aware that method generateSubroutineCode() clears this.subroutines.)
+			generateSubroutineCode(importedLibRoots, _entryPoints == null ? _roots : _entryPoints);
+		}
+		this.topLevel = true;
+		return someRootUsesFileAPI;
 	} 
+	// END KGU#815 2020-03-13
 	
 	/**
 	 * Subroutine for batch mode - writes the generated code to the console
@@ -3886,6 +5181,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#763 2019-11-13
 
+	/**
+	 * Overridable method to derive a module (unit, library) name in subclass-specific syntax
+	 * from  the stored {@link #pureFilename}.
+	 * @return A suited name for a module (unit, library) related to the file or group name.
+	 */
+	protected String getModuleName()
+	{
+		return this.pureFilename;
+	}
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)
