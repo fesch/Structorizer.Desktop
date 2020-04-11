@@ -445,7 +445,7 @@ public class Subqueue extends Element implements IElementSequence {
 		// END KGU#183 2016-04-24
 		return ele;
 	}
-        
+
 	// START KGU#119 2016-01-02: Bugfix #78
 	/**
 	 * Returns true iff _another is of same class, all persistent attributes are equal, and

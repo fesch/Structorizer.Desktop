@@ -59,22 +59,12 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-
 import java.util.Map;
-import java.util.logging.Level;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 public class XmlGenerator extends Generator
@@ -413,14 +403,14 @@ public class XmlGenerator extends Generator
 	}
 	// END KGU 2016-12-21
 	
-    @Override
-	public String generateCode(Root _root, String _indent)
+	@Override
+	public String generateCode(Root _root, String _indent, boolean _public)
 	{
- 		String pr = _root.isProgram() ? "program" : "sub";
- 		// START KGU#376 2017-05-16: Enh. #389
- 		if (_root.isInclude()) {
- 			pr = "includable";
- 		}
+		String pr = _root.isProgram() ? "program" : "sub";
+		// START KGU#376 2017-05-16: Enh. #389
+		if (_root.isInclude()) {
+			pr = "includable";
+		}
 		// END KGU##376 2017-05-16
 		String ni = _root.isBoxed ? "nice" : "abbr";
 		

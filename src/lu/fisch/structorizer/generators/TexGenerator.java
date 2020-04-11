@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
  *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
  *      Kay Gürtzig     2019-09-27      Enh. #738: Support for code preview map on Root level
+ *      Kay Gürtzig     2020-04-03      Enh. #828: Configuration for group export
  *
  ******************************************************************************************************
  *
@@ -589,7 +590,7 @@ public class TexGenerator extends Generator {
 //		}
 //	}
 	
-	public String generateCode(Root _root, String _indent)
+	public String generateCode(Root _root, String _indent, boolean _public)
 	{
 		/*
 		s.add(makeIndent(_indent)+'\begin{struktogramm}('+inttostr(round(self.height/72*25.4))+','+inttostr(round(self.width/72*25.4))+')['+ss+']');
@@ -667,12 +668,21 @@ public class TexGenerator extends Generator {
 			if (this.optionExportSubroutines()) {
 				while (!this.includedRoots.isEmpty()) {
 					Root incl = this.includedRoots.remove();
-					if (incl != _root) {
+					// START KGU#815/KGU#824 20202-03-18: Enh. #828, bugfix #836
+					//if (incl != _root) {
+					if (incl != _root && (importedLibRoots == null || !importedLibRoots.contains(incl))) {
+					// END KGU#815/KGU#824 2020-03-18
 						this.appendDefinitions(incl, _indent, null, true);
 					}
 				}
 			}
 			// END KGU#483
+			
+			// START KGU#815 2020-04-03: Enh. #828 group export
+			this.libraryInsertionLine = code.count();
+			addSepaLine();
+			// END KGU#815 2020-04-03
+			
 			code.add("\\end{document}");
 		}
 		// END KGU#178 2016-07-20
@@ -732,7 +742,7 @@ public class TexGenerator extends Generator {
 		boolean wasTopLevel = topLevel;
 		try {
 			topLevel = false;
-			generateCode(_root, _indent);
+			generateCode(_root, _indent, false);
 		}
 		finally {
 			topLevel = wasTopLevel;
@@ -740,16 +750,24 @@ public class TexGenerator extends Generator {
 	}
 	// END KGU#483 2018-01-02
 
-
-//	@Override - obsolete since 3.27
-//	public String[] getReservedWords() {
-//		return null;
-//	}
-//
-//	@Override
-//	public boolean isCaseSignificant() {
-//		return false;
-//	}
+	// START KGU#815 2020-04-03: Enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatesClass()
+	 */
+	@Override
+	protected boolean allowsMixedModule()
+	{
+		return true;
+	}
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#max1MainPerModule()
+	 */
+	@Override
+	protected boolean max1MainPerModule()
+	{
+		return false;
+	}
+	// END KGU#815 2020-04-03
 	
 }

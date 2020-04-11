@@ -206,9 +206,9 @@ public class Ini {
 	// as well
 	/**
 	 * Returns the path where the ini file is supposed to reside. In case of a specified
-	 * predominant oder redirected ini file, it will be directory of this file rather than
-	 * the standard ini folder (except in early initialization phase).
-	 * @return the path of the directory for the ini file as string
+	 * predominant oder redirected ini file, it will be the directory of this file rather
+	 * than the standard ini folder (except in early initialization phase).
+	 * @return the path of the default directory for the ini file as string
 	 * @see #getIniDirectory(boolean)
 	 */
 	public static File getIniDirectory()
@@ -221,12 +221,12 @@ public class Ini {
 	 * Returns the path where the ini file is supposed to reside. It depends on paramater
 	 * {@code alwaysStandard} whether in case of a specified predominant oder redirected
 	 * ini file still the user-specific standard folder is returned (true) or the directory
-	 * of the configured non-standard ini file (predominant / redirected).
-	 * the standard ini folder (except in early initialization phase). Method {@link #getIniDirectory()}
-	 * is equivalent to {@code getIniDirectory(false)}.
-	 * @param alwaysStandard 
+	 * of the configured non-standard (predominant / redirected) ini file (false).<br/>
+	 * Method {@link #getIniDirectory()} is equivalent to {@code getIniDirectory(false)}.
+	 * @param alwaysStandard - if true then the default ini path is yielded
 	 * @return the directory path of the effective ini file as string
 	 * @see #getIniDirectory()
+	 * @see #setIniPath(String)
 	 */
 	public static File getIniDirectory(boolean alwaysStandard)
 	// END KGU#789 2020-01-20

@@ -127,6 +127,7 @@
  *      Kay Gürtzig         2019-03-17  Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
+ *      Kay Gürtzig         2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *
  ******************************************************************************************************
  *
@@ -432,7 +433,8 @@ Menu.msgSubroutineName.text=Name des neuen Unterprogramms
 Menu.msgIncludableName.text=Name eines (neuen) einbeziehbaren Diagramms für die geteilten Typen
 Menu.msgMustBeIdentifier.text=Der gewählte Name war nicht als Bezeichner geeignet!
 Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es @k-Anweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
-Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Diagramm-Editor\naus %\nerstellte Diagrammdateien
+Menu.msgImportTooltip.text=<html>Von dem Struktogramm/PAP-Editor<br/>aus <a href="%">%</a>\nerstellte Diagrammdateien</html>
+Menu.msgExportTooltip.text=<html>Diagramdateien erzeugen, die von dem PAP-Editor<br/>aus <a href="%">%</a><br/>akzeptiert werden.</html>
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
 Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
@@ -513,6 +515,7 @@ Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservi
 Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
 Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
+Menu.error20_3.text=Ein Diagramm des Typs %1 sollte keine Parameterliste haben. Zu %2 ändern?
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 Menu.error22_1.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
 Menu.error22_2.text=Unzulässiger Versuch, die Konstante «%» zu ändern bzw. neu zu setzen.
@@ -1037,6 +1040,8 @@ ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Als Exportverzeichnis ggf. den Ablageorder des Diagramms vorschlagen
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anderenfalls wird immer der Ordner des letzten Exports vorgeschlagen.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
@@ -1340,6 +1345,7 @@ ArrangerIndex.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
 ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
 ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
+ArrangerIndex.popupIndexExport.text=Diagramm/Gruppe exportieren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
 ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:

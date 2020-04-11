@@ -90,6 +90,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-02-20/24   Issues #816, #821: More sophisticated approach to pass records/arrays (see comment)
  *      Kay Gürtzig         2020-02-21      Bugfix #824: The condition of the Repeat loop wasn't negated,
  *                                          several absurd bugs in finishCondition() fixed
+ *      Kay Gürtzig         2020-03-18      Bugfix #839: sticky returns flag mended
+ *      Kay Gürtzig         2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig         2020-03-27/29   Enh. #828: Modifications tpo supporet group export
  *
  ******************************************************************************************************
  *
@@ -322,6 +325,25 @@ public class BASHGenerator extends Generator {
 	private final Set<String> compOprs = new HashSet<String>(
 			Arrays.asList(new String[]{/*"==",*/ "<", ">", "<=", ">=", /*"!=", "<>"*/}));
 
+	// START KGU#815 2020-03-27: Enh. #828 export of group modules
+	/**
+	 * Method converts some generic module name into a generator-specific include file name or
+	 * module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * This version adds a ".sh" suffix (more precisely the first filename extension method
+	 * {@link #getFileExtensions()} provides). 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
+	 * @param _includeName a generic (language-independent) string for the generator include configuration
+	 * @return the converted string as to be actually added to {@link #generatorIncludes}
+	 */
+	protected String prepareGeneratorIncludeItem(String _includeName)
+	{
+		return _includeName + "." + this.getFileExtensions()[0];
+	}
+	// END KGU#815 2020-03-27
+	
 	// START KGU#542 2019-12-01: Enh. #739 enumeration type support - configuration for subclasses
 	/** @return the shell-specific declarator for enumeration constants (e.g. {@code "declare -ri "} for bash) */
 	protected String getEnumDeclarator()
@@ -1158,7 +1180,7 @@ public class BASHGenerator extends Generator {
 				 * assigned or input before. Then "local " could be put as prefix to codeLine.
 				 */
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-				if (this.usesFileAPI) {
+				if (this.usesFileAPI && !disabled) {
 					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 						if (line.contains(Executor.fileAPI_names[j] + "(")) {
 							appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
@@ -1246,7 +1268,7 @@ public class BASHGenerator extends Generator {
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		// END KGU#453 2017-11-02
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !disabled) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
 					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
@@ -1283,7 +1305,7 @@ public class BASHGenerator extends Generator {
 		
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(_indent+"fi");
-		//code.add("");
+		//addSepaLine();
 		addCode("fi", _indent, disabled);
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-13
@@ -1455,7 +1477,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !disabled) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
 					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
@@ -1512,7 +1534,7 @@ public class BASHGenerator extends Generator {
 		addCode("do", _indent, disabled);
 		generateCode(_repeat.q, _indent + this.getIndent());
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
-		if (this.usesFileAPI) {
+		if (this.usesFileAPI && !disabled) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
 				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
 					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
@@ -1720,8 +1742,7 @@ public class BASHGenerator extends Generator {
 //	}
 
 	// TODO: Decompose this - Result mechanism is missing!
-	public String generateCode(Root _root, String _indent) {
-		
+	public String generateCode(Root _root, String _indent, boolean _public) {
 		root = _root;
 		// START KGU#405 2017-05-19: Issue #237
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
@@ -1729,6 +1750,9 @@ public class BASHGenerator extends Generator {
 		typeMap = _root.getTypeInfo(routinePool);
 		// END KGU#676 2019-03-30
 		// START KGU#803 2020-02-16: Issue #816
+		// START KGU#828 2020-03-18: Bugfix #839: Some fields had been forgotten to reset
+		this.returns = false;
+		// END KGU#828 2020-03-18
 		boolean alwaysReturns = mapJumps(_root.children);
 		boolean isSubroutine = _root.isSubroutine();
 		// END KGU#803 2020-02-16
@@ -1743,12 +1767,20 @@ public class BASHGenerator extends Generator {
 		// END KGU#405 2017-05-19
 		if (topLevel)
 		{
+			// START KGU#815 2020-03-27: Enh. #828 group export
+			if (this.isLibraryModule()) {
+				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
+			}
+			// END KGU#815 2020-03-27
 			code.add("#!/bin/bash");
-			// STARTB KGU#351 2017-02-26: Enh. #346
+			// START KGU#815 2020-03-27: Enh. #828
+			this.appendGeneratorIncludes("", false);
+			// END KGU#815 2020-03-27
+			// START KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 		}
-		code.add("");
+		addSepaLine();
 
 		// START KGU 2014-11-16
 		appendComment(_root, _indent);
@@ -1766,6 +1798,11 @@ public class BASHGenerator extends Generator {
 			
 			subroutineInsertionLine = code.count();
 		}
+		// START KGU#815 2020-03-26: Enh. #828
+		else if (_public) {
+			appendCopyright(_root, _indent, false);
+		}
+		// END KGU#815 2020-03-26
 		
 		if (isSubroutine) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
@@ -1779,14 +1816,14 @@ public class BASHGenerator extends Generator {
 			generateArgAssignments(_root, indent);
 			// END KGU#53 2015-10-18
 		} else {				
-			code.add("");
+			addSepaLine();
 		}
 		
-		code.add("");
+		addSepaLine();
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
 		appendComment("TODO: Check and revise the syntax of all expressions!", indent);
-		code.add("");
+		addSepaLine();
 		// END KGU#129 2016-01-08
 		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
 		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
@@ -1806,7 +1843,7 @@ public class BASHGenerator extends Generator {
 		}
 		// END KGU#803 2020-02-18
 		
-		generateCode(_root.children, indent);
+		generateBody(_root, indent);
 		
 		// START KGU#803 2020-02-16: Issue #816
 		generateResult(_root, indent, alwaysReturns, varNames);
@@ -1816,6 +1853,12 @@ public class BASHGenerator extends Generator {
 			code.add("}");
 		}
 		
+		// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
+		if (topLevel) {
+			libraryInsertionLine = code.count();
+		}
+		// END KGU#815/KGU#824 2020-03-19
+
 		// START KGU#705 2019-09-23: Enh. #738
 		if (codeMap != null) {
 			// Update the end line no relative to the start line no
@@ -1849,7 +1892,7 @@ public class BASHGenerator extends Generator {
 			boolean builtInAdded = false;
 			if (occurringFunctions.contains("chr"))
 			{
-				code.add(_indent);
+				addSepaLine();
 				appendComment("chr() - converts decimal value to its ASCII character representation", _indent);
 				code.add(_indent + "chr() {");
 				code.add(indentPlus1 + "printf \\\\$(printf '%03o' $1)");
@@ -1858,7 +1901,7 @@ public class BASHGenerator extends Generator {
 			}
 			if (occurringFunctions.contains("ord"))
 			{
-				code.add(_indent);
+				addSepaLine();
 				appendComment("ord() - converts ASCII character to its decimal value", _indent);
 				code.add(_indent + "ord() {");
 				code.add(indentPlus1 + "printf '%d' \"'$1\"");
@@ -1868,7 +1911,7 @@ public class BASHGenerator extends Generator {
 			// START KGU#803/KGU#807 2020-02-24: Issues #816, #821 - provide a routine to copy associative arrays
 			for (TypeMapEntry type: typeMap.values()) {
 				if (type.isRecord()) {
-					code.add(_indent);
+					addSepaLine();
 					appendComment(FN_COPY_ASSOC_ARRAY + "() - copies an associative array via name references", _indent);
 					addCode("auxCopyAssocArray() {", _indent, false);
 					addCode(this.getNameRefDeclarator(false) + "target=$1", indentPlus1, false);
@@ -1883,7 +1926,7 @@ public class BASHGenerator extends Generator {
 				}
 			}
 			// END KGU#803/KGU#807 2020-02-24
-			if (builtInAdded) code.add(_indent);
+			if (builtInAdded) addSepaLine();
 		}
 		// END KGU#150/KGU#241 2017-01-05
 	}

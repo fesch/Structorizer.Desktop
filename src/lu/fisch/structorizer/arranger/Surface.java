@@ -1326,7 +1326,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					FileOutputStream fos = new FileOutputStream(filename);
 					out = new OutputStreamWriter(fos, "UTF-8");
 					XmlGenerator xmlgen = new XmlGenerator();
-					out.write(xmlgen.generateCode(diagr.root,"\t"));
+					out.write(xmlgen.generateCode(diagr.root,"\t", true));
 					diagr.root.filename = filename;
 					diagr.root.rememberSaved();
 					savedRoots.add(diagr.root);
@@ -2859,7 +2859,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#642 2018-12-21: Enh. #655
 			//StringSelection toClip = new StringSelection(xmlgen.generateCode(this.mouseSelected.root,"\t"));
 			StringSelection toClip = new StringSelection(
-					xmlgen.generateCode(this.diagramsSelected.iterator().next().root,"\t")
+					xmlgen.generateCode(this.diagramsSelected.iterator().next().root,"\t", true)
 					);
 			// END KGU#624 2018-12-21
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();

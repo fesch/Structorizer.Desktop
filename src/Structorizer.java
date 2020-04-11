@@ -71,6 +71,10 @@
  *      Kay Gürtzig     2019-08-07      Enh. #741: Option -s now also respected for interactive mode,
  *                                      Bugfix #742
  *      Kay Gürtzig     2019-09-16      #744 workaround: file open queue on startup for OS X
+ *      Kay Gürtzig     2020-03-23      Issues #828, #836: Slight unification of arrangement exports with
+ *                                      group export: Without specified entry points all contained diagrams
+ *                                      will be qualified for export. Remaining difference: We still first
+ *                                      check for contained main diagrams as potential tree roots.
  *
  ******************************************************************************************************
  *
@@ -139,6 +143,7 @@ public class Structorizer
 		// START KGU#484 2018-03-21: Issue #463 - Configurability of the logging system ensured
 		setupLogging();
 		// END KGU#484 2018-03-21
+		Logger.getLogger(Structorizer.class.getName()).log(Level.INFO, "Command line: " + new StringList(args).getLongString());
 		// START KGU#187 2016-04-28: Enh. #179
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
@@ -769,21 +774,38 @@ public class Structorizer
 			}
 		}
 		else {
+			// START KGU#815/KGU#824 2020-03-23: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
+			Vector<Root> allRoots = new Vector<Root>();
+			// END KGU#815/KGU#824 2020-03-23
 			// Identify and collect all main diagrams of the pool
 			for (Iterator<ArchiveIndexEntry> iter = index.iterator(); iter.hasNext();)
 			{
 				ArchiveIndexEntry entry = iter.next();
 				Root root = null;
 				if (entry.name == null) {
-					entry.getRoot(archivar);
+					entry.getRoot(archivar);	// This may set entry.name!
 				}
 				if (entry.name != null && entry.minArgs == -1) {
 					root = entry.getRoot(archivar);
-					if (root != null && root.isProgram()) {
-						poolRoots.add(root);
+					// START KGU#815/KGU#824 2020-03-23: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
+					//if (root != null && root.isProgram()) {
+					//	poolRoots.add(root);
+					//}
+					if (root != null) {
+						allRoots.add(root);
+						if (root.isProgram()) {
+							poolRoots.add(root);
+						}
 					}
+					// END KGU#815/KGU#824 2020-03-23
 				}
 			}
+			// START KGU#815/KGU#824 2020-03-23: Enh. #828, issue #836 cautious unification with group export:
+			// If no suitable program Root is found then we will simply add all diagrams
+			if (poolRoots.isEmpty()) {
+				poolRoots = allRoots;
+			}
+			// END KGU#815/KGU#824 2020-03-23
 		}
 		if (!poolRoots.isEmpty()) {
 			pools.put(pool, poolRoots);
@@ -1052,7 +1074,7 @@ public class Structorizer
 				out = new OutputStreamWriter(fos, "UTF8");
 				try {
 					XmlGenerator xmlgen = new XmlGenerator();
-					out.write(xmlgen.generateCode(rootNew,"\t"));
+					out.write(xmlgen.generateCode(rootNew,"\t", false));
 				}
 				finally {
 					out.close();

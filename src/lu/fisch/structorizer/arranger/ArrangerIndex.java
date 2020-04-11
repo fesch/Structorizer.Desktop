@@ -39,6 +39,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-02-05      Bugfix #674: L&F update of popup menu ensured
  *      Kay Gürtzig     2019-03-01      Enh. #691: Group renaming enabled (new context menu item + accelerator)
  *      Kay Gürtzig     2019-03-30      Enh. #720: tree node for dependent diagrams (includers/callers) added
+ *      Kay Gürtzig     2020-03-16      Enh. #828: New popup submenu for code export of a group (or diagram)
+ *      Kay Gürtzig     2020-04-01      Enh. #440: Group export to PapDesigner inserted in popup menu
  *
  ******************************************************************************************************
  *
@@ -62,9 +64,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -78,6 +84,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -103,8 +110,13 @@ import lu.fisch.structorizer.gui.ColorButton;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.Menu;
+import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.locales.LangEvent;
+import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.LangTree;
+import lu.fisch.structorizer.parsers.GENParser;
 import lu.fisch.utils.StringList;
 
 /**
@@ -113,7 +125,7 @@ import lu.fisch.utils.StringList;
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
-public class ArrangerIndex extends LangTree implements MouseListener {
+public class ArrangerIndex extends LangTree implements MouseListener, LangEventListener {
 	
 	private Diagram diagram = null;
 	private final DefaultMutableTreeNode arrangerIndexTop;
@@ -137,6 +149,14 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	// START KGU#573 2018-09-13: Enh. #590 - allow to open attribute inspector
 	protected final JMenuItem popupIndexAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
 	// END KGU#573 2018-09-13
+	// START KGU#815 2020-03-16: Enh. #828 group export
+	protected final JMenu popupIndexExport = new JMenu("Export diagram/group");
+	// END KGU#815 2020-03-16
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828 FIXME - to be converted into a plugin mechanism
+	protected final JMenu popupIndexExportPap = new JMenu("PapDesigner");
+	protected final JMenuItem popupIndexExportPap1966 = new JMenuItem("DIN 66001 / 1966 ...");
+	protected final JMenuItem popupIndexExportPap1982 = new JMenuItem("DIN 66001 / 1982 ...");
+	// END KGU#396/KGU#815 2020-04-01
 	// START KGU#626 2019-01-03: Enh. #657
 	protected final JMenuItem popupIndexGroup = new JMenuItem("Create group ...", IconLoader.getIcon(94));
 	protected final JMenuItem popupIndexExpandGroup = new JMenuItem("Expand group ...", IconLoader.getIcon(117));
@@ -548,6 +568,76 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
 		popupIndexRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
+		// START KGU#815 2020-03-16: Enh. #828 Code export for diagrams or groups
+		popupIndex.add(popupIndexExport);
+		popupIndexExport.setIcon(IconLoader.getIcon(32));
+		{
+			Vector<GENPlugin> plugins = Menu.generatorPlugins;
+			if (plugins.isEmpty()) {
+				// Editor must retrieve the plugins itself, obvioulsy
+				String fileName = "generators.xml";
+				BufferedInputStream buff = new BufferedInputStream(Menu.class.getResourceAsStream(fileName));
+				GENParser genp = new GENParser();
+				plugins = genp.parse(buff);
+				try { buff.close();	} catch (IOException e) {}
+			}
+			ImageIcon defaultIcon = IconLoader.getIcon(87);
+			ActionListener exportListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Object item = e.getSource();
+					if (item instanceof JMenuItem) {
+						arrangerIndexExportCode(((JMenuItem) item).getName());
+					}
+				}
+			};
+			for (GENPlugin plugin: plugins)
+			{
+				ImageIcon icon = defaultIcon;	// The default icon
+				if (plugin.icon != null && !plugin.icon.isEmpty()) {
+					try {
+						URL iconFile = IconLoader.class.getResource(plugin.icon);
+						if (iconFile != null) {
+							icon = IconLoader.getIconImage(plugin.icon);
+						}
+					}
+					catch (Exception ex) {}
+				}
+				JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+				pluginItem.setName(plugin.className);
+				popupIndexExport.add(pluginItem);
+				pluginItem.addActionListener(exportListener);
+			}
+			// START KGU#396 2020-04-01: Enh. #440 Add PapDesigner export
+			ActionListener exportPapListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Object item = e.getSource();
+					if (item instanceof JMenuItem) {
+						arrangerIndexExportPap(item == popupIndexExportPap1982);
+					}
+				}
+			};
+			ImageIcon icon = defaultIcon;	// The default icon
+			URL iconFile = IconLoader.class.getResource("icons/editor_pap.png");
+			if (iconFile != null) {
+				icon = IconLoader.getIconImage("editor_pap.png");
+			}
+			// FIXME: This should be based on a plugin definition like for Menu.importPluginItems
+			popupIndexExportPap.setIcon(icon);
+			popupIndexExport.add(popupIndexExportPap);
+			popupIndexExportPap.setToolTipText(Menu.msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
+			popupIndexExportPap.add(popupIndexExportPap1966);
+			popupIndexExportPap.add(popupIndexExportPap1982);
+			popupIndexExportPap1966.addActionListener(exportPapListener);
+			popupIndexExportPap1982.addActionListener(exportPapListener);
+			// END KGU#396 2020-04-01
+			// START KGU#396/KGU#725 2020-04-08: Enh. #440, #746 - for later re-translation if necessary
+			Menu.msgExportTooltip.addLangEventListener(this);
+			// END KGU#396 2020-04-08
+		}
+		// END KGU#815 2020-03-16
+		
 		popupIndex.add(popupIndexCovered);
 		popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
 		// END KGU#318 2017-01-05
@@ -697,9 +787,13 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// START KGU#318 2017-01-05: Enh. #319
 		boolean indexSelected = !this.isEmpty() && !this.isSelectionEmpty();
 		Group selectedGroup = null;
+		Root selectedRoot = null;
 		if (indexSelected) {
 			selectedGroup = arrangerIndexGetSelectedGroup();
+			selectedRoot = arrangerIndexGetSelectedRoot();
 		}
+		Collection<Root> selectedRoots = this.arrangerIndexGetSelectedRoots(false);
+		
 		//popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
 		//popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
 		popupIndexGet.setEnabled(indexSelected && arrangerIndexSelectsOtherRoot());
@@ -710,17 +804,17 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// END KGU#318 2017-01-05
 		// START KGU#573 2018-09-13: Enh. #590
 		//popupIndexAttributes.setEnabled(indexSelected);
-		popupIndexAttributes.setEnabled(indexSelected && arrangerIndexGetSelectedRoot() != null);
+		popupIndexAttributes.setEnabled(selectedRoot != null);
 		// END KGU#573 2018-09-13
 		// START KGU#626 2019-01-03: Enh. #657
 		popupIndexInfo.setEnabled(indexSelected &&
-				(arrangerIndexGetSelectedRoot() != null || selectedGroup != null));
-		popupIndexGroup.setEnabled(this.arrangerIndexGetSelectedRoots(false).size() > 0);
-		popupIndexExpandGroup.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty()
+				(selectedRoot != null || selectedGroup != null));
+		popupIndexGroup.setEnabled(selectedRoots.size() > 0);
+		popupIndexExpandGroup.setEnabled(!selectedRoots.isEmpty()
 				|| selectedGroup != null);
 		popupIndexDissolve.setEnabled(selectedGroup != null);
-		popupIndexDetach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
-		popupIndexAttach.setEnabled(!this.arrangerIndexGetSelectedRoots(false).isEmpty());
+		popupIndexDetach.setEnabled(!selectedRoots.isEmpty());
+		popupIndexAttach.setEnabled(!selectedRoots.isEmpty());
 		// END KGU#626 2019-01-03
 		// START KGU#630 2019-01-13: Enh. #662/2
 		popupIndexDrawGroup.setEnabled(selectedGroup != null);
@@ -729,9 +823,13 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// START KGU#669 2019-03-01: Enh. #691
 		popupIndexRenameGroup.setEnabled(selectedGroup != null);
 		// END KGU#630 2019-01-13
+		// START KGU#815 2020-03-16: Enh. #828
+		popupIndexExport.setEnabled(selectedGroup != null || selectedRoot != null);
+		//END KGU#815 2020-03-16
 
 	}
 
+	/** @return true on single selection of a {@link Root} that is not the currently edited diagram, false otherwise */
 	private boolean arrangerIndexSelectsOtherRoot() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
 		if (selectedPaths.length == 1) {
@@ -741,6 +839,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return false;
 	}
 
+	/** @return true if any of the selected {@link Root}s or {@link Group}s has unsaved changes, false otherwise */
 	private boolean arrangerIndexSelectsUnsavedChanges() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
 		for (TreePath path: selectedPaths) {
@@ -755,6 +854,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return false;
 	}
 
+	/** @return the uniquely selected {@link Root} if it is a sub or includable, otherwise {@code null} */
 	private boolean arrangerIndexSelectsNonProgram() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
 		if (selectedPaths.length == 1) {
@@ -767,6 +867,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 	}
 
 	// START KGU#305/KGU#318 2017-01-05: Enh. #305/#319 Arranger index action methods concentrated here
+	/** Action method for {@link #popupIndexGet}, summons the selected {@link Root} */
 	public void arrangerIndexGet()
 	{
 		// START KGU#626 2019-01-01: Enh. #657
@@ -778,6 +879,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}		
 	}
 
+	/** @return the selected {@link Root} if exactly one {@link Root} is selected, otherwise {@code null} */
 	private Root arrangerIndexGetSelectedRoot() {
 		TreePath[] paths = this.getSelectionPaths();
 		if (paths != null && paths.length == 1) {
@@ -789,6 +891,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return null;
 	}
 
+	/** @return the selected {@link Group} if exactly one {@link Group} is selected, otherwise {@code null} */
 	private Group arrangerIndexGetSelectedGroup() {
 		TreePath[] paths = this.getSelectionPaths();
 		if (paths != null && paths.length == 1) {
@@ -800,6 +903,11 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return null;
 	}
 
+	/**
+	 * @param groupMembersToo - if true then members of selected groups add to the result, otherwise
+	 * selected groups will be ignored
+	 * @return the selected roots (either ignoring selected groups or adding the roots of selected groups)
+	 */
 	private Collection<Root> arrangerIndexGetSelectedRoots(boolean groupMembersToo) {
 		HashSet<Root> roots = new HashSet<Root>();
 		TreePath[] paths = this.getSelectionPaths();
@@ -817,6 +925,10 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return roots;
 	}
 
+	/** @return the set of selected (or touched) {@link Group}s (multiple selection)
+	 * @param partiallySelectedGroupsToo - if true then also yields groups when at least one of their
+	 * members is selected, otherwise not.
+	 */
 	private Collection<Group> arrangerIndexGetSelectedGroups(boolean partiallySelectedGroupsToo) {
 		HashSet<Group> groups = new HashSet<Group>();
 		TreePath[] paths = this.getSelectionPaths();
@@ -836,6 +948,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		return groups;
 	}
 
+	/** Action method for {@link #popupIndexSave}, saves all selected items with pending changes */
 	protected void arrangerIndexSave()
 	{
 		// START KGU#626 2019-01-05: Enh. #657
@@ -873,6 +986,7 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		// END KGU#626 2019-01-05
 	}
 
+	/** Action method for {@link #popupIndexRemove}, removes all selected {@link Root}s and {@link Group}s */
 	protected void arrangerIndexRemove()
 	{
 		// START KGU#626 2019-01-01: Enh. #657
@@ -973,6 +1087,44 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#573 2018-09-13
+
+	// START KGU#815 2020-03-16: Enh. #828
+	/**
+	 * Action method for popup menu items below {@link #popupIndexExport}
+	 * @param generatorName - class name of the selected code generator
+	 */
+	protected void arrangerIndexExportCode(String generatorName) {
+		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
+		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
+		if (selectedGroup != null) {
+			diagram.exportGroup(selectedGroup, generatorName, null);
+			this.repaint();
+		}
+		else if (selectedRoot != null) {
+			diagram.export(selectedRoot, generatorName, null);
+		}
+	}
+	// END KGU#815 2020-03-16
+	
+	// START KGU#396/KGU#815 2020-04-01: Enh. #440, #828
+	/**
+	 * Provisional action method for PapDesigner export menu items
+	 * @param generatorName - class name of the selected code generator
+	 */
+	protected void arrangerIndexExportPap(boolean din66001_1982) {
+		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
+		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
+		if (selectedGroup != null) {
+			HashMap<String, Object> options = new HashMap<String, Object>();
+			options.put("din66001_1982", din66001_1982);
+			diagram.exportGroup(selectedGroup, "lu.fisch.structorizer.generators.PapGenerator", options);
+			this.repaint();
+		}
+		else if (selectedRoot != null) {
+			diagram.exportPap(selectedRoot, din66001_1982);
+		}
+	}
+	// END KGU#396/KGU#815 2020-04-01
 
 	// START KGU#626 2019-01-05: Enh. #657
 	protected void arrangerIndexInfo() {
@@ -1400,5 +1552,14 @@ public class ArrangerIndex extends LangTree implements MouseListener {
 		}
 	}
 	// END KGU#643 2019-01-28
+
+	// START KGU#396/KGU#815 2020-04-08: Enh. #440, #828 - group export to PapDesigner files
+	@Override
+	public void LangChanged(LangEvent evt) {
+		if (evt.getSource() == Menu.msgExportTooltip) {
+			popupIndexExportPap.setToolTipText(Menu.msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
+		}		
+	}
+	// END KGU#396/KGU#815 2020-04-08
 
 }

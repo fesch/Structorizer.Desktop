@@ -1217,7 +1217,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	 * postprocessing for individual created Roots.
 	 * @param root - one of the build diagrams
 	 * @param sourceFileName - the name of the originating source file
-	 * @return TODO
+	 * @return true if the diagram turned out to be neglectible (superfluous)
 	 * @throws ParserCancelled when cancelled by the user
 	 */
 	protected abstract boolean subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled;
@@ -1288,28 +1288,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	@Override
 	public final String getDescription()
 	{
-        return getFileDescription();
-    }
+		return getFileDescription();
+	}
 
 	/* (non-Javadoc)
 	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 	 */
 	@Override
-    public final boolean accept(File f)
+	public final boolean accept(File f)
 	{
-        if (f.isDirectory())
+		if (f.isDirectory())
 		{
-            return true;
-        }
-
-        String extension = getExtension(f);
-        if (extension != null)
-		{
-            return isOK(f.getName());
+			return true;
 		}
 
-        return false;
-    }
+		String extension = getExtension(f);
+		if (extension != null)
+		{
+			return isOK(f.getName());
+		}
+
+		return false;
+	}
 
 
     /**
@@ -1435,6 +1435,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 	// END KGU#466 2019-08-02
 
+	/**
+	 * Loads the parser-related preferences (i.e. chiefly the configured parser keywords)
+	 * from the Ini file into the internal cache.
+	 * @see #getPropertyMap(boolean)
+	 * @see #saveToINI()
+	 */
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
@@ -1492,6 +1498,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		}
 	}
 	
+	/**
+	 * Saves the parser-related preferences, i.e. chiefly the configured keywords to the
+	 * Ini file.
+	 * @see #getPropertyMap(boolean)
+	 * @see #loadFromINI()
+	 */
 	public static void saveToINI()
 	{
 		try
@@ -1514,7 +1526,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#163 2016-03-25: For syntax analysis purposes
 	/**
-	 * Returns the complete set of configurable parser keywords for Elements
+	 * Returns the complete set of configurable parser keywords for {@link Element}s
 	 * @return array of current keyword strings
 	 */
 	public static String[] getAllProperties()
@@ -1526,7 +1538,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
 	/**
-	 * Returns a Hashmap mapping parser preference labels like "preAlt" to the
+	 * Returns a {@link Hashmap} mapping parser preference labels like "preAlt" to the
 	 * configured parser preference keywords.
 	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
 	 * @return the hash table with the current settings
@@ -1546,8 +1558,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU#288 2016-11-06: New methods to facilitate bugfix #278, #279
 	/**
-	 * Returns the set of the parser preference names
-	 * @return
+	 * @return the set of the (internal) parser preference names (the keys of the map)
 	 */
 	public static Set<String> keywordSet()
 	{
@@ -1555,9 +1566,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Returns the cached keyword for parser preference _key or null
+	 * Returns the cached keyword for parser preference {@code _key} or {@code null}
 	 * @param _key - the name of the requested parser preference
-	 * @return the cached keyword or null
+	 * @return the cached keyword or {@code null}
 	 */
 	public static String getKeyword(String _key)
 	{
@@ -1565,8 +1576,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Returns the cached keyword for parser preference _key or the given _defaultVal if no
-	 * entry or only an empty entry is found for _key.
+	 * Returns the cached keyword for parser preference {@code _key} or the given {@code _defaultVal}
+	 * if no entry or only an empty entry is found for {@code _key}.
 	 * @param _key - the name of the requested parser preference
 	 * @param _defaultVal - a default keyword to be returned if there is no non-empty cached value
 	 * @return the cached or default keyword
@@ -1583,10 +1594,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	/**
-	 * Replaces the cached parser preference _key with the new keyword _keyword for this session.
+	 * Replaces the cached parser preference {@code _key} with the new keyword
+	 * {@code _keyword} for this session.<br/>
 	 * Note:
-	 * 1. This does NOT influence the Ini file!
-	 * 2. Only for existing keys a new mapping may be set
+	 * <ol>
+	 * <li>
+	 * This does NOT influence the Ini file, not even the Ini properties!
+	 * </li>
+	 * <li>
+	 * Only for existing keys a new mapping may be set
+	 * </li>
+	 * </ol>
 	 * @param _key - name of the parser preference
 	 * @param _keyword - new value of the parser preference or null
 	 */

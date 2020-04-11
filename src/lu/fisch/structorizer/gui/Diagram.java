@@ -195,12 +195,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801 - Offline help added, exception handling flaw in helpNSD() fixed
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Several volatile preferences cached to the Ini instance when modified
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined file filter (StructorizerFilter) preferred in openNSD()
+ *      Kay Gürtzig     2020-03-03      Enh. #440: New method to support PapDesigner export
+ *      Kay Gürtzig     2020-03-16/17   Enh. #828: New method to export an arrangement group
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
- *      2016.07.31 (Kay Gürtzig, #158)
+ *      2016-07-31 (Kay Gürtzig, #158)
  *      - It turned out that circular horizontal selection move is not sensible. It compromises usability
  *        rather than it helps. With active horizontal mouse scrolling the respective diagram margin is
  *        so quickly reached that a breathtaking rotation evolves - no positioning is possible. Even with
@@ -262,6 +264,8 @@ import javax.swing.text.Highlighter.HighlightPainter;
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
+
+import com.sun.tools.javac.jvm.Gen;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
@@ -711,7 +715,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (int i = 0; i < files.length; i++)
 					{
 						String filename = files[i].toString();
-						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArg() instead
+						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArr() instead
 						//String filenameLower = filename.toLowerCase();
 						//if(filenameLower.endsWith(".nsd"))
 						//{
@@ -2880,7 +2884,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#94 2015-12-04
 			Writer out = new OutputStreamWriter(fos, "UTF-8");
 			XmlGenerator xmlgen = new XmlGenerator();
-			out.write(xmlgen.generateCode(root,"\t"));
+			out.write(xmlgen.generateCode(root,"\t", false));
 			out.close();
 
 			// START KGU#94 2015-12-04: Bugfix #40 part 2
@@ -3376,7 +3380,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (selected instanceof Root)
 			{
 				XmlGenerator xmlgen = new XmlGenerator();
-				StringSelection toClip = new StringSelection(xmlgen.generateCode(root,"\t"));
+				StringSelection toClip = new StringSelection(xmlgen.generateCode(root,"\t", false));
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(toClip, this);
 			}
@@ -6131,6 +6135,54 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
+	// START KGU#396 2020-03-03: Enh. #440 Specific export interface for PapDesigner
+	/**
+	 * Exports the current diagram (possibly with all referenced subdiagrams) as PAP
+	 * flowcharts compatible with PapDesigner.
+	 * @param din66001_1982 - whether the newer DIN 66001 (from 1982) is to be applied
+	 * (otherwise the obsolete standard version from 1966 will be adhered to)
+	 * @see #exportPap(Root, boolean)
+	 */
+	public void exportPap(boolean din66001_1982) {
+		exportPap(root, din66001_1982);
+	}
+	/**
+	 * Exports the given diagram {@code _root}  (possibly with all referenced subdiagrams)
+	 * as PAP flowchart compatible with PapDesigner
+	 * @param _root - the top level {@link Root} to be exported
+	 * @param din66001_1982 - whether the newer DIN 66001 (from 1982) is to be applied
+	 * (otherwise the obsolete standard version from 1966 will be adhered to)
+	 * #see {@link #exportPap(boolean)}
+	 */
+	public void exportPap(Root _root, boolean din66001_1982) {
+		try
+		{
+			Generator gen = new PapGenerator();
+			gen.setPluginOption("din66001_1982", din66001_1982);
+			pop.setVisible(false);	// Hide the current comment popup if visible
+			File exportDir =
+					gen.exportCode(_root,
+							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
+							NSDControl.getFrame(),
+							(Arranger.hasInstance() ? Arranger.getInstance() : null));
+			if (exportDir != null) {
+				this.lastCodeExportDir = exportDir;
+			}
+			// END KGU#654 2019-02-15/16
+		}
+		catch(Exception ex)
+		{
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
+			JOptionPane.showMessageDialog(this.getFrame(),
+					Menu.msgErrorUsingGenerator.getText().replace("%", PapGenerator.class.getSimpleName())+"\n" + message,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	// END KGU#396 2020-03-03
+
 
 	/*========================================
 	 * Import method for foreign diagrams
@@ -6741,6 +6793,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void export(String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
+		// START KGU#815 2020-02-20: Enh. 828 - We offer not only the export of groups but also of diagrams
+		// (Code moved to export(Root, String, Vector<HashMap<String, String>))
+		export(root, _generatorClassName, _specificOptions);
+		// END KGU#815 2020-02-20
+	}
+	
+	// START KGU#815 2020-03-16: Enh. #828
+	/**
+	 * Export the given diagram {@code _root} to the programming language associated to the
+	 * generator {@code _generatorClassName}.
+	 * @param _generatorClassName - class name of he generator to be used
+	 * @param _specificOptions - generator-specific options 
+	 */
+	public void export(Root _root, String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
+	{
 		try
 		{
 			Class<?> genClass = Class.forName(_generatorClassName);
@@ -6748,6 +6815,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
+			// START KGU#815 2020-03-30: Enh. #828 If called from ArrangerIndex, options will be null
+			if (_specificOptions == null) {
+				for (GENPlugin plugin: Menu.generatorPlugins) {
+					if (plugin.className.equals(_generatorClassName)) {
+						_specificOptions = plugin.options;
+						break;
+					}
+				}
+				if (_specificOptions == null) {
+					_specificOptions = new Vector<HashMap<String, String>>();
+				}
+			}
+			// END KGU#815 2020-03-20
 			// START KGU#395 2017-05-11: Enh. #357
 			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
 			// END KGU#395 2017-05-11
@@ -6757,7 +6837,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//this.lastCodeExportDir =
 			File exportDir =
 			// END KGU#654 2019-02-16
-					gen.exportCode(root,
+					gen.exportCode(_root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
 							// START KGU#676/KGU#679 2019-03-13: Enh. #696,#698 Specify the routine pool expicitly
 							//NSDControl.getFrame());
@@ -6766,7 +6846,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							// END KGU#676 2019-03-13
 			// START KGU#654 2019-02-16: Enh. #681
 			// START KGU#456 2017-11-05: Enh. #452
-			if (root.advanceTutorialState(26, root)) {
+			if (_root == root && root.advanceTutorialState(26, root)) {
 				analyse();
 			}
 			// END KGU#456 2017-11-05
@@ -6819,6 +6899,68 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
+	/**
+	 * Export the group represented by the programming language associated to the generator {@code _generatorClassName}
+	 * @param group - The {@link Group} to be exported
+	 * @param generatorName - class name of the generator to be used
+	 * @param extraOptions - a possible extra option map (handled like plugin options) or null
+	 */
+	public void exportGroup(Group group, String generatorName, Map<String, Object> extraOptions) {
+		pop.setVisible(false);	// Hide the current comment popup if visible (issue #143)
+		File groupFile = group.getFile();
+		File targetDir = lastCodeExportDir;
+		if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true")) && groupFile.exists()) {
+			targetDir = groupFile.getParentFile();
+		}
+		if (targetDir == null || !targetDir.exists()) {
+			targetDir = currentDirectory;
+		}
+		String groupName = group.proposeFileName().replace(".", "_");
+
+		try {
+			Class<?> genClass = Class.forName(generatorName);
+			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
+			Vector<HashMap<String, String>> options = null;
+			for (GENPlugin plugin: Menu.generatorPlugins) {
+				if (plugin.className.equals(generatorName)) {
+					options = plugin.options;
+					break;
+				}
+			}
+			if (options == null) {
+				options = new Vector<HashMap<String, String>>();
+			}
+			this.setPluginSpecificOptions(gen, generatorName, options);
+			// START KGU#396 2020-04-01: Temporary extra mechanism for #440
+			if (extraOptions != null) {
+				for (Map.Entry<String, Object> option: extraOptions.entrySet()) {
+					gen.setPluginOption(option.getKey(), option.getValue());
+				}
+			}
+			// END KGU#396 2020-04-01
+			
+			File exportDir = gen.exportCode(group.getSortedRoots(), groupName, 
+					targetDir,
+					NSDControl.getFrame(),
+					(Arranger.hasInstance() ? Arranger.getInstance() : null));
+			
+			if (exportDir != null) {
+				this.lastCodeExportDir = exportDir;
+			}
+		}
+		catch(Exception ex)
+		{
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			if (message == null || message.isEmpty()) message = ex.toString();
+			JOptionPane.showMessageDialog(this.getFrame(),
+					Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	// END KGU#815 2020-03-16
+
 	// START KGU#705 2019-09-23: Enh. #738: Code preview support
 	/**
 	 * Place a code preview for the current diagram to the currrent favourite programming language.
@@ -8065,23 +8207,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             Ini ini = Ini.getInstance();
             ini.load();
             ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame(), Menu.generatorPlugins);
-            if(ini.getProperty("genExportComments","0").equals("true"))
+            if(ini.getProperty("genExportComments","false").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
                 eod.commentsCheckBox.setSelected(false);
             // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
-            eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
-            eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+            eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "false").equals("true"));
+            eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "false").equals("true"));
             // END KGU#16/KGU#113 2015-12-18
             // START KGU#178 2016-07-20: Enh. #160
-            eod.chkExportSubroutines.setSelected(ini.getProperty("genExportSubroutines", "0").equals("true"));
+            eod.chkExportSubroutines.setSelected(ini.getProperty("genExportSubroutines", "false").equals("true"));
             // END #178 2016-07-20
             // START KGU#162 2016-03-31: Enh. #144
-            eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
+            eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "false").equals("true"));
             // END KGU#162 2016-03-31
             // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
-            eod.chkExportLicenseInfo.setSelected(ini.getProperty("genExportLicenseInfo", "0").equals("true"));
+            eod.chkExportLicenseInfo.setSelected(ini.getProperty("genExportLicenseInfo", "false").equals("true"));
             // END KGU#363/KGU#395 2017-05-11
+            // START KGU#816 2020-03-17: Enh. #837
+            eod.chkDirectoryFromNsd.setSelected(ini.getProperty("genExportDirFromNsd", "true").equals("true"));
+            // END KGU#816 2020-03-17
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
@@ -8126,6 +8271,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#363/KGU#395 2017-05-11: Enh. #372, #357
                 ini.setProperty("genExportLicenseInfo", String.valueOf(eod.chkExportLicenseInfo.isSelected()));
                 // END KGU#363/KGU#395 2017-05-11
+                // START KGU#816 2020-03-17: Enh. #837
+                ini.setProperty("genExportDirFromNsd", String.valueOf(eod.chkDirectoryFromNsd.isSelected()));
+                // END KGU#816 2020-03-17
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
                 String prefGenName = (String)eod.cbPrefGenerator.getSelectedItem();
                 // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
@@ -10398,5 +10546,4 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return keys;
 	}
 	// END KGU#466 2019-08-03
-
 }

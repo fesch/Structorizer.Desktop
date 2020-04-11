@@ -887,7 +887,7 @@ public class Instruction extends Element {
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
-	 * an appropriate syntax is okay.
+	 * an appropriate syntax is sufficient).
 	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String)
 	 * @see #isTypeDefinition(HashMap, boolean)
@@ -976,8 +976,10 @@ public class Instruction extends Element {
 	// END KGU#542 2019-11-17
 	
 	// START KGU#47 2017-12-06: Enh. #487 - compound check for hidable content
-	/** @return true iff this Instruction contains nothing but type definitions and
-	 * (uninitialized) variable declarations, i.e. hidable stuff. 
+	/**
+	 * @return true iff this Instruction contains nothing but type definitions and
+	 * (uninitialized) variable declarations, i.e. stuff that can be hidden.
+	 * @see #isMereDeclaration(String) 
 	 */
 	public boolean isMereDeclaratory()
 	{
@@ -991,6 +993,15 @@ public class Instruction extends Element {
 	}
 	// END KGU#477 2017-12-06
 	// START KGU#772 2019-11-24: We want to be able to suppress expression of code for mere declarations
+	/**
+	 * Checks whether the given {@code _line} of code is either a type definition or
+	 * a variable declaration without initialization.
+	 * @param line - instruction line
+	 * @return true if the line is a mere declaration
+	 * @see #isTypeDefinition(String)
+	 * @see #isDeclaration(String)
+	 * @see #isAssignment(String)
+	 */
 	public static boolean isMereDeclaration(String line)
 	{
 		return isTypeDefinition(line) || (isDeclaration(line) && !isAssignment(line));
@@ -1009,16 +1020,24 @@ public class Instruction extends Element {
 	 * @see #isFunctionCall()
 	 * @see #isProcedureCall()
 	 */
-	public Function getCalledRoutine()
+	public Function getCalledRoutine() {
+		if (this.getUnbrokenText().count() == 1) {
+			return getCalledRoutine(0);
+		}
+		return null;
+	}
+	
+	// Undocumented version of getCalledRoutine() coping with multiple call lines per element
+	public Function getCalledRoutine(int lineNo)
 	{
 		Function called = null;
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
 		//StringList lines = this.text;
 		StringList lines = this.getUnbrokenText();
 		// END KGU#413 2017-06-09
-		if (lines.count() == 1)
+		if (lines.count() > 0 && lineNo < lines.count())
 		{
-			String potentialCall = lines.get(0);
+			String potentialCall = lines.get(lineNo);
 			StringList tokens = Element.splitLexically(potentialCall, true);
 			unifyOperators(tokens, true);
 			int asgnPos = tokens.indexOf("<-");

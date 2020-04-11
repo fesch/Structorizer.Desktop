@@ -153,6 +153,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
  *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
+ *      Kay Gürtzig     2020-03-29      Bugfix #841: Analyser check for missing or misplaced parameter list didn't work
  *      
  ******************************************************************************************************
  *
@@ -225,6 +226,8 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locale;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
@@ -301,7 +304,7 @@ public class Root extends Element {
 	// END KGU#624 2018-12-22
 	
 	// START KGU#676 2019-03-31: Enh. #696 - We need pool access for batch export
-	/** A routine to be used for retrieval of includables and subroutines instead of Arranger if not null */
+	/** A routine pool to be used for retrieval of includables and subroutines instead of Arranger if not null */
 	public IRoutinePool specialRoutinePool = null;
 	// END KGU#676 2019-03-31
 	
@@ -2935,8 +2938,8 @@ public class Root extends Element {
      */
     public StringList retrieveVarNames()
     {
-            //System.out.println("getVarNames() called...");
-            return getVarNames(this, false, false, true);
+    	//System.out.println("getVarNames() called...");
+    	return getVarNames(this, false, false, true);
     }
 
     /**
@@ -2944,7 +2947,7 @@ public class Root extends Element {
      * stores them in {@link #variables}.
      * @return list of variable names
      * @see #retrieveVarNames()
-     * @see #getMereDeclarationNames()
+     * @see #getMereDeclarationNames(boolean)
      */
     public StringList getVarNames() {
     	//System.out.println("getVarNames() called...");
@@ -3120,20 +3123,22 @@ public class Root extends Element {
     	return enumConstants;
     }
 
-    // START KGU#672 2019-11-13: Introduced for Bugfix #762
+    // START KGU#672 2019-11-13: Introduced for Bugfix #776
     /**
+     * @param allowMethodName if true then the method name will be included if among the keys in {@link #getTypeInfo()}, with false it will be suppressed
      * @return A list of the names of uninitialized, i.e. merely declared, variables
      * (of this diagram and all included diagrams).
      * @see #getVarNames()
      * @see #getTypeInfo()
      */
-    public StringList getMereDeclarationNames()
+    public StringList getMereDeclarationNames(boolean allowMethodName)
     {
     	StringList declNames = new StringList();	// Result
     	StringList varNames = this.getVarNames();	// Names of initialized variables
+    	String methName = this.getMethodName();
     	for (String name: this.getTypeInfo().keySet()) {
     		// Ignore type names and omit initialized variables (which should also include constants)
-    		if (!name.startsWith(":") && !varNames.contains(name)) {
+    		if (!name.startsWith(":") && !varNames.contains(name) && (allowMethodName || !methName.equals(name))) {
     			declNames.add(name);
     		}
     	}
@@ -3463,7 +3468,7 @@ public class Root extends Element {
     			analyse_15((Call)ele, _errors);
     		}
     		// CHECK: Correct usage of Jump, including return (#16) New!
-    		// + CHECK #13: Competetive return mechanisms
+    		// + CHECK #13: Competitive return mechanisms
     		else if (ele instanceof Jump)
     		{
     			analyse_13_16_jump((Jump)ele, _errors, myVars, _resultFlags);
@@ -4304,12 +4309,12 @@ public class Root extends Element {
 							ls == sl.count()-1 && _isLastElement)))
 					)
 			{
-				//error = new DetectedError("An exit, leave or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
-				//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
 				if (isReturn) {
+					//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
 					addError(_errors, new DetectedError(errorMsg(Menu.error16_2, preReturn), ele), 16);
 				}
 				else {
+					//error = new DetectedError("An exit, leave, or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
 					addError(_errors, new DetectedError(errorMsg(Menu.error16_3, new String[]{preLeave, preExit}), ele), 16);
 				}
 			}
@@ -4502,6 +4507,23 @@ public class Root extends Element {
 			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
 			addError(_errors, new DetectedError(errorMsg(Menu.error20_1, ""), this), 20);								
 		}
+		// START KGU#836 2020-03-29: Issue #841 In case of a non-subroutine a parameter list should also be wrong
+		else if (!this.isSubroutine() && this.getText().getText().indexOf("(") >= 0) {
+			Locale loc = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
+			Locale loc0 = Locales.getInstance().getDefaultLocale();
+			String key1 = "ElementNames.localizedNames." + (this.isProgram() ? 13 : 15) + ".text";
+			String key2 = "ElementNames.localizedNames.14.text";
+			String elName = loc.getValue("Elements", key1);
+			if (elName.isEmpty()) {
+				elName = loc0.getValue("Elements", key1);
+			}
+			String subName = loc.getValue("Elements", key2);
+			if (subName.isEmpty()) {
+				subName = loc0.getValue("Elements", key2);
+			}
+			addError(_errors, new DetectedError(errorMsg(Menu.error20_3, new String[] {elName, subName}), this), 20);
+		}
+		// END KGU#836 2020-03-29
 		boolean hasDefaults = false;
 		for (int i = 0; i < paramDefaults.count(); i++) {
 			String deflt = paramDefaults.get(i);
@@ -5460,7 +5482,7 @@ public class Root extends Element {
         // END KGU#253 2016-09-22
         if (this.isSubroutine())
         {
-        	// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
+        	// START KGU#371 2019-03-07: Enh. #385 Use cached values if available, otherwise fill cache
         	if (parameterList != null) {
         		synchronized(this) {
         			for (Param param: parameterList) {
@@ -5476,7 +5498,12 @@ public class Root extends Element {
         			}
         		}
         		// Nothing more to do here
-        		return true;
+        		// START KGU#836 2020-03-29: Bugfix #841
+        		//return true;
+        		String rootText = this.getText().getLongString();
+        		int posPar1 = rootText.indexOf("(");
+        		return posPar1 >= 0 && rootText.indexOf(")", posPar1+1) >= 0;
+        		// END KGU#836 2020-03-29
         	}
         	// Compute the parameter list from scratch, make sure all three lists exist
         	if (paramNames == null) {

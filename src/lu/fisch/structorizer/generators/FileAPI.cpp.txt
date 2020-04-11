@@ -2,7 +2,7 @@
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    File API for the CPlusPlusGenerator.
+ *      Description:    File API implementation for the CPlusPlusGenerator.
  *
  ******************************************************************************************************
  *
@@ -10,7 +10,7 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2016.12.24      First Issue
+ *      Kay Gürtzig     2016-12-24      First Issue
  *
  ******************************************************************************************************
  *

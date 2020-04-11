@@ -112,6 +112,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
  *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
  *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
+ *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
  *
  ******************************************************************************************************
  *
@@ -269,7 +270,7 @@ public abstract class Element {
 	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-07";
+	public static final String E_VERSION = "3.30-08";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -706,7 +707,12 @@ public abstract class Element {
 	// END KGU#502/KGU#524/KGU#553 2019-03-14
 
 	/** Strings to be highlighted in the element text (lazy initialisation) */
-	private static StringList specialSigns = null;
+	// START KGU#843 2020-04-12: Bugfix #847 We should distinguish between case-indifferent and case-relevant search
+	//private static StringList specialSigns = null;
+	private static HashSet<String> specialSigns = null;
+	/** Strings to be highlighted in the element text case-independently (lazy initialisation) */
+	private static StringList specialSignsCi = null;
+	// END KGU#843 2020-04-12
 
 	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
 	private static long lastId = 0;
@@ -3432,8 +3438,10 @@ public abstract class Element {
 					//StringList specialSigns = new StringList();
 					if (specialSigns == null)	// lazy initialisation
 					{
-						specialSigns = new StringList();
-						// END KGU#64 2015-11-03
+						// START KGU#843 2020-04-12: Bugfix #847
+						specialSigns = new HashSet<String>();
+						// START KGU#843 2020-04-12: Bugfix #847
+					// END KGU#64 2015-11-03
 						// START KGU#425 2017-09-29: Add the possible ellipses, too
 						specialSigns.add("...");
 						specialSigns.add("..");					
@@ -3469,8 +3477,6 @@ public abstract class Element {
 						// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
 						specialSigns.add("enum");
 						// END KGU#542 2019-11-17
-						specialSigns.add("mod");
-						specialSigns.add("div");
 						// START KGU#331 2017-01-13: Enh. #333
 						//specialSigns.add("<=");
 						//specialSigns.add(">=");
@@ -3490,26 +3496,10 @@ public abstract class Element {
 						// START KGU#24 2014-10-18
 						specialSigns.add("&&");
 						specialSigns.add("||");
-						specialSigns.add("and");
-						specialSigns.add("or");
-						specialSigns.add("xor");
-						specialSigns.add("not");
 						// END KGU#24 2014-10-18
-						// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
-						specialSigns.add("shl");
-						specialSigns.add("shr");
-						// END KGU#115 2015-12-23
 						// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 						specialSigns.add("as");
 						// END KGU#109 2016-01-15
-						// START KGU#611 2018-12-12 - Issue #643 - Since unifyOperators() tolerates case, we should do so here as well
-						specialSigns.add("AND");
-						specialSigns.add("OR");
-						specialSigns.add("XOR");
-						specialSigns.add("NOT");
-						specialSigns.add("SHL");
-						specialSigns.add("SHR");
-						// END KGU#611 2018-12-12
 
 						// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
 						specialSigns.add("{");
@@ -3521,6 +3511,23 @@ public abstract class Element {
 						specialSigns.add("\"");
 						// START KGU#64 2015-11-03: See above
 					}
+					// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
+					if (specialSignsCi == null) {
+						specialSignsCi = new StringList();
+						specialSignsCi.add("mod");
+						specialSignsCi.add("div");
+						// START KGU#24 2014-10-18
+						specialSignsCi.add("and");
+						specialSignsCi.add("or");
+						specialSignsCi.add("xor");
+						specialSignsCi.add("not");
+						// END KGU#24 2014-10-18
+						// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
+						specialSignsCi.add("shl");
+						specialSignsCi.add("shr");
+						// END KGU#115 2015-12-23						
+					}
+					// END KGU#611/KGU#843 2020-04-12
 					// END KGU#64 2015-11-03
 
 					// These markers might have changed by configuration, so don't cache them
@@ -3587,7 +3594,10 @@ public abstract class Element {
 							}
 							// END KGU#388 2017-09-17
 							// if this part has to be colored with special color
-							else if(specialSigns.contains(display))
+							// START KGU#611/KGU#843 2020-04-12: Issue #643, bugfix #847
+							//else if(specialSigns.contains(display))
+							else if(specialSigns.contains(display) || specialSignsCi.contains(display, false))
+							// END KGU#611/KGU#843 2020-04-12
 							{
 								// burgundy, bold
 								// START KGU#701 2019-03-29: Issue #718
@@ -3994,6 +4004,9 @@ public abstract class Element {
         	count += _tokens.replaceAllCi("or", "||");
         	count += _tokens.replaceAllCi("not", "!");
         	count += _tokens.replaceAllCi("xor", "^");
+        	// START KGU#843 2020-04-11: Bugfix #847 Inconsistency in handling operators (we don't count this, though)
+        	_tokens.replaceAllCi("DIV", "div");
+        	// END KGU#843 2020-04-11
         }
         return count;
     }
@@ -4530,5 +4543,5 @@ public abstract class Element {
 			this.rect0 = new Rect(rect0.left, rect0.top, rect0.bottom, rect0.right);
 		}
 	}
-
+	
 }
