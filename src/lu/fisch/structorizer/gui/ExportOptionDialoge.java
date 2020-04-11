@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
  *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand).
  *      Kay Gürtzig     2019-02-15  Enh. #681: New spinner for triggering a change proposal for preferred generator
+ *      Kay Gürtzig     2020-03-17  Enh. #837: New option for the proposed export directory
  *
  ******************************************************************************************************
  *
@@ -164,6 +165,9 @@ public class ExportOptionDialoge extends LangDialog
         btnPluginOptions = new javax.swing.JButton();
         cbOptionPlugins = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames(true));
         // END KGU#416 2017-06-20
+        // START KGU#816 2020-03-17: Enh. #837
+        chkDirectoryFromNsd = new javax.swing.JCheckBox();
+        // END KGI#816 2020-043-17
 
         
         setTitle("Export options ...");
@@ -272,7 +276,13 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
         // END KGU#363 2017-05-11
-        
+
+        // START KGU#816 2020-03-17: Enh. #837
+        chkDirectoryFromNsd.setText("Propose export directory from NSD location if available");
+        chkDirectoryFromNsd.setToolTipText("Otherwise the most recent export directory will always be proposed.");
+        // No action listener required
+        // END KGI#816 2020-043-17
+
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
             @Override
@@ -362,6 +372,9 @@ public class ExportOptionDialoge extends LangDialog
                     // START KGU#363 2017-05-11: Enh. #372
                     .add(chkExportLicenseInfo)
                     // END KGU#363 2017-05-11: Enh. #372
+                    // START KGU#816 2020-03-17: Enh. #837
+                    .add(chkDirectoryFromNsd)
+                    // END KGU#816 2020-03-17
                     /*.add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jButton1)
                         .addContainerGap())*/))
@@ -410,6 +423,10 @@ public class ExportOptionDialoge extends LangDialog
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkExportLicenseInfo)
                 // END KGU#363 2017-05-11: Enh. #372
+                // START KGU#816 2020-03-17: Enh. #837
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkDirectoryFromNsd)
+                // END KGU#816 2020-03-17
                 // START KGU#416 2017-06-20: Enh. #353,#357
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
@@ -469,15 +486,15 @@ public class ExportOptionDialoge extends LangDialog
 
         //======== buttonBar ========
         {
-        	buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
-        	buttonBar.setLayout(new GridBagLayout());
-        	((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
-        	((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+            buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+            buttonBar.setLayout(new GridBagLayout());
+            ((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+            ((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 
-        	//---- btnOK ----
-        	buttonBar.add(jButton1, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-        			GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-        			new Insets(0, 0, 0, 0), 0, 0));
+            //---- btnOK ----
+            buttonBar.add(jButton1, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+                    GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                    new Insets(0, 0, 0, 0), 0, 0));
         }
 
         Container contentPane = getContentPane();
@@ -515,6 +532,10 @@ public class ExportOptionDialoge extends LangDialog
         bracesCheckBox.addKeyListener(keyListener);
         lineNumbersCheckBox.addKeyListener(keyListener);
         chkExportSubroutines.addKeyListener(keyListener);
+        // START KGU#816 2020-03-17: Enh. #837
+        this.chkDirectoryFromNsd.addKeyListener(keyListener);
+        this.chkExportLicenseInfo.addKeyListener(keyListener);
+        // END KGU#816 2020-03-17
         for (int i = 0; i < this.includeLists.length; i++) {
             this.includeLists[i].addKeyListener(keyListener);
         }
@@ -543,10 +564,10 @@ public class ExportOptionDialoge extends LangDialog
     }
     // END KGU#416 2017-06-20
 
-//    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
-//    {//GEN-HEADEREND:event_commentsCheckBoxActionPerformed
+//    private void licenseInfoCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_licenseInfoCheckBoxActionPerformed
+//    {//GEN-HEADEREND:event_licenseInfoCheckBoxActionPerformed
 //        // TODO add your handling code here:
-//    }//GEN-LAST:event_commentsCheckBoxActionPerformed
+//    }//GEN-LAST:event_licenseInfoCheckBoxActionPerformed
 
     protected void licenseInfoCheckBoxActionPerformed(ActionEvent evt) {
         // TODO Auto-generated method stub
@@ -709,7 +730,6 @@ public class ExportOptionDialoge extends LangDialog
     public final LangTextHolder msgOptionsForPlugin = new LangTextHolder("Options for % Generator");
     // END KGU#416 2017-06-20
     // END KGU#351 2017-02-26
-    // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JCheckBox bracesCheckBox;
     public javax.swing.JCheckBox commentsCheckBox;
     public javax.swing.JButton jButton1;
@@ -739,5 +759,7 @@ public class ExportOptionDialoge extends LangDialog
     // START KGU#363 2017-05-11: Enh. #372
     public javax.swing.JCheckBox chkExportLicenseInfo;
     // END KGU#363 2017-05-11
-    // End of variables declaration//GEN-END:variables
+    // START KGU#816 2020-03-17: Enh. #837
+    public javax.swing.JCheckBox chkDirectoryFromNsd;
+    // END KGU#816 2020-03-17
 }

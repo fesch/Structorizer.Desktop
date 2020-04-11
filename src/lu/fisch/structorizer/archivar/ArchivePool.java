@@ -84,7 +84,7 @@ public class ArchivePool implements IRoutinePool {
 
 	/**
 	 * Creates an ArchivePool from a given {@link ArchiveIndex}.
-	 * The archive name will be derived from the arrangemenet file in
+	 * The archive name will be derived from the arrangement file in
 	 * {@code archiveIndex}.
 	 */
 	public ArchivePool(Archivar.ArchiveIndex archiveIndex) {
