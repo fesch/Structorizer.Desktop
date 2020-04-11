@@ -765,7 +765,7 @@ public class Archivar {
 			FileOutputStream fos = new FileOutputStream(filename);
 			out = new OutputStreamWriter(fos, "UTF-8");
 			XmlGenerator xmlgen = new XmlGenerator();
-			out.write(xmlgen.generateCode(_root, "\t"));
+			out.write(xmlgen.generateCode(_root, "\t", true));
 			_root.filename = filename;
 			_root.rememberSaved();
 			done = true;
