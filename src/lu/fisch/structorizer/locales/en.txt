@@ -796,6 +796,7 @@ InputBoxRoot.btnCancel.text=Cancel
 InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=Attributes
 InputBoxRoot.btnAttributes.tooltip=Opens a dialog to inspect attributes and properties of this diagram.
+InputBoxRoot.btnAddIncludable.text=Add
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagram Attributes

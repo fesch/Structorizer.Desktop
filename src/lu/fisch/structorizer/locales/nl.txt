@@ -721,7 +721,8 @@ InputBoxRoot.btnOK.tooltip=
 InputBoxRoot.btnCancel.text=Annuleren
 InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=Attributen
-InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van  attributen en eigenschappen van dit diagram
+InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram
+InputBoxRoot.btnAddIncludable.text=Invoegen
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Attributen van diagram
