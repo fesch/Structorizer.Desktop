@@ -265,8 +265,6 @@ import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
 
-import com.sun.tools.javac.jvm.Gen;
-
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
