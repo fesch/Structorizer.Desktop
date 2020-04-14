@@ -191,7 +191,8 @@ package lu.fisch.structorizer.executor;
  *                                      issue #822: Empty instruction lines are now ignored, missing exit args too.
  *                                      Fixed #823 (defective execution of assignments in some cases)
  *      Kay Gürtzig     2020-02-21      Issue #826: Raw input is to cope with backslashes as in Windows file paths
- *      Kay Gürtzig     2020-04-04      Issue #829 Control should not automatically close after debugging [mawa290669]
+ *      Kay Gürtzig     2020-04-04      Issue #829: Control should not automatically close after debugging [mawa290669]
+ *      Kay Gürtzig     2020-04-13      Bugfix #848: On updating the context of includables mere declarations had been forgotten
  *
  ******************************************************************************************************
  *
@@ -2045,7 +2046,10 @@ public class Executor implements Runnable
 					if (this.importMap.containsKey(imp)) {
 						ImportInfo impInfo = this.importMap.get(imp);
 						this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
-								imp.getCachedVarNames(), imp.constants.keySet(), false);
+								// START KGU#843 2020-04-13: Bugfix #848 Merely declared variables must also be considered
+								//imp.getCachedVarNames(), imp.constants.keySet(), false);
+								impInfo.variableNames, imp.constants.keySet(), false);
+								// END KGU#843 2020-04-13
 						// START KGU#388 2017-09-18: Enh. #423
 						// Adopt the imported typedefs if any
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
@@ -2995,7 +2999,7 @@ public class Executor implements Runnable
 	 * @param _varNames - names of the variables to be considered
 	 * @param _constNames - names of the constants to be included
 	 * @param _overwrite - whereas defined constants are never overwritten, for variables this argument
-	 * may aloow to update the values of already existing values (default is false)
+	 * may allow to update the values of already existing values (default is false)
 	 * @return true if there was at least one copied entity
 	 */
 	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target, StringList _varNames, Set<String> _constNames, boolean _overwrite)
@@ -3006,8 +3010,8 @@ public class Executor implements Runnable
 			try {
 				if (!_constNames.contains(varName) && _overwrite || _target.get(varName) == null) {
 					Object val = _source.get(_varNames.get(i));
-					// Here we try to avoid hat all specific values are boxed to
-					// Object.
+					/* Here we try to avoid hat all primitive values are boxed to
+					 * Object.*/
 					if (val instanceof Boolean) {
 						_target.set(varName, ((Boolean)val).booleanValue());
 						somethingCopied = true;

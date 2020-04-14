@@ -795,6 +795,7 @@ InputBoxRoot.btnCancel.text=Abbrechen
 InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
 InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
+InputBoxRoot.btnAddIncludable.text=Anfügen
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagrammeigenschaften

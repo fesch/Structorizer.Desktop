@@ -797,6 +797,7 @@ InputBoxRoot.btnCancel.text=Cancelar
 InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
 InputBoxRoot.btnAttributes.text=Propiedades
 InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
+InputBoxRoot.btnAddIncludable.text=Añadir
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Propiedades del diagrama
