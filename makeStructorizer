@@ -33,6 +33,7 @@ set -e
 #      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers (#665)
 #      Simon Sobisch                  2020-01-20   added handling for nostart argument,
 #                                                  default to detached start
+#      Kay Gürtzig                    2020-04-15   Copy command for logging.properties added
 #
 ################################################################################
 
@@ -152,6 +153,7 @@ cp lu/fisch/structorizer/parsers/*.egt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.nsd ../bin/lu/fisch/structorizer/parsers/
+cp lu/fisch/structorizer/*.properties
 echo "Done"
 
 if test -n "$start_compiled"; then
