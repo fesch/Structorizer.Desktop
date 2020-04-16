@@ -4812,6 +4812,7 @@ public class COBOLParser extends CodeParser
 				prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
 			}
 			//Close the input stream
+			br.close();
 			in.close();
 
 			//System.out.println(srcCode);

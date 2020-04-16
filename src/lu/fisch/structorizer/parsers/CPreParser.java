@@ -76,7 +76,6 @@ import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
-import lu.fisch.structorizer.parsers.CodeParser.ParserCancelled;
 import lu.fisch.utils.StringList;
 
 /**
@@ -516,6 +515,7 @@ public abstract class CPreParser extends CodeParser
 				return true;
 			}
 			finally {
+				br.close();
 				in.close();
 			}
 		}
