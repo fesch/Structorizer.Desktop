@@ -99,6 +99,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *      Kay Gürtzig     2020-04-20      Issue #851/1 Insertion of declaration for auxiliary variables
  *                                      Issue #851/4 Provisional implementation of SORT statement import
+ *                                      Issue #851/5 Simple solution for PERFORM ... THRU ... call spans
  *
  ******************************************************************************************************
  *
@@ -3169,7 +3170,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_TERM_OR_DOT_END_PERFORM                                               = 1356;  // <term_or_dot> ::= 'END_PERFORM'
 //		final int PROD_TERM_OR_DOT_TOK_DOT                                                   = 1357;  // <term_or_dot> ::= 'TOK_DOT'
 //		final int PROD_PERFORM_PROCEDURE                                                     = 1358;  // <perform_procedure> ::= <procedure_name>
-//		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
+		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
 		final int PROD_PERFORM_OPTION                                                        = 1360;  // <perform_option> ::=
 		final int PROD_PERFORM_OPTION_TIMES                                                  = 1361;  // <perform_option> ::= <id_or_lit_or_length_or_func> TIMES
 		final int PROD_PERFORM_OPTION_FOREVER                                                = 1362;  // <perform_option> ::= FOREVER
@@ -7811,11 +7812,14 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	// START KGU#848/KGU#849 2020-02-20: Issue #851 We need this for SORT as well and have to cope with THRU
 	/**
-	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
-	 * @param _reduction - the top Reduction of the parsed PERFORM statement
+	 * Builds a Call element from the PERFORM statement for {@link RuleConstants#PROD_PERFORM_BODY}
+	 * represented by {@code _reduction}.
+	 * @param _reduction - the top {@link Reduction} of a parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * @see {@link #buildPerformCall1(Reduction, Subqueue)}
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_body> ::= <perform_procedure> <perform_option>
@@ -7825,36 +7829,54 @@ public class COBOLParser extends CodeParser
 		
 	/**
 	 * Builds a Call element for an internal procedure call represented by {@code _reduction}.
-	 * @param _reduction - a Reduction with head <perform_procedure>
+	 * @param _reduction - a {@link Reduction} with head {@code <perform_procedure>}
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * @see {@link #buildPerformCall(Reduction, Subqueue)}
 	 */
 	private final Call buildPerformCall1(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_procedure> ::= <procedure_name>
 		// <perform_procedure> ::= <procedure_name> THRU <procedure_name>
-		/* FIXME: We must handle the case of a THRU consruct - in this case we will
-		 * have to generate a series of calls later on
+		/* FIXME: We must handle the case of a THRU construct - in this case we will
+		 * have to generate a series of calls later on. An idea would be to insert
+		 * both calls into the same element such that this can trigger the search for
+		 * the remaining procedures between the two.
 		 */
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
-		String name = this.getContent_R(_reduction, "").trim();
-		if (Character.isDigit(name.charAt(0))) {
-			name = "sub" + name;
+		StringList content = new StringList();
+		StringList names = new StringList();
+		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_PROCEDURE_THRU) {
+			// First get the second name
+			names.add(this.getContent_R(_reduction.get(2).asReduction(), "").trim());
+			_reduction = _reduction.get(0).asReduction();
 		}
-		String content = name + "()";
-		Call dummyCall = new Call(content);
+		names.add(this.getContent_R(_reduction, "").trim());
+		for (int i = 0; i < names.count(); i++) {
+			String name = names.get(i);
+			if (Character.isDigit(name.charAt(0))) {
+				name = "sub" + name;
+				names.set(i, name);
+			}
+			content.add(name + "()");
+		}
+		Call dummyCall = new Call(content.reverse());
 		dummyCall.setColor(Color.RED);
 		dummyCall.getComment().add("This was a call of an internal section or paragraph");
 		_parentNode.addElement(dummyCall);
-		// Now we register the call for later linking
-		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
-		if (otherCalls == null) {
-			otherCalls = new LinkedList<Call>();
-			this.internalCalls.put(name.toLowerCase(), otherCalls);
+		// Now we register the call(s) for later linking
+		for (int i = names.count() - 1; i >= 0; i--) {
+			String name = names.get(i);
+			LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
+			if (otherCalls == null) {
+				otherCalls = new LinkedList<Call>();
+				this.internalCalls.put(name.toLowerCase(), otherCalls);
+			}
+			otherCalls.add(dummyCall);
 		}
-		otherCalls.add(dummyCall);
 		return dummyCall;
 	}
+	// END KGU#848/KGU#849 2020-04-20
 
 	/**
 	 * Builds Case elements or nested Alternatives from the EVALUATE statement
@@ -9699,6 +9721,10 @@ public class COBOLParser extends CodeParser
 		// Hence update the procedureList before elements are going to be moved.
 		finishProcedureList();
 
+		// START KGU#849 2020-04-20: Issue #851/5 We will now have to face span calls
+		HashMap<Call, StringList> thruCallMap = new HashMap<Call, StringList>();
+		// END KGU#849 2020-04-20
+		
 		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
@@ -9719,7 +9745,13 @@ public class COBOLParser extends CodeParser
 				}
 				// START KGU#464 2017-12-04: Bugfix #475 - Check if there are EXIT PARAGRAPH or EXIT SECTION Jumps
 				//if (clients != null) {
-				if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				// START KGU#849 2020-04-20: Issue #851/5 We must handle open THRU calls
+				//if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				if (clients != null 
+						|| sop.isSection && !sop.sectionExits.isEmpty() 
+						|| !sop.isSection && !sop.paragraphExits.isEmpty()
+						|| !thruCallMap.isEmpty()) {
+				// END KGU#849 2020-04-20
 				// END KGU#464 2017-12-04
 					// No longer bothering to detect arguments and results, we may simply move the elements
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
@@ -9754,11 +9786,34 @@ public class COBOLParser extends CodeParser
 						}
 					}
 					// END KGU#464 2017-12-03
+					// START KGU#849 2020-04-20: Issue #851/5 add the proc call to all open span calls
+					for (StringList procList: thruCallMap.values()) {
+						// FIXME: Possibly this should be reduced to certain sop level?
+						procList.add(callText);
+					}
+					// END KGU#849 2020-04-20
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
 					for (Call client: clients) {
 						// We may have to care for an includable Root that defines all necessary variables
-						client.setText(callText);
+						// START KGU#849 2020-04-20: Issue #851/5
+						//client.setText(callText);
+						if (client.getText().count() > 1) {
+							StringList procList = thruCallMap.get(client);
+							if (procList != null) {
+								// We have found the second reference, so we can now place the actual call list
+								client.setText(procList.reverse());
+								thruCallMap.remove(client);
+							}
+							else {
+								// Let the span lurk for further procedures
+								thruCallMap.put(client, StringList.getNew(callText));
+							}
+						}
+						else {
+							client.setText(callText);
+						}
+						// END KGU#849 2020-04-20
 						client.setColor(colorMisc);	// No longer needs to be red
 						client.disabled = false;
 					}
