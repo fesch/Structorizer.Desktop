@@ -98,6 +98,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
  *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
  *      Kay Gürtzig     2020-04-20      Issue #851/1 Insertion of declaration for auxiliary variables
+ *                                      Issue #851/4 Provisional implementation of SORT statement import
  *
  ******************************************************************************************************
  *
@@ -3302,7 +3303,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE                                         = 1490;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_TRUE'
 		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE                                        = 1491;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_FALSE'
 //		final int PROD_SET_LAST_EXCEPTION_TO_OFF_LAST_EXCEPTION_TO_OFF                       = 1492;  // <set_last_exception_to_off> ::= LAST EXCEPTION TO OFF
-//		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
+		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
 //		final int PROD_SORT_BODY                                                             = 1494;  // <sort_body> ::= <table_identifier> <sort_key_list> <_sort_duplicates> <sort_collating> <sort_input> <sort_output>
 //		final int PROD_SORT_KEY_LIST                                                         = 1495;  // <sort_key_list> ::=
 //		final int PROD_SORT_KEY_LIST2                                                        = 1496;  // <sort_key_list> ::= <sort_key_list> <_on> <ascending_or_descending> <_key> <_key_list>
@@ -3313,11 +3314,11 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SORT_COLLATING                                                        = 1501;  // <sort_collating> ::=
 //		final int PROD_SORT_COLLATING2                                                       = 1502;  // <sort_collating> ::= <coll_sequence> <_is> <reference>
 //		final int PROD_SORT_INPUT                                                            = 1503;  // <sort_input> ::=
-//		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
-//		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
+		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
 //		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::=
-//		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
-//		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
+		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
 		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
 //		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
 //		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::=
@@ -4105,6 +4106,7 @@ public class COBOLParser extends CodeParser
 			RuleConstants.PROD_GOBACK_STATEMENT_GOBACK,
 			RuleConstants.PROD_STOP_STATEMENT_STOP,
 			RuleConstants.PROD_GOTO_STATEMENT_GO,
+			RuleConstants.PROD_SORT_STATEMENT_SORT,
 			RuleConstants.PROD_STRING_STATEMENT_STRING,
 			RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING,
 			RuleConstants.PROD_SEARCH_STATEMENT_SEARCH,
@@ -5365,7 +5367,7 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			else {
-				System.err.println("Element number discrepancy: Data section end " + elNo + " > " + root.children.getSize());
+				getLogger().log(Level.WARNING, "Element number discrepancy: Paragraph start " + elNo + " > " + root.children.getSize() + " (# elements)");
 				elNo = root.children.getSize();
 			}
 			if (declEl == null) {
@@ -5682,6 +5684,11 @@ public class COBOLParser extends CodeParser
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 		}
 		break;
+		// START KGU#848 2020-04-20: Issue #851/4
+		case RuleConstants.PROD_SORT_STATEMENT_SORT:
+			this.importSort(_reduction, _parentNode);	// sort body
+			break;
+		// END KGU#848 2020-04-20
 		case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
 			this.importFileControl(_reduction, _parentNode);
 			break;
@@ -5965,6 +5972,100 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}
+
+	// 
+	/**
+	 * Provisionally imports a SORT statement as some dummy construct ensuring
+	 * the potentially referenced import and export procedures get called
+	 * @param _reduction - the reduction of the second token
+	 * @param _parentNode - the {@link Subqueue} the elements are to be appended to
+	 * @throws ParserCancelled 
+	 */
+	private void importSort(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
+		/* This can be either a file-based sort or a table sort.
+		 * We will fake some procedure call "sortFile" or "sortArray"
+		 * that takes
+		 * 1. the target variable,
+		 * 2. a string array with key specifications (each entry is a name,
+		 *    followed by '+' or '-' for ascending/descending),
+		 * 3. a flag for duplicates (true by default)
+		 * 4. a flag or collating (whatever that may mean).
+		 * For sortFile there are two possibilities: Either input and output
+		 * procedures are given - then their calls will precede and follow
+		 * the fileSort call, respectively -, or file name lists are given,
+		 * then these will be additional arguments.
+		 */
+		Reduction secRed = _reduction.get(1).asReduction();
+		// Name of the sort file or the table (array)
+		String targetId = this.getContent_R(secRed.get(0).asReduction(), "");
+		// We might like to find out whether it is a sort file or a table
+		CobVar target = this.currentProg.getCobVar(targetId);
+		if (target != null) {
+			targetId = target.getQualifiedName();
+		}
+		// Extract the key list (first rough approach: just get it as string)
+		String keyList = "\"" + this.getContent_R(secRed.get(1).asReduction(), "") + "\"";
+		String dupl = "", coll = "";
+		Token token = secRed.get(2);
+		if (token.getType() == SymbolType.NON_TERMINAL) {
+			dupl = this.getContent_R(token.asReduction(), "").trim();
+		}
+		else {
+			dupl = token.asString();
+		}
+		token = secRed.get(3);
+		if (token.asReduction().size() > 0) {
+			coll = this.getContent_R(token.asReduction().get(2).asReduction(), "");
+		}
+		String proc = "sortArray";
+		StringList usingFiles = null, givingFiles = null;
+		Reduction inpProcRed = null, outProcRed = null;
+		Reduction redInp = secRed.get(4).asReduction();
+		switch (redInp.getParent().getTableIndex()) {
+		case RuleConstants.PROD_SORT_INPUT_USING:
+			usingFiles = StringList.explode(this.getContent_R(redInp.get(1).asReduction(), ""), " ");
+			proc = "sortFile";
+			break;
+		case RuleConstants.PROD_SORT_INPUT_INPUT_PROCEDURE:
+			inpProcRed = redInp.get(3).asReduction();
+			proc = "sortFile";
+			break;
+		}
+		Reduction redOut = secRed.get(5).asReduction();
+		switch (redOut.getParent().getTableIndex()) {
+		case RuleConstants.PROD_SORT_OUTPUT_GIVING:
+			givingFiles = StringList.explode(this.getContent_R(redOut.get(1).asReduction(), ""), " ");
+			proc = "sortFile";
+			break;
+		case RuleConstants.PROD_SORT_OUTPUT_OUTPUT_PROCEDURE:
+			outProcRed = redOut.get(3).asReduction();
+			proc = "sortFile";
+			break;
+		}
+		proc += "(" + targetId + ", " + keyList + ", "
+				+ (dupl.trim().isEmpty() ? "false" : "true") + ", \""
+				+ coll + "\"";
+		if (usingFiles != null || givingFiles != null ) {
+			if (usingFiles == null) { usingFiles = new StringList(); }
+			if (givingFiles == null) { givingFiles = new StringList(); }
+			proc += ", {" + usingFiles.concatenate(", ") + "}, {"
+					+ givingFiles.concatenate(", ") + "}";
+		}
+		proc += ")";
+		if (inpProcRed != null) {
+			this.buildPerformCall1(inpProcRed, _parentNode);
+		}
+		Call call = new Call(proc);
+		call.setColor(Color.RED);
+		this.equipWithSourceComment(call, _reduction);
+		call.getComment().add("PROVISIONALLY IMPORTED FROM:");
+		call.getComment().add(this.getContent_R(_reduction, ""));
+		_parentNode.addElement(call);
+		if (outProcRed != null) {
+			this.buildPerformCall1(outProcRed, _parentNode);
+		}
+	}
+	// END KGU#848 2020-04-20
 
 	// START KGU#614 2018-12-14: Issue #631
 	/**
@@ -7718,16 +7819,31 @@ public class COBOLParser extends CodeParser
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_body> ::= <perform_procedure> <perform_option>
+		Call dummy = buildPerformCall1(_reduction.get(0).asReduction(), _parentNode);
+		this.equipWithSourceComment(dummy, _reduction);
+	}
+		
+	/**
+	 * Builds a Call element for an internal procedure call represented by {@code _reduction}.
+	 * @param _reduction - a Reduction with head <perform_procedure>
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled
+	 */
+	private final Call buildPerformCall1(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
+		// <perform_procedure> ::= <procedure_name>
+		// <perform_procedure> ::= <procedure_name> THRU <procedure_name>
+		/* FIXME: We must handle the case of a THRU consruct - in this case we will
+		 * have to generate a series of calls later on
+		 */
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
-		String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
+		String name = this.getContent_R(_reduction, "").trim();
 		if (Character.isDigit(name.charAt(0))) {
 			name = "sub" + name;
 		}
 		String content = name + "()";
 		Call dummyCall = new Call(content);
 		dummyCall.setColor(Color.RED);
-		this.equipWithSourceComment(dummyCall, _reduction);
 		dummyCall.getComment().add("This was a call of an internal section or paragraph");
 		_parentNode.addElement(dummyCall);
 		// Now we register the call for later linking
@@ -7737,6 +7853,7 @@ public class COBOLParser extends CodeParser
 			this.internalCalls.put(name.toLowerCase(), otherCalls);
 		}
 		otherCalls.add(dummyCall);
+		return dummyCall;
 	}
 
 	/**
