@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-08 (2020-04-15)
+Current development version: 3.30-08 (2020-04-20)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -95,6 +95,7 @@ Current development version: 3.30-08 (2020-04-15)
 - 08: Bugfix #847: Inconsistent handling of upper/lowercase operand names <2>
 - 08: Bugfix #848: Incomplete variable synchronisation with Includables <2>
 - 08: Bugfix #849: New log file name scheme change of release 3.30 ensured <2>
+- 08: Issue #851/1: Declarations for auxiliary variables on COBOL import <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -97,6 +97,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-04/07   Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
  *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
  *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
+ *      Kay Gürtzig     2020-04-20      Issue #851/1 Insertion of declaration for auxiliary variables
  *
  ******************************************************************************************************
  *
@@ -4720,7 +4721,7 @@ public class COBOLParser extends CodeParser
 			length = _length;
 		}
 	};
-
+	
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
 	 * file, filters it and writes a new temporary file "Structorizer.COB", which is
@@ -4811,9 +4812,10 @@ public class COBOLParser extends CodeParser
 				// END KGU#605 2018-10-30
 				prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
 			}
-			//Close the input stream
+			// Close the input stream
+			//in.close();
+			// Close the buffered reader
 			br.close();
-			in.close();
 
 			//System.out.println(srcCode);
 
@@ -5332,6 +5334,52 @@ public class COBOLParser extends CodeParser
 	private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
 	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
 	// END KGU#402 2019-03-07
+
+	// START KGU#847 2020-04-20: Issue #851 Mechanism to ensure sensible declarations for generated variables
+	private static final String AUX_VAR_DECL_COMMENT = "Auxiliary variables introducd by Structorizer on parsing";
+
+	/**
+	 * Prepares a declaration for varable {@code _varName} and associates
+	 * it to the current section or paragraph (as it is meant to be local)
+	 * @param _varName - name of the variable to be declared
+	 * @param _typeSpec - the Structorizer-compatible type specification 
+	 */
+	private void insertAuxVarDeclaration(String _varName, String _typeSpec) {
+		if (this.optionImportVarDecl) {
+			String declContent = "var " + _varName + ": " + _typeSpec;
+			/* We want to ensure that the declaration remains with the local
+			 * set, so we insert it at the beginning of the curent paragraph
+			 * or section
+			 */
+			int elNo = this.dataSectionEnds.get(root);	// This is just a fallback
+			SectionOrParagraph lastSoP = this.procedureList.peekFirst();
+			if (lastSoP != null && lastSoP.endsBefore < 0) {
+				// position of the first actual element of the SoP (after the pseudo call)
+				elNo = lastSoP.startsAt;
+			}
+			Instruction declEl = null;
+			if (root.children.getSize() >= elNo) {
+				Element el0 = root.children.getElement(elNo);
+				if ((el0 instanceof Instruction) && el0.getComment().contains(AUX_VAR_DECL_COMMENT)) {
+					declEl = (Instruction)el0;
+				}
+			}
+			else {
+				System.err.println("Element number discrepancy: Data section end " + elNo + " > " + root.children.getSize());
+				elNo = root.children.getSize();
+			}
+			if (declEl == null) {
+				declEl = new Instruction(declContent);
+				declEl.setComment(AUX_VAR_DECL_COMMENT);
+				declEl.setColor(colorMisc);
+				root.children.insertElementAt(declEl, elNo);
+			}
+			else {
+				declEl.getText().add(declContent);
+			}
+		}
+	}
+	// END KGU#847 2020-04-20
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
@@ -6031,7 +6079,7 @@ public class COBOLParser extends CodeParser
 		if (nClauses == modes.count() && nClauses == subjects.count() && nClauses == afters.count() && nClauses == befores.count()) {
 			Call call = new Call("");
 			String hash = Integer.toHexString(call.hashCode());
-			String counter = "counts" + hash;
+			String counter = "counts_" + hash;
 			StringList content = new StringList();
 			content.add("INSPECT_TALLYING(" + _target + ",\\");
 			content.add(counter + ",\\");
@@ -6065,6 +6113,9 @@ public class COBOLParser extends CodeParser
 			el = new Instruction(content);
 			el.setColor(colorMisc);
 			_parentNode.addElement(el);
+			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
+			insertAuxVarDeclaration(counter, "int[" + counters.count() + "]");
+			// END KGU#847 2020-04-19
 			isDone = true;
 		}
 		return isDone;
@@ -6386,13 +6437,16 @@ public class COBOLParser extends CodeParser
 			// Create the WHILE element and the loop initialisation Instruction. Since the arrays length
 			// is in no case a valid index, the loop must end before the array length.
 			While wLoop = new While(indexVar.getName() + " < length(" + table.getQualifiedName() + ")");
-			String testVarName = "wasFound" + Integer.toHexString(wLoop.hashCode());
+			String testVarName = "wasFound_" + Integer.toHexString(wLoop.hashCode());
 			wLoop.setText(wLoop.getText().getText() + " and not " + testVarName);
 			Instruction testInit = new Instruction(testVarName + " <- false");
 			testInit.setColor(colorMisc);
 			wLoop.setColor(colorMisc);
 			_parentNode.addElement(testInit);
 			_parentNode.addElement(this.equipWithSourceComment(wLoop, _reduction));
+			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
+			insertAuxVarDeclaration(testVarName, "boolean");
+			// END KGU#847 2020-04-19
 			// Now convert the WHEN clauses and add the resulting Alternatives to the loop body
 			Reduction redWhens = redBody.get(3).asReduction();
 			// Alternatively, we could use a Jump "leave" here (advantage: index won't be incremented, drawback: unstructured code)
@@ -6462,7 +6516,7 @@ public class COBOLParser extends CodeParser
 		// and then decide if their concatenation might fit into a single line.
 		StringList assignments = new StringList();
 		StringList preparations = new StringList();
-		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables
+		String suffix = "_" + Integer.toHexString(secRed.hashCode());		// unique number as suffix for auxiliary variables
 		Reduction itemlRed = secRed.get(0).asReduction();
 		do {
 			// The first assigment (produced as the last one here) will just overwrite the target variable
@@ -6496,6 +6550,9 @@ public class COBOLParser extends CodeParser
 			if (delimiter != null) {
 				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
 				asgnmt += suffix + "[0]";
+				// START KGU#847 2020-04-19 Issue #851/1: insert declarations for auxiliary variables
+				insertAuxVarDeclaration(itemId + suffix, "array of string");
+				// END KGU#847 2020-04-19				
 			}
 			assignments.add(asgnmt);
 		} while (itemlRed != null);
@@ -6587,10 +6644,10 @@ public class COBOLParser extends CodeParser
 		}
 		// Now we have all information together and may compose the resulting algorithm
 		// Since this is significantly easier for a single separator we start with this
-		String suffix = Integer.toHexString(_reduction.hashCode());
+		String suffix = "_" + Integer.toHexString(_reduction.hashCode());
 		if (delimiters.count() >= 1) {
-			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
-			String indexVar = "index_" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
+			String content = "unstring"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
+			String indexVar = "index" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
 			Instruction instr = new Instruction(content);
 			instr.setColor(colorMisc);
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
@@ -6600,23 +6657,33 @@ public class COBOLParser extends CodeParser
 				instr = new Instruction(indexVar + " <- 0");
 				instr.setColor(colorMisc);
 				_parentNode.addElement(instr);
-				For loop = new For("part_" + suffix, "unstring_" + suffix + "_" + (1 - i % 2));
+				For loop = new For("part" + suffix, "unstring" + suffix + "_" + (1 - i % 2));
 				loop.setColor(colorMisc);
 				_parentNode.addElement(loop);
-				instr = new Instruction("split_" + suffix + " <- split(part_" + suffix + ", " +delimiters.get(i) + ")");
+				instr = new Instruction("split" + suffix + " <- split(part" + suffix + ", " +delimiters.get(i) + ")");
 				instr.setColor(colorMisc);
 				loop.getBody().addElement(instr);
-				For loop1 = new For("item_" + suffix, "split_" + suffix);
+				For loop1 = new For("item" + suffix, "split" + suffix);
 				loop1.setColor(colorMisc);
 				loop.getBody().addElement(loop1);
-				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
+				instr = new Instruction("unstring" + suffix + "_" + (i % 2) + "[index" + suffix + "] <- item" + suffix);
 				instr.setColor(colorMisc);
-				instr.getText().add("inc(index_" + suffix + ", 1)");
+				instr.getText().add("inc(index" + suffix + ", 1)");
 				loop1.getBody().addElement(instr);
 			}
+			// START KGU#847 2020-04-19: Issue #851/1 insert declarations for auxiliary variables
+			if (delimiters.count() > 1) {
+				insertAuxVarDeclaration(indexVar, "int");
+				insertAuxVarDeclaration("part" + suffix, "int");
+				insertAuxVarDeclaration("split" + suffix, "int");
+				insertAuxVarDeclaration("item" + suffix, "int");
+				insertAuxVarDeclaration("unstring" + suffix + "_1", "string[" + targets.size() + "]");
+			}
+			insertAuxVarDeclaration("unstring" + suffix + "_0", "string[" + targets.size() + "]");
+			// END KGU#847 2020-04-19
 			suffix += "_" + (1 - delimiters.count() % 2);
 			int index = 0;
-			// FIXME Handling of ALL clausues is still unclear
+			// FIXME Handling of ALL clauses is still unclear
 			if (!ignoreUnstringAllClauses) {
 				instr = new Instruction(indexVar + " <- 0");
 				instr.setColor(colorMisc);
@@ -6627,20 +6694,20 @@ public class COBOLParser extends CodeParser
 				// The trouble here is: we don't know anymore, which empty part resulted from which
 				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
 				// complex detection mechanism which seems beyond reasonable efforts.
-				String expr = "unstring_" + suffix + "[" + index + "]";
+				String expr = "unstring" + suffix + "[" + index + "]";
 				boolean all = (allFlags & 1) != 0;
 				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
 				// FIXME Handling of ALL clauses is still not correct (see remark above)
 				if (!ignoreUnstringAllClauses) {
 					if (all) {
-						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
+						While loop = new While("(" + indexVar + " < length(unstring" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
 						loop.setColor(colorMisc);
 						_parentNode.addElement(loop);
 						instr = new Instruction("inc(" + indexVar + ", 1)");
 						instr.setColor(colorMisc);
 						loop.getBody().addElement(instr);
 					}
-					expr = "unstring_" + suffix + "[" + indexVar + "]";
+					expr = "unstring" + suffix + "[" + indexVar + "]";
 				}
 
 				StringList assignments = new StringList();
@@ -6665,7 +6732,7 @@ public class COBOLParser extends CodeParser
 				instr.setColor(colorMisc);
 				// FIXME Handling of ALL clausues is still unclear
 				String indexStr = (ignoreUnstringAllClauses ? Integer.toString(index) : indexVar);
-				Alternative alt = new Alternative("length(unstring_" + suffix + ") > " + indexStr);
+				Alternative alt = new Alternative("length(unstring" + suffix + ") > " + indexStr);
 				alt.setColor(colorMisc);
 				_parentNode.addElement(alt);
 				alt.qTrue.addElement(instr);
@@ -7507,9 +7574,13 @@ public class COBOLParser extends CodeParser
 				// Prepare a generic variable name
 				content = this.getContent_R(optRed.get(0).asReduction(), content);
 				loop = new For("varStructorizer", "1", content, 1);
+				String suffix = "_" + Integer.toHexString(loop.hashCode());
 				this.equipWithSourceComment((For)loop, _reduction);
 				content = ((For)loop).getText().getLongString();
-				((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+				((For)loop).setText(content.replace("varStructorizer", "var" + suffix));
+				// START KGU#847 2020-04-19: #851/1 declare the auxiliary variable
+				insertAuxVarDeclaration("var" + suffix, "int");
+				// END KGU#847 2020-04-19
 			}
 			break;
 		case RuleConstants.PROD_PERFORM_OPTION_VARYING:	// <perform_option> ::= <perform_test> VARYING <perform_varying_list>
@@ -9657,6 +9728,7 @@ public class COBOLParser extends CodeParser
 		proc.setText(callText);
 		proc.setProgram(false);
 		int nElements = sop.getSize();
+		
 		//System.out.println("==== Extracting " + sop.name + " ===...");
 		for (int i = 0; i < nElements; i++) {
 			proc.children.addElement(sop.parent.getElement(sop.startsAt));
