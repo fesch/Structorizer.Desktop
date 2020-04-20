@@ -1325,7 +1325,7 @@ public class CGenerator extends Generator {
 							if (elemType != null && elemType.startsWith("@")) {
 								elemType = elemType.substring(1);
 							}
-							// START KGU #784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
+							// START KGU#784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
 							int posIdx = codeLine.indexOf(varName) + varName.length();
 							String indices = codeLine.substring(posIdx).trim();
 							while (elemType.startsWith("@") && indices.startsWith("[")) {
@@ -1345,7 +1345,7 @@ public class CGenerator extends Generator {
 									indices = indexList.get(0).substring(1);
 								}
 							}
-							// END KGU #784 2019-12-02
+							// END KGU#784 2019-12-02
 						}
 						expr = this.transformOrGenerateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
 						if (expr == null) {

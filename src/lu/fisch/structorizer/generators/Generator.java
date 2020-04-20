@@ -2624,6 +2624,58 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#236 2016-08-10
 
+	// START KGU#395 2020-04-19: Enh. #357 Introduced for COBOLGenerator but of more general use
+	/**
+	 * Checks whether the given tokens represent a variable (i.e. some sort of
+	 * "lvalue"). If _mayBeQualified is true then a list of all sorts of access
+	 * qualifiers to the right are allowed (i.e. index access [...], component
+	 * access .&lt;name&gt;).<br/>
+	 * This is a mere syntactic check i.e. whether the occurring qualifiers meet
+	 * the structure of the variable is not verified!
+	 * @param _tokens - the tokenized expression (without blanks!)
+	 * @param _mayBeQualified - whether qualifiers are allowed (see above)
+	 * @return true if the expression is a variable
+	 */
+	protected boolean isVariable(StringList _tokens, boolean _mayBeQualified, HashMap<String, TypeMapEntry> _typeMap) {
+		boolean isVar = false;
+		String token0 = null;
+		if (!_tokens.isEmpty() && Function.testIdentifier(token0 = _tokens.get(0), null)
+				&& (varNames.contains(token0) || _typeMap != null && _typeMap.containsKey(token0))) {
+			if (_mayBeQualified) {
+				isVar = true;
+				_tokens = _tokens.subSequence(1, _tokens.count());
+				while (isVar && _tokens.count() > 1 && ".[".contains(token0 = _tokens.get(0))) {
+					if (token0.equals(".") && Function.testIdentifier(_tokens.get(1), null)) {
+						// Okay, is a component access qualifier
+						_tokens.remove(0, 2);
+					}
+					else if (token0.equals("[") && _tokens.contains("]")) {
+						// Should be an index access
+						StringList indices = Element.splitExpressionList(_tokens.subSequence(1, _tokens.count()), ",", true);
+						String tail = indices.get(indices.count()-1);
+						// FIXME do we allow more than one index expression?
+						if (!tail.startsWith("]")) {
+							isVar = false;
+						}
+						else {
+							_tokens = Element.splitLexically(tail.substring(1), true);
+						}
+					}
+					else {
+						isVar = false;
+					}
+				}
+				// Okay if completely consumed
+				isVar = _tokens.isEmpty();
+			}
+			else {
+				isVar = _tokens.count() == 1;
+			}
+		}
+		return isVar;
+	}
+	// END KGU#395 2020-04-19
+	
 	/**
 	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class.
