@@ -6648,15 +6648,27 @@ public class COBOLParser extends CodeParser
 					delimiter = null;	// this is a dummy information, not delimiting at all
 				}
 			}
+			String tail = "";
+			// START KGU#850 2020-04-20: If itemId is qualified then we will decompose it
+			int posQual = itemId.indexOf(".");
+			if (posQual > 0) {
+				tail = itemId.substring(posQual);
+				itemId = itemId.substring(0, posQual);
+			}
+			if ((posQual = itemId.indexOf("[")) > 0) {
+				tail = itemId.substring(posQual) + tail;
+				itemId = itemId.substring(0, posQual);
+			}
+			// END KGU#850 2020-04-20
 			asgnmt += itemId;
 			if (delimiter != null) {
-				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
-				asgnmt += suffix + "[0]";
+				preparations.add(itemId + suffix + " <- split(" + itemId + tail + ", " + delimiter + ")");
+				tail = suffix + "[0]";
 				// START KGU#847 2020-04-19 Issue #851/1: insert declarations for auxiliary variables
 				insertAuxVarDeclaration(itemId + suffix, "array of string");
 				// END KGU#847 2020-04-19				
 			}
-			assignments.add(asgnmt);
+			assignments.add(asgnmt + tail);
 		} while (itemlRed != null);
 		// Now if there was a start pointer, an additional preparation is necessary: Replace the target
 		// variable by its prefix left of the pointer (otherwise it will completely be overwritten)
