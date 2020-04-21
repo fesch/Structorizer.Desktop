@@ -91,6 +91,8 @@ Current development version: 3.30-08 (2020-04-22)
 - 07: Bugfix #841: Analyser check against missing parameter list did not work <2>
 - 07: Bugfix #843: Handling of global declarations in PHP export was missing <2>
 - 07: Bugfix #844: Sensible export of arrays and record types/vars to PHP <2>
+- 08: Issue #828/#836: The fallback to all diagrams of an arr file on batch export
+      without specified entry points or contained programs hadn't worked <2>
 - 08: Enh. #842: Improved usability of the include list editor [H.-U. Hölscher]2
 - 08: Bugfix #847: Inconsistent handling of upper/lowercase operand names <2>
 - 08: Bugfix #848: Incomplete variable synchronisation with Includables <2>

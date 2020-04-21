@@ -77,6 +77,7 @@
  *                                      check for contained main diagrams as potential tree roots.
  *      Kay Gürtzig     2020-04-22      Bugfix #853: If both the arr file path and the contained nsd file paths
  *                                      are relative then the batch export failed
+ *                                      Issue #828/#836 - The fallback to all roots hadn't worked for arr files
  *
  ******************************************************************************************************
  *
@@ -792,7 +793,10 @@ public class Structorizer
 				if (entry.name == null) {
 					entry.getRoot(archivar);	// This may set entry.name!
 				}
-				if (entry.name != null && entry.minArgs == -1) {
+				// START KGU#815/KGU#824 2020-04-22: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
+				//if (entry.name != null && entry.minArgs == -1) {
+				if (entry.name != null) {
+				// END KGU#815/KGU#824 2020-04-22
 					root = entry.getRoot(archivar);
 					// START KGU#815/KGU#824 2020-03-23: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
 					//if (root != null && root.isProgram()) {
