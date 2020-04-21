@@ -75,6 +75,8 @@
  *                                      group export: Without specified entry points all contained diagrams
  *                                      will be qualified for export. Remaining difference: We still first
  *                                      check for contained main diagrams as potential tree roots.
+ *      Kay Gürtzig     2020-04-22      Bugfix #853: If both the arr file path and the contained nsd file paths
+ *                                      are relative then the batch export failed
  *
  ******************************************************************************************************
  *
@@ -613,6 +615,11 @@ public class Structorizer
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 				else if (f.exists() && (ArrFilter.isArr(arrSpec.get(0)) || (isArrz = ArrZipFilter.isArr(arrSpec.get(0))))) {
 					arrSpec.remove(0);
+					// START KGU#851 2020-04-22: Bugfix #853 archivar must be able to derive the parent directory
+					if (!isArrz && !f.isAbsolute()) {
+						f = f.getAbsoluteFile();
+					}
+					// END KGU#851 2020-04-22
 					if (!addExportPool(pools, archivar, arrSpec, f, isArrz)) {
 						System.err.println("*** No starting diagrams in arrangement " + f.getAbsolutePath() + " found. Skipped.");
 					}
