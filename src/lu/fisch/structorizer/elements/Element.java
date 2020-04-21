@@ -556,10 +556,10 @@ public abstract class Element {
 	// Remark: It would not be a good idea to define the Matchers here because these aren't really constant but must be
 	// reset for any new string which is likely to cause severe concurrency trouble as the patterns are used on drawing etc.
 	private static final Pattern STRING_PATTERN = Pattern.compile("(^\\\".*\\\"$)|(^\\\'.*\\\'$)");
-	private static final Pattern INC_PATTERN1 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)");
-    private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc")+"[(](.*?)[)](.*?)");
-    private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)");
-    private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec")+"[(](.*?)[)](.*?)");
+	private static final Pattern INC_PATTERN1 = Pattern.compile(BString.breakup("inc", true)+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc", true)+"[(](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[,](.*?)[)](.*?)");
+    private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[)](.*?)");
 	// END KGU#575 2018-09-17
 
     // START KGU#425 2017-09-29: Lexical core mechanisms revised

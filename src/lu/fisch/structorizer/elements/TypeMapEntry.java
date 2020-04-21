@@ -106,7 +106,7 @@ public class TypeMapEntry {
 	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
 	// START KGU#542 2019-11-17: Enh. #739
-	public static final Matcher MATCHER_ENUM = Pattern.compile("^" + BString.breakup("enum") 
+	public static final Matcher MATCHER_ENUM = Pattern.compile("^" + BString.breakup("enum", true) 
 	+ "\\s*[{]\\s*[A-Za-z_][A-Za-z_0-9]*\\s*([=]\\s*[^=,}]*?)?(,\\s*[A-Za-z_][A-Za-z_0-9]*(\\s*[=]\\s*[^=,}]*?)?)*\\s*[}]$").matcher("");
 	// END KGU#542 2019-11-17
 	
@@ -153,7 +153,7 @@ public class TypeMapEntry {
 			definingElement = _element;
 			lineNo = _lineNo;
 			// FIXME: shouldn't we apply the ARRAY_PATTERNs here?
-			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array") + "($|\\W.*)"));
+			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array", true) + "($|\\W.*)"));
 			if (isArray) {
 				this.setElementType();
 				this.setIndexRanges();
@@ -545,33 +545,33 @@ public class TypeMapEntry {
 	 */
 	public static String canonicalizeType(String type) {
 		// (copied from JavaGenerator.transformType()
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
-		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$1short$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int", true) + ")($|\\W.*)", "$1short$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int", true) + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long", true) + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort", true) + ")($|\\W.*)", "$1short$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int", true) + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long", true) + ")($|\\W.*)", "$1long$3");
 		// START KGU 2018-07-12
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned short") + ")($|\\W.*)", "$1short$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned short", true) + ")($|\\W.*)", "$1short$3");
 		// END KGU 2018-07-12
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
-		type = type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
-		type = type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
-		type = type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
-		type = type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
-		type = type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
-		type = type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
-		if (type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
-			type = type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char", true) + ")($|\\W.*)", "$1byte$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char", true) + ")($|\\W.*)", "$1byte$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned", true) + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt", true) + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("integer", true) + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong", true) + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longint", true) + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble", true) + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal", true) + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("real", true) + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat", true) + ")($|\\W.*)", "$1float$3");
+		type = type.replaceAll("(^|.*\\W)(C" + BString.breakup("har", true) + ")($|\\W.*)", "$1char$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("character", true) + ")($|\\W.*)", "$1char$3");
+		type = type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean", true) + ")($|\\W.*)", "$1boolean$3");
+		if (type.matches("(^|.*\\W)(" + BString.breakup("bool", true) + "[eE]?)(\\W.*|$)")) {
+			type = type.replaceAll("(^|.*\\W)(" + BString.breakup("bool", true) + "[eE]?)(\\W.*|$)", "$1boolean$3");
 		}
-		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1string$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string", true) + ")($|\\W.*)", "$1string$3");
 		return type;
 	}
 	

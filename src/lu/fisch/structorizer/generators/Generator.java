@@ -1979,7 +1979,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		String pattern = Matcher.quoteReplacement(keyword);
 		if (CodeParser.ignoreCase)
 		{
-			pattern = BString.breakup(pattern);
+			pattern = BString.breakup(pattern, true);
 		}
 		return pattern;
 	}

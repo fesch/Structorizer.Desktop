@@ -682,7 +682,7 @@ public class OberonGenerator extends Generator {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
 						// START KGU 2017-01-31: return must be capitalized here
-						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return"), true) + "($|\\W+.*)", "RETURN$1");
 						// END KGU 2017-01-31
 						// START KGU#261/KGU#504 2018-03-13: Enh. #259/#335, bugfix #521
 						//addCode(transline, _indent, isDisabled);

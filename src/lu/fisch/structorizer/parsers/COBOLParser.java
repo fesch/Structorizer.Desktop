@@ -7725,8 +7725,8 @@ public class COBOLParser extends CodeParser
 				}
 				catch (NumberFormatException ex) {}
 				if (step == 0
-						|| step > 0 && !cond.matches(BString.breakup(varName) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName))
-						|| step < 0 && !cond.matches(BString.breakup(varName) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName))
+						|| step > 0 && !cond.matches(BString.breakup(varName, false) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName, false))
+						|| step < 0 && !cond.matches(BString.breakup(varName, false) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName, false))
 						|| condTokens.contains("or")
 						|| condTokens.contains("and")
 						|| condTokens.contains("not")
@@ -7756,11 +7756,11 @@ public class COBOLParser extends CodeParser
 //					// TODO: We will have to convert the loop to a REPEAT loop
 //				}
 				else {
-					if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
-						cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
+					if (cond.matches(BString.breakup(varName, true) + "\\s* [<>] .*")) {
+						cond = cond.replaceAll(BString.breakup(varName, true) + "\\s* [<>] (.*)", "$1");
 					}
 					else {
-						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
+						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName, true), "$1");
 					}
 					loop = new For(varName, from, cond.trim(), step);
 					this.equipWithSourceComment((For)loop, _reduction);
@@ -8800,8 +8800,8 @@ public class COBOLParser extends CodeParser
 		}
 		// TODO We currently don't resolve the cond-name of "NOT cond-name"
 		cond += thruExpr;
-		if (cond.matches("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)")) {
-			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
+		if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
+			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
 		}
 		// bad check, the comparision can include the *text* " OF "!
 //		if (cond.contains(" OF ")) {
