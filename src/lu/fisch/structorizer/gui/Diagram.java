@@ -198,6 +198,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-03-03      Enh. #440: New method to support PapDesigner export
  *      Kay Gürtzig     2020-03-16/17   Enh. #828: New method to export an arrangement group
  *      Kay Gürtzig     2020-04-22      Enh. #855: New export options for array size / string length defaults
+ *      Kay Gürtzig     2020-04-23      Bugfix #856: Selective preference saving to file didn't work properly
  *
  ******************************************************************************************************
  *
@@ -10540,7 +10541,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!chkAll.isSelected()) {
 				i = 0;
 				for (String[] patterns: preferenceKeys.values()) {
-					if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
+					// START KGU#855 2020-04-23: Bugfix #856 didn't collect the correct items
+					//if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
+					boolean isSelected = chkCategories[i].isSelected();
+					prefCategorySelection.set(i, isSelected);
+					if (isSelected) {
+					// END KGU#855 2020-04-23
 						for (String pattern: patterns) {
 							keys.add(pattern);
 						}
