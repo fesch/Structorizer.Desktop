@@ -104,6 +104,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *      Kay Gürtzig             2020-03-20/27   Enh. #828 bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
+ *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *
  ******************************************************************************************************
  *
@@ -2253,7 +2254,10 @@ public class CGenerator extends Generator {
 			code.add("#ifndef " + guardName);
 			code.add("#define " + guardName);
 		}
-		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// KGU#815/KGU#824 2020-03-20
 
 		String pr = "program";
@@ -2460,7 +2464,7 @@ public class CGenerator extends Generator {
 
 	// START KGU#376 2017-09-26: Enh #389 - declaration stuff condensed to a method
 	/**
-	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.<br/>
 	 * @param _root - the diagram the declarations and definitions of are to be added
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
@@ -2473,7 +2477,11 @@ public class CGenerator extends Generator {
 		//this.typeMap = _root.getTypeInfo();
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
-		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		HashMap<String, TypeMapEntry> oldTypeMap = typeMap;
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// END KGU#676 2019-03-30
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
@@ -2510,6 +2518,11 @@ public class CGenerator extends Generator {
 		if (code.count() > lastLine) {
 			addSepaLine();
 		}
+		// START KGU#852 2020-04-22: make sure the original type map is restored
+		if (oldTypeMap != null) {
+			typeMap = oldTypeMap;
+		}
+		// END KGU#852 2020-04-22
 	}
 	// END KGU#376 2017-09-26
 	

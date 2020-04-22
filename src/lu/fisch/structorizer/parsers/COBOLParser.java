@@ -5361,15 +5361,16 @@ public class COBOLParser extends CodeParser
 				elNo = lastSoP.startsAt;
 			}
 			Instruction declEl = null;
-			if (root.children.getSize() >= elNo) {
+			int rootLength = root.children.getSize();
+			if (elNo < rootLength) {
 				Element el0 = root.children.getElement(elNo);
 				if ((el0 instanceof Instruction) && el0.getComment().contains(AUX_VAR_DECL_COMMENT)) {
 					declEl = (Instruction)el0;
 				}
 			}
-			else {
-				getLogger().log(Level.WARNING, "Element number discrepancy: Paragraph start " + elNo + " > " + root.children.getSize() + " (# elements)");
-				elNo = root.children.getSize();
+			else if (elNo > rootLength) {
+				getLogger().log(Level.WARNING, "Element number discrepancy: Paragraph start " + elNo + " > " + rootLength + " (# elements)");
+				elNo = rootLength;
 			}
 			if (declEl == null) {
 				declEl = new Instruction(declContent);

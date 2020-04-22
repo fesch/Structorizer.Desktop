@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

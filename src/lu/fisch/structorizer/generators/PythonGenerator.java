@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-12      Issue #807: records no longer modeled via `recordtype' but as dictionaries
  *      Kay Gürtzig             2020-02-13      Bugfix #812: Defective solution for #782 (global references) mended
  *      Kay Gürtzig             2020-03-08      Bugfix #831: Obsolete shebang and defective export of CALLs as parallel branch
+ *      Kay Gürtzig             2020-04-22      Ensured that appendGlobalInitializations() does not eventually overwrite typeMap
  *
  ******************************************************************************************************
  *
@@ -1214,6 +1215,9 @@ public class PythonGenerator extends Generator
 	 */
 	protected void appendGlobalInitialisations(Root _root, String _indent) {
 		if (topLevel) {
+			// START KGU#852 2020-04-22: Don't leave a foreign typeMap here
+			HashMap<String, TypeMapEntry> oldTypeMap = typeMap;
+			// END KGU#852 2020-04-22
 			for (Root incl: this.includedRoots.toArray(new Root[]{})) {
 				// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
 				// Don't add initialisation code for an imported module
@@ -1230,6 +1234,11 @@ public class PythonGenerator extends Generator
 				appendComment("END (global) code from included diagram \"" + incl.getMethodName() + "\"", _indent);
 			}
 			addSepaLine(_indent);
+			// START KGU#852 2020-04-22: Don't leave a foreign typeMap here
+			if (oldTypeMap != null) {
+				typeMap = oldTypeMap;
+			}
+			// END KGU#852 2020-04-22
 		}
 	}
 

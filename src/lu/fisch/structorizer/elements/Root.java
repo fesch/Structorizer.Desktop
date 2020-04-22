@@ -154,6 +154,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-21      Enh. #739: Bug in extractEnumerationConstants() fixed
  *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
  *      Kay Gürtzig     2020-03-29      Bugfix #841: Analyser check for missing or misplaced parameter list didn't work
+ *      Kay Gürtzig     2020-04-22      Bugfix #854: typeMap made a LinkedHashMap to ensure topological order on code export
  *      
  ******************************************************************************************************
  *
@@ -3176,7 +3177,10 @@ public class Root extends Element {
     	// START KGU#502 2018-03-12: Bugfix #518 - Avoid repeated traversal in case of lacking type and var info
     	//if (this.typeMap.isEmpty()) {
     	if (this.typeMap == null) {
-    		this.typeMap = new HashMap<String, TypeMapEntry>();
+    		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+    		//this.typeMap = new HashMap<String, TypeMapEntry>();
+    		this.typeMap = new LinkedHashMap<String, TypeMapEntry>();
+    		// END KGU#852 2020-04-22
     	// END KGU#502 2018-03-12
     		// START KGU#388 2017-09-18: Enh. #423 adopt all type info from included diagrams first
     		// FIXME: The import info can easily get obsolete unnoticedly!
