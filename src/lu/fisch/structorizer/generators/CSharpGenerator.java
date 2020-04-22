@@ -432,7 +432,7 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected String transformType(String _type, String _default)
 	{
-		if (_type != null && (_type.equals("String") || _type.equals("Object"))) {
+		if (_type != null && (_type.equalsIgnoreCase("String") || _type.equals("Object"))) {
 			_type = _type.toLowerCase();
 		}
 		return super.transformType(_type, _default);

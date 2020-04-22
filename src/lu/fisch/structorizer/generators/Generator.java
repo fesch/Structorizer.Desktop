@@ -107,6 +107,7 @@ package lu.fisch.structorizer.generators;
  *                                      subtrees armed despite of a potential conflict of aims.
  *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
  *      Kay Gürtzig     2020-04-01      Enh. #440, #828: Support for Group export to PapGenerator
+ *      Kay Gürtzig     2020-04-22      Enh. #855: New options for default array / string size
  *
  ******************************************************************************************************
  *
@@ -295,7 +296,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#363 2017-05-11
 	// START KGU#816 2020-03-17: Enh. #837 - allow two different strategies to propose the directory
 	private boolean proposeDirectoryFromNsd = true;
-	// START KGU#816 2020-03-17
+	// END KGU#816 2020-03-17
+	// START KGU#854 2020-04-22: Enh. #855 - defaults for array and string sizes
+	private int defaultArraySize = 0;
+	private int defaultStringLength = 0;
+	// END KGU#854 2020-04-22
 	// START KGU#395 2017-05-11: Enh. #357 - generator-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
 	// END KGU#395 2017-05-11
@@ -695,6 +700,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return this.exportAuthorLicense;
 	}
 	// END KGU#395 2017-05-11
+
+	// START KGU#854 2020-04-22: Enh. #855 new optional defaults for array/string sizes
+	/**
+	 * Returns the default for the array size (where 0 means no default,
+	 * such that "??" might be placed if syntactically required, otherwise
+	 * some workaround might have to be used).
+	 * @return the default size for arrays of unknown dimensions or 0.
+	 */
+	protected int optionDefaultArraySize() {
+		return this.defaultArraySize;
+	}
+	/**
+	 * Returns the default for the string length (where 0 means no default,
+	 * such that "??" might be placed if syntactically required, otherwise
+	 * some workaround might have to be used).
+	 * @return the default length for strings having to be declared or 0.
+	 */
+	protected int optionDefaultStringLength() {
+		return this.defaultStringLength;
+	}
+	// END KGU#854 2020-04-22
 	
 	/**
 	 * Returns a Generator-specific option value if available (otherwise null)
@@ -3837,7 +3863,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// START KGU#816 2020-03-17: Enh. #837
 			proposeDirectoryFromNsd = ini.getProperty("genExportDirFromNsd", "true").equals("true");
 			// END KGU#816 2020-03-17
-
+			// START KGU#854 2020-04-22: Enh. #855
+			defaultArraySize = Integer.parseUnsignedInt(ini.getProperty("genExportArraySizeDefault", "0"));
+			if (ini.getProperty("genExportUseArraySize", "false").equals("false")) {
+				defaultArraySize = 0;
+			}
+			defaultStringLength = Integer.parseUnsignedInt(ini.getProperty("genExportStringLenDefault", "0"));
+			if (ini.getProperty("genExportUseStringLen", "false").equals("false")) {
+				defaultStringLength = 0;
+			}
+			// END KGU#854 2020-04-22
 		} 
 		catch (IOException ex)
 		{

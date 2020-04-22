@@ -1043,6 +1043,8 @@ ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of fil
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
 ExportOPtionDialoge.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
 ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
+ExportOPtionDialoge.chkArraySize.text=Default array size (if required)
+ExportOPtionDialoge.chkStringLen.text=Default string length (if required)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...

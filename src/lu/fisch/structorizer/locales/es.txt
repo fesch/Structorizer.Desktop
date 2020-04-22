@@ -1045,6 +1045,8 @@ ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres d
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
 ExportOPtionDialoge.chkDirectoryFromNsd.text=Proponer el directorio del diagrama como directorio para la exportación
 ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=De otro modo el directorio de la exportación más recente será propuesto siempre.
+ExportOPtionDialoge.chkArraySize.text=Tamaño estándar para arrays (si sea necesario)
+ExportOPtionDialoge.chkStringLen.text=Largo estándar para cadenas de caracter
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...

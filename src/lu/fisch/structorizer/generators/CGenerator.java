@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -102,9 +102,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
  *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
- *      Kay Gürtzig             2020-03-20/27   Enh. #828 bugfix #836: Group export implemented, batch export improved
+ *      Kay Gürtzig             2020-03-20/27   Enh. #828, bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
+ *                                              Enh. #855: New configurable default array size considered
  *
  ******************************************************************************************************
  *
@@ -762,8 +763,16 @@ public class CGenerator extends Generator {
 		// END KGU 2017-04-12
 		// START KGU#332 2017-01-30: Enh. #335 - more sophisticated type info
 		if (this.getClass().getSimpleName().equals("CGenerator")) {
-			_type = _type.replace("string", "char*");
-			_type = _type.replace("String", "char*");
+			// START KGU#854 2020-04-22: Enh. #855 default string length
+			//_type = _type.replace("string", "char*");
+			//_type = _type.replace("String", "char*");
+			/*
+			 * It wouldn't make much sense to define the string type as char[<defaultStringLength>] as in most
+			 * cases we are better off with the pointer type, e.g. fo arguments, assignments and even return
+			 * values, so we don't make use of the default value introduced with version 3.30.08 here.
+			 */
+			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String", true) + ")($|\\W.*)", "$1char*$3");
+			// END KGU#854 2020-04-22
 		}
 		// END KGU#332 2017-01-30
 		return _type;
@@ -938,12 +947,17 @@ public class CGenerator extends Generator {
 			if (this.wantsSizeInArrayType()) {
 				int minIndex = typeInfo.getMinIndex(i);
 				int maxIndex = typeInfo.getMaxIndex(i);
+				// START KGU#854 2020-04-22: Enh. #855
+				if (maxIndex < 0) {
+					maxIndex = this.optionDefaultArraySize() - 1;
+				}
+				// END KGU#854 2020-04-22
 				int indexRange = maxIndex+1 - minIndex;
 				// We try a workaround for negative minIndex...
 				if (indexRange > maxIndex + 1) {
 					maxIndex = indexRange - 1;
 				}
-				if (maxIndex > 0) {
+				if (maxIndex >= 0) {
 					_typeDescr += Integer.toString(maxIndex+1);
 				}
 			}
@@ -2836,6 +2850,11 @@ public class CGenerator extends Generator {
 		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
 		for (int i = 0; i < nLevels; i++) {
 			int maxIndex = typeInfo.getMaxIndex(i);
+			// START KGU#854 2020-04-22: Enh. #855
+			if (maxIndex < 0) {
+				maxIndex = this.optionDefaultArraySize() - 1;
+			}
+			// END KGU#854 2020-04-22
 			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
 		}
 		return _elementType;

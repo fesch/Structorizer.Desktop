@@ -102,6 +102,8 @@ Current development version: 3.30-08 (2020-04-22)
 - 08: Issue #851/5: Solution for the import of PERFORM ... THRU ... from COBOL <2>
 - 08: Bugfix #852: Case-ignorant F&R replacements failed for certain strings <2>
 - 08: Bugfix #853: Batch export with relative paths of and in arr file failed <2>
+- 08: Bugfix #854: Topological order of type definitions on export ensured <2>
+- 08: Enh. #855 New configurable default array/string sizes for code export <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

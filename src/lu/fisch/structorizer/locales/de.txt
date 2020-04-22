@@ -1043,6 +1043,8 @@ ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- ode
 ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
 ExportOPtionDialoge.chkDirectoryFromNsd.text=Als Exportverzeichnis ggf. den Ablageorder des Diagramms vorschlagen
 ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anderenfalls wird immer der Ordner des letzten Exports vorgeschlagen.
+ExportOPtionDialoge.chkArraySize.text=Default-Größe für Arrays (wo erforderlich)
+ExportOPtionDialoge.chkStringLen.text=Default-Länge für Strings (wo erforderlich)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...

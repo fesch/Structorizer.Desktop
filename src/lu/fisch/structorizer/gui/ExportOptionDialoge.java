@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand).
  *      Kay Gürtzig     2019-02-15  Enh. #681: New spinner for triggering a change proposal for preferred generator
  *      Kay Gürtzig     2020-03-17  Enh. #837: New option for the proposed export directory
+ *      Kay Gürtzig     2020-04-22  Enh. #855: New options for array size / string length defaults
  *
  ******************************************************************************************************
  *
@@ -81,6 +82,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangDialog;
@@ -95,7 +98,9 @@ import lu.fisch.structorizer.parsers.GENParser;
 public class ExportOptionDialoge extends LangDialog
 {
     private static final int INCLUDE_LIST_WIDTH = 20;
-	public boolean goOn = false;
+    private static final int MAX_ARRAY_SIZE = 10000;
+    private static final int MAX_STRING_LEN = 1024;
+    public boolean goOn = false;
 
     /** Creates new form ExportOptionDialogue */
     public ExportOptionDialoge()
@@ -168,6 +173,13 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#816 2020-03-17: Enh. #837
         chkDirectoryFromNsd = new javax.swing.JCheckBox();
         // END KGI#816 2020-043-17
+        // START KGU#854 2020-04-22: Enh. #855 - new options for default array and string size
+        javax.swing.JPanel pnlLimit = new javax.swing.JPanel();
+        chkArraySize = new javax.swing.JCheckBox();
+        spnArraySize = new javax.swing.JSpinner();
+        chkStringLen = new javax.swing.JCheckBox();
+        spnStringLen = new javax.swing.JSpinner();
+        // END KGU#854 2020-04-22
 
         
         setTitle("Export options ...");
@@ -291,6 +303,48 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
 
+        // START KGU#854 2020-04-22: Enh. #855 - new options for default array and string size
+        chkArraySize.setText("Default array size (if required)");
+        chkArraySize.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent evt) {
+                spnArraySize.setEnabled(chkArraySize.isSelected());
+            }});
+        SpinnerModel spnModelDefault = new SpinnerNumberModel(100, 10, MAX_ARRAY_SIZE, 10);
+        spnArraySize.setModel(spnModelDefault);
+        spnArraySize.setEnabled(false);
+        chkStringLen.setText("Default string length (if required)");
+        chkStringLen.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent evt) {
+                spnStringLen.setEnabled(chkStringLen.isSelected());
+            }});
+        spnModelDefault = new SpinnerNumberModel(256, 8, MAX_STRING_LEN, 8);
+        spnStringLen.setModel(spnModelDefault);
+        spnStringLen.setEnabled(false);
+        GridBagConstraints gbcLimits = new GridBagConstraints();
+        gbcLimits.insets = new Insets(0, 0, 5, 10);
+        gbcLimits.weightx = 1.0;
+        gbcLimits.anchor = GridBagConstraints.LINE_START;
+        
+        pnlLimit.setLayout(new GridBagLayout());
+        gbcLimits.gridx = 0; gbcLimits.gridy = 0;
+        pnlLimit.add(chkArraySize, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnArraySize, gbcLimits);
+
+        gbcLimits.gridwidth = 1;
+        gbcLimits.gridx = 0; gbcLimits.gridy++;        
+        gbcLimits.fill = GridBagConstraints.NONE;
+        pnlLimit.add(chkStringLen, gbcLimits);
+        gbcLimits.gridx++;
+        gbcLimits.gridwidth = GridBagConstraints.REMAINDER;
+        gbcLimits.fill = GridBagConstraints.HORIZONTAL;
+        pnlLimit.add(spnStringLen, gbcLimits);
+        // END KGU#854 2020-04-22
+
         // START KGU#416 2017-06-20: Enh. #354,#357
         btnPluginOptions.setText("Language-specific Options");
         btnPluginOptions.addActionListener(new ActionListener() {
@@ -312,7 +366,7 @@ public class ExportOptionDialoge extends LangDialog
                             plugins.get(pluginIndex),
                             generatorOptions.get(pluginIndex));
                 }
-			}});
+            }});
         cbOptionPlugins.setMaximumSize(
                 new Dimension(cbPrefGenerator.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
         if (cbOptionPlugins.getItemCount() == 0) {
@@ -375,6 +429,9 @@ public class ExportOptionDialoge extends LangDialog
                     // START KGU#816 2020-03-17: Enh. #837
                     .add(chkDirectoryFromNsd)
                     // END KGU#816 2020-03-17
+                    // START KGU#854 2020-04-22: Enh. #855
+                    .add(pnlLimit)
+                    // END KGU#854 2020-04-22
                     /*.add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jButton1)
                         .addContainerGap())*/))
@@ -427,6 +484,10 @@ public class ExportOptionDialoge extends LangDialog
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkDirectoryFromNsd)
                 // END KGU#816 2020-03-17
+                // START KGU#854 2020-04-22: Enh. #855
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pnlLimit)
+                // END KGU#854 2020-04-22
                 // START KGU#416 2017-06-20: Enh. #353,#357
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
@@ -548,6 +609,12 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#653 2019-02-17: Enh. #681
         ((JSpinner.DefaultEditor)spnPrefGenTrigger.getEditor()).getTextField().addKeyListener(keyListener);
         // END KGU#653 2019-02-17
+        // START KGU#854 2020-04-22: Enh. #855 - new options for default array and string size
+        chkArraySize.addKeyListener(keyListener);
+        chkStringLen.addKeyListener(keyListener);
+        ((JSpinner.DefaultEditor)spnArraySize.getEditor()).getTextField().addKeyListener(keyListener);
+        ((JSpinner.DefaultEditor)spnStringLen.getEditor()).getTextField().addKeyListener(keyListener);
+        // END KGU#854 2020-04-22
 
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);
@@ -762,4 +829,10 @@ public class ExportOptionDialoge extends LangDialog
     // START KGU#816 2020-03-17: Enh. #837
     public javax.swing.JCheckBox chkDirectoryFromNsd;
     // END KGU#816 2020-03-17
+    // START KGU#854 2020-04-22: Enh. #855 - new options for default array and string size
+    public javax.swing.JCheckBox chkArraySize;
+    public javax.swing.JSpinner spnArraySize;
+    public javax.swing.JCheckBox chkStringLen;
+    public javax.swing.JSpinner spnStringLen;
+    // END KGU#854 2020-04-22
 }

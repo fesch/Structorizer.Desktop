@@ -476,8 +476,8 @@ public class BasGenerator extends Generator
 			_type = _default;
 		else {
 			_type = _type.trim();
-			if (_type.equals("int")) _type = "Integer";
-			else if (_type.equals("string") || _type.equals("char[]")) _type = "String";
+			if (_type.equalsIgnoreCase("int")) _type = "Integer";
+			else if (_type.equalsIgnoreCase("string") || _type.equals("char[]")) _type = "String";
 			// To be continued if required...
 		}
 		return _type;

@@ -220,10 +220,10 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#553 2018-07-13: Issue #557 - new option to limit the number of displayed Roots
         lblLimit.setText("Maximum number of imported diagrams for direct display:");
         lblLimit.setBorder(new EmptyBorder(0, 0, 0, 5));
-    	// START KGU#701 2019-03-29: Issues #557, #718
+        // START KGU#701 2019-03-29: Issues #557, #718
         //SpinnerModel spnModel = new SpinnerNumberModel(20, 5, 150, 5);
         SpinnerModel spnModel = new SpinnerNumberModel(50, 5, MAX_DIAGRAMS, 5);
-    	// END KGU#701 2019-03-29
+        // END KGU#701 2019-03-29
         spnLimit.setModel(spnModel);
 //        pnlLimit.setBorder(new EmptyBorder(3, 3, 5, 3));
 //        pnlLimit.setLayout(new javax.swing.BoxLayout(pnlLimit, javax.swing.BoxLayout.X_AXIS));
@@ -235,14 +235,14 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#602 2018-10-25: Issue #416 - new option to limit the line length
         lblMaxLen.setText("Maximum line length (for word wrapping):");
         lblMaxLen.setBorder(new EmptyBorder(0, 0, 0, 5));
-		SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
+        SpinnerModel spnModelLen = new SpinnerNumberModel(0, 0, 255, 5);
         spnMaxLen.setModel(spnModelLen);
 
         GridBagConstraints gbcLimits = new GridBagConstraints();
         gbcLimits.insets = new Insets(0, 5, 5, 5);
-		gbcLimits.weightx = 1.0;
-		gbcLimits.anchor = GridBagConstraints.LINE_START;
-        
+        gbcLimits.weightx = 1.0;
+        gbcLimits.anchor = GridBagConstraints.LINE_START;
+
         pnlLimit.setLayout(new GridBagLayout());
         gbcLimits.gridx = 0; gbcLimits.gridy = 0;
         pnlLimit.add(lblMaxLen, gbcLimits);
@@ -266,28 +266,28 @@ public class ImportOptionDialog extends LangDialog {
         btnPluginOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
-            	String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
-            	// Identify the plugin by its title
-            	int pluginIndex = -1;
-            	for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
-            		GENPlugin plugin = plugins.get(i);
-            		if (pluginTitle.equals(plugin.title)) {
-            			pluginIndex = i;
-            		}
-            	}
-            	// If found then we can open the dialog
-            	if (pluginIndex >= 0) {
-            		openSpecificOptionDialog(
-            				msgOptionsForPlugin.getText(),
-            				plugins.get(pluginIndex),
-            				parserOptions.get(pluginIndex));
-            	}
-			}});
+                String pluginTitle = (String) cbOptionPlugins.getSelectedItem();
+                // Identify the plugin by its title
+                int pluginIndex = -1;
+                for (int i = 0; pluginIndex < 0 && i < plugins.size(); i++) {
+                    GENPlugin plugin = plugins.get(i);
+                    if (pluginTitle.equals(plugin.title)) {
+                        pluginIndex = i;
+                    }
+                }
+                // If found then we can open the dialog
+                if (pluginIndex >= 0) {
+                    openSpecificOptionDialog(
+                            msgOptionsForPlugin.getText(),
+                            plugins.get(pluginIndex),
+                            parserOptions.get(pluginIndex));
+                }
+            }});
         cbOptionPlugins.setMaximumSize(
-        		new Dimension(cbOptionPlugins.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
+                new Dimension(cbOptionPlugins.getMaximumSize().width, cbOptionPlugins.getPreferredSize().height));
         if (cbOptionPlugins.getItemCount() == 0) {
-        	btnPluginOptions.setVisible(false);
-        	cbOptionPlugins.setVisible(false);
+            btnPluginOptions.setVisible(false);
+            cbOptionPlugins.setVisible(false);
         }
         // END KGU#416 2017-06-20
 
@@ -366,7 +366,7 @@ public class ImportOptionDialog extends LangDialog {
                 // START KGU#553 2018-07-13: Issue #557
                 .add(pnlLimit)
                 // END KGU#553 2018-07-13
-        		);
+                );
         pnlCodeLayout.setVerticalGroup(
                 pnlCodeLayout.createSequentialGroup()
                 .add(pnlCodeLayout.createParallelGroup()
