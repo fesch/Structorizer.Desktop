@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import lu.fisch.structorizer.elements.Element;
@@ -640,6 +641,9 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
+		// START KGU#852 2020-04-22: Since method appendDeclarations() does not overwrite typeMap anymore, we must set it
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{

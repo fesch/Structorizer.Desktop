@@ -1234,6 +1234,9 @@ public class JavaGenerator extends CGenerator
 			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
+		// START KGU#852 2020-04-22: Since method appendDeclarations() does not overwrite typeMap anymore, we must set it
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// START KGU#815 2020-04-01: Enh. #828
 		//if (_root.isProgram()) {
 		if (topLevel && (_root.isProgram() || this.isLibraryModule())) {

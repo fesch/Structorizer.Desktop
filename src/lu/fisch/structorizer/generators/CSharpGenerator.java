@@ -1028,6 +1028,9 @@ public class CSharpGenerator extends CGenerator
 			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
+		// START KGU#852 2020-04-22: Since method appendDeclarations() does not overwrite typeMap anymore, we must set it
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		
 		// START KGU#815 2020-03-26: Enh. #828 group export may produce libraries
 		//if (_root.isProgram()) {

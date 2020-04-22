@@ -451,6 +451,9 @@ public class JsGenerator extends CGenerator {
 			pr = "includable";
 		}
 		appendComment(pr + " " + _root.getText().get(0), _indent);
+
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
