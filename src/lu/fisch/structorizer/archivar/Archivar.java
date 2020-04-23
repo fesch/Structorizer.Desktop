@@ -166,7 +166,6 @@ public class Archivar {
 						this.virtPath = _fromArchive.getAbsolutePath() + File.separator + nsdFileName;
 					}
 				}
-				System.out.print("Path: "); System.out.println(this.path);
 			}
 			if (fields.count() >= 6) {
 				this.name = fields.get(3).trim();

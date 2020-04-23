@@ -754,9 +754,7 @@ public class Structorizer
 			index = archivar.unzipArrangementArchive(f, null);
 		}
 		else {
-			System.out.println("Making new index...");
 			index = archivar.makeNewIndexFor(f);
-			System.out.println(index.toString());
 		}
 		ArchivePool pool = new ArchivePool(index);
 		// Now collect the starting roots within the pool
