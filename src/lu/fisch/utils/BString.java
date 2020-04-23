@@ -43,6 +43,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2017-11-03      Bugfix #448: Method breakup(String) revised again
  *      Kay Gürtzig     2018-09-12      Method name typo refactored: enocodeVectorToHtml() --> encodeVectorToHtml()
  *      Kay Gürtzig     2019-11-22      Dead code in encodeToHtml() disabled, bugfix in explode()
+ *      Kay Gürtzig     2020-04-21      Bugfix #852: method breakup completely rewritten, signature changed
  *
  ******************************************************************************************************
  *
@@ -436,51 +437,114 @@ public abstract class BString
 		/**
 		 * Produces a regular expression allowing to match the given string in a case-insensitive way.
 		 * All letters 'x' are replaced by "[xX]", meta symbols like '[', ']', '^', '$' are escaped or
-		 * quoted, others (like '(', ')') just enclosed in brackets. 
-		 * @param _replace - the string (not supposed to be regular expression)!
-		 * @return a regular expression string
+		 * quoted, others (like '(', ')') just enclosed in brackets.<br/>
+		 * NOTE:<br/>
+		 * Decide whether the resulting pattern may contain capturing groups (i.e. parentheses as meta
+		 * symbols). With {@code _noGroups = true} the result is guaranteed not to contain capturing
+		 * groups (this may be important if the pattern is to be used as part of a regex replacement
+		 * with several groups following, as it will compromise the group counting). The disadvantage
+		 * is that possible matches may be missed for letters the lowercase or uppercase representation
+		 * of which would require more than one character as is the case with 'ß' (uppercase --> "SS").
+		 * @param _searched - the string (not supposed to be regular expression)!
+		 * @param _noGroups - if true then capturing groups are to be avoided by all means (see above).
+		 * @return a regular expression pattern as string
 		 */
-		public static String breakup(String _replace)
+// START KGU#850 2020-04-21: Bugfix #852: lower and upper may have different length (e.g. 'ß' -> "SS")
+//		public static String breakup(String _replace, boolean _noGroups)
+//		{
+//			// START KGU#324 2017-06-18: Bugfix on occ. #415
+//			//_replace = _replace.toLowerCase();
+//			String lower = _replace.toLowerCase();
+//			// END KGU#324 2017-06-18
+//			String upper = _replace.toUpperCase();
+//			String result = new String();
+//			
+//			for(int i=0; i < _replace.length(); i++)
+//			{
+//				// START KGU#324 2017-06-18: We must escape characters like brackets and shouldn't duplicate characters
+//				//result+="["+_replace.charAt(i)+upper.charAt(i)+"]";
+//				char ch1 = lower.charAt(i);
+//				char ch2 = upper.charAt(i);
+//				if (ch1 != ch2) {
+//					result += "[" + ch1 + ch2 + "]";
+//				}
+//				// START KGU#454 2017-11-03: Bugfix #448 regex syntax errors occurred e.g. with breakup("\\\\n+")
+//				//else if ("[]^$".contains(ch1+"")) {
+//				else if ("\\[]^$".contains(ch1+"")) {
+//				// END KGU#4545 2017-11-03
+//					result += "\\" + ch1;
+//					// The character following to a backslash is to be adopted as is
+//					// START KGU#454 2017-11-03: Bugfix #448 ... unless it is a backslash itself!
+//					//if (ch1 == '\\' && i < _replace.length() - 1) {
+//					if (ch1 == '\\' && i < _replace.length() - 1 && _replace.charAt(i+1) != '\\') {
+//					// END KGU#4545 2017-11-03
+//						result += _replace.charAt(++i);
+//					}
+//				}
+//				else if (ch1 == '-') {
+//					result += ch1;
+//				}
+//				else {
+//					result += "[" + ch1 + "]";
+//				}
+//				// END KGU#324 2017-06-18
+//			}
+//			
+//			return result;
+		public static String breakup(String _searched, boolean _noGroups)
 		{
-			// START KGU#324 2017-06-18: Bugfix on occ. #415
-			//_replace = _replace.toLowerCase();
-			String lower = _replace.toLowerCase();
-			// END KGU#324 2017-06-18
-			String upper = _replace.toUpperCase();
-			String result = new String();
+			StringBuilder result = new StringBuilder();
 			
-			for(int i=0; i < _replace.length(); i++)
-			{
-				// START KGU#324 2017-06-18: We must escape characters like brackets and shouldn't duplicate characters
-				//result+="["+_replace.charAt(i)+upper.charAt(i)+"]";
-				char ch1 = lower.charAt(i);
-				char ch2 = upper.charAt(i);
-				if (ch1 != ch2) {
-					result += "[" + ch1 + ch2 + "]";
-				}
-				// START KGU#454 2017-11-03: Bugfix #448 regex syntax errors occurred e.g. with breakup("\\\\n+")
-				//else if ("[]^$".contains(ch1+"")) {
-				else if ("\\[]^$".contains(ch1+"")) {
-				// END KGU#4545 2017-11-03
-					result += "\\" + ch1;
-					// The character following to a backslash is to be adopted as is
-					// START KGU#454 2017-11-03: Bugfix #448 ... unless it is a backslash itself!
-					//if (ch1 == '\\' && i < _replace.length() - 1) {
-					if (ch1 == '\\' && i < _replace.length() - 1 && _replace.charAt(i+1) != '\\') {
-					// END KGU#4545 2017-11-03
-						result += _replace.charAt(++i);
+			for (int i = 0; i < _searched.length(); i++) {
+				char ch = _searched.charAt(i);
+				String stCh = Character.toString(ch);
+				if ("\\[]^$".contains(stCh)) {
+					result.append('\\');
+					result.append(ch);
+					/* The character following to a backslash is to be adopted as is ...
+					 * ... unless it is a backslash itself! */
+					if (ch == '\\' && i < _searched.length() - 1 && _searched.charAt(i+1) != '\\') {
+						result.append(_searched.charAt(++i));
 					}
 				}
-				else if (ch1 == '-') {
-					result += ch1;
+				else if (Character.isLetter(ch)) {
+					String loCh = stCh.toLowerCase();
+					String upCh = stCh.toUpperCase();
+					if (loCh.length() != upCh.length()) {
+						if (_noGroups) {
+							// We will just use the original character as we must not group
+							result.append('[');
+							result.append(ch);
+							result.append(']');
+						}
+						else {
+							// We form a group if we are allowed to
+							result.append('(');
+							result.append(loCh);
+							result.append('|');
+							result.append(upCh);
+							result.append(')');
+						}
+					}
+					else {
+						result.append('[');
+						result.append(loCh);
+						result.append(upCh);
+						result.append(']');
+					}
+				}
+				else if (ch == '-') {
+					result.append(ch);
 				}
 				else {
-					result += "[" + ch1 + "]";
+					result.append('[');
+					result.append(ch);
+					result.append(']');
 				}
-				// END KGU#324 2017-06-18
 			}
-			
-			return result;
+			return result.toString();
+// END KGU#850 2020-04-21
+
 		}
 		
 		

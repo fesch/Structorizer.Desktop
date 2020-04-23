@@ -68,6 +68,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-11-19      Enh. #739: Genuine enumeration type import (revision of #558)
  *      Kay Gürtzig     2020-03-08      Bugfix #833: Parameter parentheses ensured, superfluous Includable suppressed
  *      Kay Gürtzig     2020-03-09      Bugfix #835: Structure preference kywords must not be glued to expressions
+ *      Kay Gürtzig     2020-04-12      Bugfix #847 ensured that ids like 'false', 'true', and built-in functions be lowercase
  *
  ******************************************************************************************************
  *
@@ -853,6 +854,13 @@ public class D7Parser extends CodeParser
     	RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE,
     };
     // END KGU#407 2017-06-22
+    
+    // START KGU#843 2020-04-11: Bugfix #847 - We must convert all operator names to lower-case
+    /** Production rule heads designating operator symbols */
+    private static final StringList OPR_RULE_HEADS = StringList.explode("<MulOp>,<RelOp>,<AddOp>", ",");
+    /** Identifiers belonging to literals or functions the names of which will only be accepted in lowercase by Structorizer */
+    private static final StringList NAMES_TO_LOWER = StringList.explode("FALSE,TRUE,CHR,ORD,POS,COPY,DELETE,INSERT,UPPERCASE,LOWERCASE", ",");
+    // END KGU#843 2020-04-11
 
     // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party regex library
     /** Matcher for temporary newline surrogates */
@@ -1916,14 +1924,14 @@ public class D7Parser extends CodeParser
 
 		String output = getKeyword("output");
 		String input = getKeyword("input");
-		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]", output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]", output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)", output+" $1");
-		_content = _content.replaceAll(BString.breakup("write")+"(.*?)", output+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"[((](.*?)[))]", input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]", input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"(.*?)", input+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"(.*?)", input+" $1");
+		_content = _content.replaceAll(BString.breakup("write", true)+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln", true)+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln", true)+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("write", true)+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("read", true)+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln", true)+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln", true)+"(.*?)", input+" $1");
+		_content = _content.replaceAll(BString.breakup("read", true)+"(.*?)", input+" $1");
 		
 		//System.out.println(_content);
 		
@@ -1976,17 +1984,21 @@ public class D7Parser extends CodeParser
 				// START KGU 2016-05-08: Avoid keyword concatenation
 				boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
 				// END KGU 2016-05-08
-				if (tokenData.trim().equalsIgnoreCase("mod") ||
-						// START KGU#192 2016-05-02: There are more operators to be considered...
-						tokenData.trim().equalsIgnoreCase("shl") ||
-						tokenData.trim().equalsIgnoreCase("shr") ||
-						// END KGU#192 2016-05-02
-						tokenData.trim().equalsIgnoreCase("div"))
+				// START KGU#843 2020-04-11: Bugfix #847: Executor does not cope with upper-case letters in operators
+				//if (tokenData.trim().equalsIgnoreCase("mod") ||
+				//		// START KGU#192 2016-05-02: There are more operators to be considered...
+				//		tokenData.trim().equalsIgnoreCase("shl") ||
+				//		tokenData.trim().equalsIgnoreCase("shr") ||
+				//		// END KGU#192 2016-05-02
+				//		tokenData.trim().equalsIgnoreCase("div"))
+				String ruleHead = _reduction.getParent().getHead().toString();
+				if (tokenIsId && ruleHead.equals("<RefId>") && NAMES_TO_LOWER.contains(tokenData, false)) {
+					tokenData = tokenData.toLowerCase();
+				}
+				if (OPR_RULE_HEADS.contains(ruleHead))
+				// END KGU#843 2020-04-11
 				{
 					_content += " " + tokenData + " ";
-					// START KGU 2016-05-08: Avoid keyword concatenation
-					tokenIsId = false;
-					// END KGU 2016-05-08
 				}
 				// START KGU 2016-05-08: Avoid keyword concatenation
 				else if (
@@ -2055,7 +2067,7 @@ public class D7Parser extends CodeParser
 			int ixLast = root.children.getSize() - 1;
 			Element lastEl = root.children.getElement(ixLast);
 			if (lastEl.getClass().getSimpleName().equals("Instruction") &&
-					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result") + "\\s*")) {
+					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result", true) + "\\s*")) {
 				// An end-standing instruction "<function-name> <- result" is redundant, so remove it.
 				root.children.removeElement(ixLast);
 			}

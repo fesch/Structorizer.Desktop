@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-07 (2020-04-11)
+Current development version: 3.30-08 (2020-04-23)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -91,11 +91,26 @@ Current development version: 3.30-07 (2020-04-11)
 - 07: Bugfix #841: Analyser check against missing parameter list did not work <2>
 - 07: Bugfix #843: Handling of global declarations in PHP export was missing <2>
 - 07: Bugfix #844: Sensible export of arrays and record types/vars to PHP <2>
+- 08: Issue #828/#836: The fallback to all diagrams of an arr file on batch export
+      without specified entry points or contained programs hadn't worked <2>
+- 08: Enh. #842: Improved usability of the include list editor [H.-U. Hölscher]2
+- 08: Bugfix #847: Inconsistent handling of upper/lowercase operand names <2>
+- 08: Bugfix #848: Incomplete variable synchronisation with Includables <2>
+- 08: Bugfix #849: New log file name scheme change of release 3.30 ensured <2>
+- 08: Issue #851/1: Declarations for auxiliary variables on COBOL import <2>
+- 08: Issue #851/4: Provisional import of SORT statements from COBOL <2>
+- 08: Issue #851/5: Solution for the import of PERFORM ... THRU ... from COBOL <2>
+- 08: Bugfix #852: Case-ignorant F&R replacements failed for certain strings <2>
+- 08: Bugfix #853: Batch export with relative paths of and in arr file failed <2>
+- 08: Bugfix #854: Topological order of type definitions on export ensured <2>
+- 08: Enh. #855 New configurable default array/string sizes for code export <2>
+- 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
+- 08: Bugfix #858: Functions did not actually work in FOR-IN loop headers <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
 - 01: Enh. #662/1: Info box for groups redesigned into a tree view <2>
-- 01: Enh. #662/2: Group visualisation with individual colors in Arranger <2>
+- 01: Enh. #662/2: Group visualisation with individual colours in Arranger <2>
 - 01: Enh. #662/3: Arranger popup menu item to rearrange diagrams by groups <2>
 - 01: Enh. #662/4: Option to save arrangements with relative coordinates <2>
 - 01: Bugfix #664: Incorrect handling of modified diagrams on closing Arranger <2>

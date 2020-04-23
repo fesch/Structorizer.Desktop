@@ -33,6 +33,7 @@ set -e
 #      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers (#665)
 #      Simon Sobisch                  2020-01-20   added handling for nostart argument,
 #                                                  default to detached start
+#      Kay Gürtzig                    2020-04-20   Copy command for logging.properties added
 #
 ################################################################################
 
@@ -145,13 +146,12 @@ cp lu/fisch/structorizer/gui/*.txt ../bin/lu/fisch/structorizer/gui/
 cp lu/fisch/structorizer/gui/*.xml ../bin/lu/fisch/structorizer/gui/
 cp lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
 cp lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
-#cp  goldengine/java/*.cgt ../bin/goldengine/java/
-#cp  goldengine/java/*.grm ../bin/goldengine/java/
 cp lu/fisch/structorizer/parsers/*.cgt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.egt ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.grm ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.xsd ../bin/lu/fisch/structorizer/parsers/
 cp lu/fisch/structorizer/parsers/*.nsd ../bin/lu/fisch/structorizer/parsers/
+cp lu/fisch/structorizer/*.properties ../bin/lu/fisch/structorizer/
 echo "Done"
 
 if test -n "$start_compiled"; then

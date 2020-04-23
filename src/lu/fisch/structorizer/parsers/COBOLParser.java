@@ -97,6 +97,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-04/07   Issue #407: Condition heuristics extended to cop with some expressions of kind "a = 5 or 9"
  *      Kay Gürtzig     2019-03-04      Bugfix #695: Arrays of basic types (e.g. Strings) haven't been imported properly
  *      Kay Gürtzig     2019-03-05      Bugfix #631 (update): commas in pic clauses (e.g. 01 test pic z,zzz,zz9.) now preserved
+ *      Kay Gürtzig     2020-04-20      Issue #851/1 Insertion of declaration for auxiliary variables
+ *                                      Issue #851/4 Provisional implementation of SORT statement import
+ *                                      Issue #851/5 Simple solution for PERFORM ... THRU ... call spans
  *
  ******************************************************************************************************
  *
@@ -3167,7 +3170,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_TERM_OR_DOT_END_PERFORM                                               = 1356;  // <term_or_dot> ::= 'END_PERFORM'
 //		final int PROD_TERM_OR_DOT_TOK_DOT                                                   = 1357;  // <term_or_dot> ::= 'TOK_DOT'
 //		final int PROD_PERFORM_PROCEDURE                                                     = 1358;  // <perform_procedure> ::= <procedure_name>
-//		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
+		final int PROD_PERFORM_PROCEDURE_THRU                                                = 1359;  // <perform_procedure> ::= <procedure_name> THRU <procedure_name>
 		final int PROD_PERFORM_OPTION                                                        = 1360;  // <perform_option> ::=
 		final int PROD_PERFORM_OPTION_TIMES                                                  = 1361;  // <perform_option> ::= <id_or_lit_or_length_or_func> TIMES
 		final int PROD_PERFORM_OPTION_FOREVER                                                = 1362;  // <perform_option> ::= FOREVER
@@ -3301,7 +3304,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_TRUE                                         = 1490;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_TRUE'
 		final int PROD_SET_TO_TRUE_FALSE_TO_TOK_FALSE                                        = 1491;  // <set_to_true_false> ::= <target_x_list> TO 'TOK_FALSE'
 //		final int PROD_SET_LAST_EXCEPTION_TO_OFF_LAST_EXCEPTION_TO_OFF                       = 1492;  // <set_last_exception_to_off> ::= LAST EXCEPTION TO OFF
-//		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
+		final int PROD_SORT_STATEMENT_SORT                                                   = 1493;  // <sort_statement> ::= SORT <sort_body>
 //		final int PROD_SORT_BODY                                                             = 1494;  // <sort_body> ::= <table_identifier> <sort_key_list> <_sort_duplicates> <sort_collating> <sort_input> <sort_output>
 //		final int PROD_SORT_KEY_LIST                                                         = 1495;  // <sort_key_list> ::=
 //		final int PROD_SORT_KEY_LIST2                                                        = 1496;  // <sort_key_list> ::= <sort_key_list> <_on> <ascending_or_descending> <_key> <_key_list>
@@ -3312,11 +3315,11 @@ public class COBOLParser extends CodeParser
 //		final int PROD_SORT_COLLATING                                                        = 1501;  // <sort_collating> ::=
 //		final int PROD_SORT_COLLATING2                                                       = 1502;  // <sort_collating> ::= <coll_sequence> <_is> <reference>
 //		final int PROD_SORT_INPUT                                                            = 1503;  // <sort_input> ::=
-//		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
-//		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_SORT_INPUT_USING                                                      = 1504;  // <sort_input> ::= USING <file_name_list>
+		final int PROD_SORT_INPUT_INPUT_PROCEDURE                                            = 1505;  // <sort_input> ::= INPUT PROCEDURE <_is> <perform_procedure>
 //		final int PROD_SORT_OUTPUT                                                           = 1506;  // <sort_output> ::=
-//		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
-//		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
+		final int PROD_SORT_OUTPUT_GIVING                                                    = 1507;  // <sort_output> ::= GIVING <file_name_list>
+		final int PROD_SORT_OUTPUT_OUTPUT_PROCEDURE                                          = 1508;  // <sort_output> ::= OUTPUT PROCEDURE <_is> <perform_procedure>
 		final int PROD_START_STATEMENT_START                                                 = 1509;  // <start_statement> ::= START <start_body> <end_start>
 //		final int PROD_START_BODY                                                            = 1510;  // <start_body> ::= <file_name> <start_key> <sizelen_clause> <_invalid_key_phrases>
 //		final int PROD_SIZELEN_CLAUSE                                                        = 1511;  // <sizelen_clause> ::=
@@ -4104,6 +4107,7 @@ public class COBOLParser extends CodeParser
 			RuleConstants.PROD_GOBACK_STATEMENT_GOBACK,
 			RuleConstants.PROD_STOP_STATEMENT_STOP,
 			RuleConstants.PROD_GOTO_STATEMENT_GO,
+			RuleConstants.PROD_SORT_STATEMENT_SORT,
 			RuleConstants.PROD_STRING_STATEMENT_STRING,
 			RuleConstants.PROD_UNSTRING_STATEMENT_UNSTRING,
 			RuleConstants.PROD_SEARCH_STATEMENT_SEARCH,
@@ -4720,7 +4724,7 @@ public class COBOLParser extends CodeParser
 			length = _length;
 		}
 	};
-
+	
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
 	 * file, filters it and writes a new temporary file "Structorizer.COB", which is
@@ -4811,8 +4815,10 @@ public class COBOLParser extends CodeParser
 				// END KGU#605 2018-10-30
 				prepareTextLine(repAuto, strLine, srcCode, lastPosAndLength);
 			}
-			//Close the input stream
-			in.close();
+			// Close the input stream
+			//in.close();
+			// Close the buffered reader
+			br.close();
 
 			//System.out.println(srcCode);
 
@@ -5332,6 +5338,53 @@ public class COBOLParser extends CodeParser
 	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
 	// END KGU#402 2019-03-07
 
+	// START KGU#847 2020-04-20: Issue #851 Mechanism to ensure sensible declarations for generated variables
+	private static final String AUX_VAR_DECL_COMMENT = "Auxiliary variables introducd by Structorizer on parsing";
+
+	/**
+	 * Prepares a declaration for varable {@code _varName} and associates
+	 * it to the current section or paragraph (as it is meant to be local)
+	 * @param _varName - name of the variable to be declared
+	 * @param _typeSpec - the Structorizer-compatible type specification 
+	 */
+	private void insertAuxVarDeclaration(String _varName, String _typeSpec) {
+		if (this.optionImportVarDecl) {
+			String declContent = "var " + _varName + ": " + _typeSpec;
+			/* We want to ensure that the declaration remains with the local
+			 * set, so we insert it at the beginning of the curent paragraph
+			 * or section
+			 */
+			int elNo = this.dataSectionEnds.get(root);	// This is just a fallback
+			SectionOrParagraph lastSoP = this.procedureList.peekFirst();
+			if (lastSoP != null && lastSoP.endsBefore < 0) {
+				// position of the first actual element of the SoP (after the pseudo call)
+				elNo = lastSoP.startsAt;
+			}
+			Instruction declEl = null;
+			int rootLength = root.children.getSize();
+			if (elNo < rootLength) {
+				Element el0 = root.children.getElement(elNo);
+				if ((el0 instanceof Instruction) && el0.getComment().contains(AUX_VAR_DECL_COMMENT)) {
+					declEl = (Instruction)el0;
+				}
+			}
+			else if (elNo > rootLength) {
+				getLogger().log(Level.WARNING, "Element number discrepancy: Paragraph start " + elNo + " > " + rootLength + " (# elements)");
+				elNo = rootLength;
+			}
+			if (declEl == null) {
+				declEl = new Instruction(declContent);
+				declEl.setComment(AUX_VAR_DECL_COMMENT);
+				declEl.setColor(colorMisc);
+				root.children.insertElementAt(declEl, elNo);
+			}
+			else {
+				declEl.getText().add(declContent);
+			}
+		}
+	}
+	// END KGU#847 2020-04-20
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#buildNSD_R(com.creativewidgetworks.goldparser.engine.Reduction, lu.fisch.structorizer.elements.Subqueue)
 	 */
@@ -5633,6 +5686,11 @@ public class COBOLParser extends CodeParser
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 		}
 		break;
+		// START KGU#848 2020-04-20: Issue #851/4
+		case RuleConstants.PROD_SORT_STATEMENT_SORT:
+			this.importSort(_reduction, _parentNode);	// sort body
+			break;
+		// END KGU#848 2020-04-20
 		case RuleConstants.PROD_FILE_CONTROL_ENTRY_SELECT:
 			this.importFileControl(_reduction, _parentNode);
 			break;
@@ -5917,6 +5975,100 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	// 
+	/**
+	 * Provisionally imports a SORT statement as some dummy construct ensuring
+	 * the potentially referenced import and export procedures get called
+	 * @param _reduction - the reduction of the second token
+	 * @param _parentNode - the {@link Subqueue} the elements are to be appended to
+	 * @throws ParserCancelled 
+	 */
+	private void importSort(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
+		/* This can be either a file-based sort or a table sort.
+		 * We will fake some procedure call "sortFile" or "sortArray"
+		 * that takes
+		 * 1. the target variable,
+		 * 2. a string array with key specifications (each entry is a name,
+		 *    followed by '+' or '-' for ascending/descending),
+		 * 3. a flag for duplicates (true by default)
+		 * 4. a flag or collating (whatever that may mean).
+		 * For sortFile there are two possibilities: Either input and output
+		 * procedures are given - then their calls will precede and follow
+		 * the fileSort call, respectively -, or file name lists are given,
+		 * then these will be additional arguments.
+		 */
+		Reduction secRed = _reduction.get(1).asReduction();
+		// Name of the sort file or the table (array)
+		String targetId = this.getContent_R(secRed.get(0).asReduction(), "");
+		// We might like to find out whether it is a sort file or a table
+		CobVar target = this.currentProg.getCobVar(targetId);
+		if (target != null) {
+			targetId = target.getQualifiedName();
+		}
+		// Extract the key list (first rough approach: just get it as string)
+		String keyList = "\"" + this.getContent_R(secRed.get(1).asReduction(), "") + "\"";
+		String dupl = "", coll = "";
+		Token token = secRed.get(2);
+		if (token.getType() == SymbolType.NON_TERMINAL) {
+			dupl = this.getContent_R(token.asReduction(), "").trim();
+		}
+		else {
+			dupl = token.asString();
+		}
+		token = secRed.get(3);
+		if (token.asReduction().size() > 0) {
+			coll = this.getContent_R(token.asReduction().get(2).asReduction(), "");
+		}
+		String proc = "sortArray";
+		StringList usingFiles = null, givingFiles = null;
+		Reduction inpProcRed = null, outProcRed = null;
+		Reduction redInp = secRed.get(4).asReduction();
+		switch (redInp.getParent().getTableIndex()) {
+		case RuleConstants.PROD_SORT_INPUT_USING:
+			usingFiles = StringList.explode(this.getContent_R(redInp.get(1).asReduction(), ""), " ");
+			proc = "sortFile";
+			break;
+		case RuleConstants.PROD_SORT_INPUT_INPUT_PROCEDURE:
+			inpProcRed = redInp.get(3).asReduction();
+			proc = "sortFile";
+			break;
+		}
+		Reduction redOut = secRed.get(5).asReduction();
+		switch (redOut.getParent().getTableIndex()) {
+		case RuleConstants.PROD_SORT_OUTPUT_GIVING:
+			givingFiles = StringList.explode(this.getContent_R(redOut.get(1).asReduction(), ""), " ");
+			proc = "sortFile";
+			break;
+		case RuleConstants.PROD_SORT_OUTPUT_OUTPUT_PROCEDURE:
+			outProcRed = redOut.get(3).asReduction();
+			proc = "sortFile";
+			break;
+		}
+		proc += "(" + targetId + ", " + keyList + ", "
+				+ (dupl.trim().isEmpty() ? "false" : "true") + ", \""
+				+ coll + "\"";
+		if (usingFiles != null || givingFiles != null ) {
+			if (usingFiles == null) { usingFiles = new StringList(); }
+			if (givingFiles == null) { givingFiles = new StringList(); }
+			proc += ", {" + usingFiles.concatenate(", ") + "}, {"
+					+ givingFiles.concatenate(", ") + "}";
+		}
+		proc += ")";
+		if (inpProcRed != null) {
+			this.buildPerformCall1(inpProcRed, _parentNode);
+		}
+		Call call = new Call(proc);
+		call.setColor(Color.RED);
+		this.equipWithSourceComment(call, _reduction);
+		call.getComment().add("PROVISIONALLY IMPORTED FROM:");
+		call.getComment().add(this.getContent_R(_reduction, ""));
+		_parentNode.addElement(call);
+		if (outProcRed != null) {
+			this.buildPerformCall1(outProcRed, _parentNode);
+		}
+	}
+	// END KGU#848 2020-04-20
+
 	// START KGU#614 2018-12-14: Issue #631
 	/**
 	 * Imports an INSPECT statement into some kind of augmented {@link Call} element
@@ -6030,7 +6182,7 @@ public class COBOLParser extends CodeParser
 		if (nClauses == modes.count() && nClauses == subjects.count() && nClauses == afters.count() && nClauses == befores.count()) {
 			Call call = new Call("");
 			String hash = Integer.toHexString(call.hashCode());
-			String counter = "counts" + hash;
+			String counter = "counts_" + hash;
 			StringList content = new StringList();
 			content.add("INSPECT_TALLYING(" + _target + ",\\");
 			content.add(counter + ",\\");
@@ -6064,6 +6216,9 @@ public class COBOLParser extends CodeParser
 			el = new Instruction(content);
 			el.setColor(colorMisc);
 			_parentNode.addElement(el);
+			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
+			insertAuxVarDeclaration(counter, "int[" + counters.count() + "]");
+			// END KGU#847 2020-04-19
 			isDone = true;
 		}
 		return isDone;
@@ -6385,13 +6540,16 @@ public class COBOLParser extends CodeParser
 			// Create the WHILE element and the loop initialisation Instruction. Since the arrays length
 			// is in no case a valid index, the loop must end before the array length.
 			While wLoop = new While(indexVar.getName() + " < length(" + table.getQualifiedName() + ")");
-			String testVarName = "wasFound" + Integer.toHexString(wLoop.hashCode());
+			String testVarName = "wasFound_" + Integer.toHexString(wLoop.hashCode());
 			wLoop.setText(wLoop.getText().getText() + " and not " + testVarName);
 			Instruction testInit = new Instruction(testVarName + " <- false");
 			testInit.setColor(colorMisc);
 			wLoop.setColor(colorMisc);
 			_parentNode.addElement(testInit);
 			_parentNode.addElement(this.equipWithSourceComment(wLoop, _reduction));
+			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
+			insertAuxVarDeclaration(testVarName, "boolean");
+			// END KGU#847 2020-04-19
 			// Now convert the WHEN clauses and add the resulting Alternatives to the loop body
 			Reduction redWhens = redBody.get(3).asReduction();
 			// Alternatively, we could use a Jump "leave" here (advantage: index won't be incremented, drawback: unstructured code)
@@ -6461,7 +6619,7 @@ public class COBOLParser extends CodeParser
 		// and then decide if their concatenation might fit into a single line.
 		StringList assignments = new StringList();
 		StringList preparations = new StringList();
-		int suffix = Math.abs(secRed.hashCode());		// unique number as suffix for auxiliary variables
+		String suffix = "_" + Integer.toHexString(secRed.hashCode());		// unique number as suffix for auxiliary variables
 		Reduction itemlRed = secRed.get(0).asReduction();
 		do {
 			// The first assigment (produced as the last one here) will just overwrite the target variable
@@ -6491,12 +6649,27 @@ public class COBOLParser extends CodeParser
 					delimiter = null;	// this is a dummy information, not delimiting at all
 				}
 			}
+			String tail = "";
+			// START KGU#850 2020-04-20: If itemId is qualified then we will decompose it
+			int posQual = itemId.indexOf(".");
+			if (posQual > 0) {
+				tail = itemId.substring(posQual);
+				itemId = itemId.substring(0, posQual);
+			}
+			if ((posQual = itemId.indexOf("[")) > 0) {
+				tail = itemId.substring(posQual) + tail;
+				itemId = itemId.substring(0, posQual);
+			}
+			// END KGU#850 2020-04-20
 			asgnmt += itemId;
 			if (delimiter != null) {
-				preparations.add(itemId + suffix + " <- split(" + itemId + ", " + delimiter + ")");
-				asgnmt += suffix + "[0]";
+				preparations.add(itemId + suffix + " <- split(" + itemId + tail + ", " + delimiter + ")");
+				tail = suffix + "[0]";
+				// START KGU#847 2020-04-19 Issue #851/1: insert declarations for auxiliary variables
+				insertAuxVarDeclaration(itemId + suffix, "array of string");
+				// END KGU#847 2020-04-19				
 			}
-			assignments.add(asgnmt);
+			assignments.add(asgnmt + tail);
 		} while (itemlRed != null);
 		// Now if there was a start pointer, an additional preparation is necessary: Replace the target
 		// variable by its prefix left of the pointer (otherwise it will completely be overwritten)
@@ -6586,10 +6759,10 @@ public class COBOLParser extends CodeParser
 		}
 		// Now we have all information together and may compose the resulting algorithm
 		// Since this is significantly easier for a single separator we start with this
-		String suffix = Integer.toHexString(_reduction.hashCode());
+		String suffix = "_" + Integer.toHexString(_reduction.hashCode());
 		if (delimiters.count() >= 1) {
-			String content = "unstring_"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
-			String indexVar = "index_" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
+			String content = "unstring"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
+			String indexVar = "index" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
 			Instruction instr = new Instruction(content);
 			instr.setColor(colorMisc);
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
@@ -6599,23 +6772,33 @@ public class COBOLParser extends CodeParser
 				instr = new Instruction(indexVar + " <- 0");
 				instr.setColor(colorMisc);
 				_parentNode.addElement(instr);
-				For loop = new For("part_" + suffix, "unstring_" + suffix + "_" + (1 - i % 2));
+				For loop = new For("part" + suffix, "unstring" + suffix + "_" + (1 - i % 2));
 				loop.setColor(colorMisc);
 				_parentNode.addElement(loop);
-				instr = new Instruction("split_" + suffix + " <- split(part_" + suffix + ", " +delimiters.get(i) + ")");
+				instr = new Instruction("split" + suffix + " <- split(part" + suffix + ", " +delimiters.get(i) + ")");
 				instr.setColor(colorMisc);
 				loop.getBody().addElement(instr);
-				For loop1 = new For("item_" + suffix, "split_" + suffix);
+				For loop1 = new For("item" + suffix, "split" + suffix);
 				loop1.setColor(colorMisc);
 				loop.getBody().addElement(loop1);
-				instr = new Instruction("unstring_" + suffix + "_" + (i % 2) + "[index_" + suffix + "] <- item_" + suffix);
+				instr = new Instruction("unstring" + suffix + "_" + (i % 2) + "[index" + suffix + "] <- item" + suffix);
 				instr.setColor(colorMisc);
-				instr.getText().add("inc(index_" + suffix + ", 1)");
+				instr.getText().add("inc(index" + suffix + ", 1)");
 				loop1.getBody().addElement(instr);
 			}
+			// START KGU#847 2020-04-19: Issue #851/1 insert declarations for auxiliary variables
+			if (delimiters.count() > 1) {
+				insertAuxVarDeclaration(indexVar, "int");
+				insertAuxVarDeclaration("part" + suffix, "int");
+				insertAuxVarDeclaration("split" + suffix, "int");
+				insertAuxVarDeclaration("item" + suffix, "int");
+				insertAuxVarDeclaration("unstring" + suffix + "_1", "string[" + targets.size() + "]");
+			}
+			insertAuxVarDeclaration("unstring" + suffix + "_0", "string[" + targets.size() + "]");
+			// END KGU#847 2020-04-19
 			suffix += "_" + (1 - delimiters.count() % 2);
 			int index = 0;
-			// FIXME Handling of ALL clausues is still unclear
+			// FIXME Handling of ALL clauses is still unclear
 			if (!ignoreUnstringAllClauses) {
 				instr = new Instruction(indexVar + " <- 0");
 				instr.setColor(colorMisc);
@@ -6626,20 +6809,20 @@ public class COBOLParser extends CodeParser
 				// The trouble here is: we don't know anymore, which empty part resulted from which
 				// delimiter, and it can hardly be guessed at compile time. We would have to implement a
 				// complex detection mechanism which seems beyond reasonable efforts.
-				String expr = "unstring_" + suffix + "[" + index + "]";
+				String expr = "unstring" + suffix + "[" + index + "]";
 				boolean all = (allFlags & 1) != 0;
 				{ allFlags >>= 1; }	// Strangely, this instruction without block caused indentation defects in Eclipse
 				// FIXME Handling of ALL clauses is still not correct (see remark above)
 				if (!ignoreUnstringAllClauses) {
 					if (all) {
-						While loop = new While("(" + indexVar + " < length(unstring_" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
+						While loop = new While("(" + indexVar + " < length(unstring" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
 						loop.setColor(colorMisc);
 						_parentNode.addElement(loop);
 						instr = new Instruction("inc(" + indexVar + ", 1)");
 						instr.setColor(colorMisc);
 						loop.getBody().addElement(instr);
 					}
-					expr = "unstring_" + suffix + "[" + indexVar + "]";
+					expr = "unstring" + suffix + "[" + indexVar + "]";
 				}
 
 				StringList assignments = new StringList();
@@ -6664,7 +6847,7 @@ public class COBOLParser extends CodeParser
 				instr.setColor(colorMisc);
 				// FIXME Handling of ALL clausues is still unclear
 				String indexStr = (ignoreUnstringAllClauses ? Integer.toString(index) : indexVar);
-				Alternative alt = new Alternative("length(unstring_" + suffix + ") > " + indexStr);
+				Alternative alt = new Alternative("length(unstring" + suffix + ") > " + indexStr);
 				alt.setColor(colorMisc);
 				_parentNode.addElement(alt);
 				alt.qTrue.addElement(instr);
@@ -7506,9 +7689,13 @@ public class COBOLParser extends CodeParser
 				// Prepare a generic variable name
 				content = this.getContent_R(optRed.get(0).asReduction(), content);
 				loop = new For("varStructorizer", "1", content, 1);
+				String suffix = "_" + Integer.toHexString(loop.hashCode());
 				this.equipWithSourceComment((For)loop, _reduction);
 				content = ((For)loop).getText().getLongString();
-				((For)loop).setText(content.replace("varStructorizer", "var" + loop.hashCode()));
+				((For)loop).setText(content.replace("varStructorizer", "var" + suffix));
+				// START KGU#847 2020-04-19: #851/1 declare the auxiliary variable
+				insertAuxVarDeclaration("var" + suffix, "int");
+				// END KGU#847 2020-04-19
 			}
 			break;
 		case RuleConstants.PROD_PERFORM_OPTION_VARYING:	// <perform_option> ::= <perform_test> VARYING <perform_varying_list>
@@ -7539,8 +7726,8 @@ public class COBOLParser extends CodeParser
 				}
 				catch (NumberFormatException ex) {}
 				if (step == 0
-						|| step > 0 && !cond.matches(BString.breakup(varName) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName))
-						|| step < 0 && !cond.matches(BString.breakup(varName) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName))
+						|| step > 0 && !cond.matches(BString.breakup(varName, false) + "\\s* > .*") && !cond.matches(".* < \\s*" + BString.breakup(varName, false))
+						|| step < 0 && !cond.matches(BString.breakup(varName, false) + "\\s* < .*") && !cond.matches(".* > \\s*" + BString.breakup(varName, false))
 						|| condTokens.contains("or")
 						|| condTokens.contains("and")
 						|| condTokens.contains("not")
@@ -7570,11 +7757,11 @@ public class COBOLParser extends CodeParser
 //					// TODO: We will have to convert the loop to a REPEAT loop
 //				}
 				else {
-					if (cond.matches(BString.breakup(varName) + "\\s* [<>] .*")) {
-						cond = cond.replaceAll(BString.breakup(varName) + "\\s* [<>] (.*)", "$1");
+					if (cond.matches(BString.breakup(varName, true) + "\\s* [<>] .*")) {
+						cond = cond.replaceAll(BString.breakup(varName, true) + "\\s* [<>] (.*)", "$1");
 					}
 					else {
-						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName), "$1");
+						cond = cond.replaceAll("(.*) [<>] \\s*" + BString.breakup(varName, true), "$1");
 					}
 					loop = new For(varName, from, cond.trim(), step);
 					this.equipWithSourceComment((For)loop, _reduction);
@@ -7638,34 +7825,71 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	// START KGU#848/KGU#849 2020-02-20: Issue #851 We need this for SORT as well and have to cope with THRU
 	/**
-	 * Builds a Call element from the PERFORM statement for PROD_PERFORM_BODY represented by {@code _reduction}.
-	 * @param _reduction - the top Reduction of the parsed PERFORM statement
+	 * Builds a Call element from the PERFORM statement for {@link RuleConstants#PROD_PERFORM_BODY}
+	 * represented by {@code _reduction}.
+	 * @param _reduction - the top {@link Reduction} of a parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * @see {@link #buildPerformCall1(Reduction, Subqueue)}
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		// <perform_body> ::= <perform_procedure> <perform_option>
+		Call dummy = buildPerformCall1(_reduction.get(0).asReduction(), _parentNode);
+		this.equipWithSourceComment(dummy, _reduction);
+	}
+		
+	/**
+	 * Builds a Call element for an internal procedure call represented by {@code _reduction}.
+	 * @param _reduction - a {@link Reduction} with head {@code <perform_procedure>}
+	 * @param _parentNode - the Subqueue to append the built elements to
+	 * @throws ParserCancelled
+	 * @see {@link #buildPerformCall(Reduction, Subqueue)}
+	 */
+	private final Call buildPerformCall1(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
+		// <perform_procedure> ::= <procedure_name>
+		// <perform_procedure> ::= <procedure_name> THRU <procedure_name>
+		/* FIXME: We must handle the case of a THRU construct - in this case we will
+		 * have to generate a series of calls later on. An idea would be to insert
+		 * both calls into the same element such that this can trigger the search for
+		 * the remaining procedures between the two.
+		 */
 		// Ideally we find the named label and either copy its content into the body Subqueue or
 		// export it to a new NSD.
-		String name = this.getContent_R(_reduction.get(0).asReduction(), "").trim();
-		if (Character.isDigit(name.charAt(0))) {
-			name = "sub" + name;
+		StringList content = new StringList();
+		StringList names = new StringList();
+		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_PROCEDURE_THRU) {
+			// First get the second name
+			names.add(this.getContent_R(_reduction.get(2).asReduction(), "").trim());
+			_reduction = _reduction.get(0).asReduction();
 		}
-		String content = name + "()";
-		Call dummyCall = new Call(content);
+		names.add(this.getContent_R(_reduction, "").trim());
+		for (int i = 0; i < names.count(); i++) {
+			String name = names.get(i);
+			if (Character.isDigit(name.charAt(0))) {
+				name = "sub" + name;
+				names.set(i, name);
+			}
+			content.add(name + "()");
+		}
+		Call dummyCall = new Call(content.reverse());
 		dummyCall.setColor(Color.RED);
-		this.equipWithSourceComment(dummyCall, _reduction);
 		dummyCall.getComment().add("This was a call of an internal section or paragraph");
 		_parentNode.addElement(dummyCall);
-		// Now we register the call for later linking
-		LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
-		if (otherCalls == null) {
-			otherCalls = new LinkedList<Call>();
-			this.internalCalls.put(name.toLowerCase(), otherCalls);
+		// Now we register the call(s) for later linking
+		for (int i = names.count() - 1; i >= 0; i--) {
+			String name = names.get(i);
+			LinkedList<Call> otherCalls = this.internalCalls.get(name.toLowerCase());
+			if (otherCalls == null) {
+				otherCalls = new LinkedList<Call>();
+				this.internalCalls.put(name.toLowerCase(), otherCalls);
+			}
+			otherCalls.add(dummyCall);
 		}
-		otherCalls.add(dummyCall);
+		return dummyCall;
 	}
+	// END KGU#848/KGU#849 2020-04-20
 
 	/**
 	 * Builds Case elements or nested Alternatives from the EVALUATE statement
@@ -8577,8 +8801,8 @@ public class COBOLParser extends CodeParser
 		}
 		// TODO We currently don't resolve the cond-name of "NOT cond-name"
 		cond += thruExpr;
-		if (cond.matches("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)")) {
-			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT") + "\\s*=(.*?)", "$1 <> $2");
+		if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
+			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
 		}
 		// bad check, the comparision can include the *text* " OF "!
 //		if (cond.contains(" OF ")) {
@@ -9510,6 +9734,10 @@ public class COBOLParser extends CodeParser
 		// Hence update the procedureList before elements are going to be moved.
 		finishProcedureList();
 
+		// START KGU#849 2020-04-20: Issue #851/5 We will now have to face span calls
+		HashMap<Call, StringList> thruCallMap = new HashMap<Call, StringList>();
+		// END KGU#849 2020-04-20
+		
 		// Now the actual extraction of local procedures may begin.
 		for (SectionOrParagraph sop: this.procedureList) {
 			LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
@@ -9530,7 +9758,13 @@ public class COBOLParser extends CodeParser
 				}
 				// START KGU#464 2017-12-04: Bugfix #475 - Check if there are EXIT PARAGRAPH or EXIT SECTION Jumps
 				//if (clients != null) {
-				if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				// START KGU#849 2020-04-20: Issue #851/5 We must handle open THRU calls
+				//if (clients != null || sop.isSection && !sop.sectionExits.isEmpty() || !sop.isSection && !sop.paragraphExits.isEmpty()) {
+				if (clients != null 
+						|| sop.isSection && !sop.sectionExits.isEmpty() 
+						|| !sop.isSection && !sop.paragraphExits.isEmpty()
+						|| !thruCallMap.isEmpty()) {
+				// END KGU#849 2020-04-20
 				// END KGU#464 2017-12-04
 					// No longer bothering to detect arguments and results, we may simply move the elements
 					//Root proc = owner.outsourceToSubroutine(elements, sop.name, null);
@@ -9565,11 +9799,34 @@ public class COBOLParser extends CodeParser
 						}
 					}
 					// END KGU#464 2017-12-03
+					// START KGU#849 2020-04-20: Issue #851/5 add the proc call to all open span calls
+					for (StringList procList: thruCallMap.values()) {
+						// FIXME: Possibly this should be reduced to certain sop level?
+						procList.add(callText);
+					}
+					// END KGU#849 2020-04-20
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
 					for (Call client: clients) {
 						// We may have to care for an includable Root that defines all necessary variables
-						client.setText(callText);
+						// START KGU#849 2020-04-20: Issue #851/5
+						//client.setText(callText);
+						if (client.getText().count() > 1) {
+							StringList procList = thruCallMap.get(client);
+							if (procList != null) {
+								// We have found the second reference, so we can now place the actual call list
+								client.setText(procList.reverse());
+								thruCallMap.remove(client);
+							}
+							else {
+								// Let the span lurk for further procedures
+								thruCallMap.put(client, StringList.getNew(callText));
+							}
+						}
+						else {
+							client.setText(callText);
+						}
+						// END KGU#849 2020-04-20
 						client.setColor(colorMisc);	// No longer needs to be red
 						client.disabled = false;
 					}
@@ -9656,6 +9913,7 @@ public class COBOLParser extends CodeParser
 		proc.setText(callText);
 		proc.setProgram(false);
 		int nElements = sop.getSize();
+		
 		//System.out.println("==== Extracting " + sop.name + " ===...");
 		for (int i = 0; i < nElements; i++) {
 			proc.children.addElement(sop.parent.getElement(sop.startsAt));

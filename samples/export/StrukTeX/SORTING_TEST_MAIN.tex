@@ -2,16 +2,15 @@
 
 \usepackage{struktex}
 \usepackage{german}
-\usepackage{mathcomp}
 
 \title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
 \author{Kay Gürtzig}
-\date{09.04.2020}
+\date{23.04.2020}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(96,82)[bubbleSort]
+\begin{struktogramm}(95,82)[bubbleSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -69,7 +68,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(174,128)[partition]
+\begin{struktogramm}(171,128)[partition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -105,7 +104,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(103,61)[testSorted]
+\begin{struktogramm}(101,61)[testSorted]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{numbers}}{type: \(null\)}
@@ -135,14 +134,14 @@
     \end{declaration}
   }
   \assign{\(lgth\ \gets\ length(heap)\)}
-  \while{\pKey{for}\(k\ \gets\ lgth\ div\ 2\ -\ 1\)\pKey{to}\(0\)\pKey{step}\(-1\)}
+  \while{\pKey{for}\(k\ \gets\ lgth\ div\ 2\ -\ 1\)\pKey{to}\(0\)\pKey{by}\(-1\)}
     \sub{\(maxHeapify(heap,\ k,\ lgth)\)}
   \whileend
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(148,71)[quickSort]
+\begin{struktogramm}(147,71)[quickSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -163,7 +162,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(90,60)[heapSort]
+\begin{struktogramm}(89,60)[heapSort]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(null\)}
@@ -171,7 +170,7 @@
   }
   \sub{\(buildMaxHeap(values)\)}
   \assign{\(heapRange\ \gets\ length(values)\)}
-  \while{\pKey{for}\(k\ \gets\ heapRange\ -\ 1\)\pKey{to}\(1\)\pKey{step}\(-1\)}
+  \while{\pKey{for}\(k\ \gets\ heapRange\ -\ 1\)\pKey{to}\(1\)\pKey{by}\(-1\)}
     \assign{\(heapRange\ \gets\ heapRange\ -\ 1\)}
     \assign{\(maximum\ \gets\ values[0]\)}
     \assign{\(values[0]\ \gets\ values[heapRange]\)}
@@ -182,7 +181,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(194,181)[SORTING\_TEST\_MAIN]
+\begin{struktogramm}(192,181)[SORTING\_TEST\_MAIN]
   \until{\(elementCount\ \geq\ 1\)}
     \assign{\(\)\pKey{INPUT}\(\ elementCount\)}
   \untilend

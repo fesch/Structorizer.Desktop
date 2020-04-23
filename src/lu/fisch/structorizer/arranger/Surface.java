@@ -1650,7 +1650,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					};
 				}
 				int trial = 1;
-				// We care a unique group name by appending a parenthesised number
+				// We care for a unique group name by appending a parenthesised number
 				while (groups.containsKey(groupName + "(" + trial +")")) trial++;
 				groupName = groupName + "(" + trial +")";
 			}

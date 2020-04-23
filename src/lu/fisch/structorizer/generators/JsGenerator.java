@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-24      Bugfix #783 - Workaround for record initializers without known type
  *      Kay Gürtzig     2020-02-11      Bugfix #810 - multiple-input instruction export wasn't properly configured
  *      Kay Gürtzig     2020-04-03      Enh. #828 - configuration and modifications for group export
+ *      Kay Gürtzig     2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *
  ******************************************************************************************************
  *
@@ -450,6 +451,9 @@ public class JsGenerator extends CGenerator {
 			pr = "includable";
 		}
 		appendComment(pr + " " + _root.getText().get(0), _indent);
+
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{
@@ -544,7 +548,8 @@ public class JsGenerator extends CGenerator {
 
 	/**
 	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
+	 * and adds it to this.code.<br/>
+	 * NOTE: This overwrites {@link #typeMap} with the one derived from {@code _root}! 
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
 	 * @param varNames - list of variable names introduced inside the body
@@ -556,7 +561,10 @@ public class JsGenerator extends CGenerator {
 			appendDefinitions(_root, _indent, varNames, false);
 		}
 		if (this.typeMap == null) {
-			this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+			// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+			//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+			this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+			// END KGU#852 2020-04-22
 		}
 		//generateIOComment(_root, _indent);
 		addSepaLine();

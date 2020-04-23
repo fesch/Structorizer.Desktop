@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,6 +75,9 @@
  *                                      group export: Without specified entry points all contained diagrams
  *                                      will be qualified for export. Remaining difference: We still first
  *                                      check for contained main diagrams as potential tree roots.
+ *      Kay Gürtzig     2020-04-22      Bugfix #853: If both the arr file path and the contained nsd file paths
+ *                                      are relative then the batch export failed
+ *                                      Issue #828/#836 - The fallback to all roots hadn't worked for arr files
  *
  ******************************************************************************************************
  *
@@ -613,6 +616,11 @@ public class Structorizer
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 				else if (f.exists() && (ArrFilter.isArr(arrSpec.get(0)) || (isArrz = ArrZipFilter.isArr(arrSpec.get(0))))) {
 					arrSpec.remove(0);
+					// START KGU#851 2020-04-22: Bugfix #853 archivar must be able to derive the parent directory
+					if (!isArrz && !f.isAbsolute()) {
+						f = f.getAbsoluteFile();
+					}
+					// END KGU#851 2020-04-22
 					if (!addExportPool(pools, archivar, arrSpec, f, isArrz)) {
 						System.err.println("*** No starting diagrams in arrangement " + f.getAbsolutePath() + " found. Skipped.");
 					}
@@ -785,7 +793,10 @@ public class Structorizer
 				if (entry.name == null) {
 					entry.getRoot(archivar);	// This may set entry.name!
 				}
-				if (entry.name != null && entry.minArgs == -1) {
+				// START KGU#815/KGU#824 2020-04-22: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
+				//if (entry.name != null && entry.minArgs == -1) {
+				if (entry.name != null) {
+				// END KGU#815/KGU#824 2020-04-22
 					root = entry.getRoot(archivar);
 					// START KGU#815/KGU#824 2020-03-23: Enh. #828, issue #836 - Collect all Roots from the archive as fallback
 					//if (root != null && root.isProgram()) {

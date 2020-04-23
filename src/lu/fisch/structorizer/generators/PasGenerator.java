@@ -91,6 +91,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2019-02-15      Issue #814: Unidentified parameter type marker changed: {type?} --> ???
  *      Kay Gürtzig         2020-03-17/30   Enh. #828: Modification in generatePreamble(), insertion lines
  *                                          corrected
+ *      Kay Gürtzig         2020-04-22      Enh. #855: New configurable default array size considered
  *
  ******************************************************************************************************
  *
@@ -470,6 +471,11 @@ public class PasGenerator extends Generator
 			_typeDescr += "array ";
 			int minIndex = typeInfo.getMinIndex(i);
 			int maxIndex = typeInfo.getMaxIndex(i);
+			// START KGU#854 2020-04-22: Enh. #855
+			if (maxIndex < 0) {
+				maxIndex = minIndex + this.optionDefaultArraySize() - 1;
+			}
+			// END KGU#854 2020-04-22
 			if (maxIndex >= minIndex) {
 				_typeDescr += "[" + minIndex + ".." + maxIndex + "] ";
 			}
@@ -2121,6 +2127,11 @@ public class PasGenerator extends Generator
 					// It's an array, so get its index range
 					int minIndex = typeInfo.getMinIndex(level);
 					int maxIndex = typeInfo.getMaxIndex(level++);
+					// START KGU#854 2020-04-22: Enh. #855
+					if (maxIndex < 0) {
+						maxIndex = this.optionDefaultArraySize() - 1;
+					}
+					// END KGU#854 2020-04-22
 					String indexRange = "";
 					if (maxIndex > 0) {
 						indexRange = "[" + minIndex +

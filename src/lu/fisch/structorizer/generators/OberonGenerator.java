@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-18      Issues #828/#836 Group export enabled, includables had been wrongly handled
  *                                              bugfix #839, fix for issue #780 revised
  *      Kay Gürtzig             2020-03-26      Bugfix KGU#833: The function name got declared as variable without need.
+ *      Kay Gürtzig             2020-04-22      Enh. #855: Configurable default array / string size considered
  *
  ******************************************************************************************************
  *
@@ -337,8 +338,16 @@ public class OberonGenerator extends Generator {
 					_type.equalsIgnoreCase("longreal")) _type = "LONGREAL";
 			else if (_type.equalsIgnoreCase("bool") ||
 					_type.equalsIgnoreCase("boolean")) _type = "BOOLEAN";
-			else if (_type.equalsIgnoreCase("string")) _type = "ARRAY 100 OF CHAR"; // may be too short but how can we guess?
-			// To be continued if required...
+			// START KGU#854 2020-04-22. Enh. #855: We have a configurable default value now
+			//else if (_type.equalsIgnoreCase("string")) _type = "ARRAY 100 OF CHAR"; // may be too short but how can we guess?
+			else if (_type.equalsIgnoreCase("string")) {
+				int length = this.optionDefaultStringLength();
+				if (length == 0) {
+					length = 100;	// For backward compatibility
+				}
+				_type = "ARRAY " + length + " OF CHAR";
+			}
+			// END KGU#854 2020-04-22
 			// START KGU#332 2017-01-30: Enh. #335
 			_type = _type.replace("array", "ARRAY");
 			_type = _type.replace(" of ", " OF ");
@@ -351,9 +360,18 @@ public class OberonGenerator extends Generator {
 			}
 			else if (_type.matches(pattern = "ARRAY\\s*OF\\s*(.*)")) {
 				String elementType = _type.replaceFirst(pattern, "$1").trim();
-				_type = "ARRAY OF " + transformType(elementType, elementType);
+				// START KGU#854 2020-04-22: Enh. #855: New default array size
+				//_type = "ARRAY OF " + transformType(elementType, elementType);
+				String sizeStr = "";
+				int defSize = this.optionDefaultArraySize();
+				if (defSize > 0) {
+					sizeStr = Integer.toString(defSize) + " ";
+				}
+				_type = "ARRAY " + sizeStr + "OF " + transformType(elementType, elementType);
+				// END KGU#854 2020-04-22
 			}
 			// END KGU#332 2017-01-30
+			// To be continued if required...
 		}
 		return _type;
 	}
@@ -378,6 +396,11 @@ public class OberonGenerator extends Generator {
 		for (int i = 0; i < nLevels; i++) {
 			_typeDescr += "ARRAY ";
 			int maxIndex = typeInfo.getMaxIndex(i);
+			// START KGU#854 2020-04-22: Enh. #855
+			if (maxIndex < 0) {
+				maxIndex = this.optionDefaultArraySize() - 1;
+			}
+			// END KGU#854 2020-04-22
 			if (maxIndex >= 0) {
 				_typeDescr += (maxIndex + 1) + " ";
 			}
@@ -682,7 +705,7 @@ public class OberonGenerator extends Generator {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
 						// START KGU 2017-01-31: return must be capitalized here
-						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return"), true) + "($|\\W+.*)", "RETURN$1");
 						// END KGU 2017-01-31
 						// START KGU#261/KGU#504 2018-03-13: Enh. #259/#335, bugfix #521
 						//addCode(transline, _indent, isDisabled);
@@ -2099,8 +2122,13 @@ public class OberonGenerator extends Generator {
 		while (typeStr.startsWith("@")) {
 			// It's an array, so get its index range
 			int maxIndex = typeInfo.getMaxIndex(level++);
+			// START KGU#854 2020-04-22: Enh. #855
+			if (maxIndex < 0) {
+				maxIndex = this.optionDefaultArraySize() - 1;
+			}
+			// END KGU#854 2020-04-22
 			String nElements = "";
-			if (maxIndex > 0) {
+			if (maxIndex >= 0) {
 				nElements = " " + (maxIndex+1);
 			}
 			prefix += "ARRAY" + nElements + " OF ";
