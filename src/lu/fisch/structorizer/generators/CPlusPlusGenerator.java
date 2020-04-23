@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import lu.fisch.structorizer.elements.Element;
@@ -316,20 +317,20 @@ public class CPlusPlusGenerator extends CGenerator {
 		//_type = _type.replace("character", "char");
 		//_type = _type.replace("String", "string");
 		//_type = _type.replace("char[]", "string");
-		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
-		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boolean") + "($|\\W.*)", "bool");
-		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boole") + "($|\\W.*)", "bool");
-		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("ool") + ")($|\\W.*)", "$1bool$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String") + ")($|\\W.*)", "$1string$3");
-		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("char") + "\\[\\])($|\\W.*)", "$1string$3");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat", true) + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boolean", true) + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boole", true) + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("ool", true) + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String", true) + ")($|\\W.*)", "$1string$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har", true) + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character", true) + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("char", true) + "\\[\\])($|\\W.*)", "$1string$3");
 		// END KGU 2017-04-12
 		return _type;
 	}
@@ -640,6 +641,9 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType, boolean _public)
 	{
+		// START KGU#852 2020-04-22: Since method appendDeclarations() does not overwrite typeMap anymore, we must set it
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// START KGU#178 2016-07-20: Enh. #160
 		if (topLevel)
 		{

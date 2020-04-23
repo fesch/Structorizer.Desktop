@@ -197,6 +197,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined file filter (StructorizerFilter) preferred in openNSD()
  *      Kay Gürtzig     2020-03-03      Enh. #440: New method to support PapDesigner export
  *      Kay Gürtzig     2020-03-16/17   Enh. #828: New method to export an arrangement group
+ *      Kay Gürtzig     2020-04-22      Enh. #855: New export options for array size / string length defaults
+ *      Kay Gürtzig     2020-04-23      Bugfix #856: Selective preference saving to file didn't work properly
  *
  ******************************************************************************************************
  *
@@ -8225,6 +8227,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#816 2020-03-17: Enh. #837
             eod.chkDirectoryFromNsd.setSelected(ini.getProperty("genExportDirFromNsd", "true").equals("true"));
             // END KGU#816 2020-03-17
+            // START KGU#854 2020-04-22: Enh. #855
+            eod.chkArraySize.setSelected(ini.getProperty("genExportUseArraySize", "false").equals("true"));
+            eod.chkStringLen.setSelected(ini.getProperty("genExportUseStringLen", "false").equals("true"));
+            eod.spnArraySize.setValue(Integer.parseUnsignedInt(ini.getProperty("genExportArraySizeDefault", "100")));
+            eod.spnStringLen.setValue(Integer.parseUnsignedInt(ini.getProperty("genExportStringLenDefault", "256")));
+            // END KGU#854 2020-04-22
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
@@ -8272,6 +8280,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#816 2020-03-17: Enh. #837
                 ini.setProperty("genExportDirFromNsd", String.valueOf(eod.chkDirectoryFromNsd.isSelected()));
                 // END KGU#816 2020-03-17
+                // START KGU#854 2020-04-22: Enh. #855
+                ini.setProperty("genExportUseArraySize", String.valueOf(eod.chkArraySize.isSelected()));
+                ini.setProperty("genExportUseStringLen", String.valueOf(eod.chkStringLen.isSelected()));
+                ini.setProperty("genExportArraySizeDefault", String.valueOf(eod.spnArraySize.getValue()));
+                ini.setProperty("genExportStringLenDefault", String.valueOf(eod.spnStringLen.getValue()));
+                // END KGU#854 2020-04-22
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
                 String prefGenName = (String)eod.cbPrefGenerator.getSelectedItem();
                 // START KGU#654 2019-02-15: Enh #681 Trigger for proposing recent generator as new favourite
@@ -10527,7 +10541,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (!chkAll.isSelected()) {
 				i = 0;
 				for (String[] patterns: preferenceKeys.values()) {
-					if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
+					// START KGU#855 2020-04-23: Bugfix #856 didn't collect the correct items
+					//if (prefCategorySelection.set(i, chkCategories[i].isSelected())) {
+					boolean isSelected = chkCategories[i].isSelected();
+					prefCategorySelection.set(i, isSelected);
+					if (isSelected) {
+					// END KGU#855 2020-04-23
 						for (String pattern: patterns) {
 							keys.add(pattern);
 						}

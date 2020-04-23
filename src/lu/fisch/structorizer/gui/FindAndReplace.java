@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-13      Bugfix #728 - IRoutinePoolListener inheritance added, now reacts on diagram changes
  *                                      Retrieval and traversal strategies unified (now tree is always completely shown)
  *      Kay Gürtzig     2019-09-29      Enh. #738: Update of code preview ensured after replacements
+ *      Kay Gürtzig     2020-04-21      Bugfix #852: Replacements for strings containing 'ß' failed in case-ignorant mode
  *
  ******************************************************************************************************
  *
@@ -1122,7 +1123,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	// FIXME: We might cache the split results for the currentElement
 	/**
 	 * Splits the source string {@code text} (may contain newlines) with respect to the
-	 * matching {@code pattern}, returns the split results and fills th matching substrings
+	 * matching {@code pattern}, returns the split results and fills the matching substrings
 	 * into {@code realWords} (the name means that it contains the real strings matching
 	 * the patterns as needed for the preview highlighting.
 	 * @param text - the newline-separated source text as String
@@ -1140,7 +1141,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 				splitter = Pattern.quote(splitter);
 			}
 			else {
-				splitter = BString.breakup(splitter);
+				// START KGU#850 2020-04-21: Bugfix #852 - was vulnerable to 'ß'
+				//splitter = BString.breakup(splitter);
+				splitter = BString.breakup(splitter, false);
+				// END KGU#850 2020-04-21
 				// We must care for metasymbols lest the regex mechanism should run havoc
 			}
 		}
@@ -1334,7 +1338,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 				// No idea why exactly, the lines get truncated (ends replaced by ellipse on the first) on the first attempt
 				fillResultTree();
 			}
-			// ÉND KGU#647 2019-02-07
+			// END KGU#647 2019-02-07
 			gotoNext = false;
 			replace = false;
 		}
@@ -1675,7 +1679,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Specific version of {@link #checkElementMatch(Element)} for the {@link #currentElement}
 	 * (which must be enabled)
-	 * @return numbe of matches in the current element (depending on current target settings)
+	 * @return number of matches in the current element (depending on current target settings)
 	 */
 	private int checkElementMatch()
 	{

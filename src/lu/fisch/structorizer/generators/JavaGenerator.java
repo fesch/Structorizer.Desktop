@@ -562,32 +562,32 @@ public class JavaGenerator extends CGenerator
 //		_type = _type.replace("integer", "Integer");
 //		_type = _type.replace("string", "String");
 //		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$1short$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
-		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1Character$3");
-		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
-		if (_type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
-			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("short int", true) + ")($|\\W.*)", "$1short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long int", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long long", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort", true) + ")($|\\W.*)", "$1short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char", true) + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char", true) + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat", true) + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har", true) + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character", true) + ")($|\\W.*)", "$1Character$3");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean", true) + ")($|\\W.*)", "$1boolean$3");
+		if (_type.matches("(^|.*\\W)(" + BString.breakup("bool", true) + "[eE]?)(\\W.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool", true) + "[eE]?)(\\W.*|$)", "$1boolean$3");
 		}
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1String$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("array") + "\\s*?\\[[0-9]*\\]\\s*?" + BString.breakup("of") + "\\s+char)(\\W.*)", "$1String$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("const") + ")($|\\W.*)", "$1final$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("string", true) + ")($|\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("array", true) + "\\s*?\\[[0-9]*\\]\\s*?" + BString.breakup("of", true) + "\\s+char)(\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("const", true) + ")($|\\W.*)", "$1final$3");
 		// END KGU 2017-04-12
 		return _type;
 	}
@@ -1234,6 +1234,9 @@ public class JavaGenerator extends CGenerator
 			addSepaLine();
 		}
 		// END KGU#178 2016-07-20
+		// START KGU#852 2020-04-22: Since method appendDeclarations() does not overwrite typeMap anymore, we must set it
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// START KGU#815 2020-04-01: Enh. #828
 		//if (_root.isProgram()) {
 		if (topLevel && (_root.isProgram() || this.isLibraryModule())) {

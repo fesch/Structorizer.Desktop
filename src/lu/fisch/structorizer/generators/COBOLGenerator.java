@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-09      Code for Alternative and Case implemented
  *      Kay Gürtzig             2020-04-16      Issue #739: Enumeration type export prepared
  *      Kay Gürtzig             2020-04-19      Declaration part advanced.
+ *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *      
  ******************************************************************************************************
  *
@@ -66,6 +67,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -1351,7 +1353,7 @@ public class COBOLGenerator extends Generator {
 
 	/**
 	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
+	 * and adds it to this.code.<br/>
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
 	 * @param varNames - list of variable names introduced inside the body
@@ -1366,7 +1368,10 @@ public class COBOLGenerator extends Generator {
 		appendComment("TODO: Check and accomplish variable declarations:", _indent);
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//this.typeMap = (HashMap<String, TypeMapEntry>)_root.getTypeInfo().clone();
-		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo(routinePool).clone();
+		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+		//this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo(routinePool).clone();
+		this.typeMap = (LinkedHashMap<String, TypeMapEntry>) _root.getTypeInfo(routinePool).clone();
+		// END KGU#852 2020-04-22
 		// END KGU#676 2019-03-30
 		// special treatment of constants
 		for (String constName: _root.constants.keySet()) {

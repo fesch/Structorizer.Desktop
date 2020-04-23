@@ -7199,7 +7199,7 @@ public class Executor implements Runnable
 		String pattern = Matcher.quoteReplacement(keyword);
 		if (CodeParser.ignoreCase)
 		{
-			pattern = BString.breakup(pattern);
+			pattern = BString.breakup(pattern, true);
 		}
 		return pattern;
 	}

@@ -2,7 +2,7 @@
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -102,8 +102,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-11      Bugfix #806: Mechanism to derive rudimentary format strings for printf/scanf
  *      Kay Gürtzig             2020-02-15      Issue #814: An empty parameter list should be translated into ...(void)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
- *      Kay Gürtzig             2020-03-20/27   Enh. #828 bugfix #836: Group export implemented, batch export improved
+ *      Kay Gürtzig             2020-03-20/27   Enh. #828, bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
+ *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
+ *                                              Enh. #855: New configurable default array size considered
  *
  ******************************************************************************************************
  *
@@ -742,27 +744,35 @@ public class CGenerator extends Generator {
 		//_type = _type.replace("boolean", "int");
 		//_type = _type.replace("boole", "int");
 		//_type = _type.replace("character", "char");
-		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
-		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
-		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer", true) + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint", true) + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real", true) + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat", true) + ")($|\\W.*)", "$1float$3");
 		// START KGU#607 2018-10-30: We may insert "#include <stdbool.h>", so bool can be used
 		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1int$3");
 		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1int$3");
 		//_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + ")($|\\W.*)", "$1int$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1bool$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean", true) + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole", true) + ")($|\\W.*)", "$1bool$3");
 		// END KGU#607 2018-10-30
-		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
-		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har", true) + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character", true) + ")($|\\W.*)", "$1char$3");
 		// END KGU 2017-04-12
 		// START KGU#332 2017-01-30: Enh. #335 - more sophisticated type info
 		if (this.getClass().getSimpleName().equals("CGenerator")) {
-			_type = _type.replace("string", "char*");
-			_type = _type.replace("String", "char*");
+			// START KGU#854 2020-04-22: Enh. #855 default string length
+			//_type = _type.replace("string", "char*");
+			//_type = _type.replace("String", "char*");
+			/*
+			 * It wouldn't make much sense to define the string type as char[<defaultStringLength>] as in most
+			 * cases we are better off with the pointer type, e.g. fo arguments, assignments and even return
+			 * values, so we don't make use of the default value introduced with version 3.30.08 here.
+			 */
+			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String", true) + ")($|\\W.*)", "$1char*$3");
+			// END KGU#854 2020-04-22
 		}
 		// END KGU#332 2017-01-30
 		return _type;
@@ -937,12 +947,17 @@ public class CGenerator extends Generator {
 			if (this.wantsSizeInArrayType()) {
 				int minIndex = typeInfo.getMinIndex(i);
 				int maxIndex = typeInfo.getMaxIndex(i);
+				// START KGU#854 2020-04-22: Enh. #855
+				if (maxIndex < 0) {
+					maxIndex = this.optionDefaultArraySize() - 1;
+				}
+				// END KGU#854 2020-04-22
 				int indexRange = maxIndex+1 - minIndex;
 				// We try a workaround for negative minIndex...
 				if (indexRange > maxIndex + 1) {
 					maxIndex = indexRange - 1;
 				}
-				if (maxIndex > 0) {
+				if (maxIndex >= 0) {
 					_typeDescr += Integer.toString(maxIndex+1);
 				}
 			}
@@ -2253,7 +2268,10 @@ public class CGenerator extends Generator {
 			code.add("#ifndef " + guardName);
 			code.add("#define " + guardName);
 		}
-		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// KGU#815/KGU#824 2020-03-20
 
 		String pr = "program";
@@ -2460,7 +2478,7 @@ public class CGenerator extends Generator {
 
 	// START KGU#376 2017-09-26: Enh #389 - declaration stuff condensed to a method
 	/**
-	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.<br/>
 	 * @param _root - the diagram the declarations and definitions of are to be added
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
@@ -2473,7 +2491,11 @@ public class CGenerator extends Generator {
 		//this.typeMap = _root.getTypeInfo();
 		// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
 		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo());
-		this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// START KGU#852 2020-04-22: Bugfix #854 - we must ensure topological order on export
+		//this.typeMap = new HashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		HashMap<String, TypeMapEntry> oldTypeMap = typeMap;
+		this.typeMap = new LinkedHashMap<String, TypeMapEntry>(_root.getTypeInfo(routinePool));
+		// END KGU#852 2020-04-22
 		// END KGU#676 2019-03-30
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
@@ -2510,6 +2532,11 @@ public class CGenerator extends Generator {
 		if (code.count() > lastLine) {
 			addSepaLine();
 		}
+		// START KGU#852 2020-04-22: make sure the original type map is restored
+		if (oldTypeMap != null) {
+			typeMap = oldTypeMap;
+		}
+		// END KGU#852 2020-04-22
 	}
 	// END KGU#376 2017-09-26
 	
@@ -2823,6 +2850,11 @@ public class CGenerator extends Generator {
 		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
 		for (int i = 0; i < nLevels; i++) {
 			int maxIndex = typeInfo.getMaxIndex(i);
+			// START KGU#854 2020-04-22: Enh. #855
+			if (maxIndex < 0) {
+				maxIndex = this.optionDefaultArraySize() - 1;
+			}
+			// END KGU#854 2020-04-22
 			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
 		}
 		return _elementType;

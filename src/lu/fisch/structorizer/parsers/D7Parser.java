@@ -1924,14 +1924,14 @@ public class D7Parser extends CodeParser
 
 		String output = getKeyword("output");
 		String input = getKeyword("input");
-		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]", output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]", output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)", output+" $1");
-		_content = _content.replaceAll(BString.breakup("write")+"(.*?)", output+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"[((](.*?)[))]", input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]", input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"(.*?)", input+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"(.*?)", input+" $1");
+		_content = _content.replaceAll(BString.breakup("write", true)+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln", true)+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln", true)+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("write", true)+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("read", true)+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln", true)+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln", true)+"(.*?)", input+" $1");
+		_content = _content.replaceAll(BString.breakup("read", true)+"(.*?)", input+" $1");
 		
 		//System.out.println(_content);
 		
@@ -2067,7 +2067,7 @@ public class D7Parser extends CodeParser
 			int ixLast = root.children.getSize() - 1;
 			Element lastEl = root.children.getElement(ixLast);
 			if (lastEl.getClass().getSimpleName().equals("Instruction") &&
-					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result") + "\\s*")) {
+					lastEl.getText().getText().matches("\\s*" + root.getMethodName() + "\\s*<-\\s*" + BString.breakup("result", true) + "\\s*")) {
 				// An end-standing instruction "<function-name> <- result" is redundant, so remove it.
 				root.children.removeElement(ixLast);
 			}
