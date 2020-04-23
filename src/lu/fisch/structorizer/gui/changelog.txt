@@ -105,6 +105,7 @@ Current development version: 3.30-08 (2020-04-22)
 - 08: Bugfix #854: Topological order of type definitions on export ensured <2>
 - 08: Enh. #855 New configurable default array/string sizes for code export <2>
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
+- 08: Bugfix #858: Functions did not actually work in FOR-IN loop headers <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

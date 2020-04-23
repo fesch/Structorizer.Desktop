@@ -193,6 +193,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-02-21      Issue #826: Raw input is to cope with backslashes as in Windows file paths
  *      Kay Gürtzig     2020-04-04      Issue #829: Control should not automatically close after debugging [mawa290669]
  *      Kay Gürtzig     2020-04-13      Bugfix #848: On updating the context of includables mere declarations had been forgotten
+ *      Kay Gürtzig     2020-04-23      Bugfix #858: split function in FOR-IN loop was not correctly handled
  *
  ******************************************************************************************************
  *
@@ -1017,6 +1018,11 @@ public class Executor implements Runnable
 	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
+	
+	// START KGU#856 2020-04-23: Bugfix #858 List of function names producing strings
+	private static final StringList STRING_YIELDING_FUNCTIONS = StringList.explode(
+			"copy,delete,insert,lowercase,uppercase,trim,fileReadLine", ",");
+	// END KGU#856 2020-04-23
 
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -6476,7 +6482,35 @@ public class Executor implements Runnable
 				problem += "\n" + ex.getMessage();
 			}
 		}
-
+		// START KGU#856 2020-04-23: Bugfix #858 - there IS a function returning an array: split
+		// and there are also functions returning strings, so we must evaluate them first
+		if (value == null && Function.isFunction(valueListString)) {
+			Function fct = new Function(valueListString);
+			if (fct.getName().equals("split") && fct.paramCount() == 2) {
+				try {
+					value = this.evaluateExpression(valueListString, true, true);
+					if (!(value instanceof ArrayList)) {
+						value = null;
+					}
+				}
+				catch (EvalError ex) {
+					problem += "\n" + ex.getMessage();
+				}
+			}
+			else if (STRING_YIELDING_FUNCTIONS.contains(fct.getName())) {
+				try {
+					value = this.evaluateExpression(valueListString, true, true);
+					if (!(value instanceof String)) {
+						value = null;
+					}
+				}
+				catch (EvalError ex) {
+					problem += "\n" + ex.getMessage();
+				}
+			}
+		}
+		// END KGU#856 2020-04-23
+		
 		// There are no other built-in functions returning an array and external function calls
 		// aren't allowed at this position, hence it's relatively safe to conclude
 		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
