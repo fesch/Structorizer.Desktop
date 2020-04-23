@@ -388,7 +388,7 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 			StringList oldEntries = getIncludeList();
 			Object inclName = cbIncludables.getSelectedItem();
 			if (inclName != null && inclName instanceof String && oldEntries == null || !oldEntries.contains((String)inclName)) {
-				if (!txtIncludeList.getText().isBlank()) {
+				if (!txtIncludeList.getText().trim().isEmpty()) {
 					txtIncludeList.append("\n");
 				}
 				txtIncludeList.append((String)inclName);
