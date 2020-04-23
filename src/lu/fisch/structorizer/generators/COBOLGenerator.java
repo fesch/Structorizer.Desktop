@@ -453,26 +453,6 @@ public class COBOLGenerator extends Generator {
 		}
 		return levelIncr;
 	}
-	/** @return the default size of COBOL tables if the array size wasn't specified in Strucorizer */
-	private int optionDefaultArraySize()
-	{
-		int defaultSize = 100;
-		Object optionVal = this.getPluginOption("defaultTableSize", defaultSize);
-		if (optionVal instanceof Integer) {
-			defaultSize = Math.max(1, ((Integer)optionVal).intValue());
-		}
-		return defaultSize;
-	}
-	/** @return the default size of COBOL tables if the array size wasn't specified in Strucorizer */
-	private int optionDefaultStringLength()
-	{
-		int defaultSize = 256;
-		Object optionVal = this.getPluginOption("defaultStringLength", defaultSize);
-		if (optionVal instanceof Integer) {
-			defaultSize = Math.max(1, ((Integer)optionVal).intValue());
-		}
-		return defaultSize;
-	}
 	// END KGU#395 2020-04-17
 	
 	/************ Code Generation **************/
