@@ -193,6 +193,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-02-21      Issue #826: Raw input is to cope with backslashes as in Windows file paths
  *      Kay Gürtzig     2020-04-04      Issue #829: Control should not automatically close after debugging [mawa290669]
  *      Kay Gürtzig     2020-04-13      Bugfix #848: On updating the context of includables mere declarations had been forgotten
+ *      Kay Gürtzig     2020-04-23      Bugfix #858: split function in FOR-IN loop was not correctly handled
  *
  ******************************************************************************************************
  *
@@ -1017,7 +1018,7 @@ public class Executor implements Runnable
 	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
-
+	
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
 	private Executor(Diagram diagram)
@@ -6476,12 +6477,15 @@ public class Executor implements Runnable
 				problem += "\n" + ex.getMessage();
 			}
 		}
-
-		// There are no other built-in functions returning an array and external function calls
-		// aren't allowed at this position, hence it's relatively safe to conclude
-		// an item enumeration from the occurrence of a comma. (If the comma IS an argument
-		// separator of a function call then the function trouble will be an element of the
-		// value list, such that it must be put in braces.)
+		
+		// External function calls are not allowed at this position but there of course some
+		// functions that yield an array (split) or a string (copy, insert, delete, uppercase,
+		// lowercase. The latter ones might even be concatenated. Nevertheless it's relatively
+		// safe to evaluate this as content of an array initializer. If the comma was what we
+		// assumed (separator of an item enumeration) then the resulting array (i.e. ArrayList)
+		// MUST contain more than one element. (If the comma IS an argument separator of a
+		// function call then either the function will be an element of the value list or
+		// we obtain a single element - or some syntax trouble.)
 		if (value == null && valueListString.contains(","))
 		{
 			try
@@ -6492,6 +6496,16 @@ public class Executor implements Runnable
 				//context.interpreter.unset("tmp20160321kgu");
 				value = this.evaluateExpression("{" + valueListString + "}", true, false);
 				// END KGU#439 2017-10-13
+				// START KGU#856 2020-04-23: Bugfix #858 - there ARE functions returning an array or string
+				if (value instanceof ArrayList && ((ArrayList<?>)value).size() == 1) {
+					/* If the array contains only a single element then we must have
+					 * misinterpreted the comma (may have been part of a string literal
+					 * or separator in a function parameter list. So the element is certainly
+					 * the array or string we need
+					 */
+					value = ((ArrayList<?>)value).get(0);
+				}
+				// END KGU#856 2020-04-23
 			}
 			catch (EvalError ex)
 			{
