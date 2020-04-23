@@ -69,6 +69,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2020-03-08      Bugfix #833: Parameter parentheses ensured, superfluous Includable suppressed
  *      Kay Gürtzig     2020-03-09      Bugfix #835: Structure preference kywords must not be glued to expressions
  *      Kay Gürtzig     2020-04-12      Bugfix #847 ensured that ids like 'false', 'true', and built-in functions be lowercase
+ *      Kay Gürtzig     2020-04-24      Bugfix #861/2 duplicate procedure comments prevented (was revealed by
+ *                                      by a modification of the block comment in PasGenerator.
  *
  ******************************************************************************************************
  *
@@ -1458,9 +1460,17 @@ public class D7Parser extends CodeParser
 				// END KGU#194 2016-05-08
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				String comment = this.retrieveComment(_reduction);
-				if (comment != null && !root.getComment().contains(comment)) {
-					root.getComment().add(StringList.explode(comment, "\n"));
+				// START KGU#860 2020-04-24: Bugfix #861/2 Precaution didn't work if newlines are contained
+				//if (comment != null && !root.getComment().contains(comment)) {
+				//	root.getComment().add(StringList.explode(comment, "\n"));
+				//}
+				if (comment != null && !comment.trim().isEmpty()) {
+					StringList commentLines = StringList.explode(comment, "\n");
+					if (root.getComment().indexOf(commentLines, 0, true) < 0) {
+						root.getComment().add(commentLines);
+					}
 				}
+				// END KGU#960 2020-06-20
 				// END KGU#407 2017-06-22
 			}
 			else if (

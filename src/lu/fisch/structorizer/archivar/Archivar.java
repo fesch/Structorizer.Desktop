@@ -36,6 +36,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-26      Enh. #697: Bugfixes in zipArrangement(), saveArrangement()
  *      Kay Gürtzig     2019-07-31      Bugfix #731 (also comprising #526): new static methods renameTo, copyFile
  *      Kay Gürtzig     2019-10-14      Bugfix #763: Missing references files now add to the problem list on loading
+ *      Kay Gürtzig     2020-04-23      Bugfix #860: ArchiveIndexEntry did not set path field with absolute nsd file paths
  *
  ******************************************************************************************************
  *
@@ -143,6 +144,7 @@ public class Archivar {
 		public ArchiveIndexEntry(String arrangementLine, File _fromArchive, File _extractDir)
 		{
 			super(null, null);
+			System.out.println("ArchiveIndexEntry(" + arrangementLine + ", ...)");
 			StringList fields = StringList.explode(arrangementLine, ",");	// FIXME what if a path or the name contains a comma?
 			if (fields.count() >= 3)
 			{
@@ -153,6 +155,9 @@ public class Archivar {
 				if (nsdFileName.endsWith("\""))
 					nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
 				File nsdFile = new File(nsdFileName);
+				// START KGU#858 2020-04-23: Bugfix #860 We forgot to set the path in case it IS absolute
+				this.path = nsdFileName;
+				// END KGU#858 2020-04-23
 				if (!nsdFile.isAbsolute()) {
 					if (_extractDir != null) {
 						this.path = _extractDir.getAbsolutePath() + File.separator + nsdFileName;
@@ -161,6 +166,7 @@ public class Archivar {
 						this.virtPath = _fromArchive.getAbsolutePath() + File.separator + nsdFileName;
 					}
 				}
+				System.out.print("Path: "); System.out.println(this.path);
 			}
 			if (fields.count() >= 6) {
 				this.name = fields.get(3).trim();
