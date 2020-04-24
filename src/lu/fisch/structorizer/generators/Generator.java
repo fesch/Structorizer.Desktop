@@ -108,6 +108,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
  *      Kay Gürtzig     2020-04-01      Enh. #440, #828: Support for Group export to PapGenerator
  *      Kay Gürtzig     2020-04-22      Enh. #855: New options for default array / string size
+ *      Kay Gürtzig     2020-04-24      Bugfix #862/2: Prevent duplicate export of an entry point root
  *
  ******************************************************************************************************
  *
@@ -5099,7 +5100,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 							this.topLevel = false;
 						}
 					}
-					else {
+					// START KGU#861 2020-04-24: Bugfix #862/2: We must not export both as subroutine and library routine
+					//else {
+					else if (!_dependencyTree.containsKey(root)) {
+					// END KGU#861 2020-04-24
 						insertLibraryRoutine(root, this.subroutineIndent, _entryPoints == null || _entryPoints.contains(root));
 					}
 				}

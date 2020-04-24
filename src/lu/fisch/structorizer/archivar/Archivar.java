@@ -37,6 +37,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-07-31      Bugfix #731 (also comprising #526): new static methods renameTo, copyFile
  *      Kay Gürtzig     2019-10-14      Bugfix #763: Missing references files now add to the problem list on loading
  *      Kay Gürtzig     2020-04-23      Bugfix #860: ArchiveIndexEntry did not set path field with absolute nsd file paths
+ *      Kay Gürtzig     2020-04-24      Bugfix #862/3: Ensure correct update of ArchiveIndexEntry on attaching the Root
  *
  ******************************************************************************************************
  *
@@ -144,7 +145,6 @@ public class Archivar {
 		public ArchiveIndexEntry(String arrangementLine, File _fromArchive, File _extractDir)
 		{
 			super(null, null);
-			System.out.println("ArchiveIndexEntry(" + arrangementLine + ", ...)");
 			StringList fields = StringList.explode(arrangementLine, ",");	// FIXME what if a path or the name contains a comma?
 			if (fields.count() >= 3)
 			{
@@ -211,14 +211,21 @@ public class Archivar {
 		}
 		
 		/**
-		 * Sets the given {@link Root} object if it hadn't been set already and the updates
-		 * all related information
+		 * Sets the given {@link Root} object and then updates all related information
 		 * @param root - the diagram to be set
 		 * @return true if the {@code root} was accepted
 		 */
 		protected boolean setRoot(Root root)
 		{
-			if (root == null || this.root != null) {
+			// START KGU#861 2020-04-24: Bugfix #862/3 - was nonsense, see comment below
+			//if (root == null || this.root != null) {
+			/* This method is either called in getRoot() if this.root IS null or in the
+			 * constructor after this.root hs already been set and hardly anything else.
+			 * So we MUST update all information here (except perhaps another Root had
+			 * been associated. But the result hasn't been asked for nowhere by now
+			 */
+			if (root == null || this.root != null && this.root != root) {
+			// END KGU#861 2020-04-24
 				return false;
 			}
 			this.root = root;

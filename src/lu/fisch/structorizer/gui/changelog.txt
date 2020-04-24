@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-09 (2020-04-23)
+Current development version: 3.30-09 (2020-04-24)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -107,7 +107,11 @@ Current development version: 3.30-09 (2020-04-23)
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
 - 08: Bugfix #858: Functions did not actually work in FOR-IN loop headers <2>
 - 09: Bugfix #860: Batch export for .arr files containing abs. paths failed <2>
-- 09: Bugfix #861/2: On Pascal input, routine comments were duplicated <2>
+- 09: Issue #861/1: Comment placement on Pascal and Oberon export revised <2>
+- 09: Bugfix #861/2: On Pascal import, routine comments were duplicated <2>
+- 09: Issue #861/3: Improved comment trimming on code import <2>
+- 09: Bugfix #862/2: Batch export no longer produces duplicate entry points <2>
+- 09: Bugfix #862/3: Batch import produced defective arrangement lists <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
