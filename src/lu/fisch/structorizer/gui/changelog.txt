@@ -13,7 +13,7 @@ Known issues:
 - Shell export does not cope with nested array/record initializers and component access,
   neither with clean parameter handling for usual arrays and associative arrays.
 
-Current development version: 3.30-09 (2020-04-24)
+Current development version: 3.30-09 (2020-04-25)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -112,6 +112,8 @@ Current development version: 3.30-09 (2020-04-24)
 - 09: Issue #861/3: Improved comment trimming on code import <2>
 - 09: Bugfix #862/2: Batch export no longer produces duplicate entry points <2>
 - 09: Bugfix #862/3: Batch import produced defective arrangement lists <2>
+- 09: Bugfix #863/1: Duplicate routines on PapDesigner/StrukTex export <2>
+- 09: Bugfix #863/2: Wrong assignment symbols in CALLs on PapDesigner export <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

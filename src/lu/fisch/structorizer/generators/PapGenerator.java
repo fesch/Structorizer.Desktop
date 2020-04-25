@@ -34,6 +34,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-02-27      First Issue for Enhancement request #440
  *      Kay Gürtzig     2020-03-07      PapItem and PapElement classes integrated
  *      Kay Gürtzig     2020-04-02      PapParallel fundamentally rewritten, provisional Jump mechanism implemented
+ *      Kay Gürtzig     2020-04-25      Bugfix #863/2: Assignment symbols hadn't been transformed in CALLs
  *
  ******************************************************************************************************
  *
@@ -489,6 +490,11 @@ public class PapGenerator extends Generator {
 			}
 			if (element instanceof Call) {
 				papType = PapFigure.Type.PapModule;
+				// START KGU#862 2020-04-25: Bugfix #863/2 - the assignment symbol must be transformed
+				for (int i = 0; i < text.count(); i++) {
+					text.set(i, transform(text.get(i)));
+				}
+				// END KGU#862 2020-04-25
 			}
 			else if (element instanceof Jump) {
 				boolean isRegularReturn = false;
