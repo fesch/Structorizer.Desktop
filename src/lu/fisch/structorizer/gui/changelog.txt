@@ -6,12 +6,14 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
-- COBOL import may fail if certain single-letter identifiers are used (rename them!).
-- COBOL import doesn't cope with some statement variants and variable redefinitions.
+- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685),
+  on Windows the image format may be JPG instead of PNG.
+- COBOL import may fail if certain single-letter identifiers are used (rename them!),
+  also if the code contains a SPECIAL-NAMES clause or float literals.
+- COBOL import does not cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
-- Shell export does not cope with nested array/record initializers and component access,
-  neither with clean parameter handling for usual arrays and associative arrays.
+- Shell export copes neither with nested array/record initializers and component access
+  nor with cleanly handling usual and associative arrays as parameters or results.
 
 Current development version: 3.30-09 (2020-04-25)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
