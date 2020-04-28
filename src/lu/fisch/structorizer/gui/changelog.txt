@@ -108,6 +108,7 @@ Current development version: 3.30-09 (2020-04-28)
 - 08: Enh. #855 New configurable default array/string sizes for code export <2>
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
 - 08: Bugfix #858: Functions did not actually work in FOR-IN loop headers <2>
+- 09: Issue #822: More sensible error message on executing an empty CALL <2>
 - 09: Bugfix #860: Batch export for .arr files containing abs. paths failed <2>
 - 09: Issue #861/1: Comment placement on Pascal and Oberon export revised <2>
 - 09: Bugfix #861/2: On Pascal import, routine comments were duplicated <2>

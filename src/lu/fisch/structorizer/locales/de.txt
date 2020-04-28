@@ -1442,6 +1442,7 @@ Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
 Control.msgInitializerAsArgument.text=Ein Array-Initialisierer kann nicht direkt als Argument an eine eingebaute Funktion übergeben werden.\nWeisen Sie das Array vorher einer Variablen zu und übergeben Sie diese.
+Control.msgIllegalEmptyLine.text=Illegale leere Zeile in einem @j!
 Control.msgVarUpdateErrors.text=Problem beim Variablen-Update
 Control.msgVarUpdatesFailed.text=Diese Variablen-Änderungen scheiterten an syntaktischen Fehlern:\n\n%
 Control.msgEndEditing.text=Zum Fortfahren erst Variablen-Editierung beenden (Enter oder Esc).
