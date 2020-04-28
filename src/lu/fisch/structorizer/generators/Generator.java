@@ -110,6 +110,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-22      Enh. #855: New options for default array / string size
  *      Kay Gürtzig     2020-04-24      Bugfix #862/2: Prevent duplicate export of an entry point root
  *      Kay Gürtzig     2020-04-25      Bugfix #863/1: Duplicate routine export to PapDesigner and StrukTex
+ *      Kay Gürtzig     2020-04-28      Bugfix #828: Unreferenced subroutines were missing on group export with 1 main
  *
  ******************************************************************************************************
  *
@@ -4820,12 +4821,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// Now we can put all diagrams together and generate a common module
 			if (!_batchMode && mainIndices.size() == 1 && _entryPoints.size() > 1) {
 				/* In case of group export (_batchMode = false) the main (if there is one) can
-				 * be made the only entry point, we just have to find it again first
+				 * be made the only entry point if all remaining entry points are redundant,
+				 * we just have to find it again first
 				 */
 				for (Root root: _entryPoints) {
 					if (root.isProgram()) {
-						_entryPoints.clear();
-						_entryPoints.add(root);
+						// START KGU#865 2020-04-28: Bugfix of #828
+						//_entryPoints.clear();
+						//_entryPoints.add(root);
+						_entryPoints.remove(root);
+						if (nRedundant == _entryPoints.size()) {
+							_entryPoints.clear();
+						}
+						_entryPoints.insertElementAt(root, 0);
+						// END KGU#865 2020-04-08
 						break;
 					}
 				}
