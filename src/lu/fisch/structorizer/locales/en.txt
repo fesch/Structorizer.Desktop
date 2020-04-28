@@ -1442,6 +1442,7 @@ Control.msgBadValueList.text=<%> cannot be interpreted as value list.
 Control.msgBadValueListDetails.text=Details: %
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) is out of bounds for array «%3»!
 Control.msgInitializerAsArgument.text=You may not pass an array initializer directly as argument to a built-in function.\nAssign the array to a variable first.
+Control.msgIllegalEmptyLine.text=Empty lines within a @j are illegal!
 Control.msgVarUpdateErrors.text=Trouble updating variables
 Control.msgVarUpdatesFailed.text=These variable modifications failed because of evaluation errors:\n\n%
 Control.msgEndEditing.text=To continue, first release the variable cell editor (Enter or Esc).

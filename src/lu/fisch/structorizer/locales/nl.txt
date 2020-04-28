@@ -1359,6 +1359,7 @@ Control.msgBadValueList.text=<%> kan geen lijst met waarden zijn
 Control.msgBadValueListDetails.text=Details: %
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) is voorbij de grenzen van array «%3»!
 Control.msgInitializerAsArgument.text=U kunt geen array direct als argument initialiseren in een built-in functie.\nKen eerst de array toe aan een variable.
+Control.msgIllegalEmptyLine.text=Lege regel in een @j is onjuist!
 Control.msgVarUpdateErrors.text=Problemen bij bijwerken van variabelen
 Control.msgVarUpdatesFailed.text=Veranderen van deze variabelen is mislukt als gevolg van foutieve berekeningen:\n\n%
 Control.msgEndEditing.text=Om verder te kunnen gaan moet u de celeditor voor variabelen vrijgeven (Enter of Escape).

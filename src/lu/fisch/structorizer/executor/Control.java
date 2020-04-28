@@ -70,6 +70,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-21      Enh. #739: Mnemonic display and ComboBox editing for enumerator values
  *                                      Editability check bug fixed in the table model fixed
  *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
+ *      Kay Gürtzig     2020-04-28      Issue #822: New message for empty lines in CALL elements
  *
  ******************************************************************************************************
  *
@@ -1110,13 +1111,16 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#569 2018-08-09: New messages for issue #577
     public static final LangTextHolder msgGUISyncFault = new LangTextHolder("Possible GUI synchronisation fault on executing «%».\nTry to resume execution?");
     // END KGU#569 2018-08-09
-	// START KGU#686 2019-03-17: Enh. #56 Try-Catch element and throw flavour of Jump introduced
-	public static final LangTextHolder msgErrorInSubroutine = new LangTextHolder("Caught error on executing «%1» at level %2:\n\t%3!");
-	public static final LangTextHolder msgThrown = new LangTextHolder("Exception thrown in «%1» at level %2: %3");
-	// END KGU#686 2019-03-17
-	// START KGU#452 2019-11-17: Enh. #739
-	public static final LangTextHolder msgInvalidEnumDefinition = new LangTextHolder("Invalid enumeration type definition «%»!");
-	// END KGU#452 2019-11-17
+    // START KGU#686 2019-03-17: Enh. #56 Try-Catch element and throw flavour of Jump introduced
+    public static final LangTextHolder msgErrorInSubroutine = new LangTextHolder("Caught error on executing «%1» at level %2:\n\t%3!");
+    public static final LangTextHolder msgThrown = new LangTextHolder("Exception thrown in «%1» at level %2: %3");
+    // END KGU#686 2019-03-17
+    // START KGU#452 2019-11-17: Enh. #739
+    public static final LangTextHolder msgInvalidEnumDefinition = new LangTextHolder("Invalid enumeration type definition «%»!");
+    // END KGU#452 2019-11-17
+    // START KGU#809 2020-04-28: Issue #822
+    public static final LangTextHolder msgIllegalEmptyLine = new LangTextHolder("Empty lines within a @j are illegal!");
+    // END KGU#809 2020-04-28
 
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

@@ -6,14 +6,16 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685).
-- COBOL import may fail if certain single-letter identifiers are used (rename them!).
-- COBOL import doesn't cope with some statement variants and variable redefinitions.
+- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685),
+  on Windows the image format may be JPG instead of PNG.
+- COBOL import may fail if certain single-letter identifiers are used (rename them!),
+  also if the code contains a SPECIAL-NAMES clause or float literals.
+- COBOL import does not cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
-- Shell export does not cope with nested array/record initializers and component access,
-  neither with clean parameter handling for usual arrays and associative arrays.
+- Shell export copes neither with nested array/record initializers and component access
+  nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-08 (2020-04-22)
+Current development version: 3.30-09 (2020-04-29)
 - 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -106,6 +108,18 @@ Current development version: 3.30-08 (2020-04-22)
 - 08: Enh. #855 New configurable default array/string sizes for code export <2>
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
 - 08: Bugfix #858: Functions did not actually work in FOR-IN loop headers <2>
+- 09: Issue #822: More sensible error message on executing an empty CALL <2>
+- 09: Bugfix #828: Missing unreferenced subroutines on group export. <2>
+- 09: Bugfix #860: Batch export for .arr files containing abs. paths failed <2>
+- 09: Issue #861/1: Comment placement on Pascal and Oberon export revised <2>
+- 09: Bugfix #861/2: On Pascal import, routine comments were duplicated <2>
+- 09: Issue #861/3: Improved comment trimming on code import <2>
+- 09: Bugfix #862/2: Batch export no longer produces duplicate entry points <2>
+- 09: Bugfix #862/3: Batch import produced defective arrangement lists <2>
+- 09: Bugfix #863/1: Duplicate routines on PapDesigner/StrukTex export <2>
+- 09: Bugfix #863/2: Wrong assignment symbols in CALLs on PapDesigner export <2>
+- 09: Issue #864: Parameter list transformation for PapDesigner export <2>
+- 09: Bugfix #865: Flaw in parameter recognition on subroutine generation <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -1427,6 +1427,7 @@ Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
 Control.msgIndexOutOfBounds.text=¡Indice «%1» (%2) está fuera de los márgines del array «%3»!
 Control.msgInitializerAsArgument.text=Un inicialisador de array ne se puede pasar diréctamente como parámetro a una función interna.\nPon el array anteriórmente en una variable y pasa ésa pués.
 Control.msgBadValueListDetails.text=Detalles: %
+Control.msgIllegalEmptyLine.text=¡Una linea vacías no es aceptable en un @j!
 Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
 Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
 Control.msgEndEditing.text=Para continuar cesa editar variables (Enter o Esc).

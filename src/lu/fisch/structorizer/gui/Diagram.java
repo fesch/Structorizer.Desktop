@@ -199,6 +199,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-03-16/17   Enh. #828: New method to export an arrangement group
  *      Kay Gürtzig     2020-04-22      Enh. #855: New export options for array size / string length defaults
  *      Kay Gürtzig     2020-04-23      Bugfix #856: Selective preference saving to file didn't work properly
+ *      Kay Gürtzig     2020-04-28      Bugfix #865: On subroutine generation arguments true and false weren't recognised
  *
  ******************************************************************************************************
  *
@@ -4260,6 +4261,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (varType != null) {
 					typeName = varType.getCanonicalType(true, true);
 				}
+				// START KGU#864 2020-04-28: Bugfix #865
+				else if (varName.equals("true") || varName.contentEquals("false")) {
+					typeName = "boolean";
+				}
+				// END KGU#864 2020-04-28
 			}
 			else {
 				typeName = Element.identifyExprType(parentTypes, varName, true);
@@ -4398,7 +4404,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #canEditSub()
 	 */
 	public void editSubNSD() {
-		// TODO Auto-generated method stub
 		if (selected instanceof Call && this.canEditSub()) {
 			Call call = (Call)selected;
 			Function called = call.getCalledRoutine();
@@ -4453,11 +4458,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String paramSeparator = ", ";
 				for (int i = 0; i < params.count(); i++) {
 					String typeName = argTypes.get(i).replace("@", "array of ");
-					if (!Function.testIdentifier(params.get(i), "")) {
-						params.set(i, "param" + (i+1));
+					// START KGU#864 2020-04-28: Bugfix #865
+					//if (!Function.testIdentifier(params.get(i), "")) {
+					String param = params.get(i);
+					if (!Function.testIdentifier(param, "") || param.equals("true") || param.equals("false")) {
+					// END KGU#864 2020-04-28
+						params.set(i, param = ("param" + (i+1)));
 					}
 					if (!typeName.isEmpty() && !typeName.equals("???")) {
-						params.set(i, params.get(i) + ": " + typeName);
+						params.set(i, param + ": " + typeName);
 						paramSeparator = "; ";
 					}
 				}
