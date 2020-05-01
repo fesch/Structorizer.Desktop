@@ -12,21 +12,21 @@ Known issues:
   also if the code contains a SPECIAL-NAMES clause or float literals.
 - COBOL import does not cope with some statement variants and variable redefinitions.
 - The Javascript generator is just a prototype and may be deficient.
-- Shell export copes neither with nested array/record initializers and component access
+- Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-09 (2020-04-29)
-- 01: Bugfix #759: Another source of stale Mainforms dried up. <2>
+Current development version: 3.30-09 (2020-05-01)
+- 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
 - 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
 - 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
-- 01: Bugfix #764: Updating of the .arr file for a modified group may fail <2>
+- 01: Bugfix #764: Group modifications failed to update the associated .arr file <2>
 - 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
 - 01: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
 - 02: Bugfix #752: Incomplete declarations in C, Java etc. no longer outcommented <2>
 - 02: Issue #766: Deterministic order of subroutines on code export <2>
-- 02: Bugfix #769: String literals containing commas in CASE branch selectors <2>
+- 02: Bugfix #769: Commas in string literals compromised CASE branch selection <2>
 - 02: Enh. #770: New Analyser checks for CASE elements (selector consistency) <2>
 - 02: Bugfix #771: Unhandled syntax errors during execution (e.g. type names) <2>
 - 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
@@ -38,7 +38,7 @@ Current development version: 3.30-09 (2020-04-29)
 - 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
 - 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
 - 03: Bugfix #776: Global variables are locally eclipsed on Pascal/Oberon export <2>
-- 03: Bugfix #777: Concurrently changed favourite export language handled. <2>
+- 03: Bugfix #777: Concurrent changes of favourite export language handled. <2>
 - 03: Bugfix #778: License text was not exported with "fresh" diagrams <2>
 - 03: Bugfix #779: Defective Oberon export of main program diagrams with I/O <2>
 - 03: Issue #780: Parameterless procedures in Oberon without parentheses [K.-P. R.]2
@@ -49,9 +49,9 @@ Current development version: 3.30-09 (2020-04-29)
 - 03: Bugfix #787: Multiplied top-level type definitions on Pascal export <2>
 - 03: Bugfix #788: Arrz file extraction to a user-specific folder did not work. <2>
 - 03: Bugfix #789: Wrong BASIC export of function calls (started with "CALL") <2>
-- 03: Bugfix #790: BASIC export failed with line continuation and initializers <2>
+- 03: Bugfix #790: BASIC export failed with line continuation and initialisers <2>
 - 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
-- 04: Bugfix #793: Wrong Perl export of initialized explicit var declarations <2>
+- 04: Bugfix #793: Wrong Perl export of initialised explicit var declarations <2>
 - 04: Bugfix #794: Code preview fails with error if license is not configured <2>
 - 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
 - 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
@@ -96,14 +96,14 @@ Current development version: 3.30-09 (2020-04-29)
 - 08: Issue #828/#836: The fallback to all diagrams of an arr file on batch export
       without specified entry points or contained programs hadn't worked <2>
 - 08: Enh. #842: Improved usability of the include list editor [H.-U. Hölscher]2
-- 08: Bugfix #847: Inconsistent handling of upper/lowercase operand names <2>
+- 08: Bugfix #847: Inconsistent handling of upper-/lower-case operand names <2>
 - 08: Bugfix #848: Incomplete variable synchronisation with Includables <2>
 - 08: Bugfix #849: New log file name scheme change of release 3.30 ensured <2>
 - 08: Issue #851/1: Declarations for auxiliary variables on COBOL import <2>
 - 08: Issue #851/4: Provisional import of SORT statements from COBOL <2>
 - 08: Issue #851/5: Solution for the import of PERFORM ... THRU ... from COBOL <2>
 - 08: Bugfix #852: Case-ignorant F&R replacements failed for certain strings <2>
-- 08: Bugfix #853: Batch export with relative paths of and in arr file failed <2>
+- 08: Bugfix #853: Batch export with relative paths of and in .arr file failed <2>
 - 08: Bugfix #854: Topological order of type definitions on export ensured <2>
 - 08: Enh. #855 New configurable default array/string sizes for code export <2>
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
@@ -839,51 +839,51 @@ Version: 3.24 (2016-03-14)
 - 17: Bugfix #97 update: Arranger updated on global drawing changes <2>
 
 Version 3.23 (2015-12-04)
-- 01: executor: fixed a bug in the Repeat loop [Sylvio Tabor]
-- 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
-- 03: export: split PNG export into multiple images [Moritz Schulze]
-- 04: executor: logical operator in CASE-statement [Lies Callemeyn]
-- 05: export: added code export option [Hanspeter Thöni]
-- 06: export: added comments to Pascal export [Dirk Wilhelmi]
-- 06: export: moved export options into menu [Hanspeter Thöni]
-- 07: export: added namespace "nsd" to save files [Treaki]
-- 08: added Polish translation [Jacek Dzieniewicz]
-- 09: new drawing strategy for the IF statement [David Tremain]
-- 09: new colorizing strategy for elements [David Tremain]
-- 10: visual re-enforcement for drag & drop [David Tremain]
-- 11: allow to collapse / expand elements by scrolling the mouse [David Tremain]
-- 12: added preferences on how to draw IF statements [David Tremain]
-- 13: fixed "empty line" bug [David Tremain]
-- 14: fixed a drawing bug while dragging an element [Bob Fisch]
-- 15: added a Python generator [Daniel Spittank]
-- 16: removed a bug when double clicking en element [Bob Fisch]
-- 16: variable highlighting did not work anymore [Andreas Schwierz]
-- 17: executor: array support [Gennaro Donnarumma]
-- 18: added traditional Chinese translation [Joe Chem]
-- 19: multiple improvements <Kay Gürtzig>
+- 01: Executor: fixed a bug in the Repeat loop [Sylvio Tabor]
+- 02: Executor: fixed a bug while interpreting the title [Benjamin Bartsch]
+- 03: Export: split PNG export into multiple images [Moritz Schulze]
+- 04: Executor: logical operator in CASE-statement [Lies Callemeyn]
+- 05: Export: added code export option [Hanspeter Thöni]
+- 06: Export: added comments to Pascal export [Dirk Wilhelmi]
+- 06: Export: moved export options into menu [Hanspeter Thöni]
+- 07: Export: added namespace "nsd" to save files [Treaki]
+- 08: Added Polish translation [Jacek Dzieniewicz]
+- 09: New drawing strategy for the IF statement [David Tremain]
+- 09: New colorizing strategy for elements [David Tremain]
+- 10: Visual re-enforcement for drag & drop [David Tremain]
+- 11: Allow to collapse / expand elements by scrolling the mouse [David Tremain]
+- 12: Added preferences on how to draw IF statements [David Tremain]
+- 13: Fixed "empty line" bug [David Tremain]
+- 14: Fixed a drawing bug while dragging an element [Bob Fisch]
+- 15: Added a Python generator [Daniel Spittank]
+- 16: Removed a bug when double clicking en element [Bob Fisch]
+- 16: Variable highlighting did not work anymore [Andreas Schwierz]
+- 17: Executor: array support [Gennaro Donnarumma]
+- 18: Added traditional Chinese translation [Joe Chem]
+- 19: Multiple improvements <Kay Gürtzig>
 - 20: DE: linguistic flaws corrected <Kay Gürtzig>
-- 21: major revision of generators files <Kay Gürtzig>
-- 22: possibility to switch text/comment in diagram [Samuel Schmidt]
-- 23: bug while parsing NSD files [Benedict Thienpont]
-- 24: fine tuning the ExportOptionDialoge <Kay Gürtzig>
-- 24: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
-- 24: updated language files (LU,FR) [Bob Fisch]
-- 25: added hints to speed buttons [Rens Duijsens]
-- 26: export for Basic [Jacek Dzieniewicz]
+- 21: Major revision of generators files <Kay Gürtzig>
+- 22: Possibility to switch text/comment in diagram [Samuel Schmidt]
+- 23: Bug while parsing NSD files [Benedict Thienpont]
+- 24: Fine tuning the ExportOptionDialoge <Kay Gürtzig>
+- 24: Updated language files (RU,DE,EN,ES) <Kay Gürtzig>
+- 24: Updated language files (LU,FR) [Bob Fisch]
+- 25: Added hints to speed buttons [Rens Duijsens]
+- 26: Export for BASIC [Jacek Dzieniewicz]
 - 26: PL: updated [Jacek Dzieniewicz]
 - 27: Array variable improvements in executor <Kay Gürtzig>
-- 27: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
-- 28: minor change in executor for comp. with Unimozer [Bob Fisch]
+- 27: Updated language files (RU,DE,EN,ES) <Kay Gürtzig>
+- 28: Minor change in executor for comp. with Unimozer [Bob Fisch]
 - 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>
-- 29: executor: breakpoints may now be placed throughout the diagram <2>
-- 29: executor: implementation for Endless loops and Parallel elements <2>
-- 29: executor: eexecution highlighting separated from selection <2>
-- 29: executor: variable list now updated on every pause even with delay 0 <2>
-- 29: gui: More localisation support for element editor (InputBox) <2>
-- 29: updated language files (DE,EN,ES,RU,IT) <2>
-- 29: export: indentation mechanism revised, BASH export corrected <2>
-- 29: export: Python export no longer "eats" lines within Repeat loops <2>
-- 29: comment popup: sticky popups eliminated, no element level limit <2>
+- 29: Executor: breakpoints may now be placed throughout the diagram <2>
+- 29: Executor: implementation for Endless loops and Parallel elements <2>
+- 29: Executor: execution highlighting separated from selection <2>
+- 29: Executor: variable list now updated on every pause even with delay 0 <2>
+- 29: GUI: More localisation support for element editor (InputBox) <2>
+- 29: Updated language files (DE,EN,ES,RU,IT) <2>
+- 29: Export: indentation mechanism revised, BASH export corrected <2>
+- 29: Export: Python export no longer "eats" lines within Repeat loops <2>
+- 29: Comment popup: sticky popups eliminated, no element level limit <2>
 - 29: Arranger: No longer loses track when related Structorizer reloads <2>
 - 30: Several Chinese (ZH-CN) translations added and typos eliminated <Zijun Ke>
 - 30: Issue on closing Structorizer fixed, file update question may be cancelled. <2>
