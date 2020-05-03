@@ -10074,7 +10074,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				|| _direction == Editor.SelectionExpandDirection.EXPAND_UP && atUpperEnd))
     		// END KGU#866 2020-05-02
     		{
-    			System.out.println("Case 1: " + index0 + ", " + index1 + " / " + anchorOffset);
     			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
     			//selected = new SelectedSequence(sq, index0-1, index1);
     			selected = new SelectedSequence(sq, index0-1, index1, anchorOffset+1, false);
@@ -10088,7 +10087,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				|| _direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atLowerEnd))
     		// END KGU#866 2020-05-02
     		{
-    			System.out.println("Case 2: " + index0 + ", " + index1 + " / " + anchorOffset);
     			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
     			//selected = new SelectedSequence(sq, index0, index1+1, _index1, true);
     			selected = new SelectedSequence(sq, index0, index1+1, anchorOffset, true);
