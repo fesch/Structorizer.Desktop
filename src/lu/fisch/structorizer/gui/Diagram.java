@@ -200,6 +200,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-04-22      Enh. #855: New export options for array size / string length defaults
  *      Kay Gürtzig     2020-04-23      Bugfix #856: Selective preference saving to file didn't work properly
  *      Kay Gürtzig     2020-04-28      Bugfix #865: On subroutine generation arguments true and false weren't recognised
+ *      Kay Gürtzig     2020-05-02      Issue #866: Selection expansion / reduction mechanisms revised
  *
  ******************************************************************************************************
  *
@@ -1017,11 +1018,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if ((selectedDown!=null) && (e.getX()!=mouseX) && (e.getY()!=mouseY) && (selectedMoved!=bSome))
 				{
 					mouseMove=true;
-					if(selectedDown.getClass().getSimpleName().equals("Root") ||
-					   selectedDown.getClass().getSimpleName().equals("Subqueue") ||
-					   bSome.getClass().getSimpleName().equals("Root") ||
-					   //root.checkChild(bSome, selectedDown))
-					   bSome.isDescendantOf(selectedDown))
+					if (selectedDown.getClass().getSimpleName().equals("Root") ||
+							selectedDown.getClass().getSimpleName().equals("Subqueue") ||
+							bSome.getClass().getSimpleName().equals("Root") ||
+							//root.checkChild(bSome, selectedDown))
+							bSome.isDescendantOf(selectedDown))
 					{
 						Element.E_DRAWCOLOR=Color.RED;
 					}
@@ -1126,6 +1127,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//((Subqueue)ele.parent).getIndexOf(selected));
 						selected.setSelected(false);
 						selected = new SelectedSequence(selected, ele);
+						// START KGU#866 2020-05-02: Issue #866 span may get reduced now
+						if (((SelectedSequence)selected).getSize() == 1) {
+							// Replace the span by its only member
+							selected = ((SelectedSequence)selected).getElement(0);
+						}
+						// END KGU#866 2020-05-02
 						selected.setSelected(true);
 						redraw();
 						selectedDown = ele;
@@ -10042,23 +10049,84 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		Subqueue sq = (Subqueue)selected.parent;
     		Element first = selected;
     		Element last = selected;
+    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    		int anchorOffset = 0;
+    		boolean atUpperEnd = true;	// Is the selection to be modified at upper end?
+    		boolean atLowerEnd = true;	// Is the selection to be modified at lower end?
+    		// END KGU#866 2020-05-02
     		if (selected instanceof SelectedSequence)
     		{
-    			first = ((SelectedSequence)selected).getElement(0);
-    			last = ((SelectedSequence)selected).getElement(((SelectedSequence)selected).getSize()-1);
+    			SelectedSequence sel = (SelectedSequence)selected;
+    			first = sel.getElement(0);
+    			last = sel.getElement(sel.getSize()-1);
+    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    			anchorOffset = sel.getAnchorOffset();
+    			atUpperEnd = !sel.wasModifiedBelowAnchor();	// FIXME offset of anchor?
+    			atLowerEnd = sel.wasModifiedBelowAnchor();
+    			// END KGU#866 2020-05-02
     		}
     		int index0 = sq.getIndexOf(first);
     		int index1 = sq.getIndexOf(last);
-    		if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && index0 > 0)
+    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    		//if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && index0 > 0)
+    		if (index0 > 0 && 
+    				(_direction == Editor.SelectionExpandDirection.EXPAND_TOP 
+    				|| _direction == Editor.SelectionExpandDirection.EXPAND_UP && atUpperEnd))
+    		// END KGU#866 2020-05-02
     		{
-    			selected = new SelectedSequence(sq, index0-1, index1);
+    			System.out.println("Case 1: " + index0 + ", " + index1 + " / " + anchorOffset);
+    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    			//selected = new SelectedSequence(sq, index0-1, index1);
+    			selected = new SelectedSequence(sq, index0-1, index1, anchorOffset+1, false);
+    			// END KGU#866 2020-05-02
     			newSelection = true;
     		}
-    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && index1 < sq.getSize()-1)
+    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    		//else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && index1 < sq.getSize()-1)
+    		else if (index1 < sq.getSize()-1 &&
+    				(_direction == Editor.SelectionExpandDirection.EXPAND_BOTTOM
+    				|| _direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atLowerEnd))
+    		// END KGU#866 2020-05-02
     		{
-    			selected = new SelectedSequence(sq, index0, index1+1);
+    			System.out.println("Case 2: " + index0 + ", " + index1 + " / " + anchorOffset);
+    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    			//selected = new SelectedSequence(sq, index0, index1+1, _index1, true);
+    			selected = new SelectedSequence(sq, index0, index1+1, anchorOffset, true);
+    			// END KGU#866 2020-05-02
     			newSelection = true;
     		}
+    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && atLowerEnd) {
+    			// Reduce at end
+    			selected.setSelected(false);
+    			redraw(selected);
+    			if (index0+1 >= index1) {
+    				// Selected sequence collapses to a single element
+    				selected = first;
+    			}
+    			else {
+    				selected = new SelectedSequence(sq, index0, index1-1,
+    						(anchorOffset == index1 - index0 ? anchorOffset - 1 : anchorOffset),
+    						true);
+    			}
+    			newSelection = true;
+    		}
+    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atUpperEnd) {
+    			// Reduce at start
+    			selected.setSelected(false);
+    			redraw(selected);
+    			if (index0+1 >= index1) {
+    				// Selected sequence collapses to a single element
+    				selected = last;
+    			}
+    			else {
+    				selected = new SelectedSequence(sq, index0+1, index1,
+    						(anchorOffset == 0 ? 0 : anchorOffset - 1),
+    						false);
+    			}
+    			newSelection = true;
+    		}
+    		// END KGU#866 2020-05-02
     		if (newSelection)
     		{
     			selected.setSelected(true);

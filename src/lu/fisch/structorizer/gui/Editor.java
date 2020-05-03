@@ -80,6 +80,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-27      Enh. #738: Click in code preview now selects element and highlights code,
  *                                      double-click opens element editor
  *      Kay Gürtzig     2019-10-02      Enh. #738 code preview font control via Ctrl-Numpad-+/-
+ *      Kay Gürtzig     2020-05-02      Issue #866: Modified key bindings for expanding / reducing selection
  *
  ******************************************************************************************************
  *
@@ -336,7 +337,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#177 2016-04-06
 	// START KGU#206 2016-07-21: Enh. #158, #197
-	public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN };
+	// START KGU#866 2020-05-02: Issue #866
+	//public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN };
+	public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN, EXPAND_TOP, EXPAND_BOTTOM };
+	// END KGU#866 2020-05-02
 	private class SelectionExpandAction extends AbstractAction
 	{
 		Diagram diagram;	// The object responsible for executing the action
@@ -568,6 +572,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_UP);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_DOWN);
 		// END KGU#206 2016-07-21
+		// START KGU#866 2020-05-02: Issue #866
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_TOP);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_BOTTOM);
+		// END KGU#866 2020-05-02
 		// START KGU#177 2016-04-14: Enh. #158
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
@@ -599,6 +607,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put(SelectionExpandDirection.EXPAND_UP, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_UP));
 		actMap.put(SelectionExpandDirection.EXPAND_DOWN, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_DOWN));
 		// END KGU#206 2016-07-21
+		// START KGU#866 2020-05-02: Issue #866
+		actMap.put(SelectionExpandDirection.EXPAND_TOP, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_TOP));
+		actMap.put(SelectionExpandDirection.EXPAND_BOTTOM, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_BOTTOM));
+		// END KGU#866 2020-05-02
 		// START KGU#177 2016-04-14: Enh. #158
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));

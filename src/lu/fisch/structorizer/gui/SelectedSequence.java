@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
  *      Kay Gürtzig     2018.10.26      Enh. #619: New method getMaxLineLength(boolean) implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2020-05-02      Issue #866: Additional fields and methods to support revised selection expansion
  *
  ******************************************************************************************************
  *
@@ -70,64 +71,108 @@ import lu.fisch.utils.StringList;
 
 /**
  * @author Kay Gürtzig
- * Class represents a selected subsequence of a Subqueue
+ * Class represents a selected subsequence of a {@link Subqueue}
  */
 public class SelectedSequence extends Element implements IElementSequence {
 
-	private int firstIndex = 0, lastIndex = -1;	// The positions of the first and last selected element within the parent Subqueue
+	// Positions of the first and last selected element within the parent Subqueue
+	private int firstIndex = 0, lastIndex = -1;
+	// START KGU#866 2020-05-02: Issue #866 New fields to support revised expansion strategy
+	// Selection seed index offset w.r.t. firstIndex
+	private int anchorOffset = 0;
+	// Where the most recent expansion had taken place w.r.t. the anchorIndex
+	private boolean lastActionBelow = true;
+	// END KGU#866 2020-05-02
 	
-	// START KGU#136 2016-03-01: Bugfix #97
+	// START KGU#136 2016-03-01: Bugfix #97 We must retain the base y coordinate to avoid flickering
 	private Vector<Integer> y0Children = new Vector<Integer>();
 	// END KGU#136 2016-03-01
 
 	/**
-	 * @param _child1 - a selected Element, marking one end of the sequence
-	 * @param _child2 - a selected Element, marking the other end of  sequence
+	 * If this is used to replace (expand/reduce) a previous selection then the old
+	 * selection must be {@code _child1}.
+	 * @param _child1 - a selected {@link Element}, marking one end of the sequence,
+	 * may be a {@link SelectedSequence}
+	 * @param _child2 - a selected {@link Element}, marking the other end of  sequence,
+	 * must not be a {@link SelectedSequence}
 	 */
-	public SelectedSequence(Element _child1, Element _child2) {
+	public SelectedSequence(Element _child1, Element _child2)
+	{
 		super("");
 		// _child1 and _child2 should have got a common parent (in particular, a Subqueue)
 		this.parent = _child1.parent;
+		assert parent == _child2.parent;
+		
 		int i1 = ((Subqueue)this.parent).getIndexOf(_child1);
 		int i2 = ((Subqueue)this.parent).getIndexOf(_child2);
-		if (i1 < 0)
-		{
-			if (_child1 instanceof SelectedSequence)
-			{
-				this.firstIndex = Math.min(((SelectedSequence)_child1).firstIndex, i2);
-				this.lastIndex = Math.max(((SelectedSequence)_child1).lastIndex, i2);
+		if (i1 < 0)	{
+			if (_child1 instanceof SelectedSequence) {
+				// START KGU#866 2020-05-02: Issue #866 - improved selection expansion / reduction
+				//this.firstIndex = Math.min(((SelectedSequence)_child1).firstIndex, i2);
+				//this.lastIndex = Math.max(((SelectedSequence)_child1).lastIndex, i2);
+				SelectedSequence sel = (SelectedSequence)_child1;
+				int ixAnchor = sel.firstIndex + sel.anchorOffset;
+				if (i2 < ixAnchor || i2 == ixAnchor && !sel.lastActionBelow) {
+					this.firstIndex = i2;
+					this.lastIndex = sel.lastIndex;
+					this.lastActionBelow = false;
+				}
+				else {
+					// i2 > ixAnchor || i2 == ixAnchor && sel.lastActionBelow
+					this.firstIndex = sel.firstIndex;
+					this.lastIndex = i2;
+				}
+				this.anchorOffset = ixAnchor - this.firstIndex;
+				// END KGU#866 2020-05-02
 			}
 			else if (i2 >= 0)
 			{
 				this.firstIndex = this.lastIndex = i2;
 			}
 		}
-		else if (i2 < 0)
-		{
+		else if (i2 < 0) {
 			this.firstIndex = this.lastIndex = i1;
 		}
-		else if (i1 <= i2)
-		{
+		else if (i1 <= i2) {
 			this.firstIndex = i1;
 			this.lastIndex = i2;
 		}
-		else
-		{
+		else {
 			this.firstIndex = i2;
-			this.lastIndex = i1;			
+			this.lastIndex = i1;
+			// START KGU#866 2020-05-02: Issue #866 - improved selection expansion / reduction
+			this.anchorOffset = i1 - i2;
+			this.lastActionBelow = false;
+			// END KGU#866 2020-05-02
 		}
 	}
 
 	/**
-	 * @param _owner - Subqueue this is to represent a subsequence of
-	 * @param _index1 - Index of the Element marking the begin of the sequence
-	 * @param _index2 - Index of the Element marking the end of the sequence
+	 * Establishes new selection span with respect to the given {@code _owner}
+	 * @param _owner - {@link Subqueue} this is to represent a subsequence of
+	 * @param _index1 - Index of the first Element of the sequence within {@code _owner}
+	 * @param _index2 - Index of the last Element of the sequence within {@code _owner}
 	 */
 	public SelectedSequence(Subqueue _owner, int _index1, int _index2) {
+		this(_owner, _index1, _index2, 0, true);
+	}
+
+	/**
+	 * Establishes new selection span with respect to the given {@code _owner}, where
+	 * element at {@code _index0} is retained as selection anchor for expansion/reduction.
+	 * @param _owner - {@link Subqueue} this is to represent a subsequence of
+	 * @param _index1 - Index of the Element marking the begin of the sequence
+	 * @param _index2 - Index of the Element marking the end of the sequence
+	 * @param _offset0 - Index offset of the selection anchor (w.r.t. {@code _index0} for expansion or reduction)
+	 * @param _modifiedBelow - true if last expanded or reduced at or below anchor (false otherwise)
+	 */
+	public SelectedSequence(Subqueue _owner, int _index1, int _index2, int _offset0, boolean _modifiedBelow) {
 		super("");
 		this.parent = _owner;
 		this.firstIndex = Math.max(0, _index1);
 		this.lastIndex = Math.min(_owner.getSize()-1, _index2);
+		this.anchorOffset = Math.max(0, Math.min(this.lastIndex - this.firstIndex, _offset0));
+		this.lastActionBelow = _modifiedBelow;
 	}
 
 	/**
@@ -260,6 +305,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#getRect()
 	 */
+	@Override
 	public Rect getRect()
 	{
 		Rect first = this.getElement(0).getRect();
@@ -275,6 +321,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#getRect(java.awt.Point)
 	 */
+	@Override
 	public Rect getRect(Point relativeTo)
 	{
 		Rect combined = getRect();
@@ -285,6 +332,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#getRectOffDrawPoint()
 	 */
+	@Override
 	public Rect getRectOffDrawPoint()
 	{
 		// First find out the topLeft coordinate of the first element
@@ -296,8 +344,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	// END KGU#206 2016-07-21
 
-	/* (non-Javadoc)
-	 * The copy will be related to a new Suqueue only consisting of copies of
+	/**
+	 * The copy will be related to a new {@link Subqueue} only consisting of copies of
 	 * my referenced elements
 	 * @see lu.fisch.structorizer.elements.Element#copy()
 	 */
@@ -312,11 +360,13 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return new SelectedSequence(newParent, 0, getSize());
 	}
 
+	@Override
 	public int getSize()
 	{
 		return lastIndex >= 0 ? lastIndex - firstIndex + 1 : 0;
 	}
 	
+	@Override
 	public int getIndexOf(Element _ele)
 	{
 		int index = ((Subqueue)parent).getIndexOf(_ele);
@@ -331,6 +381,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return index;
 	}
 	
+	@Override
 	public Element getElement(int _index)
 	{
 		Element ele = null;
@@ -371,6 +422,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * (if it was referenced here)
 	 * @param _element - Element t be removed
 	 */
+	@Override
 	public void removeElement(Element _element)
 	{
 		// Is _element within my range?
@@ -390,6 +442,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * drops the virtual reference here.
 	 * @param _index
 	 */
+	@Override
 	public void removeElement(int _index)
 	{
 		// START KGU#199 2016-07-07: Bugfix (on occasion of Enh. #188)
@@ -426,6 +479,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	// END KGU#143 2016-01-22
 
 	// START KGU#144 2016-01-22: Bugfix #38, #114 - moveDown and moveUp hadn't been implemented
+	@Override
 	public boolean canMoveDown()
 	{
 		boolean canMove = this.lastIndex + 1 < ((Subqueue)this.parent).getSize();
@@ -440,6 +494,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return canMove;
 	}
 	
+	@Override
 	public boolean canMoveUp()
 	{
 		boolean canMove = this.firstIndex > 0;
@@ -454,6 +509,12 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return canMove;
 	}
 	
+	/**
+	 * Moves all {@link Element}s representing this selection one position downwards
+	 * within the owner {@link Subqueue} if possible
+	 * @return true if the selected {@link Element}s could be moved, false otherwise
+	 * @see #canMoveDown()
+	 */
 	public boolean moveDown()
 	{
 		boolean feasible = this.canMoveDown();
@@ -471,6 +532,12 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return feasible;
 	}
 
+	/**
+	 * Moves all {@link Element}s representing this selection one position upwards
+	 * within the owner {@link Subqueue} if possible
+	 * @return true if the selected {@link Element}s could be moved, false otherwise
+	 * @see #canMoveUp()
+	 */
 	public boolean moveUp()
 	{
 		boolean feasible = this.canMoveUp();
@@ -519,19 +586,19 @@ public class SelectedSequence extends Element implements IElementSequence {
 		// This class will hardly be object of code generation
 	}
 
-    @Override
-    public void setColor(Color _color) 
-    {
-        for(int i = firstIndex; i <= lastIndex; i++)
-        {      
-            ((Subqueue)parent).getElement(i).setColor(_color);
-        }
-    }
-	
-    /**
-     * Sets this element sequence as a whole and also all individual members to selected
-     * (if {@code _sel} is true) or unselected (otherwise).
-     */
+	@Override
+	public void setColor(Color _color) 
+	{
+		for(int i = firstIndex; i <= lastIndex; i++)
+		{      
+			((Subqueue)parent).getElement(i).setColor(_color);
+		}
+	}
+
+	/**
+	 * Sets this element sequence as a whole and also all individual members to selected
+	 * (if {@code _sel} is true) or unselected (otherwise).
+	 */
 	@Override
 	public Element setSelected(boolean _sel)
 	{
@@ -688,4 +755,39 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
+	// START KGU#866 2020-05-02: Issue #866 - modified expansion / reduction strategy
+	/**
+	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 */
+	public int getStartOffset()
+	{
+		return this.firstIndex;
+	}
+
+	/**
+	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 */
+	public int getEndOffset()
+	{
+		return this.lastIndex;
+	}
+	
+	/**
+	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 */
+	public int getAnchorOffset()
+	{
+		return this.anchorOffset;
+	}
+	
+	/**
+	 * @return true if last expansion/reduction was below anchor position (or if no
+	 * expansion / reduction had been done recently), false otherwise.
+	 */
+	public boolean wasModifiedBelowAnchor()
+	{
+		return this.lastActionBelow;
+	}
+	// END KGU#866 2020-05-02
 }
