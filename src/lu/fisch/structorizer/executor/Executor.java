@@ -194,6 +194,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-04-04      Issue #829: Control should not automatically close after debugging [mawa290669]
  *      Kay Gürtzig     2020-04-13      Bugfix #848: On updating the context of includables mere declarations had been forgotten
  *      Kay Gürtzig     2020-04-23      Bugfix #858: split function in FOR-IN loop was not correctly handled
+ *      Kay Gürtzig     2020-04-28      Issue #822: Empty CALL lines should cause more sensible error messages
  *
  ******************************************************************************************************
  *
@@ -4684,6 +4685,12 @@ public class Executor implements Runnable
 		// END KGU#77 2015-11-11
 		{
 			String cmd = sl.get(i);
+			// START KGU#809 2020-04-28: Issue #822 Sensible error messages on empty lines
+			if (cmd.trim().isEmpty()) {
+				trouble = Control.msgIllegalEmptyLine.getText();
+				break;
+			}
+			// END KGU#809 2020-04-28
 			// cmd=cmd.replace(":=", "<-");
 			// START KGU#490 2018-02-08: Bugfix #503 - postpone string comparison conversion 
 			//cmd = convert(cmd);

@@ -92,6 +92,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-03-17/30   Enh. #828: Modification in generatePreamble(), insertion lines
  *                                          corrected
  *      Kay Gürtzig         2020-04-22      Enh. #855: New configurable default array size considered
+ *      Kay Gürtzig         2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
  *
  ******************************************************************************************************
  *
@@ -317,7 +318,7 @@ public class PasGenerator extends Generator
 				this.appendComment(_sl.get(0), _indent);
 			}
 			else {
-				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight());
+				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), "  ", this.commentSymbolRight());
 			}
 		}
 	}
@@ -1525,6 +1526,11 @@ public class PasGenerator extends Generator
 
 		if (topLevel)
 		{
+			// START KGU#860 2020-04-24: Issue #861/1
+			if (!_root.isSubroutine() && !_root.getComment().getLongString().trim().isEmpty()) {
+				this.appendComment(_root, _indent);
+			}
+			// END KGU#860 2020-04-24
 			// START KGU#311/KGU#815/KGU#836 2020-03-22: Enh. #314, #828, bugfix #836
 			if (this.usesFileAPI && (this.isLibraryModule() || this.importedLibRoots != null)) {
 				this.generatorIncludes.addIfNew(FILE_API_UNIT_NAME);
@@ -1553,10 +1559,6 @@ public class PasGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
-			if (!_root.isSubroutine() && !_root.getComment().getLongString().trim().isEmpty()) {
-				addSepaLine();
-				this.appendComment(_root, _indent);
-			}
 			addSepaLine();
 			// START KGU#351 2017-02-26: Enh. #346
 			if (_root.isProgram()) {

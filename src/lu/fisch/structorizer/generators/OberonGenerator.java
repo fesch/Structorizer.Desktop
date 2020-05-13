@@ -89,6 +89,7 @@ package lu.fisch.structorizer.generators;
  *                                              bugfix #839, fix for issue #780 revised
  *      Kay Gürtzig             2020-03-26      Bugfix KGU#833: The function name got declared as variable without need.
  *      Kay Gürtzig             2020-04-22      Enh. #855: Configurable default array / string size considered
+ *      Kay Gürtzig             2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
  *
  ******************************************************************************************************
  *
@@ -288,7 +289,7 @@ public class OberonGenerator extends Generator {
 				this.appendComment(_sl.get(0), _indent);
 			}
 			else {
-				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), " * ", " " + this.commentSymbolRight());
+				this.appendBlockComment(_sl, _indent, this.commentSymbolLeft(), "  ", " " + this.commentSymbolRight());
 			}
 		}
 	}
@@ -1562,6 +1563,12 @@ public class OberonGenerator extends Generator {
 			}
 		}
 		
+		// START KGU#860 2020-04-24: Issue #861/1 Moved hitherto from below the header
+		if (!_root.getComment().getLongString().trim().isEmpty())
+		{
+			appendComment(_root, _indent);	// Since #828 this will automatically decide for a block comment
+		}
+		// END KGU#860 2020-04-24
 		// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836 - An includable has never a procedure heading
 		//code.add(_indent + header + ";");
 		if (!_root.isInclude()) {
@@ -1619,11 +1626,13 @@ public class OberonGenerator extends Generator {
 		// START KGU 2016-01-16: No need to create an empty comment
 		//insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
 		//		" * ", " " + this.commentSymbolRight());
-		if (!_root.getComment().getLongString().trim().isEmpty())
-		{
-			appendBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
-					" * ", " " + this.commentSymbolRight());
-		}
+		// START KGU#860 2020-04-24: Issue #861/1 Moved above the declaration
+		//if (!_root.getComment().getLongString().trim().isEmpty())
+		//{
+		//	appendBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
+		//			" * ", " " + this.commentSymbolRight());
+		//}
+		// END KGU#860 2020-04-24
 		if (topLevel)
 		{
 			// START KGU#363 2017-05-16: Enh. #372

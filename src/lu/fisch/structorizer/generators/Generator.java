@@ -108,6 +108,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-03-30      Issue #828: Averted topological sorting in library modules mended
  *      Kay Gürtzig     2020-04-01      Enh. #440, #828: Support for Group export to PapGenerator
  *      Kay Gürtzig     2020-04-22      Enh. #855: New options for default array / string size
+ *      Kay Gürtzig     2020-04-24      Bugfix #862/2: Prevent duplicate export of an entry point root
+ *      Kay Gürtzig     2020-04-25      Bugfix #863/1: Duplicate routine export to PapDesigner and StrukTex
+ *      Kay Gürtzig     2020-04-28      Bugfix #828: Unreferenced subroutines were missing on group export with 1 main
  *
  ******************************************************************************************************
  *
@@ -4818,12 +4821,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// Now we can put all diagrams together and generate a common module
 			if (!_batchMode && mainIndices.size() == 1 && _entryPoints.size() > 1) {
 				/* In case of group export (_batchMode = false) the main (if there is one) can
-				 * be made the only entry point, we just have to find it again first
+				 * be made the only entry point if all remaining entry points are redundant,
+				 * we just have to find it again first
 				 */
 				for (Root root: _entryPoints) {
 					if (root.isProgram()) {
-						_entryPoints.clear();
-						_entryPoints.add(root);
+						// START KGU#865 2020-04-28: Bugfix of #828
+						//_entryPoints.clear();
+						//_entryPoints.add(root);
+						_entryPoints.remove(root);
+						if (nRedundant == _entryPoints.size()) {
+							_entryPoints.clear();
+						}
+						_entryPoints.insertElementAt(root, 0);
+						// END KGU#865 2020-04-08
 						break;
 					}
 				}
@@ -4847,6 +4858,45 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					this.subroutines.remove(root);
 				}
 			}
+			// START KGU#862 2020-04-25: Bugfix #863
+			else {
+				/* Now it is likely that there is no main at all.
+				 * We must prevent duplicate expression of routines. So find an independent
+				 * top level candidate or sort topologically.
+				 * What cases may occur (in falling precedence):
+				 * 1. There might be an entry point not being member of subroutines -> take it
+				 * 2. There will be an entry point with largest subtree, then this will be the one
+				 * 3. Hardly possible - would mean that all entry points are in subroutines
+				 *    (i.e. called by some other routine though none has a subtree) -> just
+				 *    sort them (?) topologically and clear subroutines.
+				 */
+				Root starter = null;
+				int maxDependents = 0;
+				for (int i = 0; i < _entryPoints.size(); i++) {
+					Root root = _entryPoints.get(i);
+					TreeMap<Root, SubTopoSortEntry> subTree = subTrees.get(i);
+					if (!this.subroutines.containsKey(root)) {
+						starter = root;
+						break;
+					}
+					else if (subTree != null && subTree.size() > maxDependents) {
+						maxDependents = subTree.size();
+						starter = root;
+						// We will continue searching, though
+					}
+				}
+				if (starter == null) {
+					_entryPoints.clear();
+					// this.subroutines gets cleared here.
+					_entryPoints.addAll(this.sortTopologically(this.subroutines));
+				}
+				else {
+					this.subroutines.remove(starter);
+					_entryPoints.remove(starter);
+					_entryPoints.insertElementAt(starter, 0);
+				}
+			}
+			// END KGU#862 2020-04-25
 			// Note: this.subroutines is likely to be consumed by method generateModule()!
 			_someRootUsesFileAPI = generateModule(_entryPoints, this.subroutines, _batchMode, null, null);
 		}
@@ -5099,7 +5149,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 							this.topLevel = false;
 						}
 					}
-					else {
+					// START KGU#861 2020-04-24: Bugfix #862/2: We must not export both as subroutine and library routine
+					//else {
+					else if (!_dependencyTree.containsKey(root)) {
+					// END KGU#861 2020-04-24
 						insertLibraryRoutine(root, this.subroutineIndent, _entryPoints == null || _entryPoints.contains(root));
 					}
 				}

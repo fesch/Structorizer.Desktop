@@ -51,6 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2020-03-08      Issue #833: Modified API for new mechanism to get rid of superfluous roots
  *      Kay Gürtzig     2020-03-09      Issue #835: New import option and method for insertion of structure preference keywords
+ *      Kay Gürtzig     2020-04-24      Method cleanComment() improved (indentation trimmed, empty lines dropped)
  *
  ******************************************************************************************************
  *
@@ -1065,7 +1066,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 			// Then we check the subtree recursively
 			retrieveComment_R(_reduction, comment);
 			if (comment.length() > 0) {
-				return cleanComment(comment.toString().substring(1));	// Remove the first newline
+				return cleanComment(comment.toString().substring(1));
 			}
 		}
 		return null;
@@ -1137,10 +1138,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 	// END KGU#407 2017-06-22
 	// START KGU#407 2017-09-30: Enh. #420
+	/**
+	 * Removes comment markers according to {@link #getCommentDelimiters()}, then
+	 * removes empty lines and trims the indentation to the minimum of all lines
+	 * @param _rawComment - the collected comments (may contain newlines)
+	 * @return the cleaned (possibly multi-line) comment 
+	 */
 	private String cleanComment(String _rawComment) {
 		StringList lines = StringList.explode(_rawComment, "\n");
 		String endDelim = null;
 		String[][] delims = this.getCommentDelimiters();
+		int minIndent = Integer.MAX_VALUE;
 		for (int i = 0; i < lines.count(); i++) {
 			String line = lines.get(i);
 			if (endDelim == null) {
@@ -1161,7 +1169,23 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				lines.set(i, line);
 				endDelim = null;
 			}
+			// START KGU#862 2020-04-24: trim the comment
+			if (line.trim().isEmpty()) {
+				lines.set(i, "");
+			}
+			else {
+				minIndent = Math.min(minIndent, line.indexOf(line.trim()));
+			}
+			// END KGU#861 2020-04-24
 		}
+		// START KGU#862 2020-04-24: trim the comment
+		lines.removeAll("");
+		if (minIndent > 0) {
+			for (int i = 0; i < lines.count(); i++) {
+				lines.set(i, lines.get(i).substring(minIndent));
+			}
+		}
+		// END KGU#861 2020-04-24
 		return lines.getText();
 	}
 	/**

@@ -34,6 +34,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-02-27      First Issue for Enhancement request #440
  *      Kay Gürtzig     2020-03-07      PapItem and PapElement classes integrated
  *      Kay Gürtzig     2020-04-02      PapParallel fundamentally rewritten, provisional Jump mechanism implemented
+ *      Kay Gürtzig     2020-04-25      Bugfix #863/2: Assignment symbols hadn't been transformed in CALLs
+ *      Kay Gürtzig     2020-04-28      Issue #864: Parameter lists of calls and routine declarations had to be transformed
  *
  ******************************************************************************************************
  *
@@ -72,6 +74,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -422,7 +425,30 @@ public class PapGenerator extends Generator {
 			if (!element.getComment().getLongString().trim().isEmpty()) {
 				right++;
 			}
-			if (element.getClass().getSimpleName().equals("Instruction")) {
+			// START KGU#863 2020-04-28: Issue #864 In case of a muti-line we must decompose it
+			if (element instanceof Call) {
+				StringList lines = element.getUnbrokenText();
+				if (lines.count() > 1) {
+					for (int i = 0; i < lines.count(); i++) {
+						if (!lines.get(i).trim().isEmpty()) {
+							height++;
+						}
+					}
+					// Subtract the standard height since we counted all (non-empty) lines
+					if (height > 1) {
+						height--;
+					}
+				}
+			}
+			// END KGU#863 2020-04-28
+			// START KGU#396 2020-04-02: Issue #440 Makeshift approach for Jump elements
+			else if (element instanceof Jump) {
+				if (!(((Jump) element).isReturn() && this.isLastElementOfRoot())) {
+					height++;
+				}
+			}
+			// END KGU396 2020-04-02
+			else if (element.getClass().getSimpleName().equals("Instruction")) {
 				// Input and output lines are to be separated and hence increase height
 				StringList lines = element.getUnbrokenText();
 				boolean isIO = false;
@@ -438,13 +464,6 @@ public class PapGenerator extends Generator {
 					}
 				}
 			}
-			// START KGU#396 2020-04-02: Issue #440 Makeshift approach for Jump elements
-			else if (element instanceof Jump) {
-				if (!(((Jump) element).isReturn() && this.isLastElementOfRoot())) {
-					height++;
-				}
-			}
-			// END KGU396 2020-04-02
 		}
 		
 		/** @return the number of occupied raster columns */
@@ -489,6 +508,48 @@ public class PapGenerator extends Generator {
 			}
 			if (element instanceof Call) {
 				papType = PapFigure.Type.PapModule;
+				Root owningRoot = Element.getRoot(element);
+				// START KGU#862 2020-04-25: Bugfix #863/2 - the assignment symbol must be transformed
+				for (int i = 0; i < text.count(); i++) {
+					String line = text.get(i).trim();
+					if (line.isEmpty()) {
+						continue;
+					}
+					// START KGU#863 2020-04-28: issues #385, #864/2 Support for declared optional arguments
+					Function call = ((Call)element).getCalledRoutine(i);
+					if (call != null && (routinePool != null) && line.endsWith(")")) {
+						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						if (!callCandidates.isEmpty()) {
+							// FIXME We'll just fetch the very first one for now...
+							Root called = callCandidates.get(0);
+							StringList defaults = new StringList();
+							called.collectParameters(null, null, defaults);
+							if (defaults.count() > call.paramCount()) {
+								// We just insert the list of default values for the missing arguments
+								line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+										defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+							}
+						}
+					}
+					PapFigure lastFigure = new PapFigure(row++, column0, papType, transform(line), null); 
+					figures.add(lastFigure);
+					if (prevId >= 0) {
+						connections.add(new PapConnection(prevId, lastFigure.getId()));
+					}
+					prevId = lastFigure.getId();
+					if (firstId < 0) {
+						firstId = prevId;
+					}
+					// END KGU#863 2020-04-28
+				}
+				// All done in general, avert the creation of another figure ...
+				text.clear();
+				// ... unless the call has not produced any figure (?)
+				if (prevId < 0) {
+					// Obviously there was no non-empty line, have a dummy node created
+					text.add("");
+				}
+				// END KGU#862 2020-04-25
 			}
 			else if (element instanceof Jump) {
 				boolean isRegularReturn = false;
@@ -634,7 +695,11 @@ public class PapGenerator extends Generator {
 			int row = this.row0;
 			PapItem.resetNextId();
 			// Generate the title figure
-			figures.add(new PapFigure(row, column0, PapFigure.Type.PapTitle, element.getText().getLongString(), null));
+			// START KGU#863 2020-04-28: Issue #864/1: PapDesigner does not recognise semicolons
+			//figures.add(new PapFigure(row, column0, PapFigure.Type.PapTitle, element.getText().getLongString(), null));
+			String header = transformHeader((Root)element);
+			figures.add(new PapFigure(row, column0, PapFigure.Type.PapTitle, header, null));
+			// END KGU#863 2020-04-28
 			// Generate the comment if necessary
 			String comment = element.getComment().getText().trim();
 			if (!comment.isEmpty()) {
@@ -1765,7 +1830,10 @@ public class PapGenerator extends Generator {
 			code.add(indent2 + "<DIAGRAMS>");
 		}
 		
-		code.add(indent3 + "<DIAGRAM FORMAT=\"1.00\" ID=\"" + (currentNo++) + "\" NAME=\"" + BString.encodeToHtml(_root.getText().getLongString()) + "\"" + date_attributes + " >");
+		// START KGU#863 2020-04-28: Issue #864: Transform parameter list
+		//code.add(indent3 + "<DIAGRAM FORMAT=\"1.00\" ID=\"" + (currentNo++) + "\" NAME=\"" + BString.encodeToHtml(_root.getText().getLongString()) + "\"" + date_attributes + " >");
+		code.add(indent3 + "<DIAGRAM FORMAT=\"1.00\" ID=\"" + (currentNo++) + "\" NAME=\"" + BString.encodeToHtml(transformHeader(_root)) + "\"" + date_attributes + " >");
+		// END KGU#863 2020-04-28
 		
 		PapRoot rootNode = new PapRoot(_root);
 		int columns = rootNode.getWidth();
@@ -1861,5 +1929,42 @@ public class PapGenerator extends Generator {
 		return false;
 	}
 	// END KGU#815 2020-04-01
-	
+
+	// START KGU#863 2020-04-28: Issue #864/1
+	/**
+	 * Provides a (possibly adapted) Root header that meets the requirements
+	 * for the PapDesigner mapping between Calls and routines.
+	 * (For PapDesigner v2.2.08.06, semicolons must be substituted.)
+	 * @param root - the {@link Root} the header for which is needed
+	 * @return the transformed routine header
+	 */
+	private String transformHeader(Root root) {
+		String header = root.getText().getLongString();
+		if (header.contains(";")) {
+			// We might convert it to C or to some pseudo Pascal syntax with commas
+			header = root.getMethodName();
+			String resType = root.getResultType();
+			StringList paramNames = new StringList();
+			StringList paramTypes = new StringList();
+			if (root.collectParameters(paramNames, paramTypes, null)) {
+				header += "(";
+				for (int i = 0; i < paramNames.count(); i++) {
+					if (i > 0) {
+						header += ", ";
+					}
+					String type = paramTypes.get(i);
+					header += paramNames.get(i);
+					if (type != null) {
+						header += ":" + type;
+					}
+				}
+				header += ")";
+			}
+			if (resType != null) {
+				header += ": " + resType;
+			}
+		}
+		return header;
+	}
+	// END KGU#863 2020-04-28
 }

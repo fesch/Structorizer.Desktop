@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
 *      Kay Gürtzig      2019-03-17      Bugfix #705: Substructure of Case and Parallel hadn't been traversed
 *      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
 *      Kay Gürtzig      2019-10-12      Bugfix #705/2: Retrieval mistake for CASE, PARALLEL branches in getNext(boolean)
+*      Kay Gürtzig      2020-05-02      Javadoc completed on occasion of issue #866
 *
 ******************************************************************************************************
 *
@@ -410,13 +411,26 @@ public interface IElementSequence {
 	 */
 	public abstract int getSize();
 
+	/**
+	 * Tries to find {@link Element} {@code _ele} within this sequence and returns
+	 * its position if found.
+	 * @param _ele - the {@link Element} to be located.
+	 * @return the index, or -1 if not found
+	 */
 	public abstract int getIndexOf(Element _ele);
 	
+	/**
+	 * Fetches the {@link Element} at position {@code _index} if this is a
+	 * valid index. Will cause an exception otherwise.
+	 * @param _index - must be in interval [0, {@link #getSize()}-1]
+	 * @return the requested {@link Element}
+	 * @throws ArrayIndexOutOfBoundsException if the index is out of range
+	 */
 	public abstract Element getElement(int _index);
 	
 	/**
-	 * Appends the given _element to the already held elements
-	 * @param _element
+	 * Appends the given {@code _element} to the already held {@link Element}s
+	 * @param _element - {@link Element} to be added.
 	 */
 	public abstract void addElement(Element _element);
 
