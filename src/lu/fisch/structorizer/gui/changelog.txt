@@ -8,6 +8,7 @@
 Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685),
   on Windows the image format may be JPG instead of PNG.
+- Pascal import does not cope with nested comments and unit name aliases.
 - COBOL import may fail if certain single-letter identifiers are used (rename them!),
   also if the code contains a SPECIAL-NAMES clause or float literals.
 - COBOL import does not cope with some statement variants and variable redefinitions.
@@ -15,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-09 (2020-05-03)
+Current development version: 3.30-09 (2020-05-13)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
