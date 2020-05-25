@@ -187,6 +187,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private JTextArea txtWelcome1 = null, txtWelcome2 = null;
 	private JToggleButton[] btnLangs = null;
 	// END KGU#655 2019-02-16
+        
+        // START BOB 2020-05-25: restricted mode
+        private boolean restricted = false;
+        // END BOB 2020-05-25
 		
 	/******************************
  	 * Setup the Mainform
@@ -1533,5 +1537,15 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			return false;
 		}
 	}					
+
+    public boolean isRestricted() {
+        return restricted;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+        editor.setRestricted(restricted);
+        menu.setRestricted(restricted);
+    }
 
 }

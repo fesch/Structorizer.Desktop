@@ -170,6 +170,7 @@ public class Structorizer
 		// START KGU#722 2019-08-06: Enh. #741
 		File settings = null;
 		boolean openFound = false;
+		boolean restricted = false;
 		// END KGU#722 2019-08-06
 		for (int i = 0; i < args.length; i++)
 		{
@@ -196,6 +197,11 @@ public class Structorizer
 				}
 				// END KGU#538 2018-07-01
 			}
+			// START BOB 2020-05-25
+			else if (args[i].equals("-restricted")) {
+				restricted = true;
+			}
+			// END BOB 2020-05-25
 			// START KGU#722 2019-08-07: Enh. #741
 			else if (i == 0 && args[i].equals("-open")) {
 				openFound = true;
@@ -365,6 +371,7 @@ public class Structorizer
 
 		// load the mainform
 		final Mainform mainform = new Mainform();
+                mainform.setRestricted(restricted);
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
 		File appDir = Ini.getInstallDirectory();

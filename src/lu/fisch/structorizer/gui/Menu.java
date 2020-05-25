@@ -789,6 +789,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
+        
+        // START BOB 2020-05-25: restricted mode
+        private boolean restricted = false;
+        // END BOB 2020-05-25
 
 	public void create()
 	{
@@ -2351,5 +2355,17 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 		return tooltipString;
 	}
+        
+        
+    public boolean isRestricted() {
+        return restricted;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+        menuFileExportCode.setVisible(!restricted);
+        menuFileExportCodeFavorite.setVisible(!restricted);
+        menuFileImport.setVisible(!restricted);
+    }
 
 }

@@ -315,6 +315,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupCodeHide = new JMenuItem("Hide code preview");
 	protected final LangTextHolder ttPopupCodePreview = new LangTextHolder("Switches the code preview to % and sets it as favourite export language.");
 	// END KGU#705 2019-09-26
+        
+        // START BOB 2020-05-25: restricted mode
+        private boolean restricted = false;
+        // END BOB 2020-05-25
 	
 	// START KGU#177 2016-04-06: Enh. #158
 	// Action names
@@ -1764,5 +1768,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		}
 	}
 	// END KGU#646 2019-02-05
+
+    public boolean isRestricted() {
+        return restricted;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+        popupCode.setVisible(!restricted);
+    }
 
 }
