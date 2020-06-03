@@ -1779,12 +1779,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// END KGU#646 2019-02-05
 
 	// START BOB 2020-05-25
-//	/**
-//	 * @return true iff code export and import are to be suppressed
-//	 */
-//	public boolean isRestricted() {
-//		return restricted;
-//	}
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
 
 	/**
 	 * Controls whether GUI elements providing code import or export be

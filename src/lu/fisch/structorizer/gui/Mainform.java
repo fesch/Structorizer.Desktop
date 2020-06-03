@@ -1553,12 +1553,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	}					
 
 	// START BOB 2020-05-25: New mode "restricted" to suppress code export / import
-//	/**
-//	 * @return true if code export and import must not be offered
-//	 */
-//	public boolean isRestricted() {
-//		return restricted;
-//	}
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
 
 	/**
 	 * Suppresses code import / export features (customer demand)

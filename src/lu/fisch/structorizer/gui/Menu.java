@@ -2372,11 +2372,15 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	}
 
 	// START BOB 2020-05-25: Mechanism to suppress code import/export
-	// START KGU#868 2020-06-03: Bugfix #868 modified API
-	//public boolean isRestricted() {
-	//	return restricted;
-	//}
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
 
+	// START KGU#868 2020-06-03: Bugfix #868 modified API
+	/**
+	 * Suppresses all code export and import items in the menus
+	 */
 	//public void setRestricted(boolean restricted) {
 	//	this.restricted = restricted;
 	//	menuFileExportCode.setVisible(!restricted);
