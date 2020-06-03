@@ -79,6 +79,7 @@
  *                                      are relative then the batch export failed
  *                                      Issue #828/#836 - The fallback to all roots hadn't worked for arr files
  *      Bob Fisch       2020-05-25      New command line option "-restricted" to suppress code export and import
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *
  ******************************************************************************************************
  *
@@ -375,7 +376,12 @@ public class Structorizer
 		// load the mainform
 		final Mainform mainform = new Mainform();
 		// START BOB 2020-05-25
-		mainform.setRestricted(restricted);
+		// START KGU#868 2020-06-03: Bugfix #868 no need to "unrestrict" it
+		//mainform.setRestricted(restricted);
+		if (restricted) {
+			mainform.hideExportImport();
+		}
+		// END KGU#868 2020-06-03
 		// END BOB 2020-05-25
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint

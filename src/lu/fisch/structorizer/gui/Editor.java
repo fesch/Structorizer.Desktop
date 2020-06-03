@@ -82,6 +82,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-10-02      Enh. #738 code preview font control via Ctrl-Numpad-+/-
  *      Kay Gürtzig     2020-05-02      Issue #866: Modified key bindings for expanding / reducing selection
  *      Bob Fisch       2020-05-25      New "restricted" mode to suppress code export/import
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *
  ******************************************************************************************************
  *
@@ -318,7 +319,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// END KGU#705 2019-09-26
 
 	// START BOB 2020-05-25: restricted mode (suppresses code export / import)
-	private boolean restricted = false;
+	// START KGU#868 2020-06-03: Renamed for more clarity
+	//private boolean restricted = false;
+	/** suppresses code preview if true */
+	private boolean noExportImport = false;
+	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25
 	
 	// START KGU#177 2016-04-06: Enh. #158
@@ -1637,7 +1642,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				}
 				// END KGU#318 2017-01-05
 				// START KGU#705 2019-09-26: Enh. #738
-				else if (comp == txtCode) {
+				// START KGU#868 2020-06-03: Bugfix #868
+				//else if (comp == txtCode) {
+				else if (comp == txtCode && !noExportImport) {
+				// END KGU#868 2020-06-03
 					popupCode.show(comp, e.getX(), e.getY());
 				}
 				// END KGU#705 2019-09-26
@@ -1771,22 +1779,30 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// END KGU#646 2019-02-05
 
 	// START BOB 2020-05-25
-	/**
-	 * @return true iff code export and import are to be suppressed
-	 */
-	public boolean isRestricted() {
-		return restricted;
-	}
+//	/**
+//	 * @return true iff code export and import are to be suppressed
+//	 */
+//	public boolean isRestricted() {
+//		return restricted;
+//	}
 
 	/**
 	 * Controls whether GUI elements providing code import or export be
 	 * suppressed
 	 * @param restricted - true to disable menu items offering export
 	 */
-	public void setRestricted(boolean restricted) {
-		this.restricted = restricted;
-		popupCode.setVisible(!restricted);
+	// START KGU#868 2020-06-03: Bugfix #868
+//	public void setRestricted(boolean restricted) {
+//		this.restricted = restricted;
+//		popupCode.setVisible(!restricted);
+//	}
+	public void hideExportImport()
+	{
+		noExportImport = true;
+		popupCode.setVisible(false);
+		diagram.setCodePreview(false);
 	}
+	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25
 
 }
