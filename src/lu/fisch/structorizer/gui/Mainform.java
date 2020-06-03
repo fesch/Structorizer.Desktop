@@ -90,6 +90,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Have ini saved recent property changes in create() before loading from ini
+ *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *
  ******************************************************************************************************
  *
@@ -187,10 +188,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private JTextArea txtWelcome1 = null, txtWelcome2 = null;
 	private JToggleButton[] btnLangs = null;
 	// END KGU#655 2019-02-16
-        
-        // START BOB 2020-05-25: restricted mode
-        private boolean restricted = false;
-        // END BOB 2020-05-25
+	
+	// START BOB 2020-05-25: restricted mode
+	private boolean restricted = false;	// If true then code import/export gets disabled
+	// END BOB 2020-05-25
 		
 	/******************************
  	 * Setup the Mainform
@@ -1538,14 +1539,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 	}					
 
-    public boolean isRestricted() {
-        return restricted;
-    }
+	// START BOB 2020-05-25
+	/**
+	 * @return true if code export and import must not be offered
+	 */
+	public boolean isRestricted() {
+		return restricted;
+	}
 
-    public void setRestricted(boolean restricted) {
-        this.restricted = restricted;
-        editor.setRestricted(restricted);
-        menu.setRestricted(restricted);
-    }
+	/**
+	 * Controls whether code import / export features are to be suppressed
+	 * @param _restricted - if true then code import / export won't be available
+	 */
+	public void setRestricted(boolean _restricted) {
+		restricted = restricted;
+		editor.setRestricted(restricted);
+		menu.setRestricted(restricted);
+	}
+	// END BOB 2020-05-25
 
 }

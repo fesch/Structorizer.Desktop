@@ -113,6 +113,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801: Messages and a new menu item for offline help support
  *      Kay Gürtzig     2020-03-03      Enh. #440: New export menu entries for PapDesigner export
  *      Kay Gürtzig     2020-03-29      Issue #841: New message error20_3
+ *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *
  ******************************************************************************************************
  *
@@ -789,10 +790,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
-        
-        // START BOB 2020-05-25: restricted mode
-        private boolean restricted = false;
-        // END BOB 2020-05-25
+
+	// START BOB 2020-05-25: restricted mode
+	private boolean restricted = false;	// supresses code export / import items
+	// END BOB 2020-05-25
 
 	public void create()
 	{
@@ -2355,17 +2356,18 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 		return tooltipString;
 	}
-        
-        
-    public boolean isRestricted() {
-        return restricted;
-    }
 
-    public void setRestricted(boolean restricted) {
-        this.restricted = restricted;
-        menuFileExportCode.setVisible(!restricted);
-        menuFileExportCodeFavorite.setVisible(!restricted);
-        menuFileImport.setVisible(!restricted);
-    }
+	// START BOB 2020-05-25: Mechanism to suppress code import/export
+	public boolean isRestricted() {
+		return restricted;
+	}
+
+	public void setRestricted(boolean restricted) {
+		this.restricted = restricted;
+		menuFileExportCode.setVisible(!restricted);
+		menuFileExportCodeFavorite.setVisible(!restricted);
+		menuFileImport.setVisible(!restricted);
+	}
+	// END BOB 2020-05-25
 
 }

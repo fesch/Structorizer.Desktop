@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-09 (2020-05-13)
+Current development version: 3.30-09a (2020-05-25)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -122,6 +122,7 @@ Current development version: 3.30-09 (2020-05-13)
 - 09: Issue #864: Parameter list transformation for PapDesigner export <2>
 - 09: Bugfix #865: Flaw in parameter recognition on subroutine generation <2>
 - 09: Issue #866: Selection expansion/reduction in the diagram revised <2>
+- 09a: Issue #868: New command line option "-restricted" to prevent export/import
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
