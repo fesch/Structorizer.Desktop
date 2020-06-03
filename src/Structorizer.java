@@ -78,6 +78,8 @@
  *      Kay Gürtzig     2020-04-22      Bugfix #853: If both the arr file path and the contained nsd file paths
  *                                      are relative then the batch export failed
  *                                      Issue #828/#836 - The fallback to all roots hadn't worked for arr files
+ *      Bob Fisch       2020-05-25      New command line option "-restricted" to suppress code export and import
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *
  ******************************************************************************************************
  *
@@ -169,9 +171,11 @@ public class Structorizer
 		}
 		// START KGU#722 2019-08-06: Enh. #741
 		File settings = null;
-		boolean openFound = false;
-		boolean restricted = false;
+		boolean openFound = false;	// switch "-open" found?
 		// END KGU#722 2019-08-06
+		// START BOB 2020-05-25
+		boolean restricted = false;	// switch "-restricted" found
+		// END BOB 2020-05-25
 		for (int i = 0; i < args.length; i++)
 		{
 			//System.out.println("arg " + i + ": " + args[i]);
@@ -371,7 +375,14 @@ public class Structorizer
 
 		// load the mainform
 		final Mainform mainform = new Mainform();
-                mainform.setRestricted(restricted);
+		// START BOB 2020-05-25
+		// START KGU#868 2020-06-03: Bugfix #868 no need to "unrestrict" it
+		//mainform.setRestricted(restricted);
+		if (restricted) {
+			mainform.hideExportImport();
+		}
+		// END KGU#868 2020-06-03
+		// END BOB 2020-05-25
 		
 		// START KGU#532 2018-06-25: Issue #551 Suppress version notification option hint
 		File appDir = Ini.getInstallDirectory();

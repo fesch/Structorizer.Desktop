@@ -113,6 +113,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801: Messages and a new menu item for offline help support
  *      Kay Gürtzig     2020-03-03      Enh. #440: New export menu entries for PapDesigner export
  *      Kay Gürtzig     2020-03-29      Issue #841: New message error20_3
+ *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *
  ******************************************************************************************************
  *
@@ -789,11 +791,17 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
-        
-        // START BOB 2020-05-25: restricted mode
-        private boolean restricted = false;
-        // END BOB 2020-05-25
 
+	// START BOB 2020-05-25: restricted mode
+	// START KGU#868 2020-06-03: Bugfix #868 - renamed for clarity
+	//private boolean restricted = false;	
+	private boolean noExportImport = false;	// supresses code export / import items
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
+
+	/**
+	 * Constructs the GUI
+	 */
 	public void create()
 	{
 		JMenuBar menubar = this;
@@ -1354,7 +1362,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		// START KGU#705 2019-09-23: Enh. #738
 		menuDiagram.add(menuDiagramPreview);
-		menuDiagramPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuDiagramPreview.isSelected()); } } );
+		// START KGU#868 2020-06-03: Bugfix #868 - consider reduced mode 
+		//menuDiagramPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuDiagramPreview.isSelected()); } } );
+		menuDiagramPreview.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				diagram.setCodePreview(!noExportImport && menuDiagramPreview.isSelected());
+				}
+			} );
+		// END KGU#868 2020-06-03
 		menuDiagramPreview.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
 
@@ -2355,17 +2370,32 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 		return tooltipString;
 	}
-        
-        
-    public boolean isRestricted() {
-        return restricted;
-    }
 
-    public void setRestricted(boolean restricted) {
-        this.restricted = restricted;
-        menuFileExportCode.setVisible(!restricted);
-        menuFileExportCodeFavorite.setVisible(!restricted);
-        menuFileImport.setVisible(!restricted);
-    }
+	// START BOB 2020-05-25: Mechanism to suppress code import/export
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
+
+	// START KGU#868 2020-06-03: Bugfix #868 modified API
+	/**
+	 * Suppresses all code export and import items in the menus
+	 */
+	//public void setRestricted(boolean restricted) {
+	//	this.restricted = restricted;
+	//	menuFileExportCode.setVisible(!restricted);
+	//	menuFileExportCodeFavorite.setVisible(!restricted);
+	//	menuFileImport.setVisible(!restricted);
+	//}
+	public void hideExportImport()
+	{
+		this.noExportImport = true;
+		menuFileExportCode.setVisible(false);
+		menuFileExportCodeFavorite.setVisible(false);
+		menuFileImportCode.setVisible(false);
+		menuDiagramPreview.setVisible(false);
+	}
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
 
 }

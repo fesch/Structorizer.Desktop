@@ -201,6 +201,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-04-23      Bugfix #856: Selective preference saving to file didn't work properly
  *      Kay Gürtzig     2020-04-28      Bugfix #865: On subroutine generation arguments true and false weren't recognised
  *      Kay Gürtzig     2020-05-02      Issue #866: Selection expansion / reduction mechanisms revised
+ *      Kay Gürtzig     2020-06-03      Issue #868: Code import via files drop had to be disabled in restricted mode
  *
  ******************************************************************************************************
  *
@@ -733,7 +734,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//// END KGU#289 2016-11-15
 						//else {
 						// If openNsdOrArr() doesn't recognise the file type then it returns an empty extension string
-						if (openNsdOrArr(filename).isEmpty()) {
+						// START KGU#868 2020-06-03: Bugfix #868 - filesdrop import is to be suppressed, too
+						//if (openNsdOrArr(filename).isEmpty()) {
+						if (openNsdOrArr(filename).isEmpty() && !NSDControl.isRestricted()) {
+						// END KGU#868 2020-06-03
 						// END KGU#671 2019-03-01
 							Ini ini = Ini.getInstance();
 							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
