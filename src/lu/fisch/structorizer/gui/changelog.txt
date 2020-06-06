@@ -124,8 +124,8 @@ Current development version: 3.30-11 (2020-06-06)
 - 09: Issue #866: Selection expansion/reduction in the diagram revised <2>
 - 09a: New command line option "-restricted" to prevent export/import [CPNV]
 - 10: Bugfix #868: Inadvertent popup of the code preview context menu on start <2>
-- 11: Issue #870: Ini property "noExportImport" instead of command-line parameter
-      "-restricted" [CPNV]2
+- 11: Issue #870: Now ini property "noExportImport=1" prevents code export/import;
+      group export prevention had been forgotten [CPNV]2
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -115,6 +115,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-03-29      Issue #841: New message error20_3
  *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
+ *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
  *
  ******************************************************************************************************
  *
@@ -972,6 +973,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			URL iconFile = this.getClass().getResource("icons/editor_pap.png");
 			if (iconFile != null) {
 				menuFileExportPap.setIcon(IconLoader.getIconImage("editor_pap.png"));
+				// START KGU#396 2020-06-06: Enh. #440
+				menuFileExportPap1966.setIcon(IconLoader.getIconImage("editor_pap.png"));
+				menuFileExportPap1982.setIcon(IconLoader.getIconImage("editor_pap.png"));
+				// END KGU#396 2020-06-06
 			}
 		}
 		catch (Exception ex) {}

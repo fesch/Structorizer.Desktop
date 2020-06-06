@@ -41,6 +41,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-30      Enh. #720: tree node for dependent diagrams (includers/callers) added
  *      Kay Gürtzig     2020-03-16      Enh. #828: New popup submenu for code export of a group (or diagram)
  *      Kay Gürtzig     2020-04-01      Enh. #440: Group export to PapDesigner inserted in popup menu
+ *      Kay Gürtzig     2020-06-06      Issue #868/#870: Suppression of group export in noExportImport mode
  *
  ******************************************************************************************************
  *
@@ -632,6 +633,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			popupIndexExportPap1966.addActionListener(exportPapListener);
 			popupIndexExportPap1982.addActionListener(exportPapListener);
 			// END KGU#396 2020-04-01
+			// START KGU#396 2020-06-06
+			popupIndexExportPap1966.setIcon(icon);
+			popupIndexExportPap1982.setIcon(icon);
+			// END KGU#396 2020-06-06
 			// START KGU#396/KGU#725 2020-04-08: Enh. #440, #746 - for later re-translation if necessary
 			Menu.msgExportTooltip.addLangEventListener(this);
 			// END KGU#396 2020-04-08
@@ -1562,4 +1567,15 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 	// END KGU#396/KGU#815 2020-04-08
 
+	/**
+	 * Controls whether GUI elements providing code import or export be
+	 * suppressed
+	 * @param restricted - true to disable menu items offering export
+	 */
+	// START KGU#870 2020-06-06: Bugfix #870
+	public void hideExportImport()
+	{
+		popupIndexExport.setVisible(false);
+	}
+	// END KGU#870 2020-06-06
 }

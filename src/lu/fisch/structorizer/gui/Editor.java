@@ -83,6 +83,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-05-02      Issue #866: Modified key bindings for expanding / reducing selection
  *      Bob Fisch       2020-05-25      New "restricted" mode to suppress code export/import
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
+ *      Kay Gürtzig     2020-06-06      Bugfix #868/#870: Suppression of group export had been forgotten.
  *
  ******************************************************************************************************
  *
@@ -1799,6 +1800,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		noExportImport = true;
 		popupCode.setVisible(false);
 		diagram.setCodePreview(false);
+		// START KGU#870 2020-06-06: Bugfix #868, #870 group export had been forgotten
+		arrangerIndex.hideExportImport();
+		// END KGU#870 2020-06-06
 	}
 	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25
