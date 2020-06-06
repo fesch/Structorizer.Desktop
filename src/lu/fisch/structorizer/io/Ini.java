@@ -49,7 +49,8 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-08-07      Enh. #741: Mechanisms to redirect the ini path via command line
  *      Kay Gürtzig         2019-09-13      Enh. #741: setIniPath may now attempt to establish the folders along the path
  *      Kay Gürtzig         2019-09-20      Enh. #741: Ini path redirection is now logged
- *      Kay Gürtzig         2020-01-20      Bugfix #802: Version of getIniDirectory with parameter to obtain the standard folder 
+ *      Kay Gürtzig         2020-01-20      Bugfix #802: Version of getIniDirectory with parameter to obtain the standard folder
+ *      Kay Gürtzig         2020-06-06      Issue #870: Specific handling of property "noExportImport", try-with-resources introduced
  *
  ******************************************************************************************************
  *
@@ -573,14 +574,14 @@ public class Ini {
 		if (f.length() != 0) {
 			// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 			// p.load(new FileInputStream(_filename));
-			FileInputStream fis = new FileInputStream(_filename);
-			// START KGU#720 2019-08-05: Enh. #737
-			if (_clearBefore) {
-				p.clear();
+			try (FileInputStream fis = new FileInputStream(_filename)) {
+				// START KGU#720 2019-08-05: Enh. #737
+				if (_clearBefore) {
+					p.clear();
+				}
+				// END KGU#720 2019-08-05
+				p.load(fis);
 			}
-			// END KGU#720 2019-08-05
-			p.load(fis);
-			fis.close();
 			// END KGU#210 2016-07-22
 			this.wasChanged = false;
 		}
@@ -743,16 +744,29 @@ public class Ini {
 		// START KGU#210 2016-07-22: Bugfix #200 ensure the file gets closed
 //		p.store(new FileOutputStream(_filename), "last updated "
 //				+ new java.util.Date());
-		FileOutputStream fos = new FileOutputStream(_filename);
-		// START KGU#264 2016-09-28: The date was redundant (next comment is the date,
-		// anyway), so better write the version
-		// p.store(fos, "last updated " + new java.util.Date());
-		// START KGU#466 2019-08-03: Issue #733 - indicate a property selection
-		// p.store(fos, "version " + Element.E_VERSION);
-		props.store(fos, "Structorizer version " + Element.E_VERSION + (p != props ? "\n(Preferences subset)" : ""));
-		// END KGU#466 2019-08-03
-		// END KGU#264 2016-09-28
-		fos.close();
+		// START KGU#869 2020-06-06: Issue #870 - we must not store the "noExportImport" property
+		//FileOutputStream fos = new FileOutputStream(_filename);
+		String noExpImp = props.getProperty("noExportImport");
+		try (FileOutputStream fos = new FileOutputStream(_filename)) {
+			props.remove("noExportImport");
+		// END KGU#869 2020-06-06	
+			// START KGU#264 2016-09-28: The date was redundant (next comment is the date,
+			// anyway), so better write the version
+			// p.store(fos, "last updated " + new java.util.Date());
+			// START KGU#466 2019-08-03: Issue #733 - indicate a property selection
+			// p.store(fos, "version " + Element.E_VERSION);
+			props.store(fos, "Structorizer version " + Element.E_VERSION + (p != props ? "\n(Preferences subset)" : ""));
+			// END KGU#466 2019-08-03
+			// END KGU#264 2016-09-28
+		// START KGU#869 2020-06-06
+		//fos.close();
+		}
+		finally {
+			if (noExpImp != null) {
+				props.setProperty("noExportImport", noExpImp);
+			}
+		}
+		// END KGU#869 2020-06-06
 		// END KGU#210 2016-07-22
 		this.wasChanged = false;
 	}

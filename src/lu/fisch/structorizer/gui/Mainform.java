@@ -92,6 +92,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Have ini saved recent property changes in create() before loading from ini
  *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
+ *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
  *
  ******************************************************************************************************
  *
@@ -616,6 +617,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Ini ini = Ini.getInstance();
 			ini.load();
 			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI (?)
+
+			// START KGU#869 2020-06-06: Issue #870
+			if (ini.getProperty("noExportImport", "0").equals("1")) {
+				noExportImport = true;
+			}
+			// END KGU#869 2020-06-06
 
 			// ======================== GUI scaling ==========================
 			double scaleFactor = Double.parseDouble(ini.getProperty("scaleFactor","1"));
