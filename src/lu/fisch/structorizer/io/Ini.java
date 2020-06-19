@@ -51,6 +51,7 @@ package lu.fisch.structorizer.io;
  *      Kay Gürtzig         2019-09-20      Enh. #741: Ini path redirection is now logged
  *      Kay Gürtzig         2020-01-20      Bugfix #802: Version of getIniDirectory with parameter to obtain the standard folder
  *      Kay Gürtzig         2020-06-06      Issue #870: Specific handling of property "noExportImport", try-with-resources introduced
+ *      Kay Gürtzig         2020-06-19      Issue #733: Property "scaleFator" excluded from overwriting by predominant ini file
  *
  ******************************************************************************************************
  *
@@ -600,7 +601,18 @@ public class Ini {
 //			p.load(new FileInputStream(filename2));
 //			// System.out.println(p.toString());
 //		}
-		load(filename2);
+		// START KGU#871 2020-06-19: Issue #733 - we must not override "scaleFactor"
+		//load(filename2);
+		String scaleFactor = p.getProperty("scaleFactor");
+		try {
+			load(filename2);
+		}
+		finally {
+			if (scaleFactor != null) {
+				p.setProperty("scaleFactor", scaleFactor);
+			}
+		}
+		// END KGU#871 2020-06-19
 		// END KGU#210 2016-07-22
 	}
 
