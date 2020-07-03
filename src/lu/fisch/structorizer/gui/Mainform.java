@@ -90,6 +90,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-20      Issue #463: Startup and shutdown/dispose log entries now with version number
  *      Kay Gürtzig     2019-10-07      Error message fallback for cases of empty exception text ensured (KGU#747)
  *      Kay Gürtzig     2020-02-04      Bugfix #805: Have ini saved recent property changes in create() before loading from ini
+ *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
+ *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
  *
  ******************************************************************************************************
  *
@@ -187,6 +190,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	private JTextArea txtWelcome1 = null, txtWelcome2 = null;
 	private JToggleButton[] btnLangs = null;
 	// END KGU#655 2019-02-16
+	
+	// START BOB 2020-05-25: restricted mode
+	// START KGU#868 2020-06-03: Bugfix #868 this must be static
+	//private boolean restricted = false;
+	private static boolean noExportImport = false;	// If true then code import/export gets disabled
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
 		
 	/******************************
  	 * Setup the Mainform
@@ -350,6 +360,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			doButtons();
 		}
 		//System.out.println("* Buttons and menu done.");
+		
+		// START KGU#868 2020-06-03: Bugfix #868 - suppress code export/import items if requested
+		if (noExportImport) {
+			this.hideExportImport();
+		}
+		// END KGU#868 2020-06-03
 
 		/******************************
 		 * Set onClose event
@@ -602,6 +618,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.load();
 			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI (?)
 
+			// START KGU#869 2020-06-06: Issue #870
+			if (ini.getProperty("noExportImport", "0").equals("1")) {
+				noExportImport = true;
+			}
+			// END KGU#869 2020-06-06
+
 			// ======================== GUI scaling ==========================
 			double scaleFactor = Double.parseDouble(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
@@ -793,7 +815,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//System.out.println("* ArrangerIndex is set.");
 				// END KGU#305 2016-12-14
 				// START KGU#705 2019-09-24: Enh. #738
-				diagram.setCodePreview(ini.getProperty("codePreview", "1").equals("1"));	// default = 1
+				// START KGU#868 2020-06-03: Bugfix #868 - we must not enable code preview in restricted mode
+				//diagram.setCodePreview(ini.getProperty("codePreview", "1").equals("1"));	// default = 1
+				diagram.setCodePreview(!noExportImport && ini.getProperty("codePreview", "1").equals("1"));	// default = 1
+				// END KGU#868 2020-06-03
 				// END KGU#705 2019-09-14
 				// START KGU#456 2017-11-05: Issue #452
 				diagram.setSimplifiedGUI(ini.getProperty("userSkillLevel", "1").equals("0"));
@@ -1533,5 +1558,29 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			return false;
 		}
 	}					
+
+	// START BOB 2020-05-25: New mode "restricted" to suppress code export / import
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
+
+	/**
+	 * Suppresses code import / export features (customer demand)
+	 */
+	// START KGU#868 2020-06-03
+//	public void setRestricted(boolean _restricted) {
+//		restricted = restricted;
+//		editor.setRestricted(restricted);
+//		menu.setRestricted(restricted);
+//	}
+	public void hideExportImport()
+	{
+		noExportImport = true;
+		editor.hideExportImport();
+		menu.hideExportImport();
+	}
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
 
 }

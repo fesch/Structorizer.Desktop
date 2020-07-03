@@ -80,6 +80,10 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-09-27      Enh. #738: Click in code preview now selects element and highlights code,
  *                                      double-click opens element editor
  *      Kay Gürtzig     2019-10-02      Enh. #738 code preview font control via Ctrl-Numpad-+/-
+ *      Kay Gürtzig     2020-05-02      Issue #866: Modified key bindings for expanding / reducing selection
+ *      Bob Fisch       2020-05-25      New "restricted" mode to suppress code export/import
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
+ *      Kay Gürtzig     2020-06-06      Bugfix #868/#870: Suppression of group export had been forgotten.
  *
  ******************************************************************************************************
  *
@@ -314,6 +318,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JMenuItem popupCodeHide = new JMenuItem("Hide code preview");
 	protected final LangTextHolder ttPopupCodePreview = new LangTextHolder("Switches the code preview to % and sets it as favourite export language.");
 	// END KGU#705 2019-09-26
+
+	// START BOB 2020-05-25: restricted mode (suppresses code export / import)
+	// START KGU#868 2020-06-03: Renamed for more clarity
+	//private boolean restricted = false;
+	/** suppresses code preview if true */
+	private boolean noExportImport = false;
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
 	
 	// START KGU#177 2016-04-06: Enh. #158
 	// Action names
@@ -336,7 +348,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	}
 	// END KGU#177 2016-04-06
 	// START KGU#206 2016-07-21: Enh. #158, #197
-	public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN };
+	// START KGU#866 2020-05-02: Issue #866
+	//public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN };
+	public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN, EXPAND_TOP, EXPAND_BOTTOM };
+	// END KGU#866 2020-05-02
 	private class SelectionExpandAction extends AbstractAction
 	{
 		Diagram diagram;	// The object responsible for executing the action
@@ -568,6 +583,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_UP);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_DOWN);
 		// END KGU#206 2016-07-21
+		// START KGU#866 2020-05-02: Issue #866
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_TOP);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_BOTTOM);
+		// END KGU#866 2020-05-02
 		// START KGU#177 2016-04-14: Enh. #158
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
@@ -599,6 +618,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put(SelectionExpandDirection.EXPAND_UP, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_UP));
 		actMap.put(SelectionExpandDirection.EXPAND_DOWN, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_DOWN));
 		// END KGU#206 2016-07-21
+		// START KGU#866 2020-05-02: Issue #866
+		actMap.put(SelectionExpandDirection.EXPAND_TOP, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_TOP));
+		actMap.put(SelectionExpandDirection.EXPAND_BOTTOM, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_BOTTOM));
+		// END KGU#866 2020-05-02
 		// START KGU#177 2016-04-14: Enh. #158
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
@@ -1620,7 +1643,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				}
 				// END KGU#318 2017-01-05
 				// START KGU#705 2019-09-26: Enh. #738
-				else if (comp == txtCode) {
+				// START KGU#868 2020-06-03: Bugfix #868
+				//else if (comp == txtCode) {
+				else if (comp == txtCode && !noExportImport) {
+				// END KGU#868 2020-06-03
 					popupCode.show(comp, e.getX(), e.getY());
 				}
 				// END KGU#705 2019-09-26
@@ -1752,5 +1778,33 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		}
 	}
 	// END KGU#646 2019-02-05
+
+	// START BOB 2020-05-25
+	@Override
+	public boolean isRestricted() {
+		return noExportImport;
+	}
+
+	/**
+	 * Controls whether GUI elements providing code import or export be
+	 * suppressed
+	 * @param restricted - true to disable menu items offering export
+	 */
+	// START KGU#868 2020-06-03: Bugfix #868
+//	public void setRestricted(boolean restricted) {
+//		this.restricted = restricted;
+//		popupCode.setVisible(!restricted);
+//	}
+	public void hideExportImport()
+	{
+		noExportImport = true;
+		popupCode.setVisible(false);
+		diagram.setCodePreview(false);
+		// START KGU#870 2020-06-06: Bugfix #868, #870 group export had been forgotten
+		arrangerIndex.hideExportImport();
+		// END KGU#870 2020-06-06
+	}
+	// END KGU#868 2020-06-03
+	// END BOB 2020-05-25
 
 }

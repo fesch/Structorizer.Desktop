@@ -78,6 +78,9 @@
  *      Kay Gürtzig     2020-04-22      Bugfix #853: If both the arr file path and the contained nsd file paths
  *                                      are relative then the batch export failed
  *                                      Issue #828/#836 - The fallback to all roots hadn't worked for arr files
+ *      Bob Fisch       2020-05-25      New command line option "-restricted" to suppress code export and import
+ *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
+ *      Kay Gürtzig     2020-06-06      Issue #870: Command line option "-restricted" withdrawn
  *
  ******************************************************************************************************
  *
@@ -169,7 +172,7 @@ public class Structorizer
 		}
 		// START KGU#722 2019-08-06: Enh. #741
 		File settings = null;
-		boolean openFound = false;
+		boolean openFound = false;	// switch "-open" found?
 		// END KGU#722 2019-08-06
 		for (int i = 0; i < args.length; i++)
 		{

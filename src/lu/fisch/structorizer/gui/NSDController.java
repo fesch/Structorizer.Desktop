@@ -36,7 +36,8 @@ import javax.swing.JFrame;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007-12.28      First Issue
+ *      Bob Fisch       2007-12-28      First Issue
+ *      Kay Gürtzig     2020-06-03      Issue #868: New API isRestricted()
  *
  ******************************************************************************************************
  *
@@ -61,4 +62,10 @@ public interface NSDController
 
 	public void loadFromINI();
 
+	// START KGU#868 2020-06-03: Bugfix #868
+	/**
+	 * @return true if code export and import are suppressed
+	 */
+	public boolean isRestricted();
+	// END KGU#868 2020-06-03
 }

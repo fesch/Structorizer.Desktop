@@ -278,4 +278,9 @@ public class StructorizerApplet extends JApplet  implements NSDController
         }
     }
 
+	@Override
+	public boolean isRestricted() {
+		return false;
+	}
+
 }
