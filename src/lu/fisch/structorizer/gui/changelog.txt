@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-11 (2020-07-10)
+Current development version: 3.30-11 (2020-07-16)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -127,6 +127,7 @@ Current development version: 3.30-11 (2020-07-10)
 - 11: Issue #870: Now ini property "noExportImport=1" prevents code export/import;
       group export prevention had been forgotten [CPNV]2
 - 11: Issue #733: GUI scale factor not to be overwritten by central ini file <2>
+- 11: Bugfix #784: Error on code export/preview of CALLs with non-Ascii names <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

@@ -90,6 +90,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-26      Bugfix KGU#833: The function name got declared as variable without need.
  *      Kay Gürtzig             2020-04-22      Enh. #855: Configurable default array / string size considered
  *      Kay Gürtzig             2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
+ *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *
  ******************************************************************************************************
  *
@@ -1280,23 +1281,29 @@ public class OberonGenerator extends Generator {
 			// END KGU#766 2019-11-14
 			if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null) && line.endsWith(")")) {
 				Function call = _call.getCalledRoutine();
-				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
-				if (!callCandidates.isEmpty()) {
-					// FIXME We'll just fetch the very first one for now...
-					Root called = callCandidates.get(0);
-					StringList defaults = new StringList();
-					called.collectParameters(null, null, defaults);
-					if (defaults.count() > call.paramCount()) {
-						// We just insert the list of default values for the missing arguments
-						line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
-								defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+				// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
+				if (call != null) {
+				// END KGU#877 2020-10-16
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+					if (!callCandidates.isEmpty()) {
+						// FIXME We'll just fetch the very first one for now...
+						Root called = callCandidates.get(0);
+						StringList defaults = new StringList();
+						called.collectParameters(null, null, defaults);
+						if (defaults.count() > call.paramCount()) {
+							// We just insert the list of default values for the missing arguments
+							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+						}
+						// START KGU#766 2019-11-14: Issue #780 Check if it might yet be a function
+						if (called.getResultType() != null) {
+							isFctCall = true;
+						}
+						// END KGU#766 2019-11-14
 					}
-					// START KGU#766 2019-11-14: Issue #780 Check if it might yet be a function
-					if (called.getResultType() != null) {
-						isFctCall = true;
-					}
-					// END KGU#766 2019-11-14
+				// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 				}
+				// END KGU#877 2020-10-16
 			}
 			// START KGU#766 2019-11-14: Issue #780 Omit empty parentheses on procedure calls.
 			if (!isFctCall && line.endsWith("()")) {

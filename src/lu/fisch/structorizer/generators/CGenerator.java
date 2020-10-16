@@ -106,6 +106,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *                                              Enh. #855: New configurable default array size considered
+ *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *
  ******************************************************************************************************
  *
@@ -1975,30 +1976,36 @@ public class CGenerator extends Generator {
 				boolean mustHealDefaults = line.endsWith(")") && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING;
 				if ((routinePool != null) && (mustHealDefaults || this.importedLibRoots != null)) {
 					Function call = _call.getCalledRoutine(i);
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
-					if (!callCandidates.isEmpty()) {
-						// FIXME We'll just fetch the very first one for now...
-						Root called = callCandidates.get(0);
-						if (mustHealDefaults) {
-							StringList defaults = new StringList();
-							called.collectParameters(null, null, defaults);
-							if (defaults.count() > call.paramCount()) {
-								// We just add the list of default values for the missing arguments
-								line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
-										defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
+					if (call != null) {
+					// END KGU#877 2020-10-16
+						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						if (!callCandidates.isEmpty()) {
+							// FIXME We'll just fetch the very first one for now...
+							Root called = callCandidates.get(0);
+							if (mustHealDefaults) {
+								StringList defaults = new StringList();
+								called.collectParameters(null, null, defaults);
+								if (defaults.count() > call.paramCount()) {
+									// We just add the list of default values for the missing arguments
+									line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+											defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+								}
 							}
+							// START KGU#815 2020-03-26: Enh. #828 we have to cope with class methods from a foreign library
+							if (this.importedLibRoots != null && this.importedLibRoots.contains(called)) {
+								StringList tokens = Element.splitLexically(line, true);
+								Element.unifyOperators(tokens, true);
+								int posAsgn = tokens.indexOf("<-");
+								int posCall = tokens.indexOf(call.getName(), posAsgn+1);
+								tokens.set(posCall, this.makeLibCallName(call.getName()));
+								line = tokens.concatenate();
+							}
+							// END KGU#815 2020-03-26
 						}
-						// START KGU#815 2020-03-26: Enh. #828 we have to cope with class methods from a foreign library
-						if (this.importedLibRoots != null && this.importedLibRoots.contains(called)) {
-							StringList tokens = Element.splitLexically(line, true);
-							Element.unifyOperators(tokens, true);
-							int posAsgn = tokens.indexOf("<-");
-							int posCall = tokens.indexOf(call.getName(), posAsgn+1);
-							tokens.set(posCall, this.makeLibCallName(call.getName()));
-							line = tokens.concatenate();
-						}
-						// END KGU#815 2020-03-26
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 					}
+					// END KGU#877 2020-10-16
 				}
 				// END KGU#371 2019-03-07
 				// Input or Output should not occur here

@@ -33,11 +33,12 @@ package lu.fisch.structorizer.executor;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
- *      Kay Gürtzig     2015.10.27      For performance reasons, now stores name and parsed parameters
- *      Kay Gürtzig     2015.11.13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
- *      Kay Gürtzig     2015.12.12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
- *      Kay Gürtzig     2016.12.22      KGU#311: New auxiliary method getSourceLength()
- *      Kay Gürtzig     2017.01.29      Enh. #335: Enhancements for better type analysis
+ *      Kay Gürtzig     2015-10-27      For performance reasons, now stores name and parsed parameters
+ *      Kay Gürtzig     2015-11-13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
+ *      Kay Gürtzig     2015-12-12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
+ *      Kay Gürtzig     2016-12-22      KGU#311: New auxiliary method getSourceLength()
+ *      Kay Gürtzig     2017-01-29      Enh. #335: Enhancements for better type analysis
+ *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check
  *
  ******************************************************************************************************
  *
@@ -374,8 +375,15 @@ public class Function
     public static boolean testIdentifier(String _str, String _alsoAllowedChars)
     {
     	_str = _str.trim().toLowerCase();
-    	boolean isIdent = !_str.isEmpty() &&
-    			('a' <= _str.charAt(0) && 'z' >= _str.charAt(0) || _str.charAt(0) == '_');
+    	// START KGU#877 2020-10-16: Bugfix #874 - we should tolerate non-ascii letters
+    	//boolean isIdent = !_str.isEmpty() &&
+    	//		('a' <= _str.charAt(0) && 'z' >= _str.charAt(0) || _str.charAt(0) == '_');
+    	boolean isIdent = false;
+    	if (!_str.isEmpty()) {
+    		char firstChar = _str.charAt(0);
+    		isIdent = Character.isLetter(firstChar) || firstChar == '_';
+    	}
+    	// END KGU#877 2020-10-16
     	if (_alsoAllowedChars == null)
     	{
     		_alsoAllowedChars = "";
@@ -384,7 +392,10 @@ public class Function
     	{
     		char currChar = _str.charAt(i);
     		if (!(
-    				('a' <= currChar && currChar <= 'z')
+    				// START KGU#877 2020-10-16: Bugfix #874 - we should tolerate non-ascii letters
+    				//('a' <= currChar && currChar <= 'z')
+    				Character.isLetterOrDigit(currChar)
+    				// END KGU#877 2020-10-16
     				||
     				('0' <= currChar && currChar <= '9')
     				||
