@@ -155,6 +155,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-02-21      Bugfix #825: The subsections of TRY elements hadn't been analysed
  *      Kay Gürtzig     2020-03-29      Bugfix #841: Analyser check for missing or misplaced parameter list didn't work
  *      Kay Gürtzig     2020-04-22      Bugfix #854: typeMap made a LinkedHashMap to ensure topological order on code export
+ *      Kay Gürtzig     2020-10-16      Issue #874: Identifier check in Analyser modified with respect to non-ascii letters
  *      
  ******************************************************************************************************
  *

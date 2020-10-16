@@ -38,7 +38,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015-12-12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
  *      Kay Gürtzig     2016-12-22      KGU#311: New auxiliary method getSourceLength()
  *      Kay Gürtzig     2017-01-29      Enh. #335: Enhancements for better type analysis
- *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check
+ *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check w.r.t. non-ascii letters
  *
  ******************************************************************************************************
  *

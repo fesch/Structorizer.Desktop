@@ -106,6 +106,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *                                              Enh. #855: New configurable default array size considered
+ *      Kay Gürtzig             2020-10-16      Bugfix #873: Type definition handling was compromised by bugfix #808
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *
  ******************************************************************************************************
@@ -1384,7 +1385,10 @@ public class CGenerator extends Generator {
 			// Attention! The following condition must not be combined with the above one! 
 			if (this.isInternalDeclarationAllowed()) {
 				tokens.removeAll(" ");
-				int posEqu = tokens.indexOf("=");
+				// START KGU#878 2020-10-16: Bugfix #873 - collateral damage of bugfix #808 mended
+				//int posEqu = tokens.indexOf("=");
+				int posEqu = tokens.indexOf("==");
+				// END KGU#878 2020-10-16
 				String typeName = null;
 				if (posEqu == 2) {
 					typeName = tokens.get(1);

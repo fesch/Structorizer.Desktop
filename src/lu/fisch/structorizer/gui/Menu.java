@@ -116,7 +116,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
- *      Kay Gürtzig     2020-10-16      Bugfix #874: New error variant error07_5
+ *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
  *
  ******************************************************************************************************
  *
