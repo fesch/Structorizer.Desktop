@@ -4169,7 +4169,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			do {
 				subroutineName = JOptionPane.showInputDialog(prompt);
 				prompt = hint + "\n" + prompt1;
-			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
+			} while (subroutineName != null && !Function.testIdentifier(subroutineName, false, null));
 			if (subroutineName != null) {
 				try {
 					addUndoNSD(false);
@@ -4267,7 +4267,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String typeName = "";
 			TypeMapEntry varType = null;
 			String varName = subVars.get(i);
-			if (Function.testIdentifier(varName, "")) {
+			if (Function.testIdentifier(varName, false, "")) {
 				varType = parentTypes.get(varName);
 				if (varType != null) {
 					typeName = varType.getCanonicalType(true, true);
@@ -4307,7 +4307,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			do {
 				includableName = JOptionPane.showInputDialog(prompt);
 				prompt = hint + prompt1;
-			} while (includableName == null || !Function.testIdentifier(includableName, null));
+			} while (includableName == null || !Function.testIdentifier(includableName, false, null));
 			Root incl = null;
 			if (Arranger.hasInstance()) {
 				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
@@ -4472,7 +4472,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#864 2020-04-28: Bugfix #865
 					//if (!Function.testIdentifier(params.get(i), "")) {
 					String param = params.get(i);
-					if (!Function.testIdentifier(param, "") || param.equals("true") || param.equals("false")) {
+					if (!Function.testIdentifier(param, false, "") || param.equals("true") || param.equals("false")) {
 					// END KGU#864 2020-04-28
 						params.set(i, param = ("param" + (i+1)));
 					}
@@ -4487,7 +4487,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
 					lineTokens.removeAll(" ");
 					String var = Call.getAssignedVarname(lineTokens, true);
-					if (Function.testIdentifier(var, null)) {
+					if (Function.testIdentifier(var, false, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
 						if (result == null) {
@@ -4910,7 +4910,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String discriminator = selTokens.concatenate().trim();
 		// If the discriminating expression isn't just a variable then assign its value to an
 		// artificial variable first and use this as discriminator further on.
-		if (!Function.testIdentifier(discriminator, ""))
+		if (!Function.testIdentifier(discriminator, false, ""))
 		{
 			String discrVar = "discr" + caseElem.hashCode();
 			asgnmt = new Instruction(discrVar + " <- " + discriminator);

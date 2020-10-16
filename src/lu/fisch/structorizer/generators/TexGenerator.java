@@ -415,7 +415,7 @@ public class TexGenerator extends Generator {
 				}
 				else {
 					valueList = items.concatenate(", ");
-					if (items.count() != 1 || !isStringLiteral(items.get(0)) && !Function.testIdentifier(items.get(0), null)) {
+					if (items.count() != 1 || !isStringLiteral(items.get(0)) && !Function.testIdentifier(items.get(0), false, null)) {
 						valueList = "\\{" + transform(valueList) + "\\}";
 					}
 					else {

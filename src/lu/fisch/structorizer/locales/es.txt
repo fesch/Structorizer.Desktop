@@ -485,6 +485,7 @@ Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
 Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
 Menu.error07_3.text=¡«%» no es un nombre válido para la variable o constante!
 Menu.error07_4.text=El nombre del diagrama no debe contener espacios, mejor pon '_' entre las palabras: «%».
+Menu.error07_5.text=Identificador «%» contiene letras no Ascii; ésto debe ser evitado.
 Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
 Menu.error09.text=Tu programa («%») no debe tener el mismo nombre que una variable o parametro.
 Menu.error10_1.text=Un solo elemento de @a no debe contener instrucciones de entrada/salida y asignaciones.

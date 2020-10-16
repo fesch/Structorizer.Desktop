@@ -128,6 +128,7 @@ Current development version: 3.30-11 (2020-07-16)
       group export prevention had been forgotten [CPNV]2
 - 11: Issue #733: GUI scale factor not to be overwritten by central ini file <2>
 - 11: Bugfix #784: Error on code export/preview of CALLs with non-Ascii names <2>
+- 11: Issue #784: Identifiers with non-ascii letters now tolerated but warned <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

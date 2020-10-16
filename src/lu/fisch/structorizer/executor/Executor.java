@@ -3284,7 +3284,7 @@ public class Executor implements Runnable
 //				}
 				// END KGU#388 2017-09-18
 				else if (strInput.endsWith("}") && (strInput.startsWith("{") ||
-						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), null))) {
+						strInput.indexOf("{") > 0 && Function.testIdentifier(strInput.substring(0, strInput.indexOf("{")), false, null))) {
 					varName = setVar(target, this.evaluateExpression(strInput, true, false));
 				}
 				// START KGU#283 2016-10-16: Enh. #273
@@ -3491,7 +3491,7 @@ public class Executor implements Runnable
 				recordType = this.identifyRecordType(target, false);	// This will only differ from null if it's a record type
 				recordName = target;
 				// Now check recursively for record component names 
-				while (recordType != null && nTokens >= 3 && tokens.get(1).equals(".") && Function.testIdentifier(tokens.get(2), null)) {
+				while (recordType != null && nTokens >= 3 && tokens.get(1).equals(".") && Function.testIdentifier(tokens.get(2), false, null)) {
 					LinkedHashMap<String, TypeMapEntry> comps = recordType.getComponentInfo(false);
 					String compName = tokens.get(2);
 					if (comps.containsKey(compName)) {
@@ -3916,7 +3916,7 @@ public class Executor implements Runnable
 	 */
 	private void associateType(String target, StringList typeDescr) {
 		String typeName = null;
-		if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), null)
+		if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), false, null)
 				&& context.dynTypeMap.containsKey(":" + typeName)) {
 			context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
 		}
@@ -6919,7 +6919,7 @@ public class Executor implements Runnable
 			// indexed access to an array element... An how can we make sure its evaluation hasn't got irreversible side
 			// effects?
 			// At least the check against following parenthesis will help to avoid the spoiling of Java method calls.
-			if (i+1 < tokens.count() && Function.testIdentifier(tokens.get(i+1), null) && (i+2 == tokens.count() || !tokens.get(i+2).equals("("))) {
+			if (i+1 < tokens.count() && Function.testIdentifier(tokens.get(i+1), false, null) && (i+2 == tokens.count() || !tokens.get(i+2).equals("("))) {
 				tokens.set(i, ".get(\"" + tokens.get(i+1) + "\")");
 				tokens.remove(i+1);
 			}

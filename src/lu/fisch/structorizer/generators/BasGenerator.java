@@ -564,13 +564,13 @@ public class BasGenerator extends Generator
 							generateArrayInit(varName, exprTokens, _indent, disabled);
 						}
 						StringList compList = null;
-						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), null)
+						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), false, null)
 								&& exprTokens.get(exprTokens.count()-1).equals("}")
 								&& !(compList = exprTokens.subSequence(1, exprTokens.count()).trim()).isEmpty()
 								&& compList.get(0).equals("{");
 						if (isRecordInit) {
 							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
-							if (type != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, true)) {
+							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
 								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
 							}
 							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);

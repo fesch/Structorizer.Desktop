@@ -302,7 +302,7 @@ public class PHPGenerator extends Generator
 		// Now convert all qualified names into array access via string key
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
-			if (Function.testIdentifier(token, null)) {
+			if (Function.testIdentifier(token, false, null)) {
 				// Check for a preceding dot
 				int k = i;
 				while (k > 0 && tokens.get(--k).trim().isEmpty());

@@ -723,7 +723,7 @@ public class PasGenerator extends Generator
 								// END KGU#560 2018-07-22
 								generateArrayInit(varName, expr, _indent, null, isDisabled);
 							}
-							else if (posBrace > 0 && Function.testIdentifier(potTypeName, ".") && expr.endsWith("}"))
+							else if (posBrace > 0 && Function.testIdentifier(potTypeName, false, ".") && expr.endsWith("}"))
 							{
 								// START KGU#559 2018-07-20: Enh. #563 - smarter record initializer interpretation
 								//generateRecordInit(varName, expr, _indent, false, isDisabled, null);
@@ -926,7 +926,7 @@ public class PasGenerator extends Generator
 			pureExprTokens.removeAll(" ");
 			int posBrace = pureExprTokens.indexOf("{");
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
-				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 					// Record initializer
 					String typeName = pureExprTokens.get(0);							
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);

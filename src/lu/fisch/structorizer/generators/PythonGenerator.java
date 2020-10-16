@@ -343,7 +343,7 @@ public class PythonGenerator extends Generator
 	{
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
-			if (Function.testIdentifier(token, null)) {
+			if (Function.testIdentifier(token, false, null)) {
 				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
 				// Check for a preceding dot
 				int k = i;
@@ -439,7 +439,7 @@ public class PythonGenerator extends Generator
 			// Go back to the last non-empty token
 			int pos = posLBrace - 1;
 			while (pos >= 0 && (prevToken = tokens.get(pos).trim()).isEmpty()) pos--;
-			if (pos >= 0 && Function.testIdentifier(prevToken, null)
+			if (pos >= 0 && Function.testIdentifier(prevToken, false, null)
 					&& (typeEntry = this.typeMap.get(":" + prevToken)) != null
 					// Should be a record type but we better make sure.
 					&& typeEntry.isRecord()) {
@@ -636,7 +636,7 @@ public class PythonGenerator extends Generator
 				if (inputItems != null && root.isInclude()) {
 					for (int j = 1; j < inputItems.count(); j++) {
 						String var = inputItems.get(j);
-						if (!Function.testIdentifier(var, null) && MTCH_IDENTIFIER.reset(var).matches()) {
+						if (!Function.testIdentifier(var, false, null) && MTCH_IDENTIFIER.reset(var).matches()) {
 							var = MTCH_IDENTIFIER.group(1);
 						}
 						if (var != null) {
@@ -1513,7 +1513,7 @@ public class PythonGenerator extends Generator
 		tokens.removeAll(" ");
 		Element.unifyOperators(tokens, true);
 		String var = Instruction.getAssignedVarname(tokens, false);
-		if (var != null && !Function.testIdentifier(var, "")) {
+		if (var != null && !Function.testIdentifier(var, false, "")) {
 			if (MTCH_IDENTIFIER.reset(var).matches()) {
 				var = MTCH_IDENTIFIER.group(0);
 			}

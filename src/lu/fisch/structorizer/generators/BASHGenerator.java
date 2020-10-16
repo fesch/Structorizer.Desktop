@@ -566,7 +566,7 @@ public class BASHGenerator extends Generator {
 			// START KGU#388 2017-10-05: Enh. #423
 			int posDot = -1;
 			while ((posDot = tokens.indexOf(".", posDot+1)) > 0 && posDot + 1 < posAsgnOpr) {
-				if (Function.testIdentifier(tokens.get(posDot+1), null))
+				if (Function.testIdentifier(tokens.get(posDot+1), false, null))
 				{
 					// FIXME: Handle multi-level record access! We might also check type
 					tokens.set(posDot - 1, tokens.get(posDot-1) + "[" + tokens.get(posDot+1) + "]");
@@ -621,7 +621,7 @@ public class BASHGenerator extends Generator {
 			tokens = tokens.subSequence(posAsgnOpr+1, tokens.count());
 			// START KGU#803 2020-02-18: Issues #388, #816
 			// We don't know whether we might process a call here, so better don't set handled entry
-			if (Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, false)
+			if (Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, false)
 					&& root.isSubroutine()) {
 				declarator = this.getLocalDeclarator(isConst, typeMap.get(varName));
 			}
@@ -719,7 +719,7 @@ public class BASHGenerator extends Generator {
 			// END KGU#803 2020-02-20
 		}
 		// START KGU#388 2017-10-24: Enh. #423
-		else if (tokens.count() > 2 && Function.testIdentifier(tokens.get(0), null)
+		else if (tokens.count() > 2 && Function.testIdentifier(tokens.get(0), false, null)
 				&& tokens.get(1).equals("{") && expr.endsWith("}")
 				// START KGU#559 2018-07-20: Enh. #  Try to fetch sufficient type info
 				//&& (recordIni = Element.splitRecordInitializer(expr, null)) != null) {
@@ -795,7 +795,7 @@ public class BASHGenerator extends Generator {
 			}
 			// END KGU#807 2020-02-24
 		}
-		if (!declarator.isEmpty() && Function.testIdentifier(varName, null)) {
+		if (!declarator.isEmpty() && Function.testIdentifier(varName, false, null)) {
 			wasDefHandled(root, varName, true);	// Set the handled flag
 		}
 		return declarator + lval + expr;
@@ -1002,7 +1002,7 @@ public class BASHGenerator extends Generator {
 				}
 			}
 			// START KGU#388 2017-10-05: Enh. #423 (record export)
-			else if (nextToken.equals(".") && posNext+1 < _end && Function.testIdentifier(_tokens.get(posNext+1), null))
+			else if (nextToken.equals(".") && posNext+1 < _end && Function.testIdentifier(_tokens.get(posNext+1), false, null))
 			{
 				// FIXME: Handle multi-level record access! We might also check type
 				_tokens.set(pos, "${" + _varName + "[" + _tokens.get(posNext+1) + "]}");
@@ -1130,7 +1130,7 @@ public class BASHGenerator extends Generator {
 					for (int j = 1; j < inputItems.count(); j++) {
 						String target = inputItems.get(j);
 						int cutPos = Math.min((target+".").indexOf("."), (target+"[").indexOf("["));
-						if (Function.testIdentifier(target.substring(cutPos), null)
+						if (Function.testIdentifier(target.substring(cutPos), false, null)
 								&& !this.wasDefHandled(root, target, !disabled)
 								&& root.isSubroutine()) {
 							addCode(getLocalDeclarator(false, typeMap.get(target)) + target, _indent, disabled);

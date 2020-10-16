@@ -1278,7 +1278,7 @@ public class CGenerator extends Generator {
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
 				// START KGU#767 2019-11-30: Bugfix #782 maybe we must introduce a postponed declaration here
 				if (varName != null
-						&& Function.testIdentifier(varName, null)
+						&& Function.testIdentifier(varName, false, null)
 						&& codeLine.indexOf(varName) + varName.length() == codeLine.length()
 						&& !paramNames.contains(varName)
 						&& !this.wasDefHandled(root, varName, false)) {
@@ -1310,7 +1310,7 @@ public class CGenerator extends Generator {
 				int posBrace = pureExprTokens.indexOf("{");
 				if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
 					// Case 1.1 or 1.2.1 (either array or record initializer)
-					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 						String typeName = pureExprTokens.get(0);							
 						TypeMapEntry recType = this.typeMap.get(":"+typeName);
 						if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
@@ -2776,7 +2776,7 @@ public class CGenerator extends Generator {
 			pureExprTokens.removeAll(" ");
 			int posBrace = pureExprTokens.indexOf("{");
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
-				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 					// Record initializer
 					String typeName = pureExprTokens.get(0);
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);

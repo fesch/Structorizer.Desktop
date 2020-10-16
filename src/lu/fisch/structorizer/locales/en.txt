@@ -481,6 +481,7 @@ Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
 Menu.error07_3.text=«%» is not a valid name for a variable or constant!
 Menu.error07_4.text=Diagram names should not contain blanks, better put underscores between the words: «%».
+Menu.error07_5.text=Identifier «%» contains non-ascii letters; this should better be avoided.
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
 Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
 Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!

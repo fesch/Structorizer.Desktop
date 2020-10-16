@@ -406,7 +406,7 @@ public class PerlGenerator extends Generator {
 				//if ((pre.equals("]") || Function.testIdentifier(pre, null) || pre.startsWith("$") && Function.testIdentifier(pre.substring(1), null))
 				if ((pre.equals("]") || varMatcher.reset(pre).matches())
 				// END KGU#388 2019-11-29
-						&& Function.testIdentifier(post, null)) {
+						&& Function.testIdentifier(post, false, null)) {
 					tokens.remove(i+1, jR);
 					tokens.set(i, "->");
 					tokens.remove(++jL, i);
@@ -602,7 +602,7 @@ public class PerlGenerator extends Generator {
 					int posAsgn = tokens.indexOf("<-");
 					String var = Instruction.getAssignedVarname(tokens.subSequence(0, posAsgn), true);
 					StringList expr = tokens.subSequence(posAsgn+1, tokens.count());
-					if (Function.testIdentifier(var, null) && expr.get(0).equals("{") && expr.get(expr.count()-1).equals("}")) {
+					if (Function.testIdentifier(var, false, null) && expr.get(0).equals("{") && expr.get(expr.count()-1).equals("}")) {
 						text = "@" + var + " = " + transform(expr.concatenate(null));
 					}
 					// START KGU#787 2019-12-03: Bugfix #793 - variable declaration parts remained

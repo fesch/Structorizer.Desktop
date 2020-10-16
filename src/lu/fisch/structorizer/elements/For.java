@@ -633,7 +633,7 @@ public class For extends Element implements ILoop {
 				valueItems = splitExpressionList(valueListTokens, " ", false);
 			}
 			
-			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), ".")) {
+			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), false, ".")) {
 				// Now we get into trouble: It ought to be an array variable, which we cannot evaluate here
 				// So what do we return?
 				// We just return null to avoid misunderstandings

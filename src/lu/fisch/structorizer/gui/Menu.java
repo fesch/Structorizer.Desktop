@@ -116,6 +116,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
+ *      Kay Gürtzig     2020-10-16      Bugfix #874: New error variant error07_5
  *
  ******************************************************************************************************
  *
@@ -467,6 +468,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
 	public static final LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
 	public static final LangTextHolder error07_4 = new LangTextHolder("Program names should not contain spaces, better put underscores between the words: «%».");
+	// START KGU#877 2020-10-16: Bugfix #874
+	public static final LangTextHolder error07_5 = new LangTextHolder("Identifier «%» contains non-ascii letters; this should better be avoided.");
+	// END KGU#877 2020-10-16
 	// START KGU#456 2017-11-04: Enh. #452 - Be more friendly to newbees
 	public static final LangTextHolder hint07_1 = new LangTextHolder("What is your algorithm to do? Replace «%» with a good name for it!");
 	// END KGU#456 2017-11-01
