@@ -94,6 +94,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
  *      Kay Gürtzig     2020-10-17      Enh. #872: New Ini property "showOpsLikeC"
+ *      Kay Gürtzig     2020-10-18      Bugfix #876: Defective saving and loading of (partial) Ini files mended 
  *
  ******************************************************************************************************
  *
@@ -599,6 +600,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		else if (category.equals("diagram")) {
 			return new String[] {"showComments", "commentsPlusText", "switchTextComments", "varHightlight",
+					// START KGU#872 2020-10-17: Enh. #738, #872, bugfix #876
+					"showOpsLikeC", "codePreview",
+					// END KGU#872 2020-10-17
 					"DIN", "hideDeclarations", "index", };
 		}
 		else if (category.equals("wheel")) {
@@ -677,7 +681,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ElementNames.getFromIni(ini);
 			// END KGU#479 2017-12-15
 			
-			// colors
+			// colors (and structure preferences)
 			Element.loadFromINI();
 			updateColors();
 
@@ -696,10 +700,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// END KGU#287 2016-11-01
 			
 			// size
-			setPreferredSize(new Dimension(width,height));
-			setSize(width,height);
-			setLocation(new Point(top,left));
-			validate();
+			// START KGU#880 2020-10-18: Bugfix #876 - Don't override size/position if already started
+			if (this.isStartingUp) {
+			// END KGU#880 2020-10-18	
+				setPreferredSize(new Dimension(width,height));
+				setSize(width,height);
+				setLocation(new Point(top,left));
+				validate();
+			// START KGU#880 2020-10-18: Bugfix #876
+			}
+			// END KGU#880 2020-10-18	
 
 			// START KGU#123 2018-03-14: Enh. #87, Bugfix #65
 			Element.E_WHEELCOLLAPSE = ini.getProperty("wheelToCollapse", "0").equals("1");
@@ -739,36 +749,50 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				
 				// ==================== diagram menu settings ====================
 				// DIN 66261
-				if (ini.getProperty("DIN","1").equals("1")) // default = 1 (since version 3.30)
-				{
-					//diagram.setDIN();
-					Element.E_DIN = true;
-				}
+				// START KGU#880 2020-10-18: Bugfix #876
+				//if (ini.getProperty("DIN","1").equals("1")) // default = 1 (since version 3.30)
+				//{
+				//	//diagram.setDIN();
+				//	Element.E_DIN = true;
+				//}
+				Element.E_DIN = ini.getProperty("DIN","1").equals("1");
+				// END KGU#880 2020-10-18
 				// comments
-				if (ini.getProperty("showComments","1").equals("0")) // default = 1
-				{
-					//diagram.setComments(false);
-					// START KGU#549 2018-07-09: Bugfix #555 - the mode of the last session wasn't restored anymore 
-					//Element.E_SHOWCOMMENTS = true;
-					Element.E_SHOWCOMMENTS = false;
-					// END KGU#549 2018-07-09
-				}
+				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
+				//if (ini.getProperty("showComments","1").equals("0")) // default = 1
+				//{
+				//	//diagram.setComments(false);
+				//	// START KGU#549 2018-07-09: Bugfix #555 - the mode of the last session wasn't restored anymore 
+				//	//Element.E_SHOWCOMMENTS = true;
+				//	Element.E_SHOWCOMMENTS = false;
+				//	// END KGU#549 2018-07-09
+				//}
+				Element.E_SHOWCOMMENTS = ini.getProperty("showComments","1").equals("1"); // default = 1
+				// END KGU#880 2020-10-18
 				// START KGU#227 2016-08-01: Enh. #128
 				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
 				Element.E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
 				// END KGU#227 2016-08-01
-				if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
-				{
-					//diagram.setToggleTC(true);
-					Element.E_TOGGLETC = true;
-				}
+				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
+				//if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
+				//{
+				//	//diagram.setToggleTC(true);
+				//	Element.E_TOGGLETC = true;
+				//}
+				//// syntax highlighting
+				//if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
+				//{
+				//	//diagram.setHightlightVars(true);
+				//	Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
+				//	diagram.resetDrawingInfo();
+				//}
+				Element.E_TOGGLETC = ini.getProperty("switchTextComments","0").equals("1");
 				// syntax highlighting
-				if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
-				{
-					//diagram.setHightlightVars(true);
-					Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
-					diagram.resetDrawingInfo();
-				}
+				Element.E_VARHIGHLIGHT = ini.getProperty("varHightlight","1").equals("1");
+				// END KGU#880 2020-10-18
+				// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+				Element.E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
+				// END KGU#872 2020-10-17
 				// START KGU#477 2017-12-06: Enh. #487
 				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
 				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
@@ -878,9 +902,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
-			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
-			Element.E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
-			// END KGU#872 2020-10-17
 			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
@@ -989,7 +1010,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
 			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
-			ini.setProperty("showOpsLikeC", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			ini.setProperty("showOpsLikeC", (Element.E_SHOW_C_OPERATORS ? "1" : "0"));
 			// END KGU#872 2020-10-17
 			// START KGU#428 2017-10-06: Enh. #430
 			if (InputBox.FONT_SIZE > 0) {
