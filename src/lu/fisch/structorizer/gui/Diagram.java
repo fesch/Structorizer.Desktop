@@ -202,6 +202,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-04-28      Bugfix #865: On subroutine generation arguments true and false weren't recognised
  *      Kay Gürtzig     2020-05-02      Issue #866: Selection expansion / reduction mechanisms revised
  *      Kay Gürtzig     2020-06-03      Issue #868: Code import via files drop had to be disabled in restricted mode
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode for operators (in C style)
  *
  ******************************************************************************************************
  *
@@ -8913,7 +8914,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	/**
 	 * Enables or disables the syntax higighting in the elements for all diagrams
-	 * @param _highlight - true to switch syntax mmarkup on, false to disable it
+	 * @param _highlight - true to switch syntax markup on, false to disable it
 	 */
 	public void setHightlightVars(boolean _highlight)
 	{
@@ -8925,6 +8926,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		NSDControl.doButtons();
 		redraw();
 	}
+
+	// START KGU#872 2020-10-17: Enh. #872 new display mode
+	/**
+	 * Enables or disables mode to display operators in C style
+	 * @param _operatorsC - true to switch operator display mode to C style, false to standard
+	 */
+	public void setOperatorDisplayC(boolean _operatorsC) {
+		Element.E_SHOW_C_OPERATORS = _operatorsC;
+		if (_operatorsC) {
+			Element.E_VARHIGHLIGHT = true;
+		}
+		this.resetDrawingInfo();
+		NSDControl.doButtons();
+		redraw();
+	}
+	// END KGU#872 2020-10-17
 
 	/**
 	 * Toggles the activation of the Analyser component (and the visibility of the Report list).
@@ -10642,4 +10659,5 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return keys;
 	}
 	// END KGU#466 2019-08-03
+
 }

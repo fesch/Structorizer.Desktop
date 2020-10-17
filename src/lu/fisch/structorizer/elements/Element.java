@@ -108,11 +108,12 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
- *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
+ *      Kay Gürtzig     2019-11-24      Bugfix #783: workaround for missing record type info
  *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
  *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
  *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New mode to display operators in C style
  *
  ******************************************************************************************************
  *
@@ -454,8 +455,12 @@ public abstract class Element {
 	// START KGU#331 2017-01-13:
 	public static boolean E_SHOW_UNICODE_OPERATORS = true;
 	// END KGU#331 2017-01-13
+	// START KGU#872 2020-10-17: Enh. #872
+	/** Option to show operators in C style (overrides {@link #E_SHOW_UNICODE_OPERATORS}) */
+	public static boolean E_SHOW_C_OPERATORS = false;
+	// END KGU#872 2020-10-17
 	// START KGU#456 2017-11-05: Enh. #452
-	/** Shall only the most important toolbar buttons be presented (beginners' mode?*/
+	/** Shall only the most important toolbar buttons be presented (beginners' mode)?*/
 	public static boolean E_REDUCED_TOOLBARS = false;
 	// END KGU#456 2017-11-05
 	// START KGU#480 2018-01-21: Enh. #490
@@ -3510,6 +3515,12 @@ public abstract class Element {
 						specialSigns.add("'");
 						specialSigns.add("\"");
 						// START KGU#64 2015-11-03: See above
+						
+						// START KGU#872 2020-10-17: Enh. #872 operator symbols for C style
+						specialSigns.add("!=");
+						specialSigns.add("<=");
+						specialSigns.add(">=");
+						// END KGU#872 2020-10-17
 					}
 					// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
 					if (specialSignsCi == null) {
@@ -3550,9 +3561,28 @@ public abstract class Element {
 						parts.replaceAll("<>","\u2260");
 						parts.replaceAll("!=","\u2260");
 						parts.replaceAll("<=","\u2264");
-						parts.replaceAll(">=","\u2265");						
+						parts.replaceAll(">=","\u2265");
 					}
 					// END KGU#377 2017-03-30
+					// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
+					if (E_SHOW_C_OPERATORS) {
+						parts.replaceAll("=", "==");
+						parts.replaceAll("\u2190", "=");
+						parts.replaceAll(":=", "=");
+						parts.replaceAll("\u2260", "!=");
+						parts.replaceAll("<>", "!=");
+						parts.replaceAll("\u2264", "<=");
+						parts.replaceAll("\u2265", ">=");
+						parts.replaceAllCi("not", "!");
+						parts.replaceAllCi("and", "&&");
+						parts.replaceAllCi("or", "||");
+						parts.replaceAllCi("xor", "^");
+						parts.replaceAllCi("div", "/");
+						parts.replaceAllCi("mod", "%");
+						parts.replaceAllCi("shl", "<<");
+						parts.replaceAllCi("shr", ">>");
+					}
+					// END KGU#872 2020-10-17
 
 					// START KGU#701 2019-03-29: Issue #718 concatenate normal text parts
 					StringBuilder normalText = new StringBuilder();

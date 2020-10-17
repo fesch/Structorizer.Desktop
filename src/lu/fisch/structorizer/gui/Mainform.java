@@ -93,6 +93,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2020-05-25      New "restricted" flag to suppress GUI elements offering code import/export
  *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New Ini property "showOpsLikeC"
  *
  ******************************************************************************************************
  *
@@ -877,6 +878,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
 			// END KGU#331 2017-01-15
+			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+			Element.E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
+			// END KGU#872 2020-10-17
 			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
@@ -984,6 +988,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
 			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
 			// END KGU#331 2017-01-15
+			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+			ini.setProperty("showOpsLikeC", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			// END KGU#872 2020-10-17
 			// START KGU#428 2017-10-06: Enh. #430
 			if (InputBox.FONT_SIZE > 0) {
 				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));

@@ -117,6 +117,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
  *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *
  ******************************************************************************************************
  *
@@ -332,6 +333,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?", IconLoader.getIcon(40));
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
+	protected final JCheckBoxMenuItem menuDiagramOperatorsC = new JCheckBoxMenuItem("Operators in C style?", IconLoader.getIcon(124));
+	// END KGU#872 2020-10-17
 	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
 	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
 	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
@@ -1356,6 +1360,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
 		menuDiagramMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
 
+		// START KGU#872 2020-10-17>: Enh. #872
+		menuDiagram.add(menuDiagramOperatorsC);
+		menuDiagramOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuDiagramOperatorsC.isSelected()); doButtons(); } } );
+		// START KGU#872 2020-10-17
+
 		menuDiagram.add(menuDiagramDIN);
 		menuDiagramDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
 
@@ -2001,6 +2010,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 			// variable highlighting
 			menuDiagramMarker.setSelected(Element.E_VARHIGHLIGHT);
+			
+			// START KGU#872 2020-10-17: Enh. #872
+			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
+			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			// END KGU#872 2020-10-17
 
 			// show comments?
 			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
