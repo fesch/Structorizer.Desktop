@@ -334,7 +334,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
 	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
 	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
-	protected final JCheckBoxMenuItem menuDiagramOperatorsC = new JCheckBoxMenuItem("Operators in C style?", IconLoader.getIcon(124));
+	protected final JCheckBoxMenuItem menuDiagramOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
 	// END KGU#872 2020-10-17
 	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
 	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
