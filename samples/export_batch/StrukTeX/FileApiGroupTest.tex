@@ -1,0 +1,202 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{german}
+
+\title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
+\author{Kay Gürtzig}
+\date{19.10.2020}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[drawBarChart]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{values}}{type: \(array\ of\ double\)}
+      \description{\pVar{nValues}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(const\ xSize\ \gets\ 500\)}
+  \assign{\(const\ ySize\ \gets\ 500\)}
+  \assign{\(kMin\ \gets\ 0\)}
+  \assign{\(kMax\ \gets\ 0\)}
+  \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(nValues-1\)}
+    \ifthenelse{6}{6}{\(values[k]\ >\ values[kMax]\)}{T}{F}
+      \assign{\(kMax\ \gets\ k\)}
+    \change
+      \ifthenelse{6}{6}{\(values[k]\ <\ values[kMin]\)}{T}{F}
+        \assign{\(kMin\ \gets\ k\)}
+      \change
+      \ifend
+    \ifend
+  \whileend
+  \assign{\(valMin\ \gets\ values[kMin]\)}
+  \assign{\(valMax\ \gets\ values[kMax]\)}
+  \assign{\(yScale\ \gets\ valMax\ *\ 1.0\ /\ (ySize\ -\ 1)\)}
+  \assign{\(yAxis\ \gets\ ySize\ -\ 1\)}
+  \ifthenelse{6}{6}{\(valMin\ <\ 0\)}{T}{F}
+    \ifthenelse{6}{6}{\(valMax\ >\ 0\)}{T}{F}
+      \assign{\(yAxis\ \gets\ valMax\ *\ ySize\ *\ 1.0\ /\ (valMax\ -\ valMin)\)}
+      \assign{\(yScale\ \gets\ (valMax\ -\ valMin)\ *\ 1.0\ /\ (ySize\ -\ 1)\)}
+    \change
+      \assign{\(yAxis\ \gets\ 1\)}
+      \assign{\(yScale\ \gets\ valMin\ *\ 1.0\ /\ (ySize\ -\ 1)\)}
+    \ifend
+  \change
+  \ifend
+  \assign{\(gotoXY(1,\ ySize\ -\ 1)\)}
+  \assign{\(forward(ySize\ -1)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(yAxis)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \assign{\(forward(xSize\ -1)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(xSize-1)\)}
+  \assign{\(stripeWidth\ \gets\ xSize\ /\ nValues\)}
+  \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
+    \assign{\(stripeHeight\ \gets\ values[k]\ *\ 1.0\ /\ yScale\)}
+    \case{6}{4}{\(k\ \)\pKey{mod}\(\ 3\)}{0}
+        \assign{\(setPenColor(255,0,0)\)}
+      \switch{1}
+        \assign{\(setPenColor(0,\ 255,0)\)}
+      \switch{2}
+        \assign{\(setPenColor(0,\ 0,\ 255)\)}
+     \caseend
+    \assign{\(fd(1)\)}
+    \assign{\(left(90)\)}
+    \assign{\(penDown()\)}
+    \assign{\(fd(stripeHeight)\)}
+    \assign{\(right(90)\)}
+    \assign{\(fd(stripeWidth\ -\ 1)\)}
+    \assign{\(right(90)\)}
+    \assign{\(forward(stripeHeight)\)}
+    \assign{\(left(90)\)}
+    \assign{\(penUp()\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[readNumbers]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{fileName}}{type: \(string\)}
+      \description{\pVar{numbers}}{type: \(array\ of\ integer\)}
+      \description{\pVar{maxNumbers}}{type: \(integer\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{integer}{}
+    \end{declaration}
+  }
+  \assign{\(nNumbers\ \gets\ 0\)}
+  \assign{\(fileNo\ \gets\ fileOpen(fileName)\)}
+  \ifthenelse{6}{6}{\(fileNo\ \leq\ 0\)}{T}{F}
+    \exit{\(\)\pKey{throw}\(\ \)"{}File\ could\ not\ be\ opened!"{}\(\)}
+  \change
+  \ifend
+  % try (FIXME!) 
+    \while{\(!\ fileEOF(fileNo)\ \wedge\ nNumbers\ <\ maxNumbers\)}
+      \assign{\(number\ \gets\ fileReadInt(fileNo)\)}
+      \assign{\(numbers[nNumbers]\ \gets\ number\)}
+      \assign{\(nNumbers\ \gets\ nNumbers\ +\ 1\)}
+    \whileend
+  % catch error (FIXME!) 
+    \exit{\(\)\pKey{throw}\(\)}
+  % finally (FIXME!) 
+    \assign{\(fileClose(fileNo)\)}
+  % end try (FIXME!) 
+  \exit{\(\)\pKey{return}\(\ nNumbers\)}
+\end{struktogramm}
+
+
+% = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[ComputeSum]
+  \assign{\(fileNo\ \gets\ 1000\)}
+  \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
+  \ifthenelse{6}{6}{\(fileNo\ >\ 0\)}{T}{F}
+    \assign{\(values\ \gets\ \{\}\)}
+    \assign{\(nValues\ \gets\ 0\)}
+    % try (FIXME!) 
+      \sub{\(nValues\ \gets\ readNumbers(file\_name,\ values,\ 1000)\)}
+    % catch failure (FIXME!) 
+      \assign{\(\)\pKey{OUTPUT}\(\ failure\)}
+      \exit{\(\)\pKey{exit}\(\ -7\)}
+    % finally (FIXME!) 
+    % end try (FIXME!) 
+    \assign{\(sum\ \gets\ 0.0\)}
+    \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
+      \assign{\(sum\ \gets\ sum\ +\ values[k]\)}
+    \whileend
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}sum\ =\ "{}\(,\ sum\)}
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}average\ =\ "{}\(,\ sum\ /\ nValues\)}
+  \change
+  \ifend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[DrawRandomHistogram]
+  \assign{\(fileNo\ \gets\ -10\)}
+  \until{\(fileNo\ >\ 0\ \vee\ file\_name\ =\ \)"{}"{}\(\)}
+    \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
+    \assign{\(fileNo\ \gets\ fileOpen(file\_name)\)}
+  \untilend
+  \ifthenelse{6}{6}{\(fileNo\ >\ 0\)}{T}{F}
+    \assign{\(fileClose(fileNo)\)}
+    \assign{\(\)\pKey{INPUT}\(\ \)"{}number\ of\ intervals"{}\(,\ nIntervals\)}
+    \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nIntervals-1\)}
+      \assign{\(count[k]\ \gets\ 0\)}
+    \whileend
+    \assign{\(kMaxCount\ \gets\ 0\)}
+    \assign{\(numberArray\ \gets\ \{\}\)}
+    \assign{\(nObtained\ \gets\ 0\)}
+    % try (FIXME!) 
+      \sub{\(nObtained\ \gets\ readNumbers(file\_name,\ numberArray,\ 10000)\)}
+    % catch failure (FIXME!) 
+      \assign{\(\)\pKey{OUTPUT}\(\ failure\)}
+    % finally (FIXME!) 
+    % end try (FIXME!) 
+    \ifthenelse{6}{6}{\(nObtained\ >\ 0\)}{T}{F}
+      \assign{\(min\ \gets\ numberArray[0]\)}
+      \assign{\(max\ \gets\ numberArray[0]\)}
+      \while{\pKey{for}\(i\ \gets\ 1\)\pKey{to}\(nObtained-1\)}
+        \ifthenelse{6}{6}{\(numberArray[i]\ <\ min\)}{T}{F}
+          \assign{\(min\ \gets\ numberArray[i]\)}
+        \change
+          \ifthenelse{6}{6}{\(numberArray[i]\ >\ max\)}{T}{F}
+            \assign{\(max\ \gets\ numberArray[i]\)}
+          \change
+          \ifend
+        \ifend
+      \whileend
+      \assign{\(width\ \gets\ (max\ -\ min)\ *\ 1.0\ /\ nIntervals\)}
+      \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(nObtained\ -\ 1\)}
+        \assign{\(value\ \gets\ numberArray[i]\)}
+        \assign{\(k\ \gets\ 1\)}
+        \while{\(k\ <\ nIntervals\ \wedge\ value\ >\ min\ +\ k\ *\ width\)}
+          \assign{\(k\ \gets\ k\ +\ 1\)}
+        \whileend
+        \assign{\(count[k-1]\ \gets\ count[k-1]\ +\ 1\)}
+        \ifthenelse{6}{6}{\(count[k-1]\ >\ count[kMaxCount]\)}{T}{F}
+          \assign{\(kMaxCount\ \gets\ k-1\)}
+        \change
+        \ifend
+      \whileend
+      \sub{\(drawBarChart(count,\ nIntervals)\)}
+      \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Interval\ with\ max\ count:\ "{}\(,\ kMaxCount,\ \)"{}\ ("{}\(,\ count[kMaxCount],\ \)"{})"{}\(\)}
+      \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nIntervals-1\)}
+        \assign{\(\)\pKey{OUTPUT}\(\ count[k],\ \)"{}\ numbers\ in\ interval\ "{}\(,\ k,\ \)"{}\ ("{}\(,\ min\ +\ k\ *\ width,\ \)"{}\ ...\ "{}\(,\ min\ +\ (k+1)\ *\ width,\ \)"{})"{}\(\)}
+      \whileend
+    \change
+      \assign{\(\)\pKey{OUTPUT}\(\ \)"{}No\ numbers\ read."{}\(\)}
+    \ifend
+  \change
+  \ifend
+\end{struktogramm}
+
+\end{document}

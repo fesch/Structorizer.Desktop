@@ -1,0 +1,1047 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{german}
+
+\title{Structorizer StrukTeX Export of TextWriter.arrz}
+\author{Kay Gürtzig}
+\date{19.10.2020}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[blank]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(width)\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[forward]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{len}}{type: \(null\)}
+      \description{\pVar{color}}{type: \(null\)}
+    \end{declaration}
+  }
+  \case{6}{11}{\(color\)}{1}
+      \assign{\(forward(len)\)}
+    \switch{2}
+      \assign{\(forward(len)\)}
+    \switch{3}
+      \assign{\(forward(len)\)}
+    \switch{4}
+      \assign{\(forward(len)\)}
+    \switch{5}
+      \assign{\(forward(len)\)}
+    \switch{6}
+      \assign{\(forward(len)\)}
+    \switch{7}
+      \assign{\(forward(len)\)}
+    \switch{8}
+      \assign{\(forward(len)\)}
+    \switch{9}
+      \assign{\(forward(len)\)}
+    \switch{10}
+      \assign{\(forward(len)\)}
+   \caseend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterA]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(h*h\ +\ width*width/4.0)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/2.0/h))\)}
+  \assign{\(right(rotAngle)\)}
+  \sub{\(forward(hypo/2.0,\ colorNo)\)}
+  \assign{\(right(90\ -\ rotAngle)\)}
+  \sub{\(forward(width/2.0,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(width/2.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90\ -\ rotAngle)\)}
+  \sub{\(forward(hypo/2.0,\ colorNo)\)}
+  \assign{\(left(2*rotAngle)\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterE]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterF]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(width)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterH]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(width)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(width)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(left(180)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterI]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(b,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(b/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(backward(b/2.0)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(b,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(b/2\ +\ c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterK]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(diag\ \gets\ h/sqrt(2.0)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(width)\)}
+  \assign{\(right(135)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(diag,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(diag,\ colorNo)\)}
+  \assign{\(left(135)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterL]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterM]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width\ +\ h*h)/2.0\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/h))\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(2*rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(-h,\ colorNo)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterN]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width\ +\ h*h)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/h))\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterT]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(width/2.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(width/2.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterV]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(h*h\ +\ width*width/4.0)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/2.0/h))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(2*rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterW]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(width\_3\ \gets\ width/3.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width\_3*width\_3\ +\ h*h)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width\_3/h))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(2*rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(90+rotAngle)\)}
+  \assign{\(forward(width\_3)\)}
+  \assign{\(right(90-rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(2*rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterX]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width\ +\ h*h)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/h))\)}
+  \assign{\(right(rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(90+rotAngle)\)}
+  \assign{\(forward(width)\)}
+  \assign{\(right(90-rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterY]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width\ +\ h*h)/2.0\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/h))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h/2.0)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterZ]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width\ +\ h*h)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(width/h))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90-rotAngle)\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(right(90-rotAngle)\)}
+  \sub{\(forward(width,\ colorNo)\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[polygonPart]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{a}}{type: \(double\)}
+      \description{\pVar{n}}{type: \(integer\)}
+      \description{\pVar{ctrclkws}}{type: \(boolean\)}
+      \description{\pVar{nEdges}}{type: \(integer\)}
+      \description{\pVar{color}}{type: \(int\)}
+    \end{declaration}
+  }
+  \assign{\(rotAngle\ \gets\ 360.0/n\)}
+  \ifthenelse{6}{6}{\(ctrclkws\)}{T}{F}
+    \assign{\(rotAngle\ \gets\ -rotAngle\)}
+  \change
+  \ifend
+  \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(nEdges\)}
+    \assign{\(right(rotAngle)\)}
+    \sub{\(forward(a,\ color)\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[charDummy]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(width\ \gets\ h\ /\ 2.0\)}
+  \assign{\(b\ \gets\ width\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ (width\ -\ b)\ /\ 2.0\)}
+  \assign{\(d\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0-b/2.0)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(c)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 4,\ true,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(b\ +\ c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(h/2.0-b/2.0)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[comma]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ toDegrees(atan(0.5))\)}
+  \assign{\(hypo\ \gets\ c\ *\ sqrt(1.25)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward((c+b)/2.0\ +\ c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(c,\ 4,\ true,\ 3,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(c/2.0,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(left(180\ -\ rotAngle)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90\ -\ rotAngle)\)}
+  \assign{\(forward((c\ +\ b)/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[exclMk]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(width\ \gets\ h/2.0\)}
+  \assign{\(length1\ \gets\ h\ -\ (b+c)/2.0\)}
+  \assign{\(length2\ \gets\ length1\ -\ 2*c\)}
+  \assign{\(hypo\ \gets\ sqrt(width*width/16.0\ +\ length2*length2)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(rotAngle2\ \gets\ toDegrees(atan(width/4.0/length2))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(length1)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(width/2.0)\)}
+  \assign{\(left(90\ +\ rotAngle)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b/2.0,\ 8,\ false,\ 5,\ colorNo)\)}
+  \assign{\(right(rotAngle2)\)}
+  \sub{\(forward(hypo,\ colorNo)\)}
+  \assign{\(left(2*rotAngle2)\)}
+  \sub{\(forward(-hypo,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(hypo)\)}
+  \assign{\(right(rotAngle2)\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(c/2.0)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(c,\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward((c\ +\ b)/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(c)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[fullSt]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward((c+b)/2.0\ +\ c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(c,\ 4,\ true,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward((c\ +\ b)/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterB]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(c+b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 4,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b\ +\ c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 4,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b\ +\ 2*c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterC]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 3,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(2*b\ +\ 2*c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterD]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(c+b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 2,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 2,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b\ +\ 2*c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterG]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(b/2.0\ +\ c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(b/2.0\ +\ c)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(b\ +\ c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterJ]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 3,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(h\ -\ c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterO]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(b\ +\ 2*c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterP]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(c+b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 4,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(b\ +\ 2*c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(b\ +\ 2*c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(180)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterQ]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(b\ +\ 2*c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(b\ +\ 2*c)\)}
+  \assign{\(right(rotAngle)\)}
+  \assign{\(backward(b)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(b,\ colorNo)\)}
+  \assign{\(left(90\ +\ rotAngle)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterR]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(c+b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 4,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(left(90\ +\ rotAngle)\)}
+  \sub{\(forward(sqrt(2.0)*(b\ +\ 2*c),\ colorNo)\)}
+  \assign{\(left(90\ +\ rotAngle)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterS]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 6,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 5,\ colorNo)\)}
+  \assign{\(right(rotAngle)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(2*b\ +\ 3*c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(180)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterU]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(h\ -\ c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h-c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 3,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(h\ -\ c,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[qstnMk]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(rotAngle\ \gets\ 45\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h-c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 5,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \assign{\(left(rotAngle)\)}
+  \sub{\(forward(b/2.0,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(c/2.0)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(c,\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward((c\ +\ b)/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(c)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[drawText]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{text}}{type: \(string\)}
+      \description{\pVar{h}}{type: \(integer\)}
+      \description{\pVar{c}}{type: \(integer\)}
+    \end{declaration}
+  }
+  \assign{\(gap\ \gets\ h/10.0\)}
+  \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(length(text)\)}
+    \assign{\(letter\ \gets\ uppercase(copy(text,\ k,\ 1))\)}
+    \ifthenelse{6}{6}{\(letter\ =\ \)"{},"{}\(\)}{T}{F}
+      \sub{\(comma(h,c)\)}
+    \change
+      \case[155]{5}{31}{\(letter\)}{\)"{}A"{}\(}
+          \sub{\(letterA(h,c)\)}
+        \switch{\)"{}B"{}\(}
+          \sub{\(letterB(h,c)\)}
+        \switch{\)"{}C"{}\(}
+          \sub{\(letterC(h,c)\)}
+        \switch{\)"{}D"{}\(}
+          \sub{\(letterD(h,c)\)}
+        \switch{\)"{}E"{}\(}
+          \sub{\(letterE(h,c)\)}
+        \switch{\)"{}F"{}\(}
+          \sub{\(letterF(h,c)\)}
+        \switch{\)"{}G"{}\(}
+          \sub{\(letterG(h,c)\)}
+        \switch{\)"{}H"{}\(}
+          \sub{\(letterH(h,c)\)}
+        \switch{\)"{}I"{}\(}
+          \sub{\(letterI(h,c)\)}
+        \switch{\)"{}J"{}\(}
+          \sub{\(letterJ(h,c)\)}
+        \switch{\)"{}K"{}\(}
+          \sub{\(letterK(h,c)\)}
+        \switch{\)"{}L"{}\(}
+          \sub{\(letterL(h,c)\)}
+        \switch{\)"{}M"{}\(}
+          \sub{\(letterM(h,c)\)}
+        \switch{\)"{}N"{}\(}
+          \sub{\(letterN(h,c)\)}
+        \switch{\)"{}O"{}\(}
+          \sub{\(letterO(h,c)\)}
+        \switch{\)"{}P"{}\(}
+          \sub{\(letterP(h,c)\)}
+        \switch{\)"{}Q"{}\(}
+          \sub{\(letterQ(h,c)\)}
+        \switch{\)"{}R"{}\(}
+          \sub{\(letterR(h,c)\)}
+        \switch{\)"{}S"{}\(}
+          \sub{\(letterS(h,c)\)}
+        \switch{\)"{}T"{}\(}
+          \sub{\(letterT(h,c)\)}
+        \switch{\)"{}U"{}\(}
+          \sub{\(letterU(h,c)\)}
+        \switch{\)"{}V"{}\(}
+          \sub{\(letterV(h,c)\)}
+        \switch{\)"{}W"{}\(}
+          \sub{\(letterW(h,c)\)}
+        \switch{\)"{}X"{}\(}
+          \sub{\(letterX(h,c)\)}
+        \switch{\)"{}Y"{}\(}
+          \sub{\(letterY(h,c)\)}
+        \switch{\)"{}Z"{}\(}
+          \sub{\(letterZ(h,c)\)}
+        \switch{\)"{}\ "{}\(}
+          \sub{\(blank(h,c)\)}
+        \switch{\)"{}!"{}\(}
+          \sub{\(exclMk(h,c)\)}
+        \switch{\)"{}?"{}\(}
+          \sub{\(qstnMk(h,c)\)}
+        \switch{\)"{}."{}\(}
+          \sub{\(fullSt(h,c)\)}
+        \switch[r]{default}
+          \sub{\(charDummy(h,c)\)}
+       \caseend
+    \ifend
+    \assign{\(right(90)\)}
+    \assign{\(penUp()\)}
+    \assign{\(forward(gap)\)}
+    \assign{\(penDown()\)}
+    \assign{\(left(90)\)}
+  \whileend
+\end{struktogramm}
+
+
+% = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[TextDemo]
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}This\ is\ a\ demo\ program\ for\ text\ writing\ with\ Turleizer."{}\(\)}
+  \assign{\(showTurtle()\)}
+  \assign{\(penDown()\)}
+  \assign{\(y\ \gets\ 0\)}
+  \until{\(text\ =\ \)"{}"{}\(\)}
+    \assign{\(\)\pKey{INPUT}\(\ \)"{}Enter\ some\ text\ (empty\ string\ to\ exit)"{}\(,\ text\)}
+    \assign{\(text\ \gets\ \)"{}"{}\(\ +\ text\)}
+    \ifthenelse{6}{6}{\(text\ \neq\ \)"{}"{}\(\)}{T}{F}
+      \until{\(height\ \geq\ 5\)}
+        \assign{\(\)\pKey{INPUT}\(\ \)"{}Height\ of\ the\ text\ (pixels)"{}\(,\ height\)}
+      \untilend
+      \until{\(colour\ \geq\ 1\ \wedge\ colour\ \leq\ 10\)}
+        \assign{\(\)\pKey{INPUT}\(\ \)"{}Colour\ (1=black,\ 2=red,\ 3=yellow,\ 4=green,\ 5=cyan,\ 6=blue,\ 7=pink,\ 8=gray,\ 9=orange,\ 10=violet)"{}\(,\ colour\)}
+      \untilend
+      \assign{\(y\ \gets\ y\ +\ height\ +\ 2\)}
+      \assign{\(gotoXY(0,\ y\ -\ 2)\)}
+      \sub{\(drawText(text,\ height,\ colour)\)}
+    \change
+    \ifend
+  \untilend
+  \assign{\(gotoXY(0,\ y\ +\ 15)\)}
+  \sub{\(drawText(\)"{}Thank\ you,\ bye."{}\(,\ 10,\ 4)\)}
+  \assign{\(hideTurtle()\)}
+\end{struktogramm}
+
+\end{document}

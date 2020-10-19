@@ -134,6 +134,7 @@ Current development version: 3.30-11 (2020-07-18)
 - 11: Bugfix #875: Saving policy mended for virgin group members and groups,
       unnessesary save requests on replacing diagrams in work area avoided <2>
 - 11: Bugfix #876: Defective saving and restoring of Ini properties from menu <2>
+- 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -430,8 +431,8 @@ Version 3.28 (2018-02-18)
 - 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
 - 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
       ElementNamePreferences (Preferences => Element names) fixed <2>
-- 05: Bugfix 497: Several defects on StrukTeX export mended <2>
-- 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
+- 05: Bugfix #497: Several defects on StrukTeX export mended <2>
+- 05: Issue #415: Find&Replace dialog now regains focus when summoned again <2>
 - 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
 - 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
 - 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2

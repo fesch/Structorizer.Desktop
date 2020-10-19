@@ -104,8 +104,8 @@
 1040     delete(result, 1, position)
 1050     insert(uppercase(start), result, 1)
 1060   END IF
-1070   DIM array74593207() AS String = {" i ", " i\'"}
-1080   FOR EACH word IN array74593207
+1070   DIM arrayd52b53f() AS String = {" i ", " i\'"}
+1080   FOR EACH word IN arrayd52b53f
 1090     LET position = pos(word, result)
 1100     DO WHILE position > 0
 1110       delete(result, position+1, 1)
@@ -211,8 +211,8 @@
 2110   REM TODO: add the respective type suffixes to your variable names if required 
 2120   LET sentence = lowercase(sentence)
 2130   REM TODO: Specify an appropriate element type for the array! 
-2140   DIM arrayad60b0f8() AS FIXME_ad60b0f8 = {'.', ',', ';', '!', '?'}
-2150   FOR EACH symbol IN arrayad60b0f8
+2140   DIM array80b588f9() AS FIXME_80b588f9 = {'.', ',', ';', '!', '?'}
+2150   FOR EACH symbol IN array80b588f9
 2160     LET position = pos(symbol, sentence)
 2170     DO WHILE position > 0
 2180       LET sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))

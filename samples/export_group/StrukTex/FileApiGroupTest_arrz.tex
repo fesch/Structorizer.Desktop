@@ -5,12 +5,12 @@
 
 \title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
 \author{Kay Gürtzig}
-\date{23.04.2020}
+\date{19.10.2020}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(141,158)[ComputeSum]
+\begin{struktogramm}(168,180)[ComputeSum]
   \assign{\(fileNo\ \gets\ 1000\)}
   \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
@@ -36,7 +36,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(268,264)[DrawRandomHistogram]
+\begin{struktogramm}(322,297)[DrawRandomHistogram]
   \assign{\(fileNo\ \gets\ -10\)}
   \until{\(fileNo\ >\ 0\ \vee\ file\_name\ =\ \)"{}"{}\(\)}
     \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
@@ -101,7 +101,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(184,205)[drawBarChart]
+\begin{struktogramm}(226,232)[drawBarChart]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(array\ of\ double\)}
@@ -113,7 +113,7 @@
   \assign{\(kMin\ \gets\ 0\)}
   \assign{\(kMax\ \gets\ 0\)}
   \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(nValues-1\)}
-    \ifthenelse{3}{3}{\(values[k]\ >\ values[kMax]\)}{T}{F}
+    \ifthenelse{2}{4}{\(values[k]\ >\ values[kMax]\)}{T}{F}
       \assign{\(kMax\ \gets\ k\)}
     \change
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
@@ -172,7 +172,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(177,104)[generateRandomNumberFile]
+\begin{struktogramm}(223,118)[generateRandomNumberFile]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{fileName}}{type: \(string\)}
@@ -206,7 +206,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(176,108)[readNumbers]
+\begin{struktogramm}(220,122)[readNumbers]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{fileName}}{type: \(string\)}
