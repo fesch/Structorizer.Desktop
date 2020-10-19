@@ -156,6 +156,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-03-29      Bugfix #841: Analyser check for missing or misplaced parameter list didn't work
  *      Kay Gürtzig     2020-04-22      Bugfix #854: typeMap made a LinkedHashMap to ensure topological order on code export
  *      Kay Gürtzig     2020-10-16      Issue #874: Identifier check in Analyser modified with respect to non-ascii letters
+ *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
  *      
  ******************************************************************************************************
  *
@@ -6341,6 +6342,29 @@ public class Root extends Element {
 		} // for(int i=0; i < _node.size(); i++)...
 	}
 	// END KGU#365 2017-03-14
+	
+	// START KGU#874 2020-10-19: Issue #875 a public wrapper for the method before
+	/**
+	 * Tries to identify all used variables that are neither imported nor initialized
+	 * @param _pool - a potential routine pool for the retrieval of included Includables
+	 * @return a {@link StringList} of potentially uninitialised variables
+	 */
+	public StringList getUninitializedVars(IRoutinePool _pool)
+	{
+		StringList obtainedVars = new StringList();
+		StringList uninitialized = new StringList();
+		if (this.includeList != null && _pool != null) {
+			for (int i = 0; i < this.includeList.count(); i++) {
+				Vector<Root> includes = _pool.findIncludesByName(this.includeList.get(i), this);
+				for (Root include: includes) {
+					obtainedVars.addIfNew(include.getVarNames());
+				}
+			}
+		}
+		this.getUninitializedVars(this.children, obtainedVars, uninitialized);
+		return uninitialized;
+	}
+	// END KGU#874 2020-10-19
 
 	// START KGU#363 2017-05-08: Enh. #372 - some statistics
 	// KGU#556 2018-07-17: Issue #561 (loops differentiated, array enlarged)

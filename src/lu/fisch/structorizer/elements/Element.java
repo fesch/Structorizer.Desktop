@@ -445,7 +445,15 @@ public abstract class Element {
 	public static boolean E_MAKE_BACKUPS = true;
 	// END KGU#309 20161-12-15
 	// START KGU#690 2019-03-21: Issue #707 - new saving options
+	/**
+	 * Specifies whether argument numbers are to be appended to a proposed file name
+	 * @see #E_FILENAME_SIG_SEPARATOR
+	 */
 	public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
+	/**
+	 * Specifies the separator character between base file name and argument numbers
+	 * @see #E_FILENAME_WITH_ARGNUMBERS
+	 */
 	public static char E_FILENAME_SIG_SEPARATOR = '-';
 	// END KGU#690 2019-03-21
 	// START KGU#287 2017-01-11: Issue #81 (workaround)
