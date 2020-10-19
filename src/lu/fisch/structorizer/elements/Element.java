@@ -113,7 +113,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
  *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
- *      Kay Gürtzig     2020-10-17      Enh. #872: New mode to display operators in C style
+ *      Kay Gürtzig     2020-10-17/19   Enh. #872: New mode to display operators in C style
  *
  ******************************************************************************************************
  *
@@ -3574,7 +3574,10 @@ public abstract class Element {
 					// END KGU#377 2017-03-30
 					// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
 					if (E_SHOW_C_OPERATORS) {
-						parts.replaceAll("=", "==");
+						if (!(_this instanceof Instruction && ((Instruction)_this).isTypeDefinition())) {
+							// Don't replace '=' in type definitions!
+							parts.replaceAll("=", "==");
+						}
 						parts.replaceAll("\u2190", "=");
 						parts.replaceAll(":=", "=");
 						parts.replaceAll("\u2260", "!=");

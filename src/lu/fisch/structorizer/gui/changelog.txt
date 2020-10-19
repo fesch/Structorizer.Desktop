@@ -135,7 +135,7 @@ Current development version: 3.30-11 (2020-07-19)
       unnessesary save requests on replacing diagrams in work area avoided <2>
 - 11: Bugfix #876: Defective saving and restoring of Ini properties from menu <2>
 - 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
-- 11: Issue #879: Bad handling of use input looking like a record initializer <2>
+- 11: Issue #879: Bad handling of user input looking like a record initializer <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
