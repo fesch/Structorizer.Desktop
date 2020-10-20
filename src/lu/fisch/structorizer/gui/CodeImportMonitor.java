@@ -94,16 +94,16 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 	{
 		super(_owner, true);
 		this.worker = _worker;
-        
-        initComponents();
-        
-        Locales.getInstance().setLocale(this);
-        
-        this.setTitle(ttlImporting.getText().replace("%", _title));
 
-        this.setLocationRelativeTo(_owner);
-        
-        this.setVisible(true);
+		initComponents();
+
+		Locales.getInstance().setLocale(this);
+
+		this.setTitle(ttlImporting.getText().replace("%", _title));
+
+		this.setLocationRelativeTo(_owner);
+
+		this.setVisible(true);
 	}
 
 	private void initComponents()
@@ -166,10 +166,10 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 		
 		this.getContentPane().add(contentPane);
 		
-        GUIScaler.rescaleComponents(this);
+		GUIScaler.rescaleComponents(this);
 
-        this.pack();
-        
+		this.pack();
+
 		btnOk.setEnabled(false);
 		this.worker.addPropertyChangeListener(this);
 		this.worker.execute();

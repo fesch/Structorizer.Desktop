@@ -204,6 +204,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-03      Issue #868: Code import via files drop had to be disabled in restricted mode
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode for operators (in C style)
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
+ *      Kay Gürtzig     2020-10-20      Issue #801: Ensured that the User Guide download is done in a background thread 
  *
  ******************************************************************************************************
  *
@@ -229,7 +230,6 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -242,6 +242,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -7287,6 +7288,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#208 2016-07-22
 	
+	// START KGU#791 2010-10-20: Issue #801 - we need a background thread for explicit download
+	private boolean helpDownloadCancelled = false;
+	
+	/**
+	 * Tries to download the most recent user guide as PDF in a backround thread
+	 * with progress bar. Will override a possibly existing file.
+	 */
+	/**
+	 * @param title - the menu item caption to be used as window title
+	 */
+	public void downloadHelpPDF(String title)
+	{
+		SwingWorker<Boolean,Void> worker = new SwingWorker<Boolean, Void>() {
+
+			@Override
+			protected Boolean doInBackground() throws Exception
+			{
+				return downloadHelpPDF(true);
+			}
+			
+			public void done()
+			{
+				if (isCancelled()) {
+					// We must tell method downloadHelpPDF that the task was aborted
+					// (The possibly incompletely transferred file must be deleted.)
+					helpDownloadCancelled = true;
+				}
+			}
+			
+		};
+		new DownloadMonitor(getFrame(), worker, title);
+	}
+	
+	// END KGU#791 2020-10-20
+	
 	// START KGU#791 2020-01-20: Enh. #801 support offline help
 	/**
 	 * Tries to download the PDF version of the user guide to the ini directory
@@ -7298,20 +7334,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		/* See https://stackoverflow.com/questions/921262/how-to-download-and-save-a-file-from-internet-using-java
 		 * for technical discussion 
 		 */
-		// FIXME: This might better be done in a performLater environment
-		boolean done = false;
+		// KGU#791 2020-10-20 Method revised to allow running in a backround thread
+		helpDownloadCancelled = false;
+		String helpFileName = Element.E_HELP_FILE;
+		File helpDir = Ini.getIniDirectory(true);
+		File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
+		String helpFileURI = Element.E_DOWNLOAD_PAGE + "?file=" + helpFileName;
+		long copied = 0;
 		try {
-			String helpFileName = Element.E_HELP_FILE;
-			String helpFileURI = Element.E_DOWNLOAD_PAGE + "?file=" + helpFileName;
 			URL website = new URL(helpFileURI);
-			File helpDir = Ini.getIniDirectory(true);
-			File helpFile = new File(helpDir.getAbsolutePath() + File.separator + helpFileName);
 			if (!helpFile.exists() || overrideExisting) {
 				try (InputStream inputStream = website.openStream();
 						ReadableByteChannel readableByteChannel = Channels.newChannel(inputStream);
 						FileOutputStream fileOutputStream = new FileOutputStream(helpFile)) {
-					long copied = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, 1 << 24);
-					done = copied > 0;
+					copied = -1;	// The help file has already been overwritten...
+					copied = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Integer.MAX_VALUE);
 				}
 				catch (IOException ex) {
 					logger.log(Level.INFO, "Failed to download help file!", ex);
@@ -7332,9 +7369,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		catch (MalformedURLException ex) {
-
+			logger.log(Level.CONFIG, helpFileURI, ex);
 		}
-		return done;
+		if (helpDownloadCancelled && copied != 0 && helpFile.exists()) {
+			helpFile.delete();	// File is likely to be defective
+			copied = 0;
+		}
+		System.out.println("Leaving downloadHelpPDF()");
+		return copied > 0;
 	}
 	
 	/**
@@ -7490,7 +7532,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			try {
 
 				URL url = new URL(http_url);
-				HttpURLConnection con = (HttpURLConnection)url.openConnection();
+				HttpsURLConnection con = (HttpsURLConnection)url.openConnection();
 
 				if (con!=null) {
 
