@@ -83,6 +83,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-05-02      Issue #866: Modified key bindings for expanding / reducing selection
  *      Bob Fisch       2020-05-25      New "restricted" mode to suppress code export/import
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
+ *      Kay Gürtzig     2020-06-06      Bugfix #868/#870: Suppression of group export had been forgotten.
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New toolbar with 2 display mode indicators
  *
  ******************************************************************************************************
  *
@@ -238,6 +240,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#245 2018-07-02: Individual color buttons converted to an array
 	protected ColorButton[] btnColors = new ColorButton[Element.colors.length];
 	// END KGU#245 2018-07-02	
+	// START KGU#872 2020-10-17: Enh. #872
+	// display modes
+	protected final JLabel lblSwitchComments = new JLabel(IconLoader.getIcon(102));
+	protected final JLabel lblOperatorsC = new JLabel(IconLoader.getIcon(124));
+	private static final String[] pathSwitchComments = {"menuDiagram", "menuDiagramSwitchComments"};
+	private static final String[] pathOperatorsC = {"menuDiagram", "menuDiagramOperatorsC"};
+	protected static final LangTextHolder ttSwitchComments = new LangTextHolder("Text and comments are exchanged!");
+	protected static final LangTextHolder ttOperatorsC = new LangTextHolder("Operators are shown in C style!");
+	protected static final LangTextHolder msgInactiveMode = new LangTextHolder("(Inactive display mode)");
+	protected static final LangTextHolder msgMenuHint = new LangTextHolder("Menu item");
+	// END KGU#872 2020-10-17
 	
 	// Popup menu
 	protected final JPopupMenu popup = new JPopupMenu();
@@ -907,7 +920,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		toolbar.add(btnFontDown);
 		btnFontDown.setFocusable(false);
 		btnFontDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontDownNSD(); doButtons(); } } );
+
+		// Display mode indicators
+		// START KGU#872 2020-10-17: Enh. 872
+		toolbar = newToolBar("Display mode", true);
 		
+		toolbar.add(lblSwitchComments);
+		toolbar.add(lblOperatorsC);
+		lblSwitchComments.setFocusable(false);
+		lblOperatorsC.setFocusable(false);
+		// END KGU#872 2020-10-17
+
 		toolbar = newToolBar("About, help", true);
 
 		// About
@@ -1444,6 +1467,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnFunction.setSelected(diagram.isSubroutine());
 		btnProgram.setSelected(diagram.isProgram());
 		btnInclude.setSelected(diagram.isInclude());
+		
+		// START KGU#872 2020-10-17: Enh. #872
+		lblSwitchComments.setEnabled(Element.E_TOGGLETC);
+		lblSwitchComments.setToolTipText(buildMessageWithMenuRef(
+				lblSwitchComments.isEnabled() ? ttSwitchComments : msgInactiveMode,
+				Menu.getLocalizedMenuPath(pathSwitchComments, null)));
+		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && !Element.E_TOGGLETC);
+		lblOperatorsC.setToolTipText(buildMessageWithMenuRef(
+				lblOperatorsC.isEnabled() ? ttOperatorsC : msgInactiveMode,
+				Menu.getLocalizedMenuPath(pathOperatorsC, null)));
+		// END KGU#872 2020-10-17
 
 		// DIN
 		ImageIcon iconFor = IconLoader.getIcon(Element.E_DIN ? 74 : 53);
@@ -1799,8 +1833,38 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		noExportImport = true;
 		popupCode.setVisible(false);
 		diagram.setCodePreview(false);
+		// START KGU#870 2020-06-06: Bugfix #868, #870 group export had been forgotten
+		arrangerIndex.hideExportImport();
+		// END KGU#870 2020-06-06
 	}
 	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25
+	
+	// START KGU#872 2020-10-17: Enh. #872
+	/**
+	 * Builds a message with with a menu path hint from a {@link LangTextHolder} and the
+	 * given caption array.
+	 * @param _label - the {@link LangTextHolder} providing the translated text template
+	 * @param _menuPath - array of translated menu captions to be appended as path
+	 * @return the composed string
+	 */
+	private String buildMessageWithMenuRef(LangTextHolder _label, String[] _menuPath)
+	{
+		StringBuilder msg = new StringBuilder(_label.getText());
+		msg.append(" → ");
+		msg.append(msgMenuHint.getText());
+		msg.append(" \"");
+		for (int i = 0; i < _menuPath.length; i++)
+		{
+			if (i > 0) {
+				msg.append(" ► ");
+			}
+			msg.append(_menuPath[i]);
+		}
+		msg.append('\"');
+		return msg.toString();
+	}
+	// END KGU#239 2016-08-12
+
 
 }

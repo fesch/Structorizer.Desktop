@@ -2258,7 +2258,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			before = _lval.substring(0, posL);
 			after = _lval.substring(posR + 1);
 		}
-		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), ".")) {
+		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), false, ".")) {
 			comp = after;
 			name = before;
 		}

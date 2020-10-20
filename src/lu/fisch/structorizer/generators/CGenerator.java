@@ -106,6 +106,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-23      Issues #828, #840: Revisions w.r.t. the File API
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *                                              Enh. #855: New configurable default array size considered
+ *      Kay Gürtzig             2020-10-16      Bugfix #873: Type definition handling was compromised by bugfix #808
+ *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *
  ******************************************************************************************************
  *
@@ -1277,7 +1279,7 @@ public class CGenerator extends Generator {
 				codeLine = transform(tokens.subSequence(0, posAsgn).concatenate()).trim();
 				// START KGU#767 2019-11-30: Bugfix #782 maybe we must introduce a postponed declaration here
 				if (varName != null
-						&& Function.testIdentifier(varName, null)
+						&& Function.testIdentifier(varName, false, null)
 						&& codeLine.indexOf(varName) + varName.length() == codeLine.length()
 						&& !paramNames.contains(varName)
 						&& !this.wasDefHandled(root, varName, false)) {
@@ -1309,7 +1311,7 @@ public class CGenerator extends Generator {
 				int posBrace = pureExprTokens.indexOf("{");
 				if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
 					// Case 1.1 or 1.2.1 (either array or record initializer)
-					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 						String typeName = pureExprTokens.get(0);							
 						TypeMapEntry recType = this.typeMap.get(":"+typeName);
 						if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
@@ -1383,7 +1385,10 @@ public class CGenerator extends Generator {
 			// Attention! The following condition must not be combined with the above one! 
 			if (this.isInternalDeclarationAllowed()) {
 				tokens.removeAll(" ");
-				int posEqu = tokens.indexOf("=");
+				// START KGU#878 2020-10-16: Bugfix #873 - collateral damage of bugfix #808 mended
+				//int posEqu = tokens.indexOf("=");
+				int posEqu = tokens.indexOf("==");
+				// END KGU#878 2020-10-16
 				String typeName = null;
 				if (posEqu == 2) {
 					typeName = tokens.get(1);
@@ -1975,30 +1980,36 @@ public class CGenerator extends Generator {
 				boolean mustHealDefaults = line.endsWith(")") && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING;
 				if ((routinePool != null) && (mustHealDefaults || this.importedLibRoots != null)) {
 					Function call = _call.getCalledRoutine(i);
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
-					if (!callCandidates.isEmpty()) {
-						// FIXME We'll just fetch the very first one for now...
-						Root called = callCandidates.get(0);
-						if (mustHealDefaults) {
-							StringList defaults = new StringList();
-							called.collectParameters(null, null, defaults);
-							if (defaults.count() > call.paramCount()) {
-								// We just add the list of default values for the missing arguments
-								line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
-										defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
+					if (call != null) {
+					// END KGU#877 2020-10-16
+						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						if (!callCandidates.isEmpty()) {
+							// FIXME We'll just fetch the very first one for now...
+							Root called = callCandidates.get(0);
+							if (mustHealDefaults) {
+								StringList defaults = new StringList();
+								called.collectParameters(null, null, defaults);
+								if (defaults.count() > call.paramCount()) {
+									// We just add the list of default values for the missing arguments
+									line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+											defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+								}
 							}
+							// START KGU#815 2020-03-26: Enh. #828 we have to cope with class methods from a foreign library
+							if (this.importedLibRoots != null && this.importedLibRoots.contains(called)) {
+								StringList tokens = Element.splitLexically(line, true);
+								Element.unifyOperators(tokens, true);
+								int posAsgn = tokens.indexOf("<-");
+								int posCall = tokens.indexOf(call.getName(), posAsgn+1);
+								tokens.set(posCall, this.makeLibCallName(call.getName()));
+								line = tokens.concatenate();
+							}
+							// END KGU#815 2020-03-26
 						}
-						// START KGU#815 2020-03-26: Enh. #828 we have to cope with class methods from a foreign library
-						if (this.importedLibRoots != null && this.importedLibRoots.contains(called)) {
-							StringList tokens = Element.splitLexically(line, true);
-							Element.unifyOperators(tokens, true);
-							int posAsgn = tokens.indexOf("<-");
-							int posCall = tokens.indexOf(call.getName(), posAsgn+1);
-							tokens.set(posCall, this.makeLibCallName(call.getName()));
-							line = tokens.concatenate();
-						}
-						// END KGU#815 2020-03-26
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 					}
+					// END KGU#877 2020-10-16
 				}
 				// END KGU#371 2019-03-07
 				// Input or Output should not occur here
@@ -2769,7 +2780,7 @@ public class CGenerator extends Generator {
 			pureExprTokens.removeAll(" ");
 			int posBrace = pureExprTokens.indexOf("{");
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
-				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), null)) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 					// Record initializer
 					String typeName = pureExprTokens.get(0);
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);

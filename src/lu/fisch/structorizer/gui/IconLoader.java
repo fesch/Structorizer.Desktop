@@ -77,6 +77,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-01-12      Enh. #622/3: 119_rearrange added
  *      Kay Gürtzig     2020-01-20      Enh. #801: 123_help_book added
  *      Kay Gürtzig     2020-04-02      Issue #4 deprecated static field turtle removed, set the from field deprecated.
+ *      Kay Gürtzig     2020-10-17      Enh. #872: 124_prog_c added
  *
  ******************************************************************************************************
  *
@@ -202,7 +203,7 @@ public class IconLoader {
 			"095_groupList.png",	//ex "095_for_dinBefore.png",	// obsolete (#510)
 			"096_groupArchive.png",	//ex "096_forAfter.png",			// obsolete (#510)
 			"097_groupDissolve.png",	//"097_for_dinAfter.png",		// obsolete (#510)
-			"098_groupDetach.png",	// 98
+			"098_groupDetach.png",
 			"099_pin_blue.png",	// for Arranger toolbar
 			"100_diagram_drop.png", // for Arranger toolbar
 			"101_diagram_new.png",	// for Arranger toolbar and Arranger index
@@ -224,10 +225,11 @@ public class IconLoader {
 			"117_groupExpand.png",
 			"118_info.png",
 			"119_rearrange.png",
-			"120_elem_try.png",	// introduced with enh. #56
-			"121_mini_try.png",	// introduced with enh. #56
-			"122_exit.png",		// Introduced with 3.29-13
-			"123_help_book.png"	// introduced with 3.30-05 for #801
+			"120_elem_try.png",		// introduced with enh. #56
+			"121_mini_try.png",		// introduced with enh. #56
+			"122_exit.png",			// Introduced with 3.29-13
+			"123_help_book.png",	// introduced with 3.30-05 for #801
+			"124_prog_c.png"		// introduced with 3.30-11 for #872
 	};
 	
 	private static final int[] ICON_SIZES = {

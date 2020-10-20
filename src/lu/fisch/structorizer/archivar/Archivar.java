@@ -38,6 +38,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-10-14      Bugfix #763: Missing references files now add to the problem list on loading
  *      Kay Gürtzig     2020-04-23      Bugfix #860: ArchiveIndexEntry did not set path field with absolute nsd file paths
  *      Kay Gürtzig     2020-04-24      Bugfix #862/3: Ensure correct update of ArchiveIndexEntry on attaching the Root
+ *      Kay Gürtzig     2020-10-19      Issue #875: Modifications to enable diagram insertion to archives
  *
  ******************************************************************************************************
  *
@@ -651,6 +652,9 @@ public class Archivar {
 		// First we must gather the Root info and create the arr file
 		/////////////////////////////////////////////////////////////////
 		StringList filePaths = new StringList();
+		// START KGU#874 2020-10-19: Issue #875 Allow etry names to differ from temp. file names
+		StringList itemPaths = new StringList();
+		// END KGU#874 2020-10-19
 		Writer out = null;
 		try {
 			FileOutputStream fos = new FileOutputStream(_arrFilePath);
@@ -680,6 +684,9 @@ public class Archivar {
 						path = nsdFile.getName();	// Only last part of path
 					}
 					entry.add(path);
+					// START KGU#874 2020-10-19: Issue #875 - make sure the name in archive is this
+					itemPaths.add(path);
+					// END KGU#874 2020-10-19
 					// The following entries are new for enh. #696
 					entry.add(item.root.getMethodName());
 					int minArgs = -1, maxArgs = -1;
@@ -736,8 +743,14 @@ public class Archivar {
 		/////////////////////////////////////////////////////////////////		
 		if ((_troubles == null || _troubles.isEmpty()) && _archive != null) {
 			filePaths.add(_arrFilePath);
+			// START KGU#874 2020-10-19: Issue #875
+			itemPaths.add((new File(_arrFilePath)).getName());
+			// END KGU#874 2020-10-19
 			try {
-				tmpArchive = compressFiles(_archive, filePaths);
+				// START KGU#874 2020-10-19: Issue #875
+				//tmpArchive = compressFiles(_archive, filePaths);
+				tmpArchive = compressFiles(_archive, filePaths, itemPaths);
+				// END KGU#874 2020-10-19
 			}
 			catch (IOException ex) {
 				if (_troubles != null) {
@@ -751,7 +764,6 @@ public class Archivar {
 		
 		return tmpArchive;
 	}
-	
 
 	/**
 	 * Saves "virgin" (i.e. unsaved) {@link Root} to an NSD file with proposed name into directory
@@ -796,10 +808,14 @@ public class Archivar {
 	 * temp directory and return the actual path.
 	 * @param _archive - the target file
 	 * @param _filePaths - {@link StringList} of the absolute paths of the files to be compressed 
+	 * @param _itemNames - {@link StringList} of the internal names for the files to be compressed
 	 * @return path of the temporary archive if the specified target file {@link _archive} had existed
 	 * @throws IOException in case some IO operation went wrong.
 	 */
-	private String compressFiles(File _archive, StringList _filePaths) throws IOException
+	// START KGU#874 2020-10-19: Issue #875 - The item names are not necessarily equal to the file names
+	//private String compressFiles(File _archive, StringList _filePaths) throws IOException
+	private String compressFiles(File _archive, StringList _filePaths, StringList _itemNames) throws IOException
+	// END KGU#874 2020-10-19
 	{
 		final int BUFSIZE = 2048;
 		String zipFilePath = _archive.getAbsolutePath();
@@ -822,7 +838,10 @@ public class Archivar {
 				File file = new File(_filePaths.get(i));
 				FileInputStream fis = new FileInputStream(file);
 				origin = new BufferedInputStream(fis, BUFSIZE);
-				ZipEntry entry = new ZipEntry(file.getName());
+				// START KGU#874 2020-10-19: Issue #875
+				//ZipEntry entry = new ZipEntry(file.getName());
+				ZipEntry entry = new ZipEntry(_itemNames.get(i));
+				// END KGU#874 2020-10-19
 				// START KGU 2018-09-12: Preserve time attributes if possible
 				Path srcPath = file.toPath();
 				try {

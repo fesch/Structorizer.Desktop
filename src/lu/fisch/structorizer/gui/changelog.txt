@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-10 (2020-06-03)
+Current development version: 3.30-11 (2020-10-20)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -123,7 +123,19 @@ Current development version: 3.30-10 (2020-06-03)
 - 09: Bugfix #865: Flaw in parameter recognition on subroutine generation <2>
 - 09: Issue #866: Selection expansion/reduction in the diagram revised <2>
 - 09a: New command line option "-restricted" to prevent export/import [CPNV]
-- 10: Bugfix #868: Inadvertant popup of the code preview context menu on start <2>
+- 10: Bugfix #868: Inadvertent popup of the code preview context menu on start <2>
+- 11: Issue #870: Now ini property "noExportImport=1" prevents code export/import;
+      group export prevention had been forgotten [CPNV]2
+- 11: Issue #733: GUI scale factor not to be overwritten by central ini file <2>
+- 11: Enh. #872: New display mode to present operators in C style [BloodyRain2k]2
+- 11: Bugfix #873: Compromised type definition export to C++, C#, Java mended <2>
+- 11: Bugfix #874: Error on code export/preview of CALLs with non-ascii names,
+      identifiers with non-ascii letters now tolerated but warned <2>
+- 11: Bugfix #875: Saving policy mended for virgin group members and groups,
+      unnessesary save requests on replacing diagrams in work area avoided <2>
+- 11: Bugfix #876: Defective saving and restoring of Ini properties from menu <2>
+- 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
+- 11: Issue #879: Bad handling of user input looking like a record initializer <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
@@ -420,8 +432,8 @@ Version 3.28 (2018-02-18)
 - 05: Issue #496: C# autodoc comment style changed to "/// <summary> ..." <2>
 - 05: Enh. #492: Localization (EN/DE/ES) and GUI scaling support for dialog
       ElementNamePreferences (Preferences => Element names) fixed <2>
-- 05: Bugfix 497: Several defects on StrukTeX export mended <2>
-- 05: Issue 415: Find&Replace dialog now regains focus when summoned again <2>
+- 05: Bugfix #497: Several defects on StrukTeX export mended <2>
+- 05: Issue #415: Find&Replace dialog now regains focus when summoned again <2>
 - 05: Issue 04: Several new and redesigned icons (for better scalability) <2>
 - 05: Enh. #490: Turtleizer routines individually re-nameable [A. Brusinsky]2
 - 05: Issue #484: Layout of Export/Import Options dialogs fixed [Simon Sobisch]2

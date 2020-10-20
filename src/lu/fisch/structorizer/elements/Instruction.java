@@ -803,7 +803,7 @@ public class Instruction extends Element {
 				int i = 1;
 				// FIXME (KGU#553): The exact idea here isn't so clear anymore
 				while (i < tokens.count() - 1) {
-					if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), null) && Function.testIdentifier(tokens.get(i+1), null)) {
+					if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), false, null) && Function.testIdentifier(tokens.get(i+1), false, null)) {
 						tokens.remove(i, i+2);
 					}
 					// START KGU#553 2018-07-12: Bugfix #557 We could get stuck in an endless loop here
@@ -909,12 +909,12 @@ public class Instruction extends Element {
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		tokens.removeAll(" ");
 		String tag = tokens.get(0).toLowerCase();
-		return Function.testIdentifier(typename, null) &&
+		return Function.testIdentifier(typename, false, null) &&
 				// START KGU#542 2019-11-17: Enh. #739 - also consider enumeration types
 				//((tag.equals("record") || tag.equals("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
 				((tag.equals("record") || tag.equals("struct") || tag.equals("enum")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
 				// END KGU#542 2019-11-17
-				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, null)));
+				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, false, null)));
 		
 	}
 	/** @return true if all non-empty lines comply to {@link #isTypeDefinition(String)} */
@@ -1140,7 +1140,7 @@ public class Instruction extends Element {
 			varTokens.removeAll(" ");
 			for (int i = 0; i < varTokens.count(); i++)
 			{
-				if (Function.testIdentifier(varTokens.get(i), null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
+				if (Function.testIdentifier(varTokens.get(i), false, null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
 					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true);
 				}
 			}
@@ -1295,7 +1295,7 @@ public class Instruction extends Element {
 			//}
 			while (i > 1 && varName != null && tokens.get(i-1).equals(".")) {
 				String preDotToken = tokens.get(i-2);
-				if (Function.testIdentifier(preDotToken, null)) {
+				if (Function.testIdentifier(preDotToken, false, null)) {
 					varName = tokens.get(i-2) + "." + varName;
 					i -= 2;
 				}
@@ -1306,7 +1306,7 @@ public class Instruction extends Element {
 						varName = null;
 						preDotToken = tokens.get(--i - 2);
 					}
-					if (varName == null && Function.testIdentifier(preDotToken, null)) {
+					if (varName == null && Function.testIdentifier(preDotToken, false, null)) {
 						varName = preDotToken;	// Start again with the identifier prior to the indices
 						i -= 2;	// this ought to be the token index of varName
 					}
@@ -1354,7 +1354,7 @@ public class Instruction extends Element {
 		}
 		else {
 			// START KGU#542 2019-11-17: Enh. #739 Check for enumerator constant
-			if (rightSide.count() == 1 && Function.testIdentifier(rightSide.get(0), null)) {
+			if (rightSide.count() == 1 && Function.testIdentifier(rightSide.get(0), false, null)) {
 				Root root = getRoot(this);
 				if (root != null) {
 					String constVal = root.constants.get(rightSide.get(0));

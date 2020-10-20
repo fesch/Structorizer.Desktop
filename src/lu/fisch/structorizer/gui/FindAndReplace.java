@@ -577,7 +577,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 				public void itemStateChanged(ItemEvent evt) {
 					Boolean deselected = evt.getStateChange() == ItemEvent.DESELECTED;
 					chkCaseSensitive.setEnabled(deselected);
-					chkWholeWord.setEnabled(deselected && Function.testIdentifier((String)cmbSearchPattern.getEditor().getItem(), null));
+					chkWholeWord.setEnabled(deselected && Function.testIdentifier((String)cmbSearchPattern.getEditor().getItem(), false, null));
 				}
 			});
 			this.chkRegEx.setSelected(ini.getProperty("findRegEx", "0").equals("1"));
@@ -1776,7 +1776,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		}
 		String item = (String)box.getEditor().getItem();
 		if (box == cmbSearchPattern) {
-			chkWholeWord.setEnabled(!chkRegEx.isSelected() && Function.testIdentifier(item, null));
+			chkWholeWord.setEnabled(!chkRegEx.isSelected() && Function.testIdentifier(item, false, null));
 		}
 		if (patternList.isEmpty() || !item.equals(patternList.getFirst())) {
 			ListIterator<String> iter = patternList.listIterator();
