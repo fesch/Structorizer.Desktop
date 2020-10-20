@@ -615,10 +615,11 @@ public class Group {
 	}
 	
 	/**
-	 * Checks if the set of member diagrams has changed or some of the member diagrams have moved since
-	 * loading or last save.
-	 * @return true if there wer some kind of changes, false otherwise 
+	 * Checks whether the set of member diagrams has changed or some of the member diagrams
+	 * have moved since loading or last save.
+	 * @return true if there was some kind of change, false otherwise 
 	 * @see #membersChanged
+	 * @see #membersMoved
 	 */
 	public boolean hasChanged()
 	{

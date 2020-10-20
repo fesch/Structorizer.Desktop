@@ -214,8 +214,10 @@ Menu.menuDiagramComment.text=Показывать комментарии
 Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
 Menu.menuDiagramCommentsPlusText.text=И тексты и комментарии
 Menu.menuDiagramSwitchTCTooltip.text=Выключите "%1" чтобы допускать этот пункт меню
-Menu.menuDiagramHideDeclarations.text=Прятать сущие декларации?
+Menu.menuDiagramHideDeclarations.text=Прятать сущие декларации
 Menu.menuDiagramMarker.text=Подсвечивать переменные
+Menu.menuDiagramOperatorsC.text=Изобразить операторы как в C
+Menu.menuDiagramOperatorsC.tooltip=Изображает операторы в схемах в соответствии с языком C (предполагает модус "Подсвечивать переменные").
 Menu.menuDiagramDIN.text=DIN (ДИН 66261)?
 Menu.menuDiagramAnalyser.text=Анализировать схему
 Menu.menuDiagramIndex.text=Вставить индекс Arranger?
@@ -586,6 +588,11 @@ Editor.btnTurtle.tooltip=Открыть Turtleizer ...
 Editor.btnMake.tooltip=Выполнить ...
 Editor.btnDropBrk.tooltip=Удалить все остановочные точки
 Editor.btnDisable.tooltip=
+// display mode
+Editor.ttSwitchComments.text=Тексты обменены с комментариями!
+Editor.ttOperatorsC.text=Операторы изображаемые как в языке C!
+Editor.msgInactiveMode.text=(Неактивный модус изображения)
+Editor.msgMenuHint.text=Пункт меню
 // Popup menu
 Editor.popupCut.text=Вырезать
 Editor.popupCopy.text=Копировать

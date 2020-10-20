@@ -108,11 +108,12 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-05-15      Issue #724: Workaround for diagram titles in writeOutVariables
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
  *      Kay Gürtzig     2019-11-17      Issue #739: Support for enum type definitions, addToTypeMap simplified
- *      Kay Gürtzig     2019-11-24      Bugfix #783 workaround for missing record type info
+ *      Kay Gürtzig     2019-11-24      Bugfix #783: workaround for missing record type info
  *      Kay Gürtzig     2019-12-02      KGU#782: identifyExprType now also tries to detect char type
  *      Kay Gürtzig     2020-01-30      Missing newlines in E_THANKS (About > Implicated persons) inserted.
  *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
+ *      Kay Gürtzig     2020-10-17/19   Enh. #872: New mode to display operators in C style
  *
  ******************************************************************************************************
  *
@@ -444,7 +445,15 @@ public abstract class Element {
 	public static boolean E_MAKE_BACKUPS = true;
 	// END KGU#309 20161-12-15
 	// START KGU#690 2019-03-21: Issue #707 - new saving options
+	/**
+	 * Specifies whether argument numbers are to be appended to a proposed file name
+	 * @see #E_FILENAME_SIG_SEPARATOR
+	 */
 	public static boolean E_FILENAME_WITH_ARGNUMBERS = true;
+	/**
+	 * Specifies the separator character between base file name and argument numbers
+	 * @see #E_FILENAME_WITH_ARGNUMBERS
+	 */
 	public static char E_FILENAME_SIG_SEPARATOR = '-';
 	// END KGU#690 2019-03-21
 	// START KGU#287 2017-01-11: Issue #81 (workaround)
@@ -454,8 +463,12 @@ public abstract class Element {
 	// START KGU#331 2017-01-13:
 	public static boolean E_SHOW_UNICODE_OPERATORS = true;
 	// END KGU#331 2017-01-13
+	// START KGU#872 2020-10-17: Enh. #872
+	/** Option to show operators in C style (overrides {@link #E_SHOW_UNICODE_OPERATORS}) */
+	public static boolean E_SHOW_C_OPERATORS = false;
+	// END KGU#872 2020-10-17
 	// START KGU#456 2017-11-05: Enh. #452
-	/** Shall only the most important toolbar buttons be presented (beginners' mode?*/
+	/** Shall only the most important toolbar buttons be presented (beginners' mode)?*/
 	public static boolean E_REDUCED_TOOLBARS = false;
 	// END KGU#456 2017-11-05
 	// START KGU#480 2018-01-21: Enh. #490
@@ -1319,7 +1332,7 @@ public abstract class Element {
 		StringList tokens = splitLexically(text, true);
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i).trim();
-			if (!token.isEmpty() && Function.testIdentifier(token, null)) {
+			if (!token.isEmpty() && Function.testIdentifier(token, false, null)) {
 				// Skip all whitespace
 				int j = i;
 				String nextToken = null;
@@ -3280,7 +3293,7 @@ public abstract class Element {
 			if (posColon >= 0) {
 				String name = tokens.subSequence(0, posColon).concatenate().trim();
 				String expr = tokens.subSequence(posColon + 1, tokens.count()).concatenate().trim();
-				if (Function.testIdentifier(name, null)) {
+				if (Function.testIdentifier(name, false, null)) {
 					components.put(name, expr);
 					// START KGU#559 2018-07-20: Enh. #563 Stop associating from type as soon as an explicit name is given
 					guessComponents = false;
@@ -3510,6 +3523,12 @@ public abstract class Element {
 						specialSigns.add("'");
 						specialSigns.add("\"");
 						// START KGU#64 2015-11-03: See above
+						
+						// START KGU#872 2020-10-17: Enh. #872 operator symbols for C style
+						specialSigns.add("!=");
+						specialSigns.add("<=");
+						specialSigns.add(">=");
+						// END KGU#872 2020-10-17
 					}
 					// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
 					if (specialSignsCi == null) {
@@ -3550,9 +3569,31 @@ public abstract class Element {
 						parts.replaceAll("<>","\u2260");
 						parts.replaceAll("!=","\u2260");
 						parts.replaceAll("<=","\u2264");
-						parts.replaceAll(">=","\u2265");						
+						parts.replaceAll(">=","\u2265");
 					}
 					// END KGU#377 2017-03-30
+					// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
+					if (E_SHOW_C_OPERATORS) {
+						if (!(_this instanceof Instruction && ((Instruction)_this).isTypeDefinition())) {
+							// Don't replace '=' in type definitions!
+							parts.replaceAll("=", "==");
+						}
+						parts.replaceAll("\u2190", "=");
+						parts.replaceAll(":=", "=");
+						parts.replaceAll("\u2260", "!=");
+						parts.replaceAll("<>", "!=");
+						parts.replaceAll("\u2264", "<=");
+						parts.replaceAll("\u2265", ">=");
+						parts.replaceAllCi("not", "!");
+						parts.replaceAllCi("and", "&&");
+						parts.replaceAllCi("or", "||");
+						parts.replaceAllCi("xor", "^");
+						parts.replaceAllCi("div", "/");
+						parts.replaceAllCi("mod", "%");
+						parts.replaceAllCi("shl", "<<");
+						parts.replaceAllCi("shr", ">>");
+					}
+					// END KGU#872 2020-10-17
 
 					// START KGU#701 2019-03-29: Issue #718 concatenate normal text parts
 					StringBuilder normalText = new StringBuilder();
@@ -3666,7 +3707,7 @@ public abstract class Element {
 							}
 							// END KGU 2015-11-12
 							// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
-							else if (E_APPLY_ALIASES && Function.testIdentifier(display, "#")) {
+							else if (E_APPLY_ALIASES && Function.testIdentifier(display, false, "#")) {
 								int j = i;
 								while (j < parts.count() && parts.get(++j).trim().isEmpty());
 								if (j < parts.count() && parts.get(j).equals("(")) {
@@ -4406,7 +4447,7 @@ public abstract class Element {
 			TypeMapEntry entry = typeMap.get(varName);
 			// Get the referred type entry in case typeSpec is a previously defined type
 			TypeMapEntry typeEntry = null;
-			if (Function.testIdentifier(typeSpec, null)) {
+			if (Function.testIdentifier(typeSpec, false, null)) {
 				typeEntry = typeMap.get(":" + typeSpec);
 			}
 			if (entry == null) {
@@ -4458,7 +4499,7 @@ public abstract class Element {
 					if (i < compTypes.count()) {
 						String type = compTypes.get(i);
 						if (type != null) {
-							if (Function.testIdentifier(type, null)) {
+							if (Function.testIdentifier(type, false, null)) {
 								// Try to find an existing type entry with this name
 								compEntry = typeMap.get(":" + type);
 								if (compEntry == null) {

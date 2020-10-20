@@ -45,6 +45,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
  *      Kay Gürtzig     2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürtzig     2020-04-03      Enh. #828: Configuration for group export
+ *      Kay Gürtzig     2020-10-19      Bugfix #877: Division by zero exception on batch export (Alternative)
  *
  ******************************************************************************************************
  *
@@ -339,16 +340,28 @@ public class TexGenerator extends Generator {
 			int gradient = Math.max(1, 8 - 2 * nCondLines);
 			// START KGU#483 2017-12-31: Issue #497 - this was too simple and inadequate - we should estimate the actual width ratio
 			//code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
-			int depth = Element.getNestingDepth(_alt);
-			gradient = Math.max(1, gradient / Math.max(1, depth));
-			int lWidth = _alt.qTrue.getRect().getRectangle().width;
-			int rWidth = _alt.qFalse.getRect().getRectangle().width;
-			int lRatio = Math.max(1, 2 * gradient * lWidth / (lWidth + rWidth));
-			int rRatio = 2 * gradient - lRatio;
-			if (gradient == 6 || depth > 2) {
-				code.add(_indent + "% Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \\ifthenelse{3}{3}... or \\ifthenelse[10]{" + lRatio + "}{" + rRatio +"}...");
+			// START KGU#881 2020-10-19: Bugfix #877 - the new mechanism fails in batch mode as it is based on drawing
+			if (_alt.getRect().right == 0) {
+				code.add(_indent + "\\ifthenelse{" + gradient + "}{" + gradient + "}{\\("
+						+ transform(condLines.getLongString()) + "\\)}{"
+						+ Element.preAltT + "}{" + Element.preAltF + "}");
 			}
-			code.add(_indent + "\\ifthenelse{" + lRatio + "}{" + rRatio + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+			else {
+			// END KGU#881 2020-10-19
+				// This works only in interactive mode when elements have been drawn
+				int depth = Element.getNestingDepth(_alt);
+				gradient = Math.max(1, gradient / Math.max(1, depth));
+				int lWidth = _alt.qTrue.getRect().getRectangle().width;
+				int rWidth = _alt.qFalse.getRect().getRectangle().width;
+				int lRatio = Math.max(1, 2 * gradient * lWidth / (lWidth + rWidth));
+				int rRatio = 2 * gradient - lRatio;
+				if (gradient == 6 || depth > 2) {
+					code.add(_indent + "% Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \\ifthenelse{3}{3}... or \\ifthenelse[10]{" + lRatio + "}{" + rRatio +"}...");
+				}
+				code.add(_indent + "\\ifthenelse{" + lRatio + "}{" + rRatio + "}{\\(" + transform(condLines.getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
+			// START KGU#881 2020-10-19: Bugfix #877
+			}
+			// END KGU#881 2020-10-19
 			// END KGU#483 2017-12-31
 			// END KGU#453 2017-11-02
 			generateCode(_alt.qTrue, indentPlus1);
@@ -415,7 +428,7 @@ public class TexGenerator extends Generator {
 				}
 				else {
 					valueList = items.concatenate(", ");
-					if (items.count() != 1 || !isStringLiteral(items.get(0)) && !Function.testIdentifier(items.get(0), null)) {
+					if (items.count() != 1 || !isStringLiteral(items.get(0)) && !Function.testIdentifier(items.get(0), false, null)) {
 						valueList = "\\{" + transform(valueList) + "\\}";
 					}
 					else {

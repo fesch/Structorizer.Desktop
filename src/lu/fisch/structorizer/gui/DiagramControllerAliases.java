@@ -508,7 +508,7 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 				int rowNo = table.getSelectedRow();
 				String newValue = (String)table.getModel().getValueAt(rowNo, 1);
 				if (newValue != null) {
-					if (!newValue.isEmpty() && !Function.testIdentifier(newValue, null)) {
+					if (!newValue.isEmpty() && !Function.testIdentifier(newValue, false, null)) {
 						JOptionPane.showMessageDialog(this,
 								msgIdentifierRequired.getText(),
 								ttlIllegalValues.getText(),

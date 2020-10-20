@@ -202,6 +202,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-04-28      Bugfix #865: On subroutine generation arguments true and false weren't recognised
  *      Kay Gürtzig     2020-05-02      Issue #866: Selection expansion / reduction mechanisms revised
  *      Kay Gürtzig     2020-06-03      Issue #868: Code import via files drop had to be disabled in restricted mode
+ *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode for operators (in C style)
+ *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
  *
  ******************************************************************************************************
  *
@@ -281,6 +283,7 @@ import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.archivar.Archivar;
+import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
@@ -574,7 +577,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/**
 	 * Replaces the current diagram ({@link #root}) by the given {@code root} unless
-	 * {@link Executor} is running or the user cancels the action on occasion of an
+	 * {@link Executor} is running or the user cancels the action on occasion of a
 	 * requested decision about unsaved changes of the recently held {@link #root}.
 	 * @param root - the {@link Root} to set
 	 * @return false if the user refuses to adopt {@code root} or the current {@link Root} is being executed
@@ -593,7 +596,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Replaces the current {@link Root} by the given {@code root} (if not null)
 	 * and updates all depending GUI elements.<br/>
 	 * CAUTION: Special interface for embedded use in Unimozer. Does not protect
-	 * unsaved changes to the recently held {@link Root}!
+	 * unsaved changes of the recently held {@link Root}!
 	 * @param root - The new {@link Root} object (NSD) to be shown.
 	 * @return true (no matter what happened)
 	 * @see #setRoot(Root, boolean, boolean)
@@ -639,7 +642,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (root != null)
 		{
 			// Save if something has been changed
-			if (!saveNSD(askToSave))
+			// START KGU#874 2020-10-18: Issue #875 Don't pester the user if root is arranged
+			//if (!saveNSD(askToSave))
+			boolean isArranged = Arranger.hasInstance()
+					&& Arranger.getInstance().getAllRoots().contains(root);
+			if ((!askToSave || !isArranged) && !saveNSD(askToSave))
+			// END KGU#874 2020-10-18
 			{
 				// Abort this if the user cancels the save request
 				return false;
@@ -1613,6 +1621,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (!root.isExecuted()) {
 			root.clearVarAndTypeInfo(false);
 		}
+		// START KGU#874 2020-10-18: Issue #875 Particularly the save buttons must be updated
+		this.doButtons();
+		// END KGU#874 2020-10-18
 		redraw();
 	}
 	// END KGU#703 2019-03-30
@@ -2499,6 +2510,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#316 2016-12-28: Enh. #318
 					root.shadowFilepath = null;
 					// END KGU#316 2016-12-28
+					// START KGU#874 2020-10-19: Enh. #875 set the signature from file name for dummies
+					replaceDummyHeader(root, f);
+					// END KGU#874 2020-10-19
 					// START KGU#94 2015.12.04: out-sourced to auxiliary method
 					// START KGU#320 2017-01-04: Bugfix #321(?) Need a parameter now
 					//doSaveNSD();
@@ -2520,6 +2534,45 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#248 2016-09-15
 		return result != JFileChooser.CANCEL_OPTION;
 	}
+	
+	// START KGU#874 2020-10-19: Issue #875 - try to make sense from the filename
+	/**
+	 * IN case {@code _root} has a dummy header (empty or "???"), we try to derive
+	 * a header from the name of the chosen target file {@code _file}
+	 * @param _root - the {@link Root} to be saved
+	 * @param _file - the chosen target file
+	 */
+	private void replaceDummyHeader(Root _root, File _file) {
+		String header = _root.getMethodName().trim();
+		if (header.isEmpty() || header.equals("???")) {
+			header = _file.getName();
+			// Remove the ".nsd" extension
+			header = header.substring(0, header.length()-4);
+			String argList = "";
+			if (_root.isSubroutine()) {
+				header = header.split(Matcher.quoteReplacement("" + Element.E_FILENAME_SIG_SEPARATOR), -1)[0];
+				// Try to infer arguments and result type
+				IRoutinePool pool = null;
+				if (Arranger.hasInstance()) {
+					pool = Arranger.getInstance();
+				}
+				StringList vars = _root.getUninitializedVars(pool);
+				// TODO: Infer the argument types and the result type
+				argList = "(" + vars.concatenate(", ") + ")";
+				vars = _root.getVarNames();
+				if (vars.contains(header) || vars.contains("result", false)) {
+					// TODO also check for return and identify the type
+					argList += ": ???";
+				}
+			}
+			if (Function.testIdentifier(header, false, null)) {
+				root.setText(header + argList);
+				this.invalidateAndRedraw();
+			}
+		}
+		
+	}
+	// END KGU#874 2020-10-19
 	
 	/**
 	 * In case of serial mode adds a checkbox to {@code fileChooser}
@@ -2631,9 +2684,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *========================================*/
 	
 	/**
-	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
-	 * inducing request. 
-	 * @param _askToSave - if true and the current root has unsaved changes then a user dialog will be popped up first
+	 * Stores unsaved changes (if any). If {@code _askToSave} is true then the user may
+	 * confirm or deny saving or cancel the inducing request. Otherwise unsaved changes
+	 * will silently stored.
+	 * @param _askToSave - if true and the current root has unsaved changes then a user
+	 * dialog will be popped up first
 	 * @return true if the user did not cancel the save request
 	 */
 	public boolean saveNSD(boolean _askToSave)
@@ -2708,6 +2763,48 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				
 				// START KGU#749 2019-10-13: Bugfix #763 - Also save in case of a stale file
 				//if (root.filename.equals(""))
+				// START KGU#874 2020-10-18: Issue #875 Special handling for virgin Roots in archive groups
+				boolean fileFaked = false;
+				if (!hasValidFile && isArrangerOpen()) {
+					Collection<Group> owners = Arranger.getInstance().getGroupsFromRoot(root, false);
+					/* If there is exactly one owning group except the default group
+					 * and this group resides in an archive file then we will prepare
+					 * the desired file paths for integration of the virgin diagram
+					 */
+					if (owners.size() == 1) {
+						File arrzFile = null;
+						for (Group owner: owners) {
+							if (!owner.isDefaultGroup()) {
+								arrzFile = owner.getArrzFile(true);
+							}
+						}
+						if (arrzFile != null) {
+							String fileName = root.proposeFileName();
+							// We won't accept a nonsense file name
+							if (!fileName.isEmpty() && !fileName.equals("???")) {
+								try {
+									/* Create a temporary file path */
+									File tempFile = File.createTempFile("Structorizer", ".nsd");
+									root.shadowFilepath = tempFile.getAbsolutePath();
+									/* Build the virtual file path (within the archive,
+									 * we hope there won't be a name collision)
+									 */
+									root.filename = arrzFile.getAbsolutePath() + File.separator + fileName + ".nsd";
+									fileFaked = true;
+									/* Remove the temporary file lest it should be regarded as update */
+									if (tempFile.exists()) {
+										tempFile.delete();
+									}
+									// Only if all preparations worked we will fake file validity
+									hasValidFile = true;
+								} catch (IOException exc) {
+									logger.log(Level.FINE, "No temporary file creatable", exc);
+								}
+							}
+						}
+					}
+				}
+				// END KGU#874 2020-10-18
 				if (!hasValidFile)
 				// END KGU#749 2019-10-13
 				{
@@ -2773,7 +2870,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
 					// START KGU#320 2017-01-04: Bugfix (#321) had to parameterize this
 					//doSaveNSD();
-					doSaveNSD(root);
+					// START KGU#874 2020-10-18: Issue #875
+					//doSaveNSD(root);
+					if (!doSaveNSD(root) && fileFaked) {
+						root.filename = "";
+						root.shadowFilepath = null;
+					}
+					// END KGU#874 2020-10-18
 					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
 				}
@@ -2785,13 +2888,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Service method for a decision about saving a file in a potential serial context.
 	 * @param _messageText - the text of the offered question if an interactive dialog is wanted at all, null otherwise
 	 * @param _initiator - an owning component for the modal message or question boxes
+	 * @param _aspect - the current serial action mode (of type {@link SerialDecisionAspect})
 	 * @return 0 for approval, 1 for disapproval, 2 for "yes to all", 3 for "no to all", -1 for cancel
 	 */
-	public static int requestSaveDecision(String _messageText, Component initiator, SerialDecisionAspect aspect) {
+	public static int requestSaveDecision(String _messageText, Component _initiator, SerialDecisionAspect _aspect) {
 		int res = 0;
 		// START KGU#534 2018-06-27: Enh. #552
 		if (_messageText != null && isInSerialMode()) {
-			switch (getSerialDecision(aspect)) {
+			switch (getSerialDecision(_aspect)) {
 			case NO_TO_ALL:
 				res = 1;
 				// NO break here!
@@ -2823,7 +2927,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				};
 			}
 			Object initialValue = options[0];
-			res = JOptionPane.showOptionDialog(initiator,
+			res = JOptionPane.showOptionDialog(_initiator,
 					_messageText,
 			// END KGU#49 2015-10-18
 					Menu.msgTitleQuestion.getText(),
@@ -2838,7 +2942,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					);
 		}
 		if (res >= 2) {
-			setSerialDecision(aspect, res == 2);
+			setSerialDecision(_aspect, res == 2);
 		}
 		return res;
 	}
@@ -2869,28 +2973,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (fileExisted && root.shadowFilepath == null)
 			// END KGU#316 2016-12-28
 			{
-				// START KGU#316 2016-12-28: Enh. #318 - temporary file designation simplified  
-//        		String tempDir = "";
-//        		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
-//        		{
-//        			tempDir = System.getenv(EnvVariablesToCheck[i]);
-//        		}
-//        		if ((tempDir == null || tempDir.isEmpty()) && this.currentDirectory != null)
-//        		{
-//        			File dir = this.currentDirectory;
-//        			if (dir.isFile())
-//        			{
-//        				tempDir = dir.getParent();
-//        			}
-//        			else
-//        			{
-//        				tempDir = dir.getAbsolutePath();
-//        			}
-//        		}
-//        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
 				File tmpFile = File.createTempFile("Structorizer", ".nsd");
 				filename = tmpFile.getAbsolutePath();
-				// END KGU#316 2016-12-28
 			}
 			FileOutputStream fos = new FileOutputStream(filename);
 			// END KGU#94 2015-12-04
@@ -3009,12 +3093,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmpZipFile));
 				Enumeration<? extends ZipEntry> entries = zipFile.entries();
 				// Copy all but the file to be updated
-				while(entries.hasMoreElements()) {
+				while (entries.hasMoreElements()) {
 					ZipEntry entryIn = entries.nextElement();
 					if (!entryIn.getName().equals(localPath)) {
 						zos.putNextEntry(entryIn);
 						InputStream is = zipFile.getInputStream(entryIn);
-						while((len = is.read(buf)) > 0) {            
+						while ((len = is.read(buf)) > 0) {
 							zos.write(buf, 0, len);
 						}
 						zos.closeEntry();
@@ -3338,6 +3422,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					break;
 				}
 			}
+			// START KGU#874 2020-10-18: Issue #875 We must also check groups!
+			if (!cond) {
+				for (Group group: Arranger.getSortedGroups()) {
+					if (!group.isDefaultGroup() && group.hasChanged()) {
+						cond = true;
+						break;
+					}
+				}
+			}
+			// END KGU#874 2020-10-18
 		}
 		return cond;
 	}
@@ -4169,7 +4263,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			do {
 				subroutineName = JOptionPane.showInputDialog(prompt);
 				prompt = hint + "\n" + prompt1;
-			} while (subroutineName != null && !Function.testIdentifier(subroutineName, null));
+			} while (subroutineName != null && !Function.testIdentifier(subroutineName, false, null));
 			if (subroutineName != null) {
 				try {
 					addUndoNSD(false);
@@ -4267,7 +4361,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String typeName = "";
 			TypeMapEntry varType = null;
 			String varName = subVars.get(i);
-			if (Function.testIdentifier(varName, "")) {
+			if (Function.testIdentifier(varName, false, "")) {
 				varType = parentTypes.get(varName);
 				if (varType != null) {
 					typeName = varType.getCanonicalType(true, true);
@@ -4307,7 +4401,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			do {
 				includableName = JOptionPane.showInputDialog(prompt);
 				prompt = hint + prompt1;
-			} while (includableName == null || !Function.testIdentifier(includableName, null));
+			} while (includableName == null || !Function.testIdentifier(includableName, false, null));
 			Root incl = null;
 			if (Arranger.hasInstance()) {
 				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
@@ -4472,7 +4566,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#864 2020-04-28: Bugfix #865
 					//if (!Function.testIdentifier(params.get(i), "")) {
 					String param = params.get(i);
-					if (!Function.testIdentifier(param, "") || param.equals("true") || param.equals("false")) {
+					if (!Function.testIdentifier(param, false, "") || param.equals("true") || param.equals("false")) {
 					// END KGU#864 2020-04-28
 						params.set(i, param = ("param" + (i+1)));
 					}
@@ -4487,7 +4581,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
 					lineTokens.removeAll(" ");
 					String var = Call.getAssignedVarname(lineTokens, true);
-					if (Function.testIdentifier(var, null)) {
+					if (Function.testIdentifier(var, false, null)) {
 						TypeMapEntry typeEntry = root.getTypeInfo().get(var);
 						result = typeEntry.getCanonicalType(true, true).replace("@", "array of ");
 						if (result == null) {
@@ -4910,7 +5004,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String discriminator = selTokens.concatenate().trim();
 		// If the discriminating expression isn't just a variable then assign its value to an
 		// artificial variable first and use this as discriminator further on.
-		if (!Function.testIdentifier(discriminator, ""))
+		if (!Function.testIdentifier(discriminator, false, ""))
 		{
 			String discrVar = "discr" + caseElem.hashCode();
 			asgnmt = new Instruction(discrVar + " <- " + discriminator);
@@ -7275,7 +7369,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/**
-	 * hecks the availability of a newer version on the download page and shows an
+	 * Checks the availability of a newer version on the download page and shows an
 	 * info box with the link to the download page of Structorizer if a new version
 	 * is available or {@code evenWithoutNewerVersion} is true.
 	 * @param evenWithoutNewerVersion - whether the infor box is always to be popped up.
@@ -8913,7 +9007,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	/**
 	 * Enables or disables the syntax higighting in the elements for all diagrams
-	 * @param _highlight - true to switch syntax mmarkup on, false to disable it
+	 * @param _highlight - true to switch syntax markup on, false to disable it
 	 */
 	public void setHightlightVars(boolean _highlight)
 	{
@@ -8925,6 +9019,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		NSDControl.doButtons();
 		redraw();
 	}
+
+	// START KGU#872 2020-10-17: Enh. #872 new display mode
+	/**
+	 * Enables or disables mode to display operators in C style
+	 * @param _operatorsC - true to switch operator display mode to C style, false to standard
+	 */
+	public void setOperatorDisplayC(boolean _operatorsC) {
+		Element.E_SHOW_C_OPERATORS = _operatorsC;
+		if (_operatorsC) {
+			Element.E_VARHIGHLIGHT = true;
+		}
+		this.resetDrawingInfo();
+		NSDControl.doButtons();
+		redraw();
+	}
+	// END KGU#872 2020-10-17
 
 	/**
 	 * Toggles the activation of the Analyser component (and the visibility of the Report list).
@@ -10642,4 +10752,5 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return keys;
 	}
 	// END KGU#466 2019-08-03
+
 }

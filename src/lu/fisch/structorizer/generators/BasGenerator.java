@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *                                          bugfix #790 line continuation according to #416 hadn't been considered,
  *                                          array initializers and record types hadn't been handled correctly
  *      Kay Gürtzig         2020-04-08      Issue #828 modifications supporting group export
+ *      Kay Gürtzig         2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *
  ******************************************************************************************************
  *
@@ -563,13 +564,13 @@ public class BasGenerator extends Generator
 							generateArrayInit(varName, exprTokens, _indent, disabled);
 						}
 						StringList compList = null;
-						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), null)
+						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), false, null)
 								&& exprTokens.get(exprTokens.count()-1).equals("}")
 								&& !(compList = exprTokens.subSequence(1, exprTokens.count()).trim()).isEmpty()
 								&& compList.get(0).equals("{");
 						if (isRecordInit) {
 							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
-							if (type != null && Function.testIdentifier(varName, null) && !this.wasDefHandled(root, varName, true)) {
+							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
 								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
 							}
 							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);
@@ -1079,18 +1080,24 @@ public class BasGenerator extends Generator
 				if (i == 0 && this.getOverloadingLevel() == OverloadingLevel.OL_NO_OVERLOADING && (routinePool != null)
 						&& line.endsWith(")")) {
 					Function call = _call.getCalledRoutine();
-					java.util.Vector<Root> callCandidates = 
-							routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
-					if (!callCandidates.isEmpty()) {
-						// FIXME We'll just fetch the very first one for now...
-						Root called = callCandidates.get(0);
-						StringList defaults = called.getParameterDefaults();
-						if (defaults.count() > call.paramCount()) {
-							// We just insert the list of default values for the missing arguments
-							line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
-									defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
+					if (call != null) {
+					// END KGU#877 2020-10-16
+						java.util.Vector<Root> callCandidates = 
+								routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						if (!callCandidates.isEmpty()) {
+							// FIXME We'll just fetch the very first one for now...
+							Root called = callCandidates.get(0);
+							StringList defaults = called.getParameterDefaults();
+							if (defaults.count() > call.paramCount()) {
+								// We just insert the list of default values for the missing arguments
+								line = line.substring(0, line.length()-1) + (call.paramCount() > 0 ? ", " : "") + 
+										defaults.subSequence(call.paramCount(), defaults.count()).concatenate(", ") + ")";
+							}
 						}
+					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 					}
+					// END KGU#877 2020-10-16
 				}
 				// END KGU#371 2019-03-08
 				// START KGU#778 2019-12-01: Bugfix #789 - The detection of function calls was corrupted by patch #385

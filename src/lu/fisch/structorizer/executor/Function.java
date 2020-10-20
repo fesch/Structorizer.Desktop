@@ -33,11 +33,12 @@ package lu.fisch.structorizer.executor;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
- *      Kay Gürtzig     2015.10.27      For performance reasons, now stores name and parsed parameters
- *      Kay Gürtzig     2015.11.13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
- *      Kay Gürtzig     2015.12.12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
- *      Kay Gürtzig     2016.12.22      KGU#311: New auxiliary method getSourceLength()
- *      Kay Gürtzig     2017.01.29      Enh. #335: Enhancements for better type analysis
+ *      Kay Gürtzig     2015-10-27      For performance reasons, now stores name and parsed parameters
+ *      Kay Gürtzig     2015-11-13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
+ *      Kay Gürtzig     2015-12-12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
+ *      Kay Gürtzig     2016-12-22      KGU#311: New auxiliary method getSourceLength()
+ *      Kay Gürtzig     2017-01-29      Enh. #335: Enhancements for better type analysis
+ *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check w.r.t. non-ascii letters
  *
  ******************************************************************************************************
  *
@@ -187,7 +188,7 @@ public class Function
 		// START KGU#61 2016-03-22: We must not accept names containing e.g. blanks
 		// (though dots as in method invocations should be accepted)
     	//return this.isFunc;
-    	return this.isFunc && testIdentifier(this.name, ".");
+    	return this.isFunc && testIdentifier(this.name, false, ".");
 		
 		// END KGU#61 2016-03-22
     	// END KGU#56 2015-10-27
@@ -214,7 +215,7 @@ public class Function
         // The test above is way too easy, it would also hold for e.g. "(a+b)*(c+d)";
         // So we restrict the result in the following
         if (isFunc) {
-        	isFunc = testIdentifier(expr.substring(0, posLP), null);
+        	isFunc = testIdentifier(expr.substring(0, posLP), false, null);
         	// Tokenize string between the outer parentheses 
         	StringList tokens = Element.splitLexically(expr.substring(posLP+1, expr.length()-1), true);
         	int parLevel = 0;	// parenthesis level, must never get < 0
@@ -368,14 +369,24 @@ public class Function
     /**
      * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and possibly dots)
      * @param _str - the identifier candidate
+     * @param _strictAscii - whether non-ascii letters are to be rejected
      * @param _alsoAllowedChars - a String containing additionally accepted characters (e.g. ".") or null
      * @return true iff _str complies with the strict identifier syntax convention (plus allowed characters)
      */
-    public static boolean testIdentifier(String _str, String _alsoAllowedChars)
+    public static boolean testIdentifier(String _str, boolean _strictAscii, String _alsoAllowedChars)
     {
     	_str = _str.trim().toLowerCase();
-    	boolean isIdent = !_str.isEmpty() &&
-    			('a' <= _str.charAt(0) && 'z' >= _str.charAt(0) || _str.charAt(0) == '_');
+    	// START KGU#877 2020-10-16: Bugfix #874 - we should tolerate non-ascii letters
+    	//boolean isIdent = !_str.isEmpty() &&
+    	//		('a' <= _str.charAt(0) && 'z' >= _str.charAt(0) || _str.charAt(0) == '_');
+    	boolean isIdent = false;
+    	if (!_str.isEmpty()) {
+    		char firstChar = _str.charAt(0);
+    		isIdent = ('a' <= firstChar && firstChar <= 'z')
+    				|| !_strictAscii && Character.isLetter(firstChar)
+    				|| firstChar == '_';
+    	}
+    	// END KGU#877 2020-10-16
     	if (_alsoAllowedChars == null)
     	{
     		_alsoAllowedChars = "";
@@ -385,6 +396,10 @@ public class Function
     		char currChar = _str.charAt(i);
     		if (!(
     				('a' <= currChar && currChar <= 'z')
+    				// START KGU#877 2020-10-16: Bugfix #874 - we should tolerate non-ascii letters
+    				||
+    				!_strictAscii && Character.isLetter(currChar)
+    				// END KGU#877 2020-10-16
     				||
     				('0' <= currChar && currChar <= '9')
     				||
