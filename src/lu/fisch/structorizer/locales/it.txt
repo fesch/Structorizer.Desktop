@@ -737,6 +737,9 @@ FindAndReplace.btnClose.text=Chiudere
 FindAndReplace.msgRegexCorrupt.text=Espressione regolare «%1» sembra invalida: %2
 FindAndReplace.ttlSearchError.text=Errore di ricerca
 
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Annulla
+
 -----> Arranger
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=

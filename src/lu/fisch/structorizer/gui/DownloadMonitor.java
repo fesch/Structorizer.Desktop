@@ -32,7 +32,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-10-20      First Issue
+ *      Kay Gürtzig     2020-10-20      First Issue (for #801 improvement)
+ *      Kay Gürtzig     2020-10-22      Sensible progress bar
  *
  ******************************************************************************************************
  *
@@ -43,12 +44,8 @@ package lu.fisch.structorizer.gui;
  *        an unreasonable time in comparison with a browser download of the same file - why?). So it
  *        had to be put in a background thread. Possibly it would be the best just to start it in the
  *        background and not mention it anymore - whatever time it takes.
- *        But well, I did the opposite: This little window contains just a indeterminate progress bar
- *        (no more information than a sand glass, but unfortunately we don't know the final size of the
- *        file in advance) and a cancel button. It places itself at the upper left screen corner and
- *        flickers dully along such that users may get inclined to cancel it.
- *        So may be it will not be used in the event unless we find a way to accelerate the download
- *        dramatically.
+ *        But well, I did the opposite and showed a progress bar in this little window placed at the
+ *        upper left corner.
  *
  ******************************************************************************************************///
 
@@ -80,10 +77,13 @@ public class DownloadMonitor extends LangDialog implements PropertyChangeListene
 	private SwingWorker<?,?> worker;
 	private JProgressBar progrBar;
 	private JButton btnCancel;
+	private long size = 0;
 
-	public DownloadMonitor(Frame owner, SwingWorker<?,?> downloadWorker, String caption)
+	public DownloadMonitor(Frame owner, SwingWorker<?,?> downloadWorker, String caption, long expectedSize)
 	{
+		super(owner);
 		worker = downloadWorker;
+		size = expectedSize;
 		
 		initComponents();
 		
@@ -122,6 +122,7 @@ public class DownloadMonitor extends LangDialog implements PropertyChangeListene
 		progrBar.setValue(0);
 		progrBar.setStringPainted(true);
 		progrBar.setString("");
+		progrBar.setIndeterminate(true);
 		
 		btnCancel = new JButton("Cancel");
 		btnCancel.addActionListener(new ActionListener() {
@@ -129,12 +130,8 @@ public class DownloadMonitor extends LangDialog implements PropertyChangeListene
 			public void actionPerformed(ActionEvent evt) {
 				worker.cancel(true);
 				progrBar.setIndeterminate(false);
-				progrBar.setValue(30);
+				//progrBar.setValue(30);
 				btnCancel.setEnabled(false);
-				JOptionPane.showMessageDialog(getOwner(),
-						Menu.msgDownloadFailed.getText().replace("%", Menu.lblCancel.getText()),
-						getTitle(),
-						JOptionPane.WARNING_MESSAGE);
 				setVisible(false);
 				dispose();
 			}});
@@ -150,22 +147,34 @@ public class DownloadMonitor extends LangDialog implements PropertyChangeListene
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() == worker && "state".equals(evt.getPropertyName())) {
-			System.out.println("Property Change received: "
-					+ evt.getPropertyName() + "-->" + evt.getNewValue().toString());
-			if (SwingWorker.StateValue.STARTED == evt.getNewValue()) {
-				progrBar.setIndeterminate(true);
+		if (evt.getSource() == worker) {
+			if ("state".equals(evt.getPropertyName())) {
+				//System.out.println("Property Change received: "
+				//		+ evt.getPropertyName() + "-->" + evt.getNewValue().toString());
+				if (SwingWorker.StateValue.STARTED == evt.getNewValue()) {
+					progrBar.setIndeterminate(false);
+					progrBar.setString("0 %");
+				}
+				else if (SwingWorker.StateValue.DONE == evt.getNewValue()
+						&& !worker.isCancelled()) {
+//					progrBar.setIndeterminate(false);
+//					progrBar.setValue(100);
+					progrBar.setString("100 %");
+					btnCancel.setEnabled(false);
+					setVisible(false);
+					dispose();
+				}
 			}
-			else if (SwingWorker.StateValue.DONE == evt.getNewValue()
-					&& !worker.isCancelled()) {
-				progrBar.setIndeterminate(false);
-				progrBar.setValue(100);
-				JOptionPane.showMessageDialog(getOwner(),
-						Menu.msgDownloadComplete.getText(),
-						getTitle(),
-						JOptionPane.INFORMATION_MESSAGE);
-				setVisible(false);
-				dispose();
+			else if ("progress".equals(evt.getPropertyName()) && size > 0) {
+				Object value = evt.getNewValue();
+				if (value instanceof Long) {
+					int percentage = (int)Math.min((100 * ((Long)value).intValue() / size), 100);
+					progrBar.setValue(percentage);
+					// We better avoid the misconception that the transfer is ready
+					if (percentage < 100) {
+						progrBar.setString(percentage + " %");
+					}
+				}
 			}
 		}
 	}

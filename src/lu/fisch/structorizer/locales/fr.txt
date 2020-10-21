@@ -662,6 +662,9 @@ FindAndReplace.chkElementTypes.9.text=@{Jump}
 FindAndReplace.chkElementTypes.10.text=@{Parallel}
 FindAndReplace.chkElementTypes.11.text=@{Try}
 
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Annuler
+
 -----> Arranger
 -----[ Surface ]-----
 Surface.msgFileLoadError.text=
@@ -680,6 +683,7 @@ Surface.msgUnsavedDiagrams.text=
 Surface.msgUnsavedHint.text=
 Surface.msgUnsavedContinue.text=
 Surface.msgNoArrFile.text=
+
 -----> Executor
 -----[ Control ]-----
 Control.lblSpeed.text=
@@ -755,3 +759,4 @@ ParserKeywords.JumpExit.text=exit
 ParserKeywords.JumpThrow.text=lancer
 ParserKeywords.Input.text=lire
 ParserKeywords.Output.text=écrire
+

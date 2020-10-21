@@ -331,8 +331,6 @@ Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=Не удался показать "%" в браузер.
 Menu.msgShowingOfflineGuide.text=Недавно ​скачанный PDF-документ руководства показывается (в вашем PDF-Reader).
 Menu.msgDownloadFailed.text=Не удался скачать руководство:\n%
-Menu.msgDownloadComplete.text=Закачивание нового руководства окончено.
-Menu.msgCancelled.text=Отменено
 Menu.msgHostNotAvailable.text=Веб-сайт "%" нет доступным.
 Menu.hdrRefactoringTable.0.text=
 Menu.hdrRefactoringTable.1.text=
@@ -1163,6 +1161,9 @@ FindAndReplace.btnReplaceAll.tooltip=
 FindAndReplace.btnClose.text=
 FindAndReplace.msgRegexCorrupt.text=
 FindAndReplace.ttlSearchError.text=
+
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Отменить
 
 -----> Arranger
 -----[ Arranger ]-----

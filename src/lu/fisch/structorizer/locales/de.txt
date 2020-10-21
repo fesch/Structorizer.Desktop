@@ -389,7 +389,6 @@ Menu.msgErrorNoFile.text=Datei nicht gefunden!
 Menu.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert
 Menu.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (im PDF-Betrachter).
 Menu.msgDownloadFailed.text=Das Herunterladen des Nutzerhandbuchs als PDF ist gescheitert:\n%
-Menu.msgDownloadComplete.text=Das Herunterladen des neuen Nutzehandbuchs ist abgeschlossen.
 Menu.msgCancelled.text=Abgebrochen
 Menu.msgHostNotAvailable.text=Die Adresse "%" ist nicht erreichbar.
 Menu.hdrRefactoringTable.0.text=Referenz
@@ -1231,6 +1230,9 @@ FindAndReplace.btnReplaceAll.tooltip=Ersetzt alle restlichen Vorkommen des Suchm
 FindAndReplace.btnClose.text=Schließen
 FindAndReplace.msgRegexCorrupt.text=Der reguläre Ausdruck «%1» scheint inkorrekt: %2
 FindAndReplace.ttlSearchError.text=Suchfehler
+
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Abbrechen
 
 -----> Arranger
 -----[ Arranger ]-----

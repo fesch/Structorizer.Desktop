@@ -392,7 +392,6 @@ Menu.msgErrorNoFile.text=¡Archivo no encontrado!
 Menu.msgBrowseFailed.text=Mostrar "%" en el browser no logró.
 Menu.msgShowingOfflineGuide.text=La versión PDF del manual más reciéntemente descargada es presentada en su lugar (PDF reader).
 Menu.msgDownloadFailed.text=No fue posible descargar el manual:\n%
-Menu.msgDownloadComplete.text=El nuevo manual está descargado complétamente.
 Menu.msgCancelled.text=Cancelado
 Menu.msgHostNotAvailable.text=El sitio web "%" no es alcanzable.
 Menu.hdrRefactoringTable.0.text=Referencia
@@ -1216,6 +1215,9 @@ FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
 FindAndReplace.btnReplaceAll.text=Reemplazar todos
 FindAndReplace.btnReplaceAll.tooltip=Reemplaza todas aparencias restantes del texto de búsqueda a partir de la posición actual en la puesta dirección.
 FindAndReplace.btnClose.text=Cerrar
+
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Cancelar
 
 -----> Arranger
 -----[ Arranger ]-----

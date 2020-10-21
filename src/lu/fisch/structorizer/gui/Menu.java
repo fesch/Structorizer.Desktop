@@ -659,7 +659,6 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgShowingOfflineGuide = new LangTextHolder("A recently downloaded User Guide is shown by your PDF reader instead.");
 	public static final LangTextHolder msgDownloadFailed = new LangTextHolder("Failed to download the User Guide:\n%");
 	// START KGU#791 2020-10-20: Issue #801 Download done in an additional thread now.
-	public static final LangTextHolder msgDownloadComplete = new LangTextHolder("Download of the new User Guide version complete.");
 	public static final LangTextHolder msgCancelled = new LangTextHolder("Cancelled");
 	// END KGU#791 2020-10-20
 	public static final LangTextHolder msgHostNotAvailable = new LangTextHolder("Host \"%\" not accessible.");

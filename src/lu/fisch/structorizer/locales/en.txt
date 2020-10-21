@@ -388,7 +388,6 @@ Menu.msgErrorNoFile.text=File not found!
 Menu.msgBrowseFailed.text=Failed to show "%" in browser
 Menu.msgShowingOfflineGuide.text=A recently downloaded User Guide is shown by your PDF reader instead.
 Menu.msgDownloadFailed.text=Failed to download the User Guide:\n%
-Menu.msgDownloadComplete.text=Download of the new User Guide version complete.
 Menu.msgCancelled.text=Cancelled
 Menu.msgHostNotAvailable.text=Host "%" not accessible.
 Menu.hdrRefactoringTable.0.text=Reference
@@ -1231,6 +1230,9 @@ FindAndReplace.btnReplaceAll.tooltip=Replaces all remaining occurrences of the s
 FindAndReplace.btnClose.text=Close
 FindAndReplace.msgRegexCorrupt.text=Regular expression «%1» seems invalid: %2
 FindAndReplace.ttlSearchError.text=Search Error
+
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Cancel
 
 -----> Arranger
 -----[ Arranger ]-----
