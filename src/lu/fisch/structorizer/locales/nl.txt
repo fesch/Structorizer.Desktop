@@ -1141,6 +1141,9 @@ FindAndReplace.btnClose.text=Sluiten
 FindAndReplace.msgRegexCorrupt.text=Reguliere expressie «%1» lijkt ongeldig: %2
 FindAndReplace.ttlSearchError.text=Zoekfout
 
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Annuleren
+
 -----> Arranger
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nieuw diagram

@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-11 (2020-10-20)
+Current development version: 3.30-12 (2020-11-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -132,10 +132,12 @@ Current development version: 3.30-11 (2020-10-20)
 - 11: Bugfix #874: Error on code export/preview of CALLs with non-ascii names,
       identifiers with non-ascii letters now tolerated but warned <2>
 - 11: Bugfix #875: Saving policy mended for virgin group members and groups,
-      unnessesary save requests on replacing diagrams in work area avoided <2>
-- 11: Bugfix #876: Defective saving and restoring of Ini properties from menu <2>
+      unnecessary save requests on replacing diagrams in work area avoided <2>
+- 11: Bugfix #876: Defective saving and restoring of Ini properties via menu <2>
 - 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
 - 11: Issue #879: Bad handling of user input looking like a record initializer <2>
+- 12: Issue #801: User Guide download now with progress bar in background <2>
+- 12: Issue #881: Highlighting of bit operators and Boolean literals <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

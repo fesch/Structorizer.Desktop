@@ -618,7 +618,11 @@ FindAndReplace.chkElementTypes.9.text=@{Jump}
 FindAndReplace.chkElementTypes.10.text=@{Parallel}
 FindAndReplace.chkElementTypes.11.text=@{Try}
 
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Storno
+
 -----> Arranger
+-----[ Surface ]-----
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=
 Surface.msgSaveDialogTitle.text=
