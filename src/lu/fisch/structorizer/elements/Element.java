@@ -2964,7 +2964,7 @@ public abstract class Element {
 	 * If the last result element is empty in mode {@code _appendTail} then the expression list was syntactically
 	 * "clean".<br/>
 	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
-	 * @param _text - string containing one or more expressions
+	 * @param _tokens - tokenized text, supposed to contain one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).

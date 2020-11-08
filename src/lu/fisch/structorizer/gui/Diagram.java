@@ -204,7 +204,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-03      Issue #868: Code import via files drop had to be disabled in restricted mode
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode for operators (in C style)
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
- *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread 
+ *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
  *
  ******************************************************************************************************
  *
