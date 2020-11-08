@@ -335,6 +335,13 @@ public class PHPGenerator extends Generator
 						}
 					}
 				}
+				else if (token.equals("randomize")) {
+					k = i;	// Skip all following blanks
+					while (k+1 < tokens.count() && tokens.get(++k).trim().isEmpty());
+					if (k < tokens.count() && tokens.get(k).equals("(")) {
+						tokens.set(i, "srand");
+					}
+				}
 				// END KGU#885 2020-11-08
 			}
 			
