@@ -71,7 +71,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *      Kay Gürtzig             2020-04-05      Enh. #828: Preparations for group export (modified include mechanism)
  *      Kay Gürtzig             2020-04-06/07   Bugfixes #843, #844: Global declarations and record/array types
- *      Kay Gürtzig             2020-11-08      Issue #882: Correct translation of random function calls
+ *      Kay Gürtzig             2020-11-08/09   Issue #882: Correct translation of random function calls,
+ *                                              also: randomize -> srand, toDegrees -> rad2deg, toRadians -> deg2rad
  *
  ******************************************************************************************************
  *
@@ -316,30 +317,36 @@ public class PHPGenerator extends Generator
 					i += (k - i) + 1;	// This corrects the current index w.r.t. insertions and deletions 
 				}
 				// START KGU#885 2020-11-08: Issue #882 - transform the random function
-				else if (token.equals("random")) {
+				else {
+					// Check whether it looks like a function
 					k = i;	// Skip all following blanks
 					while (k+1 < tokens.count() && tokens.get(++k).trim().isEmpty());
 					if (k < tokens.count() && tokens.get(k).equals("(")) {
-						StringList exprs = Element.splitExpressionList(tokens.subSequence(k+1, tokens.count()), ",", true);
-						if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
-							// Syntax seems to be okay, so ...
-							tokens.set(i, "rand");	// Replace "random" by "rand", ...
-							tokens.remove(k+1, tokens.count());	// clear all that follows the "("
-							tokens.add("0");		// ... insert a first argument 0,
-							tokens.add(",");		// ... the argument separator, and ...
-							tokens.add(" ");
-							// ... the argument of random, reduced by 1, ...
-							tokens.add(Element.splitLexically("(" + exprs.get(0) + ") - 1", true));
-							// ... and finally the re-tokenized tail
-							tokens.add(Element.splitLexically(exprs.get(1), true));
+						// It is a function or procedure call, k is the "(" index
+						if (token.equals("random")) {
+							StringList exprs = Element.splitExpressionList(tokens.subSequence(k+1, tokens.count()), ",", true);
+							if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
+								// Syntax seems to be okay, so ...
+								tokens.set(i, "rand");	// Replace "random" by "rand", ...
+								tokens.remove(k+1, tokens.count());	// clear all that follows the "("
+								tokens.add("0");		// ... insert a first argument 0,
+								tokens.add(",");		// ... the argument separator, and ...
+								tokens.add(" ");
+								// ... the argument of random, reduced by 1, ...
+								tokens.add(Element.splitLexically("(" + exprs.get(0) + ") - 1", true));
+								// ... and finally the re-tokenized tail
+								tokens.add(Element.splitLexically(exprs.get(1), true));
+							}
 						}
-					}
-				}
-				else if (token.equals("randomize")) {
-					k = i;	// Skip all following blanks
-					while (k+1 < tokens.count() && tokens.get(++k).trim().isEmpty());
-					if (k < tokens.count() && tokens.get(k).equals("(")) {
-						tokens.set(i, "srand");
+						else if (token.equals("randomize")) {
+							tokens.set(i, "srand");
+						}
+						else if (token.equals("toDegrees")) {
+							tokens.set(i, "rad2deg");
+						}
+						else if (token.equals("toRadians")) {
+							tokens.set(i, "deg2rad");
+						}
 					}
 				}
 				// END KGU#885 2020-11-08
