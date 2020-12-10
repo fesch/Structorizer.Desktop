@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-12 (2020-11-09)
+Current development version: 3.30-12 (2020-12-10)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -139,6 +139,7 @@ Current development version: 3.30-12 (2020-11-09)
 - 12: Issue #801: User Guide download now with progress bar in background <2>
 - 12: Issue #881: Highlighting of bit operators and Boolean literals <2>
 - 12: Issue #882: Translation of the random function to PHP added [S. Roschewitz]2
+- 12: Bugfix #884: Flaws of header inference for virgin diagrams (#875) mended <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

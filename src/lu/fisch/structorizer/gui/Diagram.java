@@ -205,6 +205,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode for operators (in C style)
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
  *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
+ *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
  *
  ******************************************************************************************************
  *
@@ -2561,13 +2562,63 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// TODO: Infer the argument types and the result type
 				argList = "(" + vars.concatenate(", ") + ")";
 				vars = _root.getVarNames();
-				if (vars.contains(header) || vars.contains("result", false)) {
-					// TODO also check for return and identify the type
+				// START KGU#886 2020-12-10: Issue #884
+				//if (vars.contains(header) || vars.contains("result", false)) {
+				IElementVisitor returnFinder = new IElementVisitor() {
+					private int retLen = CodeParser.getKeyword("preReturn").length();
+					@Override
+					public boolean visitPreOrder(Element _ele) {
+						if (_ele instanceof Jump) {
+							StringList lines = _ele.getUnbrokenText();
+							for (int i = 0; i < lines.count(); i++) {
+								String line = lines.get(i);
+								if (Jump.isReturn(line)) {
+									// Stops and returns false if a value is returned
+									// TODO Try to identify the result type
+									return line.substring(retLen).trim().isEmpty();
+								}
+							}
+						}
+						return true;
+					}
+
+					@Override
+					public boolean visitPostOrder(Element _ele) {
+						return true;
+					}
+					
+				};
+				boolean lastElReturnsVal = false;
+				if (root.children.getSize() > 0) {
+					Element lastEl = root.children.getElement(root.children.getSize()-1);
+					if (lastEl instanceof Instruction) {
+						int retLen = CodeParser.getKeyword("preReturn").length();
+						StringList lines = lastEl.getUnbrokenText();
+						for (int i = 0; i < lines.count(); i++) {
+							String line = lines.get(i);
+							if (Jump.isReturn(line)) {
+								// Stops and detects if a value is returned
+								lastElReturnsVal = !line.substring(retLen).trim().isEmpty();
+								break;
+							}
+						}
+					}
+				}
+				if (vars.contains(header) || vars.contains("result", false)
+						|| lastElReturnsVal 
+						|| !_root.children.traverse(returnFinder)) {
+				// END KGU#886 2020-12-10: Issue #884
+					// TODO try to identify the type
 					argList += ": ???";
 				}
 			}
 			if (Function.testIdentifier(header, false, null)) {
+				// START KGU#886 2020-12-10: Bugfix #884
+				//root.setText(header + argList);
+				root.addUndo();
 				root.setText(header + argList);
+				this.analyse();
+				// END KGU#886 2020-12-10
 				this.invalidateAndRedraw();
 			}
 		}
