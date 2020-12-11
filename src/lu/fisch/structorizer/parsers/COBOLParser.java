@@ -6668,6 +6668,9 @@ public class COBOLParser extends CodeParser
 				// START KGU#847 2020-04-19 Issue #851/1: insert declarations for auxiliary variables
 				insertAuxVarDeclaration(itemId + suffix, "array of string");
 				// END KGU#847 2020-04-19				
+				// START KGU#847 2020-04-19 Issue #851/1: insert declarations for auxiliary variables
+				insertAuxVarDeclaration(itemId + suffix, "array of string");
+				// END KGU#847 2020-04-19				
 			}
 			assignments.add(asgnmt + tail);
 		} while (itemlRed != null);
