@@ -1469,11 +1469,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnInclude.setSelected(diagram.isInclude());
 		
 		// START KGU#872 2020-10-17: Enh. #872
-		lblSwitchComments.setEnabled(Element.E_TOGGLETC);
+		// START KGU#887 2020-12-11: Bugfix #885
+		//lblSwitchComments.setEnabled(Element.E_TOGGLETC);
+		lblSwitchComments.setEnabled(Element.E_TOGGLETC && !Element.E_COMMENTSPLUSTEXT);
+		// END KGU#887 2020-12-11
 		lblSwitchComments.setToolTipText(buildMessageWithMenuRef(
 				lblSwitchComments.isEnabled() ? ttSwitchComments : msgInactiveMode,
 				Menu.getLocalizedMenuPath(pathSwitchComments, null)));
-		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && !Element.E_TOGGLETC);
+		// START KGU#887 2020-12-11: Bugfix #885
+		//lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && !Element.E_TOGGLETC);
+		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS 
+				&& (!Element.E_TOGGLETC || Element.E_COMMENTSPLUSTEXT));
+		// END KGU#887 2020-12-11
 		lblOperatorsC.setToolTipText(buildMessageWithMenuRef(
 				lblOperatorsC.isEnabled() ? ttOperatorsC : msgInactiveMode,
 				Menu.getLocalizedMenuPath(pathOperatorsC, null)));
