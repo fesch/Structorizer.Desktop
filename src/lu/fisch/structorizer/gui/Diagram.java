@@ -2072,7 +2072,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#287 2017-01-09
 		dlgOpen.setDialogTitle(Menu.msgTitleOpen.getText());
 		// set directory
-		if(root.getFile()!=null)
+		if (root.getFile() != null)
 		{
 			dlgOpen.setCurrentDirectory(root.getFile());
 		}

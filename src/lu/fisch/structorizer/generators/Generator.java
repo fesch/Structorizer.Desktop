@@ -2656,25 +2656,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#395 2020-04-19: Enh. #357 Introduced for COBOLGenerator but of more general use
 	/**
 	 * Checks whether the given tokens represent a variable (i.e. some sort of
-	 * "lvalue"). If _mayBeQualified is true then a list of all sorts of access
-	 * qualifiers to the right are allowed (i.e. index access [...], component
-	 * access .&lt;name&gt;).<br/>
-	 * This is a mere syntactic check i.e. whether the occurring qualifiers meet
+	 * "lvalue"). If {@code _mayBeQualified} is {@code true} then a list of all
+	 * sorts of access qualifiers to the right are allowed (i.e. index access 
+	 * {@code [...]}, component access {@code .<name>}).<br/>
+	 * This is a mere syntactic check, i.e. whether the occurring qualifiers meet
 	 * the structure of the variable is not verified!
 	 * @param _tokens - the tokenized expression (without blanks!)
 	 * @param _mayBeQualified - whether qualifiers are allowed (see above)
-	 * @return true if the expression is a variable
+	 * @return {@code true} if the expression is a variable
 	 */
 	protected boolean isVariable(StringList _tokens, boolean _mayBeQualified, HashMap<String, TypeMapEntry> _typeMap) {
 		boolean isVar = false;
 		String token0 = null;
-		if (!_tokens.isEmpty() && Function.testIdentifier(token0 = _tokens.get(0), null)
+		if (!_tokens.isEmpty() && Function.testIdentifier(token0 = _tokens.get(0), true, null)
 				&& (varNames.contains(token0) || _typeMap != null && _typeMap.containsKey(token0))) {
 			if (_mayBeQualified) {
 				isVar = true;
 				_tokens = _tokens.subSequence(1, _tokens.count());
 				while (isVar && _tokens.count() > 1 && ".[".contains(token0 = _tokens.get(0))) {
-					if (token0.equals(".") && Function.testIdentifier(_tokens.get(1), null)) {
+					if (token0.equals(".") && Function.testIdentifier(_tokens.get(1), true, null)) {
 						// Okay, is a component access qualifier
 						_tokens.remove(0, 2);
 					}
