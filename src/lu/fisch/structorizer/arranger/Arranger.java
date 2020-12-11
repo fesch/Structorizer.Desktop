@@ -141,10 +141,6 @@ import lu.fisch.utils.StringList;
  * one and the same drawing area.
  * @author robertfisch
  */
-/**
- * @author kay
- *
- */
 @SuppressWarnings("serial")
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
 

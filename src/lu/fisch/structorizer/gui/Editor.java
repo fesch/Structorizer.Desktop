@@ -85,6 +85,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-03      Bugfix #868: Suppression of export / import now works without side-effect
  *      Kay Gürtzig     2020-06-06      Bugfix #868/#870: Suppression of group export had been forgotten.
  *      Kay Gürtzig     2020-10-17      Enh. #872: New toolbar with 2 display mode indicators
+ *      Kay Gürtzig     2020-12-11      Bugfix #885: Display mode indicator visibility mended
  *
  ******************************************************************************************************
  *
