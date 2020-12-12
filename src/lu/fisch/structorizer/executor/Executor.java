@@ -792,11 +792,11 @@ public class Executor implements Runnable
 				errText = errText.replace("?", " (\"" + root.getMethodName() + "\")?");
 			}
 			int res = JOptionPane.showOptionDialog(diagram,
-					   errText,
-					   mySelf.control.msgTitleQuestion.getText(),
-					   JOptionPane.YES_NO_OPTION,
-					   JOptionPane.QUESTION_MESSAGE,
-					   null,null,null);
+					errText,
+					mySelf.control.msgTitleQuestion.getText(),
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,null,null);
 			if (res == 0)
 			{
 				// START KGU 2018-08-08: If it had already been stopped make sure new start will be possible

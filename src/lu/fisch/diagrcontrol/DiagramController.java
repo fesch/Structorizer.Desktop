@@ -38,6 +38,7 @@ package lu.fisch.diagrcontrol;
  *      Kay Gürtzig     2018-03-21      Issue #463: console output replaced by standard JDK4 (= j.u.l.) logging
  *      Kay Gürtzig     2018-10-12      Issue #622: Logging of API calls introduced (level CONFIG)
  *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
+ *      Kay Gürtzig     2020-12-11      Enh. #443: deprecated methods removed
  *
  ******************************************************************************************************
  *
@@ -324,8 +325,10 @@ public interface DiagramController
 	public default void requestFocus() {}
 	// END KGU#356 2019-03-02
 	
-	@Deprecated
-	public String execute(String message);
-	@Deprecated
-	public String execute(String message, Color color);
+// START KGU#448 2020-12-11 Eventually deleted
+//	@Deprecated
+//	public String execute(String message);
+//	@Deprecated
+//	public String execute(String message, Color color);
+// END KGU#448 2020-12-11
 }

@@ -19,9 +19,31 @@
 
 package lu.fisch.turtle.elements;
 
+/******************************************************************************************************
+ *
+ *      Author:         Robert Fisch
+ *
+ *      Description:    Line - a visible line in the Turtle graphics window
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle, Dimension)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *
+ ******************************************************************************************************///
+
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  *
@@ -47,4 +69,46 @@ public class Line extends Element
         graphics.drawLine(from.x, from.y, to.x, to.y);
     }
 
+    // START KGU#685 2020-12-11: Enh. #704
+    @Override
+    public void draw(Graphics2D graphics, Rectangle viewRect, Dimension dim)
+    {
+        graphics.setColor(color);
+        if (viewRect == null || viewRect.intersects(this.getBounds())) {
+            graphics.drawLine(from.x, from.y, to.x, to.y);
+        }
+        if (from.x > dim.width) {
+            dim.width = from.x;
+        }
+        if (to.x > dim.width) {
+            dim.width = to.x;
+        }
+        if (from.y > dim.height) {
+            dim.height = from.y;
+        }
+        if (to.y > dim.height) {
+            dim.height = to.y;
+        }
+    }
+
+    protected void appendSpecificCSVInfo(StringBuilder sb, String separator)
+    {
+        sb.append(separator);
+        sb.append(Integer.toHexString(color.getRGB()));
+    }
+
+    private Rectangle getBounds()
+    {
+        Rectangle bounds = new Rectangle(from);
+        bounds.add(to);
+        // We must avoid "empty" rectangles for intersection tests
+        if (bounds.height == 0) {
+            bounds.height = 1;
+        }
+        if (bounds.width == 0) {
+            bounds.width = 1;
+        }
+        return bounds;
+    }
+    // END KGU#685 2020-12-11
 }

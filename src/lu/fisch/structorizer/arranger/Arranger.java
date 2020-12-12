@@ -832,14 +832,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
 //		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
 //				vRect.y + ".." + (vRect.y + vRect.height));
-		double width = surface.getWidth() * surface.getZoom();
-		double height = surface.getHeight() * surface.getZoom();
-		Rect visRect = (new Rect(vRect)).scale(surface.getZoom());
+		double zoom = surface.getZoom();
+		double width = surface.getWidth() * zoom;
+		double height = surface.getHeight() * zoom;
+		Rect visRect = (new Rect(vRect)).scale(zoom);
 		statusSize.setText((int)width + " x " + (int)height);
 		statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
 				visRect.top + ".." + visRect.bottom);
 		// END KGU#624 2019-03-13
-		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
+		statusZoom.setText(String.format("%.1f %%", 100 / zoom));
 	}
 	
 	protected void updateStatusSelection() {
