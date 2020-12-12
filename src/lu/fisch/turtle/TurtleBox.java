@@ -95,7 +95,6 @@ import javax.swing.event.ChangeEvent;
 
 import lu.fisch.diagrcontrol.*;
 import lu.fisch.graphics.Rect;
-import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
@@ -182,10 +181,458 @@ public class TurtleBox implements DelayableDiagramController
 		}
 	}
 	// END KGU#417/KGU#448 2017-10-28
-	// START KGU#480 2018-01-16: Enh. #490 - frame now as attribute
+	// START KGU#885 2020-12-12: Enh. #704
+	//// START KGU#480 2018-01-16: Enh. #490 - frame now as attribute
+	///** The GUI frame - while null, it hasn't been materialized (light-weight instance) */
+	//private JFrame frame = null;
+	//// END KGU#480 2018-01-16
+	public static final class TurtleFrame extends JFrame
+	{
+		private JPanel panel;
+		// START KGU#685 2020-12-11: Enh. #704
+		private JScrollPane scrollarea;
+		private javax.swing.JPanel statusbar;
+		protected javax.swing.JLabel statusTurtle;
+		protected javax.swing.JLabel statusSize;
+		protected javax.swing.JLabel statusViewport;
+		protected javax.swing.JLabel statusZoom;
+		protected javax.swing.JLabel statusSelection;
+		private double zoomFactor = 1.0;
+		protected javax.swing.JPopupMenu popupMenu;
+		protected javax.swing.JMenuItem popupGotoCoord;
+		protected javax.swing.JMenuItem popupGotoTurtle;
+		protected javax.swing.JCheckBoxMenuItem popupShowTurtle;
+		protected javax.swing.JMenuItem popupExportCSV;
+		protected javax.swing.JMenu popupExportImage;
+		protected javax.swing.JMenuItem popupExportPNG;
+		protected javax.swing.JMenuItem popupExportSVG;
+		protected javax.swing.JCheckBoxMenuItem popupShowStatus;
+		protected javax.swing.JLabel lblOverwrite = new javax.swing.JLabel("File exists. Sure to overwrite?");
+		private File currentDirectory = null;
+
+		private TurtleBox owner;
+
+		public TurtleFrame(TurtleBox owner)
+		{
+			super();
+			this.owner = owner;
+			initComponents();
+			System.out.println(this.getClass().getSimpleName());
+		}
+
+		private void initComponents()
+		{
+			panel = new JPanel()
+			{
+				@Override
+				public void paint(Graphics graphics)
+				{
+					Graphics2D g = (Graphics2D) graphics;
+					// set anti-aliasing rendering
+					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+					// clear background
+					// START KGU#303 2016-12-02: Enh. #302
+					//g.setColor(Color.WHITE);
+					g.setColor(owner.backgroundColor);
+					// END KGU#303 2016-12-02
+					g.fillRect(0,0,getWidth(),getHeight());
+					// START KGU#303 2016-12-03: Enh. #302
+					//g.setColor(Color.BLACK);
+					g.setColor(owner.defaultPenColor);
+					// END KGU#303 2016-12-03
+
+					// START KGU#685 2020-12-11: Enh. #704
+					Dimension dim = new Dimension(owner.pos.x, owner.pos.y);
+					Rectangle visibleRect = g.getClipBounds();
+					// END KGU#685 2020-12-11
+
+					// draw all elements
+					// START KGU#449 2017-10-28: The use of iterators may lead to lots of
+					//java.util.ConcurrentModificationException errors slowing down all.
+					// So we better avoid the iterator and loop against a snapshot size
+					// (which is safe because the elements Vector can't shrink during execution).
+					//for (Element ele : elements)
+					//{
+					//    ele.draw(g);
+					//}
+					int nElements = owner.elements.size();
+					// START KGU#597 2018-10-12: Issue #622 - Monitoring drawing detention underMac
+					//logger.config("Painting " + nElements + " elements...");
+					// END KGU#597 2018-10-12
+					for (int i = 0; i < nElements; i++) {
+						// START KGU#685 2020-12-11: Enh. #704
+						//elements.get(i).draw(g);
+						owner.elements.get(i).draw(g, visibleRect, dim);
+						// END KGU#685 2020-12-11
+					}
+					// END KGU#449 2017-10-28
+
+					// START KGU#685 2020-12-11: Enh. #704
+					// Add some pixels for the scrollbars
+					dim.width += MARGIN;
+					dim.height += MARGIN;
+					this.setPreferredSize(dim);
+					this.revalidate();
+					// END KGU#685 2020-12-11
+
+					if (!owner.turtleHidden)
+					{
+						// START #272 2016-10-16
+						// fix drawing point
+						//int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
+						//int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
+						// fix drawing point
+						//int xRot = x+image.getWidth(this)/2;
+						//int yRot = y+image.getHeight(this)/2;
+						// apply rotation
+						//g.rotate((270-angle)/180*Math.PI,xRot,yRot);
+						// fix drawing point
+						double x = owner.posX - (owner.image.getWidth(this)/2);
+						double y = owner.posY - (owner.image.getHeight(this)/2);
+						// apply rotation
+						g.rotate((270-owner.angle)/180*Math.PI, owner.posX, owner.posY);
+						// END #272 2016-10-16
+						// draw the turtle
+						g.drawImage(owner.image,(int)Math.round(x),(int)Math.round(y),this);
+					}
+				}
+			};
+
+			panel.addMouseListener(new MouseListener() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+				}
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					if (e.isPopupTrigger() && popupMenu != null) {
+						popupMenu.show(e.getComponent(), e.getX(), e.getY());
+					}
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					if (e.isPopupTrigger() && popupMenu != null) {
+						popupMenu.show(e.getComponent(), e.getX(), e.getY());
+					}
+				}
+
+				@Override
+				public void mouseEntered(MouseEvent e) {
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e) {
+				}});
+
+			scrollarea = new JScrollPane(panel);
+			scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
+			scrollarea.setWheelScrollingEnabled(true);
+			scrollarea.setDoubleBuffered(true);
+			scrollarea.setBorder(BorderFactory.createEmptyBorder());
+			scrollarea.addMouseWheelListener(new MouseWheelListener() {
+				@Override
+				public void mouseWheelMoved(MouseWheelEvent mwEvt) {
+					if (mwEvt.isControlDown()) {
+						int rotation = mwEvt.getWheelRotation();
+						//	                    //if (Element.E_WHEEL_REVERSE_ZOOM) {
+						//    rotation *= -1;
+						//}
+						//	                    if (rotation >= 1) {
+						//	                    	mwEvt.consume();
+						//	                    	this.zoom(false);
+						//	                    }
+						//	                    else if (rotation <= -1) {
+						//	                    	mwEvt.consume();
+						//	                    	this.zoom(true);
+						//	                    }
+					}
+				}});
+			getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
+			panel.setAutoscrolls(true);
+			statusbar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+			//statusbar.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(java.awt.Color.DARK_GRAY),
+			//        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+			statusTurtle = new javax.swing.JLabel();
+			statusSize = new javax.swing.JLabel();
+			statusViewport = new javax.swing.JLabel();
+			statusZoom = new javax.swing.JLabel();
+			statusSelection = new javax.swing.JLabel("0");
+			statusTurtle.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			statusZoom.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+			statusTurtle.setToolTipText("Current turtle position");
+			statusSize.setToolTipText("Extension of the drawn area");
+			statusViewport.setToolTipText("Current scrolling viewport");
+			statusZoom.setToolTipText("Zoom factor");
+			statusSelection.setToolTipText("Number of selected lines");
+			statusbar.add(statusTurtle);
+			statusbar.add(statusSize);
+			statusbar.add(statusViewport);
+			//	        statusbar.add(statusZoom);
+			statusbar.add(statusSelection);
+			statusbar.setFocusable(false);
+			getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
+			scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent evt) {
+					updateStatusBar();
+				}
+			});
+
+			initPopupMenu();
+
+		}
+
+		/**
+		 * Updates all status information in the status bar
+		 */
+		private void updateStatusBar() {
+			statusTurtle.setText("(" + owner.pos.x + ", " + owner.pos.y + ") " + owner.getOrientation() + "°");
+			Dimension size = panel.getPreferredSize();
+			statusSize.setText((size.width - MARGIN) + " x " + (size.height - MARGIN));
+			scrollarea.getLocation();	// This is just to determine the current origin
+			java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+			Rect visRect = (new Rect(vRect)).scale(zoomFactor);
+			statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
+					visRect.top + ".." + visRect.bottom);
+			statusZoom.setText(String.format("%.1f %%", 100 / zoomFactor));
+			popupShowTurtle.setSelected(!owner.turtleHidden);
+		}
+
+		// START KGU#685 2020-12-11: Enh. #704
+		private void initPopupMenu()
+		{
+			popupMenu = new javax.swing.JPopupMenu();
+			popupGotoCoord = new javax.swing.JMenuItem("Scroll to coordinate ...");
+			popupGotoTurtle = new javax.swing.JMenuItem("Scroll to turtle position");
+			popupShowTurtle = new javax.swing.JCheckBoxMenuItem("Show turtle");
+			popupExportCSV = new javax.swing.JMenuItem("Export drawing intems as CSV ...");
+			popupExportImage = new javax.swing.JMenu("Export as image");
+			popupExportPNG = new javax.swing.JMenuItem("to PNG ...");
+			popupExportSVG = new javax.swing.JMenuItem("to SVG ...");
+
+			popupGotoCoord.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Point coord = askForCoordinate();
+					if (coord != null) {
+						coord.x = Math.max(MARGIN, Math.min(coord.x, panel.getWidth() - MARGIN));
+						coord.y = Math.max(MARGIN, Math.min(coord.y, panel.getHeight() - MARGIN));
+						panel.scrollRectToVisible(
+								new Rectangle(
+										coord.x - MARGIN, coord.y - MARGIN,
+										coord.x + MARGIN, coord.y + MARGIN
+										)
+								);
+					}
+				}});
+			popupMenu.add(popupGotoCoord);
+
+			popupGotoTurtle.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					panel.scrollRectToVisible(
+							new Rectangle(
+									owner.pos.x - MARGIN, owner.pos.y -MARGIN,
+									owner.pos.x + MARGIN, owner.pos.y + MARGIN
+									)
+							);
+				}});
+			popupMenu.add(popupGotoTurtle);
+
+			popupMenu.addSeparator();
+
+			popupShowTurtle.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					owner.turtleHidden = !popupShowTurtle.isSelected();
+					repaint();
+				}});
+			popupMenu.add(popupShowTurtle);
+
+			popupMenu.addSeparator();
+
+			popupExportCSV.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					exportCSV();
+				}});
+			popupMenu.add(popupExportCSV);
+
+			popupMenu.add(popupExportImage);
+			popupExportImage.add(popupExportPNG);
+			popupExportImage.add(popupExportSVG);
+			// TODO Implement the image export
+			popupExportImage.setEnabled(false);
+		}
+
+		/**
+		 * Asks the user for a target coordinate and returns the entered coordinate
+		 * as {@link Point} or its nearest point within the occupied area (if the
+		 * coordinate lie outside).
+		 * @return the {@link Point} representing the user input or {@code null} if
+		 * cancelled.
+		 */
+		protected Point askForCoordinate() {
+			Point point = null;
+			javax.swing.JPanel pnl = new javax.swing.JPanel();
+			pnl.setLayout(new java.awt.GridBagLayout());
+			java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+
+			gbc.gridx = 0;
+			gbc.gridy = 0;
+			gbc.gridwidth = 2;
+			gbc.weightx = 1;
+			gbc.weighty = 1;
+			gbc.anchor = java.awt.GridBagConstraints.LINE_START;
+			gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+			gbc.insets = new java.awt.Insets(1, 2, 2, 1);
+			javax.swing.JLabel lblPrompt = new javax.swing.JLabel("Target coordinate");
+			pnl.add(lblPrompt, gbc);
+			javax.swing.JTextField[] fields = new javax.swing.JTextField[2];
+
+			gbc.gridwidth = 1;
+			for (int row = 0; row < 2; row++) {
+				gbc.gridy++;
+				gbc.gridx = 0;
+				gbc.weightx = 0;
+				gbc.fill = java.awt.GridBagConstraints.NONE;
+				pnl.add(new javax.swing.JLabel((char)('x' + row) + ""), gbc);
+				gbc.gridx++;
+				gbc.weightx = 1;
+				gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+				fields[row] = new javax.swing.JTextField();
+				pnl.add(fields[row], gbc);
+			}
+
+			do {
+				boolean committed = JOptionPane.showConfirmDialog(this, pnl,
+						popupGotoCoord.getText(),
+						JOptionPane.OK_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION;
+				if (!committed) {
+					return null;
+				}
+				point = new Point();
+				for (int row = 0; row < fields.length; row++) {
+					try {
+						int coord = Integer.parseInt(fields[row].getText());
+						if (row == 0) {
+							point.x = coord;
+						}
+						else {
+							point.y = coord;
+						}
+						fields[row].setForeground(null);
+					}
+					catch (NumberFormatException ex) {
+						fields[row].setForeground(Color.RED);
+						point = null;
+						break;
+					}
+				}
+			} while (point == null);
+			return point;
+		}
+
+		/**
+		 * Exports the drawing elements and moves to a CSV file. Will open a
+		 * file chooser dialog first. May pop up a message box if something goes wrong.
+		 */
+		private void exportCSV()
+		{
+			JFileChooser fc = new JFileChooser();
+			fc.setDialogTitle(popupExportCSV.getText());
+			fc.setCurrentDirectory(currentDirectory);
+			int decision = fc.showSaveDialog(this);
+			if (decision == JFileChooser.APPROVE_OPTION) {
+				File chosen = fc.getSelectedFile();
+				if (chosen != null) {
+					Path path = chosen.toPath().toAbsolutePath();
+					Path name = path.getFileName();
+					String[] parts = name.toString().split("\\.", 0);
+					String ext = null;
+					if (parts.length < 2
+							|| !(ext = parts[parts.length-1]).equals("txt") && !ext.equals("csv")) {
+						path = new File(chosen.getParent().toString() + File.separator + name.toString() + ".txt").toPath();
+					}
+					// TODO: Check for overriding
+					if (Files.exists(path)) {
+						decision = JOptionPane.showConfirmDialog(this,
+								lblOverwrite.getText(),
+								popupExportCSV.getText(), JOptionPane.OK_CANCEL_OPTION);
+						if (decision != JOptionPane.OK_OPTION) {
+							return;
+						}
+					}
+					try (BufferedWriter bw = Files.newBufferedWriter(path)) {
+						bw.append("xFrom,yFrom,xTo,yTo,color\n");
+						int nElements = owner.elements.size();
+						for (int i = 0; i < nElements; i++) {
+							bw.append(owner.elements.get(i).toCSV(null));
+							bw.newLine();
+						}
+					} catch (IOException exc) {
+						String message = exc.getMessage();
+						if (message == null || message.isEmpty()) {
+							message = exc.toString();
+						}
+						JOptionPane.showMessageDialog(this, message,
+								popupExportCSV.getName(),
+								JOptionPane.ERROR_MESSAGE);
+					}
+					if (Files.exists(path) && !chosen.isDirectory()) {
+						currentDirectory = chosen.getParentFile();
+					}
+				}
+			}
+		}
+
+		/**
+		 * Repaints the turtle drawing and updates the status bar
+		 */
+		public void repaintAll()
+		{
+			panel.repaint();
+			updateStatusBar();
+		}
+
+	}
+
 	/** The GUI frame - while null, it hasn't been materialized (light-weight instance) */
-	private JFrame frame = null;
-	// END KGU#480 2018-01-16
+	private TurtleFrame frame = null;
+	/**
+	 * @return the used frame (e.g. for localization purposes), may be {@code null}.
+	 */
+	public JFrame getFrame()
+	{
+		return frame;
+	}
+	
+	/**
+	 * Adapt the GUI components to the current look and feel
+	 */
+	public void updateLookAndFeel()
+	{
+		if (frame != null) {
+			try {
+				javax.swing.SwingUtilities.updateComponentTreeUI(frame);
+				javax.swing.SwingUtilities.updateComponentTreeUI(frame.popupMenu);
+			}
+			catch (Exception ex) {}
+		}
+	}
+	// END KGU#685 2020-12-11
+
     private final String TITLE = "Turtleizer";
     
     // START KGU#685 2020-12-11: Enh. #704
@@ -210,28 +657,6 @@ public class TurtleBox implements DelayableDiagramController
     private boolean turtleHidden = false;
     private int delay = 10;
     private Vector<Element> elements = new Vector<Element>();
-    private JPanel panel;
-    // START KGU#685 2020-12-11: Enh. #704
-    private JScrollPane scrollarea;
-    private javax.swing.JPanel statusbar;
-    protected javax.swing.JLabel statusTurtle;
-    protected javax.swing.JLabel statusSize;
-    protected javax.swing.JLabel statusViewport;
-    protected javax.swing.JLabel statusZoom;
-    protected javax.swing.JLabel statusSelection;
-    private double zoomFactor = 1.0;
-    protected javax.swing.JPopupMenu popupMenu;
-    protected javax.swing.JMenuItem popupGotoCoord;
-    protected javax.swing.JMenuItem popupGotoTurtle;
-    protected javax.swing.JCheckBoxMenuItem popupShowTurtle;
-    protected javax.swing.JMenuItem popupExportCSV;
-    protected javax.swing.JMenu popupExportImage;
-    protected javax.swing.JMenuItem popupExportPNG;
-    protected javax.swing.JMenuItem popupExportSVG;
-    protected javax.swing.JCheckBoxMenuItem popupShowStatus;
-    protected javax.swing.JLabel lblOverwrite = new javax.swing.JLabel("File exists. Sure to overwrite?");
-    private File currentDirectory = null;
-    // END KGU#685 2020-12-11
 
     /**
      * This constructor does NOT realize a GUI, it just creates a light-weight instance
@@ -328,86 +753,12 @@ public class TurtleBox implements DelayableDiagramController
     {
         // START KGU#480 2018-01-16: Enh. #490 - care for the existence of a frame
         if (frame == null) {
-            frame = new JFrame();
+            // START KGU#685 2020-12-12
+            //frame = new JFrame();
+            frame = new TurtleFrame(this);
+            // END KGU#685 2020-12-12
         }
         // END KGU#480 2018-01-16
-        panel = new JPanel()
-        {
-            @Override
-            public void paint(Graphics graphics)
-            {
-                Graphics2D g = (Graphics2D) graphics;
-                // set anti-aliasing rendering
-                ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // clear background
-                // START KGU#303 2016-12-02: Enh. #302
-                //g.setColor(Color.WHITE);
-                g.setColor(backgroundColor);
-                // END KGU#303 2016-12-02
-                g.fillRect(0,0,getWidth(),getHeight());
-                // START KGU#303 2016-12-03: Enh. #302
-                //g.setColor(Color.BLACK);
-                g.setColor(defaultPenColor);
-                // END KGU#303 2016-12-03
-
-                // START KGU#685 2020-12-11: Enh. #704
-                Dimension dim = new Dimension(pos.x, pos.y);
-                Rectangle visibleRect = g.getClipBounds();
-                // END KGU#685 2020-12-11
-                
-                // draw all elements
-                // START KGU#449 2017-10-28: The use of iterators may lead to lots of
-                //java.util.ConcurrentModificationException errors slowing down all.
-                // So we better avoid the iterator and loop against a snapshot size
-                // (which is safe because the elements Vector can't shrink during execution).
-                //for (Element ele : elements)
-                //{
-                //    ele.draw(g);
-                //}
-                int nElements = elements.size();
-                // START KGU#597 2018-10-12: Issue #622 - Monitoring drawing detention underMac
-                //logger.config("Painting " + nElements + " elements...");
-                // END KGU#597 2018-10-12
-                for (int i = 0; i < nElements; i++) {
-                    // START KGU#685 2020-12-11: Enh. #704
-                    //elements.get(i).draw(g);
-                    elements.get(i).draw(g, visibleRect, dim);
-                    // END KGU#685 2020-12-11
-                }
-                // END KGU#449 2017-10-28
-
-                // START KGU#685 2020-12-11: Enh. #704
-                // Add some pixels for the scrollbars
-                dim.width += MARGIN;
-                dim.height += MARGIN;
-                this.setPreferredSize(dim);
-                this.revalidate();
-                // END KGU#685 2020-12-11
-
-                if (!turtleHidden)
-                {
-                    // START #272 2016-10-16
-                    // fix drawing point
-                    //int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
-                    //int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
-                    // fix drawing point
-                    //int xRot = x+image.getWidth(this)/2;
-                    //int yRot = y+image.getHeight(this)/2;
-                    // apply rotation
-                    //g.rotate((270-angle)/180*Math.PI,xRot,yRot);
-                    // fix drawing point
-                    double x = posX - (image.getWidth(this)/2);
-                    double y = posY - (image.getHeight(this)/2);
-                    // apply rotation
-                    g.rotate((270-angle)/180*Math.PI, posX, posY);
-                    // END #272 2016-10-16
-                    // draw the turtle
-                    g.drawImage(image,(int)Math.round(x),(int)Math.round(y),this);
-                }
-            }
-        };
-
         frame.setTitle(TITLE);
         //frame.setIconImage((new ImageIcon(this.getClass().getResource("turtle.png"))).getImage());
         frame.setIconImage(image);
@@ -424,238 +775,13 @@ public class TurtleBox implements DelayableDiagramController
         //panel.setDoubleBuffered(true);
         //panel.repaint();
         
-        panel.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.isPopupTrigger() && popupMenu != null) {
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger() && popupMenu != null) {
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }});
-        
-        scrollarea = new JScrollPane(panel);
-        scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
-        scrollarea.setWheelScrollingEnabled(true);
-        scrollarea.setDoubleBuffered(true);
-        scrollarea.setBorder(BorderFactory.createEmptyBorder());
-        scrollarea.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent mwEvt) {
-                if (mwEvt.isControlDown()) {
-                    int rotation = mwEvt.getWheelRotation();
-//                    //if (Element.E_WHEEL_REVERSE_ZOOM) {
-                    //    rotation *= -1;
-                    //}
-//                    if (rotation >= 1) {
-//                    	mwEvt.consume();
-//                    	this.zoom(false);
-//                    }
-//                    else if (rotation <= -1) {
-//                    	mwEvt.consume();
-//                    	this.zoom(true);
-//                    }
-                }
-            }});
-        frame.getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
-        panel.setAutoscrolls(true);
-        statusbar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        //statusbar.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(java.awt.Color.DARK_GRAY),
-        //        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
-        statusTurtle = new javax.swing.JLabel();
-        statusSize = new javax.swing.JLabel();
-        statusViewport = new javax.swing.JLabel();
-        statusZoom = new javax.swing.JLabel();
-        statusSelection = new javax.swing.JLabel("0");
-        statusTurtle.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
-                javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
-        statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
-                javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
-        statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
-                javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
-        statusZoom.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
-                javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
-        statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
-                new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
-        statusTurtle.setToolTipText("Current turtle position");
-        statusSize.setToolTipText("Extension of the drawn area");
-        statusViewport.setToolTipText("Current scrolling viewport");
-        statusZoom.setToolTipText("Zoom factor");
-        statusSelection.setToolTipText("Number of selected lines");
-        statusbar.add(statusTurtle);
-        statusbar.add(statusSize);
-        statusbar.add(statusViewport);
-//        statusbar.add(statusZoom);
-        statusbar.add(statusSelection);
-        statusbar.setFocusable(false);
-        frame.getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
-        scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent evt) {
-                updateStatusBar();
-            }
-        });
-        setPos(new Point(scrollarea.getWidth()/2, scrollarea.getHeight()/2));	// FIXME!
+        setPos(new Point(frame.scrollarea.getWidth()/2, frame.scrollarea.getHeight()/2));	// FIXME!
         home = new Point(pos.x, pos.y);
 
-        initPopupMenu();
-
-        repaint();
+        frame.repaintAll();
         // END KGU#685 2020-12-11
     }
 
-    // START KGU#685 2020-12-11: Enh. #704
-    private void initPopupMenu()
-    {
-        popupMenu = new javax.swing.JPopupMenu();
-        popupGotoCoord = new javax.swing.JMenuItem("Scroll to coordinate ...");
-        popupGotoTurtle = new javax.swing.JMenuItem("Scroll to turtle position");
-        popupShowTurtle = new javax.swing.JCheckBoxMenuItem("Show turtle");
-        popupExportCSV = new javax.swing.JMenuItem("Export list of drawing intems ...");
-        popupExportImage = new javax.swing.JMenu("Export as image");
-        popupExportPNG = new javax.swing.JMenuItem("to PNG ...");
-        popupExportSVG = new javax.swing.JMenuItem("to SVG ...");
-        
-        popupGotoCoord.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Point coord = askForCoordinate();
-                if (coord != null) {
-                    coord.x = Math.max(MARGIN, Math.min(coord.x, panel.getWidth() - MARGIN));
-                    coord.y = Math.max(MARGIN, Math.min(coord.y, panel.getHeight() - MARGIN));
-                    panel.scrollRectToVisible(
-                            new Rectangle(
-                                    coord.x - MARGIN, coord.y - MARGIN,
-                                    coord.x + MARGIN, coord.y + MARGIN
-                                    )
-                            );
-                }
-            }});
-        popupMenu.add(popupGotoCoord);
-
-        popupGotoTurtle.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                panel.scrollRectToVisible(
-                        new Rectangle(
-                                pos.x - MARGIN, pos.y -MARGIN,
-                                pos.x + MARGIN, pos.y + MARGIN
-                                )
-                        );
-            }});
-        popupMenu.add(popupGotoTurtle);
-
-        popupMenu.addSeparator();
-
-        popupShowTurtle.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                turtleHidden = !popupShowTurtle.isSelected();
-                repaint();
-            }});
-        popupMenu.add(popupShowTurtle);
-
-        popupMenu.addSeparator();
-
-        popupExportCSV.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                exportCSV();
-            }});
-        popupMenu.add(popupExportCSV);
-
-        popupMenu.add(popupExportImage);
-        popupExportImage.add(popupExportPNG);
-        popupExportImage.add(popupExportSVG);
-        // TODO Implement the image export
-        popupExportImage.setEnabled(false);
-    }
-
-    /**
-     * Asks the user for a target coordinate and returns the entered coordinate
-     * as {@link Point} or its nearest point within the occupied area (if the
-     * coordinate lie outside).
-     * @return the {@link Point} representing the user input or {@code null} if
-     * cancelled.
-     */
-    protected Point askForCoordinate() {
-        Point point = null;
-        javax.swing.JPanel pnl = new javax.swing.JPanel();
-        pnl.setLayout(new java.awt.GridBagLayout());
-        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.anchor = java.awt.GridBagConstraints.LINE_START;
-        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gbc.insets = new java.awt.Insets(1, 2, 2, 1);
-        javax.swing.JLabel lblPrompt = new javax.swing.JLabel("Target coordinate");
-        pnl.add(lblPrompt, gbc);
-        javax.swing.JTextField[] fields = new javax.swing.JTextField[2];
-
-        gbc.gridwidth = 1;
-        for (int row = 0; row < 2; row++) {
-            gbc.gridy++;
-            gbc.gridx = 0;
-            gbc.weightx = 0;
-            gbc.fill = java.awt.GridBagConstraints.NONE;
-            pnl.add(new javax.swing.JLabel((char)('x' + row) + ""), gbc);
-            gbc.gridx++;
-            gbc.weightx = 1;
-            gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-            fields[row] = new javax.swing.JTextField();
-            pnl.add(fields[row], gbc);
-        }
-
-        do {
-            boolean committed = JOptionPane.showConfirmDialog(frame, pnl,
-                    popupGotoCoord.getText(),
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION;
-            if (!committed) {
-                return null;
-            }
-            point = new Point();
-            for (int row = 0; row < fields.length; row++) {
-                try {
-                    int coord = Integer.parseInt(fields[row].getText());
-                    if (row == 0) {
-                        point.x = coord;
-                    }
-                    else {
-                        point.y = coord;
-                    }
-                    fields[row].setForeground(null);
-                }
-                catch (NumberFormatException ex) {
-                    fields[row].setForeground(Color.RED);
-                    point = null;
-                    break;
-                }
-            }
-        } while (point == null);
-        return point;
-    }
 
 	// END KGU#685 2020-12-11
     
@@ -685,13 +811,13 @@ public class TurtleBox implements DelayableDiagramController
 // END KGU#303 2016-12-03
         if (visible) {
             //home = new Point(panel.getWidth()/2, panel.getHeight()/2);
-            home = new Point(scrollarea.getWidth()/2, scrollarea.getHeight()/2);
+            home = new Point(frame.scrollarea.getWidth()/2, frame.scrollarea.getHeight()/2);
             // START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
             reinit();
             // END KGU#303 2016-12-03
             frame.paint(frame.getGraphics());
             // START KGU#685 2020-12-11: Enh. #704
-            updateStatusBar();
+            frame.updateStatusBar();
             // END KGU#685 2020-12-11
         }
     }
@@ -725,7 +851,7 @@ public class TurtleBox implements DelayableDiagramController
         //logger.config(panel + " enqueuing repaint()...");
         // START KGU#685 2020-12-11: Enh. #704
         //panel.repaint();
-        repaint();
+        frame.repaintAll();
         // END KGU#685 2020-12-11
         // END KGU#597 2018-10-12
         if (delay!=0)
@@ -857,7 +983,7 @@ public class TurtleBox implements DelayableDiagramController
         }
         // END KGU#480 2018-01-16
         backgroundColor = bgColor;
-        panel.repaint();
+        frame.panel.repaint();
     }
 
     /** Delayed API method to set the background colour from RGB values
@@ -884,7 +1010,7 @@ public class TurtleBox implements DelayableDiagramController
         }
         // END KGU#480 2018-01-16
         defaultPenColor = penColor;
-        panel.repaint();
+        frame.panel.repaint();
     }
 
     /**
@@ -1059,85 +1185,6 @@ public class TurtleBox implements DelayableDiagramController
     }
     // END KGU#356 2019-03-02
     
-    // START KGU#685 2020-12-11: Enh. #704 Status bar support
-    /**
-     * Repaints the turtle drawing and updates the status bar
-     */
-    private void repaint()
-    {
-        panel.repaint();
-        updateStatusBar();
-    }
-    
-    /**
-     * Updates all status information in the status bar
-     */
-    private void updateStatusBar() {
-        statusTurtle.setText("(" + pos.x + ", " + pos.y + ") " + this.getOrientation() + "°");
-        Dimension size = panel.getPreferredSize();
-        statusSize.setText((size.width - MARGIN) + " x " + (size.height - MARGIN));
-        scrollarea.getLocation();	// This is just to determine the current origin
-        java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
-        Rect visRect = (new Rect(vRect)).scale(zoomFactor);
-        statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
-               visRect.top + ".." + visRect.bottom);
-        statusZoom.setText(String.format("%.1f %%", 100 / zoomFactor));
-        popupShowTurtle.setSelected(!this.turtleHidden);
-    }
-
-    /**
-     * Exports the drawing elements and moves to a CSV file. Will open a
-     * file chooser dialog first. May pop up a message box if something goes wrong.
-     */
-    private void exportCSV()
-    {
-        JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle(popupExportCSV.getText());
-        fc.setCurrentDirectory(currentDirectory);
-        int decision = fc.showSaveDialog(frame);
-        if (decision == JFileChooser.APPROVE_OPTION) {
-            File chosen = fc.getSelectedFile();
-            if (chosen != null) {
-                Path path = chosen.toPath().toAbsolutePath();
-                Path name = path.getFileName();
-                String[] parts = name.toString().split("\\.", 0);
-                String ext = null;
-                if (parts.length < 2
-                        || !(ext = parts[parts.length-1]).equals("txt") && !ext.equals("csv")) {
-                    path = new File(chosen.getParent().toString() + File.separator + name.toString() + ".txt").toPath();
-                }
-                // TODO: Check for overriding
-                if (Files.exists(path)) {
-                    decision = JOptionPane.showConfirmDialog(frame,
-                            lblOverwrite.getText(),
-                            popupExportCSV.getText(), JOptionPane.OK_CANCEL_OPTION);
-                    if (decision != JOptionPane.OK_OPTION) {
-                        return;
-                    }
-                }
-                try (BufferedWriter bw = Files.newBufferedWriter(path)) {
-                    bw.append("xFrom,yFrom,xTo,yTo,color\n");
-                    int nElements = elements.size();
-                    for (int i = 0; i < nElements; i++) {
-                        bw.append(elements.get(i).toCSV(null));
-                        bw.newLine();
-                    }
-                } catch (IOException exc) {
-                    String message = exc.getMessage();
-                    if (message == null || message.isEmpty()) {
-                        message = exc.toString();
-                    }
-                    JOptionPane.showMessageDialog(frame, message,
-                            popupExportCSV.getName(),
-                            JOptionPane.ERROR_MESSAGE);
-                }
-                if (Files.exists(path) && !chosen.isDirectory()) {
-                    currentDirectory = chosen.getParentFile();
-                }
-            }
-        }
-    }
-    // END KGU#685 2020-12-11
 
 // START KGU#448 2020-12-11: Enh. #443 deprecated stuff disabled
 //    @Deprecated

@@ -243,7 +243,6 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -9915,6 +9914,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (turtle == null)
 		{
 			turtle = new TurtleBox(500,500);
+			// START KGU#685 2020-12-12: Enh. #704
+			Locales.getInstance().register(turtle.getFrame(), true);
+			// END KGU#685 2020-12-12
 		}
 		turtle.setVisible(true);
 		// Activate the executor (getInstance() is supposed to do that)
@@ -9924,8 +9926,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		goRun();
 		// END KGU#448 2018-01-05
 
-    }
-    
+	}
+
     /**
      * Checks for running status of the Root currently held and suggests the user to stop the
      * execution if it is running
@@ -10458,7 +10460,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/**
-	 * This only cares for the look and feel update of the Find&Replace dialog if it is open.
+	 * This only cares for the look and feel update of the Find&Replace dialog
+	 * (if it is open) and the Turtleizer.
 	 */
 	protected void updateLookAndFeel()
 	{
@@ -10470,6 +10473,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			catch (Exception ex) {}
 		}
+		// START KGU#685 2020-12-12: Enh. #704
+		if (this.turtle != null) {
+			this.turtle.updateLookAndFeel();
+		}
+		// END KGU#685 2020-12-12
 		if (this.codeHighlighter != null)
 		{
 			this.codeHighlighter = codePreview.getHighlighter();
