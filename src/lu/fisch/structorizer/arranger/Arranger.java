@@ -77,6 +77,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
  *      Kay Gürtzig     2019-10-05  Bugfix #759: Exception catch in routinePoolChanged() as emergency workaround
  *      Kay Gürtzig     2020-01-20  Enh. #801: Key F1 now tries to open the PDF help file if offline
+ *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
  *
  ******************************************************************************************************
  *
@@ -837,14 +838,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
 //				vRect.y + ".." + (vRect.y + vRect.height));
 		double zoom = surface.getZoom();
-		double width = surface.getWidth() * zoom;
-		double height = surface.getHeight() * zoom;
-		Rect visRect = (new Rect(vRect)).scale(zoom);
+		double width = surface.getWidth() / zoom;
+		double height = surface.getHeight() / zoom;
+		Rect visRect = (new Rect(vRect)).scale(1/zoom);
 		statusSize.setText((int)width + " x " + (int)height);
 		statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
 				visRect.top + ".." + visRect.bottom);
 		// END KGU#624 2019-03-13
-		statusZoom.setText(String.format("%.1f %%", 100 / zoom));
+		statusZoom.setText(String.format("%.1f %%", 100 * zoom));
 	}
 	
 	protected void updateStatusSelection() {
@@ -952,7 +953,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#497 2018-02-17: Enh. #513
     protected void btnZoomActionPerformed(ActionEvent evt) {
         surface.zoom((evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0);
-        if (surface.getZoom() <= 1 && this.isShiftPressed) {
+        if (surface.getZoom() >= 1 && this.isShiftPressed) {
             btnZoom.setEnabled(false);
         }
     }
@@ -1642,7 +1643,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
             // END KGU#534 2018-06-27
             this.isShiftPressed = true;
-            if (surface.getZoom() <= 1) {
+            if (surface.getZoom() >= 1) {
                 btnZoom.setEnabled(false);
             }
         }
@@ -2048,7 +2049,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public void updateProperties(Ini ini)
 	{
-		ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+		// For historical reasons, the ini property has still reverse meaning
+		ini.setProperty("arrangerZoom", Float.toString(1/surface.getZoom()));
 		// START KGU#623 2018-12-20: Enh. #654
 		ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
 		// END KGU#623 2018-12-20
