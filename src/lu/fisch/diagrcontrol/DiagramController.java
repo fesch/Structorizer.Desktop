@@ -39,6 +39,7 @@ package lu.fisch.diagrcontrol;
  *      Kay Gürtzig     2018-10-12      Issue #622: Logging of API calls introduced (level CONFIG)
  *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
  *      Kay Gürtzig     2020-12-11      Enh. #443: deprecated methods removed
+ *      Kay Gürtzig     2020-12-14      References to lu.fisch.util.StringList and java.awt.Color eliminated
  *
  ******************************************************************************************************
  *
@@ -52,13 +53,10 @@ package lu.fisch.diagrcontrol;
  *
  ******************************************************************************************************///
 
-import java.awt.Color;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import lu.fisch.utils.StringList;
 
 /**
  * Interface for classes that provide an API for being controlled e.g. by executed Structorizer
@@ -245,13 +243,22 @@ public interface DiagramController
 			Logger logger = Logger.getLogger(getClass().getName());
 			try {
 				// START KGU#597 2018-10-12: Issue #622 - better monitoring of controller activity
+				// START KGU#591/KGU#685 2020-12-14: Issues #622, #704: StringList replaced
 				if (logger.isLoggable(Level.CONFIG)) {
-					StringList argStrings = new StringList();
-					for (Object arg: arguments) {
-						argStrings.add(String.valueOf(arg));
+					StringBuilder sb = new StringBuilder();
+					sb.append("Executing ");
+					sb.append(name);
+					sb.append("(");
+					for (int i = 0; i < arguments.length; i++) {
+						if (i > 0) {
+							sb.append(";");
+						}
+						sb.append(String.valueOf(arguments[i]));
 					}
-					logger.config("Executing " + name + "(" + argStrings.concatenate(",") + ")");
+					sb.append(")");
+					logger.config(sb.toString());
 				}
+				// END KGU#597/KGU#685 2020-12-14
 				// END KGU#597 2018-10-12
 				result = method.invoke(this, arguments);
 			} catch (Exception e) {

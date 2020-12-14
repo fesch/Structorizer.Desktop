@@ -1529,7 +1529,9 @@ public class TurtleBox implements DelayableDiagramController
         turtleHidden = false;
         // START KGU#685 2020-12-14: Enh. #704
         bounds = new Rectangle();
-        frame.displacement = null;
+        if (frame != null) {
+            frame.displacement = null;
+        }
         // END KGU#685 2020-12-14
         setPos(home.getLocation());
         penDown();
