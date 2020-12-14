@@ -206,6 +206,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
  *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
+ *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
  *
  ******************************************************************************************************
  *
@@ -334,7 +335,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     //public Root root = new Root();
     private Root root = new Root();
     // END KGU 2015-10-18
-    private TurtleBox turtle = null; //
+    // START KGU#873 2020-12-14: Bugfix #887 All diagrams must share the same Turtleizer
+    //private TurtleBox turtle = null;
+    private static TurtleBox turtle = null;
+    // END KGU#873 2020-12-14
 
     private Element selected = null;
 
