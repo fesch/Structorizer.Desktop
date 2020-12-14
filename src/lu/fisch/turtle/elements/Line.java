@@ -40,7 +40,6 @@ package lu.fisch.turtle.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -71,23 +70,11 @@ public class Line extends Element
 
     // START KGU#685 2020-12-11: Enh. #704
     @Override
-    public void draw(Graphics2D graphics, Rectangle viewRect, Dimension dim)
+    public void draw(Graphics2D graphics, Rectangle viewRect)
     {
         graphics.setColor(color);
-        if (viewRect == null || viewRect.intersects(this.getBounds())) {
+        if (viewRect == null || viewRect.intersects(getBounds())) {
             graphics.drawLine(from.x, from.y, to.x, to.y);
-        }
-        if (from.x > dim.width) {
-            dim.width = from.x;
-        }
-        if (to.x > dim.width) {
-            dim.width = to.x;
-        }
-        if (from.y > dim.height) {
-            dim.height = from.y;
-        }
-        if (to.y > dim.height) {
-            dim.height = to.y;
         }
     }
 
@@ -97,7 +84,7 @@ public class Line extends Element
         sb.append(Integer.toHexString(color.getRGB()));
     }
 
-    private Rectangle getBounds()
+    public Rectangle getBounds()
     {
         Rectangle bounds = new Rectangle(from);
         bounds.add(to);

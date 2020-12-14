@@ -136,7 +136,7 @@ Current development version: 3.30-12 (2020-12-14)
 - 11: Bugfix #876: Defective saving and restoring of Ini properties via menu <2>
 - 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
 - 11: Issue #879: Bad handling of user input looking like a record initializer <2>
-- 12: Enh. #704: Turtleizer now scrollable, with status bar and popup menu <2>
+- 12: Enh. #704: Turtleizer now scrollable, with status bar, and popup menu <2>
 - 12: Issue #801: User Guide download now with progress bar in background <2>
 - 12: Issue #829: Experimentally keeping open the debug control now revoked <2>
 - 12: Issue #881: Highlighting of bit operators and Boolean literals <2>

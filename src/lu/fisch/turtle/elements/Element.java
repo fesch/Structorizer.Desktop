@@ -73,7 +73,7 @@ public abstract class Element
     /**
      * Draws this Element in the given 2D drawing environment {@code graphics}
      * @param graphics - the 2D drawing environment
-     * @see #draw(Graphics2D, Rectangle, Dimension)
+     * @see #draw(Graphics2D, Rectangle)
      */
     public abstract void draw(Graphics2D graphics);
 
@@ -84,9 +84,8 @@ public abstract class Element
      * Element is visible and exceeds it.
      * @param graphics - the 2D drawing environment
      * @param viewRect - visible clip of the graphics system (for acceleration)
-     * @param dim - a Dimension object to be adjusted or {@code null}
      */
-    public abstract void draw(Graphics2D graphics, Rectangle viewRect, Dimension dim);
+    public abstract void draw(Graphics2D graphics, Rectangle viewRect);
     
     @Override
     public String toString()
@@ -138,6 +137,18 @@ public abstract class Element
     {
         return color;
     }
-    // END KGU#685 2020-12-11
+    // END KGU#685 2020-12-13
+
+    // START KGU#685 2020-12-14: Enh. #704
+    /**
+     * Moves by the given {@code shift}
+     * @param shift - width and height specify the horizontal and vertical
+     * offset to move the element by
+     */
+    public void move(Dimension shift) {
+        this.from.x += shift.width; this.from.y += shift.height;
+        this.to.x += shift.width; this.to.y += shift.height;
+    }
+    // END KGU#685 2020-12-14
 
 }

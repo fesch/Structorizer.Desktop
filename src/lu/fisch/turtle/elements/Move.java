@@ -20,27 +20,6 @@
 
 package lu.fisch.turtle.elements;
 
-/******************************************************************************************************
- *
- *      Author:         Robert Fisch
- *
- *      Description:    Move - an invisible move in the Turtle graphics window
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Kay Gürtzig     2020-12-11      Enh. #704 API extension (dummy method implementation)
- *
- ******************************************************************************************************
- *
- *      Comment:
- *
- ******************************************************************************************************///
-
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -64,7 +43,7 @@ public class Move extends Element
 
     // START KGU#685 2020-12-11: Enh. #704
     @Override
-    public void draw(Graphics2D graphics, Rectangle viewRect, Dimension dim)
+    public void draw(Graphics2D graphics, Rectangle viewRect)
     {
     }
     // END KGU#685 2020-12-11
