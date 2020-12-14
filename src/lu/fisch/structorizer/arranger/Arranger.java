@@ -724,6 +724,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		expandRootSetOrSelection(null, Arranger.this, null);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
         
         // START KGU#626 2019-01-03: Enh. #657
@@ -734,6 +735,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		makeGroup(Arranger.this);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         
         popupExpandGroup = new javax.swing.JMenuItem("Expand and group ...", IconLoader.getIcon(117));
@@ -744,6 +746,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		expandRootSetOrSelection(null, null, null);
         		makeGroup(Arranger.this);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         // END KGU#626 201-01-03
         
@@ -757,6 +760,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         			inspectAttributes(root);
         		}
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
 
         popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
@@ -766,6 +770,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		btnRemoveDiagramActionPerformed(e, false);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
         popupMenu.addSeparator();
@@ -779,6 +784,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		rearrange();
         	}
         });
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupRearrange.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         popupMenu.addSeparator();
@@ -802,6 +808,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		helpArranger(false);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupHelp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         
         popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getIcon(89));
@@ -811,6 +818,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		helpArranger(true);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
         
     }
@@ -1313,7 +1321,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                         this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
                     }
                     else {
-                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
+                        scrollarea.getVerticalScrollBar().setValue(newValue);
                     }
                 }
                 break;

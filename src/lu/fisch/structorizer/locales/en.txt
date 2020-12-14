@@ -1487,17 +1487,24 @@ OutputConsole.msgTitleError.text=Error
 -----[ TurtleFrame ]-----
 TurtleFrame.popupGotoCoord.text=Scroll to coordinate ...
 TurtleFrame.popupGotoTurtle.text=Scroll to turtle position
+TurtleFrame.popupGotoHome.text=Scroll to home position
+TurtleFrame.popupZoom100.text=Reset zoom to 100%
+TurtleFrame.popupZoomBounds.text=Zoom to fit bounds
 TurtleFrame.popupShowTurtle.text=Show turtle
+TurtleFrame.popupShowStatus.text=Show status bar
+TurtleFrame.popupBackground.text=Set background color ...
 TurtleFrame.popupExportCSV.text=Export drawing items as CSV ...
 TurtleFrame.popupExportImage.text=Export as image
 TurtleFrame.popupExportPNG.text=to PNG ...
 TurtleFrame.popupExportSVG.text=to SVG ...
+TurtleFrame.statusHome.tooltip=Current home position
 TurtleFrame.statusTurtle.tooltip=Current turtle position
 TurtleFrame.statusSize.tooltip=Extension of drawn area
 TurtleFrame.statusViewport.tooltip=Current scrolling viewport
-TurtleFrame.statusSelection.tooltip=Number of selected lines
+TurtleFrame.statusSelection.tooltip=Number of selected segments
 TurtleFrame.statusZoom.tooltip=Zoom factor
 TurtleFrame.lblOverwrite.text=File exists. Sure to overwrite?
+TurtleFrame.lblScale.text=Scale factor:
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

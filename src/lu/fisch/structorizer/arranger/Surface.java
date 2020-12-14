@@ -478,7 +478,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#497 2018-02-17
 			if (compensateZoom) {
 				// In zoom-compensated drawing the background filled by super.paint(g)
-				// is too small (virtually scaled don), therefore we must draw a
+				// is too small (virtually scaled down), therefore we must draw a
 				// white rectangle covering the enlarged image area
 				g2d.setColor(Color.WHITE);
 				g2d.fillRect(0, 0,
@@ -4769,16 +4769,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
 		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
-			if (Element.E_WHEEL_REVERSE_ZOOM) {
-				rotation *= -1;
-			}
-			if (rotation >= 1) {
+			if (Math.abs(rotation) >= 1) {
+				if (Element.E_WHEEL_REVERSE_ZOOM) {
+					rotation *= -1;
+				}
 				mwEvt.consume();
-				this.zoom(false);
-			}
-			else if (rotation <= -1) {
-				mwEvt.consume();
-				this.zoom(true);
+				this.zoom(rotation < 0);
 			}
 		}
 	}

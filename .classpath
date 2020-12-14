@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="._*.*|lu/fisch/structorizer/gui/icons_128/|lu/fisch/structorizer/gui/icons_16/|lu/fisch/structorizer/gui/icons_256/" kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry excluding="._*.*|lu/fisch/structorizer/gui/icons_128/|lu/fisch/structorizer/gui/icons_16/|lu/fisch/structorizer/gui/icons_256/|test/lu/fisch/structorizer/syntax/ExpressionTest.java" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="lib/swing-layout-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/freehep-graphics2d-2.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/freehep-graphicsio-2.1.1.jar"/>

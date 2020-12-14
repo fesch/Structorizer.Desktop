@@ -20,24 +20,26 @@
 package lu.fisch.turtle.elements;
 
 /******************************************************************************************************
-*
-*      Author:         Robert Fisch
-*
-*      Description:    Move - an invisible move in the Turtle graphics window
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          Date            Description
-*      ------          ----            -----------
-*      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle, Dimension)
-*
-******************************************************************************************************
-*
-*      Comment:
-*
-******************************************************************************************************///
+ *
+ *      Author:         Robert Fisch
+ *
+ *      Description:    Move - an invisible move in the Turtle graphics window
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle, Dimension),
+ *                                      toString(), appendSpecificCSVInfo(StringBuilder, String)
+ *      Kay Gürtzig     2020-12-13      Enh. #704 API extension: getFrom(), getTo()
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *
+ ******************************************************************************************************///
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -75,7 +77,7 @@ public abstract class Element
      */
     public abstract void draw(Graphics2D graphics);
 
-    // START KGU#685 2020-12-11
+    // START KGU#685 2020-12-11: Enh. #704
     /**
      * Like {@link #draw(Graphics2D)} but avoids drawing outside the visible area
      * {@code viewRect} and expands the given {@link Dimension} {@code dim} if this
@@ -115,6 +117,26 @@ public abstract class Element
      */
     protected void appendSpecificCSVInfo(StringBuilder sb, String separator)
     {
+    }
+    // END KGU#685 2020-12-11
+    
+    // START KGU#685 2020-12-13: Enh. #704
+    /** @return the start point of this element */
+    public Point getFrom()
+    {
+        return from;
+    }
+    
+    /** @return the end point of this element */
+    public Point getTo()
+    {
+        return to;
+    }
+    
+    /** @return the end color of this element */
+    public Color getColor()
+    {
+        return color;
     }
     // END KGU#685 2020-12-11
 

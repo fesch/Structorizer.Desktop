@@ -206,6 +206,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
  *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
+ *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
  *
  ******************************************************************************************************
  *
@@ -9238,6 +9239,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#792 2020-02-04: Bugfix #805
 		Ini.getInstance().setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 		// END KGU#792 2020-02-04
+		// START KGU#685 2020-12-12: Enh. #704
+		// Behaviour of DiagramControllers should be consistent ...
+		if (this.turtle != null) {
+			this.turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
+		}
+		// END KGU#685 2020-12-12
 	}
 	// END KGU#503 2018-03-14
 	
@@ -9916,6 +9923,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			turtle = new TurtleBox(500,500);
 			// START KGU#685 2020-12-12: Enh. #704
 			Locales.getInstance().register(turtle.getFrame(), true);
+			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
 			// END KGU#685 2020-12-12
 		}
 		turtle.setVisible(true);
