@@ -207,6 +207,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
  *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
+ *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
  *
  ******************************************************************************************************
  *
@@ -334,7 +335,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     //public Root root = new Root();
     private Root root = new Root();
     // END KGU 2015-10-18
-    private TurtleBox turtle = null; //
+    // START KGU#873 2020-12-14: Bugfix #887 All diagrams must share the same Turtleizer
+    //private TurtleBox turtle = null;
+    private static TurtleBox turtle = null;
+    // END KGU#873 2020-12-14
 
     private Element selected = null;
 
@@ -9241,8 +9245,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#792 2020-02-04
 		// START KGU#685 2020-12-12: Enh. #704
 		// Behaviour of DiagramControllers should be consistent ...
-		if (this.turtle != null) {
-			this.turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
+		if (turtle != null) {
+			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
 		}
 		// END KGU#685 2020-12-12
 	}
@@ -10482,8 +10486,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			catch (Exception ex) {}
 		}
 		// START KGU#685 2020-12-12: Enh. #704
-		if (this.turtle != null) {
-			this.turtle.updateLookAndFeel();
+		if (turtle != null) {
+			turtle.updateLookAndFeel();
 		}
 		// END KGU#685 2020-12-12
 		if (this.codeHighlighter != null)
