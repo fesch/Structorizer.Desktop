@@ -47,7 +47,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
  *      Kay Gürtzig     2020-12-11      Enh. #704: Scrollbars, status bar, and popup menu added
  *                                      Enh. #443: Deprecated execute methods disabled
- *      Kay Gürtzig     2020-12-14      Enh. #704/#880: Zoom and export functions accomplished
+ *      Kay Gürtzig     2020-12-15      Enh. #704/#880: Zoom and export functions accomplished
  *
  ******************************************************************************************************
  *
@@ -307,7 +307,7 @@ public class TurtleBox implements DelayableDiagramController
 				Rectangle bounds = new Rectangle(owner.bounds);
 				// Make sure the bounds comprise the turtle position - visible or not
 				bounds.add(new Rectangle(owner.pos.x, owner.pos.y, 1, 1));
-				Dimension dim = new Dimension(owner.bounds.width, owner.bounds.height);
+				Dimension dim = new Dimension(bounds.width, bounds.height);
 				if (owner.bounds.x < 0) {
 					dim.width += owner.bounds.x;
 				}
@@ -683,7 +683,8 @@ public class TurtleBox implements DelayableDiagramController
 			this.zoomFactor = Math.max(0.01f, Math.min(newFactor, 2.0f));
 			// FIXME: Derive a minimum zoom factor, possibly via the bounds?
 			statusZoom.setText(String.format("%.1f %%", 100 * zoomFactor));
-			repaint();
+			repaintAll();
+			// Is this necessary?
 			this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
 		}
 		
@@ -1452,31 +1453,14 @@ public class TurtleBox implements DelayableDiagramController
         //panel.setDoubleBuffered(true);
         //panel.repaint();
         
-        setPos(new Point(frame.scrollarea.getWidth()/2, frame.scrollarea.getHeight()/2));	// FIXME!
+        setPos(new Point(frame.scrollarea.getWidth()/2,
+                frame.scrollarea.getHeight()/2));	// FIXME!
         home = new Point(pos.x, pos.y);
 
         frame.repaintAll();
         // END KGU#685 2020-12-11
     }
 
-    // START KGU#685 2020-12-13: Enh. #704
-    /**
-     * @return the current bounds of all drawn lines
-     */
-    private Rectangle getBounds()
-    {
-        Rectangle rect = new Rectangle(pos);
-        for (int i = 0; i < elements.size(); i++) {
-            Element el = elements.get(i);
-            if (el instanceof Line) {
-                rect.add(el.getFrom());
-                rect.add(el.getTo());
-            }
-        }
-        return rect;
-    }
-    // END KGU#685 2020-12-13
-    
     //@Override
     /**
      * Realizes the window on the screen , brings it to front and fetches the window focus.
@@ -1504,7 +1488,9 @@ public class TurtleBox implements DelayableDiagramController
         if (visible) {
             // START KGU #685 2020-12-11: Enh. #704
             //home = new Point(panel.getWidth()/2, panel.getHeight()/2);
-            home = new Point(frame.scrollarea.getWidth()/2, frame.scrollarea.getHeight()/2);
+            home = new Point(frame.panel.getWidth()/2, frame.panel.getHeight()/2);
+            home = new Point(Math.round(frame.scrollarea.getWidth()/2 / frame.zoomFactor),
+                    Math.round(frame.scrollarea.getHeight()/2 / frame.zoomFactor));
             // END KGU#685 2020-12-11
             // START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
             reinit();
