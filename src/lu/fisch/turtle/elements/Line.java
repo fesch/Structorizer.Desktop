@@ -31,7 +31,8 @@ package lu.fisch.turtle.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle, Dimension)
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle), getBounds()
+ *                                      appendSpecificCSVInfo(StringBuilder, String)
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,9 @@ public class Line extends Element
         sb.append(Integer.toHexString(color.getRGB()));
     }
 
+    /**
+     * @return the bounding box of this line, ensuring that no dimensions is 0
+     */
     public Rectangle getBounds()
     {
         Rectangle bounds = new Rectangle(from);

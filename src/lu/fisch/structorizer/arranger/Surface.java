@@ -2003,7 +2003,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (logger.isLoggable(Level.CONFIG)) {
 				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{width, height});
 				logger.log(Level.CONFIG, "Drawing Rect: {0}", rect);
-				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width*this.zoomFactor, height*this.zoomFactor});
+				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width/this.zoomFactor, height/this.zoomFactor});
 			}
 			BufferedImage bi = new BufferedImage(
 					Math.round(width / this.zoomFactor),

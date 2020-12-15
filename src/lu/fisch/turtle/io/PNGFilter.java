@@ -1,6 +1,6 @@
 /*
-    Structorizer
-    A little tool which you can use to create Nassi-Shneiderman Diagrams (NSD)
+    TurtleBox
+    A module providing a simple turtle graphics for Java
 
     Copyright (C) 2009, 2020  Bob Fisch
 

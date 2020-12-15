@@ -31,9 +31,10 @@ package lu.fisch.turtle.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle, Dimension),
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle),
  *                                      toString(), appendSpecificCSVInfo(StringBuilder, String)
- *      Kay Gürtzig     2020-12-13      Enh. #704 API extension: getFrom(), getTo()
+ *      Kay Gürtzig     2020-12-13      Enh. #704 API extension: getFrom(), getTo(), getColor(),
+ *                      2020-12-14      move(Dimension)
  *
  ******************************************************************************************************
  *
