@@ -1896,7 +1896,7 @@ public class TurtleBox implements DelayableDiagramController
     // END KGU#356 2019-03-02
     
 
-// START KGU#448 2020-12-11: Enh. #443 deprecated stuff disabled
+// START KGU#448/KGU#673 2020-12-11: Enh. #443 deprecated stuff disabled
 //    @Deprecated
 //    private String parseFunctionName(String str)
 //    {
@@ -1939,7 +1939,7 @@ public class TurtleBox implements DelayableDiagramController
 //        setColorNonWhite(color);
 //        return execute(message);
 //    }
-// END KGU#448 2020-12-11
+// END KGU#448/KGU#673 2020-12-11
 
     /**
      * Sets the given color except in case of WHITE where the {@link #defaultPenColor} is used instead.
@@ -1960,7 +1960,7 @@ public class TurtleBox implements DelayableDiagramController
         else this.setColor(color);
     }
 
-// START KGU#448 2020-12-11: Enh. #443 deprecated stuff disabled
+// START KGU#448/KGU#673 2020-12-11: Enh. #443 deprecated stuff disabled
 //    @Deprecated
 //    public String execute(String message)
 //    {
@@ -2020,7 +2020,7 @@ public class TurtleBox implements DelayableDiagramController
 //        
 //        return res;
 //    }
-// END KGU#448 2020-12-11
+// END KGU#448/KGU#673 2020-12-11
 
     // START KGU#448 2017-10-28: Enh. #443
     /* (non-Javadoc)

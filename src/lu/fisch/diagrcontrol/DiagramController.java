@@ -248,6 +248,7 @@ public interface DiagramController
 					//StringList argStrings = new StringList();
 					//for (Object arg: arguments) {
 					//	argStrings.add(String.valueOf(arg));
+					//}
 					//logger.config("Executing " + name + "(" + argStrings.concatenate(",") + ")");
 					StringBuilder sb = new StringBuilder();
 					sb.append("Executing ");
@@ -336,10 +337,10 @@ public interface DiagramController
 	public default void requestFocus() {}
 	// END KGU#356 2019-03-02
 	
-// START KGU#448 2020-12-11 Eventually deleted
+// START KGU#448/KGU#673 2020-12-11: Enh. #443, eventually deleted
 //	@Deprecated
 //	public String execute(String message);
 //	@Deprecated
 //	public String execute(String message, Color color);
-// END KGU#448 2020-12-11
+// END KGU#448/KGU#673 2020-12-11
 }
