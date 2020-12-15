@@ -118,6 +118,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
  *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
+ *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
  *
  ******************************************************************************************************
  *
@@ -2024,7 +2025,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			
 			// START KGU#872 2020-10-17: Enh. #872
 			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
-			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			// START KGU#887 2020-12-15: Bugfix #885
+			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			// END KGU#887 2020-12-15
 			// END KGU#872 2020-10-17
 
 			// show comments?
