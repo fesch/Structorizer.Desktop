@@ -307,13 +307,12 @@ public class TurtleBox implements DelayableDiagramController
 				Rectangle bounds = new Rectangle(owner.bounds);
 				// Make sure the bounds comprise the turtle position - visible or not
 				bounds.add(new Rectangle(owner.pos.x, owner.pos.y, 1, 1));
-				Dimension dim = new Dimension(bounds.width, bounds.height);
-				if (owner.bounds.x < 0) {
-					dim.width += owner.bounds.x;
-				}
-				if (owner.bounds.y < 0) {
-					dim.height += owner.bounds.y;
-				}
+				// We need the maximum distances from top and left border
+				Dimension dim = new Dimension(
+						// The drawing could lie completely in the negative range
+						Math.max(bounds.x + bounds.width, 0),
+						Math.max(bounds.y + bounds.height, 0)
+						);
 				// Add some pixels for the scrollbars
 				dim.width += MARGIN;
 				dim.height += MARGIN;
@@ -323,7 +322,7 @@ public class TurtleBox implements DelayableDiagramController
 					dim.width = Math.round(Math.min(dim.width, Short.MAX_VALUE) * zoomFactor);
 					dim.height = Math.round(Math.min(dim.height, Short.MAX_VALUE) * zoomFactor);
 				}
-				
+
 				this.setPreferredSize(dim);
 				this.revalidate();
 				// END KGU#685 2020-12-11
@@ -478,9 +477,15 @@ public class TurtleBox implements DelayableDiagramController
 			if (statusbar.isVisible()) {
 				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
 				statusTurtle.setText("(" + owner.pos.x + ", " + owner.pos.y + ") " + owner.getOrientation() + "°");
-				Dimension size = panel.getPreferredSize();
-				statusSize.setText(Math.round(size.width / zoomFactor - MARGIN) + " x "
-						+ Math.round(size.height / zoomFactor - MARGIN));
+				Rectangle size = new Rectangle(owner.bounds);
+				size.add(owner.pos);
+				statusSize.setText(
+						// rightmost coordinate
+						Math.max(size.x + size.width, 0)
+						+ " x "
+						// bottom coordinate
+						+ Math.max(size.y + size.height, 0)
+						);
 				scrollarea.getLocation();	// This is just to determine the current origin
 				Rectangle vRect = scrollarea.getViewport().getViewRect();
 				vRect.x /= zoomFactor;
@@ -692,13 +697,26 @@ public class TurtleBox implements DelayableDiagramController
 		 * Zooms such that the entire drawing fits into the viewport
 		 */
 		private void zoomToBounds() {
-			// The preferred size contains the zoom factor and has to be unzoomed
-			Dimension range = panel.getPreferredSize();
+			Rectangle bounds = new Rectangle(owner.bounds);
+			if (!owner.turtleHidden) {
+				bounds.add(owner.pos);
+			}
+			if (bounds.x < 0) {
+				bounds.width += bounds.x;
+				if (bounds.width < 1) bounds.width = 1;
+				bounds.x = 0;
+			}
+			if (bounds.y < 0) {
+				bounds.height += bounds.y;
+				if (bounds.height < 1) bounds.height = 1;
+				bounds.y = 0;
+			}
 			// This is the actual viewport size
 			Rectangle view = scrollarea.getViewport().getViewRect();
-			float zoomH = zoomFactor * view.width / range.width;
-			float zoomV = zoomFactor * view.height / range.height;
+			float zoomH = 1.0f * view.width / (bounds.width + MARGIN);
+			float zoomV = 1.0f * view.height / (bounds.height + MARGIN);
 			zoom(Math.min(zoomH, zoomV));
+			gotoCoordinate(new Point(bounds.x + (MARGIN + bounds.width)/2, bounds.y + (MARGIN + bounds.height)/2));
 		}
 
 		/**
@@ -1168,53 +1186,40 @@ public class TurtleBox implements DelayableDiagramController
 		
 		private void gotoHome()
 		{
-			java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
-			int marginH = vRect.width/2;	// horizontal margin
-			int marginV = vRect.height/2;	// vertical margin
-			// Estimate the position in the zoomed panel
-			int posX = Math.round(owner.home.x * zoomFactor);
-			int posY = Math.round(owner.home.y * zoomFactor); 
-			panel.scrollRectToVisible(
-					new Rectangle(
-							posX - marginH, posY - marginV,
-							posX + marginH, posY + marginV
-							)
-					);
+			Point home = new Point(owner.home);
+			if (displacement != null) {
+				home.x += displacement.x;
+				home.y += displacement.y;
+			}
+			gotoCoordinate(home);
 		}
 		
 		private void gotoTurtle()
 		{
-			java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
-			int marginH = vRect.width/2;	// horizontal margin
-			int marginV = vRect.height/2;	// vertical margin
-			// Estimate the position in the zoomed panel
-			int posX = Math.round(owner.pos.x * zoomFactor);
-			int posY = Math.round(owner.pos.y * zoomFactor); 
-			panel.scrollRectToVisible(
-					new Rectangle(
-							posX - marginH, posY - marginV,
-							posX + marginH, posY + marginV
-							)
-					);
+			gotoCoordinate(owner.pos);
 		}
 		
 		private void gotoCoordinate()
 		{
 			Point coord = askForCoordinate();
 			if (coord != null) {
-				java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
-				int marginH = vRect.width/2;	// horizontal margin
-				int marginV = vRect.height/2;	// vertical margin
-				// Estimate the position in the zoomed panel
-				int posX = Math.round(coord.x * zoomFactor);
-				int posY = Math.round(coord.y * zoomFactor); 
-				panel.scrollRectToVisible(
-						new Rectangle(
-								posX - marginH, posY - marginV,
-								posX + marginH, posY + marginV
-								)
-						);
+				gotoCoordinate(coord);
 			}
+		}
+
+		/**
+		 * @param coord
+		 */
+		private void gotoCoordinate(Point coord) {
+			java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+			int marginH = vRect.width/2;	// horizontal margin
+			int marginV = vRect.height/2;	// vertical margin
+			// Estimate the position in the zoomed panel
+			int posX = Math.round(coord.x * zoomFactor);
+			int posY = Math.round(coord.y * zoomFactor);
+			vRect.x = Math.max(posX - marginH, 0);
+			vRect.y = Math.max(posY - marginV, 0);
+			panel.scrollRectToVisible(vRect);
 		}
 		
 		/**
@@ -1488,7 +1493,6 @@ public class TurtleBox implements DelayableDiagramController
         if (visible) {
             // START KGU #685 2020-12-11: Enh. #704
             //home = new Point(panel.getWidth()/2, panel.getHeight()/2);
-            home = new Point(frame.panel.getWidth()/2, frame.panel.getHeight()/2);
             home = new Point(Math.round(frame.scrollarea.getWidth()/2 / frame.zoomFactor),
                     Math.round(frame.scrollarea.getHeight()/2 / frame.zoomFactor));
             // END KGU#685 2020-12-11
@@ -1515,6 +1519,8 @@ public class TurtleBox implements DelayableDiagramController
         turtleHidden = false;
         // START KGU#685 2020-12-14: Enh. #704
         bounds = new Rectangle();
+        bounds.width = -1;
+        bounds.height = -1;
         if (frame != null) {
             frame.displacement = null;
         }
@@ -2055,6 +2061,8 @@ public class TurtleBox implements DelayableDiagramController
     	this.elements.clear();
     	// START KGU#685 2020-12-14: Enh. #704
     	this.bounds = new Rectangle();
+    	this.bounds.width = -1;
+    	this.bounds.height = -1;
     	frame.displacement = null;
     	// END KGU#685 2020-12-14
     	this.delay();
