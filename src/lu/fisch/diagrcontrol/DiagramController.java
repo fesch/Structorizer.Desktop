@@ -243,22 +243,26 @@ public interface DiagramController
 			Logger logger = Logger.getLogger(getClass().getName());
 			try {
 				// START KGU#597 2018-10-12: Issue #622 - better monitoring of controller activity
-				// START KGU#591/KGU#685 2020-12-14: Issues #622, #704: StringList replaced
 				if (logger.isLoggable(Level.CONFIG)) {
+					// START KGU#591/KGU#685 2020-12-14: Issues #622, #704: StringList replaced
+					//StringList argStrings = new StringList();
+					//for (Object arg: arguments) {
+					//	argStrings.add(String.valueOf(arg));
+					//logger.config("Executing " + name + "(" + argStrings.concatenate(",") + ")");
 					StringBuilder sb = new StringBuilder();
 					sb.append("Executing ");
 					sb.append(name);
 					sb.append("(");
 					for (int i = 0; i < arguments.length; i++) {
 						if (i > 0) {
-							sb.append(";");
+							sb.append(",");
 						}
 						sb.append(String.valueOf(arguments[i]));
 					}
 					sb.append(")");
 					logger.config(sb.toString());
+					// END KGU#597/KGU#685 2020-12-14
 				}
-				// END KGU#597/KGU#685 2020-12-14
 				// END KGU#597 2018-10-12
 				result = method.invoke(this, arguments);
 			} catch (Exception e) {
