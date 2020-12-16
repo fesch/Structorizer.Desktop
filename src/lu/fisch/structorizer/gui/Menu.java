@@ -118,6 +118,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-06      Issue #440: Submenu items for PapDesigner export now also with icon
  *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
+ *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
  *
  ******************************************************************************************************
  *
@@ -658,6 +659,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#791 2020-01-20: Enh. #801: Offline help mechanism
 	public static final LangTextHolder msgShowingOfflineGuide = new LangTextHolder("A recently downloaded User Guide is shown by your PDF reader instead.");
 	public static final LangTextHolder msgDownloadFailed = new LangTextHolder("Failed to download the User Guide:\n%");
+	// START KGU#791 2020-10-20: Issue #801 Download done in an additional thread now.
+	public static final LangTextHolder msgCancelled = new LangTextHolder("Cancelled");
+	// END KGU#791 2020-10-20
 	public static final LangTextHolder msgHostNotAvailable = new LangTextHolder("Host \"%\" not accessible.");
 	// END KGU#791 2020-01-20
 	// START KGU#258 2016-10-03: Enh. #253: Diagram keyword refactoring
@@ -800,6 +804,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
+
 
 	// START BOB 2020-05-25: restricted mode
 	// START KGU#868 2020-06-03: Bugfix #868 - renamed for clarity
@@ -1746,7 +1751,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		// START KGU#791 2020-01-20: Enh. #791
 		menuHelp.add(menuHelpDownload);
-		menuHelpDownload.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.downloadHelpPDF(true); } } );
+		menuHelpDownload.addActionListener(new ActionListener() { 
+			public void actionPerformed(ActionEvent event) {
+				// START KGU#791 2020-10-20: Issue #801 - we need a worker thread...
+				//diagram.downloadHelpPDF(true);
+				diagram.downloadHelpPDF(menuHelpDownload.getText());
+				// END KGU#791 2020-10-20
+			}
+		});
 		// END KGU#791 2020-01-20
 
 		menuHelp.add(menuHelpAbout);
@@ -2013,7 +2025,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			
 			// START KGU#872 2020-10-17: Enh. #872
 			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
-			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			// START KGU#887 2020-12-15: Bugfix #885
+			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			// END KGU#887 2020-12-15
 			// END KGU#872 2020-10-17
 
 			// show comments?

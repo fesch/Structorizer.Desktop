@@ -98,9 +98,10 @@ public class Turtleizer {
 	}};
 	
 	/**
-	 * Returns a (heavy-weight) as-if singleton instance of class {@link TurtleBox} (creates it if it
-	 * hadn't been there).<br/>
-	 * Note: For mere API retrieval use a light-weight instance to be obtained via {@link TurtleBox#TurtleBox()}.
+	 * Returns a (heavy-weight) as-if singleton instance of class {@link TurtleBox}
+	 * (creates it if it hadn't been there).<br/>
+	 * Note: For mere API retrieval use a light-weight instance to be obtained via
+	 * {@link TurtleBox#TurtleBox()}.
 	 */
 	private static TurtleBox getTurtleBox()
 	{

@@ -649,6 +649,9 @@ FindAndReplace.chkElementTypes.9.text=@{Jump}
 FindAndReplace.chkElementTypes.10.text=@{Parallel}
 FindAndReplace.chkElementTypes.11.text=@{Try}
 
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Cancelar
+
 -----> Elements
 ElementNames.localizedNames.0.text=Instrução
 ElementNames.localizedNames.1.text=IF

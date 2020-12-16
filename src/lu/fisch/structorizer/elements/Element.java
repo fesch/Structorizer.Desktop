@@ -114,6 +114,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-02-04      Bugfix #805 - method saveToINI decomposed
  *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
  *      Kay Gürtzig     2020-10-17/19   Enh. #872: New mode to display operators in C style
+ *      Kay Gürtzig     2020-11-01      Issue #881: Highlighting of bit operators and Boolean literals
  *
  ******************************************************************************************************
  *
@@ -269,9 +270,11 @@ public abstract class Element {
 	// END KGU#563 2018-007-26
 	// START KGU#791 2020-01-20: Enh. #801 - support for offline help
 	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
+	/** Estimated size of the User Guide PDF file (to be adapted when User Guide significantly grows) */
+	public static final long E_HELP_FILE_SIZE = 10000000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-11";
+	public static final String E_VERSION = "3.30-12";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -570,12 +573,12 @@ public abstract class Element {
 	// reset for any new string which is likely to cause severe concurrency trouble as the patterns are used on drawing etc.
 	private static final Pattern STRING_PATTERN = Pattern.compile("(^\\\".*\\\"$)|(^\\\'.*\\\'$)");
 	private static final Pattern INC_PATTERN1 = Pattern.compile(BString.breakup("inc", true)+"[(](.*?)[,](.*?)[)](.*?)");
-    private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc", true)+"[(](.*?)[)](.*?)");
-    private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[,](.*?)[)](.*?)");
-    private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[)](.*?)");
+	private static final Pattern INC_PATTERN2 = Pattern.compile(BString.breakup("inc", true)+"[(](.*?)[)](.*?)");
+	private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[,](.*?)[)](.*?)");
+	private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[)](.*?)");
 	// END KGU#575 2018-09-17
 
-    // START KGU#425 2017-09-29: Lexical core mechanisms revised
+	// START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
 			" ",
 			"\t",
@@ -604,6 +607,10 @@ public abstract class Element {
 			"\"",
 			"\\",
 			"%",
+			// START KGU#790 2020-11-01: Enh. #800 unary C operators must also split
+			"&",
+			"~",
+			// END KGU#790 2020-11-01
 			// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
 			"\u2260",
 			"\u2264",
@@ -1397,12 +1404,13 @@ public abstract class Element {
 		}
 	}
 	
-	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information, 2019-03-16 made static
+	/* START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information,
+	 * 2019-03-16 made static, 2020-12-15 made public */
 	/**
 	 * Checks whether texts and comments are to be swapped for display.
 	 * @return true iff the swichTextAndComments flag is on and commentsPlusText mode is not
 	 */
-	protected static boolean isSwitchTextCommentMode()
+	public static boolean isSwitchTextCommentMode()
 	{
 //		Root root = getRoot(this);
 //		return (root != null && root.isSwitchTextAndComments());
@@ -1411,7 +1419,7 @@ public abstract class Element {
     	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
     	// END KGU#227 2016-07-31
 	}
-	// END KGU#172 2916-04-01
+	/* END KGU#172 2916-04-01 */
 
 	/**
 	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.
@@ -2957,7 +2965,7 @@ public abstract class Element {
 	 * If the last result element is empty in mode {@code _appendTail} then the expression list was syntactically
 	 * "clean".<br/>
 	 * FIXME If the expression was given without some parentheses as delimiters then a tail won't be added.
-	 * @param _text - string containing one or more expressions
+	 * @param _tokens - tokenized text, supposed to contain one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
 	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
@@ -3529,6 +3537,14 @@ public abstract class Element {
 						specialSigns.add("<=");
 						specialSigns.add(">=");
 						// END KGU#872 2020-10-17
+						// START KGU#883 2020-11-01: Enh. #881 bit operators and Boolean literal were missing
+						specialSigns.add("false");
+						specialSigns.add("true");
+						specialSigns.add("&");
+						specialSigns.add("|");
+						specialSigns.add("^");
+						specialSigns.add("~");
+						// END KGU#883 2020-11-01
 					}
 					// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
 					if (specialSignsCi == null) {
@@ -3544,7 +3560,7 @@ public abstract class Element {
 						// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
 						specialSignsCi.add("shl");
 						specialSignsCi.add("shr");
-						// END KGU#115 2015-12-23						
+						// END KGU#115 2015-12-23
 					}
 					// END KGU#611/KGU#843 2020-04-12
 					// END KGU#64 2015-11-03

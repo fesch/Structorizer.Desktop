@@ -279,10 +279,10 @@ public class TypeMapEntry {
 		 * possible, i.e. type names like "integer", "real" etc. apparently designating
 		 * standard types will be replaced by corresponding Java type names), all
 		 * prefixed with as many '&#64;' characters as there are index levels if it
-		 * is an array type. If it is a record type then it will enumerate semicolon-
-		 * separated name:type_name pairs within braces after a '$' prefix. An enumerator
-		 * type will enumerate the value names (constant ids) separated by commas within
-		 * braces following an '€' prefix.
+		 * is an array type. If it is a record type then it will enumerate
+		 * semicolon-separated {@code name:type_name} pairs within braces after a
+		 * '$' prefix. An enumerator type will enumerate the value names (constant
+		 * ids) separated by commas within braces following an '€' prefix.
 		 * @param canonicalizeTypeNames - specifies whether type names are to be unified, too
 		 * @see TypeMapEntry#getTypes()
 		 * @return type string, possibly prefixed with one or more '&#64;' characters. 
@@ -512,11 +512,15 @@ public class TypeMapEntry {
 	 * possible, i.e. type names like "integer", "real" etc. apparently designating
 	 * standard types will be replaced by corresponding Java type names), all
 	 * prefixed with as many '&#64;' characters as there are index levels if it
-	 * is an array type or embedded in a "${...}" if it is a record/struct type.
+	 * is an array type, or embedded in a "${...}" if it is a record/struct type
+	 * and {@code _asName} is not {@code true}. An enumerator type will enumerate
+	 * the value names (constant ids) separated by commas within braces following
+	 * to an '€' prefix.<br/>
 	 * If the type information is too ambiguous then an empty string is returned.
-	 * @param _canonicalizeTypeNames - if contained element types are to be canonicalized, too.
-	 * @param _asName - set this true if in case of a named type the name is to be returned (otherwise
-	 * the structural description would be returned)
+	 * @param _canonicalizeTypeNames - if contained element types are to be
+	 * canonicalized, too.
+	 * @param _asName - set this true if in case of a named type the name is to be
+	 * returned (otherwise the structural description would be returned)
 	 * @return name or structural description
 	 */
 	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {
@@ -650,10 +654,12 @@ public class TypeMapEntry {
 	
 	/**
 	 * Returns a StringList containing the type specifications of all detected
-	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
-	 * for one array dimension level, a prefix "$" symbolizes a record/struct).
-	 * Type names are preserved as declared.
+	 * declarations or assignments with symbolic structure (a prefix "&#64;"
+	 * stands for one array dimension level, a prefix "${" symbolizes a
+	 * record/struct), a prefix "€{" an enumerator type.<br/>
+	 * Type names are preserved as declared (non-canonicalized).
 	 * @return StringList of differing canonicalized type descriptions
+	 * @see #getTypes(boolean)
 	 */
 	public StringList getTypes()
 	{
@@ -664,7 +670,8 @@ public class TypeMapEntry {
 	/**
 	 * Returns a StringList containing the type specifications of all detected
 	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
-	 * for one array dimension level, a prefix "$" symbolizes a record/struct).<br/>
+	 * for one array dimension level, a prefix "${" symbolizes a record/struct),
+	 * a prefix "€{" an enumerator type.<br/>
 	 * If {@code canonicalizeTypeNames} is true then type identifiers apparently
 	 * designating standard types (like "integer", "real" etc.) will be replaced
 	 * by corresponding Java type names. 
@@ -742,6 +749,10 @@ public class TypeMapEntry {
 	// END KGU#388 2017-09-13
 	
 	// START KGU#542 2019-11-17: Enh. #739 - Support for enum types
+	/**
+	 * @return null or the list of constant names belonging to the enumeration type
+	 * (the values can be retrieved from {@link Root#constants})
+	 */
 	public StringList getEnumerationInfo()
 	{
 		if (this.isEnum()) {
@@ -918,11 +929,11 @@ public class TypeMapEntry {
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
-    public String toString()
-    {
+	public String toString()
+	{
 		String name = typeName == null ? "" : typeName + "=";
 		return getClass().getSimpleName() + "(" + name + this.getTypes().concatenate(" | ") + ")";
-    }
+	}
 
 	/**
 	 * Tries to find a common compatible canonical type for {@code type1} and {@code type2}

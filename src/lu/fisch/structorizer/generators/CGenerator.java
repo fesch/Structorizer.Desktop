@@ -95,7 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
  *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
- *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
+ *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simply skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
  *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.
@@ -1342,7 +1342,7 @@ public class CGenerator extends Generator {
 							if (elemType != null && elemType.startsWith("@")) {
 								elemType = elemType.substring(1);
 							}
-							// START KGU #784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
+							// START KGU#784 2019-12-02: varName is only part of the left side, there may be indices, so reduce the type if so
 							int posIdx = codeLine.indexOf(varName) + varName.length();
 							String indices = codeLine.substring(posIdx).trim();
 							while (elemType.startsWith("@") && indices.startsWith("[")) {
@@ -1362,7 +1362,7 @@ public class CGenerator extends Generator {
 									indices = indexList.get(0).substring(1);
 								}
 							}
-							// END KGU #784 2019-12-02
+							// END KGU#784 2019-12-02
 						}
 						expr = this.transformOrGenerateArrayInit(codeLine, items.subSequence(0, items.count()-1), _indent, isDisabled, elemType, isDecl);
 						if (expr == null) {

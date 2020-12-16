@@ -19,9 +19,31 @@
 
 package lu.fisch.turtle.elements;
 
+/******************************************************************************************************
+ *
+ *      Author:         Robert Fisch
+ *
+ *      Description:    Line - a visible line in the Turtle graphics window
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle), getBounds()
+ *                                      appendSpecificCSVInfo(StringBuilder, String)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *
+ ******************************************************************************************************///
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  *
@@ -47,4 +69,37 @@ public class Line extends Element
         graphics.drawLine(from.x, from.y, to.x, to.y);
     }
 
+    // START KGU#685 2020-12-11: Enh. #704
+    @Override
+    public void draw(Graphics2D graphics, Rectangle viewRect)
+    {
+        graphics.setColor(color);
+        if (viewRect == null || viewRect.intersects(getBounds())) {
+            graphics.drawLine(from.x, from.y, to.x, to.y);
+        }
+    }
+
+    protected void appendSpecificCSVInfo(StringBuilder sb, String separator)
+    {
+        sb.append(separator);
+        sb.append(Integer.toHexString(color.getRGB()));
+    }
+
+    /**
+     * @return the bounding box of this line, ensuring that no dimensions is 0
+     */
+    public Rectangle getBounds()
+    {
+        Rectangle bounds = new Rectangle(from);
+        bounds.add(to);
+        // We must avoid "empty" rectangles for intersection tests
+        if (bounds.height == 0) {
+            bounds.height = 1;
+        }
+        if (bounds.width == 0) {
+            bounds.width = 1;
+        }
+        return bounds;
+    }
+    // END KGU#685 2020-12-11
 }

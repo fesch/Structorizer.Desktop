@@ -372,7 +372,7 @@ Menu.lblReduced.text=Да, упрощенный вид
 Menu.lblNormal.text=Нет, нормальный вид
 Menu.ttlCodeImport.text=
 Menu.msgSelectParser.text=
-Menu.msgImportCancelled.text=
+Menu.msgImportCancelled.text=Импорт ​отменен
 Menu.msgSubroutineName.text=Название новой подпрограммы
 Menu.msgIncludableName.text=
 Menu.msgMustBeIdentifier.text=
@@ -1161,6 +1161,9 @@ FindAndReplace.btnReplaceAll.tooltip=
 FindAndReplace.btnClose.text=
 FindAndReplace.msgRegexCorrupt.text=
 FindAndReplace.ttlSearchError.text=
+
+-----[ DownloadMonitor ]-----
+DownloadMonitor.btnCancel.text=Отменить
 
 -----> Arranger
 -----[ Arranger ]-----

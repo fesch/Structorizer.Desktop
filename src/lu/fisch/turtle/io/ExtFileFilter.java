@@ -1,8 +1,8 @@
 /*
-    Structorizer
-    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+    TurtleBox
+    A module providing a simple turtle graphics for Java
 
-    Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2009, 2020  Bob Fisch
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package lu.fisch.structorizer.io;
+
+package lu.fisch.turtle.io;
 
 /******************************************************************************************************
  *
@@ -31,8 +32,7 @@ package lu.fisch.structorizer.io;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018-06-08      First Issue
- *      Kay Gürtzig     2020-12-13      Javadoc comments for getExtension methods
+ *      Kay Gürtzig     2020-12-13      First Issue
  *
  ******************************************************************************************************
  *
@@ -43,15 +43,33 @@ package lu.fisch.structorizer.io;
  ******************************************************************************************************///
 
 import java.io.File;
-
 import javax.swing.filechooser.FileFilter;
+
 /**
  * This is an extended abstract subclass of {@link javax.swing.filechooser.FileFilter}
- * providing two basic static methods for file name extension extraction 
+ * providing two basic static methods for file name extension extraction and implementing
+ * default version of {@link #accept(File)} based on the extensions proposed by the new
+ * abstract method {@link #getAcceptedExtensions()}.
  * @author Kay Gürtzig
  */
 public abstract class ExtFileFilter extends FileFilter {
-	
+
+	@Override
+	public boolean accept(File f) {
+		if (f.isDirectory()) 
+		{
+			return true;
+		}
+		String ext = getExtension(f);
+		String[] accExts = getAcceptedExtensions();
+		for (int i = 0; i < accExts.length; i++) {
+			if (ext.equals(accExts[i])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Extracts the file name extension of the given file path {@code s}
 	 * @param s - a file path as string
@@ -60,13 +78,9 @@ public abstract class ExtFileFilter extends FileFilter {
 	 */
 	public static String getExtension(String s) 
 	{
-		// START KGU#521 2018-06-08: Bugfix #536 We shouldn't return null in any case
-		//String ext = null;
 		String ext = "";
-		// END KGU#521 2018-06-08
-		// START KGU 2018-08-09: We must face cases where entire paths might be passed in
+		// We must face cases where entire paths might be passed in
 		s = (new File(s)).getName();
-		// END KGU 2018-08-09
 		int i = s.lastIndexOf('.');
 		
 		if (i > 0) 
@@ -86,5 +100,11 @@ public abstract class ExtFileFilter extends FileFilter {
 	{
 		return getExtension(f.getName());
 	}
+
+	/**
+	 * @return an array of accepted file name extensions (without dot and
+	 * preferably in lower case)
+	 */
+	public abstract String[] getAcceptedExtensions();
 
 }
