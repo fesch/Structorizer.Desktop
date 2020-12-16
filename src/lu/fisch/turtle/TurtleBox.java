@@ -749,11 +749,6 @@ public class TurtleBox implements DelayableDiagramController
 			}
 			// This is the actual viewport size
 			Rectangle view = scrollarea.getViewport().getViewRect();
-			/* FIXME Sometimes a second attempt is necessary to centre the drawing
-			 * correctly.
-			 * The reason might be that the viewport is not fast enough adapted to
-			 * the new zoom factor. But also the zoom factors differ between the
-			 * first and subsequent attempts in these cases. */
 			float zoomH = 1.0f * view.width / (bounds.width + MARGIN);
 			float zoomV = 1.0f * view.height / (bounds.height + MARGIN);
 			zoom(Math.min(zoomH, zoomV));
@@ -1511,10 +1506,6 @@ public class TurtleBox implements DelayableDiagramController
         //panel.setDoubleBuffered(true);
         //panel.repaint();
         
-        System.out.println("scrollarea: " + frame.scrollarea.getWidth()
-        		+ " x " + frame.scrollarea.getHeight());
-        System.out.println("viewport: " + frame.scrollarea.getViewport().getWidth()
-		+ " x " + frame.scrollarea.getViewport().getHeight());
         setPos(new Point(frame.scrollarea.getWidth()/2,
                 frame.scrollarea.getHeight()/2));	// FIXME!
         home = new Point(pos.x, pos.y);
@@ -1550,10 +1541,6 @@ public class TurtleBox implements DelayableDiagramController
         if (visible) {
             // START KGU #685 2020-12-11: Enh. #704
             //home = new Point(panel.getWidth()/2, panel.getHeight()/2);
-            System.out.println("scrollarea: " + frame.scrollarea.getWidth()
-    		+ " x " + frame.scrollarea.getHeight());
-    System.out.println("viewport: " + frame.scrollarea.getViewport().getWidth()
-	+ " x " + frame.scrollarea.getViewport().getHeight());
             home = new Point(Math.round(frame.scrollarea.getWidth()/2 / frame.zoomFactor),
                     Math.round(frame.scrollarea.getHeight()/2 / frame.zoomFactor));
             // END KGU#685 2020-12-11
@@ -1600,27 +1587,15 @@ public class TurtleBox implements DelayableDiagramController
             init(300, 300);
         }
         // END KGU#480 2018-01-16
-        // START KGU#597 2018-10-12: Issue #622 Attempt to fix a drawing contention on some Macbook
-        //logger.config(panel + " enqueuing repaint()...");
         // START KGU#685 2020-12-11: Enh. #704
         //panel.repaint();
         frame.repaintAll();
         // END KGU#685 2020-12-11
-        // END KGU#597 2018-10-12
         if (delay!=0)
         {
-            // START KGU#597 2018-10-12: Issue #622 Replaced by the queued repaint() above
-            //panel.paint(panel.getGraphics());
-            // END KGU#597 2018-10-12
             try { Thread.sleep(delay); }
             catch (InterruptedException e) { System.out.println(e.getMessage());}
         }
-        // START KGU#597 2018-10-12: Issue #622 Now done before the alternative
-//        else
-//        {
-//            panel.repaint();
-//        }
-        // END KGU#597 2018-10-12
     }
     
     // START KGU#685 2020-12-14: Enh. #704
@@ -1793,8 +1768,9 @@ public class TurtleBox implements DelayableDiagramController
     // KGU: Where is this method used?
     /**
      * @return the angle from the turtle home position to its current position
-     * in degrees
+     * in integral (!?) degrees
      */
+    @Deprecated
     public double getAngleToHome()
     {
         // START #272 2016-10-16 (KGU)
@@ -1816,21 +1792,21 @@ public class TurtleBox implements DelayableDiagramController
         // rounding (FIXME: what for?)
         alpha = Math.round(alpha*100)/100;
 
-        if (cosAlpha<0) // Q2 & Q3
+        if (cosAlpha < 0) // Q2 & Q3
         {
-            alpha=180-alpha;
+            alpha = 180-alpha;
         }
         alpha =- alpha;
         alpha -= getAngle();
 
         while (alpha < 0)
         {
-            alpha+=360;
+            alpha += 360;
         }
         
         while (alpha>=360)
         {
-            alpha-=360;
+            alpha -= 360;
         }
 
         return alpha;
