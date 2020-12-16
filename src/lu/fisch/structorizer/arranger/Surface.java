@@ -125,6 +125,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-11-28      Bugfix #788: Offered arrz extraction to user-chosen folder was ignored
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
  *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
+ *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
  *
  ******************************************************************************************************
  *
@@ -323,7 +324,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#88 2015-11-24
 	// START KGU#497 2018-02-17: Enh. #   - new zoom facility
 	/** The factor by which the drawing is currently downscaled */
-	private float zoomFactor = 2.0f;
+	private float zoomFactor = 0.5f;
 	// END KGU#497 2018-02-17
 	// START KGU#110 2015-12-21: Enh. #62, also supports PNG export
 	public File currentDirectory = new File(System.getProperty("user.home"));
@@ -474,24 +475,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#572 2018-09-09
 			// START KGU#497 2018-03-19: Enh. #512
-			//g2d.scale(1/zoomFactor, 1/zoomFactor);
+			//g2d.scale(zoomFactor, zoomFactor);
 			// END KGU#497 2018-02-17
 			if (compensateZoom) {
 				// In zoom-compensated drawing the background filled by super.paint(g)
-				// is too small (virtually scaled don), therefore we must draw a
+				// is too small (virtually scaled down), therefore we must draw a
 				// white rectangle covering the enlarged image area
 				g2d.setColor(Color.WHITE);
 				g2d.fillRect(0, 0,
 						// START KGU#624 2018-12-24: Enh. #655
-						//Math.round(this.getWidth() * zoomFactor),
-						//Math.round(this.getHeight() * zoomFactor)
-						Math.round(this.getWidth() * zoomFactor - offsetX),
-						Math.round(this.getHeight() * zoomFactor - offsetY)
+						//Math.round(this.getWidth() / zoomFactor),
+						//Math.round(this.getHeight() / zoomFactor)
+						Math.round(this.getWidth() / zoomFactor - offsetX),
+						Math.round(this.getHeight() / zoomFactor - offsetY)
 						// END KGU#624 2018-12-24
 						);
 			}
 			else {
-				g2d.scale(1/zoomFactor, 1/zoomFactor);
+				g2d.scale(zoomFactor, zoomFactor);
 			}
 			// END KGU#497 2018-03-19
 
@@ -503,7 +504,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				/* The clip bounds of the graphics object are usually smaller than the entire
 				 * viewport, due to window bit blit */
 				//Rect visRect = new Rect(((JViewport)getParent()).getViewRect());
-				//visRect = visRect.scale(zoomFactor);
+				//visRect = visRect.scale(1/zoomFactor);
 				//visibleRect = visRect.getRectangle();
 				// START KGU#706 2019-05-14: Bugfix #722 This failed with the graphics object of a buffered image
 				//Rect clipRect = new Rect(g.getClipBounds());
@@ -577,7 +578,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#624 2018-12-23
 			// START KGU#497 2018-03-19: Enh. #512
 			if (!compensateZoom) {
-				g2d.scale(zoomFactor, zoomFactor);
+				g2d.scale(1/zoomFactor, 1/zoomFactor);
 			}
 			// END KGU#497 2018-03-19
 		}
@@ -586,8 +587,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		area.height += DEFAULT_GAP;
 		// END KGU#645 2019-02-03S
 		// START KGU#85 2017-10-23: Enh. #35 - now make sure the scrolling area is up to date
-		area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) / this.zoomFactor);
-		area.height = Math.round(Math.min(area.height, Short.MAX_VALUE) / this.zoomFactor);
+		area.width = Math.round(Math.min(area.width, Short.MAX_VALUE) * this.zoomFactor);
+		area.height = Math.round(Math.min(area.height, Short.MAX_VALUE) * this.zoomFactor);
 		Dimension oldArea = this.getPreferredSize();
 		// This check isn't only to improve performance but also to avoid endless recursion
 		if (area.width != oldArea.width || area.height != oldArea.height) {
@@ -1996,17 +1997,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				rect.right -= offsetX;
 				rect.bottom -= offsetY;
 			}
-			int width = this.getWidth() - Math.round(offsetX / zoomFactor);
-			int height = this.getHeight() - Math.round(offsetY / zoomFactor);
+			int width = this.getWidth() - Math.round(offsetX * zoomFactor);
+			int height = this.getHeight() - Math.round(offsetY * zoomFactor);
 			// END KGU#624 2018-12-24
 			if (logger.isLoggable(Level.CONFIG)) {
 				logger.log(Level.CONFIG, "{0} x {1}", new Object[]{width, height});
 				logger.log(Level.CONFIG, "Drawing Rect: {0}", rect);
-				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width*this.zoomFactor, height*this.zoomFactor});
+				logger.log(Level.CONFIG, "zoomed: {0} x {1}", new Object[]{width/this.zoomFactor, height/this.zoomFactor});
 			}
 			BufferedImage bi = new BufferedImage(
-					Math.round(width * this.zoomFactor),
-					Math.round(height * this.zoomFactor),
+					Math.round(width / this.zoomFactor),
+					Math.round(height / this.zoomFactor),
 					BufferedImage.TYPE_4BYTE_ABGR);
 			paintComponent(bi.getGraphics(), true, !this.diagramsSelected.isEmpty(), offsetX, offsetY);
 			// END KGU#497 2018-03-19
@@ -2260,8 +2261,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //			this.setPreferredSize(new Dimension(rect.right, rect.bottom));
 //			this.revalidate();
 //		}
-		Dimension newZoomedDim = new Dimension(Math.round(Math.min(rect.right, Short.MAX_VALUE) / this.zoomFactor),
-				Math.round(Math.min(rect.bottom, Short.MAX_VALUE) / this.zoomFactor));
+		Dimension newZoomedDim = new Dimension(Math.round(Math.min(rect.right, Short.MAX_VALUE) * this.zoomFactor),
+				Math.round(Math.min(rect.bottom, Short.MAX_VALUE) * this.zoomFactor));
 		if (newZoomedDim.width != oldDim.width || newZoomedDim.height != oldDim.height) {
 			this.setPreferredSize(newZoomedDim);
 			this.revalidate();
@@ -2467,7 +2468,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 			// START KGU#497 2018-02-17: Enh. #512 - zooming must be considered
 			//if (left > this.getWidth())
-			if (left > this.getWidth() * this.zoomFactor)
+			if (left > this.getWidth() / this.zoomFactor)
 				// END KGU#497 2018-02-17
 			{
 				// FIXME (KGU 2015-11-19) This isn't really sensible - might find a free space by means of a quadtree?
@@ -2541,7 +2542,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			adaptLayout();
 			// END KGU#85 2015-11-18
 			// START KGU#497 2018-12-23: Bugfix for enh. #512
-			rec = rec.scale(1/this.zoomFactor);
+			rec = rec.scale(this.zoomFactor);
 			// END KGU#497 2018-12-23
 			this.scrollRectToVisible(rec.getRectangle());
 			// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null (KGU#804 2020-02-17: now done in both cases)
@@ -2679,7 +2680,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Point optimum = null;
 		while (iter.hasNext()) {
 			Point leap = iter.next();
-			if (leap.x > this.getWidth() * this.zoomFactor) {
+			if (leap.x > this.getWidth() / this.zoomFactor) {
 				break;
 			}
 			ListIterator<Point> iter1 = candidates.listIterator();
@@ -2707,7 +2708,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// If we didn't find anything better, then we will just adhere to the bounds approach result
 		// But first have a look whether some incompletely analysed breaches (those remaining open at
 		// end) are wide enough to be accepted. We will allow a diagram if it fits at least by half.
-		float windowWidth = this.getWidth() * this.zoomFactor - rec.width/2; 
+		float windowWidth = this.getWidth() / this.zoomFactor - rec.width/2; 
 		for (Point cand: candidates) {
 			if (cand.x < windowWidth && (optimum == null || cand.y < optimum.y)) {
 				optimum = cand;
@@ -3054,7 +3055,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		this.setPreferredSize(new Dimension(400, 300));
 		// START KGU#497 2018-02-17: Enh. #512
 		try {
-			this.zoomFactor = Float.parseFloat(Ini.getInstance().getProperty("arrangerZoom", "2.0f"));
+			// For historical reasons, the zoom scale in ini remains reverse
+			this.zoomFactor = 1/Float.parseFloat(Ini.getInstance().getProperty("arrangerZoom", "2.0f"));
 		}
 		catch (NumberFormatException ex) {
 			logger.log(Level.WARNING, "Corrupt zoom factor in ini", ex);
@@ -3468,8 +3470,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					this.unselectAll();
 				}
 				// With zooming we need the virtual mouse coordinates (Enh. #512)
-				int mouseX = Math.round(e.getX() * this.zoomFactor);
-				int mouseY = Math.round(e.getY() * this.zoomFactor);
+				int mouseX = Math.round(e.getX() / this.zoomFactor);
+				int mouseY = Math.round(e.getY() / this.zoomFactor);
 				// START KGU#633 2019-01-09: Enh. #662/2
 				if (!(drawGroups && selectGroups)) {
 					Diagram diagram = getHitDiagram(mouseX, mouseY);
@@ -3572,8 +3574,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			scrollRectToVisible(rect);
 
 			// Now we need the virtual coordinates
-			mouseX = Math.round(mouseX * zoomFactor);
-			mouseY = Math.round(mouseY * zoomFactor);
+			mouseX = Math.round(mouseX / zoomFactor);
+			mouseY = Math.round(mouseY / zoomFactor);
 			
 			Diagram diagram = getHitDiagram(mouseX, mouseY);
 			Point oldMousePoint = this.dragPoint;
@@ -3632,8 +3634,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		if (this.drawGroups) {
 			pop.setVisible(false);
-			int x = (int)(e.getX() * this.zoomFactor);
-			int y = (int)(e.getY() * this.zoomFactor);
+			int x = (int)(e.getX() / this.zoomFactor);
+			int y = (int)(e.getY() / this.zoomFactor);
 			Set<Group> hitGroups = this.getHitGroups(x, y);
 			if (!hitGroups.isEmpty()) {
 				StringList groupNames = new StringList();
@@ -3673,7 +3675,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// START KGU#630 2019-01-09: Enh #662/2
 				if (!(drawGroups && selectGroups)) {
 				// END KGU#630 2019-01-09
-					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() / zoomFactor), Math.round(e.getY() / zoomFactor));
 					for (Diagram diagr: hitDiagrs) {
 						String description = diagr.root.getSignatureString(false);
 						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, diagr.root.getIcon());
@@ -3698,7 +3700,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// START KGU#630 2019-01-09: Enh #662/2
 				}
 				if (drawGroups) {
-					Set<Group> hitGroups = this.getHitGroups(Math.round(e.getX() * zoomFactor), Math.round(e.getY() * zoomFactor));
+					Set<Group> hitGroups = this.getHitGroups(Math.round(e.getX() / zoomFactor), Math.round(e.getY() / zoomFactor));
 					String tooltipText = msgTooltipSelectThis.getText();
 					int pos2 = tooltipText.indexOf("%2");
 					if (pos2 > 0) {
@@ -4507,7 +4509,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			Rect rect = aRoot.getRect(diagr.point);
 			// START KGU#497 2018-02-17: Enh. #512
-			rect = rect.scale(1/this.zoomFactor);
+			rect = rect.scale(this.zoomFactor);
 			// END KGU#497 2018-02-17
 			this.scrollRectToVisible(rect.getRectangle());
 		}
@@ -4523,7 +4525,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void scrollToGroup(Group aGroup) {
 		Collection<Diagram> members = aGroup.getDiagrams();
 		Rect rect = this.getDrawingRect(members, null);
-		rect = rect.scale(1/this.zoomFactor);
+		rect = rect.scale(this.zoomFactor);
 		unselectAll();
 		this.selectSet(members);
 		this.scrollRectToVisible(rect.getRectangle());
@@ -4551,7 +4553,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Rectangle bounds = null;
 		Rect rect = this.getDrawingRect(this.diagramsSelected, null);
 		if (!unzoomed) {
-			rect = rect.scale(1/zoomFactor);
+			rect = rect.scale(zoomFactor);
 		}
 		if (rect.right > rect.left && rect.bottom > rect.top) {
 			bounds = rect.getRectangle();
@@ -4741,10 +4743,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public void zoom(boolean zoomIn) {
 		if (zoomIn) {
-			this.zoomFactor = Math.max(this.zoomFactor * 0.9f, 1);
+			this.zoomFactor = Math.min(this.zoomFactor / 0.9f, 1);
 		}
 		else {
-			this.zoomFactor /= 0.9f;
+			this.zoomFactor = Math.max(this.zoomFactor * 0.9f, 0.01f);
 		}
 		repaint();
 		// START KGU#624 2018-12-21: Enh. #655
@@ -4754,7 +4756,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Return the current zoom factor
-	 * @return zoom factor (1 = 100%, 2 = 50%, 3 = 33% etc.)
+	 * @return zoom factor (1 = 100%, 0.5 = 50% etc.)
 	 */
 	public float getZoom() {
 		return this.zoomFactor;
@@ -4769,16 +4771,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	public void mouseWheelMoved(MouseWheelEvent mwEvt) {
 		if (mwEvt.isControlDown()) {
 			int rotation = mwEvt.getWheelRotation();
-			if (Element.E_WHEEL_REVERSE_ZOOM) {
-				rotation *= -1;
-			}
-			if (rotation >= 1) {
+			if (Math.abs(rotation) >= 1) {
+				if (Element.E_WHEEL_REVERSE_ZOOM) {
+					rotation *= -1;
+				}
 				mwEvt.consume();
-				this.zoom(false);
-			}
-			else if (rotation <= -1) {
-				mwEvt.consume();
-				this.zoom(true);
+				this.zoom(rotation < 0);
 			}
 		}
 	}

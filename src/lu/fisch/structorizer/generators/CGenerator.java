@@ -95,7 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
  *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
- *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simpy skipped without trace
+ *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simply skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
  *      Kay Gürtzig             2020-02-10      Bugfix #808: For initialised declarations, operator unification was forgotten.

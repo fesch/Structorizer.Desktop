@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Basic scaling outsourced to class GUIScaler
  *      Kay Gürtzig     2017.03.14  Enh. #372: Additional hook for subclass InputBoxRoot.
  *      Kay Gürtzig     2017.10.06  Enh. #430: The scaled TextField font size (#284) is now kept during the session
+ *      Kay Gürtzig     2020-10-15  Bugfix #885 Focus rule was flawed (ignored suppression of switch text/comments mode)
  *
  ******************************************************************************************************
  *
@@ -359,7 +360,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
         setPreferredSize(scaleFactor);
-        if (Element.E_TOGGLETC) {
+        // START KGU#887 2020-12-15: Bugfix #885 Don't put the focus to comment if TC mode is suppressed
+        //if (Element.E_TOGGLETC) {
+        if (Element.isSwitchTextCommentMode()) {
+        // END KGU#887 2020-12-15
             txtComment.requestFocusInWindow();
         } else {
             txtText.requestFocusInWindow();

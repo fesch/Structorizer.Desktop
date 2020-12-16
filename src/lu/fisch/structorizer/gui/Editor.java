@@ -86,6 +86,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-06      Bugfix #868/#870: Suppression of group export had been forgotten.
  *      Kay Gürtzig     2020-10-17      Enh. #872: New toolbar with 2 display mode indicators
  *      Kay Gürtzig     2020-12-11      Bugfix #885: Display mode indicator visibility mended
+ *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the mode display was still flawed
  *
  ******************************************************************************************************
  *
@@ -1472,7 +1473,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#872 2020-10-17: Enh. #872
 		// START KGU#887 2020-12-11: Bugfix #885
 		//lblSwitchComments.setEnabled(Element.E_TOGGLETC);
-		lblSwitchComments.setEnabled(Element.E_TOGGLETC && !Element.E_COMMENTSPLUSTEXT);
+		lblSwitchComments.setEnabled(Element.isSwitchTextCommentMode());
 		// END KGU#887 2020-12-11
 		lblSwitchComments.setToolTipText(buildMessageWithMenuRef(
 				lblSwitchComments.isEnabled() ? ttSwitchComments : msgInactiveMode,
@@ -1480,7 +1481,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#887 2020-12-11: Bugfix #885
 		//lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && !Element.E_TOGGLETC);
 		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS 
-				&& (!Element.E_TOGGLETC || Element.E_COMMENTSPLUSTEXT));
+				&& (!Element.isSwitchTextCommentMode()));
 		// END KGU#887 2020-12-11
 		lblOperatorsC.setToolTipText(buildMessageWithMenuRef(
 				lblOperatorsC.isEnabled() ? ttOperatorsC : msgInactiveMode,
