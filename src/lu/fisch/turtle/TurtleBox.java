@@ -47,7 +47,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
  *      Kay Gürtzig     2020-12-11      Enh. #704: Scrollbars, status bar, and popup menu added
  *                                      Enh. #443: Deprecated execute methods disabled
- *      Kay Gürtzig     2020-12-15      Enh. #704/#880: Zoom and export functions accomplished
+ *      Kay Gürtzig     2020-12-16      Enh. #704/#880: Zoom and export functions accomplished
  *
  ******************************************************************************************************
  *
@@ -475,7 +475,14 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void updateStatusBar() {
 			if (statusbar.isVisible()) {
-				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
+				int homeX = owner.home.x;
+				int homeY = owner.home.y;
+				// If the drawing was moved show the virtual moved home coordinate
+				if (displacement != null) {
+					homeX += displacement.x;
+					homeY += displacement.y;
+				}
+				statusHome.setText("(" + homeX + ", " + homeY + ")");
 				statusTurtle.setText("(" + owner.pos.x + ", " + owner.pos.y + ") " + owner.getOrientation() + "°");
 				Rectangle size = new Rectangle(owner.bounds);
 				size.add(owner.pos);
@@ -486,7 +493,6 @@ public class TurtleBox implements DelayableDiagramController
 						// bottom coordinate
 						+ Math.max(size.y + size.height, 0)
 						);
-				scrollarea.getLocation();	// This is just to determine the current origin
 				Rectangle vRect = scrollarea.getViewport().getViewRect();
 				vRect.x /= zoomFactor;
 				vRect.y /= zoomFactor;
@@ -671,10 +677,10 @@ public class TurtleBox implements DelayableDiagramController
 		private void zoom(boolean zoomIn)
 		{
 			if (zoomIn) {
-				zoom(this.zoomFactor / 0.9f);
+				zoom(this.zoomFactor / ZOOM_RATE);
 			}
 			else {
-				zoom(this.zoomFactor * 0.9f);
+				zoom(this.zoomFactor * ZOOM_RATE);
 			}
 		}
 		
@@ -685,10 +691,17 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void zoom(float newFactor)
 		{
-			this.zoomFactor = Math.max(0.01f, Math.min(newFactor, 2.0f));
-			// FIXME: Derive a minimum zoom factor, possibly via the bounds?
-			statusZoom.setText(String.format("%.1f %%", 100 * zoomFactor));
+			Rectangle vRect = scrollarea.getViewport().getViewRect();
+			float centerX = (vRect.x + vRect.width/2) / zoomFactor;
+			float centerY =	(vRect.y + vRect.height/2) / zoomFactor;
+			this.zoomFactor = Math.max(MIN_ZOOM, Math.min(newFactor, MAX_ZOOM));
 			repaintAll();
+			Point center = new Point(
+					Math.round(centerX),
+					Math.round(centerY)
+					);
+			// Try to maintain centre coordinate
+			gotoCoordinate(center);
 			// Is this necessary?
 			this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
 		}
@@ -713,10 +726,13 @@ public class TurtleBox implements DelayableDiagramController
 			}
 			// This is the actual viewport size
 			Rectangle view = scrollarea.getViewport().getViewRect();
+			/* FIXME Sometimes a second attempt is necessary to centre the drawing
+			 * The reason might be that the viewport is not fast enough adapted to
+			 * the new zoom factor */
 			float zoomH = 1.0f * view.width / (bounds.width + MARGIN);
 			float zoomV = 1.0f * view.height / (bounds.height + MARGIN);
 			zoom(Math.min(zoomH, zoomV));
-			gotoCoordinate(new Point(bounds.x + (MARGIN + bounds.width)/2, bounds.y + (MARGIN + bounds.height)/2));
+			gotoCoordinate(new Point(bounds.x + bounds.width/2, bounds.y + bounds.height/2));
 		}
 
 		/**
@@ -1211,7 +1227,7 @@ public class TurtleBox implements DelayableDiagramController
 		 * @param coord
 		 */
 		private void gotoCoordinate(Point coord) {
-			java.awt.Rectangle vRect = scrollarea.getViewport().getViewRect();
+			Rectangle vRect = scrollarea.getViewport().getViewRect();
 			int marginH = vRect.width/2;	// horizontal margin
 			int marginV = vRect.height/2;	// vertical margin
 			// Estimate the position in the zoomed panel
@@ -1312,6 +1328,12 @@ public class TurtleBox implements DelayableDiagramController
     // START KGU#685 2020-12-11: Enh. #704
     /** Width and height margin for the drawn area (regarding scrollbars) */
     private static final int MARGIN = 20;
+    /** Maximum zoom factor */
+    private static final float MAX_ZOOM = 2.0f;
+    /** Minimum zoom factor */
+    private static final float MIN_ZOOM = 0.01f;
+    /** Zoom change factor */
+    private static final float ZOOM_RATE = 0.9f;
     /** Flag to specify reverse zoom effect of mouse wheel */
     private boolean reverseZoomWheel = false;
     public void setReverseZoomWheel(boolean isReverse) {
