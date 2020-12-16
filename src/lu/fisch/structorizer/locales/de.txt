@@ -128,6 +128,7 @@
  *      Kay Gürtzig         2019-08-06  Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
  *      Kay Gürtzig         2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
+ *      Kay Gürtzig         2020-12-12  Enh. #704: New top-level section "DiagramController"
  *
  ******************************************************************************************************
  *
@@ -1481,6 +1482,31 @@ OutputConsole.menuContentSave.text=Log sichern ...
 OutputConsole.msgOverwriteFile.text=Vorhandene Datei überschreiben?
 OutputConsole.msgErrorFileSave.text=Fehler beim Sichern in Datei: %!
 OutputConsole.msgTitleError.text=Fehler
+
+-----> DiagramController
+-----[ TurtleFrame ]-----
+TurtleFrame.popupGotoCoord.text=Zu Koordinate scrollen ...
+TurtleFrame.popupGotoTurtle.text=Zur Schildkröte scrollen
+TurtleFrame.popupGotoHome.text=Zur Startposition scrollen
+TurtleFrame.popupZoom100.text=Zoom auf 100% rücksetzen
+TurtleFrame.popupZoomBounds.text=Auf Gesamtbild zoomen
+TurtleFrame.popupMoveIn.text=Bild in Zeichenbereich ziehen
+TurtleFrame.popupShowOrigin.text=Koordinatenkreuz zeichnen
+TurtleFrame.popupShowTurtle.text=Schildkröte zeigen
+TurtleFrame.popupShowStatus.text=Statusleiste zeigen
+TurtleFrame.popupBackground.text=Hintergrundfarbe ändern ...
+TurtleFrame.popupExportCSV.text=Zeichnungselemente als CSV exportieren ...
+TurtleFrame.popupExportImage.text=Bildexport
+TurtleFrame.popupExportPNG.text=als PNG ...
+TurtleFrame.popupExportSVG.text=als SVG ...
+TurtleFrame.statusHome.tooltip=Startposition
+TurtleFrame.statusTurtle.tooltip=Aktuelle Schildkrötenposition
+TurtleFrame.statusSize.tooltip=Ausdehnung des Zeichnungsbereichs
+TurtleFrame.statusViewport.tooltip=Momentaner Scrolling-Ausschnitt
+TurtleFrame.statusSelection.tooltip=Anzahl der ausgewählten Segmente
+TurtleFrame.statusZoom.tooltip=Vergrößerungsfaktor
+TurtleFrame.lblOverwrite.text=Datei existiert. Wirklich überschreiben?
+TurtleFrame.lblScale.text=Skalierungsfaktor:
 
 -----> Elements
 ElementNames.localizedNames.0.text=Verarbeitung

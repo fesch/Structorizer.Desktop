@@ -77,6 +77,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-28  Enh. #657: New argument for subdiagram retrieval methods
  *      Kay Gürtzig     2019-10-05  Bugfix #759: Exception catch in routinePoolChanged() as emergency workaround
  *      Kay Gürtzig     2020-01-20  Enh. #801: Key F1 now tries to open the PDF help file if offline
+ *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
  *
  ******************************************************************************************************
  *
@@ -724,6 +725,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		expandRootSetOrSelection(null, Arranger.this, null);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
         
         // START KGU#626 2019-01-03: Enh. #657
@@ -734,6 +736,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		makeGroup(Arranger.this);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         
         popupExpandGroup = new javax.swing.JMenuItem("Expand and group ...", IconLoader.getIcon(117));
@@ -744,6 +747,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		expandRootSetOrSelection(null, null, null);
         		makeGroup(Arranger.this);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         // END KGU#626 201-01-03
         
@@ -757,6 +761,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         			inspectAttributes(root);
         		}
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
 
         popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
@@ -766,6 +771,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		btnRemoveDiagramActionPerformed(e, false);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupRemove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
         popupMenu.addSeparator();
@@ -779,6 +785,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		rearrange();
         	}
         });
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupRearrange.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         popupMenu.addSeparator();
@@ -802,6 +809,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		helpArranger(false);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupHelp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         
         popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getIcon(89));
@@ -811,6 +819,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         	public void actionPerformed(ActionEvent e) {
         		helpArranger(true);
         	}});
+        // This doesn't work directly but shows the key binding handled via keyPressed()
         popupKeyBindings.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, java.awt.event.InputEvent.ALT_DOWN_MASK));
         
     }
@@ -828,14 +837,15 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //		statusSize.setText(surface.getWidth() + " x " + surface.getHeight());
 //		statusViewport.setText(vRect.x + ".." + (vRect.x + vRect.width) + " : " +
 //				vRect.y + ".." + (vRect.y + vRect.height));
-		double width = surface.getWidth() * surface.getZoom();
-		double height = surface.getHeight() * surface.getZoom();
-		Rect visRect = (new Rect(vRect)).scale(surface.getZoom());
+		double zoom = surface.getZoom();
+		double width = surface.getWidth() / zoom;
+		double height = surface.getHeight() / zoom;
+		Rect visRect = (new Rect(vRect)).scale(1/zoom);
 		statusSize.setText((int)width + " x " + (int)height);
 		statusViewport.setText(visRect.left + ".." + visRect.right + " : " +
 				visRect.top + ".." + visRect.bottom);
 		// END KGU#624 2019-03-13
-		statusZoom.setText(String.format("%.1f %%", 100 / surface.getZoom()));
+		statusZoom.setText(String.format("%.1f %%", 100 * zoom));
 	}
 	
 	protected void updateStatusSelection() {
@@ -943,7 +953,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#497 2018-02-17: Enh. #513
     protected void btnZoomActionPerformed(ActionEvent evt) {
         surface.zoom((evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0);
-        if (surface.getZoom() <= 1 && this.isShiftPressed) {
+        if (surface.getZoom() >= 1 && this.isShiftPressed) {
             btnZoom.setEnabled(false);
         }
     }
@@ -1312,7 +1322,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
                         this.routinePoolChanged(this, IRoutinePoolListener.RPC_POSITIONS_CHANGED);
                     }
                     else {
-                        scrollarea.getVerticalScrollBar().setValue(newValue);                		
+                        scrollarea.getVerticalScrollBar().setValue(newValue);
                     }
                 }
                 break;
@@ -1633,7 +1643,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
             this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
             // END KGU#534 2018-06-27
             this.isShiftPressed = true;
-            if (surface.getZoom() <= 1) {
+            if (surface.getZoom() >= 1) {
                 btnZoom.setEnabled(false);
             }
         }
@@ -2039,7 +2049,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	 */
 	public void updateProperties(Ini ini)
 	{
-		ini.setProperty("arrangerZoom", Float.toString(surface.getZoom()));
+		// For historical reasons, the ini property has still reverse meaning
+		ini.setProperty("arrangerZoom", Float.toString(1/surface.getZoom()));
 		// START KGU#623 2018-12-20: Enh. #654
 		ini.setProperty("arrangerDirectory", surface.currentDirectory.getAbsolutePath());
 		// END KGU#623 2018-12-20

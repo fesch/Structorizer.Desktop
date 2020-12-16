@@ -22,6 +22,7 @@ package lu.fisch.turtle.elements;
 
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  *
@@ -39,5 +40,12 @@ public class Move extends Element
     public void draw(Graphics2D graphics)
     {
     }
+
+    // START KGU#685 2020-12-11: Enh. #704
+    @Override
+    public void draw(Graphics2D graphics, Rectangle viewRect)
+    {
+    }
+    // END KGU#685 2020-12-11
 
 }

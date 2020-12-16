@@ -124,6 +124,7 @@
  *      Kay Gürtzig     2020-01-20      Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09      Issue #835: New ImportOptionDialog messages
  *      Kay Gürtzig     2020-03-17      New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
+ *      Kay Gürtzig     2020-12-12      Enh. #704: New top-level section "DiagramConroller"
  *
  ******************************************************************************************************
  *
@@ -1481,6 +1482,31 @@ OutputConsole.menuContentSave.text=Save log ...
 OutputConsole.msgOverwriteFile.text=Overwrite existing file?
 OutputConsole.msgErrorFileSave.text=Error on saving the file: %!
 OutputConsole.msgTitleError.text=Error
+
+-----> DiagramController
+-----[ TurtleFrame ]-----
+TurtleFrame.popupGotoCoord.text=Scroll to coordinate ...
+TurtleFrame.popupGotoTurtle.text=Scroll to turtle position
+TurtleFrame.popupGotoHome.text=Scroll to home position
+TurtleFrame.popupZoom100.text=Reset zoom to 100%
+TurtleFrame.popupZoomBounds.text=Zoom to fit bounds
+TurtleFrame.popupMoveIn.text=Move picture into area
+TurtleFrame.popupShowOrigin.text=Show coordinate cross
+TurtleFrame.popupShowTurtle.text=Show turtle
+TurtleFrame.popupShowStatus.text=Show status bar
+TurtleFrame.popupBackground.text=Set background color ...
+TurtleFrame.popupExportCSV.text=Export drawing items as CSV ...
+TurtleFrame.popupExportImage.text=Export as image
+TurtleFrame.popupExportPNG.text=to PNG ...
+TurtleFrame.popupExportSVG.text=to SVG ...
+TurtleFrame.statusHome.tooltip=Current home position
+TurtleFrame.statusTurtle.tooltip=Current turtle position
+TurtleFrame.statusSize.tooltip=Extension of drawn area
+TurtleFrame.statusViewport.tooltip=Current scrolling viewport
+TurtleFrame.statusSelection.tooltip=Number of selected segments
+TurtleFrame.statusZoom.tooltip=Zoom factor
+TurtleFrame.lblOverwrite.text=File exists. Sure to overwrite?
+TurtleFrame.lblScale.text=Scale factor:
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

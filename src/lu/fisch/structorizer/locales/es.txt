@@ -130,6 +130,7 @@
  *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09  Issue #835: New ImportOptionDialog messages
  *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
+ *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
  *
  ******************************************************************************************************
  *
@@ -1466,6 +1467,31 @@ OutputConsole.menuContentSave.text=Guardar contenido ...
 OutputConsole.msgOverwriteFile.text=¿Grabar encima del archivo existente?
 OutputConsole.msgErrorFileSave.text=¡Error grabando fichero: %!
 OutputConsole.msgTitleError.text=Error
+
+-----> DiagramController
+-----[ TurtleFrame ]-----
+TurtleFrame.popupGotoCoord.text=Desplazar a coordenada ...
+TurtleFrame.popupGotoTurtle.text=Desplazar hacia la tortuga
+TurtleFrame.popupGotoHome.text=Desplazar hacia el inicio
+TurtleFrame.popupZoom100.text=Reponer amplificación a 100%
+TurtleFrame.popupZoomBounds.text=Ajustar dibujo a la ventana
+TurtleFrame.popupMoveIn.text=Mover dibujo adentro del area
+TurtleFrame.popupShowOrigin.text=Dibujar cruz del orígen
+TurtleFrame.popupShowTurtle.text=Mostrar tortuga
+TurtleFrame.popupShowStatus.text=Mostrar barra de estado
+TurtleFrame.popupBackground.text=Ajustar color de fondo ...
+TurtleFrame.popupExportCSV.text=Exportar elementos del dibujo como CSV ...
+TurtleFrame.popupExportImage.text=Exportar imágen
+TurtleFrame.popupExportPNG.text=como PNG ...
+TurtleFrame.popupExportSVG.text=como SVG ...
+TurtleFrame.statusHome.tooltip=Posición inicial
+TurtleFrame.statusTurtle.tooltip=Posición de tortuga
+TurtleFrame.statusSize.tooltip=Extensión del area de dibujo
+TurtleFrame.statusViewport.tooltip=Area del desplazamiento
+TurtleFrame.statusSelection.tooltip=Número de segmentos seleccionados
+TurtleFrame.statusZoom.tooltip=Factor de amplificación
+TurtleFrame.lblOverwrite.text=Archivo existe. ¿Cierto de gravar el nuevo encima del existente?
+TurtleFrame.lblScale.text=Factor de ampliación:
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instrucción

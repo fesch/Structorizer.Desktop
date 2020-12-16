@@ -206,6 +206,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-18      Issue #875: Direct diagram saving into an archive, group check in canSave(true)
  *      Kay Gürtzig     2020-10-20/22   Issue #801: Ensured that the User Guide download is done in a background thread
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
+ *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
  *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
  *
  ******************************************************************************************************
@@ -244,7 +245,6 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -7349,8 +7349,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Tries to download the most recent user guide as PDF in a backround thread
 	 * with progress bar. Will override a possibly existing file.
-	 */
-	/**
 	 * @param title - the menu item caption to be used as window title
 	 */
 	public void downloadHelpPDF(String title)
@@ -7375,7 +7373,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		};
 		new DownloadMonitor(getFrame(), worker, title, Element.E_HELP_FILE_SIZE);
 	}
-	
 	// END KGU#791 2020-10-20
 	
 	// START KGU#791 2020-01-20: Enh. #801 support offline help
@@ -7387,7 +7384,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * regular progress message will be sent
 	 * @return true if the download was done and successful.
 	 */
-	public boolean downloadHelpPDF(boolean overrideExisting, SwingWorker worker)
+	public boolean downloadHelpPDF(boolean overrideExisting, SwingWorker<Boolean, Void> worker)
 	{
 		/* See https://stackoverflow.com/questions/921262/how-to-download-and-save-a-file-from-internet-using-java
 		 * for technical discussion 
@@ -7404,7 +7401,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			URL website = new URL(helpFileURI);
 			if (!helpFile.exists() || overrideExisting) {
-				int step = 0;
 				try (InputStream inputStream = website.openStream();
 						ReadableByteChannel readableByteChannel = Channels.newChannel(inputStream);
 						FileOutputStream fileOutputStream = new FileOutputStream(helpFile)) {
@@ -9243,6 +9239,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#792 2020-02-04: Bugfix #805
 		Ini.getInstance().setProperty("wheelCtrlReverse", (Element.E_WHEEL_REVERSE_ZOOM ? "1" : "0"));
 		// END KGU#792 2020-02-04
+		// START KGU#685 2020-12-12: Enh. #704
+		// Behaviour of DiagramControllers should be consistent ...
+		if (turtle != null) {
+			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
+		}
+		// END KGU#685 2020-12-12
 	}
 	// END KGU#503 2018-03-14
 	
@@ -9919,6 +9921,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (turtle == null)
 		{
 			turtle = new TurtleBox(500,500);
+			// START KGU#685 2020-12-12: Enh. #704
+			Locales.getInstance().register(turtle.getFrame(), true);
+			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
+			// END KGU#685 2020-12-12
 		}
 		turtle.setVisible(true);
 		// Activate the executor (getInstance() is supposed to do that)
@@ -9928,21 +9934,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		goRun();
 		// END KGU#448 2018-01-05
 
-    }
-    
-    /**
-     * Checks for running status of the Root currently held and suggests the user to stop the
-     * execution if it is running
-     * @return true if the fostered Root isn't executed (action may proceed), false otherwise
-     */
-    private boolean checkRunning()
-    {
-    	if (this.root == null || !this.root.isExecuted()) return true;	// No problem
-    	// Give the user the chance to kill the execution but don't do anything for now,
-    	// whatever the user may have been decided.
-    	Executor.getInstance(null, null);
-    	return false;
-    }
+	}
+
+	/**
+	 * Checks for running status of the Root currently held and suggests the user to stop the
+	 * execution if it is running
+	 * @return true if the fostered Root isn't executed (action may proceed), false otherwise
+	 */
+	private boolean checkRunning()
+	{
+		if (this.root == null || !this.root.isExecuted()) return true;	// No problem
+		// Give the user the chance to kill the execution but don't do anything for now,
+		// whatever the user may have been decided.
+		Executor.getInstance(null, null);
+		return false;
+	}
 
 	// START KGU#448 2018-01-05: Enh. #443
 	/**
@@ -10020,348 +10026,348 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#448 2018-01-08
 
-    // START KGU#177 2016-04-07: Enh. #158
-    /**
-     * Tries to shift the selection to the next element in the _direction specified.
-     * It turned out that on going down and right it's most intuitive to dive into
-     * the substructure of compound elements (rather than jumping to its successor).
-     * (For Repeat elements this holds on going up).
-     * @param _direction - the cursor key orientation (up, down, left, right)
-     */
-    public void moveSelection(Editor.CursorMoveDirection _direction)
-    {
-    	if (selected != null)
-    	{
-    		Rect selRect = selected.getRectOffDrawPoint();
-    		// Get center coordinates
-    		int x = (selRect.left + selRect.right) / 2;
-    		int y = (selRect.top + selRect.bottom) / 2;
-    		switch (_direction)
-    		{
-    		case CMD_UP:
-    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-    			//if (selected instanceof Repeat)
-    			if (selected instanceof Repeat && !selected.isCollapsed(false))
-    				// END KGU#495 2018-02-15
-    			{
-    				// START KGU#292 2016-11-16: Bugfix #291
-    				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
-    				y = ((Repeat)selected).getBody().getRectOffDrawPoint().bottom - 2;
-    				// END KGU#292 2016-11-16
-    			}
-    			else if (selected instanceof Root)
-    			{
-    				y = ((Root)selected).children.getRectOffDrawPoint().bottom - 2;
-    			}
-    			else
-    			{
-    				y = selRect.top - 2;
-    			}
-    			break;
-    		case CMD_DOWN:
-    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-    			//if (selected instanceof ILoop && !(selected instanceof Repeat))
-    			if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
-    			// END KGU#495 2018-02-15
-    			{
-    				Subqueue body = ((ILoop)selected).getBody();
-    				y = body.getRectOffDrawPoint().top + 2;
-    			}
-    			// START KGU#346 2017-02-08: Issue #198 - Unification of forking elements
-    			//else if (selected instanceof Alternative)
-    			//{
-    			//	y = ((Alternative)selected).qTrue.getRectOffDrawPoint().top + 2;
-    			//}
-    			//else if (selected instanceof Case)
-    			//{
-    			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
-    			//}
-    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
-    			//else if (selected instanceof IFork)
-    			else if (selected instanceof IFork && !selected.isCollapsed(false))
-    			// END KGU#498 2018-02-18
-    			{
-    				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
-    			}
-    			// END KGU#346 2017-02-08
-    			// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
-    			//else if (selected instanceof Parallel)
-    			else if (selected instanceof Parallel && !selected.isCollapsed(false))
-    			// END KGU#498 2018-02-18
-    			{
-    				y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
-    			}
-    			else if (selected instanceof Root)
-    			{
-    				y = ((Root)selected).children.getRectOffDrawPoint().top + 2;
-    			}
-    			// START KGU#729 2019-09-24: Bugfix #751
-    			else if (selected instanceof Try) {
-    				y = ((Try)selected).qTry.getRectOffDrawPoint().top + 2;
-    			}
-    			// END KGU#729 2019-09-24
-    			else
-    			{
-    				y = selRect.bottom + 2;
-    			}
-    			break;
-    		case CMD_LEFT:
-    			if (selected instanceof Root)
-    			{
-    				Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
-    				// The central element of the subqueue isn't the worst choice because from
-    				// here the distances are minimal. The top element, on the other hand,
-    				// is directly reachable by cursor down.
-    				x = bodyRect.right - 2;
-    				y = (bodyRect.top + bodyRect.bottom) / 2;
-    			}
-    			else
-    			{
-    				x = selRect.left - 2;
-    				// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
-    				if (selected instanceof IFork) {
-    					y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
-    				}
-    				// END KGU#346 2017-02-08
-    			}
-    			break;
-    		case CMD_RIGHT:
-    			// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-    			//if (selected instanceof ILoop)
-    			if (selected instanceof ILoop && !selected.isCollapsed(false))
-    			// END KGU#495 2018-02-15
-    			{
-    				Rect bodyRect = ((ILoop)selected).getBody().getRectOffDrawPoint();
-    				x = bodyRect.left + 2;
-    				// The central element of the subqueue isn't the worst choice because from
-    				// here the distances are minimal. The top element, on the other hand,
-    				// is directly reachable by cursor down.
-    				y = (bodyRect.top + bodyRect.bottom) / 2;
-    			}
-    			else if (selected instanceof Root)
-    			{
-    				Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
-    				// The central element of the subqueue isn't the worst choice because from
-    				// here the distances are minimal. The top element, on the other hand,
-    				// is directly reachable by cursor down.
-    				x = bodyRect.left + 2;
-    				y = (bodyRect.top + bodyRect.bottom) / 2;
-    			}
-    			// START KGU#729 2019-09-24: Bugfix #751
-    			else if (selected instanceof Try) {
-    				Rect catchRect = ((Try)selected).qCatch.getRectOffDrawPoint();
-    				x = catchRect.left + 2;
-    				y = catchRect.top + 2;
-    			}
-    			// END KGU#729 2019-09-24
-    			else
-    			{
-    				x = selRect.right + 2;
-    				// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
-    				if (selected instanceof IFork) {
-    					y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
-    				}
-    				// END KGU#346 2017-02-08
-    			}
-    			break;
-    		}
-    		Element newSel = root.getElementByCoord(x, y, true);
-    		if (newSel != null)
-    		{
-    			// START KGU#177 2016-04-24: Bugfix - couldn't leave Parallel and Forever elements
-    			// Compound elements with a lower bar would catch the selection again when their last
-    			// encorporated element is left downwards. So identify such a situation and leap after
-    			// the enclosing compound...
-    			if (_direction == Editor.CursorMoveDirection.CMD_DOWN &&
-    					(newSel instanceof Parallel || newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
-    					newSel.getRectOffDrawPoint().top < selRect.top)
-    			{
-    				newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
-    			}
-    			// END KGU#177 2016-04-24
-    			// START KGU#214 2016-07-25: Improvement of enh. #158
-    			else if (_direction == Editor.CursorMoveDirection.CMD_UP &&
-    					(newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
-    					newSel.getRectOffDrawPoint().bottom < selRect.bottom)
-    			{
-    				Subqueue body = ((ILoop)newSel).getBody();
-    				Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
-    				if (sel != null)
-    				{
-    					newSel = sel;
-    				}
-    			}
-    			// END KGU#214 2016-07-25
-    			// START KGU#214 2016-07-31: Issue #158
-    			else if (newSel instanceof Root && (_direction == Editor.CursorMoveDirection.CMD_LEFT
-    					|| _direction == Editor.CursorMoveDirection.CMD_RIGHT))
-    			{
-    				newSel = selected;	// Stop before the border on boxed diagrams
-    			}
-    			// END KGU#214 2015-07-31
-    			// START KGU#729 2019-09-24: Bugfix #751
-    			else if (newSel instanceof Try) {
-    				Element sel = null;
-    				if (_direction == Editor.CursorMoveDirection.CMD_UP) {
-    					// From finally go to catch, from catch to try, from outside to finally
-    					if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
-    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().bottom - 2, true);
-    					}
-    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
-    						sel = root.getElementByCoord(x, ((Try)newSel).qTry.getRectOffDrawPoint().bottom - 2, true);
-    					}
-    					else if (!selected.isDescendantOf(newSel)) {
-    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
-    					}
-    				}
-    				else if (_direction == Editor.CursorMoveDirection.CMD_DOWN) {
-    					// From try go to catch, from catch to finally, from finally to subsequent element
-    					if (selected == ((Try)newSel).qTry || selected.isDescendantOf(((Try)newSel).qTry)) {
-    						sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().top + 2, true);
-    					}
-    					else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
-    						sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().top + 2, true);
-    					}
-    					else if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
-    						sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
-    					}
-    				}
-    				if (sel != null) {
-    					newSel = sel;
-    				}
-    			}
-    			// END KGU#729 2019-09-24
-    			selected = newSel;
-    		}
-    		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
-    		// This was better than to rush around on horizontal wheel activity! Hence fix withdrawn
-//    		else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
-//    		{
-//    			selected = root;
-//    		}
-    		// END KGU#214 2016-07-25
-    		selected = selected.setSelected(true);
+	// START KGU#177 2016-04-07: Enh. #158
+	/**
+	 * Tries to shift the selection to the next element in the _direction specified.
+	 * It turned out that on going down and right it's most intuitive to dive into
+	 * the substructure of compound elements (rather than jumping to its successor).
+	 * (For Repeat elements this holds on going up).
+	 * @param _direction - the cursor key orientation (up, down, left, right)
+	 */
+	public void moveSelection(Editor.CursorMoveDirection _direction)
+	{
+		if (selected != null)
+		{
+			Rect selRect = selected.getRectOffDrawPoint();
+			// Get center coordinates
+			int x = (selRect.left + selRect.right) / 2;
+			int y = (selRect.top + selRect.bottom) / 2;
+			switch (_direction)
+			{
+			case CMD_UP:
+				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+				//if (selected instanceof Repeat)
+				if (selected instanceof Repeat && !selected.isCollapsed(false))
+					// END KGU#495 2018-02-15
+				{
+					// START KGU#292 2016-11-16: Bugfix #291
+					//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+					y = ((Repeat)selected).getBody().getRectOffDrawPoint().bottom - 2;
+					// END KGU#292 2016-11-16
+				}
+				else if (selected instanceof Root)
+				{
+					y = ((Root)selected).children.getRectOffDrawPoint().bottom - 2;
+				}
+				else
+				{
+					y = selRect.top - 2;
+				}
+				break;
+			case CMD_DOWN:
+				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+				//if (selected instanceof ILoop && !(selected instanceof Repeat))
+				if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+					// END KGU#495 2018-02-15
+				{
+					Subqueue body = ((ILoop)selected).getBody();
+					y = body.getRectOffDrawPoint().top + 2;
+				}
+				// START KGU#346 2017-02-08: Issue #198 - Unification of forking elements
+				//else if (selected instanceof Alternative)
+				//{
+				//	y = ((Alternative)selected).qTrue.getRectOffDrawPoint().top + 2;
+				//}
+				//else if (selected instanceof Case)
+				//{
+				//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
+				//}
+				// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+				//else if (selected instanceof IFork)
+				else if (selected instanceof IFork && !selected.isCollapsed(false))
+					// END KGU#498 2018-02-18
+				{
+					y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
+				}
+				// END KGU#346 2017-02-08
+				// START KGU#498 2018-02-18: Bugfix #511 - cursor was caught when collapsed
+				//else if (selected instanceof Parallel)
+				else if (selected instanceof Parallel && !selected.isCollapsed(false))
+					// END KGU#498 2018-02-18
+				{
+					y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
+				}
+				else if (selected instanceof Root)
+				{
+					y = ((Root)selected).children.getRectOffDrawPoint().top + 2;
+				}
+				// START KGU#729 2019-09-24: Bugfix #751
+				else if (selected instanceof Try) {
+					y = ((Try)selected).qTry.getRectOffDrawPoint().top + 2;
+				}
+				// END KGU#729 2019-09-24
+				else
+				{
+					y = selRect.bottom + 2;
+				}
+				break;
+			case CMD_LEFT:
+				if (selected instanceof Root)
+				{
+					Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
+					// The central element of the subqueue isn't the worst choice because from
+					// here the distances are minimal. The top element, on the other hand,
+					// is directly reachable by cursor down.
+					x = bodyRect.right - 2;
+					y = (bodyRect.top + bodyRect.bottom) / 2;
+				}
+				else
+				{
+					x = selRect.left - 2;
+					// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
+					if (selected instanceof IFork) {
+						y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
+					}
+					// END KGU#346 2017-02-08
+				}
+				break;
+			case CMD_RIGHT:
+				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
+				//if (selected instanceof ILoop)
+				if (selected instanceof ILoop && !selected.isCollapsed(false))
+					// END KGU#495 2018-02-15
+				{
+					Rect bodyRect = ((ILoop)selected).getBody().getRectOffDrawPoint();
+					x = bodyRect.left + 2;
+					// The central element of the subqueue isn't the worst choice because from
+					// here the distances are minimal. The top element, on the other hand,
+					// is directly reachable by cursor down.
+					y = (bodyRect.top + bodyRect.bottom) / 2;
+				}
+				else if (selected instanceof Root)
+				{
+					Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
+					// The central element of the subqueue isn't the worst choice because from
+					// here the distances are minimal. The top element, on the other hand,
+					// is directly reachable by cursor down.
+					x = bodyRect.left + 2;
+					y = (bodyRect.top + bodyRect.bottom) / 2;
+				}
+				// START KGU#729 2019-09-24: Bugfix #751
+				else if (selected instanceof Try) {
+					Rect catchRect = ((Try)selected).qCatch.getRectOffDrawPoint();
+					x = catchRect.left + 2;
+					y = catchRect.top + 2;
+				}
+				// END KGU#729 2019-09-24
+				else
+				{
+					x = selRect.right + 2;
+					// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
+					if (selected instanceof IFork) {
+						y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
+					}
+					// END KGU#346 2017-02-08
+				}
+				break;
+			}
+			Element newSel = root.getElementByCoord(x, y, true);
+			if (newSel != null)
+			{
+				// START KGU#177 2016-04-24: Bugfix - couldn't leave Parallel and Forever elements
+				// Compound elements with a lower bar would catch the selection again when their last
+				// encorporated element is left downwards. So identify such a situation and leap after
+				// the enclosing compound...
+				if (_direction == Editor.CursorMoveDirection.CMD_DOWN &&
+						(newSel instanceof Parallel || newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+						newSel.getRectOffDrawPoint().top < selRect.top)
+				{
+					newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+				}
+				// END KGU#177 2016-04-24
+				// START KGU#214 2016-07-25: Improvement of enh. #158
+				else if (_direction == Editor.CursorMoveDirection.CMD_UP &&
+						(newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+						newSel.getRectOffDrawPoint().bottom < selRect.bottom)
+				{
+					Subqueue body = ((ILoop)newSel).getBody();
+					Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
+					if (sel != null)
+					{
+						newSel = sel;
+					}
+				}
+				// END KGU#214 2016-07-25
+				// START KGU#214 2016-07-31: Issue #158
+				else if (newSel instanceof Root && (_direction == Editor.CursorMoveDirection.CMD_LEFT
+						|| _direction == Editor.CursorMoveDirection.CMD_RIGHT))
+				{
+					newSel = selected;	// Stop before the border on boxed diagrams
+				}
+				// END KGU#214 2015-07-31
+				// START KGU#729 2019-09-24: Bugfix #751
+				else if (newSel instanceof Try) {
+					Element sel = null;
+					if (_direction == Editor.CursorMoveDirection.CMD_UP) {
+						// From finally go to catch, from catch to try, from outside to finally
+						if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+							sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().bottom - 2, true);
+						}
+						else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+							sel = root.getElementByCoord(x, ((Try)newSel).qTry.getRectOffDrawPoint().bottom - 2, true);
+						}
+						else if (!selected.isDescendantOf(newSel)) {
+							sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
+						}
+					}
+					else if (_direction == Editor.CursorMoveDirection.CMD_DOWN) {
+						// From try go to catch, from catch to finally, from finally to subsequent element
+						if (selected == ((Try)newSel).qTry || selected.isDescendantOf(((Try)newSel).qTry)) {
+							sel = root.getElementByCoord(x, ((Try)newSel).qCatch.getRectOffDrawPoint().top + 2, true);
+						}
+						else if (selected == ((Try)newSel).qCatch || selected.isDescendantOf(((Try)newSel).qCatch)) {
+							sel = root.getElementByCoord(x, ((Try)newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+						}
+						else if (selected == ((Try)newSel).qFinally || selected.isDescendantOf(((Try)newSel).qFinally)) {
+							sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+						}
+					}
+					if (sel != null) {
+						newSel = sel;
+					}
+				}
+				// END KGU#729 2019-09-24
+				selected = newSel;
+			}
+			// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
+			// This was better than to rush around on horizontal wheel activity! Hence fix withdrawn
+//			else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
+//			{
+//				selected = root;
+//			}
+			// END KGU#214 2016-07-25
+			selected = selected.setSelected(true);
 
-    		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
-    		//redraw();
-    		redraw(selected);
-    		// END KGU#177 2016-04-14
+			// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
+			//redraw();
+			redraw(selected);
+			// END KGU#177 2016-04-14
 
-    		// START KGU#705 2019-09-24: Enh. #738
-    		highlightCodeForSelection();
-    		// END KGU#705 2019-09-24
-    		// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
-    		this.doButtons();
-    		// END KGU#177 2016-04-24
-    	}
-    }
-    // END KGU#177 2016-04-07
+			// START KGU#705 2019-09-24: Enh. #738
+			highlightCodeForSelection();
+			// END KGU#705 2019-09-24
+			// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
+			this.doButtons();
+			// END KGU#177 2016-04-24
+		}
+	}
+	// END KGU#177 2016-04-07
 
-    // START KGU#206 2016-07-21: Enh. #158 + #197
-    /**
-     * Tries to expand the selection towards the next element in the _direction
-     * specified.
-     * This is of course limited to the bounds of the containing Subqueue.
-     * @param _direction - the cursor key orientation (up, down)
-     */
-    public void expandSelection(Editor.SelectionExpandDirection _direction)
-    {
-    	if (selected != null
-    			&& !(selected instanceof Subqueue)
-    			&& !(selected instanceof Root))
-    	{
-    		boolean newSelection = false;
-    		Subqueue sq = (Subqueue)selected.parent;
-    		Element first = selected;
-    		Element last = selected;
-    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    		int anchorOffset = 0;
-    		boolean atUpperEnd = true;	// Is the selection to be modified at upper end?
-    		boolean atLowerEnd = true;	// Is the selection to be modified at lower end?
-    		// END KGU#866 2020-05-02
-    		if (selected instanceof SelectedSequence)
-    		{
-    			SelectedSequence sel = (SelectedSequence)selected;
-    			first = sel.getElement(0);
-    			last = sel.getElement(sel.getSize()-1);
-    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    			anchorOffset = sel.getAnchorOffset();
-    			atUpperEnd = !sel.wasModifiedBelowAnchor();	// FIXME offset of anchor?
-    			atLowerEnd = sel.wasModifiedBelowAnchor();
-    			// END KGU#866 2020-05-02
-    		}
-    		int index0 = sq.getIndexOf(first);
-    		int index1 = sq.getIndexOf(last);
-    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    		//if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && index0 > 0)
-    		if (index0 > 0 && 
-    				(_direction == Editor.SelectionExpandDirection.EXPAND_TOP 
-    				|| _direction == Editor.SelectionExpandDirection.EXPAND_UP && atUpperEnd))
-    		// END KGU#866 2020-05-02
-    		{
-    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    			//selected = new SelectedSequence(sq, index0-1, index1);
-    			selected = new SelectedSequence(sq, index0-1, index1, anchorOffset+1, false);
-    			// END KGU#866 2020-05-02
-    			newSelection = true;
-    		}
-    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    		//else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && index1 < sq.getSize()-1)
-    		else if (index1 < sq.getSize()-1 &&
-    				(_direction == Editor.SelectionExpandDirection.EXPAND_BOTTOM
-    				|| _direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atLowerEnd))
-    		// END KGU#866 2020-05-02
-    		{
-    			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    			//selected = new SelectedSequence(sq, index0, index1+1, _index1, true);
-    			selected = new SelectedSequence(sq, index0, index1+1, anchorOffset, true);
-    			// END KGU#866 2020-05-02
-    			newSelection = true;
-    		}
-    		// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
-    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && atLowerEnd) {
-    			// Reduce at end
-    			selected.setSelected(false);
-    			redraw(selected);
-    			if (index0+1 >= index1) {
-    				// Selected sequence collapses to a single element
-    				selected = first;
-    			}
-    			else {
-    				selected = new SelectedSequence(sq, index0, index1-1,
-    						(anchorOffset == index1 - index0 ? anchorOffset - 1 : anchorOffset),
-    						true);
-    			}
-    			newSelection = true;
-    		}
-    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atUpperEnd) {
-    			// Reduce at start
-    			selected.setSelected(false);
-    			redraw(selected);
-    			if (index0+1 >= index1) {
-    				// Selected sequence collapses to a single element
-    				selected = last;
-    			}
-    			else {
-    				selected = new SelectedSequence(sq, index0+1, index1,
-    						(anchorOffset == 0 ? 0 : anchorOffset - 1),
-    						false);
-    			}
-    			newSelection = true;
-    		}
-    		// END KGU#866 2020-05-02
-    		if (newSelection)
-    		{
-    			selected.setSelected(true);
-    			redraw(selected);
-    			this.doButtons();
-    		}
-    		// START KGU#705 2019-09-24: Enh. #738
-    		highlightCodeForSelection();
-    		// END KGU#705 2019-09-24
-    	}
-    }
-    // END KGU#206 2016-07-21
+	// START KGU#206 2016-07-21: Enh. #158 + #197
+	/**
+	 * Tries to expand the selection towards the next element in the _direction
+	 * specified.
+	 * This is of course limited to the bounds of the containing Subqueue.
+	 * @param _direction - the cursor key orientation (up, down)
+	 */
+	public void expandSelection(Editor.SelectionExpandDirection _direction)
+	{
+		if (selected != null
+				&& !(selected instanceof Subqueue)
+				&& !(selected instanceof Root))
+		{
+			boolean newSelection = false;
+			Subqueue sq = (Subqueue)selected.parent;
+			Element first = selected;
+			Element last = selected;
+			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+			int anchorOffset = 0;
+			boolean atUpperEnd = true;	// Is the selection to be modified at upper end?
+			boolean atLowerEnd = true;	// Is the selection to be modified at lower end?
+			// END KGU#866 2020-05-02
+			if (selected instanceof SelectedSequence)
+			{
+				SelectedSequence sel = (SelectedSequence)selected;
+				first = sel.getElement(0);
+				last = sel.getElement(sel.getSize()-1);
+				// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+				anchorOffset = sel.getAnchorOffset();
+				atUpperEnd = !sel.wasModifiedBelowAnchor();	// FIXME offset of anchor?
+				atLowerEnd = sel.wasModifiedBelowAnchor();
+				// END KGU#866 2020-05-02
+			}
+			int index0 = sq.getIndexOf(first);
+			int index1 = sq.getIndexOf(last);
+			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+			//if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && index0 > 0)
+			if (index0 > 0 && 
+					(_direction == Editor.SelectionExpandDirection.EXPAND_TOP 
+					|| _direction == Editor.SelectionExpandDirection.EXPAND_UP && atUpperEnd))
+				// END KGU#866 2020-05-02
+			{
+				// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+				//selected = new SelectedSequence(sq, index0-1, index1);
+				selected = new SelectedSequence(sq, index0-1, index1, anchorOffset+1, false);
+				// END KGU#866 2020-05-02
+				newSelection = true;
+			}
+			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+			//else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && index1 < sq.getSize()-1)
+			else if (index1 < sq.getSize()-1 &&
+					(_direction == Editor.SelectionExpandDirection.EXPAND_BOTTOM
+					|| _direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atLowerEnd))
+				// END KGU#866 2020-05-02
+			{
+				// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+				//selected = new SelectedSequence(sq, index0, index1+1, _index1, true);
+				selected = new SelectedSequence(sq, index0, index1+1, anchorOffset, true);
+				// END KGU#866 2020-05-02
+				newSelection = true;
+			}
+			// START KGU#866 2020-05-02: Issue #866 improved expansion / reduction strategy
+			else if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && atLowerEnd) {
+				// Reduce at end
+				selected.setSelected(false);
+				redraw(selected);
+				if (index0+1 >= index1) {
+					// Selected sequence collapses to a single element
+					selected = first;
+				}
+				else {
+					selected = new SelectedSequence(sq, index0, index1-1,
+							(anchorOffset == index1 - index0 ? anchorOffset - 1 : anchorOffset),
+							true);
+				}
+				newSelection = true;
+			}
+			else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && atUpperEnd) {
+				// Reduce at start
+				selected.setSelected(false);
+				redraw(selected);
+				if (index0+1 >= index1) {
+					// Selected sequence collapses to a single element
+					selected = last;
+				}
+				else {
+					selected = new SelectedSequence(sq, index0+1, index1,
+							(anchorOffset == 0 ? 0 : anchorOffset - 1),
+							false);
+				}
+				newSelection = true;
+			}
+			// END KGU#866 2020-05-02
+			if (newSelection)
+			{
+				selected.setSelected(true);
+				redraw(selected);
+				this.doButtons();
+			}
+			// START KGU#705 2019-09-24: Enh. #738
+			highlightCodeForSelection();
+			// END KGU#705 2019-09-24
+		}
+	}
+	// END KGU#206 2016-07-21
 
 	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {
@@ -10462,7 +10468,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/**
-	 * This only cares for the look and feel update of the Find&Replace dialog if it is open.
+	 * This only cares for the look and feel update of the Find&Replace dialog
+	 * (if it is open) and the Turtleizer.
 	 */
 	protected void updateLookAndFeel()
 	{
@@ -10474,6 +10481,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			catch (Exception ex) {}
 		}
+		// START KGU#685 2020-12-12: Enh. #704
+		if (turtle != null) {
+			turtle.updateLookAndFeel();
+		}
+		// END KGU#685 2020-12-12
 		if (this.codeHighlighter != null)
 		{
 			this.codeHighlighter = codePreview.getHighlighter();

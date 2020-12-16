@@ -1404,12 +1404,13 @@ public abstract class Element {
 		}
 	}
 	
-	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information, 2019-03-16 made static
+	/* START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information,
+	 * 2019-03-16 made static, 2020-12-15 made public */
 	/**
 	 * Checks whether texts and comments are to be swapped for display.
 	 * @return true iff the swichTextAndComments flag is on and commentsPlusText mode is not
 	 */
-	protected static boolean isSwitchTextCommentMode()
+	public static boolean isSwitchTextCommentMode()
 	{
 //		Root root = getRoot(this);
 //		return (root != null && root.isSwitchTextAndComments());
@@ -1418,7 +1419,7 @@ public abstract class Element {
     	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
     	// END KGU#227 2016-07-31
 	}
-	// END KGU#172 2916-04-01
+	/* END KGU#172 2916-04-01 */
 
 	/**
 	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.
