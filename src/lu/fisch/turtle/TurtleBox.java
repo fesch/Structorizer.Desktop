@@ -82,6 +82,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,6 +101,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.diagrcontrol.*;
@@ -211,99 +213,116 @@ public class TurtleBox implements DelayableDiagramController
 			}
 			public void paint(Graphics graphics, boolean compensateZoom)
 			{
-				Graphics2D g = (Graphics2D) graphics;
-				// set anti-aliasing rendering
-				((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+				synchronized(zoomMutex) {
+					Graphics2D g = (Graphics2D) graphics;
+					// set anti-aliasing rendering
+					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
-				// clear background
-				// START KGU#303 2016-12-02: Enh. #302
-				//g.setColor(Color.WHITE);
-				g.setColor(owner.backgroundColor);
-				// END KGU#303 2016-12-02
-				if (compensateZoom) {
-					Dimension prefDim = getPreferredSize();
-					g.fillRect(0, 0,
-							Math.round(prefDim.width / zoomFactor),
-							Math.round(prefDim.height / zoomFactor));
-				}
-				else {
-					g.fillRect(0, 0, this.getWidth(), this.getHeight());
-					g.scale(zoomFactor, zoomFactor);
-				}
-				
-				// START KGU#685 2020-12-11: Enh. #704
-				Rectangle visibleRect = g.getClipBounds();
-				// END KGU#685 2020-12-11
-
-				// START KGU#685 2020-12-14: Enh. #704
-				if (displacement != null && popupShowOrigin.isSelected()) {
-					int x0 = visibleRect.x;
-					int y0 = visibleRect.y;
-					int x1 = x0 + visibleRect.width;
-					int y1 = y0 + visibleRect.height;
-					g.setColor(Color.decode("0xffcccc"));
-					java.awt.Stroke strk = g.getStroke();
-					g.setStroke(new java.awt.BasicStroke(1f,
-							java.awt.BasicStroke.CAP_ROUND,
-							java.awt.BasicStroke.JOIN_ROUND, 1f,
-							new float[] {2f, 2f}, 0f));
-					if (x0 <= displacement.x && displacement.x <= x1) {
-						g.drawLine(displacement.x, y0, displacement.x, y1);
-					}
-					if (y0 <= displacement.y && displacement.y <= y1) {
-						g.drawLine(x0, displacement.y, x1, displacement.y);
-					}
-					g.setStroke(strk);
-				}
-				// END KGU#685 2020-12-14
-				
-				// START KGU#303 2016-12-03: Enh. #302
-				//g.setColor(Color.BLACK);
-				g.setColor(owner.defaultPenColor);
-				// END KGU#303 2016-12-03
-
-				// draw all elements
-				// START KGU#449 2017-10-28: The use of iterators may lead to lots of
-				//java.util.ConcurrentModificationException errors slowing down all.
-				// So we better avoid the iterator and loop against a snapshot size
-				// (which is safe because the elements Vector can't shrink during execution).
-				//for (Element ele : elements)
-				//{
-				//    ele.draw(g);
-				//}
-				int nElements = owner.elements.size();
-				// START KGU#597 2018-10-12: Issue #622 - Monitoring drawing detention underMac
-				//logger.config("Painting " + nElements + " elements...");
-				// END KGU#597 2018-10-12
-				for (int i = 0; i < nElements; i++) {
+					// clear background
+					// START KGU#303 2016-12-02: Enh. #302
+					//g.setColor(Color.WHITE);
+					g.setColor(owner.backgroundColor);
+					// END KGU#303 2016-12-02
 					// START KGU#685 2020-12-11: Enh. #704
-					//elements.get(i).draw(g);
-					owner.elements.get(i).draw(g, visibleRect);
+					//g.fillRect(0, 0, this.getWidth(), this.getHeight());
+					if (compensateZoom) {
+						Dimension prefDim = getPreferredSize();
+						g.fillRect(0, 0,
+								Math.round(prefDim.width / zoomFactor),
+								Math.round(prefDim.height / zoomFactor));
+					}
+					else {
+						g.fillRect(0, 0, this.getWidth(), this.getHeight());
+						g.scale(zoomFactor, zoomFactor);
+					}
+
+					Rectangle visibleRect = g.getClipBounds();
+					// END KGU#685 2020-12-11
+
+					// START KGU#685 2020-12-14: Enh. #704
+					if (displacement != null && popupShowOrigin.isSelected()) {
+						int x0 = visibleRect.x;
+						int y0 = visibleRect.y;
+						int x1 = x0 + visibleRect.width;
+						int y1 = y0 + visibleRect.height;
+						g.setColor(Color.decode("0xffcccc"));
+						java.awt.Stroke strk = g.getStroke();
+						g.setStroke(new java.awt.BasicStroke(1f,
+								java.awt.BasicStroke.CAP_ROUND,
+								java.awt.BasicStroke.JOIN_ROUND, 1f,
+								new float[] {2f, 2f}, 0f));
+						if (x0 <= displacement.x && displacement.x <= x1) {
+							g.drawLine(displacement.x, y0, displacement.x, y1);
+						}
+						if (y0 <= displacement.y && displacement.y <= y1) {
+							g.drawLine(x0, displacement.y, x1, displacement.y);
+						}
+						g.setStroke(strk);
+					}
+					// END KGU#685 2020-12-14
+
+					// START KGU#303 2016-12-03: Enh. #302
+					//g.setColor(Color.BLACK);
+					g.setColor(owner.defaultPenColor);
+					// END KGU#303 2016-12-03
+
+					// draw all elements
+					// START KGU#449 2017-10-28: The use of iterators may lead to lots of
+					//java.util.ConcurrentModificationException errors slowing down all.
+					// So we better avoid the iterator and loop against a snapshot size
+					// (which is safe because the elements Vector can't shrink during execution).
+					//for (Element ele : elements)
+					//{
+					//    ele.draw(g);
+					//}
+					int nElements = owner.elements.size();
+					// START KGU#597 2018-10-12: Issue #622 - Monitoring drawing detention underMac
+					//logger.config("Painting " + nElements + " elements...");
+					// END KGU#597 2018-10-12
+					for (int i = 0; i < nElements; i++) {
+						// START KGU#685 2020-12-11: Enh. #704
+						//elements.get(i).draw(g);
+						owner.elements.get(i).draw(g, visibleRect);
+						// END KGU#685 2020-12-11
+					}
+					// END KGU#449 2017-10-28
+
+					if (!owner.turtleHidden)
+					{
+						// START #272 2016-10-16
+						// fix drawing point
+						//int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
+						//int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
+						// fix drawing point
+						//int xRot = x+image.getWidth(this)/2;
+						//int yRot = y+image.getHeight(this)/2;
+						// apply rotation
+						//g.rotate((270-angle)/180*Math.PI,xRot,yRot);
+						// fix drawing point
+						double x = owner.posX - (owner.image.getWidth(this)/2);
+						double y = owner.posY - (owner.image.getHeight(this)/2);
+						// apply rotation
+						g.rotate((270-owner.angle)/180*Math.PI, owner.posX, owner.posY);
+						// END #272 2016-10-16
+						// draw the turtle
+						g.drawImage(owner.image,(int)Math.round(x),(int)Math.round(y),this);
+					}
+					
+					// START KGU#685 2020-12-11: Enh. #704
+					if (!compensateZoom) {
+						g.scale(1/zoomFactor, 1/zoomFactor);
+					}
 					// END KGU#685 2020-12-11
 				}
-				// END KGU#449 2017-10-28
 
-				if (!owner.turtleHidden)
-				{
-					// START #272 2016-10-16
-					// fix drawing point
-					//int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
-					//int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
-					// fix drawing point
-					//int xRot = x+image.getWidth(this)/2;
-					//int yRot = y+image.getHeight(this)/2;
-					// apply rotation
-					//g.rotate((270-angle)/180*Math.PI,xRot,yRot);
-					// fix drawing point
-					double x = owner.posX - (owner.image.getWidth(this)/2);
-					double y = owner.posY - (owner.image.getHeight(this)/2);
-					// apply rotation
-					g.rotate((270-owner.angle)/180*Math.PI, owner.posX, owner.posY);
-					// END #272 2016-10-16
-					// draw the turtle
-					g.drawImage(owner.image,(int)Math.round(x),(int)Math.round(y),this);
-				}
-				// START KGU#685 2020-12-11: Enh. #704
+				// START KGU#685 2020-12-16: Enh. #704
+				this.updatePreferredSize(!compensateZoom);
+				// END KGU#685 2020-12-16
+			}
+			
+			// START KGU#685 2020-12-16: Enh. #704
+			public void updatePreferredSize(boolean useZoom)
+			{
 				Rectangle bounds = new Rectangle(owner.bounds);
 				// Make sure the bounds comprise the turtle position - visible or not
 				bounds.add(new Rectangle(owner.pos.x, owner.pos.y, 1, 1));
@@ -316,18 +335,15 @@ public class TurtleBox implements DelayableDiagramController
 				// Add some pixels for the scrollbars
 				dim.width += MARGIN;
 				dim.height += MARGIN;
-
-				if (!compensateZoom) {
-					g.scale(1/zoomFactor, 1/zoomFactor);
+				if (useZoom) {
 					dim.width = Math.round(Math.min(dim.width, Short.MAX_VALUE) * zoomFactor);
-					dim.height = Math.round(Math.min(dim.height, Short.MAX_VALUE) * zoomFactor);
+					dim.height = Math.round(Math.min(dim.height, Short.MAX_VALUE) * zoomFactor);					
 				}
-
+				
 				this.setPreferredSize(dim);
 				this.revalidate();
-				// END KGU#685 2020-12-11
-
 			}
+			// END KGU#685 2020-12-16
 		}
 		private TurtlePanel panel;
 		// START KGU#685 2020-12-11: Enh. #704
@@ -361,6 +377,10 @@ public class TurtleBox implements DelayableDiagramController
 		private int[] lastAskedCoords = null;	// last explicitly asked coordinates
 		private double lastAskedScale = 1.0;	// last explicitly asked SVG scale
 		private Point displacement = null;		// Origin displacement after moving the drawing
+		private Object zoomMutex = new Object();	// Sequentialization within the EventQueue
+		// FIXME remov this after debugging!
+		private long zoomCount = 0;
+		private long gotoCount = 0;
 
 		private TurtleBox owner;
 
@@ -493,15 +513,17 @@ public class TurtleBox implements DelayableDiagramController
 						// bottom coordinate
 						+ Math.max(size.y + size.height, 0)
 						);
-				Rectangle vRect = scrollarea.getViewport().getViewRect();
-				vRect.x /= zoomFactor;
-				vRect.y /= zoomFactor;
-				vRect.width /= zoomFactor;
-				vRect.height /= zoomFactor;
-				statusViewport.setText(String.format("%d .. %d : %d .. %d",
-						vRect.x, vRect.x + vRect.width,
-						vRect.y, vRect.y + vRect.height));
-				statusZoom.setText(String.format("%.1f %%", 100 * zoomFactor));
+				synchronized(zoomMutex) {
+					Rectangle vRect = scrollarea.getViewport().getViewRect();
+					vRect.x /= zoomFactor;
+					vRect.y /= zoomFactor;
+					vRect.width /= zoomFactor;
+					vRect.height /= zoomFactor;
+					statusViewport.setText(String.format("%d .. %d : %d .. %d",
+							vRect.x, vRect.x + vRect.width,
+							vRect.y, vRect.y + vRect.height));
+					statusZoom.setText(String.format("%.1f %%", 100 * zoomFactor));
+				}
 			}
 			popupShowTurtle.setSelected(!owner.turtleHidden);
 			popupShowOrigin.setEnabled(displacement != null);
@@ -691,19 +713,23 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void zoom(float newFactor)
 		{
-			Rectangle vRect = scrollarea.getViewport().getViewRect();
-			float centerX = (vRect.x + vRect.width/2) / zoomFactor;
-			float centerY =	(vRect.y + vRect.height/2) / zoomFactor;
-			this.zoomFactor = Math.max(MIN_ZOOM, Math.min(newFactor, MAX_ZOOM));
-			repaintAll();
-			Point center = new Point(
-					Math.round(centerX),
-					Math.round(centerY)
-					);
+			Point center = null;
+			synchronized(zoomMutex) {
+				Rectangle vRect = scrollarea.getViewport().getViewRect();
+				// Try to maintain centre coordinate
+				center = new Point(
+						Math.round((vRect.x + vRect.width/2) / zoomFactor),
+						Math.round((vRect.y + vRect.height/2) / zoomFactor)
+						);
+				this.zoomFactor = Math.max(MIN_ZOOM, Math.min(newFactor, MAX_ZOOM));
+				zoomCount++;
+				panel.updatePreferredSize(true);
+			}
 			// Try to maintain centre coordinate
 			gotoCoordinate(center);
 			// Is this necessary?
-			this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
+			//this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
+			repaintAll();
 		}
 		
 		/**
@@ -714,6 +740,7 @@ public class TurtleBox implements DelayableDiagramController
 			if (!owner.turtleHidden) {
 				bounds.add(owner.pos);
 			}
+			// Restrict the considered bounds to the visible part
 			if (bounds.x < 0) {
 				bounds.width += bounds.x;
 				if (bounds.width < 1) bounds.width = 1;
@@ -727,8 +754,10 @@ public class TurtleBox implements DelayableDiagramController
 			// This is the actual viewport size
 			Rectangle view = scrollarea.getViewport().getViewRect();
 			/* FIXME Sometimes a second attempt is necessary to centre the drawing
+			 * correctly.
 			 * The reason might be that the viewport is not fast enough adapted to
-			 * the new zoom factor */
+			 * the new zoom factor. But also the zoom factors differ between the
+			 * first and subsequent attempts in these cases. */
 			float zoomH = 1.0f * view.width / (bounds.width + MARGIN);
 			float zoomV = 1.0f * view.height / (bounds.height + MARGIN);
 			zoom(Math.min(zoomH, zoomV));
@@ -1077,31 +1106,31 @@ public class TurtleBox implements DelayableDiagramController
 						return;
 					}
 				}
-				int offsetX = 0, offsetY = 0;
-				Dimension dim = panel.getPreferredSize();
-				int width = dim.width - Math.round(offsetX * zoomFactor);
-				int height = dim.height - Math.round(offsetY * zoomFactor);
-//				int width = panel.getWidth() - Math.round(offsetX * zoomFactor);
-//				int height = panel.getHeight() - Math.round(offsetY * zoomFactor);
-				BufferedImage bi = new BufferedImage(
-						Math.round(width / this.zoomFactor),
-						Math.round(height / this.zoomFactor),
-						BufferedImage.TYPE_4BYTE_ABGR);
-				panel.paint(bi.getGraphics(), true);
-				try
-				{
-					ImageIO.write(bi, "png", chosen);
-				}
-				catch(Exception e)
-				{
-					String message = e.getMessage();
-					if (message == null || message.trim().isEmpty()) {
-						message = e.toString();
+				synchronized(zoomMutex) {
+					int offsetX = 0, offsetY = 0;
+					Dimension dim = panel.getPreferredSize();
+					int width = dim.width - Math.round(offsetX * zoomFactor);
+					int height = dim.height - Math.round(offsetY * zoomFactor);
+					BufferedImage bi = new BufferedImage(
+							Math.round(width / this.zoomFactor),
+							Math.round(height / this.zoomFactor),
+							BufferedImage.TYPE_4BYTE_ABGR);
+					panel.paint(bi.getGraphics(), true);
+					try
+					{
+						ImageIO.write(bi, "png", chosen);
 					}
-					JOptionPane.showMessageDialog(this,
-							message,
-							dlgSave.getDialogTitle(),
-							JOptionPane.ERROR_MESSAGE);
+					catch(Exception e)
+					{
+						String message = e.getMessage();
+						if (message == null || message.trim().isEmpty()) {
+							message = e.toString();
+						}
+						JOptionPane.showMessageDialog(this,
+								message,
+								dlgSave.getDialogTitle(),
+								JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		}
@@ -1227,15 +1256,22 @@ public class TurtleBox implements DelayableDiagramController
 		 * @param coord
 		 */
 		private void gotoCoordinate(Point coord) {
-			Rectangle vRect = scrollarea.getViewport().getViewRect();
-			int marginH = vRect.width/2;	// horizontal margin
-			int marginV = vRect.height/2;	// vertical margin
-			// Estimate the position in the zoomed panel
-			int posX = Math.round(coord.x * zoomFactor);
-			int posY = Math.round(coord.y * zoomFactor);
-			vRect.x = Math.max(posX - marginH, 0);
-			vRect.y = Math.max(posY - marginV, 0);
-			panel.scrollRectToVisible(vRect);
+			Rectangle vRect = null;
+			synchronized(zoomMutex) {
+				vRect = scrollarea.getViewport().getViewRect();
+				int marginH = vRect.width/2;	// horizontal margin
+				int marginV = vRect.height/2;	// vertical margin
+				// Estimate the position in the zoomed panel
+				int posX = Math.round(coord.x * zoomFactor);
+				int posY = Math.round(coord.y * zoomFactor);
+				vRect.x = Math.max(posX - marginH, 0);
+				vRect.y = Math.max(posY - marginV, 0);
+				gotoCount++;
+			}
+			if (vRect != null) {
+				panel.scrollRectToVisible(vRect);
+			}
+			repaint();
 		}
 		
 		/**
