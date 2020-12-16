@@ -337,9 +337,9 @@ public class TurtleBox implements DelayableDiagramController
 				dim.height += MARGIN;
 				if (useZoom) {
 					dim.width = Math.round(Math.min(dim.width, Short.MAX_VALUE) * zoomFactor);
-					dim.height = Math.round(Math.min(dim.height, Short.MAX_VALUE) * zoomFactor);					
+					dim.height = Math.round(Math.min(dim.height, Short.MAX_VALUE) * zoomFactor);
 				}
-				
+
 				this.setPreferredSize(dim);
 				this.revalidate();
 			}
@@ -378,9 +378,6 @@ public class TurtleBox implements DelayableDiagramController
 		private double lastAskedScale = 1.0;	// last explicitly asked SVG scale
 		private Point displacement = null;		// Origin displacement after moving the drawing
 		private Object zoomMutex = new Object();	// Sequentialization within the EventQueue
-		// FIXME remov this after debugging!
-		private long zoomCount = 0;
-		private long gotoCount = 0;
 
 		private TurtleBox owner;
 
@@ -722,7 +719,6 @@ public class TurtleBox implements DelayableDiagramController
 						Math.round((vRect.y + vRect.height/2) / zoomFactor)
 						);
 				this.zoomFactor = Math.max(MIN_ZOOM, Math.min(newFactor, MAX_ZOOM));
-				zoomCount++;
 				panel.updatePreferredSize(true);
 			}
 			// Try to maintain centre coordinate
@@ -1266,7 +1262,6 @@ public class TurtleBox implements DelayableDiagramController
 				int posY = Math.round(coord.y * zoomFactor);
 				vRect.x = Math.max(posX - marginH, 0);
 				vRect.y = Math.max(posY - marginV, 0);
-				gotoCount++;
 			}
 			if (vRect != null) {
 				panel.scrollRectToVisible(vRect);
@@ -1516,6 +1511,10 @@ public class TurtleBox implements DelayableDiagramController
         //panel.setDoubleBuffered(true);
         //panel.repaint();
         
+        System.out.println("scrollarea: " + frame.scrollarea.getWidth()
+        		+ " x " + frame.scrollarea.getHeight());
+        System.out.println("viewport: " + frame.scrollarea.getViewport().getWidth()
+		+ " x " + frame.scrollarea.getViewport().getHeight());
         setPos(new Point(frame.scrollarea.getWidth()/2,
                 frame.scrollarea.getHeight()/2));	// FIXME!
         home = new Point(pos.x, pos.y);
@@ -1551,6 +1550,10 @@ public class TurtleBox implements DelayableDiagramController
         if (visible) {
             // START KGU #685 2020-12-11: Enh. #704
             //home = new Point(panel.getWidth()/2, panel.getHeight()/2);
+            System.out.println("scrollarea: " + frame.scrollarea.getWidth()
+    		+ " x " + frame.scrollarea.getHeight());
+    System.out.println("viewport: " + frame.scrollarea.getViewport().getWidth()
+	+ " x " + frame.scrollarea.getViewport().getHeight());
             home = new Point(Math.round(frame.scrollarea.getWidth()/2 / frame.zoomFactor),
                     Math.round(frame.scrollarea.getHeight()/2 / frame.zoomFactor));
             // END KGU#685 2020-12-11
