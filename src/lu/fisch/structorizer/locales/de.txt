@@ -1050,11 +1050,11 @@ ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivier
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
-ExportOPtionDialoge.chkDirectoryFromNsd.text=Als Exportverzeichnis ggf. den Ablageorder des Diagramms vorschlagen
-ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anderenfalls wird immer der Ordner des letzten Exports vorgeschlagen.
-ExportOPtionDialoge.chkArraySize.text=Default-Größe für Arrays (wo erforderlich)
-ExportOPtionDialoge.chkStringLen.text=Default-Länge für Strings (wo erforderlich)
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=Anzahl aufeinander folgender Code-Exporte in eine andere Sprache, nach der diese als bevorzugte Exportsprache vorgeschlagen wird (0 = keinen Vorschlag).
+ExportOptionDialoge.chkDirectoryFromNsd.text=Als Exportverzeichnis ggf. den Ablageorder des Diagramms vorschlagen
+ExportOptionDialoge.chkDirectoryFromNsd.tooltip=Anderenfalls wird immer der Ordner des letzten Exports vorgeschlagen.
+ExportOptionDialoge.chkArraySize.text=Default-Größe für Arrays (wo erforderlich)
+ExportOptionDialoge.chkStringLen.text=Default-Länge für Strings (wo erforderlich)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...

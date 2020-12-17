@@ -1052,11 +1052,11 @@ ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 ExportOptionDialoge.includeLists.*.tooltip=Entra (separados por comas) nombres de archivos o modules para los quales directivas de inclusión deben ser insertadas.
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
-ExportOPtionDialoge.chkDirectoryFromNsd.text=Proponer el directorio del diagrama como directorio para la exportación
-ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=De otro modo el directorio de la exportación más recente será propuesto siempre.
-ExportOPtionDialoge.chkArraySize.text=Tamaño estándar para arrays (si sea necesario)
-ExportOPtionDialoge.chkStringLen.text=Largo estándar para cadenas de caracter
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=Número de exportaciónes a otro código que debe iniciar la propuesta de poner éste como nuevo código de exportatción preferido (0 = no propuesta).
+ExportOptionDialoge.chkDirectoryFromNsd.text=Proponer el directorio del diagrama como directorio para la exportación
+ExportOptionDialoge.chkDirectoryFromNsd.tooltip=De otro modo el directorio de la exportación más recente será propuesto siempre.
+ExportOptionDialoge.chkArraySize.text=Tamaño estándar para arrays (si sea necesario)
+ExportOptionDialoge.chkStringLen.text=Largo estándar para cadenas de caracter
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...

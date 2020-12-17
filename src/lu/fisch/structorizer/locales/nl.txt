@@ -966,7 +966,7 @@ ExportOptionDialoge.jLabel1.text=Selecteer a.u.b. de gewenste opties ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Deze instellingen opslaan
 ExportOptionDialoge.includeLists.*.tooltip=Vul een lijst in van bestanden of modules, door kommas's gescheiden, waarvoor voorwaarden voor bijsluiten/importeren/gebruik moeten worden ingevoegd.
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Importopties
