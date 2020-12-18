@@ -1473,6 +1473,7 @@ OutputConsole.msgTitleError.text=Error
 TurtleFrame.popupGotoCoord.text=Desplazar a coordenada ...
 TurtleFrame.popupGotoTurtle.text=Desplazar hacia la tortuga
 TurtleFrame.popupGotoHome.text=Desplazar hacia el inicio
+TurtleFrame.popupGotoOrigin.text=Desplazar al origen (0,0)
 TurtleFrame.popupZoom100.text=Reponer amplificación a 100%
 TurtleFrame.popupZoomBounds.text=Ajustar dibujo a la ventana
 TurtleFrame.popupMoveIn.text=Mover dibujo adentro del area
@@ -1492,6 +1493,12 @@ TurtleFrame.statusSelection.tooltip=Número de segmentos seleccionados
 TurtleFrame.statusZoom.tooltip=Factor de amplificación
 TurtleFrame.lblOverwrite.text=Archivo existe. ¿Cierto de gravar el nuevo encima del existente?
 TurtleFrame.lblScale.text=Factor de ampliación:
+TurtleFrame.lblSeparator.text=Separador
+TurtleFrame.rbSeparators.0.text=Coma
+TurtleFrame.rbSeparators.1.text=Punto y coma
+TurtleFrame.rbSeparators.2.text=Tabulador
+TurtleFrame.rbSeparators.3.text=Espacio
+TurtleFrame.rbSeparators.4.text=Dos puntos
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instrucción

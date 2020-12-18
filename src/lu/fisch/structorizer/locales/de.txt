@@ -1488,6 +1488,7 @@ OutputConsole.msgTitleError.text=Fehler
 TurtleFrame.popupGotoCoord.text=Zu Koordinate scrollen ...
 TurtleFrame.popupGotoTurtle.text=Zur Schildkröte scrollen
 TurtleFrame.popupGotoHome.text=Zur Startposition scrollen
+TurtleFrame.popupGotoOrigin.text=Zum Ursprung (0,0) scrollen
 TurtleFrame.popupZoom100.text=Zoom auf 100% rücksetzen
 TurtleFrame.popupZoomBounds.text=Auf Gesamtbild zoomen
 TurtleFrame.popupMoveIn.text=Bild in Zeichenbereich ziehen
@@ -1507,6 +1508,12 @@ TurtleFrame.statusSelection.tooltip=Anzahl der ausgewählten Segmente
 TurtleFrame.statusZoom.tooltip=Vergrößerungsfaktor
 TurtleFrame.lblOverwrite.text=Datei existiert. Wirklich überschreiben?
 TurtleFrame.lblScale.text=Skalierungsfaktor:
+TurtleFrame.lblSeparator.text=Trennzeichen
+TurtleFrame.rbSeparators.0.text=Komma
+TurtleFrame.rbSeparators.1.text=Semikolon
+TurtleFrame.rbSeparators.2.text=Tabstopp
+TurtleFrame.rbSeparators.3.text=Leerzeichen
+TurtleFrame.rbSeparators.4.text=Doppelpunkt
 
 -----> Elements
 ElementNames.localizedNames.0.text=Verarbeitung

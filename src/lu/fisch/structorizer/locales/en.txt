@@ -1050,11 +1050,11 @@ ExportOptionDialoge.jLabel1.text=Please select the options you want to activate.
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
 ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
-ExportOPtionDialoge.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
-ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
-ExportOPtionDialoge.chkArraySize.text=Default array size (if required)
-ExportOPtionDialoge.chkStringLen.text=Default string length (if required)
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
+ExportOptionDialoge.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
+ExportOptionDialoge.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
+ExportOptionDialoge.chkArraySize.text=Default array size (if required)
+ExportOptionDialoge.chkStringLen.text=Default string length (if required)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...
@@ -1488,6 +1488,7 @@ OutputConsole.msgTitleError.text=Error
 TurtleFrame.popupGotoCoord.text=Scroll to coordinate ...
 TurtleFrame.popupGotoTurtle.text=Scroll to turtle position
 TurtleFrame.popupGotoHome.text=Scroll to home position
+TurtleFrame.popupGotoOrigin.text=Scroll to origin (0,0)
 TurtleFrame.popupZoom100.text=Reset zoom to 100%
 TurtleFrame.popupZoomBounds.text=Zoom to fit bounds
 TurtleFrame.popupMoveIn.text=Move picture into area
@@ -1507,6 +1508,12 @@ TurtleFrame.statusSelection.tooltip=Number of selected segments
 TurtleFrame.statusZoom.tooltip=Zoom factor
 TurtleFrame.lblOverwrite.text=File exists. Sure to overwrite?
 TurtleFrame.lblScale.text=Scale factor:
+TurtleFrame.lblSeparator.text=Separator
+TurtleFrame.rbSeparators.0.text=Comma
+TurtleFrame.rbSeparators.1.text=Semicolon
+TurtleFrame.rbSeparators.2.text=Tabulator
+TurtleFrame.rbSeparators.3.text=Blank
+TurtleFrame.rbSeparators.4.text=Colon
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruction

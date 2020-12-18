@@ -48,6 +48,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2020-12-11      Enh. #704: Scrollbars, status bar, and popup menu added
  *                                      Enh. #443: Deprecated execute methods disabled
  *      Kay Gürtzig     2020-12-16      Enh. #704/#880: Zoom and export functions accomplished
+ *      Kay Gürtzig     2020-12-17/18   Enh. #890 Improvements to the GUI implemented 
  *
  ******************************************************************************************************
  *
@@ -98,6 +99,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 
@@ -222,11 +224,13 @@ public class TurtleBox implements DelayableDiagramController
 					// END KGU#303 2016-12-02
 					// START KGU#685 2020-12-11: Enh. #704
 					//g.fillRect(0, 0, this.getWidth(), this.getHeight());
+					float zoom = zoomFactor;
 					if (compensateZoom) {
 						Dimension prefDim = getPreferredSize();
 						g.fillRect(0, 0,
 								Math.round(prefDim.width / zoomFactor),
 								Math.round(prefDim.height / zoomFactor));
+						zoom = 1f;
 					}
 					else {
 						g.fillRect(0, 0, this.getWidth(), this.getHeight());
@@ -244,10 +248,10 @@ public class TurtleBox implements DelayableDiagramController
 						int y1 = y0 + visibleRect.height;
 						g.setColor(Color.decode("0xffcccc"));
 						java.awt.Stroke strk = g.getStroke();
-						g.setStroke(new java.awt.BasicStroke(1f,
+						g.setStroke(new java.awt.BasicStroke(1f/zoom,
 								java.awt.BasicStroke.CAP_ROUND,
 								java.awt.BasicStroke.JOIN_ROUND, 1f,
-								new float[] {2f, 2f}, 0f));
+								new float[] {2f/zoom, 2f/zoom}, 0f));
 						if (x0 <= displacement.x && displacement.x <= x1) {
 							g.drawLine(displacement.x, y0, displacement.x, y1);
 						}
@@ -357,6 +361,9 @@ public class TurtleBox implements DelayableDiagramController
 		protected javax.swing.JMenuItem popupGotoCoord;
 		protected javax.swing.JMenuItem popupGotoTurtle;
 		protected javax.swing.JMenuItem popupGotoHome;
+		// START KGU#889 2020-12-18: Enh. #890
+		protected javax.swing.JMenuItem popupGotoOrigin;
+		// END KGU#889 2020-12-18
 		protected javax.swing.JMenuItem popupMoveIn;
 		protected javax.swing.JMenuItem popupZoom100;
 		protected javax.swing.JMenuItem popupZoomBounds;
@@ -368,11 +375,30 @@ public class TurtleBox implements DelayableDiagramController
 		protected javax.swing.JMenuItem popupExportPNG;
 		protected javax.swing.JMenuItem popupExportSVG;
 		protected javax.swing.JMenuItem popupBackground;
+		// The following JLabel objects are mere text holders for localisation purposes
 		protected javax.swing.JLabel lblOverwrite = new javax.swing.JLabel("File exists. Sure to overwrite?");
 		protected javax.swing.JLabel lblScale = new javax.swing.JLabel("Scale factor:");
+		// START KGU#889 2020-12-18: Issue #890
+		private static final char[] SEPARATORS = new char[] {
+				',', ';', '\t', ' ', ':'
+		};
+		private static final String[] CSV_COL_HEADERS = new String[] {
+				"xFrom", "yFrom", "xTo", "yTo", "color"
+		};
+		protected javax.swing.JLabel lblSeparator = new javax.swing.JLabel("Separator");
+		protected javax.swing.JRadioButton[] rbSeparators = new javax.swing.JRadioButton[] {
+				new javax.swing.JRadioButton("Comma"),
+				new javax.swing.JRadioButton("Semicolon"),
+				new javax.swing.JRadioButton("Tabulator"),
+				new javax.swing.JRadioButton("Blank"),
+				new javax.swing.JRadioButton("Colon")
+		};
+		protected javax.swing.ButtonGroup bg = null;
+		// END KGU#889 2020-12-18
+		
 		private File currentDirectory = null;
 		private int[] lastAskedCoords = null;	// last explicitly asked coordinates
-		private double lastAskedScale = 1.0;	// last explicitly asked SVG scale
+		private int lastAskedScale = 1;	// last explicitly asked SVG scale
 		private Point displacement = null;		// Origin displacement after moving the drawing
 		private Object zoomMutex = new Object();	// Sequentialization within the EventQueue
 
@@ -472,22 +498,24 @@ public class TurtleBox implements DelayableDiagramController
 			//statusbar.add(statusSelection);
 			statusbar.setFocusable(false);
 			getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
+
+			initPopupMenu();
+
 			scrollarea.getViewport().addChangeListener(new javax.swing.event.ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent evt) {
-					updateStatusBar();
+					updateStatus();
 				}
 			});
-
-			initPopupMenu();
 
 			this.addKeyListener(this);
 		}
 
 		/**
-		 * Updates all status information in the status bar
+		 * Updates all status information in the status bar and controls
+		 * the menu item accessibility.
 		 */
-		private void updateStatusBar() {
+		private void updateStatus() {
 			if (statusbar.isVisible()) {
 				int homeX = owner.home.x;
 				int homeY = owner.home.y;
@@ -526,6 +554,10 @@ public class TurtleBox implements DelayableDiagramController
 			}
 			popupMoveIn.setEnabled(owner.bounds.x < 0 || owner.bounds.y < 0);
 			popupZoom100.setEnabled(zoomFactor != 1.0f);
+			// START KGU#889 2020-12-17: issue #890
+			popupExportCSV.setEnabled(!owner.elements.isEmpty());
+			popupExportSVG.setEnabled(owner.bounds.width > 0 || owner.bounds.height > 0);
+			// END KGU#889 2020-12-17
 		}
 
 		// START KGU#685 2020-12-11: Enh. #704
@@ -538,6 +570,9 @@ public class TurtleBox implements DelayableDiagramController
 			popupGotoCoord = new javax.swing.JMenuItem("Scroll to coordinate ...");
 			popupGotoTurtle = new javax.swing.JMenuItem("Scroll to turtle position");
 			popupGotoHome = new javax.swing.JMenuItem("Scroll to home position");
+			// START KGU#889 2020-12-18: Enh. #890
+			popupGotoOrigin = new javax.swing.JMenuItem("Scroll to origin (0,0)");
+			// END KGU#889 2020-12-18
 			popupMoveIn = new javax.swing.JMenuItem("Move picture into area");
 			popupZoom100 = new javax.swing.JMenuItem("Reset zoom to 100%");
 			popupZoomBounds = new javax.swing.JMenuItem("Zoom to fit bounds");
@@ -576,6 +611,18 @@ public class TurtleBox implements DelayableDiagramController
 			popupMenu.add(popupGotoHome);
 			// This doesn't work directly but shows the key binding handled via keyPressed()
 			popupGotoHome.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
+
+			// START KGU#889 2020-12-18: Enh. #890
+			popupGotoOrigin.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					gotoOrigin();
+				}});
+			popupMenu.add(popupGotoOrigin);
+			// This doesn't work directly but shows the key binding handled via keyPressed()
+			popupGotoOrigin.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0, 0));
+
+			// END KGU#889 2020-12-18
 
 			popupMenu.addSeparator();
 			
@@ -650,7 +697,7 @@ public class TurtleBox implements DelayableDiagramController
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					statusbar.setVisible(popupShowStatus.isSelected());
-					updateStatusBar();
+					updateStatus();
 				}});
 			popupMenu.add(popupShowStatus);
 			popupShowStatus.setSelected(true);
@@ -829,38 +876,6 @@ public class TurtleBox implements DelayableDiagramController
 		}
 		
 		/**
-		 * Dialog method requesting a scale factor for the given
-		 * {@code pixelBounds}, i.e. mm per pixel value
-		 * @param pixelBounds - the bounding box of the drawing in pixels
-		 * @param title - the title for the dialog
-		 * @return width and height in mm as double array
-		 */
-		protected double askForScale(Rectangle pixelBounds, String title)
-		{
-			JPanel pnl = new JPanel();
-			pnl.setLayout(new javax.swing.BoxLayout(pnl, javax.swing.BoxLayout.Y_AXIS));
-			pnl.add(new javax.swing.JLabel(statusSize.getToolTipText() + ":"));
-			pnl.add(new javax.swing.JLabel(String.format("%d x %d pixel", pixelBounds.width, pixelBounds.height)));
-			javax.swing.JSpinner spnScale = new javax.swing.JSpinner();
-			javax.swing.SpinnerModel spnModel = new SpinnerNumberModel(lastAskedScale, 1.0, 10.0, 1.0);
-			spnScale.setModel(spnModel);
-			JPanel pnlScale = new JPanel();
-			pnlScale.setLayout(new javax.swing.BoxLayout(pnlScale, javax.swing.BoxLayout.X_AXIS));
-			pnlScale.add(new javax.swing.JLabel(lblScale.getText()));
-			pnlScale.add(spnScale);
-			pnl.add(pnlScale);
-			int decision = JOptionPane.showConfirmDialog(this,
-					pnl, 
-					title, JOptionPane.OK_CANCEL_OPTION);
-			if (decision != JOptionPane.OK_OPTION) {
-				return 0.0;
-			}
-			double scale = (double)spnModel.getValue();
-			lastAskedScale = scale;
-			return scale;
-		}
-		
-		/**
 		 * Opens a colour chooser dialog allowing to specify a colour with the
 		 * given {@code oldColor} as initial setting
 		 * @param oldColor - colour to be presented (white will be the default)
@@ -891,13 +906,22 @@ public class TurtleBox implements DelayableDiagramController
 			ExtFileFilter filter = new CSVFilter();
 			fc.addChoosableFileFilter(filter);
 			fc.setFileFilter(filter);
+			// START KGU#889 2020-12-18: Issue #890 - choosable separator
+			addCSVAccessory(fc);
+			// END KGU#889 2020-12-18
 			int decision = fc.showSaveDialog(this);
 			if (decision == JFileChooser.APPROVE_OPTION) {
 				File chosen = fc.getSelectedFile();
 				if (chosen != null) {
+					// START KGU#889 2020-12-18: Issue #890 - choosable separator
+					String separator = getSeparatorCSV();
+					// END KGU#889 2020-12-18
 					// Ensure acceptable file extension
 					if (!filter.accept(chosen)) {
-						chosen = new File(chosen.getPath() + ".txt");
+						// START KGU#889 2020-12-17: Issue #890
+						//chosen = new File(chosen.getPath() + ".txt");
+						chosen = new File(chosen.getPath() + "." + filter.getAcceptedExtensions()[0]);
+						// END KGU#889 2020-12-17
 					}
 					Path path = chosen.toPath().toAbsolutePath();
 					// Check for overriding
@@ -910,11 +934,29 @@ public class TurtleBox implements DelayableDiagramController
 						}
 					}
 					try (BufferedWriter bw = Files.newBufferedWriter(path)) {
-						bw.append("xFrom,yFrom,xTo,yTo,color\n");
+						// Write header
+						// START KGU#889 2020-12-18: Issue #890 - choosable separator
+						//bw.append("xFrom,yFrom,xTo,yTo,color\n");
+						for (int i = 0; i < CSV_COL_HEADERS.length; i++) {
+							if (i > 0) {
+								bw.append(separator);
+							}
+							bw.append(CSV_COL_HEADERS[i]);
+						}
+						bw.newLine();
+						// END KGU#889 2020-12-18
+						// Write lines
 						int nElements = owner.elements.size();
 						for (int i = 0; i < nElements; i++) {
-							bw.append(owner.elements.get(i).toCSV(null));
-							bw.newLine();
+							// START KGU#889 2020-12-18: Issue #890 - Moves are redundant
+//							bw.append(owner.elements.get(i).toCSV(null));
+//							bw.newLine();
+							Element el = owner.elements.get(i);
+							if (!(el instanceof Move)) {
+								bw.append(el.toCSV(separator));
+								bw.newLine();
+							}
+							// END KGU#889 2020-12-18
 						}
 					} catch (IOException exc) {
 						String message = exc.getMessage();
@@ -931,7 +973,54 @@ public class TurtleBox implements DelayableDiagramController
 				}
 			}
 		}
-		
+
+		// START KGU#889 2020-12-18: Issue #890 - choosable separator
+		/**
+		 * Adds an accessory panel for CSV export to the given file chooser {@code fc}
+		 * @param fc - a {@link JFileChooser}
+		 */
+		private void addCSVAccessory(JFileChooser fc) {
+			JPanel pnl = new JPanel();
+			pnl.setLayout(new java.awt.GridLayout(0, 1));
+			pnl.add(lblSeparator);
+			int nSepa = Math.min(rbSeparators.length, SEPARATORS.length);
+			if (bg == null) {
+				// Construct the radio button group for the separator choice
+				bg = new javax.swing.ButtonGroup();
+				if (nSepa > 0) {
+					rbSeparators[0].setSelected(true);
+				}
+				for (int i = 0; i < nSepa; i++) {
+					bg.add(rbSeparators[i]);
+				}
+			}
+			for (int i = 0; i < nSepa; i++) {
+				pnl.add(rbSeparators[i]);
+			}
+			JPanel accessory = new JPanel();
+			accessory.add(pnl);
+			fc.setAccessory(accessory);
+		}
+
+		/**
+		 * Identifies and returns the chosen CSV separator string
+		 * @return the separator as string (or null)
+		 */
+		private String getSeparatorCSV() {
+			String separator = null;
+			if (bg != null) {
+				int nSepa = Math.min(rbSeparators.length, SEPARATORS.length);
+				for (int i = 0; i < nSepa; i++) {
+					if (rbSeparators[i].isSelected()) {
+						separator = Character.toString(SEPARATORS[i]);
+						break;
+					}
+				}
+			}
+			return separator;
+		}
+		// END KGU#889 2020-12-18
+
 		/**
 		 * Exports the drawing to an SVG file. Will open a file chooser dialog first
 		 * and ask for a scaling factor.
@@ -947,13 +1036,20 @@ public class TurtleBox implements DelayableDiagramController
 			ExtFileFilter filter = new SVGFilter();
 			fc.addChoosableFileFilter(filter);
 			fc.setFileFilter(filter);
+			// START KGU#685 2020-12-17: Issue #704 replaces posterior option query
+			SpinnerModel spnModel = addScaleAccessory(fc);
+			int scale = 0;
+			// END KGU#685 2020-12-17
 			int decision = fc.showSaveDialog(this);
-			if (decision == JFileChooser.APPROVE_OPTION) {
+			if (decision == JFileChooser.APPROVE_OPTION && (scale = (int)spnModel.getValue()) >= 1) {
 				File chosen = fc.getSelectedFile();
 				if (chosen != null) {
 					// Ensure acceptable file extension
 					if (!filter.accept(chosen)) {
-						chosen = new File(chosen.getPath() + ".svg");
+						// START KGU#889 2020-12-17: Issue #704
+						//chosen = new File(chosen.getPath() + ".svg");
+						chosen = new File(chosen.getPath() + "." + filter.getAcceptedExtensions()[0]);
+						// END KGU#889 2020-12-17
 					}
 					Path path = chosen.toPath().toAbsolutePath();
 					// Check for overriding
@@ -966,11 +1062,9 @@ public class TurtleBox implements DelayableDiagramController
 						}
 					}
 					int offsetX = -owner.bounds.x, offsetY = -owner.bounds.y;
-					float scale = (float)askForScale(owner.bounds, fc.getDialogTitle());
-					if (scale < 1) {
-						// Cancelled by the user
-						return;
-					}
+					// START KGU#685 2020-12-17: Issue #704 replaces posterior option query
+					this.lastAskedScale = scale;
+					// END KGU#685 2020-12-17
 					try (BufferedWriter bw = Files.newBufferedWriter(path)) {
 						bw.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
 						bw.append("<!-- Created with " + owner.getClass().getName()
@@ -1023,13 +1117,13 @@ public class TurtleBox implements DelayableDiagramController
 									bw.append(
 											String.format(
 													Locale.ENGLISH,
-													"      d=\"m %.2f,%.2f ",
+													"      d=\"m %d,%d ",
 													(from.x + offsetX) * scale,
 													(from.y + offsetY) * scale));
 								}
 								bw.append(String.format(
 												Locale.ENGLISH,
-												"%.2f,%.2f ",
+												"%d,%d ",
 												(to.x - from.x) * scale,
 												(to.y - from.y) * scale));
 								lastPt = to;
@@ -1059,6 +1153,30 @@ public class TurtleBox implements DelayableDiagramController
 		}
 		
 		/**
+		 * Adds some text and an integer spinner to the given file chooser
+		 * {@code fc}.
+		 * @param fc - a file chooser
+		 * @return the spinner model of the added number spinner to allow to
+		 * obtain the value
+		 */
+		private SpinnerModel addScaleAccessory(JFileChooser fc) {
+			JPanel pnl = new JPanel();
+			pnl.setLayout(new javax.swing.BoxLayout(pnl, javax.swing.BoxLayout.Y_AXIS));
+			pnl.add(new javax.swing.JLabel(statusSize.getToolTipText() + ":"));
+			pnl.add(new javax.swing.JLabel(String.format("%d x %d pixel", owner.bounds.width, owner.bounds.height)));
+			pnl.add(new javax.swing.JSeparator(javax.swing.SwingConstants.HORIZONTAL));
+			pnl.add(new javax.swing.JLabel(lblScale.getText()));
+			javax.swing.JSpinner spnScale = new javax.swing.JSpinner();
+			SpinnerModel spnModel = new SpinnerNumberModel(lastAskedScale, 1, 10, 1);
+			spnScale.setModel(spnModel);
+			pnl.add(spnScale);
+			JPanel accessory = new JPanel();
+			accessory.add(pnl);
+			fc.setAccessory(accessory);
+			return spnModel;
+		}
+
+		/**
 		 * Exports the drawing as PNG file. Will open a file chooser dialog first.
 		 * May pop up a message box if something goes wrong.
 		 */
@@ -1082,7 +1200,10 @@ public class TurtleBox implements DelayableDiagramController
 				// correct the filename, if necessary
 				File chosen = dlgSave.getSelectedFile();
 				if (!filter.accept(chosen)) {
-					chosen = new File(chosen.getPath() + ".png");
+					// START KGU#889 2020-12-17: Issue #704
+					//chosen = new File(chosen.getPath() + ".png");
+					chosen = new File(chosen.getPath() + "." + filter.getAcceptedExtensions()[0]);
+					// END KGU#889 2020-12-17
 				}
 				// Check for overriding
 				Path path = chosen.toPath().toAbsolutePath();
@@ -1129,7 +1250,7 @@ public class TurtleBox implements DelayableDiagramController
 		public void repaintAll()
 		{
 			panel.repaint();
-			updateStatusBar();
+			updateStatus();
 		}
 
 		@Override
@@ -1165,7 +1286,7 @@ public class TurtleBox implements DelayableDiagramController
 					else {
 						statusbar.setVisible(!statusbar.isVisible());
 						popupShowStatus.setSelected(statusbar.isVisible());
-						updateStatusBar();
+						updateStatus();
 					}
 					break;
 				case KeyEvent.VK_UP:
@@ -1208,6 +1329,11 @@ public class TurtleBox implements DelayableDiagramController
 						popupShowOrigin.doClick();
 					}
 					break;
+				// START KGU#889 2020-12-18: Enh. #890
+				case KeyEvent.VK_0:
+					gotoOrigin();
+					break;
+				// END KGU#889 2020-12-18
 				}
 			}
 		}
@@ -1239,9 +1365,25 @@ public class TurtleBox implements DelayableDiagramController
 				gotoCoordinate(coord);
 			}
 		}
+		
+		// START KGU#889 2020-12-18: Enh. #890
+		private void gotoOrigin()
+		{
+			if (displacement != null) {
+				gotoCoordinate(displacement);
+			}
+			else {
+				gotoCoordinate(new Point());
+			}
+		}
+		// END KGU#889 2020-12-18
+
 
 		/**
-		 * @param coord
+		 * Scrolls to the given point {@code coord}, trying to centre the
+		 * viewport around it (which will not of course work if the point
+		 * is too near to the canvas border.
+		 * @param coord - the target coordinate
 		 */
 		private void gotoCoordinate(Point coord) {
 			Rectangle vRect = null;
@@ -1546,7 +1688,7 @@ public class TurtleBox implements DelayableDiagramController
             // END KGU#303 2016-12-03
             frame.paint(frame.getGraphics());
             // START KGU#685 2020-12-11: Enh. #704
-            frame.updateStatusBar();
+            frame.updateStatus();
             // END KGU#685 2020-12-11
         }
     }

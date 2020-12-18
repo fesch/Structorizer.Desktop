@@ -1332,8 +1332,8 @@ Control.ttlContent.text=Inhoud
 Control.msgTitleError.text=Fout
 Control.msgTitleQuestion.text=Vraag
 Control.msgTitleParallel.text=Probleem bij parallelle uitvoering
-Control.msgNoSubroutine.text=Een @o-diagram "%1" (%2 parameters) werd niet gevonden!\nProbeer Arranger te starten en plaats de nodige @o -diagrammen er het eerst in.
-Control.msgNoInclDiagram.text=Een @p-diagram "%" werd niet gevonden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
+Control.msgNoSubroutine.text=Kon geen @o-diagram "%1" (%2 parameters) vinden!\nProbeer Arranger te starten en plaats de nodige @o-diagrammen er het eerst in.
+Control.msgNoInclDiagram.text=Kon geen @p-diagram "%" vinden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
 Control.msgAmbiguousCall.text=@j dubbelzinnig: Verschillende diagrammen gevonden voor subroutines: "%1" (%2 parameters).
 Control.msgInvalidExpr.text=<%1> is geen correcte of bestaande expressie.
 Control.msgInvalidBool.text=<%1> is geen geldige Booleaanse expressie.
@@ -1389,6 +1389,17 @@ OutputConsole.menuContentSave.text=Log opslaan ...
 OutputConsole.msgOverwriteFile.text=Bestaand bestand overschrijven?
 OutputConsole.msgErrorFileSave.text=Fout bij opslaan van het bestand: %!
 OutputConsole.msgTitleError.text=Fout
+
+-----> DiagramController
+-----[ TurtleFrame ]-----
+TurtleFrame.popupGotoOrigin.text=Naar oorsprong (0,0) scrollen
+
+TurtleFrame.lblSeparator.text=Scheidingsteken
+TurtleFrame.rbSeparators.0.text=Komma
+TurtleFrame.rbSeparators.1.text=Puntkomma
+TurtleFrame.rbSeparators.2.text=Tabulator
+TurtleFrame.rbSeparators.3.text=Spatie
+TurtleFrame.rbSeparators.4.text=Dubbelepunt
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instructie
