@@ -57,6 +57,7 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
+ *      Kay Gürtzig     2020-12-18      Bugfix #891: Two defective keys mended (prevented Translator from opening)
  *
  ******************************************************************************************************
  *
@@ -315,12 +316,13 @@ Menu.msgErrorNoFile.text=Bestand niet gevonden!
 Menu.msgBrowseFailed.text=Tonen "%" in de browser is mislukt.
 Menu.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade gebruiksaanwijzing in uw PDF-lezer weergegeven.
 Menu.msgDownloadFailed.text=Het downloaden van de User Guide is mislukt:\n%
+Menu.msgCancelled.text=Geannuleerd
 Menu.msgHostNotAvailable.text=Extern adres "%" is niet bereikbaar.
 Menu.hdrRefactoringTable.0.text=Referentie
 Menu.hdrRefactoringTable.1.text=Oude sleutel
 Menu.hdrRefactoringTable.2.text=Nieuwe sleutel
-Menu.msgRefactoringOffer.text=Sleutelwoorden, ingesteld in de parserinstellingen, zijn vervangen:
-Menu.msgRefactoringOffer.text=Moeten geopende diagrammen hieraan worden aangepast?
+Menu.msgRefactoringOffer1.text=Sleutelwoorden, ingesteld in de parserinstellingen, zijn vervangen:
+Menu.msgRefactoringOffer2.text=Moeten geopende diagrammen hieraan worden aangepast?
 Menu.lblRefactorNone.text=nee
 Menu.lblRefactorCurrent.text=huidig diagram
 Menu.lblRefactorAll.text=alle diagrammen
@@ -643,7 +645,7 @@ InputBox.btnOK.tooltip=Uw keuze valideren.
 InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
 InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
-InputBox.chkBreakpoint.text=
+InputBox.chkBreakpoint.text=Breakpoint
 InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
 InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren
