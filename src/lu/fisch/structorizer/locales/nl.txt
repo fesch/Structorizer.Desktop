@@ -981,11 +981,11 @@ ExportOptionDialoge.jLabel1.text=Selecteer a.u.b. de gewenste opties ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Deze instellingen opslaan
 ExportOptionDialoge.includeLists.*.tooltip=Vul een lijst in van bestanden of modules, door kommas's gescheiden, waarvoor voorwaarden voor bijsluiten/importeren/gebruik moeten worden ingevoegd.
-ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
-ExportOPtionDialoge.chkDirectoryFromNsd.text=Voorstel exportmap vanuit NSD-locatie indien beschikbaar
-ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anders wordt steeds de meest recente exportmap voorgesteld.
-ExportOPtionDialoge.chkArraySize.text=Standaard grootte array (indien nodig)
-ExportOPtionDialoge.chkStringLen.text=Standaard lengte string (indien nodig)
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
+ExportOptionDialoge.chkDirectoryFromNsd.text=Voorstel exportmap vanuit NSD-locatie indien beschikbaar
+ExportOptionDialoge.chkDirectoryFromNsd.tooltip=Anders wordt steeds de meest recente exportmap voorgesteld.
+ExportOptionDialoge.chkArraySize.text=Standaard grootte array (indien nodig)
+ExportOptionDialoge.chkStringLen.text=Standaard lengte string (indien nodig)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Importopties
@@ -1356,8 +1356,8 @@ Control.ttlContent.text=Inhoud
 Control.msgTitleError.text=Fout
 Control.msgTitleQuestion.text=Vraag
 Control.msgTitleParallel.text=Probleem bij parallelle uitvoering
-Control.msgNoSubroutine.text=Kon geen @o-diagram "%1" (%2 parameters) vinden!\nProbeer Arranger te starten en plaats de nodige @o-diagrammen er het eerst in.
-Control.msgNoInclDiagram.text=Kon geen @p-diagram "%" vinden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
+Control.msgNoSubroutine.text=Kan geen @o-diagram "%1" (%2 parameters) vinden!\nProbeer Arranger te starten en plaats de nodige @o-diagrammen er het eerst in.
+Control.msgNoInclDiagram.text=Kan geen @p-diagram "%" vinden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
 Control.msgAmbiguousCall.text=@j dubbelzinnig: Verschillende diagrammen gevonden voor subroutines: "%1" (%2 parameters).
 Control.msgInvalidExpr.text=<%1> is geen correcte of bestaande expressie.
 Control.msgInvalidBool.text=<%1> is geen geldige Booleaanse expressie.
