@@ -2411,7 +2411,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
-		return saveAsNSD(this.root);
+		// START KGU#893 2020-12-20: Bugfix #892 - Arrangment group members must be cloned!
+		//return saveAsNSD(this.root);
+		Root rootToSave = this.root;
+		// Check membership in named group: if there is any, clone the Root
+		if (Arranger.hasInstance() &&
+				!Arranger.getInstance().getGroupsFromRoot(root, true).isEmpty()) {
+			rootToSave = (Root)root.copy();
+		}
+		boolean done = saveAsNSD(rootToSave);
+		if (done && rootToSave != this.root) {
+			JOptionPane.showMessageDialog(
+					this.getFrame(),
+					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false))
+					.replace("%2", rootToSave.getSignatureString(true)));
+			this.setRoot(rootToSave, true, true);
+		}
+		return done;
+		// END KGU#893 2020-12-20
 	}
 	
 	/**
@@ -2467,14 +2484,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		GUIScaler.rescaleComponents(dlgSave);
 		// END KGU#287 2017-01-09
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
-		// START KGU#893 2020-12-20: Bugfix #892 - Arrangment group members must be cloned!
 		File rootFile = root.getFile();
-		Root origRoot = null;
-		if (checkGroupMember(root, rootFile != null)) {
-			origRoot = root;
-			root = (Root)root.copy();
-		}
-		// END KGU#893 2020-12-20
 		// set directory
 		if (rootFile != null)
 		{
@@ -2551,34 +2561,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //			}
 		} while (result == JFileChooser.ERROR_OPTION);
 		// END KGU#248 2016-09-15
-		// START KGU#893 2020-12-20: Bugfix #892
-		if (origRoot == this.root & result != JFileChooser.CANCEL_OPTION) {
-			JOptionPane.showMessageDialog(
-					this.getFrame(),
-					Menu.msgRootCloned.getText().replace("%1", origRoot.getSignatureString(false))
-					.replace("%2", root.getSignatureString(true)));
-			this.setRoot(root, true, true);
-		}
-		// END KGU#893 2020-12-20
 		
 		return result != JFileChooser.CANCEL_OPTION;
 	}
-	
-	// START KGU#893 2020-12-20: Bugfix #892
-	/**
-	 * Checks whether diagram {@code root} is member of an arrangement group
-	 * and has a file base.
-	 * @param root - the diagram root to be checked
-	 * @param hasValidFile - is to indicate whether the diagram resides in a valid file
-	 * @return {@code true} if a qualified group context is to be assumed.
-	 */
-	private boolean checkGroupMember(Root root, boolean hasValidFile) {
-		return hasValidFile &&
-				Arranger.hasInstance() &&
-				!Arranger.getInstance().getGroupsFromRoot(root, true).isEmpty();
-	}
-	// END KGU#893 2020-12-20
-	
+
 	// START KGU#874 2020-10-19: Issue #875 - try to make sense from the filename
 	/**
 	 * IN case {@code _root} has a dummy header (empty or "???"), we try to derive
