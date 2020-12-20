@@ -1323,10 +1323,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 		// START KGU#1 2015-10-11: We ought to get rid of that sticky popped comment!
@@ -1334,6 +1336,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#1 2015-10-11
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		//System.out.println("MouseClicked at (" + e.getX() + ", " + e.getY() + ")");
@@ -5533,7 +5536,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setVisible(true);
 		*/
 		// START KGU#170 2018-06-11: Issue #143 - on opening the print preview a comment popup should vanish
-		pop.setVisible(false);
+		hideComments();
 		// END KGU#170 2018-06-11
 		PrintPreview pp = new PrintPreview(NSDControl.getFrame(),this);
 		Point p = getLocationOnScreen();
@@ -5663,7 +5666,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PNGFilter filter = new PNGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU#170 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -5847,7 +5850,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PNGFilter filter = new PNGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -5947,7 +5950,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		EMFFilter filter = new EMFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6050,7 +6053,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SVGFilter filter = new SVGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6174,7 +6177,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SWFFilter filter = new SWFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6278,7 +6281,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PDFFilter filter = new PDFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6353,7 +6356,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			Generator gen = new PapGenerator();
 			gen.setPluginOption("din66001_1982", din66001_1982);
-			pop.setVisible(false);	// Hide the current comment popup if visible
+			hideComments();	// Hide the current comment popup if visible
 			File exportDir =
 					gen.exportCode(_root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
@@ -6477,7 +6480,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		PascalFilter filter = new PascalFilter();
 //		dlgOpen.addChoosableFileFilter(filter);
 //		dlgOpen.setFileFilter(filter);
-//		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+//		hideComments();	// Issue #143: Hide the current comment popup if visible
 //		// END KGU 2016-04-01
 //		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
 //		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
@@ -6632,7 +6635,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		//dlgOpen.setFileFilter(parser);
 
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
 
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -7007,7 +7010,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Class<?> genClass = Class.forName(_generatorClassName);
 			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
 			// START KGU#170 2016-04-01: Issue #143
-			pop.setVisible(false);	// Hide the current comment popup if visible
+			hideComments();	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
 			// START KGU#815 2020-03-30: Enh. #828 If called from ArrangerIndex, options will be null
 			if (_specificOptions == null) {
@@ -7100,7 +7103,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param extraOptions - a possible extra option map (handled like plugin options) or null
 	 */
 	public void exportGroup(Group group, String generatorName, Map<String, Object> extraOptions) {
-		pop.setVisible(false);	// Hide the current comment popup if visible (issue #143)
+		hideComments();	// Hide the current comment popup if visible (issue #143)
 		File groupFile = group.getFile();
 		File targetDir = lastCodeExportDir;
 		if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true")) && groupFile.exists()) {
@@ -9394,7 +9397,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if(NSDControl!=null)
 		{
 			// START KGU#170 2016-04-01: Issue #143 - on opening the editor a comment popup should vanish
-			pop.setVisible(false);
+			hideComments();
 			// END KGU#170 2016-04-01
 			// START KGU#3 2015-10-25: Dedicated support for FOR loops
 			//InputBox inputbox = new InputBox(NSDControl.getFrame(),true);
@@ -10472,7 +10475,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.getFrame(), licInfo);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
 			_root.addUndo(true);
@@ -10486,7 +10489,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (this.findDialog == null) {
 			findDialog = new FindAndReplace(this);
 		}
-		pop.setVisible(false);
+		hideComments();
 		// Even if the Find&Replace dialog had been visible it has now to regain focus
 		findDialog.setVisible(true);
 	}

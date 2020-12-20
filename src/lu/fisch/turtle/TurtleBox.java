@@ -48,7 +48,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2020-12-11      Enh. #704: Scrollbars, status bar, and popup menu added
  *                                      Enh. #443: Deprecated execute methods disabled
  *      Kay Gürtzig     2020-12-16      Enh. #704/#880: Zoom and export functions accomplished
- *      Kay Gürtzig     2020-12-17/18   Enh. #890 Improvements to the GUI implemented 
+ *      Kay Gürtzig     2020-12-17/20   Enh. #890 Seven improvements to the GUI implemented
  *
  ******************************************************************************************************
  *
@@ -76,8 +76,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -93,14 +96,18 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.diagrcontrol.*;
@@ -201,7 +208,7 @@ public class TurtleBox implements DelayableDiagramController
 	//// END KGU#480 2018-01-16
 	
 	
-	public static final class TurtleFrame extends JFrame implements KeyListener
+	public static final class TurtleFrame extends JFrame implements KeyListener, WindowFocusListener
 	{
 		public final class TurtlePanel extends JPanel
 		{
@@ -350,12 +357,12 @@ public class TurtleBox implements DelayableDiagramController
 		// START KGU#685 2020-12-11: Enh. #704
 		private JScrollPane scrollarea;
 		private JPanel statusbar;
-		protected javax.swing.JLabel statusHome;
-		protected javax.swing.JLabel statusTurtle;
-		protected javax.swing.JLabel statusSize;
-		protected javax.swing.JLabel statusViewport;
-		protected javax.swing.JLabel statusZoom;
-		protected javax.swing.JLabel statusSelection;
+		protected JLabel statusHome;
+		protected JLabel statusTurtle;
+		protected JLabel statusSize;
+		protected JLabel statusViewport;
+		protected JLabel statusZoom;
+		protected JLabel statusSelection;
 		private float zoomFactor = 1.0f;
 		protected javax.swing.JPopupMenu popupMenu;
 		protected javax.swing.JMenuItem popupGotoCoord;
@@ -364,20 +371,27 @@ public class TurtleBox implements DelayableDiagramController
 		// START KGU#889 2020-12-18: Enh. #890
 		protected javax.swing.JMenuItem popupGotoOrigin;
 		// END KGU#889 2020-12-18
-		protected javax.swing.JMenuItem popupMoveIn;
+		protected javax.swing.JMenuItem popupExtendCanvas;
 		protected javax.swing.JMenuItem popupZoom100;
 		protected javax.swing.JMenuItem popupZoomBounds;
 		protected javax.swing.JCheckBoxMenuItem popupShowOrigin;
 		protected javax.swing.JCheckBoxMenuItem popupShowTurtle;
 		protected javax.swing.JCheckBoxMenuItem popupShowStatus;
+		protected javax.swing.JCheckBoxMenuItem popupShowCoords;
 		protected javax.swing.JMenuItem popupExportCSV;
 		protected javax.swing.JMenu popupExportImage;
 		protected javax.swing.JMenuItem popupExportPNG;
 		protected javax.swing.JMenuItem popupExportSVG;
 		protected javax.swing.JMenuItem popupBackground;
+		// START KGU#889 2020-12-20: Enh. #890/7
+		// popup for coordinates
+		private JLabel lblPop = new JLabel("", SwingConstants.CENTER);
+		private JPopupMenu pop = new JPopupMenu();
+		// END KGU#889
+		
 		// The following JLabel objects are mere text holders for localisation purposes
-		protected javax.swing.JLabel lblOverwrite = new javax.swing.JLabel("File exists. Sure to overwrite?");
-		protected javax.swing.JLabel lblScale = new javax.swing.JLabel("Scale factor:");
+		protected JLabel lblOverwrite = new JLabel("File exists. Sure to overwrite?");
+		protected JLabel lblScale = new JLabel("Scale factor:");
 		// START KGU#889 2020-12-18: Issue #890
 		private static final char[] SEPARATORS = new char[] {
 				',', ';', '\t', ' ', ':'
@@ -385,7 +399,7 @@ public class TurtleBox implements DelayableDiagramController
 		private static final String[] CSV_COL_HEADERS = new String[] {
 				"xFrom", "yFrom", "xTo", "yTo", "color"
 		};
-		protected javax.swing.JLabel lblSeparator = new javax.swing.JLabel("Separator");
+		protected JLabel lblSeparator = new JLabel("Separator");
 		protected javax.swing.JRadioButton[] rbSeparators = new javax.swing.JRadioButton[] {
 				new javax.swing.JRadioButton("Comma"),
 				new javax.swing.JRadioButton("Semicolon"),
@@ -401,6 +415,11 @@ public class TurtleBox implements DelayableDiagramController
 		private int lastAskedScale = 1;	// last explicitly asked SVG scale
 		private Point displacement = null;		// Origin displacement after moving the drawing
 		private Object zoomMutex = new Object();	// Sequentialization within the EventQueue
+		// START KGU#889 2020-12-20: Enh. #890/7
+		private boolean showCoordinates = true;
+		private int mouseX = 0;
+		private int mouseY = 0;
+		// END KGU#889 2020-12-20
 
 		private TurtleBox owner;
 
@@ -423,6 +442,7 @@ public class TurtleBox implements DelayableDiagramController
 				@Override
 				public void mousePressed(MouseEvent e) {
 					if (e.isPopupTrigger() && popupMenu != null) {
+						pop.setVisible(false);
 						popupMenu.show(e.getComponent(), e.getX(), e.getY());
 					}
 				}
@@ -430,6 +450,7 @@ public class TurtleBox implements DelayableDiagramController
 				@Override
 				public void mouseReleased(MouseEvent e) {
 					if (e.isPopupTrigger() && popupMenu != null) {
+						pop.setVisible(false);
 						popupMenu.show(e.getComponent(), e.getX(), e.getY());
 					}
 				}
@@ -440,6 +461,7 @@ public class TurtleBox implements DelayableDiagramController
 
 				@Override
 				public void mouseExited(MouseEvent e) {
+					pop.setVisible(false);
 				}});
 
 			scrollarea = new JScrollPane(panel);
@@ -460,18 +482,22 @@ public class TurtleBox implements DelayableDiagramController
 							zoom(rotation < 0);
 						}
 					}
+					else {
+						pop.setVisible(false);
+					}
+						
 				}});
 			getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
 			panel.setAutoscrolls(true);
 			statusbar = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 			//statusbar.setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(java.awt.Color.DARK_GRAY),
 			//        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
-			statusHome = new javax.swing.JLabel();
-			statusTurtle = new javax.swing.JLabel();
-			statusSize = new javax.swing.JLabel();
-			statusViewport = new javax.swing.JLabel();
-			statusZoom = new javax.swing.JLabel();
-			statusSelection = new javax.swing.JLabel("0");
+			statusHome = new JLabel();
+			statusTurtle = new JLabel();
+			statusSize = new JLabel();
+			statusViewport = new JLabel();
+			statusZoom = new JLabel();
+			statusSelection = new JLabel("0");
 			statusHome.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
 					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
 			statusTurtle.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
@@ -508,6 +534,45 @@ public class TurtleBox implements DelayableDiagramController
 				}
 			});
 
+			// START KGU#889 2020-12-20: Enh. #890/7
+			// popup for current coordinates
+			JPanel jp = new JPanel();
+			jp.setOpaque(false);
+			lblPop.setPreferredSize(new Dimension(30,12));
+			jp.add(lblPop);
+			pop.add(jp);
+			this.addWindowFocusListener(this);
+			panel.addMouseMotionListener(new MouseMotionListener() {
+				@Override
+				public void mouseDragged(MouseEvent e) {
+					updateCoordPopup(e);
+				}
+				@Override
+				public void mouseMoved(MouseEvent e) {
+					updateCoordPopup(e);
+				}
+				/**
+				 * Updates the coordinate popup for mouse motion event {@code evt}
+				 * if required 
+				 * @param evt - the triggering mouse motion event
+				 */
+				private void updateCoordPopup(MouseEvent evt) {
+					if (pop.isVisible() != showCoordinates) {
+						pop.setVisible(showCoordinates);
+					}
+					if (showCoordinates) {
+						mouseX = evt.getX();
+						mouseY = evt.getY();
+						updateCoordinatePopup();
+						int locX = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation().x;
+						int locY = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation().y;
+						pop.setLocation(locX + mouseX, locY + mouseY+16);
+						//pop.setVisible(true);
+					}
+				}
+			});
+			// END KGU#889 2020-12-20
+			
 			this.addKeyListener(this);
 		}
 
@@ -517,15 +582,16 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void updateStatus() {
 			if (statusbar.isVisible()) {
-				int homeX = owner.home.x;
-				int homeY = owner.home.y;
-				// If the drawing was moved show the virtual moved home coordinate
+				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
+				int turtleX = owner.pos.x;
+				int turtleY = owner.pos.y;
 				if (displacement != null) {
-					homeX += displacement.x;
-					homeY += displacement.y;
+					turtleX -= displacement.x;
+					turtleY -= displacement.y;
 				}
-				statusHome.setText("(" + homeX + ", " + homeY + ")");
-				statusTurtle.setText("(" + owner.pos.x + ", " + owner.pos.y + ") " + owner.getOrientation() + "°");
+				statusTurtle.setText(
+						String.format("(%d, %d) %.2f°",
+								turtleX, turtleY, owner.getOrientation()));
 				Rectangle size = new Rectangle(owner.bounds);
 				size.add(owner.pos);
 				statusSize.setText(
@@ -541,6 +607,12 @@ public class TurtleBox implements DelayableDiagramController
 					vRect.y /= zoomFactor;
 					vRect.width /= zoomFactor;
 					vRect.height /= zoomFactor;
+					// START KGU#889 2020-12-20: Issue #890/7
+					if (displacement != null) {
+						vRect.x -= displacement.x;
+						vRect.y -= displacement.y;
+					}
+					// END KGU#889 2020-12-20
 					statusViewport.setText(String.format("%d .. %d : %d .. %d",
 							vRect.x, vRect.x + vRect.width,
 							vRect.y, vRect.y + vRect.height));
@@ -552,12 +624,15 @@ public class TurtleBox implements DelayableDiagramController
 			if (displacement == null) {
 				popupShowOrigin.setSelected(false);
 			}
-			popupMoveIn.setEnabled(owner.bounds.x < 0 || owner.bounds.y < 0);
+			popupExtendCanvas.setEnabled(owner.bounds.x < 0 || owner.bounds.y < 0);
 			popupZoom100.setEnabled(zoomFactor != 1.0f);
 			// START KGU#889 2020-12-17: issue #890
 			popupExportCSV.setEnabled(!owner.elements.isEmpty());
 			popupExportSVG.setEnabled(owner.bounds.width > 0 || owner.bounds.height > 0);
 			// END KGU#889 2020-12-17
+			// START KGU#889 2020-12-20: Enh. #890/7
+			popupShowCoords.setSelected(showCoordinates);
+			// END KGU#889 2020-12-20
 		}
 
 		// START KGU#685 2020-12-11: Enh. #704
@@ -573,12 +648,13 @@ public class TurtleBox implements DelayableDiagramController
 			// START KGU#889 2020-12-18: Enh. #890
 			popupGotoOrigin = new javax.swing.JMenuItem("Scroll to origin (0,0)");
 			// END KGU#889 2020-12-18
-			popupMoveIn = new javax.swing.JMenuItem("Move picture into area");
+			popupExtendCanvas = new javax.swing.JMenuItem("Extend to picture bounds");
 			popupZoom100 = new javax.swing.JMenuItem("Reset zoom to 100%");
 			popupZoomBounds = new javax.swing.JMenuItem("Zoom to fit bounds");
 			popupShowOrigin = new javax.swing.JCheckBoxMenuItem("Show axes of coordinates");
 			popupShowTurtle = new javax.swing.JCheckBoxMenuItem("Show turtle");
 			popupShowStatus = new javax.swing.JCheckBoxMenuItem("Show status bar");
+			popupShowCoords = new javax.swing.JCheckBoxMenuItem("Pop up coordinates");
 			popupExportCSV = new javax.swing.JMenuItem("Export drawing intems as CSV ...");
 			popupExportImage = new javax.swing.JMenu("Export as image");
 			popupExportPNG = new javax.swing.JMenuItem("to PNG ...");
@@ -649,16 +725,19 @@ public class TurtleBox implements DelayableDiagramController
 
 			popupMenu.addSeparator();
 			
-			popupMoveIn.addActionListener(new ActionListener() {
+			popupExtendCanvas.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					movePictureToCanvas();
 				}
 
 			});
-			popupMenu.add(popupMoveIn);
+			popupMenu.add(popupExtendCanvas);
 			// This doesn't work directly but shows the key binding handled via keyPressed()
-			popupMoveIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
+			// START KGU#889 2020-12-20: Issue #890/7
+			//popupMoveIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
+			popupExtendCanvas.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0));
+			// END KGU#889 2020-12-20
 			
 			popupShowOrigin.addActionListener(new ActionListener() {
 				@Override
@@ -703,6 +782,22 @@ public class TurtleBox implements DelayableDiagramController
 			popupShowStatus.setSelected(true);
 			// This doesn't work directly but shows the key binding handled via keyPressed()
 			popupShowStatus.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0));
+
+			// START KGU#889 2020-12-20: Enh. #890/7
+			popupShowCoords.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					showCoordinates = popupShowCoords.isSelected();
+					// Just rapidly switch off, otherwise the next mouse motion will pop it up
+					if (!showCoordinates) {
+						pop.setVisible(false);
+					}
+				}});
+			popupMenu.add(popupShowCoords);
+			popupShowCoords.setSelected(true);
+			// This doesn't work directly but shows the key binding handled via keyPressed()
+			popupShowCoords.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
+			// END KGU#889 2020-12-20
 
 			popupMenu.addSeparator();
 
@@ -770,6 +865,9 @@ public class TurtleBox implements DelayableDiagramController
 			// Is this necessary?
 			//this.dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
 			repaintAll();
+			if (pop.isVisible()) {
+				updateCoordinatePopup();
+			}
 		}
 		
 		/**
@@ -796,6 +894,7 @@ public class TurtleBox implements DelayableDiagramController
 			float zoomH = 1.0f * view.width / (bounds.width + MARGIN);
 			float zoomV = 1.0f * view.height / (bounds.height + MARGIN);
 			zoom(Math.min(zoomH, zoomV));
+			pop.setVisible(false);
 			gotoCoordinate(new Point(bounds.x + bounds.width/2, bounds.y + bounds.height/2));
 		}
 
@@ -1289,6 +1388,15 @@ public class TurtleBox implements DelayableDiagramController
 						updateStatus();
 					}
 					break;
+					// START KGU#889 2020-12-20: Enh. #890/7
+				case KeyEvent.VK_C:
+					showCoordinates = !showCoordinates;
+					popupShowCoords.setSelected(showCoordinates);
+					if (!showCoordinates) {
+						pop.setVisible(false);
+					}
+					break;
+					// END KGU#889 2020-12-20
 				case KeyEvent.VK_UP:
 					handleCursorKey(-1, false, ev.isShiftDown() ? 10 : 1);
 					break;
@@ -1319,7 +1427,10 @@ public class TurtleBox implements DelayableDiagramController
 				case KeyEvent.VK_Z:
 					zoomToBounds();
 					break;
-				case KeyEvent.VK_M:
+				// START KGU#889 2020-12-20: Issue #890/7
+				//case KeyEvent.VK_M:
+				case KeyEvent.VK_X:
+				// END KGU#889 2020-12-20
 					if (owner.bounds.x < 0 || owner.bounds.y < 0) {
 						movePictureToCanvas();
 					}
@@ -1346,6 +1457,7 @@ public class TurtleBox implements DelayableDiagramController
 		private void gotoHome()
 		{
 			Point home = new Point(owner.home);
+			pop.setVisible(false);
 			if (displacement != null) {
 				home.x += displacement.x;
 				home.y += displacement.y;
@@ -1355,12 +1467,14 @@ public class TurtleBox implements DelayableDiagramController
 		
 		private void gotoTurtle()
 		{
+			pop.setVisible(false);
 			gotoCoordinate(owner.pos);
 		}
 		
 		private void gotoCoordinate()
 		{
 			Point coord = askForCoordinate();
+			pop.setVisible(false);
 			if (coord != null) {
 				gotoCoordinate(coord);
 			}
@@ -1369,6 +1483,7 @@ public class TurtleBox implements DelayableDiagramController
 		// START KGU#889 2020-12-18: Enh. #890
 		private void gotoOrigin()
 		{
+			pop.setVisible(false);
 			if (displacement != null) {
 				gotoCoordinate(displacement);
 			}
@@ -1446,7 +1561,18 @@ public class TurtleBox implements DelayableDiagramController
 				bar = scrollarea.getVerticalScrollBar();
 			}
 			int units = bar.getUnitIncrement(dir) * factor;
-			bar.setValue(Math.max(bar.getValue() + dir * units, 0));
+			int oldVal = bar.getValue();
+			bar.setValue(Math.max(oldVal + dir * units, 0));
+			if (pop.isVisible()) {
+				int incr = bar.getValue() - oldVal;
+				if (horizontal) {
+					mouseX += incr;
+				}
+				else {
+					mouseY += incr;
+				}
+				updateCoordinatePopup();
+			}
 		}
 
 		private void handlePageKey(int dir, boolean horizontal)
@@ -1458,9 +1584,51 @@ public class TurtleBox implements DelayableDiagramController
 			else {
 				bar = scrollarea.getVerticalScrollBar();
 			}
-			bar.setValue(bar.getValue() + dir * bar.getBlockIncrement(dir));
+			int oldVal = bar.getValue();
+			bar.setValue(oldVal + dir * bar.getBlockIncrement(dir));
+			if (pop.isVisible()) {
+				int incr = bar.getValue() - oldVal;
+				if (horizontal) {
+					mouseX += incr;
+				}
+				else {
+					mouseY += incr;
+				}
+				updateCoordinatePopup();
+			}
 		}
-		
+
+		// START KGU#889 2020-12-20: Enh. #890/7 coordinate tooltip
+		@Override
+		public void windowGainedFocus(WindowEvent e) {
+			// Nothing to do here
+		}
+
+		@Override
+		public void windowLostFocus(WindowEvent e) {
+			pop.setVisible(false);
+		}
+		// END KGU#889 2020-12-20
+
+		/**
+		 * 
+		 */
+		private void updateCoordinatePopup() {
+			int x = (int)(mouseX / zoomFactor);
+			int y = (int)(mouseY / zoomFactor);
+			if (displacement != null) {
+				x -= displacement.x;
+				y -= displacement.y;
+			}
+			String coordTip = String.format("(%d, %d)", x, y);
+			lblPop.setText(coordTip);
+			lblPop.setPreferredSize(
+					new Dimension(
+							8 + lblPop.getFontMetrics(lblPop.getFont()).stringWidth(coordTip),
+							lblPop.getFontMetrics(lblPop.getFont()).getHeight()
+							)
+					);
+		}
 	}
 
 	/** The GUI frame - while null, it hasn't been materialized (light-weight instance) */
