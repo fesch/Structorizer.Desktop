@@ -1225,6 +1225,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						rootMap.put(copiedRoot, diagram);
 						String rootName = copiedRoot.getMethodName();
 						addToNameMap(rootName, diagram);
+						//printNameMap(1228);	// FIXME DEBUG
 						// In theory, the diagram can't get orphaned here.
 						group.removeDiagram(diagr);
 						group.addDiagram(diagram);
@@ -2503,6 +2504,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			String rootName = root.getMethodName();
 			addToNameMap(rootName, diagram);
 			// END KGU#624 2018-12-26
+			//printNameMap(2507);
 			// START KGU 2015-11-30
 			// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
 			//Rectangle rec = root.getRect().getRectangle();
@@ -2808,6 +2810,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		rootMap.remove(diagr.root, diagr);
 		removeFromNameMap(diagr.getName(), diagr);
 		// END KGU#624 2018-12-26
+		//printNameMap(2813);	// FIXME DEBUG
 		// START KGU#626 2018-12-30: Enh. #657
 		for (String groupName: diagr.getGroupNames()) {
 			Group group = this.groups.get(groupName);
@@ -3947,6 +3950,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (!oldRootName.equals(newRootName)) {
 					removeFromNameMap(oldRootName, diagr);
 					addToNameMap(newRootName, diagr);
+					//printNameMap(3953);	// FIXME DEBUG
 				}
 				// START KGU#626 2018-12-31: Update the root lists in the groups
 				for (String groupName: diagr.getGroupNames()) {
@@ -5392,5 +5396,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+	
+//	// DEBUG
+//	private void printNameMap(int lineNo)
+//	{
+//		System.out.println("--------------------------------- " + lineNo + " -----------------------------------");
+//		for (Entry<String, Vector<Diagram>> entry: nameMap.entrySet()) {
+//			Vector<Diagram> diagrs = entry.getValue();
+//			if (diagrs.size() > 1) {
+//				System.out.println(entry.getKey() + ": ");
+//				for (Diagram diagr: diagrs) {
+//					StringList grpnames = new StringList(diagr.getGroupNames());
+//					System.out.println("\t" + diagr.root.getSignatureString(true) + ": " + grpnames.concatenate(","));
+//				}
+//			}
+//			else {
+//				Diagram diagr = diagrs.get(0);
+//				StringList grpnames = new StringList(diagr.getGroupNames());
+//				System.out.println(entry.getKey() + "= " + diagr.root.getSignatureString(true) + ": " + grpnames.concatenate(","));
+//			}
+//		}
+//	}
 
 }

@@ -465,6 +465,7 @@ Menu.msgIniBackupFailed.text=The creation of a backup of the current preferences
 Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem on changing Look & Feel to %1: %2
+Menu.msgRootCloned.text=Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
@@ -727,7 +728,7 @@ InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
 InputBox.chkDisabled.text=Disabled (execution and export)
-InputBox.chkBreakpoint.text=
+InputBox.chkBreakpoint.text=Breakpoint
 InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
 InputBox.lblText.text[elementType:While]=Please enter the entry condition

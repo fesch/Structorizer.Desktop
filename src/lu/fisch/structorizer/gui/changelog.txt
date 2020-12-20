@@ -16,7 +16,7 @@ Known issues:
 - Shell export copes neither with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-13 (2020-12-18)
+Current development version: 3.30-13 (2020-12-20)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -146,6 +146,7 @@ Current development version: 3.30-13 (2020-12-18)
 - 12: Bugfix #885: Incorrect display mode indicator state (#872) in some case <2>
 - 12: Bugfix #887: Concurrent Turtleizer instances led to dysfunction. <2>
 - 13: Issue #890: Improvements of the Turtleizer GUI (#704/#880). <2>
+- 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

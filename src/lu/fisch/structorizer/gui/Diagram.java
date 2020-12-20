@@ -208,6 +208,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
  *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
  *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
+ *      Kay Gürtzig     2020-12-20      Bugfix #892: "Save as" and double-click trouble with arranged diagrams
  *
  ******************************************************************************************************
  *
@@ -650,8 +651,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Save if something has been changed
 			// START KGU#874 2020-10-18: Issue #875 Don't pester the user if root is arranged
 			//if (!saveNSD(askToSave))
+			// START KGU#874/KGU#893 2020-12-10: Bugfix #892 (#875 implementation mistake)
+			//boolean isArranged = Arranger.hasInstance()
+			//		&& Arranger.getInstance().getAllRoots().contains(root);
 			boolean isArranged = Arranger.hasInstance()
-					&& Arranger.getInstance().getAllRoots().contains(root);
+					&& Arranger.getInstance().getAllRoots().contains(this.root);
+			// END KGU#874/KGU#893 2020-12-10
 			if ((!askToSave || !isArranged) && !saveNSD(askToSave))
 			// END KGU#874 2020-10-18
 			{
@@ -2453,6 +2458,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Now we are either not in serial mode or a name conflict is to be solved via file chooser
 
 		JFileChooser dlgSave = new JFileChooser();
+
 		// START KGU#553 2018-07-13: Issue #557
 		// Add a checkbox to adhere to the proposed names for all remaining roots if we are in serial mode
 		JCheckBox chkAcceptProposals = addSerialAccessory(dlgSave);
@@ -2461,10 +2467,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		GUIScaler.rescaleComponents(dlgSave);
 		// END KGU#287 2017-01-09
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
+		// START KGU#893 2020-12-20: Bugfix #892 - Arrangment group members must be cloned!
+		File rootFile = root.getFile();
+		Root origRoot = null;
+		if (checkGroupMember(root, rootFile != null)) {
+			origRoot = root;
+			root = (Root)root.copy();
+		}
+		// END KGU#893 2020-12-20
 		// set directory
-		if (root.getFile() != null)
+		if (rootFile != null)
 		{
-			dlgSave.setCurrentDirectory(root.getFile());
+			dlgSave.setCurrentDirectory(rootFile);
 		}
 		else
 		{
@@ -2472,7 +2486,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		dlgSave.setSelectedFile(new File(nsdName));
-
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
 		
 		// START KGU#248 2016-09-15: Bugfix #244 - allow more than one chance
@@ -2538,8 +2551,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //			}
 		} while (result == JFileChooser.ERROR_OPTION);
 		// END KGU#248 2016-09-15
+		// START KGU#893 2020-12-20: Bugfix #892
+		if (origRoot == this.root & result != JFileChooser.CANCEL_OPTION) {
+			JOptionPane.showMessageDialog(
+					this.getFrame(),
+					Menu.msgRootCloned.getText().replace("%1", origRoot.getSignatureString(false))
+					.replace("%2", root.getSignatureString(true)));
+			this.setRoot(root, true, true);
+		}
+		// END KGU#893 2020-12-20
+		
 		return result != JFileChooser.CANCEL_OPTION;
 	}
+	
+	// START KGU#893 2020-12-20: Bugfix #892
+	/**
+	 * Checks whether diagram {@code root} is member of an arrangement group
+	 * and has a file base.
+	 * @param root - the diagram root to be checked
+	 * @param hasValidFile - is to indicate whether the diagram resides in a valid file
+	 * @return {@code true} if a qualified group context is to be assumed.
+	 */
+	private boolean checkGroupMember(Root root, boolean hasValidFile) {
+		return hasValidFile &&
+				Arranger.hasInstance() &&
+				!Arranger.getInstance().getGroupsFromRoot(root, true).isEmpty();
+	}
+	// END KGU#893 2020-12-20
 	
 	// START KGU#874 2020-10-19: Issue #875 - try to make sense from the filename
 	/**

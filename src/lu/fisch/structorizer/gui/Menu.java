@@ -119,6 +119,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
+ *      Kay Gürtzig     2020-12-20      New message for bugfix #892
  *
  ******************************************************************************************************
  *
@@ -801,6 +802,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected static final LangTextHolder msgIniBackupFailed = new LangTextHolder("The creation of a backup of the current preferences failed.\nDo you still want to load \"%\"?");
 	protected static final LangTextHolder msgIniRestoreFailed = new LangTextHolder("Could not restore the last preferences backup%");
 	// END KGU#721 2019-08-06
+	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
+	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
+	// END KGU#893 2020-12-20
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
