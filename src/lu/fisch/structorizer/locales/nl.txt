@@ -57,7 +57,7 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
- *      Kay Gürtzig     2020-12-18      Bugfix #891: Two defective keys mended (prevented Translator from opening)
+ *      Jaap Woldringh  2020-12-20      Enh. #704: New messages for Turtleizer, many revisions
  *
  ******************************************************************************************************
  *
@@ -97,7 +97,6 @@
  *
  ******************************************************************************************************/
 >>>
-
 -----> Structorizer
 -----[ Menu ]-----
 // Menu "File"
@@ -121,14 +120,14 @@ Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exporteren als % code
-Menu.menuFileExportCodeFavorite.tooltip=U kunt de doeltaal wijzigen in de exportinstellingen
+Menu.menuFileExportCodeFavorite.tooltip=U kunt uw favoriete taal wijzigen in de exportinstellingen
 Menu.menuFileImport.text=Importeren
 // Submenu of "File -> Import"
 Menu.menuFileImportCode.text=Broncode ...
 Menu.menuFilePrint.text=Afdrukken ...
 Menu.menuFileArrange.text=Rangschikken
 Menu.menuFileAttributes.text=Attributen bekijken ...
-Menu.menuFileTranslator.text=Vertaler ...
+Menu.menuFileTranslator.text=Vertalen ...
 Menu.menuFileQuit.text=Afsluiten
 
 // Menu "Edit"
@@ -136,7 +135,7 @@ Menu.menuEdit.text=Bewerken
 Menu.menuEdit.mnemonic=w
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Ongedaan maken
-Menu.menuEditRedo.text=Herhalen
+Menu.menuEditRedo.text=Opnieuw
 Menu.menuEditCut.text=Knippen
 Menu.menuEditCopy.text=Kopiëren
 Menu.menuEditPaste.text=Plakken
@@ -146,9 +145,9 @@ Menu.menuEditFindReplace.text=Zoeken/Vervangen ...
 Menu.menuEditUpgradeTurtle.text=Naar fijntekenen
 Menu.menuEditUpgradeTurtle.tooltip=Vervangt bij alle Turtle-opdrachten in de geselecteerde elementen gehele getallen door nauwkeuriger kommagetallen.
 Menu.menuEditDowngradeTurtle.text=Naar tekenen met hele getallen
-Menu.menuEditDowngradeTurtle.tooltip=Vervangt bij alle Turtleopdrachten in de geselecteerde elementen kommagetallen door minder nauwkeurige gehele getallen
+Menu.menuEditDowngradeTurtle.tooltip=Vervangt bij alle Turtleopdrachten in de geselecteerde elementen, kommagetallen door minder nauwkeurige gehele getallen
 Menu.menuEditBreakLines.text=Tekstregels (opnieuw) afbreken
-Menu.menuEditBreakLines.tooltip=Maakt het mogelijk dat tekstregels van geselecteerde elementen (en optioneel hun substructuur) op de volgende regel worden voortgezet tot een nieuwe grens aan hun lengte.
+Menu.menuEditBreakLines.tooltip=Maakt het mogelijk dat tekstregels van geselecteerde elementen, (en optioneel hun substructuur), op de volgende regel worden voortgezet tot een nieuwe lengtegrens.
 Menu.menuEditCopyDiagramPNG.text=PNG-afbeelding kopiëren
 Menu.menuEditCopyDiagramEMF.text=EMF-afbeelding kopiëren
 // Menu "Diagram"
@@ -205,10 +204,14 @@ Menu.menuDiagramCommentsPlusText.text=Commentaar plus teksten?
 Menu.menuDiagramSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
 Menu.menuDiagramHideDeclarations.text=Simpele declaraties verbergen?
 Menu.menuDiagramMarker.text=Variabelen markeren?
-Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramOperatorsC.text=Operatoren in C-stijl tonen?
+Menu.menuDiagramOperatorsC.tooltip=Operator-symbolen in de diagrammen tonen volgens de C-syntaxis (vereist modus "Variabelen markeren?").
+Menu.menuDiagramDIN.text=DIN 66261?
+Menu.menuDiagramDIN.tooltip=Schakelt uiterlijk van @d-lussen tussen DIN 66261  (gevormd als @g-lus) en niet-standaard (gevormd als @i-lus).
 Menu.menuDiagramAnalyser.text=Structogram analyseren?
 Menu.menuDiagramIndex.text=Index Arranger tonen?
 Menu.menuDiagramPreview.text=Code-preview tonen?
+
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
 Menu.menuPreferences.mnemonic=i
@@ -221,7 +224,7 @@ Menu.menuPreferencesColors.text=Kleuren ...
 Menu.menuPreferencesOptions.text=Structuren ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesElements.text=Namen van elementen ...
-Menu.menuPreferencesCtrlAliases.text=Aliassen besturing ...
+Menu.menuPreferencesCtrlAliases.text=Aliassen besturen ...
 Menu.menuPreferencesAnalyser.text=Analyseren ...
 Menu.menuPreferencesSaving.text=Opslaan ...
 Menu.menuPreferencesExport.text=Exporteren ...
@@ -241,22 +244,23 @@ Menu.menuPreferencesLanguageItems.cz.text=Tsjechisch
 Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Pools
 Menu.menuPreferencesLanguageFromFile.text=Uit bestand ...
-Menu.menuPreferencesLanguageFromFile.tooltip=U kunt vertaal-bestanden maken in het Vertalen-hulpmiddel in het Bestandsmenu.
+Menu.menuPreferencesLanguageFromFile.tooltip=U kunt vertaal-bestanden maken met het hulpmiddel "Vertalen" in het Bestandsmenu.
 Menu.menuPreferencesLookAndFeel.text=Uiterlijk
 Menu.menuPreferencesWheel.text=Muiswiel
 Menu.menuPreferencesWheelCollapse.text=Invouwen met muiswiel?
-Menu.menuPreferencesWheelZoom.text=Omgekeerd zoomen met ctrl + wiel?
+Menu.menuPreferencesWheelZoom.text=Omgekeerd zoomen met ctrl + muiswiel?
 Menu.menuPreferencesWheelUnit.text=Scroll-eenheid voor muiswiel...
-Menu.menuPreferencesScalePreset.text=GUI-schaal ...
+Menu.menuPreferencesScalePreset.text=GUI-schalen ...
 
-Menu.menuPreferencesSave.text=Opslaan of inlezen ...
+Menu.menuPreferencesSave.text=Voorkeuren opslaan of inlezen
 Menu.menuPreferencesSaveAll.text=Nu opslaan
 Menu.menuPreferencesSaveDump.text=Opslaan naar bestand ...
 Menu.menuPreferencesSaveLoad.text=Inlezen uit bestand ...
-Menu.menuPreferencesSaveLoad.tooltip=Voorkeuren inlezen uit een INI-bestand maakt automatisch een backup van alle eerdere instellingen, in een tijdelijk bestand.
+Menu.menuPreferencesSaveLoad.tooltip=Bij inlezen van voorkeuren uit een INI-bestand wordt automatisch een backup gemaakt van alle eerdere voorkeuren, in een tijdelijk bestand.
 Menu.menuPreferencesSaveRestore.text=Laatste backup terugzetten
 Menu.menuPreferencesSaveRestore.tooltip=Leest opnieuw de instellingen in uit de backup, gemaakt na de laatste keer dat er in deze sessie voorkeuren uit een INI-bestand werden ingelezen.
-// Menu "View" (Thans niet gebruikt!)
+
+// Menu "View" (not in use right now!)
 Menu.menuView.text=
 
 // Menu "Debug"
@@ -264,9 +268,9 @@ Menu.menuDebug.text=Fouten opsporen
 Menu.menuDebug.mnemonic=f
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtle ...
-Menu.menuDebugExecute.text=Uitvoeren ...
-Menu.menuDebugDropBrkpts.text=Breakpoints wissen
-Menu.menuDebugBreakpoint.text=Breakpoint aan/uit
+Menu.menuDebugExecute.text=UItvoeren ...
+Menu.menuDebugDropBrkpts.text=Breakpunten wissen
+Menu.menuDebugBreakpoint.text=Breakpunt aan/uit
 Menu.menuDebugBreakTrigger.text=Break trigger opgeven ...
 Menu.menuDebugDisable.text=Aan/Uit
 
@@ -275,9 +279,9 @@ Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Gebruiksaanwijzing (eng)
-Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing (slechts in engels) openen in de browser
-Menu.menuHelpDownload.text=Download de gebr.-aanw. als PDF
-Menu.menuHelpDownload.tooltip=Download de nieuwste gebruiksaanwijzing als PDF-bestand, om later te kunnen gebruiken zonder verbinding te hebben met het internet.
+Menu.menuHelpOnline.tooltip=De online gebruiksaanwijzing (alleen engels) openen in de browser
+Menu.menuHelpDownload.text=Download de gebruiksaanwijzing als PDF
+Menu.menuHelpDownload.tooltip=Download de nieuwste gebruiksaanwijzing als PDF-bestand, om die hierna te kunnen gebruiken zonder verbinding te hebben met het internet.
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -293,7 +297,7 @@ Menu.msgRepeatSaveAttempt.text=Het bestand is niet opgeslagen. Probeer het opsla
 Menu.msgErrorFileSave.text=Fout bij het opslaan van het bestand: %1
 Menu.msgErrorFileRename.text=Fout(en) bij het hernoemen van het opgeslagen bestand :\n%1Zoek bestand "%2" en verplaats/hernoem dit zelf.
 Menu.msgBreakTriggerPrompt.text=Geef aantal uitvoeringen op tot een break (0 = altijd) ...
-Menu.msgBreakTriggerIgnored.text=Invoer geweigerd - moet een hoofdtelwoord zijn.
+Menu.msgBreakTriggerIgnored.text=Invoer geweigerd - moet een positief geheel getal zijn.
 Menu.msgOpenLangFile.text=Taalbestand openen
 Menu.msgLangFile.text=Taalbestand voor Structorizer
 Menu.msgGotoHomepage.text=Ga naar % voor updates<br/>en nieuws over Structorizer
@@ -314,23 +318,23 @@ Menu.msgErrorImageSave.text=Fout bij opslaan van de afbeelding(en)!
 Menu.msgErrorUsingGenerator.text=Fout bij gebruik van % generator
 Menu.msgErrorNoFile.text=Bestand niet gevonden!
 Menu.msgBrowseFailed.text=Tonen "%" in de browser is mislukt.
-Menu.msgShowingOfflineGuide.text=In plaats daarvan wordt een recent gedownloade gebruiksaanwijzing in uw PDF-lezer weergegeven.
+Menu.msgShowingOfflineGuide.text=In plaats daarvan ziet u een recent gedownloade gebruiksaanwijzing in uw PDF-lezer.
 Menu.msgDownloadFailed.text=Het downloaden van de User Guide is mislukt:\n%
 Menu.msgCancelled.text=Geannuleerd
 Menu.msgHostNotAvailable.text=Extern adres "%" is niet bereikbaar.
 Menu.hdrRefactoringTable.0.text=Referentie
-Menu.hdrRefactoringTable.1.text=Oude sleutel
-Menu.hdrRefactoringTable.2.text=Nieuwe sleutel
-Menu.msgRefactoringOffer1.text=Sleutelwoorden, ingesteld in de parserinstellingen, zijn vervangen:
-Menu.msgRefactoringOffer2.text=Moeten geopende diagrammen hieraan worden aangepast?
+Menu.hdrRefactoringTable.1.text=Oud
+Menu.hdrRefactoringTable.2.text=Nieuw
+Menu.msgRefactoringOffer1.text=Sleutelwaarden ingesteld in de voorkeuren voor Parsen zijn vervangen:
+Menu.msgRefactoringOffer2.text=Moeten geopende diagrammen ook worden gerefactord?
 Menu.lblRefactorNone.text=nee
 Menu.lblRefactorCurrent.text=huidig diagram
 Menu.lblRefactorAll.text=alle diagrammen
-Menu.msgDiscardParserPrefs.text=Weet u zeker dat u afziet van de nieuwe parserinstellingen?
-Menu.msgAdaptStructPrefs.text=Structuurinstellingen aanpassen aan die van de parser?\n(bv. %)
-Menu.msgKeywordsDiffer.text=Dit is een diagram, waarvan de originele sleutelwoorden afwijken van die van de huidige parserinstellingen:%1\nU heeft gekozen tegen automatisch aanpassen bij importeren.\n\nU heeft nu de volgende optie:\n%2
-Menu.msgRefactorNow.text=Het diagram kan nu worden aangepast (aanbevolen)
-Menu.msgAdoptPreferences.text=U kunt de sleutelwoorden van het ingelezen diagramm gebruiken als de nieuwe parserinstellingen\n  (waardoor alle reeds open diagrammen hieraan worden aangepast!)
+Menu.msgDiscardParserPrefs.text=Weet u zeker dat u afziet van de nieuwe Parserinstellingen?
+Menu.msgAdaptStructPrefs.text=Structuurvoorkeuren aanpassen aan die van de parser?\n(bv. %)
+Menu.msgKeywordsDiffer.text=Dit is een diagram, waarvan de originele sleutelwoorden afwijken van die van de huidige Parserinstellingen:%1\nU heeft gekozen tegen automatisch aanpassen bij importeren.\n\nU heeft nu de volgende optie:\n%2
+Menu.msgRefactorNow.text=Het diagram kan nu worden gerefactord (aanbevolen)
+Menu.msgAdoptPreferences.text=U kunt de sleutelwoorden van het ingelezen diagramm gebruiken als de nieuwe Parserinstellingen\n  (waardoor alle reeds open diagrammen hieraan worden gerefactord!)
 Menu.msgLeaveAsIs.text=U kunt het diagram zo laten, maar dit maakt het opsporen van\n  fouten onmogelijk en leidt tot een defecte export (maar u kunt dit later aanpassen)
 Menu.msgAllowChanges.text=Wijziging toestaan, waardoor de originele sleutelwoorden definitief verloren gaan
 Menu.lblRefactorNow.text=Diagram aanpassen
@@ -363,8 +367,8 @@ Menu.msgSubroutineName.text=Naam van de nieuwe subroutine
 Menu.msgIncludableName.text=Naam van een (nieuw) insluitbaar diagram waarnaar gedeelde types kunnen worden verplaatst
 Menu.msgMustBeIdentifier.text=De naam die u koos is ongeschikt als naam!
 Menu.msgJumpsOutwardsScope.text=Er zijn JMP-instructies in de geselecteerde elementen naar buiten.\nDoor die over te hevelen wordt de logica van het programma, of de programmacode, aangetast!\nDe betreffende JUMPs staan hieronder en zijn met ROOD weergegeven in het diagram:\n%\n\nWilt u werkelijk nu nog verdergaan?
-Menu.msgExportTooltip.text=<html>Exporteren als diagrambestanden voor de bewerker<br/>van <a href="%">%</a></html>
 Menu.msgImportTooltip.text=<html>Diagrambestanden aangemaakt met de bewerker<br/>van <a href="%">%</a></html>
+Menu.msgExportTooltip.text=<html>Exporteren als diagrambestanden voor de bewerker<br/>van <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Bestand "%" bestaat niet of is onleesbaar.
 Menu.msgUnsupportedFileFormat.text=Deze bestanden konden niet worden ingelezen, omdat hun bestandstype niet bekend is, of ondersteund:\n%
 Menu.msgGuidedTours.text=U heeft om begeleiding gevraagd.\n\nU vindt aanbevelingen\nof instructies\nin het tekstgebied onderaan\n(Analyse meldlijst).
@@ -383,15 +387,18 @@ Menu.msgVetoClose.text=Structurizer gaat afsluiten. Veto?
 Menu.msgSetAsPreferredGenerator.text=De laatste %2 keer heeft u naar %1 programmacode geëxporteerd.\nWilt u nu in het Bestandsmenu van %1 uw favoriete programmeertaal maken om naar te exporteren?
 Menu.msgChooseSubroutine.text=Kies de te bewerken subroutine:
 Menu.msgCreateSubroutine.text=Een nieuwe subroutine «%» aanmaken?
-// Table column headers for DiagramControllerAliases
-Menu.msgTabHdrSignature.text=Besturingsopdracht
-Menu.msgTabHdrAlias.text=Alias
 Menu.ttlMouseScrollUnit.text=Eenheid voor scrollen met muiswiel
 Menu.msgSelectPreferences.text=Te exporterende instellingen (categorieën)
 Menu.msgAllPreferences.text=Alle instellingen
 Menu.msgInvertSelection.text=Selectie omkeren
 Menu.ttDiagramMenuSettings.text=Instellingen van het menu "%"
+Menu.msgIniBackupFailed.text=Het aanmaken van een backup van de huidige voorkeuren is mislukt.\nWilt u nog steeds "%1" inlezen?
+Menu.msgIniRestoreFailed.text=Kon de laatste backup% van de voorkeuren niet herstellen
 Menu.prefsArranger.text=Arranger
+Menu.msgErrorSettingLaF.text=Probleem bij het wijzigen van het Uiterlijk naar %1:%2
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routine handtekening
+Menu.msgTabHdrAlias.text=Aliasnaam
 
 // Error messages for analyser
 Menu.warning_1.text=WAARSCHUWING: TEKST EN COMMENTAAR ZIJN OP HET SCHERM VERWISSELD! → Menu "%1 ► %2".
@@ -408,7 +415,8 @@ Menu.error06.text=De programmanaam «%» moet met hoofdletters geschreven zijn!
 Menu.error07_1.text=«%» is geen geldige naam voor een programma of functie!
 Menu.error07_2.text=«%» is geen geldige naam voor een parameter!
 Menu.error07_3.text=«%» is geen geldige naam voor een variabele of constante!
-Menu.error07_4.text=In namen van diagrammen mogen geen spaties zijn, plaats lage streepjes tussen de woorden:«%». 
+Menu.error07_4.text=In namen van diagrammen mogen geen spaties zijn, plaats lage streepjes tussen de woorden:«%».
+Menu.error07_5.text=Naam «%» bevat non-ascii letters, die kunnen beter niet worden gebruikt.
 Menu.error08.text=In een conditie mag geen toekenning voorkomen.
 Menu.error09.text=Het programma («%») mag niet dezelfde naam hebben als een variabele of parameter!
 Menu.error10_1.text=Een enkel instructie-element kan geen invoer/uitvoer-instructies en toekenningen bevatten!
@@ -471,8 +479,8 @@ Menu.hint25_6.text=Misschien wilt u er een verwerkingselement plaatsen, zoals «
 Menu.hint26.0.text=Selecteer het centrum van het diagram, dubbelklik, druk op Enter of F5, en plaats er de insstructietekst «% "Hallo wereld!"».
 Menu.hint26.1.text=U kunt nu bijv. uw diagram uitproberen: → Menu "%1 ► %2"
 Menu.hint26.2.text=U kunt nu bijv. uw diagram opslaan: → Menu "%1 ► %2"
-Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaal: → Menu "%1 ► %2 ► %3" 
-Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3" 
+Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaal: → Menu "%1 ► %2 ► %3"
+Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Enkele keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
 Menu.error28.text=Enkele waarden (%) komen vaker voor in de (meerdere) keuzelijsten!
 Menu.errorLineReference.text=(regel %)
@@ -502,7 +510,7 @@ AnalyserPreferences.checkboxes.17.text=Controle op inconsistentierisico's in @ll
 AnalyserPreferences.checkboxes.18.text=Controle dat namen niet alleen verschillen in hoofd- en kleine letters
 AnalyserPreferences.checkboxes.19.text=Controle op mogelijk gelijk zijn van een naam aan gereserveerde woorden.
 AnalyserPreferences.checkboxes.20.text=Controle op aanwezigheid van een parameterlijst in een @o-header.
-AnalyserPreferences.checkboxes.21.text=Ontmoedigen van verwarrende namen voor variabelen «I», «l», en «O». 
+AnalyserPreferences.checkboxes.21.text=Ontmoedigen van verwarrende namen voor variabelen «I», «l», en «O».
 AnalyserPreferences.checkboxes.22.text=Controle op mogelijk misbruik van constanten.
 AnalyserPreferences.checkboxes.23.text=Controle op verkeerde importen van diagrammen.
 AnalyserPreferences.checkboxes.24.text=Controle op type-definities en toegang tot record-componenten.
@@ -573,6 +581,11 @@ Editor.btnTurtle.tooltip=Turtle openen
 Editor.btnMake.tooltip=Uitvoeren openen
 Editor.btnDropBrk.tooltip=Alle breakpoints verwijderen.
 Editor.btnDisable.tooltip=Geselecteerd(e) element(en) aan/uit.
+// display mode
+Editor.ttSwitchComments.text=Tekst en commentaar zijn verwisseld
+Editor.ttOperatorsC.text=Operatoren worden op C-manier getoond!
+Editor.msgInactiveMode.text=(inactieve modus voor tonen)
+Editor.msgMenuHint.text=Menu-onderdeel
 // Popup menu
 Editor.popupCut.text=Knippen
 Editor.popupCopy.text=Kopiëren
@@ -645,7 +658,7 @@ InputBox.btnOK.tooltip=Uw keuze valideren.
 InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
 InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
-InputBox.chkBreakpoint.text=Breakpoint
+InputBox.chkBreakpoint.text=Breakpunt
 InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
 InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren
@@ -717,7 +730,7 @@ InputBoxRoot.txtIncludeList.tooltip=Namen van bij te sluiten diagrammen bij star
 InputBoxRoot.lblText.text=Naam diagram / signatuur functie
 InputBoxRoot.txtText.tooltip=Voer naam diagram in (voor @ns of @p -diagrammen) of de @o -signatuur (naam, parameterlijst, resultaattype indien aanwezig)
 InputBoxRoot.lblComment.text=Commentaar
-InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.txtComment.tooltip=Bijv.: Waar dient het algoritme voor, hoe moet het worden gebruikt, wie maakte het enz.
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=
 InputBoxRoot.btnCancel.text=Annuleren
@@ -968,7 +981,11 @@ ExportOptionDialoge.jLabel1.text=Selecteer a.u.b. de gewenste opties ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Deze instellingen opslaan
 ExportOptionDialoge.includeLists.*.tooltip=Vul een lijst in van bestanden of modules, door kommas's gescheiden, waarvoor voorwaarden voor bijsluiten/importeren/gebruik moeten worden ingevoegd.
-ExportOptionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
+ExportOPtionDialoge.spnPrefGenTrigger.tooltip=Aantal keren export van code naar een andere programmeertaal, waarna een voorstel volgt de favoriete taal te wijzigen (0=nooit)
+ExportOPtionDialoge.chkDirectoryFromNsd.text=Voorstel exportmap vanuit NSD-locatie indien beschikbaar
+ExportOPtionDialoge.chkDirectoryFromNsd.tooltip=Anders wordt steeds de meest recente exportmap voorgesteld.
+ExportOPtionDialoge.chkArraySize.text=Standaard grootte array (indien nodig)
+ExportOPtionDialoge.chkStringLen.text=Standaard lengte string (indien nodig)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Importopties
@@ -983,6 +1000,9 @@ ImportOptionDialog.chkRefactorOnLoading.tooltip=Selecteer deze optie indien alle
 ImportOptionDialog.chkVarDeclarations.text=Declaraties van variabelen importeren
 ImportOptionDialog.chkVarDeclarations.tooltip=Met deze optie aangezet maken de parsers instructie-elementen van declaraties van variabelen.
 ImportOptionDialog.chkCommentImport.text=Commentaar in broncode importeren
+ImportOptionDialog.chkCommentImport.tooltip=Als deze optie aan is, kan de Parser verkregen elementen voorzien van dichtstbijzijnd commentaar in de broncode.
+ImportOptionDialog.chkInsertOptKeywords.text=Plaats ingestelde optionele sleutelwaarden bij condities
+ImportOptionDialog.chkInsertOptKeywords.tooltip=Hiermee kunt u geïmporteerde condities (zoals van @{Alternative}s) voorzien van de overtollige pre/post sleutelwaarden uit de voorkeuren van de Parser.
 ImportOptionDialog.chkSaveParseTree.text=Na importeren parse-tree opslaan als tekstbestand.
 ImportOptionDialog.chkSaveParseTree.tooltip=Na een gelukte import kunt u de syntax tree opslaan naar een tekstbestand "*.parsetree.txt".
 ImportOptionDialog.chkLogDir.text=Naar map loggen
@@ -1254,6 +1274,7 @@ Surface.titleRenameGroup.text=Groep "%1" hernoemen naar "%2"?
 Surface.msgRenameArrFile.text=Rangschikkingsbestand\n"%1"\nto "%2"?
 Surface.msgRenamingFailed.text=Kon rangschikkingsbestand niet hernoemen naar "%"!\nActie wordt geannuleerd.
 Surface.msgSharedDiagrams.text=De volgende diagrammen worden nu gedeeld met de groepen in de lijst\n - %1\n\nLet erop dat elke verandering erin invloed heeft op al deze groepen\nen archief %2, ook al is deze laatste niet meer ingelzen!
+Surface.msgFileMissing.text=ontbreekt!
 
 -----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Diagram ophalen
@@ -1271,6 +1292,7 @@ ArrangerIndex.popupIndexAttach.text=Toevoegen aan/verplaatsen naar groep ...
 ArrangerIndex.popupIndexDrawGroup.text=Grenzen van de groep tonen
 ArrangerIndex.popupIndexDrawGroup.tooltip=Afzonderlijk zichtbaar zijn van de geselecteerde groep in de Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Groep hernoemen ...
+ArrangerIndex.popupIndexExport.text=
 ArrangerIndex.popupIndexRenameGroup.tooltip=Staat toe de geselecteerde groep te hernoemen, optioneel samen met bijbehorende bestand
 ArrangerIndex.popupIndexHide.text=Arranger index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Selecteer de doelgroep:
@@ -1394,22 +1416,42 @@ OutputConsole.msgTitleError.text=Fout
 
 -----> DiagramController
 -----[ TurtleFrame ]-----
+TurtleFrame.popupGotoCoord.text=Naar coördinaat scrollen ...
+TurtleFrame.popupGotoTurtle.text=Naar positie turtle scrollen
+TurtleFrame.popupGotoHome.text=Naar de basispositie scrollen
 TurtleFrame.popupGotoOrigin.text=Naar oorsprong (0,0) scrollen
-
+TurtleFrame.popupZoom100.text=Herstel zoom naar 100%
+TurtleFrame.popupZoomBounds.text=Passend zoomen
+TurtleFrame.popupExtendCanvas.text=Afbeelding in gebied plaatsen
+TurtleFrame.popupShowOrigin.text=Coördinatenkruis tonen
+TurtleFrame.popupShowTurtle.text=Turtle (schildpad) tonen
+TurtleFrame.popupShowStatus.text=Statusbalk tonen
+TurtleFrame.popupBackground.text=Achtergrondkleur instellen ...
+TurtleFrame.popupExportCSV.text=Tekenelementen exporteren als CSV ...
+TurtleFrame.popupExportImage.text=Als afbeelding exporteren
+TurtleFrame.popupExportPNG.text=naar PNG ...
+TurtleFrame.popupExportSVG.text=Naar SVG ...
+TurtleFrame.statusHome.tooltip=Huidige basispositie
+TurtleFrame.statusTurtle.tooltip=Huidige positie turtle
+TurtleFrame.statusSize.tooltip=Grootte getekend gebied
+TurtleFrame.statusViewport.tooltip=Huidig zichtbaar scrollgebied
+TurtleFrame.statusSelection.tooltip=Aantal geselecteerde elementen
+TurtleFrame.statusZoom.tooltip=Zoomfactor
+TurtleFrame.lblOverwrite.text=Bestand bestaat al. Toch overschrijven?
+TurtleFrame.lblScale.text=Schaalfactor:
 TurtleFrame.lblSeparator.text=Scheidingsteken
 TurtleFrame.rbSeparators.0.text=Komma
 TurtleFrame.rbSeparators.1.text=Puntkomma
 TurtleFrame.rbSeparators.2.text=Tabulator
 TurtleFrame.rbSeparators.3.text=Spatie
-TurtleFrame.rbSeparators.4.text=Dubbelepunt
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instructie
 ElementNames.localizedNames.1.text=ALS
 ElementNames.localizedNames.2.text=IN GEVAL
 ElementNames.localizedNames.3.text=VOOR
-ElementNames.localizedNames.4.text=VOOR TOT
-ElementNames.localizedNames.5.text=VOOR IN
+ElementNames.localizedNames.4.text=VOOR-TOT
+ElementNames.localizedNames.5.text=VOOR-IN
 ElementNames.localizedNames.6.text=ZOLANG
 ElementNames.localizedNames.7.text=HERHAAL
 ElementNames.localizedNames.8.text=EINDELOOS
@@ -1442,3 +1484,4 @@ ParserKeywords.JumpExit.text=exit
 ParserKeywords.JumpThrow.text=throw
 ParserKeywords.Input.text=INVOER
 ParserKeywords.Output.text=UITVOER
+
