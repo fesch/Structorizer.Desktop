@@ -466,6 +466,7 @@ Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
 Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
+Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)

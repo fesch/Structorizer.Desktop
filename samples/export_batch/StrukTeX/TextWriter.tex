@@ -5,9 +5,41 @@
 
 \title{Structorizer StrukTeX Export of TextWriter.arrz}
 \author{Kay Gürtzig}
-\date{19.10.2020}
+\date{20.12.2020}
 
 \begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[backward]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{len}}{type: \(null\)}
+      \description{\pVar{color}}{type: \(null\)}
+    \end{declaration}
+  }
+  \case{6}{11}{\(color\)}{1}
+      \assign{\(backward(len)\)}
+    \switch{2}
+      \assign{\(backward(len)\)}
+    \switch{3}
+      \assign{\(backward(len)\)}
+    \switch{4}
+      \assign{\(backward(len)\)}
+    \switch{5}
+      \assign{\(backward(len)\)}
+    \switch{6}
+      \assign{\(backward(len)\)}
+    \switch{7}
+      \assign{\(backward(len)\)}
+    \switch{8}
+      \assign{\(backward(len)\)}
+    \switch{9}
+      \assign{\(backward(len)\)}
+    \switch{10}
+      \assign{\(backward(len)\)}
+   \caseend
+\end{struktogramm}
+
 
 % TODO: Tune the width and height argument if necessary!
 \begin{struktogramm}(-14,0)[blank]
@@ -54,6 +86,76 @@
     \switch{10}
       \assign{\(forward(len)\)}
    \caseend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit1]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(45)\)}
+  \sub{\(forward(h/sqrt(2),\ colorNo)\)}
+  \assign{\(left(45)\)}
+  \sub{\(backward(h,\ colorNo)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit4]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(angle\ \gets\ toDegrees(atan(1\ -\ 2.0*c/h))\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c\ +\ b)\)}
+  \assign{\(penDown()\)}
+  \assign{\(left(90)\)}
+  \sub{\(forward(h,\ colorNo)\)}
+  \assign{\(left(180\ -\ angle)\)}
+  \sub{\(forward(sqrt(h*h/4.0\ +\ sqr(h/2.0\ -\ c)),\ colorNo)\)}
+  \assign{\(left(90\ +\ angle)\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(h/2.0)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit7]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(angle\ \gets\ 90\ +\ toDegrees(atan(0.5))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(right(angle)\)}
+  \sub{\(forward(h\ *\ sqrt(1.25),\ colorNo)\)}
+  \assign{\(left(angle)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
 \end{struktogramm}
 
 
@@ -530,6 +632,168 @@
 
 
 % TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit2]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(angle\ \gets\ toDegrees(atan(h/(h\ +\ 2*c)))\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h\ -\ c)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 4,\ colorNo)\)}
+  \assign{\(right(angle)\)}
+  \sub{\(forward(h/2.0\ *\ sqrt(1\ +\ sqr(1+2*c/h)),\ colorNo)\)}
+  \assign{\(left(90\ +\ angle)\)}
+  \sub{\(forward(h/2.0,\ colorNo)\)}
+  \assign{\(left(90)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit3]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 6,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 5,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(45)\)}
+  \assign{\(forward(h-c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit5]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 6,\ colorNo)\)}
+  \sub{\(forward(c,\ colorNo)\)}
+  \sub{\(polygonPart(h/2.0,\ 4,\ false,\ 2,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(90)\)}
+  \assign{\(backward(h)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit6]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 8,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b)\)}
+  \assign{\(penDown()\)}
+  \sub{\(forward(2\ *\ c\ +\ b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 3,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(135)\)}
+  \assign{\(backward(h-c)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit8]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 8,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(180)\)}
+  \assign{\(forward(b)\)}
+  \assign{\(right(45)\)}
+  \assign{\(forward(b)\)}
+  \assign{\(left(135)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(b,\ 8,\ false,\ 7,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(45)\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(left(90)\)}
+  \assign{\(forward(c)\)}
+  \assign{\(left(90)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit9]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(b\ \gets\ h\ *\ 0.5\ /\ (sqrt(2.0)\ +\ 1)\)}
+  \assign{\(c\ \gets\ b\ /\ sqrt(2.0)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(c)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(180)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 4,\ colorNo)\)}
+  \sub{\(forward(2\ *\ c\ +\ b,\ colorNo)\)}
+  \sub{\(polygonPart(b,\ 8,\ true,\ 7,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(left(45)\)}
+  \assign{\(backward(h/2.0\ +\ c)\)}
+  \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
 \begin{struktogramm}(-14,0)[exclMk]
   \assign{%
     \begin{declaration}[Parameters:]
@@ -591,6 +855,34 @@
   \assign{\(forward((c\ +\ b)/2.0)\)}
   \assign{\(left(90)\)}
   \assign{\(penDown()\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterAe]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(max(h/16.0,1),\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(max(h/16.0,1),\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(h/2.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(letterA(h,\ colorNo)\)}
 \end{struktogramm}
 
 
@@ -927,6 +1219,90 @@
 
 
 % TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[digit0]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/4.0)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(45)\)}
+  \assign{\(len\ \gets\ h/sqrt(2)\)}
+  \sub{\(forward(len,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(backward(len)\)}
+  \assign{\(left(45)\)}
+  \assign{\(backward(h/4.0)\)}
+  \sub{\(letterO(h,\ colorNo)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterOe]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(polygonPart(h/8,\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(polygonPart(h/8,\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(letterO(h,\ colorNo)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[letterUe]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{h}}{type: \(null\)}
+      \description{\pVar{colorNo}}{type: \(null\)}
+    \end{declaration}
+  }
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(max(h/8,1))\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(max(h/16,1),\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h/2\ -\ 2\ *\ max(h/8,1)\ -\ max(h/16,\ 1))\)}
+  \assign{\(penDown()\)}
+  \sub{\(polygonPart(max(h/16,1),\ 4,\ false,\ 4,\ colorNo)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(max(h/8,1))\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \assign{\(penUp()\)}
+  \assign{\(forward(h)\)}
+  \assign{\(right(90)\)}
+  \assign{\(forward(h/2)\)}
+  \assign{\(penDown()\)}
+  \assign{\(right(90)\)}
+  \sub{\(letterU(h,\ colorNo)\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
 \begin{struktogramm}(-14,0)[drawText]
   \assign{%
     \begin{declaration}[Parameters:]
@@ -938,73 +1314,97 @@
   \assign{\(gap\ \gets\ h/10.0\)}
   \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(length(text)\)}
     \assign{\(letter\ \gets\ uppercase(copy(text,\ k,\ 1))\)}
-    \ifthenelse{6}{6}{\(letter\ =\ \)"{},"{}\(\)}{T}{F}
-      \sub{\(comma(h,c)\)}
-    \change
-      \case[155]{5}{31}{\(letter\)}{\)"{}A"{}\(}
-          \sub{\(letterA(h,c)\)}
-        \switch{\)"{}B"{}\(}
-          \sub{\(letterB(h,c)\)}
-        \switch{\)"{}C"{}\(}
-          \sub{\(letterC(h,c)\)}
-        \switch{\)"{}D"{}\(}
-          \sub{\(letterD(h,c)\)}
-        \switch{\)"{}E"{}\(}
-          \sub{\(letterE(h,c)\)}
-        \switch{\)"{}F"{}\(}
-          \sub{\(letterF(h,c)\)}
-        \switch{\)"{}G"{}\(}
-          \sub{\(letterG(h,c)\)}
-        \switch{\)"{}H"{}\(}
-          \sub{\(letterH(h,c)\)}
-        \switch{\)"{}I"{}\(}
-          \sub{\(letterI(h,c)\)}
-        \switch{\)"{}J"{}\(}
-          \sub{\(letterJ(h,c)\)}
-        \switch{\)"{}K"{}\(}
-          \sub{\(letterK(h,c)\)}
-        \switch{\)"{}L"{}\(}
-          \sub{\(letterL(h,c)\)}
-        \switch{\)"{}M"{}\(}
-          \sub{\(letterM(h,c)\)}
-        \switch{\)"{}N"{}\(}
-          \sub{\(letterN(h,c)\)}
-        \switch{\)"{}O"{}\(}
-          \sub{\(letterO(h,c)\)}
-        \switch{\)"{}P"{}\(}
-          \sub{\(letterP(h,c)\)}
-        \switch{\)"{}Q"{}\(}
-          \sub{\(letterQ(h,c)\)}
-        \switch{\)"{}R"{}\(}
-          \sub{\(letterR(h,c)\)}
-        \switch{\)"{}S"{}\(}
-          \sub{\(letterS(h,c)\)}
-        \switch{\)"{}T"{}\(}
-          \sub{\(letterT(h,c)\)}
-        \switch{\)"{}U"{}\(}
-          \sub{\(letterU(h,c)\)}
-        \switch{\)"{}V"{}\(}
-          \sub{\(letterV(h,c)\)}
-        \switch{\)"{}W"{}\(}
-          \sub{\(letterW(h,c)\)}
-        \switch{\)"{}X"{}\(}
-          \sub{\(letterX(h,c)\)}
-        \switch{\)"{}Y"{}\(}
-          \sub{\(letterY(h,c)\)}
-        \switch{\)"{}Z"{}\(}
-          \sub{\(letterZ(h,c)\)}
-        \switch{\)"{}\ "{}\(}
-          \sub{\(blank(h,c)\)}
-        \switch{\)"{}!"{}\(}
-          \sub{\(exclMk(h,c)\)}
-        \switch{\)"{}?"{}\(}
-          \sub{\(qstnMk(h,c)\)}
-        \switch{\)"{}."{}\(}
-          \sub{\(fullSt(h,c)\)}
-        \switch[r]{default}
-          \sub{\(charDummy(h,c)\)}
-       \caseend
-    \ifend
+    \case[225]{5}{45}{\(letter\)}{\)"{}A"{}\(}
+        \sub{\(letterA(h,c)\)}
+      \switch{\)"{}B"{}\(}
+        \sub{\(letterB(h,c)\)}
+      \switch{\)"{}C"{}\(}
+        \sub{\(letterC(h,c)\)}
+      \switch{\)"{}D"{}\(}
+        \sub{\(letterD(h,c)\)}
+      \switch{\)"{}E"{}\(}
+        \sub{\(letterE(h,c)\)}
+      \switch{\)"{}F"{}\(}
+        \sub{\(letterF(h,c)\)}
+      \switch{\)"{}G"{}\(}
+        \sub{\(letterG(h,c)\)}
+      \switch{\)"{}H"{}\(}
+        \sub{\(letterH(h,c)\)}
+      \switch{\)"{}I"{}\(}
+        \sub{\(letterI(h,c)\)}
+      \switch{\)"{}J"{}\(}
+        \sub{\(letterJ(h,c)\)}
+      \switch{\)"{}K"{}\(}
+        \sub{\(letterK(h,c)\)}
+      \switch{\)"{}L"{}\(}
+        \sub{\(letterL(h,c)\)}
+      \switch{\)"{}M"{}\(}
+        \sub{\(letterM(h,c)\)}
+      \switch{\)"{}N"{}\(}
+        \sub{\(letterN(h,c)\)}
+      \switch{\)"{}O"{}\(}
+        \sub{\(letterO(h,c)\)}
+      \switch{\)"{}P"{}\(}
+        \sub{\(letterP(h,c)\)}
+      \switch{\)"{}Q"{}\(}
+        \sub{\(letterQ(h,c)\)}
+      \switch{\)"{}R"{}\(}
+        \sub{\(letterR(h,c)\)}
+      \switch{\)"{}S"{}\(}
+        \sub{\(letterS(h,c)\)}
+      \switch{\)"{}T"{}\(}
+        \sub{\(letterT(h,c)\)}
+      \switch{\)"{}U"{}\(}
+        \sub{\(letterU(h,c)\)}
+      \switch{\)"{}V"{}\(}
+        \sub{\(letterV(h,c)\)}
+      \switch{\)"{}W"{}\(}
+        \sub{\(letterW(h,c)\)}
+      \switch{\)"{}X"{}\(}
+        \sub{\(letterX(h,c)\)}
+      \switch{\)"{}Y"{}\(}
+        \sub{\(letterY(h,c)\)}
+      \switch{\)"{}Z"{}\(}
+        \sub{\(letterZ(h,c)\)}
+      \switch{\)"{}\ "{}\(}
+        \sub{\(blank(h,c)\)}
+      \switch{\)"{}!"{}\(}
+        \sub{\(exclMk(h,c)\)}
+      \switch{\)"{}?"{}\(}
+        \sub{\(qstnMk(h,c)\)}
+      \switch{\)"{}."{}\(}
+        \sub{\(fullSt(h,c)\)}
+      \switch{\)"{},"{}\(}
+        \sub{\(comma(h,c)\)}
+      \switch{\)"{}"A"{}\(}
+        \sub{\(letterAe(h,c)\)}
+      \switch{\)"{}"O"{}\(}
+        \sub{\(letterOe(h,c)\)}
+      \switch{\)"{}"U"{}\(}
+        \sub{\(letterUe(h,c)\)}
+      \switch{\)"{}0"{}\(}
+        \sub{\(digit0(h,c)\)}
+      \switch{\)"{}1"{}\(}
+        \sub{\(digit1(h,c)\)}
+      \switch{\)"{}2"{}\(}
+        \sub{\(digit2(h,c)\)}
+      \switch{\)"{}3"{}\(}
+        \sub{\(digit3(h,c)\)}
+      \switch{\)"{}4"{}\(}
+        \sub{\(digit4(h,c)\)}
+      \switch{\)"{}5"{}\(}
+        \sub{\(digit5(h,c)\)}
+      \switch{\)"{}6"{}\(}
+        \sub{\(digit6(h,c)\)}
+      \switch{\)"{}7"{}\(}
+        \sub{\(digit7(h,c)\)}
+      \switch{\)"{}8"{}\(}
+        \sub{\(digit8(h,c)\)}
+      \switch{\)"{}9"{}\(}
+        \sub{\(digit9(h,c)\)}
+      \switch[r]{default}
+        \sub{\(charDummy(h,c)\)}
+     \caseend
     \assign{\(right(90)\)}
     \assign{\(penUp()\)}
     \assign{\(forward(gap)\)}
