@@ -384,6 +384,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
+	// START KGU#894 2020-12-21: Enh. #893 - better visibility of preview locale
+	protected final JMenuItem menuPreferencesLanguagePreview = new JCheckBoxMenuItem("Translator preview", IconLoader.getIcon(113));
+	// END KGU#894 2020-12-21
 	// START KGU#479 2017-12-14: Enh. #492
 	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.getIcon(57));
 	// END KGU#479 2017-12-14
@@ -1431,6 +1434,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
 		// END KGU#232 2016-08-03
 		
+		// START KGU#894 2020-12-21: Enh. #893
+		menuPreferencesLanguage.add(menuPreferencesLanguagePreview);
+		menuPreferencesLanguagePreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { menuPreferencesLanguagePreview.setSelected(true); } } );
+		menuPreferencesLanguagePreview.setSelected(true);
+		menuPreferencesLanguagePreview.setVisible(false);
+		// END KGU#894 2020-12-21
+
 		// START KGU#300 2016-12-02: Enh. #300
 		menuPreferences.add(menuPreferencesNotifyUpdate);
 		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
@@ -2105,7 +2115,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
 			}
 			// END KGU#242 2016-09-04
+			// START KGU#232 2016-08-03: Enh. #222
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+			// START KGU#232 2016-08-03
+			// START KGU#894 2020-12-21: Enh. #893
+			menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
+			// START KGU#894 2020-12-21
 
 			// START KGU#721 2019-08-06: Enh. #740
 			menuPreferencesSaveRestore.setEnabled(Ini.getInstance().hasBackup());

@@ -78,7 +78,8 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
- *
+ * Fundamental localization manager (for Structorizer), holds the locales and performs
+ * translations
  * @author robertfisch
  */
 public class Locales {
@@ -89,30 +90,30 @@ public class Locales {
      * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
      */
     public static final String[][] LOCALES_LIST = {
-    	{"en", "English"},
-    	{"de", "German"},
-    	{"fr", "French"},
-    	{"nl", "Hollandish"},
-    	{"lu", "Luxemburgish"},
-    	{"es", "Spanish"},
-    	{"pt_br", "Portuguese (Brazilian)"},
-    	{"it", "Italian"},
-    	{"zh-cn", "Chinese (simplified)"},
-    	{"zh-tw", "Chinese (traditional)"},
-    	{"cz", "Czech"},
-    	{"ru",	"Russian"},
-    	{"pl", "Polish"},
-    	// pseudo and auxiliary locales 
-    	{"empty", null},
-    	{"preview", null},
-    	{"external", null}
-    	};
+        {"en", "English"},
+        {"de", "German"},
+        {"fr", "French"},
+        {"nl", "Hollandish"},
+        {"lu", "Luxemburgish"},
+        {"es", "Spanish"},
+        {"pt_br", "Portuguese (Brazilian)"},
+        {"it", "Italian"},
+        {"zh-cn", "Chinese (simplified)"},
+        {"zh-tw", "Chinese (traditional)"},
+        {"cz", "Czech"},
+        {"ru",	"Russian"},
+        {"pl", "Polish"},
+        // pseudo and auxiliary locales 
+        {"empty", null},
+        {"preview", null},
+        {"external", null}
+    };
     
-	// START KGU#484 2018-03-22: Issue #463
-	public static final Logger logger = Logger.getLogger(Locales.class.getName());
-	// END KGU#484 2018-03-22
+    // START KGU#484 2018-03-22: Issue #463
+    public static final Logger logger = Logger.getLogger(Locales.class.getName());
+    // END KGU#484 2018-03-22
 
-	// the "default" oder "master" locale
+    // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
     
     // structure were all data is being loaded to
@@ -197,8 +198,8 @@ public class Locales {
         // START KGU 2016-09-09: Bugfix - We must ensure at least the default locale
         if (localeNames.length == 0)
         {
-        	getDefaultLocale();
-        	localeNames = getNames();
+            getDefaultLocale();
+            localeNames = getNames();
         }
         // END KGU 2016-09-09
         for (int i = 0; i < localeNames.length; i++) {
@@ -307,10 +308,12 @@ public class Locales {
     }
     
     /**
-     * Registers the given component for translation service on locale change
-     * and updates all components with the current Locale (equivalent to
-     * register(component, true))
-     * @param component - a translatable GUI component
+     * Registers the given {@code component} for translation service on
+     * locale change and updates all components with the current Locale
+     * (equivalent to {@code register(component, true)})
+     * @param component - a translatable GUI {@link Component}
+     * @see #register(Component, boolean)
+     * @see #unregister(Component)
      */
     public void register(Component component)
     // START KGU#337 2017-02-03: Issue #340 - possibility needed to register without update
@@ -321,7 +324,11 @@ public class Locales {
     /**
      * Registers the given component for translation service on locale change.
      * @param component - a translatable GUI component
-     * @param updateImmediately - true induces an immediate update of all subcomponents
+     * @param updateImmediately - {@code true} induces an immediate update of all
+     *  subcomponents, {@code false} will postpone this to an explicit
+     *  {@link #setLocale(Component)} event.
+     * @see #register(Component)
+     * @see #unregister(Component)
      */
     public void register(Component component, boolean updateImmediately)
     // END KGU#337 2017-02-03
@@ -405,12 +412,12 @@ public class Locales {
             else
             {
                 // get the default
-                loadedLocaleName="en";
+                loadedLocaleName = "en";
             }
         }
         
         if(!localeName.equals("preview") && !localeName.equals("external"))
-            loadedLocaleFilename=loadedLocaleName+".txt";
+            loadedLocaleFilename = loadedLocaleName+".txt";
         // update all registered components
         updateComponents();
     }
