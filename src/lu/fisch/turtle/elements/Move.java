@@ -41,11 +41,4 @@ public class Move extends Element
     {
     }
 
-    // START KGU#685 2020-12-11: Enh. #704
-    @Override
-    public void draw(Graphics2D graphics, Rectangle viewRect)
-    {
-    }
-    // END KGU#685 2020-12-11
-
 }

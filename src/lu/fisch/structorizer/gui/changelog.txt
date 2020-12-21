@@ -148,6 +148,7 @@ Current development version: 3.30-13 (2020-12-21)
 - 13: Issue #890: Improvements of the Turtleizer GUI (#704/#880). <2>
 - 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
 - 13: Enh. #893: Translator preview indication in language preference menu <2>
+- 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

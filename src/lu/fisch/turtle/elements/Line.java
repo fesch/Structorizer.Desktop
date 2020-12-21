@@ -70,15 +70,6 @@ public class Line extends Element
     }
 
     // START KGU#685 2020-12-11: Enh. #704
-    @Override
-    public void draw(Graphics2D graphics, Rectangle viewRect)
-    {
-        graphics.setColor(color);
-        if (viewRect == null || viewRect.intersects(getBounds())) {
-            graphics.drawLine(from.x, from.y, to.x, to.y);
-        }
-    }
-
     protected void appendSpecificCSVInfo(StringBuilder sb, String separator)
     {
         sb.append(separator);

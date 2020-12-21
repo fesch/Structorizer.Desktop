@@ -49,6 +49,7 @@ package lu.fisch.turtle;
  *                                      Enh. #443: Deprecated execute methods disabled
  *      Kay Gürtzig     2020-12-16      Enh. #704/#880: Zoom and export functions accomplished
  *      Kay Gürtzig     2020-12-17/20   Enh. #890 Seven improvements to the GUI implemented
+ *      Kay Gürtzig     2020-12-21      Enh. #893 (measuring), bugfix #894 (correct picture moving)
  *
  ******************************************************************************************************
  *
@@ -222,7 +223,7 @@ public class TurtleBox implements DelayableDiagramController
 				synchronized(zoomMutex) {
 					Graphics2D g = (Graphics2D) graphics;
 					// set anti-aliasing rendering
-					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+					g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
 					// clear background
 					// START KGU#303 2016-12-02: Enh. #302
@@ -243,32 +244,28 @@ public class TurtleBox implements DelayableDiagramController
 						g.fillRect(0, 0, this.getWidth(), this.getHeight());
 						g.scale(zoomFactor, zoomFactor);
 					}
-
-					Rectangle visibleRect = g.getClipBounds();
+					// START KGU#895 2020-12-21: Bugfix #894
+					Point offset = displacement;	// We cache it to avoid concurrency trouble
+					if (offset != null) {
+						g.translate(offset.x, offset.y);
+					}
+					// END KGU#895 2020-12-21
 					// END KGU#685 2020-12-11
 
 					// START KGU#685 2020-12-14: Enh. #704
-					if (displacement != null && popupShowOrigin.isSelected()) {
-						int x0 = visibleRect.x;
-						int y0 = visibleRect.y;
-						int x1 = x0 + visibleRect.width;
-						int y1 = y0 + visibleRect.height;
+					if (offset != null && popupShowOrigin.isSelected()) {
 						g.setColor(Color.decode("0xffcccc"));
 						java.awt.Stroke strk = g.getStroke();
 						g.setStroke(new java.awt.BasicStroke(1f/zoom,
 								java.awt.BasicStroke.CAP_ROUND,
 								java.awt.BasicStroke.JOIN_ROUND, 1f,
 								new float[] {2f/zoom, 2f/zoom}, 0f));
-						if (x0 <= displacement.x && displacement.x <= x1) {
-							g.drawLine(displacement.x, y0, displacement.x, y1);
-						}
-						if (y0 <= displacement.y && displacement.y <= y1) {
-							g.drawLine(x0, displacement.y, x1, displacement.y);
-						}
+						g.drawLine(0, owner.bounds.y, 0, owner.bounds.y + owner.bounds.height);
+						g.drawLine(owner.bounds.x, 0, owner.bounds.x + owner.bounds.width, 0);
 						g.setStroke(strk);
 					}
 					// END KGU#685 2020-12-14
-
+					
 					// START KGU#303 2016-12-03: Enh. #302
 					//g.setColor(Color.BLACK);
 					g.setColor(owner.defaultPenColor);
@@ -288,12 +285,31 @@ public class TurtleBox implements DelayableDiagramController
 					//logger.config("Painting " + nElements + " elements...");
 					// END KGU#597 2018-10-12
 					for (int i = 0; i < nElements; i++) {
-						// START KGU#685 2020-12-11: Enh. #704
-						//elements.get(i).draw(g);
-						owner.elements.get(i).draw(g, visibleRect);
-						// END KGU#685 2020-12-11
+						owner.elements.get(i).draw(g);
 					}
 					// END KGU#449 2017-10-28
+
+					// START KGU#889 2020-12-21: Enh. #890/8 measuring line
+					if (dragStart != null) {
+						int offsetX = 0, offsetY = 0;
+						if (offset != null) {
+							offsetX = offset.x;
+							offsetY = offset.y;
+						}
+						int x0 = (int)(dragStart.x / zoom) - offsetX;
+						int y0 = (int)(dragStart.y / zoom) - offsetY;
+						int x1 = (int)(mouseX / zoom) - offsetX;
+						int y1 = (int)(mouseY / zoom) - offsetY;
+						g.setColor(Color.decode("0xccccff"));
+						java.awt.Stroke strk = g.getStroke();
+						g.setStroke(new java.awt.BasicStroke(1f/zoom,
+								java.awt.BasicStroke.CAP_ROUND,
+								java.awt.BasicStroke.JOIN_ROUND, 1f,
+								new float[] {4f/zoom, 4f/zoom}, 0f));
+						g.drawLine(x0, y0, x1, y1);
+						g.setStroke(strk);
+					}
+					// END KGU#889 2020-12-21
 
 					if (!owner.turtleHidden)
 					{
@@ -316,6 +332,11 @@ public class TurtleBox implements DelayableDiagramController
 						g.drawImage(owner.image,(int)Math.round(x),(int)Math.round(y),this);
 					}
 					
+					// START KGU#895 2020-12-21: Bugfix #894
+					if (offset != null) {
+						g.translate(-offset.x, -offset.y);
+					}
+					// END KGU#895 2020-12-21
 					// START KGU#685 2020-12-11: Enh. #704
 					if (!compensateZoom) {
 						g.scale(1/zoomFactor, 1/zoomFactor);
@@ -332,6 +353,12 @@ public class TurtleBox implements DelayableDiagramController
 			public void updatePreferredSize(boolean useZoom)
 			{
 				Rectangle bounds = new Rectangle(owner.bounds);
+				// START KGU#895 2020-12-21: Bugfix #894
+				if (displacement != null) {
+					bounds.x += displacement.x;
+					bounds.y += displacement.y;
+				}
+				// END KGU#895 2020-12-21
 				// Make sure the bounds comprise the turtle position - visible or not
 				bounds.add(new Rectangle(owner.pos.x, owner.pos.y, 1, 1));
 				// We need the maximum distances from top and left border
@@ -419,6 +446,9 @@ public class TurtleBox implements DelayableDiagramController
 		private boolean showCoordinates = true;
 		private int mouseX = 0;
 		private int mouseY = 0;
+		// END KGU#889 2020-12-20
+		// START KGU#889 2020-12-20: Enh. #890/8
+		private Point dragStart = null;
 		// END KGU#889 2020-12-20
 
 		private TurtleBox owner;
@@ -544,11 +574,50 @@ public class TurtleBox implements DelayableDiagramController
 			this.addWindowFocusListener(this);
 			panel.addMouseMotionListener(new MouseMotionListener() {
 				@Override
-				public void mouseDragged(MouseEvent e) {
-					updateCoordPopup(e);
+				public void mouseDragged(MouseEvent evt) {
+					if (dragStart == null) {
+						dragStart = evt.getPoint();
+					}
+					mouseX = evt.getX();
+					mouseY = evt.getY();
+					Rectangle rect = new Rectangle(mouseX, mouseY, 1, 1);
+					panel.scrollRectToVisible(rect);
+					Point loc = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation();
+					int diffX = (mouseX - dragStart.x);
+					int diffY = (mouseY - dragStart.y);
+					if (diffX != 0 || diffY != 0) {
+						if (evt.isShiftDown()) {
+							if (Math.abs(diffY) < Math.abs(diffX)) {
+								mouseY = dragStart.y;
+								diffY = 0;
+							}
+							else {
+								mouseX = dragStart.x;
+								diffX = 0;
+							}
+						}
+						double length = Math.sqrt(diffX*diffX + diffY*diffY) / zoomFactor;
+						double orient = Math.toDegrees(Math.atan2(diffX, -diffY));
+						String coordTip = String.format("%.2f (%.2f, %.2f) %.2f°",
+								length, diffX/zoomFactor, diffY/zoomFactor, orient);
+						lblPop.setText(coordTip);
+						lblPop.setPreferredSize(
+								new Dimension(
+										8 + lblPop.getFontMetrics(lblPop.getFont()).stringWidth(coordTip),
+										lblPop.getFontMetrics(lblPop.getFont()).getHeight()
+										)
+								);
+						pop.setLocation(loc.x + mouseX, loc.y + mouseY+16);
+						pop.setVisible(true);
+						panel.repaint();
+					}
 				}
 				@Override
 				public void mouseMoved(MouseEvent e) {
+					if (dragStart != null) {
+						dragStart = null;
+						panel.repaint();
+					}
 					updateCoordPopup(e);
 				}
 				/**
@@ -564,9 +633,8 @@ public class TurtleBox implements DelayableDiagramController
 						mouseX = evt.getX();
 						mouseY = evt.getY();
 						updateCoordinatePopup();
-						int locX = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation().x;
-						int locY = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation().y;
-						pop.setLocation(locX + mouseX, locY + mouseY+16);
+						Point loc = ((JComponent) evt.getSource()).getLocationOnScreen().getLocation();
+						pop.setLocation(loc.x + mouseX, loc.y + mouseY+16);
 						//pop.setVisible(true);
 					}
 				}
@@ -583,15 +651,20 @@ public class TurtleBox implements DelayableDiagramController
 		private void updateStatus() {
 			if (statusbar.isVisible()) {
 				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
-				int turtleX = owner.pos.x;
-				int turtleY = owner.pos.y;
-				if (displacement != null) {
-					turtleX -= displacement.x;
-					turtleY -= displacement.y;
-				}
+				//int turtleX = owner.pos.x;
+				//int turtleY = owner.pos.y;
+				// START KGU#895 2020-12-21: Bugfix #894
+				//if (displacement != null) {
+				//	turtleX -= displacement.x;
+				//	turtleY -= displacement.y;
+				//}
+				//statusTurtle.setText(
+				//		String.format("(%d, %d) %.2f°",
+				//				turtleX, turtleY, owner.getOrientation()));
 				statusTurtle.setText(
 						String.format("(%d, %d) %.2f°",
-								turtleX, turtleY, owner.getOrientation()));
+								owner.pos.x, owner.pos.y, owner.getOrientation()));
+				// END KGU#895 2020-12-21
 				Rectangle size = new Rectangle(owner.bounds);
 				size.add(owner.pos);
 				statusSize.setText(
@@ -648,7 +721,7 @@ public class TurtleBox implements DelayableDiagramController
 			// START KGU#889 2020-12-18: Enh. #890
 			popupGotoOrigin = new javax.swing.JMenuItem("Scroll to origin (0,0)");
 			// END KGU#889 2020-12-18
-			popupExtendCanvas = new javax.swing.JMenuItem("Extend to picture bounds");
+			popupExtendCanvas = new javax.swing.JMenuItem("Make all drawing visible");
 			popupZoom100 = new javax.swing.JMenuItem("Reset zoom to 100%");
 			popupZoomBounds = new javax.swing.JMenuItem("Zoom to fit bounds");
 			popupShowOrigin = new javax.swing.JCheckBoxMenuItem("Show axes of coordinates");
@@ -728,16 +801,16 @@ public class TurtleBox implements DelayableDiagramController
 			popupExtendCanvas.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					movePictureToCanvas();
+					fixDisplacement();
 				}
 
 			});
 			popupMenu.add(popupExtendCanvas);
 			// This doesn't work directly but shows the key binding handled via keyPressed()
-			// START KGU#889 2020-12-20: Issue #890/7
+			// START KGU#889 2020-12-21: Issue #890/7
 			//popupMoveIn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
-			popupExtendCanvas.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0));
-			// END KGU#889 2020-12-20
+			popupExtendCanvas.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
+			// END KGU#889 2020-12-21
 			
 			popupShowOrigin.addActionListener(new ActionListener() {
 				@Override
@@ -878,6 +951,12 @@ public class TurtleBox implements DelayableDiagramController
 			if (!owner.turtleHidden) {
 				bounds.add(owner.pos);
 			}
+			// START KGU#895 2002-12-21: Bugfix #894
+			if (displacement != null) {
+				bounds.x += displacement.x;
+				bounds.y += displacement.y;
+			}
+			// END KGU#895 2020-12-21
 			// Restrict the considered bounds to the visible part
 			if (bounds.x < 0) {
 				bounds.width += bounds.x;
@@ -1359,6 +1438,10 @@ public class TurtleBox implements DelayableDiagramController
 
 		@Override
 		public void keyPressed(KeyEvent ev) {
+			if (dragStart != null && ev.getKeyCode() != KeyEvent.VK_SHIFT) {
+				dragStart = null;
+				panel.repaint();
+			}
 			if (ev.getSource() == this && !ev.isAltDown() && !ev.isAltGraphDown()) {
 				switch (ev.getKeyCode()) {
 				case KeyEvent.VK_HOME:
@@ -1427,12 +1510,12 @@ public class TurtleBox implements DelayableDiagramController
 				case KeyEvent.VK_Z:
 					zoomToBounds();
 					break;
-				// START KGU#889 2020-12-20: Issue #890/7
+				// START KGU#889 2020-12-21: Issue #890/7
 				//case KeyEvent.VK_M:
-				case KeyEvent.VK_X:
-				// END KGU#889 2020-12-20
+				case KeyEvent.VK_A:
+				// END KGU#889 2020-12-21
 					if (owner.bounds.x < 0 || owner.bounds.y < 0) {
-						movePictureToCanvas();
+						fixDisplacement();
 					}
 					break;
 				case KeyEvent.VK_O:
@@ -1468,14 +1551,28 @@ public class TurtleBox implements DelayableDiagramController
 		private void gotoTurtle()
 		{
 			pop.setVisible(false);
-			gotoCoordinate(owner.pos);
+			// START KGU#895 2002-12-21: Bugfix #894
+			//gotoCoordinate(owner.pos);
+			Point turtle = new Point(owner.pos);
+			if (displacement != null) {
+				turtle.x += displacement.x;
+				turtle.y += displacement.y;
+			}
+			gotoCoordinate(turtle);
+			// END KGU#895 2020-12-21
 		}
 		
 		private void gotoCoordinate()
 		{
 			Point coord = askForCoordinate();
-			pop.setVisible(false);
 			if (coord != null) {
+				pop.setVisible(false);
+				// START KGU#895 2002-12-21: Bugfix #894
+				if (displacement != null) {
+					coord.x += displacement.x;
+					coord.y += displacement.y;
+				}
+				// END KGU#895 2020-12-21
 				gotoCoordinate(coord);
 			}
 		}
@@ -1519,26 +1616,33 @@ public class TurtleBox implements DelayableDiagramController
 		}
 		
 		/**
-		 * Moves all elements into the visible canvas (i.e. the positive quadrant)
+		 * Sets the {@link #displacement} such that all elements fit into the
+		 * visible canvas (i.e. the positive quadrant)
 		 */
-		private void movePictureToCanvas()
+		private void fixDisplacement()
 		{
 			if (owner.bounds.x < 0 || owner.bounds.y < 0) {
+				// START KGU#895 2020-12-21: Bugfix #894
 				// We must prevent any repaint activity during this action
-				synchronized (this.getTreeLock()) {
-					Dimension shift = new Dimension(
-							Math.max(-owner.bounds.x, 0),
-							Math.max(-owner.bounds.y, 0));
-					int nElements = owner.elements.size();
-					for (int i = 0; i < nElements; i++) {
-						owner.elements.get(i).move(shift);
-					}
-					// Move all important points as well (except home)
-					owner.pos.x += shift.width; owner.pos.y += shift.height;
-					owner.posX += shift.width; owner.posY += shift.height;
-					owner.bounds.x += shift.width; owner.bounds.y += shift.height;
-					displacement = new Point(shift.width, shift.height);
-				}
+				//synchronized (this.getTreeLock()) {
+				//	Dimension shift = new Dimension(
+				//			Math.max(-owner.bounds.x, 0),
+				//			Math.max(-owner.bounds.y, 0));
+				//	int nElements = owner.elements.size();
+				//	for (int i = 0; i < nElements; i++) {
+				//		owner.elements.get(i).move(shift);
+				//	}
+				//	// Move all important points as well (except home)
+				//	owner.pos.x += shift.width; owner.pos.y += shift.height;
+				//	owner.posX += shift.width; owner.posY += shift.height;
+				//	owner.bounds.x += shift.width; owner.bounds.y += shift.height;
+				//	displacement = new Point(shift.width, shift.height);
+				//}
+				displacement = new Point(
+						Math.max(-owner.bounds.x, 0),
+						Math.max(-owner.bounds.y, 0)
+						);
+				// END KGU#895 2020-12-21
 				repaintAll();
 			}
 		}
@@ -1961,16 +2065,10 @@ public class TurtleBox implements DelayableDiagramController
         fd(-pixels);
     }
 
-    // START #272 2016-10-16 (KGU)
-    //public void backward(int pixels)
-    //{
-    //    fd(-pixels);
-    //}
     public void backward(Double pixels)
     {
         forward(-pixels);
     }
-    // END #272 2016-10-16
     
     // START KGU#448 2017-10-28: Enh. #443 Wrappers with color argument
     public void fd(Integer pixels, Color color)
@@ -2019,6 +2117,7 @@ public class TurtleBox implements DelayableDiagramController
     // START KGU#303 2016-12-02: Enh. #302
     /** Non-retarded method to set the background colour directly
      * @param bgColor - the new background colour
+     * @see #setBackgroundColor(Integer, Integer, Integer)
      */
     public void setBackgroundColor(Color bgColor)
     {
@@ -2035,6 +2134,7 @@ public class TurtleBox implements DelayableDiagramController
      * @param red
      * @param green
      * @param blue
+     * @see #setBackgroundColor(Color)
      */
     public void setBackgroundColor(Integer red, Integer green, Integer blue)
     {
@@ -2143,7 +2243,7 @@ public class TurtleBox implements DelayableDiagramController
     public void gotoXY(Integer x, Integer y)
     {
         Point newPos = new Point(x,y);
-        elements.add(new Move(pos, newPos));
+        elements.add(new Move(pos, newPos));	// This is rather redundant
         setPos(newPos);
         delay();
    }
