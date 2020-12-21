@@ -9952,6 +9952,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Locales.getInstance().register(turtle.getFrame(), true);
 			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
 			// END KGU#685 2020-12-12
+			// START KGU#894 2020-12-21: Issue #895 Wasn't correctly scaled (with "Nimbus")
+			GUIScaler.rescaleComponents(turtle.getFrame());
+			// END KGU#894 2020-12-21
 		}
 		turtle.setVisible(true);
 		// Activate the executor (getInstance() is supposed to do that)
