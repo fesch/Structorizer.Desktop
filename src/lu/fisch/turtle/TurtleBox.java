@@ -49,7 +49,7 @@ package lu.fisch.turtle;
  *                                      Enh. #443: Deprecated execute methods disabled
  *      Kay Gürtzig     2020-12-16      Enh. #704/#880: Zoom and export functions accomplished
  *      Kay Gürtzig     2020-12-17/20   Enh. #890 Seven improvements to the GUI implemented
- *      Kay Gürtzig     2020-12-21      Enh. #893 (measuring), bugfix #894 (correct picture moving)
+ *      Kay Gürtzig     2020-12-21      Enh. #893 (measuring), bugfix #894 (correct picture displacement)
  *
  ******************************************************************************************************
  *
@@ -1414,9 +1414,9 @@ public class TurtleBox implements DelayableDiagramController
 							Math.round(width / this.zoomFactor),
 							Math.round(height / this.zoomFactor),
 							BufferedImage.TYPE_4BYTE_ABGR);
-					panel.paint(bi.getGraphics(), true);
 					try
 					{
+						panel.paint(bi.getGraphics(), true);
 						ImageIO.write(bi, "png", chosen);
 					}
 					catch(Exception e)
