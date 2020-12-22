@@ -51,6 +51,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2020-12-17/20   Enh. #890 Seven improvements to the GUI implemented
  *      Kay Gürtzig     2020-12-21      Enh. #893 (measuring), bugfix #894 (correct picture displacement)
  *      Kay Gürtzig     2020-12-22      Enh. #890: Snapping for measure line; CR KGU#895: no Move objects
+ *                                      created anymore, 2nd (higher-resolution) turtle image
  *
  ******************************************************************************************************
  *
@@ -237,8 +238,8 @@ public class TurtleBox implements DelayableDiagramController
 					if (compensateZoom) {
 						Dimension prefDim = getPreferredSize();
 						g.fillRect(0, 0,
-								Math.round(prefDim.width / zoomFactor),
-								Math.round(prefDim.height / zoomFactor));
+								Math.round(prefDim.width / zoom),
+								Math.round(prefDim.height / zoom));
 						zoom = 1f;
 					}
 					else {
@@ -321,24 +322,35 @@ public class TurtleBox implements DelayableDiagramController
 
 					if (!owner.turtleHidden)
 					{
-						// START #272 2016-10-16
-						// fix drawing point
-						//int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
-						//int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
-						// fix drawing point
-						//int xRot = x+image.getWidth(this)/2;
-						//int yRot = y+image.getHeight(this)/2;
+						Image turtleImg = owner.image;
+						int x = owner.pos.x;
+						int y = owner.pos.y;
+						// START KGU#889 2020-12-22: Enh. #890 Provide a higher resolution
+						if (zoom > 1.25f) {
+							turtleImg = owner.image2;
+							if (offset != null) {
+								g.translate(-offset.x, -offset.y);
+							}
+							// CAUTION! BE AWARE THAT zoom GETS TEMPORARILY MODIFIED HERE!
+							zoom = zoom/2;
+							g.scale(0.5, 0.5);
+							if (offset != null) {
+								g.translate(offset.x, offset.y);
+							}
+							x *= 2;
+							y *= 2;
+						}
+						// END KGU#889 2020-12-22
 						// apply rotation
-						//g.rotate((270-angle)/180*Math.PI,xRot,yRot);
+						g.rotate((270-owner.angle)/180*Math.PI, x, y);
 						// fix drawing point
-						double x = owner.posX - (owner.image.getWidth(this)/2);
-						double y = owner.posY - (owner.image.getHeight(this)/2);
-						// apply rotation
-						g.rotate((270-owner.angle)/180*Math.PI, owner.posX, owner.posY);
-						// END #272 2016-10-16
+						x -= turtleImg.getWidth(this)/2;
+						y -= turtleImg.getHeight(this)/2;
 						// draw the turtle
-						g.drawImage(owner.image,(int)Math.round(x),(int)Math.round(y),this);
+						g.drawImage(turtleImg, x, y, this);
+						
 					}
+					// CAUTION: Make sure nothing gets drawn here (zoom possibly modified!)
 					
 					// START KGU#893 2020-12-21: Bugfix #894
 					if (offset != null) {
@@ -347,7 +359,7 @@ public class TurtleBox implements DelayableDiagramController
 					// END KGU#893 2020-12-21
 					// START KGU#685 2020-12-11: Enh. #704
 					if (!compensateZoom) {
-						g.scale(1/zoomFactor, 1/zoomFactor);
+						g.scale(1/zoom, 1/zoom);
 					}
 					// END KGU#685 2020-12-11
 				}
@@ -762,7 +774,7 @@ public class TurtleBox implements DelayableDiagramController
 			// END KGU#889 2020-12-18
 			popupExtendCanvas = new javax.swing.JMenuItem("Make all drawing visible");
 			popupZoom100 = new javax.swing.JMenuItem("Reset zoom to 100%");
-			popupZoomBounds = new javax.swing.JMenuItem("Zoom to fit bounds");
+			popupZoomBounds = new javax.swing.JMenuItem("Zoom to the bounds");
 			popupShowOrigin = new javax.swing.JCheckBoxMenuItem("Show axes of coordinates");
 			popupShowTurtle = new javax.swing.JCheckBoxMenuItem("Show turtle");
 			popupShowStatus = new javax.swing.JCheckBoxMenuItem("Show status bar");
@@ -1819,18 +1831,26 @@ public class TurtleBox implements DelayableDiagramController
     }
     // END KGU#685 2020-12-11
 
+    /** Rounded turtle position (okay for drawing but bad for consecutive drawing accuracy) */
     private Point pos;
     // START KGU#282 2016-10-16: Enh. #272
-    private double posX, posY;		// exact position
+    /** Exact turtle position coordinates */
+    private double posX, posY;
     // END KGU#282 2016-10-16
+    /** Start coordinate for the drawing (turtle home) */
     private Point home;
-    private double angle = -90;		// upwards (north-bound)
+    /** Internal turtle orientation in degrees (0° = right-bound, -90° = upwards) */
+    private double angle = -90;
+    /** The turtle image in standard size (about 36 x 36 pixel) */
     private Image image = (new ImageIcon(this.getClass().getResource("turtle.png"))).getImage();
+    /** A higher resolution turtle image (about 72 x 72 pixel) */
+    private Image image2 = (new ImageIcon(this.getClass().getResource("turtle2.png"))).getImage();
     private boolean isPenDown = true;
     // START KGU#303 2016-12-02: Enh. #302
     //private Color penColor = Color.BLACK;
     private Color defaultPenColor = Color.BLACK;
     private Color backgroundColor = Color.WHITE;
+    /** Current pen colour */
     private Color penColor = defaultPenColor;
     // END KGU#303 2016-12-02
     private boolean turtleHidden = false;
@@ -2043,10 +2063,10 @@ public class TurtleBox implements DelayableDiagramController
         //panel.repaint();
         frame.repaintAll();
         // END KGU#685 2020-12-11
-        if (delay!=0)
+        if (delay != 0)
         {
             try { Thread.sleep(delay); }
-            catch (InterruptedException e) { System.out.println(e.getMessage());}
+            catch (InterruptedException e) { System.out.println(e.getMessage()); }
         }
     }
     
@@ -2339,7 +2359,7 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void setColor(Color color)
     {
-        this.penColor=color;
+        this.penColor = color;
     }
 
     // START KGU#448 2017-10-28: Enh. #443
@@ -2347,13 +2367,13 @@ public class TurtleBox implements DelayableDiagramController
     /* (non-Javadoc)
      * @see lu.fisch.diagrcontrol.DelayableDiagramController#setAnimationDelay(int, boolean)
      */
-    public void setAnimationDelay(int delay, boolean _reinit)
+    public void setAnimationDelay(int delay, boolean forceReinit)
     // END KGU#448 2017-10-28
     {
-        if (_reinit) {
+        if (forceReinit) {
             reinit();
         }
-        this.delay=delay;
+        this.delay = delay;
     }
 
     // START KGU#356 2019-03-02: Issue #366 - Allow focus control of he DiagramController copes with it
