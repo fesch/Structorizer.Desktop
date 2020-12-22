@@ -57,7 +57,7 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
- *      Jaap Woldringh  2020-12-20      Enh. #704: New messages for Turtleizer, many revisions
+ *      Jaap Woldringh  2020-12-20/22   Enh. #704: New messages for Turtleizer, many revisions
  *
  ******************************************************************************************************
  *
@@ -454,70 +454,70 @@ Menu.error20_3.text=Een diagram van type %1 kan geen parameterlijst hebben. Type
 Menu.error21.text=Namen van variabelen I (hoofdletter i), l (kleine letter L), en O (hoofdletter o) zijn moeilijk van elkaar te onderscheiden, en van 1 en 0
 Menu.error22_1.text=Constante «%1» hangt af van naar het schijnt niet-constante waarde(n): «%2».
 Menu.error22_2.text=Poging de waarde van constante «%» te wijzigen!
-Menu.error23_1.text=Diagram «%» is nogal ongeschikt voor een importaanroep omdat er wordt teruggegeven.
+Menu.error23_1.text=Diagram «%» is nogal ongeschikt voor een importaanroep omdat het iets teruggeeft.
 Menu.error23_2.text=Importeren van diagram «%» is recursief!
 Menu.error23_3.text=Importeren wordt hier genegeerd, omdat diagram «%1» al geïmporteerd is: %2
 Menu.error23_4.text=Naamconflict tussen locale en geïmporteerde variabele of constante «%»!
 Menu.error23_5.text=Een @p -diagram «%» is nu niet beschikbaar!
 Menu.error23_6.text=Er zijn meer @p-diagrammen met de naam «%»!
 Menu.error23_7.text=Er is een naamconflict tussen locale en geïmporteerde typedefinitie «%»!
-Menu.error24_1.text=Typedefinitie in (samengestelde) regel % is misvormd.
+Menu.error24_1.text=Typedefinitie in (samengestelde) regel % is onjuist gevormd.
 Menu.error24_2.text=Typenaam «%» is niet toegestaan of botst met een andere naam.
-Menu.error24_3.text=Componentnaam «%» is niet toegestaan of dubbel.
+Menu.error24_3.text=Componentnaam «%» is niet toegestaan of bestaat al.
 Menu.error24_4.text=Componenttype «%» is niet gedefinieerd of onbekend.
 Menu.error24_5.text=Er is geen bekend recordtype «%»!
 Menu.error24_6.text=Recordcomponent «%» wordt niet gewijzigd/geïnitialiseerd!
 Menu.error24_7.text=Recordtype «%1» heeft geen component «%2»!
 Menu.error24_8.text=Variabele «%1» heeft geen component «%2»!
-Menu.hint07_1.text=Wat moet uw algoritme doen? Vervang «%» met een goede naam ervoor!
-Menu.hint25_1.text=Selecteer het centrum van het diagram en plaats er een eerste element, bijv. een invoeropdracht zoals «%1 %2».
+Menu.hint07_1.text=Wat moet uw algoritme doen? Vervang «%» met een goede naam!
+Menu.hint25_1.text=Selecteer het midden van het diagram en plaats er een eerste element, bijv. een invoeropdracht zoals «%1 %2».
 Menu.hint25_2.text=Misschien wilt u gegevens invoeren, bijv. met een instructie zoals «%1 %2». → Menu "%3"
 Menu.hint25_3.text=Misschien wilt u resultaten afdrukken, bijv. met een instructie zoals «%1 %2». → Menu "%3"
-Menu.hint25_4.text=Selecteer het centrum van ht diagram, en plaats daar het eerste element, bijv. een Instructie.
-Menu.hint25_5.text=Selecteer het centrum van het diagram, en plaats daar bijv. een Instructie-element met de definitie van een type of constante.
+Menu.hint25_4.text=Selecteer het midden van het diagram, en plaats daar het eerste element, bijv. een Instructie.
+Menu.hint25_5.text=Selecteer het midden van het diagram, en plaats daar bijv. een Instructie-element met de definitie van een type of constante.
 Menu.hint25_6.text=Misschien wilt u er een verwerkingselement plaatsen, zoals «%1» tussen invoer en uitvoer. → Menu "%2"
-Menu.hint26.0.text=Selecteer het centrum van het diagram, dubbelklik, druk op Enter of F5, en plaats er de insstructietekst «% "Hallo wereld!"».
+Menu.hint26.0.text=Selecteer het midden van het diagram, dubbelklik, druk op Enter of F5, en plaats er de insstructietekst «% "Hallo wereld!"».
 Menu.hint26.1.text=U kunt nu bijv. uw diagram uitproberen: → Menu "%1 ► %2"
 Menu.hint26.2.text=U kunt nu bijv. uw diagram opslaan: → Menu "%1 ► %2"
 Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaal: → Menu "%1 ► %2 ► %3"
 Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3"
-Menu.error27.text=Enkele keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
-Menu.error28.text=Enkele waarden (%) komen vaker voor in de (meerdere) keuzelijsten!
+Menu.error27.text=Enkele @c-keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
+Menu.error28.text=Er zijn meerdere (botsende) keuze-elementen (%) in het @c-element!
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.title=Instellingen Analyser
+AnalyserPreferences.title=Voorkeuren Analyser
 AnalyserPreferences.contentPanel.tab.0=Algoritmisch
 AnalyserPreferences.contentPanel.tab.1=Namen/conventies
 AnalyserPreferences.contentPanel.tab.2=Hints/Lessen
 AnalyserPreferences.checkboxes.1.text=Controle op gewijzigde lusvariabelen.
 AnalyserPreferences.checkboxes.2.text=Controle op eindeloze lussen (voor zover detecteerbaar!)
 AnalyserPreferences.checkboxes.3.text=Controle op niet geinitialiseerde variabelen.
-AnalyserPreferences.checkboxes.4.text=Controle op foutief gebruik van de IF-statement.
+AnalyserPreferences.checkboxes.4.text=Controle op foutief gebruik van de @b-statement.
 AnalyserPreferences.checkboxes.5.text=Controle op namen variabelen met HOOFDLETTERs. (LUX/MEN)
 AnalyserPreferences.checkboxes.6.text=Controle op programma- / subnamen met HOOFDLETTERs. (LUX/MEN)
 AnalyserPreferences.checkboxes.7.text=Controle op geldige namen.
 AnalyserPreferences.checkboxes.8.text=Controle op toekenningen in condities.
 AnalyserPreferences.checkboxes.9.text=Controle dat naam van het programma / sub niet gelijk is aan een andere naam.
-AnalyserPreferences.checkboxes.10.text=Controle op instucties met meerdere typen, op meerdere regels.
+AnalyserPreferences.checkboxes.10.text=Controle op instructies met meerdere typen, op meerdere regels.
 AnalyserPreferences.checkboxes.11.text=Controle op toekenningsfouten.
 AnalyserPreferences.checkboxes.12.text=Controle op gestandaardiseerde parameternamen. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Controle dat, in geval van een functie, een resultaat wordt teruggegeven.
 AnalyserPreferences.checkboxes.14.text=Controle op consistent zijn van @d-lusparameters.
 AnalyserPreferences.checkboxes.15.text=Controle op onjuiste subroutine-@jen en ontbrekende aanroepdoelen.
 AnalyserPreferences.checkboxes.16.text=Controle op onjuist gebruik van @k-elementen.
-AnalyserPreferences.checkboxes.17.text=Controle op inconsistentierisico's in @lle secties.
+AnalyserPreferences.checkboxes.17.text=Controle op inconsistentierisico's in @l-secties.
 AnalyserPreferences.checkboxes.18.text=Controle dat namen niet alleen verschillen in hoofd- en kleine letters
-AnalyserPreferences.checkboxes.19.text=Controle op mogelijk gelijk zijn van een naam aan gereserveerde woorden.
-AnalyserPreferences.checkboxes.20.text=Controle op aanwezigheid van een parameterlijst in een @o-header.
+AnalyserPreferences.checkboxes.19.text=Controle op mogelijk botsen van een naam met gereserveerde woorden.
+AnalyserPreferences.checkboxes.20.text=Controle op de aanwezigheid van een parameterlijst in een @o-header .
 AnalyserPreferences.checkboxes.21.text=Ontmoedigen van verwarrende namen voor variabelen «I», «l», en «O».
 AnalyserPreferences.checkboxes.22.text=Controle op mogelijk misbruik van constanten.
-AnalyserPreferences.checkboxes.23.text=Controle op verkeerde importen van diagrammen.
+AnalyserPreferences.checkboxes.23.text=Controle op verkeerd importeren van diagrammen.
 AnalyserPreferences.checkboxes.24.text=Controle op type-definities en toegang tot record-componenten.
 AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies (IPO-model)
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
-AnalyserPreferences.checkboxes.27.text=Controle of de keuzewaarden gehele getallen zijn.
-AnalyserPreferences.checkboxes.28.text=Controle of de keuzelijsten gemeenschappelijke elementen hebben.
+AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante gehele getallen zijn.
+AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -525,8 +525,8 @@ AnalyserPreferences.okButton.text=OK
 -----[ Diagram ]-----
 // Buttons
 // I/O
-Editor.btnNew.tooltip=Maak een nieuw leeg diagram aan.
-Editor.btnOpen.tooltip=Open een bestaand diagram.
+Editor.btnNew.tooltip=Een nieuw leeg diagram aanmaken.
+Editor.btnOpen.tooltip=Een bestaand diagram openen.
 Editor.btnSave.tooltip=Het huidige diagram opslaan.
 Editor.btnSaveAll.tooltip=Alle diagrammen opslaan en groepen met niet opgeslagen wijzigingen
 // InsertAfter (+shift: before)
@@ -543,7 +543,7 @@ Editor.btnAfterPara.tooltip=Een nieuwe @l-statement na (+shift: voor) het gesele
 Editor.btnAfterTry.tooltip=Een nieuwe @q-statement na (+shift: voor) het geselecteerde element invoegen.
 // undo & redo
 Editor.btnUndo.tooltip=De laatste actie ongedaan maken.
-Editor.btnRedo.tooltip=De laatste actie herhalen.
+Editor.btnRedo.tooltip=De laatste actie opnieuw.
 // find & replace
 Editor.btnFindReplace.tooltip=De Zoek- en Vervangdialoog openen.
 // copy & paste
@@ -577,9 +577,9 @@ Editor.btnColors.*.tooltip=Het geselecteerde element deze kleur geven.
 Editor.btnCollapse.tooltip=Het geselecteerde element invouwen.
 Editor.btnExpand.tooltip=Het geselecteerde element uitvouwen.
 // debug
-Editor.btnTurtle.tooltip=Turtle openen
-Editor.btnMake.tooltip=Uitvoeren openen
-Editor.btnDropBrk.tooltip=Alle breakpoints verwijderen.
+Editor.btnTurtle.tooltip=Turtleizer openen ...
+Editor.btnMake.tooltip=Uitvoeren openen ...
+Editor.btnDropBrk.tooltip=Alle breakpunten verwijderen.
 Editor.btnDisable.tooltip=Geselecteerd(e) element(en) aan/uit.
 // display mode
 Editor.ttSwitchComments.text=Tekst en commentaar zijn verwisseld
@@ -634,15 +634,15 @@ Editor.popupCollapse.text=Invouwen
 Editor.popupExpand.text=Uitvouwen
 Editor.popupDisable.text=Aan-/Uitzetten
 // Debug
-Editor.popupBreakpoint.text=Breakpoint wisselen
+Editor.popupBreakpoint.text=Breakpunt wisselen
 Editor.popupBreakTrigger.text=Break trigger opgeven ...
 // Tabbed pane
 Editor.pnlTabbed.tab.0=Index Arranger
-Editor.pnlTabbed.tab.1=Code-preview
+Editor.pnlTabbed.tab.1=Code bekijken
 Editor.popupCodeExport.text=Exporteren ...
 Editor.popupCodeExport.tooltip=Code exporteren naar bestand.
-Editor.popupCodeHide.text=Code-preview verbergen
-Editor.ttPopupCodePreview.text=Code-preview verwisselen voor % en bijstellen als favoriete code voor export.
+Editor.popupCodeHide.text=Code-bekijken verbergen
+Editor.ttPopupCodePreview.text=Code-bekijken verwisselen naar % en instellen als favoriete codetaal voor export.
 
 -----[ InputBox ]-----
 InputBox.title[getInsertionType():insert]=
@@ -654,7 +654,7 @@ InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=De inhoud van het element.
 InputBox.txtComment.tooltip=Het commentaar van het element.
 InputBox.btnOK.text=OK
-InputBox.btnOK.tooltip=Uw keuze valideren.
+InputBox.btnOK.tooltip=Uw keuze bevestigen.
 InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
 InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
@@ -663,7 +663,7 @@ InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
 InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren
 InputBox.lblText.text[elementType:Repeat]=De conditie voor verlaten invoeren
-InputBox.lblText.text[elementType:Case]=Voer de keuze-expressie in en de case-constanten (elke regel een)
+InputBox.lblText.text[elementType:Case]=Voer de keuze-expressie in en de case-constanten (in-geval elke regel een)
 InputBox.lblText.text[elementType:Parallel]=Aantal parallelle threads
 InputBox.lblText.text[elementType:Try]=Naam van de exceptie-variabele
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Nieuwe @a toevoegen ...
@@ -709,7 +709,7 @@ InputBoxFor.btnOK.tooltip=Bevestig uw keuze (en sluit de dialoog af).
 InputBoxFor.btnCancel.text=Annuleren
 InputBoxFor.btnCancel.tooltip=Sluit de dialoog af, zonder uw invoer/wijzigingen op te slaan.
 InputBoxFor.chkDisabled.text=Uitgeschakeld (uitvoeren en exporteren)
-InputBoxFor.chkBreakpoint.text=Breakpoint
+InputBoxFor.chkBreakpoint.text=Breakpunt
 InputBoxFor.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBoxFor.msgInvalidIncrement.text=<%> is geen geldige gehele constante
 InputBoxFor.msgMissingBrace1.text=Lijst met waarden moet beginnen met '{'
@@ -726,9 +726,9 @@ InputBoxRoot.title[elementType:Root]=@n bewerken
 InputBoxRoot.title[elementType:Function]=@o bewerken
 InputBoxRoot.title[elementType:Includable]=@p bewerken
 InputBoxRoot.lblIncludeList.text=Bij te sluiten diagrammen
-InputBoxRoot.txtIncludeList.tooltip=Namen van bij te sluiten diagrammen bij start uitvoeren (gescheiden door komma's of newlines).
+InputBoxRoot.txtIncludeList.tooltip=Namen van bij te sluiten diagrammen bij start uitvoeren (gescheiden door komma's of regeleinden).
 InputBoxRoot.lblText.text=Naam diagram / signatuur functie
-InputBoxRoot.txtText.tooltip=Voer naam diagram in (voor @ns of @p -diagrammen) of de @o -signatuur (naam, parameterlijst, resultaattype indien aanwezig)
+InputBoxRoot.txtText.tooltip=Voer naam diagram in (voor @ns of @p -diagrammen) of de @o -signatuur (naam, parameterlijst, resultaattype indien van toepassing)
 InputBoxRoot.lblComment.text=Commentaar
 InputBoxRoot.txtComment.tooltip=Bijv.: Waar dient het algoritme voor, hoe moet het worden gebruikt, wie maakte het enz.
 InputBoxRoot.btnOK.text=OK
@@ -736,7 +736,7 @@ InputBoxRoot.btnOK.tooltip=
 InputBoxRoot.btnCancel.text=Annuleren
 InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=Attributen
-InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram
+InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram.
 InputBoxRoot.btnAddIncludable.text=Invoegen
 
 -----[ AttributeInspector ]-----
@@ -750,7 +750,7 @@ AttributeInspector.lblShadowPath.text=Pad naar schaduwbestand
 AttributeInspector.txtShadowPath.tooltip=Dit pad (gewoonlijk in een map voor tijdelijke bestanden) wordt gebruikt voor in-/uitpakken indien het diagram in een ingepakt archief is.
 AttributeInspector.lblOrigin.text=Oorsprong
 AttributeInspector.btnClearOrigin.text=Wissen
-AttributeInspector.btnClearOrigin.tooltip=Totaal elementen
+AttributeInspector.btnClearOrigin.tooltip=Wist invoer van oorsprong
 AttributeInspector.lblElements.tooltip=Totaal elementen
 AttributeInspector.lblInstrs.tooltip=@as
 AttributeInspector.lblAlts.tooltip=@b-statements
@@ -791,7 +791,7 @@ AttributeInspector.lblMain.text=@n
 AttributeInspector.lblSub.text=@o
 AttributeInspector.lblIncl.text=Bij te sluiten
 AttributeInspector.pnCopyrights.border=Copyrights
-AttributeInspector.pnStatistics.border=Statistieken (tellingen)
+AttributeInspector.pnStatistics.border=Statistieken (aantallen)
 AttributeInspector.pnKeywordSet.border=Verschillende verzameling sleutelwoorden in cache
 AttributeInspector.msgOverrideLicense.text=Licentietekst vervangen door de geselecteerde standaard licentie "%"?
 AttributeInspector.msgLicenseChange.text=Licentiewijziging
@@ -827,7 +827,7 @@ LicenseEditor.msgPendingChanges.text=Er zijn niet opgeslagen wijzigingen van lic
 LicenseEditor.msgOverwriteExisting.text=Er is al een licentie "%" in de pool.\nMoet die worden overgeschreven?
 
 -----[ Preferences ]-----
-Preferences.title=Structuurinstellingen
+Preferences.title=Structuurvoorkeuren
 Preferences.pnlAlt.border=@b-statement
 Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Label WAAR
@@ -1322,26 +1322,26 @@ ArrangerIndex.msgNewGroupName.text=Nieuwe naam voor de geselecteerde groep:
 
 -----> Executor
 -----[ Control ]-----
-Control.title=Regels uitvoeren
+Control.title=Besturing van uitvoereen
 Control.lblSpeed.text=Vertraging:
 Control.btnCallStack.text=Stack oproepen
 Control.lblCallLevel.text=Oproepdiepte:
 Control.chkCollectRuntimeData.text=Runtime-gegevens verzamelen
-Control.cbRunDataDisplay.item.0=Geen kleuren
-Control.cbRunDataDisplay.item.1=Lage testgraad
+Control.cbRunDataDisplay.item.0=geen kleuren
+Control.cbRunDataDisplay.item.1=lage testgraad
 Control.cbRunDataDisplay.item.2=hoge testgraad
 Control.cbRunDataDisplay.item.3=aantal keren uitvoeren
 Control.cbRunDataDisplay.item.4=aantal bewerkingen , lin.
 Control.cbRunDataDisplay.item.5=aantal bewerkingen, logar.
-Control.cbRunDataDisplay.item.6=totaal aantal bewerkingen, lin.
-Control.cbRunDataDisplay.item.7=totaal aantal bewerkingen, logar.
+Control.cbRunDataDisplay.item.6=totaal bewerkingen, lin.
+Control.cbRunDataDisplay.item.7=totaal bewerkingen, logar.
 Control.chkOutputToTextWindow.text=Uitvoer naar venster
-Control.lbStopRunningProc.text=Deze actie is niet toegestaan als een diagram wordt uitgevoerd.\nWilt u het huidige uitvoeren stoppen?
+Control.lbStopRunningProc.text=Deze actie is niet toegestaan als een diagram wordt uitgevoerd.\nWilt u de huidig uitvoering stoppen?
 Control.lbInputValue.text=Voer a.u.b. een waarde in voor <%>
 Control.lbInputPaused.text=Uitvoeren wordt onderbroken - u kunt nu de waarde invullen in het invoerveld
 Control.lbInputCancelled.text=Invoer geannuleerd
 Control.lbManuallySet.text=*** Met de hand instellen: %1 <- %2 ***
-Control.lbEmptyLine.text=Lege regel
+Control.lbEmptyLine.text=lege regel
 Control.lbReturnedResult.text=Teruggegeven resultaat
 Control.lbOutput.text=Uitvoer
 Control.lbInput.text=Invoer
@@ -1378,7 +1378,7 @@ Control.msgEndOfFile.text=Poging gegevens te lezen voorbij het einde van het bes
 Control.msgUseStopButton.text=Er is een uitvoering bezig, of in de wacht!\nGebruik de STOPknop voor afbreken en afsluiten.
 Control.msgConstantRedefinition.text=Ongeldige poging constante «%» opnieuw te definiëren of te wijzigen!
 Control.msgConstantArrayElement.text=Aan een array-element «%» kan geen constante waarde worden toegekend!
-Control.msgInvalidRecord.text=Aan een array-element «%» kan geen constante waarde worden toegekend!
+Control.msgInvalidRecord.text=«%1» is geen geldig record (%2)!
 Control.msgInvalidComponent.text=Er is geen component «%1» in recordtype of variabele «%2»!
 Control.msgConstantRecordComponent.text=Een record-component «%» kan door toekenning geen constante worden!
 Control.msgTypeMismatch.text=Waardetype «%1» komt niet overeen met type «%2» van variabele/component «%3»!
@@ -1448,7 +1448,7 @@ TurtleFrame.rbSeparators.3.text=Spatie
 -----> Elements
 ElementNames.localizedNames.0.text=Instructie
 ElementNames.localizedNames.1.text=ALS
-ElementNames.localizedNames.2.text=IN GEVAL
+ElementNames.localizedNames.2.text=IN-GEVAL
 ElementNames.localizedNames.3.text=VOOR
 ElementNames.localizedNames.4.text=VOOR-TOT
 ElementNames.localizedNames.5.text=VOOR-IN
@@ -1457,7 +1457,7 @@ ElementNames.localizedNames.7.text=HERHAAL
 ElementNames.localizedNames.8.text=EINDELOOS
 ElementNames.localizedNames.9.text=AANROEP
 ElementNames.localizedNames.10.text=EXIT
-ElementNames.localizedNames.11.text=Parallel
+ElementNames.localizedNames.11.text=PARALLEL
 ElementNames.localizedNames.12.text=Diagram
 ElementNames.localizedNames.13.text=Hoofdprogramma
 ElementNames.localizedNames.14.text=Subroutine
@@ -1467,7 +1467,7 @@ ElementNames.localizedNames.16.text=TRY
 -----> Keywords
 ParserKeywords.AltPre.text=als
 ParserKeywords.AltPost.text=
-ParserKeywords.CasePre.text=in geval
+ParserKeywords.CasePre.text=in-geval
 ParserKeywords.CasePost.text=
 ParserKeywords.ForPre.text=voor
 ParserKeywords.ForPost.text=tot

@@ -33,6 +33,7 @@ package lu.fisch.turtle.elements;
  *      ------          ----            -----------
  *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle), getBounds()
  *                                      appendSpecificCSVInfo(StringBuilder, String)
+ *      Kay Gürtzig     2020-12-22      Enh. #890 method getNearestPoint(Point) implemented
  *
  ******************************************************************************************************
  *
@@ -93,4 +94,26 @@ public class Line extends Element
         return bounds;
     }
     // END KGU#685 2020-12-11
+    
+    // START KGU#889 2020-12-22: Enh. #890/9 (measuring with snap)
+    @Override
+    public Point getNearestPoint(Point pt)
+    {
+        // We abuse a point for the direction vector
+        Point dvec = new Point(to.x - from.x, to.y - from.y);
+        Point pvec = new Point(pt.x - from.x, pt.y - from.y);
+        double dlen2 = (dvec.x * dvec.x + dvec.y * dvec.y);
+        double param = (pvec.x * dvec.x + pvec.y * dvec.y) / dlen2;
+        if (param < 0) {
+            return from;
+        }
+        else if (param * param > dlen2) {
+            return to;
+        }
+        Point nearest = new Point(from);
+        nearest.translate((int)Math.round(param * dvec.x), (int)Math.round(param * dvec.y));
+        return nearest;
+    }
+    // END KGU#889 2020-12-22
+
 }
