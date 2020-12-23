@@ -32,7 +32,7 @@ package lu.fisch.turtle.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-12-22      Enh. #890 method getNearestPoint(Point) implemented
+ *      Kay Gürtzig     2020-12-22      Enh. #890 method getNearestPoint(Point, boolean) implemented
  *
  ******************************************************************************************************
  *
@@ -62,7 +62,7 @@ public class Move extends Element
 
     // START KGU#889 2020-12-22: Enh. #890/9 (measuring with snap)
     @Override
-    public Point getNearestPoint(Point pt)
+    public Point getNearestPoint(Point pt, boolean inter)
     {
         if (from.distance(pt) > to.distance(pt)) {
             return to;

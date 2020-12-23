@@ -34,7 +34,7 @@ package lu.fisch.turtle.elements;
  *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: toString(),
  *                                      appendSpecificCSVInfo(StringBuilder, String)
  *      Kay Gürtzig     2020-12-13      Enh. #704 API extension: getFrom(), getTo(), getColor(),
- *      Kay Gürtzig     2020-12-22      Enh. #890 abstract method getNearestPoint(Point) added
+ *      Kay Gürtzig     2020-12-22      Enh. #890 abstract method getNearestPoint(Point, boolean) added
  *
  ******************************************************************************************************
  *
@@ -142,9 +142,11 @@ public abstract class Element
      * Return the point of this element thatis closest to the given point
      * {@code pt}
      * @param pt - the interesting point
+     * @param inter - true if intermediate points (if existing) are also
+     * to be considered.
      * @return the point nearest to {@code pt} on this shape
      */
-    public abstract Point getNearestPoint(Point pt);
+    public abstract Point getNearestPoint(Point pt, boolean inter);
     // END KGU#889 2020-12-22
 
 }

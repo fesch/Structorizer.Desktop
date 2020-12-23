@@ -126,6 +126,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
  *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
  *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
+ *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *
  ******************************************************************************************************
  *
@@ -182,6 +183,7 @@ package lu.fisch.structorizer.arranger;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -3522,6 +3524,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
+		// START KGU#896 2020-12-23: Enh. #896 Unambiguous indication of what will happen on dragging
+		Point mousePt = e.getPoint();
+		int trueX = Math.round(mousePt.x / zoomFactor);
+		int trueY = Math.round(mousePt.y / zoomFactor);
+		Diagram diagram = getHitDiagram(trueX, trueY);
+		if (dragArea == null && (diagram != null && (this.diagramsSelected.isEmpty() || this.diagramsSelected.contains(diagram)))) {
+			setCursor(new Cursor(Cursor.HAND_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		/* The interesting things happen in mouseClicked() and mouseDragged() */
 		// START KGU#626 2018-12-23: Enh. #657
 		showPopupMenuIfTriggered(e);
@@ -3538,6 +3549,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (dragPoint != null) {
 			this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
 		}
+		// START KGU#896 2020-12-23: Enh. #896 Unambiguous indication of what will happen on dragging
+		if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		dragPoint = null;
 		if (dragArea != null) {
 			// Select all contained diagrams
@@ -3635,6 +3651,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	@Override
 	public void mouseMoved(MouseEvent e)
 	{
+		// START KGU#896 2020-12-23: Enh. #896 Dragging has definitely ended now
+		if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		if (this.drawGroups) {
 			pop.setVisible(false);
 			int x = (int)(e.getX() / this.zoomFactor);
