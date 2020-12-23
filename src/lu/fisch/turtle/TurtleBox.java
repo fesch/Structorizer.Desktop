@@ -733,6 +733,7 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void updateStatus() {
 			if (statusbar.isVisible()) {
+				statusHome.setIcon(new ImageIcon(this.getClass().getResource("home_green_16.png")));
 				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
 				//int turtleX = owner.pos.x;
 				//int turtleY = owner.pos.y;
@@ -744,6 +745,7 @@ public class TurtleBox implements DelayableDiagramController
 				//statusTurtle.setText(
 				//		String.format("(%d, %d) %.2f°",
 				//				turtleX, turtleY, owner.getOrientation()));
+				statusTurtle.setIcon(new ImageIcon(this.getClass().getResource("turtle_16.png")));
 				statusTurtle.setText(
 						String.format("(%d, %d) %.2f°",
 								owner.pos.x, owner.pos.y, owner.getOrientation()));
