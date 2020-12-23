@@ -396,6 +396,7 @@ Menu.msgIniBackupFailed.text=Het aanmaken van een backup van de huidige voorkeur
 Menu.msgIniRestoreFailed.text=Kon de laatste backup% van de voorkeuren niet herstellen
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Probleem bij het wijzigen van het Uiterlijk naar %1:%2
+Menu.msgRootCloned.text=
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine handtekening
 Menu.msgTabHdrAlias.text=Aliasnaam
@@ -1292,7 +1293,7 @@ ArrangerIndex.popupIndexAttach.text=Toevoegen aan/verplaatsen naar groep ...
 ArrangerIndex.popupIndexDrawGroup.text=Grenzen van de groep tonen
 ArrangerIndex.popupIndexDrawGroup.tooltip=Afzonderlijk zichtbaar zijn van de geselecteerde groep in de Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Groep hernoemen ...
-ArrangerIndex.popupIndexExport.text=
+ArrangerIndex.popupIndexExport.text=Diagram/groep exporteren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Staat toe de geselecteerde groep te hernoemen, optioneel samen met bijbehorende bestand
 ArrangerIndex.popupIndexHide.text=Arranger index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Selecteer de doelgroep:
@@ -1449,6 +1450,7 @@ TurtleFrame.rbSeparators.0.text=Komma
 TurtleFrame.rbSeparators.1.text=Puntkomma
 TurtleFrame.rbSeparators.2.text=Tabulator
 TurtleFrame.rbSeparators.3.text=Spatie
+TurtleFrame.rbSeparators.4.text=Dubbelepunt
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instructie
