@@ -482,7 +482,7 @@ AnalyserPreferences.title=分析器参数设置
 
 
 -----[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=导出选项 ...
+ExportOptionDialoge.title=导出选项
 ExportOptionDialoge.jButton1.text=确定
 ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
 ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
