@@ -150,9 +150,11 @@ Current development version: 3.30-13 (2020-12-25)
 - 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
 - 13: Enh. #893: Translator preview indication in language preference menu <2>
 - 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
-- 13: Enh. #896: Different cursor on readiness for moving diagrams in Arranger <2>
+- 13: Enh. #896: Different cursor on readiness for moving diagrams in Arranger
+      or diagram elements within a diagram in the Structorizer work area;
+      by holding Shift key down, elements may now be moved above the target <2>
 - 13: Bugfix #897: Numeric degradation and endless loop risk in Turtleizer <2>
-- 13: Bugfix #898: Turtleizer function pre-evaluation caused syntax errors <2>
+- 13: Bugfix #898: Turtleizer function pre-evaluation causing syntax errors <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

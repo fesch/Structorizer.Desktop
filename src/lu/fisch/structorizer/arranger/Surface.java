@@ -3530,7 +3530,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		int trueY = Math.round(mousePt.y / zoomFactor);
 		Diagram diagram = getHitDiagram(trueX, trueY);
 		if (dragArea == null && (diagram != null && (this.diagramsSelected.isEmpty() || this.diagramsSelected.contains(diagram)))) {
-			setCursor(new Cursor(Cursor.HAND_CURSOR));
+			setCursor(new Cursor(Cursor.MOVE_CURSOR));
 		}
 		// END KGU#896 2020-12-23
 		/* The interesting things happen in mouseClicked() and mouseDragged() */

@@ -57,7 +57,7 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
- *      Jaap Woldringh  2020-12-20/23   Enh. #704: New messages for Turtleizer, many revisions
+ *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
  *
  ******************************************************************************************************
  *
@@ -267,8 +267,8 @@ Menu.menuView.text=
 Menu.menuDebug.text=Fouten opsporen
 Menu.menuDebug.mnemonic=f
 // Submenu of "Debug"
-Menu.menuDebugTurtle.text=Turtle ...
-Menu.menuDebugExecute.text=UItvoeren ...
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Uitvoeren ...
 Menu.menuDebugDropBrkpts.text=Breakpunten wissen
 Menu.menuDebugBreakpoint.text=Breakpunt aan/uit
 Menu.menuDebugBreakTrigger.text=Break trigger opgeven ...
@@ -396,7 +396,7 @@ Menu.msgIniBackupFailed.text=Het aanmaken van een backup van de huidige voorkeur
 Menu.msgIniRestoreFailed.text=Kon de laatste backup% van de voorkeuren niet herstellen
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Probleem bij het wijzigen van het Uiterlijk naar %1:%2
-Menu.msgRootCloned.text=
+Menu.msgRootCloned.text=Diagram «%1» is gecloned.\n\nU werkt nu met een onafhankelijke kopie:\n%2
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine handtekening
 Menu.msgTabHdrAlias.text=Aliasnaam
@@ -649,9 +649,9 @@ Editor.ttPopupCodePreview.text=Code-bekijken verwisselen naar % en instellen als
 InputBox.title[getInsertionType():insert]=
 InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Vul een tekst in
-InputBox.lblText.tooltip=
+InputBox.lblText.tooltip=Op deze plaats tekst intypen
 InputBox.lblComment.text=Commentaar
-InputBox.lblComment.tooltip=
+InputBox.lblComment.tooltip=Hier commentaar intypen
 InputBox.txtText.tooltip=De inhoud van het element.
 InputBox.txtComment.tooltip=Het commentaar van het element.
 InputBox.btnOK.text=OK
@@ -702,7 +702,7 @@ InputBoxFor.lblValueList.text=Waardenlijst of array
 InputBoxFor.chkTextInput.text=Tekst direct bewerken
 InputBoxFor.chkTextInput.tooltip=Indien aangezet, wordt de inhoud van bovenstaande velden uit de tekst gehaald, en anders wordt de tekst hieruit samengesteld.
 InputBoxFor.lblComment.text=Commentaar
-InputBoxFor.lblComment.tooltip=
+InputBoxFor.lblComment.tooltip=Hier commentaar intypen
 InputBoxFor.txtText.tooltip=Header FOR-lus als tekstregel
 InputBoxFor.txtComment.tooltip=Voer hier het commentaar in van het element
 InputBoxFor.btnOK.text=OK
@@ -735,7 +735,7 @@ InputBoxRoot.txtComment.tooltip=Bijv.: Waar dient het algoritme voor, hoe moet h
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=
 InputBoxRoot.btnCancel.text=Annuleren
-InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.btnCancel.tooltip=Invoer annuleren
 InputBoxRoot.btnAttributes.text=Attributen
 InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram.
 InputBoxRoot.btnAddIncludable.text=Invoegen
@@ -831,10 +831,10 @@ LicenseEditor.msgOverwriteExisting.text=Er is al een licentie "%" in de pool.\nM
 Preferences.title=Structuurvoorkeuren
 Preferences.pnlAlt.border=@b-statement
 Preferences.pnlAlt.tooltip=
-Preferences.lblAltT.text=Label WAAR
-Preferences.lblAltT.tooltip=De label voor de linkerkant.
-Preferences.lblAltF.text=Label ONWAAR
-Preferences.lblAltF.tooltip=De label voor de rechterkant.
+Preferences.lblAltT.text=Aanduiding WAAR
+Preferences.lblAltT.tooltip=De aanduiding voor de linkerkant.
+Preferences.lblAltF.text=Aanduiding ONWAAR
+Preferences.lblAltF.tooltip=De aanduiding voor de rechterkant.
 Preferences.lblAltContent.text=Standaard inhoud
 Preferences.lblAltContent.tooltip=De standaard inhoud van een @b-statement.
 Preferences.altPadRight.text=ONWAAR groter maken

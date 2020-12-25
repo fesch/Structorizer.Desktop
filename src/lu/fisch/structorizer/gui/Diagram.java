@@ -209,6 +209,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
  *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
  *      Kay Gürtzig     2020-12-20      Bugfix #892: "Save as" and double-click trouble with arranged diagrams
+ *      Kay Gürtzig     2020-12-25      Enh. #896: Cursor shape changes when element dragging is permissible,
+ *                                      dragging elements above the target position enabled via the Shift key
  *
  ******************************************************************************************************
  *
@@ -346,7 +348,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private boolean mouseMove = false;
     private int mouseX = -1;
     private int mouseY = -1;
+    /** Selected element with mouse button down (i.e. element eligible for dragging) */
     private Element selectedDown = null;
+    /** On dragging elements, the element being moved */
     private Element selectedMoved = null;
     private int selX = -1;
     private int selY = -1;
@@ -946,6 +950,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pop.setVisible(false);
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e)
 	{
 		//System.out.println("MouseMoved at (" + e.getX() + ", " + e.getY() + ")");
@@ -1007,6 +1012,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
+	@Override
 	public void mouseDragged(MouseEvent e)
 	{
 		if (e.getSource()==this)
@@ -1029,7 +1035,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				/*System.out.println("DRAGGED ("+e.getX()+", "+e.getY()+") >> " +
 						bSome + " >> " + selectedDown);
 						/**/
-
+				// START KGU#896 2020-12-25: Enh. 896
+				if (getCursor().getType() != Cursor.MOVE_CURSOR) {
+					setCursor(new Cursor(Cursor.MOVE_CURSOR));
+				}
+				// END KGU#896 2020-12-25
 				bSome.setSelected(true);
 				//System.out.println("selected = " + bSome);
 				//System.out.println("selectedDown = " + selectedDown);
@@ -1038,9 +1048,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				boolean doRedraw = false;
 
-				if ((selectedDown!=null) && (e.getX()!=mouseX) && (e.getY()!=mouseY) && (selectedMoved!=bSome))
+				if ((selectedDown != null) && (e.getX() != mouseX) && (e.getY() != mouseY) && (selectedMoved != bSome))
 				{
-					mouseMove=true;
+					mouseMove = true;
 					if (selectedDown.getClass().getSimpleName().equals("Root") ||
 							selectedDown.getClass().getSimpleName().equals("Subqueue") ||
 							bSome.getClass().getSimpleName().equals("Root") ||
@@ -1061,7 +1071,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 					 }
 					 */
-					doRedraw= true;
+					doRedraw = true;
 				}
 
 				if (selX != -1 && selY != -1)
@@ -1077,6 +1087,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
@@ -1094,6 +1105,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//Element ele = root.selectElementByCoord(e.getX(),e.getY());
 			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
+			
+			// START KGU#896 2020-12-25: Enh. #896
+			boolean setMoveCursor = false;
+			// END KGU#896 2020-12-25
 
 			// KGU#87: Maintain a selected sequence on right mouse button click 
 			if (e.getButton() == MouseEvent.BUTTON3 && selected instanceof IElementSequence &&
@@ -1109,6 +1124,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else if (ele != null)
 			{
+				// START KGU#896 2020-12-25: Enh. #896
+				setMoveCursor = ele != null && getCursor().getType() != Cursor.MOVE_CURSOR;
+				// END KGU#896 2020-12-25
 				// START KGU#136 2016-03-02: Bugfix #97 - Selection wasn't reliable
 				ele = ele.setSelected(true);
 				// END KGU#136 2016-03-02
@@ -1131,7 +1149,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// In case someone wants to drag then let it just be done for the single element
 					// (we don't allow dynamically to move a sequence - the user may better cut and paste)
 					selectedDown = ele;
-					redraw();						
+					// START KGU#896 2020-12-25: Enh. #896
+					setMoveCursor = false;	// So we will not show the MOVE cursor here
+					// END KGU#896 2020-12-25
+					redraw();
 				}
 				else if (ele != selected)
 				{
@@ -1156,6 +1177,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							selected = ((SelectedSequence)selected).getElement(0);
 						}
 						// END KGU#866 2020-05-02
+						// START KGU#896 2020-12-25: Enh. #896
+						else {
+							setMoveCursor = false;
+						}
+						// END KGU#896 2020-12-25
 						selected.setSelected(true);
 						redraw();
 						selectedDown = ele;
@@ -1195,8 +1221,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					!selected.getClass().getSimpleName().equals("Root") )
 				{
 					mouseMove = false;
+					// START KGU#896 2020-12-25: Enh. #896
+					if (selected != ele) {
+						setMoveCursor = false;
+					}
+					// END KGU#896 2020-12-25
 				}
+				// START KGU#896 2020-12-25: Enh. #896
+				else {
+					// Never show the MOVE cursor on a Root or Subqueue
+					setMoveCursor = false;
+				}
+				// END KGU#896 2020-12-25
 			}
+			// START KGU#896 2020-12-25: Enh. #896
+			if (setMoveCursor) {
+				setCursor(new Cursor(Cursor.MOVE_CURSOR));
+			}
+			// END KGU#896 2020-12-25
 
 			// START KGU#705 2019-09-24: Enh. #738
 			highlightCodeForSelection();
@@ -1205,6 +1247,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 		// FIXME: What about hidden declarations?
@@ -1215,6 +1258,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
 			boolean doReanalyse = false;
 			// END KGU#514 2018-04-03
+			boolean isShiftDown = e.isShiftDown();
 
 			if((selX != -1) && (selY != -1) && (selectedDown != null))
 			{
@@ -1225,7 +1269,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if ((mouseMove == true) && (selectedDown != null))
 			{
-				Element.E_DRAWCOLOR=Color.YELLOW;
+				Element.E_DRAWCOLOR = Color.YELLOW;
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
 						!selectedDown.getClass().getSimpleName().equals("Root") )
 				{
@@ -1267,7 +1311,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							selectedUp.setSelected(false);
-							root.addAfter(selectedUp, selectedDown);
+							
+							// START KGU#896 2020-12-25: Enh. #896 - eventually allow to drop before the target
+							//root.addAfter(selectedUp, selectedDown);
+							if (isShiftDown) {
+								root.addBefore(selectedUp, selectedDown);
+							}
+							else {
+								root.addAfter(selectedUp, selectedDown);
+							}
+							// END KGU#896 2020-12-25
+							
 							// START KGU'87 2015-11-22: See above
 							//selectedDown.setSelected(true);
 							if (!(selectedDown instanceof Subqueue))
@@ -1301,12 +1355,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
-					if (selectedUp!=null) selectedUp.setSelected(false);
+					if (selectedUp != null) selectedUp.setSelected(false);
 					doDraw = true;
 				}
 			}
 
 			mouseMove = false;
+			// START KGU#896 2020-12-25: Enh. #986
+			if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
+			// END KGU#896 2020-12-25
 
 			if (doDraw)
 			{
