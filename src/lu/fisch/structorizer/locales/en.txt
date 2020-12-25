@@ -1032,7 +1032,7 @@ PrintPreview.lblMarginX.text=horiz. Margin:
 PrintPreview.lblMarginY.text=vert. Margin:
 
 -----[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Export options ...
+ExportOptionDialoge.title=Export options
 ExportOptionDialoge.tabbedPane.tab.0=General
 ExportOptionDialoge.tabbedPane.tab.1=Includes
 ExportOptionDialoge.noConversionCheckBox.text=No conversion of the expression/instruction contents.
@@ -1058,7 +1058,7 @@ ExportOptionDialoge.chkArraySize.text=Default array size (if required)
 ExportOptionDialoge.chkStringLen.text=Default string length (if required)
 
 -----[ ImportOptionDialog ]-----
-ImportOptionDialog.title=Import options ...
+ImportOptionDialog.title=Import options
 ImportOptionDialog.lbIntro.text=Please select the options you want to activate...
 ImportOptionDialog.pnlCode.border=Code files
 ImportOptionDialog.pnlNSD.border=NSD files
@@ -1088,7 +1088,7 @@ ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 
 -----[ SaveOptionDialog ]-----
-SaveOptionDialog.title=Options for saving diagrams ...
+SaveOptionDialog.title=Options for saving diagrams
 SaveOptionDialog.lbIntro.text=Please select the options you want to activate...
 SaveOptionDialog.pnlAutoSave.border=Auto-save options
 SaveOptionDialog.pnlBackup.border=Backup options

@@ -1058,7 +1058,7 @@ ExportOptionDialoge.chkArraySize.text=Default-Größe für Arrays (wo erforderli
 ExportOptionDialoge.chkStringLen.text=Default-Länge für Strings (wo erforderlich)
 
 -----[ ImportOptionDialog ]-----
-ImportOptionDialog.title=Einstellungen zum Dateiladen ...
+ImportOptionDialog.title=Einstellungen zum Dateiladen
 ImportOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ImportOptionDialog.pnlCode.border=Quellcode-Dateien
 ImportOptionDialog.pnlNSD.border=Diagramm-Dateien
@@ -1088,7 +1088,7 @@ ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 
 -----[ SaveOptionDialog ]-----
-SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
+SaveOptionDialog.title=Optionen für das Sichern von Diagrammen
 SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
 SaveOptionDialog.pnlBackup.border=Backup-Dateien

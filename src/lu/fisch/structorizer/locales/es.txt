@@ -1060,7 +1060,7 @@ ExportOptionDialoge.chkArraySize.text=Tamaño estándar para arrays (si sea nece
 ExportOptionDialoge.chkStringLen.text=Largo estándar para cadenas de caracter
 
 -----[ ImportOptionDialog ]-----
-ImportOptionDialog.title=Preferencias de Importación de archivos ...
+ImportOptionDialog.title=Preferencias de Importación de archivos
 ImportOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
 ImportOptionDialog.pnlCode.border=Archivos de código
 ImportOptionDialog.pnlNSD.border=Archivos NSD
@@ -1090,7 +1090,7 @@ ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
 -----[ SaveOptionDialog ]-----
-SaveOptionDialog.title=Preferencias para guardar diagramas ...
+SaveOptionDialog.title=Preferencias para guardar diagramas
 SaveOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
 SaveOptionDialog.pnlAutoSave.border=Guardar automáticamente
 SaveOptionDialog.pnlBackup.border=Copia de seguridad

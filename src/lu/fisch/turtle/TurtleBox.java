@@ -351,7 +351,7 @@ public class TurtleBox implements DelayableDiagramController
 							zoom = zoom/2;
 							g.scale(0.5, 0.5);
 							if (offset != null) {
-								g.translate(offset.x, offset.y);
+								g.translate(offset.x * 2, offset.y * 2);
 							}
 							x *= 2;
 							y *= 2;

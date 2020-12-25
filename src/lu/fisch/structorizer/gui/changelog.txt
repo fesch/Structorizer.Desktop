@@ -16,7 +16,7 @@ Known issues:
   nor with cleanly handling usual and associative arrays as parameters or results.
 - The Turtleizer popup menu may look weird in "Nimbus" L&F for GUI scales > 1 (#895)
 
-Current development version: 3.30-13 (2020-12-23)
+Current development version: 3.30-13 (2020-12-24)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
