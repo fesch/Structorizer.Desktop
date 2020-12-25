@@ -152,6 +152,7 @@ Current development version: 3.30-13 (2020-12-25)
 - 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
 - 13: Enh. #896: Different cursor on readiness for moving diagrams in Arranger <2>
 - 13: Bugfix #897: Numeric degradation and endless loop risk in Turtleizer <2>
+- 13: Bugfix #898: Turtleizer function pre-evaluation caused syntax errors <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

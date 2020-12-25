@@ -197,6 +197,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-04-28      Issue #822: Empty CALL lines should cause more sensible error messages
  *      Kay Gürtzig     2020-10-19      Issue #879: Inappropriate handling of input looking like initializers
  *      Kay Gürtzig     2020-12-14      Issue #829 revoked (Control will by default close after execution)
+ *      Kay Gürtzig     2020-12-25      Bugfix #898: Results of substituted Turtleizer functions must be put in parentheses 
  *
  ******************************************************************************************************
  *
@@ -4986,7 +4987,12 @@ public class Executor implements Runnable
 						Object result = controller.execute(fName, argVals);
 						tokens.remove(pos, tokens.count());
 						//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
+						// START KGU#898 2020-12-25: Bugfix #898 - we must put the results in parentheses
+						//tokens.add(result.toString());
+						tokens.add("(");
 						tokens.add(result.toString());
+						tokens.add(")");
+						// END KGU#898 2020-12-25
 						if (!tail.isEmpty()) {
 							tokens.add(Element.splitLexically(tail.substring(1), true));
 						}
