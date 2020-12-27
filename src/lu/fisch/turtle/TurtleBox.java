@@ -53,6 +53,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2020-12-22      Enh. #890: Snapping for measure line; CR KGU#895: no Move objects
  *                                      created anymore, 2nd (higher-resolution) turtle image
  *      Kay Gürtzig     2020-12-23      Bugfix #897: Numerical and endless loop risk on rl()/getOrientation()
+ *      Kay Gürtzig     2020-12-26      Enh. #890: Icons indicating the snapping mode added to status bar
  *
  ******************************************************************************************************
  *
@@ -425,6 +426,9 @@ public class TurtleBox implements DelayableDiagramController
 		protected JLabel statusSize;
 		protected JLabel statusViewport;
 		protected JLabel statusZoom;
+		// START KGU#889 2020-12-26: Enh. #890/8+11
+		protected JLabel statusSnap;
+		// END KGU#889 2020-12-26
 		//protected JLabel statusSelection;
 		private float zoomFactor = 1.0f;
 		protected javax.swing.JPopupMenu popupMenu;
@@ -460,6 +464,10 @@ public class TurtleBox implements DelayableDiagramController
 		protected JLabel msgOverwrite = new JLabel("File exists. Sure to overwrite?");
 		protected JLabel msgBrowseFailed = new JLabel("Failed to show \"%\" in browser");
 		protected JLabel msgHelp = new JLabel("Turtleizer help");
+		// START KGU#889 2020-12-26: Enh. #890/8+11
+		protected JLabel msgSnapLines = new JLabel("Measuring line will snap to nearest position on lines");
+		protected JLabel msgSnapPoints = new JLabel("Measuring line will snap to nearest points only");
+		// END KGU#889 2020-12-26
 		// START KGU#889 2020-12-18: Issue #890
 		protected JLabel lblScale = new JLabel("Scale factor:");
 		private static final char[] SEPARATORS = new char[] {
@@ -498,6 +506,10 @@ public class TurtleBox implements DelayableDiagramController
 		private int snapRadius = 5;
 		private boolean snapLines = true;
 		// END KGU#889 2020-12-20/23
+		// START KGU#889 2020-12-26: Enh. #890/8+11
+		private ImageIcon imgSnapPoints = null;
+		private ImageIcon imgSnapLines = null;
+		// END KGU#889 2020-12-26
 
 		private TurtleBox owner;
 
@@ -575,6 +587,11 @@ public class TurtleBox implements DelayableDiagramController
 			statusSize = new JLabel();
 			statusViewport = new JLabel();
 			statusZoom = new JLabel();
+			// START KGU#889 2020-12-26: Enh. #890/8+11
+			imgSnapPoints = new ImageIcon(this.getClass().getResource("snap_points_16.png"));
+			imgSnapLines = new ImageIcon(this.getClass().getResource("snap_lines_16.png"));
+			statusSnap = new JLabel();
+			// END KGU#889 2020-12-26
 			//statusSelection = new JLabel("0");
 			statusHome.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
 					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
@@ -586,19 +603,32 @@ public class TurtleBox implements DelayableDiagramController
 					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
 			statusZoom.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
 					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			// START KGU#889 2020-12-26: Enh. #890/8+11
+			statusSnap.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
+					javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
+			// END KGU#889 2020-12-26
 			//statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
 			//		new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+			statusHome.setIcon(new ImageIcon(this.getClass().getResource("home_green_16.png")));
 			statusHome.setToolTipText("Current home position");
+			statusTurtle.setIcon(new ImageIcon(this.getClass().getResource("turtle_16.png")));
 			statusTurtle.setToolTipText("Current turtle position");
 			statusSize.setToolTipText("Extent of the drawn area");
 			statusViewport.setToolTipText("Current scrolling viewport");
+			statusZoom.setIcon(new ImageIcon(this.getClass().getResource("magnifier_16.png")));
 			statusZoom.setToolTipText("Zoom factor");
+			// START KGU#889 2020-12-26: Enh. #890/8+11
+			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+			// END KGU#889 2020-12-26
 			//statusSelection.setToolTipText("Number of selected segments");
 			statusbar.add(statusHome);
 			statusbar.add(statusTurtle);
 			statusbar.add(statusSize);
 			statusbar.add(statusViewport);
 			statusbar.add(statusZoom);
+			// START KGU#889 2020-12-26: Enh. #890/8+11
+			statusbar.add(statusSnap);
+			// END KGU#889 2020-12-26
 			//statusbar.add(statusSelection);
 			statusbar.setFocusable(false);
 			getContentPane().add(statusbar, java.awt.BorderLayout.SOUTH);
@@ -733,7 +763,6 @@ public class TurtleBox implements DelayableDiagramController
 		 */
 		private void updateStatus() {
 			if (statusbar.isVisible()) {
-				statusHome.setIcon(new ImageIcon(this.getClass().getResource("home_green_16.png")));
 				statusHome.setText("(" + owner.home.x + ", " + owner.home.y + ")");
 				//int turtleX = owner.pos.x;
 				//int turtleY = owner.pos.y;
@@ -745,7 +774,6 @@ public class TurtleBox implements DelayableDiagramController
 				//statusTurtle.setText(
 				//		String.format("(%d, %d) %.2f°",
 				//				turtleX, turtleY, owner.getOrientation()));
-				statusTurtle.setIcon(new ImageIcon(this.getClass().getResource("turtle_16.png")));
 				statusTurtle.setText(
 						String.format("(%d, %d) %.2f°",
 								owner.pos.x, owner.pos.y, owner.getOrientation()));
@@ -966,6 +994,15 @@ public class TurtleBox implements DelayableDiagramController
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					snapLines = popupSnapLines.isSelected();
+					// START KGU#889 2020-12-26: Enh. #890/8+11
+					statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+					if (snapLines) {
+						statusSnap.setToolTipText(msgSnapLines.getText());
+					}
+					else {
+						statusSnap.setToolTipText(msgSnapPoints.getText());
+					}
+					// END KGU#889 2020-12-26
 				}});
 			popupMenu.add(popupSnapLines);
 			popupSnapLines.setSelected(snapLines);
@@ -1623,6 +1660,15 @@ public class TurtleBox implements DelayableDiagramController
 					case KeyEvent.VK_L:
 						snapLines = !snapLines;
 						popupSnapLines.setSelected(snapLines);
+						// START KGU#889 2020-12-26: Enh. #890/8+11
+						statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+						if (snapLines) {
+							statusSnap.setToolTipText(msgSnapLines.getText());
+						}
+						else {
+							statusSnap.setToolTipText(msgSnapPoints.getText());
+						}
+						// END KGU#889 2020-12-26
 						break;
 					case KeyEvent.VK_R:
 						configureMeasuring();
