@@ -14,9 +14,8 @@ Known issues:
 - COBOL import does not cope with some statement variants and variable redefinitions.
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
-- The Turtleizer popup menu may look weird in "Nimbus" L&F for GUI scales > 1 (#895)
 
-Current development version: 3.30-13 (2020-12-27)
+Current development version: 3.30-13 (2020-12-28)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -150,6 +149,7 @@ Current development version: 3.30-13 (2020-12-27)
 - 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
 - 13: Enh. #893: Translator preview indication in language preference menu <2>
 - 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
+- 13: Bugfix #895: GUI scaling of the Turtleizer popup menu for "Nimbus" <2>
 - 13: Enh. #896: Different cursor on readiness for moving diagrams in Arranger
       or diagram elements within a diagram in the Structorizer work area;
       by holding Shift key down, elements may now be moved above the target <2>

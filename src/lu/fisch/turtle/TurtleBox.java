@@ -54,6 +54,7 @@ package lu.fisch.turtle;
  *                                      created anymore, 2nd (higher-resolution) turtle image
  *      Kay Gürtzig     2020-12-23      Bugfix #897: Numerical and endless loop risk on rl()/getOrientation()
  *      Kay Gürtzig     2020-12-26      Enh. #890: Icons indicating the snapping mode added to status bar
+ *      Kay Gürtzig     2020-12-28      Issue #895: Workaround for scaling defect with NimbusLookAndFeel
  *
  ******************************************************************************************************
  *
@@ -68,6 +69,7 @@ package lu.fisch.turtle;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -114,14 +116,17 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
+import javax.swing.LookAndFeel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.diagrcontrol.*;
@@ -465,8 +470,9 @@ public class TurtleBox implements DelayableDiagramController
 		protected JLabel msgBrowseFailed = new JLabel("Failed to show \"%\" in browser");
 		protected JLabel msgHelp = new JLabel("Turtleizer help");
 		// START KGU#889 2020-12-26: Enh. #890/8+11
-		protected JLabel msgSnapLines = new JLabel("Measuring line will snap to nearest position on lines");
-		protected JLabel msgSnapPoints = new JLabel("Measuring line will snap to nearest points only");
+		protected JLabel msgSnapConfig = new JLabel("Measuring line will snap to nearest %1 within radius %2");
+		protected JLabel msgSnapLines = new JLabel("position on lines");
+		protected JLabel msgSnapPoints = new JLabel("start/end point");
 		// END KGU#889 2020-12-26
 		// START KGU#889 2020-12-18: Issue #890
 		protected JLabel lblScale = new JLabel("Scale factor:");
@@ -518,6 +524,7 @@ public class TurtleBox implements DelayableDiagramController
 			super();
 			this.owner = owner;
 			initComponents();
+			this.setSize(new Dimension(getPreferredSize().height, statusbar.getPreferredSize().width + 5));
 		}
 
 		private void initComponents()
@@ -619,6 +626,12 @@ public class TurtleBox implements DelayableDiagramController
 			statusZoom.setToolTipText("Zoom factor");
 			// START KGU#889 2020-12-26: Enh. #890/8+11
 			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+			/* For small fonts it is more important that the icon is visible on opening,
+			 * for larger fonts (upscaled GUI) it is more important that the panel has the
+			 * unified height which is only ensured if the label contains text */
+			if (UIManager.getFont("Label.font").getSize() > 12) {
+				statusSnap.setText("→" + Integer.toString(snapRadius) + "←");
+			}
 			// END KGU#889 2020-12-26
 			//statusSelection.setToolTipText("Number of selected segments");
 			statusbar.add(statusHome);
@@ -758,8 +771,9 @@ public class TurtleBox implements DelayableDiagramController
 		}
 
 		/**
-		 * Updates all status information in the status bar and controls
-		 * the menu item accessibility.
+		 * Updates all status information (except {@link #statusSnap} the status bar
+		 * and controls the menu item accessibility.
+		 * @see #updateSnapStatus()
 		 */
 		private void updateStatus() {
 			if (statusbar.isVisible()) {
@@ -821,6 +835,32 @@ public class TurtleBox implements DelayableDiagramController
 			// END KGU#889 2020-12-20
 		}
 
+		// START KGU#889 2020-12-27: Enh. #890/8+11
+		/**
+		 * Updates the {@link #statusSnap} label in the status bar.
+		 * @see #updateStatus()
+		 */
+		private void updateSnapStatus() {
+			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+			String snapTarget = null;
+			if (snapLines) {
+				snapTarget = msgSnapLines.getText();
+			}
+			else {
+				snapTarget = msgSnapPoints.getText();
+			}
+			/* For small fonts it is more important that the icon is visible on opening,
+			 * for larger fonts (upscaled GUI) it is more important that the panel has the
+			 * unified height which is only ensured if the label contains text */
+			if (UIManager.getFont("Label.font").getSize() > 12) {
+				statusSnap.setText("→" + Integer.toString(snapRadius) + "←");
+			}
+			statusSnap.setToolTipText(msgSnapConfig.getText().
+					replace("%1", snapTarget).
+					replace("%2", Integer.toString(snapRadius)));
+		}
+		// END KGU#889 2020-12-27
+		
 		// START KGU#685 2020-12-11: Enh. #704
 		/**
 		 * Creates the popup menu
@@ -995,15 +1035,10 @@ public class TurtleBox implements DelayableDiagramController
 				public void actionPerformed(ActionEvent e) {
 					snapLines = popupSnapLines.isSelected();
 					// START KGU#889 2020-12-26: Enh. #890/8+11
-					statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
-					if (snapLines) {
-						statusSnap.setToolTipText(msgSnapLines.getText());
-					}
-					else {
-						statusSnap.setToolTipText(msgSnapPoints.getText());
-					}
+					updateSnapStatus();
 					// END KGU#889 2020-12-26
-				}});
+				}
+			});
 			popupMenu.add(popupSnapLines);
 			popupSnapLines.setSelected(snapLines);
 			// This doesn't work directly but shows the key binding handled via keyPressed()
@@ -1242,6 +1277,7 @@ public class TurtleBox implements DelayableDiagramController
 					popupSnapRadius.getText(),
 					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 				snapRadius = (int)spnScale.getValue();
+				updateSnapStatus();
 			}
 		}
 		// END KGU#889 2020-12-23
@@ -1661,13 +1697,7 @@ public class TurtleBox implements DelayableDiagramController
 						snapLines = !snapLines;
 						popupSnapLines.setSelected(snapLines);
 						// START KGU#889 2020-12-26: Enh. #890/8+11
-						statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
-						if (snapLines) {
-							statusSnap.setToolTipText(msgSnapLines.getText());
-						}
-						else {
-							statusSnap.setToolTipText(msgSnapPoints.getText());
-						}
+						updateSnapStatus();
 						// END KGU#889 2020-12-26
 						break;
 					case KeyEvent.VK_R:
@@ -2002,10 +2032,21 @@ public class TurtleBox implements DelayableDiagramController
 	 */
 	public void updateLookAndFeel()
 	{
+		System.out.println("TurtleBox updating Look and Feel for " + (frame == null ? "null" : frame) + "...");
 		if (frame != null) {
 			try {
 				javax.swing.SwingUtilities.updateComponentTreeUI(frame);
 				javax.swing.SwingUtilities.updateComponentTreeUI(frame.popupMenu);
+				// START KGU#894 2020-12-28: Workaround for #895
+				LookAndFeel laf = UIManager.getLookAndFeel();
+				boolean isNimbus = laf != null && laf.getName().equalsIgnoreCase("nimbus");
+				if (isNimbus) {
+					for (Component comp: frame.popupMenu.getComponents()) {
+						if (comp instanceof JMenuItem) {
+							comp.setFont(UIManager.getFont("MenuItem.font"));
+						}					}
+				}
+				// END KGU#894 2020-12-28
 			}
 			catch (Exception ex) {}
 		}

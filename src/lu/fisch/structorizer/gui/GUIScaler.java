@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-10-15      Scaling for JTree rows added
  *      Kay Gürtzig     2018-03-21      Console output replaced with logging mechanism
  *      Kay Gürtzig     2019-02-06      Issue #670: JTree row height fix for sizeVariant
+ *      Kay Gürtzig     2020-12-28      Issue #895: Turtleizer popup menu hadn't properly reacted with Nimbus
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
@@ -235,6 +237,11 @@ public class GUIScaler {
 				else if (comp instanceof JTableHeader) {
 					comp.setFont(UIManager.getFont("TableHeader.font"));	
 				}
+				// START KGU#894 2020-12-28: Bugfix #895 (popup menu in TurtleFrame wasn't properly scaled)
+				else if (comp instanceof JMenuItem) {
+					comp.setFont(UIManager.getFont("MenuItem.font"));
+				}
+				// END KGU#894 2020-12-28
 			}
 			// FIXME: We also need a solution for JCheckBoxMenuItems...
 			if (comp instanceof Container) {

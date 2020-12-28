@@ -10012,6 +10012,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
 			// END KGU#685 2020-12-12
 			// START KGU#894 2020-12-21: Issue #895 Wasn't correctly scaled (with "Nimbus")
+			turtle.updateLookAndFeel();
 			GUIScaler.rescaleComponents(turtle.getFrame());
 			// END KGU#894 2020-12-21
 		}
@@ -10558,7 +10559,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	/**
 	 * This only cares for the look and feel update of the Find&Replace dialog
-	 * (if it is open) and the Turtleizer.
+	 * (if it is open) and of the Turtleizer.
 	 */
 	protected void updateLookAndFeel()
 	{
