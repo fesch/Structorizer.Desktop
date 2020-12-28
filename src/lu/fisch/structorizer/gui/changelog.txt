@@ -167,6 +167,7 @@ Current development version: 3.30-13 (2020-12-28)
       2. by holding Shift key down, elements may now be moved above the target <2>
 - 13: Bugfix #897: Numeric angle degradation + endless loop risk in Turtleizer <2>
 - 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
+- 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
