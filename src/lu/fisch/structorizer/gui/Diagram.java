@@ -10006,7 +10006,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (turtle == null)
 		{
-			turtle = new TurtleBox(500,500);
+			// START KGU#889 2020-12-28: Enh. #890 statusbar needs slightly more width
+			//turtle = new TurtleBox(500,500);
+			turtle = new TurtleBox(512, 560);
+			// END KGU#889 2020-12-28
 			// START KGU#685 2020-12-12: Enh. #704
 			Locales.getInstance().register(turtle.getFrame(), true);
 			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);

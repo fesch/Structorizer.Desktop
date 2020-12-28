@@ -71,6 +71,7 @@ package lu.fisch.turtle;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -94,11 +95,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -109,7 +106,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -279,6 +275,8 @@ public class TurtleBox implements DelayableDiagramController
 					// START KGU#685 2020-12-14: Enh. #704
 					if (offset != null && popupShowOrigin.isSelected()) {
 						// Paint the axes of coordinates
+						int x0 = Math.min(0, owner.bounds.x);
+						int y0 = Math.min(0, owner.bounds.y);
 						int x1 = owner.bounds.x + owner.bounds.width;
 						int y1 = owner.bounds.y + owner.bounds.height;
 						Rectangle visibleRect = g.getClipBounds();
@@ -293,8 +291,8 @@ public class TurtleBox implements DelayableDiagramController
 								java.awt.BasicStroke.CAP_ROUND,
 								java.awt.BasicStroke.JOIN_ROUND, 1f,
 								new float[] {2f/zoom, 2f/zoom}, 0f));
-						g.drawLine(0, owner.bounds.y, 0, y1);
-						g.drawLine(owner.bounds.x, 0, x1, 0);
+						g.drawLine(0, y0, 0, y1);
+						g.drawLine(x0, 0, x1, 0);
 						g.setStroke(strk);
 					}
 					// END KGU#685 2020-12-14
@@ -1729,6 +1727,7 @@ public class TurtleBox implements DelayableDiagramController
 						zoom(false);
 						break;
 					case KeyEvent.VK_1:
+					case KeyEvent.VK_NUMPAD1:
 						zoom(1.0f);
 						break;
 					case KeyEvent.VK_Z:
@@ -1749,6 +1748,7 @@ public class TurtleBox implements DelayableDiagramController
 						break;
 						// START KGU#889 2020-12-18: Enh. #890
 					case KeyEvent.VK_0:
+					case KeyEvent.VK_NUMPAD0:
 						gotoOrigin();
 						break;
 						// END KGU#889 2020-12-18
@@ -1940,45 +1940,13 @@ public class TurtleBox implements DelayableDiagramController
 		{
 			String query = keyBindings ? KEY_LINK : GUI_LINK;
 			String help = HELP_URL.replace("%", query);
-			boolean isLaunched = false;
-			try {
-				isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
-			} catch (URISyntaxException ex) {
-				logger.log(Level.WARNING, "Can't browse Turtleizer help URL.", ex);
-			}
-			// The isLaunched mechanism above does not signal an unavailable help page.
-			// With the following code we can find out whether the help page was available...
-			// TODO In this case we might offer to download the PDF for offline use,
-			// otherwise we could try to open a possibly previously downloaded PDF ...
-			URL url;
-			HttpsURLConnection con = null;
-			try {
-				isLaunched = false;
-				url = new URL(help);
-				con = (HttpsURLConnection)url.openConnection();
-				if (con != null) {
-					con.connect();
+			if (Desktop.isDesktopSupported()) {
+				try {
+					Desktop dtp = Desktop.getDesktop();
+					dtp.browse(new URI(help));
+				} catch (Exception ex) {
+					logger.log(Level.WARNING, "Can't browse Turtleizer help URL.", ex);
 				}
-				isLaunched = true;
-			} catch (SocketTimeoutException ex) {
-				logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
-			} catch (MalformedURLException e1) {
-				logger.log(Level.SEVERE, "Malformed URL " + help, e1);
-			} catch (IOException e) {
-				logger.log(Level.WARNING, "Failed Access to " + help, e);
-			}
-			finally {
-				if (con != null) {
-					con.disconnect();
-				}
-			}
-			if (!isLaunched)
-			{
-				String message = msgBrowseFailed.getText().replace("%", help);
-				JOptionPane.showMessageDialog(this,
-				message,
-				msgHelp.getText(),
-				JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		
@@ -2032,7 +2000,6 @@ public class TurtleBox implements DelayableDiagramController
 	 */
 	public void updateLookAndFeel()
 	{
-		System.out.println("TurtleBox updating Look and Feel for " + (frame == null ? "null" : frame) + "...");
 		if (frame != null) {
 			try {
 				javax.swing.SwingUtilities.updateComponentTreeUI(frame);
@@ -2044,7 +2011,8 @@ public class TurtleBox implements DelayableDiagramController
 					for (Component comp: frame.popupMenu.getComponents()) {
 						if (comp instanceof JMenuItem) {
 							comp.setFont(UIManager.getFont("MenuItem.font"));
-						}					}
+						}
+					}
 				}
 				// END KGU#894 2020-12-28
 			}
