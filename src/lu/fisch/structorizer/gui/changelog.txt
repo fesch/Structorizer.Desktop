@@ -144,17 +144,29 @@ Current development version: 3.30-13 (2020-12-28)
 - 12: Bugfix #884: Flaws of header inference for virgin diagrams (#875) mended <2>
 - 12: Bugfix #885: Incorrect display mode indicator state (#872) in some case <2>
 - 12: Bugfix #887: Concurrent Turtleizer instances led to dysfunction. <2>
-- 13: Issue #890: Several improvements of the Turtleizer GUI (#704/#880) <2>
+- 13: Issue #890: Several improvements of the Turtleizer GUI (#704/#880) <2>:
+       1. SVG export with less annoying scale factor request;
+       2. Menu items for CSV and SVG export no longer enabled with empty image;
+       3. New function to scroll to the coordinate origin;
+       4. Mere turtle moves without visible trace omitted on (CSV) export;
+       5. Option to choose separator character for the CSV export;
+       6. Stroke style for the axes of coordinates now compensates the zoom factor;
+       7. Tooltip showing the turtle-world coordinate at current mouse position;
+       8. Measuring function with two possible snap modes and configurable radius;
+       9. Turtle image with higher resolution for zoom factors > 1;
+      10. F1 opens the help page for the Turtleizer GUI in the browser;
+      11. Status bar icons for more intuitive recognition.
 - 13: Issue #891: Dutch locale fixed, revised, and completed <Jaap Woldringh>
 - 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
 - 13: Enh. #893: Translator preview indication in language preference menu <2>
 - 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
 - 13: Bugfix #895: GUI scaling of the Turtleizer popup menu for "Nimbus" <2>
-- 13: Enh. #896: Different cursor on readiness for moving diagrams in Arranger
-      or diagram elements within a diagram in the Structorizer work area;
-      by holding Shift key down, elements may now be moved above the target <2>
-- 13: Bugfix #897: Numeric degradation and endless loop risk in Turtleizer <2>
-- 13: Bugfix #898: Turtleizer function pre-evaluation causing syntax errors <2>
+- 13: Enh. #896 <2>:
+      1. Move cursor on readiness for moving diagrams in Arranger
+         or diagram elements within a diagram in the Structorizer work area;
+      2. by holding Shift key down, elements may now be moved above the target <2>
+- 13: Bugfix #897: Numeric angle degradation + endless loop risk in Turtleizer <2>
+- 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
