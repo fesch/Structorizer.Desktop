@@ -127,6 +127,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
  *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
+ *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *
  ******************************************************************************************************
  *
@@ -1628,6 +1629,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
 		String prevCurDirPath = this.currentDirectory.getAbsolutePath();
 		// END KGU#316 2016-12-28
+		// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try
 		{
 			// set up the file
@@ -1740,7 +1744,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //			}
 //
 //			in.close();
-			
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			StringList problems = new StringList();
 			List<ArchiveRecord> records = (new Archivar()).loadArrangement(arrFile, unzippedFrom, currentDirectory, problems);
 			if (!problems.isEmpty()) {
@@ -1771,6 +1777,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		finally {
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			setCursor(origCursor);
+			// END KGU#901 2020-12-29
 			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
 			this.currentDirectory = new File(prevCurDirPath);
 			// END KGU#316 2016-12-28

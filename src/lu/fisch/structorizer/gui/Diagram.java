@@ -211,6 +211,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-20      Bugfix #892: "Save as" and double-click trouble with arranged diagrams
  *      Kay Gürtzig     2020-12-25      Enh. #896: Cursor shape changes when element dragging is permissible,
  *                                      dragging elements above the target position enabled via the Shift key
+ *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *
  ******************************************************************************************************
  *
@@ -2199,7 +2200,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		String ext = ExtFileFilter.getExtension(_filepath);
 		if (ext.equals("arr") || ext.equals("arrz")) {
-			loadArrangement(new File(_filepath));			
+			loadArrangement(new File(_filepath));
 		}
 		// START KGU#521 2018-06-08: Bugfix #536
 		//else {
@@ -2418,7 +2419,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMsg = Menu.msgErrorNoFile.getText();
 		}
 		else {
-			errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);			
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			//errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);
+			Cursor origCursor = getCursor();
+			try {
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));	// Possibly this should have done Surface?
+				errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);			
+			}
+			finally {
+				setCursor(origCursor);
+			}
+			// END KGU#901 2020-12-29
 		}
 		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
@@ -7064,6 +7075,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void export(Root _root, String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
+		// START KGU#901 2020-12-29: Issue #901 apply WAIT_CURSOR during time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try
 		{
 			Class<?> genClass = Class.forName(_generatorClassName);
@@ -7087,6 +7101,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#395 2017-05-11: Enh. #357
 			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
 			// END KGU#395 2017-05-11
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
 			// START KGU#654 2019-02-16: Enh. #681 Don't overwrite the last export dir in case the export failed or was cancelled
@@ -7121,6 +7138,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (thisGenName.equals(this.lastGeneratorName)) {
 					if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
 							&& !prefGenName.equals(this.lastGeneratorName)) {
+						// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+						setCursor(origCursor);
+						// END KGU#901 2020-12-29
 						if (JOptionPane.showConfirmDialog(this.getFrame(), 
 								Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
 								Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
@@ -7145,6 +7165,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception ex)
 		{
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
@@ -7153,6 +7176,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
+		// START KGU#901 2020-12-29: Issue #901 apply WAIT_CURSOR during time-consuming actions
+		finally {
+			setCursor(origCursor);
+		}
+		// END KGU#901 2020-12-29
 	}
 	
 	/**
@@ -7173,6 +7201,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		String groupName = group.proposeFileName().replace(".", "_");
 
+		// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try {
 			Class<?> genClass = Class.forName(generatorName);
 			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
@@ -7195,6 +7226,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#396 2020-04-01
 			
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			File exportDir = gen.exportCode(group.getSortedRoots(), groupName, 
 					targetDir,
 					NSDControl.getFrame(),
@@ -7206,6 +7240,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception ex)
 		{
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(origCursor);
+			// END KGU#901 2020-12-29
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
@@ -7214,6 +7251,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
+		// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+		finally {
+			setCursor(origCursor);
+		}
+		// END KGU#901 2020-12-29
 	}
 	// END KGU#815 2020-03-16
 
