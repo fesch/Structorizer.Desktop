@@ -42,6 +42,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-03-16      Enh. #828: New popup submenu for code export of a group (or diagram)
  *      Kay Gürtzig     2020-04-01      Enh. #440: Group export to PapDesigner inserted in popup menu
  *      Kay Gürtzig     2020-06-06      Issue #868/#870: Suppression of group export in noExportImport mode
+ *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,7 @@ package lu.fisch.structorizer.arranger;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -1006,6 +1008,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		}
 		if (goAhead) {
 			Diagram.startSerialMode();
+			// START KGU#901 2020-12-29: Issue #901 - WAIT_CURSOR on time-consuming actions
+			Cursor origCursor = getCursor();
+			// END KGU#901 2020-12-29
 			try {
 				// First we remove groups then single roots (if still there)
 				int decision = JOptionPane.OK_OPTION;
@@ -1019,11 +1024,17 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 						doomedGroups.clear();
 					}
 				}
+				// START KGU#901 2020-12-29: Issue #901 - WAIT_CURSOR on time-consuming actions
+				this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				// END KGU#901 2020-12-29
 				for (Group group: doomedGroups) {
 					Arranger.getInstance().removeGroup(group.getName(), decision == JOptionPane.OK_OPTION, this);
 				}
 				decision = JOptionPane.OK_OPTION;
 				if (!doomedRoots.isEmpty()) {
+					// START KGU#901 2020-12-29: Issue #901 - WAIT_CURSOR on time-consuming actions
+					this.setCursor(origCursor);
+					// END KGU#901 2020-12-29
 					decision = JOptionPane.showConfirmDialog(this,
 							msgConfirmDeleteRoots.getText().replace("%", Integer.toString(doomedRoots.size())),
 							popupIndexRemove.getText(),
@@ -1032,6 +1043,11 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 					if (decision == JOptionPane.CANCEL_OPTION || decision == -1) {
 						doomedRoots.clear();
 					}
+					// START KGU#901 2020-12-29: Issue #901 - WAIT_CURSOR on time-consuming actions
+					else {
+						this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					}
+					// END KGU#901 2020-12-29
 				}
 				if (decision == JOptionPane.OK_OPTION) {
 					for (Root root: doomedRoots) {
@@ -1044,6 +1060,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			}
 			finally {
 				Diagram.endSerialMode();
+				// START KGU#901 2020-12-29: Issue #901 - WAIT_CURSOR on time-consuming actions
+				this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				// END KGU#901 2020-12-29
 			}
 		}
 		// END KGU#626 2019-01-01
@@ -1132,8 +1151,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	// END KGU#396/KGU#815 2020-04-01
 
 	// START KGU#626 2019-01-05: Enh. #657
+	/**
+	 * Produces a dialog with relevant information about the selected group or
+	 * diagram as a tree view
+	 */
 	protected void arrangerIndexInfo() {
-		// Let's see what is is
+		// Let's see what it is
 		Group selectedGroup = arrangerIndexGetSelectedGroup();
 		Root selectedRoot = this.arrangerIndexGetSelectedRoot();
 		Object display = null;

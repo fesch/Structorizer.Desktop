@@ -208,6 +208,10 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-10      Bugfix #884: Flaws of header inference for virgin diagrams mended
  *      Kay Gürtzig     2020-12-12      Enh. #704: Adaptations to Turtleizer enhancements
  *      Kay Gürtzig     2020-12-14      Bugfix #887: TurtleBox must be shared
+ *      Kay Gürtzig     2020-12-20      Bugfix #892: "Save as" and double-click trouble with arranged diagrams
+ *      Kay Gürtzig     2020-12-25      Enh. #896: Cursor shape changes when element dragging is permissible,
+ *                                      dragging elements above the target position enabled via the Shift key
+ *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *
  ******************************************************************************************************
  *
@@ -345,7 +349,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private boolean mouseMove = false;
     private int mouseX = -1;
     private int mouseY = -1;
+    /** Selected element with mouse button down (i.e. element eligible for dragging) */
     private Element selectedDown = null;
+    /** On dragging elements, the element being moved */
     private Element selectedMoved = null;
     private int selX = -1;
     private int selY = -1;
@@ -650,8 +656,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Save if something has been changed
 			// START KGU#874 2020-10-18: Issue #875 Don't pester the user if root is arranged
 			//if (!saveNSD(askToSave))
+			// START KGU#874/KGU#893 2020-12-10: Bugfix #892 (#875 implementation mistake)
+			//boolean isArranged = Arranger.hasInstance()
+			//		&& Arranger.getInstance().getAllRoots().contains(root);
 			boolean isArranged = Arranger.hasInstance()
-					&& Arranger.getInstance().getAllRoots().contains(root);
+					&& Arranger.getInstance().getAllRoots().contains(this.root);
+			// END KGU#874/KGU#893 2020-12-10
 			if ((!askToSave || !isArranged) && !saveNSD(askToSave))
 			// END KGU#874 2020-10-18
 			{
@@ -941,6 +951,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pop.setVisible(false);
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e)
 	{
 		//System.out.println("MouseMoved at (" + e.getX() + ", " + e.getY() + ")");
@@ -1002,6 +1013,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
+	@Override
 	public void mouseDragged(MouseEvent e)
 	{
 		if (e.getSource()==this)
@@ -1024,7 +1036,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				/*System.out.println("DRAGGED ("+e.getX()+", "+e.getY()+") >> " +
 						bSome + " >> " + selectedDown);
 						/**/
-
+				// START KGU#896 2020-12-25: Enh. 896
+				if (getCursor().getType() != Cursor.MOVE_CURSOR) {
+					setCursor(new Cursor(Cursor.MOVE_CURSOR));
+				}
+				// END KGU#896 2020-12-25
 				bSome.setSelected(true);
 				//System.out.println("selected = " + bSome);
 				//System.out.println("selectedDown = " + selectedDown);
@@ -1033,9 +1049,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				boolean doRedraw = false;
 
-				if ((selectedDown!=null) && (e.getX()!=mouseX) && (e.getY()!=mouseY) && (selectedMoved!=bSome))
+				if ((selectedDown != null) && (e.getX() != mouseX) && (e.getY() != mouseY) && (selectedMoved != bSome))
 				{
-					mouseMove=true;
+					mouseMove = true;
 					if (selectedDown.getClass().getSimpleName().equals("Root") ||
 							selectedDown.getClass().getSimpleName().equals("Subqueue") ||
 							bSome.getClass().getSimpleName().equals("Root") ||
@@ -1056,7 +1072,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 					 }
 					 */
-					doRedraw= true;
+					doRedraw = true;
 				}
 
 				if (selX != -1 && selY != -1)
@@ -1072,6 +1088,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e)
 	{
 		//System.out.println("MousePressed at (" + e.getX() + ", " + e.getY() + ")");
@@ -1089,6 +1106,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//Element ele = root.selectElementByCoord(e.getX(),e.getY());
 			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
+			
+			// START KGU#896 2020-12-25: Enh. #896
+			boolean setMoveCursor = false;
+			// END KGU#896 2020-12-25
 
 			// KGU#87: Maintain a selected sequence on right mouse button click 
 			if (e.getButton() == MouseEvent.BUTTON3 && selected instanceof IElementSequence &&
@@ -1104,6 +1125,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else if (ele != null)
 			{
+				// START KGU#896 2020-12-25: Enh. #896
+				setMoveCursor = ele != null && getCursor().getType() != Cursor.MOVE_CURSOR;
+				// END KGU#896 2020-12-25
 				// START KGU#136 2016-03-02: Bugfix #97 - Selection wasn't reliable
 				ele = ele.setSelected(true);
 				// END KGU#136 2016-03-02
@@ -1126,7 +1150,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// In case someone wants to drag then let it just be done for the single element
 					// (we don't allow dynamically to move a sequence - the user may better cut and paste)
 					selectedDown = ele;
-					redraw();						
+					// START KGU#896 2020-12-25: Enh. #896
+					setMoveCursor = false;	// So we will not show the MOVE cursor here
+					// END KGU#896 2020-12-25
+					redraw();
 				}
 				else if (ele != selected)
 				{
@@ -1151,6 +1178,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							selected = ((SelectedSequence)selected).getElement(0);
 						}
 						// END KGU#866 2020-05-02
+						// START KGU#896 2020-12-25: Enh. #896
+						else {
+							setMoveCursor = false;
+						}
+						// END KGU#896 2020-12-25
 						selected.setSelected(true);
 						redraw();
 						selectedDown = ele;
@@ -1190,8 +1222,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					!selected.getClass().getSimpleName().equals("Root") )
 				{
 					mouseMove = false;
+					// START KGU#896 2020-12-25: Enh. #896
+					if (selected != ele) {
+						setMoveCursor = false;
+					}
+					// END KGU#896 2020-12-25
 				}
+				// START KGU#896 2020-12-25: Enh. #896
+				else {
+					// Never show the MOVE cursor on a Root or Subqueue
+					setMoveCursor = false;
+				}
+				// END KGU#896 2020-12-25
 			}
+			// START KGU#896 2020-12-25: Enh. #896
+			if (setMoveCursor) {
+				setCursor(new Cursor(Cursor.MOVE_CURSOR));
+			}
+			// END KGU#896 2020-12-25
 
 			// START KGU#705 2019-09-24: Enh. #738
 			highlightCodeForSelection();
@@ -1200,6 +1248,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent e)
 	{
 		// FIXME: What about hidden declarations?
@@ -1210,6 +1259,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#514 2018-04-03: Superfluous Analyser calls reduced on occasion of bugfix #528 
 			boolean doReanalyse = false;
 			// END KGU#514 2018-04-03
+			boolean isShiftDown = e.isShiftDown();
 
 			if((selX != -1) && (selY != -1) && (selectedDown != null))
 			{
@@ -1220,7 +1270,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if ((mouseMove == true) && (selectedDown != null))
 			{
-				Element.E_DRAWCOLOR=Color.YELLOW;
+				Element.E_DRAWCOLOR = Color.YELLOW;
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
 						!selectedDown.getClass().getSimpleName().equals("Root") )
 				{
@@ -1262,7 +1312,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							selectedUp.setSelected(false);
-							root.addAfter(selectedUp, selectedDown);
+							
+							// START KGU#896 2020-12-25: Enh. #896 - eventually allow to drop before the target
+							//root.addAfter(selectedUp, selectedDown);
+							if (isShiftDown) {
+								root.addBefore(selectedUp, selectedDown);
+							}
+							else {
+								root.addAfter(selectedUp, selectedDown);
+							}
+							// END KGU#896 2020-12-25
+							
 							// START KGU'87 2015-11-22: See above
 							//selectedDown.setSelected(true);
 							if (!(selectedDown instanceof Subqueue))
@@ -1296,12 +1356,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Element selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
-					if (selectedUp!=null) selectedUp.setSelected(false);
+					if (selectedUp != null) selectedUp.setSelected(false);
 					doDraw = true;
 				}
 			}
 
 			mouseMove = false;
+			// START KGU#896 2020-12-25: Enh. #986
+			if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
+			// END KGU#896 2020-12-25
 
 			if (doDraw)
 			{
@@ -1318,10 +1383,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	@Override
 	public void mouseEntered(MouseEvent e)
 	{
 	}
 
+	@Override
 	public void mouseExited(MouseEvent e)
 	{
 		// START KGU#1 2015-10-11: We ought to get rid of that sticky popped comment!
@@ -1329,6 +1396,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#1 2015-10-11
 	}
 
+	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		//System.out.println("MouseClicked at (" + e.getX() + ", " + e.getY() + ")");
@@ -2132,7 +2200,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		String ext = ExtFileFilter.getExtension(_filepath);
 		if (ext.equals("arr") || ext.equals("arrz")) {
-			loadArrangement(new File(_filepath));			
+			loadArrangement(new File(_filepath));
 		}
 		// START KGU#521 2018-06-08: Bugfix #536
 		//else {
@@ -2351,7 +2419,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMsg = Menu.msgErrorNoFile.getText();
 		}
 		else {
-			errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);			
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			//errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);
+			Cursor origCursor = getCursor();
+			try {
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));	// Possibly this should have done Surface?
+				errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);			
+			}
+			finally {
+				setCursor(origCursor);
+			}
+			// END KGU#901 2020-12-29
 		}
 		// END KGU#671 2019-03-01
 		if (!errorMsg.isEmpty()) {
@@ -2406,7 +2484,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean saveAsNSD()
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
-		return saveAsNSD(this.root);
+		// START KGU#893 2020-12-20: Bugfix #892 - Arrangment group members must be cloned!
+		//return saveAsNSD(this.root);
+		Root rootToSave = this.root;
+		// Check membership in named group: if there is any, clone the Root
+		if (Arranger.hasInstance() &&
+				!Arranger.getInstance().getGroupsFromRoot(root, true).isEmpty()) {
+			rootToSave = (Root)root.copy();
+		}
+		boolean done = saveAsNSD(rootToSave);
+		if (done && rootToSave != this.root) {
+			JOptionPane.showMessageDialog(
+					this.getFrame(),
+					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false))
+					.replace("%2", rootToSave.getSignatureString(true)));
+			this.setRoot(rootToSave, true, true);
+		}
+		return done;
+		// END KGU#893 2020-12-20
 	}
 	
 	/**
@@ -2453,6 +2548,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Now we are either not in serial mode or a name conflict is to be solved via file chooser
 
 		JFileChooser dlgSave = new JFileChooser();
+
 		// START KGU#553 2018-07-13: Issue #557
 		// Add a checkbox to adhere to the proposed names for all remaining roots if we are in serial mode
 		JCheckBox chkAcceptProposals = addSerialAccessory(dlgSave);
@@ -2461,10 +2557,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		GUIScaler.rescaleComponents(dlgSave);
 		// END KGU#287 2017-01-09
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
+		File rootFile = root.getFile();
 		// set directory
-		if (root.getFile() != null)
+		if (rootFile != null)
 		{
-			dlgSave.setCurrentDirectory(root.getFile());
+			dlgSave.setCurrentDirectory(rootFile);
 		}
 		else
 		{
@@ -2472,7 +2569,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		dlgSave.setSelectedFile(new File(nsdName));
-
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
 		
 		// START KGU#248 2016-09-15: Bugfix #244 - allow more than one chance
@@ -2538,9 +2634,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //			}
 		} while (result == JFileChooser.ERROR_OPTION);
 		// END KGU#248 2016-09-15
+		
 		return result != JFileChooser.CANCEL_OPTION;
 	}
-	
+
 	// START KGU#874 2020-10-19: Issue #875 - try to make sense from the filename
 	/**
 	 * IN case {@code _root} has a dummy header (empty or "???"), we try to derive
@@ -5509,7 +5606,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setVisible(true);
 		*/
 		// START KGU#170 2018-06-11: Issue #143 - on opening the print preview a comment popup should vanish
-		pop.setVisible(false);
+		hideComments();
 		// END KGU#170 2018-06-11
 		PrintPreview pp = new PrintPreview(NSDControl.getFrame(),this);
 		Point p = getLocationOnScreen();
@@ -5639,7 +5736,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PNGFilter filter = new PNGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU#170 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -5823,7 +5920,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PNGFilter filter = new PNGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -5923,7 +6020,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		EMFFilter filter = new EMFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6026,7 +6123,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SVGFilter filter = new SVGFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6150,7 +6247,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SWFFilter filter = new SWFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6254,7 +6351,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		PDFFilter filter = new PDFFilter();
 		dlgSave.addChoosableFileFilter(filter);
 		dlgSave.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6329,7 +6426,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			Generator gen = new PapGenerator();
 			gen.setPluginOption("din66001_1982", din66001_1982);
-			pop.setVisible(false);	// Hide the current comment popup if visible
+			hideComments();	// Hide the current comment popup if visible
 			File exportDir =
 					gen.exportCode(_root,
 							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
@@ -6453,7 +6550,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		PascalFilter filter = new PascalFilter();
 //		dlgOpen.addChoosableFileFilter(filter);
 //		dlgOpen.setFileFilter(filter);
-//		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+//		hideComments();	// Issue #143: Hide the current comment popup if visible
 //		// END KGU 2016-04-01
 //		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
 //		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
@@ -6608,7 +6705,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		//dlgOpen.setFileFilter(parser);
 
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
 
 		if (result == JFileChooser.APPROVE_OPTION)
@@ -6978,12 +7075,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void export(Root _root, String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
 	{
+		// START KGU#901 2020-12-29: Issue #901 apply WAIT_CURSOR during time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try
 		{
 			Class<?> genClass = Class.forName(_generatorClassName);
 			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
 			// START KGU#170 2016-04-01: Issue #143
-			pop.setVisible(false);	// Hide the current comment popup if visible
+			hideComments();	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
 			// START KGU#815 2020-03-30: Enh. #828 If called from ArrangerIndex, options will be null
 			if (_specificOptions == null) {
@@ -7001,6 +7101,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#395 2017-05-11: Enh. #357
 			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
 			// END KGU#395 2017-05-11
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
 			// START KGU#654 2019-02-16: Enh. #681 Don't overwrite the last export dir in case the export failed or was cancelled
@@ -7035,6 +7138,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (thisGenName.equals(this.lastGeneratorName)) {
 					if (++this.generatorUseCount == this.generatorProposalTrigger && this.generatorProposalTrigger > 0
 							&& !prefGenName.equals(this.lastGeneratorName)) {
+						// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+						setCursor(origCursor);
+						// END KGU#901 2020-12-29
 						if (JOptionPane.showConfirmDialog(this.getFrame(), 
 								Menu.msgSetAsPreferredGenerator.getText().replace("%1", thisGenName).replaceAll("%2", Integer.toString(this.generatorUseCount)),
 								Menu.lbFileExportCodeFavorite.getText().replace("%", thisGenName),
@@ -7059,6 +7165,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception ex)
 		{
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
@@ -7067,6 +7176,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
+		// START KGU#901 2020-12-29: Issue #901 apply WAIT_CURSOR during time-consuming actions
+		finally {
+			setCursor(origCursor);
+		}
+		// END KGU#901 2020-12-29
 	}
 	
 	/**
@@ -7076,7 +7190,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param extraOptions - a possible extra option map (handled like plugin options) or null
 	 */
 	public void exportGroup(Group group, String generatorName, Map<String, Object> extraOptions) {
-		pop.setVisible(false);	// Hide the current comment popup if visible (issue #143)
+		hideComments();	// Hide the current comment popup if visible (issue #143)
 		File groupFile = group.getFile();
 		File targetDir = lastCodeExportDir;
 		if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true")) && groupFile.exists()) {
@@ -7087,6 +7201,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		String groupName = group.proposeFileName().replace(".", "_");
 
+		// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try {
 			Class<?> genClass = Class.forName(generatorName);
 			Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
@@ -7109,6 +7226,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#396 2020-04-01
 			
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			File exportDir = gen.exportCode(group.getSortedRoots(), groupName, 
 					targetDir,
 					NSDControl.getFrame(),
@@ -7120,6 +7240,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception ex)
 		{
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(origCursor);
+			// END KGU#901 2020-12-29
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
@@ -7128,6 +7251,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
+		// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+		finally {
+			setCursor(origCursor);
+		}
+		// END KGU#901 2020-12-29
 	}
 	// END KGU#815 2020-03-16
 
@@ -9370,7 +9498,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if(NSDControl!=null)
 		{
 			// START KGU#170 2016-04-01: Issue #143 - on opening the editor a comment popup should vanish
-			pop.setVisible(false);
+			hideComments();
 			// END KGU#170 2016-04-01
 			// START KGU#3 2015-10-25: Dedicated support for FOR loops
 			//InputBox inputbox = new InputBox(NSDControl.getFrame(),true);
@@ -9920,11 +10048,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (turtle == null)
 		{
-			turtle = new TurtleBox(500,500);
+			// START KGU#889 2020-12-28: Enh. #890 statusbar needs slightly more width
+			//turtle = new TurtleBox(500,500);
+			turtle = new TurtleBox(512, 560);
+			// END KGU#889 2020-12-28
 			// START KGU#685 2020-12-12: Enh. #704
 			Locales.getInstance().register(turtle.getFrame(), true);
 			turtle.setReverseZoomWheel(Element.E_WHEEL_REVERSE_ZOOM);
 			// END KGU#685 2020-12-12
+			// START KGU#894 2020-12-21: Issue #895 Wasn't correctly scaled (with "Nimbus")
+			turtle.updateLookAndFeel();
+			GUIScaler.rescaleComponents(turtle.getFrame());
+			// END KGU#894 2020-12-21
 		}
 		turtle.setVisible(true);
 		// Activate the executor (getInstance() is supposed to do that)
@@ -10448,7 +10583,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		RootAttributes licInfo = new RootAttributes(_root);
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.getFrame(), licInfo);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		hideComments();	// Issue #143: Hide the current comment popup if visible
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
 			_root.addUndo(true);
@@ -10462,14 +10597,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (this.findDialog == null) {
 			findDialog = new FindAndReplace(this);
 		}
-		pop.setVisible(false);
+		hideComments();
 		// Even if the Find&Replace dialog had been visible it has now to regain focus
 		findDialog.setVisible(true);
 	}
 	
 	/**
 	 * This only cares for the look and feel update of the Find&Replace dialog
-	 * (if it is open) and the Turtleizer.
+	 * (if it is open) and of the Turtleizer.
 	 */
 	protected void updateLookAndFeel()
 	{

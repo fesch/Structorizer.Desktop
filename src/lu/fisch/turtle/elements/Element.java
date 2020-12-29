@@ -31,10 +31,10 @@ package lu.fisch.turtle.elements;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: draw(Graphics2D, Rectangle),
- *                                      toString(), appendSpecificCSVInfo(StringBuilder, String)
+ *      Kay Gürtzig     2020-12-11      Enh. #704 API extension: toString(),
+ *                                      appendSpecificCSVInfo(StringBuilder, String)
  *      Kay Gürtzig     2020-12-13      Enh. #704 API extension: getFrom(), getTo(), getColor(),
- *                      2020-12-14      move(Dimension)
+ *      Kay Gürtzig     2020-12-22      Enh. #890 abstract method getNearestPoint(Point, boolean) added
  *
  ******************************************************************************************************
  *
@@ -43,7 +43,6 @@ package lu.fisch.turtle.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -79,21 +78,19 @@ public abstract class Element
     public abstract void draw(Graphics2D graphics);
 
     // START KGU#685 2020-12-11: Enh. #704
-    /**
-     * Like {@link #draw(Graphics2D)} but avoids drawing outside the visible area
-     * {@code viewRect} and expands the given {@link Dimension} {@code dim} if this
-     * Element is visible and exceeds it.
-     * @param graphics - the 2D drawing environment
-     * @param viewRect - visible clip of the graphics system (for acceleration)
-     */
-    public abstract void draw(Graphics2D graphics, Rectangle viewRect);
-    
     @Override
     public String toString()
     {
         return this.getClass().getSimpleName() + "(" + this.from + "," + this.to + "," + this.color + ")";
     }
     
+    /**
+     * Returns an appropriate string for a CSV row, using the given {@code separator}
+     * @param separator - character sequence to separate the columns (usually with
+     * length 1), internal default is {@code ","};
+     * @return the prepared string, comprising the coordinates and a subclass-specific
+     * addendum produced by {@link #appendSpecificCSVInfo(StringBuilder, String)}
+     */
     public String toCSV(String separator)
     {
         StringBuilder sb = new StringBuilder();
@@ -139,17 +136,17 @@ public abstract class Element
         return color;
     }
     // END KGU#685 2020-12-13
-
-    // START KGU#685 2020-12-14: Enh. #704
+    
+    // START KGU#889 2020-12-22: Enh. #890/9 (measuring with snap)
     /**
-     * Moves by the given {@code shift}
-     * @param shift - width and height specify the horizontal and vertical
-     * offset to move the element by
+     * Return the point of this element thatis closest to the given point
+     * {@code pt}
+     * @param pt - the interesting point
+     * @param inter - true if intermediate points (if existing) are also
+     * to be considered.
+     * @return the point nearest to {@code pt} on this shape
      */
-    public void move(Dimension shift) {
-        this.from.x += shift.width; this.from.y += shift.height;
-        this.to.x += shift.width; this.to.y += shift.height;
-    }
-    // END KGU#685 2020-12-14
+    public abstract Point getNearestPoint(Point pt, boolean inter);
+    // END KGU#889 2020-12-22
 
 }

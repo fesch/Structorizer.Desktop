@@ -78,6 +78,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-10-05  Bugfix #759: Exception catch in routinePoolChanged() as emergency workaround
  *      Kay Gürtzig     2020-01-20  Enh. #801: Key F1 now tries to open the PDF help file if offline
  *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
+ *      Kay Gürtzig     2020-12-28  Slight modifications to the status bar layout (icons, tooltip)
  *
  ******************************************************************************************************
  *
@@ -173,7 +174,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgConfirmRemove = new LangTextHolder("Do you really want to %1 the above diagram(s) from Arranger?");
 	public static final LangTextHolder msgReadyToExport = new LangTextHolder("Are you ready to export this sub-arrangement to PNG?");
 	public static final LangTextHolder msgCantDoWithMultipleRoots = new LangTextHolder("It is not possible to %1 more than one diagram at a time. You selected %2 diagram(s):\n- %3");
-	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("diagrams: %1, selected: %2");
+	public static final LangTextHolder msgDiagramsSelected = new LangTextHolder("%1, selected: %2");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show \"%\" in browser");
 	// START KGU#789 2020-01-20: Enh. #801
 	public static final LangTextHolder msgShowingOfflineGuide = new LangTextHolder("A recently downloaded User Guide is shown by your PDF reader instead.\nPlease go to section \"Arranger\" in chapter \"Features\".");
@@ -638,8 +639,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         //        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
         statusSize = new javax.swing.JLabel();
         statusViewport = new javax.swing.JLabel();
-        statusZoom = new javax.swing.JLabel();
+        statusZoom = new javax.swing.JLabel(IconLoader.getIcon(83));
         statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%1", "0").replace("%2", "0"));
+        statusSelection.setIcon(IconLoader.getIcon(0));
         statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
@@ -648,6 +650,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusSelection.setBorder(new javax.swing.border.CompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
                 new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
+        statusSelection.setToolTipText("Contained and curently selected diagrams");
         // START KGU#630 2019-01-09: Enh. #622/2
         chkDrawGroups = new javax.swing.JCheckBox("Show groups");
         chkSelectGroups = new javax.swing.JCheckBox("Select groups");

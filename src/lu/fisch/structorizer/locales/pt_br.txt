@@ -614,7 +614,7 @@ PrintPreview.btnOK.text=Imprimir
 PrintPreview.btnOK.tooltip=Imprimir o diagrama.
 
 -----[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Opções para exportar ...
+ExportOptionDialoge.title=Opções para exportar
 ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução. 
 ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida 
 ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.

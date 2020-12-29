@@ -52,6 +52,8 @@ package lu.fisch.structorizer.gui;
  *                                      Retrieval and traversal strategies unified (now tree is always completely shown)
  *      Kay Gürtzig     2019-09-29      Enh. #738: Update of code preview ensured after replacements
  *      Kay Gürtzig     2020-04-21      Bugfix #852: Replacements for strings containing 'ß' failed in case-ignorant mode
+ *      Kay Gürtzig     2020-12-28      Bugfix #900: Wrong comment search, wrong whole word check,
+ *                                      awkward initialisation of chkInTexts, chkInComments.
  *
  ******************************************************************************************************
  *
@@ -660,6 +662,12 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			chkInComments = new JCheckBox("In comments");
 			chkInComments.setSelected(!ini.getProperty("findInComments", "1").equals("0"));
 			pnlWherein.add(chkInComments);
+			// START KGU#876 2020-12-28: Bugfix #900 - Ensure there is a selection
+			if (!chkInTexts.isSelected() && !chkInComments.isSelected()) {
+				chkInTexts.setSelected(true);
+				chkInComments.setSelected(true);
+			}
+			// END KGU#876 2020-12-28
 			
 			ItemListener whereinListener = new ItemListener() {
 				@Override
@@ -1021,9 +1029,15 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			currentElement = ele;
 			// START KGU#480 2018-01-22: Enh. #490 
 			//this.splitTextToList(ele.getText(), this.partsText);
-			this.splitTextToList(ele.getAliasText(), this.partsText);
+			// START KGU#876 2020-12-28: Bugfix #900
+			//this.splitTextToList(ele.getAliasText(), this.partsText);
+			this.splitTextToList(ele.getAliasText(), this.partsText, chkInTexts.isSelected());
+			// END KGU#876 2020-12-28
 			// END KGU#480 2018-01-22
-			this.splitTextToList(ele.getComment(), this.partsComment);
+			// START KGU#876 2020-12-28: Bugfix #900
+			//this.splitTextToList(ele.getComment(), this.partsComment);
+			this.splitTextToList(ele.getComment(), this.partsComment, chkInComments.isSelected());
+			// END KGU#876 2020-12-28
 			// END KGU#454 2017-11-03
 		}
 		// START KGU#454 2017-11-03: Bugfix #448
@@ -1191,7 +1205,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			start += lenPart + matches[i].length();
 		}
 		// Finally we may have to re-combine wrong matches if we only may accept whole word matches
-		if (chkWholeWord.isSelected()) {
+		// START KGU#876 2020-12-28: Bugfix #900 we must ignore the selection if chkWholeWord is disabled
+		//if (chkWholeWord.isSelected()) {
+		if (chkWholeWord.isEnabled() && chkWholeWord.isSelected()) {
+		// END KGU#876 2020-12-28
 			StringList realParts = new StringList(); 
 			String part = parts[0];
 			for (int i = 0; i < nParts - 1; i++) {
@@ -1225,12 +1242,18 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * matches and the elements with uneven indices are the matches themselves.
 	 * @param text - the newline-separated source text as String
 	 * @param partList - empty {@link StringList} to be filled with the splitting results
+	 * @param enabled - whether the search/replacement in this kind of text is enabled
 	 * @return array of splitting results (i.e. the substrings around the matches)
 	 */
-	private int splitTextToList(StringList text, StringList partList) {
+	// START KGU#876 2020-12-28: Bugfix #900
+	private int splitTextToList(StringList text, StringList partList, boolean enabled) {
+	// END KGU#876 2020-12-28
 		String brokenText = text.getText();
 		StringList matches = new StringList();
-		if (chkInTexts.isSelected()) {
+		// START KGU#876 2020-12-28: Bugfix #900
+		//if (chkInTexts.isSelected()) {
+		if (enabled) {
+		// END KGU#876 2020-12-28
 			String pattern = (String)cmbSearchPattern.getEditor().getItem();
 			String[] parts = this.splitText(brokenText, pattern, matches);
 			for (int i = 0; i < parts.length - 1; i++) {
@@ -1720,7 +1743,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			}
 			// END KGU#454 2017-11-03
 		}
-		else if (chkWholeWord.isSelected()) {
+		// START KGU#876 2020-12-28: Bugfix #900 we must ignore the selection if chkWholeWord is disabled
+		//else if (chkWholeWord.isSelected()) {
+		else if (chkWholeWord.isEnabled() && chkWholeWord.isSelected()) {
+		// END KGU#876 2020-12-28
 			// FIXME: Maybe we should rather tokenize the string!?
 			String[] words = brokenText.split("\\W+");
 			for (String word: words) {

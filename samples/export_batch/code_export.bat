@@ -1,6 +1,6 @@
 @echo off
 rem Automated code export (test) script for Windows 2020-10-19
-rem 1. Set the path of the Structorizer.bat file in the environment variable Structorizer.
+rem 1. Set the path of the Structorizer.bat file in the environment variable STRUCTORIZER.
 rem 2. Make sure that diagrdir is correctly defined.
 rem 3. Specify the appropriate inifile (if the given ini files are not appropriate)
 rem 4. The resulting files will occur in the diagrdir as well and ought to be moved to the

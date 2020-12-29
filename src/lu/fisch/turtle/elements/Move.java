@@ -20,9 +20,28 @@
 
 package lu.fisch.turtle.elements;
 
+/******************************************************************************************************
+ *
+ *      Author:         Robert Fisch
+ *
+ *      Description:    Move - an invisible line in the Turtle graphics window
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2020-12-22      Enh. #890 method getNearestPoint(Point, boolean) implemented
+ *
+ ******************************************************************************************************
+ *
+ *      Comment: This class is completely redundant
+ *
+ ******************************************************************************************************///
+
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 
 /**
  *
@@ -41,11 +60,15 @@ public class Move extends Element
     {
     }
 
-    // START KGU#685 2020-12-11: Enh. #704
+    // START KGU#889 2020-12-22: Enh. #890/9 (measuring with snap)
     @Override
-    public void draw(Graphics2D graphics, Rectangle viewRect)
+    public Point getNearestPoint(Point pt, boolean inter)
     {
+        if (from.distance(pt) > to.distance(pt)) {
+            return to;
+        }
+        return from;
     }
-    // END KGU#685 2020-12-11
+    // END KGU#889 2020-12-22
 
 }

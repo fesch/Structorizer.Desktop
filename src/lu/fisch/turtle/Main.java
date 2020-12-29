@@ -34,7 +34,7 @@ public class Main {
      */
     public static void main(String[] args)
     {
-        /*TurtleBox turtle =*/ new TurtleBox(500,500);
+        /*TurtleBox turtle =*/ new TurtleBox(512,560);
         /*Mainform structorizer = new Mainform();*/
         //structorizer.getEditor().diagram.setDiagramController(turtle);
         //structorizer.getEditor().diagram.setAnalyser(false);

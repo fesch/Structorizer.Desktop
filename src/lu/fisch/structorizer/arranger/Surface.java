@@ -126,6 +126,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-02-16      Issue #815: Combined ArrangerFilter introduced for convenience
  *      Kay Gürtzig     2020-02-17      Bugfix #818: Strong inconsistencies by outdated method replace() mended.
  *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
+ *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
+ *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *
  ******************************************************************************************************
  *
@@ -182,6 +184,7 @@ package lu.fisch.structorizer.arranger;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -1225,6 +1228,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						rootMap.put(copiedRoot, diagram);
 						String rootName = copiedRoot.getMethodName();
 						addToNameMap(rootName, diagram);
+						//printNameMap(1228);	// FIXME DEBUG
 						// In theory, the diagram can't get orphaned here.
 						group.removeDiagram(diagr);
 						group.addDiagram(diagram);
@@ -1625,6 +1629,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
 		String prevCurDirPath = this.currentDirectory.getAbsolutePath();
 		// END KGU#316 2016-12-28
+		// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-29
 		try
 		{
 			// set up the file
@@ -1737,7 +1744,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 //			}
 //
 //			in.close();
-			
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			StringList problems = new StringList();
 			List<ArchiveRecord> records = (new Archivar()).loadArrangement(arrFile, unzippedFrom, currentDirectory, problems);
 			if (!problems.isEmpty()) {
@@ -1768,6 +1777,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		finally {
+			// START KGU#901 2020-12-29: Issue #901 WAIT_CURSOR on time-consuming actions
+			setCursor(origCursor);
+			// END KGU#901 2020-12-29
 			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
 			this.currentDirectory = new File(prevCurDirPath);
 			// END KGU#316 2016-12-28
@@ -2503,6 +2515,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			String rootName = root.getMethodName();
 			addToNameMap(rootName, diagram);
 			// END KGU#624 2018-12-26
+			//printNameMap(2507);
 			// START KGU 2015-11-30
 			// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
 			//Rectangle rec = root.getRect().getRectangle();
@@ -2808,6 +2821,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		rootMap.remove(diagr.root, diagr);
 		removeFromNameMap(diagr.getName(), diagr);
 		// END KGU#624 2018-12-26
+		//printNameMap(2813);	// FIXME DEBUG
 		// START KGU#626 2018-12-30: Enh. #657
 		for (String groupName: diagr.getGroupNames()) {
 			Group group = this.groups.get(groupName);
@@ -3519,6 +3533,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
+		// START KGU#896 2020-12-23: Enh. #896 Unambiguous indication of what will happen on dragging
+		Point mousePt = e.getPoint();
+		int trueX = Math.round(mousePt.x / zoomFactor);
+		int trueY = Math.round(mousePt.y / zoomFactor);
+		Diagram diagram = getHitDiagram(trueX, trueY);
+		if (dragArea == null && (diagram != null && (this.diagramsSelected.isEmpty() || this.diagramsSelected.contains(diagram)))) {
+			setCursor(new Cursor(Cursor.MOVE_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		/* The interesting things happen in mouseClicked() and mouseDragged() */
 		// START KGU#626 2018-12-23: Enh. #657
 		showPopupMenuIfTriggered(e);
@@ -3535,6 +3558,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (dragPoint != null) {
 			this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
 		}
+		// START KGU#896 2020-12-23: Enh. #896 Unambiguous indication of what will happen on dragging
+		if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		dragPoint = null;
 		if (dragArea != null) {
 			// Select all contained diagrams
@@ -3632,6 +3660,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	@Override
 	public void mouseMoved(MouseEvent e)
 	{
+		// START KGU#896 2020-12-23: Enh. #896 Dragging has definitely ended now
+		if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+		// END KGU#896 2020-12-23
 		if (this.drawGroups) {
 			pop.setVisible(false);
 			int x = (int)(e.getX() / this.zoomFactor);
@@ -3947,6 +3980,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (!oldRootName.equals(newRootName)) {
 					removeFromNameMap(oldRootName, diagr);
 					addToNameMap(newRootName, diagr);
+					//printNameMap(3953);	// FIXME DEBUG
 				}
 				// START KGU#626 2018-12-31: Update the root lists in the groups
 				for (String groupName: diagr.getGroupNames()) {
@@ -5392,5 +5426,26 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+	
+	// DEBUG
+//	private void printNameMap(int lineNo)
+//	{
+//		System.out.println("--------------------------------- " + lineNo + " -----------------------------------");
+//		for (Entry<String, Vector<Diagram>> entry: nameMap.entrySet()) {
+//			Vector<Diagram> diagrs = entry.getValue();
+//			if (diagrs.size() > 1) {
+//				System.out.println(entry.getKey() + ": ");
+//				for (Diagram diagr: diagrs) {
+//					StringList grpnames = new StringList(diagr.getGroupNames());
+//					System.out.println("\t" + diagr.root.getSignatureString(true) + ": " + grpnames.concatenate(","));
+//				}
+//			}
+//			else {
+//				Diagram diagr = diagrs.get(0);
+//				StringList grpnames = new StringList(diagr.getGroupNames());
+//				System.out.println(entry.getKey() + "= " + diagr.root.getSignatureString(true) + ": " + grpnames.concatenate(","));
+//			}
+//		}
+//	}
 
 }

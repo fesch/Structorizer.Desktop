@@ -119,6 +119,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-16      Bugfix #874: New warning variant error07_5 (non-ascii letters in identifiers)
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
+ *      Kay Gürtzig     2020-12-20      New message for bugfix #892
  *
  ******************************************************************************************************
  *
@@ -383,6 +384,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
+	// START KGU#892 2020-12-21: Enh. #893 - better visibility of preview locale
+	protected final JMenuItem menuPreferencesLanguagePreview = new JCheckBoxMenuItem("Translator preview", IconLoader.getIcon(113));
+	// END KGU#892 2020-12-21
 	// START KGU#479 2017-12-14: Enh. #492
 	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.getIcon(57));
 	// END KGU#479 2017-12-14
@@ -801,6 +805,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected static final LangTextHolder msgIniBackupFailed = new LangTextHolder("The creation of a backup of the current preferences failed.\nDo you still want to load \"%\"?");
 	protected static final LangTextHolder msgIniRestoreFailed = new LangTextHolder("Could not restore the last preferences backup%");
 	// END KGU#721 2019-08-06
+	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
+	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
+	// END KGU#893 2020-12-20
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
@@ -1427,6 +1434,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
 		// END KGU#232 2016-08-03
 		
+		// START KGU#892 2020-12-21: Enh. #893
+		menuPreferencesLanguage.add(menuPreferencesLanguagePreview);
+		menuPreferencesLanguagePreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { menuPreferencesLanguagePreview.setSelected(true); } } );
+		menuPreferencesLanguagePreview.setSelected(true);
+		menuPreferencesLanguagePreview.setVisible(false);
+		// END KGU#892 2020-12-21
+
 		// START KGU#300 2016-12-02: Enh. #300
 		menuPreferences.add(menuPreferencesNotifyUpdate);
 		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
@@ -2101,7 +2115,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
 			}
 			// END KGU#242 2016-09-04
+			// START KGU#232 2016-08-03: Enh. #222
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+			// START KGU#232 2016-08-03
+			// START KGU#892 2020-12-21: Enh. #893
+			menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
+			// START KGU#892 2020-12-21
 
 			// START KGU#721 2019-08-06: Enh. #740
 			menuPreferencesSaveRestore.setEnabled(Ini.getInstance().hasBackup());

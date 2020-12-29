@@ -55,10 +55,11 @@ import java.util.List;
  * Class is similar to java.awt.Desktop but provides some workarounds
  * for lacking integration with certain Linux distributions for launching
  * a browser, an editor, or some other standard application for given
- * files.
+ * files.<br/>
  * In contrast to java.awt.Desktop it is not a singleton but provides static
  * methods only. 
  * @author jjYBdx4IL
+ * @author codemanyak
  */
 public class Desktop {
 
