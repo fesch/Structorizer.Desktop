@@ -128,6 +128,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
+ *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
  *
  ******************************************************************************************************
  *
@@ -3205,6 +3206,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#650 2019-02-11
 		// START KGU#534 2018-06-27: Enh. #552
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
+		// START KGU#901 2020-12-30: Issue #901
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-30
 		try {
 			// END KGU#534 2018-06-27
 			Iterator<Diagram> iter = diagrams.iterator();
@@ -3220,6 +3224,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
 					form = someMainform = tempMainform = new Mainform(false);
 				}
+				// START KGU#901 2020-12-30: Issue #901
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				// END KGU#901 2020-12-30
 				// Postpone the saving of virgin diagrams here in case of saving to an archive (will be done later)
 				//if (form != null)
 				if (form != null && (hasFile || !forArchive)) 
@@ -3283,6 +3290,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#534 2018-06-29: Enh. #552
 		}
 		finally {
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(origCursor);
+			// END KGU#901 2020-12-30
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
 		// END KGU#534 2018-06-29
@@ -5219,9 +5229,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		boolean allDone = true;
 		StringList unsaved = new StringList();
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
+		// START KGU#901 2020-12-30: Issue #901
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-30
 		try {
 			// Saving an arrangement may modify the map of groups, so we get a copy first
 			Vector<Group> groupsToHandle = new Vector<Group>(this.groups.values());
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-30
 			for (Group group: groupsToHandle) {
 				/* It doesn't make sense to save the default group on window closing event
 				 * unless it contains some interdependent diagrams not shared anywhere.
@@ -5241,6 +5257,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		finally {
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(origCursor);
+			// END KGU#901 2020-12-30
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
 		if (!unsaved.isEmpty() && initiator != null) {

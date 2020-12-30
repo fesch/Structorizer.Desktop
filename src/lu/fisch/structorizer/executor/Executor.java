@@ -203,6 +203,11 @@ package lu.fisch.structorizer.executor;
  *
  *      Comment:
  *
+ *      2020-12-30 Issue #48
+ *      - It seems rather awkward to propagate the own delay to DelayableDiagramControllers as well because
+ *        this is prone to impose a twofold delay - both in Executor and in the DelayableDiagramController.
+ *        The one here is essential, of course, to ensure the chance to pause or stop. So the (additional)
+ *        delay in the DiagramController should be set 0.
  *      2017-10-28 Issue #443
  *      - Executor might potentially have to work with several DiagramControllers. So it is important
  *        efficiently to find out, what diagram controller routines are available and whether there are
@@ -2693,6 +2698,13 @@ public class Executor implements Runnable
 		if (diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController) {
+					/*
+					 * FIXME KGU#97 2020-12-30:
+					 * The good question here is: Why do we impose a delay to the
+					 * DiagramController at all? Isn't one delay (the one in  Executor)
+					 * enough? Why don't we just always set the DiagramController's
+					 * delay to 0?
+					 */
 					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
 					//delayed = true;
 				}
@@ -3112,12 +3124,19 @@ public class Executor implements Runnable
 		boolean delayChanged = aDelay != delay;
 		// END KGU#97 2015-12-10
 		delay = aDelay;
-		// START KGU#97 2015-12-10: Enh.Req. #48: Inform delay-aware DiaramControllers A.S.A.P.
+		// START KGU#97 2015-12-10: Enh.Req. #48: Inform delay-aware DiagramControllers A.S.A.P.
 		// START KGU#448 2017-10-28: Enh. #443 Revised to cope with several controllers
 		if (delayChanged && diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController)
 				{
+					/*
+					 * FIXME KGU#97 2020-12-30:
+					 * The good question here is: Why do we impose a delay to the
+					 * DiagramController at all? Isn't one delay (the one in Executor)
+					 * enough? Why don't we just always set the DiagramController's delay
+					 * to 0?
+					 */
 					((DelayableDiagramController) controller).setAnimationDelay(aDelay, false);
 				}
 			}
@@ -4428,7 +4447,7 @@ public class Executor implements Runnable
 		// and we MUST NOT re-initialize the diagramControllers on a subroutine!
 		if ((diagramControllers != null || !step) && callers.isEmpty())
 		{
-			// START KGU#448 2017-10-28: Enh. #443 use the internal interface not the diagram API
+			// START KGU#448 2017-10-28: Enh. #443 use the internal interface, not the diagram API
 			//getExec("init(" + delay + ")");
 			initRootExecDelay();
 			// END KGU#448 2017-10-28

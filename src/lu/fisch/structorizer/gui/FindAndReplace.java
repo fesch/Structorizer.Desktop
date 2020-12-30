@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-04-21      Bugfix #852: Replacements for strings containing 'ß' failed in case-ignorant mode
  *      Kay Gürtzig     2020-12-28      Bugfix #900: Wrong comment search, wrong whole word check,
  *                                      awkward initialisation of chkInTexts, chkInComments.
+ *      Kay Gürtzig     2020-12-30      Issue #901: Ensure wait cursor at least on action "replace all"
  *
  ******************************************************************************************************
  *
@@ -68,6 +69,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -1611,14 +1613,22 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * @param evt - the inducing event
 	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
-		// START KGU#684 2019-06-12: Bugfix #728
-		// If the search hasn't been initialised then find the first match
-		if (currentNode == null /*&& treeIterator == null*/) {
-			findActionPerformed(evt, false, false);
+		// START KGU#901 2020-12-30: Issue #901 show wait cursor on long-lasting actions
+		Cursor origCursor = getCursor();
+		try {
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-30
+			// START KGU#684 2019-06-12: Bugfix #728
+			// If the search hasn't been initialised then find the first match
+			if (currentNode == null /*&& treeIterator == null*/) {
+				findActionPerformed(evt, false, false);
+			}
+			// END KGU#684 2019-06-12
+			while (findActionPerformed(evt, true, true));
 		}
-		// END KGU#684 2019-06-12
-		while (findActionPerformed(evt, true, true));
-		
+		finally {
+			setCursor(origCursor);
+		}
 	}
 
 	/**

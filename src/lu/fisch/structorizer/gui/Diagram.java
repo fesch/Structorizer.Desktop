@@ -212,6 +212,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-25      Enh. #896: Cursor shape changes when element dragging is permissible,
  *                                      dragging elements above the target position enabled via the Shift key
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
+ *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR now also applied to saveAllNSD()
  *
  ******************************************************************************************************
  *
@@ -2458,6 +2459,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
 	{
 		startSerialMode();
+		// START KGU#901 2020-12-30: Issue #901
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-30
 		try {
 			if ((saveNSD(false)
 					|| JOptionPane.showConfirmDialog(this.getFrame(),
@@ -2465,10 +2469,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Menu.msgTitleSave.getText(),
 							JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
 					&& Arranger.hasInstance()) {
+				// START KGU#901 2020-12-30: Issue #901
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				// END KGU#901 2020-12-30
 				Arranger.getInstance().saveAll(this.getFrame());
 			}
 		}
 		finally {
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(origCursor);
+			// END KGU#901 2020-12-30
 			endSerialMode();
 		}
 	}

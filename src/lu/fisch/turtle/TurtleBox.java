@@ -55,6 +55,7 @@ package lu.fisch.turtle;
  *      Kay Gürtzig     2020-12-23      Bugfix #897: Numerical and endless loop risk on rl()/getOrientation()
  *      Kay Gürtzig     2020-12-26      Enh. #890: Icons indicating the snapping mode added to status bar
  *      Kay Gürtzig     2020-12-28      Issue #895: Workaround for scaling defect with NimbusLookAndFeel
+ *      Kay Gürtzig     2020-12-30      Enh. #890: The tooltip for statusSnap had to be set on initialisation
  *
  ******************************************************************************************************
  *
@@ -624,6 +625,15 @@ public class TurtleBox implements DelayableDiagramController
 			statusZoom.setToolTipText("Zoom factor");
 			// START KGU#889 2020-12-26: Enh. #890/8+11
 			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
+			// START KGU#889 2020-12-30: Enh. #890/11 - forgotten to initialise the tooltip
+			String snapTarget = msgSnapLines.getText();
+			if (!snapLines) {
+				snapTarget = msgSnapPoints.getText();
+			}
+			statusSnap.setToolTipText(msgSnapConfig.getText().
+					replace("%1", snapTarget).
+					replace("%2", Integer.toString(snapRadius)));
+			// END KGU#889 2020-12-30
 			/* For small fonts it is more important that the icon is visible on opening,
 			 * for larger fonts (upscaled GUI) it is more important that the panel has the
 			 * unified height which is only ensured if the label contains text */
