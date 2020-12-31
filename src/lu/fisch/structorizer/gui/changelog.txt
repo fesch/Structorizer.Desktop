@@ -170,8 +170,10 @@ Current development version: 3.30-14 (2020-12-31)
 - 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
 - 14: Issue #901: Wait cursor applied to further time-consuming actions <2>
-- 14: Bugfix #902: Fixes a focus loss in Arranger index and ensures that quitting
-      the pane offering an "add/move to group" action correctly cancels it.
+- 14: Bugfix #902 <2>:
+      1. Fixes a focus loss in Arranger index on selecting diagram or group nodes;
+      2. Ensures that quitting the "add/move to group" dialog correctly cancels;
+      3. Raises a confirmation dialog before dissolving groups via key binding
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

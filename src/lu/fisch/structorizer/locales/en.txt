@@ -1390,6 +1390,7 @@ ArrangerIndex.msgMembersComplete.text=Group is complete: No outward references
 ArrangerIndex.msgGroupMembersChanged.text=The set of member diagrams was modified.
 ArrangerIndex.msgGroupMembersMoved.text=The coordinates of some member diagrams were changed.
 ArrangerIndex.msgNewGroupName.text=New name for the selected group: 
+ArrangerIndex.msgConfirmDissolve.text=Sure to dissolve these group(s)?\n%
 
 -----> Executor
 -----[ Control ]-----

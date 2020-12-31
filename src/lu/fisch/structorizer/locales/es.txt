@@ -1375,6 +1375,7 @@ ArrangerIndex.msgMembersComplete.text=Grupo completo: No requeridos diagramas fu
 ArrangerIndex.msgGroupMembersChanged.text=El conjunto de miembros se ha cambiado.
 ArrangerIndex.msgGroupMembersMoved.text=Coordenadas de algunos miembros fueron variados.
 ArrangerIndex.msgNewGroupName.text=Nuevo nombre para el grupo:
+ArrangerIndex.msgConfirmDissolve.text=Cierto a descomponer este grupo/estos grupos?\n%
 
 -----> Executor
 -----[ Control ]-----

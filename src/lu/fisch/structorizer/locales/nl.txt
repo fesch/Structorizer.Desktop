@@ -1321,6 +1321,7 @@ ArrangerIndex.msgMembersComplete.text=Groep is compleet. Geen verwijzingen naar 
 ArrangerIndex.msgGroupMembersChanged.text=De verzameling van diagramleden is gewijzigd.
 ArrangerIndex.msgGroupMembersMoved.text=De coördinaten van sommige diagramleden zijn gewijzigd
 ArrangerIndex.msgNewGroupName.text=Nieuwe naam voor de geselecteerde groep:
+ArrangerIndex.msgConfirmDissolve.text=Wilt u echt ontbinden deze groepen?\n%
 
 -----> Executor
 -----[ Control ]-----

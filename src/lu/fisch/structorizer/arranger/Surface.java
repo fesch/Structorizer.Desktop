@@ -4946,10 +4946,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Removes the group with the given {@code name}.
-	 * @param withDiagrams - if true then the member diagrams will also be removed if not held by
-	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
-	 * @param initiator TODO
-	 * @return true if the group with given name had existed and has been removed.
+	 * @param name - the name of the group
+	 * @param withDiagrams - if {@code true} then the member diagrams will also be removed
+	 * if not held by any other group, otherwise the orphaned diagrams will be handed over
+	 * to the default group.
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
+	 * @return {@code true} if the group with given name had existed and has been removed.
 	 * @see #dissolveGroup(String, Component)
 	 */
 	protected boolean removeGroup(String name, boolean withDiagrams, Component initiator) {
@@ -4960,7 +4962,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Dissolves (clears) the group with the given {@code name}.
 	 * The member diagrams that are not shared by other groups will be handed over
 	 * to the default group.
-	 * @param initiator TODO
+	 * @param name - the name of the group
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
 	 * @return true if the group with given name had existed and has been cleared.
 	 * @see #removeGroup(String, boolean, Component)
 	 */
@@ -4975,8 +4978,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param deleteDiagrams - if true then the member diagrams will also be removed if not held by
 	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
 	 * @param deleteGroup - if the (empty) group is to be deleted in the event.
-	 * @param initiator TODO
-	 * @return true if the group with given name had existed and has been cleared.
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
+	 * @return {@code true} if the group with given name had existed and has been cleared.
 	 * @see #removeGroup(String, boolean, Component)
 	 */
 	private boolean clearGroup(String name, boolean deleteDiagrams, boolean deleteGroup, Component initiator) {

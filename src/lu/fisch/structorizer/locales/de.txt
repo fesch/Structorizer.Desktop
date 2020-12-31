@@ -1390,6 +1390,7 @@ ArrangerIndex.msgMembersComplete.text=Gruppe ist vollständig: Keine Verweise na
 ArrangerIndex.msgGroupMembersChanged.text=Die Menge der enthaltenen Diagramme hat sich geändert.
 ArrangerIndex.msgGroupMembersMoved.text=Die Koordinaten einiger enthaltener Diagramme wurden verändert.
 ArrangerIndex.msgNewGroupName.text=Neuer Name für die ausgewählte Gruppe:
+ArrangerIndex.msgConfirmDissolve.text=Sicher, diese Gruppe(n) aufzulösen?\n%
 
 -----> Executor
 -----[ Control ]-----
