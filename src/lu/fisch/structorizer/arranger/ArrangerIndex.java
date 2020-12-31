@@ -43,6 +43,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-04-01      Enh. #440: Group export to PapDesigner inserted in popup menu
  *      Kay Gürtzig     2020-06-06      Issue #868/#870: Suppression of group export in noExportImport mode
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
+ *      Kay Gürtzig     2020-12-31      Bugfix #902: Must regain focus after selecting, cancel add/move on closing the pane
  *
  ******************************************************************************************************
  *
@@ -1406,9 +1407,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		boolean done = false;
 		/* For a single selected Root, it makes of course sense not to offer its source
 		 * groups among the targets, but with distributed selection we must face a situation
-		 * that the selected Root objects are members of many different groups - so would cost
-		 * too much efforts for a rather unimportant effect - if the user selects the source
-		 * group as target group then simply nothing will happen. So we don't bother.
+		 * that the selected Root objects are members of many different groups - so it would
+		 * cost too much effort for a rather unimportant effect: if the user selects the
+		 * source group as target group then simply nothing will happen. Hence we don't bother.
 		 * Nevertheless after the target was chosen we will of course take he actual paths
 		 * into consideration.
 		 */ 
@@ -1429,7 +1430,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 					this.pnlGroupSelect,
 					popupIndexAttach.getText(),
 					JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, IconLoader.getIcon(117), options, options[0]);
-			if (option < options.length-1) {
+			// START KGU#900 2020-12-31: Issue #902 Closing the pane was mis-interpreted as move acted
+			//if (option < options.length-1) {
+			if (option >= 0 && option < options.length-1) {
+			// END KGU#900 2020-12-31
 				Group targetGroup = (Group)cmbTargetGroup.getSelectedItem();
 				if (option == 0) {
 					// Simply add the roots to the target group
@@ -1453,6 +1457,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				}
 			}
 		}
+		// Tidy the combo box for later reuse
 		cmbTargetGroup.removeAllItems();
 		return done;
 	}
@@ -1516,7 +1521,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				else if (selectedObject instanceof Group) {
 					Arranger.scrollToGroup((Group)selectedObject);
 				}
-				
+				// START KGU#900 2020-12-31: Bugfix #902
+				// We must regain the focus that will have been snatched off by notifications
+				this.requestFocusInWindow();
+				// END KGU#900 2020-12-31
 			}
 			else if (e.getClickCount() == 2) {
 				// START KGU#626 2019-01-01: Enh. #657

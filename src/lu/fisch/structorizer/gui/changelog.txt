@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-14 (2020-12-30)
+Current development version: 3.30-14 (2020-12-31)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -170,6 +170,8 @@ Current development version: 3.30-14 (2020-12-30)
 - 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
 - 14: Issue #901: Wait cursor applied to further time-consuming actions <2>
+- 14: Bugfix #902: Fixes a focus loss in Arranger index and ensures that quitting
+      the pane offering an "add/move to group" action correctly cancels it.
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

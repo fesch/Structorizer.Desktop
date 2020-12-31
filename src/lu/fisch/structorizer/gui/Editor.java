@@ -928,6 +928,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		toolbar = newToolBar("Display mode", true);
 		
 		toolbar.add(lblSwitchComments);
+		toolbar.add(new JLabel(" "));	// FIXME Better way to ensure a sensible gap, e.g. insets?
 		toolbar.add(lblOperatorsC);
 		lblSwitchComments.setFocusable(false);
 		lblOperatorsC.setFocusable(false);
