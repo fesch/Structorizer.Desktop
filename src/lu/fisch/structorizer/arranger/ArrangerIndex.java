@@ -1364,7 +1364,13 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
 			}
 		}
-		return Arranger.getInstance().makeGroup(this.arrangerIndexGetSelectedRoots(false), this, expand);
+		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+		//Arranger.getInstance().makeGroup(this.arrangerIndexGetSelectedRoots(false), this, expand);
+		boolean done = Arranger.getInstance().makeGroup(this.arrangerIndexGetSelectedRoots(false), this, expand);
+		this.requestFocusInWindow();
+		return done;
+		// END KGU#900 2020-12-31
+
 	}
 
 	/** Dissolves the selected group(s) i.e. detaches all contained diagrams. If a diagram gets
@@ -1398,6 +1404,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		for (Group group: groups) {
 			done = Arranger.getInstance().dissolveGroup(group.getName(), this) && done;
 		}
+		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+		this.requestFocusInWindow();
+		// END KGU#900 2020-12-31
 		return done && !groups.isEmpty();
 	}
 
@@ -1420,6 +1429,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				}
 			}
 		}
+		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+		this.requestFocusInWindow();
+		// END KGU#900 2020-12-31
 		return done;
 	}
 	
@@ -1456,7 +1468,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			int option = JOptionPane.showOptionDialog(this,
 					this.pnlGroupSelect,
 					popupIndexAttach.getText(),
-					JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, IconLoader.getIcon(117), options, options[0]);
+					JOptionPane.DEFAULT_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					IconLoader.getIcon(117),
+					options, options[0]);
 			// START KGU#900 2020-12-31: Issue #902 Closing the pane was mis-interpreted as move acted
 			//if (option < options.length-1) {
 			if (option >= 0 && option < options.length-1) {
@@ -1486,6 +1501,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		}
 		// Tidy the combo box for later reuse
 		cmbTargetGroup.removeAllItems();
+		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+		this.requestFocusInWindow();
+		// END KGU#900 2020-12-31
 		return done;
 	}
 	// END KGU#626 2019-01-03
@@ -1506,6 +1524,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		if (group != null) {
 			group.setVisible(show);
 			Arranger.getInstance().routinePoolChanged(null, IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED);
+			// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+			this.requestFocusInWindow();
+			// END KGU#900 2020-12-31
 		}
 	}
 	// END KGU#630 2019-01-13
@@ -1517,7 +1538,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		if (group != null) {
 			String newName = JOptionPane.showInputDialog(this, msgNewGroupName.getText(), group.getName());
 			Arranger.getInstance().renameGroup(group, newName, this);
-		}		
+			// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
+			this.requestFocusInWindow();
+			// END KGU#900 2020-12-31
+		}
 	}
 	// END KGU#669 2019-03-01
 	
