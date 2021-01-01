@@ -9244,15 +9244,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
-    // START KGU#227 2016-07-31: Enh. #128
-    void setCommentsPlusText(boolean _activate)
-    {
-    	Element.E_COMMENTSPLUSTEXT = _activate;
-    	this.resetDrawingInfo();
-    	analyse();
-    	repaint();
-    }
-    // END KGU#227 2016-07-31
+	// START KGU#227 2016-07-31: Enh. #128
+	void setCommentsPlusText(boolean _activate)
+	{
+		Element.E_COMMENTSPLUSTEXT = _activate;
+		this.resetDrawingInfo();
+		analyse();
+		// START KGU#904 2021-01-01: Repaint allone did not adjust the scroll area
+		//repaint();
+		redraw();
+		// END KGU#904 2021-01-01
+	}
+	// END KGU#227 2016-07-31
 
 	public void setToggleTC(boolean _tc)
 	{
