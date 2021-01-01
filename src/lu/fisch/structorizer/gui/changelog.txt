@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-14 (2020-12-31)
+Current development version: 3.30-14 (2021-01-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -174,6 +174,8 @@ Current development version: 3.30-14 (2020-12-31)
       1. Fixes a focus loss in Arranger index on selecting diagram or group nodes;
       2. Ensures that quitting the "add/move to group" dialog correctly cancels;
       3. Raises a confirmation dialog before dissolving groups via key binding
+- 14: Enh. #903 Syntax highlighting also applies in "Switch text/comment" mode <2>
+- 14: Bugfix #904 Display of controller aliases suppressed other function names <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

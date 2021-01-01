@@ -139,16 +139,16 @@ public class Parallel extends Element
 		// END KGU#172 2016-04-01
 	}
     // END KGU#91 2015-12-01
-    
+
     // START KGU#227 2016-07-31: Enh. #128 new helper method
     private String getGenericText()
     {
-    	return getClass().getSimpleName() + "(" + this.text.get(0) + ")";
+        return getClass().getSimpleName() + "(" + this.text.get(0) + ")";
     }
     // END KGU#227 2016-07-31
-    
-    // START KGU#122 2016-01-04: Add the Class name (or some localized text?) to the number of threads
-    @Override
+
+	// START KGU#122 2016-01-04: Add the Class name (or some localized text?) to the number of threads
+	@Override
 	public StringList getCollapsedText()
 	{
 		// START KGU#227 2016-07-30: Enh. #128 - This is getting rickier now - must must distinguish modes
@@ -156,10 +156,10 @@ public class Parallel extends Element
 		//sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
 		StringList sl = StringList.getNew(this.getGenericText());
 		sl.add(COLLAPSED);
-    	if (isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
-    	{
-    		sl.set(0, this.getGenericText() + " - " + this.getComment().get(0));
-    	}
+		if (isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
+		{
+			sl.set(0, this.getGenericText() + " - " + this.getComment().get(0));
+		}
 		// END KGU#227 2016-07-30
 		return sl;
 	}
@@ -778,4 +778,5 @@ public class Parallel extends Element
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
 }

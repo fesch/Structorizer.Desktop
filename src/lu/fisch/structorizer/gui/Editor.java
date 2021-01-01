@@ -87,6 +87,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: New toolbar with 2 display mode indicators
  *      Kay Gürtzig     2020-12-11      Bugfix #885: Display mode indicator visibility mended
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the mode display was still flawed
+ *      Kay Gürtzig     2021-01-01      Enh. #903: C operator display mode indicator visibility modified
  *
  ******************************************************************************************************
  *
@@ -1481,8 +1482,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 				Menu.getLocalizedMenuPath(pathSwitchComments, null)));
 		// START KGU#887 2020-12-11: Bugfix #885
 		//lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && !Element.E_TOGGLETC);
-		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS 
-				&& (!Element.isSwitchTextCommentMode()));
+		// START KGU#902 2021-01-01: Enh. #903 May now also work in SwitchTextComment mode
+		//lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS 
+		//		&& (!Element.isSwitchTextCommentMode()));
+		lblOperatorsC.setEnabled(Element.E_SHOW_C_OPERATORS && Element.E_VARHIGHLIGHT);
+		// END KGU#902 2021-01-01
 		// END KGU#887 2020-12-11
 		lblOperatorsC.setToolTipText(buildMessageWithMenuRef(
 				lblOperatorsC.isEnabled() ? ttOperatorsC : msgInactiveMode,

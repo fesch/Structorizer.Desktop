@@ -75,7 +75,7 @@ public abstract class BString
 			str = str.replace("\"","&#34;");
 			//str=BString.replace(str," ","&nbsp;");
 			
-			// START KGU 2019-11-22: The following code was irrelevant for the result! Should we have return res (if not null)?
+			// START KGU 2019-11-22: The following code was irrelevant for the result! Should we have returned res (if not null)?
 			//String res = null;
 			//try {
 			//	byte[] utf8 = str.getBytes("UTF-8");

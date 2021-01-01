@@ -522,8 +522,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     protected Vector<String> recentFiles = new Vector<String>();
 
     // popup for comment
+    /** The Label the comment popup consists of */
     private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
+    /** The popup for the comment */
     private JPopupMenu pop = new JPopupMenu();
+    // START KGU#902 2021-01-01: Enh. #903
+    /** The Element that most recently fed the {@link #lblPop} */
+    private Element poppedElement = null;
+    // END KGU#902 2021-01-01
 
     // toolbar management
     public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();    
@@ -950,6 +956,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void hideComments()
 	{
 		pop.setVisible(false);
+		// START KGU#902 2021-01-01: Enh. #903 Make sure the pop info gets refreshed
+		poppedElement = null;
+		// END KGU#902 2021-01-01
 	}
 
 	@Override
@@ -958,10 +967,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("MouseMoved at (" + e.getX() + ", " + e.getY() + ")");
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
 		//if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-		if(e.getSource()==this && NSDControl!=null)
+		if (e.getSource() == this && NSDControl != null)
 		{
 			boolean popVisible = false;
-			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
+			if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
 			{
 				//System.out.println("=================== MOUSE MOVED (" + e.getX()+ ", " +e.getY()+ ")======================");
 				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
@@ -973,33 +982,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (selEle != null &&
 						!selEle.getComment(false).getText().trim().isEmpty())
 				{
-					// START KGU#199 2016-07-07: Enh. #188 - we must cope with combined comments now
-					//StringList comment = selEle.getComment(false);
-					StringList comment = StringList.explode(selEle.getComment(false), "\n");
-					comment.removeAll("");	// Don't include empty lines here
-					// END KGU#199 2016-07-07
-					String htmlComment = "<html>" + BString.encodeToHtml(comment.getText()).replace("\n", "<br>") + "</html>";
-					if(!lblPop.getText().equals(htmlComment))
-					{
-						lblPop.setText(htmlComment);
-					}
-					int maxWidth = 0;
-					int si = 0;
-					for (int i = 0; i < comment.count(); i++)
-					{
-						if (maxWidth < comment.get(i).length())
+					// START KGU#902 2021-01-01: Enh. #903
+					//// START KGU#199 2016-07-07: Enh. #188 - we must cope with combined comments now
+					////StringList comment = selEle.getComment(false);
+					//StringList comment = StringList.explode(selEle.getComment(false), "\n");
+					//comment.removeAll("");	// Don't include empty lines here
+					//// END KGU#199 2016-07-07
+					//String htmlComment = "<html>" + BString.encodeToHtml(comment.getText()).replace("\n", "<br/>") + "</html>";
+					//if(!lblPop.getText().equals(htmlComment))
+					//{
+					//	lblPop.setText(htmlComment);
+					//}
+					if (selEle != poppedElement) {
+						StringBuilder sb = new StringBuilder();
+						StringList comment = selEle.appendHtmlComment(sb);
+						lblPop.setText(sb.toString());
+						int maxWidth = 0;
+						int si = 0;
+						for (int i = 0; i < comment.count(); i++)
 						{
-							maxWidth = comment.get(i).length();
-							si=i;
+							if (maxWidth < comment.get(i).length())
+							{
+								maxWidth = comment.get(i).length();
+								si=i;
+							}
 						}
+						lblPop.setPreferredSize(
+								new Dimension(
+										8 + lblPop.getFontMetrics(lblPop.getFont()).
+										stringWidth(comment.get(si)),
+										comment.count()*lblPop.getFontMetrics(lblPop.getFont()).getHeight()
+										)
+								);
+						poppedElement = selEle;
 					}
-					lblPop.setPreferredSize(
-							new Dimension(
-									8 + lblPop.getFontMetrics(lblPop.getFont()).
-									stringWidth(comment.get(si)),
-									comment.count()*lblPop.getFontMetrics(lblPop.getFont()).getHeight()
-									)
-							);
+					// END KGU#902 2021-01-01
 
 					int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
 					int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
@@ -1817,6 +1834,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void resetDrawingInfo()
 	{
 		root.resetDrawingInfoDown();
+		// START KGU#902 2021-01-01: Enh. #903
+		poppedElement = null;
+		// END KGU#902 2021-01-01
 		if (isArrangerOpen())
 		{
 			Arranger.getInstance().resetDrawingInfo(this.hashCode());
@@ -9085,6 +9105,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
 		root.resetDrawingInfoDown();
 		root.setProgram(false);
+		// START KGU#902 2021-01-01: Enh. #903
+		poppedElement = null;
+		// END KGU#902 2021-01-01
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
 		root.setChanged(true);
@@ -9109,6 +9132,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
 		root.resetDrawingInfoDown(); 
 		// START KGU#703 2019-03-30: Issue #720
+		// START KGU#902 2021-01-01: Enh. #903
+		poppedElement = null;
+		// END KGU#902 2021-01-01
 		boolean poolModified = false;
 		if (root.isInclude() && Arranger.hasInstance()) {
 			for (Root root: Arranger.getInstance().findIncludingRoots(root.getMethodName(), true)) {
@@ -9148,6 +9174,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
 		root.resetDrawingInfoDown(); 
 		root.setInclude();
+		// START KGU#902 2021-01-01: Enh. #903
+		poppedElement = null;
+		// END KGU#902 2021-01-01
 		// START KGU#703 2019-03-30: Issue #720
 		boolean poolModified = false;
 		if (Arranger.hasInstance()) {

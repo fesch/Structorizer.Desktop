@@ -120,6 +120,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
  *      Kay Gürtzig     2020-12-20      New message for bugfix #892
+ *      Kay Gürtzig     2021-01-01      Enh. #903: menuDiagramOperatorsC enabling condition modified
  *
  ******************************************************************************************************
  *
@@ -2041,7 +2042,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
 			// START KGU#887 2020-12-15: Bugfix #885
 			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
-			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			// START KGU#902 2021-01-01: Enh. #903 May now also work in StichTextComment mode
+			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT);
+			// END KGU#902 2021-01-01
 			// END KGU#887 2020-12-15
 			// END KGU#872 2020-10-17
 
