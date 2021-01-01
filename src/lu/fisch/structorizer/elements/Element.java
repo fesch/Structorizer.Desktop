@@ -117,6 +117,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-11-01      Issue #881: Highlighting of bit operators and Boolean literals
  *      Kay Gürtzig     2021-01-01      Issue #903: Syntax highlighting also in Popup when text and comment are switched
  *                                      Bugfix #904: Controller alias display wiped off all other routine names
+ *                                      Issue #872: '=' in routine headers must not be replaced by "==" for C operator mode
  *
  ******************************************************************************************************
  *
@@ -3759,8 +3760,12 @@ public abstract class Element {
 			// END KGU#377 2017-03-30
 			// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
 			if (E_SHOW_C_OPERATORS) {
-				if (!(_elem instanceof Instruction && ((Instruction)_elem).isTypeDefinition())) {
-					// Don't replace '=' in type definitions!
+				// Don't replace '=' in type definitions and optional parameters!
+				// START KGU#872 2021-01-01: Issue #872 - we must suppress it with routine headers, too
+				//if (!(_elem instanceof Instruction && ((Instruction)_elem).isTypeDefinition())) {
+				if (!(_elem instanceof Instruction && ((Instruction)_elem).isTypeDefinition()
+						|| _elem instanceof Root && ((Root)_elem).isSubroutine())) {
+				// END KGU#872 2021-01-01
 					parts.replaceAll("=", "==");
 				}
 				parts.replaceAll("\u2190", "=");

@@ -169,6 +169,7 @@ Current development version: 3.30-14 (2021-01-01)
 - 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
 - 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
+- 14: Issue #872: Wrong conversion '=' -> '==' in routine headers for C style <2>
 - 14: Issue #901: Wait cursor applied to further time-consuming actions <2>
 - 14: Bugfix #902 <2>:
       1. Fixes a focus loss in Arranger index on selecting diagram or group nodes;

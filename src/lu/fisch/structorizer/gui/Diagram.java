@@ -213,6 +213,7 @@ package lu.fisch.structorizer.gui;
  *                                      dragging elements above the target position enabled via the Shift key
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR now also applied to saveAllNSD()
+ *      Kay Gürtzig     2021-01-01      Enh. #903: Syntax highlighting in popup, popup adaption on L&F change
  *
  ******************************************************************************************************
  *
@@ -1007,11 +1008,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								si=i;
 							}
 						}
+						int width = lblPop.getFontMetrics(lblPop.getFont()).
+								stringWidth(comment.get(si));
+						if (lblPop.getText().contains("<strong>")) {
+							width *= 1.2;
+						}
 						lblPop.setPreferredSize(
 								new Dimension(
-										8 + lblPop.getFontMetrics(lblPop.getFont()).
-										stringWidth(comment.get(si)),
-										comment.count()*lblPop.getFontMetrics(lblPop.getFont()).getHeight()
+										8 + width,
+										comment.count() * lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 										)
 								);
 						poppedElement = selEle;
@@ -10650,6 +10655,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	protected void updateLookAndFeel()
 	{
+		// START KGU#902 2021-01-01: Enh. #903
+		try {
+			javax.swing.SwingUtilities.updateComponentTreeUI(this.pop);
+		}
+		catch (Exception ex) {}
+		// END KGU#902 2021-01-01
 		if (this.findDialog != null) {
 			try {
 				javax.swing.SwingUtilities.updateComponentTreeUI(this.findDialog);
