@@ -118,6 +118,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-01      Issue #903: Syntax highlighting also in Popup when text and comment are switched
  *                                      Bugfix #904: Controller alias display wiped off all other routine names
  *                                      Issue #872: '=' in routine headers must not be replaced by "==" for C operator mode
+ *                      2021-01-02      Enh. #905: Method to draw a red triangle if an error entry refers to the element
  *
  ******************************************************************************************************
  *
@@ -215,6 +216,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
@@ -436,8 +438,12 @@ public abstract class Element {
 	// END KGU#477 2017-12-06
 	/** Show FOR loops according to DIN 66261? */
 	public static boolean E_DIN = false;
-	/* Analyser enabled? */
+	/** Is Analyser enabled? */
 	public static boolean E_ANALYSER = true;
+	// START KGU#906 2021-01-02: Enh. #905
+	/** Shall warning markers be drawn in flawed elements? */
+	public static boolean E_ANALYSER_MARKER = true;
+	// END KGU#906 2021-01-02
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	/** Is collapsing by mouse wheel rotation enabled? */
 	public static boolean E_WHEELCOLLAPSE = false;
@@ -584,6 +590,10 @@ public abstract class Element {
 	private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[,](.*?)[)](.*?)");
 	private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[)](.*?)");
 	// END KGU#575 2018-09-17
+	
+	// START KGU#906 2021-01-02: Enh. #905 Draw markers on elements with related Analyser reports
+	protected static final int CANVAS_FLAGNO_ERROR_CHECK = 0;
+	// END KGU#906 2021-01-02
 
 	// START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
@@ -743,6 +753,7 @@ public abstract class Element {
 
 	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
 	private static long lastId = 0;
+
 	/**
 	 * Change- and cloning-invariant id of this element
 	 */
@@ -2301,6 +2312,44 @@ public abstract class Element {
 	}
 	// END KGU 2015-10-11
 
+	// START KGU#906 2021-01-02: Enh.
+	/**
+	 * Places a small red triangle in the upper left corner if this element
+	 * is referred to by some {@link DetectedError} record in the owning
+	 * {@link Root}.
+	 * @param _canvas - the drawing canvas
+	 * @param _rect - the outer drawing rectangle
+	 */
+	protected void drawWarningSignOnError(Canvas _canvas, Rect _rect) {
+		if (E_ANALYSER && E_ANALYSER_MARKER && _canvas.isSetFlag(CANVAS_FLAGNO_ERROR_CHECK)) {
+			Root myRoot = getRoot(this);
+			if (myRoot != null && myRoot.errors != null && !myRoot.errors.isEmpty()) {
+				for (DetectedError error: myRoot.errors) {
+					if (this == error.getElement()) {
+						Color oldCol = _canvas.getColor();
+						_canvas.setColor(Color.RED);
+						int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
+						int yBase = _rect.top + E_PADDING/4 + height;
+						int[] xCoords = new int[] {
+								_rect.left + E_PADDING/4,		// left base corner
+								_rect.left + 3 * E_PADDING/4,	// right base corner
+								_rect.left + E_PADDING/2		// top corner
+						};
+						int[] yCoords = new int[] {
+								yBase,					// left base corner
+								yBase,					// right base corner
+								_rect.top + E_PADDING/4	// top corner
+						};
+						_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
+						_canvas.setColor(oldCol);
+						break;
+					}
+				}
+			}
+		}
+	}
+	// END KGU#906 2021-01-02
+
 	/**
 	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
 	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
@@ -3520,7 +3569,9 @@ public abstract class Element {
 		sb.append("<html>");
 		StringList lines = this.getComment(false);
 		if (isSwitchTextCommentMode()) {
-			lines = prepareTextForDisplay(lines);
+			if (Element.E_APPLY_ALIASES) {
+				lines = StringList.explode(Element.replaceControllerAliases(lines.getText(), true, Element.E_VARHIGHLIGHT), "\n");
+			}
 			Root myRoot = getRoot(this);
 			for (int i = 0; i < lines.count(); i++) {
 				if (i > 0) {
@@ -3582,19 +3633,6 @@ public abstract class Element {
 		else {
 			sb.append(BString.encodeToHtml(line));
 		}
-	}
-	
-	/**
-	 * Prepares the (assumed) element text for display
-	 * @param _lines - a somehow (broken, unbroken, cute or whatever) extracted
-	 * element text
-	 * @return the prepared text (e.g. controller aliases might be relaced)
-	 */
-	protected StringList prepareTextForDisplay(StringList _lines) {
-		if (Element.E_APPLY_ALIASES) {
-			_lines = StringList.explode(Element.replaceControllerAliases(_lines.getText(), true, Element.E_VARHIGHLIGHT), "\n");
-		}
-		return _lines;
 	}
 	
 	/**
@@ -3914,7 +3952,8 @@ public abstract class Element {
 									normalText.delete(0, Integer.MAX_VALUE);
 									lastWasNormal = false;
 								}
-								hlUnits.add(_elem.makeHighlightUnit(display.substring(0, display.indexOf('#')), Color.BLACK, false, true));
+								hlUnits.add(_elem.makeHighlightUnit(display.substring(0, display.indexOf('#')),
+										Color.BLACK, false, true));
 								// END KGU#701 2019-03-29
 								// START KGU#903 2021-01-01: Bugfix #904
 								wasHandled = true;

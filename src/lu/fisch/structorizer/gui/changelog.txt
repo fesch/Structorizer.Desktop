@@ -177,6 +177,7 @@ Current development version: 3.30-14 (2021-01-01)
       3. Raises a confirmation dialog before dissolving groups via key binding
 - 14: Enh. #903 Syntax highlighting also applies in "Switch text/comment" mode <2>
 - 14: Bugfix #904 Display of controller aliases suppressed other function names <2>
+- 14: Enh. #905 Marker symbol on elements with Analyser warnings or errors <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

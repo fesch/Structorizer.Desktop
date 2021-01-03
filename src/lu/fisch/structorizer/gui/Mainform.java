@@ -95,7 +95,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
  *      Kay Gürtzig     2020-10-17      Enh. #872: New Ini property "showOpsLikeC"
  *      Kay Gürtzig     2020-10-18      Bugfix #876: Defective saving and loading of (partial) Ini files mended
- *                                      several public comments added. 
+ *                                      several public comments added.
+ *      Kay Gürtzig     2021-01-02      Enh. #905: New INI property "drawAnalyserMarks"
  *
  ******************************************************************************************************
  *
@@ -744,6 +745,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// END KGU#456 2017-11-05
 			}
 			// END KGU#2/KGU#78 2016-08-12
+			// START KGU#906 2021-01-02: Enh. #905
+			Element.E_ANALYSER_MARKER = ini.getProperty("drawAnalyserMarks", "1").equals("1");
+			// END KGU#906 2021-01-02
 			
 			if (diagram != null) 
 			{

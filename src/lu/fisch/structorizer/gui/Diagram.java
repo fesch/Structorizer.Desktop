@@ -8524,6 +8524,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
+		// START KGU#906 2021-01-02: Enh. #905
+		analyserPreferences.chkDrawWarningSign.setSelected(Element.E_ANALYSER_MARKER);
+		// END KGU#906 2021-01-02
 		// START KGU#459 2017-11-15: Enh. #459-1
 		boolean hadActiveTutorials = false;
 		for (int code: AnalyserPreferences.getOrderedGuideCodes()) {
@@ -8546,6 +8549,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
 			}
 			// END KGU#239 2016-08-12
+			// START KGU#906 2021-01-02: Enh. #905
+			boolean markersWereOn = Element.E_ANALYSER_MARKER;
+			Element.E_ANALYSER_MARKER = analyserPreferences.chkDrawWarningSign.isSelected();
+			// END KGU#906 2021-01-02
 
 			// save fields to ini-file
 			Root.saveToINI();
@@ -8564,6 +8571,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// re-analyse
 			//root.getVarNames();	// Is done by root.analyse() itself
 			analyse();
+			// START KGU#906 2021-01-02: Enh. #905
+			if (markersWereOn != Element.E_ANALYSER_MARKER) {
+				redraw();
+			}
+			// END KGU#906 2021-01-02
 		// START KGU#393 2017-05-09: Issue #400
 		}
 		// END KGU#393 2017-05-09		
