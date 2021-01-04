@@ -198,6 +198,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-10-19      Issue #879: Inappropriate handling of input looking like initializers
  *      Kay Gürtzig     2020-12-14      Issue #829 revoked (Control will by default close after execution)
  *      Kay Gürtzig     2020-12-25      Bugfix #898: Results of substituted Turtleizer functions must be put in parentheses 
+ *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *
  ******************************************************************************************************
  *
@@ -977,6 +978,10 @@ public class Executor implements Runnable
 	/** The first element of a currently executed mere declaration sequence */
 	private Instruction lastDeclarationSurrogate = null;
 	// END KGU#477 2017-12-10
+	// START KGU#907 2021-01-04: Enh. #906 Allow to step into or step over a Call
+	/** {@link Call} element currently to be executed (in paused mode) or {@code null} */
+	private Call currentCall;
+	// END KGU#907 2021-01-04
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
 	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
@@ -1447,8 +1452,7 @@ public class Executor implements Runnable
 	}
 
 	/**
-	 * @param aStep
-	 *            the step to set
+	 * Instigates the next execution step
 	 */
 	public void doStep()
 	{
@@ -1969,7 +1973,7 @@ public class Executor implements Runnable
 										step = true;
 										// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 										//control.setButtonsForPause();
-										control.setButtonsForPause(false);	// This avoids interference with the pause button
+										control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 										// END KGU#379 2017-04-12
 									}
 								}
@@ -2189,7 +2193,7 @@ public class Executor implements Runnable
 			btnPause.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) 
 				{
-					step = true; paus = true; control.setButtonsForPause(true);
+					step = true; paus = true; control.setButtonsForPause(true, false);
 					if (event.getSource() instanceof JButton)
 					{
 						Container parent = ((JButton)(event.getSource())).getParent();
@@ -3169,8 +3173,7 @@ public class Executor implements Runnable
 	 */
 
 	/**
-	 * @param aPaus
-	 *            the step to set
+	 * @param aPaus - whether the execution is to pause
 	 */
 	public void setPaus(boolean aPaus)
 	{
@@ -4328,13 +4331,31 @@ public class Executor implements Runnable
 		if (atBreakpoint) {
 			// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 			//control.setButtonsForPause();
-			control.setButtonsForPause(false);	// This avoids interference with the pause button
+			// START KGU#907 2021-01-04: Enh. #906
+			//control.setButtonsForPause(false);	// This avoids interference with the pause button
+			control.setButtonsForPause(false,	// This avoids interference with the pause button
+					element instanceof Call);	// This re-dedicates the pause button and the step button
+			// END KGU#907 2021-01-04
 			// END KGU#379 2017-04-12
 			this.setPaus(true);
 		}
 		return atBreakpoint;
 	}
 	// END KGU#43 2015-10-12
+	
+	// START KGU#907 2021-01-04: Enh. #906
+	/**
+	 * If there is a currently executed Call then flags for pausing after completion
+	 * Clears the {@link #currentCall} slot immediately
+	 */
+	public void ensurePauseAfterCall()
+	{
+		if (currentCall != null) {
+			currentCall.pauseAfterCall = true;
+			currentCall = null;
+		}
+	}
+	// END KGU#907 2021-01-04
 
 	// START KGU 2015-10-13: Decomposed this "monster" method into Element-type-specific subroutines
 	private String step(Element element)
@@ -4370,6 +4391,14 @@ public class Executor implements Runnable
 			this.lastDeclarationSurrogate.executed = true;
 		}
 		// END KGU#477 2017-12-10
+		// START KGU#907 2021-01-04: Enh. #906
+		if (element instanceof Call) {
+			this.currentCall = (Call)element;
+		}
+		else {
+			this.currentCall = null;
+		}
+		// END KGU#907 2021-01-04
 		// The Root element, REPEAT loop, and TRY block won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
@@ -4386,7 +4415,10 @@ public class Executor implements Runnable
 		else 
 		{
 			// Delay or wait (in case of step mode or breakpoint) before
-			delay();	// does the delaying or waits in case of step mode or breakpoint
+			delay();
+			// START KGU#907 2021-01-04: Enh. #906
+			this.currentCall = null;
+			// END KGU#907 2021-01-04
 			
 			// START KGU#2 2015-11-14: Separate execution for CALL elements to keep things clearer
 			//if (element instanceof Instruction)
@@ -4737,7 +4769,12 @@ public class Executor implements Runnable
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
 				if (i > 0)
 				{
+					// START KGU#907 2021-01-04: Enh. #907 different behaviour on stepping Calls
+					//delay();
+					this.currentCall = element;
 					delay();
+					this.currentCall = null;
+					// END KGU#907 2021-01-04
 				}
 				// END KGU 2015-10-12
 
@@ -4769,6 +4806,12 @@ public class Executor implements Runnable
 
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
+			// START KGU#907 2021-01-04: Enh. #906 ... but a specific pause check
+			if (element.pauseAfterCall) {
+				setPaus(true);
+				element.pauseAfterCall = false;
+			}
+			// END KGU#907 2021-01-04
 		}
 		if (trouble.equals(""))
 		{
@@ -5290,7 +5333,7 @@ public class Executor implements Runnable
 				}
 				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 				//control.setButtonsForPause();
-				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
 			}
 		}
@@ -5386,7 +5429,7 @@ public class Executor implements Runnable
 				}
 				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 				//control.setButtonsForPause();
-				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
 				for (int i = 0; i < inputItems.count(); i++) {
 					String var = inputItems.get(i);
@@ -5582,7 +5625,7 @@ public class Executor implements Runnable
 					}
 					// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 					//control.setButtonsForPause();
-					control.setButtonsForPause(false);	// This avoids interference with the pause button
+					control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 					// END KGU#379 2017-04-12
 				}
 			}
@@ -5671,7 +5714,7 @@ public class Executor implements Runnable
 						}
 						// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 						//control.setButtonsForPause();
-						control.setButtonsForPause(false);	// This avoids interference with the pause button
+						control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 						// END KGU#379 2017-04-12
 					}
 					// END KGU#84 2015-11-23
@@ -7176,7 +7219,10 @@ public class Executor implements Runnable
 		// START KGU#379 2017-04-12: Bugfix #391: This is the proper place to prepare the buttons for pause mode
 		// Well, maybe it is better put into the synchronized block?
 		if (getPaus()) {
-			control.setButtonsForPause(true);
+			// START KGU#907 2021-01-04: Enh. #906 Special step handing for Calls
+			//control.setButtonsForPause(true);
+			control.setButtonsForPause(true, currentCall != null);
+			// END KGU#907 2021-01-04
 		}
 		// END KGU#379 2017-04-12
 		synchronized (this)

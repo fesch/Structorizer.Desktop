@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
  *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
+ *      Kay Gürtzig     2021-01-04      Enh. #906: New field pauseAfterCall to support the debug mode "step over"
  *
  ******************************************************************************************************
  *
@@ -109,6 +110,11 @@ import lu.fisch.structorizer.gui.IconLoader;
 
 public class Call extends Instruction {
 	
+	// START KGU#907 2021-01-04: Enh. #906 - special break mechanism for stepping through Calls
+	/** One-time flag for pausing after execution */
+	public boolean pauseAfterCall = false;
+	// END KGU#907 2021-01-04
+
 	public Call()
 	{
 		super();

@@ -71,6 +71,7 @@ package lu.fisch.structorizer.executor;
  *                                      Editability check bug fixed in the table model fixed
  *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
  *      Kay Gürtzig     2020-04-28      Issue #822: New message for empty lines in CALL elements
+ *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *
  ******************************************************************************************************
  *
@@ -318,7 +319,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
-        btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        // START KGU#907 2021-01-04: Enh. #906
+        //btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        pauseIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png")); // NOI18N
+        diveIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/dive.png")); // NOI18N
+        btnPause.setIcon(pauseIcon);
+        // END KGU#907 2021-01-04
         // END KGU#287 2016-11-01
         btnPause.setEnabled(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
@@ -602,17 +608,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#210/KGU#234 2016-08-09: Issue #224 - Ensure GUI consistency and table grid visibility
     public void updateLookAndFeel()
     {
-    	try {
-    		SwingUtilities.updateComponentTreeUI(this);
-    		// Now, this is a workaround for issue #224
-    		if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
-    		{
-    			tblVar.setShowGrid(true);
-    		}
-    		// Make sure look and feel "Nimbus" doesn't sabotage the cell renderer setting
-    		tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
-    	}
-    	catch (Exception ex) {}
+        try {
+            SwingUtilities.updateComponentTreeUI(this);
+            // Now, this is a workaround for issue #224
+            if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+            {
+                tblVar.setShowGrid(true);
+            }
+            // Make sure look and feel "Nimbus" doesn't sabotage the cell renderer setting
+            tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
+        }
+        catch (Exception ex) {}
     }
     // END KGU#210/KGU#234 2016-08-09
     
@@ -634,6 +640,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnPlayActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPlayActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 Care for breaking after Call execution
+        if (isWaitingAtCall) {
+            isWaitingAtCall = false;
+            btnPause.setIcon(pauseIcon);
+        }
+        // END KGU#907 2021-01-04
         btnPause.setEnabled(true);
         startButtonsEnabled = false;
         btnPlay.setEnabled(startButtonsEnabled);
@@ -660,7 +672,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             varUpdates.clear();
         }
         // END KGU#68 2015-11-06
-        if(Executor.getInstance().isRunning()==false)
+        if (!Executor.getInstance().isRunning())
         {
             Executor.getInstance().start(false);
         }
@@ -679,11 +691,25 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * be enabled. By passing false as argument, only the Pause button will be enabled,
      * the other buttons would keep their state.
      * @param allButtons - if not true then only the Pause button will be influenced
+     * @param isCall - true if execution pauses at a Call element
      */
-    public void setButtonsForPause(boolean allButtons)
+    // START KGU#907 2021-01-04: Enh. #906 Signature change (new argument isCall)
+    //public void setButtonsForPause(boolean allButtons)
+    public void setButtonsForPause(boolean allButtons, boolean isCall)
+    // END KGU#907 2021-01-04
     // END KGU#379 2017-04-12
     {
-        btnPause.setEnabled(false);
+        // START KGU#907 2021-01-04: Enh. #906 Different semantics on Calls
+        //btnPause.setEnabled(false);
+        if (isCall) {
+            btnPause.setIcon(diveIcon);
+            btnPause.setEnabled(true);
+            isWaitingAtCall = true;
+        }
+        else {
+            btnPause.setEnabled(false);
+        }
+        // END KGU#907 2021-01-04
         // START KGU#379 2017-04-12: Bugfix #391
         if (allButtons) {
         // END KGU#379 2017-04-12
@@ -701,12 +727,22 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPauseActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 - Allow to step into or step over a Call
+        if (isWaitingAtCall) {
+            // Restore the original pause apparition of the button
+            btnPause.setIcon(pauseIcon);
+            // Step into the subroutine
+            isWaitingAtCall = false;
+            btnStepActionPerformed(evt);
+            return;
+        }
+        // END KGU#907 2021-01-04
         // START KGU 2015-10-12
 //        btnPause.setEnabled(false);
 //        btnPlay.setEnabled(true);
 //        btnStep.setEnabled(true);
         // START KGU#379 2017-04-12: Bugfix #391 It's sufficient just to disable the pause button for now
-        setButtonsForPause(false);
+        setButtonsForPause(false, false);
         // END KGU#379 2017-04-12
         // END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
@@ -714,6 +750,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 - For Calls we allow to step into or step over
+        if (isWaitingAtCall) {
+            Executor.getInstance().ensurePauseAfterCall();
+            btnPlayActionPerformed(evt);
+            return;
+        }
+        // END KGU#907 2021-01-04
         // START KGU#379 2017-04-12: Bugfix #391 - buttons weren't properly handled in step mode
         // Buttons will be switched back in Executor.waitForNext()
         // Attention: the pause button must not be enabled here because it has toggling effect, hence it
@@ -742,7 +785,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         chkCollectRuntimeData.setEnabled(false);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
-        if(Executor.getInstance().isRunning()==false)
+        if (!Executor.getInstance().isRunning())
         {
             Executor.getInstance().start(true);
         }
@@ -962,6 +1005,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public javax.swing.JLabel lblCallLevel;
     public javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14
+    // START KGU#907 2021-01-04: Enh. #906: Procedure steps / Overlay of the pause button
+    private ImageIcon pauseIcon;
+    private ImageIcon diveIcon;
+    private boolean isWaitingAtCall = false;
+    // END KGU#907 2021-01-04
     // START KGU#442 2017-10-14: Issue #438 - prevent continuation while a cell editor is active
     /** Normative visibility for play and step button (to be restored when cell editor is released) */
     private boolean startButtonsEnabled = true;
