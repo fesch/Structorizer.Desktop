@@ -435,7 +435,7 @@ Menu.error14_1.text=De @d-lusparameters komen niet overeen met de headertekst va
 Menu.error14_2.text=De stapwaarde («%») van de lus @e is geen geldige gehele constante!!
 Menu.error14_3.text=Variabelenaam «%» kan in strijd zijn met de ingestelde sleutelwoorden voor een FOR-lus-header!
 Menu.error15_1.text=De @j heeft niet de vorm «[ <var> <- ] <routine_naam>(<arg_list>)»!
-Menu.error15_2.text=Het aangeroepen @o -diagram «%» is nu niet beschuikbaar.
+Menu.error15_2.text=Het aangeroepen @o -diagram «%» is nu niet beschikbaar.
 Menu.error15_3.text=Er zijn meer @o-diagrammen met de signatuur «%».
 Menu.error16_1.text=Een @k-element is mogelijk leeg, of begint met een van %, mogelijk gevolgd door een argument!
 Menu.error16_2.text=Een %-instructie, behalve het laatste, moet een @k-element vormen!
@@ -519,6 +519,7 @@ AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
 AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante gehele getallen zijn.
 AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
+AnalyserPreferences.chkDrawWarningSign.text=Plaats waarschuwingsdriehoekje in gemankeerde elementen
 AnalyserPreferences.okButton.text=OK
 
 
