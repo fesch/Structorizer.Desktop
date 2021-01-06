@@ -59,6 +59,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2021-01-06      Enh. #905: draw() method enhanced to ensure markers during tutorials be shown
  *
  ******************************************************************************************************
  *
@@ -229,6 +230,10 @@ public class Subqueue extends Element implements IElementSequence {
 							_top_left.top +((_top_left.bottom-_top_left.top) / 2) + (fontHeight / 2),
 							"\u2205"
 							);  	
+
+			// START KGU#906 2021-01-06: Enh. #905 This will chiefly be used for tutorial hints
+			this.drawWarningSignOnError(canvas, _top_left);
+			// END KGU#906 2021-01-06
 
 			// START KGU#156 2016-03-11: Enh. #124
 			// write the run-time info if enabled

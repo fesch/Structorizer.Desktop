@@ -214,6 +214,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR now also applied to saveAllNSD()
  *      Kay Gürtzig     2021-01-01      Enh. #903: Syntax highlighting in popup, popup adaption on L&F change
+ *      Kay Gürtzig     2021-01-06      Bugfix #907: Duplicate code in goRun() led to a skipped tutorial step,
+ *                                      Issue #569: Diagram scrolling on errorlist selection improved
  *
  ******************************************************************************************************
  *
@@ -1446,7 +1448,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// edit the element
 		else if ((e.getClickCount() == 2))
 		{
-			if(e.getSource()==this)
+			if (e.getSource() == this)
 			{
 				// selected the right element
 				//selected = root.selectElementByCoord(e.getX(),e.getY());
@@ -1483,20 +1485,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// the error list has been clicked
 				if (errorlist.getSelectedIndex() >= 0)
 				{
-					// select the right element
-					// START KGU#565 2018-07-27: Bugfix #569 - We must first unselect the previous selection
+					// select the concerned element
+					// START KGU#565 2021-01-06: Bugfix #569 - improvement
+					//// START KGU#565 2018-07-27: Bugfix #569 - We must first unselect the previous selection
 					//selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
-					Element errElem = (root.errors.get(errorlist.getSelectedIndex())).getElement();
-					if (selected != null && errElem != selected) {
-						selected.setSelected(false);
-						selected = errElem.setSelected(true);
-						// START KGU#705 2019-09-24: Enh. #738
-						highlightCodeForSelection();
-						// END KGU#705 2019-09-24
+					//Element errElem = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					//if (selected != null && errElem != selected) {
+					//	selected.setSelected(false);
+					//	selected = errElem.setSelected(true);
+					//	// START KGU#705 2019-09-24: Enh. #738
+					//	highlightCodeForSelection();
+					//	// END KGU#705 2019-09-24
+					//}
+					//// END KGU#565 2018-07-27
+					//// edit it
+					//editNSD();
+					if (this.handleErrorListSelection()) {
+						editNSD();
 					}
-					// END KGU#565 2018-07-27
-					// edit it
-					editNSD();
+					// END KGU#565 2021-01-06
 					// do the button things
 					if (NSDControl != null) NSDControl.doButtons();
 				}
@@ -3809,7 +3816,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		boolean modified = false;
 		Element element = getSelected();
-		if (element!=null)
+		if (element != null)
 		{
 			if (element.getClass().getSimpleName().equals("Subqueue"))
 			{
@@ -10093,9 +10100,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (root.advanceTutorialState(26, this.root)) {
 			analyse();
 		}
-		if (root.advanceTutorialState(26, this.root)) {
-			analyse();
-		}
+		// KGU#908 2021-01-06: Bugfix #907 - the previous three lins were duplicate here
 	}
 
 	/**
@@ -10583,22 +10588,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#565 2018-07-27: Bugfix #569 - errorlist selection without index change wasn't recognised
 	/**
 	 * Handles a single-click selection in the {@link #errorlist} (ensures the corresponding
-	 * diagram element gets selected
+	 * diagram element gets selected)
+	 * @return {@code true} if an {@link Element} was associated with the selected error entry
+	 * (which will then be the new {@link #selected} value)
 	 */
-	private void handleErrorListSelection() {
+	// START KGU#565 2021-01-06: More consistent selection/scroll handling
+	//private void handleErrorListSelection() {
+	private boolean handleErrorListSelection() {
+	// END KGU#565 2021-01-06
+		boolean hadElement = false;
 		if (errorlist.getSelectedIndex() >= 0)
 		{
 			// get the selected error
 			DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
 			Element ele = err.getElement();
-			if (ele != null && ele != selected)
+			// START KGU 2021-01-06: The scrolling should also be done for an already selected element
+			//if (ele != null && ele != selected)
+			if (ele != null)
+			// END KGU 2021-01-06
 			{
-				// deselect the previously selected element (if any)
-				if (selected != null) {
-					selected.setSelected(false);
+				// START KGU 2021-01-06: see above
+				if (ele != selected) {
+					// END KGU 2021-01-06
+					// deselect the previously selected element (if any)
+					if (selected != null) {
+						selected.setSelected(false);
+					}
+					// select the new one
+					selected = ele.setSelected(true);
+				// START KGU 2021-01-06: See above
 				}
-				// select the new one
-				selected = ele.setSelected(true);
+				hadElement = true;
+				// END KGU 2021-01-06
 				
 				// redraw the diagram
 				// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
@@ -10607,20 +10628,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#276 2016-11-18
 				
 				// do the button thing
-				if (NSDControl!=null) NSDControl.doButtons();
+				if (NSDControl != null) NSDControl.doButtons();
 				
 				// START KGU#705 2019-09-24: Enh. #738
 				highlightCodeForSelection();
 				// END KGU#705 2019-09-24
 				errorlist.requestFocusInWindow();
 			}
-			// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
-			//else if (err.getError().equals(Menu.warning_1.getText()))
-			//{
-			//	this.toggleTextComments();
-			//}
-			// END KGU#200 2016-07-27
 		}
+		// START KGU 2021-01-06: See above
+		return hadElement;
+		// END KGU 2021-01-06
 	}
 
 	// START KGU#363 2017-05-19: Enh. #372

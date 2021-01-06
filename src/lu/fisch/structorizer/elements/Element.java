@@ -2327,7 +2327,12 @@ public abstract class Element {
 				for (DetectedError error: myRoot.errors) {
 					if (this == error.getElement()) {
 						Color oldCol = _canvas.getColor();
-						_canvas.setColor(Color.RED);
+						if (error.isWarning()) {
+							_canvas.setColor(Color.RED);
+						}
+						else {
+							_canvas.setColor(Color.BLUE);
+						}
 						int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
 						int yBase = _rect.top + E_PADDING/4 + height;
 						int[] xCoords = new int[] {

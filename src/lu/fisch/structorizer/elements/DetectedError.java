@@ -33,8 +33,9 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2008.04.16      First Issue
- *		Kay Gürtzig     2016-07-27      Enh. #207: New general substitutions to support warnings introduced
+ *      Bob Fisch       2008-04-16      First Issue
+ *      Kay Gürtzig     2016-07-27      Enh. #207: New general substitutions to support warnings introduced
+ *      Kay Gürtzig     2021-01-06      Enh. #905: New field to tell hints from errors/warnings
  *
  ******************************************************************************************************
  *
@@ -45,26 +46,61 @@ package lu.fisch.structorizer.elements;
 
 public class DetectedError 
 {
-		private String error = new String();
+		private String message = new String();
 		private Element element = null;
+		// START KGU#906 2021-01-06: Enh. #905: Tell tutorial hints from errors and warnings
+		private boolean isError = true;
+		// END KGU#906 2021-01-06
 		
 		// Constructor
+		/**
+		 * Creates a true error or warning entry with the given text {@code _error}
+		 * associated to Element {@code _ele}
+		 * @param _error - the error or warning message
+		 * @param _ele - the affected {@link Element} (or {@code null} for general
+		 * warnings)
+		 */
 		public DetectedError(String _error, Element _ele)
 		{
-			error=_error;
-			element=_ele;
+			message = _error;
+			element = _ele;
 		}
-		
+
+		// START KGU#906 2021-01-06: Enh. #905 - distinguish hints from other stuff
+		/**
+		 * Creates an entry for an error, a warning or a hint with the given text
+		 * {@code _error} associated to Element {@code _ele}
+		 * @param _error - the error or warning message
+		 * @param _ele - the affected {@link Element} (or {@code null} for general
+		 * warnings)
+		 * @param _isWarning - whether the entry is a true warning (related to an error
+		 * or mode, otherwise it would be treated as a mere tutorial hint)
+		 */
+		public DetectedError(String _error, Element _ele, boolean _isWarning)
+		{
+			message = _error;
+			element = _ele;
+			isError = _isWarning;
+		}
+		// END KGU#906 2021-01-06
+
 		// Getter
 		public String getError()
 		{
-			return error;
+			return message;
 		}
 		
 		public Element getElement()
 		{
 			return element;
 		}
+		
+		// START KGU#906 2021-01-06: Enh. #905
+		public boolean isWarning()
+		{
+			return isError;
+		}
+		// END KGU#906 2021-01-06
 		
 		// transformers
 		public String toString()
@@ -73,13 +109,13 @@ public class DetectedError
 			//if(element!=null)
 			// END KGU#220 2016-07-27
 			{
-				error = error.replaceAll("«", "\u00AB");
-				error = error.replaceAll("»", "\u00BB");
+				message = message.replaceAll("«", "\u00AB");
+				message = message.replaceAll("»", "\u00BB");
 				// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
-				error = error.replace("--->", "\u2192");
-				error = error.replace("<-", "\u2190");
+				message = message.replace("--->", "\u2192");
+				message = message.replace("<-", "\u2190");
 				// END KGU#220 2016-07-27
-				return error;
+				return message;
 				//return element.getClass().getSimpleName()+" «"+element.getText().get(0)+"»: "+error;
 			}
 			// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
@@ -93,6 +129,6 @@ public class DetectedError
 		// tester
 		public boolean equals(DetectedError _error)
 		{
-			return (element==_error.getElement()) && (error.equals(_error.getError()));
+			return (element == _error.getElement()) && (message.equals(_error.getError()));
 		}
 }

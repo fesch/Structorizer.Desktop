@@ -157,7 +157,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-04-22      Bugfix #854: typeMap made a LinkedHashMap to ensure topological order on code export
  *      Kay Gürtzig     2020-10-16      Issue #874: Identifier check in Analyser modified with respect to non-ascii letters
  *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
- *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      
  ******************************************************************************************************
  *
@@ -793,6 +793,13 @@ public class Root extends Element {
 		}
 		return checkNo;
 	}
+	/**
+	 * Checks status for tutorial {@code CheckNo} on diagram {@code root} and
+	 * advances the {@link #tutorialState} if it's due.
+	 * @param checkNo - the Analyser code for the tutorial
+	 * @param root - the affected diagram
+	 * @return {@code true} if the next step of the tutorial was granted
+	 */
 	public boolean advanceTutorialState(int checkNo, Root root)
 	{
 		if (!check(checkNo) || tutorialQueue.isEmpty() || tutorialQueue.peek() != checkNo) {
@@ -5048,7 +5055,10 @@ public class Root extends Element {
 				switch (code) {
 				case 26: // hello world tour 
 					text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-					addError(_errors, new DetectedError(text, this.children), 26);
+					// START KGU#906 2021-01-06: Enh. #905 distinguish hints from warnings
+					//addError(_errors, new DetectedError(text, this.children), 26);
+					addError(_errors, new DetectedError(text, this.children, false), 26);
+					// END KGU#906 2021-01-06
 					break;
 				case 25: // first IPO guide 
 					switch (this.diagrType) {
@@ -5066,7 +5076,10 @@ public class Root extends Element {
 						break;
 					}
 					if (text != null) {
-						addError(_errors, new DetectedError(text, this.children), 25);
+						// START KGU#906 2021-01-06: Enh. #905 distinguish hints from warnings
+						//addError(_errors, new DetectedError(text, this.children), 25);
+						addError(_errors, new DetectedError(text, this.children, false), 25);
+						// END KGU#906 2021-01-06
 					}
 					break;
 				}
@@ -5150,7 +5163,13 @@ public class Root extends Element {
 				addError(_errors, 
 						new DetectedError(
 								errorMsg(Menu.hint25_2, new String[]{CodeParser.getKeywordOrDefault("input", "INPUT"), varName1, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(0)), 25);    						    								
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(0)
+								this.children.getElement(0),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else if (!hasIO[1]) {
 				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
@@ -5159,7 +5178,13 @@ public class Root extends Element {
 				addError(_errors,
 						new DetectedError(
 								errorMsg(Menu.hint25_3, new String[]{CodeParser.getKeywordOrDefault("output", "OUTPUT"), varName2, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(this.children.getSize()-1)), 25);    						    												
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(this.children.getSize()-1)
+								this.children.getElement(this.children.getSize()-1),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else if (!hasIO[2]) {
 				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
@@ -5168,7 +5193,13 @@ public class Root extends Element {
 				addError(_errors,
 						new DetectedError(
 								errorMsg(Menu.hint25_6, new String[]{asgnmt, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(0)), 25);    						    																
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(0)
+								this.children.getElement(0),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else {
 				startNextTutorial(true);
@@ -5204,7 +5235,10 @@ public class Root extends Element {
 		if (state > 0) {
 			if (state <= menuSpecs.length) {
 				String[] menuNames = Menu.getLocalizedMenuPath(menuSpecs[state-1], menuDefaults[state-1]);
-				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
+				// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+				//addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
+				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this, false), 26);
+				// END KGU#906 2021-01-06
 			}
 			else {
 				startNextTutorial(true);
@@ -5243,7 +5277,7 @@ public class Root extends Element {
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
-    	// START KGU#239 2016-08-12: Enh. #231 + Code revision
+        // START KGU#239 2016-08-12: Enh. #231 + Code revision
         if (Root.check(errorNo))
         {
             errors.addElement(error);

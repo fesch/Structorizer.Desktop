@@ -473,7 +473,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#375 2017-04-05
 	public static final LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
 	public static final LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
-	public static final LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
+	public static final LangTextHolder error06 = new LangTextHolder("The program name «%» must be written in uppercase!");
 	public static final LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
 	public static final LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
 	public static final LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
