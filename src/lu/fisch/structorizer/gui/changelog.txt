@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-14 (2021-01-05)
+Current development version: 3.30-14 (2021-01-06)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -169,6 +169,7 @@ Current development version: 3.30-14 (2021-01-05)
 - 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
 - 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
+- 14: Bugfix #569 A scrolling insufficiency on report list selection fixed <2>
 - 14: Issue #872 Wrong conversion '=' -> '==' in routine headers for C style <2>
 - 14: Issue #901 Wait cursor applied to further time-consuming actions <2>
 - 14: Bugfix #902 <2>:
