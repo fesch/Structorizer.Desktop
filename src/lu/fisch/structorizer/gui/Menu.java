@@ -595,7 +595,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
 	// END KGU#758 2019-11-08
 	// START KGU#459 2017-11-14: Enh. #459
-	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
+	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
+			+ "\nLittle blue or red triangles in\nthe elements will remind you.");
 	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");
 	public static final LangTextHolder msgGuidedTourNext = new LangTextHolder("%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first via menu \"%3\"");
 	public static final LangTextHolder ttlGuidedTours = new LangTextHolder("Guided Tours");

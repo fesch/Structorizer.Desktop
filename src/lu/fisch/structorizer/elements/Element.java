@@ -244,7 +244,10 @@ import javax.swing.ImageIcon;
 public abstract class Element {
 	
 	/** This enumeration type distinguishes drawing contexts for selection display */
-	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
+	// START KGU#906 2021-01-06: Enh. #905 need another context to suppress triangles
+	//public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
+	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER, DC_IMAGE_EXPORT};
+	// END KGU#906 2021-01-06
 	
 	/** A cached text snippet with associated style information for syntax highlighting */
 	protected class HighlightUnit {

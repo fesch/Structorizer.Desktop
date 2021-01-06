@@ -441,7 +441,7 @@ Menu.msgImportTooltip.text=<html>Von dem Struktogramm/PAP-Editor<br/>aus <a href
 Menu.msgExportTooltip.text=<html>Diagramdateien erzeugen, die von dem PAP-Editor<br/>aus <a href="%">%</a><br/>akzeptiert werden.</html>
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
-Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
+Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).\nKleine Dreiecke in den\nElementen erinnern\ndaran.
 Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse

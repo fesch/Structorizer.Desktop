@@ -444,7 +444,7 @@ Menu.msgImportTooltip.text=<html>Diagramas guardados por el editor de ordinogram
 Menu.msgExportTooltip.text=<html>Generar archivos de diagramas aceptados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
-Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
+Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).\nTriangulitos azules o\nrojos en los elementos\nte recordarán.
 Menu.msgGuidedTourDone.text=Congratulaciones - Has acabado el curso «%».
 Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quieres iniciar nuevo diagrama: → Menú "%3"
 Menu.ttlGuidedTours.text=Cursos guiados

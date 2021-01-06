@@ -1109,7 +1109,7 @@ public class Root extends Element {
 
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
-		draw(_canvas, _top_left, _viewport, false, DrawingContext.DC_STRUCTORIZER);
+		draw(_canvas, _top_left, _viewport, _inContention, DrawingContext.DC_STRUCTORIZER);
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention, DrawingContext _context)
@@ -1768,6 +1768,13 @@ public class Root extends Element {
 
         return myrect;/**/
     }
+    
+    // START KGU#906 2021-01-06: Enh. #905
+    public Rect draw(Graphics _g, Rectangle _viewport, DrawingContext _context)
+    {
+        return draw(_g, new Point(0,0), _viewport, null, _context, false);
+    }
+    // END KGU#906 2021-01-06
     
     public boolean getSelected(DrawingContext _drawingContext)
     {

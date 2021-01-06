@@ -214,7 +214,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR now also applied to saveAllNSD()
  *      Kay Gürtzig     2021-01-01      Enh. #903: Syntax highlighting in popup, popup adaption on L&F change
- *      Kay Gürtzig     2021-01-06      Bugfix #907: Duplicate code in goRun() led to a skipped tutorial step,
+ *      Kay Gürtzig     2021-01-06      Enh. 905: New Analyser markers suppressed on image export and printing
+ *                                      Bugfix #907: Duplicate code in goRun() led to a skipped tutorial step,
  *                                      Issue #569: Diagram scrolling on errorlist selection improved
  *
  ******************************************************************************************************
@@ -298,6 +299,7 @@ import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.turtle.TurtleBox;
@@ -1732,14 +1734,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#703 2019-03-30
 
+	// START KGU#906 2021-01-06: Enh. #905 - we needed to distinguish work area from export
 	public void redraw(Graphics _g)
+	{
+		redraw(_g, DrawingContext.DC_STRUCTORIZER);
+	}
+	public void redraw(Graphics _g, DrawingContext _context)
+	// END KGU#906 2021-01-06
 	{
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
 		//if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		// START KGU#502/KGU#524/KGU#553: 2019-03-29: Issues #518, #544, #557 drawing speed
 		//root.draw(_g, ((JViewport)this.getParent()).getViewRect());
 		Rectangle clipRect = _g.getClipBounds();
-		root.draw(_g, clipRect);
+		// START KGU#906 2021-01-06: Enh. #905
+		//root.draw(_g, clipRect);
+		root.draw(_g, clipRect, _context);
+		// END KGU#906 2021-01-06
 		// END KGU#502/KGU#524/KGU#553
 		
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
@@ -1784,7 +1795,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (root != null)
 		{
 			//logger.debug("Diagram: " + System.currentTimeMillis());
-			redraw(g);
+			redraw(g, DrawingContext.DC_STRUCTORIZER);
 		}
 	}
 
@@ -2069,11 +2080,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			/*if (pageFormat.getOrientation() != PageFormat.PORTRAIT)
 			{*/
-				double sX = (pageFormat.getImageableWidth()-1)/root.width;
-				double sY = (pageFormat.getImageableHeight()-1)/root.height;
-				double sca = Math.min(sX,sY);
-				if (sca > 1) {sca = 1;}
-				g2d.scale(sca,sca);
+			double sX = (pageFormat.getImageableWidth()-1)/root.width;
+			double sY = (pageFormat.getImageableHeight()-1)/root.height;
+			double sca = Math.min(sX,sY);
+			if (sca > 1) {sca = 1;}
+			g2d.scale(sca,sca);
 			/*}
 			else
 			{
@@ -2084,7 +2095,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				g2d.scale(sca,sca);
 			}*/
 
-			root.draw(g, null);
+			// START KGU#906 2021-01-06: Enh. #905 We don't want the triangles in the print
+			//root.draw(g, null);
+			root.draw(g, null, DrawingContext.DC_IMAGE_EXPORT);
+			// END KGU#906 2021-01-06
 
 			return (PAGE_EXISTS);
 		}
@@ -5783,11 +5797,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			lastExportDir=dlgSave.getSelectedFile().getParentFile();
-			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
+			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
 			{
-				filename+=".png";
+				filename += ".png";
 			}
 
 			// START KGU#224 2016-07-28: Issue #209  Test was nonsense since the actual file names will be different
@@ -5820,7 +5834,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				BufferedImage image = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
 				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
 				//printAll(image.getGraphics());
-				redraw(image.createGraphics());
+				// START KGU#906 2021-01-06: Enh. #905
+				//redraw(image.createGraphics());
+				redraw(image.createGraphics(), DrawingContext.DC_IMAGE_EXPORT);
+				// END KGU#906 2021-01-06
 				// END KGU#221 2016-07-28
 				// source: http://answers.yahoo.com/question/index?qid=20110821001157AAcdXVk
 				// source: http://kalanir.blogspot.com/2010/02/how-to-split-image-into-chunks-java.html
@@ -5884,7 +5901,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						File f = new File(filename.replace(".png", String.format("-%1$02d-%2$02d.png", i / cols, i % cols)));
 						// END KGU#224 2016-07-28
 						ImageIO.write(imgs[i], "png", f);
-					}     
+					}
 				}
 				catch(Exception e)
 				{
@@ -5967,11 +5984,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			lastExportDir=dlgSave.getSelectedFile().getParentFile();
-			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
+			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
 			{
-				filename+=".png";
+				filename += ".png";
 			}
 
 			File file = new File(filename);
@@ -5980,7 +5997,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
 				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
 				//printAll(bi.getGraphics());
-				redraw(bi.createGraphics());
+				// START KGU#906 2021-01-06: Enh. #905
+				//redraw(bi.createGraphics());
+				redraw(bi.createGraphics(), DrawingContext.DC_IMAGE_EXPORT);
+				// END KGU#906 2021-01-06
 				// END KGU#221 2016-07-28
 				try
 				{
@@ -6067,11 +6087,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			lastExportDir=dlgSave.getSelectedFile().getParentFile();
-			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".emf"))
+			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".emf"))
 			{
-				filename+=".emf";
+				filename += ".emf";
 			}
 
 			File file = new File(filename);
@@ -6079,14 +6099,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				try
 				{
-					EMFGraphics2D emf = new EMFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+					EMFGraphics2D emf = new EMFGraphics2D(new FileOutputStream(filename),
+							new Dimension(root.width+12, root.height+12));
 
 					emf.startExport();
 					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(emf);
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-					myrect.left+=6;
-					myrect.top+=6;
-					root.draw(c,myrect, null, false);
+					myrect.left += 6;
+					myrect.top += 6;
+					root.draw(c, myrect, null, false);
 					emf.endExport();
 				}
 				catch (Exception e)
@@ -6170,11 +6191,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			lastExportDir=dlgSave.getSelectedFile().getParentFile();
-			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".svg"))
+			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".svg"))
 			{
-				filename+=".svg";
+				filename += ".svg";
 			}
 
 			File file = new File(filename);
@@ -6186,9 +6207,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					svg.startExport();
 					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-					myrect.left+=6;
-					myrect.top+=6;
-					root.draw(c,myrect, null, false);
+					myrect.left += 6;
+					myrect.top += 6;
+					root.draw(c, myrect, null, false);
 					svg.endExport();
 
 					// re-read the file ...
@@ -6398,11 +6419,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			lastExportDir=dlgSave.getSelectedFile().getParentFile();
-			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pdf"))
+			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pdf"))
 			{
-				filename+=".pdf";
+				filename += ".pdf";
 			}
 
 			File file = new File(filename);
@@ -6410,15 +6431,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				try
 				{
-					PDFGraphics2D svg = new PDFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+					PDFGraphics2D pdf = new PDFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
 
-					svg.startExport();
-					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+					pdf.startExport();
+					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(pdf);
 					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-					myrect.left+=6;
-					myrect.top+=6;
-					root.draw(c,myrect, null, false);
-					svg.endExport();
+					myrect.left += 6;
+					myrect.top += 6;
+					root.draw(c, myrect, null, false);
+					pdf.endExport();
 				}
 				catch (Exception e)
 				{
@@ -9832,7 +9853,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		BufferedImage image = new BufferedImage(root.width+1, root.height+1, imageType);
 		// END KGU#660 2019-03-25
-		root.draw(image.getGraphics(), null);
+		// START KGU#906 2021-01-06: Enh. #905 - we don't want the triangles in the clipboard
+		//root.draw(image.getGraphics(), null);
+		root.draw(image.getGraphics(), null, DrawingContext.DC_IMAGE_EXPORT);
+		// END KGU#906 2021-01-06
 
 		// put image to clipboard
 		ImageSelection imageSelection = new ImageSelection(image);
