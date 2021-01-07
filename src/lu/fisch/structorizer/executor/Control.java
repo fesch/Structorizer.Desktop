@@ -153,11 +153,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
             // START KGU#542 2019-11-21: Enh. #739 combobox for declared enumerator variables
             else if (value instanceof JComboBox) {
-            	Object item = ((JComboBox<?>)value).getSelectedItem();
-            	if (item instanceof String) {
-            		setText((String)item);
-            	}
-            	return this;
+                Object item = ((JComboBox<?>)value).getSelectedItem();
+                if (item instanceof String) {
+                    setText((String)item);
+                }
+                return this;
             }
             // END KGU#542 2019-11-21
             // END KGU#443 2017-10-16
@@ -168,15 +168,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             //if (Executor.getInstance().isConstant(varName)) {
             if (Executor.getInstance().isConstant(varName) && column != 1) {
             // END KGU#443 2017-10-16
-            	if (isSelected) {
-            		c.setBackground(constColorSel);
-            	}
-            	else {
-            		c.setBackground(constColor);
-            	}
+                if (isSelected) {
+                    c.setBackground(constColorSel);
+                }
+                else {
+                    c.setBackground(constColor);
+                }
             }
             else if (!isSelected) {
-            	c.setBackground(backgroundColor);
+                c.setBackground(backgroundColor);
             }
             return c;
         }
@@ -356,10 +356,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
             },
             new String [] {
-            		// START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
-            		//"Name", "Content"
-            		"Name", " ", "Content"
-            		// END KGU#443 2017-10-16
+                    // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
+                    //"Name", "Content"
+                    "Name", " ", "Content"
+                    // END KGU#443 2017-10-16
             }
         ) {
             Class<?>[] types = new Class<?> [] {
@@ -375,17 +375,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // START KGU#269 2016-10-05: Bugfix #260 - disable editing of the name column
             @Override
             public boolean isCellEditable(int row, int column){
-            	// START KGU#443 2017-10-31: Enh. #439
-            	//return (column>=1);  
-            	if (column == 1) {
-            		return true;	// Pulldown button always enabled if there is one
-            	}
-            	else if (column > 1) {
-            		String name = (String)this.getValueAt(row, 0);
-            		return !Executor.getInstance().isConstant(name);
-            	}
-            	return false;
-            	// END KGU#443 2017-10-31
+                // START KGU#443 2017-10-31: Enh. #439
+                //return (column>=1);  
+                if (column == 1) {
+                    return true;	// Pulldown button always enabled if there is one
+                }
+                else if (column > 1) {
+                    String name = (String)this.getValueAt(row, 0);
+                    return !Executor.getInstance().isConstant(name);
+                }
+                return false;
+                // END KGU#443 2017-10-31
             }
             // END KGU#269 2016-10-05
         });
