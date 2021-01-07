@@ -199,6 +199,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-12-14      Issue #829 revoked (Control will by default close after execution)
  *      Kay Gürtzig     2020-12-25      Bugfix #898: Results of substituted Turtleizer functions must be put in parentheses 
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
+ *      Kay Gürtzig     2021-01-07      Enh. #909: New and improved methods to support enumerator value display
  *
  ******************************************************************************************************
  *
@@ -4249,7 +4250,14 @@ public class Executor implements Runnable
 	// END KGU#68 2015-11-06
 	
 	// START KGU#542 2019-11-21: Enh. #739 Support for enumeration types
-	private String decodeEnumValue(int testVal, TypeMapEntry varType) {
+	/**
+	 * Tries to return the named constant corresponding to the given code
+	 * {@code testVal} in enumeration type {@code varType}.
+	 * @param testVal - the coded value
+	 * @param varType - the identified enumeration type
+	 * @return either the name of the constant or {@code null} if out of range
+	 */
+	public String decodeEnumValue(int testVal, TypeMapEntry varType) {
 		int itemVal = 0;
 		StringList enumInfo = varType.getEnumerationInfo();
 		for (int j = 0; j < enumInfo.count(); j++) {
@@ -4280,15 +4288,73 @@ public class Executor implements Runnable
 	// END KGU#375 2017-03-30
 	
 	// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
+	@Deprecated
 	public boolean isEnumerator(String varName)
 	{
 		TypeMapEntry type = context.dynTypeMap.get(varName);
 		return type != null && type.isEnum();
 	}
 	
+	// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
+	/**
+	 * Tries to retrieve the type of the given variable access path
+	 * @param varName - an access path - may be a single identifier or some
+	 * recursive application of component access or indices
+	 * @return the dynamic type map entry for the variable path or {@code null}
+	 */
+	public TypeMapEntry getTypeForVariable(String varName)
+	{
+		StringList tokens = Element.splitLexically(varName, true);
+		tokens.removeAll(" ");
+		int nTokens = tokens.count();
+		int pos = 1;
+		if (nTokens == 0) {
+			return null;
+		}
+		TypeMapEntry type = context.dynTypeMap.get(tokens.get(0));
+		while (type != null && pos < nTokens) {
+			if (type.isArray() && tokens.get(pos).equals("[")) {
+				String typeStr = type.getCanonicalType(false, false);
+				int nDims = 0;
+				while (typeStr.charAt(nDims) == '@') {
+					nDims++;
+					if (!tokens.get(pos).equals("[") || (pos = tokens.indexOf("]", pos)) < 0) {
+						return null;
+					}
+					pos++;
+				}
+				// The rest of typeStr should now be the name of the element type
+				type = context.dynTypeMap.get(":" + typeStr.substring(nDims));
+			} else if (type.isRecord() && tokens.get(pos++).equals(".")) {
+				HashMap<String, TypeMapEntry> compInfo = type.getComponentInfo(false);
+				if (compInfo != null) {
+					type = compInfo.get(tokens.get(pos++));
+				}
+				else {
+					return null;
+				}
+			}
+			else {
+				return null;
+			}
+		}
+		return type;
+	}
+	// END KGU#910 2021-01-07
+
+	/**
+	 * Checks if the variable access path {@code varName} represents an
+	 * enumeration type and if so returns the list of declared value names
+	 * @param varName - an access path - may be a single identifier or some
+	 * recursive application of component access or indices
+	 * @return either the StringList of value names or {@code null}
+	 */
 	public StringList getEnumeratorValuesFor(String varName)
 	{
-		TypeMapEntry type = context.dynTypeMap.get(varName);
+		// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
+		//TypeMapEntry type = context.dynTypeMap.get(varName);
+		TypeMapEntry type = getTypeForVariable(varName);
+		// END KGU#910 2021-01-07
 		if (type == null || !type.isEnum()) {
 			return null;
 		}
@@ -4296,7 +4362,7 @@ public class Executor implements Runnable
 		for (int i = 0; i < names.count(); i++) {
 			int posEqu = names.get(i).indexOf('=');
 			if (posEqu >= 0) {
-				names.set(i,  names.get(i).substring(0, posEqu).trim());
+				names.set(i, names.get(i).substring(0, posEqu).trim());
 			}
 		}
 		return names;

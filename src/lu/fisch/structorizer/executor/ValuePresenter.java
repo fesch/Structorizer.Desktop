@@ -31,9 +31,10 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.01.31      First Issue
- *      Kay Gürtzig     2017.10.31      Tweaked for result value presentation (routine execution at top level)
- *      Kay Gürtzig     2018.08.01      KGU#526: Modifications to preserve order of record components (#423)
+ *      Kay Gürtzig     2017-01-31      First Issue
+ *      Kay Gürtzig     2017-10-31      Tweaked for result value presentation (routine execution at top level)
+ *      Kay Gürtzig     2018-08-01      KGU#526: Modifications to preserve order of record components (#423)
+ *      Kay Gürtzig     2021-01-07      Enh. #909: Presentation and editing of enumerator values enabled
  *
  ******************************************************************************************************
  *
@@ -60,6 +61,7 @@ import java.util.Map.Entry;
 import javax.swing.AbstractCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -70,6 +72,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import bsh.EvalError;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
@@ -117,6 +120,15 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
             	return (JButton)value;
             }
             // END KGU#443 2017-10-16
+            // START KGU#910 2021-01-07: Enh. #909 combobox for enumerator components
+            else if (value instanceof JComboBox) {
+                Object item = ((JComboBox<?>)value).getSelectedItem();
+                if (item instanceof String) {
+                    setText((String)item);
+                }
+                return this;
+            }
+            // END KGU#910 2021-01-07
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
     }
@@ -191,13 +203,40 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 				return (column == 1 || editable && column > 1);  
 			}
 		});
-		DefaultTableModel tm =(DefaultTableModel)tblFields.getModel();
+		DefaultTableModel tm = (DefaultTableModel)tblFields.getModel();
+		// START KGU#910 2021-01-07: Enh. #909
+		boolean hasEnumValues = false;
+		// END KGU#910 2021-01-07
 		if (array != null) {
 			oldValStrings = new String[array.size()];
+			// START KGU#910 2021-01-07: Enh. #909
+			TypeMapEntry elementType = Executor.getInstance().getTypeForVariable(getTitle() +"[0]");
+			StringList enumNames = getEnumNames(elementType);
+			// END KGU#910 2021-01-07
 			for (int i = 0; i < array.size(); i++)
 			{
-				Object[] rowData = {"[" + i + "]", null,
-						oldValStrings[i] = Executor.prepareValueForDisplay(array.get(i), null)};
+				// START KGU#910 2021-01-07: Enh. #909
+				//Object[] rowData = {"[" + i + "]", null,
+				//		oldValStrings[i] = Executor.prepareValueForDisplay(array.get(i), null)};
+				Object val = array.get(i);
+				String valStr = null;
+				if (val instanceof Integer && enumNames != null) {
+					int testVal = ((Integer)val).intValue();
+					valStr = Executor.getInstance().decodeEnumValue(testVal, elementType);
+					if (valStr != null) {
+						JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
+						cbEnum.setSelectedIndex(enumNames.indexOf(valStr));
+						val = cbEnum;
+						hasEnumValues = true;
+					}
+				}
+				if (valStr == null) {
+					valStr = Executor.prepareValueForDisplay(val, null);
+					val = valStr;
+				}
+				oldValStrings[i] = valStr;
+				Object[] rowData = {"[" + i + "]", null, val};
+				// END KGU#910 2021-01-07
 				tm.addRow(rowData);
 			}
 		}
@@ -206,9 +245,32 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			int i = 0;
 			for (Entry<String, Object> entry: record.entrySet())
 			{
-				if (!entry.getKey().startsWith("§")) {
-					Object[] rowData = {entry.getKey(), null,
-							oldValStrings[i++] = Executor.prepareValueForDisplay(entry.getValue(), null)};
+				String compName = entry.getKey();
+				if (!compName.startsWith("§")) {
+					// START KGU#910 2021-01-07: Enh. #909
+					//Object[] rowData = {compName, null,
+					//		oldValStrings[i++] = Executor.prepareValueForDisplay(entry.getValue(), null)};
+					TypeMapEntry elementType = Executor.getInstance().getTypeForVariable(getTitle() +"." + compName);
+					StringList enumNames = getEnumNames(elementType);
+					Object val = entry.getValue();
+					String valStr = null;
+					if (val instanceof Integer && enumNames != null) {
+						int testVal = ((Integer)val).intValue();
+						valStr = Executor.getInstance().decodeEnumValue(testVal, elementType);
+						if (valStr != null) {
+							JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
+							cbEnum.setSelectedIndex(enumNames.indexOf(valStr));
+							val = cbEnum;
+							hasEnumValues = true;
+						}
+					}
+					if (valStr == null) {
+						valStr = Executor.prepareValueForDisplay(val, null);
+						val = valStr;
+					}
+					oldValStrings[i++] = valStr;
+					Object[] rowData = {compName, null, val};
+					// END KGU#910 2021-01-07
 					tm.addRow(rowData);
 				}
 			}
@@ -216,9 +278,9 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		// START KGU#443 2017-10-16: Enh. #439 - pulldown buttons near compound values
 		ImageIcon pulldownIcon = IconLoader.getIcon(80);
 		for (int i = 0; i < tm.getRowCount(); i++) {
-			String value = (String)tm.getValueAt(i, 2);
+			Object value = tm.getValueAt(i, 2);
 			String name = (String)tm.getValueAt(i, 0);
-			if (value.endsWith("}")) {
+			if (value instanceof String && ((String)value).endsWith("}")) {
 				JButton pulldown = new JButton();
 				pulldown.setName(name);
 				pulldown.setIcon(pulldownIcon);
@@ -233,6 +295,11 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		tblFields.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
 		tblFields.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
 		// END KGU#443 2017-10-16
+		// START KGU#910 2021-01-07: Enh. #909 Improved support for enumerator values
+		if (hasEnumValues) {
+			tblFields.getColumnModel().getColumn(2).setCellEditor(new EnumeratorCellEditor());
+		}
+		// END KGU#910 2021-01-07
 		optimizeColumnWidth(tblFields, 0);
 		tblFields.addPropertyChangeListener("tableCellEditor", this);
 		tblFields.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -259,6 +326,26 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		// We must do this as late as possible, otherwise "Nimbus" tends to ignore this
 		tblFields.setDefaultRenderer(Object.class, new MyCellRenderer());
 		pack();
+	}
+
+	/**
+	 * Extracts the pure enumeration value names from the given type info
+	 * {@code type} if it is an enumeration type.
+	 * @param type - a {@link TypeMapEntry} or {@code null}
+	 * @return either a list of enumrator constant names or {@code null}
+	 */
+	private StringList getEnumNames(TypeMapEntry type) {
+		StringList enumNames = null;
+		if (type != null && type.isEnum()) {
+			enumNames = type.getEnumerationInfo();
+			for (int i = 0; i < enumNames.count(); i++) {
+				int posEqu = enumNames.get(i).indexOf('=');
+				if (posEqu >= 0) {
+					enumNames.set(i, enumNames.get(i).substring(0, posEqu).trim());
+				}
+			}
+		}
+		return enumNames;
 	}
 	
 	// START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
@@ -445,6 +532,9 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 				// Editing finished, identify the edited cell
 				int rowNo = tblFields.getSelectedRow();
 				Object newValue = tblFields.getModel().getValueAt(rowNo, 2);
+				if (newValue instanceof JComboBox<?>) {
+					newValue = ((JComboBox<?>)newValue).getSelectedItem();
+				}
 				if (newValue != null && !oldValStrings[rowNo].equals(newValue)) {
 					editedLines.put(rowNo, (String)newValue);
 					btnDiscard.setEnabled(true);

@@ -875,21 +875,21 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * representing either an array (as {@link ArrayList} or a record (as {@link HashMap}.
      * If something therein was modified, then the modified value will be returned.
      * @param _varName - name of the compound variable 
-     * @param _value - either an {@link ArayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
+     * @param _value - either an {@link ArrayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
      * @param _editable - whether the component values may be edited
      * @param _refComponent - the originating button 
      * @return the modified value if the change was committed.
      */
     private Object editCompoundValue(String _varName, Object _value, boolean _editable, Component _refComponent) {
-    	ValuePresenter valueEditor = new ValuePresenter(_varName, _value, _editable, null);
-    	valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    	valueEditor.setLocationRelativeTo(_refComponent);
-    	valueEditor.setModal(true);
-    	valueEditor.setVisible(true);
-    	if (valueEditor.wasModified()) {
-    		return valueEditor.getValue();
-    	}
-    	return null;
+        ValuePresenter valueEditor = new ValuePresenter(_varName, _value, _editable, null);
+        valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        valueEditor.setLocationRelativeTo(_refComponent);
+        valueEditor.setModal(true);
+        valueEditor.setVisible(true);
+        if (valueEditor.wasModified()) {
+            return valueEditor.getValue();
+        }
+        return null;
     }
     // END KGU#443 2017-10-16
 
@@ -897,8 +897,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     {
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
-        DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-        // empty the table
         // START KGU#68 2016-10-07: Preparation for variable editing
         varUpdates.clear();
         // END KGU#68 2016-10-07
@@ -908,37 +906,40 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
         //while(tm.getRowCount()>0) tm.removeRow(0);
         //for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
-        int nRows = tm.getRowCount();
-        if (nRows > vars.size()) {
-        	tm.setRowCount(vars.size());
-        	nRows = vars.size();
-        }
-        // Update existing rows
-        for (int i = 0; i < nRows; i++) {
-            // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-            //tm.setValueAt(vars.get(i).get(0), i, 0);
-            //tm.setValueAt(vars.get(i).get(1), i, 1);
-            Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
-            for (int j = 0; j < rowData.length; j++) {
-                tm.setValueAt(rowData[j], i, j);
+        synchronized(tblVar) {
+            DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+            int nRows = tm.getRowCount();
+            if (nRows > vars.size()) {
+                tm.setRowCount(vars.size());
+                nRows = vars.size();
             }
-            // END KGU#443 2017-10-16
-        }
-        // Add additional rows
-        for (int i = nRows; i < vars.size(); i++) {
-            // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-            //tm.addRow(vars.get(i));
-            tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
-            // END KGU#443 2017-10-16
-        }
-        // END KGU#274 2016-10-08
-        // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
-        if (vars.size() > 0) {
-            try {
-                ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            // Update existing rows
+            for (int i = 0; i < nRows; i++) {
+                // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
+                //tm.setValueAt(vars.get(i).get(0), i, 0);
+                //tm.setValueAt(vars.get(i).get(1), i, 1);
+                Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
+                for (int j = 0; j < rowData.length; j++) {
+                    tm.setValueAt(rowData[j], i, j);
+                }
+                // END KGU#443 2017-10-16
             }
-            catch (ArrayIndexOutOfBoundsException ex) {
-                // Just ignore it - it is caused by races.
+            // Add additional rows
+            for (int i = nRows; i < vars.size(); i++) {
+                // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
+                //tm.addRow(vars.get(i));
+                tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
+                // END KGU#443 2017-10-16
+            }
+            // END KGU#274 2016-10-08
+            // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
+            if (vars.size() > 0) {
+                try {
+                    ValuePresenter.optimizeColumnWidth(tblVar, 0);
+                }
+                catch (ArrayIndexOutOfBoundsException ex) {
+                    // Just ignore it - it is caused by races.
+                }
             }
         }
         // END KGU#443 2017-10-16
@@ -956,14 +957,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 		JButton pulldown = null;
 		String name = varEntry[0];
 		Object value = varEntry[1];
+		StringList enumNames = null;
 		if (varEntry[1].endsWith("}")) {
 			pulldown = new JButton();
 			pulldown.setName(name);
 			pulldown.setIcon(pulldownIcon);
 			pulldown.addActionListener(this.pulldownActionListener);
 		}
-		else if (Executor.getInstance().isEnumerator(name) && !Executor.getInstance().isConstant(name)) {
-			StringList enumNames = Executor.getInstance().getEnumeratorValuesFor(name);
+		else if ((enumNames = Executor.getInstance().getEnumeratorValuesFor(name)) != null
+				&& !Executor.getInstance().isConstant(name)) {
 			JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
 			cbEnum.setSelectedIndex(enumNames.indexOf(varEntry[1]));
 			value = cbEnum;
@@ -1020,10 +1022,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#443 2017-10-16: Enh. #439
     private AbstractCellEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
-    	@Override
-    	public void actionPerformed(ActionEvent evt) {
-    		btnPullDownActionPerformed(evt);
-    	}};
+        @Override
+        public void actionPerformed(ActionEvent evt) {
+            btnPullDownActionPerformed(evt);
+        }};
     // END KGU#443 2017-10-16
     // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Language support for Executor
     public LangTextHolder lbStopRunningProc;
