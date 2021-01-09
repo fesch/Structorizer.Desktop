@@ -4925,7 +4925,7 @@ public class Root extends Element {
 					// Now associate all sub-analysis results with the Call element
 					for (DetectedError err: impErrors) {
 						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
-						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);
+						addError(_errors, new DetectedError(name + ": " + err.getMessage(), this), 23);
 					}
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423

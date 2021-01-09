@@ -35,7 +35,8 @@ package lu.fisch.structorizer.elements;
  *      ------			----			-----------
  *      Bob Fisch       2008-04-16      First Issue
  *      Kay Gürtzig     2016-07-27      Enh. #207: New general substitutions to support warnings introduced
- *      Kay Gürtzig     2021-01-06      Enh. #905: New field to tell hints from errors/warnings
+ *      Kay Gürtzig     2021-01-06/09   Enh. #905: New field to tell hints from errors/warnings, field
+ *                                      error renamed to message, new method getMessage() introduced
  *
  ******************************************************************************************************
  *
@@ -85,10 +86,22 @@ public class DetectedError
 		// END KGU#906 2021-01-06
 
 		// Getter
+		// START KGU#906 2021-01-09 Enh. #905 Method getError() replaced by getMessage()
+		/**
+		 * @deprecated Use {@link #getMessage()} instead
+		 */
 		public String getError()
+		{
+			return getMessage();
+		}
+		/**
+		 * @return the associated (usually localized) description
+		 */
+		public String getMessage()
 		{
 			return message;
 		}
+		// END KGU#906 2021-01-09
 		
 		public Element getElement()
 		{
@@ -96,6 +109,10 @@ public class DetectedError
 		}
 		
 		// START KGU#906 2021-01-06: Enh. #905
+		/**
+		 * @return {@code true} if this is a regular Analyser complaint, 
+		 * {@code false} in case of a tutorial hint
+		 */
 		public boolean isWarning()
 		{
 			return isError;
@@ -103,6 +120,7 @@ public class DetectedError
 		// END KGU#906 2021-01-06
 		
 		// transformers
+		@Override
 		public String toString()
 		{
 			// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
@@ -127,8 +145,14 @@ public class DetectedError
 		}
 		
 		// tester
+		/**
+		 * Compares the messages of {@code this} and {@code _error}.
+		 * @param _error - another instance of this class
+		 * @return {@code true} iff both messages are equal
+		 */
 		public boolean equals(DetectedError _error)
 		{
-			return (element == _error.getElement()) && (message.equals(_error.getError()));
+			// FIXME: Neither element reference nor warning classification are compared!
+			return (element == _error.getElement()) && (message.equals(_error.getMessage()));
 		}
 }

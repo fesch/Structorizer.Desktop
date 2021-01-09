@@ -3079,26 +3079,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#497 2018-02-17
 	}// </editor-fold>//GEN-END:initComponents
 
-//	/**
-//	 * @return the vector of {@link Diagram}s
-//	 */
-//	@Deprecated
-//	protected Vector<Diagram> getDiagrams()
-//	{
-//		// FIXME should be deleted
-//		return diagrams;
-//	}
-//
-//	/**
-//	 * @param diagrams - the vector of {@link Diagram}s to set
-//	 */
-//	@Deprecated
-//	protected void setDiagrams(Vector<Diagram> diagrams)
-//	{
-//		// FIXME: Method should be deleted
-//		this.diagrams = diagrams;
-//	}
-	
 	// START KGU#624 2018-12-25: Enh. #655
 	/**
 	 * @return the number of currently held {@link Diagram}s

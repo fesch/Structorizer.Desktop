@@ -2125,59 +2125,6 @@ public class Executor implements Runnable
 	}
 	// END KGU#376 2017-07-01
 
-	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
-	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
-	//private void showArray(Object[] _array, String _title)
-//	@Deprecated
-//	private void showArray(Object[] _array, String _title, boolean withPauseButton)
-//	// END KGU#147 2016-01-29
-//	{	
-//		JDialog arrayView = new JDialog();
-//		arrayView.setTitle(_title);
-//		arrayView.setIconImage(IconLoader.ico004.getImage());
-//		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//		// START KGU#147 2016-01-29: Enh. #84 (continued)
-//		JButton btnPause = new JButton("Pause");
-//		btnPause.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent event) 
-//			{
-//				step = true; paus = true; control.setButtonsForPause(true);
-//				if (event.getSource() instanceof JButton)
-//				{
-//					Container parent = ((JButton)(event.getSource())).getParent();
-//					while (parent != null && !(parent instanceof JDialog))
-//					{
-//						parent = parent.getParent();
-//					}
-//					if (parent != null) {
-//						((JDialog)parent).dispose();
-//					}
-//				}
-//			}
-//		});
-//		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
-//		btnPause.setVisible(withPauseButton);
-//		// END KGU#147 2016-01-29
-//		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-//		this.console.writeln("*** " + _title + ":", Color.CYAN);
-//		// END KGU#160 2016-04-26
-//		List arrayContent = new List(10);
-//		for (int i = 0; i < _array.length; i++)
-//		{
-//			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-//			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array[i]);
-//			this.console.writeln("\t" + valLine, Color.CYAN);
-//			// END KGU#160 2016-04-26
-//			arrayContent.add(valLine);
-//		}
-//		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
-//		arrayView.setSize(300, 300);
-//		arrayView.setLocationRelativeTo(control);
-//		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
-//		arrayView.setVisible(true);
-//	}
-//	// END KGU#133 2016-01-09
-
 	// START KGU#439 2017-10-13: Enh. #436
 	private void showCompoundValue(Object _arrayOrRecord, String _title, boolean withPauseButton)
 	{	
@@ -2735,32 +2682,6 @@ public class Executor implements Runnable
 		}
 		return trouble;
 	}
-
-//	// Replaced by getExec(DiagramController, String, Object[])
-//    @Deprecated
-//	public String getExec(String cmd, Color color)
-//	{
-//		String trouble = "";
-//		if (diagramController != null)
-//		{
-//			trouble = diagramController.execute(cmd, color);
-//		} else
-//		{
-//			delay();
-//		}
-//		if (delay != 0)
-//		{
-//			diagram.redraw();
-//			try
-//			{
-//				Thread.sleep(delay);
-//			} catch (InterruptedException e)
-//			{
-//				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
-//			}
-//		}
-//		return trouble;
-//	}
 
 	// START KGU#448 2017-10-28: Enh. #443 replaces getExec(String) and getExec(String, Color)
 	/**
@@ -4288,13 +4209,6 @@ public class Executor implements Runnable
 	// END KGU#375 2017-03-30
 	
 	// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
-	@Deprecated
-	public boolean isEnumerator(String varName)
-	{
-		TypeMapEntry type = context.dynTypeMap.get(varName);
-		return type != null && type.isEnum();
-	}
-	
 	// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
 	/**
 	 * Tries to retrieve the type of the given variable access path

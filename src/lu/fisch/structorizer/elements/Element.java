@@ -2629,16 +2629,6 @@ public abstract class Element {
 		return depth / 2;
 	}
 
-//	@Deprecated
-//	private String cutOut(String _s, String _by)
-//	{
-//		//System.out.print(_s+" -> ");
-//		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
-//		_s=rep.replaceAll(_s);
-//		//System.out.println(_s);
-//		return _s;
-//	}
-	
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
 	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo

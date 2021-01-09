@@ -2480,8 +2480,8 @@ public class TurtleBox implements DelayableDiagramController
     /**
      * @return the angle from the turtle home position to its current position
      * in integral (!?) degrees
+     * @deprecated
      */
-    @Deprecated
     public double getAngleToHome()
     {
         // START #272 2016-10-16 (KGU)
@@ -2684,15 +2684,16 @@ public class TurtleBox implements DelayableDiagramController
 // END KGU#448/KGU#673 2020-12-11
 
     /**
-     * Sets the given color except in case of WHITE where the {@link #defaultPenColor} is used instead.
+     * Sets the given {@code color} except in case of {@code WHITE} where the
+     * {@link #defaultPenColor} will be used instead.
      * Does not influence the default pen colour.
-     * @param color - the specified colour (where WHITE means default)
+     * @param color - the specified colour (where {@link Color#WHITE} means default)
      * @see #setColor(Color)
      * @see #setPenColor(Color)
      * @see #setBackground(Color)
      */
     private void setColorNonWhite(Color color) {
-        if(color.equals(Color.WHITE))
+        if (color.equals(Color.WHITE))
         {
             // START KGU#303 2016-12-03: Enh. #302
             //this.setColor(Color.BLACK);
@@ -2770,7 +2771,7 @@ public class TurtleBox implements DelayableDiagramController
      */
     @Override
     public HashMap<String, Method> getProcedureMap() {
-    	return definedProcedures;
+        return definedProcedures;
     }
     // END KGU#448 2017-10-28
 
@@ -2778,9 +2779,10 @@ public class TurtleBox implements DelayableDiagramController
     /* (non-Javadoc)
      * @see lu.fisch.diagrcontrol.DiagramController#getFunctionMap()
      */
+    @Override
     public HashMap<String, Method> getFunctionMap()
     {
-    	return definedFunctions;
+        return definedFunctions;
     }
     
     // START KGU#448 2017-10-28: Enh. #417, #443 - support the generic execute method
@@ -2790,7 +2792,7 @@ public class TurtleBox implements DelayableDiagramController
      */
     public double getX()
     {
-    	return this.posX;
+        return this.posX;
     }
     /**
      * Returns the current vertical pixel coordinate (from top downwards).
@@ -2798,7 +2800,7 @@ public class TurtleBox implements DelayableDiagramController
      */
     public double getY()
     {
-    	return this.posY;
+        return this.posY;
     }
     // END KGU#448 2017-10-28
 
@@ -2808,14 +2810,14 @@ public class TurtleBox implements DelayableDiagramController
      */
     public void clear()
     {
-    	this.elements.clear();
-    	// START KGU#685 2020-12-14: Enh. #704
-    	this.bounds = new Rectangle();
-    	this.bounds.width = -1;
-    	this.bounds.height = -1;
-    	frame.displacement = null;
-    	// END KGU#685 2020-12-14
-    	this.delay();
+        this.elements.clear();
+        // START KGU#685 2020-12-14: Enh. #704
+        this.bounds = new Rectangle();
+        this.bounds.width = -1;
+        this.bounds.height = -1;
+        frame.displacement = null;
+        // END KGU#685 2020-12-14
+        this.delay();
     }
     // END KGU#566 2018-07-30
 }

@@ -279,23 +279,6 @@ public class BasGenerator extends Generator
 	// END KGU 2019-12-01
 	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by "="
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		String prefix = "";
-//		if (_interm.indexOf(" <- ") >= 0 && this.optionBasicLineNumbering())	// Old-style Basic? Then better insert "LET "
-//		{
-//			prefix = "LET ";
-//		}
-//		return prefix + _interm.replace(" <- ", " = ");
-//	}
-	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */

@@ -135,32 +135,4 @@ public class ExecutionContext {
 	}
 	// END KGU 2017-04-22
 	
-	// START KGU#78 2015-11-25
-	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter)
-	// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth)
-	// START KGU#375/KGU#376 2017-04-21: Enh. #388, #389
-	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars)
-//	@Deprecated
-//	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars, HashMap<String, Object> _constants, StringList _imported)
-//	// END KGU#375/KGU#376 2017-04-21
-//	// END KGU#307 2016-12-12
-//	// END KGU#78 2015-11-25
-//	{
-//		_root.isCalling = true;
-//		this.root = _root;
-//		this.variables = _variables;
-//		this.interpreter = _interpreter;
-//		// START KGU#78 2015-11-25
-//		this.loopDepth = _loopDepth;
-//		// END KGU#78 2015-11-25
-//		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-//		this.forLoopVars = _forLoopVars; 
-//		// END KGU#307 2016-12-12
-//		// START KGU#376 2017-04-21: Enh. #389
-//		this.constants = _constants;
-//		this.importList = _imported;
-//		// END KGU#376 2017-04-21
-//	}
-
 }

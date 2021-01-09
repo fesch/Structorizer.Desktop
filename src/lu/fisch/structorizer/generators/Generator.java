@@ -491,26 +491,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected abstract String getIndent();
 		
-//	// START KGU 2016-08-12: Enh. #231 - information for analyser - obsolete since 3.27
-//	/**
-//	 * Returns a list of the most important reserved words in the target language.
-//	 * These aren't relevant for he code export itself but fo the Analyser, if it
-//	 * is to advise against the use of them for naming variables.
-//	 * @see #isCaseSignificant()
-//	 * @return collection of key strings
-//	 */
-//	@Deprecated
-//	public abstract String[] getReservedWords();
-//	
-//	/**
-//	 * Indicates whether case is significant in parsing of reserved words and
-//	 * identifiers.
-//	 * @see #getReservedWords()
-//	 * @return true if case matters
-//	 */
-//	public abstract boolean isCaseSignificant();
-//	// END KGU 2016-08-12
-	
 	// START KGU 2015-10-18: It seemed sensible to store the comment specification permanently
 	/**
 	 * Left delimiter of a both-end delimited or line comment
@@ -1763,18 +1743,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		return tokens.concatenate();
 	}
-	
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * OVERRIDE this! (Method just returns _interm without changes)
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm;
-//	}
 	// END KGU#93 2015-12-21
 	
 	// START KGU#16 2015-11-30

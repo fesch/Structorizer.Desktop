@@ -323,18 +323,6 @@ public class PythonGenerator extends Generator
 	}
 
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by "="
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm.replace(" <- ", " = ");
-//	}
-
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */

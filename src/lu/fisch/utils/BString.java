@@ -216,24 +216,22 @@ public abstract class BString
 		}
 		
 		/**
-		 * Cuts blanks at the end and at the beginning of the string. [trim]<br/>
-		 * NOTE: You should better use {@link String#trim()} instead.  
+		 * Cuts blanks at the end and at the beginning of the string.
 		 *@param str - The string to be trimmed
 		 *@return The trimmed string
+		 *@deprecated Use {@link String#trim()} instead.
 		 */
-		@Deprecated
 		public static String cutOut(String str)
 		{
 			return str.trim();
 		}
 		
 		/**
-		 * Checks whether a string contains any non-blank characters<br/>
-		 * NOTE: You may use {@code !str.trim().isEmpty()} instead
+		 * Checks whether a string contains any non-blank characters.
 		 *@param str - The string to check
 		 *@return true iff there is at least one non-blank character
+		 *@deprecated Use {@code !str.trim().isEmpty()} instead
 		 */
-		@Deprecated
 		public static boolean containsSomething(String str)
 		{
 			boolean result = false;
@@ -251,14 +249,13 @@ public abstract class BString
 		}
 		
 		/**
-		 * Replaces all substrings with another substring <br/>
-		 * NOTE: You should better use {@link String#replace(CharSequence, CharSequence)} instead.
+		 * Replaces all substrings with another substring
 		 *@param str The original string
 		 *@param substr The substring to be replaced
 		 *@param with The substring to put in
 		 *@return The replaced string
+		 *@deprecated Use {@link String#replace(CharSequence, CharSequence)} instead.
 		 */
-		@Deprecated
 		public static String replace(String str, String substr, String with)
 		{
 			String outi = new String("");
@@ -342,13 +339,13 @@ public abstract class BString
 		}
 		
 		/**
-		 * Use {@code str.startsWith(pre)} instead.
+		 * Checks whether {@code str} starts with {@code pre}.
 		 * @param pre - the prefix to be confirmed
 		 * @param str - the analysed string
 		 * @return true iff {@code str} starts with prefix {@code pre}
 		 * @see String#startsWith(String)
+		 * @deprecated Use {@code str.startsWith(pre)} instead.
 		 */
-		@Deprecated
 		public static boolean isPrefixOf(String pre, String str)
 		{
 //			boolean ret = false;
@@ -401,14 +398,12 @@ public abstract class BString
 		/**
 		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
 		 * and returns a StringList consisting of the split parts and the separating
-		 * delimiters in order of occurrence.<br/>
-		 * NOTE: Use method {@link StringList#explodeWithDelimiter(String, String)} instead.
+		 * delimiters in order of occurrence.
 		 * @param _source - the string to be split
 		 * @param _by - the separating string
 		 * @return the split result
-		 * @see String#explodeWithDelimiter(String, String)
+		 * @deprecated Use method {@link StringList#explodeWithDelimiter(String, String)} instead.
 		 */
-		@Deprecated
 		public static StringList explodeWithDelimiter(String _source, String _by)
 		{
 			// START KGU 2017-06-18: Delegated to StringList.explode() where it belongs

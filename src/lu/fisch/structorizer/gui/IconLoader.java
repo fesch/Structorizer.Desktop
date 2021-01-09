@@ -78,6 +78,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801: 123_help_book added
  *      Kay Gürtzig     2020-04-02      Issue #4 deprecated static field turtle removed, set the from field deprecated.
  *      Kay Gürtzig     2020-10-17      Enh. #872: 124_prog_c added
+ *      Kay Gürtzig     2021-01-09      Deprecated field `from' removed
  *
  ******************************************************************************************************
  *
@@ -98,8 +99,10 @@ import lu.fisch.structorizer.locales.Locales;
 
 public class IconLoader {
 
-	@Deprecated
-	private static String from = new String("");
+// START KGU 2021-01-09 Eventually disabled
+//	@Deprecated
+//	private static String from = new String("");
+// END KGU 2021-01-09
 
 	protected static double scaleFactor = 1;
 	
@@ -249,14 +252,14 @@ public class IconLoader {
 	/** A fixed-size product image for Mac or Translator */
 	// START KGU#577 2018-09-18: Issue #601
 	//public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
-	public static ImageIcon icoNSD = getIconImage(getURI(from+"icons/structorizer.png"), true);
+	public static ImageIcon icoNSD = getIconImage(getURI("icons/structorizer.png"), true);
 	// END KGU#577 2018-09-18
 	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
 	// START KGU#486 2018-02-06: Issue #4 (Icon redesign)
 	//public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
 	/** A scaled product image with basic size of 48 pixels */
-	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons_48/000_structorizer.png"));
+	public static ImageIcon icoNSD48 = getIconImage(getURI("icons_48/000_structorizer.png"));
 	// END KGU#486 2018-02-06
 	// END KGU#287 2016-11-02
 	// START KGU#577 2018-09-17: Issue #601 - we use lazy initialization
@@ -512,7 +515,7 @@ public class IconLoader {
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
 		//icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
-		icoNSD48 = getIconImage(getURI(from+"icons_48/000_structorizer.png"));
+		icoNSD48 = getIconImage(getURI("icons_48/000_structorizer.png"));
 		// END KGU#486 2018-02-06
 		// END KGU#287 2016-11-02
 
@@ -699,7 +702,7 @@ public class IconLoader {
 		// START KGU#242 2016-09-05
 		for (String key: icoLocales.keySet())
 		{
-			icoLocales.put(key, getIconImage(getURI(from+"icons/locale_"+key+".png")));
+			icoLocales.put(key, getIconImage(getURI("icons/locale_" + key + ".png")));
 		}
 		// END KGU#242 2016-09-05
 	}
@@ -735,7 +738,7 @@ public class IconLoader {
 		// First we fetch the base icon (size 16 pixels = scalefactor 1)
 		ImageIcon ii = null;
 		try {
-			ii = new ImageIcon(getURI(from + "icons/" + fileName));
+			ii = new ImageIcon(getURI("icons/" + fileName));
 		}
 		catch (Exception ex) {
 			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent - no icon file \"" + fileName + "\"!", ex);
@@ -751,7 +754,7 @@ public class IconLoader {
 		double minFactor = factor;
 		for (int i = 1; i < ICON_SIZES.length && ICON_SIZES[i] <= pixels; i++) {
 			size = ICON_SIZES[i];
-			java.net.URL url = getURI(from + "icons_" + size + "/" + fileName);
+			java.net.URL url = getURI("icons_" + size + "/" + fileName);
 			if (url != null) {
 				largestURL = url;
 				minFactor = 1.0 * pixels / size;
@@ -978,14 +981,16 @@ public class IconLoader {
 	}
 	// END KGU#577 2018-09-17
 	
-	/**
-	 * Sets a new absolute or relative base directory for the icon file retrieval. 
-	 * @param _from - an absolute or relative file path to the parent directory of
-	 * the icons and icons_&lt;pixels&gt; folder(s).
-	 */
-	@Deprecated
-	public static void setFrom(String _from)
-	{
-		from = _from;
-	}
+// START KGU 2021-01-09: Finally disabled
+//	/**
+//	 * Sets a new absolute or relative base directory for the icon file retrieval. 
+//	 * @param _from - an absolute or relative file path to the parent directory of
+//	 * the icons and icons_&lt;pixels&gt; folder(s).
+//	 */
+//	@Deprecated
+//	public static void setFrom(String _from)
+//	{
+//		from = _from;
+//	}
+// END KGU 2021-01-09
 }

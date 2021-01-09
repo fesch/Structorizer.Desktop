@@ -414,19 +414,6 @@ public class OberonGenerator extends Generator {
 	// END KGU#140/KGU#388 2017-10-24
 
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by ":=" here
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm.replace(" <- ", " := ");
-//	}
-	// END KGU#18/KGU#23 2015-11-01
-
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */

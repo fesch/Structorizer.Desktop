@@ -384,18 +384,6 @@ public class JavaGenerator extends CGenerator
 	// END KGU#16/#47 2015-11-30
 
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by "="
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm.replace(" <- ", " = ");
-//	}
-
 	// START KGU#446 2017-10-27: Enh. #441 special support for Turtleizer
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)

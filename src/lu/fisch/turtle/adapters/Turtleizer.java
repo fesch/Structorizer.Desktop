@@ -65,11 +65,12 @@ public class Turtleizer {
 	
 	private static TurtleBox turtleBox = null;
 	/**
+	 * @deprecated
 	 * Maps different Turtleizer function names (in lower-case) to the respective adapter
-	 * method names, which are not of course case-ignorant. This map is needed for 
+	 * method names, which are not of course case-ignorant. This map was needed for the
+	 * obsolete routine check {@link #checkRoutine(String)} only.
 	 */
 	// FIXME: This field became superfluous since TurtleBox got a light-weight constructor.
-	@Deprecated
 	@SuppressWarnings("serial")
 	private static final HashMap<String, String> supportedRoutines = new HashMap<String, String>() {{
 		put("forward", "forward");
@@ -117,14 +118,13 @@ public class Turtleizer {
 	 * Checks whether a routine with the {@code candidateName} is supported by Turtleizer, and if so
 	 * returns the qualified method name, otherwise null. Note that {@code candidateName} will be
 	 * looked up case-ignorantly.<br/>
-	 * Became obsolete with Structorizer version 3.27-05, better use {@link TurtleBox#providedRoutine(String, int)}
-	 * on a light-weight instance of {@link TurtleBox} (obtainable from the standard constructor,
-	 * NOT via {@link #getTurtleBox()}).
+	 * Became obsolete with Structorizer version 3.27-05
 	 * @param candidateName - a procedure or function identifier 
 	 * @return the qualified method name or null
-	 * @see TurtleBox#providedRoutine(String, int)
+	 * @deprecated Use {@link TurtleBox#providedRoutine(String, int)} instead
+	 * on a light-weight instance of {@link TurtleBox} (obtainable from the standard constructor,
+	 * NOT via {@link #getTurtleBox()}).
 	 */
-	@Deprecated
 	public static String checkRoutine(String candidateName)
 	{
 		String methodName = supportedRoutines.get(candidateName.trim().toLowerCase());
