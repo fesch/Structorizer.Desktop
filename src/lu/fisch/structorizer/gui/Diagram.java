@@ -217,6 +217,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-06      Enh. 905: New Analyser markers suppressed on image export and printing
  *                                      Bugfix #907: Duplicate code in goRun() led to a skipped tutorial step,
  *                                      Issue #569: Diagram scrolling on errorlist selection improved
+ *      Kay Gürtzig     2021-01-10      Enh. #910: Effective support for actual DiagramControllers
  *
  ******************************************************************************************************
  *
@@ -242,6 +243,7 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -300,6 +302,7 @@ import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.arranger.Group;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.elements.Element.DrawingContext;
+import lu.fisch.structorizer.executor.Control;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.turtle.TurtleBox;
@@ -494,10 +497,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private static Vector<GENPlugin> parserPlugins = null;
 	// END KGU#354 2017-03-15
 	// START KGU#448 2018-01-05: Enh. #443
-	/** Available {@link DiagramController}-implementing instances (including Turtleizer) */
-	private static ArrayList<DiagramController> diagramControllers = null;
-	/** Bitset of enabled {@link DiagramController} instances */ 
-	private long enabledDiagramControllers = 0;
+	// START KGU#911 2021-01-10: Enh. #910 We associate to all DiagramControllers an Includable
+	/** Available {@link DiagramController}-implementing instances (including Turtleizer)
+	 * combined with a representing Includable (except Turtleizer) */
+	//private static ArrayList<DiagramController> diagramControllers = null;
+	private static LinkedHashMap<DiagramController, Root> diagramControllers = null;
+	///** Bitset of enabled {@link DiagramController} instances */ 
+	//private long enabledDiagramControllers = 0;
+	// END KGU#911 2021-01-10
 	// END KGU#448 2018-01-05
 
 	// START KGU#300 2016-12-02: Enh. #300 - update notification settings
@@ -1082,6 +1089,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (selectedDown.getClass().getSimpleName().equals("Root") ||
 							selectedDown.getClass().getSimpleName().equals("Subqueue") ||
 							bSome.getClass().getSimpleName().equals("Root") ||
+							// START KGU#911 2021-01-10: Enh. #910
+							selectedDown.isImmutable() || bSome.isImmutable() ||
+							// END KGU#911 2021-01-10
 							//root.checkChild(bSome, selectedDown))
 							bSome.isDescendantOf(selectedDown))
 					{
@@ -1261,6 +1271,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					setMoveCursor = false;
 				}
 				// END KGU#896 2020-12-25
+				// START KGU#911 2021-01-10: Enh. #910
+				if (selected.isImmutable()) {
+					setMoveCursor = false;
+				}
+				// END KGU#911 2021-01-10
 			}
 			// START KGU#896 2020-12-25: Enh. #896
 			if (setMoveCursor) {
@@ -1312,6 +1327,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						selectedUp.setSelected(false);
 						if ( !selectedUp.getClass().getSimpleName().equals("Root") &&
 								selectedUp != selectedDown &&
+								// START KGU#911 2021-01-10: Enh. #910
+								!selectedUp.isImmutable() && !selectedDown.isImmutable() &&
+								// END KGU#911 2021-01-10
 								//root.checkChild(selectedUp,selectedDown)==false
 								!selectedUp.isDescendantOf(selectedDown)
 								)
@@ -2569,6 +2587,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private boolean saveAsNSD(Root root)
 	// END KGU#320 2017-01-04
 	{
+		// START KGU#911 2021-01-10: Enh. #910 suppress saving
+		if (root.isDiagramControllerRepresentative()) {
+			return true;	// Fake success
+		}
+		// END KGU#911 2021-01-10
 		// propose name
 		String nsdName = root.proposeFileName();
 		
@@ -2895,7 +2918,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Stores unsaved changes (if any). If {@code _askToSave} is true then the user may
 	 * confirm or deny saving or cancel the inducing request. Otherwise unsaved changes
-	 * will silently stored.
+	 * will silently be stored.
 	 * @param _askToSave - if true and the current root has unsaved changes then a user
 	 * dialog will be popped up first
 	 * @return true if the user did not cancel the save request
@@ -2927,6 +2950,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean saveNSD(Root root, boolean _askToSave)
 	// END KGU#320 2017-01-04
 	{
+		// START KGU#911 2021-01-10: Enh. #910 suppress saving
+		if (root.isDiagramControllerRepresentative()) {
+			return true;	// Fake success
+		}
+		// END KGU#911 2021-01-10
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
 		// only save if something has been changed
 		// START KGU#137 2016-01-11: Use the new method now
@@ -3503,7 +3531,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//return canCopy() && !selected.executed && !selected.waited;
 		// START KGU#177 2016-07-06: Enh #158: mere re-formulation (equivalent)
 		//return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
-		return canCopyNoRoot() && !selected.isExecuted();
+		// START KGU#911 2021-01-10: Enh. #910
+		//return canCopyNoRoot() && !selected.isExecuted();
+		return canCopyNoRoot() && !selected.isExecuted() && !selected.isImmutable();
+		// END KGU#911 2021-01-10
 		// END KGU#177 2016-07-06
 		// END KGU#177 2016-04-14
 	}
@@ -3570,7 +3601,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean canTransmute()
 	{
 		boolean isConvertible = false;
-		if (selected != null && !selected.isExecuted())
+		// START KGU#911 2021-01-10: Enh. #910
+		//if (selected != null && !selected.isExecuted())
+		if (selected != null && !selected.isExecuted() && !selected.isImmutable())
+		// END KGU#911 2021-01-10
 		{
 			// START KGU#666 2019-02-26: Bugfix #688 - it should always be offered to convert Calls and Jumps (to Instructions)
 			//if (selected instanceof Instruction)
@@ -3655,7 +3689,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void setColor(Color _color)
 	{
-		if (getSelected() != null)
+		// START KGU#911 2021-01-10: Enh. #910
+		//if (getSelected() != null)
+		if (selected != null && !selected.isImmutable())
+		// END KGU#911 2021-01-10
 		{
 			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
 			//root.addUndo();
@@ -3665,7 +3702,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				return;
 			}
 			// END KGU#38 2016-01-11
-			getSelected().setColor(_color);
+			selected.setColor(_color);
 			//getSelected().setSelected(false);
 			//selected=null;
 			// START KGU#137 2016-01-11: Already prepared by addUndo()
@@ -3719,7 +3756,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void cutNSD()
 	{
-		if (selected != null && selected != root)
+		// START KGU#911 2021-01-10: Enh. #910
+		//if (selected != null && selected != root)
+		if (selected != null && selected != root && !selected.isImmutable())
+		// END KGU#911 2021-01-10
 		{
 			eCopy = selected.copy();
 			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
@@ -3839,7 +3879,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
-				showInputBox(data, "Instruction", true);
+				showInputBox(data, "Instruction", true, true);
 				// END KGU#42 2015-10-14
 
 				if (data.result==true)
@@ -3921,7 +3961,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
-				showInputBox(data, element.getClass().getSimpleName(), false);
+				showInputBox(data, element.getClass().getSimpleName(), false, true);
 				// END KGU#42 2015-10-14
 
 				if (data.result == true)
@@ -4271,6 +4311,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void disableNSD()
 	{
+		// START KGU#911 2021-01-10: Enh. 910
+		if (selected != null && selected.isImmutable()) {
+			return;
+		}
+		// END KGU#911 2021-01-10
 		boolean allDisabled = true;
 		//root.addUndo();
 		try {
@@ -4322,7 +4367,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			data.text.setText(_pre);
 			// START KGU 2015-10-14: More information to ease title localisation
 			//showInputBox(data);
-			showInputBox(data, _ele.getClass().getSimpleName(), true);
+			showInputBox(data, _ele.getClass().getSimpleName(), true, true);
 			// END KGU 2015-10-14
 			if(data.result == true)
 			{
@@ -4623,7 +4668,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (isNewIncl) {
 				incl = new Root();
 				incl.setText(includableName);
-				incl.setInclude();
+				incl.setInclude(true);
 				// adopt presentation properties from root
 				//incl.highlightVars = Element.E_VARHIGHLIGHT;
 				incl.isBoxed = root.isBoxed;
@@ -9218,7 +9263,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		// Syntax highlighting must be renewed, outer dimensions may change for unboxed diagrams
 		root.resetDrawingInfoDown(); 
-		root.setInclude();
+		root.setInclude(true);
 		// START KGU#902 2021-01-01: Enh. #903
 		poppedElement = null;
 		// END KGU#902 2021-01-01
@@ -9573,16 +9618,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU 2015-10-14: additional parameters for title customisation
 	//public void showInputBox(EditData _data)
 	/**
-	 * Opens the appropriate elemet editor version for element type {@code _elementType} and
+	 * Opens the appropriate element editor version for element type {@code _elementType} and
 	 * gathers the editing results in {@code _data}.
 	 * @param _data - container for the content transfer between the element and the InputBox
 	 * @param _elementType - Class name of the {@link Element} we offer editing for
 	 * @param _isInsertion - Indicates whether or not the element is a new object
+	 * @param _allowCommit - Whether the OK button is enabled (not for immutable elements)
 	 */
-	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion)
+	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion, boolean _allowCommit)
 	// END KGU 2015-10-14
 	{
-		if(NSDControl!=null)
+		if (NSDControl != null)
 		{
 			// START KGU#170 2016-04-01: Issue #143 - on opening the editor a comment popup should vanish
 			hideComments();
@@ -9699,7 +9745,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.chkDisabled.setSelected(_data.disabled);
 			// END KGU#277 2016-10-13
 
-			inputbox.OK=false;
+			inputbox.OK = false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control
 			// START KGU#42 2019-03-05: Adapted to new type set
 			//if (_elementType.equals("Root") && !this.isProgram())
@@ -9739,6 +9785,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#61 2016-03-21: Give InputBox an opportunity to check and ensure consistency
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
+			// START KGU#911 2021-01-10: Enh. #910
+			inputbox.btnOK.setEnabled(_allowCommit);
+			// END KGU#911 2021-01-10
 			inputbox.setVisible(true);
 
 			// -------------------------------------------------------------------------------------
@@ -10179,13 +10228,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @return the initialized list of {@link DiagramController} instances; the first
 	 * element (reserved for a {@link TurtleBox)} instance) may be null.
 	 */
-	protected ArrayList<DiagramController> getDiagramControllers() {
+	// START KGU#911 2021-01-10: Enh. #910 Result type changed
+	//protected ArrayList<DiagramController> getDiagramControllers() {
+	protected LinkedHashMap<DiagramController, Root> getDiagramControllers() {
+	// END KGU#911 2021-01-10
 		if (diagramControllers != null) {
 			return diagramControllers;
 		}
-		diagramControllers = new ArrayList<DiagramController>();
+		// START KGU#911 2021-01-10: Enh. #910 data structure changed
+		//diagramControllers = new ArrayList<DiagramController>();
 		// Turtleizer is always added as first entry (no matter whether initialized or not)
-		diagramControllers.add(turtle);
+		//diagramControllers.add(turtle);
+		diagramControllers = new LinkedHashMap<DiagramController, Root>();
+		// We try to add Turtleizer as first entry
+		if (turtle != null) {
+			diagramControllers.put(turtle,  null);
+		}
+		// END KGU#911 2021-01-10
 		String errors = "";
 		Vector<GENPlugin> plugins = Menu.controllerPlugins;
 		if (plugins.isEmpty()) {
@@ -10217,10 +10276,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			GENPlugin plugin = plugins.get(i);
 			final String className = plugin.className;
 			// If it's not Turtleizer then add it to the available controllers
-			if (!className.equals("TurtleBox")) {
+			// START KGU#911 2021-01-10: Bugfix on behalf of #910
+			//if (!className.equals("TurtleBox")) {
+			if (!className.equals("lu.fisch.turtle.TurtleBox")) {
+			// END KGU#911 2021-01-10
 				try {
 					Class<?> genClass = Class.forName(className);
-					diagramControllers.add((DiagramController) genClass.getDeclaredConstructor().newInstance());
+					// START KGU#911 2021-01-10: Enh. #910 data structure changed
+					//diagramControllers.add((DiagramController) genClass.getDeclaredConstructor().newInstance());
+					DiagramController ctrlr = (DiagramController)genClass.getDeclaredConstructor().newInstance();
+					Root incl = constructDiagrContrIncludable(ctrlr, plugin.title);
+					diagramControllers.put(ctrlr, incl);
+					// END KGU#911 2021-01-10
 				} catch (Exception ex) {
 					errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
 				}
@@ -10234,18 +10301,103 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return diagramControllers;
 	}
 
-	/** @return an array of {@link DiagramController} instances enabled for execution */
+	// START KGU#911 2021-01-10: Enh. #910 - We represent DiagramControllers by includables
+	/**
+	 * Constructs a special Includable diagram for the given DiagramController
+	 * {@code controller} listing all provided routines in the comment and
+	 * defining specified data type (particularly enumeration types)
+	 * @param controller - a {@link DiagramController} implementor instance
+	 * @param name - the name of the DiagramController for the GUI
+	 * @return a special immutable Includable
+	 */
+	private Root constructDiagrContrIncludable(DiagramController controller, String name) {
+		Root incl = new Root(StringList.getNew("$" + name));
+		incl.setInclude(false);
+		StringList comment = new StringList();
+		comment.add("Represents Diagram Controller \"" + name + "\"");
+		comment.add("");
+		comment.add("Provided procedures:");
+		HashMap<String, Method> routines = controller.getProcedureMap();
+		int count = 0;
+		for (Map.Entry<String, Method> entry: routines.entrySet()) {
+			String[] parts = entry.getKey().split("#", -1);
+			comment.add(String.format("%4d. %s(%s)", ++count, parts[0], parts[1]));	// FIXME: retrieve arg types
+		}
+		if (count == 0) {
+			comment.add("\t-");
+		}
+		comment.add("Provided Functions:");
+		count = 0;
+		routines = controller.getFunctionMap();
+		for (Map.Entry<String, Method> entry: routines.entrySet()) {
+			String[] parts = entry.getKey().split("#", -1);
+			comment.add(String.format("%4d. %s(%s)", ++count, parts[0], parts[1]));	// FIXME: retrieve arg types
+		}
+		if (count == 0) {
+			comment.add("\t-");
+		}
+		String[] enumDefs = controller.getEnumerators();
+		if (enumDefs != null) {
+			comment.add("Provided Enumeration Types:");
+			count = 0;
+			for (int j = 0; j < enumDefs.length; j++) {
+				String enumDef = enumDefs[j];
+				int posBrace = enumDef.indexOf("{");
+				if (posBrace > 0) {
+					String typeName = null;
+					if (enumDef.startsWith("enum ")) {
+						// Seems to be in Java syntax, convert it to Structorizer syntax
+						typeName = enumDef.substring(5, posBrace).trim();
+						enumDef = ("type " + typeName + " = enum" + enumDef.substring(posBrace)).trim();
+						if (enumDef.endsWith(";")) {
+							enumDef = enumDef.substring(0, enumDef.length()-1);
+						}
+					}
+					else if (enumDef.startsWith("type ")
+							&& (posBrace = enumDef.substring(0, posBrace).indexOf("=")) > 0) {
+						typeName = enumDef.substring(5, posBrace).trim();
+					}
+					if (typeName != null) {
+						comment.add(String.format("%4d. %s", ++count, typeName));
+						Instruction typedef = new Instruction(enumDef);
+						incl.children.addElement(typedef);
+					}
+				}
+			}
+			if (count == 0) {
+				comment.add("\t-");
+			}
+		}
+		incl.setComment(comment);
+		incl.children.addElement(new Instruction("restart(\"" + controller.getClass().getName() + "\")"));
+		incl.disabled = true;
+		return incl;
+	}
+	// END KGU#911 2021-01-10
+	
+	/**
+	 * @return an array of {@link DiagramController} instances enabled for execution
+	 * @see #isControllerEnabled(String)
+	 * @see #enableController(String, boolean)
+	 */
 	private DiagramController[] getEnabledControllers() {
 		this.getDiagramControllers();
 		LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
-		long mask = 1;
-		for (DiagramController contr: diagramControllers) {
-			if (contr != null && (this.enabledDiagramControllers & mask) != 0) {
-				controllers.add(contr);
+		// START KGU#911 2021-01-09: Enh. #910 status now coded in the Includables
+		//long mask = 1;
+		//for (DiagramController contr: diagramControllers) {
+		//	if (contr != null && (this.enabledDiagramControllers & mask) != 0) {
+		//		controllers.add(contr);
+		//	}
+		//	mask <<= 1;
+		//}
+		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
+			if (entry.getValue() == null || !entry.getValue().isDisabled()) {
+				controllers.add(entry.getKey());
 			}
-			mask <<= 1;
 		}
-		return controllers.toArray(new DiagramController[]{});
+		// END KGU#911 2021-01-09
+		return controllers.toArray(new DiagramController[controllers.size()]);
 	}
 	// END KGU#448 2018-01-08
 
@@ -10685,6 +10837,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		AttributeInspector attrInsp = new AttributeInspector(
 				this.getFrame(), licInfo);
 		hideComments();	// Issue #143: Hide the current comment popup if visible
+		// START KGU#911 2021-01-10: Enh. #910: We may not allow any change
+		if (_root.isDiagramControllerRepresentative()) {
+			attrInsp.btnOk.setEnabled(false);
+		}
+		// END KGU#911 2021-01-10
 		attrInsp.setVisible(true);
 		if (attrInsp.isCommitted()) {
 			_root.addUndo(true);
@@ -10929,31 +11086,78 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param className - full class name of a {@link DiagramController} subclass
 	 * @param selected - if true enables, otherwise disables the specified controller
 	 * @return true if the specified controller class was found.
+	 * @see #getEnabledControllers()
+	 * @see #isControllerEnabled(String)
 	 */
 	public boolean enableController(String className, boolean selected)
 	{
+		// Ensure diagramControllers is initialised 
 		this.getDiagramControllers();
-		long mask = 1;
-		for (DiagramController controller: diagramControllers) {
-			// The initial position is reserved for the TurtleBox instance, which may not have been created 
-			if (controller == null && mask == 1) {
-				diagramControllers.set(0, turtle);
-				controller = turtle;
-			}
-			if (controller != null && controller.getClass().getName().equalsIgnoreCase(className)) {
-				if (selected) {
-					this.enabledDiagramControllers |= mask;
+		// START KGU#911 2021-01-10: Enh. #910 Status now held in associated Includables
+		//long mask = 1;
+		//for (DiagramController controller: diagramControllers) {
+		//	// The initial position is reserved for the TurtleBox instance, which may not have been created 
+		//	if (controller == null && mask == 1) {
+		//		diagramControllers.set(0, turtle);
+		//		controller = turtle;
+		//	}
+		//	if (controller != null && controller.getClass().getName().equalsIgnoreCase(className)) {
+		//		if (selected) {
+		//			this.enabledDiagramControllers |= mask;
+		//		}
+		//		else {
+		//			this.enabledDiagramControllers &= ~mask;
+		//		}
+		//		// START KGU#911 2021-01-09: Enh. #910 We must ensure the possible enumerators
+		//		analyse();
+		//		redraw();
+		//		// END KGU#911 2021-01-09
+		//		return true;
+		//	}
+		//	mask <<= 1;
+		//}
+		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
+			if (entry.getKey().getClass().getName().equals(className)) {
+				Root incl = entry.getValue();
+				if (incl != null) {
+					boolean statusChanged = incl.disabled == selected;
+					incl.disabled = !selected;
+					if (selected && !Arranger.getInstance().getAllRoots().contains(incl)) {
+						Arranger.getInstance().addToPool(incl, this.getFrame(), "Diagram Controllers");
+					}
+					else if (!selected && Arranger.hasInstance()) {
+						Arranger.getInstance().removeDiagram(incl);
+					}
+					// We must ensure the possible enumerators are visible
+					if (statusChanged) {
+						this.resetDrawingInfo();
+						analyse();
+						redraw();
+					}
+					return true;
 				}
 				else {
-					this.enabledDiagramControllers &= ~mask;
+					// Seems to be Turtleizer - cannot be disabled
+					return true;
 				}
-				return true;
 			}
-			mask <<= 1;
 		}
+		// END KGU#911 2021-01-10
 		return false;
 	}
 	// END KGU#448 2018-01-14
+	
+	// START KGU#911 2021-01-10: Enh. #910 Added for menu "button" control
+	public boolean isControllerEnabled(String className)
+	{
+		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
+			if (entry.getKey().getClass().getName().equals(className)) {
+				return entry.getValue() == null || !entry.getValue().disabled;
+			}
+		}
+		return false;
+	}
+	// END KGU#911 2021-01-10
 
 	// START KGU#480 2018-01-18: Enh. #490
 	/**

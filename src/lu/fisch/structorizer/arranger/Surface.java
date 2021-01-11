@@ -2787,7 +2787,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		boolean ask = true;
 		Mainform form = diagr.mainform;
 		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
-		if (diagr.root.hasChanged())
+		// START KGU#911 2021-01-10: Enh. #910 A DiagramController includable can't have been changed, but...
+		//if (diagr.root.hasChanged())
+		if (diagr.root.hasChanged() && !diagr.root.isDiagramControllerRepresentative())
+		// END KGU#911 2021-01-1ß
 		{
 			if (form == null || form.getRoot() != diagr.root)
 			{

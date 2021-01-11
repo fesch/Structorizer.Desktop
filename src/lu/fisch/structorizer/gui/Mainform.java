@@ -817,7 +817,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				
 				// START KGU#480 2018-01-21: Enh. #490
 				if (Element.controllerName2Alias.isEmpty()) {
-					for (DiagramController controller: diagram.getDiagramControllers()) {
+					// START KGU#911 2021-01-10: Enh. #910 data structure changed
+					//for (DiagramController controller: diagram.getDiagramControllers()) {
+					for (DiagramController controller: diagram.getDiagramControllers().keySet()) {
+					// END KGU#911 2021-01-10
 						if (controller == null) {
 							controller = new TurtleBox();
 						}

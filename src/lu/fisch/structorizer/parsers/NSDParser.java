@@ -225,7 +225,7 @@ public class NSDParser extends DefaultHandler {
 					root.setProgram(false);
 				}
 				else if (type.equals("includable")) {
-					root.setInclude();
+					root.setInclude(true);
 				}
 			}
 			// END KGU#376 2017-05-16

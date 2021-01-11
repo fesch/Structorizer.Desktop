@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-14 (2021-01-09)
+Current development version: 3.30-14 (2021-01-11)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -183,6 +183,7 @@ Current development version: 3.30-14 (2021-01-09)
 - 14: Bugfix #907 A step of the tutorial "Hello world" was always skipped <2>
 - 14: Bugfix #908 The variable content was not legible on editing with Nimbus <2>
 - 14: Enh. #909 Extended support for display and editing of enumerator values <2>
+- 14: Enh. #910 Extended DiagramController interface (for plugin modules) <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

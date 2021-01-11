@@ -118,7 +118,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-01      Issue #903: Syntax highlighting also in Popup when text and comment are switched
  *                                      Bugfix #904: Controller alias display wiped off all other routine names
  *                                      Issue #872: '=' in routine headers must not be replaced by "==" for C operator mode
- *                      2021-01-02      Enh. #905: Method to draw a red triangle if an error entry refers to the element
+ *      Kay Gürtzig     2021-01-02      Enh. #905: Method to draw a red triangle if an error entry refers to the element
+ *      Kay Gürtzig     2021-01-10      Enh. #910: New method isImmutable(), synchronisation in writeOut...
  *
  ******************************************************************************************************
  *
@@ -968,6 +969,17 @@ public abstract class Element {
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+	
+	// START KGU#911 2021-01-10: Enh. #910 DiagramController Includables are immutable
+	/**
+	 * @return {@code true} if this element must not be edited, moved, deleted etc.
+	 */
+	public boolean isImmutable()
+	{
+		Root myRoot = getRoot(this);
+		return myRoot.isDiagramControllerRepresentative();
+	}
+	// END KGU#911 2021-01-19
 
 	// START KGU#117 2016-03-07: Enh. #77
 	/**
@@ -3515,21 +3527,23 @@ public abstract class Element {
 				Vector<HighlightUnit> hlUnits = getHighlightUnits(_text, _this, root);
 				// END KGU#902 2020-12-31
 				// This is now the pure drawing
-				for (HighlightUnit unit: hlUnits) {
-					// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
-					// (This workaround will still only affect the standard font and have no impact on derived fonts)
-					//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
-					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
-					// END KGU#707 2019-05-15
-					_canvas.setColor(unit.textColor);
-					if (_actuallyDraw)
-					{
-						// write out text
-						_canvas.writeOut(_x + total, _y, unit.textSnippet);
-					}
+				synchronized (hlUnits) {
+					for (HighlightUnit unit: hlUnits) {
+						// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
+						// (This workaround will still only affect the standard font and have no impact on derived fonts)
+						//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+						_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
+						// END KGU#707 2019-05-15
+						_canvas.setColor(unit.textColor);
+						if (_actuallyDraw)
+						{
+							// write out text
+							_canvas.writeOut(_x + total, _y, unit.textSnippet);
+						}
 
-					// add to the total
-					total += _canvas.stringWidth(unit.textSnippet);
+						// add to the total
+						total += _canvas.stringWidth(unit.textSnippet);
+					}
 				}
 				// reset color
 				_canvas.setColor(Color.BLACK);
@@ -3825,175 +3839,177 @@ public abstract class Element {
 			StringBuilder normalText = new StringBuilder();
 			boolean lastWasNormal = false;
 			// END KGU#701 2019-03-29
-			for (int i = 0; i < parts.count(); i++)
-			{
-				String display = parts.get(i);
-
-				if (!display.equals(""))
+			synchronized (hlUnits) {
+				for (int i = 0; i < parts.count(); i++)
 				{
-					// if this part has to be colored
-					if (variableSet.contains(display))
+					String display = parts.get(i);
+
+					if (!display.equals(""))
 					{
-						// dark blue, bold
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setColor(E_HL_VARIABLE_COLOR);
-						//_canvas.setFont(boldFont);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, E_HL_VARIABLE_COLOR, true, false));
-						// END KGU#701 2019-03-29
-					}
-					// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
-					else if (_root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
-						// black, bold
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setFont(boldFont);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, Color.BLACK, true, false));
-						// END KGU#701 2019-03-29
-					}
-					// END KGU#388 2017-09-17
-					// if this part has to be colored with special color
-					// START KGU#611/KGU#843 2020-04-12: Issue #643, bugfix #847
-					//else if(specialSigns.contains(display))
-					else if(specialSigns.contains(display) || specialSignsCi.contains(display, false))
-					// END KGU#611/KGU#843 2020-04-12
-					{
-						// burgundy, bold
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setColor(E_HL_OPERATOR_COLOR);
-						//_canvas.setFont(boldFont);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, E_HL_OPERATOR_COLOR, true, false));
-						// END KGU#701 2019-03-29
-					}
-					// if this part has to be colored with io color
-					// START KGU#165 2016-03-25: consider the new option
-					//else if(ioSigns.contains(display))
-					else if(ioSigns.contains(display, !CodeParser.ignoreCase))
-						// END KGU#165 2016-03-25
-					{
-						// green, bold
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setColor(E_HL_INOUT_COLOR);
-						//_canvas.setFont(boldFont);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, E_HL_INOUT_COLOR, true, false));
-						// END KGU#701 2019-03-29
-					}
-					// START KGU 2015-11-12
-					// START KGU#116 2015-12-23: Enh. #75
-					// START KGU#165 2016-03-25: consider the new case option
-					//else if(jumpSigns.contains(display))
-					else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
-						// END KGU#165 2016-03-25
-					{
-						// orange, bold
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setColor(E_HL_JUMP_COLOR);
-						//_canvas.setFont(boldFont);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, E_HL_JUMP_COLOR, true, false));
-						// END KGU#701 2019-03-29
-					}
-					// END KGU#116 2015-12-23
-					// if it's a String or Character literal then mark it as such
-					else if (display.startsWith("\"") && display.endsWith("\"") ||
-							display.startsWith("'") && display.endsWith("'"))
-					{
-						// violet, plain
-						// START KGU#701 2019-03-29: Issue #718
-						//_canvas.setColor(E_HL_STRING_COLOR);
-						if (lastWasNormal) {
-							hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-							normalText.delete(0, Integer.MAX_VALUE);
-							lastWasNormal = false;
-						}
-						hlUnits.add(_elem.makeHighlightUnit(display, E_HL_STRING_COLOR, false, false));
-						// END KGU#701 2019-03-29
-					}
-					// END KGU 2015-11-12
-					// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
-					else if (E_APPLY_ALIASES && Function.testIdentifier(display, false, "#")) {
-						// START KGU#903 2021-01-01: Bugfix #904
-						boolean wasHandled = false;
-						// END KGU#903 3021-01-01
-						int j = i;
-						while (j < parts.count() && parts.get(++j).trim().isEmpty());
-						if (j < parts.count() && parts.get(j).equals("(")) {
-							if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
-								// Replace the name and show it underlined
-								// START KGU#701 2019-03-29: Issue #718
-								//display = display.substring(0, display.indexOf('#'));
-								//_canvas.setFont(underlinedFont);
-								if (lastWasNormal) {
-									hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_elem.makeHighlightUnit(display.substring(0, display.indexOf('#')),
-										Color.BLACK, false, true));
-								// END KGU#701 2019-03-29
-								// START KGU#903 2021-01-01: Bugfix #904
-								wasHandled = true;
-								// END KGU#903 3021-01-01
+						// if this part has to be colored
+						if (variableSet.contains(display))
+						{
+							// dark blue, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_VARIABLE_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
 							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_VARIABLE_COLOR, true, false));
+							// END KGU#701 2019-03-29
 						}
-						// START KGU#903 2021-01-01: Bugfix #904
-						if (!wasHandled) {
+						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
+						else if (_root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
+							// black, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, Color.BLACK, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU#388 2017-09-17
+						// if this part has to be coloured with special colour
+						// START KGU#611/KGU#843 2020-04-12: Issue #643, bugfix #847
+						//else if(specialSigns.contains(display))
+						else if(specialSigns.contains(display) || specialSignsCi.contains(display, false))
+						// END KGU#611/KGU#843 2020-04-12
+						{
+							// burgundy, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_OPERATOR_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_OPERATOR_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// if this part has to be coloured with io colour
+						// START KGU#165 2016-03-25: consider the new option
+						//else if(ioSigns.contains(display))
+						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
+						// END KGU#165 2016-03-25
+						{
+							// green, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_INOUT_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_INOUT_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// START KGU 2015-11-12
+						// START KGU#116 2015-12-23: Enh. #75
+						// START KGU#165 2016-03-25: consider the new case option
+						//else if(jumpSigns.contains(display))
+						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
+						// END KGU#165 2016-03-25
+						{
+							// orange, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_JUMP_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_JUMP_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU#116 2015-12-23
+						// if it's a String or Character literal then mark it as such
+						else if (display.startsWith("\"") && display.endsWith("\"") ||
+								display.startsWith("'") && display.endsWith("'"))
+						{
+							// violet, plain
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_STRING_COLOR);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_STRING_COLOR, false, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU 2015-11-12
+						// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
+						else if (E_APPLY_ALIASES && Function.testIdentifier(display, false, "#")) {
+							// START KGU#903 2021-01-01: Bugfix #904
+							boolean wasHandled = false;
+							// END KGU#903 3021-01-01
+							int j = i;
+							while (j < parts.count() && parts.get(++j).trim().isEmpty());
+							if (j < parts.count() && parts.get(j).equals("(")) {
+								if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
+									// Replace the name and show it underlined
+									// START KGU#701 2019-03-29: Issue #718
+									//display = display.substring(0, display.indexOf('#'));
+									//_canvas.setFont(underlinedFont);
+									if (lastWasNormal) {
+										hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+										normalText.delete(0, Integer.MAX_VALUE);
+										lastWasNormal = false;
+									}
+									hlUnits.add(_elem.makeHighlightUnit(display.substring(0, display.indexOf('#')),
+											Color.BLACK, false, true));
+									// END KGU#701 2019-03-29
+									// START KGU#903 2021-01-01: Bugfix #904
+									wasHandled = true;
+									// END KGU#903 3021-01-01
+								}
+							}
+							// START KGU#903 2021-01-01: Bugfix #904
+							if (!wasHandled) {
+								normalText.append(display);
+								lastWasNormal = true;
+							}
+							// END KGU#903 3021-01-01
+						}
+						// START KGU#701 2019-03-29: Issue #718
+						else {
 							normalText.append(display);
 							lastWasNormal = true;
 						}
-						// END KGU#903 3021-01-01
+						// END KGU#701 2019-03-29
+						// END KGU#480 2018-01-21
 					}
+
 					// START KGU#701 2019-03-29: Issue #718
-					else {
-						normalText.append(display);
-						lastWasNormal = true;
-					}
+					//if (_actuallyDraw)
+					//{
+					//	// write out text
+					//	_canvas.writeOut(_x + total, _y, display);
+					//}
+					//
+					//// add to the total
+					//total += _canvas.stringWidth(display);
+					//
+					//// reset color
+					//_canvas.setColor(Color.BLACK);
+					//// reset font
+					//_canvas.setFont(backupFont);
 					// END KGU#701 2019-03-29
-					// END KGU#480 2018-01-21
+
+				} //for(int i = 0; i < parts.count(); i++)
+
+				if (lastWasNormal) {
+					hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
 				}
-
-				// START KGU#701 2019-03-29: Issue #718
-				//if (_actuallyDraw)
-				//{
-				//	// write out text
-				//	_canvas.writeOut(_x + total, _y, display);
-				//}
-				//
-				//// add to the total
-				//total += _canvas.stringWidth(display);
-				//
-				//// reset color
-				//_canvas.setColor(Color.BLACK);
-				//// reset font
-				//_canvas.setFont(backupFont);
-				// END KGU#701 2019-03-29
-
-			} //for(int i = 0; i < parts.count(); i++)
-			
-			if (lastWasNormal) {
-				hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
 			}
 		}
 		return hlUnits;

@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-28      Bugfix #900: Wrong comment search, wrong whole word check,
  *                                      awkward initialisation of chkInTexts, chkInComments.
  *      Kay Gürtzig     2020-12-30      Issue #901: Ensure wait cursor at least on action "replace all"
+ *      Kay Gürtzig     2021-01-11      Enh. #910: Precautions against modifications of immutable elements
  *
  ******************************************************************************************************
  *
@@ -736,7 +737,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 						// FIXME: There might be more influence factors
 						btnFind.setEnabled(true);
 						btnReplaceFind.setEnabled(true);
-						btnReplace.setEnabled(currentElement != null);
+						// START KGU#911 2021-01-10: Enh. #910
+						//btnReplace.setEnabled(currentElement != null);
+						btnReplace.setEnabled(currentElement != null && !currentElement.isImmutable());
+						// END KGU#911 2021-01-10
 						btnReplaceAll.setEnabled(true);
 					}
 					// START KGU#540 2018-07-02: Bugfix - a filter change didn't reset the selection result
@@ -1379,7 +1383,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		}
 		if (replace && nMatches > 0) {
 			// START KGU#684 2019-06-13: Bugfix #728 - avoid interference from element modifications
-			replacing = true;
+			// START KGU#911 2021-01-10: Enh. #910
+			//replacing = true;
+			replacing = !currentElement.isImmutable() && !currentElement.isExecuted();
+			// END KGU#911 2021-01-10
 			//System.out.println("replacing set true...");
 			try {
 			// END KGU#684 2019-06-13
@@ -1876,9 +1883,15 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			}
 		}
 		if (btnReplace != null)
-			btnReplace.setEnabled(currentElement != null);
+			// START KGU#911 2021-01-10: Enh. #910
+			//btnReplace.setEnabled(currentElement != null);
+			btnReplace.setEnabled(currentElement != null && !currentElement.isImmutable() && !currentElement.isExecuted());
+			// END KGU#911 2021-01-10
 		if (btnReplaceFind != null)
-			btnReplaceFind.setEnabled(currentElement != null);
+			// START KGU#911 2021-01-10: Enh. #910
+			//btnReplaceFind.setEnabled(currentElement != null);
+			btnReplaceFind.setEnabled(currentElement != null && !currentElement.isImmutable() && !currentElement.isExecuted());
+			// END KGU#911 2021-01-10
 		if (btnFind != null)
 			btnFind.setEnabled(anythingSelected);
 		if (btnReplaceAll != null)

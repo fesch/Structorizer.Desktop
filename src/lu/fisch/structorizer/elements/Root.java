@@ -158,6 +158,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-10-16      Issue #874: Identifier check in Analyser modified with respect to non-ascii letters
  *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
  *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
  *      
  ******************************************************************************************************
  *
@@ -281,7 +282,11 @@ public class Root extends Element {
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
-	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+
+	// START KGU#911 2021-01-10: Enh. #910 sepecial sub type of Includable (no editing, no saving)
+	//public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL, DT_INCL_DIAGRCTRL};
+	// END KGU#911 2021-01-10
 	private DiagramType diagrType = DiagramType.DT_MAIN;
 	// END KGU#376 2017-05-16
 
@@ -420,7 +425,7 @@ public class Root extends Element {
 	 * @see #isSubroutine()
 	 * @see #isInclude()
 	 * @see #setProgram(boolean)
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public boolean isProgram() {
 		return diagrType == DiagramType.DT_MAIN;
@@ -432,7 +437,7 @@ public class Root extends Element {
 	 * @see #isProgram()
 	 * @see #isSubroutine()
 	 * @see #isInclude()
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public void setProgram(boolean isProgram) {
 		if (isProgram) {
@@ -446,7 +451,7 @@ public class Root extends Element {
 	 * @see #isProgram()
 	 * @see #isInclude()
 	 * @see #setProgram(boolean)
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public boolean isSubroutine() {
 		return diagrType == DiagramType.DT_SUB;
@@ -455,22 +460,54 @@ public class Root extends Element {
 	 * @return true if and only if the diagram type is "includable"
 	 * @see #isProgram()
 	 * @see #isSubroutine()
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 * @see #setProgram(boolean)
 	 */
 	public boolean isInclude() {
-		return diagrType == DiagramType.DT_INCL;
+		// START KGU#911 2021-01-10: Enh. #910 New subtype for DiagramControllers
+		//return diagrType == DiagramType.DT_INCL;
+		return diagrType == DiagramType.DT_INCL || diagrType == DiagramType.DT_INCL_DIAGRCTRL;
+		// END KGU#911 2021-01-10
 	}
 	/**
-	 * Sets the diagram type to "includable"
+	 * Sets the diagram type to "includable" (ordinary)
 	 * @see #isInclude()
 	 * @see #isProgram()
 	 * @see #isSubroutine()
 	 * @see #setProgram(boolean)
 	 */
-	public void setInclude() {
-		diagrType = DiagramType.DT_INCL;
+	public void setInclude()
+	// START KGU#911 2021-01-10: Enh. #910
+	//{
+	//	diagrType = DiagramType.DT_INCL;
+	//}
+	{
+		setInclude(true);
 	}
+	/**
+	 * Sets the diagram type to "includable" (ordinary)
+	 * @param usual - {@code true} for usual (user-defined) Includable,
+	 *       {@code false} for an immutable, not storable {@link DiagramController}
+	 *       representative
+	 * @see #isInclude()
+	 * @see #isProgram()
+	 * @see #isSubroutine()
+	 * @see #setProgram(boolean)
+	 */
+	public void setInclude(boolean usual)
+	{
+		diagrType = usual ? DiagramType.DT_INCL : DiagramType.DT_INCL_DIAGRCTRL;
+	}
+	/**
+	 * @return {@code true} iff this is an Includable representing a {@link DiagramController}
+	 * @see #isInclude()
+	 * @see #setInclude(boolean)
+	 */
+	public boolean isDiagramControllerRepresentative()
+	{
+		return diagrType == DiagramType.DT_INCL_DIAGRCTRL;
+	}
+	// END KGU#911 2021-01-10
 	public String getAuthor() {
 		return this.author;
 	}
@@ -1151,6 +1188,9 @@ public class Root extends Element {
 			canvas.fillRoundRect(_top_left, R_CORNER);
 			break;
 		case DT_INCL:
+		// START KGU#911 2021-01-10: Enh. #910
+		case DT_INCL_DIAGRCTRL:
+		// END KGU#911 2021-01-10
 			canvas.fillPoly(this.makeBevelledRect(_top_left, bevel));
 			break;
 		default:
@@ -1468,6 +1508,9 @@ public class Root extends Element {
     {
     	switch (this.diagrType) {
     	case DT_INCL:
+    	// START KGU#911 2021-01-10: Enh. #910
+    	case DT_INCL_DIAGRCTRL:
+    	// END KGU#911 2021-01-10
     		return IconLoader.getIcon(71);
     	case DT_SUB:
     		return IconLoader.getIcon(21);
@@ -3032,7 +3075,7 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-            if(_onlyEle && !_onlyBody)
+            if (_onlyEle && !_onlyBody)
             {
                     // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
                     //lines = _ele.getText().copy();
@@ -5444,7 +5487,13 @@ public class Root extends Element {
     		{
     			// START KGU#61 2016-03-22: Method outsourced
     			//if (testidentifier(tokens[i]))
-    			if (Function.testIdentifier(tokens[i], false, null))
+    			// START KGU#911 2021-01-10: Enh. #910 - DiagramController names start with "$"
+    			//if (Function.testIdentifier(tokens[i], false, null))
+    			if (Function.testIdentifier(tokens[i], false, null)
+    					|| this.diagrType == DiagramType.DT_INCL_DIAGRCTRL
+    					&& tokens[i].startsWith("$")
+    					&& Function.testIdentifier(tokens[i].substring(1), false, null))
+    			// END KGU#911 2021-01-10
     			// END KGU#61 2016-03-22
     			{
     				programName = tokens[i];
@@ -5806,7 +5855,12 @@ public class Root extends Element {
         // START KGU#61 2016-03-22: Method outsourced
         //if(testidentifier(programName)==false)
         boolean hasValidName = true;
-        if (!Function.testIdentifier(programName, false, null))
+        // START KGU#911 2021-01-10: Enh. 910 Tolerate a name starting with '$' for a DiagramController
+        //if (!Function.testIdentifier(programName, false, null))
+        if (!Function.testIdentifier(programName, false, null)
+            && !(this.isDiagramControllerRepresentative()
+                    && programName.startsWith("$")
+                    && Function.testIdentifier(getMethodName(true), false, null)))
         // END KGU#61 2016-03-22
         {
             //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
@@ -5818,7 +5872,7 @@ public class Root extends Element {
             }
             else if (programName.contains(" ") && Function.testIdentifier(programName.replace(' ', '_'), false, null)) {
                 // "Program names should not contain spaces, better place underscores between the words:"
-                error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);        		
+                error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);
             }
             else {
                 // "«"+programName+"» is not a valid name for a program or function!"
@@ -5855,7 +5909,7 @@ public class Root extends Element {
         // END KGU#239 2016-08-12
 
         // CHECK: two checks in one loop: (#12 - new!) & (#7)
-        for(int j=0; j < rootVars.count(); j++)
+        for (int j=0; j < rootVars.count(); j++)
         {
             String para = rootVars.get(j);
             // CHECK: non-conform parameter name (#12 - new!)
@@ -6272,7 +6326,7 @@ public class Root extends Element {
 		return typeDecl;
 	}
 	/**
-	 * This is practically a very lean version of the {@link #analyse()} method. We simply don't create
+	 * This is practically a very lean version of the {@link #analyse(StringList)} method. We simply don't create
 	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)
 	 * initialization. These are candidates for parameters.
 	 * @param _node - The Subqueue recursively to be scrutinized for variables

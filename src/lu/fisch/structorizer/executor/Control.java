@@ -893,7 +893,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     // END KGU#443 2017-10-16
 
-	public void updateVars(Vector<String[]> vars)
+    /**
+     * Method to be used by {@link Executor} in order to display the variable values
+     * passed in by {@code vars}
+     * @param vars - a vector of string pairs, each containing the name and a textual
+     * value representation of a variable.
+     */
+    public void updateVars(Vector<String[]> vars)
     {
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
