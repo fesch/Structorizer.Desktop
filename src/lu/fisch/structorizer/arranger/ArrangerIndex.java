@@ -45,6 +45,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-31      Bugfix #902: Must regain focus after selecting; cancel add/move action
  *                                      on quitting the pane; confirmation request before dissolving groups
+ *      Kay Gürtzig     2021-01-11      Enh. #910: Menu items disabled if only DiagramController proxies are selected
  *
  ******************************************************************************************************
  *
@@ -808,12 +809,13 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			selectedRoot = arrangerIndexGetSelectedRoot();
 		}
 		Collection<Root> selectedRoots = this.arrangerIndexGetSelectedRoots(false);
+		boolean isMutable = arrangerIndexSelectsMutable();
 		
 		//popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
 		//popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
 		popupIndexGet.setEnabled(indexSelected && arrangerIndexSelectsOtherRoot());
 		popupIndexSave.setEnabled(indexSelected && arrangerIndexSelectsUnsavedChanges());
-		popupIndexRemove.setEnabled(indexSelected);
+		popupIndexRemove.setEnabled(indexSelected && isMutable);
 		//popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !arrangerIndex.getSelectedValue().isProgram());
 		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && arrangerIndexSelectsNonProgram());
 		// END KGU#318 2017-01-05
@@ -825,57 +827,77 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		popupIndexInfo.setEnabled(indexSelected &&
 				(selectedRoot != null || selectedGroup != null));
 		popupIndexGroup.setEnabled(selectedRoots.size() > 0);
-		popupIndexExpandGroup.setEnabled(!selectedRoots.isEmpty()
-				|| selectedGroup != null);
-		popupIndexDissolve.setEnabled(selectedGroup != null);
-		popupIndexDetach.setEnabled(!selectedRoots.isEmpty());
-		popupIndexAttach.setEnabled(!selectedRoots.isEmpty());
+		popupIndexExpandGroup.setEnabled(isMutable && (!selectedRoots.isEmpty()
+				|| selectedGroup != null));
+		popupIndexDissolve.setEnabled(selectedGroup != null && isMutable);
+		popupIndexDetach.setEnabled(!selectedRoots.isEmpty() && isMutable);
+		popupIndexAttach.setEnabled(!selectedRoots.isEmpty() && isMutable);
 		// END KGU#626 2019-01-03
 		// START KGU#630 2019-01-13: Enh. #662/2
 		popupIndexDrawGroup.setEnabled(selectedGroup != null);
 		popupIndexDrawGroup.setSelected(selectedGroup != null && selectedGroup.isVisible());
 		// END KGU#630 2019-01-13
 		// START KGU#669 2019-03-01: Enh. #691
-		popupIndexRenameGroup.setEnabled(selectedGroup != null);
+		popupIndexRenameGroup.setEnabled(selectedGroup != null && isMutable);
 		// END KGU#630 2019-01-13
 		// START KGU#815 2020-03-16: Enh. #828
 		popupIndexExport.setEnabled(selectedGroup != null || selectedRoot != null);
 		//END KGU#815 2020-03-16
-
 	}
 
-	/** @return true on single selection of a {@link Root} that is not the currently edited diagram, false otherwise */
+	/** @return {@code true} on single selection of a {@link Root} that is not the currently edited diagram, false otherwise */
 	private boolean arrangerIndexSelectsOtherRoot() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
-		if (selectedPaths.length == 1) {
+		if (selectedPaths != null && selectedPaths.length == 1) {
 			Object selectedObject = ((DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent()).getUserObject();
 			return (selectedObject instanceof Root && selectedObject != diagram.getRoot());
 		}
 		return false;
 	}
 
-	/** @return true if any of the selected {@link Root}s or {@link Group}s has unsaved changes, false otherwise */
+	/** @return {@code true} if any of the selected {@link Root}s or {@link Group}s has unsaved changes, false otherwise */
 	private boolean arrangerIndexSelectsUnsavedChanges() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
-		for (TreePath path: selectedPaths) {
-			Object selectedObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-			if (selectedObject instanceof Root && ((Root)selectedObject).hasChanged()) {
-				return true;
-			}
-			else if (selectedObject instanceof Group && ((Group)selectedObject).hasChanged()) {
-				return true;
+		if (selectedPaths != null) {
+			for (TreePath path: selectedPaths) {
+				Object selectedObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+				if (selectedObject instanceof Root && ((Root)selectedObject).hasChanged()) {
+					return true;
+				}
+				else if (selectedObject instanceof Group && ((Group)selectedObject).hasChanged()) {
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 
-	/** @return the uniquely selected {@link Root} if it is a sub or includable, otherwise {@code null} */
+	/** @return {@code true} if a single non-main {@link Root} is selected */
 	private boolean arrangerIndexSelectsNonProgram() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
-		if (selectedPaths.length == 1) {
+		if (selectedPaths != null && selectedPaths.length == 1) {
 			Object selectedObject = ((DefaultMutableTreeNode)selectedPaths[0].getLastPathComponent()).getUserObject();
 			if (selectedObject instanceof Root) {
 				return !((Root)selectedObject).isProgram();
+			}
+		}
+		return false;
+	}
+	
+	/** @return {@code true} if at least one {@link Root} or {@link Group} not representing
+	 * DiagramControllers is among the selection */
+	private boolean arrangerIndexSelectsMutable()
+	{
+		TreePath[] selectedPaths = this.getSelectionPaths();
+		if (selectedPaths != null) {
+			for (TreePath path: selectedPaths) {
+				Object selectedObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+				if (selectedObject instanceof Root && !((Root)selectedObject).isDiagramControllerRepresentative()) {
+					return true;
+				}
+				else if (selectedObject instanceof Group && !((Group)selectedObject).isDiagramControllerRepresentative()) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -1357,11 +1379,19 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	{
 		// FIXME: Check for single group selection, then expand the group!
 		Group selectedGroup = this.arrangerIndexGetSelectedGroup();
-		if (selectedGroup != null) {
+		// START KGU#911 2021-01-11: Enh. #910 don't touch diagram controller representatives
+		//if (selectedGroup != null) {
+		if (selectedGroup != null && !selectedGroup.isDiagramControllerRepresentative()) {
+		// END KGU#911 2021-01-11
 			Collection<Root> expandedRootSet = Arranger.getInstance().accomplishRootSet(
 					new HashSet<Root>(selectedGroup.getSortedRoots()), this, null);
 			for (Root root: expandedRootSet) {
-				Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
+				// START KGU#911 2021-01-11: Enh. #910 don't touch diagram controller representatives
+				//Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
+				if (!root.isDiagramControllerRepresentative()) {
+					Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
+				}
+				// END KGU#911 2021-01-11
 			}
 		}
 		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
@@ -1388,8 +1418,14 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		if (!viaMenu || groups.size() > 1) {
 			StringBuilder groupNames = new StringBuilder();
 			for (Group group: groups) {
-				groupNames.append("\n - ");
-				groupNames.append(group.getName());
+				// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController group
+				//groupNames.append("\n - ");
+				//groupNames.append(group.getName());
+				if (!group.isDiagramControllerRepresentative()) {
+					groupNames.append("\n - ");
+					groupNames.append(group.getName());
+				}
+				// END KGU#911 2021-01-11
 			}
 			int answer = JOptionPane.showConfirmDialog(this,
 					msgConfirmDissolve.getText().replace("%", groupNames.toString()),
@@ -1402,7 +1438,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// END KGU#900 2020-12-31
 		boolean done = true;
 		for (Group group: groups) {
-			done = Arranger.getInstance().dissolveGroup(group.getName(), this) && done;
+			// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController group
+			//done = Arranger.getInstance().dissolveGroup(group.getName(), this) && done;
+			if (!group.isDiagramControllerRepresentative()) {
+				done = Arranger.getInstance().dissolveGroup(group.getName(), this) && done;
+			}
+			// END KGU#911 2021-01-11
 		}
 		// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
 		this.requestFocusInWindow();
@@ -1424,7 +1465,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			if (path.getPathCount() >= 3) {
 				Object rootObject = ((DefaultMutableTreeNode)path.getPathComponent(2)).getUserObject();
 				Object groupObject = ((DefaultMutableTreeNode)path.getPathComponent(1)).getUserObject();
-				if (rootObject instanceof Root && groupObject instanceof Group) {
+				// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
+				//if (rootObject instanceof Root && groupObject instanceof Group) {
+				if (rootObject instanceof Root && groupObject instanceof Group
+						&& !((Root)rootObject).isDiagramControllerRepresentative()
+						&& !((Group)groupObject).isDiagramControllerRepresentative()) {
+				// END KGU#911 2021-01-11
 					done = Arranger.getInstance().detachRootFromGroup((Group)groupObject, (Root)rootObject, this) || done;
 				}
 			}
@@ -1457,7 +1503,11 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			int nGroups = this.arrangerIndexTop.getChildCount();
 			for (int i = 0; i < nGroups; i++) {
 				Object groupObject = ((DefaultMutableTreeNode)arrangerIndexTop.getChildAt(i)).getUserObject();
-				if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()) {
+				// START KGU#911 2021-01-1: Enh. #910 don't offer Diagram Controllers group
+				//if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()) {
+				if (groupObject instanceof Group && !((Group)groupObject).isDefaultGroup()
+						&& !((Group)groupObject).isDiagramControllerRepresentative()) {
+				// END KGU#911 2021-01-11
 					this.cmbTargetGroup.addItem((Group)groupObject);
 				}
 			}
@@ -1480,7 +1530,14 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				if (option == 0) {
 					// Simply add the roots to the target group
 					for (Root root: roots) {
-						done = Arranger.getInstance().attachRootToGroup(targetGroup, root, null, this) || done;
+						// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
+						//done = Arranger.getInstance().attachRootToGroup(
+						//		targetGroup, root, null, this) || done;
+						if (!root.isDiagramControllerRepresentative()) {
+							done = Arranger.getInstance().attachRootToGroup(
+									targetGroup, root, null, this) || done;
+						}
+						// END KGU#911 2021-01-11
 					}
 				}
 				else {
@@ -1491,7 +1548,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 						if (path.getPathCount() >= 3) {
 							Object rootObject = ((DefaultMutableTreeNode)path.getPathComponent(2)).getUserObject();
 							Object groupObject = ((DefaultMutableTreeNode)path.getPathComponent(1)).getUserObject();
-							if (rootObject instanceof Root && groupObject instanceof Group) {
+							// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
+							//if (rootObject instanceof Root && groupObject instanceof Group) {
+							if (rootObject instanceof Root && groupObject instanceof Group
+									&& !((Root)rootObject).isDiagramControllerRepresentative()
+									&& !((Group)groupObject).isDiagramControllerRepresentative()) {
+							// END KGU#911 2021-01-11
 								done = Arranger.getInstance().attachRootToGroup(targetGroup, (Root)rootObject, (Group)groupObject, this) || done;
 							}
 						}
@@ -1535,8 +1597,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	private void arrangerIndexRenameGroup()
 	{
 		Group group = this.arrangerIndexGetSelectedGroup();
-		if (group != null) {
+		// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
+		//if (group != null) {
+		if (group != null && !group.isDiagramControllerRepresentative()) {
+		// END KGU#911 2021-01-11
 			String newName = JOptionPane.showInputDialog(this, msgNewGroupName.getText(), group.getName());
+			// Surface does not allow manually to rename a group in "Diagram Controllers"
 			Arranger.getInstance().renameGroup(group, newName, this);
 			// START KGU#900 2020-12-31: Issue #902 focus got lost because of change notifications
 			this.requestFocusInWindow();

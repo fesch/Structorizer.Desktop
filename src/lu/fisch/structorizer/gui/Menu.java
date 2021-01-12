@@ -1743,7 +1743,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		// START KGU#911 2021-01-10: Enh. #910
 		if (menuDebugControllers.getMenuComponentCount() > 0) {
-			menuDebugControllers.setIcon(IconLoader.getIcon(4));
+			menuDebugControllers.setIcon(IconLoader.getIcon(125));
 			menuDebug.add(menuDebugControllers);
 		}
 		// END KGU#911 2021-01-10
@@ -2036,17 +2036,18 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#686 2019-03-17
 			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#213 2016-08-02
-			// START KGU#911 2021-01-10: Enh. #910
-			if (controllerPlugins != null) {
-				for (GENPlugin plugin: controllerPlugins) {
-					for (int j = 0; j < menuDebugControllers.getComponentCount(); j++) {
-						Component comp = menuDebugControllers.getComponent(j);
-						if (comp instanceof JMenuItem && ((JMenuItem) comp).getText().equals(plugin.title)) {
-							((JMenuItem) comp).setSelected(diagram.isControllerEnabled(plugin.className));
-						}
-					}
-				}
-			}
+			// START KGU#911 2021-01-10: Enh. #910 Is this really necessary?
+			//if (controllerPlugins != null) {
+			//	for (GENPlugin plugin: controllerPlugins) {
+			//		for (int j = 0; j < menuDebugControllers.getMenuComponentCount(); j++) {
+			//			Component comp = menuDebugControllers.getMenuComponent(j);
+			//			if (comp instanceof JMenuItem && ((JMenuItem) comp).getText().equals(plugin.title)) {
+			//				((JMenuItem) comp).setSelected(diagram.isControllerEnabled(plugin.className));
+			//			}
+			//		}
+			//	}
+			//}
+			menuDebugControllers.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#911 2021-01-10
 
 			// copy & paste
@@ -2346,7 +2347,6 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				pluginItem = new JMenuItem(plugin.title, icon);
 			}
 			_menu.add(pluginItem);
-			System.out.println(_menu.getText() + ": " + _menu.getMenuComponentCount());
 			if (plugin.info != null) {
 				// START KGU#736 2019-09-30: Cater for newlines
 				//pluginItem.setToolTipText(tooltip.replace("%", plugin.info));

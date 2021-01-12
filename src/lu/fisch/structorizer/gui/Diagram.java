@@ -3872,8 +3872,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element element = getSelected();
 		if (element != null)
 		{
+			// START KGU#911 2021-01-11: Enh. #910 Avert changes on immutable diagrams
+			boolean mayCommit = !element.isImmutable() && !element.isExecuted();
+			// END KGU#911 2021-01-11
 			if (element.getClass().getSimpleName().equals("Subqueue"))
 			{
+				// START KGU#911 2021-01-11: Enh. #910 Avert changes on immutable diagrams
+				if (!mayCommit) {
+					return modified;
+				}
+				// END KGU#911 2021-01-11
+				
 				EditData data = new EditData();
 				data.title="Add new instruction ...";
 
@@ -3961,7 +3970,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
-				showInputBox(data, element.getClass().getSimpleName(), false, true);
+				showInputBox(data, element.getClass().getSimpleName(), false, mayCommit);
 				// END KGU#42 2015-10-14
 
 				if (data.result == true)
@@ -10202,7 +10211,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Activate the executor (getInstance() is supposed to do that)
 		// START KGU#448 2018-01-05: Enh. #443: Cope with potentially several controllers
 		//Executor.getInstance(this,turtle);
-		this.enableController("lu.fisch.turtle.TurtleBox", true);
+		this.enableController(turtle.getClass().getName(), true);
 		goRun();
 		// END KGU#448 2018-01-05
 
@@ -10285,7 +10294,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#911 2021-01-10: Enh. #910 data structure changed
 					//diagramControllers.add((DiagramController) genClass.getDeclaredConstructor().newInstance());
 					DiagramController ctrlr = (DiagramController)genClass.getDeclaredConstructor().newInstance();
-					Root incl = constructDiagrContrIncludable(ctrlr, plugin.title);
+					// Try to set the name according to the plugin title (does not necessarily work)
+					ctrlr.setName(plugin.title);
+					Root incl = constructDiagrContrIncludable(ctrlr);
 					diagramControllers.put(ctrlr, incl);
 					// END KGU#911 2021-01-10
 				} catch (Exception ex) {
@@ -10307,32 +10318,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * {@code controller} listing all provided routines in the comment and
 	 * defining specified data type (particularly enumeration types)
 	 * @param controller - a {@link DiagramController} implementor instance
-	 * @param name - the name of the DiagramController for the GUI
 	 * @return a special immutable Includable
 	 */
-	private Root constructDiagrContrIncludable(DiagramController controller, String name) {
-		Root incl = new Root(StringList.getNew("$" + name));
+	private Root constructDiagrContrIncludable(DiagramController controller) {
+		Root incl = new Root(StringList.getNew("$" + controller.getName().replace(" ", "_")));
 		incl.setInclude(false);
 		StringList comment = new StringList();
-		comment.add("Represents Diagram Controller \"" + name + "\"");
+		comment.add("Represents Diagram Controller \"" + controller.getName() + "\"");
 		comment.add("");
 		comment.add("Provided procedures:");
-		HashMap<String, Method> routines = controller.getProcedureMap();
-		int count = 0;
-		for (Map.Entry<String, Method> entry: routines.entrySet()) {
-			String[] parts = entry.getKey().split("#", -1);
-			comment.add(String.format("%4d. %s(%s)", ++count, parts[0], parts[1]));	// FIXME: retrieve arg types
-		}
+		int count = addRoutineSignatures(controller.getProcedureMap(), comment);
 		if (count == 0) {
 			comment.add("\t-");
 		}
 		comment.add("Provided Functions:");
-		count = 0;
-		routines = controller.getFunctionMap();
-		for (Map.Entry<String, Method> entry: routines.entrySet()) {
-			String[] parts = entry.getKey().split("#", -1);
-			comment.add(String.format("%4d. %s(%s)", ++count, parts[0], parts[1]));	// FIXME: retrieve arg types
-		}
+		count = addRoutineSignatures(controller.getFunctionMap(), comment);
 		if (count == 0) {
 			comment.add("\t-");
 		}
@@ -10369,9 +10369,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		incl.setComment(comment);
-		incl.children.addElement(new Instruction("restart(\"" + controller.getClass().getName() + "\")"));
+		incl.children.addElement(new Instruction("restart()"));
 		incl.disabled = true;
 		return incl;
+	}
+	
+	/**
+	 * Retrieves the signatures of the given API routines and adds them to the StringList
+	 * {@code comment}.
+	 * @param routines - the procedure or function map of the DiagramController
+	 * @param comment - the {@link StringList} the routine descriptions are to be added to
+	 * @return number of routines
+	 */
+	public int addRoutineSignatures(HashMap<String, Method> routines, StringList comment) {
+		int count = 0;
+		for (Map.Entry<String, Method> entry: routines.entrySet()) {
+			String[] parts = entry.getKey().split("#", -1);
+			Method meth = entry.getValue();
+			if (meth.getName().equalsIgnoreCase(parts[0])) {
+				// prefer the true name
+				parts[0] = meth.getName();
+			}
+			Class<?>[] argTypes = meth.getParameterTypes();
+			Class<?> resType = meth.getReturnType();
+			StringList typeNames = new StringList();
+			String resTypeName = "";
+			if (resType != null && !resType.getName().equals("void")) {
+				resTypeName = ": " + resType.getSimpleName();
+			}
+			for (int i = 0; i < argTypes.length; i++) {
+				typeNames.add(argTypes[i].getSimpleName());
+			}
+			
+			comment.add(String.format("%4d. %s(%s)%s", ++count,
+					parts[0], typeNames.concatenate(", "), resTypeName));
+		}
+		return count;
 	}
 	// END KGU#911 2021-01-10
 	
@@ -11116,14 +11149,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//	}
 		//	mask <<= 1;
 		//}
+		if (turtle != null && !diagramControllers.containsKey(turtle)) {
+			diagramControllers.put(turtle, null);
+		}
 		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
 			if (entry.getKey().getClass().getName().equals(className)) {
 				Root incl = entry.getValue();
+				// Turtleizer (incl == null) cannot be disabled
 				if (incl != null) {
 					boolean statusChanged = incl.disabled == selected;
 					incl.disabled = !selected;
 					if (selected && !Arranger.getInstance().getAllRoots().contains(incl)) {
-						Arranger.getInstance().addToPool(incl, this.getFrame(), "Diagram Controllers");
+						Arranger.getInstance().addToPool(incl, this.getFrame(),
+								Arranger.DIAGRAM_CONTROLLER_GROUP_NAME);
 					}
 					else if (!selected && Arranger.hasInstance()) {
 						Arranger.getInstance().removeDiagram(incl);
@@ -11134,12 +11172,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						analyse();
 						redraw();
 					}
-					return true;
 				}
-				else {
-					// Seems to be Turtleizer - cannot be disabled
-					return true;
-				}
+				return true;
 			}
 		}
 		// END KGU#911 2021-01-10

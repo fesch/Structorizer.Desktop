@@ -122,12 +122,12 @@ public interface DiagramController
 	// START KGU#911 2021-01-11: Enh. #910
 	/**
 	 * Possibly subclassable method for execution startup - must be repeatedly applicable
-	 * to the instance
+	 * to the instance.<br/>
+	 * The default implementation does not do anything.
 	 * @param args - array of arguments
 	 */
-	public default void restart(String arg)
+	public default void restart(Object ... args)
 	{
-		
 	}
 	// END KGU#911 2021-01-11
 	

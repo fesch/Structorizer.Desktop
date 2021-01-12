@@ -40,6 +40,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-11      Modification in addDiagram() for bugfix #699
  *      Kay Gürtzig     2019-03-19      Issues #518, #544, #557: Drawing depends on visible rect now.
  *      Kay Gürtzig     2019-10-15      Issue #763: Method getArrzFile parameterized to address stale .arrz files
+ *      Kay Gürtzig     2021-01-12      Enh. #910: New method isDiagramControllerRepresentative() added
  *
  ******************************************************************************************************
  *
@@ -626,7 +627,10 @@ public class Group {
 		if (!this.membersMoved && positionsChanged()) {
 			this.membersMoved = true;
 		}
-		return membersChanged || this.membersMoved;
+		// START KGU#911 2021-01-11: Enh. #910 We will ignore changes of DiagramController representatives
+		//return membersChanged || this.membersMoved;
+		return (membersChanged || this.membersMoved) && !this.isDiagramControllerRepresentative();
+		// END KGU#911 2021-01-11
 	}
 	
 	public void draw(Graphics _g, Rectangle _viewport)
@@ -745,5 +749,19 @@ public class Group {
 		}
 		return prefix + this.getName() + ": " + this.size();
 	}
+
+	// START KGU#911 2021-01-11: Enh. 910
+	/**
+	 * @return {@code true} if it contains only DiagramController representing Roots
+	 */
+	public boolean isDiagramControllerRepresentative() {
+		for (Root root: this.getSortedRoots()) {
+			if (!root.isDiagramControllerRepresentative()) {
+				return false;
+			}
+		}
+		return !this.isEmpty();
+	}
+	// END KGU#911 2021-01-11
 
 }

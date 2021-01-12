@@ -4900,6 +4900,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		else {
 			for (Root root: roots) {
+				// START KGU#911 2021-01-11: Enh. #910 We don't allow diagram controller roots
+				if (root.isDiagramControllerRepresentative()) {
+					continue;
+				}
+				// END KGU#911 2021-01-11
 				Diagram diagr = rootMap.get(root);
 				if (diagr == null) {
 					this.addDiagram(root, form, null, group);
@@ -5355,7 +5360,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public boolean renameGroup(Group group, String newName, Component initiator) {
 		String oldName = group.getName();
-		if (this.hasGroup(newName)) {
+		// START KGU#911 2021-01-11: Enh. #910 Dirty attempt to avoid usurping a "Diagram Controllers" group
+		//if (this.hasGroup(newName)) {
+		if (newName.equals(Arranger.DIAGRAM_CONTROLLER_GROUP_NAME) || this.hasGroup(newName)) {
+		// END KGU#911 2021-01-11
 			JOptionPane.showMessageDialog(initiator,
 					msgGroupExists.getText().replace("%", newName),
 					titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),

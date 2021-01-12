@@ -78,7 +78,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-01-20      Enh. #801: 123_help_book added
  *      Kay Gürtzig     2020-04-02      Issue #4 deprecated static field turtle removed, set the from field deprecated.
  *      Kay Gürtzig     2020-10-17      Enh. #872: 124_prog_c added
- *      Kay Gürtzig     2021-01-09      Deprecated field `from' removed
+ *      Kay Gürtzig     2021-01-09/11   Enh. #910: 125_plug added, deprecated field `from' removed
  *
  ******************************************************************************************************
  *
@@ -232,7 +232,8 @@ public class IconLoader {
 			"121_mini_try.png",		// introduced with enh. #56
 			"122_exit.png",			// Introduced with 3.29-13
 			"123_help_book.png",	// introduced with 3.30-05 for #801
-			"124_prog_c.png"		// introduced with 3.30-11 for #872
+			"124_prog_c.png",		// introduced with 3.30-11 for #872
+			"125_plug.png"			// introduced with 3.30-14 for #910
 	};
 	
 	private static final int[] ICON_SIZES = {

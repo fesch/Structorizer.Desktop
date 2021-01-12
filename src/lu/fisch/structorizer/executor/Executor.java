@@ -200,6 +200,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-12-25      Bugfix #898: Results of substituted Turtleizer functions must be put in parentheses 
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *      Kay Gürtzig     2021-01-07/10   Enh. #909: New and improved methods to support enumerator value display
+ *      Kay Gürtzig     2021-01-11/12   Enh. #910: New mechanisms for DiagramController based on Includables
  *
  ******************************************************************************************************
  *
@@ -347,7 +348,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -366,8 +366,6 @@ import javax.swing.SwingUtilities;
 
 import lu.fisch.diagrcontrol.*;
 import lu.fisch.diagrcontrol.DiagramController.FunctionException;
-import lu.fisch.structorizer.archivar.Archivar;
-import lu.fisch.structorizer.archivar.ArchivePool;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
@@ -2725,14 +2723,10 @@ public class Executor implements Runnable
 		if (diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController) {
-					/*
-					 * FIXME KGU#97 2020-12-30:
-					 * The good question here is: Why do we impose a delay to the
-					 * DiagramController at all? Isn't one delay (the one in  Executor)
-					 * enough? Why don't we just always set the DiagramController's
-					 * delay to 0?
-					 */
-					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
+					// START KGU#97 2021-01-11: issue #48 We do no longer need the delay in the external controller
+					//((DelayableDiagramController)controller).setAnimationDelay(delay, true);
+					((DelayableDiagramController)controller).setAnimationDelay(0, true);
+					// END KGU#97 2021-01-11
 					//delayed = true;
 				}
 			}
@@ -2780,10 +2774,12 @@ public class Executor implements Runnable
 		}
 		if (delay != 0)
 		{
-			// Don't do a duplicate delay
-			if (!(controller instanceof DelayableDiagramController)) {
-				delay();
-			}
+			// START KGU#97/KGU#911 2021-01-12: Issues #48, #910 Has generally not made sense anymore
+			//// Don't do a duplicate delay
+			//if (!(controller instanceof DelayableDiagramController)) {
+			//	delay();
+			//}
+			// END KGU#97/KGU#911 2021-01-12
 			diagram.redraw();
 			try
 			{
@@ -4014,8 +4010,8 @@ public class Executor implements Runnable
 	/**
 	 * Prepares an editable variable table and has the Control update the display
 	 * of variables with it
-	 * @param always - if {@code true} the {@link #delay} and {@link #step} won't hinder
-	 * the display otherwise {@link #delay} 0 and non-step mode will impede it
+	 * @param always - if {@code true} then {@link #delay} and {@link #step} won't hinder
+	 * the display, otherwise {@link #delay} 0 and non-step mode will impede it
 	 */
 	// START KGU#910 2021-01-10: Issue #909 centralized control about display opportunity
 	//private void updateVariableDisplay() throws EvalError
@@ -5127,7 +5123,10 @@ public class Executor implements Runnable
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
 					// START KGU#592 2018-10-04 - Bugfix #617 If the signature doesn't match exactly then skip
-					if (controller != null) {
+					// START KGU#911 2021-01-11: Enh. #910 - also make sure the controller is included
+					//if (controller != null) {
+					if (checkController(controller)) {
+					// END KGU#911 2021-01-11
 					// END KGU#592 2018-10-04
 						//Method function = controller.getFunctionMap().get(fSign);
 						// Now we must know what is beyond the function call (the tail)
@@ -5938,7 +5937,10 @@ public class Executor implements Runnable
 				procName = procName.toLowerCase();
 				String pSign = procName + "#" + args.length;
 				DiagramController controller = this.controllerProcedures.get(pSign);
-				if (controller != null) { 
+				// START KGU#911 2021-01-11: Enh. #910 to check if the controller is included
+				//if (controller != null) { 
+				if (checkController(controller)) { 
+				// END KGU#911 2021-01-11
 					HashMap<String, Method> procMap = controller.getProcedureMap(); 
 					// Check if the controller accepts a method with additional color argument, too
 					Method colMethod = procMap.get(procName + "#" + (args.length + 1));
@@ -5955,18 +5957,16 @@ public class Executor implements Runnable
 				// END KGU#448 2017-20-28
 				// START KGU#911 2021-01-11: Enh. #910 Special startup support for controllers
 				else if (procName.equals("restart")
-						&& Element.getRoot(element).isDiagramControllerRepresentative()
-						&& args.length > 0
-						&& args[0] instanceof String) {
+						&& context.root.isDiagramControllerRepresentative()) {
+					String ctrlName = context.root.getMethodName().substring(1);
 					for (DiagramController contr: this.diagramControllers) {
-						boolean found = contr.getClass().getName().equals(args[0]);
+						boolean found = ctrlName.equals(contr.getName().replace(" ", "_"));
 						if (found) {
 							Method[] meths = contr.getClass().getMethods();
 							for (int i = 0; i < meths.length; i++) {
-								if (meths[i].getName().equals("restart")
-										&& meths[i].getParameterCount() == 1) {
+								if (meths[i].getName().equals("restart")) {
 									try {
-										meths[i].invoke(contr, args);
+										meths[i].invoke(contr, new Object[] {args});
 										break;
 									} catch (IllegalAccessException | IllegalArgumentException
 											| InvocationTargetException exc) {
@@ -5994,6 +5994,21 @@ public class Executor implements Runnable
 		}
 		return trouble;
 	}
+	
+	/**
+	 * Checks whether the given {@link DiagramController} {@code controller} can legitimitely
+	 * be used (i.e. it is not {@code null} and either the Turtleizer or included by the owning
+	 * root.
+	 * @param controller - a {@link DiagramController} candidate for a controller routine
+	 * @return true if {@code controller} is available
+	 */
+	private boolean checkController(DiagramController controller) {
+		Root root = context.root;
+		return controller != null
+				&& (controller.getClass().getName().equals("lu.fisch.turtle.TurtleBox")
+				|| root.includeList != null && root.includeList.contains("$" + controller.getName().replace(" ", "_")));
+	}
+
 	// END KGU 2015-11-11
 
 	private String stepCase(Case element)
