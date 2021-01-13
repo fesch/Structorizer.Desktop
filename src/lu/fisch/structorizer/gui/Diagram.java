@@ -11162,6 +11162,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (selected && !Arranger.getInstance().getAllRoots().contains(incl)) {
 						Arranger.getInstance().addToPool(incl, this.getFrame(),
 								Arranger.DIAGRAM_CONTROLLER_GROUP_NAME);
+						// Ensure invisibility of the group and hence the diagram in Arranger
+						for (Group group: Arranger.getInstance().getGroupsFromRoot(incl, true)) {
+							if (group.getName().equals(Arranger.DIAGRAM_CONTROLLER_GROUP_NAME)) {
+								group.setVisible(false);
+								break;
+							}
+						}
 					}
 					else if (!selected && Arranger.hasInstance()) {
 						Arranger.getInstance().removeDiagram(incl);

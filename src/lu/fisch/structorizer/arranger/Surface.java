@@ -129,6 +129,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
+ *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams 
  *
  ******************************************************************************************************
  *
@@ -466,12 +467,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			Graphics2D g2d = (Graphics2D) g;
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
-			for(int d = 0; d < diagrams.size(); d++)
+			for (int d = 0; d < diagrams.size(); d++)
 			{
 				// START KGU#624 2018-12.24: Enh. #655
 				//diagrams.get(d).root.prepareDraw(g2d);
 				Diagram diagr = diagrams.get(d);
-				if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+				// START KGU#911 2021-01-13: Enh. #910 New interpretation of group visible
+				//if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+				if ((!onlySelected || this.diagramsSelected.contains(diagr))
+						&& diagr.root != null
+						&& this.isVisible(diagr)) {
+				// END KGU#911 2021-01-13
 					// If the diagram had already been drawn or prepared this will return immediately
 					diagr.root.prepareDraw(g2d);
 				}
@@ -531,7 +537,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#630 2019-01-19
 			
 //			System.out.println("Surface.paintComponent()");
-			for(int d=0; d<diagrams.size(); d++)
+			for (int d=0; d < diagrams.size(); d++)
 			{
 				Diagram diagram = diagrams.get(d);
 				// START KGU#624 2018-12-24: Enh. #655
@@ -539,6 +545,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					continue;
 				}
 				// END KGU#624 2018-12-24
+				// START KGU#911 2021-01-13: Enh. #910: New interpretation of diagram visibility
+				if (!isVisible(diagram)) {
+					continue;
+				}
+				// END KGU#911 2021-01-13
 				
 				Root root = diagram.root;
 				Point point = diagram.point;
@@ -3776,6 +3787,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = diagrams.size()-1; d >= 0 && hitDiagram == null; d--)
 		{
 			Diagram diagram = diagrams.get(d);
+			// START KGU#911 2021-01-13: Enh. #910: Don't select an invisible diagram
+			if (!isVisible(diagram)) {
+				continue;
+			}
+			// END KGU#911 2021-01-13
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
@@ -3804,6 +3820,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = diagrams.size()-1; d >= 0; d--)
 		{
 			Diagram diagram = diagrams.get(d);
+			// START KGU#911 2021-01-13: Enh. #910: Don't select an invisible diagram
+			if (!isVisible(diagram)) {
+				continue;
+			}
+			// END KGU#911 2021-01-13
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
@@ -5439,6 +5460,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+	
+	// START KGU#911 2021-01-13: Enh. #910 Group visibility new interpreted
+	private boolean isVisible(Diagram diagr)
+	{
+		for (Group group: this.getGroups(diagr)) {
+			if (group.isVisible()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#911 2021-01-13
 	
 	// DEBUG
 //	private void printNameMap(int lineNo)

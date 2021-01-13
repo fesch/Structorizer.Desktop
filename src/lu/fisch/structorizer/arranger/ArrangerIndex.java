@@ -170,7 +170,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
 	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
-	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group bounds", IconLoader.getIcon(17));
+	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group", IconLoader.getIcon(17));
 	// START KGU#669 2019-03-01: Enh. #691
 	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
 	// END KGU#669 2019-03-01

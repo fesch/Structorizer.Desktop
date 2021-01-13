@@ -122,6 +122,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-20      New message for bugfix #892
  *      Kay Gürtzig     2021-01-01      Enh. #903: menuDiagramOperatorsC enabling condition modified
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective menu support for actual DiagramControllers
+ *      Kay Gürtzig     2021-01-13      "About" icon replaced
  *
  ******************************************************************************************************
  *
@@ -447,7 +448,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#791 2020-01-20: Enh. #791
 	protected final JMenuItem menuHelpDownload = new JMenuItem("Download Guide as PDF", IconLoader.getIcon(123));
 	// END KGU#791 2020-01-20
-	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(17));
+	// START KGU 2021-01-13: Icon replaced
+	//protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(17));
+	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(126));	
+	// END KGU 2021-01-13
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.getIcon(52));
 
 	// START KGU#239 2016-08-12: Enh. #231
