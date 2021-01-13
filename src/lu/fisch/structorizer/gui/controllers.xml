@@ -2,6 +2,6 @@
 <plugins>
     
 	<plugin title="Turtleizer" 				class="lu.fisch.turtle.TurtleBox" icon="turtle.png" />
-	<plugin title="TestController1" 		class="lu.fisch.diagrcontrol.TestController1" icon="code_cpp.png" />
+	<!--plugin title="TestController1" 		class="lu.fisch.diagrcontrol.TestController1" icon="code_cpp.png" /-->
     
 </plugins>
