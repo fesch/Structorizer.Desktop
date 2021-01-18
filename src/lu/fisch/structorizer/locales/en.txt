@@ -466,6 +466,7 @@ Menu.msgIniRestoreFailed.text=Could not restore the last preferences backup%
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem on changing Look & Feel to %1: %2
 Menu.msgRootCloned.text=Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2
+Menu.msgAnalyserHint_3_30_14.text=New indicator symbols\nwill remind you\nthat there are Analyser\nwarnings for the marked elements.\n\nYou may switch them off via:\n%
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name

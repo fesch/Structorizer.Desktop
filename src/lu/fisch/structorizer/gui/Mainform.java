@@ -97,6 +97,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-18      Bugfix #876: Defective saving and loading of (partial) Ini files mended
  *                                      several public comments added.
  *      Kay Gürtzig     2021-01-02      Enh. #905: New INI property "drawAnalyserMarks"
+ *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
  *
  ******************************************************************************************************
  *
@@ -136,12 +137,14 @@ import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.turtle.TurtleBox;
+import lu.fisch.utils.StringList;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
@@ -1410,6 +1413,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				}
 			}
 		}
+		// START KGU#906 2021-01-18: Enh. #905 Temporary feature hint
+		else if (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo("3.30-14") < 0) {
+			if (menu != null) {
+				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
+						new String[]{"menuPreferences","menuPreferencesAnalyser"}, null));
+				JOptionPane.showMessageDialog(this,
+						Menu.msgAnalyserHint_3_30_14.getText().replace("%", menuPath.concatenate(" \u25BA ")),
+						menuPath.get(1),
+						JOptionPane.INFORMATION_MESSAGE,
+						IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint_3.30-14.png")));
+				this.suppressUpdateHint = "3.30-14";
+			}
+		}
+		// END KGU#906 2021-01-18
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 			// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense

@@ -818,6 +818,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
 	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
 	// END KGU#893 2020-12-20
+	// START KGU#906 2021-01-18: Enh. #905 temporary message for version 3.30-14
+	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder("New indicator symbols\n"
+			+ "may remind you\n"
+			+ "that there are Analyser\n"
+			+ "warnings for the marked\n"
+			+ "elements. You may switch\n"
+			+ "them off via:\n%");
+	// END KGU#906 2021-01-18
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
