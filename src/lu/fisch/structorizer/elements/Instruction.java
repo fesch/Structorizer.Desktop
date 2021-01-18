@@ -69,6 +69,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
+ *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *
  ******************************************************************************************************
  *
@@ -304,6 +305,10 @@ public class Instruction extends Element {
 		_element.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
+		// START KGU#906 2021-01-02: Enh. #905
+		_element.drawWarningSignOnError(canvas, _top_left);
+		// END KGU#906 2021-01-02
+
 		// START KGU#227 2016-07-30: Enh. #128
 		int commentHeight = 0;
 		//if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())

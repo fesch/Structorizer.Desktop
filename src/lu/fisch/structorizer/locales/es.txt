@@ -444,7 +444,7 @@ Menu.msgImportTooltip.text=<html>Diagramas guardados por el editor de ordinogram
 Menu.msgExportTooltip.text=<html>Generar archivos de diagramas aceptados por el editor de ordinogramas<br/>desde <a href="%">%</a></html>
 Menu.msgImportFileReadError.text=Archivo "%" no existe o no puede ser leído.
 Menu.msgUnsupportedFileFormat.text=Los archivos siguientes no podían estar aceptados porque sus formatos no están conocidos o ayudados:\n%
-Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).
+Menu.msgGuidedTours.text=Has activado cursos guiados.\n\nCuida las recomendaciones\no las indicaciones\nen el area de texto inferior\n(notificaciones de Comprobador).\nTriangulitos azules o\nrojos en los elementos\nte recordarán.
 Menu.msgGuidedTourDone.text=Congratulaciones - Has acabado el curso «%».
 Menu.msgGuidedTourNext.text=%1\nCurso «%2» va a empezar ahora.\nTal vez quieres iniciar nuevo diagrama: → Menú "%3"
 Menu.ttlGuidedTours.text=Cursos guiados
@@ -470,6 +470,7 @@ Menu.msgIniRestoreFailed.text=No podía restaurar el último backup%
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
+Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -592,6 +593,7 @@ AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instruccion
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son constantes integrales.
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
+AnalyserPreferences.chkDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -1345,8 +1347,8 @@ ArrangerIndex.popupIndexExpandGroup.text=Expandir grupo ...
 ArrangerIndex.popupIndexDissolve.text=Descomponer grupo
 ArrangerIndex.popupIndexDetach.text=Retirar del grupo
 ArrangerIndex.popupIndexAttach.text=Añadir/mover a un grupo ...
-ArrangerIndex.popupIndexDrawGroup.text=Mostrar area del grupo
-ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad individual del grupo en Arranger
+ArrangerIndex.popupIndexDrawGroup.text=Mostrar el grupo
+ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad del grupo y de sus diagramas en Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
 ArrangerIndex.popupIndexExport.text=Exportar diagrama/grupo
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
@@ -1375,6 +1377,7 @@ ArrangerIndex.msgMembersComplete.text=Grupo completo: No requeridos diagramas fu
 ArrangerIndex.msgGroupMembersChanged.text=El conjunto de miembros se ha cambiado.
 ArrangerIndex.msgGroupMembersMoved.text=Coordenadas de algunos miembros fueron variados.
 ArrangerIndex.msgNewGroupName.text=Nuevo nombre para el grupo:
+ArrangerIndex.msgConfirmDissolve.text=Cierto a descomponer este grupo/estos grupos?\n%
 
 -----> Executor
 -----[ Control ]-----

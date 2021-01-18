@@ -198,11 +198,22 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-10-19      Issue #879: Inappropriate handling of input looking like initializers
  *      Kay Gürtzig     2020-12-14      Issue #829 revoked (Control will by default close after execution)
  *      Kay Gürtzig     2020-12-25      Bugfix #898: Results of substituted Turtleizer functions must be put in parentheses 
+ *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
+ *      Kay Gürtzig     2021-01-07/10   Enh. #909: New and improved methods to support enumerator value display
+ *      Kay Gürtzig     2021-01-11/12   Enh. #910: New mechanisms for DiagramController based on Includables
  *
  ******************************************************************************************************
  *
  *      Comment:
  *
+ *      2021-01-10 Issue #910 (Kay Gürtzig)
+ *      - It seemed to be sensible to hold special Includables for additionally enabled DiagramController
+ *        classes in Arranger (i.e. for all DiagramControllers except Turtleizer)
+ *      2020-12-30 Issue #48
+ *      - It seems rather awkward to propagate the own delay to DelayableDiagramControllers as well because
+ *        this is prone to impose a twofold delay - both in Executor and in the DelayableDiagramController.
+ *        The one here is essential, of course, to ensure the chance to pause or stop. So the (additional)
+ *        delay in the DiagramController should be set 0.
  *      2017-10-28 Issue #443
  *      - Executor might potentially have to work with several DiagramControllers. So it is important
  *        efficiently to find out, what diagram controller routines are available and whether there are
@@ -327,6 +338,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -740,16 +752,20 @@ public class Executor implements Runnable
 	// START KGU#448 2017-10-28: Enh. #443
 	///**
 	// * Ensures there is a (singleton) instance and returns it
-	// * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	// * @param diagramController - facade of an additionally controllable module or device 
+	// * @param diagram - the Diagram instance requesting the instance 
+	// *        (also used for conflict detection)
+	// * @param diagramController - facade of an additionally controllable module
+	// *        or device 
 	// * @return the sole instance of this class.
 	// */
 	//public static Executor getInstance(Diagram diagram,
 	//		DiagramController diagramController)
 	/**
 	 * Ensures there is a (singleton) instance and returns it
-	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
-	 * @param diagramControllers - façades of additionally controllable modules or devices 
+	 * @param diagram - the Diagram instance requesting the instance
+	 *        (also used for conflict detection)
+	 * @param diagramControllers - façades of additionally controllable modules
+	 *        or devices 
 	 * @return the sole instance of this class.
 	 */
 	public static Executor getInstance(Diagram diagram,
@@ -868,13 +884,13 @@ public class Executor implements Runnable
 				String name = key.substring(0, key.indexOf('#'));
 				DiagramController conflicting = null;
 				if ((conflicting = this.controllerProcedures.put(key, controller)) != null) {
-					sb.append(Control.msgFunctionConflict.getText().
+					sb.append(Control.msgProcedureConflict.getText().
 							replace("%1", name).
 							replace("%2", key.substring(key.indexOf('#')+1)).
 							replace("%3", conflicting.getName()).
 							replace("%4", controller.getName()));
 				}
-			}				
+			}
 		}
 		if (sb.length() > 0) {
 			JOptionPane.showMessageDialog(null, 
@@ -924,8 +940,10 @@ public class Executor implements Runnable
 	// START KGU#448 2017-10-28: Enh.#443
 	//private DiagramController diagramController = null;
 	private DiagramController[] diagramControllers = new DiagramController[]{};
-	private HashMap<String, DiagramController> controllerFunctions = new HashMap<String, DiagramController>();
-	private HashMap<String, DiagramController> controllerProcedures = new HashMap<String, DiagramController>();
+	private HashMap<String, DiagramController> controllerFunctions =
+			new HashMap<String, DiagramController>();
+	private HashMap<String, DiagramController> controllerProcedures =
+			new HashMap<String, DiagramController>();
 	private Set<String> controllerFunctionNames = new HashSet<String>(); 
 	// END KGU#448 2017-10-28
 	// START KGU#384 2017-04-22: Context redesign -> this.context
@@ -972,6 +990,10 @@ public class Executor implements Runnable
 	/** The first element of a currently executed mere declaration sequence */
 	private Instruction lastDeclarationSurrogate = null;
 	// END KGU#477 2017-12-10
+	// START KGU#907 2021-01-04: Enh. #906 Allow to step into or step over a Call
+	/** {@link Call} element currently to be executed (in paused mode) or {@code null} */
+	private Call currentCall;
+	// END KGU#907 2021-01-04
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
 	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
@@ -992,7 +1014,8 @@ public class Executor implements Runnable
 	private static final Matcher MTCH_BIN_LITERAL = Pattern.compile("0b[01]+").matcher("");
 	/** Matcher for certain interpreter error messages related to array assignment */
 	// FIXME: Might have to be adapted with a newer version of the bean shell interpreter some day ...
-	private static final Matcher MTCH_EVAL_ERROR_ARRAY = Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
+	private static final Matcher MTCH_EVAL_ERROR_ARRAY = 
+			Pattern.compile(".*Can't assign.*to java\\.lang\\.Object \\[\\].*").matcher("");
 	/** Matcher for split function */
 	//private static final Matcher MTCH_SPLIT = Pattern.compile("^split\\(.*?[,].*?\\)$").matcher("");
 	// Replacer Regex objects for syntax conversion - if Regex re-use shouldn't work then we may replace it by java.util.regex stuff
@@ -1003,8 +1026,10 @@ public class Executor implements Runnable
 	//private static final Regex RPLC_INC1_PROC = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)", "$1 <- $1 + 1");
 	//private static final Regex RPLC_DEC2_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)", "$1 <- $1 - $2");
 	//private static final Regex RPLC_DEC1_PROC = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)", "$1 <- $1 - 1");
-	private static final Matcher DELETE_PROC_MATCHER = java.util.regex.Pattern.compile("delete\\((.*),(.*),(.*)\\)").matcher("");
-	private static final Matcher INSERT_PROC_MATCHER = java.util.regex.Pattern.compile("insert\\((.*),(.*),(.*)\\)").matcher("");
+	private static final Matcher DELETE_PROC_MATCHER = 
+			java.util.regex.Pattern.compile("delete\\((.*),(.*),(.*)\\)").matcher("");
+	private static final Matcher INSERT_PROC_MATCHER = 
+			java.util.regex.Pattern.compile("insert\\((.*),(.*),(.*)\\)").matcher("");
 	private static final String DELETE_PROC_SUBST = "$1 <- delete($1,$2,$3)";
 	private static final String INSERT_PROC_SUBST = "$2 <- insert($1,$2,$3)";
 	// END KGU#575 2018-09-17
@@ -1012,13 +1037,16 @@ public class Executor implements Runnable
 	private static final StringList OBJECT_ARRAY = StringList.explode("Object,[,]", ",");
 	
 	// START KGU#388 2017-10-29: Enh. #423 This EvalError message indicates that the record qualifier conversion may have overdone  
-	private static final String ERROR423MESSAGE = "Error in method invocation: Method get( java.lang.String ) not found in class";
-	private static final Matcher ERROR423MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
+	private static final String ERROR423MESSAGE = 
+			"Error in method invocation: Method get( java.lang.String ) not found in class";
+	private static final Matcher ERROR423MATCHER = 
+			Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\(\\\"(\\w+)\\\"\\)(.*?)'' : Error in method.*").matcher("");
 	// END KGU#388 2017-10-29
 	// START KGU#510 2018-03-20: Issue #527 Possible pattern for index problem
 	// START KGU#677 2019-03-09: In case of Arrays being the result of a function (e.g. copyArray()), the message looks different
 	//private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?\\.)get\\((.*?)\\)(.*?)'' : Method Invocation (\\w+)\\.)get").matcher("");
-	private static final Matcher ERROR527MATCHER = Pattern.compile(".*inline evaluation of: ``(.*?)\\.get\\((.*)\\)(.*?)'' : Method Invocation ((\\w+)\\.)?get").matcher("");
+	private static final Matcher ERROR527MATCHER = 
+			Pattern.compile(".*inline evaluation of: ``(.*?)\\.get\\((.*)\\)(.*?)'' : Method Invocation ((\\w+)\\.)?get").matcher("");
 	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
@@ -1047,7 +1075,8 @@ public class Executor implements Runnable
 				if (evt.getSource() == control) {	// should be the only possible source but...
 					if (running) {
 						JOptionPane.showMessageDialog(null, Control.msgUseStopButton.getText(),
-								mySelf.getClass().getSimpleName() + ": " + mySelf.diagram.getRoot().getSignatureString(false),
+								mySelf.getClass().getSimpleName() + ": "
+										+ mySelf.diagram.getRoot().getSignatureString(false),
 								JOptionPane.WARNING_MESSAGE);
 					}
 					else {
@@ -1133,7 +1162,8 @@ public class Executor implements Runnable
 			//	tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
 			//}
 			int tokenLen = token.length();
-			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'") || token.startsWith("\"") && token.endsWith("\"")))
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'")
+					|| token.startsWith("\"") && token.endsWith("\"")))
 			{
 				char delim = token.charAt(0);
 				String internal = token.substring(1, tokenLen-1);
@@ -1159,7 +1189,8 @@ public class Executor implements Runnable
 				//		replaceAll("(.*?)\\\\u0022(.*?)", "$1\\\\042$2").
 				//		replaceAll("(.*?)\\\\u005[cC](.*?)", "$1\\\\134$2");
 				for (int mtch = 0; mtch < MTCHs_BAD_UNICODE.length; mtch++) {
-					internal = MTCHs_BAD_UNICODE[mtch].reset(internal).replaceAll(RPLCs_BAD_UNICODE[mtch]);
+					internal = MTCHs_BAD_UNICODE[mtch].reset(internal)
+							.replaceAll(RPLCs_BAD_UNICODE[mtch]);
 				}
 				// END KGU#406/KGU#420 2017-05-23/2017-09-09
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
@@ -1219,17 +1250,17 @@ public class Executor implements Runnable
 //		s = r.replaceAll(s);
 		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initInterpreter() 
-        // pascal: convert "inc" and "dec" procedures
+		// pascal: convert "inc" and "dec" procedures
 		//s = RPLC_INC2_PROC.replaceAll(s);
 		//s = RPLC_INC1_PROC.replaceAll(s);
 		//s = RPLC_DEC2_PROC.replaceAll(s);
 		//s = RPLC_DEC1_PROC.replaceAll(s);
 		s = Element.transform_inc_dec(s);
-        // END KGU 2015-11-29
+		// END KGU 2015-11-29
 		
-        // START KGU 2017-04-22: now done above in the string token conversion
+		// START KGU 2017-04-22: now done above in the string token conversion
 		//s = s.replace("''", "'");	// (KGU 2015-11-29): Looks like an unwanted relic!
-        // END KGU 2017-04-22
+		// END KGU 2017-04-22
 		// pascal: randomize
 		s = s.replace("randomize()", "randomize");
 		s = s.replace("randomize", "randomize()");
@@ -1251,10 +1282,6 @@ public class Executor implements Runnable
 	// START KGU#57 2015-11-07
 	private String convertStringComparison(String str)
 	{
-//		Character chA = 'a';
-//		Character chB = 'a';
-//		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
-//		System.out.println("Zeichen sind " + ((chA.equals(chB)) ? "" : "NICHT ") + "gleich!");
 		// Is there any equality test at all?
 		// START KGU#76 2016-04-25: Issue #30 - convert all string comparisons
 		//if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
@@ -1270,8 +1297,8 @@ public class Executor implements Runnable
 			// START KGU#612 2018-12-12: Bugfix #642 - operator symbols weren't reliably detected
 			//// We are looking for || operators and split the expression by them (if present)
 			//// START KGU#490 2018-02-07: Bugfix #503 - the regex precaution was wrong here
-			////StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
-			//StringList exprs = StringList.explodeWithDelimiter(str, " || ");	// The delimiter is no regex here!!
+			////StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");
+			//StringList exprs = StringList.explodeWithDelimiter(str, " || ");
 			//// END KGU#490 2018-02-07
 			//// Now we do the same with && operators
 			//exprs = StringList.explodeWithDelimiter(exprs, " && ");
@@ -1312,7 +1339,7 @@ public class Executor implements Runnable
 						// Get the left operand expression
 						// START KGU#76 2016-04-25: Issue #30
 						//r = new Regex("(.*)"+eqOps[op]+"(.*)", "$1");
-						//String left = r.replaceAll(s).trim();	// All? Really? And what is the result supposed to be then?
+						//String left = r.replaceAll(s).trim();	// All? Really? What's the result supposed to be then?
 						String left = tokens.concatenate("", 0, opPos).trim();
 						// END KGU#76 2016-04-25
 						// Re-balance parentheses
@@ -1349,7 +1376,8 @@ public class Executor implements Runnable
 							{
 								// START KGU#76 2016-04-25: Issue #30 support all string comparison
 								//exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
-								exprs.set(i, leftParenth + left + ".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + left + ".compareTo(" + right + ") "
+										+ compOps[op] + " 0" + rightParenth);
 								// END KGU#76 2016-04-25
 								replaced = true;
 							}
@@ -1361,10 +1389,12 @@ public class Executor implements Runnable
 								//exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
 								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
 								//exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
-								exprs.set(i, leftParenth + left + ".compareTo(\"" + this.literalFromChar((Character)rightO) + "\") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + left
+										+ ".compareTo(\"" + this.literalFromChar((Character)rightO) + "\") "
+										+ compOps[op] + " 0" + rightParenth);
 								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
-								replaced = true;								
+								replaced = true;
 							}
 							else if ((leftO instanceof Character) && (rightO instanceof String))
 							{
@@ -1372,7 +1402,8 @@ public class Executor implements Runnable
 								//exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
 								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
 								//exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
-								exprs.set(i, leftParenth + "\"" + this.literalFromChar((Character)leftO) + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + "\"" + this.literalFromChar((Character)leftO)
+										+ "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
 								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
 								replaced = true;								
@@ -1442,8 +1473,7 @@ public class Executor implements Runnable
 	}
 
 	/**
-	 * @param aStep
-	 *            the step to set
+	 * Instigates the next execution step
 	 */
 	public void doStep()
 	{
@@ -1479,6 +1509,9 @@ public class Executor implements Runnable
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
+	/**
+	 * 
+	 */
 	public void execute()
 	// START KGU#2 (#9) 2015-11-13: We need a recursively applicable version
 	{
@@ -1523,7 +1556,7 @@ public class Executor implements Runnable
 		this.isExited = false;
 		// END KGU#686 2019-03-17
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window
-		// START KGU#569 2018-08-08: Issue #577: Replace the console if it has become inconsistent
+		// START KGU#569 2018-08-08: Issue #577: Replace an inconsistent console
 		//this.console.clear();
 		try {
 			this.console.clear();			
@@ -1579,10 +1612,12 @@ public class Executor implements Runnable
 	}
 	
 	/**
-	 * Executes the current diagram held by this.diagram, applicable for main or sub routines.<br/>
-	 * If called within a Try execution (@link #withinTryBlock} then a possible error message will
-	 * be put into {@link #subroutineTrouble}, otherwise the error message will be popped up as
-	 * message box. Flag {@link #isErrorReported} will be set in both cases.
+	 * Executes the current diagram held by this.diagram, applicable for main
+	 * programs or subroutines.<br/>
+	 * If called within a Try execution {@link #withinTryBlock} then a possible
+	 * error message will be put into {@link #subroutineTrouble}, otherwise the
+	 * error message will be popped up as message box.<br/>
+	 * Flag {@link #isErrorReported} will be set in both cases.
 	 * @param arguments - list of interpreted argument values or null (if main program)
 	 * @return whether the call was successful
 	 */
@@ -1628,7 +1663,7 @@ public class Executor implements Runnable
 		}
 		// END KGU#430 2017-10-12
 		// END KGU 2015-10-11/13
-		// START KGU#376 2017-04-11: Enh. #389 - Must no longer be done here but in execute() and executeCall()
+		// START KGU#376 2017-04-11: Enh. #389 - to be done in execute() and executeCall()
 		//initInterpreter();
 		// END KGU#376 2017-04-11
 		String trouble = "";
@@ -1681,7 +1716,8 @@ public class Executor implements Runnable
 					if (isConstant) {
 						typeTokens.remove(0);
 					}
-					if (typeTokens.count() == 1 && context.dynTypeMap.containsKey(":" + (type = typeTokens.get(0)))) {
+					if (typeTokens.count() == 1 && context.dynTypeMap.containsKey(
+							":" + (type = typeTokens.get(0)))) {
 						context.dynTypeMap.put(in, context.dynTypeMap.get(":" + type));
 					}
 				}
@@ -1698,7 +1734,8 @@ public class Executor implements Runnable
 					msg = msg.replace("%", in);
 					// START KGU#371 2019-03-07: Enh. #385 - offer a default value if available
 					//String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
-					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, pDefaults.get(i));
+					String str = JOptionPane.showInputDialog(diagram.getParent(),
+							msg, pDefaults.get(i));
 					// END KGU#371 2019-03-07
 					// END KGU#89 2016-03-18
 					if (str == null)
@@ -1716,11 +1753,12 @@ public class Executor implements Runnable
 					try
 					{
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept (KGU#580 2018-09-24 corrected)
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
+						// (KGU#580 2018-09-24 corrected)
 						String varName = setVarRaw(in, str);
 						if (isConstant) {
 							this.context.constants.put(varName, this.context.interpreter.get(varName));
-							this.updateVariableDisplay();
+							this.updateVariableDisplay(true);
 						}
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
@@ -1729,7 +1767,8 @@ public class Executor implements Runnable
 						// END KGU#2 2015-11-24
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
 						if (this.console.logMeta()) {
-							this.console.writeln("*** Argument <" + in + "> = " + prepareValueForDisplay(arguments[i], context.dynTypeMap), Color.CYAN);
+							this.console.writeln("*** Argument <" + in + "> = "
+									+ prepareValueForDisplay(arguments[i], context.dynTypeMap), Color.CYAN);
 						}
 						// END KGU#160 2016-04-26
 					} catch (EvalError ex)
@@ -1757,7 +1796,7 @@ public class Executor implements Runnable
 							in = "const " + in;
 						}
 						if (i < arguments.length) {
-							setVar(in, arguments[i]);
+							setVar(in, arguments[i], true);
 						}
 						else {
 							setVarRaw(in, pDefaults.get(i));
@@ -1777,13 +1816,13 @@ public class Executor implements Runnable
 		// START KGU#39 2015-10-16
 		}
 		// END KGU#39 2015-10-16
-		// START KGU#376 2017-04-22: Enh. #389 - without arguments, we must also show the new context 
+		// START KGU#376 2017-04-22: Enh. #389 - we must also show the new context 
 		try {
-			this.updateVariableDisplay();
+			this.updateVariableDisplay(true);
 		} catch (EvalError ex) {}
 		// END KGU#376 2017-04-22
 
-		// START KGU#159 2017-02-17: Now we permanently maintain the stacktrace, not only in case of error
+		// START KGU#159 2017-02-17: Now we permanently maintain the stacktrace
 		addToStackTrace(root, arguments);
 		// END KGU#159 2017-03-17
 	
@@ -1803,7 +1842,8 @@ public class Executor implements Runnable
 			}
 		}
 
-		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls with delay 0 (KGU#558: unless we are in step mode)
+		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls with delay 0
+		// (KGU#558: unless we are in step mode)
 		//diagram.redraw();
 		if (delay > 0 || step) {
 			diagram.redraw();
@@ -1818,8 +1858,10 @@ public class Executor implements Runnable
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
 			
 			String modifiedResult = trouble;
-			/* FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
-			 * ... and after having replaced actual arrays by ArrayLists we may no longer obtain this type of message */
+			/* FIXME (KGU): If the interpreter happens to provide localized messages
+			 * then this won't work anymore!
+			 * ... and after having replaced actual arrays by ArrayLists we may no
+			 * longer obtain this type of message */
 			if (trouble.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
@@ -1840,7 +1882,8 @@ public class Executor implements Runnable
 		
 				if (!isErrorReported)
 				{
-					JOptionPane.showMessageDialog(diagram.getParent(), trouble, control.msgTitleError.getText(),
+					JOptionPane.showMessageDialog(diagram.getParent(), trouble,
+							control.msgTitleError.getText(),
 							JOptionPane.ERROR_MESSAGE);
 					// START KGU#160 2016-07-27: Issue #137 - also log the trouble to the console
 					this.console.writeln("*** " + trouble, Color.RED);
@@ -1855,7 +1898,7 @@ public class Executor implements Runnable
 				}
 				else if (isErrorReported && stackTrace.count() > 1)
 				{
-					// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, so there is no need anymore
+					// START KGU#159 2016-03-17: no need anymore, stacktrace held permanently
 					//addToStackTrace(root, arguments);
 					// END KGU#159 2016-03-17
 					showStackTrace();
@@ -1882,13 +1925,19 @@ public class Executor implements Runnable
 			{
 				// Possible result variable names
 				StringList posres = new StringList();
-				// START KGU#434 2017-10-10: Bugfix #433 The name must have existed as variable in this context, too
-				// It happened that e.g. a Java object like java.awt.Polygon was "found" as result for diagram "Polygon"
+				// START KGU#434 2017-10-10: Bugfix #433 Must have existed as variable in this context, too
+				/* It happened that e.g. a Java object like java.awt.Polygon was
+				 * "found" as result for diagram "Polygon"
+				 */
 				//posres.add(root.getMethodName());
 				//posres.add("result");
 				//posres.add("RESULT");
 				//posres.add("Result");
-				for (String resCand: new String[]{root.getMethodName(), "result", "RESULT", "Result"}) {
+				if (context.variables.contains(root.getMethodName())) {
+					posres.add(root.getMethodName());
+				}
+				// We need all reasonably expected name spellings
+				for (String resCand: new String[]{"result", "RESULT", "Result"}) {
 					if (context.variables.contains(resCand)) {
 						posres.add(resCand);
 					}
@@ -1929,7 +1978,7 @@ public class Executor implements Runnable
 									showCompoundValue(resObj, header, !step);
 								}
 								// END KGU#439 2017-10-13
-								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
+								// START KGU#84 2015-11-23: give a chance to pause (though of little use here)
 								//else
 								//{
 									//JOptionPane.showMessageDialog(diagram, resObj,
@@ -1939,7 +1988,8 @@ public class Executor implements Runnable
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
 									if (this.console.logMeta()) {
-										this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+										this.console.writeln("*** " + header + ": "
+												+ prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
 									}
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram.getParent(), resObj,
@@ -1949,7 +1999,8 @@ public class Executor implements Runnable
 								{
 									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
 									if (this.console.logMeta()) {
-										this.console.writeln("*** " + header + ": " + prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
+										this.console.writeln("*** " + header + ": "
+												+ prepareValueForDisplay(resObj, context.dynTypeMap), Color.CYAN);
 									}
 									// END KGU#198 2016-05-25
 									Object[] options = {
@@ -1957,14 +2008,15 @@ public class Executor implements Runnable
 											Control.lbPause.getText()
 											};
 									int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
-											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+											JOptionPane.OK_CANCEL_OPTION,
+											JOptionPane.INFORMATION_MESSAGE, null, options, null);
 									if (pressed == 1)
 									{
 										paus = true;
 										step = true;
 										// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 										//control.setButtonsForPause();
-										control.setButtonsForPause(false);	// This avoids interference with the pause button
+										control.setButtonsForPause(false, false);	// Avoid interference with pause button
 										// END KGU#379 2017-04-12
 									}
 								}
@@ -1973,7 +2025,7 @@ public class Executor implements Runnable
 							}
 							// START KGU#148 2016-01-29: Pause now here, particularly for subroutines
 							delay();
-							// END KGU#148 2016-01-29							
+							// END KGU#148 2016-01-29
 							// END KGU#2 (#9) 2015-11-13
 							context.returned = true;
 						}
@@ -2022,13 +2074,22 @@ public class Executor implements Runnable
 	// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
 	private String importSpecifiedIncludables(Root root) {
 		String errorString = "";
+		// START KGU#911 2021-01-10: Enh. #910
+		//String includeList = root.includeList;
+		//if (root.includeList != null) {
+		StringList includeList = new StringList();
 		if (root.includeList != null) {
+			includeList.add(root.includeList);
+		}
+		if (!includeList.isEmpty()) {
+		// END KGU#911 2021-01-10
 			root.waited = true;
 			root.isIncluding = true;
-			for (int i = 0; errorString.isEmpty() && i < root.includeList.count(); i++) {
+			// START KGU
+			for (int i = 0; errorString.isEmpty() && i < includeList.count(); i++) {
 				delay();
 				Root imp = null;
-				String diagrName = root.includeList.get(i);
+				String diagrName = includeList.get(i);
 				try {
 					imp = this.findIncludableWithName(diagrName);
 				}
@@ -2058,9 +2119,11 @@ public class Executor implements Runnable
 						// START KGU#388 2017-09-18: Enh. #423
 						// Adopt the imported typedefs if any
 						for (Entry<String, TypeMapEntry> typeEntry: impInfo.typeDefinitions.entrySet()) {
-							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
+							TypeMapEntry oldEntry = context.dynTypeMap.putIfAbsent(typeEntry.getKey(),
+									typeEntry.getValue());
 							if (oldEntry != null) {
-								logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}", new Object[]{typeEntry.getKey(), diagrName});
+								logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}",
+										new Object[]{typeEntry.getKey(), diagrName});
 							}
 						}
 						// END KGU#388 2017-09-18
@@ -2080,7 +2143,7 @@ public class Executor implements Runnable
 						}
 						try 
 						{
-							updateVariableDisplay();
+							updateVariableDisplay(true);
 						}
 						catch (EvalError ex) {}
 					}
@@ -2115,59 +2178,6 @@ public class Executor implements Runnable
 	}
 	// END KGU#376 2017-07-01
 
-	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
-	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
-	//private void showArray(Object[] _array, String _title)
-//	@Deprecated
-//	private void showArray(Object[] _array, String _title, boolean withPauseButton)
-//	// END KGU#147 2016-01-29
-//	{	
-//		JDialog arrayView = new JDialog();
-//		arrayView.setTitle(_title);
-//		arrayView.setIconImage(IconLoader.ico004.getImage());
-//		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//		// START KGU#147 2016-01-29: Enh. #84 (continued)
-//		JButton btnPause = new JButton("Pause");
-//		btnPause.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent event) 
-//			{
-//				step = true; paus = true; control.setButtonsForPause(true);
-//				if (event.getSource() instanceof JButton)
-//				{
-//					Container parent = ((JButton)(event.getSource())).getParent();
-//					while (parent != null && !(parent instanceof JDialog))
-//					{
-//						parent = parent.getParent();
-//					}
-//					if (parent != null) {
-//						((JDialog)parent).dispose();
-//					}
-//				}
-//			}
-//		});
-//		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
-//		btnPause.setVisible(withPauseButton);
-//		// END KGU#147 2016-01-29
-//		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-//		this.console.writeln("*** " + _title + ":", Color.CYAN);
-//		// END KGU#160 2016-04-26
-//		List arrayContent = new List(10);
-//		for (int i = 0; i < _array.length; i++)
-//		{
-//			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-//			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array[i]);
-//			this.console.writeln("\t" + valLine, Color.CYAN);
-//			// END KGU#160 2016-04-26
-//			arrayContent.add(valLine);
-//		}
-//		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
-//		arrayView.setSize(300, 300);
-//		arrayView.setLocationRelativeTo(control);
-//		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
-//		arrayView.setVisible(true);
-//	}
-//	// END KGU#133 2016-01-09
-
 	// START KGU#439 2017-10-13: Enh. #436
 	private void showCompoundValue(Object _arrayOrRecord, String _title, boolean withPauseButton)
 	{	
@@ -2184,7 +2194,7 @@ public class Executor implements Runnable
 			btnPause.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) 
 				{
-					step = true; paus = true; control.setButtonsForPause(true);
+					step = true; paus = true; control.setButtonsForPause(true, false);
 					if (event.getSource() instanceof JButton)
 					{
 						Container parent = ((JButton)(event.getSource())).getParent();
@@ -2301,7 +2311,8 @@ public class Executor implements Runnable
 			for (Root impRoot: this.importMap.keySet()) {
 				if (impRoot.getMethodName().equals(impName)) {
 					ImportInfo info = this.importMap.get(impRoot);
-					this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, impRoot.constants.keySet(), true);
+					this.copyInterpreterContents(context.interpreter, info.interpreter,
+							info.variableNames, impRoot.constants.keySet(), true);
 				}
 			}
 		}
@@ -2401,15 +2412,19 @@ public class Executor implements Runnable
 		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
 		if (subRoot.isInclude()) {
 			// It was an import Call, so we have to import the definitions and values 
-			// FIXME: Derive a sensible type StringList from subRoot.getTypeInfo() KGU 2017-09-18: what for?
+			/* FIXME: Derive a sensible type StringList from subRoot.getTypeInfo()
+			 * KGU 2017-09-18: what for?
+			 */
 			this.copyInterpreterContents(context.interpreter, entry.interpreter,
 					this.context.variables, entry.root.constants.keySet(), false);
 			// START KGU#388 2017-09-18: Enh. #423
 			// Adopt the imported typedefs if any
 			for (Entry<String, TypeMapEntry> typeEntry: context.dynTypeMap.entrySet()) {
-				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(), typeEntry.getValue());
+				TypeMapEntry oldEntry = entry.dynTypeMap.putIfAbsent(typeEntry.getKey(),
+						typeEntry.getValue());
 				if (oldEntry != null) {
-					logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}", new Object[]{typeEntry.getKey(), subRoot.getMethodName()});
+					logger.log(Level.INFO, "Conflicting type entry {0} from Includable {1}",
+							new Object[]{typeEntry.getKey(), subRoot.getMethodName()});
 				}
 			}
 			// END KGU#388 2017-09-18
@@ -2419,7 +2434,8 @@ public class Executor implements Runnable
 					entry.constants.put(constEntry.getKey(), constEntry.getValue());
 				}
 			}	
-			this.importMap.put(subRoot, new ImportInfo(this.context.interpreter, this.context.variables, this.context.dynTypeMap));
+			this.importMap.put(subRoot, new ImportInfo(this.context.interpreter,
+					this.context.variables, this.context.dynTypeMap));
 			context.importList.addIfNew(subRoot.getMethodName());
 			// TODO: Check this for necessity and soundness!
 			for (Entry<String, String> constEntry: subRoot.constants.entrySet()) {
@@ -2429,16 +2445,22 @@ public class Executor implements Runnable
 			}
 		}
 		else {
-			// Subroutines may have updated definitions from import diagrams - we must get aware of these changes 
+			/* Subroutines may have updated definitions from import diagrams -
+			 * we must get aware of these changes 
+			 */
 			for (int i = 0; i < context.importList.count(); i++) {
 				String impName = context.importList.get(i);
-				// FIXME This retrieval is a little awkward - maybe the importList should be a set of Root
+				/* FIXME This retrieval is a little awkward - maybe the importList
+				 * should be a set of Root
+				 */
 				for (Root impRoot: this.importMap.keySet()) {
 					if (impRoot.getMethodName().equals(impName)) {
 						ImportInfo info = this.importMap.get(impRoot);
-						if (this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, impRoot.constants.keySet(), true)
+						if (this.copyInterpreterContents(context.interpreter, info.interpreter,
+								info.variableNames, impRoot.constants.keySet(), true)
 								&& entry.importList.contains(impName)) {
-							this.copyInterpreterContents(info.interpreter, entry.interpreter, info.variableNames, impRoot.constants.keySet(), true);
+							this.copyInterpreterContents(info.interpreter, entry.interpreter,
+									info.variableNames, impRoot.constants.keySet(), true);
 						}
 					}
 				}
@@ -2488,7 +2510,7 @@ public class Executor implements Runnable
 		
 		try 
 		{
-			updateVariableDisplay();
+			updateVariableDisplay(true);
 		}
 		catch (EvalError ex) {}
 		
@@ -2503,7 +2525,8 @@ public class Executor implements Runnable
 		{
 			for (int i = 0; i < _arguments.length; i++)
 			{
-				argumentString = argumentString + (i>0 ? ", " : "") + prepareValueForDisplay(_arguments[i], context.dynTypeMap);					
+				argumentString = argumentString + (i>0 ? ", " : "")
+						+ prepareValueForDisplay(_arguments[i], context.dynTypeMap);
 			}
 			argumentString = "(" + argumentString + ")";
 		}
@@ -2587,9 +2610,10 @@ public class Executor implements Runnable
 	// END KGU#2 2015-11-24
 	
 	/**
-	 * Searches all known pools for a unique includable diagram with given name 
+	 * Searches all known pools for a unique includable diagram with given name
 	 * @param name - diagram name
-	 * @return a Root of type INCLUDABLE with given name if uniquely found, null otherwise
+	 * @return a {@link Root} of type INCLUDABLE with given name if uniquely
+	 *         found, {@code null} otherwise
 	 * @throws Exception
 	 */
 	public Root findIncludableWithName(String name) throws Exception
@@ -2598,11 +2622,13 @@ public class Executor implements Runnable
 	}
 	
     /**
-     * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
+     * Searches all known pools for subroutines with a signature compatible to
+     * {@code name(arg1, arg2, ..., arg_nArgs)}
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
-     * @return a Root that matches the specification if uniquely found, null otherwise
-     * @throws Exception 
+     * @return a {@link Root} that matches the specification if uniquely found,
+     *        {@code null} otherwise
+     * @throws Exception
      */
     public Root findSubroutineWithSignature(String name, int nArgs) throws Exception
     {
@@ -2620,11 +2646,14 @@ public class Executor implements Runnable
     }
     
     /**
-     * Searches all known pools for either routine diagrams with a signature compatible to {@code name(arg1, arg2, ..., arg_nArgs)}
-     * or for includable diagrams with name {@code name}
+     * Searches all known pools for either routine diagrams with a signature
+     * compatible to {@code name(arg1, arg2, ..., arg_nArgs)} or for includable
+     * diagrams with name {@code name}
      * @param name - diagram name
-     * @param nArgs - number of parameters of the requested function (negative for Includable)
-     * @return a Root that matches the specification if uniquely found, null otherwise
+     * @param nArgs - number of parameters of the requested function (negative
+     *        for Includable)
+     * @return a {@link Root} that matches the specification if uniquely found,
+     *        {@code null} otherwise
      * @throws Exception if there are differing matching diagrams
      */
     private Root findDiagramWithSignature(String name, int nArgs) throws Exception
@@ -2662,7 +2691,8 @@ public class Executor implements Runnable
     				if (similarity > 2 && similarity != 4) {
     					// 3: Equal file path but unsaved changes in one or both diagrams;
     					// 5: Equal signature (i. e. type, name and argument number) but different content or structure.
-    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
+    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name)
+    							.replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
     				}
     			}
     			// END KGU#317 2016-12-29
@@ -2693,7 +2723,10 @@ public class Executor implements Runnable
 		if (diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController) {
-					((DelayableDiagramController)controller).setAnimationDelay(delay, true);
+					// START KGU#97 2021-01-11: issue #48 We do no longer need the delay in the external controller
+					//((DelayableDiagramController)controller).setAnimationDelay(delay, true);
+					((DelayableDiagramController)controller).setAnimationDelay(0, true);
+					// END KGU#97 2021-01-11
 					//delayed = true;
 				}
 			}
@@ -2719,32 +2752,6 @@ public class Executor implements Runnable
 		return trouble;
 	}
 
-//	// Replaced by getExec(DiagramController, String, Object[])
-//    @Deprecated
-//	public String getExec(String cmd, Color color)
-//	{
-//		String trouble = "";
-//		if (diagramController != null)
-//		{
-//			trouble = diagramController.execute(cmd, color);
-//		} else
-//		{
-//			delay();
-//		}
-//		if (delay != 0)
-//		{
-//			diagram.redraw();
-//			try
-//			{
-//				Thread.sleep(delay);
-//			} catch (InterruptedException e)
-//			{
-//				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
-//			}
-//		}
-//		return trouble;
-//	}
-
 	// START KGU#448 2017-10-28: Enh. #443 replaces getExec(String) and getExec(String, Color)
 	/**
 	 * Executes the procedure {@code procName} with arguments {@code arguments} on
@@ -2767,10 +2774,12 @@ public class Executor implements Runnable
 		}
 		if (delay != 0)
 		{
-			// Don't do a duplicate delay
-			if (!(controller instanceof DelayableDiagramController)) {
-				delay();
-			}
+			// START KGU#97/KGU#911 2021-01-12: Issues #48, #910 Has generally not made sense anymore
+			//// Don't do a duplicate delay
+			//if (!(controller instanceof DelayableDiagramController)) {
+			//	delay();
+			//}
+			// END KGU#97/KGU#911 2021-01-12
 			diagram.redraw();
 			try
 			{
@@ -2996,18 +3005,20 @@ public class Executor implements Runnable
 
 	// START KGU#376 2017-04-20: Enh. #389 - we need to copy interpreter contents 
 	/**
-	 * Copies the constants specified by <code>_constNames</code> and the values of the variables
-	 * specified by <code>_varNames</code> from the <code>_source</code> interpreter context to the
-	 * <code>_target</code> interpreter context.
+	 * Copies the constants specified by {@code _constNames} and the values
+	 * of the variables specified by {@code _varNames} from the {@code _source}
+	 * interpreter context to the {@cod _target} interpreter context.
 	 * @param _source - the source interpreter
 	 * @param _target - the target interpreter
 	 * @param _varNames - names of the variables to be considered
 	 * @param _constNames - names of the constants to be included
-	 * @param _overwrite - whereas defined constants are never overwritten, for variables this argument
-	 * may allow to update the values of already existing values (default is false)
+	 * @param _overwrite - whereas defined constants are never overwritten, for
+	 *        variables this argument may allow to update the values of already
+	 *        existing values (default is {@code false})
 	 * @return true if there was at least one copied entity
 	 */
-	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target, StringList _varNames, Set<String> _constNames, boolean _overwrite)
+	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target,
+			StringList _varNames, Set<String> _constNames, boolean _overwrite)
 	{
 		boolean somethingCopied = false;
 		for (int i = 0; i < _varNames.count(); i++) {
@@ -3112,12 +3123,19 @@ public class Executor implements Runnable
 		boolean delayChanged = aDelay != delay;
 		// END KGU#97 2015-12-10
 		delay = aDelay;
-		// START KGU#97 2015-12-10: Enh.Req. #48: Inform delay-aware DiaramControllers A.S.A.P.
+		// START KGU#97 2015-12-10: Enh.Req. #48: Inform delay-aware DiagramControllers A.S.A.P.
 		// START KGU#448 2017-10-28: Enh. #443 Revised to cope with several controllers
 		if (delayChanged && diagramControllers != null) {
 			for (DiagramController controller: diagramControllers) {
 				if (controller instanceof DelayableDiagramController)
 				{
+					/*
+					 * FIXME KGU#97 2020-12-30:
+					 * The good question here is: Why do we impose a delay to the
+					 * DiagramController at all? Isn't one delay (the one in Executor)
+					 * enough? Why don't we just always set the DiagramController's delay
+					 * to 0?
+					 */
 					((DelayableDiagramController) controller).setAnimationDelay(aDelay, false);
 				}
 			}
@@ -3150,8 +3168,7 @@ public class Executor implements Runnable
 	 */
 
 	/**
-	 * @param aPaus
-	 *            the step to set
+	 * @param aPaus - whether the execution is to pause
 	 */
 	public void setPaus(boolean aPaus)
 	{
@@ -3160,7 +3177,7 @@ public class Executor implements Runnable
 		{
 			diagram.redraw();
  			try {
-				updateVariableDisplay();
+				updateVariableDisplay(true);
 			}
 			catch (EvalError ex)
 			{
@@ -3199,13 +3216,13 @@ public class Executor implements Runnable
 	// START KGU#67/KGU#68/KGU#69 2015-11-08: We must distinguish between raw input and evaluated objects
 	/**
 	 * Interprets and evaluates the user input string {@code rawInput} and assigns the result to the given
-	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object)}.
+	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object, boolean)}.
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param rawInput - the raw input string to be interpreted
 	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
 	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
-	 * @see #setVar(String, Object) 
+	 * @see #setVar(String, Object, boolean) 
 	 */
 	private String setVarRaw(String target, String rawInput) throws EvalError
 	{
@@ -3217,7 +3234,7 @@ public class Executor implements Runnable
 		//setVar(name, rawInput);
 		EvalError finalError = null;
 		try {
-			varName = setVar(target, rawInput);
+			varName = setVar(target, rawInput, true);
 		}
 		catch (EvalError ex)
 		{
@@ -3251,14 +3268,14 @@ public class Executor implements Runnable
 					//this.evaluateExpression(target + " = \"" + rawInput + "\"", false, false);
 					evaluateRawString(target, "\"" + rawInput + "\"");
 					// END KGU#813 2020-02-21
-					varName = setVar(target, context.interpreter.get(target));					
+					varName = setVar(target, context.interpreter.get(target), true);					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
 					Character charInput = rawInput.charAt(0);
-					varName = setVar(target, charInput);
+					varName = setVar(target, charInput, true);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
 //				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
@@ -3293,14 +3310,14 @@ public class Executor implements Runnable
 					Object evaluated = this.evaluateExpression(strInput, true, false);
 					// If there is no sensible evaluation result then leave the value as is
 					if (evaluated != null) {
-						varName = setVar(target, evaluated);
+						varName = setVar(target, evaluated, true);
 					}
 					// END KGU#879 2020-10-19
 				}
 				// START KGU#283 2016-10-16: Enh. #273
 				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					varName = setVar(target, Boolean.valueOf(strInput));
+					varName = setVar(target, Boolean.valueOf(strInput), true);
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -3318,7 +3335,7 @@ public class Executor implements Runnable
 		try
 		{
 			double dblInput = Double.parseDouble(rawInput);	// may cause an exception 
-			varName = setVar(target, dblInput);
+			varName = setVar(target, dblInput, true);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3332,7 +3349,7 @@ public class Executor implements Runnable
 		try
 		{
 			int intInput = Integer.parseInt(rawInput);	// may cause an exception
-			varName = setVar(target, intInput);
+			varName = setVar(target, intInput, true);
 			finalError = null;
 		} catch (Exception ex)
 		{
@@ -3374,7 +3391,7 @@ public class Executor implements Runnable
 				throw ex;
 			}
 		}
-		return setVar(target, context.interpreter.get(target));					
+		return setVar(target, context.interpreter.get(target), true);					
 	}
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
@@ -3383,7 +3400,7 @@ public class Executor implements Runnable
 	 * {@code target}. Analyses and handles possibly given extra information in order to register and
 	 * declare the target variable or constant.<br/>
 	 * Also ensures that no loop variable manipulation is performed (the entire loop stack is checked,
-	 * so use {@link #setVar(String, Object, int)} for a regular loop variable update).<br/>
+	 * so use {@link #setVar(String, Object, int, boolean)} for a regular loop variable update).<br/>
 	 * There are the following sensible cases w.r.t. {@code target} here (unquoted brackets enclose optional parts):<br/>
 	 * a) {@code [const] <id>}<br/>
 	 * b) {@code <id>'['<expr>']'}<br/>
@@ -3407,16 +3424,20 @@ public class Executor implements Runnable
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
+	 * @param displayNow TODO
 	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
 	 * or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
-	 * @see #setVar(String, Object, int) 
+	 * @see #setVar(String, Object, int, boolean) 
 	 */
-	private String setVar(String target, Object content) throws EvalError
+	// START KGU#910 2021-01-10: Bugfix #909 In certain cases we must postpone the variable display
+	//private String setVar(String target, Object content) throws EvalError
+	private String setVar(String target, Object content, boolean displayNow) throws EvalError
+	// END KGU#910 2021-01-10
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		return setVar(target, content, context.forLoopVars.count()-1);
+		return setVar(target, content, context.forLoopVars.count()-1, displayNow);
 	}
 
 	/**
@@ -3427,14 +3448,18 @@ public class Executor implements Runnable
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
+	 * @param displayNow - use {@code false} to postpone the display of all variables
 	 * @return base name of the assigned variable (or constant)
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
 	 * match or if a loop variable violation is detected.
 	 * @see #setVarRaw(String, Object)
-	 * @see #setVar(String, Object)
+	 * @see #setVar(String, Object, boolean)
 	 */
 	@SuppressWarnings("unchecked")
-	private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
+	// START KGU#910 2021-01-10: Bugfix #909 - we must be able to postpone the display
+	//private String setVar(String target, Object content, int ignoreLoopStackLevel) throws EvalError
+	private String setVar(String target, Object content, int ignoreLoopStackLevel, boolean displayNow) throws EvalError
+	// END KGU#910 2021-01-10
 	// END KGU#307 2016-12-12
 	{
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
@@ -3768,7 +3793,8 @@ public class Executor implements Runnable
 				}
 				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
 				else if (record == null || !(record instanceof HashMap)) {
-					throw new EvalError(control.msgInvalidRecord.getText().replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
+					throw new EvalError(control.msgInvalidRecord.getText()
+							.replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
 				}
 				// END KGU#568 2018-08-01
 				Object comp = record;
@@ -3780,7 +3806,8 @@ public class Executor implements Runnable
 						((HashMap<String, Object>)comp).put(path.get(i), subComp);
 					}
 					else if (!(subComp instanceof HashMap<?,?>)) {
-						throw new EvalError(control.msgInvalidComponent.getText().replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
+						throw new EvalError(control.msgInvalidComponent.getText()
+								.replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
 					}
 					comp = subComp;
 				}
@@ -3910,9 +3937,15 @@ public class Executor implements Runnable
 //			this.control.updateVars(vars);
 //		}
 		
-		if (this.delay != 0 || step)
+		// START KGU#910 2021-01-10: Bugfix #909 e.g. in case of enumerators we better postpone display
+		//if (this.delay != 0 || step)
+		//{
+		//	updateVariableDisplay();
+		//}
+		if (displayNow)
+		// END KGU#910 2021-01-10
 		{
-			updateVariableDisplay();
+			updateVariableDisplay(false);
 		}
 		// END KGU#20 2015-10-13
 		// START KGU#580 2018-09-24: Bugfix #605
@@ -3977,9 +4010,19 @@ public class Executor implements Runnable
 	/**
 	 * Prepares an editable variable table and has the Control update the display
 	 * of variables with it
+	 * @param always - if {@code true} then {@link #delay} and {@link #step} won't hinder
+	 * the display, otherwise {@link #delay} 0 and non-step mode will impede it
 	 */
-	private void updateVariableDisplay() throws EvalError
+	// START KGU#910 2021-01-10: Issue #909 centralized control about display opportunity
+	//private void updateVariableDisplay() throws EvalError
+	private void updateVariableDisplay(boolean always) throws EvalError
+	// END KGU#910 2021-01-10
 	{
+		// START KGU#910 2021-01-10: Issue #909 centralized control about display opportunity
+		if (!always && this.delay == 0 && !step) {
+			return;
+		}
+		// END KGU#910 2021-01-10
 		Vector<String[]> vars = new Vector<String[]>();
 		for (int i = 0; i < context.variables.count(); i++)
 		{
@@ -4227,7 +4270,14 @@ public class Executor implements Runnable
 	// END KGU#68 2015-11-06
 	
 	// START KGU#542 2019-11-21: Enh. #739 Support for enumeration types
-	private String decodeEnumValue(int testVal, TypeMapEntry varType) {
+	/**
+	 * Tries to return the named constant corresponding to the given code
+	 * {@code testVal} in enumeration type {@code varType}.
+	 * @param testVal - the coded value
+	 * @param varType - the identified enumeration type
+	 * @return either the name of the constant or {@code null} if out of range
+	 */
+	public String decodeEnumValue(int testVal, TypeMapEntry varType) {
 		int itemVal = 0;
 		StringList enumInfo = varType.getEnumerationInfo();
 		for (int j = 0; j < enumInfo.count(); j++) {
@@ -4258,15 +4308,66 @@ public class Executor implements Runnable
 	// END KGU#375 2017-03-30
 	
 	// START KGU#542 2019-11-21: Enh. #739 support for enumerator types
-	public boolean isEnumerator(String varName)
+	// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
+	/**
+	 * Tries to retrieve the type of the given variable access path
+	 * @param varName - an access path - may be a single identifier or some
+	 * recursive application of component access or indices
+	 * @return the dynamic type map entry for the variable path or {@code null}
+	 */
+	public TypeMapEntry getTypeForVariable(String varName)
 	{
-		TypeMapEntry type = context.dynTypeMap.get(varName);
-		return type != null && type.isEnum();
+		StringList tokens = Element.splitLexically(varName, true);
+		tokens.removeAll(" ");
+		int nTokens = tokens.count();
+		int pos = 1;
+		if (nTokens == 0) {
+			return null;
+		}
+		TypeMapEntry type = context.dynTypeMap.get(tokens.get(0));
+		while (type != null && pos < nTokens) {
+			if (type.isArray() && tokens.get(pos).equals("[")) {
+				String typeStr = type.getCanonicalType(false, false);
+				int nDims = 0;
+				while (typeStr.charAt(nDims) == '@') {
+					nDims++;
+					if (!tokens.get(pos).equals("[") || (pos = tokens.indexOf("]", pos)) < 0) {
+						return null;
+					}
+					pos++;
+				}
+				// The rest of typeStr should now be the name of the element type
+				type = context.dynTypeMap.get(":" + typeStr.substring(nDims));
+			} else if (type.isRecord() && tokens.get(pos++).equals(".")) {
+				HashMap<String, TypeMapEntry> compInfo = type.getComponentInfo(false);
+				if (compInfo != null) {
+					type = compInfo.get(tokens.get(pos++));
+				}
+				else {
+					return null;
+				}
+			}
+			else {
+				return null;
+			}
+		}
+		return type;
 	}
-	
+	// END KGU#910 2021-01-07
+
+	/**
+	 * Checks if the variable access path {@code varName} represents an
+	 * enumeration type and if so returns the list of declared value names
+	 * @param varName - an access path - may be a single identifier or some
+	 * recursive application of component access or indices
+	 * @return either the StringList of value names or {@code null}
+	 */
 	public StringList getEnumeratorValuesFor(String varName)
 	{
-		TypeMapEntry type = context.dynTypeMap.get(varName);
+		// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
+		//TypeMapEntry type = context.dynTypeMap.get(varName);
+		TypeMapEntry type = getTypeForVariable(varName);
+		// END KGU#910 2021-01-07
 		if (type == null || !type.isEnum()) {
 			return null;
 		}
@@ -4274,7 +4375,7 @@ public class Executor implements Runnable
 		for (int i = 0; i < names.count(); i++) {
 			int posEqu = names.get(i).indexOf('=');
 			if (posEqu >= 0) {
-				names.set(i,  names.get(i).substring(0, posEqu).trim());
+				names.set(i, names.get(i).substring(0, posEqu).trim());
 			}
 		}
 		return names;
@@ -4309,13 +4410,31 @@ public class Executor implements Runnable
 		if (atBreakpoint) {
 			// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 			//control.setButtonsForPause();
-			control.setButtonsForPause(false);	// This avoids interference with the pause button
+			// START KGU#907 2021-01-04: Enh. #906
+			//control.setButtonsForPause(false);	// This avoids interference with the pause button
+			control.setButtonsForPause(false,	// This avoids interference with the pause button
+					element instanceof Call);	// This re-dedicates the pause button and the step button
+			// END KGU#907 2021-01-04
 			// END KGU#379 2017-04-12
 			this.setPaus(true);
 		}
 		return atBreakpoint;
 	}
 	// END KGU#43 2015-10-12
+	
+	// START KGU#907 2021-01-04: Enh. #906
+	/**
+	 * If there is a currently executed Call then flags for pausing after completion
+	 * Clears the {@link #currentCall} slot immediately
+	 */
+	public void ensurePauseAfterCall()
+	{
+		if (currentCall != null) {
+			currentCall.pauseAfterCall = true;
+			currentCall = null;
+		}
+	}
+	// END KGU#907 2021-01-04
 
 	// START KGU 2015-10-13: Decomposed this "monster" method into Element-type-specific subroutines
 	private String step(Element element)
@@ -4351,6 +4470,14 @@ public class Executor implements Runnable
 			this.lastDeclarationSurrogate.executed = true;
 		}
 		// END KGU#477 2017-12-10
+		// START KGU#907 2021-01-04: Enh. #906
+		if (element instanceof Call) {
+			this.currentCall = (Call)element;
+		}
+		else {
+			this.currentCall = null;
+		}
+		// END KGU#907 2021-01-04
 		// The Root element, REPEAT loop, and TRY block won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
@@ -4367,7 +4494,10 @@ public class Executor implements Runnable
 		else 
 		{
 			// Delay or wait (in case of step mode or breakpoint) before
-			delay();	// does the delaying or waits in case of step mode or breakpoint
+			delay();
+			// START KGU#907 2021-01-04: Enh. #906
+			this.currentCall = null;
+			// END KGU#907 2021-01-04
 			
 			// START KGU#2 2015-11-14: Separate execution for CALL elements to keep things clearer
 			//if (element instanceof Instruction)
@@ -4428,7 +4558,7 @@ public class Executor implements Runnable
 		// and we MUST NOT re-initialize the diagramControllers on a subroutine!
 		if ((diagramControllers != null || !step) && callers.isEmpty())
 		{
-			// START KGU#448 2017-10-28: Enh. #443 use the internal interface not the diagram API
+			// START KGU#448 2017-10-28: Enh. #443 use the internal interface, not the diagram API
 			//getExec("init(" + delay + ")");
 			initRootExecDelay();
 			// END KGU#448 2017-10-28
@@ -4529,6 +4659,7 @@ public class Executor implements Runnable
 					// END KGU#417 2017-06-30
 
 					// assignment?
+					boolean isBasic = false;
 					// START KGU#377 2017-03-30: Bugfix
 					//if (cmd.indexOf("<-") >= 0)
 					if (Element.splitLexically(cmd, true).contains("<-"))
@@ -4537,23 +4668,24 @@ public class Executor implements Runnable
 						trouble = tryAssignment(cmd, element, i);
 					}
 					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
-					else if (cmd.matches("^var.*:.*")) {
+					else if (cmd.matches("^var.*:.*") || (isBasic = cmd.matches("^dim.* as .*"))) {
 						// START KGU#388 2017-09-14: Enh. #423
 						element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
 						// END KGU#388 2017-09-14
-						StringList varNames = StringList.explode(cmd.substring("var".length(), cmd.indexOf(":")), ",");
+						String delim1 = isBasic ? "dim" : "var";
+						String delim2 = isBasic ? " as " : ":";
+						StringList varNames = StringList.explode(cmd.substring(delim1.length(), cmd.indexOf(delim2)), ",");
 						for (int j = 0; j < varNames.count(); j++) {
-							setVar(varNames.get(j).trim(), null);
+							// START KGU#910 2021-01-10: Bugfix #909 For performance reasons postpone display
+							//setVar(varNames.get(j), null);
+							setVar(varNames.get(j).trim(), null, false);
+							// END KGU#910 2021-01-10
 						}
-					}
-					else if (cmd.matches("^dim.* as .*")) {
-						// START KGU#388 2017-09-14: Enh. #423
-						element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
-						// END KGU#388 2017-09-14
-						StringList varNames = StringList.explode(cmd.substring("dim".length(), cmd.indexOf(" as ")), ",");
-						for (int j = 0; j < varNames.count(); j++) {
-							setVar(varNames.get(j), null);
+						// START KGU#910 2021-01-10: Bugfix #909 postponed display
+						if (!varNames.isEmpty()) {
+							updateVariableDisplay(false);
 						}
+						// END KGU#910 2021-01-10
 					}
 					// END KGU#332 2017-01-17/19
 					else
@@ -4563,7 +4695,6 @@ public class Executor implements Runnable
 						// END KGU#490 2018-02-08
 						trouble = trySubroutine(cmd, element);
 					}
-					
 				// START KGU#388 2017-09-13: Enh. #423
 				}
 				else {
@@ -4581,6 +4712,9 @@ public class Executor implements Runnable
 							trouble = Control.msgInvalidEnumDefinition.getText().replace("%", typeDescr);
 						}
 						else {
+							// START KGU#910 2021-01-10: Bugfix #909 Postpone the display for performance reasons
+							boolean displayLater = false;
+							// END KGU#910 2021-01-10
 							for (Entry<String,String> enumItem: enumItems.entrySet()) {
 								String constName = enumItem.getKey();
 								// This is the prefixed value
@@ -4596,9 +4730,18 @@ public class Executor implements Runnable
 									// This is the pure value (ought to be an integral literal)
 									Object trueValue = context.interpreter.eval(context.root.getConstValueString(constName));
 									// Now establish the value in the interpreter and the variable display
-									setVar("const " + constName, trueValue);
+									// START KGU#910 2021-01-10: Bugfix #909 Postpone the display for performance reasons
+									//setVar("const " + constName, trueValue);
+									setVar("const " + constName, trueValue, false);
+									displayLater = true;
+									// END KGU#910 2021-01-10
 								}
 							}
+							// START KGU#910 2021-01-10: Bugfix #909 Postpone the display for performance reasons
+							if (displayLater) {
+								updateVariableDisplay(false);
+							}
+							// END KGU#910 2021-01-10
 						}
 					}
 					// END KGU#542 2019-11-17
@@ -4718,7 +4861,12 @@ public class Executor implements Runnable
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
 				if (i > 0)
 				{
+					// START KGU#907 2021-01-04: Enh. #907 different behaviour on stepping Calls
+					//delay();
+					this.currentCall = element;
 					delay();
+					this.currentCall = null;
+					// END KGU#907 2021-01-04
 				}
 				// END KGU 2015-10-12
 
@@ -4750,6 +4898,12 @@ public class Executor implements Runnable
 
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
+			// START KGU#907 2021-01-04: Enh. #906 ... but a specific pause check
+			if (element.pauseAfterCall) {
+				setPaus(true);
+				element.pauseAfterCall = false;
+			}
+			// END KGU#907 2021-01-04
 		}
 		if (trouble.equals(""))
 		{
@@ -4969,7 +5123,10 @@ public class Executor implements Runnable
 					String fSign = fName + "#" + nArgs;
 					DiagramController controller = this.controllerFunctions.get(fSign);
 					// START KGU#592 2018-10-04 - Bugfix #617 If the signature doesn't match exactly then skip
-					if (controller != null) {
+					// START KGU#911 2021-01-11: Enh. #910 - also make sure the controller is included
+					//if (controller != null) {
+					if (checkController(controller)) {
+					// END KGU#911 2021-01-11
 					// END KGU#592 2018-10-04
 						//Method function = controller.getFunctionMap().get(fSign);
 						// Now we must know what is beyond the function call (the tail)
@@ -4990,7 +5147,10 @@ public class Executor implements Runnable
 						// START KGU#898 2020-12-25: Bugfix #898 - we must put the results in parentheses
 						//tokens.add(result.toString());
 						tokens.add("(");
-						tokens.add(result.toString());
+						// START KGU#911 2021-01-10: Enh. #910 worked only for numeric objects
+						//tokens.add(result.toString());
+						tokens.add(prepareValueForDisplay(result, null));
+						// END KGU#911 2021-01-10
 						tokens.add(")");
 						// END KGU#898 2020-12-25
 						if (!tail.isEmpty()) {
@@ -5151,8 +5311,13 @@ public class Executor implements Runnable
 		
 		if (value != null)
 		{
+			// START KGU#910 2021-01-10: Bugfix #909 We must postpone the display to ensure type info
+			// END KGU#910 2021-01-10
 			// Assign the value and handle provided declaration
-			setVar(leftSide, value);
+			// START KGU#910 2021-01-10: Bugfix #909 We must postpone the display until we fixed the type
+			//setVar(leftSide, value);
+			setVar(leftSide, value, false);
+			// END KGU#910 2021-01-10
 			// START KGU#388 2017-09-14. Enh. #423
 			// FIXME: This is poorly done, particularly we must handle cases of record assignment 
 			//instr.updateTypeMapFromLine(context.dynTypeMap, cmd, lineNo);
@@ -5174,6 +5339,9 @@ public class Executor implements Runnable
 				}
 			}
 			// END KGU#388 2017-09-14
+			// START KGU#910 2021-01-10: Bugfix #909 We must postpone the display until we fixed the type
+			updateVariableDisplay(false);
+			// END KGU#910 2021-01-10
 		}
 		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the trouble
 		//else if (trouble.isEmpty())
@@ -5271,7 +5439,7 @@ public class Executor implements Runnable
 				}
 				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 				//control.setButtonsForPause();
-				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
 			}
 		}
@@ -5367,14 +5535,14 @@ public class Executor implements Runnable
 				}
 				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 				//control.setButtonsForPause();
-				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
 				for (int i = 0; i < inputItems.count(); i++) {
 					String var = inputItems.get(i);
 					if (!context.variables.contains(var))
 					{
 						// If the variable hasn't been used before, we must create it now
-						setVar(var, null);
+						setVar(var, null, true);
 					}
 				}
 			}
@@ -5563,7 +5731,7 @@ public class Executor implements Runnable
 					}
 					// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 					//control.setButtonsForPause();
-					control.setButtonsForPause(false);	// This avoids interference with the pause button
+					control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 					// END KGU#379 2017-04-12
 				}
 			}
@@ -5652,7 +5820,7 @@ public class Executor implements Runnable
 						}
 						// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
 						//control.setButtonsForPause();
-						control.setButtonsForPause(false);	// This avoids interference with the pause button
+						control.setButtonsForPause(false, false);	// This avoids interference with the pause button
 						// END KGU#379 2017-04-12
 					}
 					// END KGU#84 2015-11-23
@@ -5769,7 +5937,10 @@ public class Executor implements Runnable
 				procName = procName.toLowerCase();
 				String pSign = procName + "#" + args.length;
 				DiagramController controller = this.controllerProcedures.get(pSign);
-				if (controller != null) { 
+				// START KGU#911 2021-01-11: Enh. #910 to check if the controller is included
+				//if (controller != null) { 
+				if (checkController(controller)) { 
+				// END KGU#911 2021-01-11
 					HashMap<String, Method> procMap = controller.getProcedureMap(); 
 					// Check if the controller accepts a method with additional color argument, too
 					Method colMethod = procMap.get(procName + "#" + (args.length + 1));
@@ -5784,6 +5955,30 @@ public class Executor implements Runnable
 					trouble = getExec(controller, procName, args);
 				}
 				// END KGU#448 2017-20-28
+				// START KGU#911 2021-01-11: Enh. #910 Special startup support for controllers
+				else if (procName.equals("restart")
+						&& context.root.isDiagramControllerRepresentative()) {
+					String ctrlName = context.root.getMethodName().substring(1);
+					for (DiagramController contr: this.diagramControllers) {
+						boolean found = ctrlName.equals(contr.getName().replace(" ", "_"));
+						if (found) {
+							Method[] meths = contr.getClass().getMethods();
+							for (int i = 0; i < meths.length; i++) {
+								if (meths[i].getName().equals("restart")) {
+									try {
+										meths[i].invoke(contr, new Object[] {args});
+										break;
+									} catch (IllegalAccessException | IllegalArgumentException
+											| InvocationTargetException exc) {
+										return exc.getMessage();
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+				// END KGU#911 2021-01-11
 				else	
 				{
 					// Try as built-in subroutine as is
@@ -5799,6 +5994,21 @@ public class Executor implements Runnable
 		}
 		return trouble;
 	}
+	
+	/**
+	 * Checks whether the given {@link DiagramController} {@code controller} can legitimitely
+	 * be used (i.e. it is not {@code null} and either the Turtleizer or included by the owning
+	 * root.
+	 * @param controller - a {@link DiagramController} candidate for a controller routine
+	 * @return true if {@code controller} is available
+	 */
+	private boolean checkController(DiagramController controller) {
+		Root root = context.root;
+		return controller != null
+				&& (controller.getClass().getName().equals("lu.fisch.turtle.TurtleBox")
+				|| root.includeList != null && root.includeList.contains("$" + controller.getName().replace(" ", "_")));
+	}
+
 	// END KGU 2015-11-11
 
 	private String stepCase(Case element)
@@ -6406,7 +6616,7 @@ public class Executor implements Runnable
 			{
 				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 				//setVar(counter, cw);
-				setVar(counter, cw, forLoopLevel-1);
+				setVar(counter, cw, forLoopLevel-1, true);
 				// END KGU#307 2016-12-12
 				element.waited = true;
 
@@ -6640,7 +6850,7 @@ public class Executor implements Runnable
 						// END KGU#388 2017-09-27
 						// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 						//setVar(iterVar, valueList[cw]);
-						setVar(iterVar, iterVal, forLoopLevel-1);
+						setVar(iterVar, iterVal, forLoopLevel-1, true);
 						// END KGU#307 2016-12-12
 						element.executed = false;
 						element.waited = true;
@@ -6792,7 +7002,7 @@ public class Executor implements Runnable
 		if (!trouble.isEmpty() && !isExited) {
 			String origTrouble = trouble;	// For the case of a rethrow
 			try {
-				this.updateVariableDisplay();
+				this.updateVariableDisplay(true);
 				String varName = element.getExceptionVarName();
 				Object priorValue = null;
 				boolean hadVariable = false;
@@ -6800,7 +7010,7 @@ public class Executor implements Runnable
 					if ((hadVariable = context.variables.contains(varName))) {
 					priorValue = context.interpreter.get(varName);
 					}
-					setVar(varName, trouble);
+					setVar(varName, trouble, true);
 				}
 				// START KGU#806 2020-02-20: Bugfix #820 From now on new errors may occur
 				this.isErrorReported = false;
@@ -6812,7 +7022,7 @@ public class Executor implements Runnable
 				
 				element.qTry.clearExecutionStatus();
 				if (hadVariable) {
-					setVar(varName, priorValue);
+					setVar(varName, priorValue, true);
 				}
 				else if (varName != null) {
 					context.interpreter.unset(varName);
@@ -6830,7 +7040,7 @@ public class Executor implements Runnable
 		
 		// Execute the finally block (even in case of exit - but don't overwrite the exit text then)
 		try {
-			this.updateVariableDisplay();
+			this.updateVariableDisplay(true);
 			// Execute the finally block
 			String finalTrouble = stepSubqueue(element.qFinally, true);
 			if (!finalTrouble.isEmpty() && !isExited) {
@@ -7157,7 +7367,10 @@ public class Executor implements Runnable
 		// START KGU#379 2017-04-12: Bugfix #391: This is the proper place to prepare the buttons for pause mode
 		// Well, maybe it is better put into the synchronized block?
 		if (getPaus()) {
-			control.setButtonsForPause(true);
+			// START KGU#907 2021-01-04: Enh. #906 Special step handing for Calls
+			//control.setButtonsForPause(true);
+			control.setButtonsForPause(true, currentCall != null);
+			// END KGU#907 2021-01-04
 		}
 		// END KGU#379 2017-04-12
 		synchronized (this)

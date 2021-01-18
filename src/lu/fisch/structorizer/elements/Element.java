@@ -93,7 +93,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-07-20      Enh. #563: Intelligent conversion of simplified record initializers (see comment)
  *      Kay Gürtzig     2018-07-26      Issue #566: New central fields E_HOME_PAGE, E_HELP_PAGE
  *      Kay Gürtzig     2018-08-17      Bugfix #579: isConditionedBreakpoint() didn't work properly
- *      Kay Gürtzig     2018-09-10      Issue #508: New mechanism for proportinal paddings (setFont(), E_PADDING_FIX) 
+ *      Kay Gürtzig     2018-09-10      Issue #508: New mechanism for proportional paddings (setFont(), E_PADDING_FIX) 
  *      Kay Gürtzig     2018-09-17      Issue #594: Last remnants of com.stevesoft.pat.Regex replaced
  *      Kay Gürtzig     2018-09-19      Structure preference field initialization aligned with ini defaults
  *      Kay Gürtzig     2018-09-24      Bugfix #605: Handling of const modifiers in declaration lists fixed
@@ -115,6 +115,11 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-04-12      Bugfix #847 inconsistent handling of upper and lowercase in operator names (esp. DIV)
  *      Kay Gürtzig     2020-10-17/19   Enh. #872: New mode to display operators in C style
  *      Kay Gürtzig     2020-11-01      Issue #881: Highlighting of bit operators and Boolean literals
+ *      Kay Gürtzig     2021-01-01      Issue #903: Syntax highlighting also in Popup when text and comment are switched
+ *                                      Bugfix #904: Controller alias display wiped off all other routine names
+ *                                      Issue #872: '=' in routine headers must not be replaced by "==" for C operator mode
+ *      Kay Gürtzig     2021-01-02      Enh. #905: Method to draw a red triangle if an error entry refers to the element
+ *      Kay Gürtzig     2021-01-10      Enh. #910: New method isImmutable(), synchronisation in writeOut...
  *
  ******************************************************************************************************
  *
@@ -212,6 +217,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
@@ -239,8 +245,12 @@ import javax.swing.ImageIcon;
 public abstract class Element {
 	
 	/** This enumeration type distinguishes drawing contexts for selection display */
-	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
+	// START KGU#906 2021-01-06: Enh. #905 need another context to suppress triangles
+	//public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
+	public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER, DC_IMAGE_EXPORT};
+	// END KGU#906 2021-01-06
 	
+	/** A cached text snippet with associated style information for syntax highlighting */
 	protected class HighlightUnit {
 		String textSnippet = null;
 		Color textColor = Color.BLACK;
@@ -251,7 +261,10 @@ public abstract class Element {
 			this.textSnippet = text;
 			this.textColor = color;
 			this.bold = bold;
-			this.underlined = bold;
+			// START KGU#903 2021-01-01: Bugfix #904 Underlining of aliases didn't work
+			//this.underlined = bold;
+			this.underlined = underlined;
+			// END KGU#903 2021-01-01
 		}
 		public String toString()
 		{
@@ -274,7 +287,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 10000000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-13";
+	public static final String E_VERSION = "3.30-14";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -429,8 +442,12 @@ public abstract class Element {
 	// END KGU#477 2017-12-06
 	/** Show FOR loops according to DIN 66261? */
 	public static boolean E_DIN = false;
-	/* Analyser enabled? */
+	/** Is Analyser enabled? */
 	public static boolean E_ANALYSER = true;
+	// START KGU#906 2021-01-02: Enh. #905
+	/** Shall warning markers be drawn in flawed elements? */
+	public static boolean E_ANALYSER_MARKER = true;
+	// END KGU#906 2021-01-02
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	/** Is collapsing by mouse wheel rotation enabled? */
 	public static boolean E_WHEELCOLLAPSE = false;
@@ -577,6 +594,10 @@ public abstract class Element {
 	private static final Pattern DEC_PATTERN1 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[,](.*?)[)](.*?)");
 	private static final Pattern DEC_PATTERN2 = Pattern.compile(BString.breakup("dec", true)+"[(](.*?)[)](.*?)");
 	// END KGU#575 2018-09-17
+	
+	// START KGU#906 2021-01-02: Enh. #905 Draw markers on elements with related Analyser reports
+	protected static final int CANVAS_FLAGNO_ERROR_CHECK = 0;
+	// END KGU#906 2021-01-02
 
 	// START KGU#425 2017-09-29: Lexical core mechanisms revised
 	private static final String[] LEXICAL_DELIMITERS = new String[] {
@@ -736,6 +757,7 @@ public abstract class Element {
 
 	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
 	private static long lastId = 0;
+
 	/**
 	 * Change- and cloning-invariant id of this element
 	 */
@@ -947,6 +969,17 @@ public abstract class Element {
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+	
+	// START KGU#911 2021-01-10: Enh. #910 DiagramController Includables are immutable
+	/**
+	 * @return {@code true} if this element must not be edited, moved, deleted etc.
+	 */
+	public boolean isImmutable()
+	{
+		Root myRoot = getRoot(this);
+		return myRoot.isDiagramControllerRepresentative();
+	}
+	// END KGU#911 2021-01-19
 
 	// START KGU#117 2016-03-07: Enh. #77
 	/**
@@ -2294,6 +2327,49 @@ public abstract class Element {
 	}
 	// END KGU 2015-10-11
 
+	// START KGU#906 2021-01-02: Enh.
+	/**
+	 * Places a small red triangle in the upper left corner if this element
+	 * is referred to by some {@link DetectedError} record in the owning
+	 * {@link Root}.
+	 * @param _canvas - the drawing canvas
+	 * @param _rect - the outer drawing rectangle
+	 */
+	protected void drawWarningSignOnError(Canvas _canvas, Rect _rect) {
+		if (E_ANALYSER && E_ANALYSER_MARKER && _canvas.isSetFlag(CANVAS_FLAGNO_ERROR_CHECK)) {
+			Root myRoot = getRoot(this);
+			if (myRoot != null && myRoot.errors != null && !myRoot.errors.isEmpty()) {
+				for (DetectedError error: myRoot.errors) {
+					if (this == error.getElement()) {
+						Color oldCol = _canvas.getColor();
+						if (error.isWarning()) {
+							_canvas.setColor(Color.RED);
+						}
+						else {
+							_canvas.setColor(Color.BLUE);
+						}
+						int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
+						int yBase = _rect.top + E_PADDING/4 + height;
+						int[] xCoords = new int[] {
+								_rect.left + E_PADDING/4,		// left base corner
+								_rect.left + 3 * E_PADDING/4,	// right base corner
+								_rect.left + E_PADDING/2		// top corner
+						};
+						int[] yCoords = new int[] {
+								yBase,					// left base corner
+								yBase,					// right base corner
+								_rect.top + E_PADDING/4	// top corner
+						};
+						_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
+						_canvas.setColor(oldCol);
+						break;
+					}
+				}
+			}
+		}
+	}
+	// END KGU#906 2021-01-02
+
 	/**
 	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
 	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
@@ -2565,16 +2641,6 @@ public abstract class Element {
 		return depth / 2;
 	}
 
-//	@Deprecated
-//	private String cutOut(String _s, String _by)
-//	{
-//		//System.out.print(_s+" -> ");
-//		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
-//		_s=rep.replaceAll(_s);
-//		//System.out.println(_s);
-//		return _s;
-//	}
-	
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
 	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo
@@ -3404,11 +3470,33 @@ public abstract class Element {
 	
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
+	/**
+	 * Computes the expected width of text line {@code _text} of Element
+	 * {@code _this} on the given {@code _canvas} (with its current font), where
+	 * mode {@link #E_VARHIGHLIGHT} is considered.
+	 * @param _canvas - the target {@link Canvas}
+	 * @param _text - a line of element text
+	 * @param _this - the Element this retrieval is done for
+	 * @return the projected text width in pixel
+	 */
 	public static int getWidthOutVariables(Canvas _canvas, String _text, Element _this)
 	{
 		return writeOutVariables(_canvas, 0, 0, _text, _this, false, false);
 	}
 
+	/**
+	 * Actually writes the of text line {@code _text} of Element {@code _this}
+	 * to the given {@code _canvas} (with its current font), where mode
+	 * {@link #E_VARHIGHLIGHT} is considered.
+	 * @param _canvas - the target {@link Canvas}
+	 * @param _x - the horizontal start position
+	 * @param _y - the vertical start position
+	 * @param _text - the text line to be drawn
+	 * @param _this - the responsible Element
+	 * @param _inContention - a flag indication a possible event queue contention,
+	 * in which case the drawing ought to be simplified (e.g. by suppressing syntax
+	 * highlighting)
+	 */
 	public static void writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _inContention)
 	{
 		writeOutVariables(_canvas, _x, _y, _text, _this, true, _inContention);
@@ -3435,361 +3523,27 @@ public abstract class Element {
 				// START KGU#701 2019-03-29: Issue #718 - highlighting acceleration by caching
 				// backup the original font
 				Font backupFont = _canvas.getFont();
-				Vector<HighlightUnit> hlUnits = _this.highlightCache.get(_text);
-				if (hlUnits == null) {
-					_this.highlightCache.put(_text, hlUnits = new Vector<HighlightUnit>());
-				// END KGU#701 2019-03-29 part 1
-					// START KGU#686 2019-03-16: Enh. #56
-					Set<String> variableSet = _this.getVariableSetFor(_this);
-					// END KGU#686 2019-03-16
-
-					StringList parts = Element.splitLexically(_text, true);
-
-					// START KGU#701 2019-03-29: Issue #718 Derived fonts now cached in static fields
-					//Font boldFont = new Font(Element.font.getName(), Font.BOLD, Element.font.getSize());
-					// START KGU#480 2018-01-21: Enh. #490 - we will underline alias names
-					//Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
-					//fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-					//Font underlinedFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()).deriveFont(fontAttributes);
-					// END KGU#480 2018-01-21
-					//Font backupFont = _canvas.getFont();
-					// END KGU#701 2019-03-29
-
-					// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
-					//StringList specialSigns = new StringList();
-					if (specialSigns == null)	// lazy initialisation
-					{
-						// START KGU#843 2020-04-12: Bugfix #847
-						specialSigns = new HashSet<String>();
-						// START KGU#843 2020-04-12: Bugfix #847
-					// END KGU#64 2015-11-03
-						// START KGU#425 2017-09-29: Add the possible ellipses, too
-						specialSigns.add("...");
-						specialSigns.add("..");					
-						// END KGU#425 2017-09-29
-						specialSigns.add(".");
-						specialSigns.add("[");
-						specialSigns.add("]");
-						specialSigns.add("\u2190");
-						specialSigns.add(":=");
-						// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
-						specialSigns.add(":");
-						// END KGU#332 2017-01-27
-
-						specialSigns.add("+");
-						specialSigns.add("/");
-						// START KGU 2015-11-03: This operator had been missing
-						specialSigns.add("%");
-						// END KGU 2015-11-03
-						specialSigns.add("*");
-						specialSigns.add("-");
-						specialSigns.add("var");
-						// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
-						specialSigns.add("dim");
-						// END KGU#332 2017-01-27
-						// START KGU#375 2017-03-30: Enh. #388 "const" as declaration keyword
-						specialSigns.add("const");
-						// END KGU#375 2017-03-30
-						// START KGU#388 2017-09-13: Enh. #423 "type", "record", and "struct" as type definition keywords
-						specialSigns.add("type");
-						specialSigns.add("record");
-						specialSigns.add("struct");
-						// END KGU#388 2017-09-13
-						// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
-						specialSigns.add("enum");
-						// END KGU#542 2019-11-17
-						// START KGU#331 2017-01-13: Enh. #333
-						//specialSigns.add("<=");
-						//specialSigns.add(">=");
-						//specialSigns.add("<>");
-						//specialSigns.add("!=");
-						specialSigns.add("\u2260");
-						specialSigns.add("\u2264");
-						specialSigns.add("\u2265");
-						// END KGU#331 2017-01-13
-						specialSigns.add("<<");
-						specialSigns.add(">>");
-						specialSigns.add("<");
-						specialSigns.add(">");
-						specialSigns.add("==");
-						specialSigns.add("=");
-						specialSigns.add("!");
-						// START KGU#24 2014-10-18
-						specialSigns.add("&&");
-						specialSigns.add("||");
-						// END KGU#24 2014-10-18
-						// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
-						specialSigns.add("as");
-						// END KGU#109 2016-01-15
-
-						// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
-						specialSigns.add("{");
-						specialSigns.add("}");
-						// END KGU#100 2016-01-16
-
-						// The quotes will only occur as tokens if they are unpaired!
-						specialSigns.add("'");
-						specialSigns.add("\"");
-						// START KGU#64 2015-11-03: See above
-						
-						// START KGU#872 2020-10-17: Enh. #872 operator symbols for C style
-						specialSigns.add("!=");
-						specialSigns.add("<=");
-						specialSigns.add(">=");
-						// END KGU#872 2020-10-17
-						// START KGU#883 2020-11-01: Enh. #881 bit operators and Boolean literal were missing
-						specialSigns.add("false");
-						specialSigns.add("true");
-						specialSigns.add("&");
-						specialSigns.add("|");
-						specialSigns.add("^");
-						specialSigns.add("~");
-						// END KGU#883 2020-11-01
-					}
-					// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
-					if (specialSignsCi == null) {
-						specialSignsCi = new StringList();
-						specialSignsCi.add("mod");
-						specialSignsCi.add("div");
-						// START KGU#24 2014-10-18
-						specialSignsCi.add("and");
-						specialSignsCi.add("or");
-						specialSignsCi.add("xor");
-						specialSignsCi.add("not");
-						// END KGU#24 2014-10-18
-						// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
-						specialSignsCi.add("shl");
-						specialSignsCi.add("shr");
-						// END KGU#115 2015-12-23
-					}
-					// END KGU#611/KGU#843 2020-04-12
-					// END KGU#64 2015-11-03
-
-					// These markers might have changed by configuration, so don't cache them
-					StringList ioSigns = new StringList();
-					ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
-					ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
-					// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
-					StringList jumpSigns = new StringList();
-					jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
-					jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
-					jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
-					// START KGU#686 2019-03-18: Enh. #56
-					jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
-					// END KGU#686 2019-03-18
-					// END KGU#116 2015-12-23
-
-					// START KGU#377 2017-03-30: Bugfix #333
-					parts.replaceAll("<-","\u2190");
-					if (E_SHOW_UNICODE_OPERATORS) {
-						parts.replaceAll("<>","\u2260");
-						parts.replaceAll("!=","\u2260");
-						parts.replaceAll("<=","\u2264");
-						parts.replaceAll(">=","\u2265");
-					}
-					// END KGU#377 2017-03-30
-					// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
-					if (E_SHOW_C_OPERATORS) {
-						if (!(_this instanceof Instruction && ((Instruction)_this).isTypeDefinition())) {
-							// Don't replace '=' in type definitions!
-							parts.replaceAll("=", "==");
-						}
-						parts.replaceAll("\u2190", "=");
-						parts.replaceAll(":=", "=");
-						parts.replaceAll("\u2260", "!=");
-						parts.replaceAll("<>", "!=");
-						parts.replaceAll("\u2264", "<=");
-						parts.replaceAll("\u2265", ">=");
-						parts.replaceAllCi("not", "!");
-						parts.replaceAllCi("and", "&&");
-						parts.replaceAllCi("or", "||");
-						parts.replaceAllCi("xor", "^");
-						parts.replaceAllCi("div", "/");
-						parts.replaceAllCi("mod", "%");
-						parts.replaceAllCi("shl", "<<");
-						parts.replaceAllCi("shr", ">>");
-					}
-					// END KGU#872 2020-10-17
-
-					// START KGU#701 2019-03-29: Issue #718 concatenate normal text parts
-					StringBuilder normalText = new StringBuilder();
-					boolean lastWasNormal = false;
-					// END KGU#701 2019-03-29
-					for (int i = 0; i < parts.count(); i++)
-					{
-						String display = parts.get(i);
-
-						if (!display.equals(""))
-						{
-							// if this part has to be colored
-							if (variableSet.contains(display))
-							{
-								// dark blue, bold
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setColor(E_HL_VARIABLE_COLOR);
-								//_canvas.setFont(boldFont);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, E_HL_VARIABLE_COLOR, true, false));
-								// END KGU#701 2019-03-29
-							}
-							// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
-							else if (root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
-								// black, bold
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setFont(boldFont);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, Color.BLACK, true, false));
-								// END KGU#701 2019-03-29
-							}
-							// END KGU#388 2017-09-17
-							// if this part has to be colored with special color
-							// START KGU#611/KGU#843 2020-04-12: Issue #643, bugfix #847
-							//else if(specialSigns.contains(display))
-							else if(specialSigns.contains(display) || specialSignsCi.contains(display, false))
-							// END KGU#611/KGU#843 2020-04-12
-							{
-								// burgundy, bold
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setColor(E_HL_OPERATOR_COLOR);
-								//_canvas.setFont(boldFont);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, E_HL_OPERATOR_COLOR, true, false));
-								// END KGU#701 2019-03-29
-							}
-							// if this part has to be colored with io color
-							// START KGU#165 2016-03-25: consider the new option
-							//else if(ioSigns.contains(display))
-							else if(ioSigns.contains(display, !CodeParser.ignoreCase))
-								// END KGU#165 2016-03-25
-							{
-								// green, bold
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setColor(E_HL_INOUT_COLOR);
-								//_canvas.setFont(boldFont);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, E_HL_INOUT_COLOR, true, false));
-								// END KGU#701 2019-03-29
-							}
-							// START KGU 2015-11-12
-							// START KGU#116 2015-12-23: Enh. #75
-							// START KGU#165 2016-03-25: consider the new case option
-							//else if(jumpSigns.contains(display))
-							else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
-								// END KGU#165 2016-03-25
-							{
-								// orange, bold
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setColor(E_HL_JUMP_COLOR);
-								//_canvas.setFont(boldFont);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, E_HL_JUMP_COLOR, true, false));
-								// END KGU#701 2019-03-29
-							}
-							// END KGU#116 2015-12-23
-							// if it's a String or Character literal then mark it as such
-							else if (display.startsWith("\"") && display.endsWith("\"") ||
-									display.startsWith("'") && display.endsWith("'"))
-							{
-								// violet, plain
-								// START KGU#701 2019-03-29: Issue #718
-								//_canvas.setColor(E_HL_STRING_COLOR);
-								if (lastWasNormal) {
-									hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-									normalText.delete(0, Integer.MAX_VALUE);
-									lastWasNormal = false;
-								}
-								hlUnits.add(_this.makeHighlightUnit(display, E_HL_STRING_COLOR, false, false));
-								// END KGU#701 2019-03-29
-							}
-							// END KGU 2015-11-12
-							// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
-							else if (E_APPLY_ALIASES && Function.testIdentifier(display, false, "#")) {
-								int j = i;
-								while (j < parts.count() && parts.get(++j).trim().isEmpty());
-								if (j < parts.count() && parts.get(j).equals("(")) {
-									if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
-										// Replace the name and show it underlined
-										// START KGU#701 2019-03-29: Issue #718
-										//display = display.substring(0, display.indexOf('#'));
-										//_canvas.setFont(underlinedFont);
-										if (lastWasNormal) {
-											hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-											normalText.delete(0, Integer.MAX_VALUE);
-											lastWasNormal = false;
-										}
-										hlUnits.add(_this.makeHighlightUnit(display.substring(0, display.indexOf('#')), Color.BLACK, false, true));
-										// END KGU#701 2019-03-29
-									}
-								}
-							}
-							// START KGU#701 2019-03-29: Issue #718
-							else {
-								normalText.append(display);
-								lastWasNormal = true;
-							}
-							// END KGU#701 2019-03-29
-							// END KGU#480 2018-01-21
-						}
-
-						// START KGU#701 2019-03-29: Issue #718
-						//if (_actuallyDraw)
-						//{
-						//	// write out text
-						//	_canvas.writeOut(_x + total, _y, display);
-						//}
-						//
-						//// add to the total
-						//total += _canvas.stringWidth(display);
-						//
-						//// reset color
-						//_canvas.setColor(Color.BLACK);
-						//// reset font
-						//_canvas.setFont(backupFont);
-						// END KGU#701 2019-03-29
-
-					} //for(int i = 0; i < parts.count(); i++)
-					
-				// START KGU#701 2019-03-29: Issue #718 part 2
-					if (lastWasNormal) {
-						hlUnits.add(_this.makeHighlightUnit(normalText.toString()));
-					}
-				}
+				// START KGU#902 2020-12-31: Issue #903 - method decomposed
+				Vector<HighlightUnit> hlUnits = getHighlightUnits(_text, _this, root);
+				// END KGU#902 2020-12-31
 				// This is now the pure drawing
-				for (HighlightUnit unit: hlUnits) {
-					// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
-					// (This workaround will still only affect the standard font and have no impact on derived fonts)
-					//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
-					_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
-					// END KGU#707 2019-05-15
-					_canvas.setColor(unit.textColor);
-					if (_actuallyDraw)
-					{
-						// write out text
-						_canvas.writeOut(_x + total, _y, unit.textSnippet);
-					}
+				synchronized (hlUnits) {
+					for (HighlightUnit unit: hlUnits) {
+						// START KGU#707 2019-05-15: Bugfix #724 special font properties of the canvas weren't used anymore
+						// (This workaround will still only affect the standard font and have no impact on derived fonts)
+						//_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : font));
+						_canvas.setFont(unit.bold ? boldFont : (unit.underlined ? underlinedFont : backupFont));
+						// END KGU#707 2019-05-15
+						_canvas.setColor(unit.textColor);
+						if (_actuallyDraw)
+						{
+							// write out text
+							_canvas.writeOut(_x + total, _y, unit.textSnippet);
+						}
 
-					// add to the total
-					total += _canvas.stringWidth(unit.textSnippet);
+						// add to the total
+						total += _canvas.stringWidth(unit.textSnippet);
+					}
 				}
 				// reset color
 				_canvas.setColor(Color.BLACK);
@@ -3812,6 +3566,455 @@ public abstract class Element {
 		
 		return total;
 	}
+	
+	// START KGU#902 2020-12-31: Enh. #903 Now the comment popup may contain highlighted text
+	/**
+	 * Composes an HTML string of the element comment or text (depending on
+	 * {@link #isSwitchTextCommentMode()}) to be presented in the "show comment"
+	 * popup.
+	 * @param sb - a {@link StringBuilder} to append the HTML text parts to
+	 * @return the {@link StringList} of the actual (not HTML) text lines to be
+	 * presented.
+	 */
+	public StringList appendHtmlComment(StringBuilder sb)
+	{
+		sb.append("<html>");
+		StringList lines = this.getComment(false);
+		if (isSwitchTextCommentMode()) {
+			if (Element.E_APPLY_ALIASES) {
+				lines = StringList.explode(Element.replaceControllerAliases(lines.getText(), true, Element.E_VARHIGHLIGHT), "\n");
+			}
+			Root myRoot = getRoot(this);
+			for (int i = 0; i < lines.count(); i++) {
+				if (i > 0) {
+					sb.append("<br/>");
+				}
+				appendLineToHtml(sb, lines.get(i), myRoot);
+			}
+		}
+		else {
+			// START KGU#199 2016-07-07: Enh. #188 - we must cope with combined comments now
+			//StringList comment = selEle.getComment(false);
+			lines = StringList.explode(lines, "\n");
+			lines.removeAll("");	// Don't include empty lines here
+			// END KGU#199 2016-07-07
+			sb.append(BString.encodeToHtml(lines.getText()).replace("\n", "<br/>"));
+		}
+		sb.append("</html>");
+		return lines;
+	}
+	
+	/**
+	 * Appends an HTML equivalent for the given {@code line} of text to the
+	 * content of the {@link StringBuilder} {@code sb}.
+	 * @param sb - a {@link StringBuilder} gathering the HTML text
+	 * @param line - a line of text
+	 * @param myRoot - the owning {@link Root}
+	 */
+	private void appendLineToHtml(StringBuilder sb, String line, Root myRoot) {
+		if (Element.E_VARHIGHLIGHT) {
+			Vector<HighlightUnit> hlUnits = getHighlightUnits(line, this, myRoot);
+			for (HighlightUnit unit: hlUnits) {
+				boolean hasColor = unit.textColor != null && !unit.textColor.equals(Color.BLACK);
+				boolean hasSpan = hasColor || unit.underlined;
+				boolean isStrong = unit.bold;
+				if (hasSpan) {
+					sb.append("<span style=\"");
+					if (hasColor) {
+						sb.append("color: #");
+						sb.append(Integer.toHexString(unit.textColor.getRGB()).substring(2));
+						sb.append(";");
+					}
+					if (unit.underlined) {
+						sb.append("text-decoration: underline;");
+					}
+					sb.append("\">");
+				}
+				if (isStrong) {
+					sb.append("<strong>");
+				}
+				sb.append(BString.encodeToHtml(unit.textSnippet));
+				if (isStrong) {
+					sb.append("</strong>");
+				}
+				if (hasSpan) {
+					sb.append("</span>");
+				}
+			}
+		}
+		else {
+			sb.append(BString.encodeToHtml(line));
+		}
+	}
+	
+	/**
+	 * Retrieves or creates the highlight units for the text of Element {@code _elem} from/in
+	 * the {@link #highlightCache}
+	 * @param _text - the interesting line of the element text
+	 * @param _elem - the responsible Element
+	 * @param _root - the owing {@link Root}
+	 * @return the vector of cached highlight units for this line of text to be used for drawing
+	 */
+	private static Vector<HighlightUnit> getHighlightUnits(String _text, Element _elem, Root _root) {
+		Vector<HighlightUnit> hlUnits = _elem.highlightCache.get(_text);
+		if (hlUnits == null) {
+			_elem.highlightCache.put(_text, hlUnits = new Vector<HighlightUnit>());
+			// START KGU#686 2019-03-16: Enh. #56
+			Set<String> variableSet = _elem.getVariableSetFor(_elem);
+			// END KGU#686 2019-03-16
+
+			StringList parts = Element.splitLexically(_text, true);
+
+			// START KGU#701 2019-03-29: Issue #718 Derived fonts now cached in static fields
+			//Font boldFont = new Font(Element.font.getName(), Font.BOLD, Element.font.getSize());
+			// START KGU#480 2018-01-21: Enh. #490 - we will underline alias names
+			//Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
+			//fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+			//Font underlinedFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()).deriveFont(fontAttributes);
+			// END KGU#480 2018-01-21
+			//Font backupFont = _canvas.getFont();
+			// END KGU#701 2019-03-29
+
+			// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
+			//StringList specialSigns = new StringList();
+			if (specialSigns == null)	// lazy initialisation
+			{
+				// START KGU#843 2020-04-12: Bugfix #847
+				specialSigns = new HashSet<String>();
+				// START KGU#843 2020-04-12: Bugfix #847
+			// END KGU#64 2015-11-03
+				// START KGU#425 2017-09-29: Add the possible ellipses, too
+				specialSigns.add("...");
+				specialSigns.add("..");					
+				// END KGU#425 2017-09-29
+				specialSigns.add(".");
+				specialSigns.add("[");
+				specialSigns.add("]");
+				specialSigns.add("\u2190");
+				specialSigns.add(":=");
+				// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+				specialSigns.add(":");
+				// END KGU#332 2017-01-27
+
+				specialSigns.add("+");
+				specialSigns.add("/");
+				// START KGU 2015-11-03: This operator had been missing
+				specialSigns.add("%");
+				// END KGU 2015-11-03
+				specialSigns.add("*");
+				specialSigns.add("-");
+				specialSigns.add("var");
+				// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+				specialSigns.add("dim");
+				// END KGU#332 2017-01-27
+				// START KGU#375 2017-03-30: Enh. #388 "const" as declaration keyword
+				specialSigns.add("const");
+				// END KGU#375 2017-03-30
+				// START KGU#388 2017-09-13: Enh. #423 "type", "record", and "struct" as type definition keywords
+				specialSigns.add("type");
+				specialSigns.add("record");
+				specialSigns.add("struct");
+				// END KGU#388 2017-09-13
+				// START KGU#542 2019-11-17: Enh. #739 "enum" added to type definition keywords
+				specialSigns.add("enum");
+				// END KGU#542 2019-11-17
+				// START KGU#331 2017-01-13: Enh. #333
+				//specialSigns.add("<=");
+				//specialSigns.add(">=");
+				//specialSigns.add("<>");
+				//specialSigns.add("!=");
+				specialSigns.add("\u2260");
+				specialSigns.add("\u2264");
+				specialSigns.add("\u2265");
+				// END KGU#331 2017-01-13
+				specialSigns.add("<<");
+				specialSigns.add(">>");
+				specialSigns.add("<");
+				specialSigns.add(">");
+				specialSigns.add("==");
+				specialSigns.add("=");
+				specialSigns.add("!");
+				// START KGU#24 2014-10-18
+				specialSigns.add("&&");
+				specialSigns.add("||");
+				// END KGU#24 2014-10-18
+				// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
+				specialSigns.add("as");
+				// END KGU#109 2016-01-15
+
+				// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
+				specialSigns.add("{");
+				specialSigns.add("}");
+				// END KGU#100 2016-01-16
+
+				// The quotes will only occur as tokens if they are unpaired!
+				specialSigns.add("'");
+				specialSigns.add("\"");
+				// START KGU#64 2015-11-03: See above
+				
+				// START KGU#872 2020-10-17: Enh. #872 operator symbols for C style
+				specialSigns.add("!=");
+				specialSigns.add("<=");
+				specialSigns.add(">=");
+				// END KGU#872 2020-10-17
+				// START KGU#883 2020-11-01: Enh. #881 bit operators and Boolean literal were missing
+				specialSigns.add("false");
+				specialSigns.add("true");
+				specialSigns.add("&");
+				specialSigns.add("|");
+				specialSigns.add("^");
+				specialSigns.add("~");
+				// END KGU#883 2020-11-01
+			}
+			// START KGU#611/KGU843 2020-04-12: Issue #643, bugfix #847
+			if (specialSignsCi == null) {
+				specialSignsCi = new StringList();
+				specialSignsCi.add("mod");
+				specialSignsCi.add("div");
+				// START KGU#24 2014-10-18
+				specialSignsCi.add("and");
+				specialSignsCi.add("or");
+				specialSignsCi.add("xor");
+				specialSignsCi.add("not");
+				// END KGU#24 2014-10-18
+				// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
+				specialSignsCi.add("shl");
+				specialSignsCi.add("shr");
+				// END KGU#115 2015-12-23
+			}
+			// END KGU#611/KGU#843 2020-04-12
+			// END KGU#64 2015-11-03
+
+			// These markers might have changed by configuration, so don't cache them
+			StringList ioSigns = new StringList();
+			ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
+			ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
+			// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
+			StringList jumpSigns = new StringList();
+			jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
+			jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
+			jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
+			// START KGU#686 2019-03-18: Enh. #56
+			jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
+			// END KGU#686 2019-03-18
+			// END KGU#116 2015-12-23
+
+			// START KGU#377 2017-03-30: Bugfix #333
+			parts.replaceAll("<-","\u2190");
+			if (E_SHOW_UNICODE_OPERATORS) {
+				parts.replaceAll("<>","\u2260");
+				parts.replaceAll("!=","\u2260");
+				parts.replaceAll("<=","\u2264");
+				parts.replaceAll(">=","\u2265");
+			}
+			// END KGU#377 2017-03-30
+			// START KGU#872 2020-10-17: Enh. #872 - show operators in C style
+			if (E_SHOW_C_OPERATORS) {
+				// Don't replace '=' in type definitions and optional parameters!
+				// START KGU#872 2021-01-01: Issue #872 - we must suppress it with routine headers, too
+				//if (!(_elem instanceof Instruction && ((Instruction)_elem).isTypeDefinition())) {
+				if (!(_elem instanceof Instruction && ((Instruction)_elem).isTypeDefinition()
+						|| _elem instanceof Root && ((Root)_elem).isSubroutine())) {
+				// END KGU#872 2021-01-01
+					parts.replaceAll("=", "==");
+				}
+				parts.replaceAll("\u2190", "=");
+				parts.replaceAll(":=", "=");
+				parts.replaceAll("\u2260", "!=");
+				parts.replaceAll("<>", "!=");
+				parts.replaceAll("\u2264", "<=");
+				parts.replaceAll("\u2265", ">=");
+				parts.replaceAllCi("not", "!");
+				parts.replaceAllCi("and", "&&");
+				parts.replaceAllCi("or", "||");
+				parts.replaceAllCi("xor", "^");
+				parts.replaceAllCi("div", "/");
+				parts.replaceAllCi("mod", "%");
+				parts.replaceAllCi("shl", "<<");
+				parts.replaceAllCi("shr", ">>");
+			}
+			// END KGU#872 2020-10-17
+
+			// START KGU#701 2019-03-29: Issue #718 concatenate normal text parts
+			StringBuilder normalText = new StringBuilder();
+			boolean lastWasNormal = false;
+			// END KGU#701 2019-03-29
+			synchronized (hlUnits) {
+				for (int i = 0; i < parts.count(); i++)
+				{
+					String display = parts.get(i);
+
+					if (!display.equals(""))
+					{
+						// if this part has to be colored
+						if (variableSet.contains(display))
+						{
+							// dark blue, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_VARIABLE_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_VARIABLE_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// START KGU#388 2017-09-17: Enh. #423 Highlighting of defined types
+						else if (_root.getTypeInfo().containsKey(":" + display) || TypeMapEntry.isStandardType(display)) {
+							// black, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, Color.BLACK, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU#388 2017-09-17
+						// if this part has to be coloured with special colour
+						// START KGU#611/KGU#843 2020-04-12: Issue #643, bugfix #847
+						//else if(specialSigns.contains(display))
+						else if(specialSigns.contains(display) || specialSignsCi.contains(display, false))
+						// END KGU#611/KGU#843 2020-04-12
+						{
+							// burgundy, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_OPERATOR_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_OPERATOR_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// if this part has to be coloured with io colour
+						// START KGU#165 2016-03-25: consider the new option
+						//else if(ioSigns.contains(display))
+						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
+						// END KGU#165 2016-03-25
+						{
+							// green, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_INOUT_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_INOUT_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// START KGU 2015-11-12
+						// START KGU#116 2015-12-23: Enh. #75
+						// START KGU#165 2016-03-25: consider the new case option
+						//else if(jumpSigns.contains(display))
+						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
+						// END KGU#165 2016-03-25
+						{
+							// orange, bold
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_JUMP_COLOR);
+							//_canvas.setFont(boldFont);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_JUMP_COLOR, true, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU#116 2015-12-23
+						// if it's a String or Character literal then mark it as such
+						else if (display.startsWith("\"") && display.endsWith("\"") ||
+								display.startsWith("'") && display.endsWith("'"))
+						{
+							// violet, plain
+							// START KGU#701 2019-03-29: Issue #718
+							//_canvas.setColor(E_HL_STRING_COLOR);
+							if (lastWasNormal) {
+								hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+								normalText.delete(0, Integer.MAX_VALUE);
+								lastWasNormal = false;
+							}
+							hlUnits.add(_elem.makeHighlightUnit(display, E_HL_STRING_COLOR, false, false));
+							// END KGU#701 2019-03-29
+						}
+						// END KGU 2015-11-12
+						// START KGU#480 2018-01-21: Enh. #490 DiagramController routine aliases?
+						else if (E_APPLY_ALIASES && Function.testIdentifier(display, false, "#")) {
+							// START KGU#903 2021-01-01: Bugfix #904
+							boolean wasHandled = false;
+							// END KGU#903 3021-01-01
+							int j = i;
+							while (j < parts.count() && parts.get(++j).trim().isEmpty());
+							if (j < parts.count() && parts.get(j).equals("(")) {
+								if (Element.controllerAlias2Name.containsKey(display.toLowerCase())) {
+									// Replace the name and show it underlined
+									// START KGU#701 2019-03-29: Issue #718
+									//display = display.substring(0, display.indexOf('#'));
+									//_canvas.setFont(underlinedFont);
+									if (lastWasNormal) {
+										hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+										normalText.delete(0, Integer.MAX_VALUE);
+										lastWasNormal = false;
+									}
+									hlUnits.add(_elem.makeHighlightUnit(display.substring(0, display.indexOf('#')),
+											Color.BLACK, false, true));
+									// END KGU#701 2019-03-29
+									// START KGU#903 2021-01-01: Bugfix #904
+									wasHandled = true;
+									// END KGU#903 3021-01-01
+								}
+							}
+							// START KGU#903 2021-01-01: Bugfix #904
+							if (!wasHandled) {
+								normalText.append(display);
+								lastWasNormal = true;
+							}
+							// END KGU#903 3021-01-01
+						}
+						// START KGU#701 2019-03-29: Issue #718
+						else {
+							normalText.append(display);
+							lastWasNormal = true;
+						}
+						// END KGU#701 2019-03-29
+						// END KGU#480 2018-01-21
+					}
+
+					// START KGU#701 2019-03-29: Issue #718
+					//if (_actuallyDraw)
+					//{
+					//	// write out text
+					//	_canvas.writeOut(_x + total, _y, display);
+					//}
+					//
+					//// add to the total
+					//total += _canvas.stringWidth(display);
+					//
+					//// reset color
+					//_canvas.setColor(Color.BLACK);
+					//// reset font
+					//_canvas.setFont(backupFont);
+					// END KGU#701 2019-03-29
+
+				} //for(int i = 0; i < parts.count(); i++)
+
+				if (lastWasNormal) {
+					hlUnits.add(_elem.makeHighlightUnit(normalText.toString()));
+				}
+			}
+		}
+		return hlUnits;
+	}
+	// END KGU#902 2020-12-31
 	
 	// START KGU#701 2019-03-29: Issue #718 - approach to accelerate syntax highlighting
 	private HighlightUnit makeHighlightUnit(String string)

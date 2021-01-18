@@ -128,6 +128,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-14      Zoom scale reverted, i.e. zomeFactor is no longer inverse: 0.5 means 50% now
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
+ *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
+ *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams 
  *
  ******************************************************************************************************
  *
@@ -465,12 +467,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#497 2018-02-17: Enh. #512
 			Graphics2D g2d = (Graphics2D) g;
 			// START KGU#572 2018-09-09: Bugfix #508/#512 - ensure all diagrams have shape without rounding defects
-			for(int d = 0; d < diagrams.size(); d++)
+			for (int d = 0; d < diagrams.size(); d++)
 			{
 				// START KGU#624 2018-12.24: Enh. #655
 				//diagrams.get(d).root.prepareDraw(g2d);
 				Diagram diagr = diagrams.get(d);
-				if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+				// START KGU#911 2021-01-13: Enh. #910 New interpretation of group visible
+				//if ((!onlySelected || this.diagramsSelected.contains(diagr)) && diagr.root != null) {
+				if ((!onlySelected || this.diagramsSelected.contains(diagr))
+						&& diagr.root != null
+						&& this.isVisible(diagr)) {
+				// END KGU#911 2021-01-13
 					// If the diagram had already been drawn or prepared this will return immediately
 					diagr.root.prepareDraw(g2d);
 				}
@@ -530,7 +537,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#630 2019-01-19
 			
 //			System.out.println("Surface.paintComponent()");
-			for(int d=0; d<diagrams.size(); d++)
+			for (int d=0; d < diagrams.size(); d++)
 			{
 				Diagram diagram = diagrams.get(d);
 				// START KGU#624 2018-12-24: Enh. #655
@@ -538,6 +545,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					continue;
 				}
 				// END KGU#624 2018-12-24
+				// START KGU#911 2021-01-13: Enh. #910: New interpretation of diagram visibility
+				if (!isVisible(diagram)) {
+					continue;
+				}
+				// END KGU#911 2021-01-13
 				
 				Root root = diagram.root;
 				Point point = diagram.point;
@@ -2786,7 +2798,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		boolean ask = true;
 		Mainform form = diagr.mainform;
 		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
-		if (diagr.root.hasChanged())
+		// START KGU#911 2021-01-10: Enh. #910 A DiagramController includable can't have been changed, but...
+		//if (diagr.root.hasChanged())
+		if (diagr.root.hasChanged() && !diagr.root.isDiagramControllerRepresentative())
+		// END KGU#911 2021-01-1ß
 		{
 			if (form == null || form.getRoot() != diagr.root)
 			{
@@ -3078,26 +3093,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#497 2018-02-17
 	}// </editor-fold>//GEN-END:initComponents
 
-//	/**
-//	 * @return the vector of {@link Diagram}s
-//	 */
-//	@Deprecated
-//	protected Vector<Diagram> getDiagrams()
-//	{
-//		// FIXME should be deleted
-//		return diagrams;
-//	}
-//
-//	/**
-//	 * @param diagrams - the vector of {@link Diagram}s to set
-//	 */
-//	@Deprecated
-//	protected void setDiagrams(Vector<Diagram> diagrams)
-//	{
-//		// FIXME: Method should be deleted
-//		this.diagrams = diagrams;
-//	}
-	
 	// START KGU#624 2018-12-25: Enh. #655
 	/**
 	 * @return the number of currently held {@link Diagram}s
@@ -3205,6 +3200,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#650 2019-02-11
 		// START KGU#534 2018-06-27: Enh. #552
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
+		// START KGU#901 2020-12-30: Issue #901
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-30
 		try {
 			// END KGU#534 2018-06-27
 			Iterator<Diagram> iter = diagrams.iterator();
@@ -3220,6 +3218,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				if (form == null && hasFile && forArchive && (form = someMainform) == null) {
 					form = someMainform = tempMainform = new Mainform(false);
 				}
+				// START KGU#901 2020-12-30: Issue #901
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				// END KGU#901 2020-12-30
 				// Postpone the saving of virgin diagrams here in case of saving to an archive (will be done later)
 				//if (form != null)
 				if (form != null && (hasFile || !forArchive)) 
@@ -3283,6 +3284,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// START KGU#534 2018-06-29: Enh. #552
 		}
 		finally {
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(origCursor);
+			// END KGU#901 2020-12-30
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
 		// END KGU#534 2018-06-29
@@ -3783,6 +3787,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = diagrams.size()-1; d >= 0 && hitDiagram == null; d--)
 		{
 			Diagram diagram = diagrams.get(d);
+			// START KGU#911 2021-01-13: Enh. #910: Don't select an invisible diagram
+			if (!isVisible(diagram)) {
+				continue;
+			}
+			// END KGU#911 2021-01-13
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
@@ -3811,6 +3820,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = diagrams.size()-1; d >= 0; d--)
 		{
 			Diagram diagram = diagrams.get(d);
+			// START KGU#911 2021-01-13: Enh. #910: Don't select an invisible diagram
+			if (!isVisible(diagram)) {
+				continue;
+			}
+			// END KGU#911 2021-01-13
 			Root root = diagram.root;
 
 			Element ele = root.getElementByCoord(
@@ -4907,6 +4921,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		else {
 			for (Root root: roots) {
+				// START KGU#911 2021-01-11: Enh. #910 We don't allow diagram controller roots
+				if (root.isDiagramControllerRepresentative()) {
+					continue;
+				}
+				// END KGU#911 2021-01-11
 				Diagram diagr = rootMap.get(root);
 				if (diagr == null) {
 					this.addDiagram(root, form, null, group);
@@ -4936,10 +4955,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	/**
 	 * Removes the group with the given {@code name}.
-	 * @param withDiagrams - if true then the member diagrams will also be removed if not held by
-	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
-	 * @param initiator TODO
-	 * @return true if the group with given name had existed and has been removed.
+	 * @param name - the name of the group
+	 * @param withDiagrams - if {@code true} then the member diagrams will also be removed
+	 * if not held by any other group, otherwise the orphaned diagrams will be handed over
+	 * to the default group.
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
+	 * @return {@code true} if the group with given name had existed and has been removed.
 	 * @see #dissolveGroup(String, Component)
 	 */
 	protected boolean removeGroup(String name, boolean withDiagrams, Component initiator) {
@@ -4950,7 +4971,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Dissolves (clears) the group with the given {@code name}.
 	 * The member diagrams that are not shared by other groups will be handed over
 	 * to the default group.
-	 * @param initiator TODO
+	 * @param name - the name of the group
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
 	 * @return true if the group with given name had existed and has been cleared.
 	 * @see #removeGroup(String, boolean, Component)
 	 */
@@ -4965,8 +4987,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param deleteDiagrams - if true then the member diagrams will also be removed if not held by
 	 * any other group, otherwise the orphaned diagrams will be handed over to the default group.
 	 * @param deleteGroup - if the (empty) group is to be deleted in the event.
-	 * @param initiator TODO
-	 * @return true if the group with given name had existed and has been cleared.
+	 * @param initiator - the initiating component, e.g. {@link Arranger} or {@link ArrangerIndex}
+	 * @return {@code true} if the group with given name had existed and has been cleared.
 	 * @see #removeGroup(String, boolean, Component)
 	 */
 	private boolean clearGroup(String name, boolean deleteDiagrams, boolean deleteGroup, Component initiator) {
@@ -5219,9 +5241,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		boolean allDone = true;
 		StringList unsaved = new StringList();
 		lu.fisch.structorizer.gui.Diagram.startSerialMode();
+		// START KGU#901 2020-12-30: Issue #901
+		Cursor origCursor = getCursor();
+		// END KGU#901 2020-12-30
 		try {
 			// Saving an arrangement may modify the map of groups, so we get a copy first
 			Vector<Group> groupsToHandle = new Vector<Group>(this.groups.values());
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-30
 			for (Group group: groupsToHandle) {
 				/* It doesn't make sense to save the default group on window closing event
 				 * unless it contains some interdependent diagrams not shared anywhere.
@@ -5241,6 +5269,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		finally {
+			// START KGU#901 2020-12-30: Issue #901
+			setCursor(origCursor);
+			// END KGU#901 2020-12-30
 			lu.fisch.structorizer.gui.Diagram.endSerialMode();
 		}
 		if (!unsaved.isEmpty() && initiator != null) {
@@ -5350,7 +5381,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 */
 	public boolean renameGroup(Group group, String newName, Component initiator) {
 		String oldName = group.getName();
-		if (this.hasGroup(newName)) {
+		// START KGU#911 2021-01-11: Enh. #910 Dirty attempt to avoid usurping a "Diagram Controllers" group
+		//if (this.hasGroup(newName)) {
+		if (newName.equals(Arranger.DIAGRAM_CONTROLLER_GROUP_NAME) || this.hasGroup(newName)) {
+		// END KGU#911 2021-01-11
 			JOptionPane.showMessageDialog(initiator,
 					msgGroupExists.getText().replace("%", newName),
 					titleRenameGroup.getText().replace("%1", group.getName()).replace("%2", newName),
@@ -5426,6 +5460,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return this.getClass().getSimpleName();
 	}
 	// END KGU#679 2019-03-13
+	
+	// START KGU#911 2021-01-13: Enh. #910 Group visibility new interpreted
+	private boolean isVisible(Diagram diagr)
+	{
+		for (Group group: this.getGroups(diagr)) {
+			if (group.isVisible()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#911 2021-01-13
 	
 	// DEBUG
 //	private void printNameMap(int lineNo)

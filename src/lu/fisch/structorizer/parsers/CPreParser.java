@@ -1673,7 +1673,7 @@ public abstract class CPreParser extends CodeParser
 				this.globalRoot.setText(inclName);
 				// START KGU#376 2017-05-17: Enh. #389 now we have an appropriate diagram type
 				//this.globalRoot.setProgram(true);
-				this.globalRoot.setInclude();
+				this.globalRoot.setInclude(true);
 				// END KGU#376 2017-05-17
 				// START KGU#376 2017-07-01: Enh. #389 - now register global includable with Root
 				for (Root impRoot: this.importingRoots) {
@@ -1721,7 +1721,7 @@ public abstract class CPreParser extends CodeParser
 			}
 			// START KGU#376 2017-05-23: Enh. #389 now we have an appropriate diagram type
 			//this.globalRoot.setProgram(true);
-			this.globalRoot.setInclude();
+			this.globalRoot.setInclude(true);
 			// END KGU#376 2017-05-23
 			// Check again that we haven't forgotten to update any include list
 			for (Root dependent: this.importingRoots) {

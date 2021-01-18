@@ -488,18 +488,6 @@ public class PasGenerator extends Generator
 	// END KGU#140 2017-01-31
 	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by ":=" here
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm.replace(" <- ", " := ");
-//	}
-
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */

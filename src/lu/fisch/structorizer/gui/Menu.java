@@ -120,6 +120,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
  *      Kay Gürtzig     2020-12-20      New message for bugfix #892
+ *      Kay Gürtzig     2021-01-01      Enh. #903: menuDiagramOperatorsC enabling condition modified
+ *      Kay Gürtzig     2021-01-10      Enh. #910: Effective menu support for actual DiagramControllers
+ *      Kay Gürtzig     2021-01-13      "About" icon replaced
  *
  ******************************************************************************************************
  *
@@ -422,6 +425,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// Menu "Debug"
 	protected final JMenu menuDebug = new JMenu("Debug");
 	// Submenu of "Debug"
+	// START KGU#911 2021-01-10: Issue #910
+	protected final JMenu menuDebugControllers = new JMenu("Optional controllers");
+	// END KGU#911 2021-01-10
 	// START KGU#486 2018-02-06: Issue #4
 	//protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.turtle);
 	protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.getIcon(54));
@@ -442,7 +448,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#791 2020-01-20: Enh. #791
 	protected final JMenuItem menuHelpDownload = new JMenuItem("Download Guide as PDF", IconLoader.getIcon(123));
 	// END KGU#791 2020-01-20
-	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(17));
+	// START KGU 2021-01-13: Icon replaced
+	//protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(17));
+	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.getIcon(126));	
+	// END KGU 2021-01-13
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.getIcon(52));
 
 	// START KGU#239 2016-08-12: Enh. #231
@@ -472,7 +481,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#375 2017-04-05
 	public static final LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
 	public static final LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
-	public static final LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
+	public static final LangTextHolder error06 = new LangTextHolder("The program name «%» must be written in uppercase!");
 	public static final LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
 	public static final LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
 	public static final LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
@@ -594,7 +603,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
 	// END KGU#758 2019-11-08
 	// START KGU#459 2017-11-14: Enh. #459
-	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list).");
+	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
+			+ "\nLittle blue or red triangles in\nthe elements will remind you.");
 	public static final LangTextHolder msgGuidedTourDone = new LangTextHolder("Congratulations - you finished the tutorial «%».");
 	public static final LangTextHolder msgGuidedTourNext = new LangTextHolder("%1\nTutorial «%2» is going to start now.\nYou may want to clear the diagram first via menu \"%3\"");
 	public static final LangTextHolder ttlGuidedTours = new LangTextHolder("Guided Tours");
@@ -808,6 +818,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
 	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
 	// END KGU#893 2020-12-20
+	// START KGU#906 2021-01-18: Enh. #905 temporary message for version 3.30-14
+	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder("New indicator symbols\n"
+			+ "may remind you\n"
+			+ "that there are Analyser\n"
+			+ "warnings for the marked\n"
+			+ "elements. You may switch\n"
+			+ "them off via:\n%");
+	// END KGU#906 2021-01-18
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
@@ -1535,7 +1553,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuPreferences.addSeparator();
 		
 		// START KGU#448 2018-01-04: Enh. #443 - checkbox menu items prepared for additional diagram controllers
-		controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4), null);
+		// START KGU#911 2021-01-10: Enh. #910 submenu preferred
+		//controllerPlugins = this.addPluginMenuItems(menuDebug, PluginType.CONTROLLER, IconLoader.getIcon(4), null);
+		controllerPlugins = this.addPluginMenuItems(menuDebugControllers, PluginType.CONTROLLER, IconLoader.getIcon(4), null);
+		// END KGU#911 2021-01-10
 		// END KGU#448 2018-01-04
 
 		// START KGU#466 2019-08.02: Issue #733 - allows selective preferences export
@@ -1731,6 +1752,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// START KGU#463 2017-11-20: Enh. #469 (accelerator key added)
 		menuDebugExecute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, menuShortcutKeyMask));
 		// START KGU#463 2017-11-2
+
+		// START KGU#911 2021-01-10: Enh. #910
+		if (menuDebugControllers.getMenuComponentCount() > 0) {
+			menuDebugControllers.setIcon(IconLoader.getIcon(125));
+			menuDebug.add(menuDebugControllers);
+		}
+		// END KGU#911 2021-01-10
 		
 		menuDebug.add(menuDebugDropBrkpts);
 		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
@@ -1815,7 +1843,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	@Override
 	public void doButtonsLocal()
 	{
-		if (diagram!=null)
+		if (diagram != null)
 		{
 			/*
 			// remove all submenus from "view"
@@ -1997,9 +2025,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuPreferencesElements.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuPreferencesCtrlAliases.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuPreferencesWheel.setVisible(!Element.E_REDUCED_TOOLBARS);
-
-			
 			// END KGU#123 2016-01-03
+			
 			// START KGU#277 2016-10-13: Enh. #270
 			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
 			menuDebugDisable.setVisible(!Element.E_REDUCED_TOOLBARS);
@@ -2021,6 +2048,19 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#686 2019-03-17
 			menuDebugBreakTrigger.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#213 2016-08-02
+			// START KGU#911 2021-01-10: Enh. #910 Is this really necessary?
+			//if (controllerPlugins != null) {
+			//	for (GENPlugin plugin: controllerPlugins) {
+			//		for (int j = 0; j < menuDebugControllers.getMenuComponentCount(); j++) {
+			//			Component comp = menuDebugControllers.getMenuComponent(j);
+			//			if (comp instanceof JMenuItem && ((JMenuItem) comp).getText().equals(plugin.title)) {
+			//				((JMenuItem) comp).setSelected(diagram.isControllerEnabled(plugin.className));
+			//			}
+			//		}
+			//	}
+			//}
+			menuDebugControllers.setVisible(!Element.E_REDUCED_TOOLBARS);
+			// END KGU#911 2021-01-10
 
 			// copy & paste
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
@@ -2041,7 +2081,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
 			// START KGU#887 2020-12-15: Bugfix #885
 			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
-			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			// START KGU#902 2021-01-01: Enh. #903 May now also work in StichTextComment mode
+			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT);
+			// END KGU#902 2021-01-01
 			// END KGU#887 2020-12-15
 			// END KGU#872 2020-10-17
 

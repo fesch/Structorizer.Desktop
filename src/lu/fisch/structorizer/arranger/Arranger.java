@@ -203,6 +203,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// START KGU#624 2018-12-26: Enh. #655 - (temporary) limit for the listing of selected diagrams in a message box
 	protected static final int ROOT_LIST_LIMIT = 20;
 	// END KGU#624 2018-12-26
+	
+	// START KGU#911 2021-01-11: Enh. #910
+	public static final String DIAGRAM_CONTROLLER_GROUP_NAME = "Diagram Controllers";
+	// END KGU#911 2021-01-11
 
     // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
@@ -1486,7 +1490,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		if (!roots.isEmpty()) {
 			String groupName = this.requestNewGroupName(originator, nSelected);
 			if (groupName != null) { // not cancelled
-				// the prefix character of groupName signals whether to to override an existing group  or not  
+				// the prefix character of groupName signals whether to to override an existing group or not  
 				done = (surface.makeGroup(groupName.substring(1), null, roots, groupName.startsWith("!"), null) != null);
 			}
 		}

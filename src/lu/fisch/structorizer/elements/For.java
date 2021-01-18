@@ -132,8 +132,6 @@ public class For extends Element implements ILoop {
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	//@Deprecated
-	//public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
 	// START KGU#61 2016-03-20: Enh. #84/#135 - now we have to distinguish three styles
 	private String valueList = null;		// expression specifying the set (array) of values

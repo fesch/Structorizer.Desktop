@@ -95,7 +95,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-06-06      Issue #870: restricted mode now set from predominant ini file instead of command line
  *      Kay Gürtzig     2020-10-17      Enh. #872: New Ini property "showOpsLikeC"
  *      Kay Gürtzig     2020-10-18      Bugfix #876: Defective saving and loading of (partial) Ini files mended
- *                                      several public comments added. 
+ *                                      several public comments added.
+ *      Kay Gürtzig     2021-01-02      Enh. #905: New INI property "drawAnalyserMarks"
+ *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
  *
  ******************************************************************************************************
  *
@@ -135,6 +137,7 @@ import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.turtle.TurtleBox;
+import lu.fisch.utils.StringList;
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.archivar.IRoutinePoolListener;
@@ -744,6 +747,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// END KGU#456 2017-11-05
 			}
 			// END KGU#2/KGU#78 2016-08-12
+			// START KGU#906 2021-01-02: Enh. #905
+			Element.E_ANALYSER_MARKER = ini.getProperty("drawAnalyserMarks", "1").equals("1");
+			// END KGU#906 2021-01-02
 			
 			if (diagram != null) 
 			{
@@ -813,7 +819,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				
 				// START KGU#480 2018-01-21: Enh. #490
 				if (Element.controllerName2Alias.isEmpty()) {
-					for (DiagramController controller: diagram.getDiagramControllers()) {
+					// START KGU#911 2021-01-10: Enh. #910 data structure changed
+					//for (DiagramController controller: diagram.getDiagramControllers()) {
+					for (DiagramController controller: diagram.getDiagramControllers().keySet()) {
+					// END KGU#911 2021-01-10
 						if (controller == null) {
 							controller = new TurtleBox();
 						}
@@ -1403,6 +1412,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				}
 			}
 		}
+		// START KGU#906 2021-01-18: Enh. #905 Temporary feature hint
+		else if (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo("3.30-14") < 0) {
+			if (menu != null) {
+				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
+						new String[]{"menuPreferences","menuPreferencesAnalyser"}, null));
+				JOptionPane.showMessageDialog(this,
+						Menu.msgAnalyserHint_3_30_14.getText().replace("%", menuPath.concatenate(" \u25BA ")),
+						menuPath.get(1),
+						JOptionPane.INFORMATION_MESSAGE,
+						IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint_3.30-14.png")));
+				this.suppressUpdateHint = "3.30-14";
+			}
+		}
+		// END KGU#906 2021-01-18
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 			// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense

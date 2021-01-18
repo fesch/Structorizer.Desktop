@@ -441,7 +441,7 @@ Menu.msgImportTooltip.text=<html>Von dem Struktogramm/PAP-Editor<br/>aus <a href
 Menu.msgExportTooltip.text=<html>Diagramdateien erzeugen, die von dem PAP-Editor<br/>aus <a href="%">%</a><br/>akzeptiert werden.</html>
 Menu.msgImportFileReadError.text=Datei "%" existiert nicht oder ist nicht lesbar.
 Menu.msgUnsupportedFileFormat.text=Diese Datei(en) konnte(n) nicht geladen werden, weil ihr Format unbekannt oder nicht unterstützt ist:\n%
-Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).
+Menu.msgGuidedTours.text=Sie haben geführte Kurse aktiviert.\n\nAchten Sie auf Empfehlungen\noder Vorschläge\nim unteren Textbereich\n(Überprüfungsmeldungen).\nKleine Dreiecke in den\nElementen erinnern\ndaran.
 Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
@@ -467,6 +467,7 @@ Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
+Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -589,6 +590,7 @@ AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisun
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
+AnalyserPreferences.chkDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
 
@@ -1360,8 +1362,8 @@ ArrangerIndex.popupIndexExpandGroup.text=Gruppe erweitern ...
 ArrangerIndex.popupIndexDissolve.text=Gruppe auflösen
 ArrangerIndex.popupIndexDetach.text=Aus Gruppe entfernen
 ArrangerIndex.popupIndexAttach.text=In Gruppe einfügen/verschieben ...
-ArrangerIndex.popupIndexDrawGroup.text=Zeige Fläche der Gruppe
-ArrangerIndex.popupIndexDrawGroup.tooltip=Individuelle Sichtbarkeit dieser Gruppe im Arranger
+ArrangerIndex.popupIndexDrawGroup.text=Zeige Gruppe
+ArrangerIndex.popupIndexDrawGroup.tooltip=Sichtbarkeit dieser Gruppe und iherer Diagramme im Arranger
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
 ArrangerIndex.popupIndexExport.text=Diagramm/Gruppe exportieren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
@@ -1390,6 +1392,7 @@ ArrangerIndex.msgMembersComplete.text=Gruppe ist vollständig: Keine Verweise na
 ArrangerIndex.msgGroupMembersChanged.text=Die Menge der enthaltenen Diagramme hat sich geändert.
 ArrangerIndex.msgGroupMembersMoved.text=Die Koordinaten einiger enthaltener Diagramme wurden verändert.
 ArrangerIndex.msgNewGroupName.text=Neuer Name für die ausgewählte Gruppe:
+ArrangerIndex.msgConfirmDissolve.text=Sicher, diese Gruppe(n) aufzulösen?\n%
 
 -----> Executor
 -----[ Control ]-----

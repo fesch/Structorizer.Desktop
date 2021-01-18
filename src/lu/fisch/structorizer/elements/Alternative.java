@@ -60,7 +60,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
- *      Kay Gürtzig     2019-03-28      Enh. #128 - comment block height slightly enlarged
+ *      Kay Gürtzig     2019-03-28      Enh. #128: comment block height slightly enlarged
+ *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *
  ******************************************************************************************************
  *
@@ -512,6 +513,10 @@ public class Alternative extends Element implements IFork {
 		this.drawBreakpointMark(canvas, myrect);
 		// END KGU 2015-10-11
 		
+		// START KGU#906 2021-01-02: Enh. #905
+		this.drawWarningSignOnError(canvas, myrect);
+		// END KGU#906 2021-01-02
+
 		// START KGU#156 2016-03-11: Enh. #124
 		// write the run-time info if enabled
 		// START KGU#435 2017-10-22: Enh. #128 revised

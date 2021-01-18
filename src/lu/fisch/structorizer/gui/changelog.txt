@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-13 (2020-12-29)
+Current development version: 3.30-14 (2021-01-18)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -169,6 +169,22 @@ Current development version: 3.30-13 (2020-12-29)
 - 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
 - 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
+- 14: Bugfix #569 A scrolling insufficiency on report list selection fixed <2>
+- 14: Issue #872 Wrong conversion '=' -> '==' in routine headers for C style <2>
+- 14: Issue #901 Wait cursor applied to further time-consuming actions <2>
+- 14: Bugfix #902 <2>:
+      1. Fixes a focus loss in Arranger index on selecting diagram or group nodes;
+      2. Ensures that quitting the "add/move to group" dialog correctly cancels;
+      3. Raises a confirmation dialog before dissolving groups via key binding
+- 14: Enh. #903 Syntax highlighting also applies in "Switch text/comment" mode <2>
+- 14: Bugfix #904 Display of controller aliases suppressed other function names <2>
+- 14: Enh. #905 Marker symbol on elements with Analyser warnings or tutorials <2>
+- 14: Enh. #906 Executor now allows either to step into or step over a CALL <2>
+- 14: Bugfix #907 A step of the tutorial "Hello world" was always skipped <2>
+- 14: Bugfix #908 The variable content was not legible on editing with Nimbus <2>
+- 14: Enh. #909 Extended support for display and editing of enumerator values <2>
+- 14: Enh. #910 Extended DiagramController interface (for plugin modules) <2>
+- 14: "About" icon (eye) in toolbar / Help menu replaced by "info" icon <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

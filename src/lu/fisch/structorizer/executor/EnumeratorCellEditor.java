@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.executor;
 
+import java.awt.Color;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -32,16 +34,23 @@ package lu.fisch.structorizer.executor;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-11-21      First Issue (for enh. #739)
+ *      Kay Gürtzig     2021-01-07      Bugfix #908: Border fr the JTextField overridden to avoid a L&F problem
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *      2021-01-07 (Kay Gürtzig, #908)
+ *      - Though method DefaultCellEditor.getTableCellEditorComponent(...) suggests that the border may
+ *        be overidden each time it is called, it was sufficient to set the border once in the constructor
+ *        to avoid that L&F "Nimbus" imposes an extra-fat border to the editor component that makes the
+ *        text content illegible during editing. It turned out stable even on live L&F change - though
+ *        this is seems unlikely.
  *
  ******************************************************************************************************///
 
 import java.awt.Component;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
@@ -58,20 +67,22 @@ public class EnumeratorCellEditor extends DefaultCellEditor {
 	private JComboBox<?> combo = null;
 	
 	/**
-	 * @param textField
+	 * Creates a new EnumeratorCellEditor instantiated with a JTextField as default
 	 */
 	public EnumeratorCellEditor() {
 		super(new JTextField());
-		// TODO Auto-generated constructor stub
+		// START KGU#909 2021-01-07: Bugfix #908 - see file comment
+		editorComponent.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		// END KGU#909 2021-01-07
 	}
 
-	/**
-	 * @param comboBox
-	 */
-	public EnumeratorCellEditor(JComboBox<?> comboBox) {
-		super(comboBox);
-		// TODO Auto-generated constructor stub
-	}
+//	/**
+//	 * @param comboBox
+//	 */
+//	public EnumeratorCellEditor(JComboBox<?> comboBox) {
+//		super(comboBox);
+//		// TODO Auto-generated constructor stub
+//	}
 	
 	@Override
 	public Object getCellEditorValue() {

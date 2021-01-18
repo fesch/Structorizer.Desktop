@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions)
  *      Kay Gürtzig     2017.11.04      Enh. #452: Charm initiative: start hints tab 
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
+ *      Kay Gürtzig     2021-01-02      Enh. #905: New general checkbox for warning signs in elements
  *
  ******************************************************************************************************
  *
@@ -149,7 +150,6 @@ public class AnalyserPreferences extends LangDialog {
 	public boolean OK = false;
 	// END KGU#393 2017-05-09
 	
-	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	private JPanel dialogPane;
 	private JTabbedPane contentPanel;
@@ -159,7 +159,9 @@ public class AnalyserPreferences extends LangDialog {
 	// END KGU 2016-09-22
 	private JPanel buttonBar;
 	protected JButton okButton;
-	// JFormDesigner - End of variables declaration  //GEN-END:variables
+	// START KGU#906 2021-01-02: Enh. #905
+	public JCheckBox chkDrawWarningSign;
+	// END KGU#906 2021-01-02
 	
 	/*public AnalyserPreferences()
 	{
@@ -197,6 +199,9 @@ public class AnalyserPreferences extends LangDialog {
 		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
+		// START KGU#906 2021-01-02: Enh. #905
+		chkDrawWarningSign = new JCheckBox("Draw warning sign in affected elements");
+		// END KGU#906 2021-01-02
 
 		//======== this ========
 		setTitle("Analyser preferences");
@@ -281,11 +286,26 @@ public class AnalyserPreferences extends LangDialog {
 				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
 				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 				
+				// START KGU#906 2021-01-02: Enh. #905
+				GridBagConstraints gbc = new GridBagConstraints();
+				gbc.gridx = 0; gbc.gridy = 0;
+				gbc.weightx = 1.0;
+				gbc.anchor = GridBagConstraints.LINE_START;
+				gbc.fill = GridBagConstraints.HORIZONTAL;
+				gbc.insets = new Insets(0, 0, 0, 0);
+				buttonBar.add(chkDrawWarningSign, gbc);
+				chkDrawWarningSign.addKeyListener(keyListener);
+				// END KGU#906 2021-01-02
 				//---- okButton ----
 				okButton.setText("OK");
-				buttonBar.add(okButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-															   GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-															   new Insets(0, 0, 0, 0), 0, 0));
+				gbc.gridx = 1; gbc.gridy = 0;
+				gbc.weightx = 0.0;
+				gbc.anchor = GridBagConstraints.CENTER;
+				gbc.fill = GridBagConstraints.BOTH;
+				//buttonBar.add(okButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+				//											   GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+				//											   new Insets(0, 0, 0, 0), 0, 0));
+				buttonBar.add(okButton, gbc);
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 			

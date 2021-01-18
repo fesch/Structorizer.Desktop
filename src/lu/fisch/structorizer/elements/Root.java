@@ -157,6 +157,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-04-22      Bugfix #854: typeMap made a LinkedHashMap to ensure topological order on code export
  *      Kay Gürtzig     2020-10-16      Issue #874: Identifier check in Analyser modified with respect to non-ascii letters
  *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
+ *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
  *      
  ******************************************************************************************************
  *
@@ -280,7 +282,11 @@ public class Root extends Element {
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
-	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+
+	// START KGU#911 2021-01-10: Enh. #910 sepecial sub type of Includable (no editing, no saving)
+	//public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL};
+	public enum DiagramType {DT_MAIN, DT_SUB, DT_INCL, DT_INCL_DIAGRCTRL};
+	// END KGU#911 2021-01-10
 	private DiagramType diagrType = DiagramType.DT_MAIN;
 	// END KGU#376 2017-05-16
 
@@ -419,7 +425,7 @@ public class Root extends Element {
 	 * @see #isSubroutine()
 	 * @see #isInclude()
 	 * @see #setProgram(boolean)
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public boolean isProgram() {
 		return diagrType == DiagramType.DT_MAIN;
@@ -431,7 +437,7 @@ public class Root extends Element {
 	 * @see #isProgram()
 	 * @see #isSubroutine()
 	 * @see #isInclude()
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public void setProgram(boolean isProgram) {
 		if (isProgram) {
@@ -445,7 +451,7 @@ public class Root extends Element {
 	 * @see #isProgram()
 	 * @see #isInclude()
 	 * @see #setProgram(boolean)
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 */
 	public boolean isSubroutine() {
 		return diagrType == DiagramType.DT_SUB;
@@ -454,22 +460,54 @@ public class Root extends Element {
 	 * @return true if and only if the diagram type is "includable"
 	 * @see #isProgram()
 	 * @see #isSubroutine()
-	 * @see #setInclude()
+	 * @see #setInclude(boolean)
 	 * @see #setProgram(boolean)
 	 */
 	public boolean isInclude() {
-		return diagrType == DiagramType.DT_INCL;
+		// START KGU#911 2021-01-10: Enh. #910 New subtype for DiagramControllers
+		//return diagrType == DiagramType.DT_INCL;
+		return diagrType == DiagramType.DT_INCL || diagrType == DiagramType.DT_INCL_DIAGRCTRL;
+		// END KGU#911 2021-01-10
 	}
 	/**
-	 * Sets the diagram type to "includable"
+	 * Sets the diagram type to "includable" (ordinary)
 	 * @see #isInclude()
 	 * @see #isProgram()
 	 * @see #isSubroutine()
 	 * @see #setProgram(boolean)
 	 */
-	public void setInclude() {
-		diagrType = DiagramType.DT_INCL;
+	public void setInclude()
+	// START KGU#911 2021-01-10: Enh. #910
+	//{
+	//	diagrType = DiagramType.DT_INCL;
+	//}
+	{
+		setInclude(true);
 	}
+	/**
+	 * Sets the diagram type to "includable" (ordinary)
+	 * @param usual - {@code true} for usual (user-defined) Includable,
+	 *       {@code false} for an immutable, not storable {@link DiagramController}
+	 *       representative
+	 * @see #isInclude()
+	 * @see #isProgram()
+	 * @see #isSubroutine()
+	 * @see #setProgram(boolean)
+	 */
+	public void setInclude(boolean usual)
+	{
+		diagrType = usual ? DiagramType.DT_INCL : DiagramType.DT_INCL_DIAGRCTRL;
+	}
+	/**
+	 * @return {@code true} iff this is an Includable representing a {@link DiagramController}
+	 * @see #isInclude()
+	 * @see #setInclude(boolean)
+	 */
+	public boolean isDiagramControllerRepresentative()
+	{
+		return diagrType == DiagramType.DT_INCL_DIAGRCTRL;
+	}
+	// END KGU#911 2021-01-10
 	public String getAuthor() {
 		return this.author;
 	}
@@ -792,6 +830,13 @@ public class Root extends Element {
 		}
 		return checkNo;
 	}
+	/**
+	 * Checks status for tutorial {@code CheckNo} on diagram {@code root} and
+	 * advances the {@link #tutorialState} if it's due.
+	 * @param checkNo - the Analyser code for the tutorial
+	 * @param root - the affected diagram
+	 * @return {@code true} if the next step of the tutorial was granted
+	 */
 	public boolean advanceTutorialState(int checkNo, Root root)
 	{
 		if (!check(checkNo) || tutorialQueue.isEmpty() || tutorialQueue.peek() != checkNo) {
@@ -1101,7 +1146,7 @@ public class Root extends Element {
 
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
-		draw(_canvas, _top_left, _viewport, false, DrawingContext.DC_STRUCTORIZER);
+		draw(_canvas, _top_left, _viewport, _inContention, DrawingContext.DC_STRUCTORIZER);
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention, DrawingContext _context)
@@ -1143,6 +1188,9 @@ public class Root extends Element {
 			canvas.fillRoundRect(_top_left, R_CORNER);
 			break;
 		case DT_INCL:
+		// START KGU#911 2021-01-10: Enh. #910
+		case DT_INCL_DIAGRCTRL:
+		// END KGU#911 2021-01-10
 			canvas.fillPoly(this.makeBevelledRect(_top_left, bevel));
 			break;
 		default:
@@ -1216,6 +1264,10 @@ public class Root extends Element {
 		this.writeOutRuntimeInfo(canvas, myRect.right - textPadding, myRect.top);
 		// END KGU#216 2016-07-25
 		
+		// START KGU#906 2021-01-02: Enh. #905
+		this.drawWarningSignOnError(canvas, myRect);
+		// END KGU#906 2021-01-02
+
 		canvas.setFont(Element.font);
 		
 		// Draw the frame around the body
@@ -1456,6 +1508,9 @@ public class Root extends Element {
     {
     	switch (this.diagrType) {
     	case DT_INCL:
+    	// START KGU#911 2021-01-10: Enh. #910
+    	case DT_INCL_DIAGRCTRL:
+    	// END KGU#911 2021-01-10
     		return IconLoader.getIcon(71);
     	case DT_SUB:
     		return IconLoader.getIcon(21);
@@ -1716,6 +1771,11 @@ public class Root extends Element {
         }
 
         Canvas canvas = new Canvas((Graphics2D) _g);
+        // START KGU#906 2021-01-02: Enh. #905
+        if (_drawingContext == DrawingContext.DC_STRUCTORIZER) {
+            canvas.setFlag(CANVAS_FLAGNO_ERROR_CHECK);
+        }
+        // END KGU#906 2021-01-02
         canvas.setFont(Element.getFont()); //?
         Rect myrect = this.prepareDraw(canvas);
         myrect.left += _point.x;
@@ -1751,6 +1811,13 @@ public class Root extends Element {
 
         return myrect;/**/
     }
+    
+    // START KGU#906 2021-01-06: Enh. #905
+    public Rect draw(Graphics _g, Rectangle _viewport, DrawingContext _context)
+    {
+        return draw(_g, new Point(0,0), _viewport, null, _context, false);
+    }
+    // END KGU#906 2021-01-06
     
     public boolean getSelected(DrawingContext _drawingContext)
     {
@@ -3008,7 +3075,7 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-            if(_onlyEle && !_onlyBody)
+            if (_onlyEle && !_onlyBody)
             {
                     // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
                     //lines = _ele.getText().copy();
@@ -4901,7 +4968,7 @@ public class Root extends Element {
 					// Now associate all sub-analysis results with the Call element
 					for (DetectedError err: impErrors) {
 						// Unfortunately the error object doesn't know its category, so we relaunch it under category 23
-						addError(_errors, new DetectedError(name + ": " + err.getError(), this), 23);
+						addError(_errors, new DetectedError(name + ": " + err.getMessage(), this), 23);
 					}
 					// Add analysis for name conflicts and uncertain variables - might still occur among includes!
 					// START KGU#388 2017-09-17: Enh. #423
@@ -5038,7 +5105,10 @@ public class Root extends Element {
 				switch (code) {
 				case 26: // hello world tour 
 					text = errorMsg(Menu.hint26[0], CodeParser.getKeywordOrDefault("output", "OUTPUT"));
-					addError(_errors, new DetectedError(text, this.children), 26);
+					// START KGU#906 2021-01-06: Enh. #905 distinguish hints from warnings
+					//addError(_errors, new DetectedError(text, this.children), 26);
+					addError(_errors, new DetectedError(text, this.children, false), 26);
+					// END KGU#906 2021-01-06
 					break;
 				case 25: // first IPO guide 
 					switch (this.diagrType) {
@@ -5056,7 +5126,10 @@ public class Root extends Element {
 						break;
 					}
 					if (text != null) {
-						addError(_errors, new DetectedError(text, this.children), 25);
+						// START KGU#906 2021-01-06: Enh. #905 distinguish hints from warnings
+						//addError(_errors, new DetectedError(text, this.children), 25);
+						addError(_errors, new DetectedError(text, this.children, false), 25);
+						// END KGU#906 2021-01-06
 					}
 					break;
 				}
@@ -5140,7 +5213,13 @@ public class Root extends Element {
 				addError(_errors, 
 						new DetectedError(
 								errorMsg(Menu.hint25_2, new String[]{CodeParser.getKeywordOrDefault("input", "INPUT"), varName1, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(0)), 25);    						    								
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(0)
+								this.children.getElement(0),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else if (!hasIO[1]) {
 				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
@@ -5149,7 +5228,13 @@ public class Root extends Element {
 				addError(_errors,
 						new DetectedError(
 								errorMsg(Menu.hint25_3, new String[]{CodeParser.getKeywordOrDefault("output", "OUTPUT"), varName2, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(this.children.getSize()-1)), 25);    						    												
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(this.children.getSize()-1)
+								this.children.getElement(this.children.getSize()-1),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else if (!hasIO[2]) {
 				StringList menuPath = new StringList(Menu.getLocalizedMenuPath(
@@ -5158,7 +5243,13 @@ public class Root extends Element {
 				addError(_errors,
 						new DetectedError(
 								errorMsg(Menu.hint25_6, new String[]{asgnmt, menuPath.concatenate(" \u25BA ")}),
-								this.children.getElement(0)), 25);    						    																
+								// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+								//this.children.getElement(0)
+								this.children.getElement(0),
+								false
+								// END KGU#906 2021-01-06
+								),
+						25);
 			}
 			else {
 				startNextTutorial(true);
@@ -5194,7 +5285,10 @@ public class Root extends Element {
 		if (state > 0) {
 			if (state <= menuSpecs.length) {
 				String[] menuNames = Menu.getLocalizedMenuPath(menuSpecs[state-1], menuDefaults[state-1]);
-				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
+				// START KGU#906 2021-01-06: Enh. #905 Distinguish hints from warnings
+				//addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this), 26);
+				addError(_errors, new DetectedError(errorMsg(Menu.hint26[state], menuNames), this, false), 26);
+				// END KGU#906 2021-01-06
 			}
 			else {
 				startNextTutorial(true);
@@ -5233,7 +5327,7 @@ public class Root extends Element {
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
-    	// START KGU#239 2016-08-12: Enh. #231 + Code revision
+        // START KGU#239 2016-08-12: Enh. #231 + Code revision
         if (Root.check(errorNo))
         {
             errors.addElement(error);
@@ -5393,7 +5487,13 @@ public class Root extends Element {
     		{
     			// START KGU#61 2016-03-22: Method outsourced
     			//if (testidentifier(tokens[i]))
-    			if (Function.testIdentifier(tokens[i], false, null))
+    			// START KGU#911 2021-01-10: Enh. #910 - DiagramController names start with "$"
+    			//if (Function.testIdentifier(tokens[i], false, null))
+    			if (Function.testIdentifier(tokens[i], false, null)
+    					|| this.diagrType == DiagramType.DT_INCL_DIAGRCTRL
+    					&& tokens[i].startsWith("$")
+    					&& Function.testIdentifier(tokens[i].substring(1), false, null))
+    			// END KGU#911 2021-01-10
     			// END KGU#61 2016-03-22
     			{
     				programName = tokens[i];
@@ -5755,7 +5855,12 @@ public class Root extends Element {
         // START KGU#61 2016-03-22: Method outsourced
         //if(testidentifier(programName)==false)
         boolean hasValidName = true;
-        if (!Function.testIdentifier(programName, false, null))
+        // START KGU#911 2021-01-10: Enh. 910 Tolerate a name starting with '$' for a DiagramController
+        //if (!Function.testIdentifier(programName, false, null))
+        if (!Function.testIdentifier(programName, false, null)
+            && !(this.isDiagramControllerRepresentative()
+                    && programName.startsWith("$")
+                    && Function.testIdentifier(getMethodName(true), false, null)))
         // END KGU#61 2016-03-22
         {
             //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
@@ -5767,7 +5872,7 @@ public class Root extends Element {
             }
             else if (programName.contains(" ") && Function.testIdentifier(programName.replace(' ', '_'), false, null)) {
                 // "Program names should not contain spaces, better place underscores between the words:"
-                error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);        		
+                error  = new DetectedError(errorMsg(Menu.error07_4, programName.replace(' ', '_')), this);
             }
             else {
                 // "«"+programName+"» is not a valid name for a program or function!"
@@ -5804,7 +5909,7 @@ public class Root extends Element {
         // END KGU#239 2016-08-12
 
         // CHECK: two checks in one loop: (#12 - new!) & (#7)
-        for(int j=0; j < rootVars.count(); j++)
+        for (int j=0; j < rootVars.count(); j++)
         {
             String para = rootVars.get(j);
             // CHECK: non-conform parameter name (#12 - new!)
@@ -5921,7 +6026,7 @@ public class Root extends Element {
         }
         /**/
 
-        this.errors=errors;
+        this.errors = errors;
         return errors;
     }
 
@@ -5984,14 +6089,20 @@ public class Root extends Element {
 	// START KGU#466 2019-08-02: Issue #733
 	public static String[] getPreferenceKeys()
 	{
-		String[] prefKeys = new String[analyserChecks.length];
-		for (int i = 0; i < prefKeys.length; i++) {
+		// START KGU#906 2021-01-02: Enh. #905
+		//String[] prefKeys = new String[analyserChecks.length];
+		String[] prefKeys = new String[analyserChecks.length + 1];
+		// END KGU#906 2021-01-02
+		for (int i = 0; i < analyserChecks.length; i++) {
 			prefKeys[i] = "check" + (i+1);
 		}
+		// START KGU#906 2021-01-02: Enh. #905
+		prefKeys[analyserChecks.length] = "drawAnalyserMarks";
+		// END KGU#906 2021-01-02
 		return prefKeys;
 	}
 	// END KGU#466 2019-08-02
-    
+
     public static void saveToINI()
     {
         try
@@ -6005,6 +6116,9 @@ public class Root extends Element {
                 ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
             }
             // END KGU#239 2016-08-12
+            // START KGU#906 2021-01-02: Enh. #905
+            ini.setProperty("drawAnalyserMarks", E_ANALYSER_MARKER ? "1" : "0");
+            // END KGU#906 2021-01-02
             ini.save();
         }
         catch (Exception e)
@@ -6012,7 +6126,6 @@ public class Root extends Element {
         	logger.logp(Level.SEVERE, Root.class.getName(), "saveToINI()", "", e);
         }
     }
-
 
 // START KGU#91 2015-12-04: No longer needed
 //  public void setSwitchTextAndComments(boolean switchTextAndComments) {
@@ -6213,7 +6326,7 @@ public class Root extends Element {
 		return typeDecl;
 	}
 	/**
-	 * This is practically a very lean version of the {@link #analyse()} method. We simply don't create
+	 * This is practically a very lean version of the {@link #analyse(StringList)} method. We simply don't create
 	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)
 	 * initialization. These are candidates for parameters.
 	 * @param _node - The Subqueue recursively to be scrutinized for variables

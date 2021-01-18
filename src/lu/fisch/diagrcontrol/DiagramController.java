@@ -40,6 +40,7 @@ package lu.fisch.diagrcontrol;
  *      Kay Gürtzig     2019-03-02      Issue #366: New methods isFocused() and requestFocus() in analogy to Window
  *      Kay Gürtzig     2020-12-11      Enh. #443: deprecated methods removed
  *      Kay Gürtzig     2020-12-14      References to lu.fisch.util.StringList and java.awt.Color eliminated
+ *      Kay Gürtzig     2021-01-09/11   Enh. #910: New methods getEnumerators(), restart()
  *
  ******************************************************************************************************
  *
@@ -118,6 +119,18 @@ public interface DiagramController
 		
 	}
 	
+	// START KGU#911 2021-01-11: Enh. #910
+	/**
+	 * Possibly subclassable method for execution startup - must be repeatedly applicable
+	 * to the instance.<br/>
+	 * The default implementation does not do anything.
+	 * @param args - array of arguments
+	 */
+	public default void restart(Object ... args)
+	{
+	}
+	// END KGU#911 2021-01-11
+	
 	/**
 	 * Returns a map associating Strings of format {@code"<function_name>#<arg_count>"}
 	 * with a {@link Method} object each for every supported function. The argument classes
@@ -138,6 +151,21 @@ public interface DiagramController
 	 */
 	public HashMap<String, Method> getProcedureMap();
 
+	// START KGU#911 2021-01-09: Enh. #910 This shall facilitate the creation of new controllers
+	/**
+	 * May provide the Java definition texts of enumerator types to by made available via
+	 * Analyser and Executor for argument (de-)coding and possibly be used by code generators
+	 * of Structorizer.<br/>
+	 * The default implementation returns {@code null}.
+	 * @return a String array of definitions like "enum TrafficLights {GREEN, YELLOW, RED}",
+	 * or {@code null}
+	 */
+	public default String[] getEnumerators()
+	{
+		return null;
+	}
+	// END KGU#911 2021-01-09
+	
 	// START KGU#446/KGU#448 2018-01-21: Enh. #441, #443 - More generic support for code export
 	/**
 	 * Checks whether there may be a procedure or function with name {@code name} and

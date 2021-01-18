@@ -71,6 +71,7 @@ package lu.fisch.structorizer.executor;
  *                                      Editability check bug fixed in the table model fixed
  *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
  *      Kay Gürtzig     2020-04-28      Issue #822: New message for empty lines in CALL elements
+ *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *
  ******************************************************************************************************
  *
@@ -152,11 +153,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
             // START KGU#542 2019-11-21: Enh. #739 combobox for declared enumerator variables
             else if (value instanceof JComboBox) {
-            	Object item = ((JComboBox<?>)value).getSelectedItem();
-            	if (item instanceof String) {
-            		setText((String)item);
-            	}
-            	return this;
+                Object item = ((JComboBox<?>)value).getSelectedItem();
+                if (item instanceof String) {
+                    setText((String)item);
+                }
+                return this;
             }
             // END KGU#542 2019-11-21
             // END KGU#443 2017-10-16
@@ -167,15 +168,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             //if (Executor.getInstance().isConstant(varName)) {
             if (Executor.getInstance().isConstant(varName) && column != 1) {
             // END KGU#443 2017-10-16
-            	if (isSelected) {
-            		c.setBackground(constColorSel);
-            	}
-            	else {
-            		c.setBackground(constColor);
-            	}
+                if (isSelected) {
+                    c.setBackground(constColorSel);
+                }
+                else {
+                    c.setBackground(constColor);
+                }
             }
             else if (!isSelected) {
-            	c.setBackground(backgroundColor);
+                c.setBackground(backgroundColor);
             }
             return c;
         }
@@ -318,7 +319,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
-        btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        // START KGU#907 2021-01-04: Enh. #906
+        //btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        pauseIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png")); // NOI18N
+        diveIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/dive.png")); // NOI18N
+        btnPause.setIcon(pauseIcon);
+        // END KGU#907 2021-01-04
         // END KGU#287 2016-11-01
         btnPause.setEnabled(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
@@ -350,10 +356,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
             },
             new String [] {
-            		// START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
-            		//"Name", "Content"
-            		"Name", " ", "Content"
-            		// END KGU#443 2017-10-16
+                    // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
+                    //"Name", "Content"
+                    "Name", " ", "Content"
+                    // END KGU#443 2017-10-16
             }
         ) {
             Class<?>[] types = new Class<?> [] {
@@ -369,17 +375,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // START KGU#269 2016-10-05: Bugfix #260 - disable editing of the name column
             @Override
             public boolean isCellEditable(int row, int column){
-            	// START KGU#443 2017-10-31: Enh. #439
-            	//return (column>=1);  
-            	if (column == 1) {
-            		return true;	// Pulldown button always enabled if there is one
-            	}
-            	else if (column > 1) {
-            		String name = (String)this.getValueAt(row, 0);
-            		return !Executor.getInstance().isConstant(name);
-            	}
-            	return false;
-            	// END KGU#443 2017-10-31
+                // START KGU#443 2017-10-31: Enh. #439
+                //return (column>=1);  
+                if (column == 1) {
+                    return true;	// Pulldown button always enabled if there is one
+                }
+                else if (column > 1) {
+                    String name = (String)this.getValueAt(row, 0);
+                    return !Executor.getInstance().isConstant(name);
+                }
+                return false;
+                // END KGU#443 2017-10-31
             }
             // END KGU#269 2016-10-05
         });
@@ -602,17 +608,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#210/KGU#234 2016-08-09: Issue #224 - Ensure GUI consistency and table grid visibility
     public void updateLookAndFeel()
     {
-    	try {
-    		SwingUtilities.updateComponentTreeUI(this);
-    		// Now, this is a workaround for issue #224
-    		if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
-    		{
-    			tblVar.setShowGrid(true);
-    		}
-    		// Make sure look and feel "Nimbus" doesn't sabotage the cell renderer setting
-    		tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
-    	}
-    	catch (Exception ex) {}
+        try {
+            SwingUtilities.updateComponentTreeUI(this);
+            // Now, this is a workaround for issue #224
+            if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+            {
+                tblVar.setShowGrid(true);
+            }
+            // Make sure look and feel "Nimbus" doesn't sabotage the cell renderer setting
+            tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
+        }
+        catch (Exception ex) {}
     }
     // END KGU#210/KGU#234 2016-08-09
     
@@ -634,6 +640,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnPlayActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPlayActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 Care for breaking after Call execution
+        if (isWaitingAtCall) {
+            isWaitingAtCall = false;
+            btnPause.setIcon(pauseIcon);
+        }
+        // END KGU#907 2021-01-04
         btnPause.setEnabled(true);
         startButtonsEnabled = false;
         btnPlay.setEnabled(startButtonsEnabled);
@@ -660,7 +672,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             varUpdates.clear();
         }
         // END KGU#68 2015-11-06
-        if(Executor.getInstance().isRunning()==false)
+        if (!Executor.getInstance().isRunning())
         {
             Executor.getInstance().start(false);
         }
@@ -679,11 +691,25 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * be enabled. By passing false as argument, only the Pause button will be enabled,
      * the other buttons would keep their state.
      * @param allButtons - if not true then only the Pause button will be influenced
+     * @param isCall - true if execution pauses at a Call element
      */
-    public void setButtonsForPause(boolean allButtons)
+    // START KGU#907 2021-01-04: Enh. #906 Signature change (new argument isCall)
+    //public void setButtonsForPause(boolean allButtons)
+    public void setButtonsForPause(boolean allButtons, boolean isCall)
+    // END KGU#907 2021-01-04
     // END KGU#379 2017-04-12
     {
-        btnPause.setEnabled(false);
+        // START KGU#907 2021-01-04: Enh. #906 Different semantics on Calls
+        //btnPause.setEnabled(false);
+        if (isCall) {
+            btnPause.setIcon(diveIcon);
+            btnPause.setEnabled(true);
+            isWaitingAtCall = true;
+        }
+        else {
+            btnPause.setEnabled(false);
+        }
+        // END KGU#907 2021-01-04
         // START KGU#379 2017-04-12: Bugfix #391
         if (allButtons) {
         // END KGU#379 2017-04-12
@@ -701,12 +727,22 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPauseActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 - Allow to step into or step over a Call
+        if (isWaitingAtCall) {
+            // Restore the original pause apparition of the button
+            btnPause.setIcon(pauseIcon);
+            // Step into the subroutine
+            isWaitingAtCall = false;
+            btnStepActionPerformed(evt);
+            return;
+        }
+        // END KGU#907 2021-01-04
         // START KGU 2015-10-12
 //        btnPause.setEnabled(false);
 //        btnPlay.setEnabled(true);
 //        btnStep.setEnabled(true);
         // START KGU#379 2017-04-12: Bugfix #391 It's sufficient just to disable the pause button for now
-        setButtonsForPause(false);
+        setButtonsForPause(false, false);
         // END KGU#379 2017-04-12
         // END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
@@ -714,6 +750,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {
+        // START KGU#907 2021-01-04: Enh. #906 - For Calls we allow to step into or step over
+        if (isWaitingAtCall) {
+            Executor.getInstance().ensurePauseAfterCall();
+            btnPlayActionPerformed(evt);
+            return;
+        }
+        // END KGU#907 2021-01-04
         // START KGU#379 2017-04-12: Bugfix #391 - buttons weren't properly handled in step mode
         // Buttons will be switched back in Executor.waitForNext()
         // Attention: the pause button must not be enabled here because it has toggling effect, hence it
@@ -742,7 +785,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         chkCollectRuntimeData.setEnabled(false);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
-        if(Executor.getInstance().isRunning()==false)
+        if (!Executor.getInstance().isRunning())
         {
             Executor.getInstance().start(true);
         }
@@ -832,30 +875,34 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * representing either an array (as {@link ArrayList} or a record (as {@link HashMap}.
      * If something therein was modified, then the modified value will be returned.
      * @param _varName - name of the compound variable 
-     * @param _value - either an {@link ArayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
+     * @param _value - either an {@link ArrayList}{@code <Object>} or a {@link HashMap}{@code<String, Object>} is expected
      * @param _editable - whether the component values may be edited
      * @param _refComponent - the originating button 
      * @return the modified value if the change was committed.
      */
     private Object editCompoundValue(String _varName, Object _value, boolean _editable, Component _refComponent) {
-    	ValuePresenter valueEditor = new ValuePresenter(_varName, _value, _editable, null);
-    	valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    	valueEditor.setLocationRelativeTo(_refComponent);
-    	valueEditor.setModal(true);
-    	valueEditor.setVisible(true);
-    	if (valueEditor.wasModified()) {
-    		return valueEditor.getValue();
-    	}
-    	return null;
+        ValuePresenter valueEditor = new ValuePresenter(_varName, _value, _editable, null);
+        valueEditor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        valueEditor.setLocationRelativeTo(_refComponent);
+        valueEditor.setModal(true);
+        valueEditor.setVisible(true);
+        if (valueEditor.wasModified()) {
+            return valueEditor.getValue();
+        }
+        return null;
     }
     // END KGU#443 2017-10-16
 
-	public void updateVars(Vector<String[]> vars)
+    /**
+     * Method to be used by {@link Executor} in order to display the variable values
+     * passed in by {@code vars}
+     * @param vars - a vector of string pairs, each containing the name and a textual
+     * value representation of a variable.
+     */
+    public void updateVars(Vector<String[]> vars)
     {
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
-        DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-        // empty the table
         // START KGU#68 2016-10-07: Preparation for variable editing
         varUpdates.clear();
         // END KGU#68 2016-10-07
@@ -865,37 +912,40 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
         //while(tm.getRowCount()>0) tm.removeRow(0);
         //for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
-        int nRows = tm.getRowCount();
-        if (nRows > vars.size()) {
-        	tm.setRowCount(vars.size());
-        	nRows = vars.size();
-        }
-        // Update existing rows
-        for (int i = 0; i < nRows; i++) {
-            // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-            //tm.setValueAt(vars.get(i).get(0), i, 0);
-            //tm.setValueAt(vars.get(i).get(1), i, 1);
-            Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
-            for (int j = 0; j < rowData.length; j++) {
-                tm.setValueAt(rowData[j], i, j);
+        synchronized(tblVar) {
+            DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+            int nRows = tm.getRowCount();
+            if (nRows > vars.size()) {
+                tm.setRowCount(vars.size());
+                nRows = vars.size();
             }
-            // END KGU#443 2017-10-16
-        }
-        // Add additional rows
-        for (int i = nRows; i < vars.size(); i++) {
-            // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-            //tm.addRow(vars.get(i));
-            tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
-            // END KGU#443 2017-10-16
-        }
-        // END KGU#274 2016-10-08
-        // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
-        if (vars.size() > 0) {
-            try {
-                ValuePresenter.optimizeColumnWidth(tblVar, 0);
+            // Update existing rows
+            for (int i = 0; i < nRows; i++) {
+                // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
+                //tm.setValueAt(vars.get(i).get(0), i, 0);
+                //tm.setValueAt(vars.get(i).get(1), i, 1);
+                Object[] rowData = makeVarListRow(vars.get(i), pulldownIcon);
+                for (int j = 0; j < rowData.length; j++) {
+                    tm.setValueAt(rowData[j], i, j);
+                }
+                // END KGU#443 2017-10-16
             }
-            catch (ArrayIndexOutOfBoundsException ex) {
-                // Just ignore it - it is caused by races.
+            // Add additional rows
+            for (int i = nRows; i < vars.size(); i++) {
+                // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
+                //tm.addRow(vars.get(i));
+                tm.addRow(makeVarListRow(vars.get(i), pulldownIcon));
+                // END KGU#443 2017-10-16
+            }
+            // END KGU#274 2016-10-08
+            // START KGU#443 2017-10-16: Enh. #439 - Reserve the maximum space for last column
+            if (vars.size() > 0) {
+                try {
+                    ValuePresenter.optimizeColumnWidth(tblVar, 0);
+                }
+                catch (ArrayIndexOutOfBoundsException ex) {
+                    // Just ignore it - it is caused by races.
+                }
             }
         }
         // END KGU#443 2017-10-16
@@ -913,14 +963,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 		JButton pulldown = null;
 		String name = varEntry[0];
 		Object value = varEntry[1];
+		StringList enumNames = null;
 		if (varEntry[1].endsWith("}")) {
 			pulldown = new JButton();
 			pulldown.setName(name);
 			pulldown.setIcon(pulldownIcon);
 			pulldown.addActionListener(this.pulldownActionListener);
 		}
-		else if (Executor.getInstance().isEnumerator(name) && !Executor.getInstance().isConstant(name)) {
-			StringList enumNames = Executor.getInstance().getEnumeratorValuesFor(name);
+		else if ((enumNames = Executor.getInstance().getEnumeratorValuesFor(name)) != null
+				&& !Executor.getInstance().isConstant(name)) {
 			JComboBox<String> cbEnum = new JComboBox<String>(enumNames.toArray());
 			cbEnum.setSelectedIndex(enumNames.indexOf(varEntry[1]));
 			value = cbEnum;
@@ -962,6 +1013,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public javax.swing.JLabel lblCallLevel;
     public javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14
+    // START KGU#907 2021-01-04: Enh. #906: Procedure steps / Overlay of the pause button
+    private ImageIcon pauseIcon;
+    private ImageIcon diveIcon;
+    private boolean isWaitingAtCall = false;
+    // END KGU#907 2021-01-04
     // START KGU#442 2017-10-14: Issue #438 - prevent continuation while a cell editor is active
     /** Normative visibility for play and step button (to be restored when cell editor is released) */
     private boolean startButtonsEnabled = true;
@@ -972,10 +1028,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#443 2017-10-16: Enh. #439
     private AbstractCellEditor activeBtnEditor = null;
     private java.awt.event.ActionListener pulldownActionListener = new java.awt.event.ActionListener(){
-    	@Override
-    	public void actionPerformed(ActionEvent evt) {
-    		btnPullDownActionPerformed(evt);
-    	}};
+        @Override
+        public void actionPerformed(ActionEvent evt) {
+            btnPullDownActionPerformed(evt);
+        }};
     // END KGU#443 2017-10-16
     // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Language support for Executor
     public LangTextHolder lbStopRunningProc;
