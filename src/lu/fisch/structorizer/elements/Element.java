@@ -287,7 +287,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 10000000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.30-14";
+	public static final String E_VERSION = "3.30-15";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -372,7 +372,7 @@ public abstract class Element {
 
 	// some static quasi-constants
 	// START KGU#494 2018-09-10: Enh. #508
-	/** Mode for fixed i.e. font-independent E_PADDING (= standard behaviour before 3.28-07) */
+	/** Mode for fixed, i.e. font-independent, E_PADDING (= standard behaviour before 3.28-07) */
 	public static boolean E_PADDING_FIX = false;
 	// END KGU#494 2018-09-10
 	/** Padding between e.g. the content of elements and their borders */
