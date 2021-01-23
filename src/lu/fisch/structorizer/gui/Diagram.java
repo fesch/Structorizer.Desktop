@@ -2297,12 +2297,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		String errorMessage = Menu.msgErrorNoFile.getText();
 		// END KGU#111 2015-12-16
+		// START KGU#901 2021-01-22: Issue #901 WAIT_CURSOR on time-consuming actions
+		Cursor origCursor = getCursor();
+		setCursor(new Cursor(Cursor.WAIT_CURSOR));
+		// END KGU#901 2021-01-22
 		try
 		{
 			File f = new File(_filename);
 			//System.out.println(f.toURI().toString());
 			if (f.exists())
 			{
+				// START KGU#901 2021-01-22: Issue #901 WAIT_CURSOR on time-consuming actions
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				// END KGU#901 2021-01-22
 				// save current diagram (only if something has been changed)
 				saveNSD(true);
 
@@ -2365,6 +2372,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			logger.log(level, "openNSD(\"" + _filename + "\"): ", e);				
 			// END KGU#111 2015-12-16
 		}
+		// START KGU#901 2021-01-22: Issue #901 WAIT_CURSOR on time-consuming actions
+		finally {
+			setCursor(origCursor);
+		}
+		// END KGU#901 2021-01-22
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		if (errorMessage != null)
 		{
@@ -2940,12 +2952,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/**
-	 * Stores unsaved changes (if any) of the give {@link Root} {@code root}. If {@code _askToSave} is true
-	 * then the user may confirm or deny saving or cancel the inducing request.
+	 * Stores unsaved changes (if any) of the given {@link Root} {@code root}.
+	 * If {@code _askToSave} is {@code true} then the user may confirm or deny
+	 * saving or cancel the inducing request.
 	 * @param root - {@link Root} to be saved
-	 * @param _askToSave - if true and the given {@code root} has unsaved changes then a user dialog will be
-	 * popped up first.
-	 * @return true if the user did not cancel the save request
+	 * @param _askToSave - if {@code true} and the given {@code root} has unsaved
+	 * changes then a user dialog will be popped up first.
+	 * @return {@code true} if the user did not cancel the save request
 	 */
 	public boolean saveNSD(Root root, boolean _askToSave)
 	// END KGU#320 2017-01-04
@@ -3967,6 +3980,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#376 2017-07-01
 				}
 				// END KGU#363 2017-03-14
+				// START KGU#695 2021-01-22: Enh. #714
+				else if (element instanceof Try) {
+					data.showFinally = ((Try)element).isEmptyFinallyVisible();
+				}
+				// END KGU#695 2021-01-22
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
@@ -4026,6 +4044,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// END KGU#376 2017-07-01
 					}
 					// END KGU#363 2017-03-14
+					// START KGU#695 2021-01-22: Enh. #714
+					else if (element instanceof Try) {
+						((Try)element).setEmptyFinallyVisible(data.showFinally);
+					}
+					// END KGU#695 2021-01-22
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
@@ -4378,7 +4401,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//showInputBox(data);
 			showInputBox(data, _ele.getClass().getSimpleName(), true, true);
 			// END KGU 2015-10-14
-			if(data.result == true)
+			if (data.result == true)
 			{
 				if (!(_ele instanceof Forever))
 				{
@@ -4429,6 +4452,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU 2018-01-22
 				}
 				// END KGU#3 2015-10-25
+				// START KGU#695 2021-01-22: Enh. #714
+				else if (_ele instanceof Try) {
+					((Try)_ele).setEmptyFinallyVisible(data.showFinally);
+				}
+				// END KGU#695 2021-01-22
 				//root.addUndo();
 				try {
 					addUndoNSD(false);
@@ -9739,6 +9767,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#686 2019-03-17
 			// END KGU#43 2015-10-12
+			// START KGU#695 2021-01-22: Enh. #714: Special checkbox for Try elements
+			if (_elementType.equals("Try")) {
+				inputbox.chkShowFinally.setVisible(true);
+				inputbox.chkShowFinally.setSelected(_data.showFinally);
+			}
+			// END KGU#695 2021-01-22
 			// START KGU#213 2016-08-01: Enh. #215
 			// START KGU#246 2016-09-13: Bugfix #241)
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
@@ -9819,6 +9853,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				_data.breakTriggerCount = 0;
 //			}
 			// END KGU#213 2016-08-01
+			// START KGU#695 2021-01-22: Enh. #714
+			_data.showFinally = inputbox.chkShowFinally.isSelected();
+			// END KGU#695 2021-01-22
 			// START KGU#3 2015-10-25: Dedicated support for For loops
 			if (inputbox instanceof InputBoxFor)
 			{

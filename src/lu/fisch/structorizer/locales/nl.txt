@@ -58,6 +58,7 @@
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
  *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
+ *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *
  ******************************************************************************************************
  *
@@ -661,6 +662,7 @@ InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
 InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
 InputBox.chkBreakpoint.text=Breakpunt
+InputBox.chkShowFinally.text=Het opruimblok (FINALLY) immer tonen, ook indien het is leeg
 InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
 InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren

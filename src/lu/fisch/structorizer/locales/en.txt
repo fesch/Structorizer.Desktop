@@ -124,7 +124,8 @@
  *      Kay Gürtzig     2020-01-20      Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09      Issue #835: New ImportOptionDialog messages
  *      Kay Gürtzig     2020-03-17      New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
- *      Kay Gürtzig     2020-12-12      Enh. #704: New top-level section "DiagramConroller"
+ *      Kay Gürtzig     2020-12-12      Enh. #704: New top-level section "DiagramController"
+ *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *
  ******************************************************************************************************
  *
@@ -731,6 +732,7 @@ InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
 InputBox.chkDisabled.text=Disabled (execution and export)
 InputBox.chkBreakpoint.text=Breakpoint
+InputBox.chkShowFinally.text=Show the cleanup block (FINALLY section) even if empty
 InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
 InputBox.lblText.text[elementType:While]=Please enter the entry condition

@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.14  Enh. #372: Additional hook for subclass InputBoxRoot.
  *      Kay Gürtzig     2017.10.06  Enh. #430: The scaled TextField font size (#284) is now kept during the session
  *      Kay Gürtzig     2020-10-15  Bugfix #885 Focus rule was flawed (ignored suppression of switch text/comments mode)
+ *      Kay Gürtzig     2021-01-22  Enh. #714 New checkbox for TRY elements
  *
  ******************************************************************************************************
  *
@@ -103,6 +104,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // START KGU#277 2016-10-13: #270
     public JCheckBox chkDisabled = new JCheckBox("Execution and export disabled");
     // END KGU#277 2016-10-13
+    // START KGU#695 2021-01-22: Enh. #714 New checkbox to force the Finally block in Try element
+    public JCheckBox chkShowFinally = new JCheckBox("Show the FINALLY block even if empty");
+    // END KGU#695 2021-01-22
     // START KGU#43 2015-10-12: Additional possibility to control the breakpoint setting
     public JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
     // END KGU#43 2015-10-12
@@ -269,10 +273,24 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         pnPanel1.add(fontPanel);
         // END KGU#294 2016-11-22
 
+        // START KGU 2021-02-22: Enh. #714 - special checkbox for Try elements
+        gbcPanel1.gridx = 1;
+        gbcPanel1.gridy++;
+        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.BOTH;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.NORTH;
+        gbPanel1.setConstraints(chkShowFinally, gbcPanel1);
+        pnPanel1.add(chkShowFinally);
+        chkShowFinally.setVisible(false);	// Usually not visible
+        // END KGU 2021-02-22
+        
         gbcPanel1.gridx = 1;
         // START KGU#277 2016-10-13: Enh. #270
         //gbcPanel1.gridy = 17;
-        gbcPanel1.gridy = 18;
+        gbcPanel1.gridy++;
         // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
@@ -287,7 +305,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.gridx = 12;
         // START KGU#277 2016-10-13: Enh. #270
         //gbcPanel1.gridy = 17;
-        gbcPanel1.gridy = 18;
         // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
@@ -317,7 +334,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.gridx = 1;
         // START KGU#277 2016-10-13: Enh. #270
         //gbcPanel1.gridy = 18;
-        gbcPanel1.gridy = 19;
+        gbcPanel1.gridy++;
         // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
@@ -334,7 +351,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#3 2015-10-31
         // START KGU#277 2016-10-13: Enh. #270
         //gbcPanel1.gridy = 18;
-        gbcPanel1.gridy = 19;
         // END KGU#277 2016-10-13
         // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
         gbcPanel1.gridwidth = 8;
@@ -490,7 +506,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
     public String getInsertionType()
     {
-        return (forInsertion?"insert":"update");
+        return (forInsertion ? "insert" : "update");
     }
 
     // START KGU#61 2016-03-21: Enh. #84 - Addition to facilitate specific handling

@@ -34,15 +34,16 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.29      First Issue
- *      Kay Gürtzig     2015.10.12      Field for breakpoint control added (KGU#43)
- *      Kay Gürtzig     2015.10.25      Enh. #10: Fields for specific For loop support (KGU#3)
- *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
- *      Kay Gürtzig     2016.08.01      Enh. #215: Breakpoint trigger counters added (KGU#213)
- *      Kay Gürtzig     2016.10.13      Enh. #270: Disabling control added (KGU#277)
- *      Kay Gürtzig     2017.03.14      Enh. #372: Additional Root fields (author, license)
- *      Kay Gürtzig     2017.05.20      Enh. #372: Structure of the passed license info changed
- *      Kay Gürtzig     2017.07.01      Enh. #389: Attribute diagramRefs added
+ *      Bob Fisch       2007-12-29      First Issue
+ *      Kay Gürtzig     2015-10-12      Field for breakpoint control added (KGU#43)
+ *      Kay Gürtzig     2015-10-25      Enh. #10: Fields for specific For loop support (KGU#3)
+ *      Kay Gürtzig     2016-03-21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
+ *      Kay Gürtzig     2016-08-01      Enh. #215: Breakpoint trigger counters added (KGU#213)
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Disabling control added (KGU#277)
+ *      Kay Gürtzig     2017-03-14      Enh. #372: Additional Root fields (author, license)
+ *      Kay Gürtzig     2017-05-20      Enh. #372: Structure of the passed license info changed
+ *      Kay Gürtzig     2017-07-01      Enh. #389: Attribute diagramRefs added
+ *      Kay Gürtzig     2021-01-22      Enh. #714: Additional field showFinally
  *
  ******************************************************************************************************
  *
@@ -89,6 +90,9 @@ public class EditData {
 	public RootAttributes licInfo = null;
 	// END KGU#363 2017-05-20
 	// END KGU#363 2017-03-14
+	// START KGU#695 2021-01-22: Enh. #714
+	public boolean showFinally = false;
+	// END KGU#695 2021-01-22
 	
 	public boolean result = false;
 	

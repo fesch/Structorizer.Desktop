@@ -66,7 +66,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-07-12      Separator bug in For(String,String,String,int) fixed.
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
- *      Kay Gürtzig     2019-11-21      Enh. #739 Enum types considered in type compatibility check for FOR-IN lists 
+ *      Kay Gürtzig     2019-11-21      Enh. #739 Enum types considered in type compatibility check for FOR-IN lists
+ *      Kay Gürtzig     2021-01-22      Result value for setStepConst(String) introduced
  *
  ******************************************************************************************************
  *
@@ -218,7 +219,7 @@ public class For extends Element implements ILoop {
 //	}
 //	// END KGU#64 2015-11-03
 	
-	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97
@@ -273,6 +274,7 @@ public class For extends Element implements ILoop {
 		return rect0;
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -474,8 +476,8 @@ public class For extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled()) {
 			// START KGU#3 2015-11-30: Fine tuning
 			//_lines.add(this.getText());
@@ -489,8 +491,8 @@ public class For extends Element implements ILoop {
 			// END KGU#3 2015-11-30
 			this.q.addFullText(_lines, _instructionsOnly);
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 
 	// START KGU#3 2015-10-24
 	
@@ -643,21 +645,21 @@ public class For extends Element implements ILoop {
 	// END KGU 2017-04-14
     
 	/**
-	 * @param counterVar the counterVar to set
+	 * @param counterVar - the counterVar to set
 	 */
 	public void setCounterVar(String counterVar) {
 		this.counterVar = counterVar;
 	}
 
 	/**
-	 * @param startValue the startValue to set
+	 * @param startValue - the startValue to set
 	 */
 	public void setStartValue(String startValue) {
 		this.startValue = startValue;
 	}
 
 	/**
-	 * @param endValue the endValue to set
+	 * @param endValue - the endValue to set
 	 */
 	public void setEndValue(String endValue) {
 		this.endValue = endValue;
@@ -670,7 +672,14 @@ public class For extends Element implements ILoop {
 		this.stepConst = stepConst;
 	}
 
-	public void setStepConst(String stepConst) {
+	/**
+	 * Tries to convert the given {@code stepConst} string into an integer
+	 * constant and reports if this succeeded. Otherwise value 1 is set.
+	 * @param stepConst - a string describing h step value (or {@code null})
+	 * @return {@code true} if the argument could be converted into an integer
+	 */
+	public boolean setStepConst(String stepConst) {
+		boolean done = true;
 		if (stepConst == null || stepConst.isEmpty())
 		{
 			this.stepConst = 1;
@@ -681,14 +690,17 @@ public class For extends Element implements ILoop {
 			{
 				this.stepConst = Integer.valueOf(stepConst);
 			}
-			catch (Exception ex) {}
+			catch (Exception ex) {
+				done = false;
+			}
 		}
+		return done;
 	}
 	// END KGU#3 2015-10-24
 
 	// START KGU#61 2016-03-22: Enh. #84/#135 - needed for FOR-IN loops
 	/**
-	 * @param valueList the String representing the values to be traversed
+	 * @param valueList - the String representing the values to be traversed
 	 */
 	public void setValueList(String valueList) {
 		this.valueList = valueList;

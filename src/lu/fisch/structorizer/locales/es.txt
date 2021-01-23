@@ -131,6 +131,7 @@
  *      Kay Gürtzig     2020-03-09  Issue #835: New ImportOptionDialog messages
  *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
+ *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
  *
  ******************************************************************************************************
  *
@@ -732,6 +733,7 @@ InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
 InputBox.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBox.chkBreakpoint.text=Breakpoint
+InputBox.chkShowFinally.text=Mostrar bloque de limpieza (sección FINALLY) aun cuando es vacía
 InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBox.lblText.text[elementType:Alternative]=Por favor ingresa la condición
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar

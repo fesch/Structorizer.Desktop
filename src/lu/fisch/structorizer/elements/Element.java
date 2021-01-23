@@ -120,6 +120,7 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #872: '=' in routine headers must not be replaced by "==" for C operator mode
  *      Kay Gürtzig     2021-01-02      Enh. #905: Method to draw a red triangle if an error entry refers to the element
  *      Kay Gürtzig     2021-01-10      Enh. #910: New method isImmutable(), synchronisation in writeOut...
+ *      Kay Gürtzig     2021-01-22      Bugfix KGU#914 in splitExpressionList(StringList,...)
  *
  ******************************************************************************************************
  *
@@ -3047,7 +3048,10 @@ public abstract class Element {
 		boolean isWellFormed = true;
 		Stack<String> enclosings = new Stack<String>();
 		int tokenCount = _tokens.count();
-		String currExpr = "";
+		// START KGU#914 2021-01-22: Bugfix - identifiers were glued in expressions if _tokens is condensed
+		//String currExpr = "";
+		StringList currExpr = new StringList();
+		// END KGU#914 2021-01-22
 		String tail = "";
 		for (int i = 0; isWellFormed && parenthDepth >= 0 && i < tokenCount; i++)
 		{
@@ -3055,8 +3059,12 @@ public abstract class Element {
 			if (token.equals(_listSeparator) && enclosings.isEmpty())
 			{
 				// store the current expression and start a new one
-				expressionList.add(currExpr.trim());
-				currExpr = new String();
+				// START KGU#914 2021-01-22: Bugfix - see above
+				//expressionList.add(currExpr.trim());
+				//currExpr = new String();
+				expressionList.add(currExpr.trim().concatenate(null));
+				currExpr.clear();
+				// END KGU#914 2021-01-22
 			}
 			else
 			{ 
@@ -3082,20 +3090,31 @@ public abstract class Element {
 				}
 				if (isWellFormed)
 				{
-					currExpr += token;
+					// START KGU#914 2021-01-22: Bugfix - see above
+					//currExpr += token;
+					currExpr.add(token);
+					// END KGU#914 2021-01-22
 				}
 				else if (_appendTail)
 				{
-					expressionList.add(currExpr.trim());
-					currExpr = "";
-					tail = _tokens.concatenate("", i).trim();
+					// START KGU#914 2021-01-22: Bugfix - see above
+					//expressionList.add(currExpr.trim());
+					//currExpr = "";
+					//tail = _tokens.concatenate("", i).trim();
+					expressionList.add(currExpr.trim().concatenate(null));
+					currExpr.clear();
+					tail = _tokens.concatenate(null, i).trim();
+					// END KGU#914 2021-01-22
 				}
 			}
 		}
 		// add the last expression if it's not empty
 		if (!(currExpr = currExpr.trim()).isEmpty())
 		{
-			expressionList.add(currExpr);
+			// START KGU#914 2021-01-22: Bugfix - see above
+			//expressionList.add(currExpr);
+			expressionList.add(currExpr.concatenate(null));
+			// END KGU#914 2021-01-22
 		}
 		// Add the tail if requested. Empty if there is no bad tail
 		if (_appendTail) {
