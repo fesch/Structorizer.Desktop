@@ -130,7 +130,7 @@ public class Try extends Element {
 		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
 		
 		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
-		boolean showFinally = forceFinally || qFinally.getSize() > 0;
+		boolean showFinally = forceFinally || qFinally.hasEnabledElements();
 		// END KGU#695 2021-01-22
 
 		Rect rTry = qTry.prepareDraw(_canvas).copy();
@@ -237,7 +237,7 @@ public class Try extends Element {
 		subRect = new Rect(_top_left.left + r0Catch.left, _top_left.top + r0Catch.top, _top_left.right - E_PADDING, _top_left.top + r0Catch.bottom);		
 		qCatch.draw(_canvas, subRect, _viewport, _inContention);
 		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
-		if (forceFinally || qFinally.getSize() > 0) {
+		if (forceFinally || qFinally.hasEnabledElements()) {
 		// END KGU#695 2021-01-22
 			if (!preFinally.trim().isEmpty()) {
 				writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
