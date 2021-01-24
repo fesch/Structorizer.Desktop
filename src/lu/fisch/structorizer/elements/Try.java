@@ -164,9 +164,11 @@ public class Try extends Element {
 		// END KGU#695 2021-01-22
 			if (widths[i] > width) width = widths[i];
 		}
-		for (int i = 1; i < textCatch.count(); i++) {
-			width = Math.max(width, E_PADDING + E_PADDING/2 + getWidthOutVariables(_canvas, textCatch.get(i), this)) + E_PADDING;
-		}
+		// START KGU#695 2021-01-23: Enh. #714 - the following loop was nonsense
+		//for (int i = 1; i < textCatch.count(); i++) {
+		//	width = Math.max(width, E_PADDING + E_PADDING/2 + getWidthOutVariables(_canvas, textCatch.get(i), this)) + E_PADDING;
+		//}
+		// END KGU#695 2021-01-23
 		//int height = rTop.bottom + rTry.bottom + 2 * (E_PADDING/2) + fontHeight + rCatch.bottom + rFinally.bottom + E_PADDING;
 		int height = rTop.bottom;
 		rTry.top = height; rTry.bottom += height;
@@ -230,10 +232,12 @@ public class Try extends Element {
 		}
 		writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
 				(preCatch + " " + lineCatch0).trim(), this, _inContention);
-		for (int i = 1; i < textCatch.count(); i++) {
-			writeOutVariables(_canvas, _top_left.left + E_PADDING + E_PADDING/2, subRect.bottom + E_PADDING/2 + i * fontHeight,
-					textCatch.get(i), this, _inContention);			
-		}
+		// START KGU#695 2021-01-23: Enh. #714 - the following loop was nonsense
+		//for (int i = 1; i < textCatch.count(); i++) {
+		//	writeOutVariables(_canvas, _top_left.left + E_PADDING + E_PADDING/2, subRect.bottom + E_PADDING/2 + i * fontHeight,
+		//			textCatch.get(i), this, _inContention);			
+		//}
+		// END KGU#695 2021-01-23
 		subRect = new Rect(_top_left.left + r0Catch.left, _top_left.top + r0Catch.top, _top_left.right - E_PADDING, _top_left.top + r0Catch.bottom);		
 		qCatch.draw(_canvas, subRect, _viewport, _inContention);
 		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional

@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.10.06  Enh. #430: The scaled TextField font size (#284) is now kept during the session
  *      Kay Gürtzig     2020-10-15  Bugfix #885 Focus rule was flawed (ignored suppression of switch text/comments mode)
  *      Kay Gürtzig     2021-01-22  Enh. #714 New checkbox for TRY elements
+ *      Kay Gürtzig     2021-01-04  Enh. #914 UndoManagers added to text and comment field.
  *
  ******************************************************************************************************
  *
@@ -70,6 +71,12 @@ import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.Document;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
 
 import lu.fisch.structorizer.elements.Element;
 
@@ -95,6 +102,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // Textarea
     public JTextArea txtText = new JTextArea();
     public JTextArea txtComment = new JTextArea();
+    // START KGU#915 2021-01-24: Enh. #914
+    private UndoManager umText = new UndoManager();
+    private UndoManager umComment = new UndoManager();
+    // END KGU#915 2021-01-24
 
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
@@ -185,6 +196,21 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);
         txtText.setBorder(emptyBorder);
         txtComment.setBorder(emptyBorder);
+        
+        // START KGU#915 2021-01-24: Enh. #914
+        Document docText = txtText.getDocument();
+        Document docComment = txtComment.getDocument();
+        docText.addUndoableEditListener(new UndoableEditListener() {
+            @Override
+            public void undoableEditHappened(UndoableEditEvent e) {
+                umText.addEdit(e.getEdit());
+            }});
+        docComment.addUndoableEditListener(new UndoableEditListener() {
+            @Override
+            public void undoableEditHappened(UndoableEditEvent e) {
+                umComment.addEdit(e.getEdit());
+            }});
+        // END KGU#915 2021-01-24
         
         // START KGU#294 2016-11-21: Issue #284
         scalableComponents.addElement(txtText);
@@ -461,18 +487,46 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_ESCAPE) {
             OK = false;
             setVisible(false);
-        } else if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown())) {
+        } else if (keyCode == KeyEvent.VK_ENTER && (e.isShiftDown() || e.isControlDown())) {
             OK = true;
             setVisible(false);
         }
         // START KGU#294 2016-11-21: Issue #284 - Opportunity to modify JTextField font size
-        else if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
-            fontControl(e.getKeyCode() == KeyEvent.VK_ADD);
+        else if ((keyCode == KeyEvent.VK_ADD || keyCode == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
+            fontControl(keyCode == KeyEvent.VK_ADD);
         }
         // END KGU#294 2016-11-21
+        // START KGU#915 2021-01-24: Enh. #914
+        else if (keyCode == KeyEvent.VK_Z && e.isControlDown() && !e.isShiftDown()) {
+            Object src = e.getSource();
+            try {
+                if (src == txtText && umText.canUndo()) {
+                    umText.undo();
+                }
+                else if (src == txtComment && umComment.canUndo()) {
+                    umComment.undo();
+                }
+            }
+            catch (CannotUndoException ex) {}
+        }
+        else if (keyCode == KeyEvent.VK_Y && e.isControlDown() && !e.isShiftDown()
+              || keyCode == KeyEvent.VK_Z && e.isControlDown() && e.isShiftDown()) {
+            Object src = e.getSource();
+            try {
+                if (src == txtText && umText.canRedo()) {
+                    umText.redo();
+                }
+                else if (src == txtComment && umComment.canUndo()) {
+                    umComment.redo();
+                }
+            }
+            catch (CannotRedoException ex) {}
+        }
+        // END KGU#915
     }
     
     @Override
