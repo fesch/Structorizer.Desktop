@@ -218,6 +218,7 @@ package lu.fisch.structorizer.gui;
  *                                      Bugfix #907: Duplicate code in goRun() led to a skipped tutorial step,
  *                                      Issue #569: Diagram scrolling on errorlist selection improved
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective support for actual DiagramControllers
+ *      Kay Gürtzig     2021-01-23/25   Enh. #915: Special editor for Case elements (InputBoxCase) supported
  *
  ******************************************************************************************************
  *
@@ -8055,6 +8056,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#376 2017-07-02: Enh. #389
 		preferences.edtRoot.setText(Element.preImport);
 		// END KGU#376 2017-07-02
+		// START KGU#916 2021-01-25: Enh. #915
+		preferences.chkCaseEditor.setSelected(Element.useInputBoxCase);
+		// END KGU#916 2021-01-25
 		
 		// START KGU#686 2019-03-22: Enh. #56
 		preferences.edtTry.setText(Element.preTry);
@@ -8102,6 +8106,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			Element.caseShrinkByRot = newShrinkThreshold;
 			// END KGU#401 2017-05-18
+			// START KGU#916 2021-01-25: Enh. #915
+			Element.useInputBoxCase = preferences.chkCaseEditor.isSelected();
+			// END KGU#916 2021-01-25
 			// START KGU#376 2017-07-02: Enh. #389
 			Element.preImport   = preferences.edtRoot.getText();
 			// END KGU#376 2017-07-02
@@ -9744,7 +9751,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#363 2017-03-13
 			// START KGU#916 2021-01-24: Enh. #915
-			else if (_elementType.equals("Case")) {
+			else if (_elementType.equals("Case") && Element.useInputBoxCase) {
 				inputbox = new InputBoxCase(getFrame(), true);
 				inputbox.txtText.setVisible(false);
 			}

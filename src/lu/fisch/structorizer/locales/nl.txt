@@ -59,6 +59,7 @@
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
  *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *
  ******************************************************************************************************
  *
@@ -743,6 +744,32 @@ InputBoxRoot.btnAttributes.text=Attributen
 InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram.
 InputBoxRoot.btnAddIncludable.text=Invoegen
 
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Nieuwe @c-statement toevoegen ...
+InputBoxCase.title[getInsertionType():update]=@c-element bewerken ...
+InputBoxCase.lblDiscriminator.text=Keuze-expressie:
+InputBoxCase.lblSelectors.text=Case-constanten:
+InputBoxCase.btnAddLine.tooltip=Regel voor een nieuw geval toevoegen (en de komma-gescheiden lijst van de case-constanten intypen)
+InputBoxCase.btnDelLine.tooltip=Geselecteerd geval-regel verwijderen (in verband met de associeerde tak!)
+InputBoxCase.btnUpLine.tooltip=Geselecteerd geval-regel naar boven verplaatsen
+InputBoxCase.btnDnLine.tooltip=Geselecteerd geval-regel naar beneden verplaatsen
+InputBoxCase.chkMoveBranches.text=Takken meeverplaatsen
+InputBoxCase.chkMoveBranches.tooltip=Als activeerd (gerecommandeerd), de connectie van de takken met de verplaatste regelen wordt bewaardt.
+InputBoxCase.chkDefaultBranch.text=Anderszins-tak:
+InputBoxCase.chkDefaultBranch.tooltip=Bewerkstelligt een anderszins-tak (met de label dat u hiernaast kunt intypen).
+InputBoxCase.txtDefaultLabel.tooltip=De label (hoofding) voor de anderszins-tak, bv. "anders", "anderszins" (mag niet "%" zijn!)
+InputBoxCase.lblComment.text=Commentaar
+InputBoxCase.lblComment.tooltip=Hier commentaar intypen
+InputBoxCase.txtComment.tooltip=Het commentaar van het element.
+InputBoxCase.btnOK.text=OK
+InputBoxCase.btnOK.tooltip=Uw keuze bevestigen.
+InputBoxCase.btnCancel.text=Annuleren
+InputBoxCase.btnCancel.tooltip=Uw keuze annuleren.
+InputBoxCase.chkDisabled.text=Uitgezet (uitvoering en export)
+InputBoxCase.chkBreakpoint.text=Breakpunt
+InputBoxCase.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Een keuze-lijst mag niet leeg zijn!
+
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Attributen van diagram
 AttributeInspector.lblCreatedBy.text=Auteur
@@ -847,6 +874,7 @@ Preferences.lblCase.text=Standaard inhoud
 Preferences.lblCase.tooltip=De standaard inhoud van een @c-statement.
 Preferences.lblCaseRot.text=Min. aftakkingen voor rotatie
 Preferences.lblCaseRot.tooltip=Drempelwaarde voor aantal aftakkingen bij pogingen breedte te beperken door elementen te roteren (0=uit)
+Preferences.chkCaseEditor.text=De speciaal editor voor @c-elementen gebruiken
 Preferences.pnlRoot.border=@m-header
 Preferences.lblRoot.text=Ook koptekst lijst
 Preferences.lblRoot.tooltip=De koptekst van de lijst van @p-diagrammen bij tekenen.

@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-05-18      Issue #405: New option spnCaseRot introduced
  *      Kay Gürtzig     2017-06-08      Issue #405: dimension tuning for Nimbus L&F
  *      Kay Gürtzig     2019-03-22      Enh. #56: Preferences for Try blocks added, Layout revised
+ *      Kay Gürtzig     2021-01-25      Enh. #915: Alternative editor for Case elements offered
  *
  ******************************************************************************************************
  *
@@ -122,6 +123,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JLabel lblCaseRot;
 	protected JSpinner spnCaseRot;
 	// END KGU#401 2017-05-18
+	// START KGU#916 2021-01-25: Enh. #915 Case editor
+	protected JCheckBox chkCaseEditor;
+	// END KGU#916 2021-01-15
 	// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 	protected JPanel pnlTry;
 	protected JLabel lblTry;
@@ -193,6 +197,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		lblCaseRot = new JLabel();
 		spnCaseRot = new JSpinner();
 		// END KGU#401 2017-05-18
+		// START KGU#916 2021-01-25: Enh. #915 Case editor
+		chkCaseEditor = new JCheckBox();
+		// END KGU#916 2021-01-15
 		// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 		pnlTry = new JPanel();
 		lblTry = new JLabel();
@@ -321,6 +328,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlCaseRot.add(spnCaseRot, BorderLayout.EAST);
 						pnlCase.add(pnlCaseRot, BorderLayout.SOUTH);
 						// END KGU#401 2017-05-18
+						// START KGU#916 2021-01-25: Enh. #915
+						chkCaseEditor.setText("Use dedicated editor for CASE elements");
+						pnlCaseRot.add(chkCaseEditor, BorderLayout.SOUTH);
+						// END KGU#916 2021-01-25
 					}
 					pnlLeft.add(pnlCase, BorderLayout.CENTER);
 				}

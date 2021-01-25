@@ -20,10 +20,6 @@
 
 package lu.fisch.structorizer.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -45,6 +41,9 @@ import java.awt.Dimension;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -72,6 +71,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.StringList;
@@ -134,12 +134,12 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		if (scaleFactor < 1) scaleFactor = 1.0;
 		// END Issue #81
 		
-		lblDiscriminator = new JLabel("Choice expression");
-		lblSelectors = new JLabel("Branch selectors");
+		lblDiscriminator = new JLabel("Choice expression:");
+		lblSelectors = new JLabel("Branch selectors:");
 		txtDiscriminator = new JTextField();	// FIXME Length should not be hard-coded
 		txtDefaultLabel = new JTextField();	// FIXME Length should not be hard-coded
-		chkMoveBranches = new JCheckBox("Move branches");
-		chkDefaultBranch = new JCheckBox("Default branch");
+		chkMoveBranches = new JCheckBox("Move associated branches");
+		chkDefaultBranch = new JCheckBox("Default branch:");
 		btnAddLine = new JButton(IconLoader.getIcon(18));
 		btnDelLine = new JButton(IconLoader.getIcon(5));
 		btnUpLine = new JButton(IconLoader.getIcon(19));
@@ -154,7 +154,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		tblSelectors.addPropertyChangeListener("tableCellEditor", this);
 		tblSelectors.setModel(new javax.swing.table.DefaultTableModel(5, 2) {
 			Class<?>[] types = new Class<?> [] {
-				java.lang.Integer.class, java.lang.String.class
+				java.lang.String.class, java.lang.String.class
 			};
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
@@ -269,15 +269,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		this.addComponentListener(new ComponentListener() {
 
 			@Override
-			public void componentResized(ComponentEvent e) {
-				double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
-				if (scaleFactor < 1) scaleFactor = 1.0;
-				int border = (int)(5 * scaleFactor);
-				Dimension dialogSize = getSize();
-				Dimension pnlSize = pnlSelectorControl.getPreferredSize();
-				int diff = dialogSize.width - pnlSize.width - 4 * border;
-				scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(100 * scaleFactor)));
-				adjustTableSize();
+			public void componentResized(ComponentEvent evt) {
+				resizeTableScrollPane();
 			}
 			@Override
 			public void componentMoved(ComponentEvent e) {}
@@ -299,7 +292,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		if (source == btnAddLine) {
 			int nRows = tm.getRowCount();
 			tblSelectors.clearSelection();
-			tm.addRow(new Object[] {0, "???"});
+			tm.addRow(new Object[] {"", "???"});
 			adjustTableSize();
 			tblSelectors.setRowSelectionInterval(nRows, nRows);
 		}
@@ -348,7 +341,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				this.branchOrder = new int[nRows+1];
 				this.branchOrder[nRows] = maxBranch;
 				for (int i = 0; i < nRows; i++) {
-					branchOrder[i] = (Integer)tm.getValueAt(i, 0);
+					branchOrder[i] = 0;
+					String branchIx = (String)tm.getValueAt(i, 0);
+					if (!branchIx.isEmpty()) {
+						branchOrder[i] = Integer.parseInt(branchIx);
+					}
 					StringList selector = StringList.explode(((String)tm.getValueAt(i, 1)), "\\\\n");
 					for (int j = 0; j < selector.count()-1; j++) {
 						String line = selector.get(j);
@@ -366,7 +363,15 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					text.add(lastLine);
 				}
 				if (chkDefaultBranch.isSelected()) {
-					text.add(txtDefaultLabel.getText());
+					String defaultLabel = txtDefaultLabel.getText().trim();
+					if (defaultLabel.isEmpty() || defaultLabel.equals("%")) {
+						StringList defText = StringList.explode(Element.preCase, "\n");
+						defaultLabel = defText.get(defText.count()-1).trim();
+						if (defaultLabel.isEmpty() || defaultLabel.equals("%")) {
+							defaultLabel = "default";
+						}
+					}
+					text.add(defaultLabel);
 				}
 				else {
 					text.add("%");
@@ -408,7 +413,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		DefaultTableModel tm = (DefaultTableModel) tblSelectors.getModel();
 		tm.setRowCount(0);
 		for (i = 1; i < nLines; i++) {
-			tm.addRow(new Object[] {i, text.get(i)});
+			tm.addRow(new Object[] {Integer.toString(i), text.get(i)});
 		}
 		adjustTableSize();
 		if (!forInsertion) {
@@ -417,6 +422,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		}
 		tblSelectors.setRowHeight((int)(tblSelectors.getFontMetrics(txtText.getFont()).getHeight()));
 		tblSelectors.revalidate();
+		
+		valueChanged(null);
+		
 		scrText.setVisible(false);
 	}
 	
@@ -484,14 +492,40 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 	
 	@Override
-    public void fontControl(boolean up)
-    {
-        super.fontControl(up);
-        /*
-         * If we don't do his then the actual drawing canvas of the table might get too
-         * large or too small w.r.t. the table rows.
-         */
-        adjustTableSize();
-    }
+	public void fontControl(boolean up)
+	{
+		super.fontControl(up);
+		/*
+		 * If we don't do his then the actual drawing canvas of the table might get too
+		 * large or too small w.r.t. the table rows.
+		 */
+		adjustTableSize();
+	}
+
+	@Override
+	protected void adjustLangDependentComponents()
+	{
+		super.adjustLangDependentComponents();
+		resizeTableScrollPane();
+	}
+
+	/**
+	 * Adapts the width of the scroll pane associated to {@link #tblSelectors} according
+	 * the current width of the left part of the top pane and the dialog width.<br/>
+	 * This is a precarious workaround for the lacking auto-resizing of a JTable ScrollPane
+	 * within a {@link GridBagLayout}: If the new size is a little to wide then the layout
+	 * will collapse, if it is a little too narrow then it will look ugly.
+	 */
+	private void resizeTableScrollPane() {
+		// FIXME Precarious workaround for a layout defect
+		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		if (scaleFactor < 1) scaleFactor = 1.0;
+		int border = (int)(5 * scaleFactor);
+		Dimension dialogSize = getSize();
+		Dimension pnlSize = pnlSelectorControl.getPreferredSize();
+		int diff = dialogSize.width - pnlSize.width - 4 * border;
+		scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(100 * scaleFactor)));
+		adjustTableSize();
+	}
 
 }

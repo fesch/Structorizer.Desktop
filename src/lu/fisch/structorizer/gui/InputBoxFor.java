@@ -870,16 +870,16 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		}
 	}
 	
-    /**
-     * This method is called on opening after setLocale and before re-packing.
-     * Replaces markers in translated texts.
-     */
-    @Override
-    protected void adjustLangDependentComponents()
-    {
-    	super.adjustLangDependentComponents();
-    	setVisibility();
-    }
+	/**
+	 * This method is called on opening after setLocale and before re-packing.
+	 * Replaces markers in translated texts.
+	 */
+	@Override
+	protected void adjustLangDependentComponents()
+	{
+		super.adjustLangDependentComponents();
+		setVisibility();
+	}
 
 	// END KGU#61 2016-09-23
 	
