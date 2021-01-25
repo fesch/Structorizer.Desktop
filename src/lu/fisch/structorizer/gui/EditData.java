@@ -43,7 +43,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-03-14      Enh. #372: Additional Root fields (author, license)
  *      Kay Gürtzig     2017-05-20      Enh. #372: Structure of the passed license info changed
  *      Kay Gürtzig     2017-07-01      Enh. #389: Attribute diagramRefs added
- *      Kay Gürtzig     2021-01-22      Enh. #714: Additional field showFinally
+ *      Kay Gürtzig     2021-01-22      Enh. #714: Additional field showFinally for Try elements
+ *      Kay Gürtzig     2021-01-24      Enh. #915: Additional field branchOrder for Case elements
  *
  ******************************************************************************************************
  *
@@ -93,6 +94,9 @@ public class EditData {
 	// START KGU#695 2021-01-22: Enh. #714
 	public boolean showFinally = false;
 	// END KGU#695 2021-01-22
+	// START KGU#916 2021-01-24: Enh. #915 New editor subclass for Case elements
+	public int[] branchOrder = null;
+	// END KGU#916 2021-01-24
 	
 	public boolean result = false;
 	

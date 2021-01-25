@@ -4008,6 +4008,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// END KGU#684 2019-06-13
 					// END KGU#363 2017-05-21
+					// START KGU#916 2021-01-24: Enh. #915 We may preserve branch associations now
+					// This must be done before the text is updated!
+					if (element instanceof Case) {
+						((Case)element).reorderBranches(data.branchOrder);
+					}
+					// END KGU#916 2021-01-24
 					if (!(element instanceof Forever))
 					{
 						// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
@@ -9718,7 +9724,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// START KGU#363 2017-03-13: Enh. #372
 			else if (_elementType.equals("Root")) {
-				InputBoxRoot ipbRt = new InputBoxRoot(NSDControl.getFrame(), true);
+				InputBoxRoot ipbRt = new InputBoxRoot(getFrame(), true);
 //				ipbRt.licenseInfo.rootName = root.getMethodName();
 //				ipbRt.licenseInfo.licenseName = _data.licenseName;
 //				ipbRt.licenseInfo.licenseText = _data.licenseText;
@@ -9736,10 +9742,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#376 2017-07-01
 				inputbox = ipbRt;
 			}
-			// END KGU#363 2017-03-13 
+			// END KGU#363 2017-03-13
+			// START KGU#916 2021-01-24: Enh. #915
+			else if (_elementType.equals("Case")) {
+				inputbox = new InputBoxCase(getFrame(), true);
+				inputbox.txtText.setVisible(false);
+			}
+			// END KGU#916 2021-01-24
 			else
 			{
-				inputbox = new InputBox(NSDControl.getFrame(), true);
+				inputbox = new InputBox(getFrame(), true);
 			}
 			// END KGU#3 2015-10-25
 			//Point p = getLocationOnScreen();
@@ -9748,7 +9760,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//inputbox.setLocation(Math.round(p.x+(this.getVisibleRect().width-inputbox.getWidth())/2+this.getVisibleRect().x),
 			//					 Math.round(p.y+(this.getVisibleRect().height-inputbox.getHeight())/2+this.getVisibleRect().y));
 
-			inputbox.setLocationRelativeTo(NSDControl.getFrame());
+			inputbox.setLocationRelativeTo(getFrame());
 
 			// set title (as default)
 			inputbox.setTitle(_data.title);
@@ -9906,6 +9918,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#376 2017-07-01
 			}
 			// END KGU#363 2017-03-13
+			// START KGU#916 2021-01-24: Enh. #915 additional functionality for Case elements
+			else if (inputbox instanceof InputBoxCase) {
+				_data.branchOrder = ((InputBoxCase)inputbox).branchOrder;
+			}
+			// END KGU#916 2021-01-24
 			_data.result = inputbox.OK;
 
 			inputbox.dispose();

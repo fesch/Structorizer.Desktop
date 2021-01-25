@@ -207,6 +207,39 @@ public class Case extends Element implements IFork
 
     }
 
+	// START KGU#916 2021-01-24: Enh. #915 Preserved branch association on text permutations
+	/**
+	 * Rearranges existing branches according to number list {@code newBranchOrder}
+	 * @param newBranchOrder - array of branch numbers i where numbers i > 0 refer to the
+	 *     existing branch i-1 and numbers i = 0 mean new branches, may be {@code null}
+	 *     (in which case no branch reordering will take place)<br/>
+	 *     It is expected that there are no branch numbers > {@code qs.size()} and no
+	 *     duplicate numbers except 0 in {@code newBranchOrder}!
+	 */
+	public void reorderBranches(int[] newBranchOrder) {
+		if (newBranchOrder != null) {
+			// Rearrange the existing branches according to the given array
+			Subqueue[] sqs = new Subqueue[newBranchOrder.length];
+			int nBranches = qs.size();
+			// For performance reasons we do not check for duplicates here!
+			for (int i = 0; i < sqs.length; i++) {
+				int ixBranch = newBranchOrder[i];
+				if (ixBranch > 0 && ixBranch <= nBranches) {
+					sqs[i] = qs.get(ixBranch - 1);
+				}
+				else {
+					sqs[i] = new Subqueue();
+					sqs[i].parent = this;
+				}
+			}
+			qs.clear();
+			for (Subqueue sq: sqs) {
+				qs.add(sq);
+			}
+		}
+	}
+	// END KGU#916 2021-01-24
+
     public Case()
     {
             super();

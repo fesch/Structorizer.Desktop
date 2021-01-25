@@ -24,7 +24,7 @@ package lu.fisch.structorizer.gui;
  *
  *     Author: Bob Fisch
  *
- *     Description: This the dialog that allows editing the properties of any element.
+ *     Description: This is the dialog that allows editing the properties of any element.
  *
  ******************************************************************************************************
  *
@@ -53,6 +53,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-15  Bugfix #885 Focus rule was flawed (ignored suppression of switch text/comments mode)
  *      Kay Gürtzig     2021-01-22  Enh. #714 New checkbox for TRY elements
  *      Kay Gürtzig     2021-01-04  Enh. #914 UndoManagers added to text and comment field.
+ *      Kay Gürtzig     2021-01-25  Enh. #915 New supporting methods for JTables
  *
  ******************************************************************************************************
  *
@@ -71,8 +72,7 @@ import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.Document;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -83,10 +83,10 @@ import lu.fisch.structorizer.elements.Element;
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
 	
-	// START KGU#428 2017-10-06: Issue #430 Modified editor font size should be maintained
-	/** font size for the text fields, 0 = default, may be overridden by keys or from ini */
-	public static float FONT_SIZE = 0;	// Default value
-	// END KGU#428 2017-10-06
+    // START KGU#428 2017-10-06: Issue #430 Modified editor font size should be maintained
+    /** font size for the text fields, 0 = default, may be overridden by keys or from ini */
+    public static float FONT_SIZE = 0;	// Default value
+    // END KGU#428 2017-10-06
 
     public boolean OK = false;
 
@@ -160,10 +160,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#169 2016-07-14
         
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
-		// END KGU#287 2016-11-11
+        double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+        // END KGU#287 2016-11-11
 
-		// show form
+        // show form
         setVisible(false);
         // set action to perform if closed
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -200,16 +200,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#915 2021-01-24: Enh. #914
         Document docText = txtText.getDocument();
         Document docComment = txtComment.getDocument();
-        docText.addUndoableEditListener(new UndoableEditListener() {
-            @Override
-            public void undoableEditHappened(UndoableEditEvent e) {
-                umText.addEdit(e.getEdit());
-            }});
-        docComment.addUndoableEditListener(new UndoableEditListener() {
-            @Override
-            public void undoableEditHappened(UndoableEditEvent e) {
-                umComment.addEdit(e.getEdit());
-            }});
+        docText.addUndoableEditListener(umText);
+        docComment.addUndoableEditListener(umComment);
         // END KGU#915 2021-01-24
         
         // START KGU#294 2016-11-21: Issue #284
@@ -380,7 +372,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#277 2016-10-13
         // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
         gbcPanel1.gridwidth = 8;
-    		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
+        //gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
         // END KGU#3 2015-10-31
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -396,8 +388,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         container.add(pnPanel1, BorderLayout.CENTER);
 
         // START KGU#287 2017-01-09: Bugfix #330  - scaling stuff outsourced to class GUIScaler
-		GUIScaler.rescaleComponents(this);
-		// END KGU#287 2017-01-09
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
@@ -474,8 +466,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         }
         // START KGU#294 2016-11-22: Issue #284
         else if (source == btnFontUp || source == btnFontDown) {
-        	fontControl(source == btnFontUp);
-        	return;
+            fontControl(source == btnFontUp);
+            return;
         }
         // END KGU#294 2016-11-22
         setVisible(false);
@@ -588,20 +580,69 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // START KGU#294 2016-11-22: Issue #284
     public void fontControl(boolean up)
     {
-    	Font font = txtText.getFont();
-    	float increment = 2.0f;
-    	if (!up) {
-    		increment = font.getSize() > 8 ? -2.0f : 0.0f;
-    	}
-    	// START KGU#428 2017-10-06: Enh. #430
-    	//Font newFont = font.deriveFont(font.getSize()+increment);
-    	FONT_SIZE = font.getSize()+increment;
-    	Font newFont = font.deriveFont(FONT_SIZE);
-    	// END KGU#428 2017-10-06
-    	for (JComponent comp: scalableComponents) {
-    		comp.setFont(newFont);
-    	}
+        Font font = txtText.getFont();
+        float increment = 2.0f;
+        if (!up) {
+            increment = font.getSize() > 8 ? -2.0f : 0.0f;
+        }
+        // START KGU#428 2017-10-06: Enh. #430
+        //Font newFont = font.deriveFont(font.getSize()+increment);
+        FONT_SIZE = font.getSize()+increment;
+        Font newFont = font.deriveFont(FONT_SIZE);
+        // END KGU#428 2017-10-06
+        for (JComponent comp: scalableComponents) {
+            comp.setFont(newFont);
+            // START KGU#916 2021-01-25: Enh. #915
+            if (comp instanceof JTable) {
+                ((JTable)comp).setRowHeight(((JTable)comp).getFontMetrics(newFont).getHeight());
+            }
+            // END KGU#915 2021-01-25
+        }
+        this.revalidate();
     }
     // END KGU#294 2016-11-22
+
+    // START KGU#916 2021-01-24: Enh. #915 Support for tables in subclasses
+    /**
+     * Determines the required maximum rendering width for column {@code _colNo} of
+     * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
+     * @param _table - the {@link JTable} to be optimized
+     * @param _colNo - index of the interesting column (typically 0)
+     * @return the determined width 
+     */
+    protected static int optimizeColumnWidth(JTable _table, int _colNo)
+    {
+        int optWidth = 5;
+        for (int row = 0; row < _table.getRowCount(); row++) {
+            TableCellRenderer renderer = _table.getCellRenderer(row, _colNo);
+            Component comp = _table.prepareRenderer(renderer, row, _colNo);
+            optWidth = Math.max(comp.getPreferredSize().width, optWidth);
+        }
+        return optWidth;
+    }
+    
+    /**
+     * Determines the required dimension of the given table {@code _table} in
+     * order to display all rows and columns. If {@code _optimizeCol0Width} is
+     * {@code true} then will adjust the width of the first column.
+     * @param _table - The {@link JTable} to be analysed
+     * @param _optimizeCol0width - whether the first column width is to be
+     *      optimized for the contained values.
+     * @return the required size as {@link Dimension}
+     */
+    protected Dimension getRequiredTableSize(JTable _table, boolean _optimizeCol0width)
+    {
+        int width0 = optimizeColumnWidth(_table, 0);
+        int width1 = optimizeColumnWidth(_table, 1);
+        int height = _table.getRowHeight() * _table.getRowCount();
+        if (_optimizeCol0width) {
+            _table.getColumnModel().getColumn(0).setMaxWidth(width0 + 3);
+            _table.getColumnModel().getColumn(0).setPreferredWidth(width0 + 3);
+        }
+        return new Dimension(width0 + width1 + 10, height);
+    }
+
+
+    // END KGU#916 2021-01-24
 
 }

@@ -130,6 +130,7 @@
  *      Kay Gürtzig         2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig         2020-12-12  Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig         2021-01-23  Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *
  ******************************************************************************************************
  *
@@ -736,12 +737,10 @@ InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
 InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
 InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
-InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
 InputBox.lblText.text[elementType:Try]=Name der Ausnahme-Variablen
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue @a hinzufügen...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue @b-Anweisung hinzufügen...
-InputBox.title[elementType:Case,getInsertionType():insert]=Neue @c hinzufügen...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Neue @i-Schleife hinzufügen...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Neue @h-Schleife hinzufügen...
 InputBox.title[elementType:While,getInsertionType():insert]=Neue @g-Schleife hinzufügen...
@@ -751,7 +750,6 @@ InputBox.title[elementType:Parallel,getInsertionType():insert]=Neues @l-Element 
 InputBox.title[elementType:Try,getInsertionType():insert]=Neuen @q-Block hinzufügen...
 InputBox.title[elementType:Instruction,getInsertionType():update]=@a bearbeiten...
 InputBox.title[elementType:Alternative,getInsertionType():update]=@b-Anweisung bearbeiten...
-InputBox.title[elementType:Case,getInsertionType():update]=@c bearbeiten...
 InputBox.title[elementType:Forever,getInsertionType():update]=@i-Schleife bearbeiten...
 InputBox.title[elementType:Repeat,getInsertionType():update]=@h-Schleife bearbeiten...
 InputBox.title[elementType:While,getInsertionType():update]=@g-Schleife bearbeiten...
@@ -781,7 +779,7 @@ InputBoxFor.btnOK.text=OK
 InputBoxFor.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
-InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
+InputBoxFor.chkDisabled.text=Ausführung und Export unterbunden
 InputBoxFor.chkBreakpoint.text=Haltepunkt
 InputBoxFor.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante
@@ -811,6 +809,32 @@ InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
 InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
 InputBoxRoot.btnAddIncludable.text=Anfügen
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Neue @c hinzufügen ...
+InputBoxCase.title[getInsertionType():update]=@c bearbeiten ...
+InputBoxCase.lblDiscriminator.text=Auswahlausdruck
+InputBoxCase.lblSelectors.text=Fallkonstanten
+InputBoxCase.btnAddLine.tooltip=Zeile für neuen Fall hinzufügen (und die kommagetrennte Liste der Auswahlkonstanten dafür eintragen)
+InputBoxCase.btnDelLine.tooltip=Ausgewählte Fall-Zeile entfernen (zusammen ggf. mit dem zugehörigen Zweig!)
+InputBoxCase.btnUpLine.tooltip=Ausgewählte Fallzeile um eine Position nach oben schieben
+InputBoxCase.btnDnLine.tooltip=Ausgewählte Fallzeile um eine Position nach unten schieben.
+InputBoxCase.chkMoveBranches.text=Zweige mitbewegen
+InputBoxCase.chkMoveBranches.tooltip=Falls ativiert, wird die Beziehung zwischen bestehenden Zweigen und verschobenen Fallzeilen aufrecht erhalten (empfohlen!).
+InputBoxCase.chkDefaultBranch.text=Sonst-Zweig
+InputBoxCase.chkDefaultBranch.tooltip=Hiermit wird dafür gesorgt, dass die Auswahl einen Auffangzweig besitzt (mit der im benachbarten Textfeld eingebbaren Überschrift).
+InputBoxCase.txtDefaultLabel.tooltip=Die Benennung (Überschrift) für den Sonst-Zweig (darf nicht "%" sein!), z.B. "sonst", "andernfalls" o.Ä.
+InputBoxCase.lblComment.text=Kommentar
+InputBoxCase.lblComment.tooltip=
+InputBoxCase.txtComment.tooltip=Der Kommentar zu diesem Auswahlelement.
+InputBoxCase.btnOK.text=OK
+InputBoxCase.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
+InputBoxCase.btnCancel.text=Abbrechen
+InputBoxCase.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxCase.chkDisabled.text=Ausführung und Export unterbunden
+InputBoxCase.chkBreakpoint.text=Haltepunkt
+InputBoxCase.lblBreakTriggerText.text=Halt vor %. Ausführung
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Eine Auswahlliste darf nicht leer sein!
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagrammeigenschaften

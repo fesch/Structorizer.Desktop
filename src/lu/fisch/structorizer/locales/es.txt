@@ -132,6 +132,7 @@
  *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig     2021-01-25  Enh. #915: New class InputBoxCase added
  *
  ******************************************************************************************************
  *
@@ -738,12 +739,10 @@ InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBox.lblText.text[elementType:Alternative]=Por favor ingresa la condición
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Por favor ingresa la condición para salir
-InputBox.lblText.text[elementType:Case]=Ingresa la expresión y las constantes de selección (cada en nueva linea)
 InputBox.lblText.text[elementType:Parallel]=Número de brazos paralelos
 InputBox.lblText.text[elementType:Try]=Nombre de la variable de excepción
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Insertar instrucciones...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Insertar ramificación @b...
-InputBox.title[elementType:Case,getInsertionType():insert]=Insertar ramificación @c...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Insertar bucle @i...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Insertar bucle @h...
 InputBox.title[elementType:While,getInsertionType():insert]=Insertar bucle @g...
@@ -753,7 +752,6 @@ InputBox.title[elementType:Parallel,getInsertionType():insert]=Insertar sección
 InputBox.title[elementType:Try,getInsertionType():insert]=Insertar bloque @q...
 InputBox.title[elementType:Instruction,getInsertionType():update]=Editar @a...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Editar ramificación @b...
-InputBox.title[elementType:Case,getInsertionType():update]=Editar ramificación @c...
 InputBox.title[elementType:Forever,getInsertionType():update]=Editar bucle @i...
 InputBox.title[elementType:Repeat,getInsertionType():update]=Editar bucle @h...
 InputBox.title[elementType:While,getInsertionType():update]=Editar bucle @g...
@@ -813,6 +811,32 @@ InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
 InputBoxRoot.btnAttributes.text=Propiedades
 InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
 InputBoxRoot.btnAddIncludable.text=Añadir
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Insertar ramificación @c...
+InputBoxCase.title[getInsertionType():update]=Editar ramificación @c...
+InputBoxCase.lblDiscriminator.text=Expresión de selección
+InputBoxCase.lblSelectors.text=Constantes de selección
+InputBoxCase.btnAddLine.tooltip=Añadir nueva línea de brazo (y rellenar una lista de constantes selectores, separada por comas)
+InputBoxCase.btnDelLine.tooltip=Quitar la línea de brazo seleccionada
+InputBoxCase.btnUpLine.tooltip=Mover la línea de brazo arriva por una posición
+InputBoxCase.btnDnLine.tooltip=Mover la línea de brazo abajo por una posición
+InputBoxCase.chkMoveBranches.text=Mover los brazos según las líneas
+InputBoxCase.chkMoveBranches.tooltip=Si activo, la asociación entre brazos existentes y las líneas movadas serán mantenidas (¡recomendado!).
+InputBoxCase.chkDefaultBranch.text=Brazo residual
+InputBoxCase.chkDefaultBranch.tooltip=Garantiza que la selección tiene un brazo residual (el nombre del cual puedes entrar en la máscara de entrada vecina).
+InputBoxCase.txtDefaultLabel.tooltip=El nombre para el brazo residual (no debe ser igual a "%"), p.ej. "otro", "en caso demás" o algo así.
+InputBoxCase.lblComment.text=Comment
+InputBoxCase.lblComment.tooltip=
+InputBoxCase.txtComment.tooltip=The comment of the element.
+InputBoxCase.btnOK.text=Aceptar
+InputBoxCase.btnOK.tooltip=Aceptar los cambios.
+InputBoxCase.btnCancel.text=Cancelar
+InputBoxCase.btnCancel.tooltip=Cancelar los cambios.
+InputBoxCase.chkDisabled.text=Desactivado (ejecución y exportación)
+InputBoxCase.chkBreakpoint.text=Breakpoint
+InputBoxCase.lblBreakTriggerText.text=Parar antes de %a ejecución
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Una lista de selectores no debe ser vacía!
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Propiedades del diagrama

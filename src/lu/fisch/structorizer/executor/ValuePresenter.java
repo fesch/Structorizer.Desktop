@@ -353,7 +353,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 	 * Determines the required maximum rendering width for column {@code _colNo} of
 	 * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
 	 * @param _table - the {@link JTable} to be optimized
-	 * @param _colNo - index of the intersting column (typically 0)
+	 * @param _colNo - index of the interesting column (typically 0)
 	 * @return the determined width 
 	 */
 	public static int optimizeColumnWidth(JTable _table, int _colNo) {
