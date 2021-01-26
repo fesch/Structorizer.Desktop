@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-01-09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2018-12-29      Issue #658: Configuration of leave, return, and exit keywords enabled
  *      Kay Gürtzig     2019-03-03      Enh. #327: New button + popup menu for locale-specific keyword sets
+ *      Kay Gürtzig     2021-01-26      Issue #400: Key listener applied to chkIgnoreCase
  *
  ******************************************************************************************************
  *
@@ -502,6 +503,9 @@ public class ParserPreferences extends LangDialog {
 		// START KGU#323 2019-03-03: Enh. #327
 		btnFromLocale.addKeyListener(keyListener);
 		// END KGU#323 2019-03-03
+		// START KGU#393 2021-01-26: Issue #400
+		chkIgnoreCase.addKeyListener(keyListener);
+		// END KGU#393 2021-01-26
 		
 		// add the ACTION-listeners
 		ActionListener actionListener = new ActionListener()

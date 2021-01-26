@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-01-09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
  *      Kay Gürtzig     2017-07-01  Issue #413 FOR-IN value list check made aware of built-in split function
  *      Kay Gürtzig     2019-02-19  Bugfix #684 Fall-back FOR-IN radio button caption was wrong in case preForIn is void
+ *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *
  ******************************************************************************************************
  *
@@ -218,6 +219,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtStartVal.addKeyListener(this);
 		txtEndVal.addKeyListener(this);
 		txtIncr.addKeyListener(this);
+		// START KGU#393 2021-01-26: Issue #400
+		chkTextInput.addKeyListener(this);
+		// END KGU#393 2021-01-26
 		chkTextInput.setSelected(false); 
 		chkTextInput.addItemListener(this);
 		chkTextInput.setToolTipText("If enabled then the content for the above fields will be extracted from the text, otherwise the text will be composed from the field contents.");
@@ -256,6 +260,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		rbCounting.addActionListener(this);
 		rbTraversing.addActionListener(this);
 		// END KGU#254 2016-09-24
+
+		// START KGU#393 2021-01-26: Issue #400
+		rbCounting.addKeyListener(this);
+		rbTraversing.addKeyListener(this);
+		// END KGU#393 2021-01-26
 
 		int lineNo = 1;
 		
@@ -685,12 +694,12 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		boolean startsWithBrace = forInValueList.startsWith("{");
 		boolean endsWithBrace = forInValueList.endsWith("}");
 		if (startsWithBrace && !endsWithBrace)
-		{				
-    			txtParserInfo.setForeground(Color.RED);
-				// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
-    			//lblParserInfo.setText("Value list must end with '}'");
-    			txtParserInfo.setText(msgMissingBrace2.getText());
-				// END KGU#247 2016-09-23
+		{
+			txtParserInfo.setForeground(Color.RED);
+			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+			//lblParserInfo.setText("Value list must end with '}'");
+			txtParserInfo.setText(msgMissingBrace2.getText());
+			// END KGU#247 2016-09-23
 		}
 		else if (!startsWithBrace && endsWithBrace)
 		{				
@@ -753,22 +762,22 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	{
 		if (chkTextInput.isSelected())
 		{
-    		String text = txtText.getText();
-    		String[] forFractions = For.splitForClause(text);
-    		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
-    		setIsTraversingLoop(forFractions.length >= 6 && forFractions[5] != null);
-    		if (isTraversingLoop)
-    		{
-    			//txtVariable.setText(forFractions[0]);
-    			txtVariableIn.setText(forFractions[0]);
-    			forInValueList = forFractions[5];
-    			txtValueList.setText(forInValueList);
-    			checkValueList();
-    			
-    			txtStartVal.setText("");
-    			txtEndVal.setText("");
-    			txtIncr.setText("");
-    		}		
+			String text = txtText.getText();
+			String[] forFractions = For.splitForClause(text);
+			// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
+			setIsTraversingLoop(forFractions.length >= 6 && forFractions[5] != null);
+			if (isTraversingLoop)
+			{
+				//txtVariable.setText(forFractions[0]);
+				txtVariableIn.setText(forFractions[0]);
+				forInValueList = forFractions[5];
+				txtValueList.setText(forInValueList);
+				checkValueList();
+
+				txtStartVal.setText("");
+				txtEndVal.setText("");
+				txtIncr.setText("");
+			}		
 			setVisibility();
 			if (isLoopDataConsistent())
 			{

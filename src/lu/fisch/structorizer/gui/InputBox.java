@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-22  Enh. #714 New checkbox for TRY elements
  *      Kay Gürtzig     2021-01-04  Enh. #914 UndoManagers added to text and comment field.
  *      Kay Gürtzig     2021-01-25  Enh. #915 New supporting methods for JTables
+ *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *
  ******************************************************************************************************
  *
@@ -148,7 +149,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // Components with fonts to be scaled independently 
     protected Vector<JComponent> scalableComponents = new Vector<JComponent>();
     // END KGU#294 2016-11-21
-
+    
     private void create() {
         // set window title
         setTitle("Content");
@@ -175,8 +176,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         btnOK.addActionListener(this);
         btnCancel.addActionListener(this);
         
-        btnOK.addKeyListener(this);		// ???
-        btnCancel.addKeyListener(this);	// ???
+        btnOK.addKeyListener(this);
+        btnCancel.addKeyListener(this);
+        // START KGU#393 2021-01-26: Issue #400
+        btnFontUp.addKeyListener(this);
+        btnFontDown.addKeyListener(this);
+        chkDisabled.addKeyListener(this);
+        chkBreakpoint.addKeyListener(this);
+        chkShowFinally.addKeyListener(this);
+        // END KGU#393 2021-01-26
         txtText.addKeyListener(this);
         // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
         txtText.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
@@ -186,11 +194,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
         txtComment.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
         txtComment.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
-            // END KGU#186 2016-04-26
+        // END KGU#186 2016-04-26
         // START KGU#213 2016-08-01: Enh. #215
         //txtBreakTrigger.addKeyListener(this);
         // END KGU#213 2016-08-01
         addKeyListener(this);
+        // START 
         
         int border = (int)(4 * scaleFactor);
         Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);
@@ -450,6 +459,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         ((GridBagLayout)_panel.getLayout()).setConstraints(chkDisabled, _gbc);
         _panel.add(chkDisabled);
         // END KGU#277 2016-10-13
+        // START KGU#393 2021-01-26: Issue #400
+        chkDisabled.addKeyListener(this);
+        // END KGU#393 2021-01-26
         
         return _gbc.gridx + _gbc.gridwidth;
 	}

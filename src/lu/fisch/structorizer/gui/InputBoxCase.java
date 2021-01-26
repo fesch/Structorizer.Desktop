@@ -182,6 +182,15 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		btnDelLine.addActionListener(this);
 		btnUpLine.addActionListener(this);
 		btnDnLine.addActionListener(this);
+		// START KGU#393 2021-01-26: Issue #400
+		btnAddLine.addKeyListener(this);
+		btnDelLine.addKeyListener(this);
+		btnUpLine.addKeyListener(this);
+		btnDnLine.addKeyListener(this);
+		chkMoveBranches.addKeyListener(this);
+		chkDefaultBranch.addKeyListener(this);
+		// END KGU#393 2021-01-26
+
 		
 		pnlSelectorControl.setLayout(new BoxLayout(pnlSelectorControl, BoxLayout.Y_AXIS));
 		lblSelectors.setAlignmentX(Component.LEFT_ALIGNMENT);

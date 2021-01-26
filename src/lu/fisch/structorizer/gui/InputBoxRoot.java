@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-19      Issue #651: Include list editing now delegated to a JOptionPane
  *      Kay Gürtzig     2019-10-04      Bugfix #757: JTextArea size for include list.
  *      Kay Gürtzig     2020-04-13      Issue #842 Includable selection aid, indentation aligned
+ *      Kay Gürtzig     2021-01-26      Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *
  ******************************************************************************************************
  *
@@ -261,6 +262,10 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 		// START KGU#620 2018-12-19: Issue #651 - Include list now editable via a button
 		btnIncludeList = new JButton(lblIncludeList.getText());
 		btnIncludeList.addActionListener(this);
+		// START KGU#393 2021-01-26: Issue #400
+		btnAttributes.addKeyListener(this);
+		btnIncludeList.addKeyListener(this);
+		// END KGU#393 2021-01-26
 		
 		lblIncludeList.addLangEventListener(this);
 

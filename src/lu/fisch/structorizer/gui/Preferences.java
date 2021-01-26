@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-06-08      Issue #405: dimension tuning for Nimbus L&F
  *      Kay Gürtzig     2019-03-22      Enh. #56: Preferences for Try blocks added, Layout revised
  *      Kay Gürtzig     2021-01-25      Enh. #915: Alternative editor for Case elements offered
+ *      Kay Gürtzig     2021-01-26      Issue #163: Tab and Shift Tab as traversal keys for txtCase
  *
  ******************************************************************************************************
  *
@@ -458,6 +459,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtAltF.addKeyListener(this);
 		edtAlt.addKeyListener(this);
 		txtCase.addKeyListener(this);
+		// START KGU#186 2021-01-26: Issue #163 - tab isn't really needed within the text
+		txtCase.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+		txtCase.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+		// END KGU#186 2021-01-26
 		edtFor.addKeyListener(this);
 		edtWhile.addKeyListener(this);
 		edtRepeat.addKeyListener(this);
@@ -466,12 +471,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		// END KGU#394/KGU#401 2017-11-06
 		// START KGU#394/KGU#376 2017-07-01: Enh. #389, #401
 		edtRoot.addKeyListener(this);
-		// END KGU#376 2017-07-01
+		// END KGU#394/KGU#376 2017-07-01
 		// START KGU#686 2019-03-22: Enh. #56
 		edtTry.addKeyListener(this);
 		edtCatch.addKeyListener(this);
 		edtFinal.addKeyListener(this);
 		// END KGU#686 2019-03-22
+		// START KGU#393/KGU#916 2021-01-26: Issue #400, enh. #915
+		chkCaseEditor.addKeyListener(this);
+		// END KGU#393/KGU#916 2021-01-26
 		addKeyListener(this);
 		
 	}
