@@ -93,7 +93,7 @@ public class Locales {
         {"en", "English"},
         {"de", "German"},
         {"fr", "French"},
-        {"nl", "Hollandish"},
+        {"nl", "Dutch"},
         {"lu", "Luxemburgish"},
         {"es", "Spanish"},
         {"pt_br", "Portuguese (Brazilian)"},

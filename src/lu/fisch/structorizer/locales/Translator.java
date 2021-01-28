@@ -52,6 +52,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-06-07/08   Enh. #726: Pull-down buttons opening new TranslatorRowEditor added
  *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
  *      Kay Gürtzig     2020-01-20      Enh. #801: Key F1 now tries to open the PDF help file if offline
+ *      Kay Gürtzig     2021-01-28      Issue #919 More precise change detection in propertyChange()
  *
  ******************************************************************************************************
  *
@@ -147,6 +148,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
+	private Object editCache;
+	private JTable editTab;
+	private int editRow;
     // END KGU#418 2017-12-11
     
     public static Translator getInstance() 
@@ -1259,8 +1263,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     // START KGU#231 2016-08-04: Issue #220
     public void propertyChange(PropertyChangeEvent pcEv) {
-       // Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
-        if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+       // First identify the position
+        if (pcEv.getPropertyName().equals("tableCellEditor"))
         {
             for (String sectionName: locales.getSectionNames())
             {
@@ -1270,8 +1274,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     int rowNr = table.getSelectedRow();
                     DefaultTableModel tm = (DefaultTableModel) table.getModel();
                     Object val = tm.getValueAt(rowNr, 2);
-                    if (val != null && val instanceof String && !((String)val).trim().isEmpty())
+                    if (pcEv.getNewValue() != null) {
+                        // Seems, we start editing, so cache the previous content
+                        editCache = val;
+                        editTab = table;
+                        editRow = rowNr;
+                        break;
+                    }
+                    // Apparently we ended editing (editor was dropped)
+                    else if (val != null && val instanceof String && /*!((String)val).trim().isEmpty())*/
+                            table == editTab &&
+                            rowNr == editRow &&
+                            !((String)val).equals(editCache))
                     {
+                        // Content seems to have changed, so set flag
                         flagAsUnsaved();
                         break;
                     }

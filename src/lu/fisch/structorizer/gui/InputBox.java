@@ -530,7 +530,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             }
             catch (CannotRedoException ex) {}
         }
-        // END KGU#915
+        // END KGU#915 2021-01-24
     }
     
     @Override
