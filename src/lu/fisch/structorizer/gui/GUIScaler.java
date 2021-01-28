@@ -416,7 +416,7 @@ public class GUIScaler {
 		Object[] keys = keySet.toArray(new Object[keySet.size()]);
 
 		for (Object key : keys) {
-			if (key.toString().toLowerCase().contains("font")) {
+			if (key != null && key.toString().toLowerCase().contains("font")) {
 				Font font = UIManager.getDefaults().getFont(key);
 				if (font != null) {
 					int size = font.getSize();

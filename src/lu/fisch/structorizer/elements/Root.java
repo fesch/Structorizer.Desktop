@@ -4593,18 +4593,10 @@ public class Root extends Element {
 		}
 		// START KGU#836 2020-03-29: Issue #841 In case of a non-subroutine a parameter list should also be wrong
 		else if (!this.isSubroutine() && this.getText().getText().indexOf("(") >= 0) {
-			Locale loc = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
-			Locale loc0 = Locales.getInstance().getDefaultLocale();
 			String key1 = "ElementNames.localizedNames." + (this.isProgram() ? 13 : 15) + ".text";
 			String key2 = "ElementNames.localizedNames.14.text";
-			String elName = loc.getValue("Elements", key1);
-			if (elName.isEmpty()) {
-				elName = loc0.getValue("Elements", key1);
-			}
-			String subName = loc.getValue("Elements", key2);
-			if (subName.isEmpty()) {
-				subName = loc0.getValue("Elements", key2);
-			}
+			String elName = Locales.getValue("Elements", key1, true);
+			String subName = Locales.getValue("Elements", key2, true);
 			addError(_errors, new DetectedError(errorMsg(Menu.error20_3, new String[] {elName, subName}), this), 20);
 		}
 		// END KGU#836 2020-03-29

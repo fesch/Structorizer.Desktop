@@ -4934,7 +4934,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Create new subroutine root if we haven't been able to select an existing one
 			if (referredRoot == null) {
 				if (JOptionPane.showConfirmDialog(getFrame(),
-						Menu.msgCreateSubroutine.getText().replace("%", inclName),
+						Menu.msgCreateIncludable.getText().replace("%", inclName),
 						Menu.msgTitleQuestion.getText(),
 						JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
 					return;
@@ -8961,11 +8961,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (comp instanceof JTabbedPane) {
 			//prefGenName + Menu.
-			Locales locales = Locales.getInstance();
-			String tt = locales.getLocale(locales.getLoadedLocaleName()).getValue("Structorizer", "Menu.menuFileExportCodeFavorite.tooltip");
-			if (tt.isEmpty()) {
-				tt = locales.getDefaultLocale().getValue("Structorizer", "Menu.menuFileExportCodeFavorite.tooltip");
-			}
+			String tt = Locales.getValue("Structorizer", "Menu.menuFileExportCodeFavorite.tooltip", true);
 			((JTabbedPane)comp).setToolTipTextAt(1, prefGeneratorName + " - " + tt);
 		}
 	}
@@ -11418,8 +11414,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @return the set of key patterns for filtering the preference export. may be empty or {@code null}.
 	 */
 	public Set<String> selectPreferencesToExport(String title, HashMap<String, String[]> preferenceKeys) {
-		lu.fisch.structorizer.locales.Locale locale0 = Locales.getInstance().getDefaultLocale();
-		lu.fisch.structorizer.locales.Locale locale = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
 		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
 		// Fill the selection vector to the necessary size
 		for (int j = prefCategorySelection.size(); j < preferenceKeys.size(); j++) {
@@ -11438,10 +11432,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int i = 0;
 		for (String category: preferenceKeys.keySet()) {
 			String msgKey = "Menu." + category + ".text";
-			String caption = locale.getValue("Structorizer", msgKey);
-			if (caption == null || caption.isEmpty()) {
-				caption = locale0.getValue("Structorizer", msgKey);
-			}
+			String caption = Locales.getValue("Structorizer", msgKey, true);
 			int posEllipse = caption.indexOf("...");
 			if (posEllipse > 0) {
 				caption = caption.substring(0, posEllipse).trim();

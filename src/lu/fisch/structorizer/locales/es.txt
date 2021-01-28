@@ -466,7 +466,7 @@ Menu.msgEditSubroutine.text=Editar @o ...
 Menu.msgEditIncludable.text=Editar @p ...
 Menu.msgChooseIncludable.text=Escoje el diagrama @p, que debe ser visitado:
 Menu.msgCreateIncludable.text=¿Crear nuevo diagrama @p «%»?
-Menu.msgCyclicInclusion.text=¡Inclusión ciclica quitada - no hay más diagramas incluuidos!
+Menu.msgCyclicInclusion.text=¡Inclusión ciclica quitada - no hay más diagramas incluidos!
 Menu.ttlMouseScrollUnit.text=Unidad de decplazamiento (rueda del ratón)
 Menu.msgSelectPreferences.text=Preferencias a ser exportados (categorías)
 Menu.msgAllPreferences.text=Todas preferencias
@@ -478,6 +478,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
+Menu.msgVersionHint_3_30_15.text=Este nuevo editor para elementos\ndel tipo @c es opcional.\nPromete mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nSi prefieres el diseño tradicional,\nsin embargo, puedes deshabilitar la opción\n"%1"\nen las %2.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias

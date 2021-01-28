@@ -74,6 +74,7 @@ import javax.swing.table.DefaultTableModel;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.utils.StringList;
 
 /**
@@ -109,6 +110,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	private JPanel pnlSelectorControl;
 	private JScrollPane scrSelectors;
 	private int ixEdit;
+	
+	// FIXME temporary field
+	private boolean tempHintGiven = false;
 
 	/**
 	 * Constructs the dedicated editor for CASE elements 
@@ -477,7 +481,6 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	/**
 	 * Adjusts the actual tables size according to the number of rows and row widths
 	 * Will also ensure a sensible scroll pane width and the horizontal scrollbar
-	 * @param _table TODO
 	 */
 	public void adjustTableSize() {
 		Dimension tabSize = getRequiredTableSize(tblSelectors, true);
@@ -535,6 +538,22 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		int diff = dialogSize.width - pnlSize.width - 4 * border;
 		scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(100 * scaleFactor)));
 		adjustTableSize();
+		// FIXME: Temporary version hint
+		String lastHint = Ini.getInstance().getProperty("versionHint", "");
+		if (!tempHintGiven && lastHint.compareTo("3.30-15") < 0) {
+			tempHintGiven = true;
+			String message = ElementNames.resolveElementNames(
+					Menu.msgVersionHint_3_30_15.getText()
+					.replace("%1", Locales.getValue("Structorizer", "Preferences.chkCaseEditor.text", rootPaneCheckingEnabled))
+					.replace("%2", Locales.getValue("Structorizer", "Preferences.title", true)),
+					null);
+			JOptionPane.showMessageDialog(this.getOwner(),
+					message, this.getClass().getSimpleName(),
+					JOptionPane.INFORMATION_MESSAGE,
+					IconLoader.getIconImage(getClass().getResource("icons/EditorHint_3.30-15.png")));
+				
+			Ini.getInstance().setProperty("versionHint", "3.30-15");
+		}
 	}
-
+	
 }

@@ -475,6 +475,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
+Menu.msgVersionHint_3_30_15.text=Dieser neu entworfene Editor für @c-Elemente\nist optional.\nEr verspricht die Bewahrung des Zusammenhangs\nzwischen Fall-Listen und den zugehörigen\nZweigen beim Umordnen.\n\nWenn Sie den traditionellen Elementeditor\nbevorzugen, dann können Sie das Häkchen bei\n"%1"\nin den %2 entfernen.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)

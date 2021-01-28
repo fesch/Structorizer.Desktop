@@ -826,7 +826,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
 	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
 	// END KGU#893 2020-12-20
-	// START KGU#906 2021-01-18: Enh. #905 temporary message for version 3.30-14
+	// ===================== TEMPORARY VERSION HINTS =======================
+	// START KGU#906 2021-01-18: Enh. #905 FIXME temporary message for version 3.30-14
 	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder("New indicator symbols\n"
 			+ "may remind you\n"
 			+ "that there are Analyser\n"
@@ -834,10 +835,22 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			+ "elements. You may switch\n"
 			+ "them off via:\n%");
 	// END KGU#906 2021-01-18
+	// START KGU#916 2021-01-28: Enh. #915 FIXME temporary version hint for 3.30-15
+	public static final LangTextHolder msgVersionHint_3_30_15 = new LangTextHolder(
+			"This new-designed editor for CASE elements\n"
+			+ "is optional.\n"
+			+ "It promises to maintain the bond between cases\n"
+			+ "and their branches on permutating them.\n\n"
+			+ "If you prefer the traditional element editor,\n"
+			+ "however, then you may unselect the checkbox\n"
+			+ "\"%1\"\n"
+			+ "in the %2.");
+	// END KGU#916 2021-01-28
+	//=======================================================================
+	
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
-
 
 	// START BOB 2020-05-25: restricted mode
 	// START KGU#868 2020-06-03: Bugfix #868 - renamed for clarity
@@ -1943,7 +1956,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#667 2019-02-26
 			// START KGU#770 2021-01-27: Enh. #917
 			if (diagram.canEditSub()) {
-				if (selected instanceof Root) {
+				if (selected != null && selected instanceof Root) {
 					menuEditSummonSub.setText(msgEditIncludable.getText());
 					menuEditSummonSub.setIcon(IconLoader.getIcon(71));
 				}
@@ -2242,6 +2255,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		String[] names = new String[menuItemKeys.length];
 		String localeName = Locales.getInstance().getLoadedLocaleName();
 		Locale locale = Locales.getInstance().getLocale(localeName);
+		Locale locale0 = null;
 		if (locale != null) {
 			for (int i = 0; i < menuItemKeys.length; i++) {
 				String text = locale.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
@@ -2250,7 +2264,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 						text = defaultStrings[i];
 					}
 					else {
-						text = Locales.getInstance().getDefaultLocale().getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
+						if (locale0 == null) {
+							locale0 = Locales.getInstance().getDefaultLocale();
+						}
+						text = locale0.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
 					}
 				}
 				names[i] = text;

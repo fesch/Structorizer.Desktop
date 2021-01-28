@@ -148,9 +148,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
-	private Object editCache;
-	private JTable editTab;
-	private int editRow;
+    // START KGU#919 2021-01-28: Issue #919 More precise change detection
+    private Object editCache;
+    private JTable editTab;
+    private int editRow = -1;
+    // END KGU#919 2021-01-28
     // END KGU#418 2017-12-11
     
     public static Translator getInstance() 
@@ -344,6 +346,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             editor.setVisible(true);
             if (editor.isCommitted()) {
                 table.setValueAt(editor.getText(), row, 2);
+                // START KGU#919 2021-01-28: Issue #919 Sharpened change detection
+                this.flagAsUnsaved();
+                // END KGU#919 2021-01-28
             }
         }
     }
@@ -1273,8 +1278,19 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 {
                     int rowNr = table.getSelectedRow();
                     DefaultTableModel tm = (DefaultTableModel) table.getModel();
-                    Object val = tm.getValueAt(rowNr, 2);
-                    if (pcEv.getNewValue() != null) {
+                    Object editor = pcEv.getNewValue();
+                    // START KGU#919 2021-01-28: Issue #919 Avoid out of bound exception
+                    //Object val = tm.getValueAt(rowNr, 2);
+                    //if (editor == null && val != null && val instanceof String && !((String)val).trim().isEmpty()))
+                    Object val = null;
+                    if (rowNr >= 0) {
+                        /* Otherwise a pulldown button may have been pressed without
+                         * having selected a line. There will be another way to
+                         * find out whether the value will have been changed...
+                         */
+                        val = tm.getValueAt(rowNr, 2);
+                    }
+                    if (editor != null) {
                         // Seems, we start editing, so cache the previous content
                         editCache = val;
                         editTab = table;
@@ -1282,13 +1298,19 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         break;
                     }
                     // Apparently we ended editing (editor was dropped)
-                    else if (val != null && val instanceof String && /*!((String)val).trim().isEmpty())*/
+                    else if (val != null && val instanceof String &&
                             table == editTab &&
                             rowNr == editRow &&
                             !((String)val).equals(editCache))
+                    // END KGU#919 2021-01-28
                     {
                         // Content seems to have changed, so set flag
                         flagAsUnsaved();
+                        // START KGU#919 2021-01-28: Issue #919 change detection
+                        editCache = null;
+                        editTab = null;
+                        editRow = -1;
+                        // END KGU#919 2021-01-28
                         break;
                     }
                 }
@@ -1307,7 +1329,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             button.setBackground(Color.green);
         }
         // START KGU#694 2019-03-28: Issue #712
-        // The save button needs at least as much attention as the locale butto now
+        // The save button needs at least as much attention as the locale button now
         button_save.setBackground(Color.GREEN);
         // END KGU#694 2019 2019-03-28
     }

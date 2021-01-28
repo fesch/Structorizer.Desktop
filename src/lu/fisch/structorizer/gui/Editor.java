@@ -1420,7 +1420,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#667 2019-02-26
 		// START KGU#770 2021-01-27: Enh. #917
 		if (diagram.canEditSub()) {
-			if (selected instanceof Root) {
+			if (selected != null && selected instanceof Root) {
 				popupEditSub.setText(Menu.msgEditIncludable.getText());
 				popupEditSub.setIcon(IconLoader.getIcon(71));
 			}

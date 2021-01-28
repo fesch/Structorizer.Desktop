@@ -192,7 +192,7 @@ Current development version: 3.30-15 (2021-01-28)
 - 15: Enh. #915 New structured editor for CASE elements preserving branches <2>
 - 15: Enh. #917 Menu item to edit subroutines extended to included diagrams <2>
 - 15: Bugfix #918 Missing root type filter in Find&Replace, unwanted checkbox <2>
-- 15: Issue #919 More precise  change detection in Translator
+- 15: Issue #919 More precise modification detection in Translator, undo/redo <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>
