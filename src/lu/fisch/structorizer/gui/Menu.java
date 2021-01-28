@@ -143,6 +143,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
@@ -798,9 +799,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgSetAsPreferredGenerator = new LangTextHolder("You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu?");
 	// END KGU#654 2019-02-15
 	// START KGU#667 2019-02-26: Enh. #689
-	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the subroutine to be edited:");
-	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new subroutine «%»?");
+	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the @o to be edited:");
+	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new @o «%»?");
 	// END KGU#667 2019-02-26
+	// START KGU#770 2021-01-27: Enh. #917
+	public static final LangTextHolder msgEditSubroutine = new LangTextHolder("Edit @o ...");
+	public static final LangTextHolder msgEditIncludable = new LangTextHolder("Edit @p ...");
+	public static final LangTextHolder msgChooseIncludable = new LangTextHolder("Choose the @p to be edited:");
+	public static final LangTextHolder msgCreateIncludable = new LangTextHolder("Create a new @p «%»?");
+	public static final LangTextHolder msgCyclicInclusion = new LangTextHolder("Cyclic include removed - no more diagrams included!");
+	// END KGU#770 2021-01-27
 	// START KGU#699 2019-03-27: Issue #717
 	public static final LangTextHolder ttlMouseScrollUnit = new LangTextHolder("Mouse wheel scrolling unit");
 	// END KGU#699 2019-03-27
@@ -1921,18 +1929,30 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuEditUpgradeTurtle.setEnabled(conditionAny);
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
 			menuEditUpgradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuEditDowngradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditDowngradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#282 2016-10-16
 			
 			// START KGU#602 2018-10-26: Enh. #619
 			menuEditBreakLines.setEnabled(conditionAny);
-			menuEditBreakLines.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditBreakLines.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#602 2018-10-16
 
 			// START KGU#667 2019-02-26 Enh.#689
 			menuEditSummonSub.setEnabled(diagram.canEditSub());
-			menuEditSummonSub.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditSummonSub.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#667 2019-02-26
+			// START KGU#770 2021-01-27: Enh. #917
+			if (diagram.canEditSub()) {
+				if (selected instanceof Root) {
+					menuEditSummonSub.setText(msgEditIncludable.getText());
+					menuEditSummonSub.setIcon(IconLoader.getIcon(71));
+				}
+				else {
+					menuEditSummonSub.setText(msgEditSubroutine.getText());
+					menuEditSummonSub.setIcon(IconLoader.getIcon(21));
+				}
+			}
+			// END KGU#770 2021-01-27
 			
 			// style / type
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());

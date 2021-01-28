@@ -89,6 +89,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the mode display was still flawed
  *      Kay Gürtzig     2021-01-01      Enh. #903: C operator display mode indicator visibility modified
  *      Kay Gürtzig     2021-01-13      Icon for "About ..." menu item replaced
+ *      Kay Gürtzig     2021-01-27      Enh. #917: popupEditSub enhanced to work also for included diagrams
  *
  ******************************************************************************************************
  *
@@ -1417,6 +1418,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#667 2019-02-26 Enh.#689
 		popupEditSub.setEnabled(diagram.canEditSub());
 		// END KGU#667 2019-02-26
+		// START KGU#770 2021-01-27: Enh. #917
+		if (diagram.canEditSub()) {
+			if (selected instanceof Root) {
+				popupEditSub.setText(Menu.msgEditIncludable.getText());
+				popupEditSub.setIcon(IconLoader.getIcon(71));
+			}
+			else {
+				popupEditSub.setText(Menu.msgEditSubroutine.getText());
+				popupEditSub.setIcon(IconLoader.getIcon(21));
+			}
+		}
+		// END KGU#770 2021-01-27
 		popupTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);
 		popupOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);
 		popupEditSub.setVisible(!Element.E_REDUCED_TOOLBARS);

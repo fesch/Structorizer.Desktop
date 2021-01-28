@@ -219,6 +219,7 @@ package lu.fisch.structorizer.gui;
  *                                      Issue #569: Diagram scrolling on errorlist selection improved
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective support for actual DiagramControllers
  *      Kay Gürtzig     2021-01-23/25   Enh. #915: Special editor for Case elements (InputBoxCase) supported
+ *      Kay Gürtzig     2021-01-27      Enh. #917: editSubNSD() (#689) now also applies to referred Includables
  *
  ******************************************************************************************************
  *
@@ -4788,7 +4789,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	// START KGU#667 2019-02-26: Enh. #689
 	/**
-	 * @return true if the selected element is a {@link Call} and a called routine signature can be extracted.
+	 * @return true if the selected element is a {@link Call} and a called
+	 *  routine signature can be extracted or if the selected element is a
+	 *  {@link Root} and its include list is not empty.
 	 * @see #editSubNSD()
 	 */
 	public boolean canEditSub() {
@@ -4798,66 +4801,61 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// We don't want to open an editor in case of a recursive call.
 			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false))));
 		}
+		// START KGU#770 2021-01-27: Enh. #917 Also support Includables
+		else if (selected != null && selected instanceof Root) {
+			canEdit = ((Root)selected).includeList != null
+					&& !((Root)selected).includeList.isEmpty();
+		}
+		// END KGU#770 2021-01-27
 		return canEdit;
 	}
 	
 	/**
-	 * Summons the called subroutine of the selected {@link Call} into a {@link Mainfom} instance,
-	 * possibly opens a new one.
+	 * Summons the called subroutine of the selected {@link Call} into a {@link Mainfom}
+	 * instance, possibly opens a new one. May instead offer a choice list of Includable
+	 * names if the selected element is {@link Root} with non-empty include list an then
+	 * summon the selected Includable in the same way.
 	 * @see #canEditSub()
 	 */
 	public void editSubNSD() {
+		// START KGU#770 2021-01-27: Enh. #917
+		Root referredRoot = null;
+		String targetGroupName = null;	// This will be relevant for a new diagram
+		Collection<Group> myGroups = null;
+		// END KGU#770 2021-01-27
 		if (selected instanceof Call && this.canEditSub()) {
 			Call call = (Call)selected;
 			Function called = call.getCalledRoutine();
-			Root subroutine = null;
+			// START KGU#770 2021-01-27: Enh. #917
+			//Root referredRoot = null;
+			// END KGU#770 2021-01-27
 			// Try to find the subroutine in Arranger
 			if (Arranger.hasInstance()) {
-				Vector<Root> candidates = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), root);
-				// If the finding is unambiguous, get it
-				if (candidates.size() == 1) {
-					subroutine = candidates.get(0);
-				}
-				// Otherwise we try to select the most appropriate among the conflicting ones
-				else if (candidates.size() > 1) {
-					// Open a choice list if the group approach wasn't successful
-					String[] choices = new String[candidates.size()];
-					int i = 0;
-					for (Root cand: candidates) {
-						choices[i++] = cand.getSignatureString(true);
-					}
-					String input = (String) JOptionPane.showInputDialog(null, Menu.msgChooseSubroutine.getText(),
-							Menu.msgTitleQuestion.getText(),
-							JOptionPane.QUESTION_MESSAGE, null, // Use default icon
-							choices, // Array of choices
-							choices[0]); // Initial choice
-					if (input != null && !input.trim().isEmpty()) {
-						for (i = 0; i < choices.length && subroutine != null; i++) {
-							if (input.equals(choices[i])) {
-								subroutine = candidates.get(i);
-							}
-						}
-					}
-				}
+				Vector<Root> candidates = Arranger.getInstance()
+						.findRoutinesBySignature(called.getName(), called.paramCount(), root);
+				// Open a choice list if the group approach alone wasn't successful
+				referredRoot = chooseReferredRoot(candidates, Menu.msgChooseSubroutine.getText());
 			}
-			String targetGroupName = null;	// This will be relevant for a new subroutine
+			// START KGU#770 2021-01-27: Enh. #917
+			//String targetGroupName = null;	// This will be relevant for a new subroutine
+			// END KGU#770 2021-01-27
 			// Create new subroutine root if we haven't been able to select an existing one
-			if (subroutine == null) {
-				if (JOptionPane.showConfirmDialog(NSDControl.getFrame(),
+			if (referredRoot == null) {
+				if (JOptionPane.showConfirmDialog(getFrame(),
 						Menu.msgCreateSubroutine.getText().replace("%", called.getSignatureString()),
 						Menu.msgTitleQuestion.getText(),
 						JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
 					return;
 				}
-				subroutine = new Root();
-				Collection<Group> myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				referredRoot = new Root();
+				myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 				StringList params = new StringList();
 				for (int i = 0; i < called.paramCount(); i++) {
 					String param = called.getParam(i);
 					params.add(param);
 				}
 				// START KGU#744 2019-10-05: Issue #758 - retrieve argument types and care for shared types 
-				StringList argTypes = this.prepareArgTypesForSub(root.getTypeInfo(), myGroups, targetGroupName, subroutine, params);
+				StringList argTypes = this.prepareArgTypesForSub(root.getTypeInfo(), myGroups, targetGroupName, referredRoot, params);
 				String paramSeparator = ", ";
 				for (int i = 0; i < params.count(); i++) {
 					String typeName = argTypes.get(i).replace("@", "array of ");
@@ -4893,32 +4891,86 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						result = ": ???";
 					}
 				}
-				subroutine.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
-				subroutine.setProgram(false);
-				subroutine.setChanged(false);
-				// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
-				if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
-					// If the diagram is a program then create an exclusive group named after the main diagram 
-					if (root.isProgram()) {
-						targetGroupName = root.getMethodName(true);
-						Arranger.getInstance().addToPool(root, this.getFrame(), targetGroupName);
-						myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
-					}
-					else {
-						Arranger.getInstance().addToPool(root, this.getFrame());
-					}
-				}
-				else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == myGroups.size()) {
-					// Parent diagram is arranged but not member of the default group - then its children shouldn't be either
-					targetGroupName = myGroups.iterator().next().getName();
+				referredRoot.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
+				referredRoot.setProgram(false);
+			}
+		// START KGU#770 2021-01-27: Enh. #917
+		}
+		else if (selected instanceof Root && this.canEditSub()) {
+			StringList includeNames = ((Root)selected).includeList;
+			if (root.isInclude() && includeNames.contains(root.getMethodName())) {
+				root.addUndo();
+				includeNames.removeAll(root.getMethodName());
+				if (includeNames.isEmpty()) {
+					JOptionPane.showMessageDialog(getFrame(),
+							Menu.msgCyclicInclusion.getText(),
+							Menu.msgTitleWarning.getText(),
+							JOptionPane.WARNING_MESSAGE);
+					return;
 				}
 			}
+			String inclName = null;
+			if (includeNames.count() > 1) {
+				inclName = (String)JOptionPane.showInputDialog(getFrame(),
+						Menu.msgChooseIncludable.getText(),
+						Menu.msgTitleQuestion.getText(),
+						JOptionPane.QUESTION_MESSAGE, null, // Use default icon
+						includeNames.toArray(),				// Array of choices
+						includeNames.get(0));				// Initial choice
+				if (inclName == null) {
+					return;
+				}
+			}
+			else {
+				inclName = includeNames.get(0);
+			}
+			// Try to find the Includable in Arranger
+			Vector<Root> candidates = Arranger.getInstance()
+					.findIncludesByName(inclName, (Root)selected);
+			// Prevent cyclic inclusion
+			candidates.remove(root);
+			// Open a choice list if the group approach alone wasn't successful
+			referredRoot = chooseReferredRoot(candidates, Menu.msgChooseIncludable.getText());
+			// Create new subroutine root if we haven't been able to select an existing one
+			if (referredRoot == null) {
+				if (JOptionPane.showConfirmDialog(getFrame(),
+						Menu.msgCreateSubroutine.getText().replace("%", inclName),
+						Menu.msgTitleQuestion.getText(),
+						JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+					return;
+				}
+				referredRoot = new Root();
+				referredRoot.setText(inclName);
+				referredRoot.setInclude();
+			}
+			myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+		}
+		if (referredRoot != null) {
+			referredRoot.setChanged(false);
+			// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
+			if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
+				// If the diagram is a program then create an exclusive group named after the main diagram 
+				if (root.isProgram()) {
+					targetGroupName = root.getMethodName(true);
+					Arranger.getInstance().addToPool(root, this.getFrame(), targetGroupName);
+					myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
+				}
+				else {
+					Arranger.getInstance().addToPool(root, this.getFrame());
+				}
+			}
+			else if (Arranger.getInstance().getGroupsFromRoot(root, false).size() == myGroups.size()) {
+				// Parent diagram is arranged but not member of the default group - then its children shouldn't be either
+				targetGroupName = myGroups.iterator().next().getName();
+			}
+		// END KGU#770 2021-01-27
 			// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
 			//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
 			if (
 					subForm == null ||
 					subForm.diagram == null ||
-					subForm.diagram.getRoot() != subroutine && (!subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine))
+					subForm.diagram.getRoot() != referredRoot &&
+					(!subForm.diagram.saveNSD(true) || !subForm.setRoot(referredRoot))
 					)
 			{
 			// END KGU#744 2019-10-05
@@ -4953,16 +5005,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					
 				});
 			}
-			if (subForm.diagram.getRoot() != subroutine) {
-				subForm.setRoot(subroutine);
+			if (subForm.diagram.getRoot() != referredRoot) {
+				subForm.setRoot(referredRoot);
 			}
 			// If it is a new root then add it to Arranger
 			if (targetGroupName != null) {
-				Arranger.getInstance().addToPool(subroutine, subForm, targetGroupName);
+				Arranger.getInstance().addToPool(referredRoot, subForm, targetGroupName);
 			}
 			// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be added to Arranger
 			else {
-				Arranger.getInstance().addToPool(subroutine, subForm);
+				Arranger.getInstance().addToPool(referredRoot, subForm);
 			}
 			Arranger.getInstance().setVisible(true);
 			// END KGU#744 2019-10-05
@@ -4980,7 +5032,48 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (loc.equals(locSub)) {
 				subForm.setLocation(loc.x + 20, loc.y + 20);
 			}
+			// START KGU#770 2021-01-27: Enh. #689, #917
+			// We must of course give the focus to the opened editor
+			subForm.requestFocus();
+			// END KGU#770 2021-01-27
 		}
+	}
+		
+	/**
+	 * Disambiguates the referenced {@link Root} among the {@code candidates}
+	 * with user assistance if necessary.
+	 * @param candidates - the vector of candidate {@link Root}s
+	 * @param rootType - localised name of the rout type
+	 * @return either the selected {@link Root} or {@code null}
+	 */
+	private Root chooseReferredRoot(Vector<Root> candidates, String rootType) {
+		Root referredRoot = null;
+		// If the finding is unambiguous, get it
+		if (candidates.size() == 1) {
+			referredRoot = candidates.get(0);
+		}
+		else if (candidates.size() > 1) {
+			// Open a choice list with full paths and let the user decide
+			String[] choices = new String[candidates.size()];
+			int i = 0;
+			for (Root cand: candidates) {
+				choices[i++] = cand.getSignatureString(true);
+			}
+			String input = (String) JOptionPane.showInputDialog(getFrame(),
+					Menu.msgChooseSubroutine.getText().replace("%", rootType),
+					Menu.msgTitleQuestion.getText(),
+					JOptionPane.QUESTION_MESSAGE, null, // Use default icon
+					choices,	 // Array of choices
+					choices[0]); // Initial choice
+			if (input != null && !input.trim().isEmpty()) {
+				for (i = 0; i < choices.length && referredRoot != null; i++) {
+					if (input.equals(choices[i])) {
+						referredRoot = candidates.get(i);
+					}
+				}
+			}
+		}
+		return referredRoot;
 	}
 	// END KGU#667 2019-02-26
 
