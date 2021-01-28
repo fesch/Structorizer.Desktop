@@ -503,7 +503,7 @@ public class Root extends Element {
 	 * @see #isInclude()
 	 * @see #setInclude(boolean)
 	 */
-	public boolean isDiagramControllerRepresentative()
+	public boolean isRepresentingDiagramController()
 	{
 		return diagrType == DiagramType.DT_INCL_DIAGRCTRL;
 	}
@@ -5858,7 +5858,7 @@ public class Root extends Element {
         // START KGU#911 2021-01-10: Enh. 910 Tolerate a name starting with '$' for a DiagramController
         //if (!Function.testIdentifier(programName, false, null))
         if (!Function.testIdentifier(programName, false, null)
-            && !(this.isDiagramControllerRepresentative()
+            && !(this.isRepresentingDiagramController()
                     && programName.startsWith("$")
                     && Function.testIdentifier(getMethodName(true), false, null)))
         // END KGU#61 2016-03-22

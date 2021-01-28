@@ -2800,7 +2800,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
 		// START KGU#911 2021-01-10: Enh. #910 A DiagramController includable can't have been changed, but...
 		//if (diagr.root.hasChanged())
-		if (diagr.root.hasChanged() && !diagr.root.isDiagramControllerRepresentative())
+		if (diagr.root.hasChanged() && !diagr.root.isRepresentingDiagramController())
 		// END KGU#911 2021-01-1ß
 		{
 			if (form == null || form.getRoot() != diagr.root)
@@ -4922,7 +4922,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		else {
 			for (Root root: roots) {
 				// START KGU#911 2021-01-11: Enh. #910 We don't allow diagram controller roots
-				if (root.isDiagramControllerRepresentative()) {
+				if (root.isRepresentingDiagramController()) {
 					continue;
 				}
 				// END KGU#911 2021-01-11

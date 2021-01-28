@@ -5957,7 +5957,7 @@ public class Executor implements Runnable
 				// END KGU#448 2017-20-28
 				// START KGU#911 2021-01-11: Enh. #910 Special startup support for controllers
 				else if (procName.equals("restart")
-						&& context.root.isDiagramControllerRepresentative()) {
+						&& context.root.isRepresentingDiagramController()) {
 					String ctrlName = context.root.getMethodName().substring(1);
 					for (DiagramController contr: this.diagramControllers) {
 						boolean found = ctrlName.equals(contr.getName().replace(" ", "_"));

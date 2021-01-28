@@ -982,7 +982,7 @@ public abstract class Element {
 	public boolean isImmutable()
 	{
 		Root myRoot = getRoot(this);
-		return myRoot.isDiagramControllerRepresentative();
+		return myRoot.isRepresentingDiagramController();
 	}
 	// END KGU#911 2021-01-19
 

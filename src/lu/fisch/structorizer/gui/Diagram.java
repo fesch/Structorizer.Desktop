@@ -2602,7 +2602,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#320 2017-01-04
 	{
 		// START KGU#911 2021-01-10: Enh. #910 suppress saving
-		if (root.isDiagramControllerRepresentative()) {
+		if (root.isRepresentingDiagramController()) {
 			return true;	// Fake success
 		}
 		// END KGU#911 2021-01-10
@@ -2966,7 +2966,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#320 2017-01-04
 	{
 		// START KGU#911 2021-01-10: Enh. #910 suppress saving
-		if (root.isDiagramControllerRepresentative()) {
+		if (root.isRepresentingDiagramController()) {
 			return true;	// Fake success
 		}
 		// END KGU#911 2021-01-10
@@ -11025,7 +11025,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				this.getFrame(), licInfo);
 		hideComments();	// Issue #143: Hide the current comment popup if visible
 		// START KGU#911 2021-01-10: Enh. #910: We may not allow any change
-		if (_root.isDiagramControllerRepresentative()) {
+		if (_root.isRepresentingDiagramController()) {
 			attrInsp.btnOk.setEnabled(false);
 		}
 		// END KGU#911 2021-01-10

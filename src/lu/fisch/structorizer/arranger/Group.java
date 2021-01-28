@@ -756,7 +756,7 @@ public class Group {
 	 */
 	public boolean isDiagramControllerRepresentative() {
 		for (Root root: this.getSortedRoots()) {
-			if (!root.isDiagramControllerRepresentative()) {
+			if (!root.isRepresentingDiagramController()) {
 				return false;
 			}
 		}
