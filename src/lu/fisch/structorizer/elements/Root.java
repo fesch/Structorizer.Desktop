@@ -159,6 +159,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
  *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
+ *      Kay Gürtzig     2021-01-30      Bugfix #921: Outsourcing repaired w.r.t. enumerators
  *      
  ******************************************************************************************************
  *
@@ -231,7 +232,6 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
-import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
@@ -6242,14 +6242,29 @@ public class Root extends Element {
 				results.add(result);
 			}
 			else if (results.count() > 1 && result == null) {
-				result = "arr" + subroutine.hashCode();
+				// START KGU#921 2021-01-30: Bugfix #921 Minus signs broke id syntax
+				// The hexstring conversion avoids a syntax error because of negative hash code
+				//result = "arr" + subroutine.hashCode();
+				result = "arr" + Integer.toHexString(subroutine.hashCode());
+				// END KGU#921 2021-01-30
 			}
 			// FIXME: There should be a hook for interactive argument reordering
 			// Compose the subroutine signature
 			StringList argSpecs = new StringList();
+			// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+			StringList realArgs = new StringList();
+			// END KGU#921 2021-01-30
 			boolean argTypesFound = false;
 			for (int i = 0; i < args.count(); i++) {
 				String argSpec = args.get(i);
+				// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+				// FIXME actually any primitive constants should be skipped, but their def is to be included
+				String constVal = this.constants.get(argSpec);
+				if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+					continue;
+				}
+				realArgs.add(argSpec);
+				// END KGU#921 2021-01-30
 				String typeDecl = makeTypeDeclaration(argSpec, types);
 				if (!typeDecl.isEmpty()) {
 					argSpec += typeDecl;
@@ -6257,6 +6272,9 @@ public class Root extends Element {
 				}
 				argSpecs.add(argSpec);
 			}
+			// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+			args = realArgs;
+			// END KGU#921 2021-01-30
 			String signature = name + "("
 					+ argSpecs.concatenate(argTypesFound ? "; " : ", ")
 					+ ")";
@@ -6301,7 +6319,10 @@ public class Root extends Element {
 			String type = entry.getTypes().get(0);
 			if (!type.equals("???")) {
 				// START KGU#506 2018-03-14: Issue #522
-				if (entry.isRecord()) {
+				// START KGU#921 2021-01-30: Bugfix #921
+				//if (entry.isRecord()) {
+				if (entry.isRecord() || entry.isEnum()) {
+				// END KGU#921 2021-01-30
 					type = entry.typeName;
 				}
 				// END KGU#506 2018-03-14
@@ -6311,7 +6332,7 @@ public class Root extends Element {
 				}
 				typeDecl += ": " + prefix + type;
 			}
-			// FIXME: Handle record types mor sensibly (how?)
+			// FIXME: Handle record types more sensibly (how?)
 			// We would rather have to replace the sequence by the type name instead
 			typeDecl.replaceAll("(.*?)[$]\\w+(\\{.*?)", "$1record\\{");
 		}

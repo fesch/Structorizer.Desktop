@@ -220,6 +220,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective support for actual DiagramControllers
  *      Kay Gürtzig     2021-01-23/25   Enh. #915: Special editor for Case elements (InputBoxCase) supported
  *      Kay Gürtzig     2021-01-27      Enh. #917: editSubNSD() (#689) now also applies to referred Includables
+ *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
  *
  ******************************************************************************************************
  *
@@ -4643,7 +4644,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/**
-	 * Retrieves the types for subroutine variables {@code subVars} from the typeMap
+	 * Retrieves the types for subroutine variables {@code subVars} from the type map
 	 * {@code parentTypes} of the calling routine and adopts or implants required includables.
 	 * @param parentTypes - type map of the calling routine
 	 * @param groups - Arranger groups of the calling routine (for Includable implantation)
@@ -4654,7 +4655,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	private StringList prepareArgTypesForSub(HashMap<String, TypeMapEntry> parentTypes, Collection<Group> groups,
 			String targetGroupName, Root sub, StringList subVars) {
-		HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+		// START KGU#921 2021-01-30: Bugfix #921 we must ensure topological ordering
+		//HashMap<String, Element> sharedTypesMap = new HashMap<String, Element>();
+		HashMap<String, Element> sharedTypesMap = new LinkedHashMap<String, Element>();
+		// END KGU#921 2021-01-30
 		StringList typeNames = new StringList();
 		for (int i = 0; i < subVars.count(); i++) {
 			String typeName = "";
@@ -4677,18 +4681,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					varType = parentTypes.get(":"+typeName);
 				}
 			}
-			if (varType != null && varType.isRecord()) {
-				Element defining = varType.getDeclaringElement();
-				if (defining != null) {
-					Root typeSource = Element.getRoot(defining); 
-					if (typeSource == root) {
-						sharedTypesMap.putIfAbsent(varType.typeName, defining);
-					}
-					else if (typeSource != null) {
-						sub.addToIncludeList(typeSource);
-					}
-				}
-			}
+			// START KGU#921 2021-01-30: Bugfix #921 Had to be recursive!
+			//if (varType != null && varType.isRecord()) {
+			//	Element defining = varType.getDeclaringElement();
+			//	if (defining != null) {
+			//		Root typeSource = Element.getRoot(defining); 
+			//		if (typeSource == root) {
+			//			sharedTypesMap.putIfAbsent(varType.typeName, defining);
+			//		}
+			//		else if (typeSource != null) {
+			//			sub.addToIncludeList(typeSource);
+			//		}
+			//	}
+			//}
+			gatherSharedTypes(sub, sharedTypesMap, varType, parentTypes);
+			// END KGU#921 2021-01-30
 			typeNames.add(typeName);
 		}
 		if (!sharedTypesMap.isEmpty()) {
@@ -4743,6 +4750,52 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return typeNames;
 	}
 	// END KGU#365 2017-03-19
+
+	// START KGU#921 2021-01-30: Bugfix #921
+	/**
+	 * Recursively gathers the underlying complex (i.e. definition-mandatory)
+	 * types the subroutine {@code sub} depends on together with their defining
+	 * elements if retrievable.
+	 * @param sub - a new subroutine diagram
+	 * @param sharedTypesMap - the map of types assumed necessarily to be shared,
+	 * may be enhanced here
+	 * @param varType - a definitely referred type
+	 * @param parentTypeMap - the type map of the calling diagram,
+	 */
+	private void gatherSharedTypes(Root sub, HashMap<String, Element> sharedTypesMap, TypeMapEntry varType, HashMap<String, TypeMapEntry> parentTypeMap) {
+		if (varType != null) {
+			if (varType.isRecord() || varType.isEnum()) {
+				// Ensure a topological order of types by post-order traversal
+				if (varType.isRecord()) {
+					for (TypeMapEntry subType: varType.getComponentInfo(true).values()) {
+						gatherSharedTypes(sub, sharedTypesMap, subType, parentTypeMap);
+					}
+				}
+				Element defining = varType.getDeclaringElement();
+				if (defining != null) {
+					Root typeSource = Element.getRoot(defining); 
+					if (typeSource == root) {
+						sharedTypesMap.putIfAbsent(varType.typeName, defining);
+					}
+					else if (typeSource != null) {
+						sub.addToIncludeList(typeSource);
+					}
+				}
+			}
+			else if (varType.isArray()) {
+				// Try to fetch the element type
+				String typeDescr = varType.getCanonicalType(true, false);
+				int i = 0;
+				while (i < typeDescr.length() && typeDescr.charAt(i) == '@') i++;
+				typeDescr = typeDescr.substring(i);
+				if (Function.testIdentifier(typeDescr, false, null)
+						&& (varType = parentTypeMap.get(":" + typeDescr)) != null) {
+					gatherSharedTypes(sub, sharedTypesMap, varType, parentTypeMap);
+				}
+			}
+		}
+	}
+	// END KGU#921 2021-01-30
 
 	// START KGU#365 2017-04-14: Enh. #380
 	/** Retrieves all {@link Jump} elements within the span of {@code elements} trying to leave outside the span. */
