@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-15 (2021-01-30)
+Current development version: 3.30-15 (2021-02-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -194,6 +194,7 @@ Current development version: 3.30-15 (2021-01-30)
 - 15: Bugfix #918 Missing root type filter in Find&Replace, unwanted checkbox <2>
 - 15: Issue #919 More precise modification detection in Translator, undo/redo <2>
 - 15: Bugfix #921 Type handling on outsourcing fixed (recursion, enumerators) <2>
+- 15: Bugfix #923 Analyser gave false warnings regarding FOR-IN loops <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

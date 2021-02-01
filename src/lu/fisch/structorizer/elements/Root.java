@@ -160,6 +160,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
  *      Kay Gürtzig     2021-01-30      Bugfix #921: Outsourcing repaired w.r.t. enumerators
+ *      Kay Gürtzig     2021-02-01      Bugfix #923: Analyser did not consider FOR loop variable types on record check
  *      
  ******************************************************************************************************
  *
@@ -3572,6 +3573,11 @@ public class Root extends Element {
     		// CHECK: loop var modified (#1) and loop parameter consistency (#14 new!)
     		if (eleClassName.equals("For"))
     		{
+    			// START KGU#923 2021-02-01: Bugfix #923 FOR loops introduce variables!
+    			if (ele instanceof For) {
+    				ele.updateTypeMap(_types);
+    			}
+    			// END KGU#923 2021-02-01
     			analyse_1_2_14((For)ele, _errors);
     		}
 
@@ -3759,7 +3765,7 @@ public class Root extends Element {
 		// get loop variable (that should be only one!!!)
 		StringList loopVars = getVarNames(ele, true);
 		// START KGU#61 2016-03-21: Enh. #84 - ensure FOR-IN variables aren't forgotten
-		String counterVar = ((For)ele).getCounterVar();
+		String counterVar = ele.getCounterVar();
 		if (counterVar != null && !counterVar.isEmpty())
 		{
 			loopVars.addIfNew(counterVar);
@@ -3787,7 +3793,10 @@ public class Root extends Element {
 				// END KGU#260 2016-09-25
 			}
 
-			if (modifiedVars.contains(loopVars.get(0)))
+			// START KGU#923 2021-02-01: Bugfix #923 This check does not make sense in FOR-IN loops
+			//if (modifiedVars.contains(loopVars.get(0)))
+			if (modifiedVars.contains(loopVars.get(0)) && !ele.isForInLoop())
+			// END KGU#923 201-02-01
 			{
 				//error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.getElement(i));
 				addError(_errors, new DetectedError(errorMsg(Menu.error01_3, loopVars.get(0)), ele), 1);

@@ -201,6 +201,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *      Kay Gürtzig     2021-01-07/10   Enh. #909: New and improved methods to support enumerator value display
  *      Kay Gürtzig     2021-01-11/12   Enh. #910: New mechanisms for DiagramController based on Includables
+ *      Kay Gürtzig     2021-02-01      Issue #923: Manipulations of FOR-IN loop variables are not illegal
  *
  ******************************************************************************************************
  *
@@ -6823,7 +6824,9 @@ public class Executor implements Runnable
 		{
 				element.addToExecTotalCount(1, true);	// For the condition evaluation
 				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-				context.forLoopVars.add(iterVar);
+				// START KGU#923 2021-02-01: Issue #923 - does not cause harm in FOR-IN loops
+				//context.forLoopVars.add(iterVar);
+				// END KGU#923 2021-02-01
 				// END KGU#307 2016-12-12
 
 				// Leave if any kind of Jump statement has been executed
@@ -6881,7 +6884,7 @@ public class Executor implements Runnable
 					leave--;
 				}
 				context.loopDepth--;
-				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+				// START KGU#307 2016-12-12: Issue #307 - Okay to ensure clean level
 				while (forLoopLevel < context.forLoopVars.count()) {
 					context.forLoopVars.remove(forLoopLevel);
 				}

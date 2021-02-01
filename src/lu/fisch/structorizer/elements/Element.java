@@ -122,6 +122,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-10      Enh. #910: New method isImmutable(), synchronisation in writeOut...
  *      Kay Gürtzig     2021-01-22      Bugfix KGU#914 in splitExpressionList(StringList,...)
  *      Kay Gürtzig     2021-01-25      Enh. #915: New Structures preference "useInputBoxCase"
+ *      Kay Gürtzig     2021-02-01      Bugfix #923: Method identifyExprType had ignored qualified names
  *
  ******************************************************************************************************
  *
@@ -3446,6 +3447,21 @@ public abstract class Element {
 		TypeMapEntry typeEntry = null;
 		if (typeMap != null) {
 			typeEntry = typeMap.get(expr);
+			// START KGU#923 2021-02-01: Bugfix #923 qualified names were ignored
+			if (typeEntry == null && Function.testIdentifier(expr, false, ".")) {
+				// Seems to be a record component
+				StringList qualPath = StringList.explode(expr, "[.]");
+				typeEntry = typeMap.get(qualPath.get(0));
+				qualPath.remove(0);
+				while (!qualPath.isEmpty() && typeEntry != null && typeEntry.isRecord()) {
+					typeEntry = typeEntry.getComponentInfo(true).get(qualPath.get(0));
+					qualPath.remove(0);
+				}
+				if (!qualPath.isEmpty()) {
+					 typeEntry = null;
+				}
+			}
+			// END KGU#923 2021-02-01
 		}
 		if (typeEntry != null) {
 			// START KGU#388 2017-07-12: Enh. #423

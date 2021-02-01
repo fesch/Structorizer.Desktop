@@ -68,6 +68,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-11-21      Enh. #739 Enum types considered in type compatibility check for FOR-IN lists
  *      Kay Gürtzig     2021-01-22      Result value for setStepConst(String) introduced
+ *      Kay Gürtzig     2021-02-01      Bugfix #923: Type retrieval for value lists was too weak
  *
  ******************************************************************************************************
  *
