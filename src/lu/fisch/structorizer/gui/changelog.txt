@@ -193,6 +193,7 @@ Current development version: 3.30-15 (2021-02-01)
 - 15: Enh. #917 Menu item to edit subroutines extended to included diagrams <2>
 - 15: Bugfix #918 Missing root type filter in Find&Replace, unwanted checkbox <2>
 - 15: Issue #919 More precise modification detection in Translator, undo/redo <2>
+- 15: Issue #920 Value "Infinity" was not consistently displayed in debugger <2>
 - 15: Bugfix #921 Type handling on outsourcing fixed (recursion, enumerators) <2>
 - 15: Bugfix #923 Analyser gave false warnings regarding FOR-IN loops <2>
 

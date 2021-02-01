@@ -201,7 +201,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *      Kay Gürtzig     2021-01-07/10   Enh. #909: New and improved methods to support enumerator value display
  *      Kay Gürtzig     2021-01-11/12   Enh. #910: New mechanisms for DiagramController based on Includables
- *      Kay Gürtzig     2021-02-01      Issue #923: Manipulations of FOR-IN loop variables are not illegal
+ *      Kay Gürtzig     2021-02-01      Issue #920: Evaluation of "[-]Infinity" to Double.POSITIVE_INFINITY etc.
+ *                                      Issue #923: Manipulations of FOR-IN loop variables are not illegal
  *
  ******************************************************************************************************
  *
@@ -7169,6 +7170,14 @@ public class Executor implements Runnable
 			// END KGU#388 2017-09-13
 		}
 		// END KGU#100/KGU#388 2017-09-29
+		// START KGU#920 2021-02-01: Bugfix #920: "Infinity" should be interpreted
+		else if (tokens.count() == 1 && tokens.get(0).equals("Infinity")) {
+			value = Double.POSITIVE_INFINITY;
+		}
+		else if (tokens.count() == 2 && tokens.get(0).equals("-") && tokens.get(1).equals("Infinity")) {
+			value = Double.NEGATIVE_INFINITY;
+		}
+		// END KGU#920 2021-02-01
 		else
 		{
 			// Possibly our resolution of qualified names went too far. For this case give it some more tries
