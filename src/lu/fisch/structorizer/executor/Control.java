@@ -1104,6 +1104,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgInvalidRecord =
     		new LangTextHolder("«%1» is not a valid record (%2)!");
     // END KGU#568 2018-08-01
+    // START KGU#922 2021-02-01: Bugfix #922 New variable access parsing
+    public final LangTextHolder msgInvalidArrayAccess =
+    		new LangTextHolder("Unexpected array access at «%1» (%2)!");
+    // END KGU#922 2021-02-01
     // START KGU#388 2017-09-14: Enh. #423 - support for record types
     public final LangTextHolder msgInvalidComponent =
     		new LangTextHolder("There is no component «%1» in record type or variable «%2»!");
