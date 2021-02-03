@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-18      Enh. #739: Support for enum types (debugged on 2019-11-30)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *      Kay Gürtzig             2020-04-01      Enh. #348: Parallel code generation refined (result mechanism)
+ *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *
  ******************************************************************************************************
  *
@@ -391,6 +392,9 @@ public class JavaGenerator extends CGenerator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+		tokens.replaceAll("Infinity", "Double.POSITIVE_INFINITY");
+		// END KGU#920 2021-02-03
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			if (Function.testIdentifier(token, false, null)) {

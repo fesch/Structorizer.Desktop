@@ -98,6 +98,10 @@ package lu.fisch.structorizer.generators;
  *
  *      Comments:
  *      
+ *      2021-02-03 - Issue #920 (Kay Gürtzig)
+ *      - At least RealPascal and FreePascal should understand Infinity, so we didn't bother to do something
+ *        to convert this new literal
+
  *      2020-03-22 - File API Issues #314 + #828 + #836 (Kay Gürtzig)
  *      - The introduction of arrangement group export with enh. #828 has further complicated the File API
  *        handling (enh. #314), where code preview and batch code export have also to be considered.

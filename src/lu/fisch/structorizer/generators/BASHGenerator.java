@@ -93,6 +93,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-03-18      Bugfix #839: sticky returns flag mended
  *      Kay Gürtzig         2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *      Kay Gürtzig         2020-03-27/29   Enh. #828: Modifications tpo supporet group export
+ *      Kay Gürtzig         2021-02-03      Issue #920: Transformation for "Infinity" literal
  *
  ******************************************************************************************************
  *
@@ -534,6 +535,10 @@ public class BASHGenerator extends Generator {
 		String varName = "";
 		String origExpr = "";
 		// END KGU#803 2020-02-18
+		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+		// https://unix.stackexchange.com/questions/24721/how-to-compare-to-floating-point-number-in-a-shell-script
+		tokens.replaceAll("Infinity", "INF");
+		// END KGU#920 2021-02-03
 		// Trim the tokens at both ends (just for sure)
 		tokens = tokens.trim();
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing

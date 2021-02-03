@@ -43,6 +43,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.07.12      Canonicalisation of type name "unsigned short" added.
  *      Kay Gürtzig     2019-11-17      Field isCStyle removed, several method signatures accordingly reduced,
  *                                      Enh. #739: Support for enum types
+ *      Kay Gürtzig     2021-02-03      Bugfix #923: Method isNamed() corrected ("unnamed" types are often named "???")
  *
  ******************************************************************************************************
  *
@@ -325,8 +326,14 @@ public class TypeMapEntry {
 			// array[1..6] of ARRAY 9 OF BOOLEAN
 			// double[5][8]
 			// array [2..9, columns] of array of char
+			// array
 			String typeDescr = this.typeDescriptor;
 			Matcher matcher;
+			// START KGU#923 2021-02-04: Bugfix #923 matcher don't catch pure "array" string
+			if (typeDescr.trim().equalsIgnoreCase("array")) {
+				typeDescr = "";	// will result in "???"
+			}
+			// END KGU#923 2021-02-04
 			while ((matcher = ARRAY_PATTERN4.matcher(typeDescr)).matches()) {
 				typeDescr = matcher.replaceAll( "$2").trim();
 			}
@@ -449,10 +456,10 @@ public class TypeMapEntry {
 	 */
 	public TypeMapEntry(String _descriptor, String _typeName, HashMap<String, TypeMapEntry> _owningMap, Element _element, int _lineNo, boolean _initialized, boolean _explicit)
 	{
-		// START KGU#922 2021-01-31: Caution here! Nobody checks for null!
-		if (_typeName == null) {
-			_typeName = "???";
-		}
+		// START KGU#922 2021-01-31: Caution here! Nobody checks for null! Revoked.
+//		if (_typeName == null) {
+//			_typeName = "???";
+//		}
 		// END KGU#922 2021-01-31
 		// START KGU#388 2017-07-12: Enh. #423
 		this.typeName = _typeName;
@@ -897,7 +904,8 @@ public class TypeMapEntry {
 	 */
 	public boolean isNamed()
 	{
-		return this.typeName != null;
+		// START KGU#923 2021-02-03: Bugfix #923
+		return this.typeName != null && !this.typeName.equals("???");
 	}
 	// END KGU#388 2017-07011
 

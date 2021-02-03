@@ -1494,6 +1494,7 @@ Control.msgConstantRecordComponent.text=A record component «%» may not be made
 Control.msgTypeMismatch.text=Value type «%1» is incompatible with type «%2» of variable/component «%3»!
 Control.msgBadValueList.text=<%> cannot be interpreted as value list.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgInvalidArrayAccess.text=Unexpected array access at «%1» (%2)!
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) is out of bounds for array «%3»!
 Control.msgInitializerAsArgument.text=You may not pass an array initializer directly as argument to a built-in function.\nAssign the array to a variable first.
 Control.msgIllegalEmptyLine.text=Empty lines within a @j are illegal!

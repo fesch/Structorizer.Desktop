@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-06/07   Bugfixes #843, #844: Global declarations and record/array types
  *      Kay Gürtzig             2020-11-08/09   Issue #882: Correct translation of random function calls,
  *                                              also: randomize -> srand, toDegrees -> rad2deg, toRadians -> deg2rad
+ *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *
  ******************************************************************************************************
  *
@@ -297,6 +298,9 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+		tokens.replaceAll("Infinity", "INF");
+		// END KGU#920 2021-02-03
 		// START KGU#840 2020-04-06: Bugfix #844 array and record initializers had not been transformed at all
 		if (tokens.contains("{") && tokens.contains("}")) {
 			tokens = transformInitializers(tokens);

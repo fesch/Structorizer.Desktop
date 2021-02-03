@@ -204,6 +204,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-02-01      Issue #920: Evaluation of "[-]Infinity" to Double.POSITIVE_INFINITY etc.
  *                                      Bugfix #922: Corrected handling of mixed substructure in setVar()
  *                                      Issue #923: Manipulations of FOR-IN loop variables are not illegal
+ *      Kay Gürtzig     2021-02-03      Issue #920: Acceptance of infinity as symbol ∞
  *
  ******************************************************************************************************
  *
@@ -1139,9 +1140,9 @@ public class Executor implements Runnable
 	
 	/**
 	 * Unifies the operators, replaces math functions and certain built-in routines and
-	 * converts string comparisons if {@code convertComparisons} is true.<br/>
-	 * NOTE: Argument {@code convertComparisons} should not be true if {@code s} contains
-	 * an entire instruction line rather than just an expression! 
+	 * converts string comparisons if {@code convertComparisons} is {@code true}.<br/>
+	 * <b>NOTE:</b> Argument {@code convertComparisons} should not be {@code true} if
+	 * {@code s} contains an entire instruction line rather than just an expression!
 	 * @param s - the expression or instruction line to be pre-processed
 	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
 	 * @return the converted string
@@ -3232,7 +3233,8 @@ public class Executor implements Runnable
 		// START KGU#580 2018-09-24: Issue #605
 		String varName = target;
 		// END KGU#580 2018-09-24
-		// first add as string (lest we should end with nothing at all...)
+		
+		// First add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		EvalError finalError = null;
@@ -3274,6 +3276,11 @@ public class Executor implements Runnable
 					varName = setVar(target, context.interpreter.get(target), true);					
 				}
 				// END KGU#285 2016-10-16
+				// START KGU#920 2021-02-03: Issue #920: Infinity symbol
+				if ("\u221E".equals(strInput)) {
+					varName = setVar(target, Double.POSITIVE_INFINITY, true);
+				}
+				// END KGU#920 2021-02-03
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
@@ -3743,7 +3750,7 @@ public class Executor implements Runnable
 									tokens.add("]");
 									tokens.add(indexExprs.get(nExprs));
 									throw new EvalError(control.msgInvalidArrayAccess.getText()
-											.replace("%1", tokens.get(0)).replace("%2", typeStr),
+											.replace("%1", tokens.concatenate(null)).replace("%2", typeStr),
 											null, null);
 	// <================================================
 								}
@@ -3753,9 +3760,6 @@ public class Executor implements Runnable
 							Object index = this.evaluateExpression(indexStr, true, false);
 							if (index != null && index instanceof Integer) {
 								if ((int)index < 0) {
-									tokens.add("[ ►");
-									tokens.add(indexStr);
-									tokens.add("]...");
 									throw new EvalError(control.msgIndexOutOfBounds.getText()
 											.replace("%3", tokens.concatenate(null))
 											.replace("%1", indexStr)
@@ -4070,14 +4074,19 @@ public class Executor implements Runnable
 			// Now we actually walk the path (as far as possible)
 			for (int i = 1; i < accessPath.count()-1 && compObject != null; i++) {
 				String access = accessPath.get(i);
+				String typeInfo = compObject.getClass().getSimpleName();
+				if (compObject instanceof HashMap<?,?> &&
+						((HashMap<String, Object>)compObject).containsKey("§TYPENAME§")) {
+					typeInfo = String.valueOf(((HashMap<String, Object>)compObject).get("§TYPENAME§"));
+				}
 				level = i;
 				
 				if (access.startsWith("[")) {
 					// ARRAY: access.sustring(1) t is an index expression
 					if (!(compObject instanceof ArrayList<?>)) {
-						throw new EvalError(control.msgTypeMismatch.getText()
-								.replace("%1", accessPath.subSequence(0, i).concatenate("/"))
-								.replace("%2", String.valueOf(compObject)),
+						throw new EvalError(control.msgInvalidArrayAccess.getText()
+								.replace("%1", composeAccessPath(accessPath, i))
+								.replace("%2", typeInfo),
 								null, null);
 					}
 					objectArray = (ArrayList<Object>)compObject;
@@ -4089,7 +4098,7 @@ public class Executor implements Runnable
 					}
 					else {
 						throw new EvalError(control.msgIndexOutOfBounds.getText()
-								.replace("%3", composeAccessPath(accessPath, i))
+								.replace("%3", composeAccessPath(accessPath, i-1))
 								.replace("%1", access.substring(1))
 								.replace("%2", String.valueOf(index)),
 								null, null);
@@ -4107,23 +4116,21 @@ public class Executor implements Runnable
 				else {
 					// RECORD: it is a component selector
 					if (!(compObject instanceof HashMap<?,?>)) {
-						throw new EvalError(control.msgTypeMismatch.getText()
+						throw new EvalError(control.msgInvalidRecord.getText()
 								.replace("%1", composeAccessPath(accessPath, i))
-								.replace("%2", String.valueOf(compObject)),
+								.replace("%2", typeInfo),
 								null, null);
 					}
 					objectRecord = (HashMap<String, Object>)compObject;
-					if (targetType == null) {
-						Object typeName = objectRecord.get("§TYPENAME§");
-						if (typeName != null && typeName instanceof String) {
-							targetType = this.identifyRecordType((String)typeName, true);
-						}
+					Object typeName = objectRecord.get("§TYPENAME§");
+					if (typeName instanceof String) {
+						targetType = this.identifyRecordType((String)typeName, true);
 					}
 					if (targetType == null || !targetType.isRecord()
 							|| (targetType = targetType.getComponentInfo(true).get(access)) == null) {
 						throw new EvalError(control.msgInvalidComponent.getText()
-								.replace("%1", composeAccessPath(accessPath, i))
-								.replace("%2", String.valueOf(compObject)),
+								.replace("%1", access)
+								.replace("%2", composeAccessPath(accessPath, i-1)),
 								null, null);
 					}
 					compObject = objectRecord.get(access);
@@ -4132,17 +4139,29 @@ public class Executor implements Runnable
 				}
 			}
 			if (compObject == null) {
-				// FIXME Find a better description
-				throw new EvalError(control.msgInvalidComponent.getText()
-						.replace("%1", accessPath.get(level))
-						.replace("%2", composeAccessPath(accessPath, level-1)),
+				throw new EvalError(control.msgInvalidExpr.getText()
+						.replace("%2", composeAccessPath(accessPath, level)),
 						null, null);
 			}
 
 			// Now we can eventually do the assignment
 			String access = accessPath.get(accessPath.count()-1);
 			try {
-				if ((arrayWanted = access.startsWith("[")) && compObject instanceof ArrayList<?>) {
+				if (arrayWanted = access.startsWith("[")) {
+					if (!(compObject instanceof ArrayList<?>)) {
+						String typeInfo = "null";
+						if (compObject instanceof HashMap<?,?> &&
+								((HashMap<String, Object>)compObject).containsKey("§TYPENAME§")) {
+							typeInfo = String.valueOf(((HashMap<String, Object>)compObject).get("§TYPENAME§"));
+						}
+						else if (compObject != null){
+							typeInfo = compObject.getClass().getSimpleName();
+						}
+						throw new EvalError(control.msgInvalidArrayAccess.getText()
+								.replace("%1", composeAccessPath(accessPath, accessPath.count()-1))
+								.replace("%2", typeInfo),
+								null, null);
+					}
 					objectArray = (ArrayList<Object>)compObject;
 					int oldSize = objectArray.size();
 					int index = Integer.parseInt(access.substring(1));
@@ -4158,9 +4177,16 @@ public class Executor implements Runnable
 	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 					objectArray.set(index, content);
 				}
-				else if (!arrayWanted && compObject instanceof HashMap<?,?>
-					&& targetType != null && targetType.isRecord()
-					&& targetType.getComponentInfo(true).containsKey(access)) {
+				else {
+					if (!(compObject instanceof HashMap<?,?>)
+							|| targetType == null
+							|| !targetType.isRecord()
+							|| !targetType.getComponentInfo(true).containsKey(access)) {
+						throw new EvalError(control.msgInvalidComponent.getText()
+								.replace("%1", access)
+								.replace("%2", composeAccessPath(accessPath, accessPath.count()-2)),
+								null, null);
+					}
 					objectRecord = (HashMap<String, Object>)compObject;
 					targetType = targetType.getComponentInfo(true).get(access);
 					checkTypeCompatibility(composeAccessPath(accessPath, accessPath.count()-1),

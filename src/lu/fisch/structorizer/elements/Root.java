@@ -161,6 +161,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
  *      Kay Gürtzig     2021-01-30      Bugfix #921: Outsourcing repaired w.r.t. enumerators
  *      Kay Gürtzig     2021-02-01      Bugfix #923: Analyser did not consider FOR loop variable types on record check
+ *      Kay Gürtzig     2021-02-03      Bugfix #924: Record component names falsely detected as uninitialized variables
+ *                                      Issue #920: `Infinity' introduced as literal
  *      
  ******************************************************************************************************
  *
@@ -686,9 +688,13 @@ public class Root extends Element {
 	// END KGU#502 2018-03-12
 	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
-	// Pre-processed parser preference keywords to match them against tokenized strings
+	/** Pre-processed parser preference keywords to match them against tokenized strings */
 	private static Vector<StringList> splitKeywords = new Vector<StringList>();
-	private String[] operatorsAndLiterals = {"false", "true", "div"};
+	// START KGU#920 2021-02-02: Issue #920 Infinity allowed as literal
+	/** Specific names not to be mistaken as uninitialized variables in unified texts */
+	//private String[] operatorsAndLiterals = {"false", "true", "div"};
+	private String[] operatorsAndLiterals = {"false", "true", "Infinity", "div"};
+	// END KGU#920 2021-02-03
 	// END KGU#163 2016-03-25
 
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
@@ -2729,8 +2735,15 @@ public class Root extends Element {
 		{
 			// Look for indexed variable as assignment target, get the indices in this case
 			String s = tokens.subSequence(0, asgnPos).concatenate();
-			if (s.indexOf("[") >= 0)
+			// START KGU#924 2021-02-03: Bugfix #924 component ids sometimes blamed
+			//if (s.indexOf("[") >= 0)
+			int posLBrack = s.indexOf("[");
+			if (posLBrack >= 0 && s.indexOf("]", posLBrack+1) >= 0)
+			// END KGU#924 2021-02-03
 			{
+				// START KGU#924 2021-02-03: Bugfix #924 We must cut off the tail
+				s = s.substring(posLBrack, s.lastIndexOf("]")+1);
+				// END KGU#924 2021-02-03
 				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
 				//s = r.replaceAll(s);
 				s = INDEX_PATTERN.matcher(s).replaceAll("$2");
@@ -2764,12 +2777,21 @@ public class Root extends Element {
 			for (int j = 1; j < items.count(); j++) {
 				StringList itemTokens = Element.splitLexically(items.get(j), true);
 				String s = "";
-				if (itemTokens.indexOf("[", 1) >= 0)
+				// START KGU#924 2021-02-03: Bugfix #924 component ids sometimes blamed
+				//if (itemTokens.indexOf("[", 1) >= 0)
+				int posLBrack = itemTokens.indexOf("[", 1);
+				if (posLBrack >= 0 && itemTokens.indexOf("]", posLBrack+1) >= 0)
+				// END KGU#924 2021-02-03
 				{
 					//System.out.print("Reducing \"" + s);
 					//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
 					//s = r.replaceAll(s);
-					s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					// START KGU#924 2021-02-03: Bugfix #924 We must cut off the tail
+					//s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					s = INDEX_PATTERN.matcher(
+							itemTokens.concatenate(null, posLBrack, itemTokens.lastIndexOf("]")+1))
+							.replaceAll("$2");
+					// END KGU#924 2021-02-03
 					//System.out.println("\" to \"" + s + "\"");
 				}
 				// Only the indices are relevant here
@@ -4811,7 +4833,7 @@ public class Root extends Element {
 	 * @param _ele - the originating element
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
-	 * @param _tokens - tokens of the current lne, ideally without any instruction keywords
+	 * @param _tokens - tokens of the current line, ideally without any instruction keywords
 	 */
 	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
 			HashMap<String, TypeMapEntry> _types, StringList _tokens) {

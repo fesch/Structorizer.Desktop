@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *                                          array initializers and record types hadn't been handled correctly
  *      Kay Gürtzig         2020-04-08      Issue #828 modifications supporting group export
  *      Kay Gürtzig         2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
+ *      Kay Gürtzig         2021-02-03      Issue #920: Attempt to transform "Infinity" literal
  *
  ******************************************************************************************************
  *
@@ -293,6 +294,13 @@ public class BasGenerator extends Generator
 		tokens.replaceAll("[", "(");
 		tokens.replaceAll("]", ")");
 		tokens.replaceAll("div", "/");
+		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+		// FIXME: Will only work with VisualBasic, others might try with 1.0/0.0
+		if (!this.optionCodeLineNumbering())
+		{
+			tokens.replaceAll("Infinity", "Double.PositiveInfinity");
+		}
+		// END KGU#920 2021-02-03
 		// START KGU#150 2016-04-04: Handle Pascal ord and chr function
 		int pos = - 1;
 		while ((pos = tokens.indexOf("ord", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))

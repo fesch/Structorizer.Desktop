@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-15      KGU#801: Correction in generateParallelThreadWorkers() (had inflated the header)
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *      Kay Gürtzig             2020-03-27      Enh. #828: Group export support accomplished
+ *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *
  ******************************************************************************************************
  *
@@ -427,6 +428,15 @@ public class CSharpGenerator extends CGenerator
 		// END KGU#501 2018-02-22
 	}
 	// END KGU#332 2017-04-14
+	
+	// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		tokens.replaceAll("Infinity", "double.PositiveInfinity");
+		return super.transformTokens(tokens);
+	}
+	// END KGU#920 2021-02-03
 
 	// START KGU#784 2019-12-02
 	@Override

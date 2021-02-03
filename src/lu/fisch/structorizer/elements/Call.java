@@ -32,20 +32,20 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.13      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Kay Gürtzig     2015.01.03      Enh. #87 (KGU#122) -> getIcon()
- *      Kay Gürtzig     2015.03.01      Bugfix #97 (KGU#136) Steady selection mechanism
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
- *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
- *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
- *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
- *      Kay Gürtzig     2017.04.11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
+ *      Bob Fisch       2007-12-13      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-12      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2015-01-03      Enh. #87 (KGU#122) -> getIcon()
+ *      Kay Gürtzig     2015-03-01      Bugfix #97 (KGU#136) Steady selection mechanism
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-07      Enh. #188: New copy constructor to support conversion (KGU#199)
+ *      Kay Gürtzig     2016-07-19      Enh. #160: New method getSignatureString()
+ *      Kay Gürtzig     2016-07-30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017-02-20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
+ *      Kay Gürtzig     2017-04-11      Enh. #389: Support for "import" flavour. Withdrawn 2017-ß07-01 
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
  *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
@@ -334,14 +334,14 @@ public class Call extends Instruction {
 			if (myRoot.getSignatureString(false).equals(signature)) {
 				typeSpec = myRoot.getResultType();
 			}
-			// START KGU#676 219-03-31: Issue #696 batch export
+			// START KGU#676 2019-03-31: Issue #696 batch export
 			//else if (Arranger.hasInstance()) {
 			//	Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
 			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
 				IRoutinePool pool = myRoot.specialRoutinePool;
 				if (pool == null) { pool = Arranger.getInstance(); }
 				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
-			// END KGU#676 2019.03-31
+			// END KGU#676 2019-03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();
 				}

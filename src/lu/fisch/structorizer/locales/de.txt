@@ -1494,6 +1494,7 @@ Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht 
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
 Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgInvalidArrayAccess.text=Unerwarteter Array-Zugriff bei «%1» (%2)!
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
 Control.msgInitializerAsArgument.text=Ein Array-Initialisierer kann nicht direkt als Argument an eine eingebaute Funktion übergeben werden.\nWeisen Sie das Array vorher einer Variablen zu und übergeben Sie diese.
 Control.msgIllegalEmptyLine.text=Illegale leere Zeile in einem @j!

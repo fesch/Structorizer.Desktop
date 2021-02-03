@@ -1478,6 +1478,7 @@ Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura 
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
+Control.msgInvalidArrayAccess.text=¡Intento inesperado de accesar a «%1» con índice (%2)!
 Control.msgIndexOutOfBounds.text=¡Indice «%1» (%2) está fuera de los márgines del array «%3»!
 Control.msgInitializerAsArgument.text=Un inicialisador de array ne se puede pasar diréctamente como parámetro a una función interna.\nPon el array anteriórmente en una variable y pasa ésa pués.
 Control.msgBadValueListDetails.text=Detalles: %
