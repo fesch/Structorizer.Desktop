@@ -7720,6 +7720,10 @@ public class Executor implements Runnable
 		// END KGU#920 2021-02-01
 		else
 		{
+			// START KGU#920 2021-02-04: Bugfix #920: "Infinity" should be interpreted
+			tokens.replaceAll("Infinity", "Double.POSITIVE_INFINITY");
+			// END KGU#920 2021-02-04
+			
 			// Possibly our resolution of qualified names went too far. For this case give it some more tries
 			// with partially undone conversions. This should not noticeably slow down the evaluation in case
 			// no error occurs.
