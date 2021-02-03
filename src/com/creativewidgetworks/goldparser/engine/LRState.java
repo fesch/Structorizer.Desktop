@@ -19,6 +19,7 @@ import com.creativewidgetworks.goldparser.engine.enums.LRActionType;
  * @author Ralph Iden (http://www.creativewidgetworks.com), port to Java
  * @version 5.0.0
  */
+@SuppressWarnings("serial")
 public class LRState extends ArrayList<LRAction> {
     
     public static final int INITIAL_STATE = 0;

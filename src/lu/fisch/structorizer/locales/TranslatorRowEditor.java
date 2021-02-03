@@ -79,7 +79,6 @@ import javax.swing.text.Document;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
 import lu.fisch.structorizer.gui.ElementNames;
 import lu.fisch.structorizer.gui.IconLoader;
