@@ -198,6 +198,7 @@ Current development version: 3.30-15 (2021-02-04)
 - 15: Bugfix #922 Executor failed to interpret mixed array / record access <2>
 - 15: Bugfix #923 Analyser gave false warnings regarding FOR-IN loops <2>
 - 15: Bugfix #924 Erratic Analyser warnings on mixed record/array access paths <2>
+- 15: Bugfix #925 Analyser always complained about constant record arguments <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

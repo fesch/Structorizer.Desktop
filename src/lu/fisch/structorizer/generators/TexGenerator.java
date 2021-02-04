@@ -733,7 +733,7 @@ public class TexGenerator extends Generator {
 					code.add(indent2 + "\\begin{declaration}[Parameters:]");
 					for (Param param: params) {
 						code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
-								"}}{type: \\("+ transform(param.getType()) +"\\)}");
+								"}}{type: \\("+ transform(param.getType(true)) +"\\)}");
 					}
 					code.add(indent2 + "\\end{declaration}");
 				}
