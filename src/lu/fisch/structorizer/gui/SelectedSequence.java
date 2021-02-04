@@ -59,12 +59,10 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.LinkedHashMap;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
-import lu.fisch.structorizer.elements.DetectedError;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.IElementSequence;
 import lu.fisch.structorizer.elements.IElementVisitor;
