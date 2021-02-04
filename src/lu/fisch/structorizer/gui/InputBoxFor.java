@@ -163,6 +163,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	
     // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
     // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+    @Override
     protected void setPreferredSize(double scaleFactor) {
         setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(400 * scaleFactor));
     }

@@ -141,7 +141,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
     // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
     protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));        
+        setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));
     }
     // END KGU#287 2016-11-02
     
