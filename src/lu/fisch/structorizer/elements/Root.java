@@ -5785,6 +5785,11 @@ public class Root extends Element {
     {
         structorizerKeywords.clear();
         structorizerKeywords.add("global");
+        // START KGU#920 2021-02-04: Enh. #920 Infinity is now a literal
+        structorizerKeywords.add("Infinity");
+        structorizerKeywords.add("true");
+        structorizerKeywords.add("false");
+        // END KGU#920 2021-02-04
         for (String keyword: CodeParser.getAllProperties()) {
             structorizerKeywords.add(keyword);
         }

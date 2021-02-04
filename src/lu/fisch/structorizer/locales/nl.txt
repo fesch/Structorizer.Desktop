@@ -527,7 +527,7 @@ AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
 AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante gehele getallen zijn.
 AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
-AnalyserPreferences.chkDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
+AnalyserPreferences.lblDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
 AnalyserPreferences.okButton.text=OK
 
 
