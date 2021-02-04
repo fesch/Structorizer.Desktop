@@ -221,6 +221,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-23/25   Enh. #915: Special editor for Case elements (InputBoxCase) supported
  *      Kay Gürtzig     2021-01-27      Enh. #917: editSubNSD() (#689) now also applies to referred Includables
  *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
+ *      Kay Gürtzig     2021-02-04      Enh. #926: Element selection now scrolls to the related Analyser warnings
  *
  ******************************************************************************************************
  *
@@ -1246,6 +1247,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#87 2015-11-23
 				}
 				//redraw();
+				// START KGU#926 2021-02-04: Enh. #926
+				scrollErrorListToSelected();
+				// END KGU#926 2021-02-04
 			}
 			// START KGU#180 2016-04-15: Bugfix #165 - detection didn't work properly
 			else /* ele == null */
@@ -1292,6 +1296,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (NSDControl != null) NSDControl.doButtons();
 		}
 	}
+	
+	// START KGU#926 2021-02-04: Enh. #926
+	/**
+	 * Scrolls the errorlist to its first entry that is related to an element
+	 * of the selection set, if {@link #selected} is not {@code null} and
+	 * Analyser mode is active
+	 */
+	private void scrollErrorListToSelected() {
+		if (selected != null && Element.E_ANALYSER) {
+			HashMap<Element, Vector<DetectedError>> errorMap =
+					selected.getRelatedErrors(false);
+			// The errorMap will not contain more than one DetectedError object
+			for (Vector<DetectedError> relatedErrors: errorMap.values()) {
+				DetectedError err = relatedErrors.firstElement();
+				int ix = root.errors.indexOf(err);
+				if (ix >= 0) {
+					errorlist.ensureIndexIsVisible(ix);
+				}
+			}
+		}
+	}
+	// END KGU#926 2021-02-04
 
 	@Override
 	public void mouseReleased(MouseEvent e)
@@ -10864,6 +10890,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			redraw(selected);
 			// END KGU#177 2016-04-14
 
+			// START KGU#926 2021-02-04: Enh. #926
+			this.scrollErrorListToSelected();
+			// END KGU#926 2021-02-04
 			// START KGU#705 2019-09-24: Enh. #738
 			highlightCodeForSelection();
 			// END KGU#705 2019-09-24

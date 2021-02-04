@@ -1623,7 +1623,6 @@ public class Instruction extends Element {
 		}
 		return errorMap;
 	}
-	
 	// END KGU#906/KGU#926 2021-02-04
 
 }

@@ -34,17 +34,17 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Kay Gürtzig     2015.11.23      First issue (KGU#87).
- *      Kay Gürtzig     2016.01.22      Bugfix #114 for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
- *      Kay Gürtzig     2016.03.01/02   Bugfix #79 (KGU#136) for reliable selection.
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
- *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
- *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
- *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
- *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
- *      Kay Gürtzig     2018.10.26      Enh. #619: New method getMaxLineLength(boolean) implemented
+ *      Kay Gürtzig     2015-11-23      First issue (KGU#87).
+ *      Kay Gürtzig     2016-01-22      Bugfix #114 for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016-03-01/02   Bugfix #79 (KGU#136) for reliable selection.
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-06      Bugfix in method removeElement() for enh. #188 (element conversion)
+ *      Kay Gürtzig     2016-07-21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
+ *      Kay Gürtzig     2016-10-13      Enh. #277: Method setDisabled(boolean) implemented
+ *      Kay Gürtzig     2016-11-17      Bugfix #114: isExecuted() revised (signatures too)
+ *      Kay Gürtzig     2017-03-26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
+ *      Kay Gürtzig     2018-10-26      Enh. #619: New method getMaxLineLength(boolean) implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2020-05-02      Issue #866: Additional fields and methods to support revised selection expansion
  *
@@ -59,10 +59,12 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.LinkedHashMap;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
+import lu.fisch.structorizer.elements.DetectedError;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.IElementSequence;
 import lu.fisch.structorizer.elements.IElementVisitor;
@@ -790,4 +792,5 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return this.lastActionBelow;
 	}
 	// END KGU#866 2020-05-02
+	
 }
