@@ -32,25 +32,25 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.12      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
- *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
+ *      Bob Fisch       2007-12-12      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
  *                                      Enh. #87 (KGU#122): Modification of collapsed text, getIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
- *      Kay Gürtzig     2016.12.12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
- *      Kay Gürtzig     2017.11.01      Bugfix #447: End-standing backslashes suppressed for display and analysis
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-10-13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016-12-12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
+ *      Kay Gürtzig     2017-11-01      Bugfix #447: End-standing backslashes suppressed for display and analysis
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *
  ******************************************************************************************************

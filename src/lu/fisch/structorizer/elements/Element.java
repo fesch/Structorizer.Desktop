@@ -124,6 +124,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-25      Enh. #915: New Structures preference "useInputBoxCase"
  *      Kay Gürtzig     2021-02-01/03   Bugfix #923: Method identifyExprType had ignored qualified names
  *      Kay Gürtzig     2021-02-03      Issue #920: Highlighting and tokenizing support for "Infinity" and '∞'
+ *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Improved drawing of Analyser flags and backlink support
  *
  ******************************************************************************************************
  *
@@ -2347,35 +2348,77 @@ public abstract class Element {
 	 */
 	protected void drawWarningSignOnError(Canvas _canvas, Rect _rect) {
 		if (E_ANALYSER && E_ANALYSER_MARKER && _canvas.isSetFlag(CANVAS_FLAGNO_ERROR_CHECK)) {
-			Root myRoot = getRoot(this);
-			if (myRoot != null && myRoot.errors != null && !myRoot.errors.isEmpty()) {
-				for (DetectedError error: myRoot.errors) {
-					if (this == error.getElement()) {
-						Color oldCol = _canvas.getColor();
-						if (error.isWarning()) {
-							_canvas.setColor(Color.RED);
+			// START KGU#906 2021-02-04: Bugfix for #905 - consider collapsed case
+//			Root myRoot = getRoot(this);
+//			if (myRoot != null && myRoot.errors != null && !myRoot.errors.isEmpty()) {
+//				for (DetectedError error: myRoot.errors) {
+//					if (this == error.getElement()) {
+//						Color oldCol = _canvas.getColor();
+//						if (error.isWarning()) {
+//							_canvas.setColor(Color.RED);
+//						}
+//						else {
+//							_canvas.setColor(Color.BLUE);
+//						}
+//						int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
+//						int yBase = _rect.top + E_PADDING/4 + height;
+//						int[] xCoords = new int[] {
+//								_rect.left + E_PADDING/4,		// left base corner
+//								_rect.left + 3 * E_PADDING/4,	// right base corner
+//								_rect.left + E_PADDING/2		// top corner
+//						};
+//						int[] yCoords = new int[] {
+//								yBase,					// left base corner
+//								yBase,					// right base corner
+//								_rect.top + E_PADDING/4	// top corner
+//						};
+//						_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
+//						_canvas.setColor(oldCol);
+//						break;
+//					}
+//				}
+//			}
+			HashMap<Element, Vector<DetectedError>> errorMap = this.getRelatedErrors(false);
+			{
+				// There should be at most a single entry with a single error object
+				for (Vector<DetectedError> errList: errorMap.values()) {
+					DetectedError error = errList.firstElement();
+					Color oldCol = _canvas.getColor();
+					if (error.isWarning()) {
+						_canvas.setColor(Color.RED);
+					}
+					else {
+						_canvas.setColor(Color.BLUE);
+					}
+					int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
+					int xBase = _rect.left + E_PADDING/4;
+					int yBase = _rect.top + E_PADDING/4 + height;
+					if (this.isCollapsed(true)) {
+						// Put it below or aside the icon
+						int iconHeight = this.getIcon().getIconHeight();
+						if (yBase + iconHeight < _rect.bottom) {
+							yBase += iconHeight;
 						}
 						else {
-							_canvas.setColor(Color.BLUE);
+							xBase += this.getIcon().getIconWidth();
 						}
-						int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
-						int yBase = _rect.top + E_PADDING/4 + height;
-						int[] xCoords = new int[] {
-								_rect.left + E_PADDING/4,		// left base corner
-								_rect.left + 3 * E_PADDING/4,	// right base corner
-								_rect.left + E_PADDING/2		// top corner
-						};
-						int[] yCoords = new int[] {
-								yBase,					// left base corner
-								yBase,					// right base corner
-								_rect.top + E_PADDING/4	// top corner
-						};
-						_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
-						_canvas.setColor(oldCol);
-						break;
 					}
+					int[] xCoords = new int[] {
+							xBase,		// left base corner
+							xBase + E_PADDING/2,	// right base corner
+							xBase + E_PADDING/4		// top corner
+					};
+					int[] yCoords = new int[] {
+							yBase,			// left base corner
+							yBase,			// right base corner
+							yBase - height	// top corner
+					};
+					_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
+					_canvas.setColor(oldCol);
+					break;
 				}
 			}
+			// END KGU#906 2021-02-04
 		}
 	}
 	// END KGU#906 2021-01-02
@@ -4277,10 +4320,10 @@ public abstract class Element {
 	
     /**
      * Detect whether the element is currently collapsed (or to be shown as collapsed by other reasons)
-     * @param _orHidden - if some additional element-specific hiding criterion is to be considered, too  
+     * @param _orHidingOthers - if some additional element-specific hiding criterion is to be considered, too  
      * @return true if element is to be shown in collapsed shape
      */
-    public boolean isCollapsed(boolean _orHidden) {
+    public boolean isCollapsed(boolean _orHidingOthers) {
         return collapsed;
     }
 
@@ -4942,5 +4985,84 @@ public abstract class Element {
 			this.rect0 = new Rect(rect0.left, rect0.top, rect0.bottom, rect0.right);
 		}
 	}
+	
+	// START KGU#906/KGU#926 2021-02-04: Enh. #905, #926 consider eclipsed substructure
+	/**
+	 * Retrieves all (or just the first) {@link DetectedError} objects related to this
+	 * element or some substructure element (in case this element is collapsed)
+	 * @param getAll - if not {@code true} then only the result will only contain the
+	 * first related {@link DetectedError} found (allowing an efficient existence check)
+	 * @return a map from element to lists of related {@link DetectedError} objects,
+	 *  may be empty
+	 */
+	public LinkedHashMap<Element, Vector<DetectedError>> getRelatedErrors(boolean getAll)
+	{
+		LinkedHashMap<Element, Vector<DetectedError>> errorMap = 
+				new LinkedHashMap<Element, Vector<DetectedError>>();
+		addRelatedErrors(getAll, errorMap);
+		return errorMap;
+	}
+	
+	/**
+	 * Internal helper for {@link #getRelatedErrors(boolean)}
+	 * @param getAll - if not {@code true} then only the result will only contain the
+	 * first related {@link DetectedError} found (allowing an efficient existence check)
+	 * @param errorMap - a map from element to lists of related {@link DetectedError} objects,
+	 *  may be empty
+	 */
+	protected final void addRelatedErrors(boolean getAll, LinkedHashMap<Element, Vector<DetectedError>> errorMap)
+	{
+		if (E_ANALYSER) {
+			Root myRoot = getRoot(this);
+			if (myRoot != null && myRoot.errors != null && !myRoot.errors.isEmpty()) {
+				boolean descend = this.isCollapsed(false);
+				// Now collect the information from the substructure if necessary
+				final class ErrorFinder implements IElementVisitor {
+					
+//					private Root root;
+//					public LinkedHashMap<Element, Vector<DetectedError>> errorMap;
+//					boolean descend;
+//					boolean oneIsEnough;
+//
+//					public ErrorFinder(Root _root, LinkedHashMap<Element, Vector<DetectedError>> _errorMap,
+//							boolean _descend, boolean _getAll)
+//					{
+//						root = _root;
+//						errorMap = _errorMap;
+//						descend = _descend;
+//						oneIsEnough = !_getAll;
+//					}
+					
+					@Override
+					public boolean visitPreOrder(Element _ele) {
+						for (DetectedError error: myRoot.errors) {
+							if (_ele == error.getElement()) {
+								if (!errorMap.containsKey(_ele)) {
+									errorMap.put(_ele, new Vector<DetectedError>());
+								}
+								errorMap.get(_ele).add(error);
+								if (!getAll) {
+									return false;
+								}
+							}
+						}
+						return descend;
+					}
+
+					@Override
+					public boolean visitPostOrder(Element _ele) {
+						return true;
+					}
+
+				}
+				ErrorFinder finder = new ErrorFinder();
+//				ErrorFinder finder = new ErrorFinder(myRoot, errorMap, descend, getAll);
+				traverse(finder);
+			}
+		}
+		
+	}
+	
+	// END KGU#906/KGU#926 2021-02-04
 	
 }

@@ -35,7 +35,7 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch               2008-11-17      First Issue
  *      Gunter Schillebeeckx    2009-08-10      Bugfixes (see comment)
  *      Bob Fisch               2009-08-17      Bugfixes (see comment)
- *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig
+ *      Bob Fisch               2010-08-30      Different fixes asked by Kay Gürtzig
  *                                              and Peter Ehrlich
  *      Kay Gürtzig             2010-09-10      Bugfixes and cosmetics (see comment)
  *      Bob Fisch               2011-11-07      Fixed an issue while doing replacements
@@ -114,16 +114,16 @@ package lu.fisch.structorizer.generators;
  *
  *      Comment:
  *      
- *      2017.03.05 - Bugfix #365 (Kay Gürtzig)
+ *      2017-03-05 - Bugfix #365 (Kay Gürtzig)
  *      - Improved FOR-IN loop export applying the now available typeMap information.
  *      - generic names no longer with constant suffix but with loop-specific hash code, allowing global distinction
  *      - generic type definitions now global (old ANSI C didn't support local type definitions (relevant for reimport)
  *
- *      2016.04.01 - Enh. #144 (Kay Gürtzig)
+ *      2016-04-01 - Enh. #144 (Kay Gürtzig)
  *      - A new export option suppresses conversion of text content and restricts the export
  *        more or less to the mere control structure generation.
  *        
- *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
  *      
@@ -139,38 +139,38 @@ package lu.fisch.structorizer.generators;
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
  *      - Enhancement #10 (KGU#3): FOR loops themselves now provide more reliable loop parameters  
  *      
- *      2015.10.21 - Enhancement KGU#15: Case element with comma-separated constant list per branch
+ *      2015-10-21 - Enhancement KGU#15: Case element with comma-separated constant list per branch
  *      
- *      2015.10.18 - Bugfixes and modificatons (Kay Gürtzig)
+ *      2015-10-18 - Bugfixes and modificatons (Kay Gürtzig)
  *      - Bugfix: The export option "export instructions as comments" had been ignored before
  *      - An empty Jump element will now be translated into a break; instruction by default.
  *      - Comment method signature simplified
  *      - Indentation mechanism revised
  *      
- *      2014.11.16 - Bugfixes (Kay Gürtzig)
+ *      2014-11-16 - Bugfixes (Kay Gürtzig)
  *      - conversion of comparison and logical operators had still been flawed
  *      - comment generation unified by new inherited generic method insertComment 
  *      
- *      2014.11.06 - Enhancement (Kay Gürtzig)
+ *      2014-11-06 - Enhancement (Kay Gürtzig)
  *      - logical operators "and", "or", and "not" supported 
  *      
- *      2010.09.10 - Bugfixes (Kay Gürtzig)
+ *      2010-09-10 - Bugfixes (Kay Gürtzig)
  *      - conditions for automatic bracket insertion for "while", "switch", "if" corrected
  *      - case keyword inserted for the branches of "switch"
  *      - function header and return statement for non-program diagram export adjusted
  *      - "cosmetic" changes to the block ends of "switch" and "do while" 
  *      
- *      2010.08.30
+ *      2010-08-30
  *      - replaced standard I/O by the correct versions for C (not Pascal ;-P))
  *      - comments are put into code as well
  *      - code transformations (copied from Java)
  *
- *      2009.08.17 - Bugfixes
+ *      2009-08-17 - Bugfixes
  *      - added automatic brackets for "while", "switch" & "if"
  *      - in the "repeat": "not" => "!"
  *      - pascal operator convertion
  *
- *      2009.08.10 - Bugfixes
+ *      2009-08-10 - Bugfixes
  *      - Mistyping of the keyword "switch" in CASE statement
  *      - Mistyping of brackets in IF statement
  *      - Implementation of FOR loop
