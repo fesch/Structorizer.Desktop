@@ -404,7 +404,7 @@ Menu.msgIniRestoreFailed.text=Kon de laatste backup% van de voorkeuren niet hers
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Probleem bij het wijzigen van het Uiterlijk naar %1:%2
 Menu.msgRootCloned.text=Diagram «%1» is gecloned.\n\nU werkt nu met een onafhankelijke kopie:\n%2
-Menu.msgAnalyserHint_3_30_14.text=Nieuwe driehookjes attenderen u\nop er zijn waarschuwings van de\nAnalyser voor de gemarkeerde elementen.\n\nU kunt dat afsetten in:\n%
+Menu.msgAnalyserHint_3_30_14.text=Nieuwe driehoekjes attenderen u\nop er zijn waarschuwings van de\nAnalyser voor de gemarkeerde elementen.\n\nU kunt dat afsetten in:\n%
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine handtekening
 Menu.msgTabHdrAlias.text=Aliasnaam
