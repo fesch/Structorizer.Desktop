@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Abstract class for all Elements.
+ *      Description:    Interface for Element visitor classes used to traverse the NSD tree.
  *
  ******************************************************************************************************
  *
@@ -32,7 +32,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Kay Gürtzig     11.08.2016      First Issue
+ *      Kay Gürtzig     2016-08-11      First Issue
  *
  ******************************************************************************************************
  *
@@ -41,10 +41,10 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************/
 
 /**
- * @author kay
  * Interface for visitor objects on diagram traversal, offering a visit in preOrder
  * and another in postOrder e.g. for information gathering, status changes or the like.
  * For access to private attributes the visitor may need a privileged partner object.
+ * @author Kay Gürtzig
  */
 public interface IElementVisitor {
 	/**

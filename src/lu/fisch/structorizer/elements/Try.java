@@ -34,6 +34,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-15      First Issue (implementing an idea of Bob Fisch, enh. requ. #56)
  *      Kay Gürtzig     2019-09-17      Bugfix #749: Width for FINALLY section wasn't properly reserved
  *      Kay Gürtzig     2019-09-24      Bugfix #749: Text content and width in collapsed mode fixed
+ *      Kay Gürtzig     2021-01-22      Enh. #714: Special visibility control for the FINALLY block
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,10 @@ public class Try extends Element {
 	private Rect r0Try = new Rect();
 	private Rect r0Catch = new Rect();
 	private Rect r0Finally = new Rect();
+	
+	// START KGU#695 2021-01-22: Enh. #714
+	private boolean forceFinally = false;
+	// END KGU#695 2021-01-22
 	
 	/**
 	 * Creates an empty 
@@ -124,6 +129,10 @@ public class Try extends Element {
 		
 		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
 		
+		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
+		boolean showFinally = forceFinally || qFinally.hasEnabledElements();
+		// END KGU#695 2021-01-22
+
 		Rect rTry = qTry.prepareDraw(_canvas).copy();
 		Rect rCatch = qCatch.prepareDraw(_canvas).copy();
 		Rect rFinally = qFinally.prepareDraw(_canvas).copy();
@@ -131,7 +140,7 @@ public class Try extends Element {
 		rTry.left = E_PADDING; rTry.right += E_PADDING;
 		rCatch.left = 2 * E_PADDING; rCatch.right += 2 * E_PADDING;
 		rFinally.left = E_PADDING; rFinally.right += E_PADDING;
-
+		
 		StringList textCatch = this.getCuteText(false);
 		String lineCatch0 = "";
 		if (!textCatch.isEmpty()) {
@@ -149,12 +158,17 @@ public class Try extends Element {
 				// END KGU#728 2019-09-17
 				};
 		int width = 0;
-		for (int i = 0; i < widths.length; i++) {
+		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
+		//for (int i = 0; i < widths.length; i++) {
+		for (int i = 0; i < widths.length - (showFinally ? 0 : 2); i++) {
+		// END KGU#695 2021-01-22
 			if (widths[i] > width) width = widths[i];
 		}
-		for (int i = 1; i < textCatch.count(); i++) {
-			width = Math.max(width, E_PADDING + E_PADDING/2 + getWidthOutVariables(_canvas, textCatch.get(i), this)) + E_PADDING;
-		}
+		// START KGU#695 2021-01-23: Enh. #714 - the following loop was nonsense
+		//for (int i = 1; i < textCatch.count(); i++) {
+		//	width = Math.max(width, E_PADDING + E_PADDING/2 + getWidthOutVariables(_canvas, textCatch.get(i), this)) + E_PADDING;
+		//}
+		// END KGU#695 2021-01-23
 		//int height = rTop.bottom + rTry.bottom + 2 * (E_PADDING/2) + fontHeight + rCatch.bottom + rFinally.bottom + E_PADDING;
 		int height = rTop.bottom;
 		rTry.top = height; rTry.bottom += height;
@@ -166,11 +180,20 @@ public class Try extends Element {
 			height += (textCatch.count() - 1) * fontHeight;
 		}
 		height = Math.max(height, rCatch.bottom) + E_PADDING;
-		if (!preFinally.trim().isEmpty()) {
+		
+		// START KGU#695 2021-01-22: Enh. #714
+		//if (!preFinally.trim().isEmpty()) {
+		if (showFinally && !preFinally.trim().isEmpty()) {
+		// END KGU#695 2021-01-22
 			height += fontHeight;
 		}
 		rFinally.top = height; rFinally.bottom += height;
-		height = rFinally.bottom + E_PADDING;
+		// START KGU#695 2021-01-22: Enh. #714
+		//height = rFinally.bottom + E_PADDING;
+		if (showFinally) {
+			height = rFinally.bottom + E_PADDING;
+		}
+		// END KGU#695 2021-01-22
 		r0Try = rTry;
 		r0Catch = rCatch;
 		r0Finally = rFinally;
@@ -209,18 +232,26 @@ public class Try extends Element {
 		}
 		writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
 				(preCatch + " " + lineCatch0).trim(), this, _inContention);
-		for (int i = 1; i < textCatch.count(); i++) {
-			writeOutVariables(_canvas, _top_left.left + E_PADDING + E_PADDING/2, subRect.bottom + E_PADDING/2 + i * fontHeight,
-					textCatch.get(i), this, _inContention);			
-		}
+		// START KGU#695 2021-01-23: Enh. #714 - the following loop was nonsense
+		//for (int i = 1; i < textCatch.count(); i++) {
+		//	writeOutVariables(_canvas, _top_left.left + E_PADDING + E_PADDING/2, subRect.bottom + E_PADDING/2 + i * fontHeight,
+		//			textCatch.get(i), this, _inContention);			
+		//}
+		// END KGU#695 2021-01-23
 		subRect = new Rect(_top_left.left + r0Catch.left, _top_left.top + r0Catch.top, _top_left.right - E_PADDING, _top_left.top + r0Catch.bottom);		
 		qCatch.draw(_canvas, subRect, _viewport, _inContention);
-		if (!preFinally.trim().isEmpty()) {
-			writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
-					preFinally, this, _inContention);
+		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
+		if (forceFinally || qFinally.hasEnabledElements()) {
+		// END KGU#695 2021-01-22
+			if (!preFinally.trim().isEmpty()) {
+				writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
+						preFinally, this, _inContention);
+			}
+			subRect = new Rect(_top_left.left + r0Finally.left, _top_left.top + r0Finally.top, _top_left.right - E_PADDING, _top_left.top + r0Finally.bottom);
+			qFinally.draw(_canvas, subRect, _viewport, _inContention);
+		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
 		}
-		subRect = new Rect(_top_left.left + r0Finally.left, _top_left.top + r0Finally.top, _top_left.right - E_PADDING, _top_left.top + r0Finally.bottom);
-		qFinally.draw(_canvas, subRect, _viewport, _inContention);
+		// END KGU#695 2021-01-22
 		
 		_canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.
 		_canvas.moveTo(_top_left.left + (E_PADDING / 2), _top_left.top + r0Catch.top);
@@ -292,6 +323,9 @@ public class Try extends Element {
 		ele.qTry.parent     = ele;
 		ele.qCatch.parent   = ele;
 		ele.qFinally.parent = ele;
+		// START KGU#695 2021-01-22: Enh. #714
+		ele.forceFinally = this.forceFinally;
+		// END KGU#695 2021-01-22
 		return ele;
 	}
 
@@ -535,5 +569,30 @@ public class Try extends Element {
 				false
 				);
 	}
+	
+	// START KGU#695 2021-01-22: Enh. #714
+	/**
+	 * Checks whether a FINALLY block is shown even if being empty
+	 * @return {@code true} if the FINALLY block is always drawn.
+	 */
+	public boolean isEmptyFinallyVisible()
+	{
+		return forceFinally;
+	}
+	
+	/**
+	 * Specifies whether the FINALLY clock is to be drawn even in case it
+	 * is empty. Will reset drawing information if the change has consequences.
+	 * @param visible - the new drawing mode for the FINALLY block
+	 */
+	public void setEmptyFinallyVisible(boolean visible)
+	{
+		if (forceFinally != visible && qFinally.getSize() == 0) {
+			this.resetDrawingInfoUp();
+		}
+		forceFinally = visible;
+	}
+	// END KGU#695 2021-01-22
+
 
 }

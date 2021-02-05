@@ -143,6 +143,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
@@ -798,9 +799,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgSetAsPreferredGenerator = new LangTextHolder("You exported the last %2 times to %1 code.\nDo you want to set %1 as your favourite code export language in the File menu?");
 	// END KGU#654 2019-02-15
 	// START KGU#667 2019-02-26: Enh. #689
-	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the subroutine to be edited:");
-	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new subroutine «%»?");
+	public static final LangTextHolder msgChooseSubroutine = new LangTextHolder("Choose the @o to be edited:");
+	public static final LangTextHolder msgCreateSubroutine = new LangTextHolder("Create a new @o «%»?");
 	// END KGU#667 2019-02-26
+	// START KGU#770 2021-01-27: Enh. #917
+	public static final LangTextHolder msgEditSubroutine = new LangTextHolder("Edit @o ...");
+	public static final LangTextHolder msgEditIncludable = new LangTextHolder("Edit @p ...");
+	public static final LangTextHolder msgChooseIncludable = new LangTextHolder("Choose the @p to be edited:");
+	public static final LangTextHolder msgCreateIncludable = new LangTextHolder("Create a new @p «%»?");
+	public static final LangTextHolder msgCyclicInclusion = new LangTextHolder("Cyclic include removed - no more diagrams included!");
+	// END KGU#770 2021-01-27
 	// START KGU#699 2019-03-27: Issue #717
 	public static final LangTextHolder ttlMouseScrollUnit = new LangTextHolder("Mouse wheel scrolling unit");
 	// END KGU#699 2019-03-27
@@ -818,7 +826,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#893 2020-12-20: Bugfix #892 - group members must be cloned on save as...
 	public static final LangTextHolder msgRootCloned = new LangTextHolder("Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2");
 	// END KGU#893 2020-12-20
-	// START KGU#906 2021-01-18: Enh. #905 temporary message for version 3.30-14
+	// ===================== TEMPORARY VERSION HINTS =======================
+	// START KGU#906 2021-01-18: Enh. #905 FIXME temporary message for version 3.30-14
 	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder("New indicator symbols\n"
 			+ "may remind you\n"
 			+ "that there are Analyser\n"
@@ -826,10 +835,22 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			+ "elements. You may switch\n"
 			+ "them off via:\n%");
 	// END KGU#906 2021-01-18
+	// START KGU#916 2021-01-28: Enh. #915 FIXME temporary version hint for 3.30-15
+	public static final LangTextHolder msgVersionHint_3_30_15 = new LangTextHolder(
+			"This new-designed editor for CASE elements\n"
+			+ "is optional.\n"
+			+ "It promises to maintain the bond between cases\n"
+			+ "and their branches on permutating them.\n\n"
+			+ "If you prefer the traditional element editor,\n"
+			+ "however, then you may unselect the checkbox\n"
+			+ "\"%1\"\n"
+			+ "in the %2.");
+	// END KGU#916 2021-01-28
+	//=======================================================================
+	
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
 	private Map<JMenuItem, String> importpluginItems = new HashMap<JMenuItem, String>();
 	// END KGU#725 2019-09-13
-
 
 	// START BOB 2020-05-25: restricted mode
 	// START KGU#868 2020-06-03: Bugfix #868 - renamed for clarity
@@ -866,7 +887,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuFileSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 
 		menuFile.add(menuFileSaveAs);
-		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK)));
+		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		menuFileSaveAs.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAsNSD(); doButtons(); } } );
 
 		// START KGU#373 2017-03-28: Enh. #387
@@ -1032,7 +1053,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuFile.addSeparator();
 
 		menuFile.add(menuFilePrint);
-		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,menuShortcutKeyMask));
+		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, menuShortcutKeyMask));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
 
 		// START KGU#2 2015-11-19
@@ -1111,7 +1132,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		// START KGU#324 2017-05-30: Enh. #415
 		menuEdit.add(menuEditFindReplace);
-		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F,menuShortcutKeyMask));
+		menuEditFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, menuShortcutKeyMask));
 		menuEditFindReplace.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.findAndReplaceNSD(); doButtons(); } } );
 		menuEdit.addSeparator();
 		// END KGU#324 2017-05-30
@@ -1192,7 +1213,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramAddBefore.add(menuDiagramAddBeforeForever);
 		menuDiagramAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
-		menuDiagramAddBeforeForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuDiagramAddBeforeForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, menuShortcutKeyMask | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#725 2019-09-17
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCall);
@@ -1207,7 +1228,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
 		//menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
-		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, menuShortcutKeyMask | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#725 2019-09-17
 		// END KGU#169 2016-04-01
 
@@ -1215,7 +1236,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramAddBefore.add(menuDiagramAddBeforeTry);
 		menuDiagramAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
-		menuDiagramAddBeforeTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuDiagramAddBeforeTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, menuShortcutKeyMask | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#725 2019-09-17
 		// END KGU#686 2019-03-16
 
@@ -1249,7 +1270,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramAddAfter.add(menuDiagramAddAfterForever);
 		menuDiagramAddAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
-		menuDiagramAddAfterForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		menuDiagramAddAfterForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, menuShortcutKeyMask));
 		// END KGU#725 2019-09-17
 
 		menuDiagramAddAfter.add(menuDiagramAddAfterCall);
@@ -1264,38 +1285,38 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagramAddAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
 		//menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, 0));
-		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, menuShortcutKeyMask));
 		// END KGU#725 2019-09-17
 
 		// START KGU#686 2019-03-16: Enh. #56
 		menuDiagramAddAfter.add(menuDiagramAddAfterTry);
 		menuDiagramAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
 		// START KGU#725 2019-09-17: Issue #747
-		menuDiagramAddAfterTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+		menuDiagramAddAfterTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, menuShortcutKeyMask));
 		// END KGU#725 2019-09-17
 		// END KGU#686 2019-03-16
 
 		menuDiagram.add(menuDiagramEdit);
 		// START KGU#177 2016-04-06: Enh. #158
-		menuDiagramEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0));
+		menuDiagramEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
 		// END KGU#177 2016-04-06
 		menuDiagramEdit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editNSD(); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramDelete);
-		menuDiagramDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,0));
+		menuDiagramDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 		menuDiagramDelete.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.deleteNSD(); doButtons(); } } );
 
 		menuDiagram.addSeparator();
 
 		menuDiagram.add(menuDiagramMoveUp);
 		// START KGU#177 2016-04-06: Enh. #158
-		menuDiagramMoveUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK));
+		menuDiagramMoveUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, menuShortcutKeyMask));
 		// END KGU#177 2016-04-06
 		menuDiagramMoveUp.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveUpNSD(); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramMoveDown);
 		// START KGU#177 2016-04-06: Enh. #158
-		menuDiagramMoveDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK));
+		menuDiagramMoveDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, menuShortcutKeyMask));
 		// END KGU#177 2016-04-06
 		menuDiagramMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
 
@@ -1306,7 +1327,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// END KGU#199 2016-07-06
 		// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
 		menuDiagram.add(menuDiagramOutsource);
-		menuDiagramOutsource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, KeyEvent.CTRL_DOWN_MASK));
+		menuDiagramOutsource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, menuShortcutKeyMask));
 		menuDiagramOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );;
 		// END KGU#365 2017-03-23
 		
@@ -1921,18 +1942,30 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuEditUpgradeTurtle.setEnabled(conditionAny);
 			menuEditDowngradeTurtle.setEnabled(conditionAny);
 			menuEditUpgradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);
-			menuEditDowngradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditDowngradeTurtle.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#282 2016-10-16
 			
 			// START KGU#602 2018-10-26: Enh. #619
 			menuEditBreakLines.setEnabled(conditionAny);
-			menuEditBreakLines.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditBreakLines.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#602 2018-10-16
 
 			// START KGU#667 2019-02-26 Enh.#689
 			menuEditSummonSub.setEnabled(diagram.canEditSub());
-			menuEditSummonSub.setVisible(!Element.E_REDUCED_TOOLBARS);			
+			menuEditSummonSub.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#667 2019-02-26
+			// START KGU#770 2021-01-27: Enh. #917
+			if (diagram.canEditSub()) {
+				if (selected != null && selected instanceof Root) {
+					menuEditSummonSub.setText(msgEditIncludable.getText());
+					menuEditSummonSub.setIcon(IconLoader.getIcon(71));
+				}
+				else {
+					menuEditSummonSub.setText(msgEditSubroutine.getText());
+					menuEditSummonSub.setIcon(IconLoader.getIcon(21));
+				}
+			}
+			// END KGU#770 2021-01-27
 			
 			// style / type
 			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
@@ -2222,6 +2255,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		String[] names = new String[menuItemKeys.length];
 		String localeName = Locales.getInstance().getLoadedLocaleName();
 		Locale locale = Locales.getInstance().getLocale(localeName);
+		Locale locale0 = null;
 		if (locale != null) {
 			for (int i = 0; i < menuItemKeys.length; i++) {
 				String text = locale.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
@@ -2230,7 +2264,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 						text = defaultStrings[i];
 					}
 					else {
-						text = Locales.getInstance().getDefaultLocale().getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
+						if (locale0 == null) {
+							locale0 = Locales.getInstance().getDefaultLocale();
+						}
+						text = locale0.getValue("Structorizer", "Menu." + menuItemKeys[i] + ".text");
 					}
 				}
 				names[i] = text;

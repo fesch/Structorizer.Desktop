@@ -514,6 +514,7 @@ public class IconLoader {
 			dummyIcon = null;	// Is going to be reproduced as soon as needed
 		}
 		// END KGU#577 2018-09-18
+		// FIXME: Consider GUIScaler.getScreenScale() and possibly some initial system font height?
 		scaleFactor = scale;
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
@@ -809,8 +810,8 @@ public class IconLoader {
 
 	/**
 	 * Produces a new, {@link ImageIcon} from icon file at the given {@code url}.
-	 * If {@code fixed} is true then the icon will be scaled for the currently set
-	 * {@link #scaleFactor}.
+	 * If {@code fixed} is {@code true} then the icon will be scaled for the
+	 * currently set {@link #scaleFactor}.
 	 * @param url - the source URL for the icon file.
 	 * @param fixed - if the icon is to be scaled with the current factor
 	 * @return An {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
@@ -908,6 +909,7 @@ public class IconLoader {
 		BufferedImage dst = new BufferedImage(width, height, type);
 		Graphics2D g2 = dst.createGraphics();
 		g2.drawImage(src.getImage(), 0, 0, width, height, null);
+		// FIXME: This is somewhat rush as we cannot be sure drawImage was ready
 		g2.dispose();
 		return new ImageIcon(dst);
 	}

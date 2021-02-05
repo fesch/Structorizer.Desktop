@@ -38,11 +38,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-02-11      Bugfix #810 - multiple-input instruction export wasn't properly configured
  *      Kay Gürtzig     2020-04-03      Enh. #828 - configuration and modifications for group export
  *      Kay Gürtzig     2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
+ *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal, see comment
  *
  ******************************************************************************************************
  *
  *      Comment: See e.g. https://www.w3schools.com/js/default.asp
  *      
+ *      2021-02-03 - Issue #920 (Kay Gürtzig)
+ *      - According to https://www.w3schools.com/jsref/jsref_infinity.asp, "Infinity" represents the
+ *        infinite number in Javascript, so nothing would have to be done to transform "Infinity", if
+ *        parent CGenerator didn't so. Hence we must prevent it from doing so - by padding it before
+ *        (see transformTokens(StringList))
  *
  ******************************************************************************************************///
 
@@ -195,6 +201,16 @@ public class JsGenerator extends CGenerator {
 		return "./" + _includeName + ".js";
 	}
 	// END KGU#815 2020-04-03
+
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+		// This is a little trick to hinder super from replacing Infinity.
+		tokens.replaceAll("Infinity", "Infinity ");
+		// END KGU#920 2021-02-03
+		return super.transformTokens(tokens);
+	}
 
 	/**
 	 * Generates code that decomposes an array initializer into a series of element assignments if there no

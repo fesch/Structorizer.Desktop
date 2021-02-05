@@ -32,13 +32,14 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.31      First Issue
- *      Kay Gürtzig     2016.10.11      Minimum font size 2 dropped from the sizes array.
- *      Kay Gürtzig     2016.11.02      Issue #81: Scaling Factor considered (DPI awareness workarond)
- *      Kay Gürtzig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2018.09.10      Issue #508: displays current size in label if not in list, re-pack after font change
- *      Kay Gürtzig     2018.12.19      Bugfix #650: Fix #508 had to be revised for Java functionality changes 
+ *      Bob Fisch       2007-12-31      First Issue
+ *      Kay Gürtzig     2016-10-11      Minimum font size 2 dropped from the sizes array.
+ *      Kay Gürtzig     2016-11-02      Issue #81: Scaling Factor considered (DPI awareness workarond)
+ *      Kay Gürtzig     2016-11-09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
+ *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2018-09-10      Issue #508: displays current size in label if not in list, re-pack after font change
+ *      Kay Gürtzig     2018-12-19      Bugfix #650: Fix #508 had to be revised for Java functionality changes
+ *      Kay Gürtzig     2021-01-26      Issue #400: keyListener applied to cbFixPadding
  *
  ******************************************************************************************************
  *
@@ -262,9 +263,9 @@ public class FontChooser extends LangDialog
 					buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
 						GridBagConstraints.CENTER, GridBagConstraints.BOTH,
 						new Insets(0, 0, 0, 0), 0, 0));
-			        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
-			        GUIScaler.rescaleComponents(buttonBar);
-			        // END KGU#287 2017-01-09
+					// START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+					GUIScaler.rescaleComponents(buttonBar);
+					// END KGU#287 2017-01-09
 				}
 				pnlChooser.add(buttonBar, BorderLayout.SOUTH);
 			}
@@ -322,6 +323,9 @@ public class FontChooser extends LangDialog
 		lsSizes.addKeyListener(keyListener);
 		lsNames.addKeyListener(keyListener);
 		btnOK.addKeyListener(keyListener);
+		// START KGU#393/KGU#494 2021-01-26: Issues #400, #508
+		cbFixPadding.addKeyListener(keyListener);
+		// END KGU#393/KGU#494 2021-01-26
 		
 		// add the ACTION-listeners
 		ActionListener actionListener = new ActionListener()

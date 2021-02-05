@@ -110,28 +110,28 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 	};
 	// END KGU#443 2017-10-31
 
-    private class MyCellRenderer extends DefaultTableCellRenderer {
+	private class MyCellRenderer extends DefaultTableCellRenderer {
 
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
-        {
-            // START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
-            if (value instanceof JButton) {
-            	return (JButton)value;
-            }
-            // END KGU#443 2017-10-16
-            // START KGU#910 2021-01-07: Enh. #909 combobox for enumerator components
-            else if (value instanceof JComboBox) {
-                Object item = ((JComboBox<?>)value).getSelectedItem();
-                if (item instanceof String) {
-                    setText((String)item);
-                }
-                return this;
-            }
-            // END KGU#910 2021-01-07
-            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        }
-    }
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+		{
+			// START KGU#443 2017-10-16: Enh. #439 pulldown button for compound values
+			if (value instanceof JButton) {
+				return (JButton)value;
+			}
+			// END KGU#443 2017-10-16
+			// START KGU#910 2021-01-07: Enh. #909 combobox for enumerator components
+			else if (value instanceof JComboBox) {
+				Object item = ((JComboBox<?>)value).getSelectedItem();
+				if (item instanceof String) {
+					setText((String)item);
+				}
+				return this;
+			}
+			// END KGU#910 2021-01-07
+			return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		}
+	}
 
 	
 	/**
@@ -170,7 +170,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		}
 		else {
 			// Use a magnifying glass if not editable
-			this.setIconImage(IconLoader.getIcon(83).getImage());    			
+			this.setIconImage(IconLoader.getIcon(83).getImage());
 		}
 		this.getContentPane().setLayout(new BorderLayout());
 		pnlButtons.setLayout(new java.awt.GridLayout(0, 2));
@@ -353,7 +353,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 	 * Determines the required maximum rendering width for column {@code _colNo} of
 	 * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
 	 * @param _table - the {@link JTable} to be optimized
-	 * @param _colNo - index of the intersting column (typically 0)
+	 * @param _colNo - index of the interesting column (typically 0)
 	 * @return the determined width 
 	 */
 	public static int optimizeColumnWidth(JTable _table, int _colNo) {

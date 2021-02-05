@@ -89,6 +89,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the mode display was still flawed
  *      Kay Gürtzig     2021-01-01      Enh. #903: C operator display mode indicator visibility modified
  *      Kay Gürtzig     2021-01-13      Icon for "About ..." menu item replaced
+ *      Kay Gürtzig     2021-01-27      Enh. #917: popupEditSub enhanced to work also for included diagrams
+ *      Kay Gürtzig     2021-01-28      Accelerator associations for the context menu items set.
  *
  ******************************************************************************************************
  *
@@ -960,14 +962,21 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	 * Sets up the pop-up menus with all submenus and shortcuts and actions
 	 */
 	private void createPopupMenu() {
+		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
+		// OS-dependent key mask for menu shortcuts
+		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+
 		popup.add(popupCut);
 		popupCut.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.cutNSD(); doButtons(); } } );
+		popupCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,menuShortcutKeyMask));
 
 		popup.add(popupCopy);
 		popupCopy.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyNSD(); doButtons(); } } );
+		popupCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,menuShortcutKeyMask));
 
 		popup.add(popupPaste);
 		popupPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
+		popupPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,menuShortcutKeyMask));
 
 		popup.addSeparator();
 
@@ -979,37 +988,48 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		popupAddBefore.add(popupAddBeforeInst);
 		popupAddBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
+		popupAddBeforeInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeAlt);
 		popupAddBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
+		popupAddBeforeAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeCase);
 		popupAddBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
+		popupAddBeforeCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeFor);
 		popupAddBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
+		popupAddBeforeFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeWhile);
 		popupAddBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
+		popupAddBeforeWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeRepeat);
 		popupAddBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
+		popupAddBeforeRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeForever);
 		popupAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
+		popupAddBeforeForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, menuShortcutKeyMask | KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeCall);
 		popupAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
+		popupAddBeforeCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforeJump);
 		popupAddBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
+		popupAddBeforeJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, KeyEvent.SHIFT_DOWN_MASK));
 
 		popupAddBefore.add(popupAddBeforePara);
 		popupAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
+		popupAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, menuShortcutKeyMask | KeyEvent.SHIFT_DOWN_MASK));
 
 		// START KGU#686 2019-03-16: Enh. #56
 		popupAddBefore.add(popupAddBeforeTry);
 		popupAddBeforeTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",false); doButtons(); } } );
+		popupAddBeforeTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, menuShortcutKeyMask | KeyEvent.SHIFT_DOWN_MASK));
 		// END KGU#686 2019-03-16
 
 		popupAdd.add(popupAddAfter);
@@ -1017,66 +1037,84 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		popupAddAfter.add(popupAddAfterInst);
 		popupAddAfterInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",true); doButtons(); } } );
+		popupAddAfterInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
 
 		popupAddAfter.add(popupAddAfterAlt);
 		popupAddAfterAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,true); doButtons(); } } );
+		popupAddAfterAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
 
 		popupAddAfter.add(popupAddAfterCase);
 		popupAddAfterCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,true); doButtons(); } } );
+		popupAddAfterCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0));
 
 		popupAddAfter.add(popupAddAfterFor);
 		popupAddAfterFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,true); doButtons(); } } );
+		popupAddAfterFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0));
 
 		popupAddAfter.add(popupAddAfterWhile);
 		popupAddAfterWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,true); doButtons(); } } );
+		popupAddAfterWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0));
 
 		popupAddAfter.add(popupAddAfterRepeat);
 		popupAddAfterRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,true); doButtons(); } } );
+		popupAddAfterRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0));
 
 		popupAddAfter.add(popupAddAfterForever);
 		popupAddAfterForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",true); doButtons(); } } );
+		popupAddAfterForever.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, menuShortcutKeyMask));
 
 		popupAddAfter.add(popupAddAfterCall);
 		popupAddAfterCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",true); doButtons(); } } );
+		popupAddAfterCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
 
 		popupAddAfter.add(popupAddAfterJump);
 		popupAddAfterJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",true); doButtons(); } } );
+		popupAddAfterJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0));
 
 		popupAddAfter.add(popupAddAfterPara);
 		popupAddAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
+		popupAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, menuShortcutKeyMask));
 
 		// START KGU#686 2019-03-16: Enh. #56
 		popupAddAfter.add(popupAddAfterTry);
 		popupAddAfterTry.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Try(),"Add new try-catch ...","",true); doButtons(); } } );
+		popupAddAfterTry.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, menuShortcutKeyMask));
 		// END KGU#686 2019-03-16
 
 		popup.add(popupEdit);
 		popupEdit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editNSD(); doButtons(); } } );
+		popupEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
 
 		popup.add(popupDelete);
 		popupDelete.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.deleteNSD(); doButtons(); } } );
+		popupDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
 		popup.addSeparator();
 
 		popup.add(popupMoveUp);
 		popupMoveUp.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveUpNSD(); doButtons(); } } );
+		popupMoveUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, menuShortcutKeyMask));
 
 		popup.add(popupMoveDown);
 		popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
+		popupMoveDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, menuShortcutKeyMask));
 		
 		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 		popup.add(popupTransmute);
 		popupTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );
+		popupTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, menuShortcutKeyMask));
 		// END KGU#199 2016-07-06
 
 		// START KGU#365 2017-03-27: Enh. #380 - conversion of sequence in a subroutine
 		popup.add(popupOutsource);
 		popupOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );
+		popupOutsource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, menuShortcutKeyMask));
 		// END KGU#365 2017-03-27
 
 		// START KGU#667 2019-02-26: Enh. #689 - summons the called subroutine for editing
 		popup.add(popupEditSub);
 		popupEditSub.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editSubNSD(); doButtons(); } } );
+		popupEditSub.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, menuShortcutKeyMask));
 		// END KGU#667 2019-02-26
 
 		// START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
@@ -1084,14 +1122,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		popup.add(popupCollapse);
 		popupCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); doButtons(); } } );
+		popupCollapse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
 
 		popup.add(popupExpand);
 		popupExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
+		popupExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
 		// END KGU#123 2016-01-03
 
 		// START KGU#277 2016-10-13: Enh. #270
 		popup.add(popupDisable);
 		popupDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+		popupDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, menuShortcutKeyMask));
 		// END KGU#123 2016-10-13
 
 		// START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
@@ -1099,11 +1140,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
 		popup.add(popupBreakpoint);
 		popupBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+		popupBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, menuShortcutKeyMask | KeyEvent.SHIFT_DOWN_MASK));
 		// END KGU#43 2015-10-12
 
 		// START KGU#213 2016-08-02: Enh. #215 - new breakpoint feature
 		popup.add(popupBreakTrigger);
 		popupBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
+		popupBreakTrigger.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, menuShortcutKeyMask | KeyEvent.ALT_DOWN_MASK));
 		// END KGU#213 2016-08-02
 
 	}
@@ -1417,6 +1460,18 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#667 2019-02-26 Enh.#689
 		popupEditSub.setEnabled(diagram.canEditSub());
 		// END KGU#667 2019-02-26
+		// START KGU#770 2021-01-27: Enh. #917
+		if (diagram.canEditSub()) {
+			if (selected != null && selected instanceof Root) {
+				popupEditSub.setText(Menu.msgEditIncludable.getText());
+				popupEditSub.setIcon(IconLoader.getIcon(71));
+			}
+			else {
+				popupEditSub.setText(Menu.msgEditSubroutine.getText());
+				popupEditSub.setIcon(IconLoader.getIcon(21));
+			}
+		}
+		// END KGU#770 2021-01-27
 		popupTransmute.setVisible(!Element.E_REDUCED_TOOLBARS);
 		popupOutsource.setVisible(!Element.E_REDUCED_TOOLBARS);
 		popupEditSub.setVisible(!Element.E_REDUCED_TOOLBARS);

@@ -767,4 +767,20 @@ public class Subqueue extends Element implements IElementSequence {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
+	// START KGU#695 2021-01-23: Enh. #714 Also return true if all elements are disabled
+	/**
+	 * @return {@code true} if there is at least one member not being individually disabled
+	 */
+	public boolean hasEnabledElements()
+	{
+		for (int i = 0; i < this.children.size(); i++) {
+			// Inherited disabling is of no interest here
+			if (!this.children.get(i).disabled) {
+				return true;
+			}
+		}
+		return false;
+	}
+	// END KGU#695 2021-01-23
 }

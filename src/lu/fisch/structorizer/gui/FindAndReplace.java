@@ -56,6 +56,7 @@ package lu.fisch.structorizer.gui;
  *                                      awkward initialisation of chkInTexts, chkInComments.
  *      Kay Gürtzig     2020-12-30      Issue #901: Ensure wait cursor at least on action "replace all"
  *      Kay Gürtzig     2021-01-11      Enh. #910: Precautions against modifications of immutable elements
+ *      Kay Gürtzig     2021-01-28      Bugfix #918: Missing Root type filter, unwanted checkbox for the #910 type
  *
  ******************************************************************************************************
  *
@@ -643,8 +644,12 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			pnlRootTypes.setBorder(new TitledBorder("Diagram types"));
 			pnlRootTypes.setLayout(new BoxLayout(pnlRootTypes, BoxLayout.Y_AXIS));
 			Root.DiagramType[] rootTypes = Root.DiagramType.values();
-			chkRootTypes = new JCheckBox[rootTypes.length];
-			for (int i = 0; i < rootTypes.length; i++) {
+			// START KGU#911 2021-01-28: Issur #910 Don't express diagram controllers
+			//chkRootTypes = new JCheckBox[rootTypes.length];
+			//for (int i = 0; i < rootTypes.length; i++) {
+			chkRootTypes = new JCheckBox[rootTypes.length-1];
+			for (int i = 0; i < chkRootTypes.length; i++) {
+			// END KGU#911 2021-01-28
 				boolean sel = !ini.getProperty("search" + rootTypes[i].name(), "1").equals("0"); 
 				chkRootTypes[i] = new JCheckBox(rootTypes[i].name());
 				chkRootTypes[i].setSelected(sel);
@@ -685,10 +690,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 						}
 					}
 					if (txtText != null) {
-			    		// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
+						// START KGU#480 208-01-22: Enh. #490 - Replace aliases if necessary
 						//txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getText()) > 0);
 						txtText.setEnabled(chkInTexts.isSelected() && currentElement != null && textMatches(currentElement.getAliasText()) > 0);
-			    		// END KGU#480 2018-01-22
+						// END KGU#480 2018-01-22
 					}
 					if (txtComm != null) {
 						txtComm.setEnabled(chkInComments.isSelected() && currentElement != null && textMatches(currentElement.getComment()) > 0);
@@ -1558,10 +1563,21 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		if (!roots.isEmpty()) {
 			Arranger.addToChangeListeners(this);
 		}
+		// The current diagram should always be part of the game
 		if (!roots.contains(diagram.getRoot())) {
 			roots.add(0, diagram.getRoot());
 		}
 		for (Root root: roots) {
+			// START KGU#918 2021-01-27: Bugfix #918 Root type filter was forgotten
+			if (scope == Scope.OPENED_DIAGRAMS && 
+					(root.isProgram() && !chkRootTypes[0].isSelected() || 
+					root.isSubroutine() && !chkRootTypes[1].isSelected() ||
+					root.isInclude() && !chkRootTypes[2].isSelected())) {
+				// Skip this Root and its contained elements
+				continue;
+			}
+			// END KGU#918 2021-01-27
+			// END KGU#918 2021-01-27
 			IElementSequence range = null;
 			Element selected = diagram.getSelected();
 			if (scope == Scope.CURRENT_SELECTION && root == diagram.getRoot()) {
@@ -1961,11 +1977,16 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		ini.setProperty("searchScope", ((Scope)cmbScope.getSelectedItem()).name());
 		i = 0;
 		for (Root.DiagramType type: Root.DiagramType.values()) {
-			ini.setProperty("search" + type.name(), chkRootTypes[i++].isSelected() ? "1" : "0"); 
+			// START KGU#911 2021-01-28: Issue #910 Don't store diagram controller stuff
+			//ini.setProperty("search" + type.name(), chkRootTypes[i++].isSelected() ? "1" : "0");
+			if (type != Root.DiagramType.DT_INCL_DIAGRCTRL) {
+				ini.setProperty("search" + type.name(), chkRootTypes[i++].isSelected() ? "1" : "0");
+			}
+			// END KGU#911 2021-01-28
 		}
 		i = 0;
 		for (ElementType type: ElementType.values()) {
-			ini.setProperty("find" + type.name(), chkElementTypes[i++].isSelected() ? "1" : "0"); 
+			ini.setProperty("find" + type.name(), chkElementTypes[i++].isSelected() ? "1" : "0");
 		}
 		ini.setProperty("findInTexts", chkInTexts.isSelected() ? "1" : "0");
 		ini.setProperty("findInComments", chkInTexts.isSelected() ? "1" : "0");

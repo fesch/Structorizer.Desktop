@@ -66,7 +66,6 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.parsers.INSDImporter;
 import lu.fisch.utils.StringList;
 
 /**

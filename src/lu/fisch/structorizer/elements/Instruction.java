@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-18      Enh. #56: "preThrow" keyword handling
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Warning symbol for hidden declarations, support for backlink
  *
  ******************************************************************************************************
  *
@@ -83,6 +84,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -207,7 +210,7 @@ public class Instruction extends Element {
 
 		return rect;
 	}
-        
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -1417,13 +1420,13 @@ public class Instruction extends Element {
 	{
 		return (_modeIndependent || E_HIDE_DECL) && this.isMereDeclaratory() && this == this.getDrawingSurrogate(_modeIndependent);
 	}
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#isCollapsed(boolean)
-     */
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isCollapsed(boolean)
+	 */
 	@Override
-    public boolean isCollapsed(boolean _orHidden) {
-        return super.isCollapsed(_orHidden) || _orHidden && eclipsesDeclarations(false);
-    }
+	public boolean isCollapsed(boolean _orHidingOthers) {
+		return super.isCollapsed(_orHidingOthers) || _orHidingOthers && eclipsesDeclarations(false);
+	}
 	/**
 	 * @param _modeIndependent TODO
 	 * @return either this or a preceding declaration if mode {@link Element#E_HIDE_DECL}
@@ -1446,12 +1449,14 @@ public class Instruction extends Element {
 		return surrogate;
 	}
 	/**
-	 * If this is part of a sequence of mere declaration elements and display mode {@link Element#E_HIDE_DECL}
-	 * is active or {@code _force} is true then the complete declaration sequence virtually amalgamated under
-	 * its first member will be returned, otherwise null.
-	 * @param _modeIndependent - if true then an existing declaration sequence will also be returned if mode
-	 * {@link Element#E_HIDE_DECL} is off.
-	 * @return the sequence of hidden declaration elements including its surrogate element or null.
+	 * If this is part of a sequence of mere declaration elements and display
+	 * mode {@link Element#E_HIDE_DECL} is active or {@code _force} is {@code true}
+	 * then the complete declaration sequence virtually amalgamated under its
+	 * first member will be returned, otherwise null.
+	 * @param _modeIndependent - if true then an existing declaration sequence
+	 * will also be returned if mode {@link Element#E_HIDE_DECL} is off.
+	 * @return the sequence of hidden declaration elements including its surrogate
+	 * element or null.
 	 */
 	public IElementSequence getEclipsedDeclarations(boolean _modeIndependent)
 	{
@@ -1601,5 +1606,23 @@ public class Instruction extends Element {
 		}
 	}
 	// END KGU#477 2017-12-10
+	
+	// START KGU#906/KGU#926 2021-02-04: Enh. #905, #926
+	@Override
+	public LinkedHashMap<Element, Vector<DetectedError>> getRelatedErrors(boolean getAll)
+	{
+		LinkedHashMap<Element, Vector<DetectedError>> errorMap = super.getRelatedErrors(getAll);
+		IElementSequence hiddenDecls = this.getEclipsedDeclarations(false);
+		if (hiddenDecls != null) {
+			for (int i = 0; i < hiddenDecls.getSize() && (getAll || errorMap.isEmpty()); i++) {
+				Element decl = hiddenDecls.getElement(i);
+				if (decl != this) {
+					decl.addRelatedErrors(getAll, errorMap);
+				}
+			}
+		}
+		return errorMap;
+	}
+	// END KGU#906/KGU#926 2021-02-04
 
 }

@@ -53,6 +53,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.11.04      Enh. #452: Charm initiative: start hints tab 
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2021-01-02      Enh. #905: New general checkbox for warning signs in elements
+ *      Kay Gürtzig     2021-02-04      Enh. #905: Decomposed checkbox/label in order to provide an icon
  *
  ******************************************************************************************************
  *
@@ -60,12 +61,15 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.io.Ini;
+
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
@@ -146,6 +150,10 @@ public class AnalyserPreferences extends LangDialog {
 	}
 	// END KGU#290 2016-11-10
 	
+	// START KGU#906 2021-02-04: Issue #905 A picture tells more than thousand words...
+	private static ImageIcon warningIcon = null;
+	// END KGU#906 2021-02-04
+	
 	// START KGU#393 2017-05-09: Issue #400 - indicate whether changes are committed
 	public boolean OK = false;
 	// END KGU#393 2017-05-09
@@ -161,6 +169,7 @@ public class AnalyserPreferences extends LangDialog {
 	protected JButton okButton;
 	// START KGU#906 2021-01-02: Enh. #905
 	public JCheckBox chkDrawWarningSign;
+	public JLabel lblDrawWarningSign;
 	// END KGU#906 2021-01-02
 	
 	/*public AnalyserPreferences()
@@ -199,8 +208,10 @@ public class AnalyserPreferences extends LangDialog {
 		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
-		// START KGU#906 2021-01-02: Enh. #905
-		chkDrawWarningSign = new JCheckBox("Draw warning sign in affected elements");
+		// START KGU#906 2021-01-02: Enh. #905, modified on 2021-02-04
+		chkDrawWarningSign = new JCheckBox();
+		lblDrawWarningSign = new JLabel("Draw warning sign in affected elements");
+		lblDrawWarningSign.setIcon(getWarningIcon());
 		// END KGU#906 2021-01-02
 
 		//======== this ========
@@ -287,15 +298,23 @@ public class AnalyserPreferences extends LangDialog {
 				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 				
 				// START KGU#906 2021-01-02: Enh. #905
+				//---- Warning sign checkbox ----
 				GridBagConstraints gbc = new GridBagConstraints();
 				gbc.gridx = 0; gbc.gridy = 0;
 				gbc.weightx = 1.0;
 				gbc.anchor = GridBagConstraints.LINE_START;
 				gbc.fill = GridBagConstraints.HORIZONTAL;
 				gbc.insets = new Insets(0, 0, 0, 0);
-				buttonBar.add(chkDrawWarningSign, gbc);
+				
+				JPanel pnlWarningSign = new JPanel();
+				pnlWarningSign.setLayout(new BoxLayout(pnlWarningSign, BoxLayout.X_AXIS));
+				pnlWarningSign.add(chkDrawWarningSign);
+				pnlWarningSign.add(Box.createHorizontalStrut(5));
+				pnlWarningSign.add(lblDrawWarningSign);
+				buttonBar.add(pnlWarningSign, gbc);
 				chkDrawWarningSign.addKeyListener(keyListener);
 				// END KGU#906 2021-01-02
+				
 				//---- okButton ----
 				okButton.setText("OK");
 				gbc.gridx = 1; gbc.gridy = 0;
@@ -338,6 +357,45 @@ public class AnalyserPreferences extends LangDialog {
 		};
 		okButton.addActionListener(actionListener);
 	}
+	
+	// START KGU#906 2021-02-04: Enh. #905 - We construct the warning icon once
+	private static final ImageIcon getWarningIcon()
+	{
+		ImageIcon icon = warningIcon;
+		if (icon == null) {
+			float scaleFactor = Float.parseFloat(Ini.getInstance().getProperty("scaleFactor", "1.0"));
+			int size = (int)(16 * scaleFactor);
+			int height = (int)Math.round(size * Math.sin(Math.PI/3));
+			int yTop = (size-height)/2;
+			int[] xCoords = new int[] {
+					0,		// left base corner
+					size,	// right base corner
+					size/2	// top corner
+			};
+			int[] yCoords = new int[] {
+					yTop + height,	// left base corner
+					yTop + height,	// right base corner
+					yTop			// top corner
+			};
+			BufferedImage dst = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2 = null;
+			try {
+				g2 = dst.createGraphics();
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2.setColor(Color.RED);
+				g2.fillPolygon(xCoords, yCoords, xCoords.length);
+			}
+			finally {
+				// FIXME: This is somewhat rush as we cannot be sure drawImage was ready
+				if (g2 != null) {
+					g2.dispose();
+				}
+			}
+			icon = warningIcon = new ImageIcon(dst);
+		}
+		return icon;
+	}
+	// END KGU#906 2021-02-04
 	
 	// START KGU#456 2017-11-04 Enh. #452
 	/**

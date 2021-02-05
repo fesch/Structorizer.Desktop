@@ -131,6 +131,8 @@
  *      Kay Gürtzig     2020-03-09  Issue #835: New ImportOptionDialog messages
  *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
+ *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig     2021-01-25  Enh. #915: New class InputBoxCase added
  *
  ******************************************************************************************************
  *
@@ -214,7 +216,7 @@ Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
 Menu.menuEditSummonSub.text=Editar subdiagrama ...
-Menu.menuEditSummonSub.tooltip=Convocar la subrutina llamada al editor.
+Menu.menuEditSummonSub.tooltip=Convocar la llamada @o o un diagrama incluido al editor.
 Menu.menuEditFindReplace.text=Buscar/Reemplazar ...
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
 Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión discreta en los elementos seleccionados por aquellos con precisión fina real.
@@ -458,8 +460,13 @@ Menu.lblInvolveSubtree.text=Applicar a las subestructuras también
 Menu.lblPreserveContinuators.text=Mantener saltos de línea existentes
 Menu.msgVetoClose.text=Structorizer esta terminandose. ¿Objetas?
 Menu.msgSetAsPreferredGenerator.text=Has exportado código %1 las ultimas %2 veces.\n¿Quieres eligir % como el código de exportación preferido en el menú ahora?
-Menu.msgChooseSubroutine.text=Escoje la subrutina, que debe ser visitada:
-Menu.msgCreateSubroutine.text=¿Crear nueva subrutina «%»?
+Menu.msgChooseSubroutine.text=Escoje la @o, que debe ser visitado:
+Menu.msgCreateSubroutine.text=¿Crear nuevo diagrama para @o «%»?
+Menu.msgEditSubroutine.text=Editar @o ...
+Menu.msgEditIncludable.text=Editar @p ...
+Menu.msgChooseIncludable.text=Escoje el diagrama @p, que debe ser visitado:
+Menu.msgCreateIncludable.text=¿Crear nuevo diagrama @p «%»?
+Menu.msgCyclicInclusion.text=¡Inclusión ciclica quitada - no hay más diagramas incluidos!
 Menu.ttlMouseScrollUnit.text=Unidad de decplazamiento (rueda del ratón)
 Menu.msgSelectPreferences.text=Preferencias a ser exportados (categorías)
 Menu.msgAllPreferences.text=Todas preferencias
@@ -471,6 +478,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
+Menu.msgVersionHint_3_30_15.text=Este nuevo editor para elementos\ndel tipo @c es opcional.\nPromete mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nSi prefieres el diseño tradicional,\nsin embargo, puedes deshabilitar la opción\n"%1"\nen las %2.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -593,7 +601,7 @@ AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instruccion
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son constantes integrales.
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
-AnalyserPreferences.chkDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
+AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -703,7 +711,7 @@ Editor.popupTransmute.text=Transmutar
 Editor.popupOutsource.text=Delegar
 Editor.popupOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 Editor.popupEditSub.text=Editar subrutina ...
-Editor.popupEditSub.tooltip=Convocar subrutina llamada al editor para ser visitada.
+Editor.popupEditSub.tooltip=Convocar la llamada @o o un diagrama incluido al editor.
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
@@ -732,6 +740,7 @@ InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
 InputBox.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBox.chkBreakpoint.text=Breakpoint
+InputBox.chkShowFinally.text=Mostrar bloque de limpieza (sección FINALLY) aun cuando es vacía
 InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBox.lblText.text[elementType:Alternative]=Por favor ingresa la condición
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar
@@ -811,6 +820,32 @@ InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
 InputBoxRoot.btnAttributes.text=Propiedades
 InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
 InputBoxRoot.btnAddIncludable.text=Añadir
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Insertar ramificación @c...
+InputBoxCase.title[getInsertionType():update]=Editar ramificación @c...
+InputBoxCase.lblDiscriminator.text=Expresión de selección
+InputBoxCase.lblSelectors.text=Constantes de selección
+InputBoxCase.btnAddLine.tooltip=Añadir nueva línea de brazo (y rellenar una lista de constantes selectores, separada por comas)
+InputBoxCase.btnDelLine.tooltip=Quitar la línea de brazo seleccionada
+InputBoxCase.btnUpLine.tooltip=Mover la línea de brazo arriva por una posición
+InputBoxCase.btnDnLine.tooltip=Mover la línea de brazo abajo por una posición
+InputBoxCase.chkMoveBranches.text=Mover brazos relacionados
+InputBoxCase.chkMoveBranches.tooltip=Si activo, la asociación entre brazos existentes y las líneas movadas serán mantenidas (¡recomendado!).
+InputBoxCase.chkDefaultBranch.text=Brazo residual
+InputBoxCase.chkDefaultBranch.tooltip=Garantiza que la selección tiene un brazo residual (el nombre del cual puedes entrar en la máscara de entrada vecina).
+InputBoxCase.txtDefaultLabel.tooltip=El nombre para el brazo residual (no debe ser igual a "%"), p.ej. "otro", "en caso demás" o algo así.
+InputBoxCase.lblComment.text=Comment
+InputBoxCase.lblComment.tooltip=
+InputBoxCase.txtComment.tooltip=The comment of the element.
+InputBoxCase.btnOK.text=Aceptar
+InputBoxCase.btnOK.tooltip=Aceptar los cambios.
+InputBoxCase.btnCancel.text=Cancelar
+InputBoxCase.btnCancel.tooltip=Cancelar los cambios.
+InputBoxCase.chkDisabled.text=Desactivado (ejecución y exportación)
+InputBoxCase.chkBreakpoint.text=Breakpoint
+InputBoxCase.lblBreakTriggerText.text=Parar antes de %a ejecución
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Una lista de selectores no debe ser vacía!
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Propiedades del diagrama
@@ -916,6 +951,7 @@ Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una ramificación @c
 Preferences.lblCaseRot.text=Min. brazos para rotar
 Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
+Preferences.chkCaseEditor.text=Utilizar editor especial para elementos @c
 Preferences.pnlRoot.border=Encabezamiento del diagrama
 Preferences.lblRoot.text=Rótulo de la lista de incluíbles
 Preferences.lblRoot.tooltip=El rótulo debajo del cual la lista de diagramas a ser incluidos debe ser dibujada.
@@ -1442,6 +1478,7 @@ Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura 
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
+Control.msgInvalidArrayAccess.text=¡Intento inesperado de accesar a «%1» con índice (%2)!
 Control.msgIndexOutOfBounds.text=¡Indice «%1» (%2) está fuera de los márgines del array «%3»!
 Control.msgInitializerAsArgument.text=Un inicialisador de array ne se puede pasar diréctamente como parámetro a una función interna.\nPon el array anteriórmente en una variable y pasa ésa pués.
 Control.msgBadValueListDetails.text=Detalles: %

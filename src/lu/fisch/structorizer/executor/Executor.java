@@ -201,6 +201,10 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *      Kay Gürtzig     2021-01-07/10   Enh. #909: New and improved methods to support enumerator value display
  *      Kay Gürtzig     2021-01-11/12   Enh. #910: New mechanisms for DiagramController based on Includables
+ *      Kay Gürtzig     2021-02-01      Issue #920: Evaluation of "[-]Infinity" to Double.POSITIVE_INFINITY etc.
+ *                                      Bugfix #922: Corrected handling of mixed substructure in setVar()
+ *                                      Issue #923: Manipulations of FOR-IN loop variables are not illegal
+ *      Kay Gürtzig     2021-02-03      Issue #920: Acceptance of infinity as symbol ∞
  *
  ******************************************************************************************************
  *
@@ -1136,9 +1140,9 @@ public class Executor implements Runnable
 	
 	/**
 	 * Unifies the operators, replaces math functions and certain built-in routines and
-	 * converts string comparisons if {@code convertComparisons} is true.<br/>
-	 * NOTE: Argument {@code convertComparisons} should not be true if {@code s} contains
-	 * an entire instruction line rather than just an expression! 
+	 * converts string comparisons if {@code convertComparisons} is {@code true}.<br/>
+	 * <b>NOTE:</b> Argument {@code convertComparisons} should not be {@code true} if
+	 * {@code s} contains an entire instruction line rather than just an expression!
 	 * @param s - the expression or instruction line to be pre-processed
 	 * @param convertComparisons - whether string comparisons are to be detected and rewritten
 	 * @return the converted string
@@ -3229,7 +3233,8 @@ public class Executor implements Runnable
 		// START KGU#580 2018-09-24: Issue #605
 		String varName = target;
 		// END KGU#580 2018-09-24
-		// first add as string (lest we should end with nothing at all...)
+		
+		// First add as string (lest we should end with nothing at all...)
 		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
 		//setVar(name, rawInput);
 		EvalError finalError = null;
@@ -3271,6 +3276,11 @@ public class Executor implements Runnable
 					varName = setVar(target, context.interpreter.get(target), true);					
 				}
 				// END KGU#285 2016-10-16
+				// START KGU#920 2021-02-03: Issue #920: Infinity symbol
+				if ("\u221E".equals(strInput)) {
+					varName = setVar(target, Double.POSITIVE_INFINITY, true);
+				}
+				// END KGU#920 2021-02-03
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
@@ -3408,8 +3418,10 @@ public class Executor implements Runnable
 	 * d) {@code [const] <typespec1> <id>'['[<expr>]']'}  - implicit C-style array declaration (questionable)<br/>
 	 * e) {@code [const|var] <id> : <typespec2>}<br/>
 	 * f) {@code [const|dim] <id> as <typespec2>}<br/>
-	 * g) {@code <id>(.<id>['['<expr>']'])+}<br/>
-	 * h) {@code <id>'['<expr>']'(.<id>)+}<br/>
+	 * // g) {@code <id>(.<id>['['<expr>']'])+} - one variant of i)<br/> 
+	 * // h) {@code <id>'['<expr>']'(.<id>)+} - another variant of i)<br/>
+	 * i) {@code <id>('['<expr>']'|.<id>)*}<br/>
+	 * j) {@code <id>(.<id>)*('['']')* <id>} - Java [array] declaration<br/>
 	 * ILLEGAL (NOT supported here):<br/>
 	 * w) {@code const <id>'['<expr>']'} - single elements can't be const<br/>
 	 * x) {@code [const] <id>'['']'}  - C-style array declaration: redundant if array value is assigned, wrong otherwise<br/>
@@ -3465,8 +3477,6 @@ public class Executor implements Runnable
 		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
 		// We refer to the cases listed in the javadoc of method setVar(target, content).
 		boolean isConstant = false;
-		String recordName = null;
-		TypeMapEntry compType = null;
 		StringList typeDescr = null;
 		String indexStr = null;
 
@@ -3476,121 +3486,340 @@ public class Executor implements Runnable
 		tokens.removeAll(" ");
 		int nTokens = tokens.count();
 		String token0 = tokens.get(0).toLowerCase();
+		String token1;
+		StringList accessPath = null;	// Qualifier path (for the case of record access)
+		boolean isDecl = false;
 		if ((isConstant = token0.equals("const")) || token0.equals("var") || token0.equals("dim")) {
 			// a), c), d), e), f) ?
-			tokens.remove(0);
+			tokens.remove(0);	// get rid of the modifier
+			nTokens--;
 			// Extract type information
 			int posColon = tokens.indexOf(":");
 			if (posColon < 0 && !token0.equals("var")) posColon = tokens.indexOf("as", false);
 			if (posColon >= 0) {
+				isDecl = true;
 				typeDescr = tokens.subSequence(posColon+1, nTokens);
 				tokens = tokens.subSequence(0, posColon);
-				// In case of an explicit and Pascal- or BASIC-style variable declaration the target must be an unqualified identifier
+				nTokens = tokens.count();
+				/* In case of an explicit and Pascal- or BASIC-style variable declaration
+				 * the target must be an unqualified identifier
+				 */
 				if (tokens.contains(".")) {
-					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
+					throw new EvalError(control.msgConstantRecordComponent.getText()
+							.replace("%", target), null, null);
+	// <=======================================================
 				}
 				if (tokens.contains("[")) {
-					throw new EvalError(control.msgConstantArrayElement.getText().replace("%", target), null, null);
+					throw new EvalError(control.msgConstantArrayElement.getText()
+							.replace("%", target), null, null);
+	// <=======================================================
 				}
 			}
-			nTokens = tokens.count();
+			else if (nTokens == 0) {
+				// Only the word "const"
+				throw new EvalError(control.msgInvalidExpr.getText()
+						.replace("%", token0), null, null);
+	// <=======================================================
+			}
 			target = tokens.get(nTokens-1);
 			// START KGU#388 2017-09-18: Enh. #423 - Register the declared type
-			associateType(target, typeDescr);
+			associateType(target, typeDescr);	// NOP if typeDescr == null
 			// END KGU#388 2017-09-18
 		}
-		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed or qualified or both)
-		// START KGU#388 2017-09-14: Enh. #423 - We try recursively to track cases g) and h) down
-//		else if (tokens.get(nTokens-1).equals("]")) {
-//			// b) indexed variable or d) a C-style array declaration or g) or h)?
-//			int posLBrack = tokens.indexOf("[");
-//			if (posLBrack < 1) {
-//				throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+		// START KGU#922 2021-01-31: Bugfix #922 Mixed nesting of arrays and records
+//		// START KGU#388 2017-09-14: Enh. #423 - We try recursively to track cases g) and h) down
+//		// qualified or indexed or both?
+//		else if (tokens.indexOf(".") == 1 || tokens.get(nTokens-1).equals("]")) {
+//			// FIXME: Face a mixed encapsulation of arrays and records
+//			// In case of a record component access there must not be modifiers
+//			if (tokens.indexOf(".") == 1) {
+//				TypeMapEntry recordType = null;
+//				// The base variable name should be the last identifier in the series
+//				target = tokens.get(0);
+//				recordType = this.identifyRecordType(target, false);	// This will only differ from null if it's a record type
+//				recordName = target;
+//				// Now check recursively for record component names 
+//				while (recordType != null && nTokens >= 3 && tokens.get(1).equals(".") && Function.testIdentifier(tokens.get(2), false, null)) {
+//					LinkedHashMap<String, TypeMapEntry> comps = recordType.getComponentInfo(false);
+//					String compName = tokens.get(2);
+//					if (comps.containsKey(compName)) {
+//						// If this is in turn a record type, it may be going on recursively...
+//						target += "." + compName;
+//						compType = comps.get(compName);
+//						if (compType.isRecord()) {
+//							recordType = compType;
+//						}
+//						else {
+//							recordType = null;
+//						}
+//						tokens.set(0, target);
+//						tokens.remove(1, 3);
+//						nTokens -= 2;
+//					}
+//					else {
+//						throw new EvalError(control.msgInvalidExpr.getText().replace("%1", target + "." + compName), null, null);
+//					}
+//				}
+//				if (isConstant) {
+//					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
+//				}
+//				if (this.isConstant(recordName)) {
+//					throw new EvalError(control.msgConstantRedefinition.getText().replace("%", recordName), null, null);
+//				}
 //			}
-//			else {
-//				name = tokens.get(posLBrack-1);
-//				if (posLBrack == 1) {
-//					indexStr = tokens.concatenate(" ");
-//					if (isConstant) {
-//						throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+//			if (tokens.get(nTokens-1).equals("]")) {
+//				// b) indexed variable or d) a C-style array declaration?
+//				int posLBrack = tokens.indexOf("[");
+//				if (posLBrack < 1 || recordName != null && posLBrack > 1) {
+//					throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+//				}
+//				else {
+//					target = tokens.get(posLBrack-1);
+//					if (posLBrack == 1) {
+//						// START KGU#773 2019-11-28: Bugfix #786 - To insert spaces wasn't helpful
+//						//indexStr = tokens.concatenate(" ");
+//						indexStr = tokens.concatenate(null);
+//						// END KGU#773 2019-11-28
+//						// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition
+//						// A string comparison in the index string  may be unlikely but not impossible
+//						indexStr = this.convertStringComparison(indexStr);
+//						// END KGU#490 2018-02-08
+//						if (isConstant) {
+//							throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+//						}
 //					}
 //				}
 //			}
 //		}
-		// qualified or indexed or both?
-		else if (tokens.indexOf(".") == 1 || tokens.get(nTokens-1).equals("]")) {
-			// FIXME: Face a mixed encapsulation of arrays and records
-			// In case of a record component access there must not be modifiers
-			if (tokens.indexOf(".") == 1) {
-				TypeMapEntry recordType = null;
-				// The base variable name should be the last identifier in the series
-				target = tokens.get(0);
-				recordType = this.identifyRecordType(target, false);	// This will only differ from null if it's a record type
-				recordName = target;
-				// Now check recursively for record component names 
-				while (recordType != null && nTokens >= 3 && tokens.get(1).equals(".") && Function.testIdentifier(tokens.get(2), false, null)) {
-					LinkedHashMap<String, TypeMapEntry> comps = recordType.getComponentInfo(false);
-					String compName = tokens.get(2);
-					if (comps.containsKey(compName)) {
-						// If this is in turn a record type, it may be going on recursively...
-						target += "." + compName;
-						compType = comps.get(compName);
-						if (compType.isRecord()) {
-							recordType = compType;
-						}
-						else {
-							recordType = null;
-						}
-						tokens.set(0, target);
-						tokens.remove(1, 3);
-						nTokens -= 2;
-					}
-					else {
-						throw new EvalError(control.msgInvalidExpr.getText().replace("%1", target + "." + compName), null, null);
-					}
-				}
-				if (isConstant) {
-					throw new EvalError(control.msgConstantRecordComponent.getText().replace("%", target), null, null);
-				}
-				if (this.isConstant(recordName)) {
-					throw new EvalError(control.msgConstantRedefinition.getText().replace("%", recordName), null, null);
-				}
-			}
-			if (tokens.get(nTokens-1).equals("]")) {
-				// b) indexed variable or d) a C-style array declaration?
-				int posLBrack = tokens.indexOf("[");
-				if (posLBrack < 1 || recordName != null && posLBrack > 1) {
-					throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+//		// END KGU#388 2017-09-14
+//		else {
+//			// Either a declaration or it does not start with an identifier
+//			// The standard case: a) or c)
+//			// START KGU#388 2017-09-18: Register the declared type if it's a defined type name
+//			if (nTokens == 2) {
+//				typeDescr = tokens.subSequence(0, nTokens - 1);
+//				associateType(tokens.get(1), typeDescr);
+//			}
+//			// END KGU#388 2017-09-18
+//			target = tokens.get(nTokens-1);
+//		}
+		if (!isDecl && (Function.testIdentifier(token0 = tokens.get(0), false, null))) {
+			/* Now it must be some C or Java declaration or just a plain variable
+			 * (possibly indexed or qualified or both).
+			 * A Java type may be qualified itself (package + member class).
+			 */
+			// Now we check for all cases except e) and f)
+			boolean isVariable = context.variables.contains(token0);
+			// In case of an existing variable this should be its type
+			TypeMapEntry targetType = context.dynTypeMap.get(token0);
+			// In case it is a C or Java declaration we might get a type here
+			TypeMapEntry declType = context.dynTypeMap.get(":" + token0);
+			// It might also be a standard type name in case of C or Java
+			boolean isStandardType = TypeMapEntry.isStandardType(token0);
+			boolean isJavaType = !isVariable && (isStandardType || declType != null);
+			// The sequence of mere component names and index expressions
+			accessPath = StringList.getNew(token0);
+
+			target = token0;	// Remember the base name
+			/* First gather the maximum initial qualification sequence 
+			 * (might be a Java class path - or a qualified variable)
+			 */
+			int posDot = 1;
+			String token2 = "";
+			while (posDot+1 < nTokens && tokens.get(posDot).equals(".")
+					&& Function.testIdentifier(token2 = tokens.get(posDot+1), false, null)) {
+				declType = null;	// Can't be a declared user type anymore
+				isStandardType = false;	// ... neither a primitive type
+				if (isVariable && targetType != null && targetType.isRecord()) {
+					targetType = targetType.getComponentInfo(true).get(token2);
 				}
 				else {
-					target = tokens.get(posLBrack-1);
-					if (posLBrack == 1) {
-						// START KGU#773 2019-11-28: Bugfix #786 - To insert spaces wasn't helpful
-						//indexStr = tokens.concatenate(" ");
-						indexStr = tokens.concatenate(null);
-						// END KGU#773 2019-11-28
-						// START KGU#490 2018-02-08: Bugfix #503 - we must apply string comparison conversion after decomposition
-						// A string comparison in the index string  may be unlikely but not impossible
-						indexStr = this.convertStringComparison(indexStr);
-						// END KGU#490 2018-02-08
-						if (isConstant) {
-							throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
-						}
+					try {
+						Class.forName(tokens.concatenate("", 0, posDot));
+						isJavaType = true;
+					} catch (ClassNotFoundException exc) {
+						isJavaType = false;
 					}
 				}
+				accessPath.add(token2);
+				posDot += 2;
 			}
-		}
-		// END KGU#388 2017-09-14
-		else {
-			// The standard case: a) or c)
-			// START KGU#388 2017-09-18: Register the declared type if it's a defined type name
-			if (nTokens == 2) {
-				typeDescr = tokens.subSequence(0, nTokens - 1);
-				associateType(tokens.get(1), typeDescr);
+			
+			
+			/* Now either an identifier might follow (which makes it an
+			 * initialisation of C or Java style) or some access path
+			 */
+			if ((declType != null || isJavaType || isStandardType) && posDot < nTokens
+					&& Function.testIdentifier(token1 = tokens.get(posDot), false, "")) {
+				/* it is a either a non-array Java declaration or a C declaration
+				 * with a possible array specification still to come
+				 * i.e. cases b) or d)
+				 */
+				isDecl = true;
+				accessPath.clear();
+				target = token1;	// Now the target is the declared identifier
+				typeDescr = tokens.subSequence(0, posDot);
+				// Only index ranges may follow, which would make it a C declaration
+				if (++posDot < nTokens) {
+					// A Java declaration should end here
+					boolean atPosDot = false;
+					if ((atPosDot = !tokens.get(posDot).equals("["))
+							|| !tokens.get(nTokens-1).equals("]")) {
+						tokens.insert("►", atPosDot ? posDot : nTokens-1);
+						throw new EvalError(control.msgInvalidExpr.getText()
+								.replace("%1", tokens.concatenate(null)), null, null);
+	// <================================================================
+					}
+					/* It is a C array declaration.
+					 * The difficulty will be how to handle this exactly:
+					 * The variable is to be assigned an array as a whole then -
+					 * we may only check whether the dimensions are okay.
+					 * The following check may throw an EvalError
+					 */
+					checkDimensionsC(target, typeDescr, tokens.subSequence(posDot+1, nTokens), content);
+	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+					typeDescr.add(tokens.subSequence(posDot, nTokens));
+				}
+				associateType(target, typeDescr);
+				// We are done with cases b), d). isDecl will prevent further parsing
 			}
-			// END KGU#388 2017-09-18
-			target = tokens.get(nTokens-1);
+			while (!isDecl && posDot+1 < nTokens && ".[".contains(token1 = tokens.get(posDot))) {
+				// Now it is either an access path or still a Java declaration
+				if (token1.equals("[")) {
+					/* It cannot be a C array initialisation, otherwise a type
+					 * specification AND an id (possibly with non-empty brackets)
+					 * should have preceded - but then we would not have come here!
+					 */
+					if (tokens.get(posDot+1).equals("]")) {
+						/* This must be a Java array declaration: a (new!?)
+						 * identifier must follow, possibly after further bracket
+						 * pairs.
+						 * The variable existence check is not so good an idea
+						 * while we don't support block-local variables - it
+						 * might be a declaration in a loop.
+						 * FIXME: But is is generally too restrictive to require
+						 * an actual type here?
+						 */
+						if ((isJavaType || declType != null) /*&& !isVariable*/) {
+							// check for what is coming
+							typeDescr = tokens.subSequence(0, posDot);
+							/* The following "dimension counting" routine
+							 * may throw an EvalError if syntax is corrupted,
+							 * otherwise assigns the type and returns the
+							 * variable name
+							 */
+							target = getJavaDimensions(tokens.subSequence(posDot, nTokens), typeDescr);
+	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+							isDecl = true;
+							accessPath.clear();
+							// We are done here with case j)
+							break;
+						}
+						tokens.insert("►", 0);
+						throw new EvalError(control.msgInvalidExpr.getText()
+								.replace("%1", tokens.concatenate(null)), null, null);
+					}
+					// Okay, some index expression is expected, no Java or C declaration
+					else if (targetType == null || targetType.isArray() || isVariable) {
+						// Variable may not exist. For a simple path we can create it.
+						StringList indexExprs = Element.splitExpressionList(
+								tokens.subSequence(posDot + 1, nTokens), ",", true);
+						int nExprs = indexExprs.count()-1;
+						
+						if (!indexExprs.get(nExprs).startsWith("]")) {
+							tokens.remove(posDot +1, nTokens);
+							tokens.add(indexExprs.subSequence(0, nExprs).concatenate(","));
+							tokens.add("►");
+							tokens.add(indexExprs.get(nExprs));
+							throw new EvalError(control.msgInvalidExpr.getText()
+									.replace("%", tokens.concatenate(null)), null, null);
+						}
+						// Try to determine the array element type
+						String typeStr = null;
+						if (targetType != null && targetType.isArray()) {
+							typeStr = targetType.getCanonicalType(true, false);
+						}
+						tokens.remove(posDot, nTokens);
+						// Decompose a multiple index, retain the last index expression
+						for (int i = 0; i < nExprs; i++) {
+							indexStr = this.convertStringComparison(indexExprs.get(i));
+							if (typeStr != null) {
+								if (!typeStr.startsWith("@")) {
+									tokens.add("► [");
+									tokens.add(indexExprs.subSequence(i, nExprs).concatenate("]["));
+									tokens.add("]");
+									tokens.add(indexExprs.get(nExprs));
+									throw new EvalError(control.msgInvalidArrayAccess.getText()
+											.replace("%1", tokens.concatenate(null)).replace("%2", typeStr),
+											null, null);
+	// <================================================
+								}
+								typeStr = typeStr.substring(1);
+							}
+							// Pre-evaluate the index at this point
+							Object index = this.evaluateExpression(indexStr, true, false);
+							if (index != null && index instanceof Integer) {
+								if ((int)index < 0) {
+									throw new EvalError(control.msgIndexOutOfBounds.getText()
+											.replace("%3", tokens.concatenate(null))
+											.replace("%1", indexStr)
+											.replace("%2", String.valueOf(index)),
+											null, null);
+	// <================================================
+								}
+								indexStr = Integer.toString((int)index);
+							}
+							else {
+								tokens.add("[ ►");
+								tokens.add(indexStr);
+								tokens.add("]...");
+								throw new EvalError(control.msgInvalidExpr.getText()
+										.replace("%", tokens.concatenate(null)),
+										null, null);
+	// <=============================================
+							}
+							// For the access path a prefix character is sufficient
+							accessPath.add("[" + indexStr);
+							// For the token agglomeration, a full index expression is necessary
+							tokens.add("[");
+							tokens.add(indexStr);
+							tokens.add("]");
+							posDot += 3;
+						}
+						//target = tokens.concatenate(null);
+						tokens.add(Element.splitLexically(indexExprs.get(nExprs), true));
+						tokens.remove(posDot);	// drop the leading "]"
+						nTokens = tokens.count();
+					}
+				}
+				/* Because of the prerequisites only a "." is to be expected,
+				 * but at least one index access must have been in the path
+				 */
+				else if (Function.testIdentifier(token2 = tokens.get(posDot + 1), false, null)) {
+					// Record component access again
+					if (targetType != null && targetType.isRecord()) {
+						targetType = targetType.getComponentInfo(false).get(token2);
+					}
+					accessPath.add(token2);
+					posDot += 2;
+				}
+				else {
+					// Something defective
+					tokens.insert("►", posDot + 1);
+					throw new EvalError(control.msgInvalidExpr.getText()
+							.replace("%", tokens.concatenate(null)), null, null);
+	// <================================================================
+				}
+			}
+
 		}
+		// Either a declaration or it does not start with an identifier
+		else if (!isDecl) {
+			// Certainly a syntax error
+			throw new EvalError(control.msgInvalidExpr.getText()
+					.replace("%", "►" + tokens.get(0)), null, null);
+		}
+		// END KGU#922 2021-01-31
 		
 		// ======== PHASE 2: Check of loop variable violations ===========
 		
@@ -3604,7 +3833,10 @@ public class Executor implements Runnable
 		
 		// ======== PHASE 3: Precautions against violation of constants ===========
 		// START KGU#375 2017-03-30: Enh. #388 - check redefinition of constant
-		if (this.isConstant(target) || recordName != null && this.isConstant(recordName)) {
+		// START KGU#922 2021-02-01: Bugfix #922
+		//if (this.isConstant(target) || recordName != null && this.isConstant(recordName)) {
+		if (this.isConstant(target)) {
+		// END KGU#922 2021-02-01
 			throw new EvalError(control.msgConstantRedefinition.getText().replace("%", target), null, null);
 		}
 		
@@ -3638,184 +3870,335 @@ public class Executor implements Runnable
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
 
-		// START KGU#375 2017-03-30: Enh. #388 - replaced by preparing code above
-//		String arrayname = null;
-//		if ((name.contains("[")) && (name.contains("]")))
-//		{
-//			arrayname = name.substring(0, name.indexOf("["));
-//			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
-//			String[] nameParts = arrayname.split(" ");
-//			arrayname = nameParts[nameParts.length-1];
-//			// END KGU#109 2015-12-15
-//		// START KGU#359 2017-03-06: Bugfix #369 for typed array initialisation like int a[3] <- {4, 9, 2}
-//			if (nameParts.length > 1) {
-//				// This is rather a C-style array declaration (initialized) than an array
-//				// element assignment. The important question is now, whether the
-//				// expression represents an array. Then we would drop the "index"
-//				// (which is indeed a size) or check it against the array size.
-//				name = arrayname;
-//				arrayname = null;
-//			}
-//		}
-//		if (arrayname != null) {
-//		// Now all is fine here...
-//		// END KGU#359 2017-03-06 
-//			boolean arrayFound = this.variables.contains(arrayname);
-//			int index = this.getIndexValue(name);
-		
 		// ======== PHASE 4: Structure-aware value assignment ===========
 
-		// -------- Step 4 a: Array element assignment ----------------------- 
-		if (indexStr != null) {
-		// END KGU#375 2017-03-30
-			boolean arrayFound = context.variables.contains(target);
-			boolean componentArrayFound = compType != null && context.variables.contains(recordName) && compType.isArray();
-			int index = this.getIndexValue(indexStr);
+		// START KGU#922 2021-02-01: Bugfix #922 completely rewritten
+//		// -------- Step 4 a: Array element assignment ----------------------- 
+//		if (indexStr != null) {
+//			boolean arrayFound = context.variables.contains(target);
+//			boolean componentArrayFound = compType != null && context.variables.contains(recordName) && compType.isArray();
+//			int index = this.getIndexValue(indexStr);
+//			ArrayList<Object> objectArray = null;
+//			Object record = null;
+//			HashMap<String, Object> parentRecord = null;
+//			int oldSize = 0;
+//			if (arrayFound)
+//			{
+//				Object targetObject = this.context.interpreter.get(target);
+//				if (targetObject == null && context.dynTypeMap.containsKey(target) && context.dynTypeMap.get(target).isArray()) {
+//					// KGU#432: The variable had been declared as array but not initialized - so be generous here
+//					objectArray = new ArrayList<Object>();
+//				}
+//				else if (targetObject instanceof ArrayList) {
+//					objectArray = (ArrayList<Object>)targetObject;
+//					oldSize = objectArray.size();
+//				}
+//				else {
+//					// FIXME: Produce a more meaningful EvalError
+//					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content, context.dynTypeMap), false, true);
+//				}
+//			}
+//			else if (componentArrayFound)
+//			{
+//				// Now get the original array component
+//				StringList path = StringList.explode(target, "\\.");
+//				record = context.interpreter.get(path.get(0));	// base record
+//				if (record == null) {
+//					record = this.createEmptyRecord(path, 0);
+//				}
+//				Object comp = record;
+//				for (int i = 1; i < path.count(); i++) {
+//					parentRecord = (HashMap<String,Object>)comp;
+//					comp = parentRecord.get(path.get(i));
+//					if (comp == null && i < path.count()-1) {
+//						comp = this.createEmptyRecord(path, i);
+//						parentRecord.put(path.get(i), comp);
+//					}
+//				}
+//				if (comp == null) {
+//					objectArray = new ArrayList<Object>();
+//				}
+//				else if (comp instanceof ArrayList<?>) {
+//					objectArray = (ArrayList<Object>)comp;
+//					oldSize = objectArray.size();
+//				}
+//				else {
+//					String valueType = Instruction.identifyExprType(context.dynTypeMap, prepareValueForDisplay(comp, null), true);
+//					throw new EvalError(control.msgTypeMismatch.getText().
+//							replace("%1", valueType).
+//									replace("%2", compType.getCanonicalType(true, true)).
+//									replace("%3", target), null, null);
+//				}
+//			}
+//			if (index > oldSize - 1) // This includes the case of oldSize = 0
+//			{
+//				// START KGU#439 2017-10-13: Issue #436
+////				Object[] oldObjectArray = objectArray;
+////				objectArray = new Object[index + 1];
+////				for (int i = 0; i < oldSize; i++)
+////				{
+////					objectArray[i] = oldObjectArray[i];
+////				}
+////				for (int i = oldSize; i < index; i++)
+////				{
+////					objectArray[i] = new Integer(0);
+////				}
+//				if (objectArray == null) {
+//					objectArray = new ArrayList<Object>(index+1);
+//				}
+//				// This adds dummy elements until inclusively index
+//				for (int i = oldSize; i <= index; i++) {
+//					objectArray.add(0);
+//				}
+//				// END KGU#439 2017-10-13
+//			}
+//			//objectArray[index] = content;
+//			objectArray.set(index, content);
+//			//this.interpreter.set(arrayname, objectArray);
+//			//this.variables.addIfNew(arrayname);
+//			if (componentArrayFound) {
+//				//try {
+//					StringList path = StringList.explode(target, "\\.");
+//					parentRecord.put(path.get(path.count()-1), objectArray);
+//					context.interpreter.set(recordName, record);
+//				//}
+//				//catch (Exception ex)
+//				//{
+//				//	// Produce a meaningful EvalError instead
+//				//	//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
+//				//	this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
+//				//}
+//				
+//			}
+//			else {
+//				context.interpreter.set(target, objectArray);
+//				context.variables.addIfNew(target);
+//			}
+//		}
+//		// START KGU#388 2017-09-14: Enh. #423 Special treatment for record components
+//		// -------- Step 4 b: Record component assignment -------------------- 
+//		else if (recordName != null) {
+//			StringList path = StringList.explode(target, "\\.");
+//			try {
+//				Object record = context.interpreter.get(recordName);
+//				if (record == null && path.count() == 2) {
+//					record = createEmptyRecord(path, 0);
+//				}
+//				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
+//				else if (record == null || !(record instanceof HashMap)) {
+//					throw new EvalError(control.msgInvalidRecord.getText()
+//							.replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
+//				}
+//				// END KGU#568 2018-08-01
+//				Object comp = record;
+//				for (int i = 1; i < path.count()-1; i++) {
+//					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
+//					if (subComp == null && i == path.count()-2) {
+//						// We tolerate that the penultimate level is unset...
+//						subComp = this.createEmptyRecord(path, i);
+//						((HashMap<String, Object>)comp).put(path.get(i), subComp);
+//					}
+//					else if (!(subComp instanceof HashMap<?,?>)) {
+//						throw new EvalError(control.msgInvalidComponent.getText()
+//								.replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
+//					}
+//					comp = subComp;
+//				}
+//				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
+//				context.interpreter.set(recordName, record);
+//				// START KGU#580 2018-09-24
+//				target = recordName;	// this is the variable name to be returned
+//				// END KGU#580 2018-09-24
+//			}
+//			catch (EvalError ex) {
+//				throw ex;
+//			}
+//			catch (Exception ex) {
+//				throw new EvalError(ex.toString(), null, null);
+//			}
+//		}
+//		// END KGU#388 2017-09-14
+		
+		if (accessPath != null && accessPath.count() > 1) {
+			// target should be identical to accessPath.get(0);
+			Object targetObject = context.interpreter.get(target);
+			
+			// Convenience object holders
 			ArrayList<Object> objectArray = null;
-			Object record = null;
-			HashMap<String, Object> parentRecord = null;
-			int oldSize = 0;
-			if (arrayFound)
-			{
-				// START KGU#439 2017-10-13: Issue #436
-//				try {
-//					// If it hasn't been an array then we'll get an error here
-//					//objectArray = (Object[]) this.interpreter.get(arrayname);
-//					objectArray = (Object[]) context.interpreter.get(target);
-//					oldSize = objectArray.length;
-//				}
-//				catch (Exception ex)
-//				{
-//					// Produce a meaningful EvalError instead
-//					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-//					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
-//				}
-				Object targetObject = this.context.interpreter.get(target);
-				if (targetObject == null && context.dynTypeMap.containsKey(target) && context.dynTypeMap.get(target).isArray()) {
-					// KGU#432: The variable had been declared as array but not initialized - so be generous here
-					objectArray = new ArrayList<Object>();
-				}
-				else if (targetObject instanceof ArrayList) {
-					objectArray = (ArrayList<Object>)targetObject;
-					oldSize = objectArray.size();
-				}
-				else {
-					// FIXME: Produce a more meaningful EvalError
-					this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content, context.dynTypeMap), false, true);
-				}
-				// END KGU#439 2017-10-13
+			HashMap<String, Object> objectRecord = null;
+			TypeMapEntry targetType = context.dynTypeMap.get(target);
+			String typeStr = null;
+			if (targetType != null) {
+				typeStr = targetType.getCanonicalType(true, false);
 			}
-			else if (componentArrayFound)
-			{
-				// Now get the original array component
-				StringList path = StringList.explode(target, "\\.");
-				record = context.interpreter.get(path.get(0));	// base record
-				if (record == null) {
-					record = this.createEmptyRecord(path, 0);
-				}
-				Object comp = record;
-				for (int i = 1; i < path.count(); i++) {
-					parentRecord = (HashMap<String,Object>)comp;
-					comp = parentRecord.get(path.get(i));
-					if (comp == null && i < path.count()-1) {
-						comp = this.createEmptyRecord(path, i);
-						parentRecord.put(path.get(i), comp);
+			
+			// Adjust the basic level - find the variable or object or create it
+			int level = 0;
+			boolean arrayWanted = false;
+			if ((targetObject == null) && accessPath.count() < 3) {
+				// We may generously create it, in particular if  the type is declared
+				String access = accessPath.get(1);
+				if ((arrayWanted = access.startsWith("["))
+						&& (targetType == null || targetType.isArray())) {
+					int index = Integer.parseInt(access = access.substring(1));
+					targetObject = objectArray = new ArrayList<Object>(index+1);
+					for (int i = 0; i <= index; i++) {
+						objectArray.add(0);
+					}
+					if (typeStr == null) {
+						typeStr = "@???";
 					}
 				}
-				if (comp == null) {
-					objectArray = new ArrayList<Object>();
-				}
-				else if (comp instanceof ArrayList<?>) {
-					objectArray = (ArrayList<Object>)comp;
-					oldSize = objectArray.size();
-				}
-				else {
-					String valueType = Instruction.identifyExprType(context.dynTypeMap, prepareValueForDisplay(comp, null), true);
-					throw new EvalError(control.msgTypeMismatch.getText().
-							replace("%1", valueType).
-									replace("%2", compType.getCanonicalType(true, true)).
-									replace("%3", target), null, null);
+				else if (!arrayWanted
+						&& (targetType == null || targetType.isRecord())) {
+					targetObject = objectRecord = createEmptyRecord(accessPath, 0);
+					if (targetObject == null) {
+						throw new EvalError(control.msgInvalidRecord.getText()
+								.replace("%1", this.composeAccessPath(accessPath, 0))
+								.replace("%2", String.valueOf(targetType)), null, null);
+					}
+					if (targetType == null) {
+						Object typeName = objectRecord.get("§TYPENAME§");
+						if (typeName != null && typeName instanceof String) {
+							targetType = this.identifyRecordType((String)typeName, true);
+						}
+					}
+					if (targetType != null) {
+						typeStr = targetType.getCanonicalType(true, false);
+					}
 				}
 			}
-			if (index > oldSize - 1) // This includes the case of oldSize = 0
-			{
-				// START KGU#439 2017-10-13: Issue #436
-//				Object[] oldObjectArray = objectArray;
-//				objectArray = new Object[index + 1];
-//				for (int i = 0; i < oldSize; i++)
-//				{
-//					objectArray[i] = oldObjectArray[i];
-//				}
-//				for (int i = oldSize; i < index; i++)
-//				{
-//					objectArray[i] = new Integer(0);
-//				}
-				if (objectArray == null) {
-					objectArray = new ArrayList<Object>(index+1);
+			
+			// The substructure object on descending
+			Object compObject = targetObject;
+			// Now we actually walk the path (as far as possible)
+			for (int i = 1; i < accessPath.count()-1 && compObject != null; i++) {
+				String access = accessPath.get(i);
+				String typeInfo = compObject.getClass().getSimpleName();
+				if (compObject instanceof HashMap<?,?> &&
+						((HashMap<String, Object>)compObject).containsKey("§TYPENAME§")) {
+					typeInfo = String.valueOf(((HashMap<String, Object>)compObject).get("§TYPENAME§"));
 				}
-				// This adds dummy elements until inclusively index
-				for (int i = oldSize; i <= index; i++) {
-					objectArray.add(0);
-				}
-				// END KGU#439 2017-10-13
-			}
-			//objectArray[index] = content;
-			objectArray.set(index, content);
-			//this.interpreter.set(arrayname, objectArray);
-			//this.variables.addIfNew(arrayname);
-			if (componentArrayFound) {
-				//try {
-					StringList path = StringList.explode(target, "\\.");
-					parentRecord.put(path.get(path.count()-1), objectArray);
-					context.interpreter.set(recordName, record);
-				//}
-				//catch (Exception ex)
-				//{
-				//	// Produce a meaningful EvalError instead
-				//	//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-				//	this.evaluateExpression(target + "[" + index + "] = " + prepareValueForDisplay(content), false);
-				//}
+				level = i;
 				
-			}
-			else {
-				context.interpreter.set(target, objectArray);
-				context.variables.addIfNew(target);
-			}
-		}
-		// START KGU#388 2017-09-14: Enh. #423 Special treatment for record components
-		// -------- Step 4 b: Record component assignment -------------------- 
-		else if (recordName != null) {
-			StringList path = StringList.explode(target, "\\.");
-			try {
-				Object record = context.interpreter.get(recordName);
-				if (record == null && path.count() == 2) {
-					record = createEmptyRecord(path, 0);
-				}
-				// START KGU#568 2018-08-01: Avoid a dull NullPointerException
-				else if (record == null || !(record instanceof HashMap)) {
-					throw new EvalError(control.msgInvalidRecord.getText()
-							.replace("%1", recordName).replace("%2", String.valueOf(record)), null, null);
-				}
-				// END KGU#568 2018-08-01
-				Object comp = record;
-				for (int i = 1; i < path.count()-1; i++) {
-					Object subComp = ((HashMap<?, ?>)comp).get(path.get(i));
-					if (subComp == null && i == path.count()-2) {
-						// We tolerate that the penultimate level is unset...
-						subComp = this.createEmptyRecord(path, i);
-						((HashMap<String, Object>)comp).put(path.get(i), subComp);
+				if (access.startsWith("[")) {
+					// ARRAY: access.sustring(1) t is an index expression
+					if (!(compObject instanceof ArrayList<?>)) {
+						throw new EvalError(control.msgInvalidArrayAccess.getText()
+								.replace("%1", composeAccessPath(accessPath, i))
+								.replace("%2", typeInfo),
+								null, null);
 					}
-					else if (!(subComp instanceof HashMap<?,?>)) {
+					objectArray = (ArrayList<Object>)compObject;
+					int index = Integer.parseInt(access.substring(1));
+					compObject = null;	// Just to make sure we get the true object
+					// Underflow has already been checked in phase 2
+					if (index < objectArray.size()) {
+						compObject = objectArray.get((int)index);
+					}
+					else {
+						throw new EvalError(control.msgIndexOutOfBounds.getText()
+								.replace("%3", composeAccessPath(accessPath, i-1))
+								.replace("%1", access.substring(1))
+								.replace("%2", String.valueOf(index)),
+								null, null);
+					}
+					// Now try to identify the type
+					if (targetType != null && targetType.isArray()) {
+						typeStr = targetType.getCanonicalType(true, false);
+						if (typeStr != null && typeStr.startsWith("@")) {
+							typeStr = typeStr.substring(1);
+							targetType = context.dynTypeMap.get(":" + typeStr);
+						}
+					}
+				}
+				
+				else {
+					// RECORD: it is a component selector
+					if (!(compObject instanceof HashMap<?,?>)) {
+						throw new EvalError(control.msgInvalidRecord.getText()
+								.replace("%1", composeAccessPath(accessPath, i))
+								.replace("%2", typeInfo),
+								null, null);
+					}
+					objectRecord = (HashMap<String, Object>)compObject;
+					Object typeName = objectRecord.get("§TYPENAME§");
+					if (typeName instanceof String) {
+						targetType = this.identifyRecordType((String)typeName, true);
+					}
+					if (targetType == null || !targetType.isRecord()
+							|| (targetType = targetType.getComponentInfo(true).get(access)) == null) {
 						throw new EvalError(control.msgInvalidComponent.getText()
-								.replace("%1", path.get(i-1)).replace("%2", path.concatenate(".",0,i-1)), null, null);
+								.replace("%1", access)
+								.replace("%2", composeAccessPath(accessPath, i-1)),
+								null, null);
 					}
-					comp = subComp;
+					compObject = objectRecord.get(access);
+					// targetType should already have been adjusted
+					typeStr = targetType.getCanonicalType(true, false);
 				}
-				((HashMap<String, Object>)comp).put(path.get(path.count()-1), content);
-				context.interpreter.set(recordName, record);
-				// START KGU#580 2018-09-24
-				target = recordName;	// this is the variable name to be returned
-				// END KGU#580 2018-09-24
+			}
+			if (compObject == null) {
+				throw new EvalError(control.msgInvalidExpr.getText()
+						.replace("%2", composeAccessPath(accessPath, level)),
+						null, null);
+			}
+
+			// Now we can eventually do the assignment
+			String access = accessPath.get(accessPath.count()-1);
+			try {
+				if (arrayWanted = access.startsWith("[")) {
+					if (!(compObject instanceof ArrayList<?>)) {
+						String typeInfo = "null";
+						if (compObject instanceof HashMap<?,?> &&
+								((HashMap<String, Object>)compObject).containsKey("§TYPENAME§")) {
+							typeInfo = String.valueOf(((HashMap<String, Object>)compObject).get("§TYPENAME§"));
+						}
+						else if (compObject != null){
+							typeInfo = compObject.getClass().getSimpleName();
+						}
+						throw new EvalError(control.msgInvalidArrayAccess.getText()
+								.replace("%1", composeAccessPath(accessPath, accessPath.count()-1))
+								.replace("%2", typeInfo),
+								null, null);
+					}
+					objectArray = (ArrayList<Object>)compObject;
+					int oldSize = objectArray.size();
+					int index = Integer.parseInt(access.substring(1));
+					for (int i = oldSize; i <= index; i++) {
+						objectArray.add(0);
+					}
+					if (typeStr != null && typeStr.startsWith("@")) {
+						typeStr = typeStr.substring(1);
+						targetType = context.dynTypeMap.get(":" + typeStr);
+					}
+					checkTypeCompatibility(composeAccessPath(accessPath, accessPath.count()-1),
+							targetType, content, typeDescr);
+	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+					objectArray.set(index, content);
+				}
+				else {
+					if (!(compObject instanceof HashMap<?,?>)
+							|| targetType == null
+							|| !targetType.isRecord()
+							|| !targetType.getComponentInfo(true).containsKey(access)) {
+						throw new EvalError(control.msgInvalidComponent.getText()
+								.replace("%1", access)
+								.replace("%2", composeAccessPath(accessPath, accessPath.count()-2)),
+								null, null);
+					}
+					objectRecord = (HashMap<String, Object>)compObject;
+					targetType = targetType.getComponentInfo(true).get(access);
+					checkTypeCompatibility(composeAccessPath(accessPath, accessPath.count()-1),
+							targetType, content, typeDescr);
+	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+					objectRecord.put(access, content);
+				}
+				context.interpreter.set(target, targetObject);
+				context.variables.addIfNew(target);
+				if (isConstant) {
+					context.constants.put(target, context.interpreter.get(target));
+				}
 			}
 			catch (EvalError ex) {
 				throw ex;
@@ -3824,7 +4207,8 @@ public class Executor implements Runnable
 				throw new EvalError(ex.toString(), null, null);
 			}
 		}
-		// END KGU#388 2017-09-14
+		// END KGU#922 2021-02-01
+		
 		// -------- Step 4 c: assignment to a plain variable ----------------------- 
 		else // indexString == null && recordName == null
 		{
@@ -3843,31 +4227,10 @@ public class Executor implements Runnable
 			// END KGU#375 2017-03-30
 
 			// START KGU#388 2017-09-14: Enh. #423
-			// Throw an error if a record is assigned to a used but undeclared, non-record or wrong-record-type variable
-			// or vice versa 
-			if (content instanceof HashMap<?,?>) {
-				String typeName = ((HashMap<?, ?>)content).get("§TYPENAME§").toString();
-				if ((context.variables.contains(target) || typeDescr != null)
-						&& (!context.dynTypeMap.containsKey(target) || (compType = context.dynTypeMap.get(target)) == null || !compType.isRecord()
-						|| !compType.typeName.equals(typeName))) {
-					String compTypeStr = "???";
-					if (compType != null) {
-						compTypeStr = compType.getCanonicalType(true, true).replace("@", "array of ");
-					}
-					throw new EvalError(control.msgTypeMismatch.getText().
-							replace("%1", ((HashMap<?, ?>)content).get("§TYPENAME§").toString()).
-							replace("%2", compTypeStr).
-							replace("%3", target), null, null);
-				}
-			}
-			else if (content != null && (context.dynTypeMap.containsKey(target) && (compType = context.dynTypeMap.get(target)) != null
-				|| typeDescr != null && typeDescr.count() == 1 && (compType = context.dynTypeMap.get("%" + typeDescr.get(0))) != null)
-					&& compType.isRecord() ) {
-				throw new EvalError(control.msgTypeMismatch.getText().
-						replace("%1", content.toString()).
-						replace("%2", compType.typeName).
-						replace("%3", target), null, null);
-			}
+			/* Throw an error if a record is assigned to a used but undeclared, non-record or
+			 * wrong-record-type variable or vice versa 
+			 */
+			checkTypeCompatibility(target, context.dynTypeMap.get(target), content, typeDescr);
 
 			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
 			//this.interpreter.set(name, content);
@@ -3954,19 +4317,197 @@ public class Executor implements Runnable
 	}
 
 	/**
-	 * Detects whether the StringList {@code _typeDescr} specifies a defined type and if so
-	 * associates the latter to the given variable or constant name {@code target} in {@code this.context.dynTypeMap}.
+	 * Checks compatibility of types between {@code target} (i.e. {@code targetType}
+	 * or {@code typeDescr}) on then one hand and {@code content} on the other hand.<br/>
+	 * @param target - name or path of the target variable or component
+	 * @param targetType - type entry for {@code target}
+	 * @param content - the value to be assigned
+	 * @param typeDescr - a type description in case of a declaration
+	 * @throws EvalError if there is an obvious incompatibility (e.g. record vs. no record
+	 * or different record types)
+	 */
+	private void checkTypeCompatibility(String target, TypeMapEntry targetType, Object content, StringList typeDescr)
+			throws EvalError {
+		if (content instanceof HashMap<?,?>) {
+			String typeName = String.valueOf(((HashMap<?, ?>)content).get("§TYPENAME§"));
+			if ((targetType != null || typeDescr != null)
+					&& (targetType == null || !targetType.isRecord()
+					|| !targetType.typeName.equals(typeName))) {
+				String compTypeStr = "???";
+				if (targetType != null) {
+					compTypeStr = targetType.getCanonicalType(true, true).replace("@", "array of ");
+				}
+				throw new EvalError(control.msgTypeMismatch.getText().
+						replace("%1", ((HashMap<?, ?>)content).get("§TYPENAME§").toString()).
+						replace("%2", compTypeStr).
+						replace("%3", target), null, null);
+			}
+		}
+		else if (content != null && (targetType != null
+			|| typeDescr != null && typeDescr.count() == 1 && (targetType = context.dynTypeMap.get("%" + typeDescr.get(0))) != null)
+				&& targetType.isRecord() ) {
+			throw new EvalError(control.msgTypeMismatch.getText().
+					replace("%1", content.toString()).
+					replace("%2", targetType.typeName).
+					replace("%3", target), null, null);
+		}
+	}
+	
+	/**
+	 * Recomposes an extracted variable access path being a sequence of component
+	 * names and index values (the latter ones prefixed with "[")
+	 * @param accessPath - the access token list
+	 * @param depth - up to which element of the list the path is to be composed
+	 * @return
+	 */
+	private String composeAccessPath(StringList accessPath, int depth)
+	{
+		StringBuilder sb = new StringBuilder();
+		if (!accessPath.isEmpty()) {
+			sb.append(accessPath.get(0));
+			for (int i = 1; i <= depth; i++) {
+				String access = accessPath.get(i);
+				if (access.startsWith("[")) {
+					sb.append(access);
+					sb.append("]");
+				}
+				else {
+					sb.append(".");
+					sb.append(access);
+				}
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Checks whether the dimension definitions held in {@code dimensionSpecs}
+	 * are syntactically plausible and whether {@code target} is an {@link ArrayList}
+	 * (which is internally used to model arrays).<br/>
+	 * Cannot sensibly check whether the numbers of dimensions coincide or
+	 * whether the index ranges match.
+	 * @param target - the name of the declared array variable
+	 * @param dimensionSpecs - the tokenised index range specifications
+	 * @param content - the value of the expression to be assigned - expected to be
+	 * an {@link ArrayList}
+	 */
+	private int checkDimensionsC(String target, StringList typeDescr, StringList dimensionSpecs, Object content)
+			throws EvalError
+	{
+		String decl = typeDescr + " " + target + " " + dimensionSpecs.concatenate(null);
+		// TODO Is this too rigid
+		int nDims = 0;
+		int nTokens = dimensionSpecs.count();
+		while (nTokens > 0 && dimensionSpecs.get(0).equals("[")) {
+			StringList exprs = Element.splitExpressionList(dimensionSpecs, ",", true);
+			if (exprs.count() != 2 || !exprs.get(2).startsWith("]")) {
+				throw new EvalError(control.msgInvalidExpr.getText()
+						.replace("%", decl), null, null);
+			}
+			nDims++;
+			dimensionSpecs = Element.splitLexically(exprs.get(1), true);
+			dimensionSpecs.remove(0); // This was the "]".
+			nTokens = dimensionSpecs.count();
+			typeDescr.add("[");
+			if (exprs.get(0).trim().isEmpty()) {
+				if (nTokens != 0) {
+					/* Was not the last dimension - so there must be a size
+					 * (at least in C this is mandatory). Otherwise error
+					 */
+					throw new EvalError(control.msgInvalidExpr.getText()
+							.replace("%", decl), null, null);
+				}
+			}
+			else {
+				Object size = this.evaluateExpression(exprs.get(0), false, false);
+				if (size != null && size instanceof Integer) {
+					typeDescr.add(((Integer)size).toString());
+				}
+			}
+			typeDescr.add("]");
+		}
+		if (content == null || !(content instanceof ArrayList)) {
+			String valStr = "null";
+			if (content != null) {
+				valStr = content.getClass().toGenericString();
+			}
+			throw new EvalError(control.msgTypeMismatch.getText()
+					.replace("%1", typeDescr.concatenate(null))
+					.replace("%2", valStr)
+					.replace("%3", target), null, null);
+		}
+		return nDims;
+	}
+
+	/**
+	 * Checks the number of dimensions for a Java type specification. Will
+	 * associate the identified type to the target variable.
+	 * @param tokens - the lexically split declaration - will not be modified here!
+	 * @param typeDescr - a {@link StringList} containing the element type description so far
+	 * @return the name of the declared target variable
+	 * @throws EvalError
+	 */
+	private String getJavaDimensions(StringList tokens, StringList typeDescr)
+			throws EvalError
+	{
+		String target = null;
+		int nTokens = tokens.count();
+		int nDims = 1;
+		while (nDims * 2 + 2 < nTokens
+				&& tokens.get(nDims * 2 + 1).equals("[")
+				&& tokens.get(nDims * 2 + 2).equals("]")) {
+			nDims++;
+		}
+		if (nDims * 2 + 2 != nTokens ||
+				!Function.testIdentifier(target = tokens.get(nDims*2+1), false, null)) {
+			throw new EvalError(control.msgInvalidExpr.getText()
+					.replace("%1", tokens.concatenate(null)), null, null);
+		}
+		// FIXME
+		for (int d = 0; d < nDims; d++) {
+			typeDescr.insert("of", 0);
+			typeDescr.insert("array", 0);
+		}
+		associateType(target, typeDescr);
+		return target;
+	}
+
+	/**
+	 * If {@code typeDescr} contains the name of an existing type then associates
+	 * it to the given variable or constant with name {@code target} in
+	 * {@code this.context.dynTypeMap}, otherwise creates a new {@link TypeMapEntry}
+	 * from the {@link StringList} {@code typeDescr} and associates this.
 	 * @param target - a variable or constant identifier
 	 * @param typeDescr - a {@link StringList} comprising a found type description
+	 * @return {@code true} if a new type was created.
 	 */
-	private void associateType(String target, StringList typeDescr) {
+	private boolean associateType(String target, StringList typeDescr) {
+		boolean newType = false;
 		String typeName = null;
-		if (typeDescr != null && typeDescr.count() == 1 && Function.testIdentifier(typeName = typeDescr.get(0), false, null)
+		boolean isId = false;
+		if (typeDescr != null && typeDescr.count() == 1
+				// START KGU#922 2021-01-31: Bugfix #922
+				//&& Function.testIdentifier(typeName = typeDescr.get(0), false, null)
+				&& (isId = Function.testIdentifier(typeName = typeDescr.get(0), false, "."))
+				// END KGU#922 2021-01-31
 				&& context.dynTypeMap.containsKey(":" + typeName)) {
 			context.dynTypeMap.put(target, context.dynTypeMap.get(":" + typeName));
 		}
-		// In other cases we cannot create a new TypeMapEntry because we are lacking element and line information here.
+		// In other cases we cannot create a new TypeMapEntry because we are lacking
+		// element and line information here.
 		// So it is up to the calling method...
+		// START KGU#922 2021-01-31: Bugfix #922
+		else if (typeDescr != null && !typeDescr.isEmpty()) {
+			TypeMapEntry type = new TypeMapEntry(typeDescr.concatenate(null),
+					isId ? typeName : null,
+					context.dynTypeMap,
+					null, -1,
+					false, false);
+			newType = true;
+			context.dynTypeMap.put(target, type);
+		}
+		return newType;
+		// END KGU#922 2021-01-31
 	}
 	
 	private HashMap<String, Object> createEmptyRecord(StringList path, int depth) {
@@ -3991,9 +4532,10 @@ public class Executor implements Runnable
 	/**
 	 * Checks if the name described by {@code typeOrVarName} represents a record and if so
 	 * returns the respective TypeMapEntry, otherwise null.
-	 * @param typeOrVarName - a string sequence of modifiers, ids, and possible selectors 
-	 * @param isTypeName - must be true for a type name and false for a var/const name.
-	 * @return a TypeMapEntry for a record type or null
+	 * @param typeOrVarName - a variable or type name ({@code is to specify which of them} 
+	 * @param isTypeName - must be {@code true} for a type name and {@code false} for a
+	 *  var/const name.
+	 * @return a TypeMapEntry for a record type or {@code null}
 	 */
 	private TypeMapEntry identifyRecordType(String typeOrVarName, boolean isTypeName)
 	{
@@ -5957,7 +6499,7 @@ public class Executor implements Runnable
 				// END KGU#448 2017-20-28
 				// START KGU#911 2021-01-11: Enh. #910 Special startup support for controllers
 				else if (procName.equals("restart")
-						&& context.root.isDiagramControllerRepresentative()) {
+						&& context.root.isRepresentingDiagramController()) {
 					String ctrlName = context.root.getMethodName().substring(1);
 					for (DiagramController contr: this.diagramControllers) {
 						boolean found = ctrlName.equals(contr.getName().replace(" ", "_"));
@@ -6821,71 +7363,73 @@ public class Executor implements Runnable
 		}
 		else
 		{
-				element.addToExecTotalCount(1, true);	// For the condition evaluation
-				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-				context.forLoopVars.add(iterVar);
-				// END KGU#307 2016-12-12
+			element.addToExecTotalCount(1, true);	// For the condition evaluation
+			// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+			// START KGU#923 2021-02-01: Issue #923 no problem in FOR-IN-loopd
+			//context.forLoopVars.add(iterVar);
+			// END KGU#923 2021-02-01
+			// END KGU#307 2016-12-12
 
-				// Leave if any kind of Jump statement has been executed
-				context.loopDepth++;
-				int cw = 0;
+			// Leave if any kind of Jump statement has been executed
+			context.loopDepth++;
+			int cw = 0;
 
-				while (cw < valueList.length && trouble.equals("")
-						&& (stop == false) && !context.returned && leave == 0)
+			while (cw < valueList.length && trouble.equals("")
+					&& (stop == false) && !context.returned && leave == 0)
+			{
+				try
 				{
-					try
-					{
-						Object iterVal = valueList[cw];
-						// START KGU#388 2017-09-27: Enh. #423 declare or un-declare the loop variable dynamically
-						TypeMapEntry iterType = null;
-						if (iterVal instanceof HashMap<?,?>) {
-							Object typeName = ((HashMap<?, ?>)iterVal).get("§TYPENAME§");
-							if (typeName instanceof String && (iterType = context.dynTypeMap.get(":" + typeName)) != null) {
-								context.dynTypeMap.put(iterVar, iterType);
-							}
+					Object iterVal = valueList[cw];
+					// START KGU#388 2017-09-27: Enh. #423 declare or un-declare the loop variable dynamically
+					TypeMapEntry iterType = null;
+					if (iterVal instanceof HashMap<?,?>) {
+						Object typeName = ((HashMap<?, ?>)iterVal).get("§TYPENAME§");
+						if (typeName instanceof String && (iterType = context.dynTypeMap.get(":" + typeName)) != null) {
+							context.dynTypeMap.put(iterVar, iterType);
 						}
-						else if (iterVal != null && (iterType = context.dynTypeMap.get(iterVar)) != null && iterType.isRecord()) {
-							context.dynTypeMap.remove(iterVar);
-						}
-						// END KGU#388 2017-09-27
-						// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-						//setVar(iterVar, valueList[cw]);
-						setVar(iterVar, iterVal, forLoopLevel-1, true);
-						// END KGU#307 2016-12-12
-						element.executed = false;
-						element.waited = true;
-
-						if (trouble.isEmpty())
-						{
-							trouble = stepSubqueue(((ILoop)element).getBody(), true);						
-						}
-
-						element.executed = true;
-						element.waited = false;
-						if (trouble.equals(""))
-						{
-							cw++;
-							// Symbolizes the loop condition check 
-							checkBreakpoint(element);
-							delay();
-						}
-						element.addToExecTotalCount(1, true);	// For the condition evaluation
-					} catch (EvalError ex)
-					{
-						trouble = ex.getMessage();
 					}
-				}
-				// If there are open leave requests then nibble one off
-				if (leave > 0)
+					else if (iterVal != null && (iterType = context.dynTypeMap.get(iterVar)) != null && iterType.isRecord()) {
+						context.dynTypeMap.remove(iterVar);
+					}
+					// END KGU#388 2017-09-27
+					// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+					//setVar(iterVar, valueList[cw]);
+					setVar(iterVar, iterVal, forLoopLevel-1, true);
+					// END KGU#307 2016-12-12
+					element.executed = false;
+					element.waited = true;
+
+					if (trouble.isEmpty())
+					{
+						trouble = stepSubqueue(((ILoop)element).getBody(), true);						
+					}
+
+					element.executed = true;
+					element.waited = false;
+					if (trouble.equals(""))
+					{
+						cw++;
+						// Symbolizes the loop condition check 
+						checkBreakpoint(element);
+						delay();
+					}
+					element.addToExecTotalCount(1, true);	// For the condition evaluation
+				} catch (EvalError ex)
 				{
-					leave--;
+					trouble = ex.getMessage();
 				}
-				context.loopDepth--;
-				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-				while (forLoopLevel < context.forLoopVars.count()) {
-					context.forLoopVars.remove(forLoopLevel);
-				}
-				// END KGU#307 2016-12-12
+			}
+			// If there are open leave requests then nibble one off
+			if (leave > 0)
+			{
+				leave--;
+			}
+			context.loopDepth--;
+			// START KGU#307 2016-12-12: Issue #307 - No matter what happened - ensure the entry level
+			while (forLoopLevel < context.forLoopVars.count()) {
+				context.forLoopVars.remove(forLoopLevel);
+			}
+			// END KGU#307 2016-12-12
 		}
 		if (trouble.equals(""))
 		{
@@ -7166,8 +7710,20 @@ public class Executor implements Runnable
 			// END KGU#388 2017-09-13
 		}
 		// END KGU#100/KGU#388 2017-09-29
+		// START KGU#920 2021-02-01: Bugfix #920: "Infinity" should be interpreted
+		else if (tokens.count() == 1 && tokens.get(0).equals("Infinity")) {
+			value = Double.POSITIVE_INFINITY;
+		}
+		else if (tokens.count() == 2 && tokens.get(0).equals("-") && tokens.get(1).equals("Infinity")) {
+			value = Double.NEGATIVE_INFINITY;
+		}
+		// END KGU#920 2021-02-01
 		else
 		{
+			// START KGU#920 2021-02-04: Bugfix #920: "Infinity" should be interpreted
+			tokens.replaceAll("Infinity", "Double.POSITIVE_INFINITY");
+			// END KGU#920 2021-02-04
+			
 			// Possibly our resolution of qualified names went too far. For this case give it some more tries
 			// with partially undone conversions. This should not noticeably slow down the evaluation in case
 			// no error occurs.

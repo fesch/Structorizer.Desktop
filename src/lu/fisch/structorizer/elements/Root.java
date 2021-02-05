@@ -159,6 +159,11 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2020-10-19      Issue #875: New public method for the retrieval of potential arguments
  *      Kay Gürtzig     2021-01-02/06   Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-01-10      Enh. #910: Adaptations for new DiagramController approach
+ *      Kay Gürtzig     2021-01-30      Bugfix #921: Outsourcing repaired w.r.t. enumerators
+ *      Kay Gürtzig     2021-02-01      Bugfix #923: Analyser did not consider FOR loop variable types on record check
+ *      Kay Gürtzig     2021-02-03      Bugfix #924: Record component names falsely detected as uninitialized variables
+ *                                      Issue #920: `Infinity' introduced as literal
+ *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
  *      
  ******************************************************************************************************
  *
@@ -231,7 +236,6 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.locales.LangTextHolder;
-import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
@@ -503,7 +507,7 @@ public class Root extends Element {
 	 * @see #isInclude()
 	 * @see #setInclude(boolean)
 	 */
-	public boolean isDiagramControllerRepresentative()
+	public boolean isRepresentingDiagramController()
 	{
 		return diagrType == DiagramType.DT_INCL_DIAGRCTRL;
 	}
@@ -685,9 +689,13 @@ public class Root extends Element {
 	// END KGU#502 2018-03-12
 	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
-	// Pre-processed parser preference keywords to match them against tokenized strings
+	/** Pre-processed parser preference keywords to match them against tokenized strings */
 	private static Vector<StringList> splitKeywords = new Vector<StringList>();
-	private String[] operatorsAndLiterals = {"false", "true", "div"};
+	// START KGU#920 2021-02-02: Issue #920 Infinity allowed as literal
+	/** Specific names not to be mistaken as uninitialized variables in unified texts */
+	//private String[] operatorsAndLiterals = {"false", "true", "div"};
+	private String[] operatorsAndLiterals = {"false", "true", "Infinity", "div"};
+	// END KGU#920 2021-02-03
 	// END KGU#163 2016-03-25
 
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
@@ -2728,8 +2736,15 @@ public class Root extends Element {
 		{
 			// Look for indexed variable as assignment target, get the indices in this case
 			String s = tokens.subSequence(0, asgnPos).concatenate();
-			if (s.indexOf("[") >= 0)
+			// START KGU#924 2021-02-03: Bugfix #924 component ids sometimes blamed
+			//if (s.indexOf("[") >= 0)
+			int posLBrack = s.indexOf("[");
+			if (posLBrack >= 0 && s.indexOf("]", posLBrack+1) >= 0)
+			// END KGU#924 2021-02-03
 			{
+				// START KGU#924 2021-02-03: Bugfix #924 We must cut off the tail
+				s = s.substring(posLBrack, s.lastIndexOf("]")+1);
+				// END KGU#924 2021-02-03
 				//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
 				//s = r.replaceAll(s);
 				s = INDEX_PATTERN.matcher(s).replaceAll("$2");
@@ -2763,12 +2778,21 @@ public class Root extends Element {
 			for (int j = 1; j < items.count(); j++) {
 				StringList itemTokens = Element.splitLexically(items.get(j), true);
 				String s = "";
-				if (itemTokens.indexOf("[", 1) >= 0)
+				// START KGU#924 2021-02-03: Bugfix #924 component ids sometimes blamed
+				//if (itemTokens.indexOf("[", 1) >= 0)
+				int posLBrack = itemTokens.indexOf("[", 1);
+				if (posLBrack >= 0 && itemTokens.indexOf("]", posLBrack+1) >= 0)
+				// END KGU#924 2021-02-03
 				{
 					//System.out.print("Reducing \"" + s);
 					//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
 					//s = r.replaceAll(s);
-					s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					// START KGU#924 2021-02-03: Bugfix #924 We must cut off the tail
+					//s = INDEX_PATTERN.matcher(itemTokens.subSequence(1, itemTokens.count()).concatenate()).replaceAll("$2");
+					s = INDEX_PATTERN.matcher(
+							itemTokens.concatenate(null, posLBrack, itemTokens.lastIndexOf("]")+1))
+							.replaceAll("$2");
+					// END KGU#924 2021-02-03
 					//System.out.println("\" to \"" + s + "\"");
 				}
 				// Only the indices are relevant here
@@ -3067,7 +3091,7 @@ public class Root extends Element {
             	collectParameters(varNames, argTypes, null);
             	for (int i = 0; i < varNames.count(); i++) {
             		String type = argTypes.get(i); 
-            		if (type != null && (type.trim() + " ").startsWith("const")) {
+            		if (type != null && (type.trim() + " ").startsWith("const ")) {
             			this.constants.put(varNames.get(i), null);
             		}
             	}
@@ -3335,7 +3359,10 @@ public class Root extends Element {
 		ArrayList<Param> parameters = getParams();
 		String typeSpec = null;
 		for (Param par: parameters) {
-			if ((typeSpec = par.getType()) != null) {
+			// START KGU#925 2021-02-04: Bugfix #925 - can't need prefixes like "const" here
+			//if ((typeSpec = par.getType()) != null) {
+			if ((typeSpec = par.getType(true)) != null) {
+			// END KGU#925 2021-02-04
 				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, true);
 			}
 		}
@@ -3572,6 +3599,11 @@ public class Root extends Element {
     		// CHECK: loop var modified (#1) and loop parameter consistency (#14 new!)
     		if (eleClassName.equals("For"))
     		{
+    			// START KGU#923 2021-02-01: Bugfix #923 FOR loops introduce variables!
+    			if (ele instanceof For) {
+    				ele.updateTypeMap(_types);
+    			}
+    			// END KGU#923 2021-02-01
     			analyse_1_2_14((For)ele, _errors);
     		}
 
@@ -3759,7 +3791,7 @@ public class Root extends Element {
 		// get loop variable (that should be only one!!!)
 		StringList loopVars = getVarNames(ele, true);
 		// START KGU#61 2016-03-21: Enh. #84 - ensure FOR-IN variables aren't forgotten
-		String counterVar = ((For)ele).getCounterVar();
+		String counterVar = ele.getCounterVar();
 		if (counterVar != null && !counterVar.isEmpty())
 		{
 			loopVars.addIfNew(counterVar);
@@ -3787,7 +3819,10 @@ public class Root extends Element {
 				// END KGU#260 2016-09-25
 			}
 
-			if (modifiedVars.contains(loopVars.get(0)))
+			// START KGU#923 2021-02-01: Bugfix #923 This check does not make sense in FOR-IN loops
+			//if (modifiedVars.contains(loopVars.get(0)))
+			if (modifiedVars.contains(loopVars.get(0)) && !ele.isForInLoop())
+			// END KGU#923 201-02-01
 			{
 				//error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.getElement(i));
 				addError(_errors, new DetectedError(errorMsg(Menu.error01_3, loopVars.get(0)), ele), 1);
@@ -4593,18 +4628,10 @@ public class Root extends Element {
 		}
 		// START KGU#836 2020-03-29: Issue #841 In case of a non-subroutine a parameter list should also be wrong
 		else if (!this.isSubroutine() && this.getText().getText().indexOf("(") >= 0) {
-			Locale loc = Locales.getInstance().getLocale(Locales.getInstance().getLoadedLocaleName());
-			Locale loc0 = Locales.getInstance().getDefaultLocale();
 			String key1 = "ElementNames.localizedNames." + (this.isProgram() ? 13 : 15) + ".text";
 			String key2 = "ElementNames.localizedNames.14.text";
-			String elName = loc.getValue("Elements", key1);
-			if (elName.isEmpty()) {
-				elName = loc0.getValue("Elements", key1);
-			}
-			String subName = loc.getValue("Elements", key2);
-			if (subName.isEmpty()) {
-				subName = loc0.getValue("Elements", key2);
-			}
+			String elName = Locales.getValue("Elements", key1, true);
+			String subName = Locales.getValue("Elements", key2, true);
 			addError(_errors, new DetectedError(errorMsg(Menu.error20_3, new String[] {elName, subName}), this), 20);
 		}
 		// END KGU#836 2020-03-29
@@ -4810,7 +4837,7 @@ public class Root extends Element {
 	 * @param _ele - the originating element
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
-	 * @param _tokens - tokens of the current lne, ideally without any instruction keywords
+	 * @param _tokens - tokens of the current line, ideally without any instruction keywords
 	 */
 	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
 			HashMap<String, TypeMapEntry> _types, StringList _tokens) {
@@ -5573,8 +5600,8 @@ public class Root extends Element {
     }
 
     /**
-     *  Extracts parameter names and types from the parenthesis content of the Root text
-     *  and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
+     * Extracts parameter names and types from the parenthesis content of the Root text
+     * and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
      * @param paramNames - {@link StringList} to be expanded by the found parameter names
      * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
      * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
@@ -5758,6 +5785,11 @@ public class Root extends Element {
     {
         structorizerKeywords.clear();
         structorizerKeywords.add("global");
+        // START KGU#920 2021-02-04: Enh. #920 Infinity is now a literal
+        structorizerKeywords.add("Infinity");
+        structorizerKeywords.add("true");
+        structorizerKeywords.add("false");
+        // END KGU#920 2021-02-04
         for (String keyword: CodeParser.getAllProperties()) {
             structorizerKeywords.add(keyword);
         }
@@ -5858,7 +5890,7 @@ public class Root extends Element {
         // START KGU#911 2021-01-10: Enh. 910 Tolerate a name starting with '$' for a DiagramController
         //if (!Function.testIdentifier(programName, false, null))
         if (!Function.testIdentifier(programName, false, null)
-            && !(this.isDiagramControllerRepresentative()
+            && !(this.isRepresentingDiagramController()
                     && programName.startsWith("$")
                     && Function.testIdentifier(getMethodName(true), false, null)))
         // END KGU#61 2016-03-22
@@ -6250,14 +6282,29 @@ public class Root extends Element {
 				results.add(result);
 			}
 			else if (results.count() > 1 && result == null) {
-				result = "arr" + subroutine.hashCode();
+				// START KGU#921 2021-01-30: Bugfix #921 Minus signs broke id syntax
+				// The hexstring conversion avoids a syntax error because of negative hash code
+				//result = "arr" + subroutine.hashCode();
+				result = "arr" + Integer.toHexString(subroutine.hashCode());
+				// END KGU#921 2021-01-30
 			}
 			// FIXME: There should be a hook for interactive argument reordering
 			// Compose the subroutine signature
 			StringList argSpecs = new StringList();
+			// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+			StringList realArgs = new StringList();
+			// END KGU#921 2021-01-30
 			boolean argTypesFound = false;
 			for (int i = 0; i < args.count(); i++) {
 				String argSpec = args.get(i);
+				// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+				// FIXME actually any primitive constants should be skipped, but their def is to be included
+				String constVal = this.constants.get(argSpec);
+				if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+					continue;
+				}
+				realArgs.add(argSpec);
+				// END KGU#921 2021-01-30
 				String typeDecl = makeTypeDeclaration(argSpec, types);
 				if (!typeDecl.isEmpty()) {
 					argSpec += typeDecl;
@@ -6265,6 +6312,9 @@ public class Root extends Element {
 				}
 				argSpecs.add(argSpec);
 			}
+			// START KGU#921 2021-01-30: Bugfix #921 we must skip enum constants
+			args = realArgs;
+			// END KGU#921 2021-01-30
 			String signature = name + "("
 					+ argSpecs.concatenate(argTypesFound ? "; " : ", ")
 					+ ")";
@@ -6309,7 +6359,10 @@ public class Root extends Element {
 			String type = entry.getTypes().get(0);
 			if (!type.equals("???")) {
 				// START KGU#506 2018-03-14: Issue #522
-				if (entry.isRecord()) {
+				// START KGU#921 2021-01-30: Bugfix #921
+				//if (entry.isRecord()) {
+				if (entry.isRecord() || entry.isEnum()) {
+				// END KGU#921 2021-01-30
 					type = entry.typeName;
 				}
 				// END KGU#506 2018-03-14
@@ -6319,7 +6372,7 @@ public class Root extends Element {
 				}
 				typeDecl += ": " + prefix + type;
 			}
-			// FIXME: Handle record types mor sensibly (how?)
+			// FIXME: Handle record types more sensibly (how?)
 			// We would rather have to replace the sequence by the type name instead
 			typeDecl.replaceAll("(.*?)[$]\\w+(\\{.*?)", "$1record\\{");
 		}

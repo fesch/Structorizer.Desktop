@@ -284,7 +284,7 @@ public class Locale {
         for (int i = 0; i < section.count(); i++) {
             String line = section.get(i);
             StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
-            if(line.trim().contains("=") && 
+            if (line.trim().contains("=") && 
                     parts.get(0).contains(".") && 
                     !parts.get(0).startsWith("//") &&
                     parts.get(0).equals(key)
@@ -315,9 +315,12 @@ public class Locale {
     /**
      * Retrieves the string value for the given {@code key} in section {@code sectionName}.
      * If there is no such key or the value isn't specified then an empty string will be
-     * returned.
+     * returned.<br/>
+     * <b>Note:</b> Possible conditions and index placeholders will <b>not</b> be resolved,
+     * i.e. they are interpreted as constant parts of the key here, e.g.
+     * {@code "InputBox.title[getInsertionType():insert]"}, not just {@code "InputBox.title"}.
      * @param sectionName - name of the interesting section
-     * @param key - the key sequence
+     * @param key - the key sequence (with all conditional adapters, as is)
      * @return a string associated to the given key or ""
      */
     public String getValue(String sectionName, String key)
@@ -339,8 +342,8 @@ public class Locale {
         //        return parts.get(1);
         //    }
         //}
-    	String value = getValueIfPresent(sectionName, key);
-    	if (value != null) return value;
+        String value = getValueIfPresent(sectionName, key);
+        if (value != null) return value;
         // END KGU#231 2016-08-08
         return "";
     }

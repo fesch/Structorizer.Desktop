@@ -17,6 +17,7 @@ import java.util.ArrayList;
  * @author Ralph Iden (http://www.creativewidgetworks.com), port to Java
  * @version 5.0.0
  */
+@SuppressWarnings("serial")
 public class SymbolList extends ArrayList<Symbol> {
     
     // Symbol keys for comment processing

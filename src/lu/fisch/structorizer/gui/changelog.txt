@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-14 (2021-01-18)
+Current development version: 3.30-15 (2021-02-04)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -185,6 +185,22 @@ Current development version: 3.30-14 (2021-01-18)
 - 14: Enh. #909 Extended support for display and editing of enumerator values <2>
 - 14: Enh. #910 Extended DiagramController interface (for plugin modules) <2>
 - 14: "About" icon (eye) in toolbar / Help menu replaced by "info" icon <2>
+- 14: Arrangement group visibility now includes member diagrams, not only bounds <2>
+- 15: Issue #400: Some editor controls had ignored Esc and Shift/Ctrl-Enter <2>
+- 15: Enh. #714 Empty FINALLY block of TRY elements now by default suppressed <2>
+- 15: Issue #905: Analyser markers on collapsed or eclipsing elements ensured <2>
+- 15: Enh. #914 Text and comment fields in element editor now allow undo/redo <2>
+- 15: Enh. #915 New structured editor for CASE elements preserving branches <2>
+- 15: Enh. #917 Menu item to edit subroutines extended to included diagrams <2>
+- 15: Bugfix #918 Missing root type filter in Find&Replace, unwanted checkbox <2>
+- 15: Issue #919 More precise modification detection in Translator, undo/redo <2>
+- 15: Issue #920 Consistent support for value literal "Infinity" / ∞ <2>
+- 15: Bugfix #921 Type handling on outsourcing fixed (recursion, enumerators) <2>
+- 15: Bugfix #922 Executor failed to interpret mixed array / record access <2>
+- 15: Bugfix #923 Analyser gave false warnings regarding FOR-IN loops <2>
+- 15: Bugfix #924 Erratic Analyser warnings on mixed record/array access paths <2>
+- 15: Bugfix #925 Analyser always complained about constant record arguments <2>
+- 15: Enh. #926: Element selection now scrolls to related Analyser warnings <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

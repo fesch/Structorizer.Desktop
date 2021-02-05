@@ -21,7 +21,7 @@ package lu.fisch.structorizer.gui;
 
 /******************************************************************************************************
  *
- *      Author:         kay
+ *      Author:         Kay Gürtzig
  *
  *      Description:    Preferences dialog class to allow users to specify names for all Element types.
  *
@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-01-20      Layout improved (row distance reduced)
  *      Kay Gürtzig     2019-06-10/11   Issue #727: The placement of the TRY field had to be tweaked,
  *                                      a new button "English Standards" was introduced.
+ *      Kay Gürtzig     2021-01-26      Issue #400: Key listener applied to chkUseConfNames
  *
  ******************************************************************************************************
  *
@@ -264,6 +265,9 @@ public class ElementNamePreferences extends LangDialog {
 		for (int i = 0; i < txtElements.length; i++) {
 			txtElements[i].addKeyListener(keyListener);
 		}
+		// START KGU#393 2021-01-26: Issue #400
+		chkUseConfNames.addKeyListener(keyListener);
+		// END KGU#393 2021-01-26
 		// START KGU#710 2019-06-11: Issue #727
 		btnEnglishStd.addKeyListener(keyListener);
 		// END KGU#710 2019-06-11

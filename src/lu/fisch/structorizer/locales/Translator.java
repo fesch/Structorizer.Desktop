@@ -52,6 +52,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-06-07/08   Enh. #726: Pull-down buttons opening new TranslatorRowEditor added
  *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
  *      Kay Gürtzig     2020-01-20      Enh. #801: Key F1 now tries to open the PDF help file if offline
+ *      Kay Gürtzig     2021-01-28      Issue #919 More precise change detection in propertyChange()
  *
  ******************************************************************************************************
  *
@@ -147,6 +148,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
+    // START KGU#919 2021-01-28: Issue #919 More precise change detection
+    private Object editCache;
+    private JTable editTab;
+    private int editRow = -1;
+    // END KGU#919 2021-01-28
     // END KGU#418 2017-12-11
     
     public static Translator getInstance() 
@@ -340,6 +346,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             editor.setVisible(true);
             if (editor.isCommitted()) {
                 table.setValueAt(editor.getText(), row, 2);
+                // START KGU#919 2021-01-28: Issue #919 Sharpened change detection
+                this.flagAsUnsaved();
+                // END KGU#919 2021-01-28
             }
         }
     }
@@ -1259,8 +1268,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     // START KGU#231 2016-08-04: Issue #220
     public void propertyChange(PropertyChangeEvent pcEv) {
-       // Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
-        if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+       // First identify the position
+        if (pcEv.getPropertyName().equals("tableCellEditor"))
         {
             for (String sectionName: locales.getSectionNames())
             {
@@ -1269,10 +1278,39 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 {
                     int rowNr = table.getSelectedRow();
                     DefaultTableModel tm = (DefaultTableModel) table.getModel();
-                    Object val = tm.getValueAt(rowNr, 2);
-                    if (val != null && val instanceof String && !((String)val).trim().isEmpty())
+                    Object editor = pcEv.getNewValue();
+                    // START KGU#919 2021-01-28: Issue #919 Avoid out of bound exception
+                    //Object val = tm.getValueAt(rowNr, 2);
+                    //if (editor == null && val != null && val instanceof String && !((String)val).trim().isEmpty()))
+                    Object val = null;
+                    if (rowNr >= 0) {
+                        /* Otherwise a pulldown button may have been pressed without
+                         * having selected a line. There will be another way to
+                         * find out whether the value will have been changed...
+                         */
+                        val = tm.getValueAt(rowNr, 2);
+                    }
+                    if (editor != null) {
+                        // Seems, we start editing, so cache the previous content
+                        editCache = val;
+                        editTab = table;
+                        editRow = rowNr;
+                        break;
+                    }
+                    // Apparently we ended editing (editor was dropped)
+                    else if (val != null && val instanceof String &&
+                            table == editTab &&
+                            rowNr == editRow &&
+                            !((String)val).equals(editCache))
+                    // END KGU#919 2021-01-28
                     {
+                        // Content seems to have changed, so set flag
                         flagAsUnsaved();
+                        // START KGU#919 2021-01-28: Issue #919 change detection
+                        editCache = null;
+                        editTab = null;
+                        editRow = -1;
+                        // END KGU#919 2021-01-28
                         break;
                     }
                 }
@@ -1291,7 +1329,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             button.setBackground(Color.green);
         }
         // START KGU#694 2019-03-28: Issue #712
-        // The save button needs at least as much attention as the locale butto now
+        // The save button needs at least as much attention as the locale button now
         button_save.setBackground(Color.GREEN);
         // END KGU#694 2019 2019-03-28
     }

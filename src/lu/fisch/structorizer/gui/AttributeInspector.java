@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-12-30      Issue #658: Text fields for Jump keywords enabled.
  *      Kay Gürtzig     2019-03-05      Enh. #327: Adaptation in parserPrefsButtonActionPerformed(ActionEvent)
  *      Kay Gürtzig     2019-03-24      Enh. #56: Try elements and Throw flavour of Jump elements introduced
+ *      Kay Gürtzig     2021-01-26      Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *
  ******************************************************************************************************
  *
@@ -350,6 +351,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 			}
 		});
 		// END KGU#363 2017-05-22
+		// START KGU#393 2021-01-26: Issue #400
+		btnClearOrigin.addKeyListener(keyListener);
+		// END KGU#393 2021-01-26
 
 		final JLabel[] statLabels = new JLabel[]{
 				lblElements,
@@ -605,6 +609,11 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 			cbLicenseName = new JComboBox<String>();
 			cbLicenseName.setToolTipText("Select an available license from the personal license pool or the current one to edit it.");
 			this.updateLicenseChoice();
+			
+			// START KGU#393 2021-01-26: Issue #400
+			btnShowLicense.addKeyListener(keyListener);
+			cbLicenseName.addKeyListener(keyListener);
+			// END KGU#393 2021-01-26
 
 			pnCopyrights.add(btnShowLicense);
 			pnCopyrights.add(cbLicenseName);
@@ -732,6 +741,9 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		// add the KEY-listeners
 		btnOk.requestFocus(true);
 		btnOk.addKeyListener(keyListener);
+		// START KGU#393 2021-01-26: Issue #400
+		btnCancel.addKeyListener(keyListener);
+		// END KGU#393 2021-01-26
 		
 	}
 

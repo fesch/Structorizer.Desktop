@@ -41,6 +41,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-05-18      Issue #405: New option spnCaseRot introduced
  *      Kay Gürtzig     2017-06-08      Issue #405: dimension tuning for Nimbus L&F
  *      Kay Gürtzig     2019-03-22      Enh. #56: Preferences for Try blocks added, Layout revised
+ *      Kay Gürtzig     2021-01-25      Enh. #915: Alternative editor for Case elements offered
+ *      Kay Gürtzig     2021-01-26      Issue #163: Tab and Shift Tab as traversal keys for txtCase
  *
  ******************************************************************************************************
  *
@@ -122,6 +124,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JLabel lblCaseRot;
 	protected JSpinner spnCaseRot;
 	// END KGU#401 2017-05-18
+	// START KGU#916 2021-01-25: Enh. #915 Case editor
+	protected JCheckBox chkCaseEditor;
+	// END KGU#916 2021-01-15
 	// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 	protected JPanel pnlTry;
 	protected JLabel lblTry;
@@ -193,6 +198,9 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		lblCaseRot = new JLabel();
 		spnCaseRot = new JSpinner();
 		// END KGU#401 2017-05-18
+		// START KGU#916 2021-01-25: Enh. #915 Case editor
+		chkCaseEditor = new JCheckBox();
+		// END KGU#916 2021-01-15
 		// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 		pnlTry = new JPanel();
 		lblTry = new JLabel();
@@ -321,6 +329,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlCaseRot.add(spnCaseRot, BorderLayout.EAST);
 						pnlCase.add(pnlCaseRot, BorderLayout.SOUTH);
 						// END KGU#401 2017-05-18
+						// START KGU#916 2021-01-25: Enh. #915
+						chkCaseEditor.setText("Use dedicated editor for CASE elements");
+						pnlCaseRot.add(chkCaseEditor, BorderLayout.SOUTH);
+						// END KGU#916 2021-01-25
 					}
 					pnlLeft.add(pnlCase, BorderLayout.CENTER);
 				}
@@ -447,6 +459,10 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtAltF.addKeyListener(this);
 		edtAlt.addKeyListener(this);
 		txtCase.addKeyListener(this);
+		// START KGU#186 2021-01-26: Issue #163 - tab isn't really needed within the text
+		txtCase.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+		txtCase.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+		// END KGU#186 2021-01-26
 		edtFor.addKeyListener(this);
 		edtWhile.addKeyListener(this);
 		edtRepeat.addKeyListener(this);
@@ -455,12 +471,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		// END KGU#394/KGU#401 2017-11-06
 		// START KGU#394/KGU#376 2017-07-01: Enh. #389, #401
 		edtRoot.addKeyListener(this);
-		// END KGU#376 2017-07-01
+		// END KGU#394/KGU#376 2017-07-01
 		// START KGU#686 2019-03-22: Enh. #56
 		edtTry.addKeyListener(this);
 		edtCatch.addKeyListener(this);
 		edtFinal.addKeyListener(this);
 		// END KGU#686 2019-03-22
+		// START KGU#393/KGU#916 2021-01-26: Issue #400, enh. #915
+		chkCaseEditor.addKeyListener(this);
+		// END KGU#393/KGU#916 2021-01-26
 		addKeyListener(this);
 		
 	}

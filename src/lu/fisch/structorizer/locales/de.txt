@@ -129,6 +129,8 @@
  *      Kay Gürtzig         2020-01-20  Enh. #801: New messages for offline help support
  *      Kay Gürtzig         2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig         2020-12-12  Enh. #704: New top-level section "DiagramController"
+ *      Kay Gürtzig         2021-01-23  Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *
  ******************************************************************************************************
  *
@@ -210,8 +212,8 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
-Menu.menuEditSummonSub.text=Unterprogramm bearbeiten ...
-Menu.menuEditSummonSub.tooltip=Aufgerufenes Unterprogramm zur Bearbeitung heranziehen.
+Menu.menuEditSummonSub.text=@o bearbeiten ...
+Menu.menuEditSummonSub.tooltip=Aufgerufenes @o oder einbezogenes Diagram zur Bearbeitung heranziehen.
 Menu.menuEditFindReplace.text=Suchen/Ersetzen ...
 Menu.menuEditUpgradeTurtle.text=Reelle Turtle-Befehle
 Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlbasierte Turtle-Befehle in den ausgewählten Elementen durch reellwertige.
@@ -455,8 +457,13 @@ Menu.lblInvolveSubtree.text=Rekursiv auf Unterstrukturen anwenden
 Menu.lblPreserveContinuators.text=Bestehende Zeilensprünge beibehalten
 Menu.msgVetoClose.text=Structorizer ist dabei, sich zu beenden. Einspruch?
 Menu.msgSetAsPreferredGenerator.text=Sie haben die letzten %2 Male %1-Code exportiert.\nMöchten Sie %1 jetzt im Dateimenü als die bevorzugte Exportsprache setzen?
-Menu.msgChooseSubroutine.text=Bitte zu bearbeitendes Unterprogramm auswählen:
-Menu.msgCreateSubroutine.text=Neues Unterdiagramm «%» erstellen?
+Menu.msgChooseSubroutine.text=Bitte zu bearbeitendes @o-Diagramm auswählen:
+Menu.msgCreateSubroutine.text=Neues @o-Diagramm «%» erstellen?
+Menu.msgEditSubroutine.text=@o bearbeiten ...
+Menu.msgEditIncludable.text=@p bearbeiten ...
+Menu.msgChooseIncludable.text=Bitte zu bearbeitendes @p-Diagramm auswählen:
+Menu.msgCreateIncludable.text=Neues @p-Diagramm «%» erstellen?
+Menu.msgCyclicInclusion.text=Zyklischer Bezug entfernt - keine weiteren einbezogenen Diagramme!
 Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
 Menu.msgAllPreferences.text=Alle Einstellungen
@@ -468,6 +475,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
+Menu.msgVersionHint_3_30_15.text=Dieser neu entworfene Editor für @c-Elemente\nist optional.\nEr kann den Zusammenhang zwischen\nFall-Listen und den zugehörigen Zweigen\nbeim Umordnen bewahren.\n\nWenn Sie den traditionellen Elementeditor\nbevorzugen, dann können Sie das Häkchen bei\n"%1"\nin den %2 entfernen.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -590,7 +598,7 @@ AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisun
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
-AnalyserPreferences.chkDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
+AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
 
@@ -701,7 +709,7 @@ Editor.popupTransmute.text=Umwandeln
 Editor.popupOutsource.text=Auslagern
 Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues @o auslagern.
 Editor.popupEditSub.text=Unterprogramm bearbeiten ...
-Editor.popupEditSub.tooltip=Aufgerufenes Unterprogramm zur Bearbeitung heranziehen.
+Editor.popupEditSub.tooltip=Aufgerufenes @o oder einbezogenes Diagram zur Bearbeitung heranziehen.
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
@@ -730,6 +738,7 @@ InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBox.chkDisabled.text=Ausführung und Export unterbunden
 InputBox.chkBreakpoint.text=Haltepunkt
+InputBox.chkShowFinally.text=Aufräumblock (FINALLY) immer anzeigen, auch falls leer
 InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
 InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
@@ -779,7 +788,7 @@ InputBoxFor.btnOK.text=OK
 InputBoxFor.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
-InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
+InputBoxFor.chkDisabled.text=Ausführung und Export unterbunden
 InputBoxFor.chkBreakpoint.text=Haltepunkt
 InputBoxFor.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante
@@ -809,6 +818,32 @@ InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
 InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
 InputBoxRoot.btnAddIncludable.text=Anfügen
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Neue @c hinzufügen ...
+InputBoxCase.title[getInsertionType():update]=@c bearbeiten ...
+InputBoxCase.lblDiscriminator.text=Auswahlausdruck:
+InputBoxCase.lblSelectors.text=Fallkonstanten:
+InputBoxCase.btnAddLine.tooltip=Zeile für neuen Fall hinzufügen (mehrere Auswahlkonstanten für denselben Fall mit Komma trennen!)
+InputBoxCase.btnDelLine.tooltip=Ausgewählte Fall-Zeile entfernen (ggf. zusammen mit dem zugehörigen Zweig!)
+InputBoxCase.btnUpLine.tooltip=Ausgewählte Fall-Zeile höher schieben
+InputBoxCase.btnDnLine.tooltip=Ausgewählte Fall-Zeile tiefer schieben
+InputBoxCase.chkMoveBranches.text=Zweige mitbewegen
+InputBoxCase.chkMoveBranches.tooltip=Falls aktiviert (empfohlen!), wird die Beziehung bestehender Zweige zu verschobenen Fallzeilen aufrecht erhalten.
+InputBoxCase.chkDefaultBranch.text=Sonst-Zweig:
+InputBoxCase.chkDefaultBranch.tooltip=Erzeugt einen Auffangzweig (mit der im benachbarten Textfeld einzugebenden Überschrift).
+InputBoxCase.txtDefaultLabel.tooltip=Benennung (Überschrift) für den Sonst-Zweig, z.B. "sonst", "andernfalls" o.Ä. (darf nicht "%" sein!)
+InputBoxCase.lblComment.text=Kommentar
+InputBoxCase.lblComment.tooltip=
+InputBoxCase.txtComment.tooltip=Der Kommentar zu diesem Auswahlelement.
+InputBoxCase.btnOK.text=OK
+InputBoxCase.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
+InputBoxCase.btnCancel.text=Abbrechen
+InputBoxCase.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxCase.chkDisabled.text=Ausführung und Export unterbunden
+InputBoxCase.chkBreakpoint.text=Haltepunkt
+InputBoxCase.lblBreakTriggerText.text=Halt vor %. Ausführung
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Eine Auswahlliste darf nicht leer sein!
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagrammeigenschaften
@@ -914,6 +949,7 @@ Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
 Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
+Preferences.chkCaseEditor.text=Speziellen Editor for @c benutzen
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.
@@ -1458,6 +1494,7 @@ Control.msgConstantRecordComponent.text=Eine Verbundkomponente «%» kann nicht 
 Control.msgTypeMismatch.text=Werttyp «%1» ist nicht kompatibel mit dem Typ «%2» der Variablen/Komponente «%3»!
 Control.msgBadValueList.text=<%> kann nicht als Wertliste interpretiert werden.
 Control.msgBadValueListDetails.text=Details: %
+Control.msgInvalidArrayAccess.text=Unerwarteter Array-Zugriff bei «%1» (%2)!
 Control.msgIndexOutOfBounds.text=Index «%1» (%2) überschreitet Indexbereich für Array «%3»!
 Control.msgInitializerAsArgument.text=Ein Array-Initialisierer kann nicht direkt als Argument an eine eingebaute Funktion übergeben werden.\nWeisen Sie das Array vorher einer Variablen zu und übergeben Sie diese.
 Control.msgIllegalEmptyLine.text=Illegale leere Zeile in einem @j!

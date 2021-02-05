@@ -892,7 +892,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		if (selectedPaths != null) {
 			for (TreePath path: selectedPaths) {
 				Object selectedObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-				if (selectedObject instanceof Root && !((Root)selectedObject).isDiagramControllerRepresentative()) {
+				if (selectedObject instanceof Root && !((Root)selectedObject).isRepresentingDiagramController()) {
 					return true;
 				}
 				else if (selectedObject instanceof Group && !((Group)selectedObject).isDiagramControllerRepresentative()) {
@@ -1388,7 +1388,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			for (Root root: expandedRootSet) {
 				// START KGU#911 2021-01-11: Enh. #910 don't touch diagram controller representatives
 				//Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
-				if (!root.isDiagramControllerRepresentative()) {
+				if (!root.isRepresentingDiagramController()) {
 					Arranger.getInstance().attachRootToGroup(selectedGroup, root, null, this);
 				}
 				// END KGU#911 2021-01-11
@@ -1468,7 +1468,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
 				//if (rootObject instanceof Root && groupObject instanceof Group) {
 				if (rootObject instanceof Root && groupObject instanceof Group
-						&& !((Root)rootObject).isDiagramControllerRepresentative()
+						&& !((Root)rootObject).isRepresentingDiagramController()
 						&& !((Group)groupObject).isDiagramControllerRepresentative()) {
 				// END KGU#911 2021-01-11
 					done = Arranger.getInstance().detachRootFromGroup((Group)groupObject, (Root)rootObject, this) || done;
@@ -1533,7 +1533,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 						// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
 						//done = Arranger.getInstance().attachRootToGroup(
 						//		targetGroup, root, null, this) || done;
-						if (!root.isDiagramControllerRepresentative()) {
+						if (!root.isRepresentingDiagramController()) {
 							done = Arranger.getInstance().attachRootToGroup(
 									targetGroup, root, null, this) || done;
 						}
@@ -1551,7 +1551,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 							// START KGU#911 2021-01-11: Enh. #910 Skip DiagramController includables
 							//if (rootObject instanceof Root && groupObject instanceof Group) {
 							if (rootObject instanceof Root && groupObject instanceof Group
-									&& !((Root)rootObject).isDiagramControllerRepresentative()
+									&& !((Root)rootObject).isRepresentingDiagramController()
 									&& !((Group)groupObject).isDiagramControllerRepresentative()) {
 							// END KGU#911 2021-01-11
 								done = Arranger.getInstance().attachRootToGroup(targetGroup, (Root)rootObject, (Group)groupObject, this) || done;

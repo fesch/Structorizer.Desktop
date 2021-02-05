@@ -31,7 +31,7 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2019-01-011     First Issue
+ *      Kay Gürtzig     2019-01-11      First Issue
  *
  ******************************************************************************************************
  *
@@ -44,6 +44,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.swing.JTree;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 
@@ -55,14 +56,25 @@ import javax.swing.tree.TreeNode;
 public class LangTree extends JTree {
 
 	/**
-	 * 
+	 * Returns a {@link LangTree} with a sample model.<br/>
+	 * The default model used by the tree defines a leaf node as any node
+	 * without children.
+	 *
+	 * @see DefaultTreeModel#asksAllowsChildren
 	 */
 	public LangTree() {
 		Locales.getInstance().register(this);
 	}
 
 	/**
-	 * @param value
+	 * Returns a {@link LangTree} with each element of the
+	 * specified array as the
+	 * child of a new root node which is not displayed.<br/>
+	 * By default, the tree defines a leaf node as any node without
+	 * children.
+	 *
+	 * @param value - an array of <code>Object</code>s
+	 * @see #LangTree(Vector)
 	 */
 	public LangTree(Object[] value) {
 		super(value);
@@ -70,7 +82,12 @@ public class LangTree extends JTree {
 	}
 
 	/**
-	 * @param value
+	 * Returns a LangTree with each element of the specified {@link Vector}
+	 * {@code value} as the child of a new root node which is not displayed.
+	 * By default, the tree defines a leaf node as any node without children.
+	 * 
+	 * @param value - a {@link Vector}
+	 * @see #LangTree(Object[])
 	 */
 	public LangTree(Vector<?> value) {
 		super(value);
@@ -78,7 +95,13 @@ public class LangTree extends JTree {
 	}
 
 	/**
-	 * @param value
+     * Returns a <code>LangTree</code> created from {@link Hashtable} {@code value}
+     * which does not display with root.
+     * Each value-half of the key/value pairs in the <code>HashTable</code>
+     * becomes a child of the new root node. By default, the tree defines
+     * a leaf node as any node without children.
+     * 
+	 * @param value - a {@link Hashtable}
 	 */
 	public LangTree(Hashtable<?, ?> value) {
 		super(value);
@@ -86,7 +109,12 @@ public class LangTree extends JTree {
 	}
 
 	/**
-	 * @param root
+	 * Returns a LangTree with the specified {@link TreeNode} {@code root}
+	 * as its root, which displays the root node. By default, the tree
+	 * defines a leaf node as any node without children.
+	 * 
+	 * @param root - a {@link TreeNode} object
+	 * @see #LangTree(TreeNode, boolean)
 	 */
 	public LangTree(TreeNode root) {
 		super(root);
@@ -94,7 +122,10 @@ public class LangTree extends JTree {
 	}
 
 	/**
-	 * @param newModel
+	 * Returns an instance of LangTree which displays the root node
+	 * -- the tree is created using the specified data model {@code newModel.}
+	 * 
+	 * @param newModel - the {@link TreeModel} to use as the data model
 	 */
 	public LangTree(TreeModel newModel) {
 		super(newModel);
@@ -102,8 +133,13 @@ public class LangTree extends JTree {
 	}
 
 	/**
-	 * @param root
-	 * @param asksAllowsChildren
+	 * Returns a LangTree with the specified {@link TreeNode} {@code root} as
+	 * its root, which displays the root node and which decides whether
+	 * a node is a leaf node in the specified manner.
+	 * @param root - a {@link TreeNode} object
+	 * @param asksAllowsChildren - if {@code false}, any node without
+	 * children is a leaf node; if {@code true}, only nodes that do not
+	 * allow children are leaf nodes.
 	 */
 	public LangTree(TreeNode root, boolean asksAllowsChildren) {
 		super(root, asksAllowsChildren);

@@ -49,6 +49,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-03-03  Enh. #327: New methods removeLocale(String, boolean), removeLocales(boolean)
  *      Kay Gürtzig     2019-06-14  Issue #728: Mechanism for setting mnemonics enhanced
  *      Kay Gürtzig     2019-09-30  KGU#736 Precaution against newlines in tooltips
+ *      Kay Gürtzig     2021-01-28  New static convenience method getValue(String, String, boolean)
  *
  ******************************************************************************************************
  *
@@ -93,7 +94,7 @@ public class Locales {
         {"en", "English"},
         {"de", "German"},
         {"fr", "French"},
-        {"nl", "Hollandish"},
+        {"nl", "Dutch"},
         {"lu", "Luxemburgish"},
         {"es", "Spanish"},
         {"pt_br", "Portuguese (Brazilian)"},
@@ -953,4 +954,37 @@ public class Locales {
         setLocale("external");
         loadedLocaleFilename=filename;
     }
+    
+    // START KGU 2021-01-28: New convenience method for message retrieval
+    /**
+     * Retrieves the string value for the given {@code key} in section {@code sectionName}
+     * from the current (loaded) locale.<br/>
+     * If there is no such key or the value isn't specified and {@code fallback}
+     * is{@code true} then the respective message from the default locale will
+     * be returned.<br/>
+     * If there is no such entry or the velue isn't specified then the result will
+     * be an empty string.<br/>
+     * <b>Note:</b> Possible conditions and index placeholders will <b>not</b> be
+     * resolved in the key, i.e. they are interpreted as constant parts of the key
+     * here, pass e.g. {@code "InputBox.title[getInsertionType():insert]"}, not just
+     * {@code "InputBox.title"}.
+     * @param sectionName - name of the interesting section
+     * @param key - the key sequence (with all conditional adapters, as is)
+     * @return a string associated to the given key or {@code ""}. The string
+     * may contain placeholders like {@code "%"}, {@code "@i"}, or 
+     * <code>"@{Instruction}"</code>.
+     */
+    public static String getValue(String sectionName, String key, boolean fallback)
+    {
+        String message = "";
+        Locale loc = getInstance().getLocale(getInstance().getLoadedLocaleName());
+        if (loc != null) {
+            message = loc.getValue(sectionName, key);
+        }
+        if (message.isEmpty() && fallback && (loc = getInstance().getDefaultLocale()) != null) {
+            message = loc.getValue(sectionName, key);
+        }
+        return message;
+    }
+    // END KGU 2021-01-28
 }

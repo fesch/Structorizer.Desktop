@@ -58,6 +58,8 @@
  *      Jaap Woldringh  2019-06-10      Translation updated and completed
  *      Jaap Woldringh  2020-01-21      Enh. #801: New messages for offline help support
  *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
+ *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
+ *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *
  ******************************************************************************************************
  *
@@ -139,8 +141,8 @@ Menu.menuEditRedo.text=Opnieuw
 Menu.menuEditCut.text=Knippen
 Menu.menuEditCopy.text=Kopiëren
 Menu.menuEditPaste.text=Plakken
-Menu.menuEditSummonSub.text=Subroutine bewerken ...
-Menu.menuEditSummonSub.tooltip=De aangeroepen subroutine ophalen voor bewerking.
+Menu.menuEditSummonSub.text=@o bewerken ...
+Menu.menuEditSummonSub.tooltip=De aangeroepen @o of een geïmporteerde @p-diagram ophalen voor bewerking.
 Menu.menuEditFindReplace.text=Zoeken/Vervangen ...
 Menu.menuEditUpgradeTurtle.text=Naar fijntekenen
 Menu.menuEditUpgradeTurtle.tooltip=Vervangt bij alle Turtle-opdrachten in de geselecteerde elementen gehele getallen door nauwkeuriger kommagetallen.
@@ -385,8 +387,13 @@ Menu.lblInvolveSubtree.text=Ook toepassen op substructuur
 Menu.lblPreserveContinuators.text=Bestaande zachte regelafbrekingen behouden
 Menu.msgVetoClose.text=Structurizer gaat afsluiten. Veto?
 Menu.msgSetAsPreferredGenerator.text=De laatste %2 keer heeft u naar %1 programmacode geëxporteerd.\nWilt u nu in het Bestandsmenu van %1 uw favoriete programmeertaal maken om naar te exporteren?
-Menu.msgChooseSubroutine.text=Kies de te bewerken subroutine:
-Menu.msgCreateSubroutine.text=Een nieuwe subroutine «%» aanmaken?
+Menu.msgChooseSubroutine.text=Kies de te bewerken @o:
+Menu.msgCreateSubroutine.text=Een nieuwe @o «%» aanmaken?
+Menu.msgEditSubroutine.text=@o bewerken ...
+Menu.msgEditIncludable.text=@p bewerken ...
+Menu.msgChooseIncludable.text=Kies de te bewerken @p:
+Menu.msgCreateIncludable.text=Een nieuwe @p «%» aanmaken?
+Menu.msgCyclicInclusion.text=Cyclische verwijzing verwijderd - geen verwijzing naar @p-diagrammen overblijvend!
 Menu.ttlMouseScrollUnit.text=Eenheid voor scrollen met muiswiel
 Menu.msgSelectPreferences.text=Te exporterende instellingen (categorieën)
 Menu.msgAllPreferences.text=Alle instellingen
@@ -397,6 +404,7 @@ Menu.msgIniRestoreFailed.text=Kon de laatste backup% van de voorkeuren niet hers
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Probleem bij het wijzigen van het Uiterlijk naar %1:%2
 Menu.msgRootCloned.text=Diagram «%1» is gecloned.\n\nU werkt nu met een onafhankelijke kopie:\n%2
+Menu.msgAnalyserHint_3_30_14.text=Nieuwe driehoekjes attenderen u\nop er zijn waarschuwings van de\nAnalyser voor de gemarkeerde elementen.\n\nU kunt dat afsetten in:\n%
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine handtekening
 Menu.msgTabHdrAlias.text=Aliasnaam
@@ -459,7 +467,7 @@ Menu.error23_1.text=Diagram «%» is nogal ongeschikt voor een importaanroep omd
 Menu.error23_2.text=Importeren van diagram «%» is recursief!
 Menu.error23_3.text=Importeren wordt hier genegeerd, omdat diagram «%1» al geïmporteerd is: %2
 Menu.error23_4.text=Naamconflict tussen locale en geïmporteerde variabele of constante «%»!
-Menu.error23_5.text=Een @p -diagram «%» is nu niet beschikbaar!
+Menu.error23_5.text=Een @p-diagram «%» is nu niet beschikbaar!
 Menu.error23_6.text=Er zijn meer @p-diagrammen met de naam «%»!
 Menu.error23_7.text=Er is een naamconflict tussen locale en geïmporteerde typedefinitie «%»!
 Menu.error24_1.text=Typedefinitie in (samengestelde) regel % is onjuist gevormd.
@@ -519,7 +527,7 @@ AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
 AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante gehele getallen zijn.
 AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
-AnalyserPreferences.chkDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
+AnalyserPreferences.lblDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
 AnalyserPreferences.okButton.text=OK
 
 
@@ -630,7 +638,7 @@ Editor.popupTransmute.text=Omzetten
 Editor.popupOutsource.text=Overbrengen
 Editor.popupOutsource.tooltip=De geselecteerde elementenrij overbrengen naar een nieuwe @o.
 Editor.popupEditSub.text=Subroutine bewerken ...
-Editor.popupEditSub.tooltip=De aangeroepen subroutine ophalen voor bewerken.
+Editor.popupEditSub.tooltip=De aangeroepen @o of een geïmporteerde @p-diagram ophalen voor bewerking.
 // Collapsing
 Editor.popupCollapse.text=Invouwen
 Editor.popupExpand.text=Uitvouwen
@@ -661,6 +669,7 @@ InputBox.btnCancel.text=Annuleren
 InputBox.btnCancel.tooltip=Uw keuze annuleren.
 InputBox.chkDisabled.text=Uitgezet (uitvoering en export)
 InputBox.chkBreakpoint.text=Breakpunt
+InputBox.chkShowFinally.text=Het opruimblok (FINALLY) immer tonen, ook indien het is leeg
 InputBox.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
 InputBox.lblText.text[elementType:Alternative]=Conditie invoeren
 InputBox.lblText.text[elementType:While]=De ingangsconditie invoeren
@@ -740,6 +749,32 @@ InputBoxRoot.btnCancel.tooltip=Invoer annuleren
 InputBoxRoot.btnAttributes.text=Attributen
 InputBoxRoot.btnAttributes.tooltip=Opent een dialoog voor het bekijken van attributen en eigenschappen van dit diagram.
 InputBoxRoot.btnAddIncludable.text=Invoegen
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=Nieuwe @c-statement toevoegen ...
+InputBoxCase.title[getInsertionType():update]=@c-element bewerken ...
+InputBoxCase.lblDiscriminator.text=Keuze-expressie:
+InputBoxCase.lblSelectors.text=Case-constanten:
+InputBoxCase.btnAddLine.tooltip=Regel voor een nieuw geval toevoegen (en de komma-gescheiden lijst van de case-constanten intypen)
+InputBoxCase.btnDelLine.tooltip=Geselecteerd geval-regel verwijderen (in verband met de associeerde tak!)
+InputBoxCase.btnUpLine.tooltip=Geselecteerd geval-regel naar boven verplaatsen
+InputBoxCase.btnDnLine.tooltip=Geselecteerd geval-regel naar beneden verplaatsen
+InputBoxCase.chkMoveBranches.text=Takken meeverplaatsen
+InputBoxCase.chkMoveBranches.tooltip=Als activeerd (gerecommandeerd), de connectie van de takken met de verplaatste regelen wordt bewaardt.
+InputBoxCase.chkDefaultBranch.text=Anderszins-tak:
+InputBoxCase.chkDefaultBranch.tooltip=Bewerkstelligt een anderszins-tak (met de label dat u hiernaast kunt intypen).
+InputBoxCase.txtDefaultLabel.tooltip=De label (hoofding) voor de anderszins-tak, bv. "anders", "anderszins" (mag niet "%" zijn!)
+InputBoxCase.lblComment.text=Commentaar
+InputBoxCase.lblComment.tooltip=Hier commentaar intypen
+InputBoxCase.txtComment.tooltip=Het commentaar van het element.
+InputBoxCase.btnOK.text=OK
+InputBoxCase.btnOK.tooltip=Uw keuze bevestigen.
+InputBoxCase.btnCancel.text=Annuleren
+InputBoxCase.btnCancel.tooltip=Uw keuze annuleren.
+InputBoxCase.chkDisabled.text=Uitgezet (uitvoering en export)
+InputBoxCase.chkBreakpoint.text=Breakpunt
+InputBoxCase.lblBreakTriggerText.text=Afbreken na dit aantal keren uitvoeren: %
+InputBoxCase.msgSelectorMustNotBeEmpty.text=Een keuze-lijst mag niet leeg zijn!
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Attributen van diagram
@@ -845,6 +880,7 @@ Preferences.lblCase.text=Standaard inhoud
 Preferences.lblCase.tooltip=De standaard inhoud van een @c-statement.
 Preferences.lblCaseRot.text=Min. aftakkingen voor rotatie
 Preferences.lblCaseRot.tooltip=Drempelwaarde voor aantal aftakkingen bij pogingen breedte te beperken door elementen te roteren (0=uit)
+Preferences.chkCaseEditor.text=De speciaal editor voor @c-elementen gebruiken
 Preferences.pnlRoot.border=@m-header
 Preferences.lblRoot.text=Ook koptekst lijst
 Preferences.lblRoot.tooltip=De koptekst van de lijst van @p-diagrammen bij tekenen.

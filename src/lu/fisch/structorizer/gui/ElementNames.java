@@ -158,7 +158,7 @@ public class ElementNames extends Component {
 	/**
 	 * Array of locale-defined names for element types and flavours.
 	 * Subject to locale-switching.<br/>
-	 * Indices must correspond to thoseof of @{@link ELEMENT_KEYS} and {@link #configuredNames}.
+	 * Indices must correspond to those of @{@link ELEMENT_KEYS} and {@link #configuredNames}.
 	 */
 	public static LangTextHolder[] localizedNames = {
 			new LangTextHolder("Instruction"),	
@@ -234,7 +234,8 @@ public class ElementNames extends Component {
 	 * {@link ElementNames} comment.
 	 * @param _defaultOnly - if true then user-configured names otherwise prioritized will
 	 * be ignored.
-	 * @param _translations - possibly an array of localised elements names (may be null).
+	 * @param _translations - possibly an array of localised element names (may be
+	 * {@code null}).
 	 * @return the element name for GUI purposes if available, null otherwise.
 	 */
 	public static String getElementName(char _formatCode, boolean _defaultOnly, String[] _translations)
@@ -249,7 +250,8 @@ public class ElementNames extends Component {
 	 * @param _element - a Structorizer {@link Element} instance
 	 * @param _defaultOnly - if true then user-configurations otherwise prioritized will
 	 * be ignored.
-	 * @param _translations - a possible array of localized element names (may be null).
+	 * @param _translations - a possible array of localized element names (may be
+	 * {@code null}).
 	 * @return the element name for GUI purposes if available, null otherwise.
 	 * @see #getElementName(char, boolean, Locale)
 	 * @see #getElementName(int, boolean, Locale)
@@ -292,7 +294,8 @@ public class ElementNames extends Component {
 	 * See {@link ElementNames} class comment for the mapping of letters to
 	 * element classes or flavours.
 	 * @param _rawString - the string with possibly unresolved placeholders
-	 * @param _translations - possible array of localised Element names (may be null).
+	 * @param _translations - possible array of localised Element names (may be
+	 * {@code null}).
 	 * @return the string with resolved element names.
 	 * @see #getElementName(char, boolean, Locale)
 	 * @see #getElementName(int, boolean, Locale)

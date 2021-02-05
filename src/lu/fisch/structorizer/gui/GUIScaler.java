@@ -31,11 +31,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017-01-09      First Issue
+ *      Kay Gürtzig     2017-01-09      First Issue to address #81
  *      Kay Gürtzig     2017-10-15      Scaling for JTree rows added
  *      Kay Gürtzig     2018-03-21      Console output replaced with logging mechanism
  *      Kay Gürtzig     2019-02-06      Issue #670: JTree row height fix for sizeVariant
  *      Kay Gürtzig     2020-12-28      Issue #895: Turtleizer popup menu hadn't properly reacted with Nimbus
+ *      Kay Gürtzig     2021-01-27      New static method getScreenScale()
  *
  ******************************************************************************************************
  *
@@ -49,7 +50,9 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.HeadlessException;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.logging.Level;
@@ -79,6 +82,10 @@ import lu.fisch.structorizer.io.Ini;
  * @author Kay Gürtzig
  */
 public class GUIScaler {
+	
+	// START KGU#287 2021-01-27: Issue #81
+	private static Float screenScale = null;
+	// END KGU#287 2021-01-27
 	
 	// START KGU#484 2018-03-21: Issue #463
 	public static final Logger logger = Logger.getLogger(GUIScaler.class.getName());
@@ -116,6 +123,33 @@ public class GUIScaler {
 		}
 		return sizeVariant;
 	}
+	
+	// START KGU 2021-01-27: Issue #81
+	/**
+	 * Service method to retrieve a sensible system dpi factor
+	 * @return a normed DPI scale factor between 1.0f and 2.0f in 0.25f steps
+	 */
+	public static float getScreenScale()
+	{
+		if (screenScale == null) {
+			/* 
+			 * Found on https://github.com/bulenkov/iconloader/blob/master/src/com/bulenkov/iconloader/util/UIUtil.java
+			 */
+			int dpi = 96;
+			try {
+				dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+			} catch (HeadlessException e) {
+			}
+			screenScale = 1f;
+			if (dpi < 120) screenScale = 1f;
+			else if (dpi < 144) screenScale = 1.25f;
+			else if (dpi < 168) screenScale = 1.5f;
+			else if (dpi < 192) screenScale = 1.75f;
+			else screenScale = 2f;
+		}
+		return screenScale;
+	}
+	// END KGU 2021-01-26
 	
 	/**
 	 * Recursively rescales all {@link Component}s in container {@code cont} that
@@ -188,6 +222,7 @@ public class GUIScaler {
 			// KGU#287 2017-01-07: Bugfix #330: With L&F "Nimbus" the icon replacement would hide selected status
 			// (it seems to suppress the standard Painters of the L&F)
 			if (comp instanceof JToggleButton /*comp instanceof JCheckBox || comp instanceof JRadioButton*/) {
+				// FIXME: check screenScale and the current icon size - maybe there isn't anything to do
 				if (alternativeLaf != null) {
 					comp.setFont(UIManager.getFont("CheckBox.font"));
 					try {
@@ -243,78 +278,88 @@ public class GUIScaler {
 				}
 				// END KGU#894 2020-12-28
 			}
-			// FIXME: We also need a solution for JCheckBoxMenuItems...
 			if (comp instanceof Container) {
 				rescaleComponents((Container)comp, scaleFactor, alternativeLaf);
 			}
 		}
+		// FIXME: We also need a solution for JCheckBoxMenuItems...
+//		if (cont instanceof JMenu) {
+//			for (Component comp: ((JMenu)cont).getMenuComponents()) {
+//				if (comp instanceof JCheckBoxMenuItem) {
+//					/* We cannot do a lot as the LaF draws the checkbox
+//					 * via software within LaF-specific Factory classes
+//					 * which do not even implement a common interface...
+//					 */
+//				}
+//			}
+//		}
 	}
 
-    // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-    /**
-     * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
-     * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
-     * {@code selected} (checked or unchecked)
-     * @param toggleButton - the toggle button the icon is requested for
-     * @param selected - the kind of icon (true = selected, false = unselected)
-     * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
-     */
-    static ImageIcon scaleToggleIcon(JToggleButton toggleButton, boolean selected)
-    {
-    	return scaleToggleIcon(toggleButton, selected, true);
-    }
-    // END KGU#287-11-11
-    
-    // START KGU#287 2017-01-11: Issue #81 (DPI-awareness workaround)
-    /**
-     * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
-     * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
-     * {@code selected} (checked or unchecked)
-     * @param toggleButton - the toggle button the icon is requested for
-     * @param selected - the kind of icon (true = selected, false = unselected)
-     * @param useCache - whether an internal toggleIcon cache is to be used or not
-     * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
-     */
-    static ImageIcon scaleToggleIcon(JToggleButton toggleButton, boolean selected, boolean useCache)
-        {
-    	final String[] propertyNames = new String[]{"CheckBox", "RadioButton", "ToggleButton"};
-    	
-    	int buttonType = 2;	// JToggleButton
-    	if (toggleButton instanceof JCheckBox) {
-    		buttonType = 0;
-    	}
-    	else if (toggleButton instanceof JRadioButton) {
-    		buttonType = 1;
-    	}
+	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+	/**
+	 * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
+	 * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
+	 * {@code selected} (checked or unchecked)
+	 * @param toggleButton - the toggle button the icon is requested for
+	 * @param selected - the kind of icon (true = selected, false = unselected)
+	 * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
+	 */
+	static ImageIcon scaleToggleIcon(JToggleButton toggleButton, boolean selected)
+	{
+		return scaleToggleIcon(toggleButton, selected, true);
+	}
+	// END KGU#287-11-11
+
+	// START KGU#287 2017-01-11: Issue #81 (DPI-awareness workaround)
+	/**
+	 * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
+	 * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
+	 * {@code selected} (checked or unchecked)
+	 * @param toggleButton - the toggle button the icon is requested for
+	 * @param selected - the kind of icon (true = selected, false = unselected)
+	 * @param useCache - whether an internal toggleIcon cache is to be used or not
+	 * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
+	 */
+	static ImageIcon scaleToggleIcon(JToggleButton toggleButton, boolean selected, boolean useCache)
+	{
+		final String[] propertyNames = new String[]{"CheckBox", "RadioButton", "ToggleButton"};
+
+		int buttonType = 2;	// JToggleButton
+		if (toggleButton instanceof JCheckBox) {
+			buttonType = 0;
+		}
+		else if (toggleButton instanceof JRadioButton) {
+			buttonType = 1;
+		}
 		Icon boxIcon = selected ? toggleButton.getSelectedIcon() : toggleButton.getIcon();
 		int iconIndex = buttonType * 2 + (selected ? 1 : 0);
 		boolean hadBoxIcon = boxIcon != null;
-    	if (useCache && iconIndex < toggleIcons.length && toggleIcons[iconIndex] != null) {
-    		return toggleIcons[iconIndex];	// Return pre-computed icon
-    	}
-    	
-    	boolean prevState = toggleButton.isSelected();
-    	FontMetrics boxFontMetrics = toggleButton.getFontMetrics(toggleButton.getFont());
-    	if (boxIcon == null) {
-    		if (buttonType < 2) {
-    			String propertyName = propertyNames[buttonType];
-    			boxIcon = UIManager.getIcon(propertyName + ".icon");
-    		}
-    		else if (selected) {
-    			boxIcon = toggleButton.getIcon();
-    			hadBoxIcon = boxIcon != null;
-    		}
-    	}
-    	int type = BufferedImage.TYPE_INT_ARGB;
-    	BufferedImage boxImage = new BufferedImage(
-    			boxIcon.getIconWidth(), boxIcon.getIconHeight(), type);
-    	Graphics2D g2 = boxImage.createGraphics();
+		if (useCache && iconIndex < toggleIcons.length && toggleIcons[iconIndex] != null) {
+			return toggleIcons[iconIndex];	// Return pre-computed icon
+		}
 
-    	// In case of a RadioButton we cannot temporarily unselect it to paint
-    	// the unselected RadioButton image. We would rather have to select another
-    	// RadioButtobof the same group to achieve this. But it's difficult to
-    	// identify the ButtonGroup. So we just look for another RadioButton with
-    	// the needed selection state underthe same parent as a surrogate.
+		boolean prevState = toggleButton.isSelected();
+		FontMetrics boxFontMetrics = toggleButton.getFontMetrics(toggleButton.getFont());
+		if (boxIcon == null) {
+			if (buttonType < 2) {
+				String propertyName = propertyNames[buttonType];
+				boxIcon = UIManager.getIcon(propertyName + ".icon");
+			}
+			else if (selected) {
+				boxIcon = toggleButton.getIcon();
+				hadBoxIcon = boxIcon != null;
+			}
+		}
+		int type = BufferedImage.TYPE_INT_ARGB;
+		BufferedImage boxImage = new BufferedImage(
+				boxIcon.getIconWidth(), boxIcon.getIconHeight(), type);
+		Graphics2D g2 = boxImage.createGraphics();
+
+		// In case of a RadioButton we cannot temporarily unselect it to paint
+		// the unselected RadioButton image. We would rather have to select another
+		// RadioButton of the same group to achieve this. But it's difficult to
+		// identify the ButtonGroup. So we just look for another RadioButton with
+		// the needed selection state under the same parent as a surrogate.
 		JRadioButton surrogate = null;
 		if (toggleButton instanceof JRadioButton) {
 			if (prevState == selected) {
@@ -333,31 +378,31 @@ public class GUIScaler {
 			}
 		}
 		if (surrogate == null) {
-    		toggleButton.setSelected(selected);
+			toggleButton.setSelected(selected);
 		}
 
 		try {
-    		boxIcon.paintIcon(((surrogate != null) ? surrogate : toggleButton), g2, 0, 0);
-    	}
-    	finally {
-    		g2.dispose();
-    	}
-    	ImageIcon newBoxIcon = new ImageIcon(boxImage);
-    	Image finalBoxImage = newBoxIcon.getImage().getScaledInstance(
-    			boxFontMetrics.getHeight(), boxFontMetrics.getHeight(), Image.SCALE_SMOOTH
-    			);
-    	if (surrogate == null) {
-    		toggleButton.setSelected(prevState);
-    	}
-    	
-    	ImageIcon scaledIcon = new ImageIcon(finalBoxImage);
+			boxIcon.paintIcon(((surrogate != null) ? surrogate : toggleButton), g2, 0, 0);
+		}
+		finally {
+			g2.dispose();
+		}
+		ImageIcon newBoxIcon = new ImageIcon(boxImage);
+		Image finalBoxImage = newBoxIcon.getImage().getScaledInstance(
+				boxFontMetrics.getHeight(), boxFontMetrics.getHeight(), Image.SCALE_SMOOTH
+				);
+		if (surrogate == null) {
+			toggleButton.setSelected(prevState);
+		}
 
-    	if (useCache && !hadBoxIcon && iconIndex < toggleIcons.length) {
-    		toggleIcons[iconIndex] = scaledIcon;
-    	}
-    	return scaledIcon;
-    }
-    // END KGU#287 2017-01-11
+		ImageIcon scaledIcon = new ImageIcon(finalBoxImage);
+
+		if (useCache && !hadBoxIcon && iconIndex < toggleIcons.length) {
+			toggleIcons[iconIndex] = scaledIcon;
+		}
+		return scaledIcon;
+	}
+	// END KGU#287 2017-01-11
 
 	// START KGU#287 2016-11-01: Issue #81 (DPI awareness, 2017-01-09 moved hitherto from Mainform)
 	static void scaleDefaultFontSize(double factor) {
@@ -371,9 +416,7 @@ public class GUIScaler {
 		Object[] keys = keySet.toArray(new Object[keySet.size()]);
 
 		for (Object key : keys) {
-
 			if (key != null && key.toString().toLowerCase().contains("font")) {
-
 				Font font = UIManager.getDefaults().getFont(key);
 				if (font != null) {
 					int size = font.getSize();
@@ -384,13 +427,10 @@ public class GUIScaler {
 						UIManager.put(key, font);
 					}
 				}
-
 			}
-
 		}
-
+		
 	}
 	// END KGU#287 2016-11-01
-	
 
 }

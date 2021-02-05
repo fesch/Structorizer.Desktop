@@ -32,6 +32,7 @@ package lu.fisch.structorizer.locales;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-06-06      First Issue (addressing issue #726)
+ *      Kay Gürtzig     2921-01-27      Issue #914, #919: Undo/Redo management added.
  *
  ******************************************************************************************************
  *
@@ -69,9 +70,15 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.text.Document;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
 
 import lu.fisch.structorizer.gui.ElementNames;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -116,6 +123,10 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 	private JButton btnOK;
 	/** Unsubstituted texts in preview mode, never with true newlines */
 	private String[] cachedTexts = new String[N_TEXT_AREAS];
+	// START KGU#915 2021-01-28: Enh. #914: Undo manager
+	private UndoManager undoManager = new UndoManager();
+	private int nPastEdits = 0;
+	// END KGU#915 2021-01-28
 
 	/**
 	 * @param owner
@@ -297,21 +308,69 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		buttonBar.add(btnCancel);
 		buttonBar.add(btnOK);
 		
+		// ================= UndoManager =========================
+
+		// START KGU#915 2021-01-28: Enh. #914
+		Document docTarget = txtTarget.getDocument();
+		docTarget.addUndoableEditListener(new UndoableEditListener() {
+			@Override
+			public void undoableEditHappened(UndoableEditEvent evt) {
+				if (txtAreas[1].isEditable()) {
+					undoManager.addEdit(evt.getEdit());
+					nPastEdits++;
+					btnOK.setEnabled(true);
+				}
+			}});
+		btnOK.setEnabled(false);
+		// END KGU#915 2021-01-28
+		
 		// ================= KeyListener =========================
 		KeyListener keyListener = new KeyListener() {
 
 			public void keyPressed(KeyEvent evt) 
 			{
-				if(evt.getKeyCode() == KeyEvent.VK_ESCAPE)
+				int keyCode = evt.getKeyCode();
+				if(keyCode == KeyEvent.VK_ESCAPE)
 				{
 					dispose();
 				}
-				else if(evt.getKeyCode() == KeyEvent.VK_ENTER && (evt.isShiftDown() || evt.isControlDown()))
+				else if(keyCode == KeyEvent.VK_ENTER && (evt.isShiftDown() || evt.isControlDown()))
 				{
-					committed = true;
+					// START KGU#915 2021-01-28: Enh. #914
+					//committed = true;
+					committed = nPastEdits > 0;
+					// END KGU#915 2021-01-28
 					Ini.getInstance().setProperty("TranslatorWrap", multilineMode ? "1" : "0");
 					dispose();
 				}
+				// START KGU#915 2021-01-28: Enh. #914 We want undo/redo behaviour
+				// (it is the only UndoManager, so we don't have to restrict to src)
+				else if (/*src == txtAreas[1] &&*/ txtAreas[1].isEditable()) {
+					if (keyCode == KeyEvent.VK_Z && evt.isControlDown() && !evt.isShiftDown()) {
+					try {
+						if (undoManager.canUndo()) {
+							undoManager.undo();
+							nPastEdits--;
+						}
+						else if (nPastEdits == 0){
+							btnOK.setEnabled(false);
+						}
+					}
+					catch (CannotUndoException ex) {}
+					}
+					else if (keyCode == KeyEvent.VK_Y && evt.isControlDown() && !evt.isShiftDown()
+							|| keyCode == KeyEvent.VK_Z && evt.isControlDown() && evt.isShiftDown()) {
+						try {
+							if (undoManager.canRedo()) {
+								undoManager.redo();
+								nPastEdits++;
+								btnOK.setEnabled(true);
+							}
+						}
+						catch (CannotRedoException ex) {}
+					}
+				}
+				// END KGU#915 2021-0-28
 			}
 
 			@Override
@@ -334,6 +393,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		// ================= Tooltips ============================
 		cmbLanguage.setToolTipText("By selecting a banner you may see the translation into the respective language for comparison (or to copy parts).");
 		chkWrapLines.setToolTipText("Preview or enter newline characters directly. If unselected, newlines will be represented as '\\n'.");
+		btnElements.setToolTipText("Shows the table of Element type placeholders and their current replacements.");
 		btnReset.setToolTipText("Undoes all your changes to this message without closing the dialog.");
 		btnPreview.setToolTipText("Shows all texts with resolved element name place holders (@...). Disables editing while selected.");
 		btnCancel.setToolTipText("Closes the dialog without committing your changes (so does the <Esc> key).");
@@ -362,12 +422,20 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 				content = ElementNames.resolveElementNames(content, this.translator.provideCurrentElementNames(this.lang, true));
 			}
 			txtAreas[1].setText(content);
+			// START KGU#915 2021-01-28: Enh. #914
+			undoManager.discardAllEdits();
+			nPastEdits = 0;
+			btnOK.setEnabled(false);
+			// END KGU#915 2021-01-28
 		}
 		else if (evt.getSource() == btnElements) {
 			this.showElementPlaceholders();
 		}
 		else if (evt.getSource() == btnOK) {
-			committed = true;
+			// START KGU#915 2021-01-28: Enh. #914
+			//committed = true;
+			committed = btnOK.isEnabled() || nPastEdits > 0;
+			// END KGU#915 2021-01-28
 			Ini.getInstance().setProperty("TranslatorWrap", this.multilineMode ? "1" : "0");
 			//this.setVisible(false);
 			this.dispose();
@@ -378,6 +446,11 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		}
 		else if (evt.getSource() == chkWrapLines) {
 			this.multilineMode = chkWrapLines.isSelected();
+			// START KGU#915 2021-01-28: Enh. #914
+			// Stop tracking undoable edits
+			boolean wasEditable = txtAreas[1].isEditable();
+			txtAreas[1].setEditable(false);
+			// END KGU#915 2021-01-28
 			for (int i = 0; i < txtAreas.length; i++) {
 				String content = txtAreas[i].getText();
 				if (this.multilineMode) {
@@ -386,7 +459,17 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 				else {
 					txtAreas[i].setText(content.replace("\n", "\\n"));
 				}
+				// START KGU#915 2021-01-28: Enh. #914
+				// We must invalidate all edits if something changed
+				if (i == 1 && content.length() != txtAreas[1].getText().length()) {
+					undoManager.discardAllEdits();
+				}
+				// END KGU#915 2021-01-28
 			}
+			// START KGU#915 2021-01-28: Enh. #914
+			// Restore previous mode
+			txtAreas[1].setEditable(wasEditable);
+			// END KGU#915 2021-01-28
 		}
 		else if (evt.getSource() == cmbLanguage) {
 			String langName = locales.get(cmbLanguage.getSelectedItem());
@@ -406,6 +489,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		}
 	}
 	
+	/** Pops up a dialog with the table of element placeholder keys and names */
 	private void showElementPlaceholders() {
 		String[] localeNames = new String[] {
 				Locales.DEFAULT_LOCALE,
