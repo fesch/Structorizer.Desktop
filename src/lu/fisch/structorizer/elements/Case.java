@@ -221,11 +221,20 @@ public class Case extends Element implements IFork
 			// Rearrange the existing branches according to the given array
 			Subqueue[] sqs = new Subqueue[newBranchOrder.length];
 			int nBranches = qs.size();
-			// For performance reasons we do not check for duplicates here!
+			// We must check for duplicates here - branches may have to be copied!
+			long branchSet = 0;
 			for (int i = 0; i < sqs.length; i++) {
-				int ixBranch = newBranchOrder[i];
-				if (ixBranch > 0 && ixBranch <= nBranches) {
-					sqs[i] = qs.get(ixBranch - 1);
+				int ixBranch = newBranchOrder[i] - 1;
+				if (ixBranch >= 0 && ixBranch < nBranches) {
+					sqs[i] = qs.get(ixBranch);
+					if ((branchSet & (1 << ixBranch)) != 0
+							&& sqs[i].getSize() > 0) {
+						// Already applied elsewhere, so we must copy
+						sqs[i] = (Subqueue)sqs[i].copy();
+						sqs[i].parent = this;
+						sqs[i].setSelected(false);
+					}
+					branchSet |= (1 << ixBranch);
 				}
 				else {
 					sqs[i] = new Subqueue();

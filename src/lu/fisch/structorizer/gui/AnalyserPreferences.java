@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2021-01-02      Enh. #905: New general checkbox for warning signs in elements
  *      Kay Gürtzig     2021-02-04      Enh. #905: Decomposed checkbox/label in order to provide an icon
+ *      Kay Gürtzig     2021-02-08      Enh. #928: New CASE check 29 (unstructured discriminator expression)
  *
  ******************************************************************************************************
  *
@@ -111,7 +112,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*25*/"Recommendations for first program instructions.",
 		/*26*/"Short \"hello world\" tour.",
 		/*27*/"Check that CASE selector items are integer constants.",
-		/*28*/"Check that CASE selector lists are disjoint."
+		/*28*/"Check that CASE selector lists are disjoint.",
+		/*29*/"Check that the CASE discriminator type is not structured."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -126,7 +128,7 @@ public class AnalyserPreferences extends LangDialog {
 				// instructions
 				3, 11, 22, 24,
 				0,// alternatives and case
-				8, 4, 27, 28,
+				8, 4, 29, 27, 28,
 				0,// loops
 				1, 14, 2,
 				0,// functions and calls

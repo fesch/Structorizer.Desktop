@@ -235,7 +235,10 @@ public class IconLoader {
 			"123_help_book.png",	// introduced with 3.30-05 for #801
 			"124_prog_c.png",		// introduced with 3.30-11 for #872
 			"125_plug.png",			// introduced with 3.30-14 for #910
-			"126_info.png"			// is to replace the 017_Eye.png in the main toolbox
+			"126_info.png",			// is to replace the 017_Eye.png in the main toolbox
+			"127_merge.png",		// introduced with 3.30-16 for #915
+			"128_split.png",		// introduced with 3.30-16 for #915
+			"129_renum.png",		// introduced with 3.30-16 for #915
 	};
 	
 	private static final int[] ICON_SIZES = {

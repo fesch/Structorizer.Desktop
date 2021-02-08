@@ -603,6 +603,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error27 = new LangTextHolder("Some selector items (e.g. «%») don't seem to be integer constants.");
 	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
 	// END KGU#758 2019-11-08
+	// START KGU#927 2021-02-08: Enh. #915
+	public static final LangTextHolder error29 = new LangTextHolder("A structured discriminator («%») is unsuited for CASE!");
+	// END KGU#927 2021-02-08
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");

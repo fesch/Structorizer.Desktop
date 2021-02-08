@@ -127,6 +127,7 @@
  *      Kay Gürtzig     2020-12-12      Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: New class InputBoxCase added
+ *      Kay Gürtzig     2021-02-07      Enh. #915: New messages and tooltips for InputBoxCase
  *
  ******************************************************************************************************
  *
@@ -562,6 +563,7 @@ Menu.hint26.3.text=Now you may e.g. export your diagram to some programming lang
 Menu.hint26.4.text=Now you may e.g. export your diagram as graphics file: → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Some @c selector items (e.g. «%») don't seem to be integer constants.
 Menu.error28.text=There are multiple (conflicting) selector items (%) in the @c element!
+Menu.error29.text=The choice value «%» is of a structured type and hence unsuited for @c!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -597,6 +599,7 @@ AnalyserPreferences.checkboxes.25.text=Guide to first program instructions (IPO 
 AnalyserPreferences.checkboxes.26.text=Short "hello world" tour
 AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer constants.
 AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
+AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured types.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 
@@ -825,10 +828,14 @@ InputBoxCase.title[getInsertionType():insert]=Add new @c statement ...
 InputBoxCase.title[getInsertionType():update]=Edit @c statement ...
 InputBoxCase.lblDiscriminator.text=Choice expression:
 InputBoxCase.lblSelectors.text=Branch selectors:
-InputBoxCase.btnAddLine.tooltip=Add a new branch line (and fill in the comma-separated list of selector constants)
-InputBoxCase.btnDelLine.tooltip=Remove the selected branch line
-InputBoxCase.btnUpLine.tooltip=Move the selected branch line one position up
-InputBoxCase.btnDnLine.tooltip=Move the selected branch line one position down
+InputBoxCase.btnAddLine.tooltip=Append a new case line (and let you fill in the comma-separated list of selector constants)
+InputBoxCase.btnDelLine.tooltip=Remove the selected case line
+InputBoxCase.btnUpLine.tooltip=Move the selected case line one position up
+InputBoxCase.btnDnLine.tooltip=Move the selected case line one position down
+InputBoxCase.btnMergeLines.tooltip=Merge the selected case lines (not enabled with differing non-empty branches)
+InputBoxCase.btnSplitLine.tooltip=Split the selected case line
+InputBoxCase.btnEnumAssist.tooltip=Ensure case lines for all enumerator values, remove non-matching case lines (except those with nonempty branches)
+InputBoxCase.btnCheckLines.tooltip=Check consistency and report detected problems
 InputBoxCase.chkMoveBranches.text=Move associated branches
 InputBoxCase.chkMoveBranches.tooltip=If selected, then the association between existing branches and moved selector lines will be preserved (recommended!).
 InputBoxCase.chkDefaultBranch.text=Default branch:
@@ -845,6 +852,12 @@ InputBoxCase.chkDisabled.text=Disabled (execution and export)
 InputBoxCase.chkBreakpoint.text=Breakpoint
 InputBoxCase.lblBreakTriggerText.text=Break at execution count: %
 InputBoxCase.msgSelectorMustNotBeEmpty.text=A selector list must not be empty!
+InputBoxCase.msgRedundantLines.text=Redundant lines (unlikely values):
+InputBoxCase.msgConflictsDetected.text=Selector conflicts detected:
+InputBoxCase.msgOrphanedBranches.text=Orphaned branches (doomed on commit):
+InputBoxCase.msgDubiousSelectors.text=Dubious selectors (not evaluable):
+InputBoxCase.msgStructuredDiscriminator.text=A structured choice expression is unsuited!
+InputBoxCase.msgNoProblems.text=No obvious problems detected.
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagram Attributes
