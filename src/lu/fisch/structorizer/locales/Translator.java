@@ -53,6 +53,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-06-10      Enh. #726: Help key F1 enabled to show the user guide translator page
  *      Kay Gürtzig     2020-01-20      Enh. #801: Key F1 now tries to open the PDF help file if offline
  *      Kay Gürtzig     2021-01-28      Issue #919 More precise change detection in propertyChange()
+ *      Kay Gürtzig     2021-02-09      Enh. #929: Context menus for the locale buttons introduced.
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -99,7 +102,9 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
@@ -356,7 +361,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
 	public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
     {
-        ((JButton)evt.getSource()).setName(localeName);
+        //((Component)evt.getSource()).setName(localeName);
         //((JButton)evt.getSource()).setToolTipText(localeName);
         
         headerText.getDocument().removeDocumentListener(this);
@@ -808,6 +813,74 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             
         };
         // END KGU#393/KGU#418 2017-11-20
+        
+        // START KGU#929 2021-02-08: Enh. #929
+        // Common context menu for all locale buttons
+        buttonPopup = new JPopupMenu();
+        buttonPopupGet = new JMenuItem("Get locale", IconLoader.getLocaleIconImage("en"));
+        buttonPopupLoad = new JMenuItem("Load from file ...", IconLoader.getIcon(2));
+        buttonPopupSave = new JMenuItem("Save to file ...", IconLoader.getIcon(3));
+        buttonPopup.add(buttonPopupGet);
+        buttonPopupGet.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                popupGetActionPerformed(evt);
+            }});
+        buttonPopup.add(buttonPopupLoad);
+        buttonPopupLoad.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                popupLoadActionPerformed(evt);
+            }});
+        buttonPopup.add(buttonPopupSave);
+        buttonPopupSave.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                popupSaveActionPerformed(evt);
+            }});
+        // Common mouse listener for all locale buttons - shall improve usability
+        MouseListener myMouseListener = new MouseListener() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {}
+            @Override
+            public void mouseEntered(MouseEvent e) {}
+            @Override
+            public void mouseClicked(MouseEvent e) {}
+
+            public void showPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    if (e.getComponent() instanceof JButton) {
+                        JButton button = (JButton)e.getComponent();
+                        String localeName = button.getName();
+                        buttonPopupGet.setIcon(button.getIcon());
+                        buttonPopupGet.setText("Get " + button.getToolTipText() + " locale");
+                        buttonPopupGet.setName(localeName);
+                        buttonPopupLoad.setName(localeName);
+                        buttonPopupSave.setName(localeName);
+                        System.out.println("loaded: " + loadedLocaleName);
+                        System.out.println("cached:" + loadedLocale.hasCachedChanges());
+                        System.out.println("unsaved:" + loadedLocale.hasUnsavedChanges);
+                        buttonPopupSave.setEnabled(localeName.equals(loadedLocaleName));
+                        if (!buttonPopupSave.isEnabled()) {
+                            buttonPopupSave.setToolTipText("The save action is only enabled while " + button.getToolTipText() + " is the currently shown locale.");
+                        }
+                        else {
+                            buttonPopupSave.setToolTipText(null);
+                        }
+                        buttonPopup.show(e.getComponent(), e.getX(), e.getY());
+                    }
+                }
+            }
+        };
+        // END KGU#929 2021-02-08
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -840,6 +913,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 button.setIcon(IconLoader.getLocaleIconImage(localeName)); // NOI18N
                 // END KGU#287 2016-11-02
                 button.setToolTipText(localeToolTip);
+                // START KGU#929 2021-02-08: Enh. #929 Why not already set the name here?
+                button.setName(localeName);
+                // END KGU#929 2021-02-08
                 button.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         button_localeActionPerformed(evt, localeName);
@@ -848,6 +924,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
                 button.addKeyListener(myKeyListener);
                 // END KGU#393/KGU#418 2017-11-20
+                
+                // START KGU#929 2021-02-08: Enh. #929 provide a context menu
+                button.addMouseListener(myMouseListener);
+                // END KGU#929 2021-02-08
                 localeButtons.add(button);
             }
         }
@@ -1243,6 +1323,56 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }*/
     }//GEN-LAST:event_button_previewActionPerformed
 
+    // START KGU#929 2021-02-08: Enh. #929 Action methods for locale button context menu
+    /**
+     * Handles the action of the context menu item "Save Locale" for a locale button
+     * @param evt - the inducing action event
+     */
+    protected void popupSaveActionPerformed(ActionEvent evt) {
+        this.button_saveActionPerformed(evt);
+    }
+
+    /**
+     * Handles the action of the context menu item "Load Locale" for a locale button
+     * @param evt - the inducing action event
+     */
+    protected void popupLoadActionPerformed(ActionEvent evt) {
+        if (evt.getSource() instanceof Component) {
+            String localeName = ((Component)evt.getSource()).getName();
+            // (Re-)Load the selected standard locale - with check on unsaved changes
+            boolean done = loadLocale(localeName, evt, true);
+            // In case of a user file to be reloaded, the file content overrides the standard
+            if (done)
+            {
+                Locale loaded = makeLocaleFromChosenFile(localeName);
+                if (loaded != null)
+                {
+                    // Override the data by the loaded locale ...
+                    boolean diffs = presentLocale(loaded);
+                    // ... and adjust the button colour accordingly
+                    Component comp = this.getComponentByName(localeName);
+                    if (comp instanceof JButton) {
+                        ((JButton)comp).setBackground(diffs ? savedColor : stdBackgroundColor);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Handles the action of the context menu item "Get Locale" for a locale button
+     * @param evt - the inducing action event
+     */
+    protected void popupGetActionPerformed(ActionEvent evt) {
+        if (evt.getSource() instanceof Component) {
+            String localeName = ((Component)evt.getSource()).getName();
+            loadLocale(localeName, evt, false);
+        }
+
+    }
+    // END KGU#929 2021-02-08
+
+    
     public static void launch(final NSDController NSDControl)
     {
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -1417,9 +1547,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration
     // START KGU#242 2016-09-05
-    private Vector<javax.swing.JButton> localeButtons = new Vector<javax.swing.JButton>();
 //    private javax.swing.JButton button_chs;
 //    private javax.swing.JButton button_cht;
 //    private javax.swing.JButton button_cz;
@@ -1433,6 +1562,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 //    private javax.swing.JButton button_pl;
 //    private javax.swing.JButton button_pt_br;
 //    private javax.swing.JButton button_ru;
+    private Vector<javax.swing.JButton> localeButtons = new Vector<javax.swing.JButton>();
     // END KGU#242 2016-09-05
     private javax.swing.JButton button_empty;
     private javax.swing.JButton button_preview;
@@ -1443,7 +1573,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane tabs;
-    // End of variables declaration//GEN-END:variables
+    // START KGU#929 2021-02-08: Enh. #929 Common popup menu for all language buttons
+    private JPopupMenu buttonPopup;
+    private JMenuItem buttonPopupGet;
+    private JMenuItem buttonPopupLoad;
+    private JMenuItem buttonPopupSave;
+    // END KGU#929 2021-02-08
+    // End of variables declaration
 
     @Override
     public void changedUpdate(DocumentEvent ev) {
