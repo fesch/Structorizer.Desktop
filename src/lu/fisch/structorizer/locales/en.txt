@@ -599,7 +599,7 @@ AnalyserPreferences.checkboxes.25.text=Guide to first program instructions (IPO 
 AnalyserPreferences.checkboxes.26.text=Short "hello world" tour
 AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer constants.
 AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
-AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured types.
+AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured type.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 

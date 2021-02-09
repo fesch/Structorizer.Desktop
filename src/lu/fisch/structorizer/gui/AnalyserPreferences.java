@@ -113,7 +113,7 @@ public class AnalyserPreferences extends LangDialog {
 		/*26*/"Short \"hello world\" tour.",
 		/*27*/"Check that CASE selector items are integer constants.",
 		/*28*/"Check that CASE selector lists are disjoint.",
-		/*29*/"Check that the CASE discriminator type is not structured."
+		/*29*/"Check that the CASE choice value is not of a structured type."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every

@@ -204,6 +204,7 @@ Current development version: 3.30-16 (2021-02-09)
 - 16: Enh. #915: Functional upgrade of the new CASE element editor <2>
 - 16: Enh. #928: New Analyser check against structured CASE choice value <2>
 - 16: Enh. #929: Translator usability improved with locale button context menus <2>
+- 16: Bugfix #930: Wrong CASE branch width with broken selector lines <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

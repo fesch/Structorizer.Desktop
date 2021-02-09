@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2021-02-09      Bugfix #930: Wrong selector line width calculation in prepareDraw()
  *
  ******************************************************************************************************
  *
@@ -207,48 +208,6 @@ public class Case extends Element implements IFork
 
     }
 
-	// START KGU#916 2021-01-24: Enh. #915 Preserved branch association on text permutations
-	/**
-	 * Rearranges existing branches according to number list {@code newBranchOrder}
-	 * @param newBranchOrder - array of branch numbers i where numbers i > 0 refer to the
-	 *     existing branch i-1 and numbers i = 0 mean new branches, may be {@code null}
-	 *     (in which case no branch reordering will take place)<br/>
-	 *     It is expected that there are no branch numbers > {@code qs.size()} and no
-	 *     duplicate numbers except 0 in {@code newBranchOrder}!
-	 */
-	public void reorderBranches(int[] newBranchOrder) {
-		if (newBranchOrder != null) {
-			// Rearrange the existing branches according to the given array
-			Subqueue[] sqs = new Subqueue[newBranchOrder.length];
-			int nBranches = qs.size();
-			// We must check for duplicates here - branches may have to be copied!
-			long branchSet = 0;
-			for (int i = 0; i < sqs.length; i++) {
-				int ixBranch = newBranchOrder[i] - 1;
-				if (ixBranch >= 0 && ixBranch < nBranches) {
-					sqs[i] = qs.get(ixBranch);
-					if ((branchSet & (1 << ixBranch)) != 0
-							&& sqs[i].getSize() > 0) {
-						// Already applied elsewhere, so we must copy
-						sqs[i] = (Subqueue)sqs[i].copy();
-						sqs[i].parent = this;
-						sqs[i].setSelected(false);
-					}
-					branchSet |= (1 << ixBranch);
-				}
-				else {
-					sqs[i] = new Subqueue();
-					sqs[i].parent = this;
-				}
-			}
-			qs.clear();
-			for (Subqueue sq: sqs) {
-				qs.add(sq);
-			}
-		}
-	}
-	// END KGU#916 2021-01-24
-
     public Case()
     {
             super();
@@ -317,8 +276,8 @@ public class Case extends Element implements IFork
 
             // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
             //int nBranches = getText().count() - 1;
-            StringList unbrokenText = getBrokenText(SOFT_LINE_BREAK);
-            int nBranches = unbrokenText.count() - 1;
+            StringList brokenText = getBrokenText(SOFT_LINE_BREAK);
+            int nBranches = brokenText.count() - 1;
             // END KGU#453 2017-11-01
 
             // Width of the header
@@ -335,7 +294,7 @@ public class Case extends Element implements IFork
                 if (getText().get(nBranches).equals("%")) nBranches--;
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
                 //discrLines.add(getText().get(0));
-                discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
+                discrLines = StringList.explode(brokenText.get(0), SOFT_LINE_BREAK);
                 // END KGU#453 2017-11-01
             }
             if (isSwitchTextCommentMode())
@@ -353,21 +312,21 @@ public class Case extends Element implements IFork
             commentRect = new Rect();
             if (Element.E_COMMENTSPLUSTEXT)
             {
-            	// START KGU#435 2017-10-22: Enh. #128 revised
-            	//commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
-            	//rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
-            	commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
-            	if (commentRect.right > 0) {
-            		commentRect.bottom += E_PADDING/4;
-            		commentRect.right += 2 * (E_PADDING/2);
-            	}
-            	rect0.right = Math.max(rect0.right, commentRect.right);
-            	// END KGU#435 2017-10-22
+                // START KGU#435 2017-10-22: Enh. #128 revised
+                //commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+                //rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
+                commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
+                if (commentRect.right > 0) {
+                    commentRect.bottom += E_PADDING/4;
+                    commentRect.right += 2 * (E_PADDING/2);
+                }
+                rect0.right = Math.max(rect0.right, commentRect.right);
+                // END KGU#435 2017-10-22
             }
             // END KGU#227 2016-07-31
             for (int i = 0; i < discrLines.count(); i++)
             {
-            	rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, discrLines.get(i), this) + extrapadding);
+                rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, discrLines.get(i), this) + extrapadding);
             }
             // END KGU#172 2016-04-01
             // Total width of the branches
@@ -377,31 +336,34 @@ public class Case extends Element implements IFork
             nSelectorLines = 1;
             for(int i = 0; i < nBranches; i++)
             {
-            	// Instead of computing the text width three times (!?) we just store the result the first time
-            	// FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
+                // Instead of computing the text width three times (!?) we just store the result the first time
+                // FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
-            	//textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2;
-            	// START KGU#480 2018-01-21: Enh. #490
-            	//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
-            	String selectors = unbrokenText.get(i+1);
-            	if (Element.E_APPLY_ALIASES) {
-            		selectors = Element.replaceControllerAliases(selectors, true, false);
-            	}
-            	String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
-            	// END KGU#480 2018-01-21
-            	if (brokenLine.length > nSelectorLines) {
-            		nSelectorLines = brokenLine.length; 
-            	}
-            	textWidths[i] = 0;
-            	for (int j = 0; j < brokenLine.length; j++) {
-            		int widthJ = getWidthOutVariables(_canvas, unbrokenText.get(i+1), this);
-            		if (widthJ > textWidths[i]) {
-            			textWidths[i] = widthJ;
-            		}
-            	}
-            	textWidths[i] += padding/2; 
-            	// END KGU#453 2017-11-01
-            	width += textWidths[i];
+                //textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2;
+                // START KGU#480 2018-01-21: Enh. #490
+                //String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
+                String selectors = brokenText.get(i+1);
+                if (Element.E_APPLY_ALIASES) {
+                	selectors = Element.replaceControllerAliases(selectors, true, false);
+                }
+                String[] brokenLine = selectors.split(SOFT_LINE_BREAK);
+                // END KGU#480 2018-01-21
+                if (brokenLine.length > nSelectorLines) {
+                    nSelectorLines = brokenLine.length; 
+                }
+                textWidths[i] = 0;
+                for (int j = 0; j < brokenLine.length; j++) {
+                    // START KGU#930 2021-02-09: Wrong text measured
+                    //int widthJ = getWidthOutVariables(_canvas, unbrokenText.get(i+1), this);
+                    int widthJ = getWidthOutVariables(_canvas, brokenLine[j], this);
+                    // END KGU#930 2021-02-09
+                    if (widthJ > textWidths[i]) {
+                        textWidths[i] = widthJ;
+                    }
+                }
+                textWidths[i] += padding/2; 
+                // END KGU#453 2017-11-01
+                width += textWidths[i];
             }
             if (rect0.right < width)
             {
@@ -537,8 +499,8 @@ public class Case extends Element implements IFork
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
     	//StringList discrLines = StringList.getNew(this.getText().get(0));
-    	StringList unbrokenText = this.getBrokenText(SOFT_LINE_BREAK);
-    	StringList discrLines = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);
+    	StringList brokenText = this.getBrokenText(SOFT_LINE_BREAK);
+    	StringList discrLines = StringList.explode(brokenText.get(0), SOFT_LINE_BREAK);
     	// END KGU#453 2017-11-01
     	if (isSwitchMode)
     	{
@@ -607,7 +569,7 @@ public class Case extends Element implements IFork
     	//for (int i=0; i<1; i++)
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
     	//int nLines = this.getText().count();
-    	int nLines = unbrokenText.count();
+    	int nLines = brokenText.count();
     	// END KGU#453 2017-11-01
     	if (nLines > 0)
     	// END KGU#91 2015-12-01
@@ -634,7 +596,7 @@ public class Case extends Element implements IFork
     		else {
     			// START KGU#480 2018-01-21: Enh. #490
     			//text = StringList.explode(unbrokenText.get(0), SOFT_LINE_BREAK);	// Text can't be empty, see setText()
-    			String discr = unbrokenText.get(0);	// Text can't be empty, see setText()
+    			String discr = brokenText.get(0);	// Text can't be empty, see setText()
     			if (Element.E_APPLY_ALIASES) {
     				discr = Element.replaceControllerAliases(discr, true, Element.E_VARHIGHLIGHT);
     			}
@@ -829,7 +791,7 @@ public class Case extends Element implements IFork
     			//		getText().get(i+1),this);
     			// START KGU#480 2018-01-21: Enh. #490
     			//String[] brokenLine = unbrokenText.get(i+1).split(SOFT_LINE_BREAK);
-    			String selectors = unbrokenText.get(i+1);
+    			String selectors = brokenText.get(i+1);
     			if (Element.E_APPLY_ALIASES) {
     				selectors = Element.replaceControllerAliases(selectors, true, Element.E_VARHIGHLIGHT);
     			}
@@ -964,7 +926,7 @@ public class Case extends Element implements IFork
 		return sel;
 	}
 	// END KGU#183 2016-04-24
-	    
+
     public Element copy() // Problem here???
     {
             Element ele = new Case(this.getText().getText());
@@ -1047,23 +1009,23 @@ public class Case extends Element implements IFork
 	public boolean isTestCovered(boolean _deeply)
 	{
 		boolean covered = true;
-    	if (qs!= null)
-    	{
-    		// START KGU#296 2016-11-22: Issue #294 - hidde default branch prevented full coverage
-    		//for (int i = 0; covered && i < qs.size(); i++)
-    		int nBranches = qs.size();
-    		// START KGU#296 2016-11-24: Issue #294: For deep coverage the hidden branch is also to be checked
-    		//if (!hasDefaultBranch()) {
-    		if (!_deeply && !hasDefaultBranch()) {
-    		// END KGU#296 2016-11-24
-    			nBranches--;
-    		}
-    		for (int i = 0; covered && i < nBranches; i++)
-    		// END KGU#296 2016-11-22
-    		{
-    			covered = qs.get(i).isTestCovered(_deeply);
-    		}
-    	}		
+		if (qs!= null)
+		{
+			// START KGU#296 2016-11-22: Issue #294 - hidde default branch prevented full coverage
+			//for (int i = 0; covered && i < qs.size(); i++)
+			int nBranches = qs.size();
+			// START KGU#296 2016-11-24: Issue #294: For deep coverage the hidden branch is also to be checked
+			//if (!hasDefaultBranch()) {
+			if (!_deeply && !hasDefaultBranch()) {
+			// END KGU#296 2016-11-24
+				nBranches--;
+			}
+			for (int i = 0; covered && i < nBranches; i++)
+			// END KGU#296 2016-11-22
+			{
+				covered = qs.get(i).isTestCovered(_deeply);
+			}
+		}		
 		return covered;
 	}
 	// END KGU#117 2016-03-06
@@ -1073,8 +1035,8 @@ public class Case extends Element implements IFork
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
 				// START KGU#453 2017-11-01
@@ -1092,8 +1054,8 @@ public class Case extends Element implements IFork
 				}
 			}
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
@@ -1101,13 +1063,13 @@ public class Case extends Element implements IFork
 	 */
 	@Override
 	public void convertToCalls(StringList _signatures) {
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).convertToCalls(_signatures);
-    		}
-    	}
+		if (qs!= null)
+		{
+			for (int i = 0; i < qs.size(); i++)
+			{
+				qs.get(i).convertToCalls(_signatures);
+			}
+		}
 	}
 	// END KGU#199 2016-07-07
 
@@ -1139,35 +1101,35 @@ public class Case extends Element implements IFork
 		return relevantParserKeys;
 	}
 
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#refactorKeywords(java.util.HashMap, boolean)
-     */
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#refactorKeywords(java.util.HashMap, boolean)
+	 */
 	@Override
-    public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
-    {
-    	String[] relevantKeywords = getRelevantParserKeys();
-    	if (!text.isEmpty())
-    	{
-    		text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
-    		// START KGU#453 2017-11-02: Issue #447
-    		boolean isContinuation = text.get(0).endsWith("\\");
-    		// END KGU#453 2017-11-02
-    		relevantKeywords = new String[]{"postCase"};
-    		for (int i = 1; i < text.count(); i++)
-    		{
-    			String line = text.get(i).trim();
-        		// START KGU#453 2017-11-02: Issue #447
-    			//if (!line.equals("%"))
-    			if (!isContinuation && !line.equals("%"))
-    	    	// END KGU#453 2017-11-02
-    			{
-    				text.set(i, refactorLine(line, _splitOldKeywords, relevantKeywords, _ignoreCase));
-    			}
-        		// START KGU#453 2017-11-02: Issue #447
-    			isContinuation = line.endsWith("\\");
-        		// END KGU#453 2017-11-02
-    		}
-    	}
+	public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
+	{
+		String[] relevantKeywords = getRelevantParserKeys();
+		if (!text.isEmpty())
+		{
+			text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
+			// START KGU#453 2017-11-02: Issue #447
+			boolean isContinuation = text.get(0).endsWith("\\");
+			// END KGU#453 2017-11-02
+			relevantKeywords = new String[]{"postCase"};
+			for (int i = 1; i < text.count(); i++)
+			{
+				String line = text.get(i).trim();
+				// START KGU#453 2017-11-02: Issue #447
+				//if (!line.equals("%"))
+				if (!isContinuation && !line.equals("%"))
+				// END KGU#453 2017-11-02
+				{
+					text.set(i, refactorLine(line, _splitOldKeywords, relevantKeywords, _ignoreCase));
+				}
+				// START KGU#453 2017-11-02: Issue #447
+				isContinuation = line.endsWith("\\");
+				// END KGU#453 2017-11-02
+			}
+		}
 	}
 	// END KGU#258 2016-09-25
 
@@ -1207,4 +1169,47 @@ public class Case extends Element implements IFork
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+
+	// START KGU#916 2021-01-24: Enh. #915 Preserved branch association on text permutations
+	/**
+	 * Rearranges existing branches according to number list {@code newBranchOrder}
+	 * @param newBranchOrder - array of branch numbers i where numbers i > 0 refer to the
+	 *     existing branch i-1 and numbers i = 0 mean new branches, may be {@code null}
+	 *     (in which case no branch reordering will take place)<br/>
+	 *     It is expected that there are no branch numbers > {@code qs.size()} and no
+	 *     duplicate numbers except 0 in {@code newBranchOrder}!
+	 */
+	public void reorderBranches(int[] newBranchOrder) {
+		if (newBranchOrder != null) {
+			// Rearrange the existing branches according to the given array
+			Subqueue[] sqs = new Subqueue[newBranchOrder.length];
+			int nBranches = qs.size();
+			// We must check for duplicates here - branches may have to be copied!
+			long branchSet = 0;
+			for (int i = 0; i < sqs.length; i++) {
+				int ixBranch = newBranchOrder[i] - 1;
+				if (ixBranch >= 0 && ixBranch < nBranches) {
+					sqs[i] = qs.get(ixBranch);
+					if ((branchSet & (1 << ixBranch)) != 0
+							&& sqs[i].getSize() > 0) {
+						// Already applied elsewhere, so we must copy
+						sqs[i] = (Subqueue)sqs[i].copy();
+						sqs[i].parent = this;
+						sqs[i].setSelected(false);
+					}
+					branchSet |= (1 << ixBranch);
+				}
+				else {
+					sqs[i] = new Subqueue();
+					sqs[i].parent = this;
+				}
+			}
+			qs.clear();
+			for (Subqueue sq: sqs) {
+				qs.add(sq);
+			}
+		}
+	}
+	// END KGU#916 2021-01-24
+
 }

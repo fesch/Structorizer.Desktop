@@ -600,7 +600,7 @@ AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisun
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
-AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlwert keinem strukturierten Typ angehört.
+AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 

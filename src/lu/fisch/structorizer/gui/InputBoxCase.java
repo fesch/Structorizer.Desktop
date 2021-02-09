@@ -52,8 +52,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -559,11 +557,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					String line0 = ((String)tm.getValueAt(i, 1)).replace("\\n", "\n");
 					StringList tokens = Element.splitLexically(line0, true);
 					int posNl = -1;
-					while ((posNl = tokens.indexOf("\n", posNl + 1)) >= 0) {
+					while ((posNl = tokens.indexOf("\n")) >= 0) {
 						text.add(tokens.concatenate(null, 0, posNl).replace("\n", "\\n") + "\\");
 						tokens.remove(0, posNl+1);
 					}
-					text.add(tokens.concatenate(null, posNl+1).replace("\n", "\\n"));
+					text.add(tokens.concatenate(null).replace("\n", "\\n"));
 				}
 				if (chkDefaultBranch.isSelected()) {
 					String defaultLabel = txtDefaultLabel.getText().trim();
