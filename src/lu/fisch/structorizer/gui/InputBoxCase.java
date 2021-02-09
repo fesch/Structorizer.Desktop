@@ -733,7 +733,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		boolean isInappropriate = valueHelper.isStructured(txtDiscriminator.getText());
 		if (!conflicts.isEmpty() || unusedLines != 0 || orphanedBranches.size() > 1
 				|| isInappropriate) {
-			if (!conflicts.isEmpty()) {
+			if (!conflicts.isEmpty() || isInappropriate) {
 				btnCheckLines.setBackground(Color.RED);
 			}
 			else {
