@@ -107,6 +107,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -838,6 +840,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             public void actionPerformed(ActionEvent evt) {
                 popupSaveActionPerformed(evt);
             }});
+        javax.swing.SwingUtilities.updateComponentTreeUI(buttonPopup);
+        LookAndFeel laf = UIManager.getLookAndFeel();
+        boolean isNimbus = laf != null && laf.getName().equalsIgnoreCase("nimbus");
+        if (isNimbus) {
+            for (Component comp: buttonPopup.getComponents()) {
+                if (comp instanceof JMenuItem) {
+                    comp.setFont(UIManager.getFont("MenuItem.font"));
+                }
+            }
+        }
         // Common mouse listener for all locale buttons - shall improve usability
         MouseListener myMouseListener = new MouseListener() {
             @Override
@@ -865,9 +877,6 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         buttonPopupGet.setName(localeName);
                         buttonPopupLoad.setName(localeName);
                         buttonPopupSave.setName(localeName);
-                        System.out.println("loaded: " + loadedLocaleName);
-                        System.out.println("cached:" + loadedLocale.hasCachedChanges());
-                        System.out.println("unsaved:" + loadedLocale.hasUnsavedChanges);
                         buttonPopupSave.setEnabled(localeName.equals(loadedLocaleName));
                         if (!buttonPopupSave.isEnabled()) {
                             buttonPopupSave.setToolTipText("The save action is only enabled while " + button.getToolTipText() + " is the currently shown locale.");
@@ -1481,10 +1490,22 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
                 // START KGU#418 2017-12-11: Enh. #425
                 if (instance.searchDialog != null) {
-                	javax.swing.SwingUtilities.updateComponentTreeUI(instance.searchDialog);
-                	instance.searchDialog.adaptToNewLaF();;
+                    javax.swing.SwingUtilities.updateComponentTreeUI(instance.searchDialog);
+                    instance.searchDialog.adaptToNewLaF();
                 }
                 // END KGU#418 2017-12-11
+                // START KGU#929 2021-02-09: Enh. #929
+                javax.swing.SwingUtilities.updateComponentTreeUI(instance.buttonPopup);
+                LookAndFeel laf = UIManager.getLookAndFeel();
+                boolean isNimbus = laf != null && laf.getName().equalsIgnoreCase("nimbus");
+                if (isNimbus) {
+                    for (Component comp: instance.buttonPopup.getComponents()) {
+                        if (comp instanceof JMenuItem) {
+                            comp.setFont(UIManager.getFont("MenuItem.font"));
+                        }
+                    }
+                }
+                // END KGU#929 2021-02-09
             }
             catch (Exception ex) {}
         }

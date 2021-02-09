@@ -799,7 +799,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				}
 				JOptionPane.showMessageDialog(this, 
 						sb.toString(),
-						txtDiscriminator.getText(),
+						ElementNames.getElementName('c', false, null) + " " + txtDiscriminator.getText(),
 						JOptionPane.WARNING_MESSAGE);
 			}
 		}
@@ -808,7 +808,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			if (interactive) {
 				JOptionPane.showMessageDialog(this, 
 						msgNoProblems.getText(),
-						txtDiscriminator.getText(),
+						ElementNames.getElementName('c', false, null) + " " + txtDiscriminator.getText(),
 						JOptionPane.INFORMATION_MESSAGE);
 			}
 		}
