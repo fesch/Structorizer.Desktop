@@ -33,7 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-01-24/25   First Issue (on behalf of #915)
- *      Kay Gürtzig     2021-02-06/08   More functionality implemented
+ *      Kay Gürtzig     2021-02-06/10   More functionality implemented
  *
  ******************************************************************************************************
  *
@@ -49,6 +49,7 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -213,6 +214,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	private JPanel pnlSelectorControl;
 	private JScrollPane scrSelectors;
 	private int ixEdit = -1;
+//	private DefaultCellEditor activeCellEditor = null;
 	//private boolean discriminatorModified = false;
 	
 	// FIXME temporary field
@@ -477,6 +479,10 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			tm.addRow(new Object[] {"", "???"});
 			adjustTableSize();
 			tblSelectors.setRowSelectionInterval(nRows, nRows);
+			Rectangle cellRect = tblSelectors.getCellRect(nRows, 1, true);
+			tblSelectors.scrollRectToVisible(cellRect);
+			// The editor will request its focus itself in propertyChanged
+			tblSelectors.editCellAt(nRows, 1);
 		}
 		else if (source == btnDelLine) {
 			if (nSelected > 0) {
@@ -523,19 +529,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		// END KGU#927 2021-02-06
 		else {
 			if (source == btnOK) {
-				// FIXME could split string literals containing "\n" --> We must tokenize
-				StringList text = StringList.explode(txtDiscriminator.getText(), "\\\\n");
-				for (int i = 0; i < text.count()-1; i++) {
-					String line = text.get(i);
-					if (!line.endsWith("\\")) {
-						text.set(i, line + "\\");
-					}
-				}
-				String lastLine = text.get(text.count()-1);
-				while (lastLine.endsWith("\\")) {
-					lastLine = lastLine.substring(0, lastLine.length()-1);
-				}
-				text.set(text.count()-1, lastLine);
+				StringList text = new StringList();
+				addBrokenLine(text, txtDiscriminator.getText());
 				int defBranchNo = 0;
 				int nRows = tm.getRowCount();
 				if (this.branchOrder != null && maxBranch < this.branchOrder.length) {
@@ -549,19 +544,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					if (!branchIx.isEmpty()) {
 						branchOrder[i] = Integer.parseInt(branchIx);
 					}
-					/* Lest we should split string literals containing "\n", we must tokenize
-					 * the text after having temporarily replaced "\n" by true newlines, such
-					 * that newlines within strings should survive when we split the token list.
-					 * Afterwards we will re-unite the tokens and undo the replacement.
-					 */
-					String line0 = ((String)tm.getValueAt(i, 1)).replace("\\n", "\n");
-					StringList tokens = Element.splitLexically(line0, true);
-					int posNl = -1;
-					while ((posNl = tokens.indexOf("\n")) >= 0) {
-						text.add(tokens.concatenate(null, 0, posNl).replace("\n", "\\n") + "\\");
-						tokens.remove(0, posNl+1);
-					}
-					text.add(tokens.concatenate(null).replace("\n", "\\n"));
+					addBrokenLine(text, ((String)tm.getValueAt(i, 1)));
 				}
 				if (chkDefaultBranch.isSelected()) {
 					String defaultLabel = txtDefaultLabel.getText().trim();
@@ -584,6 +567,37 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
+	 * Adds the given {@code line} to the StringList {@code text}, decomposing it
+	 * at all {@code "\n"} substrings outside of string or character literals
+	 * into "broken lines", i.e. several lines where all but the last one end
+	 * with a backslash. All ending backslashes of the last part of the line will
+	 * be removed.
+	 * @param text - the {@link StringList} to be composed
+	 * @param line - the text line to be appended (after preparation)
+	 */
+	private void addBrokenLine(StringList text, String line) {
+		/* Lest we should split string literals containing "\n", we must tokenize
+		 * the text after having temporarily replaced "\n" by true newlines, such
+		 * that newlines within strings should survive when we split the token list.
+		 * Afterwards we will re-unite the tokens and undo the replacement.
+		 */
+		line = line.replace("\\n", "\n");
+		
+		StringList tokens = Element.splitLexically(line, true);
+		int posNl = -1;
+		while ((posNl = tokens.indexOf("\n")) >= 0) {
+			text.add(tokens.concatenate(null, 0, posNl).replace("\n", "\\n") + "\\");
+			tokens.remove(0, posNl+1);
+		}
+		text.add(tokens.concatenate(null).replace("\n", "\\n"));
+		String lastLine = text.get(text.count()-1);
+		while (lastLine.endsWith("\\")) {
+			lastLine = lastLine.substring(0, lastLine.length()-1);
+		}
+		text.set(text.count()-1, lastLine);
+	}
+
+	/**
 	 * Deletes the selected table lines
 	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span
@@ -599,7 +613,12 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		adjustTableSize();
 		checkEnumButton(null);
 		checkLines(tm, false);
-		tblSelectors.setRowSelectionInterval(ixSelected[0], ixSelected[0]);
+		if (ixSelected[0] >= tm.getRowCount()) {
+			ixSelected[0] = tm.getRowCount()-1;
+		}
+		if (ixSelected[0] >= 0) {
+			tblSelectors.setRowSelectionInterval(ixSelected[0], ixSelected[0]);
+		}
 	}
 
 	/**
@@ -655,7 +674,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	 * lines will also inherit the branch number such that the branch would
 	 * be copied on committing.
 	 * 
-	 * @param tm - thetable model of {@link #tblSelectors}
+	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span (if the length differs
 	 * from 1 them nothing will be done here)
 	 */
@@ -700,7 +719,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			Object selectors = tm.getValueAt(i, 1);
 			// Might be null during initialisation
 			if (selectors != null) {
-				lines.add(((String)selectors).replace("\\n", " "));
+				lines.add(((String)selectors));
 			}
 		}
 		HashMap<String, ArrayList<Integer>> values = valueHelper.checkValues(lines, false);
@@ -732,7 +751,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		// Check for structured discriminator
 		boolean isInappropriate = valueHelper.isStructured(txtDiscriminator.getText());
 		if (!conflicts.isEmpty() || unusedLines != 0 || orphanedBranches.size() > 1
-				|| isInappropriate) {
+				|| isInappropriate || !dubiousValues.isEmpty()) {
 			if (!conflicts.isEmpty() || isInappropriate) {
 				btnCheckLines.setBackground(Color.RED);
 			}
@@ -750,11 +769,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					sb.append("\n");
 				}
 				for (Map.Entry<String, ArrayList<Integer>> conflict: conflicts.entrySet()) {
+					sb.append("    ");
 					sb.append(conflict.getKey());
-					sb.append(": ");
+					String sepa = ": ";
 					for (Integer index: conflict.getValue()) {
+						sb.append(sepa);
 						sb.append(index + 1);
-						sb.append(", ");
+						sepa = ", ";
 					}
 					sb.append("\n");
 				}
@@ -763,6 +784,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					sb.append("\n");
 					for (int i = 0; i < nRows; i++) {
 						if ((unusedLines & (1L << i)) != 0) {
+							sb.append("    ");
 							sb.append(i+1);
 							sb.append(": ");
 							sb.append(tm.getValueAt(i, 1));
@@ -772,12 +794,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				}
 				if (orphanedBranches.size() > 1) {
 					sb.append(msgOrphanedBranches.getText());
-					sb.append("\n");
+					sb.append("\n    ");
 					String defBranchNoStr = "";
 					if (maxBranch < branchOrder.length) {
 						defBranchNoStr = Integer.toString(branchOrder[maxBranch]);
 					}
 					for (int i = 1; i < orphanedBranches.size(); i++) {
+						if (i > 1) sb.append(", ");
 						String branchNoStr = orphanedBranches.get(i);
 						sb.append(branchNoStr);
 						if (branchNoStr.equals(defBranchNoStr)) {
@@ -787,13 +810,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 							}
 							sb.append(" (= " + defaultLabel + ")");
 						}
-						sb.append(", ");
 					}
+					sb.append("\n");
 				}
 				if (!dubiousValues.isEmpty()) {
 					sb.append(msgDubiousSelectors.getText());
-					sb.append("\n");
-					sb.append(dubiousValues.getText());
+					sb.append("\n    ");
+					sb.append(dubiousValues.concatenate("\n    "));
 				}
 				JOptionPane.showMessageDialog(this, 
 						sb.toString(),
@@ -836,9 +859,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			StringList lines = new StringList();
 			for (int i = 0; i < nRows; i++) {
 				String line = (String)tm.getValueAt(i, 1);
-				lines.add(line.replace("\\n", " "));
+				lines.add(line);
 				// Now replace all code literals with the respective constant name
-				StringList exprs = Element.splitExpressionList(line, ",", true);
+				StringList exprs = Element.splitExpressionList(line.replace("\\n", " "), ",", true);
 				boolean replaced = false;
 				for (int j = 0; j < exprs.count(); j++) {
 					String expr = exprs.get(j);
@@ -889,7 +912,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			}
 			adjustTableSize();
 			checkLines(tm, false);
-			tblSelectors.setRowSelectionInterval(nRows, nRows);
+			//tblSelectors.setRowSelectionInterval(nRows, nRows);
 		}
 	}
 	
@@ -912,7 +935,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				Object value = tm.getValueAt(i, 1);
 				// Could be null during initialisation!
 				if (value != null) {
-					lines.add(((String)value).replace("\\n", " "));
+					
+					lines.add((String)value);
 				}
 			}
 			HashMap<String, ArrayList<Integer>> values = valueHelper.checkValues(lines, false);
@@ -997,15 +1021,24 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	// Typically called when a table cell is worked on.
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() == tblSelectors) {
+		if (evt.getSource() == tblSelectors
+				&& "tableCellEditor".equals(evt.getPropertyName())) {
 			Object cellEditor = evt.getNewValue();
 			if (cellEditor != null && cellEditor instanceof DefaultCellEditor) {
 				// First ensure acceptable behaviour for scaled mode
 				if (((DefaultCellEditor)cellEditor).getComponent() != null) {
 					((DefaultCellEditor)cellEditor).getComponent().setFont(tblSelectors.getFont());
+					((DefaultCellEditor)cellEditor).getComponent().requestFocusInWindow();
 				}
 				ixEdit = tblSelectors.getSelectedRow();
 				btnOK.setEnabled(false);
+				btnAddLine.setEnabled(false);
+				btnDelLine.setEnabled(false);
+				btnUpLine.setEnabled(false);
+				btnDnLine.setEnabled(false);
+				btnMergeLines.setEnabled(false);
+				btnSplitLine.setEnabled(false);
+				btnEnumAssist.setEnabled(false);
 			}
 			else {
 				adjustTableSize();
@@ -1054,6 +1087,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	private void doButtons() {
 		int[] ixSelected = tblSelectors.getSelectedRows();
 		int nRows = tblSelectors.getRowCount();
+		btnAddLine.setEnabled(true);
 		btnDelLine.setEnabled(ixSelected.length > 0 && (nRows > 1 || this.elementType.equalsIgnoreCase("try") && nRows > 0));
 		btnUpLine.setEnabled(ixSelected.length > 0 && ixSelected[0] > 0);
 		btnDnLine.setEnabled(ixSelected.length > 0 && ixSelected[ixSelected.length-1] < nRows-1);
