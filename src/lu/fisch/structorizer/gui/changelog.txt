@@ -201,10 +201,11 @@ Current development version: 3.30-16 (2021-02-10)
 - 15: Bugfix #924 Erratic Analyser warnings on mixed record/array access paths <2>
 - 15: Bugfix #925 Analyser always complained about constant record arguments <2>
 - 15: Enh. #926: Element selection now scrolls to related Analyser warnings <2>
-- 16: Enh. #915: Functional upgrade of the new CASE element editor <2>
+- 16: Enh. #915: Functional upgrade for the new CASE element editor <2>
 - 16: Enh. #928: New Analyser check against structured CASE choice value <2>
 - 16: Enh. #929: Translator usability improved with locale button context menus <2>
 - 16: Bugfix #930: Wrong CASE branch width with broken selector lines <2>
+- 16: Bugfix #931: Inadvertent font changes in element editors on font resizing <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

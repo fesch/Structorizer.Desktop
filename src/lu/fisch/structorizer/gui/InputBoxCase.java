@@ -33,7 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-01-24/25   First Issue (on behalf of #915)
- *      Kay Gürtzig     2021-02-06/10   More functionality implemented
+ *      Kay Gürtzig     2021-02-06/10   More functionality implemented, resizing behaviour fixed
  *
  ******************************************************************************************************
  *
@@ -127,8 +127,6 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		public NumberCellEditor() {
 			super(new JTextField());
 		}
-		
-		
 
 		@Override
 		public Object getCellEditorValue() {
@@ -163,8 +161,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	
 	public static final LangTextHolder msgSelectorMustNotBeEmpty = 
 			new LangTextHolder("A selector list must not be empty!");
-	public static final LangTextHolder msgRedundantLines =
-			new LangTextHolder("Redundant lines (unlikely values):");
+	// START KGU#927 2021-02-06: Issue #915 update - more functionality
+	public static final LangTextHolder msgRedundantRows =
+			new LangTextHolder("Redundant rows (unlikely values):");
 	public static final LangTextHolder msgConflictsDetected =
 			new LangTextHolder("Selector conflicts detected:");
 	public static final LangTextHolder msgOrphanedBranches =
@@ -173,8 +172,23 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			new LangTextHolder("Dubious selectors (not evaluable):");
 	public static final LangTextHolder msgStructuredDiscriminator =
 			new LangTextHolder("A structured choice expression is unsuited!");
+	public static final LangTextHolder msgMissingValues =
+			new LangTextHolder("Missing enumerator values (and no default):");
 	public static final LangTextHolder msgNoProblems =
 			new LangTextHolder("No obvious problems detected.");
+	public static final LangTextHolder msgRows =
+			new LangTextHolder("rows");
+	// END KGU#927 2021-02-06
+	
+	// START KGU#927 2021-02-10: Issue #915 update - better resizing behaviour
+	/**
+	 * Specifies the nominal initial dimension of {@link #tblSelectors} (to
+	 * be scaled, of course)
+	 */
+	private static final int[] TABLE_SIZE = new int[] {400, 100};
+	// comment field was on the brink of being hidden
+	private static final int IBC_PREFERRED_HEIGHT = 425;
+	// END KGU#927 2021-02-10
 	
 	/**
 	 * Contains the numbers of non-empty branches (starting at 1) in
@@ -199,15 +213,15 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	protected JTextField txtDefaultLabel;
 	protected JCheckBox chkMoveBranches;
 	protected JCheckBox chkDefaultBranch;
-	protected JButton btnAddLine;
-	protected JButton btnDelLine;
-	protected JButton btnUpLine;
-	protected JButton btnDnLine;
+	protected JButton btnAddRow;
+	protected JButton btnDelRows;
+	protected JButton btnUpRow;
+	protected JButton btnDnRow;
 	// START KGU#927 2021-02-06: Enh. #915
-	protected JButton btnMergeLines;
-	protected JButton btnSplitLine;
+	protected JButton btnMergeRows;
+	protected JButton btnSplitRow;
 	protected JButton btnEnumAssist;
-	protected JButton btnCheckLines;
+	protected JButton btnCheckRows;
 	// END KGU#927 2021-02-06
 	protected JTable tblSelectors;
 	
@@ -232,6 +246,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		// END KGU#927 2021-02-06
 	}
 
+	// START KGU#927 2021-02-10: Issue #915 update - comment field was on the brink of being hidden
+	@Override
+	protected void setPreferredSize(double scaleFactor) {
+		setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(IBC_PREFERRED_HEIGHT * scaleFactor));
+	}
+	// END KGU#927 2021-02-10
+
 	/**
 	 * Subclassable method to add specific stuff to the Panel top
 	 * @param _panel - the panel to be enhanced
@@ -252,16 +273,16 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		txtDefaultLabel = new JTextField();
 		chkMoveBranches = new JCheckBox("Move associated branches");
 		chkDefaultBranch = new JCheckBox("Default branch:");
-		btnAddLine = new JButton(IconLoader.getIcon(18));
-		btnDelLine = new JButton(IconLoader.getIcon(5));
-		btnUpLine = new JButton(IconLoader.getIcon(19));
-		btnDnLine = new JButton(IconLoader.getIcon(20));
+		btnAddRow = new JButton(IconLoader.getIcon(18));
+		btnDelRows = new JButton(IconLoader.getIcon(5));
+		btnUpRow = new JButton(IconLoader.getIcon(19));
+		btnDnRow = new JButton(IconLoader.getIcon(20));
 		// START KGU#927 2021-02-06: Enh. #915
-		btnMergeLines = new JButton(IconLoader.getIcon(127));
-		btnSplitLine = new JButton(IconLoader.getIcon(128));
-		btnCheckLines = new JButton(IconLoader.getIcon(83));
+		btnMergeRows = new JButton(IconLoader.getIcon(127));
+		btnSplitRow = new JButton(IconLoader.getIcon(128));
+		btnCheckRows = new JButton(IconLoader.getIcon(83));
 		btnEnumAssist = new JButton(IconLoader.getIcon(109));
-		standardButtonBackground = btnCheckLines.getBackground();
+		standardButtonBackground = btnCheckRows.getBackground();
 		// END KGU#927 2021-02-06
 		tblSelectors = new JTable();
 		scrSelectors = new JScrollPane();
@@ -289,7 +310,6 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			}
 		});
 		tblSelectors.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-		tblSelectors.setRowHeight((int)(tblSelectors.getFontMetrics(txtText.getFont()).getHeight()));
 		// START KGU#927 2021-02-07: Enh. #915
 		//tblSelectors.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tblSelectors.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -297,7 +317,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		// END KGU#927 2021-02-07
 		tblSelectors.getSelectionModel().addListSelectionListener(this);
 		scrSelectors.setViewportView(tblSelectors);
-		scrSelectors.setPreferredSize(new Dimension((int)(400 * scaleFactor), (int)(100 * scaleFactor)));
+		scrSelectors.setPreferredSize(new Dimension((int)(TABLE_SIZE[0] * scaleFactor), (int)(TABLE_SIZE[1] * scaleFactor)));
 		tblSelectors.setTableHeader(null);
 		
 		chkMoveBranches.setEnabled(false);
@@ -305,15 +325,15 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		
 		txtDiscriminator.addKeyListener(this);
 		txtDefaultLabel.addKeyListener(this);
-		btnAddLine.addActionListener(this);
-		btnDelLine.addActionListener(this);
-		btnUpLine.addActionListener(this);
-		btnDnLine.addActionListener(this);
+		btnAddRow.addActionListener(this);
+		btnDelRows.addActionListener(this);
+		btnUpRow.addActionListener(this);
+		btnDnRow.addActionListener(this);
 		// START KGU#393 2021-01-26: Issue #400
-		btnAddLine.addKeyListener(this);
-		btnDelLine.addKeyListener(this);
-		btnUpLine.addKeyListener(this);
-		btnDnLine.addKeyListener(this);
+		btnAddRow.addKeyListener(this);
+		btnDelRows.addKeyListener(this);
+		btnUpRow.addKeyListener(this);
+		btnDnRow.addKeyListener(this);
 		chkMoveBranches.addKeyListener(this);
 		chkDefaultBranch.addKeyListener(this);
 		// END KGU#393 2021-01-26
@@ -331,16 +351,16 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 //					discriminatorModified = false;
 //				}
 //			}});
-		btnMergeLines.addActionListener(this);
-		btnSplitLine.addActionListener(this);
+		btnMergeRows.addActionListener(this);
+		btnSplitRow.addActionListener(this);
 		btnEnumAssist.addActionListener(this);
-		btnCheckLines.addActionListener(this);
-		btnMergeLines.addKeyListener(this);
-		btnSplitLine.addKeyListener(this);
+		btnCheckRows.addActionListener(this);
+		btnMergeRows.addKeyListener(this);
+		btnSplitRow.addKeyListener(this);
 		btnEnumAssist.addKeyListener(this);
-		btnCheckLines.addKeyListener(this);
+		btnCheckRows.addKeyListener(this);
 		String lafName = UIManager.getLookAndFeel().getName();
-		btnCheckLines.setOpaque(!"Nimbus".equals(lafName) && !"CDE/Motif".equals(lafName));
+		btnCheckRows.setOpaque(!"Nimbus".equals(lafName) && !"CDE/Motif".equals(lafName));
 		// END KGU#927 2021-02-06
 		
 		pnlSelectorControl.setLayout(new BoxLayout(pnlSelectorControl, BoxLayout.Y_AXIS));
@@ -350,20 +370,20 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		pnlSelectorControl.add(chkMoveBranches);
 		JPanel pnlSelCtrlButtons = new JPanel();
 		pnlSelCtrlButtons.setLayout(new BoxLayout(pnlSelCtrlButtons, BoxLayout.X_AXIS));
-		pnlSelCtrlButtons.add(btnAddLine);
-		pnlSelCtrlButtons.add(btnDelLine);
-		pnlSelCtrlButtons.add(btnUpLine);
-		pnlSelCtrlButtons.add(btnDnLine);
+		pnlSelCtrlButtons.add(btnAddRow);
+		pnlSelCtrlButtons.add(btnDelRows);
+		pnlSelCtrlButtons.add(btnUpRow);
+		pnlSelCtrlButtons.add(btnDnRow);
 		pnlSelCtrlButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		pnlSelectorControl.add(pnlSelCtrlButtons);
 		
 		// START KGU#927 2021-02-06: Enh. #915
 		JPanel pnlSelManipButtons = new JPanel();
 		pnlSelManipButtons.setLayout(new BoxLayout(pnlSelManipButtons, BoxLayout.X_AXIS));
-		pnlSelManipButtons.add(btnMergeLines);
-		pnlSelManipButtons.add(btnSplitLine);
+		pnlSelManipButtons.add(btnMergeRows);
+		pnlSelManipButtons.add(btnSplitRow);
 		pnlSelManipButtons.add(btnEnumAssist);
-		pnlSelManipButtons.add(btnCheckLines);
+		pnlSelManipButtons.add(btnCheckRows);
 		pnlSelManipButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		pnlSelectorControl.add(pnlSelManipButtons);
 		// END KGU#927 2021-02-06
@@ -473,25 +493,25 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		int[] ixSelected = tblSelectors.getSelectedRows();
 		int nSelected = ixSelected.length;
 		
-		if (source == btnAddLine) {
+		if (source == btnAddRow) {
 			int nRows = tm.getRowCount();
 			tblSelectors.clearSelection();
-			tm.addRow(new Object[] {"", "???"});
+			tm.addRow(new Object[] {"", "?"});
 			adjustTableSize();
 			tblSelectors.setRowSelectionInterval(nRows, nRows);
 			Rectangle cellRect = tblSelectors.getCellRect(nRows, 1, true);
 			tblSelectors.scrollRectToVisible(cellRect);
-			// The editor will request its focus itself in propertyChanged
+			// The editor will request its focus itself in this.propertyChanged(e)
 			tblSelectors.editCellAt(nRows, 1);
 		}
-		else if (source == btnDelLine) {
+		else if (source == btnDelRows) {
 			if (nSelected > 0) {
-				deleteLines(tm, ixSelected);
+				deleteRows(tm, ixSelected);
 			}
 		}
-		else if (source == btnUpLine) {
+		else if (source == btnUpRow) {
 			if (nSelected > 0 && ixSelected[0] > 0) {
-				// In fact we move the preceding line down
+				// In fact we move the preceding row down
 				int ixSel = ixSelected[0] - 1;
 				Object val0 = tm.getValueAt(ixSel, 0);
 				Object val1 = tm.getValueAt(ixSel, 1);
@@ -501,9 +521,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				tblSelectors.setRowSelectionInterval(ixSel, ixSel + nSelected-1);
 			}
 		}
-		else if (source == btnDnLine) {
+		else if (source == btnDnRow) {
 			if (nSelected > 0 && ixSelected[nSelected-1] < tm.getRowCount()-1) {
-				// In fact we move the subsequent line up
+				// In fact we move the subsequent row up
 				int ixSel = ixSelected[nSelected-1] + 1;
 				Object val0 = tm.getValueAt(ixSel, 0);
 				Object val1 = tm.getValueAt(ixSel, 1);
@@ -514,17 +534,17 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			}
 		}
 		// START KGU#927 2021-02-06: Enh. #915
-		else if (source == btnMergeLines) {
-			mergeLines(tm, ixSelected);
+		else if (source == btnMergeRows) {
+			mergeRows(tm, ixSelected);
 		}
-		else if (source == btnSplitLine) {
-			splitLine(tm, ixSelected);
+		else if (source == btnSplitRow) {
+			splitRow(tm, ixSelected);
 		}
 		else if (source == btnEnumAssist) {
 			forceEnumeratorCompleteness(tm);
 		}
-		else if (source == btnCheckLines) {
-			checkLines(tm, true);
+		else if (source == btnCheckRows) {
+			checkRows(tm, true);
 		}
 		// END KGU#927 2021-02-06
 		else {
@@ -602,7 +622,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span
 	 */
-	private void deleteLines(DefaultTableModel tm, int[] ixSelected) {
+	private void deleteRows(DefaultTableModel tm, int[] ixSelected) {
 		if (tm == null) {
 			tm = (DefaultTableModel)tblSelectors.getModel();
 		}
@@ -612,7 +632,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		}
 		adjustTableSize();
 		checkEnumButton(null);
-		checkLines(tm, false);
+		checkRows(tm, false);
 		if (ixSelected[0] >= tm.getRowCount()) {
 			ixSelected[0] = tm.getRowCount()-1;
 		}
@@ -624,9 +644,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	/**
 	 * Merges the lines of the selection interval {@code ixSelected}
 	 * @param tm - TableModel of {@link #tblSelectors}
-	 * @param ixSelected
+	 * @param ixSelected - the index span of selected rows
 	 */
-	private void mergeLines(DefaultTableModel tm, int[] ixSelected) {
+	private void mergeRows(DefaultTableModel tm, int[] ixSelected) {
 		int nSelected = ixSelected.length;
 		int nRows = tm.getRowCount();
 		int minRowCount = 2;
@@ -636,7 +656,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		if (nSelected > 1 && nRows - nSelected >= minRowCount-1) {
 			/* We don't care for the case of several non-empty branches
 			 * here, but rely on the correct enabling control in valueChanged(),
-			 * so at most one line may have an existing relevant branch
+			 * so at most one row may have an existing relevant branch
 			 */
 			int ixNonEmpty = ixSelected[0];
 			StringList lines = new StringList();
@@ -667,18 +687,18 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 
 	/**
 	 * Performs the splitting of the selected line, i.e. distributes the
-	 * comma-separated expressions to as many lines (all but the first one
-	 * new), the new lines will be inserted immediately after the selected
-	 * one. In the event, all modified or created lines will be selected.<br/>
-	 * If the source line was associated to a non-empty branch then all new
-	 * lines will also inherit the branch number such that the branch would
+	 * comma-separated expressions to as many rows (all but the first one
+	 * new), the new rows will be inserted immediately after the selected
+	 * one. In the event, all modified or created rows will be selected.<br/>
+	 * If the source row was associated to a non-empty branch then all new
+	 * rows will also inherit the branch number such that the branch would
 	 * be copied on committing.
 	 * 
 	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span (if the length differs
 	 * from 1 them nothing will be done here)
 	 */
-	private void splitLine(DefaultTableModel tm, int[] ixSelected) {
+	private void splitRow(DefaultTableModel tm, int[] ixSelected) {
 		if (ixSelected.length == 1) {
 			int ixSel = ixSelected[0];
 			Object branchNo = tm.getValueAt(ixSel, 0);
@@ -704,11 +724,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	/**
 	 * Checks the lines for conflicts and redundancy. Also checks for orphaned
 	 * branches. Will pop up a message if {@code interactive} is {@code true},
-	 * otherwise only controls the colour of button {@link #btnCheckLines}.
+	 * otherwise only controls the colour of button {@link #btnCheckRows}.
 	 * @param tm - the table model of {@link #tblSelectors} or {@code null}
 	 * @param interactive - whether the result is to be reported as message box
 	 */
-	private void checkLines(DefaultTableModel tm, boolean interactive) {
+	private void checkRows(DefaultTableModel tm, boolean interactive) {
 		if (tm == null) {
 			tm = (DefaultTableModel)tblSelectors.getModel();
 		}
@@ -732,17 +752,24 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		}
 		// Retrieve conflicts in particular
 		HashMap<String, ArrayList<Integer>> conflicts = valueHelper.checkValues(lines, true);
-		// Check for redundant lines in case of an enumerator
+		// Check for redundant rows and missing values in case of an enumerator
 		HashMap<String, Integer> enumVals = valueHelper.getEnumeratorInfo(txtDiscriminator.getText());
 		long unusedLines = 0L;	// Bitmap
+		StringList missingValues = new StringList();
 		if (enumVals != null) {
 			unusedLines = (1L << nRows) - 1;
-			for (Integer code: enumVals.values()) {
-				ArrayList<Integer> lineNos = values.get(code.toString());
-				if (lineNos != null) {
-					for (Integer lineNo: lineNos) {
-						unusedLines &= ~(1L << lineNo);
+			boolean noDefault = !chkDefaultBranch.isSelected();
+			for (Map.Entry<String, Integer> entry: enumVals.entrySet()) {
+				Integer code = entry.getValue();
+				ArrayList<Integer> rowNos = values.get(code.toString());
+				if (rowNos != null) {
+					for (Integer rowNo: rowNos) {
+						// Remove the respective bit
+						unusedLines &= ~(1L << rowNo);
 					}
+				}
+				else if (noDefault) {
+					missingValues.add(entry.getKey());
 				}
 			}
 		}
@@ -750,20 +777,26 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		Vector<String> orphanedBranches = this.getUnusedBranchNumbers(-1);
 		// Check for structured discriminator
 		boolean isInappropriate = valueHelper.isStructured(txtDiscriminator.getText());
+
+		// No it is time to act according to the findings
 		if (!conflicts.isEmpty() || unusedLines != 0 || orphanedBranches.size() > 1
-				|| isInappropriate || !dubiousValues.isEmpty()) {
+				|| isInappropriate || !dubiousValues.isEmpty() || !missingValues.isEmpty()) {
+			// Decide the severity
 			if (!conflicts.isEmpty() || isInappropriate) {
-				btnCheckLines.setBackground(Color.RED);
+				btnCheckRows.setBackground(Color.RED);
 			}
 			else {
-				btnCheckLines.setBackground(Color.ORANGE);
+				btnCheckRows.setBackground(Color.ORANGE);
 			}
 			if (interactive) {
+				// Compose the problem report
 				StringBuilder sb = new StringBuilder();
+				// 1. Inappropriate discriminator expression type
 				if (isInappropriate) {
 					sb.append(msgStructuredDiscriminator.getText());
 					sb.append("\n\n");
 				}
+				// 2. Selector conflicts
 				if (!conflicts.isEmpty()) {
 					sb.append(msgConflictsDetected.getText());
 					sb.append("\n");
@@ -771,7 +804,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				for (Map.Entry<String, ArrayList<Integer>> conflict: conflicts.entrySet()) {
 					sb.append("    ");
 					sb.append(conflict.getKey());
-					String sepa = ": ";
+					String sepa = ": " + msgRows.getText() + " ";
 					for (Integer index: conflict.getValue()) {
 						sb.append(sepa);
 						sb.append(index + 1);
@@ -779,8 +812,16 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					}
 					sb.append("\n");
 				}
+				// 3. Missing enumerator values
+				if (!missingValues.isEmpty()) {
+					sb.append(msgMissingValues.getText());
+					sb.append("\n    ");
+					sb.append(missingValues.concatenate(", "));
+					sb.append("\n");
+				}
+				// 4. Unused rows
 				if (unusedLines != 0) {
-					sb.append(msgRedundantLines.getText());
+					sb.append(msgRedundantRows.getText());
 					sb.append("\n");
 					for (int i = 0; i < nRows; i++) {
 						if ((unusedLines & (1L << i)) != 0) {
@@ -792,6 +833,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 						}
 					}
 				}
+				// 5. Orphaned branches
 				if (orphanedBranches.size() > 1) {
 					sb.append(msgOrphanedBranches.getText());
 					sb.append("\n    ");
@@ -813,11 +855,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					}
 					sb.append("\n");
 				}
+				// 6. Dubious selectors (not evaluable expressions)
 				if (!dubiousValues.isEmpty()) {
 					sb.append(msgDubiousSelectors.getText());
 					sb.append("\n    ");
 					sb.append(dubiousValues.concatenate("\n    "));
 				}
+				// Show the composed problem report
 				JOptionPane.showMessageDialog(this, 
 						sb.toString(),
 						ElementNames.getElementName('c', false, null) + " " + txtDiscriminator.getText(),
@@ -825,8 +869,10 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			}
 		}
 		else {
-			btnCheckLines.setBackground(standardButtonBackground);
+			// No problem found
+			btnCheckRows.setBackground(standardButtonBackground);
 			if (interactive) {
+				// Report the absence of detected problems
 				JOptionPane.showMessageDialog(this, 
 						msgNoProblems.getText(),
 						ElementNames.getElementName('c', false, null) + " " + txtDiscriminator.getText(),
@@ -883,25 +929,25 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 					tm.setValueAt(exprs.concatenate(", "), i, 1);
 				}
 			}
-			// Get the mapping of code values to line numbers
+			// Get the mapping of code values to row numbers
 			HashMap<String, ArrayList<Integer>> values = valueHelper.checkValues(lines, false);
-			long usedLines = 0;	// Bitset
-			// Phase 2: Add lines with missing enumeration names
+			long usedRows = 0;	// Bitset
+			// Phase 2: Add rows with missing enumeration names
 			for (Map.Entry<String, Integer> enumEntry: enumVals.entrySet()) {
-				ArrayList<Integer> lineNos = values.get(enumEntry.getValue().toString());
-				if (lineNos == null) {
+				ArrayList<Integer> rowNos = values.get(enumEntry.getValue().toString());
+				if (rowNos == null) {
 					tm.addRow(new Object[] {"", enumEntry.getKey()});
 				}
 				else {
-					for (Integer lNo: lineNos) {
-						usedLines |= 1L << lNo;
+					for (Integer lNo: rowNos) {
+						usedRows |= 1L << lNo;
 					}
 				}
 			}
 			// Phase 3: Remove redundant lines (only sensible among the old lines)
 			for (int i = nRows-1; i >= 0; i--) {
-				// Don't drop lines with non-empty branch
-				if ((usedLines & (1L << i)) == 0 && "".equals(tm.getValueAt(i, 0))) {
+				// Don't drop rows with non-empty branch
+				if ((usedRows & (1L << i)) == 0 && "".equals(tm.getValueAt(i, 0))) {
 					tm.removeRow(i);
 				}
 			}
@@ -911,7 +957,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				chkDefaultBranch.setSelected(false);
 			}
 			adjustTableSize();
-			checkLines(tm, false);
+			checkRows(tm, false);
 			//tblSelectors.setRowSelectionInterval(nRows, nRows);
 		}
 	}
@@ -994,15 +1040,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			chkMoveBranches.setEnabled(true);
 			chkMoveBranches.setSelected(true);
 		}
-		tblSelectors.setRowHeight((int)(tblSelectors.getFontMetrics(txtText.getFont()).getHeight()));
-		tblSelectors.revalidate();
 		
 		valueChanged(null);
 		
 		scrText.setVisible(false);
 		
 		checkEnumButton(tm);
-		checkLines(tm, false);
+		checkRows(tm, false);
 	}
 	
 	// Gets called on selecting/unselecting the checkbox for the default branch
@@ -1014,7 +1058,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			if (txtDefaultLabel.isEnabled() && txtDefaultLabel.getText().trim().isEmpty()) {
 				txtDefaultLabel.setText("default");
 			}
-			checkLines(null, false);
+			checkRows(null, false);
 		}
 	}
 
@@ -1032,12 +1076,12 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				}
 				ixEdit = tblSelectors.getSelectedRow();
 				btnOK.setEnabled(false);
-				btnAddLine.setEnabled(false);
-				btnDelLine.setEnabled(false);
-				btnUpLine.setEnabled(false);
-				btnDnLine.setEnabled(false);
-				btnMergeLines.setEnabled(false);
-				btnSplitLine.setEnabled(false);
+				btnAddRow.setEnabled(false);
+				btnDelRows.setEnabled(false);
+				btnUpRow.setEnabled(false);
+				btnDnRow.setEnabled(false);
+				btnMergeRows.setEnabled(false);
+				btnSplitRow.setEnabled(false);
 				btnEnumAssist.setEnabled(false);
 			}
 			else {
@@ -1053,7 +1097,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				}
 				ixEdit = -1;	// Editing ended
 				doButtons();
-				this.checkLines(null, false);
+				this.checkRows(null, false);
 				btnOK.setEnabled(true);
 			}
 		}
@@ -1087,10 +1131,10 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	private void doButtons() {
 		int[] ixSelected = tblSelectors.getSelectedRows();
 		int nRows = tblSelectors.getRowCount();
-		btnAddLine.setEnabled(true);
-		btnDelLine.setEnabled(ixSelected.length > 0 && (nRows > 1 || this.elementType.equalsIgnoreCase("try") && nRows > 0));
-		btnUpLine.setEnabled(ixSelected.length > 0 && ixSelected[0] > 0);
-		btnDnLine.setEnabled(ixSelected.length > 0 && ixSelected[ixSelected.length-1] < nRows-1);
+		btnAddRow.setEnabled(true);
+		btnDelRows.setEnabled(ixSelected.length > 0 && (nRows > 1 || this.elementType.equalsIgnoreCase("try") && nRows > 0));
+		btnUpRow.setEnabled(ixSelected.length > 0 && ixSelected[0] > 0);
+		btnDnRow.setEnabled(ixSelected.length > 0 && ixSelected[ixSelected.length-1] < nRows-1);
 		boolean canMerge = ixSelected.length > 1;
 		if (canMerge) {
 			// Check branch association
@@ -1108,7 +1152,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				}
 			}
 		}
-		btnMergeLines.setEnabled(canMerge);
+		btnMergeRows.setEnabled(canMerge);
 		boolean canSplit = ixSelected.length == 1;
 		if (canSplit) {
 			Object val = tblSelectors.getValueAt(ixSelected[0], 1);
@@ -1117,7 +1161,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 				canSplit = exprs.count() > 1;
 			}
 		}
-		btnSplitLine.setEnabled(canSplit);
+		btnSplitRow.setEnabled(canSplit);
 	}
 	
 	@Override
@@ -1139,21 +1183,24 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
-	 * Adapts the width of the scroll pane associated to {@link #tblSelectors} according
-	 * the current width of the left part of the top pane and the dialog width.<br/>
-	 * This is a precarious workaround for the lacking auto-resizing of a JTable ScrollPane
-	 * within a {@link GridBagLayout}: If the new size is a little to wide then the layout
-	 * will collapse, if it is a little too narrow then it will look ugly.
+	 * Adapts the width and height of the scroll pane associated to {@link #tblSelectors}
+	 * according to the current width of the left part of the top pane and the dialog width,
+	 * and regarding the extra height of the dialog wrt to the preferred height (we ensure
+	 * that the table scroll pane gets about an 7/8 share of the extra height).<br/>
+	 * The width mechanism is a precarious workaround for the lacking auto-resizing of a
+	 * JTable ScrollPane within a {@link GridBagLayout}: If the new size is a little to wide
+	 * then the layout will collapse, if it is a little too narrow then it will look ugly.
 	 */
 	private void resizeTableScrollPane() {
-		// FIXME Precarious workaround for a layout defect
 		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
 		if (scaleFactor < 1) scaleFactor = 1.0;
 		int border = (int)(5 * scaleFactor);
 		Dimension dialogSize = getSize();
 		Dimension pnlSize = pnlSelectorControl.getPreferredSize();
 		int diff = dialogSize.width - pnlSize.width - 4 * border;
-		scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(100 * scaleFactor)));
+		int extraHeight = Math.max(0, dialogSize.height - (int)(scaleFactor * IBC_PREFERRED_HEIGHT));
+		int newTableHeight = (int)(scaleFactor * TABLE_SIZE[1]) + 7 * extraHeight / 8;
+		scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(newTableHeight)));
 		adjustTableSize();
 		// FIXME: Temporary version hint
 		String lastHint = Ini.getInstance().getProperty("versionHint", "");
@@ -1175,18 +1222,18 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 
 	// START KGU#927 2021-02-06: Enh. #915
 	/** 
-	 * @param - the line index if called from a cell editor, otherwise -1
-	 * @return - the (sorted) vector of branch numbers of non-empty branches
+	 * @param rowNumber - the row index if called from a cell editor, otherwise -1
+	 * @return the (sorted) vector of branch numbers of non-empty branches
 	 * without current bond to a selector line.
 	 */
-	private Vector<String> getUnusedBranchNumbers(int lineNumber)
+	private Vector<String> getUnusedBranchNumbers(int rowNumber)
 	{
 		Vector<String> numbers = new Vector<String>();
 		numbers.add("");
 		HashSet<String> usedNumbers = new HashSet<String>();
 		for (int j = 0; j < tblSelectors.getRowCount(); j++) {
-			// The branch number of the passed line is to be seen as available
-			if (j != lineNumber) {
+			// The branch number of the passed row is to be seen as available
+			if (j != rowNumber) {
 				usedNumbers.add((String)tblSelectors.getValueAt(j, 0));
 			}
 		}
@@ -1218,21 +1265,21 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	public void insertUpdate(DocumentEvent e) {
 		checkEnumButton((DefaultTableModel)tblSelectors.getModel());
 //		discriminatorModified = true;
-		checkLines(null, false);	// We react immediately now, should be fast enough
+		checkRows(null, false);	// We react immediately now, should be fast enough
 	}
 
 	@Override
 	public void removeUpdate(DocumentEvent e) {
 		checkEnumButton((DefaultTableModel)tblSelectors.getModel());
 //		discriminatorModified = true;
-		checkLines(null, false);	// We react immediately now, should be fast enough
+		checkRows(null, false);	// We react immediately now, should be fast enough
 	}
 
 	@Override
 	public void changedUpdate(DocumentEvent e) {
 		checkEnumButton((DefaultTableModel)tblSelectors.getModel());
 //		discriminatorModified = true;
-		checkLines(null, false);	// We react immediately now, should be fast enough
+		checkRows(null, false);	// We react immediately now, should be fast enough
 	}
 	// END KGU#927 2021-02-06
 	

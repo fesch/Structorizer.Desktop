@@ -55,6 +55,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-04  Enh. #914 UndoManagers added to text and comment field.
  *      Kay Gürtzig     2021-01-25  Enh. #915 New supporting methods for JTables
  *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
+ *      Kay Gürtzig     2021-02-10  Bugfix #931: Font resizing: JTextArea font was spread to other components,
+ *                                  JTables are to be involved on init already, scaleFactor to be considered
  *
  ******************************************************************************************************
  *
@@ -88,6 +90,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     /** font size for the text fields, 0 = default, may be overridden by keys or from ini */
     public static float FONT_SIZE = 0;	// Default value
     // END KGU#428 2017-10-06
+    
+    protected static int[] PREFERRED_SIZE = new int[] {500, 400};
 
     public boolean OK = false;
 
@@ -141,7 +145,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
     // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
     protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));
+        setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
     }
     // END KGU#287 2016-11-02
     
@@ -228,13 +232,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#3 2015-10-24: Open opportunities for subclasses
         createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
         
-        // START KGU#428 2017-10-06: Enh. #430
-        if (FONT_SIZE > 0) {
-            for (JComponent comp: scalableComponents) {
-                Font font = comp.getFont();
-                comp.setFont(font.deriveFont(FONT_SIZE));
-            }
-        }
+        //// START KGU#428 2017-10-06: Enh. #430 - 2021-02-10 now done after GUI scaling
+        //if (FONT_SIZE > 0) {
+        //    for (JComponent comp: scalableComponents) {
+        //        Font font = comp.getFont();
+        //        comp.setFont(font.deriveFont(FONT_SIZE));
+        //    }
+        //}
         // END KGU#428 2017-10-06
  
         JPanel pnPanel1 = new JPanel();
@@ -399,6 +403,18 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#287 2017-01-09: Bugfix #330  - scaling stuff outsourced to class GUIScaler
         GUIScaler.rescaleComponents(this);
         // END KGU#287 2017-01-09
+
+        // START KGU#428 2017-10-06: Enh. #430
+        // START KGU#916/KGU#931 2021-02-10 moved hitherto and replaced by method
+        //if (FONT_SIZE > 0) {
+        //    for (JComponent comp: scalableComponents) {
+        //        Font font = comp.getFont();
+        //        comp.setFont(font.deriveFont(FONT_SIZE));
+        //    }
+        //}
+        applyFontScale();
+        // END KGU#916/KGU#931 2021-02-10
+        // END KGU#428 2017-10-06
 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
@@ -585,34 +601,61 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     @Override
     protected void adjustLangDependentComponents()
     {
-    	this.lblBreakTriggerText.setText(this.lblBreakTriggerText.getText().replace("%", lblBreakTrigger.getText()));
+        this.lblBreakTriggerText.setText(this.lblBreakTriggerText.getText().replace("%", lblBreakTrigger.getText()));
     }
     // END KGU#246 2016-09-21
     
     // START KGU#294 2016-11-22: Issue #284
     public void fontControl(boolean up)
     {
-        Font font = txtText.getFont();
+        // START KGU#931 2021-02-10: Issue #931
+        if (FONT_SIZE == 0) {
+            Font font = txtText.getFont();
+            FONT_SIZE = font.getSize();	// Make sure FONT_SIZE is set
+        }
         float increment = 2.0f;
         if (!up) {
-            increment = font.getSize() > 8 ? -2.0f : 0.0f;
+            increment = FONT_SIZE > 8 ? -2.0f : 0.0f;
         }
         // START KGU#428 2017-10-06: Enh. #430
         //Font newFont = font.deriveFont(font.getSize()+increment);
-        FONT_SIZE = font.getSize()+increment;
-        Font newFont = font.deriveFont(FONT_SIZE);
+        FONT_SIZE += increment;
+        // START KGU#931 2021-02-10: Bugfix #931 Don't spread the JTextArea font!
+        //Font newFont = font.deriveFont(FONT_SIZE);
+        // END KGU#931 2021-02-10
         // END KGU#428 2017-10-06
+        applyFontScale();	// Outsourced on occasion of #931
+        this.revalidate();
+    }
+    // END KGU#294 2016-11-22
+
+    // START KGU#931 2021-02-10: Issue #931 + code revision
+    /**
+     * Applies the configured {@link #FONT_SIZE} to all {@link #scalableComponents}
+     */
+    private void applyFontScale() {
+        if (FONT_SIZE < 6) {
+            return;
+        }
+        // START KGU#931 2021-02-10 Bugfix #931 Now we will consider the scaleFactor, too
+        //Font newFont = txtText.getFont().deriveFont(FONT_SIZE);
+        float scaleFactor = Float.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+        float fontSize = FONT_SIZE * scaleFactor;
+        // END KGU#931 2021-02-10
         for (JComponent comp: scalableComponents) {
+            // START KGU#931 2021-02-10: Bugfix #931 Don't spread the JTextArea font!
+            //comp.setFont(newFont);
+            Font newFont = comp.getFont().deriveFont(fontSize);
             comp.setFont(newFont);
+            // END KGU#9321 2021-02-10
             // START KGU#916 2021-01-25: Enh. #915
             if (comp instanceof JTable) {
                 ((JTable)comp).setRowHeight(((JTable)comp).getFontMetrics(newFont).getHeight());
             }
             // END KGU#915 2021-01-25
         }
-        this.revalidate();
     }
-    // END KGU#294 2016-11-22
+    // END KGU#931 2021-02-10
 
     // START KGU#916 2021-01-24: Enh. #915 Support for tables in subclasses
     /**

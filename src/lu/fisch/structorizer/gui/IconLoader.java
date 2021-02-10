@@ -80,6 +80,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: 124_prog_c added
  *      Kay Gürtzig     2021-01-09/11   Enh. #910: 125_plug added, deprecated field `from' removed
  *      Kay Gürtzig     2021-01-13      126_info added to replace 017 in some places.
+ *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
  *
  ******************************************************************************************************
  *
@@ -237,8 +238,7 @@ public class IconLoader {
 			"125_plug.png",			// introduced with 3.30-14 for #910
 			"126_info.png",			// is to replace the 017_Eye.png in the main toolbox
 			"127_merge.png",		// introduced with 3.30-16 for #915
-			"128_split.png",		// introduced with 3.30-16 for #915
-			"129_renum.png",		// introduced with 3.30-16 for #915
+			"128_split.png"			// introduced with 3.30-16 for #915
 	};
 	
 	private static final int[] ICON_SIZES = {
