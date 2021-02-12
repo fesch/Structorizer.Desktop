@@ -4014,6 +4014,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					data.showFinally = ((Try)element).isEmptyFinallyVisible();
 				}
 				// END KGU#695 2021-01-22
+				// START KGU#927 2021-02-07: Enh. #915 Which branches contain elements?
+				else if (element instanceof Case) {
+					data.branchOrder = new int[((Case)element).qs.size()];
+					for (int i = 0; i < data.branchOrder.length; i++) {
+						if (((Case)element).qs.get(i).getSize() > 0) {
+							data.branchOrder[i] = i + 1;
+						}
+						else {
+							data.branchOrder[i] = 0;
+						}
+					}
+				}
+				// END KGU#927 2021-02-07
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
@@ -9920,7 +9933,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#363 2017-03-13
 			// START KGU#916 2021-01-24: Enh. #915
 			else if (_elementType.equals("Case") && Element.useInputBoxCase) {
-				inputbox = new InputBoxCase(getFrame(), true);
+				// START KGU#927 2021-02-06: Enh. #915
+				//inputbox = new InputBoxCase(getFrame(), true);
+				inputbox = new InputBoxCase(getFrame(), true, new CaseEditHelper(root));
+				((InputBoxCase)inputbox).branchOrder = _data.branchOrder;
+				// END KGU#927 2021-02-06
 				inputbox.txtText.setVisible(false);
 			}
 			// END KGU#916 2021-01-24
@@ -10022,6 +10039,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			// -------------------------------------------------------------------------------------
 			
+			// START KGU#927 2021-02-07: Enh. #915 Avoid unnecessary Case branch reordering
+			_data.branchOrder = null;
+			// END KGU#927 2021-02-07
 			// get fields
 			_data.text.setText(inputbox.txtText.getText());
 			_data.comment.setText(inputbox.txtComment.getText());

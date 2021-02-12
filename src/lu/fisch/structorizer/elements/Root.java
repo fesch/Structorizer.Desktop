@@ -164,6 +164,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-03      Bugfix #924: Record component names falsely detected as uninitialized variables
  *                                      Issue #920: `Infinity' introduced as literal
  *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
+ *      Kay Gürtzig     2021-02-08      Enh. #928: New Analyser check 29 (structured CASE discriminator)
  *      
  ******************************************************************************************************
  *
@@ -707,7 +708,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false,	true,	true					// 26 .. 28
+		false,	true,	true,	true			// 26 .. 29
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -3685,6 +3686,10 @@ public class Root extends Element {
     			// START KGU#758 2019-11-08: Enh. #770
     			analyse_27_28(caseEle, _errors);
     			// END KGU#758 2019-11-08
+    			// START KGU#928 2021-02-08: Enh. #928 - discriminator type check added
+    			analyse_29(caseEle, _errors, _types);
+    			// END KGU#928 2021-02-08
+    			    			 
     			// This Hashtable will contain strings composed of as many '1' characters as
     			// branches initialise the respective new variable - so in the end we can see
     			// which variables aren't always initialised.
@@ -5067,6 +5072,7 @@ public class Root extends Element {
 		StringList text = _case.getUnbrokenText();
 		StringList duplicates = new StringList();
 		String aNonNumber = null;
+		// cf. checkValues
 		for (int i = 1; i < text.count(); i++) {
 			StringList items = Element.splitExpressionList(text.get(i), ",");
 			for (int j = 0; j < items.count(); j++) {
@@ -5107,6 +5113,24 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#758 2019-11-08
+	
+	// START KGU#928 2021-02-08: Enh. #928 - check for structured types
+	private void analyse_29(Case _case, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types)
+	{
+		StringList text = _case.getUnbrokenText();
+		String typeStr = Root.identifyExprType(_types, text.get(0), true);
+		boolean isStructured = typeStr.startsWith("@") || typeStr.startsWith("$");
+		if (!isStructured && Function.testIdentifier(typeStr, false, null)) {
+			// Do another test
+			TypeMapEntry type = _types.get(":" + typeStr);
+			isStructured = type != null && (type.isArray() || type.isRecord());
+		}
+		if (isStructured) {
+			//error  = new DetectedError("The discriminator (%) is structured - which is unsuited for CASE!", _case);
+			addError(_errors, new DetectedError(errorMsg(Menu.error29, text.get(0)), _case), 29);
+		}
+	}
+	// END KGU#928 2021-02-08
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**
@@ -6728,5 +6752,5 @@ public class Root extends Element {
 		return visitor.calls;
 	}
 	// END KGU#178/KGU#624 2018-12-26
-
+	
 }

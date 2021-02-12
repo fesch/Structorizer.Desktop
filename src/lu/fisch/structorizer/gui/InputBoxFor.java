@@ -165,7 +165,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
     // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
     @Override
     protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(400 * scaleFactor));
+        setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
     }
     // END KGU#287 2016-11-02
     // END KGU#169 2016-07-14

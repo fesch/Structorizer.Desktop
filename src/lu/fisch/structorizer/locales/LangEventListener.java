@@ -31,7 +31,8 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.10.08      First Issue
+ *      Kay Gürtzig     2018-10-08      First Issue
+ *      Kay Gürtzig     2021-02-11      Description modified according the enhanced LangEvent API
  *
  ******************************************************************************************************
  *
@@ -43,7 +44,8 @@ package lu.fisch.structorizer.locales;
 /**
  * The listener interface for receiving Structorizer locale events. The class that is interested in
  * processing a locale event implements this interface, and the object created with that class is
- * registered with a {@link LangTextHolder}, using the component's addLangEventListener method.
+ * registered with a {@link LangTextHolder} or with a {@link Locales} instance using the component's
+ * addLangEventListener method.
  * When the {@link LangEvent} occurs, that object's LangChanged method is invoked.
  * @author Kay Gürtzig
  *
@@ -51,8 +53,8 @@ package lu.fisch.structorizer.locales;
 public interface LangEventListener {
 
 	/**
-	 * Invoked when the source object of event {@code evt}, usually a {@link LangTextHolder}, was affected
-	 * by a Locale change.
+	 * Invoked when the source object of event {@code evt}, usually a {@link LangTextHolder} or
+	 * {@link Locales} was affected by or generating a Locale change.
 	 * @param evt - The language event
 	 */
 	public void LangChanged(LangEvent evt);

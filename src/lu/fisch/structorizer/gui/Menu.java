@@ -120,9 +120,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-10-17      Enh. #872: New display mode "Operators in C style"
  *      Kay Gürtzig     2020-10-15      Bugfix #885 enabling rule for the C operator mode was flawed
  *      Kay Gürtzig     2020-12-20      New message for bugfix #892
+ *      Kay Gürtzig     2020-12-21      Enh. #893: New menu entry for language preview
  *      Kay Gürtzig     2021-01-01      Enh. #903: menuDiagramOperatorsC enabling condition modified
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective menu support for actual DiagramControllers
  *      Kay Gürtzig     2021-01-13      "About" icon replaced
+ *      Kay Gürtzig     2021-02-11      Enh. #893: Revalidation of the preference menu enforced after locale setting
  *
  ******************************************************************************************************
  *
@@ -603,6 +605,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error27 = new LangTextHolder("Some selector items (e.g. «%») don't seem to be integer constants.");
 	public static final LangTextHolder error28 = new LangTextHolder("There are multiple (conflicting) selector items (%) in the CASE element!");
 	// END KGU#758 2019-11-08
+	// START KGU#927 2021-02-08: Enh. #915
+	public static final LangTextHolder error29 = new LangTextHolder("A structured discriminator («%») is unsuited for CASE!");
+	// END KGU#927 2021-02-08
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");
@@ -1844,6 +1849,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
+		
+		// START KGU#892 2021-02-12: Enh. #893
+		Locales.getInstance().addLangEventListener(this, "Menu.menuHelp.text");
+		// END KGU#892 2021-02-12
 	}
 
 	@Override
@@ -2491,6 +2500,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			this.menuFileExportPap.setToolTipText(msgExportTooltip.getText().replace("%", "https://www.heise.de/download/product/papdesigner-51889"));
 		}
 		// END KGU#396 2020-04-08
+		// START KGU#892 2021-02-11: Enh. #893 Ensured that the menu change gets displayed
+		else if (evt.getSource() instanceof Locales) {
+			doButtonsLocal();
+		}
+		// END KGU#892 2021-02-11
 	}
 	// END KGU#725 2019-09-13
 	

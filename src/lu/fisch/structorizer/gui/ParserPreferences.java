@@ -453,7 +453,7 @@ public class ParserPreferences extends LangDialog {
 		{
 			public void keyPressed(KeyEvent e) 
 			{
-				if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
 				{
 					// START KGU#323 2019-03-03: Enh. #327
 					if (popupLocales != null) {
@@ -650,7 +650,7 @@ public class ParserPreferences extends LangDialog {
 	 * @return true if we may expect some keyword entry from the locale 
 	 */
 	private boolean hasParserKeywords(Locale locale) {
-		for (String key: locale.getKeys("Keywords")) {
+		for (String key: locale.getKeyList("Keywords")) {
 			if (!locale.getValue("Keywords", key).isEmpty()) {
 				return true;
 			}
@@ -665,7 +665,7 @@ public class ParserPreferences extends LangDialog {
 	 */
 	protected void fetchFromLang(String locName) {
 		Locale locale = Locales.getInstance().getLocale(locName);
-		for (String key: locale.getKeys("Keywords")) {
+		for (String key: locale.getKeyList("Keywords")) {
 			String keyword = locale.getValue("Keywords", key);
 			//if (!keyword.isEmpty()) {
 				String compName = key.split("\\.")[1];

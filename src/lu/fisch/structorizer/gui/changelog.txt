@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-15 (2021-02-04)
+Current development version: 3.30-16 (2021-02-12)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -201,6 +201,13 @@ Current development version: 3.30-15 (2021-02-04)
 - 15: Bugfix #924 Erratic Analyser warnings on mixed record/array access paths <2>
 - 15: Bugfix #925 Analyser always complained about constant record arguments <2>
 - 15: Enh. #926: Element selection now scrolls to related Analyser warnings <2>
+- 16: Enh. #893: Translator preview indicator in the language menu enforced <2>
+- 16: Enh. #915: Functional upgrade for the new CASE element editor <2>
+- 16: Enh. #928: New Analyser check against structured CASE choice value <2>
+- 16: Issue #929: Translator usability improved with locale button context menus,
+      temporary icon changes on shift; locale reset mechanism fixed <2>
+- 16: Bugfix #930: Wrong CASE branch width with broken selector lines <2>
+- 16: Bugfix #931: Inadvertent font changes in element editors on font resizing <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

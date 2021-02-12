@@ -131,6 +131,7 @@
  *      Kay Gürtzig         2020-12-12  Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig         2021-01-23  Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
+ *      Kay Gürtzig         2021-02-07  Enh. #915: New messages and tooltips for InputBoxCase
  *
  ******************************************************************************************************
  *
@@ -563,6 +564,7 @@ Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprach
 Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
 Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
+Menu.error29.text=Der Auswahlwert «%» ist von strukturiertem Typ und somit ungeeignet für @c!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -598,6 +600,7 @@ AnalyserPreferences.checkboxes.25.text=Empfehlungen für erste Programm-Anweisun
 AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
+AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -824,10 +827,14 @@ InputBoxCase.title[getInsertionType():insert]=Neue @c hinzufügen ...
 InputBoxCase.title[getInsertionType():update]=@c bearbeiten ...
 InputBoxCase.lblDiscriminator.text=Auswahlausdruck:
 InputBoxCase.lblSelectors.text=Fallkonstanten:
-InputBoxCase.btnAddLine.tooltip=Zeile für neuen Fall hinzufügen (mehrere Auswahlkonstanten für denselben Fall mit Komma trennen!)
-InputBoxCase.btnDelLine.tooltip=Ausgewählte Fall-Zeile entfernen (ggf. zusammen mit dem zugehörigen Zweig!)
-InputBoxCase.btnUpLine.tooltip=Ausgewählte Fall-Zeile höher schieben
-InputBoxCase.btnDnLine.tooltip=Ausgewählte Fall-Zeile tiefer schieben
+InputBoxCase.btnAddRow.tooltip=Zeile für neuen Fall hinzufügen (mehrere Auswahlkonstanten für denselben Fall mit Komma trennen!)
+InputBoxCase.btnDelRows.tooltip=Ausgewählte Fall-Zeile entfernen (ggf. zusammen mit dem zugehörigen Zweig!)
+InputBoxCase.btnUpRow.tooltip=Ausgewählte Fall-Zeile höher schieben
+InputBoxCase.btnDnRow.tooltip=Ausgewählte Fall-Zeile tiefer schieben
+InputBoxCase.btnMergeRows.tooltip=Ausgewählte Zeilen zusammenführen (nicht wählbar bei verschiedenen nicht-leeren Zweigen)
+InputBoxCase.btnSplitRow.tooltip=Fallkonstanten der gewählten Zeile auf eigene Zeilen aufteilen
+InputBoxCase.btnEnumAssist.tooltip=Fallzeilen für alle noch nicht vorkommenden Enumeratorwerte erzeugen und überflüssige Zeilen enfernen (außer bei nichtleeren Zweigen)
+InputBoxCase.btnCheckRows.tooltip=Konsistenz überprüfen und festgestellte Probleme anzeigen
 InputBoxCase.chkMoveBranches.text=Zweige mitbewegen
 InputBoxCase.chkMoveBranches.tooltip=Falls aktiviert (empfohlen!), wird die Beziehung bestehender Zweige zu verschobenen Fallzeilen aufrecht erhalten.
 InputBoxCase.chkDefaultBranch.text=Sonst-Zweig:
@@ -844,6 +851,14 @@ InputBoxCase.chkDisabled.text=Ausführung und Export unterbunden
 InputBoxCase.chkBreakpoint.text=Haltepunkt
 InputBoxCase.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxCase.msgSelectorMustNotBeEmpty.text=Eine Auswahlliste darf nicht leer sein!
+InputBoxCase.msgRedundantRows.text=Überflüssige Zeilen (kaum mögliche Werte):
+InputBoxCase.msgMissingValues.text=Fehlende Enumeratorwerte (und kein Default):
+InputBoxCase.msgConflictsDetected.text=Mehrfach vorkommende Fallkonstanten (Konflikte):
+InputBoxCase.msgOrphanedBranches.text=Nicht zugeordnete Zweige (Verlust beim Übernehmen!):
+InputBoxCase.msgDubiousSelectors.text=Fallkonstanten ohne bestimmbaren Wert:
+InputBoxCase.msgStructuredDiscriminator.text=Ungeeigneter Auswahlausdruck (strukturierter Typ)!
+InputBoxCase.msgNoProblems.text=Keine offensichtlichen Fehler festgestellt.
+InputBoxCase.msgRows.text=Zeilen
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Diagrammeigenschaften

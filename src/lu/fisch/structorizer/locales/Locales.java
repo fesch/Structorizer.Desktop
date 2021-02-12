@@ -50,6 +50,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-06-14  Issue #728: Mechanism for setting mnemonics enhanced
  *      Kay Gürtzig     2019-09-30  KGU#736 Precaution against newlines in tooltips
  *      Kay Gürtzig     2021-01-28  New static convenience method getValue(String, String, boolean)
+ *      Kay Gürtzig     2021-02-11  Enh. #893 Now also registers and serves LangEventListeners
  *
  ******************************************************************************************************
  *
@@ -66,6 +67,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -125,6 +127,10 @@ public class Locales {
     private String loadedLocaleName = null;
     private String loadedLocaleFilename = null;
     private final ArrayList<Component> components = new ArrayList<Component>();
+    
+    // START KGU#892 2021-02-11: Enh. #893
+    private HashMap<String, HashSet<LangEventListener>> listeners = null;
+    // END KGU#892 2021-02-11
     
     public static Locales getInstance()
     {
@@ -345,7 +351,10 @@ public class Locales {
         //updateComponents();
         if (updateImmediately) {
         // update all components!
-            updateComponents();
+            // START KGU 2021-02-11: It should only update the new component, shouldn't it? 
+            //updateComponents();
+            Locales.this.setLocale(component);
+            // END KGU 2021-02-11
         }
         // END KGU#337 2017-02-03
         
@@ -371,6 +380,56 @@ public class Locales {
             Locales.this.setLocale(component);
         }
     }
+    
+    // START KGU#892 2021-02-11: Enh. #893 Additional event listener mechanism
+    public void addLangEventListener(LangEventListener listener, String key)
+    {
+        synchronized (this) {
+            if (listeners == null) {
+                listeners = new HashMap<String, HashSet<LangEventListener>>();
+            }
+            HashSet<LangEventListener> listenerSet = listeners.get(key);
+            if (listenerSet == null) {
+                listeners.put(key, listenerSet = new HashSet<LangEventListener>());
+            }
+            listenerSet.add(listener);
+        }
+    }
+
+    public void removeLangEventListener(LangEventListener listener, String key)
+    {
+        synchronized (this) {
+            if (listeners != null) {
+                HashSet<LangEventListener> listenerSet = listeners.get(key);
+                if (listenerSet != null) {
+                    listenerSet.remove(listener);
+                }
+            }
+        }
+    }
+    
+    private void fireLangEvent(String key, String message)
+    {
+        if (listeners != null) {
+            LangEventListener[] toBeNotified = null;
+            synchronized (this) {
+                if (!listeners.containsKey(key)) {
+                    return;
+                }
+                HashSet<LangEventListener> lsnrSet = listeners.get(key);
+                toBeNotified = lsnrSet.toArray(new LangEventListener[lsnrSet.size()]);
+            }
+            synchronized (this) {
+                for (int i = 0; i < toBeNotified.length; i++) {
+                    try {
+                        toBeNotified[i].LangChanged(new LangEvent(this, message, key));
+                    }
+                    catch (Exception ex) {}
+                }
+            }
+        }
+    }
+    // END KGU#892 2021-02-11
     
     /**
      * Checks whether the proposed localeName is listed among LOCALES_LIST
@@ -417,7 +476,7 @@ public class Locales {
             }
         }
         
-        if(!localeName.equals("preview") && !localeName.equals("external"))
+        if (!localeName.equals("preview") && !localeName.equals("external"))
             loadedLocaleFilename = loadedLocaleName+".txt";
         // update all registered components
         updateComponents();
@@ -430,10 +489,10 @@ public class Locales {
     public void setLocale(Component component)
     {
         // check if we have a loaded LocaleName
-        if(loadedLocaleName!=null) {
+        if (loadedLocaleName != null) {
             // try to load the corresponding locale
             Locale locale = getLocale(loadedLocaleName);
-            if(locale!=null) {
+            if (locale!=null) {
                 // set it
                 setLocale(component, locale.getBody());
             }
@@ -620,8 +679,8 @@ public class Locales {
                 String key = parts.get(0);
                 if (key.contains("[") && key.endsWith("]"))
                 {
-                    // cut of last "]"
-                    key=key.substring(0, key.length()-1);
+                    // cut off last "]"
+                    key = key.substring(0, key.length()-1);
                     // split
                     String[] elements = key.split("\\[");
                     // put back the key
@@ -637,7 +696,7 @@ public class Locales {
                     pieces = StringList.explode(parts.get(0), "\\.");
                 }
                 
-                if(condition)
+                if (condition)
                     {
                     // START KGU#263 2016-09-28: Generally replace any found "\n" by a real newline
                     // START #479 2017-12-15: Enh. #492 - replace element names
@@ -852,6 +911,10 @@ public class Locales {
                                     new Object[]{pieces.get(0), pieces.get(1)});
                         }
                     }
+                    // START KGU#892 2021-02-12: Enh. #893
+                    this.fireLangEvent(parts.get(0), parts.get(1));
+                    // END KGU#892 2021-02-12
+
                 }
             }
         }
@@ -952,7 +1015,7 @@ public class Locales {
     {
         getLocale("external").parseStringList(lines);
         setLocale("external");
-        loadedLocaleFilename=filename;
+        loadedLocaleFilename = filename;
     }
     
     // START KGU 2021-01-28: New convenience method for message retrieval

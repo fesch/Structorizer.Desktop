@@ -802,7 +802,7 @@ public class StringList {
 	{
 		String[] lines = _text.split("\n");
 		strings.clear();
-		for (int i=0; i < lines.length; i++)
+		for (int i = 0; i < lines.length; i++)
 		{
 			strings.add(lines[i]);
 		}

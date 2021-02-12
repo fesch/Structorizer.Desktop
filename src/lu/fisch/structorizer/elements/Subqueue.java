@@ -430,7 +430,8 @@ public class Subqueue extends Element implements IElementSequence {
 		return sel;
 	}
 	// END KGU#183 2016-04-24
-	    
+
+	@Override
 	public Element copy()
 	{
 		Element ele = new Subqueue();

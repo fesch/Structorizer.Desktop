@@ -132,7 +132,7 @@
  *      Kay Gürtzig     2020-03-17  New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
  *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
- *      Kay Gürtzig     2021-01-25  Enh. #915: New class InputBoxCase added
+ *      Kay Gürtzig     2021-01-25  Enh. #915: Messages for new class InputBoxCase added
  *
  ******************************************************************************************************
  *
@@ -566,6 +566,7 @@ Menu.hint26.3.text=Ahora puedes p.ej. exportar tu diagrama a un código: → Men
 Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Menú "%1 ► %2 ► %3"
 Menu.error27.text=Algunos valores comparativos @c (p.ej. «%») no parecen constantes integrales.
 Menu.error28.text=!Valores comparativos (%) ocurren varias veces o en más de un ramo del elemento @c!
+Menu.error29.text=El tipo de la expresión de selección «%» es estructurado, pues no sirve para @c.
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -601,6 +602,7 @@ AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instruccion
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son constantes integrales.
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
+AnalyserPreferences.checkboxes.29.text=Comprobar que el valor de selectión en elementos @c no es de un tipo estructurado.
 AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 
@@ -826,18 +828,22 @@ InputBoxCase.title[getInsertionType():insert]=Insertar ramificación @c...
 InputBoxCase.title[getInsertionType():update]=Editar ramificación @c...
 InputBoxCase.lblDiscriminator.text=Expresión de selección
 InputBoxCase.lblSelectors.text=Constantes de selección
-InputBoxCase.btnAddLine.tooltip=Añadir nueva línea de brazo (y rellenar una lista de constantes selectores, separada por comas)
-InputBoxCase.btnDelLine.tooltip=Quitar la línea de brazo seleccionada
-InputBoxCase.btnUpLine.tooltip=Mover la línea de brazo arriva por una posición
-InputBoxCase.btnDnLine.tooltip=Mover la línea de brazo abajo por una posición
+InputBoxCase.btnAddRow.tooltip=Añadir nuevo renglón (y dejar rellenarlo con constantes selectores, separadas por comas)
+InputBoxCase.btnDelRows.tooltip=Quitar los renglones seleccionados
+InputBoxCase.btnUpRow.tooltip=Mover las líneas arriva por un renglón
+InputBoxCase.btnDnRow.tooltip=Mover las líneas abajo por un renglón
+InputBoxCase.btnMergeRows.tooltip=Unir renglones seleccionados (no ofrecido con diferentes brazos asociados)
+InputBoxCase.btnSplitRow.tooltip=Dividir el renglón seleccionado
+InputBoxCase.btnEnumAssist.tooltip=Añadir renglones para todos valores del enumerador que faltan, quitar renglones superfluos (excepto tales con brazos no vacíos)
+InputBoxCase.btnCheckRows.tooltip=Probar consistencia y reportar problemas constatados
 InputBoxCase.chkMoveBranches.text=Mover brazos relacionados
 InputBoxCase.chkMoveBranches.tooltip=Si activo, la asociación entre brazos existentes y las líneas movadas serán mantenidas (¡recomendado!).
 InputBoxCase.chkDefaultBranch.text=Brazo residual
 InputBoxCase.chkDefaultBranch.tooltip=Garantiza que la selección tiene un brazo residual (el nombre del cual puedes entrar en la máscara de entrada vecina).
 InputBoxCase.txtDefaultLabel.tooltip=El nombre para el brazo residual (no debe ser igual a "%"), p.ej. "otro", "en caso demás" o algo así.
-InputBoxCase.lblComment.text=Comment
+InputBoxCase.lblComment.text=Comentario
 InputBoxCase.lblComment.tooltip=
-InputBoxCase.txtComment.tooltip=The comment of the element.
+InputBoxCase.txtComment.tooltip=El comentario del elemento.
 InputBoxCase.btnOK.text=Aceptar
 InputBoxCase.btnOK.tooltip=Aceptar los cambios.
 InputBoxCase.btnCancel.text=Cancelar
@@ -846,6 +852,14 @@ InputBoxCase.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBoxCase.chkBreakpoint.text=Breakpoint
 InputBoxCase.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBoxCase.msgSelectorMustNotBeEmpty.text=Una lista de selectores no debe ser vacía!
+InputBoxCase.msgRedundantRows.text=Renglones redundantes (valores improbables):
+InputBoxCase.msgMissingValues.text=Valores de enumeración faltan (y no brazo residual):
+InputBoxCase.msgConflictsDetected.text=Conflictos entre selectores constatados:
+InputBoxCase.msgOrphanedBranches.text=Brazos huérfanos (moribundos al aceptar):
+InputBoxCase.msgDubiousSelectors.text=Selectores dubiosos (no evaluables):
+InputBoxCase.msgStructuredDiscriminator.text=¡Valores de un tipo estructorado son inadecuados!
+InputBoxCase.msgNoProblems.text=No problemas obvios constatados.
+InputBoxCase.msgRows.text=renglones
 
 -----[ AttributeInspector ]-----
 AttributeInspector.title=Propiedades del diagrama
