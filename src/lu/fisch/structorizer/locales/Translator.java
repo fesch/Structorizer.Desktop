@@ -54,6 +54,8 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2020-01-20      Enh. #801: Key F1 now tries to open the PDF help file if offline
  *      Kay Gürtzig     2021-01-28      Issue #919 More precise change detection in propertyChange()
  *      Kay Gürtzig     2021-02-09      Enh. #929: Context menus for the locale buttons introduced.
+ *      Kay Gürtzig     2021-02-11      Enh. Reloading via button_empty enabled (special handling). Mechanism
+ *                                      of resetting the locale revised (loadLocale())
  *
  ******************************************************************************************************
  *
@@ -65,6 +67,7 @@ package lu.fisch.structorizer.locales;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -111,6 +114,8 @@ import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
@@ -138,13 +143,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     private String loadedLocaleName = null;
     public static Locale loadedLocale = null;
+    // START KGU#929 2021-02-11: Enh. #929 Workaround for files loaded over "empty"
+    private Locale externalLocale = null;
+    // END KGU#929 2021-02-11
     // START KGU#694 2019-03-24: Issue #712
     private File currentDirectory = null;
     // END KGU#694 2019-03-24
     
     // START KGU 2016-08-04: Issue #220
     // Button colour for saved but still cached modifications
-    private static final Color savedColor = new Color(170,255,170);
+    private static final Color SAVED_COLOR = new Color(170,255,170);
+	private static final String CREATE_NEW_TOOLTIP = "Create new locale";
     // Standard button background colour (for restauring original appearance)
     private Color stdBackgroundColor = null;
     // END KGU 2016-08-04
@@ -164,7 +173,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     public static Translator getInstance() 
     {
-        if(instance==null) instance = new Translator();
+        if (instance == null) instance = new Translator();
         return instance;
     }
     
@@ -246,6 +255,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             // START KGU 2016-08-04: Issue #220
             table.addPropertyChangeListener(this);
             // END KGU 2016-08-04
+            // START KGU#929 2021-02-11: Enh. #929
+            table.getSelectionModel().addListSelectionListener(
+                    new ListSelectionListener() {
+                        @Override
+                        public void valueChanged(ListSelectionEvent e) {
+                            replaceButtonIcons(false);
+                        }});
+            // END KGU#929 2021-02-11
             
             // START KGU#287 2016-11-09: Issue #81 (DPI awareness workaround)
             if (scaleFactor > 2.0) {
@@ -361,148 +378,239 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
     // END KGU#709 2019-06-07
 
-	public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
+    /**
+     * 
+     * @param localeName
+     * @param toLoadFromFile
+     * @return
+     */
+	public boolean loadLocale(String localeName, boolean toLoadFromFile)
     {
-        //((Component)evt.getSource()).setName(localeName);
-        //((JButton)evt.getSource()).setToolTipText(localeName);
+        /* What cases are to be distinguished:
+         * It is generally more critical if current and requested locale are the same
+         * 1. If they are not, the following options are to be considered:
+         * 1.1 The current locale is a product locale (unmodified)
+         *     --> Just replace it
+         * 1.2 The current locale has unsaved changes
+         *     --> cache the changes from the table and replace it
+         * 1.3 The requested locale has cached changes and it is to be loaded
+         *     from file
+         * 1.3.1 The changes are unsaved --> ask whether to discard them
+         * 1.3.2 The changes were saved or loaded from file
+         *      --> ask to overload them
+         * 2. If they are equal then:
+         * 2.1 The current/requested locale is the product locale (unmodified)
+         *     --> Don't do anything
+         * 2.2 The current/requested locale has unsaved changes
+         *     --> ask for approval to discard changes
+         * 2.3 The current/requested locale was loaded from or saved to a file and
+         *     unchanged afterwards
+         *     --> ask for approval to forget it (replace the locale)
+         * What role does it play if a loading from file is expected?
+         * None in case of the same name
+         */
         
         headerText.getDocument().removeDocumentListener(this);
-
-        // backup current loadedLocale
-        if (loadedLocale != null && loadedLocaleName != null)
-        {
-            // Check if user wants to discard changes
-            if (loadedLocaleName.equals(localeName)
-                    &&
-                    (loadedLocale.hasUnsavedChanges
-                            || 
-                            loadedLocale.hasCachedChanges() &&
-                            !((loadedLocale.cachedFilename != null) && toLoadFromFile && !loadedLocale.hasUnsavedChanges)
-                    )
-                ||
-                !loadedLocaleName.equals(localeName) &&
-                locales.getLocale(localeName).hasUnsavedChanges && toLoadFromFile)
+        try {
+            // START KGU#929 2021-02-11: Enh. #929
+            Locale requestedLocale = locales.getLocale(localeName);
+            // END KGU#929 2021-02-11
+            // backup current loadedLocale
+            if (loadedLocale != null && loadedLocaleName != null)
             {
-                String question = locales.getLocale(localeName).hasUnsavedChanges ? "Do you want to discard all changes for" : "Do you want to reload the released locale";
-                int answer = JOptionPane.showConfirmDialog (null, 
-                        question + " \"" + localeName + "\"?", 
-                        "Existing Changes",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
-                if (answer == JOptionPane.YES_OPTION) {
-                    // discard all cached changes if any
-                    JButton button = (JButton) getComponentByName(loadedLocaleName);
-                    loadedLocale.values.clear();
-                    loadedLocale.cachedHeader.clear();
-                    loadedLocale.hasUnsavedChanges = false;
-                    loadedLocale.cachedFilename = null;
-                    button.setBackground(this.stdBackgroundColor);
+                boolean sameName = loadedLocaleName.equals(localeName)
+                        ||
+                        loadedLocaleName.equals("extern") && localeName.equals("empty");
+                // Check if user wants to discard changes
+                /* The relevant pending changes are that of the requested locale
+                 * because either (sameName) requestedLocale and loadedLocale
+                 * are the same or (!sameName) the loadedLocale will get cached
+                 * anyway.
+                 */
+                // START KGU#929 2021-02-11: Enh. #929
+                boolean emptyKillsExtern = false;
+                if (localeName.equals("empty") && externalLocale != null) {
+                    if (sameName) {
+                        emptyKillsExtern = true;
+                    }
+                    else {
+                        requestedLocale = externalLocale;
+                    }
+                    // May be renamed to "empty" again later
+                    localeName = "extern";
                 }
-                // START KGU 2016-09-05: Bugfix - if the user doesn't want to discard changes we shouldn't continue
-                else {          
-                    headerText.getDocument().addDocumentListener(this);
-                    return false;
+                // END KGU#929 2021-02-11
+                boolean unsaved =
+                        requestedLocale.hasUnsavedChanges
+                        && (sameName || toLoadFromFile)
+                        ||
+                        emptyKillsExtern
+                        && externalLocale.hasUnsavedChanges;
+                boolean cached = 
+                        !unsaved
+                        && requestedLocale.hasCachedChanges() 
+                        && (sameName || toLoadFromFile)
+                        ||
+                        emptyKillsExtern
+                        && externalLocale.hasCachedChanges();
+                if (unsaved || cached)
+                {
+                    String question = unsaved ? "Do you want to discard all changes for" : "Do you want to reload the released locale";
+                    int answer = JOptionPane.showConfirmDialog (null, 
+                            question + " \"" + localeName + "\"?", 
+                            "Existing Changes",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
+                    if (answer == JOptionPane.YES_OPTION) {
+                        // discard all cached changes if any
+                        // START KGU#929 2021-02-11: It was the wrong locale to be cleaned
+                        //JButton button = (JButton) getComponentByName(loadedLocaleName);
+                        //loadedLocale.values.clear();
+                        //loadedLocale.cachedHeader.clear();
+                        //loadedLocale.hasUnsavedChanges = false;
+                        //loadedLocale.cachedFilename = null;
+                        if (emptyKillsExtern) {
+                            externalLocale = null;
+                            // Undo the locale renaming and use the original locale
+                            localeName = "empty";
+                            requestedLocale = locales.getLocale(localeName);
+                            button_empty.setToolTipText(CREATE_NEW_TOOLTIP);
+                        }
+                        JButton button = (JButton) getComponentByName(localeName);
+                        requestedLocale.values.clear();
+                        requestedLocale.cachedHeader.clear();
+                        requestedLocale.hasUnsavedChanges = false;
+                        requestedLocale.cachedFilename = null;
+                        // END KGU#929 2021-02-11
+                        button.setBackground(this.stdBackgroundColor);
+                    }
+                    // START KGU 2016-09-05: Bugfix - if the user doesn't want to discard changes we shouldn't continue
+                    else {
+                        // Document listener on headerText will be set by the finally clause;
+                        return false;
+                    }
+                    // END KGU 2016-09-05
                 }
-                // END KGU 2016-09-05
+                
+
+                cacheUnsavedData();
             }
-            
-            cacheUnsavedData();
-        }
-        
-        headerText.setText(locales.getLocale(localeName).getHeader().getText());
-        loadedLocale = locales.getLocale(localeName);
-        
-        // First check if we have some cached values
-        // START KGU#231 2016-08-09: Issue #220
-        // Take care of a modified header
-        if (!loadedLocale.cachedHeader.isEmpty())
-        {
-            headerText.setText(loadedLocale.cachedHeader.getText());
-        }
-        // END KGU#231 2016-08-09
-        if (loadedLocale.values.size() > 0)
-        {
-            // Present a different column header if the locale data were from file
-            String column2Header = localeName;
-            if (loadedLocale.cachedFilename != null)
+
+            // START KGU#929 2021-02-11: Enh. #929 Consider new external locales
+            //headerText.setText(locales.getLocale(localeName).getHeader().getText());
+            //loadedLocale = locales.getLocale(localeName);
+            headerText.setText(requestedLocale.getHeader().getText());
+            loadedLocale = requestedLocale;
+            // END KGU#929 2021-02-11
+
+            // First check if we have some cached values
+            // START KGU#231 2016-08-09: Issue #220
+            // Take care of a modified header
+            if (!loadedLocale.cachedHeader.isEmpty())
             {
-                column2Header += " (" + loadedLocale.cachedFilename + ")";
+                headerText.setText(loadedLocale.cachedHeader.getText());
             }
-            // loop through all sections
-            ArrayList<String> sectionNames = locales.getSectionNames();
-            for (int i = 0; i < sectionNames.size(); i++) {
-                // get the name of the section
-                String sectionName = sectionNames.get(i);
+            // END KGU#231 2016-08-09
+            if (loadedLocale.values.size() > 0)
+            {
+                // There are cached modifications
+                // Present a different column header if the locale data were from file
+                String column2Header = localeName;
+                if (loadedLocale.cachedFilename != null)
+                {
+                    column2Header += " (" + loadedLocale.cachedFilename + ")";
+                }
+                // loop through all sections
+                ArrayList<String> sectionNames = locales.getSectionNames();
+                for (int i = 0; i < sectionNames.size(); i++) {
+                    // get the name of the section
+                    String sectionName = sectionNames.get(i);
 
-                // fetch the corresponding table
-                JTable table = tables.get(sectionName);
+                    // fetch the corresponding table
+                    JTable table = tables.get(sectionName);
 
-                // put the label on the column
-                table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
-                table.getTableHeader().repaint();
+                    // put the label on the column
+                    table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+                    table.getTableHeader().repaint();
 
-                // get a reference to the model
-                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+                    // get a reference to the model
+                    DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-                // get the strings and put them into the right row
-                for (int r = 0; r < model.getRowCount(); r++) {
-                    // get the key
-                    String key = ((String) model.getValueAt(r, 0)).trim();
-                    // put the value
-                    model.setValueAt(loadedLocale.values.get(sectionName).get(key), r, 2);
+                    // get the strings and put them into the right row
+                    for (int r = 0; r < model.getRowCount(); r++) {
+                        // get the key
+                        String key = ((String) model.getValueAt(r, 0)).trim();
+                        // put the value
+                        model.setValueAt(loadedLocale.values.get(sectionName).get(key), r, 2);
+                    }
                 }
             }
-        }
-        else {
-            // loop through all sections
-            ArrayList<String> sectionNames = locales.getSectionNames();
-            for (int i = 0; i < sectionNames.size(); i++) {
-                // get the name of the section
-                String sectionName = sectionNames.get(i);
+            else {
+                // No cached data
+                // loop through all sections
+                ArrayList<String> sectionNames = locales.getSectionNames();
+                for (int i = 0; i < sectionNames.size(); i++) {
+                    // get the name of the section
+                    String sectionName = sectionNames.get(i);
 
-                // fetch the corresponding table
-                JTable table = tables.get(sectionName);
+                    // fetch the corresponding table
+                    JTable table = tables.get(sectionName);
 
-                // put the label on the column
-                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
-                table.getTableHeader().repaint();
+                    // put the label on the column
+                    table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+                    table.getTableHeader().repaint();
 
-                // get a reference to the model
-                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+                    // get a reference to the model
+                    DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-                // get the needed loadedLocale and the corresponding section
-                Locale locale = locales.getLocale(localeName);
-
-                // get the strings and put them into the right row
-                for (int r = 0; r < model.getRowCount(); r++) {
-                    // get the key
-                    String key = ((String) model.getValueAt(r, 0)).trim();
-                    // put the value
-                    model.setValueAt(locale.getValue(sectionName, key), r, 2);
+                    // get the strings and put them into the right row
+                    for (int r = 0; r < model.getRowCount(); r++) {
+                        // get the key
+                        String key = ((String) model.getValueAt(r, 0)).trim();
+                        // put the value
+                        model.setValueAt(requestedLocale.getValue(sectionName, key), r, 2);
+                    }
                 }
             }
-        }
 
-        // enable the buttons
-        button_save.setEnabled(true);
-        // START KGU#694 2019-03-28: Issue #712 - save button should have same attention as locale button
-        if (loadedLocale.hasUnsavedChanges) {
-            button_save.setBackground(Color.GREEN);
-        } else {
-            button_save.setBackground(this.stdBackgroundColor);
-        }
-        // END KGU#694 2019-03-28
-        tabs.setEnabled(true);
-        headerText.setEditable(true);
-        
-        // remember the loaded loadedLocale name
-        loadedLocaleName = localeName;
+            // enable the buttons
+            button_save.setEnabled(true);
+            // START KGU#694 2019-03-28: Issue #712 - save button should have same attention as locale button
+            if (loadedLocale.hasUnsavedChanges) {
+                button_save.setBackground(Color.GREEN);
+            } else {
+                button_save.setBackground(this.stdBackgroundColor);
+            }
+            // END KGU#694 2019-03-28
+            tabs.setEnabled(true);
+            headerText.setEditable(true);
 
-        headerText.getDocument().addDocumentListener(this);
+            // remember the loaded loadedLocale name
+            loadedLocaleName = localeName;
+            // START KGU#929 2021-02-11: Enh. 929
+            if (localeName.equals("extern")) {
+                // Restore the original tooltip (the button would now reset the locale)
+                button_empty.setToolTipText(CREATE_NEW_TOOLTIP);
+            }
+            else if (externalLocale != null) {
+                // Show that the empty button will get the external locale
+                button_empty.setToolTipText(externalLocale.cachedFilename);
+            }
+            // END KGU#929 2021-02-11
+
+        }
+        finally {
+            headerText.getDocument().addDocumentListener(this);
+        }
         return true;
     }
     
     // START KGU#231 2016-08-09: Issue #220
+    /**
+     * If the {@link #loadedLocale} has unsaved changes (flag is set) or an associated
+     * file name then reads the current table contents and caches them into the fields
+     * {@link Locale#cachedHeader} and {@link Locale#values} of the {@link #loadedLocale}.
+     */
     private void cacheUnsavedData()
     {
         if (loadedLocale.hasUnsavedChanges || loadedLocale.cachedFilename != null) {
@@ -585,6 +693,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // END KGU#709 2019-06-10
     
     // START KGU#244 2016-06-09: Allow to reload a translation file
+    /**
+     * Copies the content of the given external Locale {@code locale} into
+     * column 2 of the tables and determines the differences to the former
+     * table content, which is assumed to represent the {@link #loadedLocale}.<br/>
+     * The file name of {@code locale} is then set as {@link Locale#cachedFilename}
+     * of the {@link #loadedLocale}. The file name is also added to the table
+     * column heading.
+     * @param locale - an external locale
+     * @return whether there were differences to the former table contents
+     */
     private boolean presentLocale(Locale locale)
     {
         // first check if we have some cached values
@@ -616,28 +734,32 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             JTable table = tables.get(sectionName);
             // No need to trigger property change events here, we know what we do
             table.removePropertyChangeListener(this);
+            try {
 
-            // put the label on the column
-            table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
-            table.getTableHeader().repaint();
+                // put the label on the column
+                table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+                table.getTableHeader().repaint();
 
-            // get a reference to the model
-            DefaultTableModel model = ((DefaultTableModel)table.getModel());
+                // get a reference to the model
+                DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-            // get the strings and put them into the right row
-            for (int r = 0; r < model.getRowCount(); r++) {
-                // get the key
-                String key = ((String) model.getValueAt(r, 0)).trim();
-                // Test the value
-                if (locale.valueDiffersFrom(key, (String)model.getValueAt(r, 2)))
-                {
-                    differs = true;
+                // get the strings and put them into the right row
+                for (int r = 0; r < model.getRowCount(); r++) {
+                    // get the key
+                    String key = ((String) model.getValueAt(r, 0)).trim();
+                    // Test the value
+                    if (locale.valueDiffersFrom(key, (String)model.getValueAt(r, 2)))
+                    {
+                        differs = true;
+                    }
+                    // put the value
+                    model.setValueAt(locale.getValue(sectionName, key), r, 2);
                 }
-                // put the value
-                model.setValueAt(locale.getValue(sectionName, key), r, 2);
             }
-            // Table loaded, from now on react to user manipulations again
-            table.addPropertyChangeListener(this);
+            finally {
+                // Table loaded, from now on react to user manipulations again
+                table.addPropertyChangeListener(this);
+            }
         }
         return differs;
     }
@@ -656,11 +778,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             for (int s = 0; s < sectionNames.size(); s++) {
                 // get the name of the section
                 String sectionName = sectionNames.get(s);
-                ArrayList<String> localKeys = locales.getLocale(localeName).getKeys(sectionName);
+                ArrayList<String> localKeys = locales.getLocale(localeName).getKeyList(sectionName);
                 // check if key already exists before adding it
                 for (int j = 0; j < localKeys.size(); j++) {
                     String get = localKeys.get(j);
-                    if(!keys.contains(get)) keys.add(get);
+                    if (!keys.contains(get)) keys.add(get);
                 }
             }
         } // now "keys" contains all keys from all locales
@@ -670,25 +792,28 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         for (int s = 0; s < sectionNames.size(); s++) {
             // get the name of the section
             String sectionName = sectionNames.get(s);
-            ArrayList<String> localKeys = locale.getKeys(sectionName);
+            ArrayList<String> localKeys = locale.getKeyList(sectionName);
             for (int j = 0; j < localKeys.size(); j++) {
                 String get = localKeys.get(j);
                 keys.remove(get);
             }
         }
         
-        if(keys.size()>0)
+        if (keys.size()>0)
         {
             for (int i = 0; i < keys.size(); i++) {
                 String key = keys.get(i);
-                System.out.println("- "+key+" ("+locales.whoHasKey(key)+")");
+                System.out.println("- " + key + " (" + locales.whoHasKey(key) + ")");
             }
             
-            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
-                    "Please take a look at the console output for details.\n\n" +
-                    "Translator will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses"
+                    + " strings that have been found in another language file.\n"
+                    + "Please take a look at the console output for details.\n\n"
+                    + "Translator will terminate immediately in order to prevent data loss ...",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-        }    
+        }
     }
     
     private void checkForDuplicatedStrings()
@@ -706,7 +831,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             String sectionName = sectionNames.get(i);
             System.out.println("Section: " + sectionName);
 
-            ArrayList<String> keys = locale.getKeys(sectionName);
+            ArrayList<String> keys = locale.getKeyList(sectionName);
 
             while(!keys.isEmpty())
             {
@@ -722,7 +847,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         if(error)
         {
-            JOptionPane.showMessageDialog(this, "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
     }
@@ -758,6 +886,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private void initComponents(double scaleFactor)
     // END KGU#287 2016-11-02
     {
+        // START KGU#929 2021-02-11: Enh. #929
+        localeIcons = new Vector<ImageIcon>();
+        loadIcons = new Vector<ImageIcon>();
+        // END KGU#929 2021-02-11
         
         // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
         KeyListener myKeyListener = new KeyListener() {
@@ -804,14 +936,33 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
                 break;
                 // END KGU#709 2019-06-10
+                // START KGU#929 2021-02-11: Enh. #929
+                case KeyEvent.VK_SHIFT:
+                {
+                    // Temporarily set the "open" icons
+                    replaceButtonIcons(true);
+                }
+                break;
+                // END KGU#929 2021-02-11
                 }
             }
-
 
             @Override
             public void keyTyped(KeyEvent evt) {}
             @Override
-            public void keyReleased(KeyEvent evt) {}
+            public void keyReleased(KeyEvent evt) {
+                // START KGU#929 2021-02-11: Enh. #929
+                int keyCode = evt.getKeyCode();
+                switch (keyCode) {
+                case KeyEvent.VK_SHIFT:
+                {
+                    // Change icons back to the standard icon set
+                    replaceButtonIcons(false);
+                }
+                break;
+                }
+                // END KGU#929 2021-02-11
+            }
             
         };
         // END KGU#393/KGU#418 2017-11-20
@@ -873,11 +1024,18 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                         JButton button = (JButton)e.getComponent();
                         String localeName = button.getName();
                         buttonPopupGet.setIcon(button.getIcon());
-                        buttonPopupGet.setText("Get " + button.getToolTipText() + " locale");
+                        if (button == button_empty) {
+                            localeName = "empty";
+                            buttonPopupGet.setText(button.getToolTipText());
+                        }
+                        else {
+                            buttonPopupGet.setText("Get " + button.getToolTipText() + " locale");
+                        }
                         buttonPopupGet.setName(localeName);
                         buttonPopupLoad.setName(localeName);
                         buttonPopupSave.setName(localeName);
-                        buttonPopupSave.setEnabled(localeName.equals(loadedLocaleName));
+                        buttonPopupSave.setEnabled(localeName.equals(loadedLocaleName) ||
+                        		localeName.equals("empty") && "extern".equals(loadedLocaleName));
                         if (!buttonPopupSave.isEnabled()) {
                             buttonPopupSave.setToolTipText("The save action is only enabled while " + button.getToolTipText() + " is the currently shown locale.");
                         }
@@ -919,7 +1077,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 javax.swing.JButton button = new javax.swing.JButton();
                 // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
                 //button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
-                button.setIcon(IconLoader.getLocaleIconImage(localeName)); // NOI18N
+                ImageIcon localeIcon = IconLoader.getLocaleIconImage(localeName);
+                button.setIcon(localeIcon); // NOI18N
                 // END KGU#287 2016-11-02
                 button.setToolTipText(localeToolTip);
                 // START KGU#929 2021-02-08: Enh. #929 Why not already set the name here?
@@ -936,6 +1095,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 
                 // START KGU#929 2021-02-08: Enh. #929 provide a context menu
                 button.addMouseListener(myMouseListener);
+                localeIcons.add(localeIcon);
+                loadIcons.add(IconLoader.decorateIcon(localeIcon, 2));
                 // END KGU#929 2021-02-08
                 localeButtons.add(button);
             }
@@ -966,17 +1127,29 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
-        button_empty.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
+        // START KGU#929 2021-02-11: Enh. #929 Same procedure as for specific locales
+        //button_empty.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
+        button_empty.setIcon(IconLoader.getLocaleIconImage("empty"));
+        // END KGU#929 2021-02-11
         // END KGU#287 2016-11-02
-        button_empty.setToolTipText("Create new locale");
+        // START KGU#929 2021-02-11: Enh. #929 Name is no longer set in loadLocale()
+        button_empty.setName("empty");
+        // END KGU#929 2021-02-11
+        button_empty.setToolTipText(CREATE_NEW_TOOLTIP);
         button_empty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_emptyActionPerformed(evt);
+                // START KGU#929 2021-02-11: Enh. #929 No difference anymore
+                //button_emptyActionPerformed(evt);
+                button_localeActionPerformed(evt, "empty");
+                // END KGU#929 2021-02-11
             }
         });
         // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
         button_empty.addKeyListener(myKeyListener);
         // END KGU#393/KGU#418 2017-11-20
+        // START KGU#929 2021-02-10: Enh. #929 provide a context menu
+        button_empty.addMouseListener(myMouseListener);
+        // END KGU#929 2021-02-10
 
         // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
         //button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
@@ -1067,6 +1240,26 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+
+    /**
+     * @param forLoad - whether the icons shall show an open symbol
+     */
+    private void replaceButtonIcons(boolean forLoad) {
+        if (forLoad) {
+            button_empty.setIcon(IconLoader.getIcon(2));
+            for (int i = 0; i < loadIcons.size(); i++) {
+                localeButtons.get(i).setIcon(loadIcons.get(i));
+            }
+        }
+        else {
+            button_empty.setIcon(IconLoader.getLocaleIconImage("empty"));
+            for (int i = 0; i < localeIcons.size(); i++) {
+                localeButtons.get(i).setIcon(localeIcons.get(i));
+            }
+        }
+    }
+
+
     // START KGU#709 2019-06-10: Issue #726 - Usability improvements
     /**
      * Opens the User Guide page for Translator in the browser (or as PDF) if possible
@@ -1144,20 +1337,25 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {
-        boolean fromFile = (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
-        // (Re-)Load the selected standard locale - with check on unsaved changes
-        boolean done = loadLocale(localeName, evt, fromFile);
-        // In case of a user file to be reloaded, the file content overrides the standard
-        if (done && fromFile)
-        {
-            Locale loaded = makeLocaleFromChosenFile(localeName);
-            if (loaded != null)
+        Cursor stdCursor = this.getCursor();
+        try {
+            this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            this.replaceButtonIcons(false);
+            boolean fromFile = (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
+            // (Re-)Load the selected standard locale - with check on unsaved changes
+            boolean done = loadLocale(localeName, fromFile);
+            // In case of a user file to be reloaded, the file content overrides the standard
+            if (done && fromFile)
             {
-                // Override the data by the loaded locale ...
-                boolean diffs = presentLocale(loaded);
-                // ... and adjust the button colour accordingly
-                ((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
+                Locale loaded = makeLocaleFromChosenFile(localeName);
+                if (loaded != null)
+                {
+                    localeLoadAction(localeName, loaded);
+                }
             }
+        }
+        finally {
+            this.setCursor(stdCursor);
         }
     }
     
@@ -1230,6 +1428,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
 
     private void button_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_saveActionPerformed
+        this.replaceButtonIcons(false);
         // get the composed locale
         Locale locale = getComposedLocale();
 
@@ -1239,7 +1438,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         String proposedFilename = loadedLocale.cachedFilename;
         if (proposedFilename == null)
         {
-            proposedFilename = loadedLocaleName+".txt";
+            proposedFilename = loadedLocaleName + ".txt";
         }
         // START KGU#694 2019-03-24: Issue #712
         if (this.currentDirectory != null && this.currentDirectory.isDirectory()) {
@@ -1260,71 +1459,96 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
-                    save=false;
+                    save = false;
                 }
 
             }
             
-            if (save) try
-            {
-                FileOutputStream fos = new FileOutputStream(fileToSave);
-                Writer out = new OutputStreamWriter(fos, "UTF8");
-                out.write(locale.getText());
-                out.close();
-                // START KGU 2016-08-04: #220
-                JButton button = (JButton) getComponentByName(loadedLocaleName);
-                if (button != null)
-                {
-                    //button.setBackground(stdBackgroundColor);
-                    button.setBackground(savedColor);
-                }
-                cacheUnsavedData();
-                loadedLocale.hasUnsavedChanges = false;
-                // END KGU 2016-08-04
-                // START KGU#694 2019-03-24/28: Issue #712
-                this.button_save.setBackground(stdBackgroundColor);
-                this.currentDirectory = fileToSave.getParentFile();
-                boolean updateTableHeader = loadedLocale.cachedFilename == null;
-                loadedLocale.cachedFilename = fileToSave.getAbsolutePath();
-                String column2Header = loadedLocaleName + " (" + loadedLocale.cachedFilename + ")";
-                if (updateTableHeader) {
-                    for (String sectionName: locales.getSectionNames()) {
-                        // fetch the corresponding table
-                        JTable table = tables.get(sectionName);
-                        // No need to trigger property change events here, we know what we do
-                        table.removePropertyChangeListener(this);
-
-                        // put the label on the column
-                        table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
-                        table.getTableHeader().repaint();
-
-                        // Table header modified, from now on react to user manipulations again
-                        table.addPropertyChangeListener(this);
+            if (save) {
+                Cursor stdCursor = this.getCursor();
+                try {
+                    this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+                    FileOutputStream fos = new FileOutputStream(fileToSave);
+                    Writer out = new OutputStreamWriter(fos, "UTF8");
+                    out.write(locale.getText());
+                    out.close();
+                    // START KGU 2016-08-04: #220
+                    JButton button = (JButton) getComponentByName(loadedLocaleName);
+                    if (button != null)
+                    {
+                    	//button.setBackground(stdBackgroundColor);
+                    	button.setBackground(SAVED_COLOR);
                     }
+                    // START KGU#929 2021-02-11: Enh. #929
+                    else if ("extern".equals(loadedLocaleName)) {
+                    	button_empty.setBackground(SAVED_COLOR);
+                    }
+                    // END KGU#929 2021-02-11
+                    cacheUnsavedData();
+                    loadedLocale.hasUnsavedChanges = false;
+                    // END KGU 2016-08-04
+                    // START KGU#694 2019-03-24/28: Issue #712
+                    this.button_save.setBackground(stdBackgroundColor);
+                    this.currentDirectory = fileToSave.getParentFile();
+                    // START KGU#929 2021-02-11: Enh. #929 we should also update if the file changed
+                    //boolean updateTableHeader = loadedLocale.cachedFilename == null;
+                    //loadedLocale.cachedFilename =  fileToSave.getAbsolutePath();
+                    String filePath = fileToSave.getAbsolutePath();
+                    boolean updateTableHeader = !filePath.equals(loadedLocale.cachedFilename);
+                    // END KGU#929 2021-02-11
+                    loadedLocale.cachedFilename = filePath;
+                    String column2Header = loadedLocaleName + " (" + loadedLocale.cachedFilename + ")";
+                    if (updateTableHeader) {
+                        for (String sectionName: locales.getSectionNames()) {
+                            // fetch the corresponding table
+                            JTable table = tables.get(sectionName);
+                            // No need to trigger property change events here, we know what we do
+                            table.removePropertyChangeListener(this);
+
+                            // put the label on the column
+                            table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+                            table.getTableHeader().repaint();
+
+                            // Table header modified, from now on react to user manipulations again
+                            table.addPropertyChangeListener(this);
+                        }
+                    }
+                    // END KGU#694 2019-03-24/28
                 }
-                // END KGU#694 2019-03-24/28
-            }
-            catch (IOException e)
-            {
-                JOptionPane.showMessageDialog(this,
+                catch (IOException e) {
+                    JOptionPane.showMessageDialog(this,
                         "Error while saving language file\n" + e.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                finally {
+                    this.setCursor(stdCursor);
+                }
             }
-        }     
+        }
     }//GEN-LAST:event_button_saveActionPerformed
 
-    private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
-        loadLocale("empty", evt, false);
-    }//GEN-LAST:event_button_emptyActionPerformed
+    // START KGU#929 2021-02-11: Enh. #929 Now button_localeActionPerformed() does the job
+    //private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
+    //    loadLocale("empty", false);
+    //}//GEN-LAST:event_button_emptyActionPerformed
+    // END KGU#929 2021-02-11
 
     private void button_previewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_previewActionPerformed
-        // get the composed locale
-        Locale locale = getComposedLocale();
+        this.replaceButtonIcons(false);
+        Cursor stdCursor = this.getCursor();
+        try {
+            this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            // get the composed locale
+            Locale locale = getComposedLocale();
 
-        // update the special "preview" locale with the generated body
-        Locales.getInstance().getLocale("preview").setBody(locale.getBody());
-        // make it the actual locale
-        Locales.getInstance().setLocale("preview");
+            // update the special "preview" locale with the generated body
+            Locales.getInstance().getLocale("preview").setBody(locale.getBody());
+            // make it the actual locale
+            Locales.getInstance().setLocale("preview");
+        }
+        finally {
+            this.setCursor(stdCursor);
+        }
 
         /*
         if(NSDControl!=null) {
@@ -1348,23 +1572,53 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     protected void popupLoadActionPerformed(ActionEvent evt) {
         if (evt.getSource() instanceof Component) {
             String localeName = ((Component)evt.getSource()).getName();
-            // (Re-)Load the selected standard locale - with check on unsaved changes
-            boolean done = loadLocale(localeName, evt, true);
-            // In case of a user file to be reloaded, the file content overrides the standard
-            if (done)
-            {
-                Locale loaded = makeLocaleFromChosenFile(localeName);
-                if (loaded != null)
+            Cursor stdCursor = this.getCursor();
+            try {
+                this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+                // (Re-)Load the selected standard locale - with check on unsaved changes
+                boolean done = loadLocale(localeName, true);
+                // In case of a user file to be reloaded, the file content overrides the standard
+                if (done)
                 {
-                    // Override the data by the loaded locale ...
-                    boolean diffs = presentLocale(loaded);
-                    // ... and adjust the button colour accordingly
-                    Component comp = this.getComponentByName(localeName);
-                    if (comp instanceof JButton) {
-                        ((JButton)comp).setBackground(diffs ? savedColor : stdBackgroundColor);
+                    Locale loaded = makeLocaleFromChosenFile(localeName);
+                    if (loaded != null)
+                    {
+                    	localeLoadAction(localeName, loaded);
                     }
                 }
             }
+            finally {
+                this.setCursor(stdCursor);
+            }
+        }
+    }
+
+    /**
+     * Organizes the correct presentation of a locale loaded from file
+     * @param localeName - the name of the loaded locale
+     * @param localeFromFile - the read external locale itself
+     */
+    private void localeLoadAction(String localeName, Locale localeFromFile) {
+        // START KGU#929 2021-02-11: Enh. #929 Specific handling for empty
+        // Override the data by the loaded locale ...
+        //boolean diffs = presentLocale(loaded);
+        Component button = this.getComponentByName(localeName);
+        boolean wasEmpty = localeName.equals("empty");
+        if (wasEmpty) {
+            externalLocale = localeFromFile;
+            loadedLocale = localeFromFile;
+            loadedLocaleName = "extern";
+            // presentLocale() won't find a header difference...
+            headerText.getDocument().removeDocumentListener(this);
+            headerText.setText(localeFromFile.getHeader().getText());
+            headerText.getDocument().addDocumentListener(this);
+            localeFromFile.cachedFilename = localeFromFile.getFilename();
+        }
+        boolean diffs = presentLocale(localeFromFile) || wasEmpty;
+        // END KGU#929 2021-02-11
+        // ... and adjust the button colour accordingly
+        if (button instanceof JButton) {
+        	((JButton)button).setBackground(diffs ? SAVED_COLOR : stdBackgroundColor);
         }
     }
 
@@ -1375,7 +1629,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     protected void popupGetActionPerformed(ActionEvent evt) {
         if (evt.getSource() instanceof Component) {
             String localeName = ((Component)evt.getSource()).getName();
-            loadLocale(localeName, evt, false);
+            loadLocale(localeName, false);
         }
 
     }
@@ -1408,6 +1662,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // START KGU#231 2016-08-04: Issue #220
     public void propertyChange(PropertyChangeEvent pcEv) {
        // First identify the position
+        this.replaceButtonIcons(false);
         if (pcEv.getPropertyName().equals("tableCellEditor"))
         {
             for (String sectionName: locales.getSectionNames())
@@ -1465,8 +1720,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         JButton button = (JButton) getComponentByName(loadedLocaleName);
         if (button != null)
         {
-            button.setBackground(Color.green);
+            button.setBackground(Color.GREEN);
         }
+        // START KGU#929 2021-02-11: Enh. #929
+        else if ("extern".equals(loadedLocaleName)) {
+            button_empty.setBackground(Color.GREEN);
+        }
+        // END KGU#929 2021-02-11
         // START KGU#694 2019-03-28: Issue #712
         // The save button needs at least as much attention as the locale button now
         button_save.setBackground(Color.GREEN);
@@ -1599,6 +1859,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private JMenuItem buttonPopupGet;
     private JMenuItem buttonPopupLoad;
     private JMenuItem buttonPopupSave;
+    private Vector<ImageIcon> localeIcons;
+    private Vector<ImageIcon> loadIcons;
     // END KGU#929 2021-02-08
     // End of variables declaration
 

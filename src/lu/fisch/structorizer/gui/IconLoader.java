@@ -912,7 +912,7 @@ public class IconLoader {
 		BufferedImage dst = new BufferedImage(width, height, type);
 		Graphics2D g2 = dst.createGraphics();
 		g2.drawImage(src.getImage(), 0, 0, width, height, null);
-		// FIXME: This is somewhat rush as we cannot be sure drawImage was ready
+		// FIXME: This may be somewhat rash as we cannot be sure drawImage was ready
 		g2.dispose();
 		return new ImageIcon(dst);
 	}
@@ -924,11 +924,30 @@ public class IconLoader {
 		return icol.getClass().getResource(_filename);
 	}
 	
+	/**
+	 * Generates a circular icon filled with the given colour {@code _color}
+	 * and a thin black border. The circle fill be as large as possible within
+	 * the current standard icon square of 16&nbsp;*&nbsp;{@link #scaleFactor} size.
+	 * @param _color - the fill colour
+	 * @return the created circular icon
+	 * @see #generateIcon(Color, int)
+	 */
 	public static ImageIcon generateIcon(Color _color)
 	{
 		return generateIcon(_color, 0);
 	}
 	
+	/**
+	 * Generates a circular icon filled with the given colour {@code _color}
+	 * and a thin black border. The circle radius will be reduced by
+	 * {@code _insets} pixels with respect to the icon size of
+	 * 16&nbsp;*&nbsp;{@link #scaleFactor}.
+	 * @param _color - the fill colour
+	 * @param _insets - the distance of the circle circumference from the icon
+	 * border
+	 * @return the created circular icon
+	 * @see #generateIcon(Color)
+	 */
 	public static ImageIcon generateIcon(Color _color, int _insets)
 	{
 		int size = (int) (16*scaleFactor);
@@ -988,6 +1007,33 @@ public class IconLoader {
 		return dummyIcon;
 	}
 	// END KGU#577 2018-09-17
+	
+	// START KGU#929 2021-02-11: Enh. #929 Added for Translator support
+	/**
+	 * Places a diminished version of standarc icon {@code iconNoDecor} into the
+	 * upper left corner of the given icon {@code baseIcon}
+	 * @param baseIcon - the base icon to be decorated
+	 * @param iconNoDecor - the index of the decoration item
+	 * @return the decorated icon
+	 */
+	public static ImageIcon decorateIcon(ImageIcon baseIcon, int iconNoDecor)
+	{
+		//System.out.println(scaleFactor);
+		int type = BufferedImage.TYPE_INT_ARGB;
+		int width = baseIcon.getIconWidth();
+		int height = baseIcon.getIconHeight();
+		BufferedImage dst = new BufferedImage(width, height, type);
+		Graphics2D g2 = dst.createGraphics();
+		g2.drawImage(baseIcon.getImage(), 0, 0, width, height, null);
+		ImageIcon decor = getIcon(iconNoDecor);
+		int size = Math.min(width, height);
+		g2.drawImage(decor.getImage(), 0, 0, size, size, null);
+		// FIXME: This may be somewhat rash as we cannot be sure drawImage was ready
+		g2.dispose();
+		return new ImageIcon(dst);
+		
+	}
+	// END KGU#929 2021-02-11
 	
 // START KGU 2021-01-09: Finally disabled
 //	/**

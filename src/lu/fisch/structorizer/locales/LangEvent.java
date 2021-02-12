@@ -32,6 +32,7 @@ package lu.fisch.structorizer.locales;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2018-10-08      First Issue
+ *      Kay Gürtzig     2021-02-11      New constructor (for more general use) and new getters
  *
  ******************************************************************************************************
  *
@@ -49,18 +50,49 @@ import java.util.EventObject;
  */
 @SuppressWarnings("serial")
 public class LangEvent extends EventObject {
+	
+	// START KGU#892 2021-02-11 for issue #893
+	private String text;
+	private String key;
+	// END KGU#892 2021-02-11
 
 	public LangEvent(LangTextHolder source) {
 		super(source);
+		// START KGU#892 2021-02-11 for issue #893
+		text = source.getText();
+		key = "text";
+		// END KGU#892 2021-02-11
 	}
 
+	// START KGU#892 2021-02-11 for issue #893
+	public LangEvent(Object source, String message, String key) {
+		super(source);
+		this.text = message;
+		this.key = key;
+	}
+	// END KGU#892 2021-02-11
+
 	/**
-	 * Same as {@link #getSource()}{@code .getText()}.
 	 * @return the new localized text of the source object 
 	 */
 	public String getText()
 	{
-		return ((LangTextHolder)getSource()).getText();
+		// START KGU#892 2021-02-11 for issue #893
+		//return ((LangTextHolder)getSource()).getText();
+		return text;
+		// END KGU#892 2021-02-11
 	}
 	
+	// START KGU#892 2021-02-11 for issue #893
+	/**
+	 * @return possibly (an assumed part of) the key from language file,
+	 * e.g. "text" or "tooltip" or "LicenseEditor.menuEdit.mnemonic",
+	 * usually not complete as the components may not know their own
+	 * location
+	 */
+	public String getKey()
+	{
+		return key;
+	}
+	// END KGU#892 2021-02-11
 }
