@@ -40,11 +40,13 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-07-09      KGU#546/KGU#547: Further StreamTokenizer workaround, include guard surrogate
  *                                      typedef collection now recursive in included header files.
  *                                      KGU#550 through KGU#552: Macro replacement refined, new options use_XXX_defines
+ *                                      Workaround #556 for StreamTokenizer (mis-interpreted single slashes as line comments)
  *      Kay Gürtzig     2018-09-25      Bugfix #608 Makeshift fix for a broken comment block issue in preproc. lines
  *      Kay Gürtzig     2019-02-13      Issue #679: importInput() was defective, support for more input an output functions
  *      Kay Gürtzig     2020-03-10      Bugfix #806: Import of printf instructions improved (handling of format strings). 
  *                                      Bugfix #809: retrieveComment(Reduction) overridden to reinstate type names in comments,
  *                                      Elimination of trailing "return 0" elements in main diagrams
+ *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
  *
  ******************************************************************************************************
  *
@@ -910,7 +912,10 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#541 2018-07-04
 		
 		// START KGU#546 2018-07-09: Workaround #556 for a StreamTokenizer bug (takes slashes as double slashes at certain positions)
-		_srcCode = _srcCode.replaceAll("(.*[^/*])/([^/*].*)", "$1?$2");
+		// START KGU#993 2021-02-12: Bugfix #556 Wrong regex quantifier left slashes in the lines
+		//_srcCode = _srcCode.replaceAll("(.*[^/*])/([^/*].*)", "$1?$2");
+		_srcCode = _srcCode.replaceAll("(.*?[^/*])/([^/*].*?)", "$1?$2");
+		// END KGU#993 2021-02-12
 		// END KGU#546 2018-07-09
 		
 		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));

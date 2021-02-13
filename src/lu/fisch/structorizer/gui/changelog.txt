@@ -208,6 +208,7 @@ Current development version: 3.30-17 (2021-02-13)
       temporary icon changes on shift; locale reset mechanism fixed <2>
 - 16: Bugfix #930: Wrong CASE branch width with broken selector lines <2>
 - 16: Bugfix #931: Inadvertent font changes in element editors on font resizing <2>
+- 17: Bugfix #556: Errors on C99 import if expressions contained > 1 slash <2>
 - 17: Bugfix #935: Export of incompatible FOR loops caused errors (silent) <2>
 - 17: Bugfix #936: Group export (silently) failed for never saved groups <2>
 - 17: Bugfix #937: Precaution against endless loop on group export <2>
