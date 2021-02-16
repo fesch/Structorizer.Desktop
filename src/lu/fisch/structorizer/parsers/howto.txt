@@ -10,7 +10,7 @@ This is just a little file that explains
 ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
 =========================================
 Author:      Kay Gürtzig
-Last update: 2018-07-02
+Last update: 2021-02-15
 
 Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
 combination with a compiled grammar for the source language to derive a structogram
@@ -31,23 +31,28 @@ Before the grammar rules begin, some preceding lines will have to define the lex
 tokens used by the grammar rules (e.g. number literals, identifiers etc.). These are
 (according to the Chomsky type 3 of lexic) defined by some sort of regular expressions.
 The documentation is around here: http://goldparser.org/doc/grammars/index.htm.
+The grammar handles line comments and block comments if the delimiters are defined
+with "Comment Start", "Comment End", and "Comment Line". If alternative comment
+delimiters are to be accepted, then the names of the additional group definitions shall
+start with "Comment" (see http://www.goldparser.org/doc/grammars/define-groups.htm)
+if the generated parser is to be enabled to attach the comments to reductions objects. 
 Be aware that the GOLD Parser is a LALR(1) parser which makes it performant but imposes
 some restrictions to the way grammar rules are to be formed.
 In general, it is a good idea to start with some grammar for a very similar language,
 which GOLD Parser is known to work with. You may find examples in this directory and
 on the GOLD Parser homepage (http://goldparser.org/grammars/index.htm). 
-To set up the grammar, the graphical GOLD Builder tool is recommended. It provides
-excellent diagnostics for conflicting rules.
-The optimum tool for editing grammar file for GOLDParser is the GOLDBuilder.exe you
+The optimum tool for editing a grammar file for GOLDParser is the GOLDBuilder.exe you
 may download as binary for Windows from:
 http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Binary.zip.
 It is not only an editor but also integrates the grammar check and the compilation
-to the grammar table file. It provides an interactive analysis, which allows you
-comfortably to navigate through rule conflicts and the like.  
+to the grammar table file. It provides an excellent interactive analysis, which allows
+you comfortably to navigate through rule conflicts and the like.  
 
 2. COMPILED GRAMMAR TABLE
-Convert the grammar file to a set of compiled grammar tables. For Windows, you can
-download a command-line tool GOLDbuild.exe with the following URL:
+Convert the grammar file to a set of compiled grammar tables. If you haven't already
+done this with the GOLDBuilder tool mentioned above, it can also be done with a command-
+line tool named GOLDbuild. For Windows, a compiled version of it may be downloaded as
+GOLDbuild.exe from the following URL:
 http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
 Make sure to unzip all the dat files together with the GOLDbuild.exe into the same folder.
 The GOLDbuild tool analyzes the grammar and constructs the decision tables for the parser
@@ -67,8 +72,8 @@ than the GOLDBuild.exe - it leads you step by step to the grammar table.
 If you have luckily obtained an egt file (or have downloaded an also suited cgt file -
 which is just an older file format for GOLD parser compiled grammar tables) then you
 will have to generate a Parser skeleton for this grammar.
-Here you will have to use a command-line tool GOLDprog.exe downloaded together with GOLDbuild
-from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
+Here you will have to use a command-line tool GOLDprog.exe downloaded together with
+GOLDbuild (see step 2) as http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
 In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
 as the template file for GOLDprog.exe:
 GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
