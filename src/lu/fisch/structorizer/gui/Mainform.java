@@ -129,6 +129,8 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
+import java.awt.desktop.OpenFilesEvent;
+import java.awt.desktop.OpenFilesHandler;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -1562,6 +1564,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * use as delegates for various com.apple.eawt.ApplicationListener methods.
 	 */
 	public void doOSX() {
+                // this is the old way to go (<=JDK8) on OSX
 		try {
 			/* Issue #744: The file handler must be the first handler to be established! Otherwise the
 			 * event of the double-clicked file that led to launching Structorizer might slip through!
@@ -1577,6 +1580,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			e.printStackTrace();
 			logger.log(Level.WARNING, "Failed to establish OS X handlers", e);
 		}
+                
+                // this is the new way (>JDK8) on OSX
+                Desktop.getDesktop().setOpenFileHandler(new OpenFilesHandler() {
+                    @Override
+                    public void openFiles(OpenFilesEvent e) {
+                        for (File file: e.getFiles​()) {
+                            loadFile(file.getAbsolutePath());
+                        }
+                    }
+                });
 	}
 
 	/**
@@ -1586,6 +1599,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * @see #doOSX()
 	 */
 	public void loadFile(String filePath) {
+                logger.info("loadFile with path \"" + filePath + "\".");
+                
 		// START KGU#724 2019-09-16: Issue #744 (workaround for hazards on startup, may no longer be necessary)
 		if (filePath == null || filePath.isEmpty()) {
 			return;

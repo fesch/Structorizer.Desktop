@@ -57,9 +57,12 @@ package lu.fisch.structorizer.gui;
  
 import java.awt.Image;
 import java.lang.reflect.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static lu.fisch.structorizer.gui.Mainform.logger;
 public class OSXAdapter implements InvocationHandler {
     
-    private static final boolean silent = true;
+    private static final boolean silent = false;
  
     protected Object targetObject;
     protected Method targetMethod;
@@ -117,13 +120,15 @@ public class OSXAdapter implements InvocationHandler {
             // Override OSXAdapter.callTarget to send information on the
             // file to be opened
             public boolean callTarget(Object appleEvent) {
+                Mainform.logger.info("callTarget with appleEvent \"" + appleEvent + "\".");
                 if (appleEvent != null) {
                     try {
                         Method getFilenameMethod = appleEvent.getClass().getDeclaredMethod("getFilename", (Class[])null);
                         String filename = (String) getFilenameMethod.invoke(appleEvent, (Object[])null);
+                        Mainform.logger.info("filename \"" + filename + "\".");
                         this.targetMethod.invoke(this.targetObject, new Object[] { filename });
                     } catch (Exception ex) {
-                        
+                        Mainform.logger.info(ex.getMessage());
                     }
                 }
                 return true;
