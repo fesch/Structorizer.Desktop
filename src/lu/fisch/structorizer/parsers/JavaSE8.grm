@@ -1,0 +1,912 @@
+﻿! -----------------------------------------------------------------------
+! Java SE 8 Edition grammar
+! -----------------------------------------------------------------------
+!
+! In 1996, James Gosling, Bill Joy, and Guy Steele wrote for the First
+! Edition of The Java® Language Specification:
+!   "We believe that the Java programming language is a mature language,
+!   ready for widespread use.
+!   Nevertheless, we expect some evolution of the language in the years
+!   to come. We intend to manage this evolution in a way that is completely
+!   compatible with existing applications."
+!
+! From the introduction to the Java SE 8 specfication by Alex Buckley:
+!   "Java SE 8 represents the single largest evolution of the Java language
+!   in its history.
+!   A relatively small number of features - lambda expressions, method
+!   references, and functional interfaces - combine to offer a programming
+!   model that fuses the object-oriented and functional styles. Under the
+!   leadership of Brian Goetz, this fusion has been accomplished in a way
+!   that encourages best practices - immutability, statelessness, composi-
+!   tionality - while preserving "the feel of Java" - readability,
+!   simplicity, universality."
+!
+! This grammar is a first, somewhat simplified LALR(1) grammar approach
+! for GOLDParser, originally intended to be used for the Java code import
+! into Structorizer (http://structorizer.fisch.lu).
+! In order to avoid reduce-reduce conflicts and be LALR(19-parsable,
+! several rules were slightly simplified, some have been reformulated
+! to achieve more elegance.
+! The annotations were only considered at the most likely positions in
+! the compliation units (i.e. before class, interface, method, and field
+! declarations.
+! As there is no possibility of some dynamic symbol table feedback during
+! parsing, the rules are usually too generous in all conflict-prone cases.
+! This won't be a problem for correct Java code as input but is less
+! suited for a meticulous syntax check. Illegal combinations will have to
+! be detected afterwards, based on the obtained syntax tree, the priority
+! so far was successfully to get the input code into a syntax tree at all.
+! For what has been accmplished already, the following sources were used:
+! http://www.goldparser.org/grammars/files/Java-Dmitry-Gazko.zip
+! https://docs.oracle.com/javase/specs/jls/se8/html/index.html
+!
+! The lambda expressions mentioned above have still not be integrated.
+!
+! -----------------------------------------------------------------------
+! Version history:                                       
+! Version   Date        Author          Description
+! V 0.1     2021-02-16  Kay Gürtzig     Created (i.e. derived from the D.
+!                                       Gazkos Java 2.0 grammar and the SE 8
+!                                       language specification) and tested
+!                                       with GOLDBuilder 5.2.0
+! -----------------------------------------------------------------------
+
+"Name"    = 'Java SE 8'
+"Version" = '0.1, Feb. 2021'
+"Author"  = 'Kay Gürtzig'
+"About"   = 'Based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification '
+
+{String Char} = {all printable} - ["]
+{Quote} = ['']
+{IdLetter} = {Letter} + [_$]
+{IdAlphaNumeric} = {Alphanumeric} + [_$]
+{HexDigit} = {Digit} + [abcdefABCDEF]
+{OctalCharSet} = [01234567]
+{NoZeroDigit} = [123456789]
+{LongTypeSuffix} =[lL]
+{FloatTypeSuffix} =[dfDF]
+{ExponentPartIndicator} = [eE]
+{Sign} = [-+]
+{CharSign} = [abtnfr"\] + {Quote}
+{CharSign1} = {String Char} + ["] - [\]
+{HexEscapeSign} =[uUxX]
+
+Identifier     = {IdLetter}{IdAlphaNumeric}*
+StringLiteral  = '"'({String Char}|'\'{CharSign})*'"'
+FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
+FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
+BooleanLiteral = 'true' | 'false'
+IndirectCharLiteral = {Quote}{CharSign1}{Quote}
+StandardEscapeCharLiteral = {Quote}'\'{CharSign}{Quote}
+OctalEscapeCharLiteral ={Quote}'\'{OctalCharSet}+{Quote}
+HexEscapeCharLiteral ={Quote}'\'{HexEscapeSign}{HexDigit}+{Quote}
+NullLiteral = 'null'
+StartWithNoZeroDecimalIntegerLiteral = {NoZeroDigit}{Digit}*{LongTypeSuffix}?
+StartWithZeroDecimalIntegerLiteral = '0'{LongTypeSuffix}?
+HexIntegerLiteral = '0'('x'|'X'){HexDigit}+{LongTypeSuffix}?
+OctalIntegerLiteral = '0'{OctalCharSet}+{LongTypeSuffix}?
+
+
+"Case Sensitive" = 'True'
+"Start Symbol"   = <CompilationUnit>
+
+Comment Start = '/*'
+Comment End = '*/'
+Comment Line = '//'
+
+!==================== Literals ==================
+
+<CharacterLiteral> 
+        ::= IndirectCharLiteral
+         |  StandardEscapeCharLiteral
+         |  OctalEscapeCharLiteral
+         |  HexEscapeCharLiteral
+
+<DecimalIntegerLiteral> 
+        ::= StartWithZeroDecimalIntegerLiteral
+         |  StartWithNoZeroDecimalIntegerLiteral
+
+<FloatPointLiteral> 
+        ::= FloatingPointLiteral
+         |  FloatingPointLiteralExponent
+
+<IntegerLiteral> 
+        ::= <DecimalIntegerLiteral>
+         |  HexIntegerLiteral  
+         |  OctalIntegerLiteral
+
+
+<Literal> 
+        ::= <IntegerLiteral>
+         |  <FloatPointLiteral>
+         |  BooleanLiteral
+         |  <CharacterLiteral>
+         |  StringLiteral
+         |  NullLiteral
+
+!==================== Annotations ==================
+
+! Maybe annotations will have to be wiped ofv by a preprocessor
+
+<Annotation>
+        ::= <NormalAnnotation>
+         |  <MarkerAnnotation>
+         |  <SingleElementAnnotation>
+         
+<NormalAnnotation>
+        ::= '@' <TypeName> '(' <ElementValuePairs> ')'
+         
+<ElementValuePairs>
+        ::= <ElementValuePair>
+         |  <ElementValuePairs> ',' <ElementValuePair>
+         
+<ElementValuePair>
+        ::= Identifier '=' <ElementValue>
+         
+<ElementValue>
+        ::= <ConditionalExpression>
+         |  <ElementValueArrayInitializer>
+         |  <Annotation>
+         
+<ElementValueArrayInitializer>
+        ::= '{' <ElementValues> '}'
+         |  '{' <ElementValues> ',' '}'
+         |  '{' ',' '}'
+         |  '{' '}'
+         
+<ElementValues>
+        ::= <ElementValue>
+         |  <ElementValues> ',' <ElementValue>
+         
+<MarkerAnnotation>
+        ::= '@' <TypeName>
+         
+<SingleElementAnnotation>
+        ::= '@' <TypeName> '(' <ElementValue> ')'
+         
+<TypeName>
+        ::= <Name>
+         
+<Annotations>
+        ::= <Annotation> <Annotations>
+         |
+         
+!==================== Types ==================
+
+<Type>  ::= <PrimitiveType>
+         |  <ReferenceType>
+
+<PrimitiveType> ::= <Annotations> <NumericType>
+                  | <Annotations> 'boolean'
+
+<NumericType> 
+        ::= <IntegralType>
+         |  <FloatingPointType>
+
+<IntegralType>
+        ::= 'byte'
+         |  'short'
+         |  'int'
+         |  'long'
+         |  'char'
+
+<FloatingPointType> 
+        ::= 'float'
+         |  'double'
+
+<ReferenceType> 
+        ::= <ClassOrInterfaceType>
+!         |  <TypeVariable>         ! subsumed by <ClassOrInterfaceType> except for the annotations
+         |  <ArrayType>
+
+! This is the official syntax - unfortuntely not LALR(1) so it is just turned uside down...
+!<ClassOrInterfaceType>
+!        ::= <ClassType>
+!         |  <InterfaceType>
+<ClassOrInterfaceType>
+        ::= <Name> <TypeArgumentsOpt>
+
+!<ClassType>
+!        ::= <Annotations> Identifier <TypeArgumentsOpt>
+!         |  <ClassOrInterfaceType> '.' <Annotations> Identifier <TypeArgumentsOpt>
+         
+<ClassType>
+        ::= <ClassOrInterfaceType>
+         
+<InterfaceType>
+        ::= <ClassOrInterfaceType>
+
+<TypeVariable>
+        ::= <Annotations> Identifier       ! caused a reduce-reduce conflict
+
+! This is the official specification - we simplify again to reduce ambiguity, the inserted
+! annotations will be very rare and might be cut out by preprocessing
+!<ArrayType>
+!        ::= <PrimitiveType> <Dims>
+!         |  <Name> <Dims>
+!         |  <TypeVariable> <Dims>
+         
+!<Dims>  ::= <Annotations> '[' ']'
+!         |  <Annotations> '[' ']' <Dims>
+
+! This was another simplification from the Java 1.0/2.0 versuion
+!<ArrayType>
+!        ::= <PrimitiveType> '[' ']'
+!         |  <Name> '[' ']'
+!         |  <ArrayType> '[' ']'
+
+<ArrayType>
+        ::= <PrimitiveType> <Dims>
+         |  <Name> <Dims>
+!         |  <TypeVariable> <Dims>     ! subsumed by <Name> except for the annotations
+
+<Name>
+        ::= <SimpleName>
+         |  <QualifiedName>
+
+<SimpleName> ::= Identifier
+
+<QualifiedName> ::= <Name> '.' Identifier
+      
+<TypeArgumentsOpt>
+        ::= '<' <TypeArguments> '>'
+         |
+
+<TypeArguments>
+        ::= <TypeArgument>
+         |  <TypeArguments> ',' <TypeArgument>
+
+<TypeArgument>
+        ::= <ReferenceType>
+         |  <Wildcard>
+
+<Wildcard>
+        ::= <Annotations> '?' <WildcardBoundsOpt>
+
+<WildcardBoundsOpt>
+        ::= 'extends' <ReferenceType>
+         |  'super' <ReferenceType>
+         |
+
+<TypeParameter>
+        ::= <Annotations> Identifier <TypeBoundOpt>
+
+<TypeBoundOpt>
+        ::= 'extends' <TypeVariable>
+         |  'extends' <ClassOrInterfaceType> <AdditionalBoundOpt>
+
+<AdditionalBoundOpt>
+        ::= '&' <InterfaceType>
+         |
+
+!========================= Compilation Unit ==============================
+
+<CompilationUnit> 
+        ::= <PackageDeclaration> <ImportDeclarations> <TypeDeclarations>
+         |  <PackageDeclaration> <ImportDeclarations>
+         |  <PackageDeclaration> <TypeDeclarations>
+         |  <PackageDeclaration>
+         |  <ImportDeclarations> <TypeDeclarations>
+         |  <ImportDeclarations>
+         |  <TypeDeclarations>
+         |  
+
+<ImportDeclarations> 
+        ::= <ImportDeclaration>
+         |  <ImportDeclarations> <ImportDeclaration>
+
+<TypeDeclarations> 
+        ::= <TypeDeclaration>
+         |  <TypeDeclarations> <TypeDeclaration>
+
+<PackageDeclaration> 
+        ::= 'package' <Name> ';'
+
+<ImportDeclaration>
+        ::= <SingleTypeImportDeclaration>
+         |  <TypeImportOnDemandDeclaration>
+
+<SingleTypeImportDeclaration> 
+        ::= 'import' <Name> ';'
+
+<TypeImportOnDemandDeclaration> 
+        ::= 'import' <Name> '.' '*' ';'
+
+<TypeDeclaration> 
+        ::= <ClassDeclaration>
+         |  <InterfaceDeclaration>
+         |  ';'
+
+<Modifiers> 
+        ::= <Modifier>
+         |  <Modifiers> <Modifier>
+
+<Modifier> 
+        ::= 'public'
+         |  'protected'
+         |  'private'
+         |  'static'
+         |  'abstract'
+         |  'final'
+         |  'native'
+         |  'synchronized'
+         |  'transient'
+         |  'volatile'
+         |  'default'    ! causes conflict with switch
+         |  'strictfp'
+
+<ClassDeclaration>
+        ::= <Annotations> <NormalClassDeclaration>
+         |  <Annotations> <EnumDeclaration>
+
+<NormalClassDeclaration> 
+        ::= <Modifiers> <PureClassDeclaration>
+         |  <PureClassDeclaration>
+
+<PureClassDeclaration> 
+        ::= 'class' Identifier <TypeParametersOpt> <Super> <Interfaces> <ClassBody>
+         |  'class' Identifier <TypeParametersOpt> <Super> <ClassBody>
+         |  'class' Identifier <TypeParametersOpt> <Interfaces> <ClassBody>
+         |  'class' Identifier <TypeParametersOpt> <ClassBody>
+
+<TypeParametersOpt>
+        ::= '<' <TypeParameters> '>'
+         |
+         
+<TypeParameters>
+        ::= <TypeParameter>
+         |  <TypeParameters> ',' <TypeParameter>
+
+<Super> ::= 'extends' <ClassType>
+
+<Interfaces> ::= 'implements' <InterfaceTypeList>
+
+<InterfaceTypeList> ::= <InterfaceType>
+                        | <InterfaceTypeList> ',' <InterfaceType>
+
+<EnumDeclaration>
+        ::= <Modifiers> 'enum' Identifier <Interfaces> <EnumBody>
+         |  <Modifiers> 'enum' Identifier <EnumBody>
+         
+<EnumBody>
+        ::= '{' <EnumConstants> ',' <EnumBodyDeclarationsOpt> '}'
+         |  '{' <EnumConstants> <EnumBodyDeclarationsOpt> '}'
+         
+<EnumBodyDeclarationsOpt>
+        ::= ';' <ClassBodyDeclarations>
+         |
+         
+<EnumConstants>
+        ::= <EnumConstant>
+         |  <EnumConstants> ',' <EnumConstant>
+         
+<EnumConstant>
+        ::= <Annotations> Identifier '(' <ArgumentList> ')' <ClassBodyOpt>
+         |  <Annotations> Identifier <ClassBodyOpt>
+         
+<ClassBodyOpt>
+        ::= <ClassBody>
+         |
+                 
+<ClassBody> 
+        ::= '{' <ClassBodyDeclarations> '}'
+         |  '{' '}'
+               
+
+<ClassBodyDeclarations> 
+        ::= <ClassBodyDeclaration>
+         |  <ClassBodyDeclarations> <ClassBodyDeclaration>
+
+<ClassBodyDeclaration> 
+        ::= <ClassMemberDeclaration>
+         |  <StaticInitializer>
+         |  <ConstructorDeclaration>
+
+<ClassMemberDeclaration>
+        ::= <FieldDeclaration>
+         |  <MethodDeclaration>
+         |  <ClassDeclaration>
+         |  <InterfaceDeclaration>
+         | ';'
+
+<FieldDeclaration> 
+        ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+         |  <Annotations> <Type> <VariableDeclarators> ';'
+
+<VariableDeclarators>
+        ::= <VariableDeclarator>
+         |  <VariableDeclarators> ',' <VariableDeclarator>
+
+<VariableDeclarator> 
+        ::= <VariableDeclaratorId>
+         |  <VariableDeclaratorId> '=' <VariableInitializer>
+
+<VariableDeclaratorId> 
+        ::= Identifier
+         |  <VariableDeclaratorId> '[' ']'
+
+<VariableInitializer> 
+        ::= <Expression>
+         |  <ArrayInitializer>
+
+<MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
+!<MethodDeclaration> ::= <MethodHeader> <MethodBody>
+
+<MethodHeader>
+        ::= <Modifiers> <Type> <MethodDeclarator> <Throws>
+         |  <Modifiers> <Type> <MethodDeclarator>
+         |  <Type> <MethodDeclarator> <Throws>
+         |  <Type> <MethodDeclarator>
+         |  <Modifiers> 'void' <MethodDeclarator> <Throws>
+         |  <Modifiers> 'void' <MethodDeclarator>
+         |  'void' <MethodDeclarator> <Throws>
+         |  'void' <MethodDeclarator>
+
+<MethodDeclarator>
+        ::= Identifier '(' <FormalParameterList> ')'
+         |  Identifier '(' ')'
+         |  <MethodDeclarator> '[' ']'
+
+<FormalParameterList> 
+        ::= <FormalParameter>
+         |  <FormalParameterList> ',' <FormalParameter>
+
+<FormalParameter> 
+        ::= <Type> <VariableDeclaratorId>
+
+<Throws> 
+        ::= 'throws' <ClassTypeList>
+
+<ClassTypeList>
+        ::= <ClassType>
+         |  <ClassTypeList> ',' <ClassType>
+
+<MethodBody> 
+        ::= <Block>
+         |  ';'
+
+<StaticInitializer> 
+        ::= <Annotations> 'static' <Block>
+
+<ConstructorDeclaration>
+        ::= <Annotations> <Modifiers> <ConstructorDeclarator> <Throws> <ConstructorBody>
+         |  <Annotations> <Modifiers> <ConstructorDeclarator> <ConstructorBody>
+         |  <Annotations> <ConstructorDeclarator> <Throws> <ConstructorBody>
+         |  <Annotations> <ConstructorDeclarator> <ConstructorBody>
+
+<ConstructorDeclarator>
+        ::= <SimpleName> '(' <FormalParameterList> ')'
+         |  <SimpleName> '(' ')'
+
+<ConstructorBody> 
+        ::= '{' <ExplicitConstructorInvocation> <BlockStatements> '}'
+         |  '{' <ExplicitConstructorInvocation> '}'
+         |  '{' <BlockStatements> '}'
+         |  '{' '}'
+
+<ExplicitConstructorInvocation>
+        ::= 'this' '(' <ArgumentList> ')' ';'
+         |  'this' '(' ')' ';'
+         |  'super' '(' <ArgumentList> ')' ';'
+         |  'super' '(' ')' ';'
+                                   
+<InterfaceDeclaration> 
+        ::= <Annotations> <Modifiers> 'interface' Identifier <TypeParametersOpt> <ExtendsInterfaces> <InterfaceBody>
+         |  <Annotations> <Modifiers> 'interface' Identifier <TypeParametersOpt> <InterfaceBody>
+         |  <Annotations> 'interface' Identifier <TypeParametersOpt> <ExtendsInterfaces> <InterfaceBody>
+         |  <Annotations> 'interface' Identifier <TypeParametersOpt> <InterfaceBody>
+
+<ExtendsInterfaces> 
+        ::= 'extends' <InterfaceType>
+         |  <ExtendsInterfaces> ',' <InterfaceType>
+
+<InterfaceBody> 
+        ::= '{' <InterfaceMemberDeclarations> '}'
+         |  '{' '}'
+
+<InterfaceMemberDeclarations> 
+        ::= <InterfaceMemberDeclaration>
+         |  <InterfaceMemberDeclarations> <InterfaceMemberDeclaration>
+
+<InterfaceMemberDeclaration> 
+        ::= <ConstantDeclaration>
+!         |  <AbstractMethodDeclaration>
+         |  <MethodDeclaration>     ! Because of the default methods, we may not restrict this sensibly
+         |  <ClassDeclaration>
+         |  <InterfaceDeclaration>
+
+<ConstantDeclaration> ::= <FieldDeclaration>
+
+!<AbstractMethodDeclaration> ::= <MethodHeader> ';'
+
+<ArrayInitializer>
+        ::= '{' <VariableInitializers> ',' '}'
+         |  '{' <VariableInitializers> '}'
+         |  '{' ',' '}'
+         |  '{' '}'
+
+<VariableInitializers>
+        ::= <VariableInitializer>
+         |  <VariableInitializers> ',' <VariableInitializer>
+
+<Block> ::= '{' <BlockStatements> '}'
+         |  '{' '}'
+
+<BlockStatements> 
+        ::= <BlockStatement>
+         |  <BlockStatements> <BlockStatement>
+
+<BlockStatement>
+        ::= <LocalVariableDeclarationStatement>
+         |  <LocalClassDeclaration>
+         |  <Statement>
+
+<LocalVariableDeclarationStatement> 
+        ::= <LocalVariableDeclaration> ';'
+
+<LocalVariableDeclaration> 
+        ::= 'final' <Type> <VariableDeclarators>
+         |  <Type> <VariableDeclarators>
+
+<LocalClassDeclaration>
+        ::= <LocalClassModifiers> <PureClassDeclaration>
+         |  <PureClassDeclaration>
+         
+<LocalClassModifiers>
+        ::= abstract
+         |  final
+
+<Statement>
+        ::= <StatementWithoutTrailingSubstatement>
+         |  <LabeledStatement>
+         |  <IfThenStatement>
+         |  <IfThenElseStatement>
+         |  <WhileStatement>
+         |  <ForStatement>
+
+<StatementNoShortIf> 
+        ::= <StatementWithoutTrailingSubstatement>
+         |  <LabeledStatementNoShortIf>
+         |  <IfThenElseStatementNoShortIf>
+         |  <WhileStatementNoShortIf>
+         |  <ForStatementNoShortIf>
+
+<StatementWithoutTrailingSubstatement> 
+        ::= <Block>
+         |  <EmptyStatement>
+         |  <ExpressionStatement>
+         |  <SwitchStatement>
+         |  <DoStatement>
+         |  <BreakStatement>
+         |  <ContinueStatement>
+         |  <ReturnStatement>
+         |  <SynchronizedStatement>
+         |  <ThrowStatement>
+         |  <TryStatement>
+
+<EmptyStatement> 
+        ::= ';'
+
+<LabeledStatement> 
+        ::= Identifier ':' <Statement>
+
+<LabeledStatementNoShortIf> 
+        ::= Identifier ':' <StatementNoShortIf>
+
+<ExpressionStatement> 
+        ::= <StatementExpression> ';'
+
+<StatementExpression>
+        ::= <Assignment>
+         |  <PreIncrementExpression>
+         |  <PreDecrementExpression>
+         |  <PostIncrementExpression>
+         |  <PostDecrementExpression>
+         |  <MethodInvocation>
+         |  <ClassInstanceCreationExpression>
+
+<IfThenStatement> 
+        ::= 'if' '(' <Expression> ')' <Statement>
+
+<IfThenElseStatement> 
+        ::= 'if' '(' <Expression> ')' <StatementNoShortIf> 'else' <Statement>
+
+<IfThenElseStatementNoShortIf> 
+        ::= 'if' '(' <Expression> ')' <StatementNoShortIf> 'else' <StatementNoShortIf>
+
+<SwitchStatement> 
+        ::= 'switch' '(' <Expression> ')' <SwitchBlock>
+
+<SwitchBlock> 
+        ::= '{' <SwitchBlockStatementGroups> <SwitchLabels> '}'
+         |  '{' <SwitchBlockStatementGroups> '}'
+         |  '{' <SwitchLabels> '}'
+         |  '{' '}'
+
+<SwitchBlockStatementGroups>
+        ::= <SwitchBlockStatementGroup>
+         |  <SwitchBlockStatementGroups> <SwitchBlockStatementGroup>
+
+<SwitchBlockStatementGroup> 
+        ::= <SwitchLabels> <BlockStatements>
+
+<SwitchLabels>
+        ::= <SwitchLabel>
+         |  <SwitchLabels> <SwitchLabel>
+
+<SwitchLabel> 
+        ::= 'case' <ConstantExpression> ':'
+         |  'default' ':'
+
+<WhileStatement> 
+        ::= 'while' '(' <Expression> ')' <Statement>
+
+<WhileStatementNoShortIf>
+        ::= 'while' '(' <Expression> ')' <StatementNoShortIf>
+
+<DoStatement> 
+        ::= 'do' <Statement> 'while' '(' <Expression> ')' ';'
+
+<ForStatement>
+        ::= <BasicForStatement>
+         |  <EnhancedForStatement>
+         
+<BasicForStatement>
+!        ::= 'for' '(' <ForInit> ';' <Expression> ';' <ForUpdate> ')' <Statement>
+!         |  'for' '(' <ForInit> ';' <Expression> ';' ')' <Statement>
+!         |  'for' '(' <ForInit> ';' ';' <ForUpdate> ')' <Statement>
+!         |  'for' '(' <ForInit> ';' ';' ')' <Statement>
+!         |  'for' '(' ';' <Expression> ';' <ForUpdate> ')' <Statement>
+!         |  'for' '(' ';' <Expression> ';' ')' <Statement>
+!         |  'for' '(' ';' ';' <ForUpdate> ')' <Statement>
+!         |  'for' '(' ';' ';'  ')' <Statement>
+        ::= 'for' '(' <ForInitOpt> ';' <ExpressionOpt> ';' <ForUpdateOpt> ')' <Statement>
+         
+<ExpressionOpt>
+        ::= <Expression>
+         |
+         
+<ForStatementNoShortIf>
+        ::= <BasicForStatementNoShortIf>
+         |  <EnhancedForStatementNoShortIf>
+
+<BasicForStatementNoShortIf> 
+!        ::= 'for' '(' <ForInit> ';' <Expression> ';' <ForUpdate> ')' <StatementNoShortIf>
+!         |  'for' '(' <ForInit> ';' <Expression> ';' ')' <StatementNoShortIf>
+!         |  'for' '(' <ForInit> ';' ';' <ForUpdate> ')' <StatementNoShortIf>
+!         |  'for' '(' <ForInit> ';' ';' ')' <StatementNoShortIf>
+!         |  'for' '(' ';' <Expression> ';' <ForUpdate> ')' <StatementNoShortIf>
+!         |  'for' '(' ';' <Expression> ';' ')' <StatementNoShortIf>
+!         |  'for' '(' ';' ';' <ForUpdate> ')' <StatementNoShortIf>
+!         |  'for' '(' ';' ';' ')' <StatementNoShortIf>
+        ::= 'for' '(' <ForInitOpt> ';' <ExpressionOpt> ';' <ForUpdateOpt> ')' <StatementNoShortIf>
+
+<ForInitOpt>
+        ::= <StatementExpressionList>
+         | <LocalVariableDeclaration>
+         |
+
+<ForUpdateOpt>
+        ::= <StatementExpressionList>
+         |
+         
+<EnhancedForStatement>
+        ::= 'for' '(' 'final' <Type> <VariableDeclaratorId> ':' <Expression> ')' <Statement>
+         |  'for' '(' <Type> <VariableDeclaratorId> ':' <Expression> ')' <Statement>
+
+<EnhancedForStatementNoShortIf>
+        ::= 'for' '(' 'final' <Type> <VariableDeclaratorId> ':' <Expression> ')' <StatementNoShortIf>
+         |  'for' '(' <Type> <VariableDeclaratorId> ':' <Expression> ')' <StatementNoShortIf>
+
+<StatementExpressionList> 
+        ::= <StatementExpression>
+         |  <StatementExpressionList> ',' <StatementExpression>
+
+<BreakStatement> 
+        ::= 'break' Identifier ';'
+         |  'break' ';'
+
+<ContinueStatement>
+        ::= 'continue' Identifier ';'
+         |  'continue' ';'
+
+<ReturnStatement> 
+        ::= 'return' <Expression> ';'
+         |  'return' ';'
+
+<ThrowStatement> 
+        ::= 'throw' <Expression> ';'
+
+<SynchronizedStatement> 
+        ::= 'synchronized' '(' <Expression> ')' <Block>
+
+<TryStatement>
+        ::= 'try' <Block> <Catches>
+         |  'try' <Block> <Catches> <Finally>
+         |  'try' <Block> <Finally>
+
+<Catches>
+        ::= <CatchClause>
+         |  <Catches> <CatchClause>
+
+<CatchClause>
+        ::= 'catch' '(' <FormalParameter> ')' <Block>
+
+<Finally> 
+        ::= 'finally' <Block>
+
+<Primary> 
+        ::= <PrimaryNoNewArray>
+         |  <ArrayCreationExpression>
+
+<PrimaryNoNewArray> 
+        ::= <Literal>
+         |  'this'
+         |  '(' <Expression> ')'
+         |  <ClassInstanceCreationExpression>
+         |  <FieldAccess>
+         |  <MethodInvocation>
+         |  <ArrayAccess>
+
+<ClassInstanceCreationExpression> 
+        ::= 'new' <ClassType> '(' <ArgumentList> ')'
+         |  'new' <ClassType> '(' ')'
+
+<ArgumentList> 
+        ::= <Expression>
+         |  <ArgumentList> ',' <Expression>
+
+<ArrayCreationExpression> 
+        ::= 'new' <PrimitiveType> <DimExprs> <Dims>
+         |  'new' <PrimitiveType> <DimExprs>
+         |  'new' <ClassOrInterfaceType> <DimExprs> <Dims>
+         |  'new' <ClassOrInterfaceType> <DimExprs>
+         |  'new' <PrimitiveType> <Dims> <ArrayInitializer>
+         |  'new' <ClassOrInterfaceType> <Dims> <ArrayInitializer>
+
+<DimExprs> 
+        ::= <DimExpr>
+         |  <DimExprs> <DimExpr>
+
+<DimExpr> ::= '[' <Expression> ']'
+
+<Dims> ::= '[' ']'
+         | <Dims> '[' ']'
+
+<FieldAccess> 
+        ::= <Primary> '.' Identifier
+         |  'super' '.' Identifier
+
+<MethodInvocation>
+        ::= <Name> '(' <ArgumentList> ')'
+         |  <Name> '(' ')'
+         |  <Primary> '.' Identifier '(' <ArgumentList> ')'
+         |  <Primary> '.' Identifier '(' ')'
+         |  'super' '.' Identifier '(' <ArgumentList> ')'
+         |  'super' '.' Identifier '(' ')'
+
+<ArrayAccess> 
+        ::= <Name> '[' <Expression> ']'
+         |  <PrimaryNoNewArray> '[' <Expression> ']'
+
+<PostfixExpression>
+        ::= <Primary>
+         |  <Name>
+         |  <PostIncrementExpression>
+         |  <PostDecrementExpression>
+
+<PostIncrementExpression>
+        ::= <PostfixExpression> '++'
+
+<PostDecrementExpression>
+        ::= <PostfixExpression> '--'
+
+<UnaryExpression>
+        ::= <PreIncrementExpression>
+         |  <PreDecrementExpression>
+         |  '+' <UnaryExpression>
+         |  '-' <UnaryExpression>
+         |  <UnaryExpressionNotPlusMinus>
+
+<PreIncrementExpression> 
+        ::= '++' <UnaryExpression>
+
+<PreDecrementExpression>
+        ::= '--' <UnaryExpression>
+
+<UnaryExpressionNotPlusMinus> 
+        ::= <PostfixExpression>
+         |  '~' <UnaryExpression>
+         |  '!' <UnaryExpression>
+         |  <CastExpression>
+
+<CastExpression>
+        ::= '(' <PrimitiveType> <Dims> ')' <UnaryExpression>
+         |  '(' <PrimitiveType> ')' <UnaryExpression>
+         |  '(' <Expression> ')' <UnaryExpressionNotPlusMinus>
+         |  '(' <Name> <Dims> ')' <UnaryExpressionNotPlusMinus>
+
+<MultiplicativeExpression>
+        ::= <UnaryExpression>
+         |  <MultiplicativeExpression> '*' <UnaryExpression>
+         |  <MultiplicativeExpression> '/' <UnaryExpression>
+         |  <MultiplicativeExpression> '%' <UnaryExpression>
+
+<AdditiveExpression>
+        ::= <MultiplicativeExpression>
+         |  <AdditiveExpression> '+' <MultiplicativeExpression>
+         |  <AdditiveExpression> '-' <MultiplicativeExpression>
+
+<ShiftExpression>
+        ::= <AdditiveExpression>
+         |  <ShiftExpression> '<<' <AdditiveExpression>
+         |  <ShiftExpression> '>>' <AdditiveExpression>
+         |  <ShiftExpression> '>>>' <AdditiveExpression>
+
+<RelationalExpression>
+        ::= <ShiftExpression>
+         |  <RelationalExpression> '<' <ShiftExpression>
+         |  <RelationalExpression> '>' <ShiftExpression>
+         |  <RelationalExpression> '<=' <ShiftExpression>
+         |  <RelationalExpression> '>=' <ShiftExpression>
+         |  <RelationalExpression> 'instanceof' <ReferenceType>
+
+<EqualityExpression>
+        ::= <RelationalExpression>
+         |  <EqualityExpression> '==' <RelationalExpression>
+         |  <EqualityExpression> '!=' <RelationalExpression>
+
+<AndExpression>
+        ::= <EqualityExpression>
+         |  <AndExpression> '&' <EqualityExpression>
+
+<ExclusiveOrExpression>
+        ::= <AndExpression>
+         |  <ExclusiveOrExpression> '^' <AndExpression>
+
+<InclusiveOrExpression> 
+        ::= <ExclusiveOrExpression>
+         |  <InclusiveOrExpression> '|' <ExclusiveOrExpression>
+
+<ConditionalAndExpression>
+        ::= <InclusiveOrExpression>
+         |  <ConditionalAndExpression> '&&' <InclusiveOrExpression>
+
+<ConditionalOrExpression>
+        ::= <ConditionalAndExpression>
+         |  <ConditionalOrExpression> '||' <ConditionalAndExpression>
+
+<ConditionalExpression> 
+        ::= <ConditionalOrExpression>
+         |  <ConditionalOrExpression> '?' <Expression> ':' <ConditionalExpression>
+
+<AssignmentExpression> 
+        ::= <ConditionalExpression>
+         |  <Assignment>
+
+<Assignment>
+        ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+
+<LeftHandSide> 
+        ::= <Name>
+         |  <FieldAccess>
+         |  <ArrayAccess>
+
+<AssignmentOperator> 
+        ::= '='
+         |  '*='
+         |  '/='
+         |  '%='
+         |  '+='
+         |  '-='
+         |  '<<='
+         |  '>>='
+         |  '>>>='
+         |  '&='
+         |  '^='
+         |  '|='
+
+<Expression> ::= <AssignmentExpression>
+
+<ConstantExpression> ::= <Expression>
+
