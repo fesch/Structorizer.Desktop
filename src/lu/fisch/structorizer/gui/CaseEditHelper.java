@@ -24,7 +24,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    Interface (or facade) for retrieval and checking of Case options
+ *      Description:    Facade class for retrieval and checking of Case options
  *
  ******************************************************************************************************
  *
@@ -94,7 +94,7 @@ public class CaseEditHelper {
 	
 	/**
 	 * For the supposed enumerator variable {@code name} (might be a qualified name),
-	 * returns either {@code null} if no enumerator type associatin can be found) or
+	 * returns either {@code null} if no enumerator type association can be found) or
 	 * a map of enumerator constant names and the associated code (integer value).
 	 * @param name - (possibly qualified) name of an assumed variable
 	 * @return - either {@code null} or a name-value map for the enumerator constants
@@ -171,7 +171,7 @@ public class CaseEditHelper {
 	 *       place holders "\n" will be replaced by spaces.
 	 * @param conflictsOnly - if {@code true} then only conflicting entries will contained
 	 *       in the result.
-	 * @return a lookup table mapping each found value to the line indices of its ocurrence
+	 * @return a lookup table mapping each found value to the line indices of its occurrence
 	 *       (in case {@code conflictsOnly} is {@code true} only entries with conflicts
 	 *       - either between several lines or between expressions of a single line - will
 	 *       be contained.
