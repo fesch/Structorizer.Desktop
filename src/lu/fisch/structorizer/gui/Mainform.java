@@ -98,6 +98,8 @@ package lu.fisch.structorizer.gui;
  *                                      several public comments added.
  *      Kay Gürtzig     2021-01-02      Enh. #905: New INI property "drawAnalyserMarks"
  *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
+ *      Bob Fisch       2021-02-17      Attempt to solve issue #912 (Opening Structorizer via file doubleclick on OS X)
+ *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
  *
  ******************************************************************************************************
  *
@@ -1636,46 +1638,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		// END FISRO 2021-02-17
 	}
 	
-//	public void testOSX912() {
-//		try {
-//			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
-//			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
-//			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
-//			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
-//			Method methGF = evClass.getMethod("getFiles", new Class[0]);
-//			if (methSOFH != null && methOF != null) {
-//				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
-//						new Class[] {fhInterface}, new InvocationHandler() {
-//							@Override
-//							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-//								if (method.getDeclaringClass() == fhInterface
-//										&& method.equals(methOF)
-//										&& args.length == 1
-//										&& args[0].getClass() == evClass) {
-//									Object files = methGF.invoke(args[0], new Object[0]);
-//									if (files instanceof List<?>) {
-//										for (File file: (List<File>)files) {
-//											loadFile(file.getAbsolutePath());
-//										}
-//									}
-//									else {
-//										logger.warning("Failed to get the file list from assumend OpenFilesEvent");
-//									}
-//								}
-//								return null;
-//							}});
-//				try {
-//					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
-//				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
-//					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
-//				}
-//			}
-//		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
-//			// TODO Auto-generated catch block
-//			exc.printStackTrace();
-//		}
-//	}
-
 	/**
 	 * General file handler for OS X; fed to the OSXAdapter as the method to call
 	 * when a file associated to Structorizer is double-clicked or dragged onto it.
