@@ -123,14 +123,18 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
-import java.awt.desktop.OpenFilesEvent;
-import java.awt.desktop.OpenFilesHandler;
+//import java.awt.desktop.OpenFilesEvent;
+//import java.awt.desktop.OpenFilesHandler;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -1564,7 +1568,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * use as delegates for various com.apple.eawt.ApplicationListener methods.
 	 */
 	public void doOSX() {
-                // this is the old way to go (<=JDK8) on OSX
+		// this is the old way to go (<=JDK8) on OSX
 		try {
 			/* Issue #744: The file handler must be the first handler to be established! Otherwise the
 			 * event of the double-clicked file that led to launching Structorizer might slip through!
@@ -1580,17 +1584,97 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			e.printStackTrace();
 			logger.log(Level.WARNING, "Failed to establish OS X handlers", e);
 		}
-                
-                // this is the new way (>JDK8) on OSX
-                Desktop.getDesktop().setOpenFileHandler(new OpenFilesHandler() {
-                    @Override
-                    public void openFiles(OpenFilesEvent e) {
-                        for (File file: e.getFiles​()) {
-                            loadFile(file.getAbsolutePath());
-                        }
-                    }
-                });
+		// START FISRO 2021-02-17: Issue #912
+		// this is the new way (>JDK8) on OSX
+		// START KGU 2021-02-18: Bugfix #940 Methods/classes not available before Java 9 - try via reflection
+//		Desktop.getDesktop().setOpenFileHandler(new OpenFilesHandler() {
+//			@Override
+//			public void openFiles(OpenFilesEvent e) {
+//				for (File file: e.getFiles()) {
+//					loadFile(file.getAbsolutePath());
+//				}
+//			}
+//		});
+		try {
+			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
+			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
+			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
+			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
+			Method methGF = evClass.getMethod("getFiles", new Class[0]);
+			if (methSOFH != null && methOF != null) {
+				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
+						new Class[] {fhInterface}, new InvocationHandler() {
+							@Override
+							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+								if (method.getDeclaringClass() == fhInterface
+										&& method.equals(methOF)
+										&& args.length == 1
+										&& args[0].getClass() == evClass) {
+									Object files = methGF.invoke(args[0], new Object[0]);
+									if (files instanceof List<?>) {
+										for (File file: (List<File>)files) {
+											loadFile(file.getAbsolutePath());
+										}
+									}
+									else {
+										logger.warning("Failed to get the file list from assumend OpenFilesEvent");
+									}
+								}
+								return null;
+							}});
+				try {
+					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
+					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
+				}
+			}
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
+			// FIXME Before Java 9, this can just be ignored. Not so, afterwards, though.
+			exc.printStackTrace();
+		}
+		// END KGU 2021-02-18
+		// END FISRO 2021-02-17
 	}
+	
+//	public void testOSX912() {
+//		try {
+//			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
+//			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
+//			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
+//			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
+//			Method methGF = evClass.getMethod("getFiles", new Class[0]);
+//			if (methSOFH != null && methOF != null) {
+//				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
+//						new Class[] {fhInterface}, new InvocationHandler() {
+//							@Override
+//							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+//								if (method.getDeclaringClass() == fhInterface
+//										&& method.equals(methOF)
+//										&& args.length == 1
+//										&& args[0].getClass() == evClass) {
+//									Object files = methGF.invoke(args[0], new Object[0]);
+//									if (files instanceof List<?>) {
+//										for (File file: (List<File>)files) {
+//											loadFile(file.getAbsolutePath());
+//										}
+//									}
+//									else {
+//										logger.warning("Failed to get the file list from assumend OpenFilesEvent");
+//									}
+//								}
+//								return null;
+//							}});
+//				try {
+//					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
+//				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
+//					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
+//				}
+//			}
+//		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
+//			// TODO Auto-generated catch block
+//			exc.printStackTrace();
+//		}
+//	}
 
 	/**
 	 * General file handler for OS X; fed to the OSXAdapter as the method to call
@@ -1599,8 +1683,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * @see #doOSX()
 	 */
 	public void loadFile(String filePath) {
-                logger.info("loadFile with path \"" + filePath + "\".");
-                
+		// START FISRO 2021-02-17: Issue #912
+		logger.info("loadFile with path \"" + filePath + "\".");
+		// END FISRO 2021-02-17
 		// START KGU#724 2019-09-16: Issue #744 (workaround for hazards on startup, may no longer be necessary)
 		if (filePath == null || filePath.isEmpty()) {
 			return;
