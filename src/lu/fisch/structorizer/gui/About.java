@@ -42,6 +42,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-08      Issue #620: a fourth tab "Paths" added.
  *      Kay Gürtzig     2019-08-01      Issue #733: Correct representation of the installation directory (URL to UTF-8)
  *      Kay Gürtzig     2019-08-07      Enh. #741: Paths tab now shows the complete ini file path, not just the dir path
+ *      Bob Fisch       2021-02-18      Issue #940: Paths tab now also reports the java version (from System)
+ *                                      Kay Gürtzig: Message adapted, Java home path added
  *
  ******************************************************************************************************
  *
@@ -105,7 +107,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 	protected JTextPane txtPaths;
 	// START KGU#722 2019-08-07: Enh. #741
 	//public LangTextHolder msgPaths = new LangTextHolder("Ini folder:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
-	public LangTextHolder msgPaths = new LangTextHolder("Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	// START KGU#937 2021-02-18: Issues #912, #940, #943
+	//public LangTextHolder msgPaths = new LangTextHolder("Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n");
+	public LangTextHolder msgPaths = new LangTextHolder("Ini file:\n%1\n\nLog folder:\n%2\n\nInstallation path:\n%3\n\nJVM (version %4):\n%5\n");
+	// END KGU#937 2021-02-18
 	// END KGU#722 2019-08-07
 	// END KGU#595 2018-10-08
 	protected JPanel buttonBar;
@@ -169,10 +174,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 			// JFormDesigner evaluation mark
 			/*
 			dialogPane.setBorder(new javax.swing.border.CompoundBorder(
-																	   new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
-																										   "JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
-																										   javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
-																										   java.awt.Color.red), dialogPane.getBorder())); dialogPane.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
+					new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
+							"JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
+							javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
+							java.awt.Color.red), dialogPane.getBorder())); dialogPane.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
 			*/
 			dialogPane.setLayout(new BorderLayout());
 			
@@ -352,8 +357,16 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 				replace("%1", Ini.getInstance().getIniFile().getAbsolutePath()).
 				// END KGU#722 2019-08-07
 				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
-				replace("%3", prodDir.getAbsolutePath())+
-				"\nJVM version:\n"+System.getProperty("java.version"));
+				// START FISRO 2021-02-18: Issue #940, #943
+				//replace("%3", prodDir.getAbsolutePath()));
+				// START KGU#937 2021-02-18: Issue #940, #943
+				//replace("%3", prodDir.getAbsolutePath())+
+				//"\nJVM version:\n"+System.getProperty("java.version"));
+				replace("%3", prodDir.getAbsolutePath()).
+				replace("%4", System.getProperty("java.version")).
+				replace("%5", System.getProperty("java.home")));
+				// END KGU#937 2021-02-18
+				// END FISRO 2021-02-18
 		txtPaths.setCaretPosition(0);
 	}
 	// END KGU#595 2018-10-08
