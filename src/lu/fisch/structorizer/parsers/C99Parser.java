@@ -2727,7 +2727,7 @@ public class C99Parser extends CPreParser
 			}
 		}
 		// END KGU#652 2019-02-13
-		for (int i=0; i<_reduction.size(); i++)
+		for (int i = 0; i < _reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
 			/* -------- Begin code example for text retrieval and translation -------- */

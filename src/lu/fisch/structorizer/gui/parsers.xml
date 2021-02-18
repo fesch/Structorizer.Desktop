@@ -15,5 +15,10 @@
 		<option name="fixedColumnIndicator" type="Unsigned" title="Indicator column in fixed format" help="Number of the indicator column (in fixed format)" />
 		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format)" />
 	</plugin>
+	<plugin title="Java SE 8" 				class="lu.fisch.structorizer.parsers.JavaParser" icon="">
+		<option name="wrap_in_dummy_class" type="Boolean" title="Wrap bare code in a dummy class" help="If the Java file to be imported contains only fragments, e.g. a method or interpreter instructions, you should enable this." />
+		<option name="convert_array_types" type="Boolean" title="Convert declarations to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations, particularly of arrays." />
+		<option name="classes_2_records" type="Boolean" title="Try to represent internal classes to record types" help="This will help to represent the local structures at all but cannot replace methods of course." />
+	</plugin>
     
 </plugins>

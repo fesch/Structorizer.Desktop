@@ -85,6 +85,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
@@ -230,8 +231,6 @@ public class %Name%Parser extends CodeParser
 			try {
 				String strLine;
 				//Read File Line By Line
-				// Preprocessor directives are not tolerated by the grammar, so drop them or try to
-				// do the #define replacements (at least roughly...)
 				while ((strLine = br.readLine()) != null)   
 				{
 					checkCancelled();
@@ -377,7 +376,7 @@ public class %Name%Parser extends CodeParser
 		// START KGU#537 2018-07-01: Enh. #553
 		checkCancelled();
 		// END KGU#537 2018-07-01
-		for(int i=0; i<_reduction.size(); i++)
+		for (int i = 0; i < _reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
 			/* -------- Begin code example for text retrieval and translation -------- */

@@ -46,13 +46,13 @@
 ! Version history:                                       
 ! Version   Date        Author          Description
 ! V 0.1     2021-02-16  Kay Gürtzig     Created (i.e. derived from the D.
-!                                       Gazkos Java 2.0 grammar and the SE 8
-!                                       language specification) and tested
+!                                       Gazkos Java 2.0 grammar) and tested
 !                                       with GOLDBuilder 5.2.0
+! V 0.2     2021-02-17  Kay Gürtzig     Missing import declarations added
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.1, Feb. 2021'
+"Version" = '0.2, Feb. 2021'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification '
 
@@ -305,12 +305,20 @@ Comment Line = '//'
 <ImportDeclaration>
         ::= <SingleTypeImportDeclaration>
          |  <TypeImportOnDemandDeclaration>
+         |  <SingleStaticImportDeclaration>
+         |  <StaticImportOnDemandDeclaration>
 
 <SingleTypeImportDeclaration> 
         ::= 'import' <Name> ';'
 
 <TypeImportOnDemandDeclaration> 
         ::= 'import' <Name> '.' '*' ';'
+
+<SingleStaticImportDeclaration>
+        ::= 'import' 'static' <Name> ';'
+
+<StaticImportOnDemandDeclaration> 
+        ::= 'import' 'static' <Name> '.' '*' ';'
 
 <TypeDeclaration> 
         ::= <ClassDeclaration>

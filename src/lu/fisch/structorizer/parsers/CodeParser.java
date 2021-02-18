@@ -1202,7 +1202,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 	// START KGU 2017-04-11
 	/**
-	 * Replaces all strings being keys in this.replacedIds by their respective mapped
+	 * Replaces all strings being keys in {@link #replacedIds} by their respective mapped
 	 * strings in the given line (i.e. actually tries to revert all performed substitutions).
 	 * (Method is called in situations when the original text is required).
 	 * @param line a source line or content string possibly with identifiers replaced by the file preparer
