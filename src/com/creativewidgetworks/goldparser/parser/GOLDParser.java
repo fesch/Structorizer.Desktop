@@ -6,7 +6,7 @@
  *      Author          Date			Description
  *      ------			----			-----------
  *      Kay Gürtzig     2018-09-18      Raw types (Class etc.) replaced by type inference, unused
- *                                      import diabled
+ *                                      import disabled
  *      
  ******************************************************************************************************
  */

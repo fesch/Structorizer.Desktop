@@ -222,6 +222,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-27      Enh. #917: editSubNSD() (#689) now also applies to referred Includables
  *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
  *      Kay Gürtzig     2021-02-04      Enh. #926: Element selection now scrolls to the related Analyser warnings
+ *      Kay Gürtzig     2021-02-12      Bugfix #936 in exportGroup() - failed on a group never having been saved
  *
  ******************************************************************************************************
  *
@@ -7530,7 +7531,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		hideComments();	// Hide the current comment popup if visible (issue #143)
 		File groupFile = group.getFile();
 		File targetDir = lastCodeExportDir;
-		if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true")) && groupFile.exists()) {
+		// START KGU#935 2021-02-12: Bugfix #936
+		//if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true")) && groupFile.exists()) {
+		if ((targetDir == null || Ini.getInstance().getProperty("", "true").equals("true"))
+				&& groupFile != null && groupFile.exists()) {
+		// END KGU#935 2021-02-12
 			targetDir = groupFile.getParentFile();
 		}
 		if (targetDir == null || !targetDir.exists()) {

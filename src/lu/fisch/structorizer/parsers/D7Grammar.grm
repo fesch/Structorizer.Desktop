@@ -1,4 +1,4 @@
-! -----------------------------------------------------------------------
+﻿! -----------------------------------------------------------------------
 ! Delphi 7.0 Object Pascal Grammar
 ! -----------------------------------------------------------------------
 ! (c) Rob F.M. van den Brink - the Netherlands, 2006 - R.F.M.vandenBrink@hccnet.nl
@@ -18,13 +18,14 @@
 !     an identifier, the current grammar cannot handle it correctly.
 !     For several of them a workaround was created, but a better solution should be 
 !     developped.
-! (4) Strings with characters above #127 cannot be handled by the current Grammar. 
+! (4) Strings with characters above #127 could not be handled by the grammar version < 1.2. 
 !     This should be very simple, but if the grammar defines string characters
 !     as the range {#32 .. #255}, Goldparser also adds {#376} and {#956}. 
-!     This looks like a bug in Gold Parser.
+!     This looks like a bug in Gold Parser. But what the heck, we may allow all
+!     unicode characters except apostrophes here -> {all printable} - [''] + [HT]
 ! (5) The inclusion of an adequate number of error productions (SynError) is still 
 !     to be done.
-! (6) constructs that are considered (for the timebeing) as too weird, are not
+! (6) constructs that are considered (for the time being) as too weird, are not
 !     supported; see below.
 ! -----------------------------------------------------------------------
 ! This grammar supports also most of 'weird' constructs that Borland has added 
@@ -42,28 +43,33 @@
 ! -----------------------------------------------------------------------
 ! Version history
 !  V1.0 - June 2006, derived from scratch, using Delphi 7.0 help and code files
-!  V1.1 - Aug 2006,  lots of refinements to cover almost evberything of the language
+!  V1.1 - Aug 2006,  lots of refinements to cover almost everything of the language
 !                    Consumes assembler code as well.
+!  V1.2 - May 2017,  some reduce-reduce conflicts evaded (Kay Gürtzig)
+!  V1.3 - Oct 2018,  second comment group repaired (i.e. adapted to GOLDBuilder 5.2)
+!  V1.4 - Apr 2020,  indentaion re-aligned (Kay Gürtzig)
+!  V1.5 - Feb 2021,  Hack into the <EnumType> rule in order to overcome a reduce-reduce conflict (Kay Gürtzig)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'ObjectPascal' 
-"Version" = '1.1, Aug 2006'
-"Author"  = 'Rob F.M. van den Brink' 
+"Version" = '1.5, Feb 2021'
+"Author"  = 'Rob F.M. van den Brink, Kay Gürtzig' 
 "About"   = 'Derived from scratch, from Delphi 7.0 help and experiments with code files'
 "Start Symbol"  = <ObjectPascal> 
 
 !------------------------------------------------------------------------------
 "Case Sensitive" = False
-"Virtual Terminals" = SynError CommentStart2 CommentEnd2
+"Virtual Terminals" = SynError !CommentStart2 CommentEnd2
 
+Comment1 Block @= { Nesting = None, Advance = Character }
+                
+Comment1 @= { Type = Noise }
 
 Comment Line     =  '//'
-Comment Start 	 =  '{'
+Comment Start    =  '{'
 Comment End      =  '}'
-
-CommentStart1    =  '(*'
-CommentEnd1      =  '*)'
-
+Comment1 Start    =  '(*'
+Comment1 End      =  '*)'
 
 {Hex Digit}      = {Digit} + [abcdefABCDEF]
 
@@ -73,8 +79,8 @@ CommentEnd1      =  '*)'
 
 !{String Ch}      = {#32 .. #255} - [''] + {HT} !WHY DOES GOLS ADD character #376 and #956 ??
 
-{String Ch}      = {printable} - [''] + {HT}
-
+!{String Ch}      = {printable} - [''] + {HT}
+{String Ch}      = {all printable} - [''] + {HT}
 
 DecLiteral       = {digit}+
 
@@ -87,533 +93,527 @@ RealLiteral      = {Digit}+ ('.' {Digit}* | {Digit}*) ('E' '+' | 'E' '-' | 'E') 
 
 StringLiteral    = (  '' {String Ch}* ''  |  '#' {digit}+  |  '#' '$' {hex digit}+  |  ''''  )+
 
-!StringLiteral	 = ( ( '' {String Ch}* '' )
-!		   | ( '#' {digit}+ )
-!		   | ( '#' '$' {hex digit}+ )
-!		   | ( '''' )
-!		   )+
+!StringLiteral   = ( ( '' {String Ch}* '' )
+!                  | ( '#' {digit}+ )
+!                  | ( '#' '$' {hex digit}+ )
+!                  | ( '''' )
+!                  )+
 
 id               = {Id Head}{Id Tail}*
 
 
 
 
-<LCONST>		::= DecLiteral
+<LCONST>                ::= DecLiteral
 
-<ICONST>		::= DecLiteral
-			  | HexLiteral
+<ICONST>                ::= DecLiteral
+                          | HexLiteral
 
-<RCONST>		::= FloatLiteral
-			  | RealLiteral
+<RCONST>                ::= FloatLiteral
+                          | RealLiteral
 
-<SCONST>		::= StringLiteral
-			  | '^' id	! handles characters like ^H and ^V
+<SCONST>                ::= StringLiteral
+                          | '^' id  ! handles characters like ^H and ^V
 
-		       
+
 !------------------------------------------------------------------------------
 
-!<UnitId>		::= id
+!<UnitId>               ::= id
 
-<IdList>		::= <IdList> ',' <RefId>
-			  | <RefId>
+<IdList>                ::= <IdList> ',' <RefId>
+                          | <RefId>
 
-<LabelId>		::= id			  
+<LabelId>               ::= id
 
-<TypeId>		::= id
-!			  | id '.' <RefId>
-			  | NAME
-			  
-<TypeName>		::= <TypeId>
-			  | id '.' <RefId>	!!accepts UnitId.Id as well
-			  
+<TypeId>                ::= id
+!                         | id '.' <RefId>
+                          | NAME
+              
+<TypeName>              ::= <TypeId>
+                          | id '.' <RefId>  !!accepts UnitId.Id as well
 
-<TypeList>		::= <TypeName>
-			  | <TypeList> ',' <TypeName>
-			  
-
-<RefId>			::= id 
-			  | AT | ON | READ | WRITE | READLN | WRITELN | NAME | INDEX 
-			  | VIRTUAL | ABSOLUTE | MESSAGE  | DEFAULT | OVERRIDE | ABSTRACT
-			  | DISPID | REINTRODUCE
-			  | REGISTER | PASCAL | CDECL | STDCALL | SAFECALL
-			  | STRING  | WIDESTRING | ANSISTRING 
-			  | VARIANT | OLEVARIANT
-			  | READONLY | IMPLEMENTS | NODEFAULT | STORED 
-		          | OVERLOAD	| LOCAL	| VARARGS  
-		          | FORWARD
-		          | CONTAINS | PACKAGE | REQUIRES | LIBRARY
-			  | IMPORT | EXPORT
-			  | PLATFORM | DEPRECATED 
-			  | EXTERNAL 
-			   
-		         ! PROTECTED | PUBLISHED | PRIVATE | PUBLIC !THIS FAILS IN FIELDS
+<TypeList>              ::= <TypeName>
+                          | <TypeList> ',' <TypeName>
 
 
-<FieldDesignator>	::= <RefId>
-			  | <FieldDesignator> '.' <RefId>
+<RefId>                 ::= id 
+                          ! This way, some of the directive keywords are reintroduced as usable ids, it seems
+                          | AT | ON | READ | WRITE | READLN | WRITELN | NAME | INDEX 
+                          | VIRTUAL | ABSOLUTE | MESSAGE  | DEFAULT | OVERRIDE | ABSTRACT
+                          | DISPID | REINTRODUCE
+                          | REGISTER | PASCAL | CDECL | STDCALL | SAFECALL
+                          | STRING  | WIDESTRING | ANSISTRING 
+                          | VARIANT | OLEVARIANT
+                          | READONLY | IMPLEMENTS | NODEFAULT | STORED 
+                          | OVERLOAD    | LOCAL | VARARGS  
+                          | FORWARD
+                          | CONTAINS | PACKAGE | REQUIRES | LIBRARY
+                          | IMPORT | EXPORT
+                          | PLATFORM | DEPRECATED 
+                          | EXTERNAL 
+               
+                          ! PROTECTED | PUBLISHED | PRIVATE | PUBLIC !THIS FAILS IN FIELDS
 
 
+<FieldDesignator>       ::= <RefId>
+                          | <FieldDesignator> '.' <RefId>
 
-!* predefined identifiers are no part of a syntax			  
-<RealTypeId>		::= REAL48
-			  | REAL
-			  | SINGLE
-			  | DOUBLE
-			  | EXTENDED
-			  | CURRENCY
-			  | COMP
+
+!* predefined identifiers are no part of a syntax             
+<RealTypeId>            ::= REAL48
+                          | REAL
+                          | SINGLE
+                          | DOUBLE
+                          | EXTENDED
+                          | CURRENCY
+                          | COMP
          
 
-<OrdTypeId>		::= SHORTINT
-			  | SMALLINT
-			  | INTEGER
-			  | BYTE
-			  | LONGINT
-			  | INT64
-			  | WORD
-			  | BOOLEAN
-			  | CHAR
-			  | WIDECHAR
-			  | LONGWORD
-			  | PCHAR
+<OrdTypeId>             ::= SHORTINT
+                          | SMALLINT
+                          | INTEGER
+                          | BYTE
+                          | LONGINT
+                          | INT64
+                          | WORD
+                          | BOOLEAN
+                          | CHAR
+                          | WIDECHAR
+                          | LONGWORD
+                          | PCHAR
 *!
 
 !------------------------------------------------------------------------------
 ! M O D U L E S
 !------------------------------------------------------------------------------
 
-<ObjectPascal>		::= <Program> | <Unit> | <Package> | <Library> 
+<ObjectPascal>          ::= <Program> | <Unit> | <Package> | <Library> 
 
-<Program>		::= <ProgHeader> <OptUsesSection> <Block> '.'
+<Program>               ::= <ProgHeader> <OptUsesSection> <Block> '.'
 
-<ProgHeader>		::= PROGRAM <RefId> <OptProgParamList> ';'
+<ProgHeader>            ::= PROGRAM <RefId> <OptProgParamList> ';'
 
-<OptProgParamList>	::= '(' <IdList> ')' 
-			  | 
-			
+<OptProgParamList>      ::= '(' <IdList> ')' 
+                          |
 
            
-<Unit>			::= <UnitHeader>  <InterfaceSection> <ImplementationSection> <InitSection> '.'
+<Unit>                  ::= <UnitHeader>  <InterfaceSection> <ImplementationSection> <InitSection> '.'
 
-<UnitHeader>		::= UNIT <RefId> <OptPortDirectives> ';'
-           
-
-<Package>		::= <PackageHeader> <OptRequiresClause> <OptContainsClause> END '.'
+<UnitHeader>            ::= UNIT <RefId> <OptPortDirectives> ';'
 
 
-<PackageHeader>		::= PACKAGE <RefId> ';'
-
-<OptRequiresClause>	::= REQUIRES <IdList> ';'
-			  |
-
-<OptContainsClause>	::= CONTAINS <IdList> ';'
-			  |
-
-<LibraryHeader>		::= LIBRARY <RefId>  ';'
-
-<Library>		::= <LibraryHeader> <OptUsesSection> <Block> '.'
+<Package>               ::= <PackageHeader> <OptRequiresClause> <OptContainsClause> END '.'
 
 
+<PackageHeader>         ::= PACKAGE <RefId> ';'
 
-<InterfaceSection>	::= INTERFACE <OptUsesSection> <OptExportDeclList> 
+<OptRequiresClause>     ::= REQUIRES <IdList> ';'
+                          |
 
-<OptUsesSection>	::= <UsesSection>
-			  | 
+<OptContainsClause>     ::= CONTAINS <IdList> ';'
+                          |
+
+<LibraryHeader>         ::= LIBRARY <RefId>  ';'
+
+<Library>               ::= <LibraryHeader> <OptUsesSection> <Block> '.'
+
+<InterfaceSection>      ::= INTERFACE <OptUsesSection> <OptExportDeclList> 
+
+<OptUsesSection>        ::= <UsesSection>
+                          | 
 
 
-<UsesClause>		::= USES <IdList> ';'
-			  | SynError
+<UsesClause>            ::= USES <IdList> ';'
+                          | SynError
 
-<UsesSection>		::= <UsesClause>
-			  | <UsesSection> <UsesClause> 
+<UsesSection>           ::= <UsesClause>
+                          | <UsesSection> <UsesClause> 
 
-<OptExportDeclList>	::= <ExportDeclList> 
-			  |
+<OptExportDeclList>     ::= <ExportDeclList> 
+                          |
 
-<ExportDeclList>	::= <ExportDeclItem> 
-			  | <ExportDeclList>  <ExportDeclItem>
+<ExportDeclList>        ::= <ExportDeclItem> 
+                          | <ExportDeclList>  <ExportDeclItem>
 
-<ExportDeclItem>	::= <ConstSection>
-			  | <TypeSection> 
-			  | <VarSection>
-			  | <CallSection>
-			  | <CallSection>  FORWARD ';'
-		! The forward directive has no effect in the interface section of a unit,
-		! but is not forbidden here. 
+<ExportDeclItem>        ::= <ConstSection>
+                          | <TypeSection> 
+                          | <VarSection>
+                          | <CallSection>
+                          | <CallSection>  FORWARD ';'
+        ! The forward directive has no effect in the interface section of a unit,
+        ! but is not forbidden here. 
 
-<CallSection>		::= <ProcHeading>  
-			  | <FuncHeading>   
+<CallSection>           ::= <ProcHeading>  
+                          | <FuncHeading>   
 
 
 
-<ImplementationSection>	::= IMPLEMENTATION <OptUsesSection> <OptDeclSection> <OptExportBlock>
+<ImplementationSection> ::= IMPLEMENTATION <OptUsesSection> <OptDeclSection> <OptExportBlock>
                          
-<InitSection>		::= INITIALIZATION <StmtList> END
-			  | INITIALIZATION <StmtList> FINALIZATION <StmtList> END
-			  | <CompoundStmt>
-			  | END
+<InitSection>           ::= INITIALIZATION <StmtList> END
+                          | INITIALIZATION <StmtList> FINALIZATION <StmtList> END
+                          | <CompoundStmt>
+                          | END
 
-<Block>			::= <OptDeclSection> <OptExportBlock> <CompoundStmt> <OptExportBlock> 
-
-
-<OptExportBlock>	::= <ExportStmt>
-			  | <OptExportBlock>  <ExportStmt>	
-			  |
-
-<ExportStmt>		::= EXPORTS <ExportList> ';'
+<Block>                 ::= <OptDeclSection> <OptExportBlock> <CompoundStmt> <OptExportBlock> 
 
 
-<ExportList>		::= <ExportItem>
-			  | <ExportList> ',' <ExportItem>
+<OptExportBlock>        ::= <ExportStmt>
+                          | <OptExportBlock>  <ExportStmt>  
+                          |
 
-<ExportItem>		::= id 
-			  | id NAME  '' <ConstExpr> ''
-			  | Id INDEX '' <ConstExpr> ''
-			  |    NAME  '' <ConstExpr> ''
-			  |    INDEX '' <ConstExpr> ''
-                     
+<ExportStmt>            ::= EXPORTS <ExportList> ';'
+
+
+<ExportList>            ::= <ExportItem>
+                          | <ExportList> ',' <ExportItem>
+
+<ExportItem>            ::= id 
+                          | id NAME  '' <ConstExpr> ''
+                          | Id INDEX '' <ConstExpr> ''
+                          |    NAME  '' <ConstExpr> ''
+                          |    INDEX '' <ConstExpr> ''
+
 
 !------------------------------------------------------------------------------
 ! D E C L A R A T I O N S
 !------------------------------------------------------------------------------
 
-<OptDeclSection>	::= <DeclSection>
-			  |
+<OptDeclSection>        ::= <DeclSection>
+                          |
 
-<DeclSection>		::= <DeclItem>
-			  | <DeclSection>  <DeclItem>
+<DeclSection>           ::= <DeclItem>
+                          | <DeclSection>  <DeclItem>
 
-<DeclItem>		::= <LabelSection>
-			  | <ConstSection>
-			  | <TypeSection> 
-			  | <VarSection>
-			  | <ProcedureDeclSection>
-			  |  SynError
-			  
+<DeclItem>              ::= <LabelSection>
+                          | <ConstSection>
+                          | <TypeSection> 
+                          | <VarSection>
+                          | <ProcedureDeclSection>
+                          |  SynError
+              
             
-<LabelSection>		::= LABEL <LabelList> ';'
+<LabelSection>          ::= LABEL <LabelList> ';'
 
-<LabelList>		::= <LabelId>
-			  | <LabelList> ',' <LabelId>
+<LabelList>             ::= <LabelId>
+                          | <LabelList> ',' <LabelId>
 
 !-----CONSTS-------------------------------------------------------------------
 
-<ConstSection>		::= CONST          <ConstantDeclList> 
-			  | RESOURCESTRING <ConstantDeclList>  !all these constants should be string
+<ConstSection>          ::= CONST          <ConstantDeclList> 
+                          | RESOURCESTRING <ConstantDeclList>  !all these constants should be string
 
-<ConstantDeclList>	::= <ConstantDecl>  
-			  | <ConstantDeclList>  <ConstantDecl>	
+<ConstantDeclList>      ::= <ConstantDecl>  
+                          | <ConstantDeclList>  <ConstantDecl>  
 
-<ConstantDecl>		::= <RefId>            '=' <ConstExpr>     <OptPortDirectives> ';'
-			  | <RefId> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
-			  | SynError ';'
+<ConstantDecl>          ::= <RefId>            '=' <ConstExpr>     <OptPortDirectives> ';'
+                          | <RefId> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
+                          | SynError ';'
              
 
-<TypedConstant>		::= <ConstExpr> 
-			  | <ArrayConstant> 
-			  | <RecordConstant>
+<TypedConstant>         ::= <ConstExpr> 
+                          | <ArrayConstant> 
+                          | <RecordConstant>
 
-<ArrayConstant>		::= '(' <TypedConstList> ')'
+<ArrayConstant>         ::= '(' <TypedConstList> ')'
 
-<RecordConstant>	::= '(' <RecordFieldConstList>     ')'
-			  | '(' <RecordFieldConstList> ';' ')'
-			  | '(' ')'	!only to initialize globar vars"
+<RecordConstant>        ::= '(' <RecordFieldConstList>     ')'
+                          | '(' <RecordFieldConstList> ';' ')'
+                          | '(' ')' !only to initialize globar vars"
 
-<RecordFieldConstList>	::= <RecordFieldConstant>
-			  | <RecordFieldConstList> ';' <RecordFieldConstant>
+<RecordFieldConstList>  ::= <RecordFieldConstant>
+                          | <RecordFieldConstList> ';' <RecordFieldConstant>
 
-<RecordFieldConstant>	::= <RefId> ':' <TypedConstant>
+<RecordFieldConstant>   ::= <RefId> ':' <TypedConstant>
 
-<TypedConstList>	::= <TypedConstant>
-			  | <TypedConstList> ',' <TypedConstant>
+<TypedConstList>        ::= <TypedConstant>
+                          | <TypedConstList> ',' <TypedConstant>
 
 
 !-----TYPES--------------------------------------------------------------------
 
 
-<TypeSection>		::= TYPE <TypeDeclList> 
+<TypeSection>           ::= TYPE <TypeDeclList> 
 
-<TypeDeclList>		::= <TypeDecl>  
-			  | <TypeDeclList>  <TypeDecl> 
+<TypeDeclList>          ::= <TypeDecl>  
+                          | <TypeDeclList>  <TypeDecl> 
 
-<TypeDecl>		::= <TypeId> '=' <TypeSpec>
-			  | SynError ';'
-
-
-<TypeSpec>		::= <GenericType>    ';'		  
-			  | <RestrictedType> <OptPortDirectives> ';'	  
-			  | <CallType>       ';' 
-			  | <CallType>       ';' <CallConventions>  ';' 
-			  |  SynError        ';'
-
-<Type>			::= <GenericType> 
- 			  | <CallType>
-
-<TypeRef>		::= <TypeName>
-			  | <StringType>
-			  | <VariantType>
-
-<GenericType>		::= <TypeName>       
-			  | <StringType>
-			  | <VariantType>
-			  | <SubrangeType> 
-			  | <EnumType>
-			  | <StructType>  
-			  | <PointerType> 
-			  | <ClassRefType>
-			  | <ClonedType>
+<TypeDecl>              ::= <TypeId> '=' <TypeSpec>
+                          | SynError ';'
 
 
-<ClonedType>		::= TYPE <TypeRef>
+<TypeSpec>              ::= <GenericType>    ';'          
+                          | <RestrictedType> <OptPortDirectives> ';'      
+                          | <CallType>       ';' 
+                          | <CallType>       ';' <CallConventions>  ';' 
+                          |  SynError        ';'
+
+<Type>                  ::= <GenericType> 
+                          | <CallType>
+
+<TypeRef>               ::= <TypeName>
+                          | <StringType>
+                          | <VariantType>
+
+<GenericType>           ::= <TypeName>       
+                          | <StringType>
+                          | <VariantType>
+                          | <SubrangeType> 
+                          | <EnumType>
+                          | <StructType>  
+                          | <PointerType> 
+                          | <ClassRefType>
+                          | <ClonedType>
 
 
-<StringType>		::= STRING
-			  | ANSISTRING
-			  | WIDESTRING
-			  | STRING '[' <ConstExpr> ']'
-		          
-<VariantType>		::= VARIANT
-			  | OLEVARIANT
+<ClonedType>            ::= TYPE <TypeRef>
+
+
+<StringType>            ::= STRING
+                          | ANSISTRING
+                          | WIDESTRING
+                          | STRING '[' <ConstExpr> ']'
+                  
+<VariantType>           ::= VARIANT
+                          | OLEVARIANT
             
-<OrdinalType>		::= <SubrangeType> | <EnumType> | <TypeName>
+<OrdinalType>           ::= <SubrangeType> | <EnumType> | <TypeName>
 
-<SubrangeType>		::=  <ConstOrdExpr> '..' <ConstOrdExpr>
-			  |  <ConstOrdExpr>  SynError
-			  | '(' <RefId> ')' '..' <ConstOrdExpr>
+<SubrangeType>          ::=  <ConstOrdExpr> '..' <ConstOrdExpr>
+!                         |  <ConstOrdExpr>  SynError
+!                         | '(' <RefId> ')' '..' <ConstOrdExpr>    ! This rule caused a reduce-reduce conflict
 
+! To avoid a reduce-reduce conflict with expressions we sensibly required an enum type to consist of at least two items
+!<EnumType>              ::= '(' <EnumList> ')' 
+!                         | '(' <RefId> ')'    ! Is already covered by '(' <EnumList> ')' where <EnumList> ::= <EnumId> and <EnumId> ::= <RefId>
+<EnumType>              ::= '(' <EnumId> ',' <EnumList> ')'
 
+<EnumList>              ::= <EnumId>  
+                          | <EnumList> ',' <EnumId>
+              
+<EnumId>                ::= <RefId>
+                          | <RefId> '=' <ConstExpr>
 
-
-<EnumType>		::= '(' <EnumList> ')' 
-			  | '(' <RefId> ')'
-
-<EnumList>		::= <EnumId>  
-			  | <EnumList> ',' <EnumId>
-			  
-<EnumId>		::= <RefId>
-			  | <RefId> '=' <ConstExpr>
-
-
-<OptPacked>		::= PACKED
-			  |
-			  
-<StructType>		::= <ArrayType>
-			  | <SetType>
-			  | <FileType>
-			  | <RecType>
+<OptPacked>             ::= PACKED
+                          |
+              
+<StructType>            ::= <ArrayType>
+                          | <SetType>
+                          | <FileType>
+                          | <RecType>
 
 
-<ArrayType>		::= <OptPacked> ARRAY '[' <OrdinalTypeList> ']' OF <Type> 
-			  | <OptPacked> ARRAY OF CONST
-			  | <OptPacked> ARRAY OF <Type> !dynamic array, starting from 0
+<ArrayType>             ::= <OptPacked> ARRAY '[' <OrdinalTypeList> ']' OF <Type> 
+                          | <OptPacked> ARRAY OF CONST
+                          | <OptPacked> ARRAY OF <Type> !dynamic array, starting from 0
 !    FCells: array of array of TIWGridCell;
 
 
-<OrdinalTypeList>	::= <OrdinalType>
-			  | <OrdinalTypeList> ',' <OrdinalType>
+<OrdinalTypeList>       ::= <OrdinalType>
+                          | <OrdinalTypeList> ',' <OrdinalType>
 
 
 
-<RecType>		::= <OptPacked> RECORD <RecFieldList> END <OptPortDirectives>
+<RecType>               ::= <OptPacked> RECORD <RecFieldList> END <OptPortDirectives>
 
-<RecFieldList>		::= 
-			  | <RecField1> 
-			  | <RecField2> 
-			  | <RecField1> ';'                      <RecFieldList>
-			  | <RecField2> ';'                      <RecFieldList>
-			  | <RecField2> ';' <CallConvention>
-			  | <RecField2> ';' <CallConvention> ';' <RecFieldList>
-			  | CASE <Selector> OF <RecVariantList>
+<RecFieldList>          ::= 
+                          | <RecField1> 
+                          | <RecField2> 
+                          | <RecField1> ';'                      <RecFieldList>
+                          | <RecField2> ';'                      <RecFieldList>
+                          | <RecField2> ';' <CallConvention>
+                          | <RecField2> ';' <CallConvention> ';' <RecFieldList>
+                          | CASE <Selector> OF <RecVariantList>
 
-<RecVariantList>	::= 
-		 	  | <RecVariant> 
-			  | <RecVariant> ';' <RecVariantList>
+<RecVariantList>        ::= 
+                          | <RecVariant> 
+                          | <RecVariant> ';' <RecVariantList>
 
-<RecField1>		::= <IdList> ':' <GenericType> <OptPortDirectives>
+<RecField1>             ::= <IdList> ':' <GenericType> <OptPortDirectives>
 
-<RecField2>		::= <IdList> ':' <CallType> 
+<RecField2>             ::= <IdList> ':' <CallType> 
 
-<RecVariant>		::= <ConstExprList> ':' '(' <RecFieldList> ')'
-
-
-
-
-
-<Selector>		::= <RefId> ':' <TypeName> 
-			  | <TypeName> 
-
-
-<SetType>		::= <OptPacked> SET OF <OrdinalType>	
-
-<FileType>		::= <OptPacked> FILE OF <TypeRef>	
-			  | FILE
-
-<PointerType>		::= '^' <TypeRef>			
-
-<CallType>		::= PROCEDURE   <OptFormalParms>                            <OptCallConventions>
-			  | PROCEDURE   <OptFormalParms>                  OF OBJECT <OptCallConventions>
-			  | FUNCTION    <OptFormalParms> ':' <ResultType>           <OptCallConventions>
-			  | FUNCTION    <OptFormalParms> ':' <ResultType> OF OBJECT <OptCallConventions>
+<RecVariant>            ::= <ConstExprList> ':' '(' <RecFieldList> ')'
 
 
 
 
- 
+
+<Selector>              ::= <RefId> ':' <TypeName> 
+                          | <TypeName> 
+
+
+<SetType>               ::= <OptPacked> SET OF <OrdinalType>    
+
+<FileType>              ::= <OptPacked> FILE OF <TypeRef>   
+                          | FILE
+
+<PointerType>           ::= '^' <TypeRef>           
+
+<CallType>              ::= PROCEDURE   <OptFormalParms>                            <OptCallConventions>
+                          | PROCEDURE   <OptFormalParms>                  OF OBJECT <OptCallConventions>
+                          | FUNCTION    <OptFormalParms> ':' <ResultType>           <OptCallConventions>
+                          | FUNCTION    <OptFormalParms> ':' <ResultType> OF OBJECT <OptCallConventions>
+
+
+
+
+
 !-----CLASSES AND OBJECTS------------------------------------------------------
 
-<RestrictedType>	::= <ObjectType>	
-			  | <ClassType>		
-			  | <InterfaceType>	
-			  
-<ObjectType>		::= <OptPacked> OBJECT <OptObjectHeritage> <ObjectMemberList> END
+<RestrictedType>        ::= <ObjectType>    
+                          | <ClassType>     
+                          | <InterfaceType> 
+              
+<ObjectType>            ::= <OptPacked> OBJECT <OptObjectHeritage> <ObjectMemberList> END
 
-<ClassType>		::= CLASS  <OptClassHeritage>  <ClassMemberList>  END
-			  | CLASS  <OptClassHeritage>  
+<ClassType>             ::= CLASS  <OptClassHeritage>  <ClassMemberList>  END
+                          | CLASS  <OptClassHeritage>  
 
-<ClassRefType>		::= CLASS OF <TypeName>
+<ClassRefType>          ::= CLASS OF <TypeName>
 
-<InterfaceType>		::= INTERFACE     <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
-			  | DISPINTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
-			  | INTERFACE
-			  | DISPINTERFACE
-
-
-<OptObjectHeritage>	::= '(' <TypeName> ')'
-			  |
+<InterfaceType>         ::= INTERFACE     <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
+                          | DISPINTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
+                          | INTERFACE
+                          | DISPINTERFACE
 
 
-<OptClassHeritage>	::='(' <TypeList> ')'	
-			  |
-			  
-<OptClassGUID>		::= '[' <ConstStrExpr> ']'	! <SCONST> globally unique identifier
-			  |
-
-<ObjectMemberList>	::=                                <OptFieldList> <OptObjectMethodList> 
-			  | <ObjectMemberList> PUBLIC      <OptFieldList> <OptObjectMethodList>
-			  | <ObjectMemberList> PRIVATE     <OptFieldList> <OptObjectMethodList>
-			  | <ObjectMemberList> PROTECTED   <OptFieldList> <OptObjectMethodList>
-
-<ClassMemberList>	::=                                <OptFieldList> <OptClassMethodList> 
-			  | <ClassMemberList>  PUBLIC      <OptFieldList> <OptClassMethodList>
-			  | <ClassMemberList>  PRIVATE     <OptFieldList> <OptClassMethodList>
-			  | <ClassMemberList>  PROTECTED   <OptFieldList> <OptClassMethodList>
-			  | <ClassMemberList>  PUBLISHED   <OptFieldList> <OptClassMethodList>
+<OptObjectHeritage>     ::= '(' <TypeName> ')'
+                          |
 
 
-<OptFieldList>		::= <FieldList>
-			  |
+<OptClassHeritage>      ::='(' <TypeList> ')'   
+                          |
+              
+<OptClassGUID>          ::= '[' <ConstStrExpr> ']'  ! <SCONST> globally unique identifier
+                          |
 
-<OptObjectMethodList>	::= <ObjectMethodList>  
-			  |
+<ObjectMemberList>      ::=                                <OptFieldList> <OptObjectMethodList> 
+                          | <ObjectMemberList> PUBLIC      <OptFieldList> <OptObjectMethodList>
+                          | <ObjectMemberList> PRIVATE     <OptFieldList> <OptObjectMethodList>
+                          | <ObjectMemberList> PROTECTED   <OptFieldList> <OptObjectMethodList>
 
-<OptClassMethodList>	::=  <ClassMethodList>                 
-			  |
-
-<FieldList>		::= <FieldSpec>
-			  | <FieldList>  <FieldSpec>
-
-<ObjectMethodList>	::= <ObjectMethodSpec> 
-			  | <ObjectMethodList>  <ObjectMethodSpec> 
-
-<ClassMethodList>	::= <ClassMethodSpec> 
-			  | <ClassMethodList>   <ClassMethodSpec> 
-
-
-<FieldSpec>		::= <IdList> ':' <Type> <OptPortDirectives> ';'
-			  | SynError              ';'
+<ClassMemberList>       ::=                                <OptFieldList> <OptClassMethodList> 
+                          | <ClassMemberList>  PUBLIC      <OptFieldList> <OptClassMethodList>
+                          | <ClassMemberList>  PRIVATE     <OptFieldList> <OptClassMethodList>
+                          | <ClassMemberList>  PROTECTED   <OptFieldList> <OptClassMethodList>
+                          | <ClassMemberList>  PUBLISHED   <OptFieldList> <OptClassMethodList>
 
 
-<ObjectMethodSpec>	::= <MethodSpec>        <OptMethodDirectives> 
-			  | <PropertySpec>    <OptPropertyDirectives> 
-			  |  SynError	
+<OptFieldList>          ::= <FieldList>
+                          |
 
-<ClassMethodSpec>	::= <MethodSpec>	<OptMethodDirectives>
-			  | <ResolutionSpec>	<OptMethodDirectives>
-			  |  CLASS <ProcSpec> 	<OptMethodDirectives>
-			  |  CLASS <FuncSpec>	<OptMethodDirectives>
-			  | <PropertySpec>    <OptPropertyDirectives> 
-			  |  SynError	
+<OptObjectMethodList>   ::= <ObjectMethodList>  
+                          |
+
+<OptClassMethodList>    ::=  <ClassMethodList>                 
+                          |
+
+<FieldList>             ::= <FieldSpec>
+                          | <FieldList>  <FieldSpec>
+
+<ObjectMethodList>      ::= <ObjectMethodSpec> 
+                          | <ObjectMethodList>  <ObjectMethodSpec> 
+
+<ClassMethodList>       ::= <ClassMethodSpec> 
+                          | <ClassMethodList>   <ClassMethodSpec> 
+
+
+<FieldSpec>             ::= <IdList> ':' <Type> <OptPortDirectives> ';'
+                          | SynError              ';'
+
+
+<ObjectMethodSpec>      ::= <MethodSpec>        <OptMethodDirectives> 
+                          | <PropertySpec>    <OptPropertyDirectives> 
+                          |  SynError   
+
+<ClassMethodSpec>       ::= <MethodSpec>    <OptMethodDirectives>
+                          | <ResolutionSpec>    <OptMethodDirectives>
+                          |  CLASS <ProcSpec>   <OptMethodDirectives>
+                          |  CLASS <FuncSpec>   <OptMethodDirectives>
+                          | <PropertySpec>    <OptPropertyDirectives> 
+                          |  SynError   
             
-<MethodSpec>		::= <ConstructorSpec>	
-			  | <DestructorSpec>	
-			  | <ProcSpec> 		
-			  | <FuncSpec>		
+<MethodSpec>            ::= <ConstructorSpec>   
+                          | <DestructorSpec>    
+                          | <ProcSpec>      
+                          | <FuncSpec>      
 
 
-<ConstructorSpec>	::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
+<ConstructorSpec>       ::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
 
-<DestructorSpec>	::= DESTRUCTOR  <RefId> <OptFormalParms> ';'
+<DestructorSpec>        ::= DESTRUCTOR  <RefId> <OptFormalParms> ';'
 
-<ProcSpec>		::= PROCEDURE   <RefId> <OptFormalParms> <OptCallConventions> ';'
+<ProcSpec>              ::= PROCEDURE   <RefId> <OptFormalParms> <OptCallConventions> ';'
 
-<FuncSpec>		::= FUNCTION    <RefId> <OptFormalParms> ':' <ResultType> <OptCallConventions> ';'
+<FuncSpec>              ::= FUNCTION    <RefId> <OptFormalParms> ':' <ResultType> <OptCallConventions> ';'
 
-<ResolutionSpec>	::= PROCEDURE   <RefId> '.' <RefId> '=' <RefId> ';'
-			  | FUNCTION    <RefId> '.' <RefId> '=' <RefId> ';'
+<ResolutionSpec>        ::= PROCEDURE   <RefId> '.' <RefId> '=' <RefId> ';'
+                          | FUNCTION    <RefId> '.' <RefId> '=' <RefId> ';'
 
-<PropertySpec>		::= PROPERTY <PropertyDecl> <OptPropSpecifiers> ';' 
+<PropertySpec>          ::= PROPERTY <PropertyDecl> <OptPropSpecifiers> ';' 
 
-<PropertyDecl>		::= <RefId>                     ':' <TypeRef>
-			  | <RefId> '[' <IndexList> ']' ':' <TypeRef>
-			  | <RefId> 
+<PropertyDecl>          ::= <RefId>                     ':' <TypeRef>
+                          | <RefId> '[' <IndexList> ']' ':' <TypeRef>
+                          | <RefId> 
 
-<IndexList>		::= <IndexDecl>
-			  | <IndexList> ';' <IndexDecl>	
-			  
-<IndexDecl>		::= <IdDecl>
-			  | CONST <IdDecl>
+<IndexList>             ::= <IndexDecl>
+                          | <IndexList> ';' <IndexDecl> 
 
-<IdDecl>		::= <IdList> ':' <Type>
+<IndexDecl>             ::= <IdDecl>
+                          | CONST <IdDecl>
 
-
-<OptPropSpecifiers>	::= <PropertySpecifiers>
-			  | 
-
-<PropertySpecifiers>	::= <PropertySpecifier>
-			  | <PropertySpecifiers>  <PropertySpecifier>
+<IdDecl>                ::= <IdList> ':' <Type>
 
 
-<PropertySpecifier>	::= INDEX      <ConstExpr>	!StorageSpecifier
-			  | READ       <FieldDesignator>
-			  | WRITE      <FieldDesignator>
-			  | STORED     <FieldDesignator>
-!			  | STORED     <ConstExpr>	
-			  | DEFAULT    <ConstExpr> 
-			  | NODEFAULT
-			  | WRITEONLY 	
-			  | READONLY 	
-			  | DISPID <ConstExpr>        !Only within InterfaceTypes              
-			  | <ImplementsSpecifier>
+<OptPropSpecifiers>     ::= <PropertySpecifiers>
+                          | 
 
-<ImplementsSpecifier>	::= IMPLEMENTS <TypeRef>	
-			  | <ImplementsSpecifier> ',' <TypeRef>
-		! The implements directive must be the last specifier in the property 
-		! declaration and can list more than one interface, separated by commas
+<PropertySpecifiers>    ::= <PropertySpecifier>
+                          | <PropertySpecifiers>  <PropertySpecifier>
+
+
+<PropertySpecifier>     ::= INDEX      <ConstExpr>  !StorageSpecifier
+                          | READ       <FieldDesignator>
+                          | WRITE      <FieldDesignator>
+                          | STORED     <FieldDesignator>
+!                         | STORED     <ConstExpr>  
+                          | DEFAULT    <ConstExpr> 
+                          | NODEFAULT
+                          | WRITEONLY   
+                          | READONLY    
+                          | DISPID <ConstExpr>        !Only within InterfaceTypes              
+                          | <ImplementsSpecifier>
+
+<ImplementsSpecifier>   ::= IMPLEMENTS <TypeRef>    
+                          | <ImplementsSpecifier> ',' <TypeRef>
+        ! The implements directive must be the last specifier in the property 
+        ! declaration and can list more than one interface, separated by commas
 
 !-----VARS---------------------------------------------------------------------
 
-<VarSection>		::= VAR <VarDeclList>
-			  | THREADVAR <ThreadVarDeclList> 
+<VarSection>            ::= VAR <VarDeclList>
+                          | THREADVAR <ThreadVarDeclList> 
 
-<VarDeclList>		::= <VarDecl>
-			  | <VarDeclList>  <VarDecl>	
+<VarDeclList>           ::= <VarDecl>
+                          | <VarDeclList>  <VarDecl>    
 
-<VarDecl>		::= <IdList> ':' <Type> <OptAbsoluteClause> <OptPortDirectives> ';'
-			  | <IdList> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
-			  | <IdList> ':' <TypeSpec> 
-			  | SynError ';'
+<VarDecl>               ::= <IdList> ':' <Type> <OptAbsoluteClause> <OptPortDirectives> ';'
+                          | <IdList> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
+                          | <IdList> ':' <TypeSpec> 
+                          | SynError ';'
 
-<ThreadVarDeclList>	::= <ThreadVarDecl> 
-			  | <ThreadVarDeclList>  <ThreadVarDecl> 
+<ThreadVarDeclList>     ::= <ThreadVarDecl> 
+                          | <ThreadVarDeclList>  <ThreadVarDecl> 
 
-<ThreadVarDecl>		::= <IdList> ':' <TypeSpec> 
-			  | SynError ';'
+<ThreadVarDecl>         ::= <IdList> ':' <TypeSpec> 
+                          | SynError ';'
 
 
 
-<OptAbsoluteClause>	::= ABSOLUTE <RefId>
-!			  | ABSOLUTE <ConstExpr>	!on windows only, not on linux
-			  |
+<OptAbsoluteClause>     ::= ABSOLUTE <RefId>
+!                         | ABSOLUTE <ConstExpr>    !on windows only, not on linux
+                          |
 
 
 
@@ -622,393 +622,394 @@ id               = {Id Head}{Id Tail}*
 ! E X P R E S S I O N S
 !------------------------------------------------------------------------------
 
-<ConstExpr>		::= <Expr>
+<ConstExpr>             ::= <Expr>
 
-<ConstOrdExpr>		::= <AddExpr>
+<ConstOrdExpr>          ::= <AddExpr>
 
-<ConstStrExpr>		::= <AddExpr>
+<ConstStrExpr>          ::= <AddExpr>
 
-<Expr>			::= <AddExpr>
-			  | <AddExpr> <RelOp> <AddExpr>
-			  | SynError
+<Expr>                  ::= <AddExpr>
+                          | <AddExpr> <RelOp> <AddExpr>
+                          | SynError
 
-<AddExpr>		::= <MulExpr>
-			  | <AddExpr> <AddOp> <MulExpr>
+<AddExpr>               ::= <MulExpr>
+                          | <AddExpr> <AddOp> <MulExpr>
 
-<MulExpr>		::= <Factor>
-			  | <MulExpr> <MulOp> <Factor>
-
-
-<Factor>		::= NIL
-			  | <ICONST>
-			  | <RCONST>
-			  | <SCONST>
-			  | <Designator>
-			  | <SetConstructor>
-			  | '@' <Designator>
-			  | '@' '@' <Designator> !returns memory address of a procedural variable 
-			  | '(' <Expr> ')'
-			  | '(' <Expr> ')' '^'
-			  | '+' <Factor>
-			  | '-' <Factor>
-			  | NOT <Factor>
-			!---PortArray	  
+<MulExpr>               ::= <Factor>
+                          | <MulExpr> <MulOp> <Factor>
 
 
-<Designator>		::= <FieldDesignator>
-			  | <Designator> '.' <FieldDesignator>
-			  | <Designator> '^'
-			  | <Designator> '[' <ExprList> ']'
-			  | <Designator> '(' <ExprList> ')' !FunctionCall or TypeCast
-			  | <Designator> '('  ')'           !FunctionCall 
-			  | <Designator> AS <TypeRef>	!eg "with Source as TListItem do ..."
-			  | '(' <Designator> ')'
-			  | INHERITED <Designator>
+<Factor>                ::= NIL
+                          | <ICONST>
+                          | <RCONST>
+                          | <SCONST>
+                          | <Designator>
+                          | <SetConstructor>
+                          | '@' <Designator>
+                          | '@' '@' <Designator> !returns memory address of a procedural variable 
+                          | '(' <Expr> ')'
+                          | '(' <Expr> ')' '^'
+                          | '+' <Factor>
+                          | '-' <Factor>
+                          | NOT <Factor>
+            !---PortArray     
 
 
-<AsnOp>			::= ':=' 
-			  | '+=' | '-=' | '*=' | '/=' 
+<Designator>           ::= <FieldDesignator>
+                         | <Designator> '.' <FieldDesignator>    ! Seemed to be an ambiguous redundancy with the <FieldDesignator>
+!<Designator>            ::= <RefId>
+!                          | <Designator> '.' <RefId>
+                          | <Designator> '^'
+                          | <Designator> '[' <ExprList> ']'
+                          | <Designator> '(' <ExprList> ')' !FunctionCall or TypeCast
+                          | <Designator> '('  ')'           !FunctionCall 
+                          | <Designator> AS <TypeRef>   !eg "with Source as TListItem do ..."
+                          | '(' <Designator> ')'
+                          | INHERITED <Designator>
 
 
-<RelOp>			::= '=' | '>' | '<' | '<=' | '>=' | '<>'
-	 	 	  | IN  | IS  |  AS  
-			
-<AddOp>			::= '+' |'-'
-			  | OR  | XOR 
-			
-<MulOp>			::='*' | '/'
-			  | DIV | MOD | AND | SHL | SHR
-			
-			
-                        
-
-<SetConstructor>	::= '[' <SetElementList> ']'
-			  | '[' ']'
-
-<SetElementList>	::= <SetElement>
-			  | <SetElementList> ',' <SetElement>
-			  
-
-<SetElement>		::= <Expr>
-			  | <Expr> '..' <Expr>
-
-<ExprList>		::= <Expr> 
-			  | <ExprList> ',' <Expr>
-			  
-<FmtExpr>		::= <Expr> 
-			  | <Expr> ':' <Expr>
-			  | <Expr> ':' <Expr> ':' <Expr>
-
-<FmtExprList>		::= <FmtExpr> 
-			  | <FmtExprList> ',' <FmtExpr>
+<AsnOp>                 ::= ':=' 
+                          | '+=' | '-=' | '*=' | '/=' 
 
 
-<ConstExprList>		::= <ConstExpr> 
-			  | <ConstExprList> ',' <ConstExpr>
+<RelOp>                 ::= '=' | '>' | '<' | '<=' | '>=' | '<>'
+                          | IN  | IS  |  AS  
+            
+<AddOp>                 ::= '+' |'-'
+                          | OR  | XOR 
+            
+<MulOp>                 ::='*' | '/'
+                          | DIV | MOD | AND | SHL | SHR
+            
+                
+
+<SetConstructor>        ::= '[' <SetElementList> ']'
+                          | '[' ']'
+
+<SetElementList>        ::= <SetElement>
+                          | <SetElementList> ',' <SetElement>
+              
+
+<SetElement>            ::= <Expr>
+                          | <Expr> '..' <Expr>
+
+<ExprList>              ::= <Expr> 
+                          | <ExprList> ',' <Expr>
+              
+<FmtExpr>               ::= <Expr> 
+                          | <Expr> ':' <Expr>
+                          | <Expr> ':' <Expr> ':' <Expr>
+
+<FmtExprList>           ::= <FmtExpr> 
+                          | <FmtExprList> ',' <FmtExpr>
+
+
+<ConstExprList>         ::= <ConstExpr> 
+                          | <ConstExprList> ',' <ConstExpr>
 
 !------------------------------------------------------------------------------
 ! S T A T E M E N T S
 !------------------------------------------------------------------------------
 
 
-<StmtList>		::= <Statement> 
-			  | <StmtList> ';' <Statement> 
+<StmtList>              ::= <Statement> 
+                          | <StmtList> ';' <Statement> 
 
-<Statement>		::= <Label> <Statement>
-			  | <AssignmentStmt>
-			  | <CallStmt>
-			  | <GotoStatement>
-			  | <CompoundStmt>
-			  | <IfStatement>
-			  | <CaseStatement>
-			  | <ForStatement>
-			  | <WhileStatement>
-			  | <RepeatStatement>
-			  | <WithStatement>
-			  | <TryFinallyStmt>
-			  | <TryExceptStmt>
-			  | <RaiseStmt>
-			  | <AssemblerStmt>
-			  |  SynError
-			  |
-			  
-<Label>			::= <LCONST>  ':' 
-			  | <LabelId> ':' 
-			  
+<Statement>             ::= <Label> <Statement>
+                          | <AssignmentStmt>
+                          | <CallStmt>
+                          | <GotoStatement>
+                          | <CompoundStmt>
+                          | <IfStatement>
+                          | <CaseStatement>
+                          | <ForStatement>
+                          | <WhileStatement>
+                          | <RepeatStatement>
+                          | <WithStatement>
+                          | <TryFinallyStmt>
+                          | <TryExceptStmt>
+                          | <RaiseStmt>
+                          | <AssemblerStmt>
+                          |  SynError
+                          |
+              
+<Label>                 ::= <LCONST>  ':' 
+                          | <LabelId> ':' 
+              
 
-<AssignmentStmt>	::= <Designator> <AsnOp> <Expr>
-			  | '@' <RefId> ':=' <Factor> 	
+<AssignmentStmt>        ::= <Designator> <AsnOp> <Expr>
+                          | '@' <RefId> ':=' <Factor>   
 
-			  
-		!EXAMPLE of this '@' <RefId>, that calls the GetProcAddress 
-		!function and points a var StrComp to the result.
-		!  var StrComp: function(Str1, Str2: PChar): Integer;
-		!   ...
-		!  @StrComp := GetProcAddress(KernelHandle, 'lstrcmpi');
+              
+        !EXAMPLE of this '@' <RefId>, that calls the GetProcAddress 
+        !function and points a var StrComp to the result.
+        !  var StrComp: function(Str1, Str2: PChar): Integer;
+        !   ...
+        !  @StrComp := GetProcAddress(KernelHandle, 'lstrcmpi');
 
-			  
-			  
-<CallStmt>		::= <Designator> 		!procedure, function, method, typecast
-			  | WRITE   '(' <FmtExprList> ')'
-			  | WRITELN '(' <FmtExprList> ')'
-!			  | INHERITED <CallStmt>
-			  | INHERITED
-
-
-<GotoStatement>		::= GOTO <LCONST> 
-			  | GOTO <RefId> 			  
-
-<CompoundStmt>		::= BEGIN <StmtList> END
+              
+              
+<CallStmt>              ::= <Designator>        !procedure, function, method, typecast
+                          | WRITE   '(' <FmtExprList> ')'
+                          | WRITELN '(' <FmtExprList> ')'
+!                         | INHERITED <CallStmt>
+                          | INHERITED
 
 
-<IfStatement>		::= IF <Expr> THEN <Statement> ELSE <Statement>
-	                  | IF <Expr> THEN <Statement>
-	                  | IF SynError THEN <Statement>
+<GotoStatement>         ::= GOTO <LCONST> 
+                          | GOTO <RefId>              
 
-		  
-<CaseStatement>		::= CASE <Expr> OF <CaseList> <OtherWise> END
-
-<ForStatement>		::= FOR <RefId> ':=' <Expr> <Dir> <Expr> DO <Statement>
-
-<Dir>			::= TO | DOWNTO
-
-<WhileStatement>	::= WHILE <Expr> DO <Statement>
-
-<WithStatement>		::= WITH <DesignatorList> DO <Statement> 
-
-<DesignatorList>	::= <Designator>
-			  | <DesignatorList> ',' <Designator>
-
-<RepeatStatement>	::= REPEAT <StmtList> UNTIL <Expr>
+<CompoundStmt>          ::= BEGIN <StmtList> END
 
 
-<AssemblerStmt>		::= ASM <AsmLanguage> END
+<IfStatement>           ::= IF <Expr> THEN <Statement> ELSE <Statement>
+                          | IF <Expr> THEN <Statement>
+                          | IF SynError THEN <Statement>
+
+          
+<CaseStatement>         ::= CASE <Expr> OF <CaseList> <OtherWise> END
+
+<ForStatement>          ::= FOR <RefId> ':=' <Expr> <Dir> <Expr> DO <Statement>
+
+<Dir>                   ::= TO | DOWNTO
+
+<WhileStatement>        ::= WHILE <Expr> DO <Statement>
+
+<WithStatement>         ::= WITH <DesignatorList> DO <Statement> 
+
+<DesignatorList>        ::= <Designator>
+                          | <DesignatorList> ',' <Designator>
+
+<RepeatStatement>       ::= REPEAT <StmtList> UNTIL <Expr>
+
+
+<AssemblerStmt>         ::= ASM <AsmLanguage> END
                 
-	  
+      
 
-<OtherWise>		::= OTHERWISE <StmtList>
-			  | ELSE      <StmtList>     
-			  |
+<OtherWise>             ::= OTHERWISE <StmtList>
+                          | ELSE      <StmtList>     
+                          |
 
-<CaseList>		::= <CaseSelector> 
-			  | <CaseList> ';' <CaseSelector>
-			  | <CaseList> ';' 
-
-
-<CaseSelector>		::= <CaseLabels> ':' <Statement> 
-
-<CaseLabels>		::= <CaseLabel>
-			  | <CaseLabels> ',' <CaseLabel>
-			  
-<CaseLabel>		::= <ConstExpr>
-			  | <ConstExpr> '..' <ConstExpr>
-			  
-
-<RaiseStmt>		::= RAISE SynError	![object] [AT address]
-			  | RAISE <OptExceptInstance> 
-			  | RAISE <OptExceptInstance> AT <Address>
-
-<TryFinallyStmt>	::= TRY <StmtList> FINALLY <StmtList> END
-
-<TryExceptStmt>		::= TRY <StmtList> EXCEPT  <ExceptionBlock> <OptExceptionElse> END
-
-<ExceptionBlock>	::= <ExceptionStmt>
-			  | <ExceptionBlock> ';' <ExceptionStmt>
-
-<ExceptionStmt>		::= ON <Selector> DO <Statement>
-!			  | ELSE <Statement> 
-			  | <Statement> 
-
-<OptExceptionElse>	::= ELSE <StmtList> 
-			  |
-
-<OptExceptInstance>	::= <Designator> !usually a method call (??)
-			  |
-
-<Address>		::= <Designator> !usually a functiion call, returning an adress
+<CaseList>              ::= <CaseSelector> 
+                          | <CaseList> ';' <CaseSelector>
+                          | <CaseList> ';' 
 
 
+<CaseSelector>          ::= <CaseLabels> ':' <Statement> 
+
+<CaseLabels>            ::= <CaseLabel>
+                          | <CaseLabels> ',' <CaseLabel>
+              
+<CaseLabel>             ::= <ConstExpr>
+                          | <ConstExpr> '..' <ConstExpr>
+              
+
+<RaiseStmt>             ::= RAISE SynError  ![object] [AT address]
+                          | RAISE <OptExceptInstance> 
+                          | RAISE <OptExceptInstance> AT <Address>
+
+<TryFinallyStmt>        ::= TRY <StmtList> FINALLY <StmtList> END
+
+<TryExceptStmt>         ::= TRY <StmtList> EXCEPT  <ExceptionBlock> <OptExceptionElse> END
+
+<ExceptionBlock>        ::= <ExceptionStmt>
+                          | <ExceptionBlock> ';' <ExceptionStmt>
+
+<ExceptionStmt>         ::= ON <Selector> DO <Statement>
+!                         | ELSE <Statement> 
+                          | <Statement> 
+
+<OptExceptionElse>      ::= ELSE <StmtList> 
+                          |
+
+<OptExceptInstance>     ::= <Designator> !usually a method call (??)
+                          |
+
+<Address>               ::= <Designator> !usually a function call, returning an address
 
 
 
 
-<OptSemi>		::= ';'
-			  |
+
+
+<OptSemi>               ::= ';'
+                          |
 
 !------------------------------------------------------------------------------
 ! R O U T I N E S
 !------------------------------------------------------------------------------
 
-<ProcedureDeclSection>	::= <ProcedureDecl>
-			  | <FunctionDecl>
-			  | <MethodDecl>
+<ProcedureDeclSection>  ::= <ProcedureDecl>
+                          | <FunctionDecl>
+                          | <MethodDecl>
                      
                      
-<ProcedureDecl>		::= <ProcHeading>  <CallBody> <OptSemi>
+<ProcedureDecl>         ::= <ProcHeading>  <CallBody> <OptSemi>
 
-<FunctionDecl>		::= <FuncHeading>  <CallBody> <OptSemi>
-			    
-<MethodDecl>		::= <MethHeading>  <CallBody> <OptSemi>
-			    
+<FunctionDecl>          ::= <FuncHeading>  <CallBody> <OptSemi>
+                
+<MethodDecl>            ::= <MethHeading>  <CallBody> <OptSemi>
+                
 
-<ProcHeading>		::= PROCEDURE <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
-			  | <ProcHeading> <CallDirectives> <OptSemi>
-
-
-<FuncHeading>		::= FUNCTION  <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-			  | FUNCTION  <RefId> ';'
-			  | <FuncHeading> <CallDirectives> <OptSemi>
-			  !
-			  ! if the heading is 'incomplete' it was declared before
-			  ! and must be followed by a <CallBody> TO BE IMPROVED
-
-<MethHeading>		::= PROCEDURE         <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
-			  | FUNCTION          <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-			  | FUNCTION          <RefId> '.' <RefId>  ';'
-			  | CONSTRUCTOR       <RefId> '.' <RefId> <OptFormalParms>		    <OptCallSpecifiers> ';'
-			  | DESTRUCTOR        <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
-			  | CLASS PROCEDURE   <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
-			  | CLASS FUNCTION    <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-			  | <MethHeading> <CallDirectives> ';'
-			  !
-			  ! the class methods operates on classes instead of objects
-
-<ResultType>		::= <TypeRef>
+<ProcHeading>           ::= PROCEDURE <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
+                          | <ProcHeading> <CallDirectives> <OptSemi>
 
 
-<OptFormalParms>	::= '(' <FormalParmList> ')'
-			  | '(' ')'
-			  |
-			  
+<FuncHeading>           ::= FUNCTION  <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+                          | FUNCTION  <RefId> ';'
+                          | <FuncHeading> <CallDirectives> <OptSemi>
+              !
+              ! if the heading is 'incomplete' it was declared before
+              ! and must be followed by a <CallBody> TO BE IMPROVED
 
-<FormalParmList>	::= <FormalParm>
-			  | <FormalParmList> ';' <FormalParm>
+<MethHeading>           ::= PROCEDURE         <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
+                          | FUNCTION          <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+                          | FUNCTION          <RefId> '.' <RefId>  ';'
+                          | CONSTRUCTOR       <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
+                          | DESTRUCTOR        <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
+                          | CLASS PROCEDURE   <RefId> '.' <RefId> <OptFormalParms>                  <OptCallSpecifiers> ';'
+                          | CLASS FUNCTION    <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+                          | <MethHeading> <CallDirectives> ';'
+              !
+              ! the class methods operates on classes instead of objects
 
-<FormalParm>		::= <Parameter>
-			  | CONST <Parameter>
-			  | VAR   <Parameter>
-			  | OUT   <Parameter>
+<ResultType>            ::= <TypeRef>
 
-<Parameter>		::= <IdList>
-			  | <IdList> ':' <ParmType>
-			  | <IdList> ':' <TypeRef> '=' <ConstExpr>
 
-<ParmType>		::= <TypeRef>
-			  | ARRAY OF <TypeRef>
-			  | ARRAY OF CONST
-			  | FILE
-			  
-<CallBody>		::= <OptDeclSection> <CompoundStmt>
-			  | <OptDeclSection> <AssemblerStmt>
-			  | <ExternalDeclaration>
-			  | FORWARD
+<OptFormalParms>        ::= '(' <FormalParmList> ')'
+                          | '(' ')'
+                          |
+              
+
+<FormalParmList>        ::= <FormalParm>
+                          | <FormalParmList> ';' <FormalParm>
+
+<FormalParm>            ::= <Parameter>
+                          | CONST <Parameter>
+                          | VAR   <Parameter>
+                          | OUT   <Parameter>
+
+<Parameter>             ::= <IdList>
+                          | <IdList> ':' <ParmType>
+                          | <IdList> ':' <TypeRef> '=' <ConstExpr>
+
+<ParmType>              ::= <TypeRef>
+                          | ARRAY OF <TypeRef>
+                          | ARRAY OF CONST
+                          | FILE
+              
+<CallBody>              ::= <OptDeclSection> <CompoundStmt>
+                          | <OptDeclSection> <AssemblerStmt>
+                          | <ExternalDeclaration>
+                          | FORWARD
 
 !-----DIRECTIVES---------------------------------------------------------------
 ! <PortDirectives> are to produce warnings at compile time when source code is compiled 
 ! in the {$HINTS ON} {$WARNINGS ON} state. It can be applied to declarations
 !
 ! <PortDirectives are accepted:
-!	WITHIN const and var declarations (not after), 
-!	WITHIN unit headers (not after)
-!	AFTER function/procedure headings (not within) (ONE terminating ';' is optional)
+!   WITHIN const and var declarations (not after), 
+!   WITHIN unit headers (not after)
+!   AFTER function/procedure headings (not within) (ONE terminating ';' is optional)
 ! <PortDirectives are NOT accepted:
-! 	in/after type declarations
+!   in/after type declarations
 !------------------------------------------------------------------------------
 
 
-<OptPortDirectives>	::= <PortDirectives>
-			  |
-			  
-<PortDirectives>	::= <PortDirective>
-			  | <PortDirectives> <PortDirective>
+<OptPortDirectives>     ::= <PortDirectives>
+                          |
+              
+<PortDirectives>        ::= <PortDirective>
+                          | <PortDirectives> <PortDirective>
 
-<PortDirective>		::= PLATFORM    ! to warn that it is specific to a particular operating environment (such as Windows or Linux)
-			  | PLATFORM '=' <ConstExpr>
-			  | DEPRECATED  ! to warn it is obsolete or supported only for backward compatibility
-			  | LIBRARY  	! to warn dependencies on a particular library or component framework (such as CLX).
-
-
-
-!------------------------
-			  
-<OptMethodDirectives>	::=  <MethodDirectives> 
-			   | <OptMethodDirectives> <PortDirective> ';'
-			   |
-
-<MethodDirectives>	::= <MethodDirective> ';'
-			  | <MethodDirectives>     <MethodDirective> ';'
-
-<MethodDirective>	::= VIRTUAL 
-			  | VIRTUAL <ConstExpr> 
-			  | DYNAMIC 		!for classes only
-			  | OVERRIDE 
-			  | ABSTRACT 
-			  | MESSAGE <ConstExpr> 
-			  | OVERLOAD 
-			  | REINTRODUCE 
-			  | DISPID <ConstExpr> !only within an <InterfaceType>
-			  | <CallConvention> 
-		!TODO NOT ALL THESE METHOD DIRECTIVES CAN BE COMBINED WITH EACH OTHER
-
-!------------------------
-
-<OptPropertyDirectives>	::=  <PropertyDirective> ';'
-			   | <OptPropertyDirectives>  <PortDirective> ';'
-			   | 
-
-<PropertyDirective>	::= DEFAULT 
+<PortDirective>         ::= PLATFORM    ! to warn that it is specific to a particular operating environment (such as Windows or Linux)
+                          | PLATFORM '=' <ConstExpr>
+                          | DEPRECATED  ! to warn it is obsolete or supported only for backward compatibility
+                          | LIBRARY     ! to warn dependencies on a particular library or component framework (such as CLX).
 
 
 
 !------------------------
-			  
-<ExternalDeclaration>	::= EXTERNAL
-			  | EXTERNAL <ConstStrExpr>
-			  | EXTERNAL <ConstStrExpr> NAME <ConstStrExpr>
-!			  | EXTERNAL <SCONST>
-!			  | EXTERNAL <SCONST> NAME <SCONST>			  
+              
+<OptMethodDirectives>   ::=  <MethodDirectives> 
+                          | <OptMethodDirectives> <PortDirective> ';'
+                          |
+
+<MethodDirectives>      ::= <MethodDirective> ';'
+                          | <MethodDirectives>     <MethodDirective> ';'
+
+<MethodDirective>       ::= VIRTUAL 
+                          | VIRTUAL <ConstExpr> 
+                          | DYNAMIC         !for classes only
+                          | OVERRIDE 
+                          | ABSTRACT 
+                          | MESSAGE <ConstExpr> 
+                          | OVERLOAD 
+                          | REINTRODUCE 
+                          | DISPID <ConstExpr> !only within an <InterfaceType>
+                          | <CallConvention> 
+        !TODO NOT ALL THESE METHOD DIRECTIVES CAN BE COMBINED WITH EACH OTHER
+
+!------------------------
+
+<OptPropertyDirectives> ::= <PropertyDirective> ';'
+                          | <OptPropertyDirectives>  <PortDirective> ';'
+                          | 
+
+<PropertyDirective>     ::= DEFAULT 
+
+
+
+!------------------------
+              
+<ExternalDeclaration>   ::= EXTERNAL
+                          | EXTERNAL <ConstStrExpr>
+                          | EXTERNAL <ConstStrExpr> NAME <ConstStrExpr>
+!                         | EXTERNAL <SCONST>
+!                         | EXTERNAL <SCONST> NAME <SCONST>           
 
 
 !------------------------
 
-<CallDirectives>	::= <CallDirective>
-			  | <CallDirectives> <CallDirective>
+<CallDirectives>        ::= <CallDirective>
+                          | <CallDirectives> <CallDirective>
 
-<CallDirective>		::= <CallConvention>
-			  | <CallObsolete>
-			  | <PortDirective>
-			  | VARARGS	!works only with external routines and cdecl calling convention.
-			  | LOCAL	!prevents exporting in a library
-			  | <SCONST>	!for PasPro only
-			  | OVERLOAD 
+<CallDirective>         ::= <CallConvention>
+                          | <CallObsolete>
+                          | <PortDirective>
+                          | VARARGS !works only with external routines and cdecl calling convention.
+                          | LOCAL   !prevents exporting in a library
+                          | <SCONST>    !for PasPro only
+                          | OVERLOAD 
 
-<OptCallSpecifiers>	::= <CallSpecifier>
-			  | <OptCallSpecifiers> <CallSpecifier>
-			  |
-			  
-<CallSpecifier>		::= <CallConvention>
-			  | <CallObsolete>
-			  
+<OptCallSpecifiers>     ::= <CallSpecifier>
+                          | <OptCallSpecifiers> <CallSpecifier>
+                          |
+              
+<CallSpecifier>         ::= <CallConvention>
+                          | <CallObsolete>
+              
 <CallConventions>       ::= <CallConvention>
-			  | <CallConventions> <CallConvention>
+                          | <CallConventions> <CallConvention>
 
 <OptCallConventions>    ::= <CallConvention>
-			  | <OptCallConventions> <CallConvention>
-			  |
-			  
-			  
-						![ParmOrder]	[CleanUp]	[RegParms]	
-<CallConvention>	::= REGISTER		!Left-to-right	Routine		Yes
-			  | PASCAL		!Left-to-right	Routine		No
-			  | CDECL		!Right-to-left	Caller		No
-			  | STDCALL		!Right-to-left	Routine		No
-			  | SAFECALL		!Right-to-left	Routine		No
+                          | <OptCallConventions> <CallConvention>
+                          |
+              
+              
+                                        ![ParmOrder]    [CleanUp]   [RegParms]  
+<CallConvention>        ::= REGISTER    !Left-to-right  Routine     Yes
+                          | PASCAL      !Left-to-right  Routine     No
+                          | CDECL       !Right-to-left  Caller      No
+                          | STDCALL     !Right-to-left  Routine     No
+                          | SAFECALL    !Right-to-left  Routine     No
 
-<CallObsolete>		::= INLINE	!for backward compatibility only; has no effect on the compiler.
-			  | ASSEMBLER	!for backward compatibility only; has no effect on the compiler.
-			  | NEAR	!for 16-bits programming only, has no effect in 32 bit applications
-			  | FAR		!for 16-bits programming only, has no effect in 32 bit applications
-			  | EXPORT	!for 16-bits programming only, has no effect in 32 bit applications
+<CallObsolete>          ::= INLINE  !for backward compatibility only; has no effect on the compiler.
+                          | ASSEMBLER   !for backward compatibility only; has no effect on the compiler.
+                          | NEAR    !for 16-bits programming only, has no effect in 32 bit applications
+                          | FAR     !for 16-bits programming only, has no effect in 32 bit applications
+                          | EXPORT  !for 16-bits programming only, has no effect in 32 bit applications
 
 
 !------------------------------------------------------------------------------
@@ -1022,44 +1023,44 @@ id               = {Id Head}{Id Tail}*
 ! that forces the lexical scanner to recognize an assembler specific list of keywords 
 ! Unfortunately, this is not supported by the Gold parser
 
-<AsmLanguage>		::= <AsmInstruction>
-			  | <AsmLanguage> <AsmInstruction>
+<AsmLanguage>           ::= <AsmInstruction>
+                          | <AsmLanguage> <AsmInstruction>
 
-<AsmInstruction>	::= <AsmItem>
-			  | <AsmInstruction> <AsmItem>
-			  | <AsmInstruction> ',' <AsmItem>
-			  | <AsmInstruction> ';' 
+<AsmInstruction>        ::= <AsmItem>
+                          | <AsmInstruction> <AsmItem>
+                          | <AsmInstruction> ',' <AsmItem>
+                          | <AsmInstruction> ';' 
 
-<AsmItem>		::= <AsmLabel>
-			  | <AsmExpr>
+<AsmItem>               ::= <AsmLabel>
+                          | <AsmExpr>
 
-<AsmLabel>		::= <AsmLocal> ':'
-			  | <AsmId>    ':'
+<AsmLabel>              ::= <AsmLocal> ':'
+                          | <AsmId>    ':'
 
-<AsmExpr>		::= <AsmFactor>
-			  | '-' <AsmFactor>
-			  | <AsmExpr> '+' <AsmFactor>
-			  | <AsmExpr> '*' <AsmFactor>
-			  | <AsmExpr> '-' <AsmFactor>
-			  | <AsmExpr> '.' <AsmFactor>
-			  | '[' <AsmExpr> ']'
-			  | '(' <AsmExpr> ')'
-			  ! <AsmId> '(' <AsmExpr> ')'
-			  | SynError
+<AsmExpr>               ::= <AsmFactor>
+                          | '-' <AsmFactor>
+                          | <AsmExpr> '+' <AsmFactor>
+                          | <AsmExpr> '*' <AsmFactor>
+                          | <AsmExpr> '-' <AsmFactor>
+                          | <AsmExpr> '.' <AsmFactor>
+                          | '[' <AsmExpr> ']'
+                          | '(' <AsmExpr> ')'
+                          ! <AsmId> '(' <AsmExpr> ')'
+                          | SynError
 
-<AsmFactor>		::= <AsmId>
-			  | <AsmLocal>
-			  | <ICONST>
-			  | <RCONST>
-			  | <SCONST>
+<AsmFactor>             ::= <AsmId>
+                          | <AsmLocal>
+                          | <ICONST>
+                          | <RCONST>
+                          | <SCONST>
 
-<AsmId>			::= <RefId>
-			  | '&' <RefId>	
-			  | REPEAT | WHILE | IF
-			  | AND | OR | XOR | SHR | SHL | DIV | NOT
-			  ! plus many other keywords as well that may serve as an identifier
+<AsmId>                 ::= <RefId>
+                          | '&' <RefId> 
+                          | REPEAT | WHILE | IF
+                          | AND | OR | XOR | SHR | SHL | DIV | NOT
+              ! plus many other keywords as well that may serve as an identifier
 
-<AsmLocal>		::= '@' <LCONST>
-			  | '@' <AsmId>
-			  | '@' <AsmLocal>	
-			  | '@' END
+<AsmLocal>              ::= '@' <LCONST>
+                          | '@' <AsmId>
+                          | '@' <AsmLocal>  
+                          | '@' END

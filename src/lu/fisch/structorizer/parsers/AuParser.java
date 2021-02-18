@@ -32,10 +32,11 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.09      First Issue (solving the legacy cgt problem)
- *      Kay Gürtzig     2017.04.27      File logging option added
- *      Kay Gürtzig     2017.06.22      Enh. #420: Infrastructure for comment import
- *      Kay Gürtzig     2018.04.12      Issue #489: Fault tolerance improved, logger added, comments reorganized
+ *      Kay Gürtzig     2017-03-09      First Issue (solving the legacy cgt problem)
+ *      Kay Gürtzig     2017-04-27      File logging option added
+ *      Kay Gürtzig     2017-06-22      Enh. #420: Infrastructure for comment import
+ *      Kay Gürtzig     2018-04-12      Issue #489: Fault tolerance improved, logger added, comments reorganized
+ *      Kay Gürtzig     2021-02-15      Enh. #420: Comment retrieval mechanism revised (now group is checked)
  *
  ******************************************************************************************************
  *
@@ -139,7 +140,7 @@ public class AuParser extends GOLDParser {
 	 */
 	protected final HashMap<Token, String> commentMap = new HashMap<Token, String>();
 	// END KGU#407 2017-07-21
-
+	
 	/**
 	 * Default constructor
 	 */
@@ -187,140 +188,144 @@ public class AuParser extends GOLDParser {
 	}
 	// END KGU#354 2017-04-27
 
-    /**
-     * Inserts Group objects into the group table, so comments can be processed in a 
-     * grammar.  It is assumed that version 1.0 files have a maximum of 1 closed
-     * comment block and one comment line symbol.
-     */	
-    protected void resolveCommentGroupsForVersion1Grammars() {
-        if (isVersion1Format()) {
-            Group group;
-            Symbol symbolStart = null;
-            Symbol symbolEnd = null;
-            
-            // Create a new COMMENT_LINE group
-            for (Symbol currentStartSymbol : symbolTable) {
-                if (currentStartSymbol.getType().equals(SymbolType.COMMENT_LINE)) {
-                    symbolStart = currentStartSymbol;
-                    group = new Group();
-                    group.setName("Comment Line");
-                    // START KGU#354 2017-03-08: Bugfix for old cgt file where there was no COMMENT symbol
-                    //group.setContainer(symbolTable.findByName(SymbolList.SYMBOL_COMMENT));
-                    Symbol commentSymbol = symbolTable.findByName(SymbolList.SYMBOL_COMMENT);
-                    if (commentSymbol == null) {
-                    	// Okay then just create one...
-                    	commentSymbol = new Symbol(SymbolList.SYMBOL_COMMENT, SymbolType.NOISE, symbolTable.size());
-                    	symbolTable.add(commentSymbol);
-                    }
-                    group.setContainer(commentSymbol);
-                    // END KGU#354 2017-03-08
-                    group.setStart(symbolStart);
-                    group.setEnd(symbolTable.findByName("NewLine"));
-                    group.setAdvanceMode(AdvanceMode.TOKEN);
-                    group.setEndingMode(EndingMode.OPEN);
-                    groupTable.add(group);
-                    symbolStart.setGroup(group);
-                    break;
-                }
-            }
+	/**
+	 * Inserts Group objects into the group table, so comments can be processed in a 
+	 * grammar. It is assumed that version 1.0 files have a maximum of 1 closed
+	 * comment block and one comment line symbol.
+	 */	
+	protected void resolveCommentGroupsForVersion1Grammars() {
+		if (isVersion1Format()) {
+			Group group;
+			Symbol symbolStart = null;
+			Symbol symbolEnd = null;
 
-            // Create a new COMMENT_BLOCK group
-            for (Symbol currentStartSymbol : symbolTable) {
-                if (currentStartSymbol.getType().equals(SymbolType.GROUP_START)) {
-                    symbolStart = symbolEnd = currentStartSymbol;
-                    for (Symbol currentEndSymbol : symbolTable) {
-                        if (currentEndSymbol.getType().equals(SymbolType.GROUP_END)) { 
-                            symbolEnd = currentEndSymbol;
-                            break;
-                        }
-                    }    
-                    group = new Group();
-                    group.setName("Comment Block");
-                    group.setContainer(symbolTable.findByName(SymbolList.SYMBOL_COMMENT));
-                    group.setStart(symbolStart);
-                    group.setEnd(symbolEnd);
-                    group.setAdvanceMode(AdvanceMode.TOKEN);
-                    group.setEndingMode(EndingMode.CLOSED);
-                    groupTable.add(group);
-                    
-                    symbolStart.setGroup(group);                         
-                    symbolEnd.setGroup(group);                         
-                    
-                    break;
-                }
-            }
-        }
-    }
+			// Create a new COMMENT_LINE group
+			for (Symbol currentStartSymbol : symbolTable) {
+				if (currentStartSymbol.getType().equals(SymbolType.COMMENT_LINE)) {
+					symbolStart = currentStartSymbol;
+					group = new Group();
+					group.setName("Comment Line");
+					// START KGU#354 2017-03-08: Bugfix for old cgt file where there was no COMMENT symbol
+					//group.setContainer(symbolTable.findByName(SymbolList.SYMBOL_COMMENT));
+					Symbol commentSymbol = symbolTable.findByName(SymbolList.SYMBOL_COMMENT);
+					if (commentSymbol == null) {
+						// Okay then just create one...
+						commentSymbol = new Symbol(SymbolList.SYMBOL_COMMENT, SymbolType.NOISE, symbolTable.size());
+						symbolTable.add(commentSymbol);
+					}
+					group.setContainer(commentSymbol);
+					// END KGU#354 2017-03-08
+					group.setStart(symbolStart);
+					group.setEnd(symbolTable.findByName("NewLine"));
+					group.setAdvanceMode(AdvanceMode.TOKEN);
+					group.setEndingMode(EndingMode.OPEN);
+					groupTable.add(group);
+					symbolStart.setGroup(group);
+					break;
+				}
+			}
 
-    protected boolean processTokenRead() {
-    	Token token = this.getCurrentToken();
-    	// START KGU#511 2018-04-12: Issue #489
-    	if (token == null) {
-    		return false;
-    	}
-    	// END KGU#511 2018-04-12
-    	// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
-    	String name = token.getName();	// FIXME: Is this sufficient for a classification?
-    	if (name.equalsIgnoreCase("comment")) {
-    		String comment = token.asString();
-    		if (lastToken != null) {
-    			commentMap.put(lastToken, comment);
-    			lastToken = null;
-    		}
-    		else if (lastComment != null) {
-    			lastComment += "\n" + comment;
-    		}
-    		else {
-    			lastComment = comment;
-    		}
-    	}
-    	else if (name.equalsIgnoreCase("NewLine")
-    			|| name.equalsIgnoreCase("Whitespace") && (token.getData() instanceof String) && ((String)token.getData()).contains("\n")) {
-    		lastToken = null;
-    	}
-    	else if (!name.equalsIgnoreCase("whitespace")) {
-    		if (lastComment != null) {
-    			commentMap.put(token, lastComment);
-    			lastComment = null;
-    			lastToken = null;
-    		}
-    		else {
-    			lastToken = token;
-    		}
-    	}
-    	// END KGU#407 2017-06-21
-    	if (logFile != null) {
-    		try {
-    			String tokenStr = token.toString();
-    			logFile.write("Token " + tokenStr + "\tat " + this.getCurrentPosition().toString().trim());
-    			if (!tokenStr.equals("(NewLine)") && !tokenStr.equals("(Whitespace)") && !tokenStr.matches("^'.'$")) {
-    				logFile.write(": " + token.asString() );
-    			}
-    			logFile.write("\n");
-    		} catch (IOException e) {
-    			// START KGU#484 2018-04-12: Issue #463
-    			//e.printStackTrace();
-    			logger.log(Level.WARNING, getClass().getSimpleName() + " logging failed!", e);
-    			// END KGU#484 2018-04-12
-    		}
-    	}
-    	return false;
-    }
-    
-    /**
-     * Just allowing public access to the current token 
-     */
-    public Token getCurrentToken() {
-    	// START KGU#511 2018-04-12: Issue #489
-    	//return super.getCurrentToken();
-    	Token currentToken = null;
-    	try {
-    		currentToken = super.getCurrentToken();
-    	}
-    	catch (java.util.EmptyStackException ex) {
-    		logger.log(Level.SEVERE, "No current token", ex);
-    	}
-    	return currentToken;
-    	// END KGU#511 2018-04-12
-    }
+			// Create a new COMMENT_BLOCK group
+			for (Symbol currentStartSymbol : symbolTable) {
+				if (currentStartSymbol.getType().equals(SymbolType.GROUP_START)) {
+					symbolStart = symbolEnd = currentStartSymbol;
+					for (Symbol currentEndSymbol : symbolTable) {
+						if (currentEndSymbol.getType().equals(SymbolType.GROUP_END)) { 
+							symbolEnd = currentEndSymbol;
+							break;
+						}
+					}    
+					group = new Group();
+					group.setName("Comment Block");
+					group.setContainer(symbolTable.findByName(SymbolList.SYMBOL_COMMENT));
+					group.setStart(symbolStart);
+					group.setEnd(symbolEnd);
+					group.setAdvanceMode(AdvanceMode.TOKEN);
+					group.setEndingMode(EndingMode.CLOSED);
+					groupTable.add(group);
+
+					symbolStart.setGroup(group);
+					symbolEnd.setGroup(group);
+
+					break;
+				}
+			}
+		}
+	}
+
+	protected boolean processTokenRead() {
+		Token token = this.getCurrentToken();
+		// START KGU#511 2018-04-12: Issue #489
+		if (token == null) {
+			return false;
+		}
+		// END KGU#511 2018-04-12
+		// START KGU#407 2017-06-21: Enh. #420 Set the token - comment mapping
+		String name = token.getName();
+		// START KGU#407 2021-02-15: Enh. #420 Revision
+		//if (name.equalsIgnoreCase("comment")) {
+		Group group = token.getGroup();
+		if (group != null && group.getName().startsWith("Comment")) {
+		// END KGU#407 2021-02-15
+			String comment = token.asString();
+			if (lastToken != null) {
+				commentMap.put(lastToken, comment);
+				lastToken = null;
+			}
+			else if (lastComment != null) {
+				lastComment += "\n" + comment;
+			}
+			else {
+				lastComment = comment;
+			}
+		}
+		else if (name.equalsIgnoreCase("NewLine")
+				|| name.equalsIgnoreCase("Whitespace") && (token.getData() instanceof String) && ((String)token.getData()).contains("\n")) {
+			lastToken = null;
+		}
+		else if (!name.equalsIgnoreCase("whitespace")) {
+			if (lastComment != null) {
+				commentMap.put(token, lastComment);
+				lastComment = null;
+				lastToken = null;
+			}
+			else {
+				lastToken = token;
+			}
+		}
+		// END KGU#407 2017-06-21
+		if (logFile != null) {
+			try {
+				String tokenStr = token.toString();
+				logFile.write("Token " + tokenStr + "\tat " + this.getCurrentPosition().toString().trim());
+				if (!tokenStr.equals("(NewLine)") && !tokenStr.equals("(Whitespace)") && !tokenStr.matches("^'.'$")) {
+					logFile.write(": " + token.asString() );
+				}
+				logFile.write("\n");
+			} catch (IOException e) {
+				// START KGU#484 2018-04-12: Issue #463
+				//e.printStackTrace();
+				logger.log(Level.WARNING, getClass().getSimpleName() + " logging failed!", e);
+				// END KGU#484 2018-04-12
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Just allowing public access to the current token 
+	 */
+	public Token getCurrentToken() {
+		// START KGU#511 2018-04-12: Issue #489
+		//return super.getCurrentToken();
+		Token currentToken = null;
+		try {
+			currentToken = super.getCurrentToken();
+		}
+		catch (java.util.EmptyStackException ex) {
+			logger.log(Level.SEVERE, "No current token", ex);
+		}
+		return currentToken;
+		// END KGU#511 2018-04-12
+	}
 }

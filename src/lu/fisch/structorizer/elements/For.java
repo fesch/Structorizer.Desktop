@@ -807,7 +807,8 @@ public class For extends Element implements ILoop {
 	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null<br/>
 	 * 
 	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
-	 * @return String array consisting of the four parts explained above
+	 * @return String array consisting of the four parts explained above. Some parts might be
+	 *      {@code null}, though!
 	 */
 	public static String[] splitForClause(String _text)
 	{

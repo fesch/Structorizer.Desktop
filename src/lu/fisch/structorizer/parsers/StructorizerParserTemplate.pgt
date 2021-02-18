@@ -49,10 +49,11 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue for Iden GOLDEngine
- *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
- *      Kay Gürtzig     2018.03.26      Imports revised
- *      Kay Gürtzig     2018.06.30      Enh. #553: hooks for possible thread cancellation inserted.
+ *      Kay Gürtzig     2017-03-02      First Issue for Iden GOLDEngine
+ *      Kay Gürtzig     2017-03-11      Parameter annotations and some comments corrected, indentation unified
+ *      Kay Gürtzig     2018-03-26      Imports revised
+ *      Kay Gürtzig     2018-06-30      Enh. #553: hooks for possible thread cancellation inserted.
+ *      Kay Gürtzig     2021-02-17      Some updates to interface changes and e.g. date formatting 
  *
  ******************************************************************************************************
  *
@@ -61,7 +62,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
 ##PARAMETERS
- *      %Author%     YYYY.MM.DD      First Issue (generated with GOLDprog.exe)
+ *      %Author%     YYYY-MM-DD      First Issue (generated with GOLDprog.exe)
 ##END-PARAMETERS
  *
  ******************************************************************************************************
@@ -248,12 +249,9 @@ public class %Name%Parser extends CodeParser
 			// trim and save as new file
 			checkCancelled();
 			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
-			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
-			try {
+			
+			try (OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8")) {
 				ow.write(srcCode.trim()+"\n");
-			}
-			finally {
-				ow.close();
 			}
 		}
 		catch (Exception e) 
@@ -410,21 +408,15 @@ public class %Name%Parser extends CodeParser
 		return _content;
 	}
 
-	@Override
-	protected void subclassUpdateRoot(Root root, String sourceFileName) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	//------------------------- Postprocessor ---------------------------
 
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
-//	 */
-//	@Override
-//	protected void subclassUpdateRoot(Root aRoot, String textToParse) throws ParserCancelled
-//	{
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected boolean subclassUpdateRoot(Root aRoot, String sourceFileName) throws ParserCancelled
+	{
 //		// THIS CODE EXAMPLE IS FROM THE CPARSER (derives a name for the main program)
 //		if (aRoot.getMethodName().equals("main")) {
 //			if (aRoot.getParameterNames().count() == 0) {
@@ -439,6 +431,7 @@ public class %Name%Parser extends CodeParser
 //			}
 //			aRoot.isProgram = true;
 //		}
-//	}
+		return false;
+	}
 
 }

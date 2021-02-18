@@ -1670,10 +1670,24 @@ public class CGenerator extends Generator {
 		int step = _for.getStepConst();
 		String compOp = (step > 0) ? " <= " : " >= ";
 		String increment = var + " += (" + step + ")";
-		appendBlockHeading(_for, "for (" + decl + var + " = "
-				+ transform(_for.getStartValue(), false) + "; " + var + compOp
-				+ transform(_for.getEndValue(), false) + "; " + increment + ")",
-				_indent);
+		// START KGU#934 2021-02-13: Bugfix #935: NullpointerException
+		//appendBlockHeading(_for, "for (" + decl + var + " = "
+		//		+ transform(_for.getStartValue(), false) + "; " + var + compOp
+		//		+ transform(_for.getEndValue(), false) + "; " + increment + ")",
+		//		_indent);
+		String header = transform(_for.getUnbrokenText().getLongString());
+		if (_for.style == For.ForLoopStyle.COUNTER) {
+			header = "for (" + decl + var + " = "
+					+ transform(_for.getStartValue(), false) + "; "
+					+ var + compOp
+					+ transform(_for.getEndValue(), false) + "; "
+					+ increment + ")";
+		}
+		else {
+			appendComment("TODO: No automatic FOR loop conversion found!", _indent);
+		}
+		appendBlockHeading(_for, header, _indent);
+		// END KGU#934 2021-02-13
 
 		generateCode(_for.q, _indent + this.getIndent());
 

@@ -8,14 +8,14 @@
 Known issues:
 - Copying diagram images to the clipboard may fail with some OS/JRE combination (#685),
   on Windows the image format may be JPG instead of PNG.
-- Pascal import does not cope with nested comments and unit name aliases.
+- Pascal import does not cope with unit name aliases.
 - COBOL import may fail if certain single-letter identifiers are used (rename them!),
   also if the code contains a SPECIAL-NAMES clause or float literals.
 - COBOL import does not cope with some statement variants and variable redefinitions.
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-16 (2021-02-12)
+Current development version: 3.30-17 (2021-02-18)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -208,6 +208,14 @@ Current development version: 3.30-16 (2021-02-12)
       temporary icon changes on shift; locale reset mechanism fixed <2>
 - 16: Bugfix #930: Wrong CASE branch width with broken selector lines <2>
 - 16: Bugfix #931: Inadvertent font changes in element editors on font resizing <2>
+- 17: Issue #420: Comment retrieval on code import revised, workaround dropped <2>
+- 17: Bugfix #556: Errors on C99 import if expressions contained > 1 slash <2>
+- 17: Issue #912: JRE packaged into the Mac OS X delivery [omezger]
+- 17: Bugfix #935: Export of incompatible FOR loops caused errors (silent) <2>
+- 17: Bugfix #936: Group export (silently) failed for never saved groups <2>
+- 17: Bugfix #937: Precaution against endless loop on group export <2>
+- 17: Issue #939: Several Pascal import limitations (e.g. ASCII) lifted <2>
+- 17: Bugfix #940: Undue reference to Java 9 classes and methods in fix #912 <2>
 
 Version: 3.30 (2019-10-06)
 - 01: Issue #657: Spanish message in German locale replaced <2>

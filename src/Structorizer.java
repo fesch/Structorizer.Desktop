@@ -475,7 +475,7 @@ public class Structorizer
 
 			mainform.doOSX();
 		}
-
+		
 		// Without this, the toolbar had often wrong status when started from a diagram 
 		mainform.doButtons();
 		// START KGU#300 2016-12-02

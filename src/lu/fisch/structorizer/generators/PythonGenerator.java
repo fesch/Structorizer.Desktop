@@ -81,6 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-08      Bugfix #831: Obsolete shebang and defective export of CALLs as parallel branch
  *      Kay Gürtzig             2020-04-22      Ensured that appendGlobalInitializations() does not eventually overwrite typeMap
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig             2021-02-13      Bugfix #935: NullPointerException in generateCode(For...)
  *
  ******************************************************************************************************
  *
@@ -794,7 +795,10 @@ public class PythonGenerator extends Generator
 				valueList = "[" + transform(items.concatenate(", "), false) + "]";
 			}
 		}
-		else 
+		// START KGU#934 2021-02-13: Bugfix #935 NullPointerException...
+		//else
+		else if (_for.style == For.ForLoopStyle.COUNTER)
+		// END KGU#934 2021-02-13
 		{
 			String startValueStr = this.transform(_for.getStartValue());
 			String endValueStr = this.transform(_for.getEndValue());
@@ -809,7 +813,16 @@ public class PythonGenerator extends Generator
 			// END KGU#600 2018-10-17
 			valueList = "range("+startValueStr+", "+endValueStr+", "+stepValueStr+")";
 		}
-		addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
+		// START KGU#934 2021-02-13: Bugfix #935 NullPointerException...
+		//addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
+		if (_for.style == For.ForLoopStyle.FREETEXT) {
+			this.appendComment("TODO: No automatic loop translation found!", _indent);
+			addCode(_for.getUnbrokenText().getLongString(), _indent, isDisabled);
+		}
+		else {
+			addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
+		}
+		// END KGU#934 2021-02-13
 		generateCode((Subqueue) _for.q,_indent + this.getIndent());
 		// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 		//code.add("");
