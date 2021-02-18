@@ -995,7 +995,7 @@ About.pnlTabbed.tab.0=Personas implicadas
 About.pnlTabbed.tab.1=Diario de cambios
 About.pnlTabbed.tab.2=Licencia
 About.pnlTabbed.tab.3=Rutas
-About.msgPaths.text=Fichero Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n
+About.msgPaths.text=Fichero Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n\nJava VM (versión %4):\n%5\n
 About.btnOK.text=Aceptar
 About.btnOK.tooltip=Cerrar el diálogo.
 
