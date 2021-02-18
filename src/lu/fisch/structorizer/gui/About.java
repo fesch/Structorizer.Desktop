@@ -352,7 +352,8 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 				replace("%1", Ini.getInstance().getIniFile().getAbsolutePath()).
 				// END KGU#722 2019-08-07
 				replace("%2", new File(System.getProperty("java.util.logging.config.file", "???")).getParent()).
-				replace("%3", prodDir.getAbsolutePath()));
+				replace("%3", prodDir.getAbsolutePath())+
+				"\nJVM version:\n"+System.getProperty("java.version"));
 		txtPaths.setCaretPosition(0);
 	}
 	// END KGU#595 2018-10-08
