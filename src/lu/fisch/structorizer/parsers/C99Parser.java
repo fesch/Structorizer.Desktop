@@ -1320,7 +1320,7 @@ public class C99Parser extends CPreParser
 		//System.out.println(sr.getParentRule().getText());  // <<<<<<<
 		while (sr.getParent().getTableIndex() == RuleConstants.PROD_CASESTMTS_CASE_COLON)
 		{
-			Reduction stmList = (Reduction) sr.get(3).getData();
+			Reduction stmList = sr.get(3).asReduction();
 			if (stmList.getParent().getTableIndex() == RuleConstants.PROD_STMTLIST) {
 				// non-empty statement list, so we will have to set up a branch
 				j++;

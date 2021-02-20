@@ -111,8 +111,8 @@ public class JavaParser extends CodeParser
 			RuleConstants.PROD_BASICFORSTATEMENTNOSHORTIF_FOR_LPAREN_SEMI_SEMI_RPAREN,
 			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_COLON_RPAREN,
 			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_COLON_RPAREN,
-			RuleConstants.PROD_BASICFORSTATEMENT_FOR_LPAREN_SEMI_SEMI_RPAREN,
-			RuleConstants.PROD_BASICFORSTATEMENTNOSHORTIF_FOR_LPAREN_SEMI_SEMI_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_FINAL_COLON_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_FINAL_COLON_RPAREN,
 	};
 
 	//---------------------- Grammar specification ---------------------------
@@ -1022,10 +1022,10 @@ public class JavaParser extends CodeParser
 
 	//---------------------- Build methods for structograms ---------------------------
 
-	private int classNestingLevel = 0;
 	private String packageStr = null;
 	private StringList imports = null;
-	private Vector<Root> includables = null;
+	private Stack<Root> includables = null;
+	private Stack<Root> classes = null;
 	
 	/* (non-Javadoc)
 	 * @see CodeParser#initializeBuildNSD()
@@ -1034,13 +1034,10 @@ public class JavaParser extends CodeParser
 	protected void initializeBuildNSD() throws ParserCancelled
 	{
 		// TODO insert initializations for the build phase if necessary ...
-		classNestingLevel = 0;
 		packageStr = null;
 		imports = new StringList();
-		includables = new Vector<Root>();
-		Root incl0 = new Root();
-		incl0.setInclude();
-		includables.add(incl0);
+		includables = new Stack<Root>();
+		classes = new Stack<Root>();
 		
 		// START KGU#407 2018-03-26: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
@@ -1115,45 +1112,62 @@ public class JavaParser extends CodeParser
 				// <PureClassDeclaration> ::= class Identifier <TypeParametersOpt> <Super> <ClassBody>
 				// <PureClassDeclaration> ::= class Identifier <TypeParametersOpt> <Interfaces> <ClassBody>
 				// <PureClassDeclaration> ::= class Identifier <TypeParametersOpt> <ClassBody>
-				if (this.classNestingLevel == 0) {
-					// Fetch comment and append modifiers
-					this.equipWithSourceComment(root, _reduction);
-					String modifiers = "";
-					if (ruleId == RuleConstants.PROD_NORMALCLASSDECLARATION) {
-						// Get modifiers (in order to append them to the comment)
-						modifiers = this.getContent_R(_reduction.get(0).asReduction(), "");
-						_reduction = _reduction.get(1).asReduction();
-						ruleId = _reduction.getParent().getTableIndex();
-					}
-					// Get the name
-					String name = _reduction.get(1).asString();
-					// Get type parameters (if any)
-					String typePars = this.getContent_R(_reduction.get(2).asReduction(), "");
-					int ixBody = 3;
-					// Get the inheritance
-					String inh = "";
-					if (ruleId != RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER4) {
-						ixBody++;
-						inh = this.getContent_R(_reduction.get(3).asReduction(), inh);
-						if (ruleId == RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER) {
-							ixBody++;
-							inh = this.getContent_R(_reduction.get(4).asReduction(), inh);
-						}
-					}
-					root.setText(name);
-					root.getComment().add(packageStr);
-					if (!imports.isEmpty()) {
-						root.getComment().add("imports:");
-						root.getComment().add(imports);
-					}
-					root.getComment().add((modifiers + " class").trim());
-					if (!typePars.trim().isEmpty()) {
-						root.getComment().add("Type parameters: " + typePars);
-					}
-					// Now descend into the body
-					this.classNestingLevel++;
-					this.buildNSD_R(_reduction.get(ixBody).asReduction(), _parentNode);
+				// Fetch comment and append modifiers
+				String modifiers = "";
+				if (ruleId == RuleConstants.PROD_NORMALCLASSDECLARATION) {
+					// Get modifiers (in order to append them to the comment)
+					modifiers = this.getContent_R(_reduction.get(0));
+					_reduction = _reduction.get(1).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
 				}
+				// Get the name
+				String name = _reduction.get(1).asString();
+				Root classRoot = root;
+				if (!this.classes.isEmpty()) {
+					classRoot = new Root();
+					this.addRoot(classRoot);
+				}
+				classes.push(classRoot);
+				
+				Root incl = new Root();
+				incl.setInclude();
+				if (!includables.isEmpty()) {
+					incl.addToIncludeList(includables.peek());
+				}
+				includables.push(incl);
+				classRoot.setText(name);
+				incl.setText(name + "_Fields");
+				classRoot.addToIncludeList(incl);
+				
+				this.equipWithSourceComment(classRoot, _reduction);
+				// Get type parameters (if any)
+				String typePars = this.getContent_R(_reduction.get(2));
+				int ixBody = 3;
+				// Get the inheritance
+				String inh = "";
+				if (ruleId != RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER4) {
+					ixBody++;
+					inh = this.getContent_R(_reduction.get(3).asReduction(), inh);
+					if (ruleId == RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER) {
+						ixBody++;
+						inh = this.getContent_R(_reduction.get(4).asReduction(), inh);
+					}
+				}
+				if (this.classes.size() == 1 && packageStr != null) {
+					classRoot.getComment().add("==== " + packageStr);
+					if (!imports.isEmpty()) {
+						imports.insert("==== imports:", 0);
+						incl.getComment().add(imports);
+					}
+				}
+				classRoot.getComment().add((modifiers + " class").trim());
+				if (!typePars.trim().isEmpty()) {
+					classRoot.getComment().add("==== type parameters: " + typePars);
+				}
+				// Now descend into the body
+				this.buildNSD_R(_reduction.get(ixBody).asReduction(), _parentNode);
+				this.classes.pop();
+				this.includables.pop();
 			}
 			break;
 			case RuleConstants.PROD_FIELDDECLARATION_SEMI:
@@ -1164,11 +1178,74 @@ public class JavaParser extends CodeParser
 				String modifiers = null;
 				int ixDecls = 2;
 				if (ruleId == RuleConstants.PROD_FIELDDECLARATION_SEMI) {
-					modifiers = this.getContent_R(_reduction.get(1).asReduction(), "");
+					modifiers = this.getContent_R(_reduction.get(1));
 					ixDecls++;
 				}
 				// TODO: Compose the variable declarations
 				StringList decls = processVarDeclarators(_reduction.get(ixDecls));
+				Element ele = this.equipWithSourceComment(new Instruction(decls), _reduction);
+				if (modifiers != null) {
+					ele.getComment().add(modifiers);
+				}
+				includables.peek().children.addElement(ele);
+			}
+			break;
+			case RuleConstants.PROD_METHODDECLARATION:
+			{
+				// <MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
+				// Ignore the annotations (or add them as comment?)
+				Root subRoot = new Root();
+				this.equipWithSourceComment(subRoot, _reduction);
+				Root targetRoot = subRoot;
+				// Extract the method header
+				boolean isStdConstructorOrMain = this.applyMethodHeader(
+						_reduction.get(1).asReduction(), subRoot, classes.peek().getMethodName());
+				if (isStdConstructorOrMain) {
+					/* If it is the standard constructor add the body to the includable
+					 * FIXME: Is this acceptable if there are other constructors?
+					 */
+					targetRoot = includables.peek();
+					if (subRoot.isProgram()) {
+						// Must be "Main" -> add the body elements to the class Root instead
+						targetRoot = classes.peek();
+					}
+					// Prepare a disabled instruction element showing the declaration
+					Instruction decl = new Instruction(subRoot.getText());
+					decl.setComment(subRoot.getComment());
+					decl.setColor(colorDecl);
+					decl.disabled = true;
+					// Append the declaration
+					targetRoot.children.addElement(decl);
+				}
+				else {
+					// In any other case just add the method as is to the pool
+					addRoot(subRoot);
+				}
+				// Now build the method body
+				this.buildNSD_R(_reduction.get(2).asReduction(), targetRoot.children);
+			}
+			break;
+			case RuleConstants.PROD_IFTHENSTATEMENT_IF_LPAREN_RPAREN:
+			case RuleConstants.PROD_IFTHENELSESTATEMENT_IF_LPAREN_RPAREN_ELSE:
+			case RuleConstants.PROD_IFTHENELSESTATEMENTNOSHORTIF_IF_LPAREN_RPAREN_ELSE:
+			{
+				// <IfThenStatement> ::= if '(' <Expression> ')' <Statement>
+				// <IfThenElseStatement> ::= if '(' <Expression> ')' <StatementNoShortIf> else <Statement>
+				// <IfThenElseStatementNoShortIf> ::= if '(' <Expression> ')' <StatementNoShortIf> else <StatementNoShortIf>
+				String cond = getContent_R(_reduction.get(2));
+				Alternative alt = new Alternative(cond);
+				this.equipWithSourceComment(alt, _reduction);
+				_parentNode.addElement(alt);
+				buildNSD_R(_reduction.get(4).asReduction(), alt.qTrue);
+				if (_reduction.size() > 6) {
+					buildNSD_R(_reduction.get(6).asReduction(), alt.qFalse);
+				}
+			}
+			break;
+			case RuleConstants.PROD_SWITCHSTATEMENT_SWITCH_LPAREN_RPAREN:
+			{
+				// <SwitchStatement> ::= switch '(' <Expression> ')' <SwitchBlock>
+				buildCase(_reduction, _parentNode);
 			}
 			break;
 			case RuleConstants.PROD_BASICFORSTATEMENT_FOR_LPAREN_SEMI_SEMI_RPAREN:
@@ -1196,7 +1273,7 @@ public class JavaParser extends CodeParser
 					}
 
 					// get the second part - should be an ordinary condition
-					String content = getContent_R(_reduction.get(4).asReduction(), "");
+					String content = getContent_R(_reduction.get(4));
 					if (content.trim().isEmpty()) {
 						Forever loop = new Forever();
 						ele = loop;
@@ -1231,7 +1308,61 @@ public class JavaParser extends CodeParser
 				}
 			}
 			break;
-				
+			case RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_COLON_RPAREN:
+			case RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_FINAL_COLON_RPAREN:
+			case RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_COLON_RPAREN:
+			case RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_FINAL_COLON_RPAREN:
+			{
+				// <EnhancedForStatement> ::= for '(' <Type> <VariableDeclaratorId> ':' <Expression> ')' <Statement>
+				// <EnhancedForStatement> ::= for '(' final <Type> <VariableDeclaratorId> ':' <Expression> ')' <Statement>
+				// <EnhancedForStatementNoShortIf> ::= for '(' <Type> <VariableDeclaratorId> ':' <Expression> ')' <StatementNoShortIf>
+				// <EnhancedForStatementNoShortIf> ::= for '(' final <Type> <VariableDeclaratorId> ':' <Expression> ')' <StatementNoShortIf>
+				int ixType = 2;
+				if (ruleId == RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_FINAL_COLON_RPAREN ||
+						ruleId == RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_FINAL_COLON_RPAREN) {
+					ixType++;
+				}
+				// What do we do with the type? We might insert a declaration and disable it
+				String type = this.translateType(_reduction.get(ixType));
+				String loopVar = this.getContent_R(_reduction.get(ixType + 1));
+				Instruction instr = new Instruction("var " + loopVar + ": " + type);
+				instr.disabled = true;
+				instr.setColor(colorMisc);
+				_parentNode.addElement(instr);
+				String valList = this.translateContent(this.getContent_R(_reduction.get(ixType + 3)));
+				Element forIn = this.equipWithSourceComment(new For(loopVar, valList), _reduction);
+				_parentNode.addElement(forIn);
+				this.buildNSD_R(_reduction.get(ixType + 5).asReduction(), ((For)forIn).getBody());
+			}
+			break;
+			case RuleConstants.PROD_WHILESTATEMENT_WHILE_LPAREN_RPAREN:
+			case RuleConstants.PROD_WHILESTATEMENTNOSHORTIF_WHILE_LPAREN_RPAREN:
+			{
+				// <WhileStatement> ::= while '(' <Expression> ')' <Statement>
+				// <WhileStatementNoShortIf> ::= while '(' <Expression> ')' <StatementNoShortIf>
+				String cond = this.getContent_R(_reduction.get(2));
+				While loop = (While)this.equipWithSourceComment(
+						new While(getOptKeyword("preWhile", false, true)
+								+ this.translateContent(cond)
+								+ getOptKeyword("postWhile", true, false)),
+						_reduction);
+				_parentNode.addElement(loop);
+				this.buildNSD_R(_reduction.get(4).asReduction(), loop.getBody());
+			}
+			break;
+			case RuleConstants.PROD_DOSTATEMENT_DO_WHILE_LPAREN_RPAREN_SEMI:
+			{
+				// <DoStatement> ::= do <Statement> while '(' <Expression> ')' ';'
+				String cond = Element.negateCondition(this.getContent_R(_reduction.get(4)));
+				Repeat loop = (Repeat)this.equipWithSourceComment(
+						new Repeat(getOptKeyword("preRepeat", false, true)
+								+ this.translateContent(cond)
+								+ getOptKeyword("posRepeat", true, false)),
+						_reduction);
+				_parentNode.addElement(loop);
+				this.buildNSD_R(_reduction.get(1).asReduction(), loop.getBody());
+			}
+			break;
 			default:
 				if (_reduction.size()>0)
 				{
@@ -1245,6 +1376,71 @@ public class JavaParser extends CodeParser
 				}
 			}
 		}
+	}
+
+	/**
+	 * Extracts the methos header from {@link Reduction} {@code _reduction}, prepares
+	 * it for Structorizer and applies the information to {@code _subRoot}.<br/>
+	 * The method comment is assumed to have been attached already.
+	 * @param asReduction - the {@code <MethodHeader>} reduction
+	 * @param subRoot - the method diagram to be equipped with a header
+	 * @returns {@code true} if the method represents either a constructor for class
+	 * {@code _className} or the "Main" method; {@code false} otherwise
+	 * @throws ParserCancelled 
+	 */
+	private boolean applyMethodHeader(Reduction _reduction, Root _subRoot, String _className) throws ParserCancelled
+	{
+		// PROD_METHODHEADER:  <MethodHeader> ::= <Modifiers> <Type> <MethodDeclarator> <Throws>
+		// PROD_METHODHEADER2: <MethodHeader> ::= <Modifiers> <Type> <MethodDeclarator>
+		// PROD_METHODHEADER3: <MethodHeader> ::= <Type> <MethodDeclarator> <Throws>
+		// PROD_METHODHEADER4: <MethodHeader> ::= <Type> <MethodDeclarator>
+		// PROD_METHODHEADER_VOID:  <MethodHeader> ::= <Modifiers> void <MethodDeclarator> <Throws>
+		// PROD_METHODHEADER_VOID2: <MethodHeader> ::= <Modifiers> void <MethodDeclarator>
+		// PROD_METHODHEADER_VOID3: <MethodHeader> ::= void <MethodDeclarator> <Throws>
+		// PROD_METHODHEADER_VOID4: <MethodHeader> ::= void <MethodDeclarator>
+		int ixType = 0;
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_METHODHEADER
+				|| ruleId == RuleConstants.PROD_METHODHEADER2
+				|| ruleId == RuleConstants.PROD_METHODHEADER_VOID
+				|| ruleId == RuleConstants.PROD_METHODHEADER_VOID2) {
+			String modifiers = this.getContent_R(_reduction.get(0));
+			if (!modifiers.trim().isEmpty()) {
+				_subRoot.getComment().add(modifiers);
+			}
+			ixType++;
+		}
+		String resultType = null;
+		if (ruleId == RuleConstants.PROD_METHODHEADER
+				|| ruleId == RuleConstants.PROD_METHODHEADER2
+				|| ruleId == RuleConstants.PROD_METHODHEADER3
+				|| ruleId == RuleConstants.PROD_METHODHEADER4) {
+			resultType = translateType(_reduction.get(ixType));
+		}
+		// TODO get the name and arguments
+		String name = "???";
+		int nArgs = 0;
+//		final int PROD_METHODDECLARATOR_IDENTIFIER_LPAREN_RPAREN                    = 175;  // <MethodDeclarator> ::= Identifier '(' <FormalParameterList> ')'
+//		final int PROD_METHODDECLARATOR_IDENTIFIER_LPAREN_RPAREN2                   = 176;  // <MethodDeclarator> ::= Identifier '(' ')'
+//		final int PROD_METHODDECLARATOR_LBRACKET_RBRACKET                           = 177;  // <MethodDeclarator> ::= <MethodDeclarator> '[' ']'
+		
+		if (name.equals("Main") && nArgs == 0) {
+			_subRoot.setProgram(true);
+		}
+		if (_reduction.size() > ixType + 2) {
+			// Add the throws clause to the comment
+			_subRoot.getComment().add("==== " + this.getContent_R(_reduction.get(ixType + 2)));
+		}
+		return name.equals(_className) || name.equals("Main");
+	}
+
+	/**
+	 * @param token
+	 * @return
+	 */
+	private String translateType(Token token) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -1307,6 +1503,25 @@ public class JavaParser extends CodeParser
 		return _content.trim();
 	}
 	
+	/**
+	 * Convenience method for the string content retrieval from a {@link Token}
+	 * that may be either reprsent a content symbol or a {@link Reduction}.
+	 * @param _token - the {@link Token} the content is to be appended to
+	 *        {@code _content}
+	 * @return the content string (may be empty in case of noise)
+	 * @throws ParserCancelled
+	 */
+	private String getContent_R(Token _token) throws ParserCancelled
+	{
+		if (_token.getType() == SymbolType.NON_TERMINAL) {
+			return getContent_R(_token.asReduction(), "");
+		}
+		else if (_token.getType() == SymbolType.CONTENT) {
+			return _token.asString();
+		}
+		return "";
+	}
+	
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content) throws ParserCancelled
 	{
@@ -1320,7 +1535,7 @@ public class JavaParser extends CodeParser
 			switch (token.getType()) 
 			{
 			case NON_TERMINAL:
-				int ruleId = _reduction.getParent().getTableIndex();
+				//int ruleId = _reduction.getParent().getTableIndex();
 				_content = getContent_R(token.asReduction(), _content);	
 				break;
 			case CONTENT:
@@ -1407,6 +1622,161 @@ public class JavaParser extends CodeParser
 		
 		return _content;
 	}
+
+	/**
+	 * Converts a rule of type PROD_SWITCHSTATEMENT_SWITCH_LPAREN_RPAREN into the
+	 * skeleton of a Case element. The case branches will be handled separately
+	 * @param _reduction - Reduction rule of a switch instruction
+	 * @param _parentNode - the Subqueue this Case element is to be appended to
+	 * @throws ParserCancelled 
+	 */
+	private void buildCase(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
+	{
+		// <SwitchStatement> ::= switch '(' <Expression> ')' <SwitchBlock>
+		// Put the discriminator into the first line of content
+		String content = translateContent(getContent_R(_reduction.get(2)));
+
+		// How many branches has the CASE element? We must count the non-empty statement lists!
+		Reduction sr = _reduction.get(4).asReduction();
+		int ruleId = sr.getParent().getTableIndex();
+		if (ruleId == RuleConstants.PROD_SWITCHBLOCK_LBRACE_RBRACE4 ||
+				ruleId == RuleConstants.PROD_SWITCHBLOCK_LBRACE_RBRACE3) {
+			// <SwitchBlock> ::= '{' '}'
+			/* Empty switch block! This means the only possible purpose is a side effect
+			 * of the discriminator evaluation! So we might produce a dummy assignment
+			 */
+			String var = "switch" + Integer.toHexString(_reduction.hashCode());
+			Instruction instr = new Instruction(var + " <- " + content);
+			this.equipWithSourceComment(instr, _reduction);
+			instr.getComment().add("This was a switch instruction with empty body!");
+			instr.setColor(colorMisc);
+			_parentNode.addElement(instr);
+			return;
+		}
+		// Now we have one of:
+		// <SwitchBlock> ::= '{' <SwitchBlockStatementGroups> <SwitchLabels> '}'
+		// <SwitchBlock> ::= '{' <SwitchBlockStatementGroups> '}'
+		content = getOptKeyword("preCase", false, true)
+				+ content
+				+ getOptKeyword("postCase", true, false).trim();
+		StringList text = StringList.getNew(content);
+		Stack<Subqueue> branches = new Stack<Subqueue>();
+		// Add some pro-forma branch
+		text.add("%");
+		branches.add(new Subqueue());
+		boolean hasDefault = false;
+		if (ruleId == RuleConstants.PROD_SWITCHBLOCK_LBRACE_RBRACE) {
+			// <SwitchBlock> ::= '{' <SwitchBlockStatementGroups> <SwitchLabels> '}'
+			// Get the trailing switch labels (there is an empty branch, though)
+			StringList tailLabels = extractCaseLabels(sr.get(2));
+			hasDefault = tailLabels.contains("default");
+			if (hasDefault) {
+				text.set(1, "default");
+				tailLabels.clear();	// The other labels are necessarily redundant
+			}
+			if (!tailLabels.isEmpty()) {
+				// This is an unnecessary empty branch, but let it be
+				text.insert(tailLabels.concatenate(", "), 1);
+				branches.add(new Subqueue());
+			}
+		}
+		sr = sr.get(1).asReduction();
+		ruleId = sr.getParent().getTableIndex();
+		// Now we retrieve the branches from last to first
+		while (ruleId == RuleConstants.PROD_SWITCHBLOCKSTATEMENTGROUPS2)
+		{
+			// <SwitchBlockStatementGroups> ::= <SwitchBlockStatementGroups> <SwitchBlockStatementGroup>
+			hasDefault = addCaseBranch(sr.get(1).asReduction(), text, branches, hasDefault);
+			sr = sr.get(0).asReduction();
+			ruleId = sr.getParent().getTableIndex();
+		}
+		addCaseBranch(sr, text, branches, hasDefault);
+
+		Case ele = new Case(text);
+		this.equipWithSourceComment(ele, _reduction);
+		_parentNode.addElement(ele);
+
+		/* Now adjust the case branches
+		 * In theory, all branches should end with a break instruction
+		 * unless they end with return or exit. Drop the break instructions
+		 * (and only these) now.
+		 * If there is non of them, however, then we must append a copy of
+		 * the following branch(es).
+		 */
+		int ixAppendTo = ele.qs.size();
+		for (int i = 0; i < ele.qs.size() && !branches.isEmpty(); i++) {
+			Subqueue sq = branches.pop();
+			ele.qs.set(i, sq);
+			sq.parent = ele;
+			int size = sq.getSize();
+			if (size > 0) {
+				Element el = sq.getElement(size-1);
+				boolean jumps = el instanceof Jump;
+				if (jumps && ((Jump)el).isLeave()) {
+					// remove the break instruction! All others remain
+					sq.removeElement(--size);
+				}
+				// In case we had unclosed previous branches copy the content
+				for (int j = ixAppendTo; j < i; j++) {
+					for (int k = 0; k < size; k++) {
+						ele.qs.get(j).addElement(sq.getElement(k).copy());
+					}
+				}
+				if (jumps) {
+					// Disable copy
+					ixAppendTo = ele.qs.size();
+				}
+				else if (ixAppendTo > i) {
+					// Prepare copy for next branches
+					ixAppendTo = i;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Evaluates the case block represented by the passed in reduction {@code stmGroup},
+	 * inserts the labels into {@code text} and pushes the block onto {@code branches}.
+	 * @param stmGroup - {@link Reduction} representing a <SwitchBlockStatementGroup> rule
+	 * @param text - The Case text in progress - new entries are to be inserted at position 1
+	 * @param branches - a stack of provisional {@link Subqueues} to form the branches
+	 * @param hasDefault - whether there had been an (empty) default branch
+	 * @return whether there is a default branch now
+	 * @throws ParserCancelled if the user has aborted the import
+	 */
+	private boolean addCaseBranch(Reduction stmGroup, StringList text, Stack<Subqueue> branches, boolean hasDefault)
+			throws ParserCancelled {
+		// <SwitchBlockStatementGroup> ::= <SwitchLabels> <BlockStatements>
+		StringList caseLabels = extractCaseLabels(stmGroup.get(0));
+		if (!hasDefault && branches.size() == 1 
+				&& (hasDefault = caseLabels.contains("default"))) {
+			// Replace the "%" line
+			text.set(1, "default");
+			caseLabels.clear();
+		}
+		else {
+			caseLabels.removeAll("default");	// Just in case
+			if (!caseLabels.isEmpty()) {
+				text.insert(caseLabels.concatenate(", "), 1);
+			}
+			else {
+				text.insert("???", 1);
+			}
+			branches.push(new Subqueue());
+		}
+		this.buildNSD_R(stmGroup.get(1).asReduction(), branches.peek());
+		return hasDefault;
+	}
+
+	/**
+	 * @param token
+	 * @return
+	 */
+	private StringList extractCaseLabels(Token token) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 	/**
 	 * Checks the three header zones (given by the {@link Token}s) of a C {@code for} loop being

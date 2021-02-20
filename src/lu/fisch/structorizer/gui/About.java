@@ -171,14 +171,6 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 			int border = (int)(12 * scaleFactor);
 			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
 			
-			// JFormDesigner evaluation mark
-			/*
-			dialogPane.setBorder(new javax.swing.border.CompoundBorder(
-					new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
-							"JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
-							javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
-							java.awt.Color.red), dialogPane.getBorder())); dialogPane.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
-			*/
 			dialogPane.setLayout(new BorderLayout());
 			
 			//======== contentPanel ========
@@ -273,10 +265,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
 
-        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
-        GUIScaler.rescaleComponents(this);
-        // END KGU#287 2017-01-09
-        		
+		// START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+
 		//pack();	// Don't pack here (would minimize all tabs)!
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents

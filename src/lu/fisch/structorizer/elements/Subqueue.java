@@ -293,17 +293,17 @@ public class Subqueue extends Element implements IElementSequence {
 			children.insertElementAt(_element, _where);
 			_element.parent=this;
 		}
-    	// START KGU#136 2016-07-06: Bugfix #97
-    	this.resetDrawingInfoUp();
-    	// END KGU#136 2016-07-06
+		// START KGU#136 2016-07-06: Bugfix #97
+		this.resetDrawingInfoUp();
+		// END KGU#136 2016-07-06
 	}
 
 	public void clear()
 	{
 		children.clear();
-    	// START KGU#136 2016-07-06: Bugfix #97
-    	this.resetDrawingInfoUp();
-    	// END KGU#136 2016-07-06
+		// START KGU#136 2016-07-06: Bugfix #97
+		this.resetDrawingInfoUp();
+		// END KGU#136 2016-07-06
 	}
 	// END KGU#87 2015-11-22
 	
@@ -311,9 +311,9 @@ public class Subqueue extends Element implements IElementSequence {
 	public void removeElement(Element _element)
 	{
 		children.removeElement(_element);
-    	// START KGU#136 2016-07-06: Bugfix #97
-    	this.resetDrawingInfoUp();
-    	// END KGU#136 2016-07-06
+		// START KGU#136 2016-07-06: Bugfix #97
+		this.resetDrawingInfoUp();
+		// END KGU#136 2016-07-06
 	}
 	
 	public void removeElement(int _index)
@@ -322,9 +322,9 @@ public class Subqueue extends Element implements IElementSequence {
 		//children.removeElement(children.get(_index));
 		children.removeElementAt(_index);
 		// END KGU 2015-11-22
-    	// START KGU#136 2016-07-06: Bugfix #97
-    	this.resetDrawingInfoUp();
-    	// END KGU#136 2016-07-06
+		// START KGU#136 2016-07-06: Bugfix #97
+		this.resetDrawingInfoUp();
+		// END KGU#136 2016-07-06
 	}
 	
 	// START KGU#136 2016-03-02: New method to facilitate bugfix #97
@@ -363,7 +363,7 @@ public class Subqueue extends Element implements IElementSequence {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element res = super.getElementByCoord(_x, _y, _forSelection);
-    	// If this element isn't hit then there is no use searching the substructure
+		// If this element isn't hit then there is no use searching the substructure
 		if (res != null || _forSelection)
 		{
 			Element sel = null;
@@ -488,15 +488,15 @@ public class Subqueue extends Element implements IElementSequence {
 	// END KGU#117 2016-03-07
 
 	// START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
-    @Override
-    public void setColor(Color _color) 
-    {
-        super.setColor(_color);
-        for(int i=0; i<children.size(); i++)
-        {      
-            children.get(i).setColor(_color);
-        }
-    }
+	@Override
+	public void setColor(Color _color) 
+	{
+		super.setColor(_color);
+		for(int i=0; i<children.size(); i++)
+		{
+			children.get(i).setColor(_color);
+		}
+	}
 	// END KGU#87 2015-11-22
 
 	// START KGU#43 2016-01-22: Method to control the breakpoint property of the sub-elements
@@ -575,15 +575,15 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		// No own text is to be considered here
-        for(int i = 0; i < children.size(); i++)
-        {      
-            children.get(i).addFullText(_lines, _instructionsOnly);
-        }
-    }
-    // END KGU 2015-10-16
+		for(int i = 0; i < children.size(); i++)
+		{
+			children.get(i).addFullText(_lines, _instructionsOnly);
+		}
+	}
+	// END KGU 2015-10-16
 
 	// START KGU#87 2015-11-22: Allow the selection flagging of all immediate children
 	@Override
@@ -601,14 +601,14 @@ public class Subqueue extends Element implements IElementSequence {
 
 	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
 	@Override
-    public void setCollapsed(boolean collapsed) {
-        super.setCollapsed(false);	// the Subqueue itself will never be collapsed
-        java.util.Iterator<Element> iter = getIterator();
-        while (iter.hasNext())
-        {
-        	iter.next().setCollapsed(collapsed);
-        }
-    }
+	public void setCollapsed(boolean collapsed) {
+		super.setCollapsed(false);	// the Subqueue itself will never be collapsed
+		java.util.Iterator<Element> iter = getIterator();
+		while (iter.hasNext())
+		{
+			iter.next().setCollapsed(collapsed);
+		}
+	}
 	// END KGU#123 2016-01-03
 	
 	/* (non-Javadoc)
