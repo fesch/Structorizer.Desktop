@@ -12,6 +12,10 @@ Known issues:
 - COBOL import may fail if certain single-letter identifiers are used (rename them!),
   also if the code contains a SPECIAL-NAMES clause or float literals.
 - COBOL import does not cope with some statement variants and variable redefinitions.
+- Java import does not cope with type arguments in casting prefixes and fails if two
+  or more closing angular brackets (i.e. of nested type arguments) meet without blank
+  separating them. It does not cope with lambda expressions, either. The imported
+  diagrams will usually not be executable (because of unsupported OOP context).
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
