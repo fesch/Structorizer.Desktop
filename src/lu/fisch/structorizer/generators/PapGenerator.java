@@ -518,7 +518,7 @@ public class PapGenerator extends Generator {
 					// START KGU#863 2020-04-28: issues #385, #864/2 Support for declared optional arguments
 					Function call = ((Call)element).getCalledRoutine(i);
 					if (call != null && (routinePool != null) && line.endsWith(")")) {
-						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot, false);
 						if (!callCandidates.isEmpty()) {
 							// FIXME We'll just fetch the very first one for now...
 							Root called = callCandidates.get(0);

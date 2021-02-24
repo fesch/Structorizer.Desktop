@@ -1174,7 +1174,7 @@ public class PythonGenerator extends Generator
 			// We leave it to the caller what to do
 			return false;
 		}
-		setDefHandled(_root.getSignatureString(false), typeKey);
+		setDefHandled(_root.getSignatureString(false, false), typeKey);
 		if (_type.isRecord()) {
 			// START KGU#795 2020-02-12: Issue #807 Use dictionaries instead of external library recordtype
 			//String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
@@ -1335,7 +1335,7 @@ public class PythonGenerator extends Generator
 			}
 		}
 		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
-		this.setDefHandled(_root.getSignatureString(false), varName);
+		this.setDefHandled(_root.getSignatureString(false, false), varName);
 		return true;
 	}
 	// END KGU#767 2019-11-24

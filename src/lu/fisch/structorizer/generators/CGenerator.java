@@ -1292,7 +1292,7 @@ public class CGenerator extends Generator {
 						// END KGU#784 2019-12-02
 					}
 					codeLine = typeName + " " + codeLine;
-					this.setDefHandled(root.getSignatureString(false), varName);
+					this.setDefHandled(root.getSignatureString(false, false), varName);
 				}
 				// END KGU#767 2019-11-30
 			}
@@ -1988,7 +1988,7 @@ public class CGenerator extends Generator {
 					// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 					if (call != null) {
 					// END KGU#877 2020-10-16
-						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+						java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot, false);
 						if (!callCandidates.isEmpty()) {
 							// FIXME We'll just fetch the very first one for now...
 							Root called = callCandidates.get(0);
@@ -2671,7 +2671,7 @@ public class CGenerator extends Generator {
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
 			appendDeclComment(_root, _indent, _name);
 			// Just ensure that the declaration is registered
-			setDefHandled(_root.getSignatureString(false), _name);
+			setDefHandled(_root.getSignatureString(false, false), _name);
 			// END KGU#424 2017-09-26
 			if (decl.contains("???")) {
 				// START #730 2019-11-12: Issue #752 don't comment it out, a missing declaration is a syntax error anyway
@@ -2699,7 +2699,7 @@ public class CGenerator extends Generator {
 			addCode(typeName + " " + _name + ";", _indent, false);
 			// END KGU#730 2019-11-12
 			// START KGU#424 2017-09-26: Ensure the declaration comment doesn't get lost
-			setDefHandled(_root.getSignatureString(false), _name);
+			setDefHandled(_root.getSignatureString(false, false), _name);
 			// END KGU#424 2017-09-26
 		}
 		// END KGU#261/KGU#332 2017-01-16

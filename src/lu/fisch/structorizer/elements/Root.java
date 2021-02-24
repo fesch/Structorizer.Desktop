@@ -165,6 +165,7 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #920: `Infinity' introduced as literal
  *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
  *      Kay Gürtzig     2021-02-08      Enh. #928: New Analyser check 29 (structured CASE discriminator)
+ *      Kay Gürtzig     2021-02-22      Enh. #410: New field "namespace" to reflect e.g. class context
  *      
  ******************************************************************************************************
  *
@@ -263,7 +264,10 @@ public class Root extends Element {
 		{
 			String prefix1 = Integer.toString(root1.diagrType.ordinal());
 			String prefix2 = Integer.toString(root2.diagrType.ordinal());
-			int result = (prefix1 + root1.getSignatureString(false)).compareToIgnoreCase(prefix2 + root2.getSignatureString(false));
+			// START KGU#408 2021-02-22: Enh. #410 Consider the qualified names
+			//int result = (prefix1 + root1.getSignatureString(false)).compareToIgnoreCase(prefix2 + root2.getSignatureString(false));
+			int result = (prefix1 + root1.getSignatureString(false, true)).compareToIgnoreCase(prefix2 + root2.getSignatureString(false, true));
+			// END KGU#408 2021-02-22
 			if (result == 0) {
 				result = ("" + root1.getPath()).compareToIgnoreCase("" + root2.getPath());
 			}
@@ -311,6 +315,10 @@ public class Root extends Element {
 	// START KGU#376 2017-07-02: Enh. #389 - we want to show execution in inlcudeList
 	public boolean isIncluding = false;
 	// END KGU#376 2017-07-02
+	// START KGU#408 2021-02-22: Enh. #410 Introduced on occasion of Java import
+	/** A qualifier usable e.g. to reflect package (in case of a class) or class membership */
+	private String namespace = null;
+	// END KGU#408 2021-02-22
 	
 	// START KGU#624 2018-12-22: Enh. #655
 	/** selection flags for different drawing contexts. Index 0 is unused (instead field {@link #selected} is used) */ 
@@ -424,6 +432,44 @@ public class Root extends Element {
 		return done;
 	}
 	// END KGU#586 2018-09-28
+	
+	// START KGU#408 2021-02-22: Enh. #410 getter and setter for new field namespace
+	/**
+	 * Sets the given name prefix {@code _qualifier} as {@link #namespace} attribute
+	 * if it is an identifier sequence, separated by dots like e.g. a Java package name.
+	 * An empty string or {@code null} will nullify the namespace.
+	 * Does not modify this object otherwise.
+	 * @param _qualifier - the proposed name prefix or {@code null}.
+	 * @return {@code true} if the proposed _qualifier met the syntax requirements
+	 * @see #getNamespace()
+	 * @see #getQualifiedName()
+	 * @see #getSignatureString(boolean, boolean)
+	 */
+	public boolean setNamespace(String _qualifier)
+	{
+		boolean done = _qualifier == null || (_qualifier =_qualifier.trim()).isEmpty() ||
+				Function.testIdentifier(_qualifier, true, ".");
+		if (done) {
+			namespace = _qualifier;
+			if (namespace != null && namespace.isEmpty()) {
+				namespace = null;
+			}
+		}
+		return done;
+	}
+	
+	/**
+	 * @return the specified name qualifier (e.g. a package name or class access path)
+	 * or {@code null}.
+	 * @see #setNamespace(String)
+	 * @see #getQualifiedName()
+	 * @see #getSignatureString(boolean, boolean)
+	 */
+	public String getNamespace()
+	{
+		return namespace;
+	}
+	// END KGU#408 2021-02-22
 	
 	/**
 	 * @return true if and only if the diagram type is "main program"
@@ -1886,6 +1932,9 @@ public class Root extends Element {
             }
             ele.modified = new Date();
             // END KGU#363 2017-03-10
+            // START KGU#408 2021-02-22: Enh. #410
+            ele.namespace = this.namespace;
+            // END KGU#408 2021-02-22
             return ele;
     }
     
@@ -1899,7 +1948,14 @@ public class Root extends Element {
 	@Override
 	public boolean equals(Element _another)
 	{
-		return super.equals(_another) && this.children.equals(((Root)_another).children);
+		// START KGU#408 2021-02-24: Enh. #410 Involve namespace
+		//return super.equals(_another) && this.children.equals(((Root)_another).children);
+		return super.equals(_another)
+				&& (this.namespace == null && ((Root)_another).namespace == null
+					|| this.namespace != null && ((Root)_another).namespace != null
+					&& this.namespace.equals(((Root)_another).namespace))
+				&& this.children.equals(((Root)_another).children);
+		// END KGU#408 2021-02-24
 	}
 	// END KGU#119 2016-01-02
 	
@@ -1941,7 +1997,7 @@ public class Root extends Element {
 				resemblance = 4;
 			}
 		}
-		else if (this.getSignatureString(false).equals(another.getSignatureString(false))) {
+		else if (this.getSignatureString(false, false).equals(another.getSignatureString(false, false))) {
 			resemblance = 5;
 		}
 		return resemblance;
@@ -2214,6 +2270,9 @@ public class Root extends Element {
     		this.licenseName = attributes.licenseName;
     		this.licenseText = attributes.licenseText;
     		this.origin = attributes.origin;
+    		// START KGU#408 2021-02-22: Enh. #410
+    		this.namespace = attributes.namespace;
+    		// END KGU#408 2021-02-22
     	}
     }
     // KGU#363 2017-05-21
@@ -2511,7 +2570,7 @@ public class Root extends Element {
     				String name = this.includeList.get(i);
     				// START KGU#676 2019-03-31: Enh. #696
     				//Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
-    				Vector<Root> roots = pool.findIncludesByName(name, this);
+    				Vector<Root> roots = pool.findIncludesByName(name, this, false);
     				// END KGU#676 2019-03-31
     				if (roots.size() == 1) {
     					roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
@@ -3292,7 +3351,7 @@ public class Root extends Element {
     					pool = Arranger.getInstance();
     				}
     				if (pool != null) {
-    					for (Root incl: pool.findIncludesByName(inclName, this)) {
+    					for (Root incl: pool.findIncludesByName(inclName, this, false)) {
     						typeMap.putAll(incl.getTypeInfo());
     					}
     				}
@@ -4215,7 +4274,7 @@ public class Root extends Element {
 			{
 				int count = 0;	// Number of matching routines
 				if (Arranger.hasInstance()) {
-					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this).size();
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this, false).size();
 				}
 				if (count == 0) {
 					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
@@ -4946,7 +5005,7 @@ public class Root extends Element {
 			String name = includeList.get(i);
 			int count = 0;	// Number of matching routines
 			if (Arranger.hasInstance()) {
-				count = Arranger.getInstance().findIncludesByName(name, this).size();
+				count = Arranger.getInstance().findIncludesByName(name, this, false).size();
 			}
 			if (count == 0) {
 				//error  = new DetectedError("An includable diagram «<diagram_name>» is currently not available.", this);
@@ -4970,7 +5029,7 @@ public class Root extends Element {
 				addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), this), 23);    									
 			}
 			else if (Arranger.hasInstance()) {
-				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this);
+				Vector<Root> roots = Arranger.getInstance().findIncludesByName(name, this, false);
 				if (roots.size() == 1) {
 					Root importedRoot = roots.get(0);
 					Vector<DetectedError> impErrors = new Vector<DetectedError>();
@@ -5463,7 +5522,8 @@ public class Root extends Element {
      * Extracts the diagram name from the Root text. Contained blanks are replaced with underscores.
      * @return the program/subroutine name
      * @see #getMethodName(boolean)
-     * @see #getSignatureString(boolean)
+     * @see #getQualifiedName()
+     * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
      * @see #getResultType()
@@ -5482,7 +5542,8 @@ public class Root extends Element {
      * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
      * @return the program/subroutine name
      * @see #getMethodName()
-     * @see #getSignatureString(boolean)
+     * @see #getQualifiedName(boolean)
+     * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
      * @see #getResultType()
@@ -5564,6 +5625,51 @@ public class Root extends Element {
     	return programName;
     }
     
+    // START KGU#408 2021-02-22: Enh. #410 New convenience methods to support class import
+    /**
+     * Extracts the diagram name from the Root text and applies the {@link #namespace} as
+     * prefix if specified. Contained blanks are replaced with underscores.
+     * @return the (possibly qualified) program/subroutine name
+     * @see #getMethodName()
+     * @see #getQualifiedName(boolean)
+     * @see #getSignatureString(boolean, boolean)
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
+     * @see #isProgram()
+     * @see #isSubroutine()
+     * @see #isInclude()
+     */
+    public String getQualifiedName()
+    {
+    	return getQualifiedName(true);
+    }
+    
+    /**
+     * Extracts the diagram name from the Root text and applies the {@link #namespace} as
+     * prefix if specified.
+     * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
+     * @return the (possibly qualified) program/subroutine name
+     * @see #getMethodName(boolean)
+     * @see #getQualifiedName()
+     * @see #getSignatureString(boolean, boolean)
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #getResultType()
+     * @see #isProgram()
+     * @see #isSubroutine()
+     * @see #isInclude()
+     */
+    public String getQualifiedName(boolean _replaceBlanks)
+    {
+    	String name = getMethodName(_replaceBlanks);
+    	if (namespace != null && !namespace.trim().isEmpty()) {
+    		name = namespace.trim() + "." + name;
+    	}
+    	return name;
+    }
+    // END KGU#408 2021-02-22
+    
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
     /**
      * Returns a string representing a detected result type if this is a subroutine diagram. 
@@ -5634,7 +5740,7 @@ public class Root extends Element {
      * @see #getParameterTypes()
      * @see #getResultType()
      * @see #getMethodName()
-     * @see #getSignatureString(boolean)
+     * @see #getSignatureString(boolean, boolean)
      * @see #isSubroutine()
      */
     // START KGU#253 2016-09-22: Enh. #249 - Find out whether there is a parameter list
@@ -5737,14 +5843,21 @@ public class Root extends Element {
      * The parenthesized argument number (&lt;n_args&gt;) is only included if this is not a program,
      * the file path appendix is only added if _addPath is true 
      * @param _addPath - whether or not the file path is to be aded t the signature string
+     * @param _qualified - if {@code true} and the {@link #namespace} attribute is set then
+     * the qualified name ({@code <namespace>.<name>}) is used in the result.
      * @return the composed string
      * @see #getMethodName()
      * @see #getParameterNames()
      * @see #getParameterTypes()
      * @see #getResultType()
      */
-    public String getSignatureString(boolean _addPath) {
+    public String getSignatureString(boolean _addPath, boolean _qualified) {
     	String presentation = this.getMethodName();
+    	// START KGU#408 2021-02-22: Enh. #410 consider possible qualification
+    	if (_qualified && namespace != null && !namespace.isEmpty()) {
+    		presentation = namespace + "." + presentation;
+    	}
+    	// END KGU#408 2021-02-22
     	if (this.isSubroutine()) {
     		// START KGU#371 2019-03-07: Enh. #385: Default parameter values supported
     		//presentation += "(" + this.getParameterNames().count() + ")";
@@ -5774,7 +5887,7 @@ public class Root extends Element {
      * and the text contains "func(x, name)" or "int func(double x, String name)" or
      * "func(x: REAL; name: STRING): INTEGER" then the result would be "func-2".
      * @return a file base name (i.e. without path and extension)
-     * @see #getSignatureString(boolean)
+     * @see #getSignatureString(boolean, boolean)
      * @see #getMethodName()
      */
     public String proposeFileName()
@@ -6545,7 +6658,7 @@ public class Root extends Element {
 		StringList uninitialized = new StringList();
 		if (this.includeList != null && _pool != null) {
 			for (int i = 0; i < this.includeList.count(); i++) {
-				Vector<Root> includes = _pool.findIncludesByName(this.includeList.get(i), this);
+				Vector<Root> includes = _pool.findIncludesByName(this.includeList.get(i), this, false);
 				for (Root include: includes) {
 					obtainedVars.addIfNew(include.getVarNames());
 				}

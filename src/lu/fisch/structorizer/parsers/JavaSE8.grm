@@ -49,10 +49,11 @@
 !                                       Gazkos Java 2.0 grammar) and tested
 !                                       with GOLDBuilder 5.2.0
 ! V 0.2     2021-02-17  Kay Gürtzig     Missing import declarations added
+! V 0.3     2021-02-22  Kay Gürtzig     <MethodDeclaration> stuff modified
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.2, Feb. 2021'
+"Version" = '0.3, Feb. 2021'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification '
 
@@ -73,8 +74,8 @@
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*
 StringLiteral  = '"'({String Char}|'\'{CharSign})*'"'
-FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
-FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
+FloatingPointLiteral   = {Digit}+'.'{Digit}*{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
+FloatingPointLiteralExponent = {Digit}+'.'{Digit}*{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'
 IndirectCharLiteral = {Quote}{CharSign1}{Quote}
 StandardEscapeCharLiteral = {Quote}'\'{CharSign}{Quote}
@@ -85,6 +86,7 @@ StartWithNoZeroDecimalIntegerLiteral = {NoZeroDigit}{Digit}*{LongTypeSuffix}?
 StartWithZeroDecimalIntegerLiteral = '0'{LongTypeSuffix}?
 HexIntegerLiteral = '0'('x'|'X'){HexDigit}+{LongTypeSuffix}?
 OctalIntegerLiteral = '0'{OctalCharSet}+{LongTypeSuffix}?
+Ellipsis = '...'
 
 
 "Case Sensitive" = 'True'
@@ -135,6 +137,7 @@ Comment Line = '//'
          
 <NormalAnnotation>
         ::= '@' <TypeName> '(' <ElementValuePairs> ')'
+        ::= '@' <TypeName> '(' ')'
          
 <ElementValuePairs>
         ::= <ElementValuePair>
@@ -176,8 +179,11 @@ Comment Line = '//'
 <Type>  ::= <PrimitiveType>
          |  <ReferenceType>
 
-<PrimitiveType> ::= <Annotations> <NumericType>
-                  | <Annotations> 'boolean'
+!<PrimitiveType> ::= <Annotations> <NumericType>
+!                  | <Annotations> 'boolean'
+<PrimitiveType>
+        ::= <NumericType>
+         | 'boolean'
 
 <NumericType> 
         ::= <IntegralType>
@@ -199,12 +205,13 @@ Comment Line = '//'
 !         |  <TypeVariable>         ! subsumed by <ClassOrInterfaceType> except for the annotations
          |  <ArrayType>
 
-! This is the official syntax - unfortuntely not LALR(1) so it is just turned uside down...
+! This is the official syntax - unfortuntely not LALR(1) so it is just turned upside down...
 !<ClassOrInterfaceType>
 !        ::= <ClassType>
 !         |  <InterfaceType>
 <ClassOrInterfaceType>
-        ::= <Name> <TypeArgumentsOpt>
+        ::= <Name> '<' <TypeArguments> '>'
+         |  <Name>
 
 !<ClassType>
 !        ::= <Annotations> Identifier <TypeArgumentsOpt>
@@ -248,9 +255,9 @@ Comment Line = '//'
 
 <QualifiedName> ::= <Name> '.' Identifier
       
-<TypeArgumentsOpt>
-        ::= '<' <TypeArguments> '>'
-         |
+!<TypeArgumentsOpt>
+!        ::= '<' <TypeArguments> '>'
+!         |
 
 <TypeArguments>
         ::= <TypeArgument>
@@ -407,6 +414,7 @@ Comment Line = '//'
 
 <ClassBodyDeclaration> 
         ::= <ClassMemberDeclaration>
+         |  <InstanceInitializer>
          |  <StaticInitializer>
          |  <ConstructorDeclaration>
 
@@ -431,16 +439,30 @@ Comment Line = '//'
 
 <VariableDeclaratorId> 
         ::= Identifier
-         |  <VariableDeclaratorId> '[' ']'
+!         |  <VariableDeclaratorId> '[' ']'
+         |  Identifier <Dims>
 
 <VariableInitializer> 
         ::= <Expression>
          |  <ArrayInitializer>
 
-<MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
 !<MethodDeclaration> ::= <MethodHeader> <MethodBody>
+<MethodDeclaration>
+!        ::= <Annotations> <Modifiers> <MethodHeader> <MethodBody>
+!         |  <Annotations> <MethodHeader> <MethodBody>
+        ::= <Annotations> <MethodHeader> <MethodBody>
 
 <MethodHeader>
+!        ::= <TypeParametersOpt> <Result> <MethodDeclarator> <Throws>
+!         |  <TypeParametersOpt> <Result> <MethodDeclarator>
+!        ::= <Modifiers> <Result> <MethodDeclarator> <Throws>
+!         |  <Modifiers> <Result> <MethodDeclarator>
+!         |  <Result> <MethodDeclarator> <Throws>
+!         |  <Result> <MethodDeclarator>
+!        
+!<Result>
+!        ::= <Type>
+!         |  'void'
         ::= <Modifiers> <Type> <MethodDeclarator> <Throws>
          |  <Modifiers> <Type> <MethodDeclarator>
          |  <Type> <MethodDeclarator> <Throws>
@@ -453,15 +475,55 @@ Comment Line = '//'
 <MethodDeclarator>
         ::= Identifier '(' <FormalParameterList> ')'
          |  Identifier '(' ')'
-         |  <MethodDeclarator> '[' ']'
+         |  Identifier '(' <FormalParameterList> ')' <Dims>
+         |  Identifier '(' ')' <Dims>
+
+! The following rules describe the official grammar. Unfortunately
+! it causes syntax errors at the end of the parameter list.
+! So we simplify it, such that it is no longer checked that a
+! <ReceiverParameter> may only be the first formal parameter and a
+! <LastFormalParameter> may only be the last formal parameter.
+!<FormalParameterList> 
+!        ::= <ReceiverParameter>
+!         |  <FormalParameters> ',' <LastFormalParameter>
+!         |  <LastFormalParameter>
+!         
+!<FormalParameters>
+!        ::= <ReceiverParameter> <FormalParametersOpt>
+!         |  <FormalParameter> <FormalParametersOpt>
+!
+!<FormalParametersOpt>
+!        ::= ',' <FormalParameter> <FormalParametersOpt>
+!         |
+!
+!<FormalParameter> 
+!        ::= <Type> <VariableDeclaratorId>
+!         |  'final' <Type> <VariableDeclaratorId>
+!
+!<LastFormalParameter>
+!        ::= <Type> Ellipsis <VariableDeclaratorId>
+!         |  <FormalParameter>
 
 <FormalParameterList> 
         ::= <FormalParameter>
          |  <FormalParameterList> ',' <FormalParameter>
-
-<FormalParameter> 
+         
+<FormalParameter>
         ::= <Type> <VariableDeclaratorId>
+         |  'final' <Type> <VariableDeclaratorId>
+         |  <ReceiverParameter>
+         |  <LastFormalParameter>
+                  
+<LastFormalParameter>
+        ::= <Type> Ellipsis <VariableDeclaratorId>
 
+<ReceiverParameter>
+        ::= <Type> <QualPrefixOpt> 'this'
+         
+<QualPrefixOpt>
+        ::= Identifier '.' <QualPrefixOpt>
+         |
+         
 <Throws> 
         ::= 'throws' <ClassTypeList>
 
@@ -472,6 +534,9 @@ Comment Line = '//'
 <MethodBody> 
         ::= <Block>
          |  ';'
+
+<InstanceInitializer>
+        ::= <Annotations> <Block>
 
 <StaticInitializer> 
         ::= <Annotations> 'static' <Block>
@@ -732,6 +797,10 @@ Comment Line = '//'
         ::= 'try' <Block> <Catches>
          |  'try' <Block> <Catches> <Finally>
          |  'try' <Block> <Finally>
+         |  'try' <ResourceSpecification> <Block>
+         |  'try' <ResourceSpecification> <Block> <Catches>
+         |  'try' <ResourceSpecification> <Block> <Catches> <Finally>
+         |  'try' <ResourceSpecification> <Block> <Finally>
 
 <Catches>
         ::= <CatchClause>
@@ -742,6 +811,18 @@ Comment Line = '//'
 
 <Finally> 
         ::= 'finally' <Block>
+         
+<ResourceSpecification>
+        ::= '(' <Resources> ')'
+         |  '(' <Resources> ';' ')'
+         
+<Resources>
+        ::= <Resource>
+         |  <Resources> ';' <Resource>
+         
+<Resource>
+        ::= <Type> <VariableDeclaratorId> '=' <Expression>
+         |  'final' <Type> <VariableDeclaratorId> '=' <Expression>
 
 <Primary> 
         ::= <PrimaryNoNewArray>
@@ -749,6 +830,7 @@ Comment Line = '//'
 
 <PrimaryNoNewArray> 
         ::= <Literal>
+!         |  <ClassLiteral>
          |  'this'
          |  '(' <Expression> ')'
          |  <ClassInstanceCreationExpression>
@@ -756,9 +838,24 @@ Comment Line = '//'
          |  <MethodInvocation>
          |  <ArrayAccess>
 
+! This would be okay according to the language specification but causes syntax errors during parsing
+! So we better use a simple preprocessing workaround: replace all ".class." occurrences by something
+! recognisable else, e.g. ".c_l_a_s_s." before parsing
+!<ClassLiteral>
+!        ::= <Name> '.' 'class'
+!         |  <NumericType> '.' 'class'
+!         |  'boolean' '.' 'class'
+!         |  'void' '.' 'class'
+!         |  <Name> <Dims> '.' 'class'
+!         |  <NumericType> <Dims> '.' 'class'
+!         |  'boolean' <Dims> '.' 'class'
+!         |  'void' <Dims> '.' 'class'
+
 <ClassInstanceCreationExpression> 
         ::= 'new' <ClassType> '(' <ArgumentList> ')'
          |  'new' <ClassType> '(' ')'
+         |  'new' <ClassType> '(' <ArgumentList> ')' <ClassBody>
+         |  'new' <ClassType> '(' ')' <ClassBody>
 
 <ArgumentList> 
         ::= <Expression>
@@ -828,11 +925,13 @@ Comment Line = '//'
          |  '!' <UnaryExpression>
          |  <CastExpression>
 
+! Unfortunately there is no obvious way to accept target types with type arguments here :-(
 <CastExpression>
         ::= '(' <PrimitiveType> <Dims> ')' <UnaryExpression>
          |  '(' <PrimitiveType> ')' <UnaryExpression>
-         |  '(' <Expression> ')' <UnaryExpressionNotPlusMinus>
-         |  '(' <Name> <Dims> ')' <UnaryExpressionNotPlusMinus>
+!         |  '(' <ReferenceType> ')' <UnaryExpressionNotPlusMinus>  ! this would be correct but collides
+         |  '(' <Expression> ')' <UnaryExpressionNotPlusMinus>      ! this is a cheap workaround for the conflict with <Expression>
+         |  '(' <Name> <Dims> ')' <UnaryExpressionNotPlusMinus>     ! this allows at least general array types
 
 <MultiplicativeExpression>
         ::= <UnaryExpression>
@@ -917,4 +1016,5 @@ Comment Line = '//'
 <Expression> ::= <AssignmentExpression>
 
 <ConstantExpression> ::= <Expression>
+
 

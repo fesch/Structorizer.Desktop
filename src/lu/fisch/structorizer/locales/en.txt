@@ -822,6 +822,8 @@ InputBoxRoot.btnCancel.tooltip=
 InputBoxRoot.btnAttributes.text=Attributes
 InputBoxRoot.btnAttributes.tooltip=Opens a dialog to inspect attributes and properties of this diagram.
 InputBoxRoot.btnAddIncludable.text=Add
+InputBoxRoot.lblNamespace.text=Name space (prefix)
+InputBoxRoot.lblNamespace.tooltip=An optional dot-separated qualifier as name prefix
 
 -----[ InputBoxCase ]-----
 InputBoxCase.title[getInsertionType():insert]=Add new @c statement ...

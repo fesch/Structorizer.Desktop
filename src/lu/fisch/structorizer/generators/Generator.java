@@ -887,7 +887,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected boolean wasDefHandled(Root _root, String _id, boolean _setDefinedIfNot, boolean _involveIncludables)
 	// END KGU#767 2019-11-24
 	{
-		String signature = _root.getSignatureString(false);
+		String signature = _root.getSignatureString(false, false);
 		StringList definedIds = this.declaredStuff.get(signature);
 		boolean handled = definedIds != null && definedIds.contains(_id);
 		if (_involveIncludables && _root.includeList != null) {
@@ -2330,7 +2330,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			//Vector<Root> foundRoots = Arranger.getInstance().
 			//		findRoutinesBySignature(called.getName(), called.paramCount());
 			Vector<Root> foundRoots = routinePool.
-					findRoutinesBySignature(called.getName(), called.paramCount(), _caller);
+					findRoutinesBySignature(called.getName(), called.paramCount(), _caller, false);
 			// END KGU#676 2019-03-13
 			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
@@ -2451,7 +2451,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			{
 				Root newIncl = null;
 				String includeName = _root.includeList.get(i);
-				Vector<Root> candidates = routinePool.findIncludesByName(includeName, _root);
+				Vector<Root> candidates = routinePool.findIncludesByName(includeName, _root, false);
 				if (!candidates.isEmpty()) {
 					newIncl = putRootsToMap(candidates.firstElement(), _root, _includedRoots);
 				}
@@ -3329,7 +3329,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// We cannot ask wasDefHandled(...) since the flag is not a registered variable
 			if (flagDecl != null) {
 				code.add(_indent + flagDecl);
-				this.setDefHandled(incl.getSignatureString(false), this.getInitFlagName(incl));
+				this.setDefHandled(incl.getSignatureString(false, false), this.getInitFlagName(incl));
 			}
 			// END KGU#834 2020-03-26
 			appendDefinitions(incl, _indent, incl.retrieveVarNames(), _force);
@@ -3514,11 +3514,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				alt.qTrue.parent = alt;
 				//alt.parent = incl;
 				init.children.addElement(alt);
-				StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false));
+				StringList doneDecls = this.declaredStuff.get(incl.getSignatureString(false, false));
 				if (doneDecls != null) {
-					this.declaredStuff.put(init.getSignatureString(false), doneDecls);
+					this.declaredStuff.put(init.getSignatureString(false, false), doneDecls);
 				}
-				this.setDefHandled(init.getSignatureString(false), flagName);
+				this.setDefHandled(init.getSignatureString(false, false), flagName);
 				// FIXME: I am afraid, some initialisations are necessary for ensuring re-entrance
 				generateCode(alt, bodyIndent);
 			}

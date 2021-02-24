@@ -488,10 +488,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	public abstract String[] getFileExtensions();
 	
 	/**
-	 * Parses the source code from file _textToParse, which is supposed to be encoded
-	 * with the charset _encoding, and returns a list of structograms - one for each function
-	 * or program contained in the source file.
-	 * Field `error' will either contain an empty string or an error message afterwards.
+	 * Parses the source code from file {@code _textToParse}, which is supposed to be encoded
+	 * with the charset {@code _encoding}, and returns a list of structograms - one for each
+	 * function or program contained in the source file.
+	 * Field {@link #error} will either contain an empty string or an error message afterwards.
 	 * @param _textToParse - file name of the C source.
 	 * @param _encoding - name of the charset to be used for decoding
 	 * @param _logDir - null or a directory path to direct the parsing and building log to.
@@ -833,7 +833,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 
 			// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
 			//return root;
-			if (subRoots.isEmpty() || root.children.getSize() > 0 && !forgetMainRoot)
+			if (subRoots.isEmpty() || root.children.getSize() > 0 && !forgetMainRoot && !subRoots.contains(root))
 			{
 				subRoots.add(0, root);
 				// START KGU#537 2018-07-01: Enh. #533

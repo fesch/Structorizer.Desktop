@@ -1136,7 +1136,7 @@ public class COBOLGenerator extends Generator {
 					target = transform(Call.getAssignedVarname(tokens, true));
 				}
 				if (routinePool != null) {
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(called.getName(), called.paramCount(), owningRoot);
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(called.getName(), called.paramCount(), owningRoot, false);
 					if (callCandidates.size() > 0) {
 						Root sub = callCandidates.get(0);	// TODO better selection strategy?
 						sub.collectParameters(null, paramTypes, defaults);

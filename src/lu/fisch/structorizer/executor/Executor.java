@@ -205,6 +205,7 @@ package lu.fisch.structorizer.executor;
  *                                      Bugfix #922: Corrected handling of mixed substructure in setVar()
  *                                      Issue #923: Manipulations of FOR-IN loop variables are not illegal
  *      Kay Gürtzig     2021-02-03      Issue #920: Acceptance of infinity as symbol ∞
+ *      Kay Gürtzig     2021-02-24      Enh. #410: Additional namespace filter applied for callees and includables
  *
  ******************************************************************************************************
  *
@@ -1080,7 +1081,7 @@ public class Executor implements Runnable
 					if (running) {
 						JOptionPane.showMessageDialog(null, Control.msgUseStopButton.getText(),
 								mySelf.getClass().getSimpleName() + ": "
-										+ mySelf.diagram.getRoot().getSignatureString(false),
+										+ mySelf.diagram.getRoot().getSignatureString(false, false),
 								JOptionPane.WARNING_MESSAGE);
 					}
 					else {
@@ -2615,6 +2616,7 @@ public class Executor implements Runnable
 	
 	/**
 	 * Searches all known pools for a unique includable diagram with given name
+	 * and maximum namespace coincidence with current root in the context
 	 * @param name - diagram name
 	 * @return a {@link Root} of type INCLUDABLE with given name if uniquely
 	 *         found, {@code null} otherwise
@@ -2627,7 +2629,8 @@ public class Executor implements Runnable
 	
     /**
      * Searches all known pools for subroutines with a signature compatible to
-     * {@code name(arg1, arg2, ..., arg_nArgs)}
+     * {@code name(arg1, arg2, ..., arg_nArgs)} and maximum namespace coincidence
+     * with current root in the context
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
      * @return a {@link Root} that matches the specification if uniquely found,
@@ -2669,15 +2672,16 @@ public class Executor implements Runnable
     		IRoutinePool pool = iter.next();
     		Vector<Root> candidates = null;
     		if (nArgs >= 0) {
-    			candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
+    			// START KGU#408 2021-02-24: Enh. #410 Involve the namespace if possible
+    			//candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
+    			candidates = pool.findRoutinesBySignature(name, nArgs, context.root, true);
+    			// END KGU#408 2021-02-24
     		}
     		else {
-    			// Why the heck this circumvention? 
-//    			candidates = new Vector<Root>();
-//    			for (Root cand: pool.findIncludesByName(name, context.root)) {
-//    				candidates.add(cand);
-//    			}
-    			candidates = pool.findIncludesByName(name, context.root);
+    			// START KGU#408 2021-02-24: Enh. #410 Involve the namespace if possible
+    			//candidates = pool.findIncludesByName(name, context.root);
+    			candidates = pool.findIncludesByName(name, context.root, true);
+    			// END KGU#408 2021-02-24
     		}
     		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
     		//for (int c = 0; subroutine == null && c < candidates.size(); c++)

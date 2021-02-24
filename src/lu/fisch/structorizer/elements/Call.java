@@ -331,7 +331,7 @@ public class Call extends Instruction {
 		if (called != null) {
 			String signature = called.getSignatureString();
 			Root myRoot = Element.getRoot(this);
-			if (myRoot.getSignatureString(false).equals(signature)) {
+			if (myRoot.getSignatureString(false, false).equals(signature)) {
 				typeSpec = myRoot.getResultType();
 			}
 			// START KGU#676 2019-03-31: Issue #696 batch export
@@ -340,7 +340,7 @@ public class Call extends Instruction {
 			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
 				IRoutinePool pool = myRoot.specialRoutinePool;
 				if (pool == null) { pool = Arranger.getInstance(); }
-				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot, false);
 			// END KGU#676 2019-03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();

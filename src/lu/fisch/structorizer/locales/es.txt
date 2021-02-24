@@ -822,6 +822,8 @@ InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
 InputBoxRoot.btnAttributes.text=Propiedades
 InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
 InputBoxRoot.btnAddIncludable.text=Añadir
+InputBoxRoot.lblNamespace.text=Espacio de nombres (prefijo)
+InputBoxRoot.lblNamespace.tooltip=Un cualificador jerárquico (y opcional), constando de identificadores separados por puntos, como prefijo
 
 -----[ InputBoxCase ]-----
 InputBoxCase.title[getInsertionType():insert]=Insertar ramificación @c...

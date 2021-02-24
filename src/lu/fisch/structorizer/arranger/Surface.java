@@ -129,7 +129,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
- *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams 
+ *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams
+ *      Kay Gürtzig     2021-02-24      Enh. #410: Root search methods enhanced by namespace similarity ranking
  *
  ******************************************************************************************************
  *
@@ -1249,7 +1250,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
-						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false, false) + ": " +
 								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 						if (savedRoots.contains(diagr.root)) {
 							for (String grName: diagr.getGroupNames()) {
@@ -3714,7 +3715,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#630 2019-01-09
 					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() / zoomFactor), Math.round(e.getY() / zoomFactor));
 					for (Diagram diagr: hitDiagrs) {
-						String description = diagr.root.getSignatureString(false);
+						String description = diagr.root.getSignatureString(false, false);
 						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, diagr.root.getIcon());
 						menuItem.setToolTipText(msgTooltipSelectThis.getText()
 								.replace("%1", msgDiagram.getText().replace("%", description))
@@ -4060,7 +4061,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int, boolean)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
@@ -4075,7 +4076,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
@@ -4120,11 +4121,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							fName = "[" + diagram.root.proposeFileName() + "]";
 						}
 						String message = msgInsertionConflict[resemblance-3].getText().
-								replace("%1", root.getSignatureString(false)).
+								replace("%1", root.getSignatureString(false, false)).
 								replace("%2", fName);
 						JOptionPane.showMessageDialog(this.getParent(), message,
 								this.titleDiagramConflict.getText(),
-								JOptionPane.WARNING_MESSAGE);			
+								JOptionPane.WARNING_MESSAGE);
 					}
 					if (resemblance <= equalityLevel)
 					{
@@ -4223,7 +4224,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
 	 */
 	@Override
-	public Vector<Root> findIncludesByName(String rootName, Root includer)
+	public Vector<Root> findIncludesByName(String rootName, Root includer, boolean filterByClosestPath)
 	{
 		/* The most efficient strategy for group-aware retrieval is supposed to
 		 * be first to fetch all matching Roots (in most cases the result will
@@ -4241,6 +4242,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			incls = filterRootsByGroups(includer, incls, false);
 		}
 		// END KGU#700 2019-03-28
+		
+		// START KGU#408 2021-02-24: Enh. #410 Additional check for namespace match
+		if (incls.size() > 0 && includer != null && includer.getNamespace() != null) {
+			incls = sortRootsByNamespace(includer.getNamespace(), incls, filterByClosestPath);
+		}
+		// END KGU#408 2021-02-24
 		return incls;
 	}
 	// END KGU#376 2017-04-11
@@ -4250,7 +4257,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
 	 */
 	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller)
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller, boolean filterByClosestPath)
 	{
 		/* The most efficient strategy for group-aware retrieval is supposed to
 		 * be first to fetch all matching Roots (in most cases the result will
@@ -4287,6 +4294,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			functions = filterRootsByGroups(caller, functions, false);
 		}
 		// END KGU#700 2019-03-28
+		
+		// START KGU#408 2021-02-24: Enh. #410 Additional check for namespace match
+		if (functions.size() > 0 && caller != null && caller.getNamespace() != null) {
+			functions = sortRootsByNamespace(caller.getNamespace(), functions, filterByClosestPath);
+		}
+		// END KGU#408 2021-02-24
 		return functions;
 	}
 	// END KGU#2 2015-11-24
@@ -4347,7 +4360,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Collections.sort(selectedRoots, Root.SIGNATURE_ORDER);
 		StringList signatures = new StringList();
 		for (Root root: selectedRoots) {
-			signatures.add(root.getSignatureString(withPath));
+			signatures.add(root.getSignatureString(withPath, false));
 		}
 		return signatures;
 	}
@@ -4378,11 +4391,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Returns a {@link Vector} of only those elements of {@code roots} that
 	 * share at least one group with {@code discriminator} if {@code discriminator}
 	 * is member of at least one group. If {@code strictly} is false, then in case of
-	 * an empy intersection the original set of roots will be returned (unfiltered).
+	 * an empty intersection the original set of roots will be returned (unfiltered).
 	 * @param discriminator - a {@link Root} object the associated groups of which decide membership
 	 * @param roots - collection of candidate {@link Root} objects
-	 * @param strictly - if true then an empy vector is returned if none of the roots shares a group
-	 * with discriminator, otherwise all given roots will be returned in case te filtered set became empty
+	 * @param strictly - if {@code true} then an empty vector is returned if none of the
+	 *  roots shares a group with {@code discriminator}, otherwise all given roots will
+	 *  be returned in case the filtered set became empty
+	 * @return the filtered collection of members of {@code roots}
 	 */
 	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots, boolean strictly) {
 		Vector<Root> filteredRoots = new Vector<Root>();
@@ -4405,6 +4420,53 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return filteredRoots;
 	}
 	// END KGU#700 2019-03-28
+	
+	// START KGU#408 2021-02-24: Enh. #410 Additional namespace field on behalf of Java import
+	/**
+	 * Returns a {@link Vector} of the given elements of {@code roots} that is sorted
+	 * from maximum to minimum coincidence of the name space prefixes with given
+	 * {@code namespace}. Result set may be restricted to the best-matching partition.
+	 * @param namespace - the qualifier to be matched against
+	 * @param roots - the candidate {@link Root}s
+	 * @param onlyBestMatch - if {@code true} and there are differences in the length
+	 *   of the common namespace prefix then only the best-matching category will be
+	 *   returned
+	 * @return the sorted and possibly filtered collection of members of {@code roots}
+	 */
+	private Vector<Root> sortRootsByNamespace(String namespace, Vector<Root> roots, boolean onlyBestMatch) {
+		Vector<Root> orderedRoots = new Vector<Root>();
+		StringList path = StringList.explode(namespace, "\\.");
+		Vector<Vector<Root>> partition = new Vector<Vector<Root>>(path.count()+1);
+		for (int i = 0; i <= path.count(); i++) {
+			partition.add(new Vector<Root>());
+		}
+		for (int i = 0; i < roots.size(); i++) {
+			Root cand = roots.get(i);
+			if (cand.getNamespace() == null) {
+				partition.get(0).add(cand);
+			}
+			else {
+				StringList pathI = StringList.explode(cand.getNamespace(), "\\.");
+				int minLgth = Math.min(path.count(), pathI.count());
+				for (int j = 0; j < minLgth; j++) {
+					if (!path.get(j).equals(pathI.get(j))) {
+						partition.get(j).add(cand);
+						break;
+					}
+					else if (j+1 == minLgth) {
+						partition.get(j+1).add(cand);
+					}
+				}
+			}
+		}
+		for (int i = partition.size() - 1; i >= 0; i--) {
+			if (orderedRoots.addAll(partition.get(i)) && onlyBestMatch) {
+				break;
+			}
+		}
+		return orderedRoots;
+	}
+	// END KGU#408 2021-02-24
 
 	// START KGU#305 2016-12-16
 	/**
@@ -4687,7 +4749,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: calls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root, false);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
@@ -4696,7 +4758,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (root.includeList != null) {
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
-					Vector<Root> candidates = this.findIncludesByName(inclName, root);
+					Vector<Root> candidates = this.findIncludesByName(inclName, root, false);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
@@ -5299,7 +5361,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: containedCalls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null && fct.isFunction()) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null, false);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
@@ -5308,7 +5370,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList includeNames = diagr.root.includeList;
 			if (includeNames != null) {
 				for (int i = 0; i < includeNames.count(); i++) {
-					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null);
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null, false);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}

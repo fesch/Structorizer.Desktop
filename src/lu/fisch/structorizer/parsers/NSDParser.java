@@ -55,6 +55,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.07.17      Bugfix #562: Attribute "origin" must be set (overwritten) in any case
  *      Kay Gürtzig     2018.09.11      Refines #372: More sensible attributes for Roots from an arrz file.
  *      Kay Gürtzig     2019-03-17      Enh. #56: Import of new Try element implemented
+ *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
  *
  ******************************************************************************************************
  *
@@ -268,6 +269,12 @@ public class NSDParser extends DefaultHandler {
 				root.origin = "Structorizer < 3.23-12 (legacy NSD file)";
 			}
 			// END KGU#557 2018-07-17
+			
+			// START KGU#408 2021-02-22: Enh. #410 New filed since implementation of Java import
+			if (attributes.getIndex("namespace") != -1) {
+				root.setNamespace(attributes.getValue("namespace"));
+			}
+			// END KGU#408 2021-02-22
 			
 			// START KGU#363 2017-03-10: Enh. #372
 			root.fetchAuthorDates(attributes);

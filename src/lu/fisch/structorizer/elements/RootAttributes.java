@@ -58,6 +58,9 @@ public class RootAttributes {
 	// START KGU#363 2017-05-22: Enh. #372
 	public String origin = null; 
 	// END KGU#363 2017-05-22
+	// START KGU#408 2021-02-22: Enh. #410
+	public String namespace = null;
+	// END KGU#408 2021-02-22
 
 
 	/**
@@ -79,8 +82,11 @@ public class RootAttributes {
 			this.licenseText = _root.licenseText + "";
 		}
 		// START KGU#363 2017-05-22: Enh. #372
-		this.origin = _root.origin;; 
+		this.origin = _root.origin;
 		// END KGU#363 2017-05-22
+		// START KGU#408 2021-02-22: Enh. #410
+		this.namespace = _root.getNamespace();
+		// END KGU#408 2021-02-22
 	}
 	
 	/**
@@ -97,6 +103,9 @@ public class RootAttributes {
 		// START KGU#363 2017-05-22: Enh. #372
 		info.origin = this.origin;
 		// END KGU#363 2017-05-22
+		// START KGU#408 2021-02-22: Enh. #410
+		info.namespace = this.namespace;
+		// END KGU#408 2021-02-22
 		return info;
 	}
 

@@ -288,7 +288,7 @@ public class Archivar {
 				}
 			}
 			else if (this.root != null) {
-				signature = this.root.getSignatureString(false);
+				signature = this.root.getSignatureString(false, false);
 			}
 			return signature;
 		}
@@ -706,10 +706,10 @@ public class Archivar {
 				}
 				catch (IOException ex) {
 					if (_troubles != null) {
-						_troubles.add(item.root.getSignatureString(false) + ": " + ex.toString());
+						_troubles.add(item.root.getSignatureString(false, false) + ": " + ex.toString());
 					}
 					else {
-						throw new ArchivarException(item.root.getSignatureString(false), ex);
+						throw new ArchivarException(item.root.getSignatureString(false, false), ex);
 					}
 				}
 			}

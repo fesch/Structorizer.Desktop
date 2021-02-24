@@ -46,6 +46,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-31      Bugfix #902: Must regain focus after selecting; cancel add/move action
  *                                      on quitting the pane; confirmation request before dissolving groups
  *      Kay Gürtzig     2021-01-11      Enh. #910: Menu items disabled if only DiagramController proxies are selected
+ *      Kay Gürtzig     2021-02-23      Issue #901: WAIT_CURSOR now also set on group saving
  *
  ******************************************************************************************************
  *
@@ -276,7 +277,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			Object content = ((DefaultMutableTreeNode)value).getUserObject();
 			if (content instanceof Root) {
 				Root root = (Root)content;
-				String s = root.getSignatureString(true);
+				// START KGU#408 2021-02-22: Enh. #410 Show the qualified names, e.g. after Java import
+				//String s = root.getSignatureString(true);
+				String s = root.getSignatureString(true, true);
+				// END KGU#408 2021-02-22
 				boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
 				setText(s);
 				// Enh. #319, #389: show coverage status of (imported) main diagrams
@@ -1001,25 +1005,36 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		Collection<Group> selectedGroups = arrangerIndexGetSelectedGroups(false);
 		Collection<Root> selectedRoots = arrangerIndexGetSelectedRoots(true);
 
-		// First save groups then save further roots (the latter may have got superfluous then)
-		for (Group selectedGroup: selectedGroups) {
-			if (selectedGroup.hasChanged()) {
-				Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
-				// Now update the list of recent files in case the saving was successful
-				if (resultGroup != null) {
-					File groupFile = resultGroup.getArrzFile(true);
-					if (groupFile != null || (groupFile = resultGroup.getFile()) != null) {
-						this.diagram.addRecentFile(groupFile.getAbsolutePath());
+		// START KGU#901 2021-02-23: Issue #901 - WAIT_CURSOR on time-consuming actions
+		Cursor prevCursor = this.getCursor();
+		try {
+			this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+		// END KGU#901 2021-02-23
+			// First save groups then save further roots (the latter may have got superfluous then)
+			for (Group selectedGroup: selectedGroups) {
+				if (selectedGroup.hasChanged()) {
+					Group resultGroup = Arranger.getInstance().saveGroup(this, selectedGroup);
+					// Now update the list of recent files in case the saving was successful
+					if (resultGroup != null) {
+						File groupFile = resultGroup.getArrzFile(true);
+						if (groupFile != null || (groupFile = resultGroup.getFile()) != null) {
+							this.diagram.addRecentFile(groupFile.getAbsolutePath());
+						}
 					}
 				}
 			}
-		}
 
-		for (Root selectedRoot: selectedRoots) {
-			if (selectedRoot.hasChanged()) {
-				diagram.saveNSD(selectedRoot, false);
+			for (Root selectedRoot: selectedRoots) {
+				if (selectedRoot.hasChanged()) {
+					diagram.saveNSD(selectedRoot, false);
+				}
 			}
+		// START KGU#901 2021-02-23: Issue #901 - WAIT_CURSOR on time-consuming actions
 		}
+		finally {
+			this.setCursor(prevCursor);
+		}
+		// END KGU#901 2021-02-23
 		// END KGU#626 2019-01-05
 	}
 
@@ -1221,7 +1236,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				Vector<Root> dependents = new Vector<Root>(Arranger.getInstance().findIncludingRoots(name, false));
 				Collections.sort(dependents, Root.SIGNATURE_ORDER);
 				for (Root dependent: dependents) {
-					if (Arranger.getInstance().findIncludesByName(name, dependent).contains(selectedRoot)) {
+					if (Arranger.getInstance().findIncludesByName(name, dependent, false).contains(selectedRoot)) {
 						nodeDependingDiagrams.add(makeNodeWithGroups(dependent, null));
 					}
 				}
@@ -1351,7 +1366,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 						&& Arranger.getInstance().findRoutinesBySignature(
 								fct.getName(), 
 								fct.paramCount(), 
-								candidate).contains(subRoutine)) {
+								candidate, false).contains(subRoutine)) {
 					callers.add(candidate);
 					break;
 				}

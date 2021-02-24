@@ -861,7 +861,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		Root sel1 = surface.getSelected1();
 		String selText = Integer.toString(sel.size());
 		if (sel1 != null) {
-			selText = sel1.getSignatureString(false);
+			selText = sel1.getSignatureString(false, false);
 		}
 		statusSelection.setText(msgDiagramsSelected.getText()
 				.replace("%1", Integer.toString(surface.getDiagramCount()))
@@ -1757,8 +1757,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String, Root)
      */
     @Override
-    public Vector<Root> findIncludesByName(String rootName, Root includer) {
-        return surface.findIncludesByName(rootName, includer);
+    public Vector<Root> findIncludesByName(String rootName, Root includer, boolean filterByClosestPath) {
+        return surface.findIncludesByName(rootName, includer, false);
     }
     // END KGU#376 2017-04-11
 
@@ -1766,8 +1766,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int, Root)
      */
     @Override
-    public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller) {
-        return surface.findRoutinesBySignature(rootName, argCount, caller);
+    public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller, boolean filterByClosestPath) {
+        return surface.findRoutinesBySignature(rootName, argCount, caller, false);
     }
     // END KGU#2 2015-11-24
     

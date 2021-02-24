@@ -821,6 +821,8 @@ InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
 InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
 InputBoxRoot.btnAddIncludable.text=Anfügen
+InputBoxRoot.lblNamespace.text=Namensraum (Präfix)
+InputBoxRoot.lblNamespace.tooltip=Optionaler punkt-getrennter hierachischer Qualifizier als Namenspräfix
 
 -----[ InputBoxCase ]-----
 InputBoxCase.title[getInsertionType():insert]=Neue @c hinzufügen ...

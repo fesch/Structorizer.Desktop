@@ -2612,8 +2612,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (done && rootToSave != this.root) {
 			JOptionPane.showMessageDialog(
 					this.getFrame(),
-					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false))
-					.replace("%2", rootToSave.getSignatureString(true)));
+					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false, false))
+					.replace("%2", rootToSave.getSignatureString(true, false)));
 			this.setRoot(rootToSave, true, true);
 		}
 		return done;
@@ -3927,14 +3927,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#911 2021-01-11
 				
 				EditData data = new EditData();
-				data.title="Add new instruction ...";
+				data.title = "Add new instruction ...";
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
 				showInputBox(data, "Instruction", true, true);
 				// END KGU#42 2015-10-14
 
-				if (data.result==true)
+				if (data.result == true)
 				{
 					// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 					//Element ele = new Instruction(data.text.getText());
@@ -4750,7 +4750,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} while (includableName == null || !Function.testIdentifier(includableName, false, null));
 			Root incl = null;
 			if (Arranger.hasInstance()) {
-				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
+				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root, false);
 				if (!includes.isEmpty()) {
 					incl = includes.firstElement();
 					incl.addUndo();
@@ -4892,7 +4892,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (selected != null && selected instanceof Call) {
 			Function called = ((Call)selected).getCalledRoutine();
 			// We don't want to open an editor in case of a recursive call.
-			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false))));
+			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false, false))));
 		}
 		// START KGU#770 2021-01-27: Enh. #917 Also support Includables
 		else if (selected != null && selected instanceof Root) {
@@ -4925,7 +4925,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Try to find the subroutine in Arranger
 			if (Arranger.hasInstance()) {
 				Vector<Root> candidates = Arranger.getInstance()
-						.findRoutinesBySignature(called.getName(), called.paramCount(), root);
+						.findRoutinesBySignature(called.getName(), called.paramCount(), root, false);
 				// Open a choice list if the group approach alone wasn't successful
 				referredRoot = chooseReferredRoot(candidates, Menu.msgChooseSubroutine.getText());
 			}
@@ -5019,7 +5019,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// Try to find the Includable in Arranger
 			Vector<Root> candidates = Arranger.getInstance()
-					.findIncludesByName(inclName, (Root)selected);
+					.findIncludesByName(inclName, (Root)selected, false);
 			// Prevent cyclic inclusion
 			candidates.remove(root);
 			// Open a choice list if the group approach alone wasn't successful
@@ -5150,7 +5150,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String[] choices = new String[candidates.size()];
 			int i = 0;
 			for (Root cand: candidates) {
-				choices[i++] = cand.getSignatureString(true);
+				choices[i++] = cand.getSignatureString(true, false);
 			}
 			String input = (String) JOptionPane.showInputDialog(getFrame(),
 					Menu.msgChooseSubroutine.getText().replace("%", rootType),

@@ -15,7 +15,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-18 (2021-02-18)
+Current development version: 3.30-18 (2021-02-24)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -218,6 +218,7 @@ Current development version: 3.30-18 (2021-02-18)
 - 17: Issue #939: Several Pascal import limitations (e.g. ASCII) lifted <2>
 - 17: Bugfix #940: Undue reference to Java 9 classes and methods in fix #912 <2>
 - 17: Issue #943: Java version now displayed in the About dialog Paths tab.
+- 18: Enh. #410: Java import implemented (new diagram field "namespace") <2>
 - 18: Issue #943: Java home path now also displayed in the About dialog <2>
 
 Version: 3.30 (2019-10-06)

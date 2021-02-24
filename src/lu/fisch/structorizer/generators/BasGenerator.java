@@ -693,7 +693,7 @@ public class BasGenerator extends Generator
 				addCode(transformKeyword("END ENUM"), _indent, _disabled);
 			}
 		}
-		this.setDefHandled(_root.getSignatureString(false), typeKey);
+		this.setDefHandled(_root.getSignatureString(false, false), typeKey);
 		return true;
 	}
 
@@ -1075,7 +1075,7 @@ public class BasGenerator extends Generator
 					if (call != null) {
 					// END KGU#877 2020-10-16
 						java.util.Vector<Root> callCandidates = 
-								routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+								routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot, false);
 						if (!callCandidates.isEmpty()) {
 							// FIXME We'll just fetch the very first one for now...
 							Root called = callCandidates.get(0);

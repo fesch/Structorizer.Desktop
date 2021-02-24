@@ -203,7 +203,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         //txtBreakTrigger.addKeyListener(this);
         // END KGU#213 2016-08-01
         addKeyListener(this);
-        // START 
+        // START KGU#408 2021-02-23: Enh. #410 Introduced on behalf of InputBoxRoot.txtNamespace
+        // Suppress input validation
+        btnCancel.setVerifyInputWhenFocusTarget(false);
+        // END KGU#408 2021-03-23
         
         int border = (int)(4 * scaleFactor);
         Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);

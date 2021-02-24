@@ -52,6 +52,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList" added.
  *      Kay Gürtzig     2019-03-17      Enh. #56: Method generateCode(Try, String) implemented.
  *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
+ *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
  *
  ******************************************************************************************************
  *
@@ -442,6 +443,12 @@ public class XmlGenerator extends Generator
 			pp_attributes += " includeList=\"" + _root.includeList.concatenate(",").trim() + "\"";
 		}
 		// END KGU#376 2017-06-30
+		
+		// START KGU#408 2021-02-22: Enh. #410
+		if (_root.getNamespace() != null) {
+			pp_attributes += " namespace=\"" + _root.getNamespace() + "\"";
+		}
+		// END KGU#376 2021-02-22
 		
 		// START KGU#363 2017-03-10: Enh. #372 These are no parser preferences but the mechanism is convenient
 		if (_root.getAuthor() != null) {

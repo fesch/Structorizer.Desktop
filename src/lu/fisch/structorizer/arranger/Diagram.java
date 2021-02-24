@@ -81,7 +81,7 @@ public class Diagram extends ArchiveRecord
 	{
 		super(root,  point);
 		// START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-		signature = root.getSignatureString(true);
+		signature = root.getSignatureString(true, false);
 		// END KGU#330 2017-01-13
 	}
 
@@ -116,7 +116,7 @@ public class Diagram extends ArchiveRecord
 	public boolean checkSignatureChange()
 	{
 		String oldSignature = this.signature;
-		this.signature = this.root.getSignatureString(true);
+		this.signature = this.root.getSignatureString(true, false);
 		return !this.signature.equals(oldSignature);
 	}
 	// END KGU#330 2017-01-13

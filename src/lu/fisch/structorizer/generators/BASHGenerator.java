@@ -680,7 +680,7 @@ public class BASHGenerator extends Generator {
 			// END KGU#405 2017-05-19
 			//if (posAsgnOpr > 0)
 			boolean isRoutine = this.routinePool != null 
-					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty();
+					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null, false).isEmpty();
 			// START KGU#803 2020-02-16: Issue #816 don't assign the result of functions directly
 			//if (posAsgnOpr > 0 && !isRoutine)
 			// END KGU 2019-12-01
@@ -1604,7 +1604,7 @@ public class BASHGenerator extends Generator {
 				if (fct != null && fct.isFunction() && Instruction.isAssignment(line)) {
 					if (this.routinePool != null) {
 						Root routine = null;
-						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root, false);
 						if (cands.size() >= 1) {
 							routine = cands.firstElement();
 							String routineId = Integer.toHexString(routine.hashCode());
@@ -1999,7 +1999,7 @@ public class BASHGenerator extends Generator {
 				String modifier = getLocalDeclarator(isConst, typeEntry);
 				addCode(modifier + parName + "=" + argVar(i), indent, false);
 			}
-			this.setDefHandled(_root.getSignatureString(false), parName);
+			this.setDefHandled(_root.getSignatureString(false, false), parName);
 			// END KGU#803 2020-02-18
 		}
 		for (int i = minArgs; i < paraNames.count(); i++)
@@ -2022,7 +2022,7 @@ public class BASHGenerator extends Generator {
 				modifier = this.getNameRefDeclarator(isConst);
 			}
 			addCode(modifier + parName + "=" + argVar(i), indent + this.getIndent(), false);
-			this.setDefHandled(_root.getSignatureString(false), paraNames.get(i));
+			this.setDefHandled(_root.getSignatureString(false, false), paraNames.get(i));
 			// END KGU#803 2020-02-18
 			addCode("fi", indent, false);
 		}
