@@ -125,6 +125,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-01/03   Bugfix #923: Method identifyExprType had ignored qualified names
  *      Kay Gürtzig     2021-02-03      Issue #920: Highlighting and tokenizing support for "Infinity" and '∞'
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Improved drawing of Analyser flags and backlink support
+ *      Kay Gürtzig     2021-02-24      Enh. #410: "?" added as lexical delimiter and operator symbol
  *
  ******************************************************************************************************
  *
@@ -640,6 +641,9 @@ public abstract class Element {
 			"&",
 			"~",
 			// END KGU#790 2020-11-01
+			// START KGU#408 2021-02-24: Enh. #410: '?' might otherwise be attached to an identifier
+			"?",
+			// END KGU#408 2021-02-24
 			// START KGU#920 2021-02-03: Enh. #920 We allow ∞ as synonym for Infinity
 			"\u221E",
 			// END KGU#920 2021-02-03
@@ -3870,6 +3874,9 @@ public abstract class Element {
 				// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
 				specialSigns.add(":");
 				// END KGU#332 2017-01-27
+				// START KGU#408 2021-02-24: Enh. #410 Since the " ? : " is executable, it should be highlighted
+				specialSigns.add("?");
+				// END KGU#408 2021-02-24
 
 				specialSigns.add("+");
 				specialSigns.add("/");

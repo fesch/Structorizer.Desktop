@@ -1758,7 +1758,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      */
     @Override
     public Vector<Root> findIncludesByName(String rootName, Root includer, boolean filterByClosestPath) {
-        return surface.findIncludesByName(rootName, includer, false);
+        return surface.findIncludesByName(rootName, includer, filterByClosestPath);
     }
     // END KGU#376 2017-04-11
 
@@ -1767,7 +1767,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
      */
     @Override
     public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller, boolean filterByClosestPath) {
-        return surface.findRoutinesBySignature(rootName, argCount, caller, false);
+        return surface.findRoutinesBySignature(rootName, argCount, caller, filterByClosestPath);
     }
     // END KGU#2 2015-11-24
     

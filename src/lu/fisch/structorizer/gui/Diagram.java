@@ -223,6 +223,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
  *      Kay Gürtzig     2021-02-04      Enh. #926: Element selection now scrolls to the related Analyser warnings
  *      Kay Gürtzig     2021-02-12      Bugfix #936 in exportGroup() - failed on a group never having been saved
+ *      Kay Gürtzig     2021-02-24      Bugfix #419: rebreakLines() did not redraw though it induces reshaping
  *
  ******************************************************************************************************
  *
@@ -5676,7 +5677,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#282 2016-10-16
 	
-	// START KGU#602 2018-10-26: Enh. #619
+	// START KGU#602 2018-10-26: Enh. #419
 	/**
 	 * Adjusts line breaking for the selected element(s). Requests the details
 	 * interactively from the user.
@@ -5790,6 +5791,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (!changed) {
 					root.undo(false);
 				}
+				// START KGU#940 2021-02-24: Bugfix #419 - Drawing update had been missing
+				redraw();
+				// END KGU#940 2021-02-24
 				// START KGU#705 2019-09-23: Enh. #738
 				updateCodePreview();
 				// END KGU#705 2019-09-23

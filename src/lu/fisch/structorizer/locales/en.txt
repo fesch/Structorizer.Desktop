@@ -476,6 +476,8 @@ Menu.msgErrorSettingLaF.text=Problem on changing Look & Feel to %1: %2
 Menu.msgRootCloned.text=Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2
 Menu.msgAnalyserHint_3_30_14.text=New indicator symbols\nwill remind you\nthat there are Analyser\nwarnings for the marked elements.\n\nYou may switch them off via:\n%
 Menu.msgVersionHint_3_30_15.text=This new-designed editor for @c elements\nis optional.\nIt promises to maintain the bond between cases\nand their branches on permutating them.\n\nIf you prefer the traditional element editor,\nhowever, then you may unselect the checkbox\n"%1"\nin the %2.
+Menu.msgJavaUpgradeHint_3_30_18.text=The Structorizer developers plan to give up Java version 8 compatibility\nby mid 2021 and to upgrade the code base such that it will require a Java 11 VM\nat least.\nYou can run Structorizer already now with Java VMs 11+, but future versions\nwill no longer be usable on obsolete Java versions < 11. It does not matter\nwhether Oracle Java or an OpenJDK is used.
+Menu.msgJavaUpgradeHint_3_30_18a.text=\nBe aware that Java WebStart support officially ended with Java 8,\nbut there are alternatives like Open Webstart (https://openwebstart.com)\nif you want to adhere to the Structorizer JNLP delivery.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name

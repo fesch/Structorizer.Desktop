@@ -1341,6 +1341,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 */
 	public void popupWelcomePane()
 	{
+		// START KGU#941 2021-02-24: Issue #944
+		String javaVersion = System.getProperty("java.version");
+		int javaMajor = 1;
+		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
+			try {
+				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
+			}
+			catch (NumberFormatException e) {}
+		}
+		// END KGU#941 2021-02-24
 		// START KGU#456 2017-11-06: Enh. #452
 		//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 		if (this.isNew) {
@@ -1434,6 +1444,24 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 		}
 		// END KGU#906 2021-01-18
+		// START KGU#941 2021-02-24: Issue #944: Temporary update hint
+		else if (javaMajor < 11
+				&& (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo(Element.E_VERSION) < 0)
+				&& !System.getProperty("os.name").toLowerCase().startsWith("mac os x")) {
+			if (menu != null) {
+				String message = Menu.msgJavaUpgradeHint_3_30_18.getText();
+				if (Ini.getInstallDirectory().getAbsolutePath().endsWith("webstart")) {
+					message += Menu.msgJavaUpgradeHint_3_30_18a.getText();
+				}
+				JOptionPane.showMessageDialog(this,
+						message,
+						Element.E_VERSION,
+						JOptionPane.INFORMATION_MESSAGE,
+						IconLoader.getIconImage("078_java.png", 2.0));
+				this.suppressUpdateHint = Element.E_VERSION;
+			}
+		}
+		// END KGU#941 2021-02-24
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 			// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense

@@ -118,6 +118,9 @@ public class JavaParser extends CodeParser
 			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER4,
 			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER,
 			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER2,
+			RuleConstants.PROD_ENUMCONSTANTS_COMMA,
+			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN,
+			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER,
 			RuleConstants.PROD_STATICINITIALIZER_STATIC,
 			RuleConstants.PROD_LOCALVARIABLEDECLARATION_FINAL,
 			RuleConstants.PROD_LOCALVARIABLEDECLARATION,
@@ -165,12 +168,6 @@ public class JavaParser extends CodeParser
 		return "Java SE 8";
 	}
 
-	/**
-	 * If this flag is set then program names derived from file name will be made uppercase
-	 * This default will be initialized in consistency with the Analyser check 
-	 */
-	private boolean optionUpperCaseProgName = false;
-
 	//------------------------------ Constructor -----------------------------
 
 	/**
@@ -210,308 +207,308 @@ public class JavaParser extends CodeParser
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
-	@SuppressWarnings("unused")
+	//@SuppressWarnings("unused")
 	private interface SymbolConstants 
 	{
-		final int SYM_EOF                                  =   0;  // (EOF)
-		final int SYM_ERROR                                =   1;  // (Error)
-		final int SYM_COMMENT                              =   2;  // Comment
-		final int SYM_NEWLINE                              =   3;  // NewLine
-		final int SYM_WHITESPACE                           =   4;  // Whitespace
-		final int SYM_TIMESDIV                             =   5;  // '*/'
-		final int SYM_DIVTIMES                             =   6;  // '/*'
-		final int SYM_DIVDIV                               =   7;  // '//'
+//		final int SYM_EOF                                  =   0;  // (EOF)
+//		final int SYM_ERROR                                =   1;  // (Error)
+//		final int SYM_COMMENT                              =   2;  // Comment
+//		final int SYM_NEWLINE                              =   3;  // NewLine
+//		final int SYM_WHITESPACE                           =   4;  // Whitespace
+//		final int SYM_TIMESDIV                             =   5;  // '*/'
+//		final int SYM_DIVTIMES                             =   6;  // '/*'
+//		final int SYM_DIVDIV                               =   7;  // '//'
 		final int SYM_MINUS                                =   8;  // '-'
-		final int SYM_MINUSMINUS                           =   9;  // '--'
+//		final int SYM_MINUSMINUS                           =   9;  // '--'
 		final int SYM_EXCLAM                               =  10;  // '!'
 		final int SYM_EXCLAMEQ                             =  11;  // '!='
 		final int SYM_PERCENT                              =  12;  // '%'
-		final int SYM_PERCENTEQ                            =  13;  // '%='
+//		final int SYM_PERCENTEQ                            =  13;  // '%='
 		final int SYM_AMP                                  =  14;  // '&'
 		final int SYM_AMPAMP                               =  15;  // '&&'
-		final int SYM_AMPEQ                                =  16;  // '&='
-		final int SYM_LPAREN                               =  17;  // '('
-		final int SYM_RPAREN                               =  18;  // ')'
+//		final int SYM_AMPEQ                                =  16;  // '&='
+//		final int SYM_LPAREN                               =  17;  // '('
+//		final int SYM_RPAREN                               =  18;  // ')'
 		final int SYM_TIMES                                =  19;  // '*'
-		final int SYM_TIMESEQ                              =  20;  // '*='
-		final int SYM_COMMA                                =  21;  // ','
-		final int SYM_DOT                                  =  22;  // '.'
+//		final int SYM_TIMESEQ                              =  20;  // '*='
+//		final int SYM_COMMA                                =  21;  // ','
+//		final int SYM_DOT                                  =  22;  // '.'
 		final int SYM_DIV                                  =  23;  // '/'
-		final int SYM_DIVEQ                                =  24;  // '/='
-		final int SYM_COLON                                =  25;  // ':'
-		final int SYM_SEMI                                 =  26;  // ';'
-		final int SYM_QUESTION                             =  27;  // '?'
-		final int SYM_AT                                   =  28;  // '@'
-		final int SYM_LBRACKET                             =  29;  // '['
-		final int SYM_RBRACKET                             =  30;  // ']'
+//		final int SYM_DIVEQ                                =  24;  // '/='
+//		final int SYM_COLON                                =  25;  // ':'
+//		final int SYM_SEMI                                 =  26;  // ';'
+//		final int SYM_QUESTION                             =  27;  // '?'
+//		final int SYM_AT                                   =  28;  // '@'
+//		final int SYM_LBRACKET                             =  29;  // '['
+//		final int SYM_RBRACKET                             =  30;  // ']'
 		final int SYM_CARET                                =  31;  // '^'
-		final int SYM_CARETEQ                              =  32;  // '^='
+//		final int SYM_CARETEQ                              =  32;  // '^='
 		final int SYM_LBRACE                               =  33;  // '{'
 		final int SYM_PIPE                                 =  34;  // '|'
 		final int SYM_PIPEPIPE                             =  35;  // '||'
-		final int SYM_PIPEEQ                               =  36;  // '|='
+//		final int SYM_PIPEEQ                               =  36;  // '|='
 		final int SYM_RBRACE                               =  37;  // '}'
 		final int SYM_TILDE                                =  38;  // '~'
 		final int SYM_PLUS                                 =  39;  // '+'
-		final int SYM_PLUSPLUS                             =  40;  // '++'
-		final int SYM_PLUSEQ                               =  41;  // '+='
+//		final int SYM_PLUSPLUS                             =  40;  // '++'
+//		final int SYM_PLUSEQ                               =  41;  // '+='
 		final int SYM_LT                                   =  42;  // '<'
 		final int SYM_LTLT                                 =  43;  // '<<'
-		final int SYM_LTLTEQ                               =  44;  // '<<='
+//		final int SYM_LTLTEQ                               =  44;  // '<<='
 		final int SYM_LTEQ                                 =  45;  // '<='
 		final int SYM_EQ                                   =  46;  // '='
-		final int SYM_MINUSEQ                              =  47;  // '-='
+//		final int SYM_MINUSEQ                              =  47;  // '-='
 		final int SYM_EQEQ                                 =  48;  // '=='
 		final int SYM_GT                                   =  49;  // '>'
 		final int SYM_GTEQ                                 =  50;  // '>='
 		final int SYM_GTGT                                 =  51;  // '>>'
-		final int SYM_GTGTEQ                               =  52;  // '>>='
-		final int SYM_GTGTGT                               =  53;  // '>>>'
-		final int SYM_GTGTGTEQ                             =  54;  // '>>>='
-		final int SYM_ABSTRACT                             =  55;  // abstract
-		final int SYM_BOOLEAN                              =  56;  // boolean
-		final int SYM_BOOLEANLITERAL                       =  57;  // BooleanLiteral
-		final int SYM_BREAK                                =  58;  // break
-		final int SYM_BYTE                                 =  59;  // byte
-		final int SYM_CASE                                 =  60;  // case
-		final int SYM_CATCH                                =  61;  // catch
-		final int SYM_CHAR                                 =  62;  // char
-		final int SYM_CLASS                                =  63;  // class
-		final int SYM_CONTINUE                             =  64;  // continue
-		final int SYM_DEFAULT                              =  65;  // default
-		final int SYM_DO                                   =  66;  // do
-		final int SYM_DOUBLE                               =  67;  // double
-		final int SYM_ELLIPSIS                             =  68;  // Ellipsis
-		final int SYM_ELSE                                 =  69;  // else
-		final int SYM_ENUM                                 =  70;  // enum
-		final int SYM_EXTENDS                              =  71;  // extends
-		final int SYM_FINAL                                =  72;  // final
-		final int SYM_FINALLY                              =  73;  // finally
-		final int SYM_FLOAT                                =  74;  // float
+//		final int SYM_GTGTEQ                               =  52;  // '>>='
+//		final int SYM_GTGTGT                               =  53;  // '>>>'
+//		final int SYM_GTGTGTEQ                             =  54;  // '>>>='
+//		final int SYM_ABSTRACT                             =  55;  // abstract
+//		final int SYM_BOOLEAN                              =  56;  // boolean
+//		final int SYM_BOOLEANLITERAL                       =  57;  // BooleanLiteral
+//		final int SYM_BREAK                                =  58;  // break
+//		final int SYM_BYTE                                 =  59;  // byte
+//		final int SYM_CASE                                 =  60;  // case
+//		final int SYM_CATCH                                =  61;  // catch
+//		final int SYM_CHAR                                 =  62;  // char
+//		final int SYM_CLASS                                =  63;  // class
+//		final int SYM_CONTINUE                             =  64;  // continue
+//		final int SYM_DEFAULT                              =  65;  // default
+//		final int SYM_DO                                   =  66;  // do
+//		final int SYM_DOUBLE                               =  67;  // double
+//		final int SYM_ELLIPSIS                             =  68;  // Ellipsis
+//		final int SYM_ELSE                                 =  69;  // else
+//		final int SYM_ENUM                                 =  70;  // enum
+//		final int SYM_EXTENDS                              =  71;  // extends
+//		final int SYM_FINAL                                =  72;  // final
+//		final int SYM_FINALLY                              =  73;  // finally
+//		final int SYM_FLOAT                                =  74;  // float
 		final int SYM_FLOATINGPOINTLITERAL                 =  75;  // FloatingPointLiteral
-		final int SYM_FLOATINGPOINTLITERALEXPONENT         =  76;  // FloatingPointLiteralExponent
-		final int SYM_FOR                                  =  77;  // for
-		final int SYM_HEXESCAPECHARLITERAL                 =  78;  // HexEscapeCharLiteral
+//		final int SYM_FLOATINGPOINTLITERALEXPONENT         =  76;  // FloatingPointLiteralExponent
+//		final int SYM_FOR                                  =  77;  // for
+//		final int SYM_HEXESCAPECHARLITERAL                 =  78;  // HexEscapeCharLiteral
 		final int SYM_HEXINTEGERLITERAL                    =  79;  // HexIntegerLiteral
-		final int SYM_IDENTIFIER                           =  80;  // Identifier
-		final int SYM_IF                                   =  81;  // if
-		final int SYM_IMPLEMENTS                           =  82;  // implements
-		final int SYM_IMPORT                               =  83;  // import
-		final int SYM_INDIRECTCHARLITERAL                  =  84;  // IndirectCharLiteral
-		final int SYM_INSTANCEOF                           =  85;  // instanceof
-		final int SYM_INT                                  =  86;  // int
-		final int SYM_INTERFACE                            =  87;  // interface
-		final int SYM_LONG                                 =  88;  // long
-		final int SYM_NATIVE                               =  89;  // native
-		final int SYM_NEW                                  =  90;  // new
-		final int SYM_NULLLITERAL                          =  91;  // NullLiteral
-		final int SYM_OCTALESCAPECHARLITERAL               =  92;  // OctalEscapeCharLiteral
+//		final int SYM_IDENTIFIER                           =  80;  // Identifier
+//		final int SYM_IF                                   =  81;  // if
+//		final int SYM_IMPLEMENTS                           =  82;  // implements
+//		final int SYM_IMPORT                               =  83;  // import
+//		final int SYM_INDIRECTCHARLITERAL                  =  84;  // IndirectCharLiteral
+//		final int SYM_INSTANCEOF                           =  85;  // instanceof
+//		final int SYM_INT                                  =  86;  // int
+//		final int SYM_INTERFACE                            =  87;  // interface
+//		final int SYM_LONG                                 =  88;  // long
+//		final int SYM_NATIVE                               =  89;  // native
+//		final int SYM_NEW                                  =  90;  // new
+//		final int SYM_NULLLITERAL                          =  91;  // NullLiteral
+//		final int SYM_OCTALESCAPECHARLITERAL               =  92;  // OctalEscapeCharLiteral
 		final int SYM_OCTALINTEGERLITERAL                  =  93;  // OctalIntegerLiteral
-		final int SYM_PACKAGE                              =  94;  // package
-		final int SYM_PRIVATE                              =  95;  // private
-		final int SYM_PROTECTED                            =  96;  // protected
-		final int SYM_PUBLIC                               =  97;  // public
-		final int SYM_RETURN                               =  98;  // return
-		final int SYM_SHORT                                =  99;  // short
-		final int SYM_STANDARDESCAPECHARLITERAL            = 100;  // StandardEscapeCharLiteral
-		final int SYM_STARTWITHNOZERODECIMALINTEGERLITERAL = 101;  // StartWithNoZeroDecimalIntegerLiteral
-		final int SYM_STARTWITHZERODECIMALINTEGERLITERAL   = 102;  // StartWithZeroDecimalIntegerLiteral
-		final int SYM_STATIC                               = 103;  // static
-		final int SYM_STRICTFP                             = 104;  // strictfp
+//		final int SYM_PACKAGE                              =  94;  // package
+//		final int SYM_PRIVATE                              =  95;  // private
+//		final int SYM_PROTECTED                            =  96;  // protected
+//		final int SYM_PUBLIC                               =  97;  // public
+//		final int SYM_RETURN                               =  98;  // return
+//		final int SYM_SHORT                                =  99;  // short
+//		final int SYM_STANDARDESCAPECHARLITERAL            = 100;  // StandardEscapeCharLiteral
+//		final int SYM_STARTWITHNOZERODECIMALINTEGERLITERAL = 101;  // StartWithNoZeroDecimalIntegerLiteral
+//		final int SYM_STARTWITHZERODECIMALINTEGERLITERAL   = 102;  // StartWithZeroDecimalIntegerLiteral
+//		final int SYM_STATIC                               = 103;  // static
+//		final int SYM_STRICTFP                             = 104;  // strictfp
 		final int SYM_STRINGLITERAL                        = 105;  // StringLiteral
-		final int SYM_SUPER                                = 106;  // super
-		final int SYM_SWITCH                               = 107;  // switch
-		final int SYM_SYNCHRONIZED                         = 108;  // synchronized
-		final int SYM_THIS                                 = 109;  // this
-		final int SYM_THROW                                = 110;  // throw
-		final int SYM_THROWS                               = 111;  // throws
-		final int SYM_TRANSIENT                            = 112;  // transient
-		final int SYM_TRY                                  = 113;  // try
-		final int SYM_VOID                                 = 114;  // void
-		final int SYM_VOLATILE                             = 115;  // volatile
-		final int SYM_WHILE                                = 116;  // while
-		final int SYM_ADDITIONALBOUNDOPT                   = 117;  // <AdditionalBoundOpt>
-		final int SYM_ADDITIVEEXPRESSION                   = 118;  // <AdditiveExpression>
-		final int SYM_ANDEXPRESSION                        = 119;  // <AndExpression>
-		final int SYM_ANNOTATION                           = 120;  // <Annotation>
-		final int SYM_ANNOTATIONS                          = 121;  // <Annotations>
-		final int SYM_ARGUMENTLIST                         = 122;  // <ArgumentList>
-		final int SYM_ARRAYACCESS                          = 123;  // <ArrayAccess>
-		final int SYM_ARRAYCREATIONEXPRESSION              = 124;  // <ArrayCreationExpression>
-		final int SYM_ARRAYINITIALIZER                     = 125;  // <ArrayInitializer>
-		final int SYM_ARRAYTYPE                            = 126;  // <ArrayType>
-		final int SYM_ASSIGNMENT                           = 127;  // <Assignment>
-		final int SYM_ASSIGNMENTEXPRESSION                 = 128;  // <AssignmentExpression>
-		final int SYM_ASSIGNMENTOPERATOR                   = 129;  // <AssignmentOperator>
-		final int SYM_BASICFORSTATEMENT                    = 130;  // <BasicForStatement>
-		final int SYM_BASICFORSTATEMENTNOSHORTIF           = 131;  // <BasicForStatementNoShortIf>
-		final int SYM_BLOCK                                = 132;  // <Block>
-		final int SYM_BLOCKSTATEMENT                       = 133;  // <BlockStatement>
-		final int SYM_BLOCKSTATEMENTS                      = 134;  // <BlockStatements>
-		final int SYM_BREAKSTATEMENT                       = 135;  // <BreakStatement>
-		final int SYM_CASTEXPRESSION                       = 136;  // <CastExpression>
-		final int SYM_CATCHCLAUSE                          = 137;  // <CatchClause>
-		final int SYM_CATCHES                              = 138;  // <Catches>
-		final int SYM_CHARACTERLITERAL                     = 139;  // <CharacterLiteral>
-		final int SYM_CLASSBODY                            = 140;  // <ClassBody>
-		final int SYM_CLASSBODYDECLARATION                 = 141;  // <ClassBodyDeclaration>
-		final int SYM_CLASSBODYDECLARATIONS                = 142;  // <ClassBodyDeclarations>
-		final int SYM_CLASSBODYOPT                         = 143;  // <ClassBodyOpt>
-		final int SYM_CLASSDECLARATION                     = 144;  // <ClassDeclaration>
-		final int SYM_CLASSINSTANCECREATIONEXPRESSION      = 145;  // <ClassInstanceCreationExpression>
-		final int SYM_CLASSMEMBERDECLARATION               = 146;  // <ClassMemberDeclaration>
-		final int SYM_CLASSORINTERFACETYPE                 = 147;  // <ClassOrInterfaceType>
-		final int SYM_CLASSTYPE                            = 148;  // <ClassType>
-		final int SYM_CLASSTYPELIST                        = 149;  // <ClassTypeList>
-		final int SYM_COMPILATIONUNIT                      = 150;  // <CompilationUnit>
-		final int SYM_CONDITIONALANDEXPRESSION             = 151;  // <ConditionalAndExpression>
-		final int SYM_CONDITIONALEXPRESSION                = 152;  // <ConditionalExpression>
-		final int SYM_CONDITIONALOREXPRESSION              = 153;  // <ConditionalOrExpression>
-		final int SYM_CONSTANTDECLARATION                  = 154;  // <ConstantDeclaration>
-		final int SYM_CONSTANTEXPRESSION                   = 155;  // <ConstantExpression>
-		final int SYM_CONSTRUCTORBODY                      = 156;  // <ConstructorBody>
-		final int SYM_CONSTRUCTORDECLARATION               = 157;  // <ConstructorDeclaration>
-		final int SYM_CONSTRUCTORDECLARATOR                = 158;  // <ConstructorDeclarator>
-		final int SYM_CONTINUESTATEMENT                    = 159;  // <ContinueStatement>
+//		final int SYM_SUPER                                = 106;  // super
+//		final int SYM_SWITCH                               = 107;  // switch
+//		final int SYM_SYNCHRONIZED                         = 108;  // synchronized
+//		final int SYM_THIS                                 = 109;  // this
+//		final int SYM_THROW                                = 110;  // throw
+//		final int SYM_THROWS                               = 111;  // throws
+//		final int SYM_TRANSIENT                            = 112;  // transient
+//		final int SYM_TRY                                  = 113;  // try
+//		final int SYM_VOID                                 = 114;  // void
+//		final int SYM_VOLATILE                             = 115;  // volatile
+//		final int SYM_WHILE                                = 116;  // while
+//		final int SYM_ADDITIONALBOUNDOPT                   = 117;  // <AdditionalBoundOpt>
+//		final int SYM_ADDITIVEEXPRESSION                   = 118;  // <AdditiveExpression>
+//		final int SYM_ANDEXPRESSION                        = 119;  // <AndExpression>
+//		final int SYM_ANNOTATION                           = 120;  // <Annotation>
+//		final int SYM_ANNOTATIONS                          = 121;  // <Annotations>
+//		final int SYM_ARGUMENTLIST                         = 122;  // <ArgumentList>
+//		final int SYM_ARRAYACCESS                          = 123;  // <ArrayAccess>
+//		final int SYM_ARRAYCREATIONEXPRESSION              = 124;  // <ArrayCreationExpression>
+//		final int SYM_ARRAYINITIALIZER                     = 125;  // <ArrayInitializer>
+//		final int SYM_ARRAYTYPE                            = 126;  // <ArrayType>
+//		final int SYM_ASSIGNMENT                           = 127;  // <Assignment>
+//		final int SYM_ASSIGNMENTEXPRESSION                 = 128;  // <AssignmentExpression>
+//		final int SYM_ASSIGNMENTOPERATOR                   = 129;  // <AssignmentOperator>
+//		final int SYM_BASICFORSTATEMENT                    = 130;  // <BasicForStatement>
+//		final int SYM_BASICFORSTATEMENTNOSHORTIF           = 131;  // <BasicForStatementNoShortIf>
+//		final int SYM_BLOCK                                = 132;  // <Block>
+//		final int SYM_BLOCKSTATEMENT                       = 133;  // <BlockStatement>
+//		final int SYM_BLOCKSTATEMENTS                      = 134;  // <BlockStatements>
+//		final int SYM_BREAKSTATEMENT                       = 135;  // <BreakStatement>
+//		final int SYM_CASTEXPRESSION                       = 136;  // <CastExpression>
+//		final int SYM_CATCHCLAUSE                          = 137;  // <CatchClause>
+//		final int SYM_CATCHES                              = 138;  // <Catches>
+//		final int SYM_CHARACTERLITERAL                     = 139;  // <CharacterLiteral>
+//		final int SYM_CLASSBODY                            = 140;  // <ClassBody>
+//		final int SYM_CLASSBODYDECLARATION                 = 141;  // <ClassBodyDeclaration>
+//		final int SYM_CLASSBODYDECLARATIONS                = 142;  // <ClassBodyDeclarations>
+//		final int SYM_CLASSBODYOPT                         = 143;  // <ClassBodyOpt>
+//		final int SYM_CLASSDECLARATION                     = 144;  // <ClassDeclaration>
+//		final int SYM_CLASSINSTANCECREATIONEXPRESSION      = 145;  // <ClassInstanceCreationExpression>
+//		final int SYM_CLASSMEMBERDECLARATION               = 146;  // <ClassMemberDeclaration>
+//		final int SYM_CLASSORINTERFACETYPE                 = 147;  // <ClassOrInterfaceType>
+//		final int SYM_CLASSTYPE                            = 148;  // <ClassType>
+//		final int SYM_CLASSTYPELIST                        = 149;  // <ClassTypeList>
+//		final int SYM_COMPILATIONUNIT                      = 150;  // <CompilationUnit>
+//		final int SYM_CONDITIONALANDEXPRESSION             = 151;  // <ConditionalAndExpression>
+//		final int SYM_CONDITIONALEXPRESSION                = 152;  // <ConditionalExpression>
+//		final int SYM_CONDITIONALOREXPRESSION              = 153;  // <ConditionalOrExpression>
+//		final int SYM_CONSTANTDECLARATION                  = 154;  // <ConstantDeclaration>
+//		final int SYM_CONSTANTEXPRESSION                   = 155;  // <ConstantExpression>
+//		final int SYM_CONSTRUCTORBODY                      = 156;  // <ConstructorBody>
+//		final int SYM_CONSTRUCTORDECLARATION               = 157;  // <ConstructorDeclaration>
+//		final int SYM_CONSTRUCTORDECLARATOR                = 158;  // <ConstructorDeclarator>
+//		final int SYM_CONTINUESTATEMENT                    = 159;  // <ContinueStatement>
 		final int SYM_DECIMALINTEGERLITERAL                = 160;  // <DecimalIntegerLiteral>
-		final int SYM_DIMEXPR                              = 161;  // <DimExpr>
-		final int SYM_DIMEXPRS                             = 162;  // <DimExprs>
-		final int SYM_DIMS                                 = 163;  // <Dims>
-		final int SYM_DOSTATEMENT                          = 164;  // <DoStatement>
-		final int SYM_ELEMENTVALUE                         = 165;  // <ElementValue>
-		final int SYM_ELEMENTVALUEARRAYINITIALIZER         = 166;  // <ElementValueArrayInitializer>
-		final int SYM_ELEMENTVALUEPAIR                     = 167;  // <ElementValuePair>
-		final int SYM_ELEMENTVALUEPAIRS                    = 168;  // <ElementValuePairs>
-		final int SYM_ELEMENTVALUES                        = 169;  // <ElementValues>
-		final int SYM_EMPTYSTATEMENT                       = 170;  // <EmptyStatement>
-		final int SYM_ENHANCEDFORSTATEMENT                 = 171;  // <EnhancedForStatement>
-		final int SYM_ENHANCEDFORSTATEMENTNOSHORTIF        = 172;  // <EnhancedForStatementNoShortIf>
-		final int SYM_ENUMBODY                             = 173;  // <EnumBody>
-		final int SYM_ENUMBODYDECLARATIONSOPT              = 174;  // <EnumBodyDeclarationsOpt>
-		final int SYM_ENUMCONSTANT                         = 175;  // <EnumConstant>
-		final int SYM_ENUMCONSTANTS                        = 176;  // <EnumConstants>
-		final int SYM_ENUMDECLARATION                      = 177;  // <EnumDeclaration>
-		final int SYM_EQUALITYEXPRESSION                   = 178;  // <EqualityExpression>
-		final int SYM_EXCLUSIVEOREXPRESSION                = 179;  // <ExclusiveOrExpression>
-		final int SYM_EXPLICITCONSTRUCTORINVOCATION        = 180;  // <ExplicitConstructorInvocation>
-		final int SYM_EXPRESSION                           = 181;  // <Expression>
-		final int SYM_EXPRESSIONOPT                        = 182;  // <ExpressionOpt>
-		final int SYM_EXPRESSIONSTATEMENT                  = 183;  // <ExpressionStatement>
-		final int SYM_EXTENDSINTERFACES                    = 184;  // <ExtendsInterfaces>
-		final int SYM_FIELDACCESS                          = 185;  // <FieldAccess>
-		final int SYM_FIELDDECLARATION                     = 186;  // <FieldDeclaration>
-		final int SYM_FINALLY2                             = 187;  // <Finally>
-		final int SYM_FLOATINGPOINTTYPE                    = 188;  // <FloatingPointType>
-		final int SYM_FLOATPOINTLITERAL                    = 189;  // <FloatPointLiteral>
-		final int SYM_FORINITOPT                           = 190;  // <ForInitOpt>
-		final int SYM_FORMALPARAMETER                      = 191;  // <FormalParameter>
-		final int SYM_FORMALPARAMETERLIST                  = 192;  // <FormalParameterList>
-		final int SYM_FORSTATEMENT                         = 193;  // <ForStatement>
-		final int SYM_FORSTATEMENTNOSHORTIF                = 194;  // <ForStatementNoShortIf>
-		final int SYM_FORUPDATEOPT                         = 195;  // <ForUpdateOpt>
-		final int SYM_IFTHENELSESTATEMENT                  = 196;  // <IfThenElseStatement>
-		final int SYM_IFTHENELSESTATEMENTNOSHORTIF         = 197;  // <IfThenElseStatementNoShortIf>
-		final int SYM_IFTHENSTATEMENT                      = 198;  // <IfThenStatement>
-		final int SYM_IMPORTDECLARATION                    = 199;  // <ImportDeclaration>
-		final int SYM_IMPORTDECLARATIONS                   = 200;  // <ImportDeclarations>
-		final int SYM_INCLUSIVEOREXPRESSION                = 201;  // <InclusiveOrExpression>
-		final int SYM_INSTANCEINITIALIZER                  = 202;  // <InstanceInitializer>
-		final int SYM_INTEGERLITERAL                       = 203;  // <IntegerLiteral>
-		final int SYM_INTEGRALTYPE                         = 204;  // <IntegralType>
-		final int SYM_INTERFACEBODY                        = 205;  // <InterfaceBody>
-		final int SYM_INTERFACEDECLARATION                 = 206;  // <InterfaceDeclaration>
-		final int SYM_INTERFACEMEMBERDECLARATION           = 207;  // <InterfaceMemberDeclaration>
-		final int SYM_INTERFACEMEMBERDECLARATIONS          = 208;  // <InterfaceMemberDeclarations>
-		final int SYM_INTERFACES                           = 209;  // <Interfaces>
-		final int SYM_INTERFACETYPE                        = 210;  // <InterfaceType>
-		final int SYM_INTERFACETYPELIST                    = 211;  // <InterfaceTypeList>
-		final int SYM_LABELEDSTATEMENT                     = 212;  // <LabeledStatement>
-		final int SYM_LABELEDSTATEMENTNOSHORTIF            = 213;  // <LabeledStatementNoShortIf>
-		final int SYM_LASTFORMALPARAMETER                  = 214;  // <LastFormalParameter>
-		final int SYM_LEFTHANDSIDE                         = 215;  // <LeftHandSide>
-		final int SYM_LITERAL                              = 216;  // <Literal>
-		final int SYM_LOCALCLASSDECLARATION                = 217;  // <LocalClassDeclaration>
-		final int SYM_LOCALCLASSMODIFIERS                  = 218;  // <LocalClassModifiers>
-		final int SYM_LOCALVARIABLEDECLARATION             = 219;  // <LocalVariableDeclaration>
-		final int SYM_LOCALVARIABLEDECLARATIONSTATEMENT    = 220;  // <LocalVariableDeclarationStatement>
-		final int SYM_MARKERANNOTATION                     = 221;  // <MarkerAnnotation>
-		final int SYM_METHODBODY                           = 222;  // <MethodBody>
-		final int SYM_METHODDECLARATION                    = 223;  // <MethodDeclaration>
-		final int SYM_METHODDECLARATOR                     = 224;  // <MethodDeclarator>
-		final int SYM_METHODHEADER                         = 225;  // <MethodHeader>
-		final int SYM_METHODINVOCATION                     = 226;  // <MethodInvocation>
-		final int SYM_MODIFIER                             = 227;  // <Modifier>
-		final int SYM_MODIFIERS                            = 228;  // <Modifiers>
-		final int SYM_MULTIPLICATIVEEXPRESSION             = 229;  // <MultiplicativeExpression>
-		final int SYM_NAME                                 = 230;  // <Name>
-		final int SYM_NORMALANNOTATION                     = 231;  // <NormalAnnotation>
-		final int SYM_NORMALCLASSDECLARATION               = 232;  // <NormalClassDeclaration>
-		final int SYM_NUMERICTYPE                          = 233;  // <NumericType>
-		final int SYM_PACKAGEDECLARATION                   = 234;  // <PackageDeclaration>
-		final int SYM_POSTDECREMENTEXPRESSION              = 235;  // <PostDecrementExpression>
-		final int SYM_POSTFIXEXPRESSION                    = 236;  // <PostfixExpression>
-		final int SYM_POSTINCREMENTEXPRESSION              = 237;  // <PostIncrementExpression>
-		final int SYM_PREDECREMENTEXPRESSION               = 238;  // <PreDecrementExpression>
-		final int SYM_PREINCREMENTEXPRESSION               = 239;  // <PreIncrementExpression>
-		final int SYM_PRIMARY                              = 240;  // <Primary>
-		final int SYM_PRIMARYNONEWARRAY                    = 241;  // <PrimaryNoNewArray>
-		final int SYM_PRIMITIVETYPE                        = 242;  // <PrimitiveType>
-		final int SYM_PURECLASSDECLARATION                 = 243;  // <PureClassDeclaration>
-		final int SYM_QUALIFIEDNAME                        = 244;  // <QualifiedName>
-		final int SYM_QUALPREFIXOPT                        = 245;  // <QualPrefixOpt>
-		final int SYM_RECEIVERPARAMETER                    = 246;  // <ReceiverParameter>
-		final int SYM_REFERENCETYPE                        = 247;  // <ReferenceType>
-		final int SYM_RELATIONALEXPRESSION                 = 248;  // <RelationalExpression>
-		final int SYM_RESOURCE                             = 249;  // <Resource>
-		final int SYM_RESOURCES                            = 250;  // <Resources>
-		final int SYM_RESOURCESPECIFICATION                = 251;  // <ResourceSpecification>
-		final int SYM_RETURNSTATEMENT                      = 252;  // <ReturnStatement>
-		final int SYM_SHIFTEXPRESSION                      = 253;  // <ShiftExpression>
-		final int SYM_SIMPLENAME                           = 254;  // <SimpleName>
-		final int SYM_SINGLEELEMENTANNOTATION              = 255;  // <SingleElementAnnotation>
-		final int SYM_SINGLESTATICIMPORTDECLARATION        = 256;  // <SingleStaticImportDeclaration>
-		final int SYM_SINGLETYPEIMPORTDECLARATION          = 257;  // <SingleTypeImportDeclaration>
-		final int SYM_STATEMENT                            = 258;  // <Statement>
-		final int SYM_STATEMENTEXPRESSION                  = 259;  // <StatementExpression>
-		final int SYM_STATEMENTEXPRESSIONLIST              = 260;  // <StatementExpressionList>
-		final int SYM_STATEMENTNOSHORTIF                   = 261;  // <StatementNoShortIf>
-		final int SYM_STATEMENTWITHOUTTRAILINGSUBSTATEMENT = 262;  // <StatementWithoutTrailingSubstatement>
-		final int SYM_STATICIMPORTONDEMANDDECLARATION      = 263;  // <StaticImportOnDemandDeclaration>
-		final int SYM_STATICINITIALIZER                    = 264;  // <StaticInitializer>
-		final int SYM_SUPER2                               = 265;  // <Super>
-		final int SYM_SWITCHBLOCK                          = 266;  // <SwitchBlock>
-		final int SYM_SWITCHBLOCKSTATEMENTGROUP            = 267;  // <SwitchBlockStatementGroup>
-		final int SYM_SWITCHBLOCKSTATEMENTGROUPS           = 268;  // <SwitchBlockStatementGroups>
-		final int SYM_SWITCHLABEL                          = 269;  // <SwitchLabel>
-		final int SYM_SWITCHLABELS                         = 270;  // <SwitchLabels>
-		final int SYM_SWITCHSTATEMENT                      = 271;  // <SwitchStatement>
-		final int SYM_SYNCHRONIZEDSTATEMENT                = 272;  // <SynchronizedStatement>
-		final int SYM_THROWS2                              = 273;  // <Throws>
-		final int SYM_THROWSTATEMENT                       = 274;  // <ThrowStatement>
-		final int SYM_TRYSTATEMENT                         = 275;  // <TryStatement>
-		final int SYM_TYPE                                 = 276;  // <Type>
-		final int SYM_TYPEARGUMENT                         = 277;  // <TypeArgument>
-		final int SYM_TYPEARGUMENTS                        = 278;  // <TypeArguments>
-		final int SYM_TYPEBOUNDOPT                         = 279;  // <TypeBoundOpt>
-		final int SYM_TYPEDECLARATION                      = 280;  // <TypeDeclaration>
-		final int SYM_TYPEDECLARATIONS                     = 281;  // <TypeDeclarations>
-		final int SYM_TYPEIMPORTONDEMANDDECLARATION        = 282;  // <TypeImportOnDemandDeclaration>
-		final int SYM_TYPENAME                             = 283;  // <TypeName>
-		final int SYM_TYPEPARAMETER                        = 284;  // <TypeParameter>
-		final int SYM_TYPEPARAMETERS                       = 285;  // <TypeParameters>
-		final int SYM_TYPEPARAMETERSOPT                    = 286;  // <TypeParametersOpt>
-		final int SYM_TYPEVARIABLE                         = 287;  // <TypeVariable>
-		final int SYM_UNARYEXPRESSION                      = 288;  // <UnaryExpression>
-		final int SYM_UNARYEXPRESSIONNOTPLUSMINUS          = 289;  // <UnaryExpressionNotPlusMinus>
-		final int SYM_VARIABLEDECLARATOR                   = 290;  // <VariableDeclarator>
-		final int SYM_VARIABLEDECLARATORID                 = 291;  // <VariableDeclaratorId>
-		final int SYM_VARIABLEDECLARATORS                  = 292;  // <VariableDeclarators>
-		final int SYM_VARIABLEINITIALIZER                  = 293;  // <VariableInitializer>
-		final int SYM_VARIABLEINITIALIZERS                 = 294;  // <VariableInitializers>
-		final int SYM_WHILESTATEMENT                       = 295;  // <WhileStatement>
-		final int SYM_WHILESTATEMENTNOSHORTIF              = 296;  // <WhileStatementNoShortIf>
-		final int SYM_WILDCARD                             = 297;  // <Wildcard>
-		final int SYM_WILDCARDBOUNDSOPT                    = 298;  // <WildcardBoundsOpt>
+//		final int SYM_DIMEXPR                              = 161;  // <DimExpr>
+//		final int SYM_DIMEXPRS                             = 162;  // <DimExprs>
+//		final int SYM_DIMS                                 = 163;  // <Dims>
+//		final int SYM_DOSTATEMENT                          = 164;  // <DoStatement>
+//		final int SYM_ELEMENTVALUE                         = 165;  // <ElementValue>
+//		final int SYM_ELEMENTVALUEARRAYINITIALIZER         = 166;  // <ElementValueArrayInitializer>
+//		final int SYM_ELEMENTVALUEPAIR                     = 167;  // <ElementValuePair>
+//		final int SYM_ELEMENTVALUEPAIRS                    = 168;  // <ElementValuePairs>
+//		final int SYM_ELEMENTVALUES                        = 169;  // <ElementValues>
+//		final int SYM_EMPTYSTATEMENT                       = 170;  // <EmptyStatement>
+//		final int SYM_ENHANCEDFORSTATEMENT                 = 171;  // <EnhancedForStatement>
+//		final int SYM_ENHANCEDFORSTATEMENTNOSHORTIF        = 172;  // <EnhancedForStatementNoShortIf>
+//		final int SYM_ENUMBODY                             = 173;  // <EnumBody>
+//		final int SYM_ENUMBODYDECLARATIONSOPT              = 174;  // <EnumBodyDeclarationsOpt>
+//		final int SYM_ENUMCONSTANT                         = 175;  // <EnumConstant>
+//		final int SYM_ENUMCONSTANTS                        = 176;  // <EnumConstants>
+//		final int SYM_ENUMDECLARATION                      = 177;  // <EnumDeclaration>
+//		final int SYM_EQUALITYEXPRESSION                   = 178;  // <EqualityExpression>
+//		final int SYM_EXCLUSIVEOREXPRESSION                = 179;  // <ExclusiveOrExpression>
+//		final int SYM_EXPLICITCONSTRUCTORINVOCATION        = 180;  // <ExplicitConstructorInvocation>
+//		final int SYM_EXPRESSION                           = 181;  // <Expression>
+//		final int SYM_EXPRESSIONOPT                        = 182;  // <ExpressionOpt>
+//		final int SYM_EXPRESSIONSTATEMENT                  = 183;  // <ExpressionStatement>
+//		final int SYM_EXTENDSINTERFACES                    = 184;  // <ExtendsInterfaces>
+//		final int SYM_FIELDACCESS                          = 185;  // <FieldAccess>
+//		final int SYM_FIELDDECLARATION                     = 186;  // <FieldDeclaration>
+//		final int SYM_FINALLY2                             = 187;  // <Finally>
+//		final int SYM_FLOATINGPOINTTYPE                    = 188;  // <FloatingPointType>
+//		final int SYM_FLOATPOINTLITERAL                    = 189;  // <FloatPointLiteral>
+//		final int SYM_FORINITOPT                           = 190;  // <ForInitOpt>
+//		final int SYM_FORMALPARAMETER                      = 191;  // <FormalParameter>
+//		final int SYM_FORMALPARAMETERLIST                  = 192;  // <FormalParameterList>
+//		final int SYM_FORSTATEMENT                         = 193;  // <ForStatement>
+//		final int SYM_FORSTATEMENTNOSHORTIF                = 194;  // <ForStatementNoShortIf>
+//		final int SYM_FORUPDATEOPT                         = 195;  // <ForUpdateOpt>
+//		final int SYM_IFTHENELSESTATEMENT                  = 196;  // <IfThenElseStatement>
+//		final int SYM_IFTHENELSESTATEMENTNOSHORTIF         = 197;  // <IfThenElseStatementNoShortIf>
+//		final int SYM_IFTHENSTATEMENT                      = 198;  // <IfThenStatement>
+//		final int SYM_IMPORTDECLARATION                    = 199;  // <ImportDeclaration>
+//		final int SYM_IMPORTDECLARATIONS                   = 200;  // <ImportDeclarations>
+//		final int SYM_INCLUSIVEOREXPRESSION                = 201;  // <InclusiveOrExpression>
+//		final int SYM_INSTANCEINITIALIZER                  = 202;  // <InstanceInitializer>
+//		final int SYM_INTEGERLITERAL                       = 203;  // <IntegerLiteral>
+//		final int SYM_INTEGRALTYPE                         = 204;  // <IntegralType>
+//		final int SYM_INTERFACEBODY                        = 205;  // <InterfaceBody>
+//		final int SYM_INTERFACEDECLARATION                 = 206;  // <InterfaceDeclaration>
+//		final int SYM_INTERFACEMEMBERDECLARATION           = 207;  // <InterfaceMemberDeclaration>
+//		final int SYM_INTERFACEMEMBERDECLARATIONS          = 208;  // <InterfaceMemberDeclarations>
+//		final int SYM_INTERFACES                           = 209;  // <Interfaces>
+//		final int SYM_INTERFACETYPE                        = 210;  // <InterfaceType>
+//		final int SYM_INTERFACETYPELIST                    = 211;  // <InterfaceTypeList>
+//		final int SYM_LABELEDSTATEMENT                     = 212;  // <LabeledStatement>
+//		final int SYM_LABELEDSTATEMENTNOSHORTIF            = 213;  // <LabeledStatementNoShortIf>
+//		final int SYM_LASTFORMALPARAMETER                  = 214;  // <LastFormalParameter>
+//		final int SYM_LEFTHANDSIDE                         = 215;  // <LeftHandSide>
+//		final int SYM_LITERAL                              = 216;  // <Literal>
+//		final int SYM_LOCALCLASSDECLARATION                = 217;  // <LocalClassDeclaration>
+//		final int SYM_LOCALCLASSMODIFIERS                  = 218;  // <LocalClassModifiers>
+//		final int SYM_LOCALVARIABLEDECLARATION             = 219;  // <LocalVariableDeclaration>
+//		final int SYM_LOCALVARIABLEDECLARATIONSTATEMENT    = 220;  // <LocalVariableDeclarationStatement>
+//		final int SYM_MARKERANNOTATION                     = 221;  // <MarkerAnnotation>
+//		final int SYM_METHODBODY                           = 222;  // <MethodBody>
+//		final int SYM_METHODDECLARATION                    = 223;  // <MethodDeclaration>
+//		final int SYM_METHODDECLARATOR                     = 224;  // <MethodDeclarator>
+//		final int SYM_METHODHEADER                         = 225;  // <MethodHeader>
+//		final int SYM_METHODINVOCATION                     = 226;  // <MethodInvocation>
+//		final int SYM_MODIFIER                             = 227;  // <Modifier>
+//		final int SYM_MODIFIERS                            = 228;  // <Modifiers>
+//		final int SYM_MULTIPLICATIVEEXPRESSION             = 229;  // <MultiplicativeExpression>
+//		final int SYM_NAME                                 = 230;  // <Name>
+//		final int SYM_NORMALANNOTATION                     = 231;  // <NormalAnnotation>
+//		final int SYM_NORMALCLASSDECLARATION               = 232;  // <NormalClassDeclaration>
+//		final int SYM_NUMERICTYPE                          = 233;  // <NumericType>
+//		final int SYM_PACKAGEDECLARATION                   = 234;  // <PackageDeclaration>
+//		final int SYM_POSTDECREMENTEXPRESSION              = 235;  // <PostDecrementExpression>
+//		final int SYM_POSTFIXEXPRESSION                    = 236;  // <PostfixExpression>
+//		final int SYM_POSTINCREMENTEXPRESSION              = 237;  // <PostIncrementExpression>
+//		final int SYM_PREDECREMENTEXPRESSION               = 238;  // <PreDecrementExpression>
+//		final int SYM_PREINCREMENTEXPRESSION               = 239;  // <PreIncrementExpression>
+//		final int SYM_PRIMARY                              = 240;  // <Primary>
+//		final int SYM_PRIMARYNONEWARRAY                    = 241;  // <PrimaryNoNewArray>
+//		final int SYM_PRIMITIVETYPE                        = 242;  // <PrimitiveType>
+//		final int SYM_PURECLASSDECLARATION                 = 243;  // <PureClassDeclaration>
+//		final int SYM_QUALIFIEDNAME                        = 244;  // <QualifiedName>
+//		final int SYM_QUALPREFIXOPT                        = 245;  // <QualPrefixOpt>
+//		final int SYM_RECEIVERPARAMETER                    = 246;  // <ReceiverParameter>
+//		final int SYM_REFERENCETYPE                        = 247;  // <ReferenceType>
+//		final int SYM_RELATIONALEXPRESSION                 = 248;  // <RelationalExpression>
+//		final int SYM_RESOURCE                             = 249;  // <Resource>
+//		final int SYM_RESOURCES                            = 250;  // <Resources>
+//		final int SYM_RESOURCESPECIFICATION                = 251;  // <ResourceSpecification>
+//		final int SYM_RETURNSTATEMENT                      = 252;  // <ReturnStatement>
+//		final int SYM_SHIFTEXPRESSION                      = 253;  // <ShiftExpression>
+//		final int SYM_SIMPLENAME                           = 254;  // <SimpleName>
+//		final int SYM_SINGLEELEMENTANNOTATION              = 255;  // <SingleElementAnnotation>
+//		final int SYM_SINGLESTATICIMPORTDECLARATION        = 256;  // <SingleStaticImportDeclaration>
+//		final int SYM_SINGLETYPEIMPORTDECLARATION          = 257;  // <SingleTypeImportDeclaration>
+//		final int SYM_STATEMENT                            = 258;  // <Statement>
+//		final int SYM_STATEMENTEXPRESSION                  = 259;  // <StatementExpression>
+//		final int SYM_STATEMENTEXPRESSIONLIST              = 260;  // <StatementExpressionList>
+//		final int SYM_STATEMENTNOSHORTIF                   = 261;  // <StatementNoShortIf>
+//		final int SYM_STATEMENTWITHOUTTRAILINGSUBSTATEMENT = 262;  // <StatementWithoutTrailingSubstatement>
+//		final int SYM_STATICIMPORTONDEMANDDECLARATION      = 263;  // <StaticImportOnDemandDeclaration>
+//		final int SYM_STATICINITIALIZER                    = 264;  // <StaticInitializer>
+//		final int SYM_SUPER2                               = 265;  // <Super>
+//		final int SYM_SWITCHBLOCK                          = 266;  // <SwitchBlock>
+//		final int SYM_SWITCHBLOCKSTATEMENTGROUP            = 267;  // <SwitchBlockStatementGroup>
+//		final int SYM_SWITCHBLOCKSTATEMENTGROUPS           = 268;  // <SwitchBlockStatementGroups>
+//		final int SYM_SWITCHLABEL                          = 269;  // <SwitchLabel>
+//		final int SYM_SWITCHLABELS                         = 270;  // <SwitchLabels>
+//		final int SYM_SWITCHSTATEMENT                      = 271;  // <SwitchStatement>
+//		final int SYM_SYNCHRONIZEDSTATEMENT                = 272;  // <SynchronizedStatement>
+//		final int SYM_THROWS2                              = 273;  // <Throws>
+//		final int SYM_THROWSTATEMENT                       = 274;  // <ThrowStatement>
+//		final int SYM_TRYSTATEMENT                         = 275;  // <TryStatement>
+//		final int SYM_TYPE                                 = 276;  // <Type>
+//		final int SYM_TYPEARGUMENT                         = 277;  // <TypeArgument>
+//		final int SYM_TYPEARGUMENTS                        = 278;  // <TypeArguments>
+//		final int SYM_TYPEBOUNDOPT                         = 279;  // <TypeBoundOpt>
+//		final int SYM_TYPEDECLARATION                      = 280;  // <TypeDeclaration>
+//		final int SYM_TYPEDECLARATIONS                     = 281;  // <TypeDeclarations>
+//		final int SYM_TYPEIMPORTONDEMANDDECLARATION        = 282;  // <TypeImportOnDemandDeclaration>
+//		final int SYM_TYPENAME                             = 283;  // <TypeName>
+//		final int SYM_TYPEPARAMETER                        = 284;  // <TypeParameter>
+//		final int SYM_TYPEPARAMETERS                       = 285;  // <TypeParameters>
+//		final int SYM_TYPEPARAMETERSOPT                    = 286;  // <TypeParametersOpt>
+//		final int SYM_TYPEVARIABLE                         = 287;  // <TypeVariable>
+//		final int SYM_UNARYEXPRESSION                      = 288;  // <UnaryExpression>
+//		final int SYM_UNARYEXPRESSIONNOTPLUSMINUS          = 289;  // <UnaryExpressionNotPlusMinus>
+//		final int SYM_VARIABLEDECLARATOR                   = 290;  // <VariableDeclarator>
+//		final int SYM_VARIABLEDECLARATORID                 = 291;  // <VariableDeclaratorId>
+//		final int SYM_VARIABLEDECLARATORS                  = 292;  // <VariableDeclarators>
+//		final int SYM_VARIABLEINITIALIZER                  = 293;  // <VariableInitializer>
+//		final int SYM_VARIABLEINITIALIZERS                 = 294;  // <VariableInitializers>
+//		final int SYM_WHILESTATEMENT                       = 295;  // <WhileStatement>
+//		final int SYM_WHILESTATEMENTNOSHORTIF              = 296;  // <WhileStatementNoShortIf>
+//		final int SYM_WILDCARD                             = 297;  // <Wildcard>
+//		final int SYM_WILDCARDBOUNDSOPT                    = 298;  // <WildcardBoundsOpt>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -658,7 +655,7 @@ public class JavaParser extends CodeParser
 //		final int PROD_ENUMBODYDECLARATIONSOPT                                      = 137;  // <EnumBodyDeclarationsOpt> ::= 
 //		final int PROD_ENUMCONSTANTS                                                = 138;  // <EnumConstants> ::= <EnumConstant>
 		final int PROD_ENUMCONSTANTS_COMMA                                          = 139;  // <EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
-//		final int PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN                        = 140;  // <EnumConstant> ::= <Annotations> Identifier '(' <ArgumentList> ')' <ClassBodyOpt>
+		final int PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN                        = 140;  // <EnumConstant> ::= <Annotations> Identifier '(' <ArgumentList> ')' <ClassBodyOpt>
 		final int PROD_ENUMCONSTANT_IDENTIFIER                                      = 141;  // <EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
 //		final int PROD_CLASSBODYOPT                                                 = 142;  // <ClassBodyOpt> ::= <ClassBody>
 //		final int PROD_CLASSBODYOPT2                                                = 143;  // <ClassBodyOpt> ::= 
@@ -1335,146 +1332,7 @@ public class JavaParser extends CodeParser
 			case RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER:
 			case RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER2:
 			{
-				// <EnumDeclaration> ::= <Modifiers> enum Identifier <Interfaces> <EnumBody>
-				// <EnumDeclaration> ::= <Modifiers> enum Identifier <EnumBody>
-				String modifiers = this.getContent_R(_reduction.get(0));
-				String name = this.getContent_R(_reduction.get(2));
-				Reduction redBody = _reduction.get(_reduction.size()-1).asReduction();
-				// PROD_ENUMBODY_LBRACE_COMMA_RBRACE: <EnumBody> ::= '{' <EnumConstants> ',' <EnumBodyDeclarationsOpt> '}'
-				// PROD_ENUMBODY_LBRACE_RBRACE:       <EnumBody> ::= '{' <EnumConstants> <EnumBodyDeclarationsOpt> '}'
-				Reduction redConstants = redBody.get(1).asReduction();
-				// PROD_ENUMCONSTANTS:       <EnumConstants> ::= <EnumConstant>
-				// PROD_ENUMCONSTANTS_COMMA: <EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
-				boolean isClass = false;
-				final StringList EMPTY_SL = new StringList();
-				StringList itemNames = new StringList();
-				Stack<StringList> itemValues = new Stack<StringList>();
-				HashMap<String, Reduction> classBodies = new HashMap<String, Reduction>();
-				do {
-					Reduction redConst = redConstants;
-					// Prepare the next loop pass
-					if (redConstants.getParent().getTableIndex() == RuleConstants.PROD_ENUMCONSTANTS_COMMA) {
-						redConst = redConstants.get(2).asReduction();
-						redConstants = redConstants.get(0).asReduction();
-					}
-					else {
-						redConstants = null;
-					}
-					// Now process the item...
-					// PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN: <EnumConstant> ::= <Annotations> Identifier '(' <ArgumentList> ')' <ClassBodyOpt>
-					// PROD_ENUMCONSTANT_IDENTIFIER:               <EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
-					String itemName = redConst.get(1).asString();
-					if (redConst.getParent().getTableIndex() == RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER) {
-						itemNames.add(itemName);
-						itemValues.push(EMPTY_SL); // consecutive value
-					}
-					else {
-						// Form the constructor call
-						isClass = true;
-						StringList value = new StringList();
-						this.processArguments(redConst.get(3), StringList.getNew(name), value);
-						itemNames.add(itemName);
-						itemValues.push(value);
-					}
-					Reduction redItemBody = redConst.get(redConst.size()-1).asReduction();
-					if (redItemBody != null && redItemBody.getParent().getTableIndex() == 
-							RuleConstants.PROD_CLASSBODY_LBRACE_RBRACE) {
-						// There is a non-empty class body
-						isClass = true;
-						classBodies.put(itemName, redItemBody);
-					}
-				} while (redConstants != null);
-
-				// Now we have to decide among a mere type definition or a class declaration
-				Reduction redDecls = redBody.get(redBody.size()-2).asReduction();
-				if (isClass || redDecls != null && redDecls.size() > 0) {
-					// We will have to define a member class
-					Root enumRoot = root;
-					Root enumIncl = new Root();
-					enumIncl.setInclude();
-					enumIncl.setText(name + "_Enum");
-					String qualifier = packageStr;
-					if (!classes.isEmpty()) {
-						enumRoot = new Root();
-						qualifier = classes.peek().getQualifiedName();
-						enumIncl.addToIncludeList(includables.peek());
-					}
-					enumRoot.setText(name);
-					enumRoot.setNamespace(qualifier);
-					enumIncl.setNamespace(qualifier);
-					enumRoot.addToIncludeList(enumIncl);
-					this.equipWithSourceComment(enumRoot, _reduction);
-					this.equipWithSourceComment(enumIncl, _reduction);
-					enumRoot.comment.add(modifiers);
-					if (ruleId == RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER) {
-						enumIncl.comment.add("==== " + this.getContent_R(_reduction.get(3)));
-					}
-					addRoot(enumRoot);
-					addRoot(enumIncl);
-					if (redDecls != null && redDecls.size() > 0) {
-						classes.push(enumRoot);
-						includables.push(enumIncl);
-						this.buildNSD_R(redDecls.get(1).asReduction(), enumRoot.children);
-						classes.pop();
-						includables.pop();
-					}
-					int itemOffset = 0;
-					String prevValue = null;
-					for (int i = itemNames.count()-1; i > 0; i--) {
-						String itemName = itemNames.get(i);
-						StringList exprs = itemValues.pop();
-						String value = Integer.toString(itemOffset);
-						if (exprs.isEmpty()) {
-							if (prevValue != null) {
-								value = prevValue + " + " + value;
-							}
-						}
-						else if (exprs.count() == 1) {
-							value = prevValue = exprs.get(0);
-							itemOffset = 0;
-						}
-						else {
-							// Put all preparatory assignments as initialisation code
-							enumIncl.children.addElement(
-									new Instruction(exprs.subSequence(0, exprs.count()-1)));
-							value = prevValue = exprs.get(exprs.count()-1);
-							itemOffset = 0;
-						}
-						enumIncl.children.addElement(
-								new Instruction("const " + itemName + " <- " + value));
-						itemOffset++;
-						if (classBodies.containsKey(itemName)) {
-							// Produce a subclass for the specific item
-							Root itemBody = new Root();
-							itemBody.setText(itemName);
-							Root itemIncl = new Root();
-							itemIncl.setText(itemName + "_Fields");
-							itemBody.setNamespace(qualifier + "." + name);
-							itemIncl.setNamespace(qualifier + "." + name);
-							itemBody.setComment("Specific CLASS for enum item "
-									+ itemBody.getNamespace() + "." + itemName);
-							itemIncl.addToIncludeList(includables.peek());
-							itemBody.addToIncludeList(itemIncl);
-							addRoot(itemBody);
-							addRoot(itemIncl);
-							classes.push(itemBody);
-							includables.push(itemIncl);
-							this.buildNSD_R(classBodies.get(itemName), itemBody.children);
-							classes.pop();
-							includables.pop();
-						}
-					}
-				}
-				else {
-					// This is going to be a type definition
-					// Users may break the lines at their preference afterwards...
-					Instruction ele = new Instruction("type " + name + " = enum{"
-							+ itemNames.reverse().concatenate(", ") + "}");
-					this.equipWithSourceComment(ele, _reduction);
-					ele.comment.add(modifiers);
-					includables.peek().children.addElement(ele);
-				}
-				
+				buildEnumeratorDefinition(_reduction, ruleId);
 			}
 			break;
 			
@@ -2073,25 +1931,45 @@ public class JavaParser extends CodeParser
 					String line = exprLines.get(i);
 					if (Instruction.isFunctionCall(line) || Instruction.isProcedureCall(line)) {
 						if (i > 0) {
+							// Make an instruction for the preceding lines (if there are any)
 							ele = new Instruction(exprLines.subSequence(0, i));
 							if (!commentDone) {
 								this.equipWithSourceComment(ele, _reduction);
 							}
 							_parentNode.addElement(ele);
 						}
-						ele = new Instruction(line);
+						/* Now care for the method invocation line itself. Also
+						 * check whether it might be some specific action like
+						 * System.exit() or System.out.print[ln]()
+						 */
+						if (line.startsWith("System.exit(")) {
+							ele = new Jump(getKeyword("preExit") + " " + line.substring("System.exit".length()));
+						}
+						else if (line.startsWith("System.out.println(")) {
+							ele = new Instruction(getKeyword("output") + " " + line.substring("System.out.println".length()));
+						}
+						else if (line.startsWith("System.out.print(")) {
+							ele = new Instruction(getKeyword("output") + " " + line.substring("System.out.print".length()));
+						}
+						else {
+							ele = new Instruction(line);
+						}
 						if (!commentDone) {
 							this.equipWithSourceComment(ele, _reduction);
 						}
 						_parentNode.addElement(ele);
+						// Remove the processed lines from the list and reset i
 						exprLines.remove(0, i+1);
 						i = 0;
 					}
 					else {
+						// No special treatment -> just advance to the next line
 						i++;
 					}
 				}
-				// Are some lines left? Then make an instruction from it
+				/* Are some lines left? Then make an instruction from it (there can't
+				 * be method invocations among them, as we have scrutinised all lines)
+				 */
 				if (!exprLines.isEmpty()) {
 					ele = new Instruction(exprLines);
 					if (!commentDone) {
@@ -2114,6 +1992,184 @@ public class JavaParser extends CodeParser
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * Derives an enumerator definition, either as a type definition or as a class
+	 * from the given {@link Reduction} {@code _reduction}
+	 * @param _reduction - The {@link Reduction} meant to represent an {@code  <EnumDeclaration>}
+	 * rule.
+	 * @param _ruleId - the actual table index of the rule
+	 * @throws ParserCancelled if the user happened to abort the parsing process
+	 */
+	private void buildEnumeratorDefinition(Reduction _reduction, int _ruleId) throws ParserCancelled {
+		// <EnumDeclaration> ::= <Modifiers> enum Identifier <Interfaces> <EnumBody>
+		// <EnumDeclaration> ::= <Modifiers> enum Identifier <EnumBody>
+		String modifiers = this.getContent_R(_reduction.get(0));
+		String name = this.getContent_R(_reduction.get(2));
+		Reduction redBody = _reduction.get(_reduction.size()-1).asReduction();
+		// PROD_ENUMBODY_LBRACE_COMMA_RBRACE: <EnumBody> ::= '{' <EnumConstants> ',' <EnumBodyDeclarationsOpt> '}'
+		// PROD_ENUMBODY_LBRACE_RBRACE:       <EnumBody> ::= '{' <EnumConstants> <EnumBodyDeclarationsOpt> '}'
+		Reduction redConstants = redBody.get(1).asReduction();
+		// PROD_ENUMCONSTANTS:       <EnumConstants> ::= <EnumConstant>
+		// PROD_ENUMCONSTANTS_COMMA: <EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+		boolean isClass = false;
+		final StringList EMPTY_SL = new StringList();
+		StringList itemComments = new StringList();
+		StringList itemNames = new StringList();
+		Stack<StringList> itemValues = new Stack<StringList>();
+		HashMap<String, Reduction> classBodies = new HashMap<String, Reduction>();
+		String thisListComment = null;	// comment for the current item from previous list rule
+		do {
+			System.out.println(redConstants.getParent().toString());
+			Reduction redConst = redConstants;
+			String nextListComment = this.retrieveComment(redConstants);
+			// Prepare the next loop pass
+			if (redConstants.getParent().getTableIndex() == RuleConstants.PROD_ENUMCONSTANTS_COMMA) {
+				redConst = redConstants.get(2).asReduction();
+				redConstants = redConstants.get(0).asReduction();
+			}
+			else {
+				redConstants = null;
+			}
+			// Now process the item...
+			// PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN: <EnumConstant> ::= <Annotations> Identifier '(' <ArgumentList> ')' <ClassBodyOpt>
+			// PROD_ENUMCONSTANT_IDENTIFIER:               <EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+			String itemName = redConst.get(1).asString();
+			if (redConst.getParent().getTableIndex() == RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER) {
+				itemValues.push(EMPTY_SL); // consecutive value
+			}
+			else {
+				// Form the constructor call
+				isClass = true;
+				StringList value = new StringList();
+				this.processArguments(redConst.get(3), StringList.getNew(name), value);
+				itemValues.push(value);
+			}
+			itemNames.add(itemName);
+			String itemComment = this.retrieveComment(redConst);
+			if (itemComment == null || itemComment.isEmpty()) {
+				itemComment = thisListComment;
+			}
+			itemComments.add(itemComment == null ? "" : itemComment);
+			Reduction redItemBody = redConst.get(redConst.size()-1).asReduction();
+			if (redItemBody != null && redItemBody.getParent().getTableIndex() == 
+					RuleConstants.PROD_CLASSBODY_LBRACE_RBRACE) {
+				// There is a non-empty class body
+				isClass = true;
+				classBodies.put(itemName, redItemBody);
+			}
+			thisListComment = nextListComment;
+		} while (redConstants != null);
+
+		// Now we have to decide among a mere type definition or a class declaration
+		Reduction redDecls = redBody.get(redBody.size()-2).asReduction();
+		if (isClass || redDecls != null && redDecls.size() > 0) {
+			// We will have to define a member class
+			Root enumRoot = root;
+			Root enumIncl = new Root();
+			enumIncl.setInclude();
+			enumIncl.setText(name + "_Enum");
+			String qualifier = packageStr;
+			if (!classes.isEmpty()) {
+				enumRoot = new Root();
+				qualifier = classes.peek().getQualifiedName();
+				enumIncl.addToIncludeList(includables.peek());
+			}
+			enumRoot.setText(name);
+			enumRoot.setNamespace(qualifier);
+			enumIncl.setNamespace(qualifier);
+			enumRoot.addToIncludeList(enumIncl);
+			this.equipWithSourceComment(enumRoot, _reduction);
+			this.equipWithSourceComment(enumIncl, _reduction);
+			enumRoot.comment.add(modifiers);
+			if (_ruleId == RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER) {
+				enumIncl.comment.add("==== " + this.getContent_R(_reduction.get(3)));
+			}
+			addRoot(enumRoot);
+			addRoot(enumIncl);
+			if (redDecls != null && redDecls.size() > 0) {
+				classes.push(enumRoot);
+				includables.push(enumIncl);
+				this.buildNSD_R(redDecls.get(1).asReduction(), enumRoot.children);
+				classes.pop();
+				includables.pop();
+			}
+			int itemOffset = 0;
+			String prevValue = null;
+			for (int i = itemNames.count()-1; i >= 0; i--) {
+				String itemName = itemNames.get(i);
+				StringList exprs = itemValues.pop();
+				String value = Integer.toString(itemOffset);
+				if (exprs.isEmpty()) {
+					if (prevValue != null) {
+						value = prevValue + " + " + value;
+					}
+				}
+				else if (exprs.count() == 1) {
+					value = prevValue = exprs.get(0);
+					itemOffset = 0;
+				}
+				else {
+					// Put all preparatory assignments as initialisation code
+					enumIncl.children.addElement(
+							new Instruction(exprs.subSequence(0, exprs.count()-1)));
+					value = prevValue = exprs.get(exprs.count()-1);
+					itemOffset = 0;
+				}
+				Instruction itemDecl = new Instruction("const " + itemName + " <- " + value);
+				itemDecl.setComment(itemComments.get(i));
+				itemDecl.setColor(colorConst);
+				enumIncl.children.addElement(itemDecl);
+				itemOffset++;
+				if (classBodies.containsKey(itemName)) {
+					// Produce a subclass for the specific item
+					Root itemBody = new Root();
+					itemBody.setText(itemName);
+					Root itemIncl = new Root();
+					itemIncl.setText(itemName + "_Fields");
+					itemBody.setNamespace(qualifier + "." + name);
+					itemIncl.setNamespace(qualifier + "." + name);
+					itemBody.setComment("Specific CLASS for enum item "
+							+ itemBody.getNamespace() + "." + itemName);
+					itemIncl.addToIncludeList(includables.peek());
+					itemBody.addToIncludeList(itemIncl);
+					addRoot(itemBody);
+					addRoot(itemIncl);
+					classes.push(itemBody);
+					includables.push(itemIncl);
+					this.buildNSD_R(classBodies.get(itemName), itemBody.children);
+					classes.pop();
+					includables.pop();
+				}
+			}
+		}
+		else {
+			// This is going to be a type definition
+			// If there are item comments, then make them unambiguous
+			for (int i = 0; i < itemNames.count(); i++) {
+				String itemComment = itemComments.get(i);
+				String itemName = itemNames.get(i);
+				if (!itemComment.isEmpty() && !itemComment.contains(itemName)) {
+					itemComments.set(i, itemName + ": " + itemComment);
+				}
+			}
+			// Users may break the lines at their preference afterwards...
+			Instruction ele = new Instruction("type " + name + " = enum{"
+					+ itemNames.reverse().concatenate(", ") + "}");
+			if (!includables.isEmpty()) {
+				this.equipWithSourceComment(ele, _reduction);
+				includables.peek().children.addElement(ele);
+			}
+			else {
+				// We are on the outermost level
+				root.setText(name);
+				this.equipWithSourceComment(root, _reduction);
+				root.children.addElement(ele);
+			}
+			ele.comment.add(itemComments.reverse());
+			ele.comment.add(modifiers);
 		}
 	}
 	
@@ -2304,15 +2360,20 @@ public class JavaParser extends CodeParser
 			case RuleConstants.PROD_CONDITIONALEXPRESSION_QUESTION_COLON:
 			{
 				// <ConditionalExpression> ::= <ConditionalOrExpression> '?' <Expression> ':' <ConditionalExpression>
-				// FIXME: Here we haven't a really good chance to replace it by a statement
+				/* Here we haven't a really good chance to replace it by a statement,
+				 * but Structorizer may cope with its execution in simple contexts
+				 */
 				exprs = decomposeExpression(exprRed.get(0), false, false);
 				StringList exprsTrue = decomposeExpression(exprRed.get(2), false, false);
 				StringList exprsFalse = decomposeExpression(exprRed.get(4), false, false);
-				String result = exprs.get(exprs.count()-1);
-				exprs.remove(exprs.count()-1);
-				exprs.add(exprsTrue.subSequence(0, exprsTrue.count()-1));
-				exprs.add(exprsFalse.subSequence(0, exprsFalse.count()-1));
-				exprs.add(result + " ? " + exprsTrue.get(exprsTrue.count()-1) + " : " + exprsFalse.get(exprsFalse.count()-1));
+				int ixLast = exprs.count() -1;
+				int ixLastT = exprsTrue.count() - 1;
+				int ixLastF = exprsFalse.count() - 1;
+				String result = exprs.get(ixLast);
+				exprs.remove(ixLast);
+				exprs.add(exprsTrue.subSequence(0, ixLastT));
+				exprs.add(exprsFalse.subSequence(0, ixLastF));
+				exprs.add("(" + result + ") ? " + exprsTrue.get(ixLastT) + " : " + exprsFalse.get(ixLastF));
 			}
 			break;
 			
