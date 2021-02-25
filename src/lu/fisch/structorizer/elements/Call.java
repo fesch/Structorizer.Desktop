@@ -266,7 +266,7 @@ public class Call extends Instruction {
 	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
 	 * a procedure or function call syntax as described in the user guide.
-	 * Otherwise null will be returned.
+	 * Otherwise {@code null} will be returned.
 	 * @return signature string, e.g. "factorial(1)", or null
 	 */
 	public String getSignatureString()
@@ -340,7 +340,7 @@ public class Call extends Instruction {
 			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
 				IRoutinePool pool = myRoot.specialRoutinePool;
 				if (pool == null) { pool = Arranger.getInstance(); }
-				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot, false);
+				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot, true);
 			// END KGU#676 2019-03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();

@@ -3351,7 +3351,10 @@ public class Root extends Element {
     					pool = Arranger.getInstance();
     				}
     				if (pool != null) {
-    					for (Root incl: pool.findIncludesByName(inclName, this, false)) {
+    					// START KGU#408 2021-02-24: Enh. #410 Filter by namespace if available
+    					//for (Root incl: pool.findIncludesByName(inclName, this)) {
+    					for (Root incl: pool.findIncludesByName(inclName, this, true)) {
+    					// END KGU#408 2021-02-24
     						typeMap.putAll(incl.getTypeInfo());
     					}
     				}
@@ -4274,7 +4277,10 @@ public class Root extends Element {
 			{
 				int count = 0;	// Number of matching routines
 				if (Arranger.hasInstance()) {
-					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this, false).size();
+					// START KGU#408 2021-02-25: Enh. #410 more precise filtering
+					//count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this).size();
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount, this, true).size();
+					// END KGU#408 2021-02-25
 				}
 				if (count == 0) {
 					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
