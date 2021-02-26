@@ -21,8 +21,6 @@
 
 package lu.fisch.structorizer.parsers;
 
-import java.awt.Color;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -48,6 +46,7 @@ import java.awt.Color;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-02-16      First Issue (generated with GOLDprog.exe)
  *      Kay Gürtzig     2021-02-23      Functionally complete implementation
+ *      Kay Gürtzig     2021-02-26      Revision of the class and method handling, minr fixes
  *
  ******************************************************************************************************
  *
@@ -61,6 +60,8 @@ import java.awt.Color;
  *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
  *
  ******************************************************************************************************/
+
+import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
