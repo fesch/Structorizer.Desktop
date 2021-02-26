@@ -862,7 +862,7 @@ public class CGenerator extends Generator {
 
 	protected void appendBlockHeading(Element elem, String _headingText, String _indent)
 	{
-		boolean isDisabled = elem.isDisabled();
+		boolean isDisabled = elem.isDisabled(false);
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && this.isLabelAtLoopStart())  
 		{
 				_headingText = this.labelBaseName + this.jumpTable.get(elem) + ": " + _headingText;
@@ -880,7 +880,7 @@ public class CGenerator extends Generator {
 
 	protected void appendBlockTail(Element elem, String _tailText, String _indent)
 	{
-		boolean isDisabled = elem.isDisabled();
+		boolean isDisabled = elem.isDisabled(false);
 		if (_tailText == null) {
 			addCode("}", _indent, isDisabled);
 		}
@@ -1130,7 +1130,7 @@ public class CGenerator extends Generator {
 		// 2.2 as variable
 		// 3. type definition
 		// 4. Input / output
-		boolean isDisabled = _inst.isDisabled(); 
+		boolean isDisabled = _inst.isDisabled(false); 
 		StringList tokens = Element.splitLexically(line.trim(), true);
 		// START KGU#796 2020-02-10: Bugfix #808
 		Element.unifyOperators(tokens, false);
@@ -1582,7 +1582,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(Case _case, String _indent) {
 		
-		boolean isDisabled = _case.isDisabled();
+		boolean isDisabled = _case.isDisabled(false);
 		appendComment(_case, _indent);
 		
 		// START KGU#453 2017-11-02: Issue #447
@@ -1617,7 +1617,7 @@ public class CGenerator extends Generator {
 			generateCode(sq, _indent + this.getIndent());
 			Element lastEl = null;
 			for (int j = sq.getSize() - 1; lastEl == null && j >= 0; j--) {
-				if ((lastEl = sq.getElement(j)).disabled) {
+				if ((lastEl = sq.getElement(j)).isDisabled(true)) {
 					lastEl = null;
 				}
 			}
@@ -1720,7 +1720,7 @@ public class CGenerator extends Generator {
 		String indent = _indent + this.getIndent();
 		String startValStr = "0";
 		String endValStr = "???";
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 		// START KGU#640 2019-01-21: Bugfix #669
 		boolean isLoopConverted = false;
 		// END KGU#640 2019-01-21
@@ -1967,7 +1967,7 @@ public class CGenerator extends Generator {
 
 			boolean commentInserted = false;
 			
-			boolean isDisabled = _call.isDisabled();
+			boolean isDisabled = _call.isDisabled(false);
 
 			appendComment(_call, _indent);
 			// In theory, here should be only one line, but we better be prepared...
@@ -2056,7 +2056,7 @@ public class CGenerator extends Generator {
 		// }
 		if (!appendAsComment(_jump, _indent)) {
 			
-			boolean isDisabled = _jump.isDisabled();
+			boolean isDisabled = _jump.isDisabled(false);
 
 			appendComment(_jump, _indent);
 
@@ -2159,7 +2159,7 @@ public class CGenerator extends Generator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);
@@ -2195,21 +2195,22 @@ public class CGenerator extends Generator {
 	protected void generateCode(Try _try, String _indent)
 	{
 
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		appendComment(_try, _indent);
 	
 		TryCatchSupportLevel trySupport = this.getTryCatchLevel();
 		if (trySupport == TryCatchSupportLevel.TC_NO_TRY) {
 			this.appendComment("TODO: Find an equivalent for this non-supported try / catch block!", _indent);
 		}
-		_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
+		// We will temporarily modify the disabled status depending on the language capabilities
+		_try.setDisabled(isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY);
 		try {
 			this.appendBlockHeading(_try, "try", _indent);
-			_try.disabled = isDisabled;
+			_try.setDisabled(isDisabled);
 
 			generateCode(_try.qTry, _indent + this.getIndent());
 
-			_try.disabled = isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY;
+			_try.setDisabled(isDisabled || trySupport == TryCatchSupportLevel.TC_NO_TRY);
 			this.appendBlockTail(_try, null, _indent);
 			String caught = this.caughtException;
 			this.appendCatchHeading(_try, _indent);
@@ -2220,18 +2221,19 @@ public class CGenerator extends Generator {
 			this.caughtException = caught;
 			this.appendBlockTail(_try, null, _indent);
 			if (_try.qFinally.getSize() > 0) {
-				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+				_try.setDisabled(isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY);
 				this.appendBlockHeading(_try, "finally", _indent);
-				_try.disabled = isDisabled;
+				_try.setDisabled(isDisabled);
 
 				generateCode(_try.qFinally, _indent + this.getIndent());
 
-				_try.disabled = isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
+				_try.setDisabled(isDisabled || trySupport != TryCatchSupportLevel.TC_TRY_CATCH_FINALLY);
 				this.appendBlockTail(_try, null, _indent);
 			}
 		}
 		finally {
-			_try.disabled = isDisabled;
+			// Restore the original disabled status
+			_try.setDisabled(isDisabled);
 		}
 	}
 

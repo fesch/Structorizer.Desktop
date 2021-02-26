@@ -1422,6 +1422,7 @@ ArrangerIndex.popupIndexDrawGroup.tooltip=Visibility of the selected group and i
 ArrangerIndex.popupIndexRenameGroup.text=Rename group ...
 ArrangerIndex.popupIndexExport.text=Export diagram/group
 ArrangerIndex.popupIndexRenameGroup.tooltip=Allows to rename the selected group, optionally including the associated file
+ArrangerIndex.popupIndexShowQualifiers.text=Show qualifiers
 ArrangerIndex.popupIndexHide.text=Hide Arranger index
 ArrangerIndex.lblSelectTargetGroup.text=Select the target group:
 ArrangerIndex.lblGroups.text=Containing groups

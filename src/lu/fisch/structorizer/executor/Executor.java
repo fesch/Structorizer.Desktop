@@ -4987,7 +4987,7 @@ public class Executor implements Runnable
 	{
 		String trouble = new String();
 		// START KGU#277 2016-10-13: Enh. #270: skip the element if disabled
-		if (element.disabled) {
+		if (element.isDisabled(true)) {
 			return trouble;
 		}
 		// END KGU#277 2016-10-13

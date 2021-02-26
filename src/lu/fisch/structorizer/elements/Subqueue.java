@@ -561,7 +561,7 @@ public class Subqueue extends Element implements IElementSequence {
 		{
 			// START KGU#345 2017-02-07: Bugfix #342 - disabled elements must be ignored for test coverage
 			//covered = children.get(i).isTestCovered(_deeply);
-			if (!children.get(i).disabled) {
+			if (!children.get(i).isDisabled(true)) {
 				covered = children.get(i).isTestCovered(_deeply);
 			}
 			// END KGU#345 2017-02-07
@@ -663,7 +663,7 @@ public class Subqueue extends Element implements IElementSequence {
 	public void setDisabled(boolean disable) {
 		for (int i = 0; i < this.getSize(); i++)
 		{
-			this.getElement(i).disabled = disable;
+			this.getElement(i).setDisabled(disable);
 		}
 	}
 
@@ -686,7 +686,7 @@ public class Subqueue extends Element implements IElementSequence {
 	{
 		for (int i = 0; i < this.getSize(); i++) {
 			Element ele = this.getElement(i);
-			if (!ele.isDisabled() && (
+			if (!ele.isDisabled(false) && (
 					!(ele instanceof Instruction)
 					|| (ele instanceof Jump)
 					|| !ele.getText().getLongString().trim().isEmpty())
@@ -733,7 +733,7 @@ public class Subqueue extends Element implements IElementSequence {
 		boolean reachable = _index >= 0 && _index < this.children.size();
 		while (_index >= 0 && reachable) {
 			Element ele = children.get(_index--);
-			reachable = !_deepCheck && (ele.disabled || !(ele instanceof Jump)) || ele.mayPassControl();
+			reachable = !_deepCheck && (ele.isDisabled(true) || !(ele instanceof Jump)) || ele.mayPassControl();
 		}
 		return reachable;
 	}
@@ -777,7 +777,7 @@ public class Subqueue extends Element implements IElementSequence {
 	{
 		for (int i = 0; i < this.children.size(); i++) {
 			// Inherited disabling is of no interest here
-			if (!this.children.get(i).disabled) {
+			if (!this.children.get(i).isDisabled(true)) {
 				return true;
 			}
 		}

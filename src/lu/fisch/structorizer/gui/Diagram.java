@@ -3949,7 +3949,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// END KGU#43 2015-10-17
 					// START KGU#277 2016-10-13: Enh. #270
-					ele.disabled = data.disabled;
+					ele.setDisabled(data.disabled);
 					// END KGU#277 2016-10-13
 					// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
@@ -3988,7 +3988,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				data.breakTriggerCount = element.getBreakTriggerCount();
 				// END KGU#213 2016-08-01				
 				// START KGU#277 2016-10-13: Enh. #270
-				data.disabled = element.disabled;
+				data.disabled = element.isDisabled(true);
 				// END KGU#277 2016-10-13
 			
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
@@ -4076,7 +4076,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//element.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
 					// START KGU#277 2016-10-13: Enh. #270
-					element.disabled = data.disabled;
+					element.setDisabled(data.disabled);
 					// END KGU#277 2016-10-13
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
@@ -4410,12 +4410,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			IElementSequence elements = (IElementSequence)getSelected();
 			for (int i = 0; allDisabled && i < elements.getSize(); i++)
 			{
-				allDisabled = elements.getElement(i).disabled;
+				allDisabled = elements.getElement(i).isDisabled(true);
 			}
 			elements.setDisabled(!allDisabled);
 		}
 		else {
-			getSelected().disabled = !getSelected().disabled;
+			getSelected().setDisabled(!getSelected().isDisabled(true));
 		}
 		
 		redraw();
@@ -4467,7 +4467,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU 2015-10-17
 				// START KGU#277 2016-10-13: Enh. #270
-				_ele.disabled = data.disabled;
+				_ele.setDisabled(data.disabled);
 				// END KGU#277 2016-10-13
 				// START KGU#213 2016-08-01: Enh. #215
 				//_ele.setBreakTriggerCount(data.breakTriggerCount);
@@ -5037,8 +5037,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				referredRoot.setText(inclName);
 				referredRoot.setInclude();
 			}
-			myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 		}
+		myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 		if (referredRoot != null) {
 			referredRoot.setChanged(false);
 			// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
@@ -10628,7 +10628,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		incl.setComment(comment);
 		incl.children.addElement(new Instruction("restart()"));
-		incl.disabled = true;
+		incl.setDisabled(true);
 		return incl;
 	}
 	
@@ -10683,7 +10683,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//	mask <<= 1;
 		//}
 		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
-			if (entry.getValue() == null || !entry.getValue().isDisabled()) {
+			if (entry.getValue() == null || !entry.getValue().isDisabled(false)) {
 				controllers.add(entry.getKey());
 			}
 		}
@@ -11418,8 +11418,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root incl = entry.getValue();
 				// Turtleizer (incl == null) cannot be disabled
 				if (incl != null) {
-					boolean statusChanged = incl.disabled == selected;
-					incl.disabled = !selected;
+					boolean statusChanged = incl.isDisabled(true) == selected;
+					incl.setDisabled(!selected);
 					if (selected && !Arranger.getInstance().getAllRoots().contains(incl)) {
 						Arranger.getInstance().addToPool(incl, this.getFrame(),
 								Arranger.DIAGRAM_CONTROLLER_GROUP_NAME);
@@ -11454,7 +11454,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
 			if (entry.getKey().getClass().getName().equals(className)) {
-				return entry.getValue() == null || !entry.getValue().disabled;
+				return entry.getValue() == null || !entry.getValue().isDisabled(true);
 			}
 		}
 		return false;

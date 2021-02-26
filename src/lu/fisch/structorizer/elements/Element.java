@@ -730,7 +730,7 @@ public abstract class Element {
 	 * If true then this element is to be skipped on execution and outcommented on code export!
 	 * Also see isDisabled() for recursively inherited disabled state
 	 */
-	public boolean disabled = false;
+	protected boolean disabled = false;
 	// END KGU#277 2016-10-13
 
 	// END KGU156 2016-03-10
@@ -1874,6 +1874,14 @@ public abstract class Element {
 		return getColor();
 	}
 	// END KGU#41 2015-10-13
+	
+	// START KGU#408 2021-02-26: Enh. #410 Allows Elements to modify this depending on certain status
+	/** Returns the (default) text colour for the drawing of Element text */
+	protected Color getTextColor()
+	{
+		return Color.BLACK;
+	}
+	// END KGU#408 2021-02-26
 	
 	// START KGU#156 2016-03-12: Enh. #124 (Runtime data visualisation)
 	protected Color getScaleColorForRTDPM()
@@ -3239,13 +3247,13 @@ public abstract class Element {
 	 * Extracts the parameter or component declarations from the parameter list (or
 	 * record type definition, respectively) given by {@code declText} and adds their names
 	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.<br/>
-	 * CAUTION: Some elements of {@code declTypes} may be null on return!
+	 * CAUTION: Some elements of {@code declTypes} may be {@code null} on return!
 	 * @param declText - the text of the declaration inside the parentheses or braces
-	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or null
-	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or null
-	 * @param declDefaults - the literals of the declared parameter/component defaults (in order of occurrence), or null
+	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or {@code null}
+	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or {@code null}
+	 * @param declDefaults - the literals of the declared parameter/component defaults (in order of occurrence), or {@code null}
 	 */
-	protected void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes, StringList declDefaults) {
+	protected static void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes, StringList declDefaults) {
 		// START KGU#371 2019-03-07: Enh. #385 - We have to face e.g. string literals in the argument list now!
 		//StringList declGroups = StringList.explode(declText,";");
 		StringList declGroups = splitExpressionList(declText, ";");
@@ -3684,9 +3692,8 @@ public abstract class Element {
 	private static int writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _actuallyDraw, boolean _inContention)
 	// END KGU#63 2015-11-03
 	{
-		// init total
+		// init total (the result, telling the width in pixels)
 		int total = 0;
-
 		Root root = getRoot(_this);
 		
 		if (root != null)
@@ -4205,7 +4212,7 @@ public abstract class Element {
 	// START KGU#701 2019-03-29: Issue #718 - approach to accelerate syntax highlighting
 	private HighlightUnit makeHighlightUnit(String string)
 	{
-		return new HighlightUnit(string, Color.BLACK, false, false);
+		return new HighlightUnit(string, getTextColor(), false, false);
 	}
 	private HighlightUnit makeHighlightUnit(String string, Color color, boolean bold, boolean underlined) {
 		return new HighlightUnit(string, color, bold, underlined);
@@ -4777,13 +4784,22 @@ public abstract class Element {
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
 	/**
 	 * Checks whether this element or one of its ancestors is disabled 
+	 * @param individually - if {@code true} then only the individual setting will be reported
 	 * @return true if directly or indirectly disabled
 	 */
-	public boolean isDisabled()
+	public boolean isDisabled(boolean individually)
 	{
-		return this.disabled || (this.parent != null && this.parent.isDisabled());
+		return this.disabled || (this.parent != null && this.parent.isDisabled(individually));
 	}
 	// END KGU#277 2016-10-13
+	
+	// START KGU#408 2021-02-26: Enh. #410 - We need a composed disabled check
+	/** Sets the {@link #disabled} flag to {@code b} */
+	public void setDisabled(boolean b)
+	{
+		this.disabled = b;
+	}
+	// END KG#408 2021-02-26
 	
 	// START KGU 2017-10-21 New deep reachability check
 	/** @return whether an entered control flow may leave this element sequentially. */

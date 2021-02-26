@@ -459,7 +459,7 @@ public interface IElementSequence {
 	
 	/**
 	 * Sets or removes the disabled flag from all elements
-	 * @param disable - whetjer to set (true) or to remove (false) the disabled flag
+	 * @param disable - whether to set (true) or to remove (false) the disabled flag
 	 */
 	public abstract void setDisabled(boolean disable);
 

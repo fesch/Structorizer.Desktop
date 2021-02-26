@@ -1037,7 +1037,7 @@ public class Case extends Element implements IFork
 	@Override
 	protected void addFullText(StringList _lines, boolean _instructionsOnly)
 	{
-		if (!this.isDisabled()) {
+		if (!this.isDisabled(false)) {
 			if (!_instructionsOnly) {
 				// START KGU#453 2017-11-01
 				//_lines.add(this.getText());

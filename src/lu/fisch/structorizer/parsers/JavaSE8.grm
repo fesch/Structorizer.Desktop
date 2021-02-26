@@ -1,4 +1,4 @@
-﻿! -----------------------------------------------------------------------
+! -----------------------------------------------------------------------
 ! Java SE 8 Edition grammar
 ! -----------------------------------------------------------------------
 !
@@ -50,12 +50,14 @@
 !                                       with GOLDBuilder 5.2.0
 ! V 0.2     2021-02-17  Kay Gürtzig     Missing import declarations added
 ! V 0.3     2021-02-22  Kay Gürtzig     <MethodDeclaration> stuff modified
+!                                       FloatingPointLiteral spec corrected,
+!                                       Try with resources added
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
 "Version" = '0.3, Feb. 2021'
 "Author"  = 'Kay Gürtzig'
-"About"   = 'Based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification '
+"About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
 {String Char} = {all printable} - ["]
 {Quote} = ['']
@@ -137,7 +139,7 @@ Comment Line = '//'
          
 <NormalAnnotation>
         ::= '@' <TypeName> '(' <ElementValuePairs> ')'
-        ::= '@' <TypeName> '(' ')'
+         | '@' <TypeName> '(' ')'
          
 <ElementValuePairs>
         ::= <ElementValuePair>
@@ -811,7 +813,7 @@ Comment Line = '//'
 
 <Finally> 
         ::= 'finally' <Block>
-         
+
 <ResourceSpecification>
         ::= '(' <Resources> ')'
          |  '(' <Resources> ';' ')'
@@ -1013,8 +1015,24 @@ Comment Line = '//'
          |  '^='
          |  '|='
 
-<Expression> ::= <AssignmentExpression>
+<Expression>
+        ::= <AssignmentExpression>
+!         |  <LambdaExpression>
 
 <ConstantExpression> ::= <Expression>
 
-
+!<LambdaExpression>
+!        ::= <Lambdaparameters> '->' <LambdaBody>
+!         
+!<LambdaParameters>
+!        ::= Identifier
+!         |  '(' ')'
+!         |  '(' <FormalParameterList> ')'
+!         |  '(' <InferredFormalParameterList> ')'
+!         
+!<InferredFormalParameterList>
+!        ::= <Name>
+!         
+!<LambdaBody>
+!        ::= <Expression>
+!         |  <Block>

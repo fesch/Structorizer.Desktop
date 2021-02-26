@@ -811,7 +811,7 @@ public class C99Parser extends CPreParser
 				String content = _reduction.get(0).asString() + ":";
 				Instruction el = new Instruction(content);
 				el.setColor(Color.RED);	// will only be seen if the user enables the element
-				el.disabled = true;
+				el.setDisabled(true);
 				this.equipWithSourceComment(el, _reduction);
 				el.getComment().add("FIXME: Goto instructions are not supported in structured algorithms!");
 				_parentNode.addElement(el);

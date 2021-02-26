@@ -175,12 +175,20 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	// START KGU#669 2019-03-01: Enh. #691
 	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
 	// END KGU#669 2019-03-01
+	// START KGU#408 2021-02-26: Enh. #410 It ought to be possible to hide the qualifiers
+	protected final JCheckBoxMenuItem popupIndexShowQualifiers = new JCheckBoxMenuItem("Show qualifiers");
+	// END KGU#408 2021-02-26
 	// START KGU#705 2019-10-03: Added on occasion of Enh. #738 (code preview) for regularity
 	protected final JMenuItem popupIndexHide = new JMenuItem("Hide Arranger index");
 	// END KGU#705 2019-10-03
 	// START KGU#646 2019-02-10: Issue #674 - The L&F adaptation from Windows to others was defective if it hadn't been open before
 	private boolean wasPopupOpen = false;
 	// END KGU#646 2019-02-10
+	
+	// START KGU#408 2021-02-26: Enh. #410 The display of the namespace prefix ought to be configurable
+	// The map is necessary to allow instance-dependent settings
+	private static final HashMap<JTree, Boolean> showQualifiers = new HashMap<JTree, Boolean>();
+	// END KGU#408 2021-02-26
 
 	protected final JLabel lblSelectTargetGroup = new JLabel("Select the target group:");
 	protected final JComboBox<Group> cmbTargetGroup = new JComboBox<Group>();
@@ -277,10 +285,11 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			Object content = ((DefaultMutableTreeNode)value).getUserObject();
 			if (content instanceof Root) {
 				Root root = (Root)content;
-				// START KGU#408 2021-02-22: Enh. #410 Show the qualified names, e.g. after Java import
+				// START KGU#408 2021-02-26: Enh. #410 Show the qualified names, e.g. after Java import
 				//String s = root.getSignatureString(true);
-				String s = root.getSignatureString(true, true);
-				// END KGU#408 2021-02-22
+				boolean withQualifiers = !showQualifiers.containsKey(tree) || showQualifiers.get(tree);
+				String s = root.getSignatureString(true, withQualifiers);
+				// END KGU#408 2021-02-26
 				boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
 				setText(s);
 				// Enh. #319, #389: show coverage status of (imported) main diagrams
@@ -452,6 +461,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		super();
 		diagram = _diagram;
 		arrangerIndexTop = ((DefaultMutableTreeNode)this.getModel().getRoot());
+		// START KGU#408 2021-02-26: Enh. #410
+		showQualifiers.put(this, true);
+		// END KGU#408 2021-02-26
 		create();
 	}
 
@@ -706,6 +718,19 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// END KGU#534 2018-06-27
 		
 		popupIndex.addSeparator();
+		
+		// START KGU#408 2021-02-26: Enh. #410
+		popupIndex.add(popupIndexShowQualifiers);
+		popupIndexShowQualifiers.setSelected(true);
+		popupIndexShowQualifiers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showQualifiers.put(ArrangerIndex.this, popupIndexShowQualifiers.isSelected());
+				repaint();
+			}
+		});
+		// END KGU#408 2021-02-21
+		
 		popupIndex.add(popupIndexHide);
 		popupIndexHide.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		popupIndexHide.addActionListener(new ActionListener() {
@@ -756,8 +781,8 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 	
 	/**
-	 * Rebuilds the Arranger index from scratch according to the group information give
-	 * with {@code _groups}.
+	 * Rebuilds the Arranger index from scratch according to the group information
+	 * given with {@code _groups}.
 	 * @param _groups - sorted list of all currently held {@link Group} objects
 	 */
 	public void update(Vector<Group> _groups)

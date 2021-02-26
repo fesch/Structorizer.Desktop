@@ -71,6 +71,7 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -83,6 +84,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.utils.StringList;
 
 /**
@@ -1012,16 +1014,19 @@ public class JavaParser extends CodeParser
 		try
 		{
 			File file = new File(_textToParse);
-			DataInputStream in = new DataInputStream(new FileInputStream(file));
-			// START KGU#193 2016-05-04
-			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
-			// END KGU#193 2016-05-04
+			
 			StringBuilder srcCode = new StringBuilder();
-			try {
+			try (DataInputStream in = new DataInputStream(new FileInputStream(file));
+					// START KGU#193 2016-05-04
+					BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
+					// END KGU#193 2016-05-04
+					) {
 				String strLine;
 //				boolean withinComment = false;	// Registers a block comment context
 //				boolean inDeclaration = false;	// e.g. package or import declaration
 //				boolean mayBeClassDeclaration = false;
+				// Filter BOM sequence?
+				boolean first = "UTF-8".equals(_encoding);
 				//Read File Line By Line
 				while ((strLine = br.readLine()) != null)   
 				{
@@ -1076,7 +1081,14 @@ public class JavaParser extends CodeParser
 //							}
 //						}
 //					}
-					
+					if (first && strLine.length() >= 1) {
+						/* Cut off the BOM sequence (0xEF, 0xBB, 0xBF) if there is any
+						 * (As code point, it is represented as 0xfeff, interestingly)
+						 */
+						if (strLine.codePointAt(0) == 0xfeff) {
+							strLine = strLine.substring(1);
+						}
+					}
 					/* We have to replace "class" as a component identifier
 					 * as in "Logger.getLogger(XYZClass.class.getName())"
 					 */
@@ -1094,11 +1106,8 @@ public class JavaParser extends CodeParser
 						}
 					}
 					srcCode.append(strLine + "\n");
+					first = false;
 				}
-				//Close the input stream
-			}
-			finally {
-				in.close();
 			}
 
 			//System.out.println(srcCode);
@@ -1126,10 +1135,8 @@ public class JavaParser extends CodeParser
 	private String packageStr = null;
 	/** Caches the import directives */
 	private StringList imports = null;
-	/** Represents the field definitions of the hierarchical class context*/
+	/** Represents the class definitions in the hierarchical class context */
 	private Stack<Root> includables = null;
-	/** Represents the hierarchical class context*/
-	private Stack<Root> classes = null;
 	
 	private boolean optionTranslate = false;
 	
@@ -1159,8 +1166,11 @@ public class JavaParser extends CodeParser
 		packageStr = null;
 		imports = new StringList();
 		includables = new Stack<Root>();
-		classes = new Stack<Root>();
+		root.setInclude();
 		addRoot(root);
+		// Add dummy loops in order to gather fields and method signatures (to be dissolved in the end)
+		root.children.addElement(new Forever());
+		root.children.addElement(new Forever());
 		
 		optionTranslate = (Boolean)this.getPluginOption("convert_syntax", false);
 		
@@ -1274,25 +1284,20 @@ public class JavaParser extends CodeParser
 				String category = _reduction.get(ixName-1).asString(); // "class" or "interface"
 				String qualifier = packageStr;
 				Root classRoot = root;
-				if (!this.classes.isEmpty()) {
-					qualifier = this.classes.peek().getQualifiedName();
+				if (!this.includables.isEmpty()) {
+					qualifier = this.includables.peek().getQualifiedName();
 					classRoot = new Root();
+					classRoot.setInclude();
+					classRoot.addToIncludeList(includables.peek());
+					// Add temporary dummy loops in order to gather fields and method signatures
+					classRoot.children.addElement(new Forever());
+					classRoot.children.addElement(new Forever());
 					this.addRoot(classRoot);
 				}
-				classes.push(classRoot);
+				includables.push(classRoot);
 				classRoot.setNamespace(qualifier);
 				
-				Root incl = new Root();
-				incl.setInclude();
-				incl.setNamespace(qualifier);
-				this.addRoot(incl);
-				if (!includables.isEmpty()) {
-					incl.addToIncludeList(includables.peek());
-				}
-				includables.push(incl);
 				classRoot.setText(name);
-				incl.setText(name + "_Fields");
-				classRoot.addToIncludeList(incl);
 				
 				this.equipWithSourceComment(classRoot, _reduction);
 				// Get type parameters (if any)
@@ -1308,23 +1313,23 @@ public class JavaParser extends CodeParser
 						inh = this.getContent_R(_reduction.get(ixBody++).asReduction(), inh);
 					}
 				}
-				if (this.classes.size() == 1 && packageStr != null) {
+				if (this.includables.size() == 1 && packageStr != null) {
 					classRoot.comment.add("==== package: " + packageStr);
 					if (!imports.isEmpty()) {
 						imports.insert("==== imports:", 0);
-						incl.comment.add(imports);
+						classRoot.comment.add(imports);
 					}
 				}
-				if (this.classes.size() > 1) {
-					classRoot.comment.add(category.toUpperCase() + " in class " + qualifier);
-				}
+				classRoot.comment.add(category.toUpperCase()
+						+ (this.includables.size() > 1 ? " in class " + qualifier : ""));
 				classRoot.getComment().add((modifiers + " " + category).trim());
 				if (!typePars.trim().isEmpty()) {
 					classRoot.getComment().add("==== type parameters: " + typePars);
 				}
 				// Now descend into the body
-				this.buildNSD_R(_reduction.get(ixBody).asReduction(), _parentNode);
-				this.classes.pop();
+				this.buildNSD_R(_reduction.get(ixBody).asReduction(), classRoot.children);
+				// Dissolve the field and method containers
+				dissolveDummyContainers(classRoot);
 				this.includables.pop();
 			}
 			break;
@@ -1354,7 +1359,7 @@ public class JavaParser extends CodeParser
 				String type = this.translateType(_reduction.get(ixType));
 				StringList decls = processVarDeclarators(_reduction.get(ixType+1), type, allConstant);
 				Element ele = this.equipWithSourceComment(new Instruction(decls), _reduction);
-				ele.comment.add("FIELD in class " + classes.peek().getQualifiedName());
+				ele.comment.add("FIELD in class " + includables.peek().getQualifiedName());
 				ele.setColor(colorGlobal);
 				if (allConstant) {
 					ele.setColor(colorConst);
@@ -1362,13 +1367,13 @@ public class JavaParser extends CodeParser
 				if (modifiers != null) {
 					ele.comment.add(modifiers);
 				}
-				includables.peek().children.addElement(ele);
+				((Forever)_parentNode.getElement(0)).getBody().addElement(ele);
 			}
 			break;
 			
 			case RuleConstants.PROD_STATICINITIALIZER_STATIC:
 				// <StaticInitializer> ::= <Annotations> static <Block>
-				this.buildNSD_R(_reduction.get(2).asReduction(), includables.peek().children);
+				this.buildNSD_R(_reduction.get(2).asReduction(), _parentNode);
 				break;
 			
 			case RuleConstants.PROD_METHODDECLARATION:
@@ -1386,7 +1391,7 @@ public class JavaParser extends CodeParser
 				int ixHeader = 1;
 				Root subRoot = new Root();
 				this.equipWithSourceComment(subRoot, _reduction);
-				String qualifier = classes.peek().getQualifiedName();
+				String qualifier = includables.peek().getQualifiedName();
 				subRoot.setNamespace(qualifier);
 				subRoot.comment.add((ruleId == RuleConstants.PROD_METHODDECLARATION ? "METHOD" : "CONSTRUCTOR")
 						+ " for class " + qualifier);
@@ -1401,28 +1406,22 @@ public class JavaParser extends CodeParser
 					// Add the throws clause to the comment
 					subRoot.getComment().add("==== " + this.getContent_R(_reduction.get(ixHeader + 1)));
 				}
-				Root targetRoot = subRoot;
 				// Extract the method header
-				boolean isMain = this.applyMethodHeader(
-						_reduction.get(ixHeader).asReduction(), subRoot);
-				if (isMain) {
+				this.applyMethodHeader(_reduction.get(ixHeader).asReduction(), subRoot);
 					// Add the body elements to the class Root instead
-					targetRoot = classes.peek();
-					// Prepare a disabled instruction element showing the declaration
-					Instruction decl = new Instruction(subRoot.getText());
-					decl.setComment(subRoot.getComment());
-					decl.setColor(colorDecl);
-					decl.disabled = true;
-					// Append the declaration
-					targetRoot.children.addElement(decl);
-				}
-				else {
-					// In any other case just add the method as is to the pool
-					subRoot.addToIncludeList(includables.peek());
-					addRoot(subRoot);
-				}
+				Root classRoot = includables.peek();
+				// Prepare a disabled instruction element showing the declaration
+				Call decl = new Call(subRoot.getText());
+				decl.isMethodDeclaration = true;
+				decl.setComment(subRoot.getComment());
+				decl.setColor(colorDecl);
+				// Append the declaration
+				((Forever)classRoot.children.getElement(1)).getBody().addElement(decl);
+				// Add the method as is to the pool
+				subRoot.addToIncludeList(includables.peek());
+				addRoot(subRoot);
 				// Now build the method body
-				this.buildNSD_R(_reduction.get(2).asReduction(), targetRoot.children);
+				this.buildNSD_R(_reduction.get(2).asReduction(), subRoot.children);
 			}
 			break;
 	
@@ -1564,7 +1563,7 @@ public class JavaParser extends CodeParser
 				String type = this.translateType(_reduction.get(ixType));
 				String loopVar = this.getContent_R(_reduction.get(ixType + 1));
 				Instruction instr = new Instruction("var " + loopVar + ": " + type);
-				instr.disabled = true;
+				instr.setDisabled(true);
 				instr.setColor(colorMisc);
 				_parentNode.addElement(instr);
 				//String valList = this.translateContent(this.getContent_R(_reduction.get(ixType + 3)));
@@ -1776,7 +1775,7 @@ public class JavaParser extends CodeParser
 				String label = this.getContent_R(_reduction.get(0));
 				Instruction ele = new Instruction(label + ":");
 				ele.setColor(Color.RED);
-				ele.disabled = true;
+				ele.setDisabled(true);
 				_parentNode.addElement(ele);
 				labels.put(label, ele);
 				this.buildNSD_R(_reduction.get(2).asReduction(), _parentNode);
@@ -1836,7 +1835,7 @@ public class JavaParser extends CodeParser
 				Instruction ele = new Instruction(this.getContent_R(_reduction, ""));
 				this.equipWithSourceComment(ele, _reduction);
 				ele.setColor(Color.RED);
-				ele.disabled = true;
+				ele.setDisabled(true);
 				ele.comment.add("Continue statements are NOT SUPPORTED in Structorizer! Try to circumvent it.");
 				_parentNode.addElement(ele);
 			}
@@ -1996,6 +1995,22 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
+	 * @param classRoot
+	 */
+	private void dissolveDummyContainers(Root classRoot) {
+		for (int i = 1; i >= 0; i--) {
+			if (classRoot.children.getSize() > i
+					&& classRoot.children.getElement(i) instanceof Forever) {
+				Subqueue body = ((Forever)classRoot.children.getElement(i)).getBody();
+				for (int j = body.getSize() - 1; j >= 0; j--) {
+					classRoot.children.insertElementAt(body.getElement(j), i+1);
+				}
+				classRoot.children.removeElement(i);
+			}
+		}
+	}
+
+	/**
 	 * Derives an enumerator definition, either as a type definition or as a class
 	 * from the given {@link Reduction} {@code _reduction}
 	 * @param _reduction - The {@link Reduction} meant to represent an {@code  <EnumDeclaration>}
@@ -2022,7 +2037,7 @@ public class JavaParser extends CodeParser
 		HashMap<String, Reduction> classBodies = new HashMap<String, Reduction>();
 		String thisListComment = null;	// comment for the current item from previous list rule
 		do {
-			System.out.println(redConstants.getParent().toString());
+			//System.out.println(redConstants.getParent().toString());
 			Reduction redConst = redConstants;
 			String nextListComment = this.retrieveComment(redConstants);
 			// Prepare the next loop pass
@@ -2068,36 +2083,32 @@ public class JavaParser extends CodeParser
 		if (isClass || redDecls != null && redDecls.size() > 0) {
 			// We will have to define a member class
 			Root enumRoot = root;
-			Root enumIncl = new Root();
-			enumIncl.setInclude();
-			enumIncl.setText(name + "_Enum");
 			String qualifier = packageStr;
-			if (!classes.isEmpty()) {
+			if (!includables.isEmpty()) {
 				enumRoot = new Root();
-				qualifier = classes.peek().getQualifiedName();
-				enumIncl.addToIncludeList(includables.peek());
+				enumRoot.setInclude();
+				// Add temporary dummy loops in order to gather fields and method signatures
+				enumRoot.children.addElement(new Forever());
+				enumRoot.children.addElement(new Forever());
+				qualifier = includables.peek().getQualifiedName();
+				enumRoot.addToIncludeList(includables.peek());
+				addRoot(enumRoot);
 			}
 			enumRoot.setText(name);
 			enumRoot.setNamespace(qualifier);
-			enumIncl.setNamespace(qualifier);
-			enumRoot.addToIncludeList(enumIncl);
 			this.equipWithSourceComment(enumRoot, _reduction);
-			this.equipWithSourceComment(enumIncl, _reduction);
 			enumRoot.comment.add(modifiers);
 			if (_ruleId == RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER) {
-				enumIncl.comment.add("==== " + this.getContent_R(_reduction.get(3)));
+				enumRoot.comment.add("==== " + this.getContent_R(_reduction.get(3)));
 			}
-			addRoot(enumRoot);
-			addRoot(enumIncl);
 			if (redDecls != null && redDecls.size() > 0) {
-				classes.push(enumRoot);
-				includables.push(enumIncl);
+				includables.push(enumRoot);
 				this.buildNSD_R(redDecls.get(1).asReduction(), enumRoot.children);
-				classes.pop();
 				includables.pop();
 			}
 			int itemOffset = 0;
 			String prevValue = null;
+			Subqueue container = ((Forever)enumRoot.children.getElement(0)).getBody();
 			for (int i = itemNames.count()-1; i >= 0; i--) {
 				String itemName = itemNames.get(i);
 				StringList exprs = itemValues.pop();
@@ -2113,7 +2124,7 @@ public class JavaParser extends CodeParser
 				}
 				else {
 					// Put all preparatory assignments as initialisation code
-					enumIncl.children.addElement(
+					container.addElement(
 							new Instruction(exprs.subSequence(0, exprs.count()-1)));
 					value = prevValue = exprs.get(exprs.count()-1);
 					itemOffset = 0;
@@ -2121,26 +2132,21 @@ public class JavaParser extends CodeParser
 				Instruction itemDecl = new Instruction("const " + itemName + " <- " + value);
 				itemDecl.setComment(itemComments.get(i));
 				itemDecl.setColor(colorConst);
-				enumIncl.children.addElement(itemDecl);
+				container.addElement(itemDecl);
 				itemOffset++;
 				if (classBodies.containsKey(itemName)) {
 					// Produce a subclass for the specific item
 					Root itemBody = new Root();
 					itemBody.setText(itemName);
-					Root itemIncl = new Root();
-					itemIncl.setText(itemName + "_Fields");
 					itemBody.setNamespace(qualifier + "." + name);
-					itemIncl.setNamespace(qualifier + "." + name);
+					itemBody.setInclude();
 					itemBody.setComment("Specific CLASS for enum item "
 							+ itemBody.getNamespace() + "." + itemName);
-					itemIncl.addToIncludeList(includables.peek());
-					itemBody.addToIncludeList(itemIncl);
+					itemBody.addToIncludeList(includables.peek());
 					addRoot(itemBody);
-					addRoot(itemIncl);
-					classes.push(itemBody);
-					includables.push(itemIncl);
+					includables.push(itemBody);
 					this.buildNSD_R(classBodies.get(itemName), itemBody.children);
-					classes.pop();
+					this.dissolveDummyContainers(itemBody);
 					includables.pop();
 				}
 			}
@@ -2158,16 +2164,17 @@ public class JavaParser extends CodeParser
 			// Users may break the lines at their preference afterwards...
 			Instruction ele = new Instruction("type " + name + " = enum{"
 					+ itemNames.reverse().concatenate(", ") + "}");
+			Root targetRoot = root;
 			if (!includables.isEmpty()) {
+				targetRoot = includables.peek();
 				this.equipWithSourceComment(ele, _reduction);
-				includables.peek().children.addElement(ele);
 			}
 			else {
 				// We are on the outermost level
 				root.setText(name);
 				this.equipWithSourceComment(root, _reduction);
-				root.children.addElement(ele);
 			}
+			((Forever)targetRoot.children.getElement(0)).getBody().addElement(ele);
 			ele.comment.add(itemComments.reverse());
 			ele.comment.add(modifiers);
 		}
@@ -2274,7 +2281,7 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
 				StringList result = new StringList();
 				for (int i = 0; i < exprRed.size() - 3; i++) {
-					result.add(this.getContent_R(exprRed.get(i)));
+					result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class"));
 				}
 				Token argListToken = exprRed.get(exprRed.size()-2);
 				processArguments(argListToken, result, exprs);
@@ -2290,7 +2297,7 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
 				
 				// Just leave it as is
-				exprs.add(getContent_R(exprRed, ""));
+				exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class"));
 			}
 			break;
 			
@@ -2350,10 +2357,13 @@ public class JavaParser extends CodeParser
 				// <UnaryExpressionNotPlusMinus> ::= '~' <UnaryExpression>
 				// <UnaryExpressionNotPlusMinus> ::= '!' <UnaryExpression>
 			{
-				String opr = exprRed.get(0).asString();
+				String opr = translateOperator(exprRed.get(0).asString());
 				exprs = decomposeExpression(exprRed.get(1), false, false);
 				int ixLast = exprs.count()-1;
-				exprs.set(ixLast, translateOperator(opr) + exprs.get(ixLast));
+				if (Function.testIdentifier(opr, true, null)) {
+					opr += " ";
+				}
+				exprs.set(ixLast, opr + exprs.get(ixLast));
 			}
 			break;
 			

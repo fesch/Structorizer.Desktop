@@ -803,7 +803,7 @@ public class COBOLGenerator extends Generator {
 	protected void generateCode(Instruction _inst, String _indent)
 	{
 		if (!appendAsComment(_inst, _indent)) {
-			boolean isDisabled = _inst.isDisabled();
+			boolean isDisabled = _inst.isDisabled(false);
 			StringList text = _inst.getUnbrokenText();
 			appendComment(_inst, _indent);
 			for (int i = 0; i < text.count(); i++) {
@@ -922,7 +922,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(Alternative _alt, String _indent)
 	{
-		boolean isDisabled = _alt.isDisabled();
+		boolean isDisabled = _alt.isDisabled(false);
 
 		appendComment(_alt, _indent);
 
@@ -947,7 +947,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
-		boolean isDisabled = _case.isDisabled();
+		boolean isDisabled = _case.isDisabled(false);
 		String indent1 = _indent + this.getIndent();
 		String indent2 = indent1 + this.getIndent();
 
@@ -978,7 +978,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 		String bodyName = "";
 		if (this.optionFixedSourceFormat()) {
 			bodyName = transformName("body_" + Integer.toHexString(_for.hashCode()));
@@ -1020,7 +1020,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(While _while, String _indent)
 	{
-		boolean isDisabled = _while.isDisabled();
+		boolean isDisabled = _while.isDisabled(false);
 		String bodyName = "";
 		if (this.optionFixedSourceFormat()) {
 			bodyName = transformName("body_" + Integer.toHexString(_while.hashCode()));
@@ -1036,7 +1036,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		boolean isDisabled = _repeat.isDisabled();
+		boolean isDisabled = _repeat.isDisabled(false);
 		String bodyName = "";
 		if (this.optionFixedSourceFormat()) {
 			bodyName = transformName("body_" + Integer.toHexString(_repeat.hashCode()));
@@ -1052,7 +1052,7 @@ public class COBOLGenerator extends Generator {
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		boolean isDisabled = _forever.isDisabled();
+		boolean isDisabled = _forever.isDisabled(false);
 		String bodyName = "";
 		if (this.optionFixedSourceFormat()) {
 			bodyName = transformName("body_" + Integer.toHexString(_forever.hashCode()));
@@ -1107,7 +1107,7 @@ public class COBOLGenerator extends Generator {
 		 * false. The challenge is to ensure their consistency no matter
 		 * whether we are handling the Root or a Call.
 		 */
-		boolean isDisabled = _call.isDisabled();
+		boolean isDisabled = _call.isDisabled(false);
 		StringList lines = _call.getUnbrokenText();
 		appendComment(_call, _indent);
 		Root owningRoot = Element.getRoot(_call);

@@ -5254,7 +5254,7 @@ public class COBOLParser extends CodeParser
 					_ele.setText(text + " " + resultVar);
 				};
 				_ele.setColor(Color.WHITE);
-				_ele.disabled = false;
+				_ele.setDisabled(false);
 			}
 			return true;
 		}
@@ -5547,7 +5547,7 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call sec = new Call(name);
-			sec.disabled = true;
+			sec.setDisabled(true);
 			_parentNode.addElement(this.equipWithSourceComment(sec, _reduction));
 			sec.getComment().insert("Definition of section " + name, 0);
 
@@ -5567,7 +5567,7 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call par = new Call(name);
-			par.disabled = true;
+			par.setDisabled(true);
 			_parentNode.addElement(this.equipWithSourceComment(par, _reduction));
 			par.getComment().insert("Definition of paragraph " + name, 0);
 
@@ -5614,7 +5614,7 @@ public class COBOLParser extends CodeParser
 				String content = this.getContent_R(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.disabled = true;
+				instr.setDisabled(true);
 				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 				instr.getComment().add("This statement cannot be converted into a sensible diagram element!");
 			}
@@ -5659,7 +5659,7 @@ public class COBOLParser extends CodeParser
 			if (!this.importAccept(_reduction, _parentNode)) {
 				Instruction dummy = new Instruction(this.getContent_R(_reduction, ""));
 				dummy.setColor(Color.RED);
-				dummy.disabled = true;
+				dummy.setDisabled(true);
 				_parentNode.addElement(this.equipWithSourceComment(dummy, _reduction));
 				dummy.getComment().add(StringList.explode("An import for this kind of ACCEPT instruction is not implemented:\n"
 						+ this.getOriginalText(_reduction, ""), "\n"));
@@ -5859,7 +5859,7 @@ public class COBOLParser extends CodeParser
 				String content = this.getOriginalText(_reduction, "");
 				Instruction instr = new Instruction(content);
 				instr.setColor(Color.RED);
-				instr.disabled = true;
+				instr.setDisabled(true);
 				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 				instr.getComment().add("TODO: there is still no automatic conversion for this statement");
 			}
@@ -6102,7 +6102,7 @@ public class COBOLParser extends CodeParser
 		if (!built) {
 			String content = this.getContent_R(_reduction, "");
 			Instruction instr = new Instruction(content);
-			instr.disabled = true;
+			instr.setDisabled(true);
 			instr.setColor(Color.RED);
 			_parentNode.addElement(equipWithSourceComment(instr, _reduction));
 			instr.getComment().add("Import of INSPECT statements hasn't been implemented yet!");
@@ -7369,7 +7369,7 @@ public class COBOLParser extends CodeParser
 			_parentNode.insertElementAt(instr, pos);
 			Element statusEl = addStatusAssignment(_parentNode, fileDescr);
 			if (unsupportedMode) {
-				statusEl.disabled = true;
+				statusEl.setDisabled(true);
 			}
 			done = true;
 		} while (bodyRed != null);
@@ -7422,7 +7422,7 @@ public class COBOLParser extends CodeParser
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
-			defective.disabled = true;
+			defective.setDisabled(true);
 			_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
 			defective.getComment().add("COBOL import still not implemented");
 		}
@@ -7463,7 +7463,7 @@ public class COBOLParser extends CodeParser
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
-			defective.disabled = true;
+			defective.setDisabled(true);
 			_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
 			defective.getComment().add("COBOL import still not implemented");
 		}
@@ -7506,7 +7506,7 @@ public class COBOLParser extends CodeParser
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
-			defective.disabled = true;
+			defective.setDisabled(true);
 			this.equipWithSourceComment(defective, _reduction);
 			defective.getComment().add("COBOL import still not implemented");
 			_parentNode.addElement(defective);
@@ -7568,7 +7568,7 @@ public class COBOLParser extends CodeParser
 		else {
 			Instruction defective = new Instruction(this.getContent_R(_reduction, "", " "));
 			defective.setColor(Color.RED);
-			defective.disabled = true;
+			defective.setDisabled(true);
 			this.equipWithSourceComment(defective, _reduction);
 			defective.getComment().add("COBOL import still not implemented");
 			_parentNode.addElement(defective);
@@ -7630,7 +7630,7 @@ public class COBOLParser extends CodeParser
 			}
 			if (color != null) {
 				jmp.setColor(color);
-				jmp.disabled = true;
+				jmp.setDisabled(true);
 			}
 			_parentNode.addElement(jmp);
 			// START KGU#464 201-12-04: Bugfix #475
@@ -7752,7 +7752,7 @@ public class COBOLParser extends CodeParser
 					else {
 						Instruction defective = new Instruction(this.getContent_R(_reduction, ""));
 						defective.setColor(Color.RED);
-						defective.disabled = true;
+						defective.setDisabled(true);
 						_parentNode.addElement(this.equipWithSourceComment(defective, _reduction));
 					}
 				}
@@ -9784,7 +9784,7 @@ public class COBOLParser extends CodeParser
 					Element doomedEl = null;
 					if (callIndex > 0 && (doomedEl = sq.getElement(callIndex-1)) instanceof Call) {
 						// Get rid of the dummy Call now
-						if (doomedEl.disabled && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
+						if (doomedEl.isDisabled(true) && doomedEl.getText().getLongString().equalsIgnoreCase(sop.name)) {
 							replacingCall.setComment(doomedEl.getComment());
 							//System.out.println("=== Cleanup Call: " + sq.getElement(callIndex-1));
 							sq.removeElement(callIndex-1);
@@ -9831,7 +9831,7 @@ public class COBOLParser extends CodeParser
 						}
 						// END KGU#849 2020-04-20
 						client.setColor(colorMisc);	// No longer needs to be red
-						client.disabled = false;
+						client.setDisabled(false);
 					}
 					// At the original place we most likely won't need the Call anymore (not reachable).
 					if (!sq.isReachable(sop.startsAt, false)) {
@@ -9847,7 +9847,7 @@ public class COBOLParser extends CodeParser
 					Jump dummyJump = (Jump)firstElement;
 					// Cleanup if the content is just a dummy jump and it is preceded by a real jump and a dummy call
 					// both being un-reachable; then we will drop the two dummy elements now
-					if (startIndex > 0 && dummyJump.disabled && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(startIndex-1)) instanceof Call) {
+					if (startIndex > 0 && dummyJump.isDisabled(true) && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(startIndex-1)) instanceof Call) {
 						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name)) {
 							if (!sq.isReachable(startIndex-1, false)) {
 								//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
@@ -9881,7 +9881,7 @@ public class COBOLParser extends CodeParser
 			else if (clients != null) {
 				for (Call client: clients) {
 					client.getComment().add("The called " + (sop.isSection ? "section" : "paragraph") + " seems to be empty, corrupt, or vanished.");
-					client.disabled = true;
+					client.setDisabled(true);
 				}
 			}
 			// END KGU#478 2017-12-10

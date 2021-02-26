@@ -642,7 +642,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
 	/**
 	 * Tries to load all nsd files contained in the array `files´ such that the diagrams
-	 * may be held by this.  
+	 * may be held by this.
 	 * @param files - array of File objects associated to NSD file names 
 	 * @return number of successfully loaded files.
 	 */
@@ -653,30 +653,35 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#624 2018-12-22
 		// We try to load as many files of the list as possible and collect the error messages
 		int nLoaded = 0;
+		int toBeLoaded = files.length;
+		// TODO delegate this to a worker thread with a large number (e.g. > 20) of files
 		String troubles = "";
-		for (int i = 0; i < files.length; i++)
-		{
-			//String filename = files[i].toString();
-			String errorMessage = loadFile(files[i]);
-			// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
-			//if (!troubles.isEmpty()) { troubles += "\n"; }
-			//troubles += "\"" + filename + "\": " + errorMessage;
-			//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
-			if (!errorMessage.isEmpty())
-			{
-				if (!troubles.isEmpty()) { troubles += "\n"; }
-				String trouble = "\"" + files[i].getAbsolutePath() + "\": " + errorMessage;
-				troubles += trouble;
-				logger.log(Level.INFO, "Arranger failed to load " + trouble);	
+		Cursor origCursor = getCursor();
+		try {
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			for (int i = 0; i < toBeLoaded; i++) {
+				//String filename = files[i].toString();
+				String errorMessage = loadFile(files[i]);
+				// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
+				//if (!troubles.isEmpty()) { troubles += "\n"; }
+				//troubles += "\"" + filename + "\": " + errorMessage;
+				//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+				if (!errorMessage.isEmpty()) {
+					if (!troubles.isEmpty()) { troubles += "\n"; }
+					String trouble = "\"" + files[i].getAbsolutePath() + "\": " + errorMessage;
+					troubles += trouble;
+					logger.log(Level.INFO, "Arranger failed to load " + trouble);	
+				}
+				else {
+					nLoaded++;
+				}
+				// END KGU#153 2016-03-03
 			}
-			else
-			{
-				nLoaded++;
-			}
-			// END KGU#153 2016-03-03
 		}
-		if (!troubles.isEmpty())
-		{
+		finally {
+			setCursor(origCursor);
+		}
+		if (!troubles.isEmpty()) {
 			JOptionPane.showMessageDialog(this, troubles, msgFileLoadError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
 		// START KGU#278 2016-10-11: Enh. #267

@@ -2017,7 +2017,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			Element elem = iter.next();
 			// If we detect a Jump element of type leave then we detect its target
 			// and label both
-			if (elem instanceof Jump && !elem.isDisabled())
+			if (elem instanceof Jump && !elem.isDisabled(false))
 			{
 				// START KGU#413 2017-06-09: Enh. #416: There might be line continuation
 				//String jumpText = elem.getText().getLongString().trim();
@@ -2568,7 +2568,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		 * disabled code lines with external references.
 		 * So will wait to arm the following three lines prepared until some customer complains. 
 		 */
-		if (_ele.isDisabled()) {
+		if (_ele.isDisabled(false)) {
 			return true;
 		}
 		// END KGU#832 2020-03-23

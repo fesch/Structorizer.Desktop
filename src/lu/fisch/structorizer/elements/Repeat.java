@@ -382,7 +382,7 @@ public class Repeat extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		if (!this.isDisabled()) {
+		if (!this.isDisabled(false)) {
 			// The own text contains just a condition (i.e. a logical expression), not an instruction
 			if (!_instructionsOnly)
 			{

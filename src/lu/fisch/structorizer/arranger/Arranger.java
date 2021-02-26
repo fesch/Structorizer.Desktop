@@ -27,7 +27,8 @@ package lu.fisch.structorizer.arranger;
  *      Description: This class offers an opportunity to graphically arrange several
  *      NSD diagrams within one and the same drawing area. While related to owned
  *      Structorizers, the diagrams will fully and synchronously reflect all status
- *      changes (selection, execution, ...)
+ *      changes (selection, execution, ...).
+ *      Arranger also serves as subroutine pool for execution of Call elements
  *
  ******************************************************************************************************
  *
@@ -35,8 +36,8 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2009-08-18  First Issue
- *      Kay Gürtzig     2015-10-18  Transient WindowsListener added enabling Surface to have dirty
+ *      Bob Fisch       2009-08-18  First Issue (idea: Stephan O. Merckens)
+ *      Kay Gürtzig     2015-10-18  Transient WindowsListener added, enabling Surface to have dirty
  *                                  diagrams saved before exit (KGU#49)
  *      Kay Gürtzig     2015-11-17  Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015-11-19  Converted into a singleton (enhancement request #9 = KGU#2)
@@ -141,11 +142,15 @@ import lu.fisch.utils.StringList;
 
 /**
  * This class graphically arranges several Nassi-Shneiderman diagrams within
- * one and the same drawing area.
+ * one and the same drawing area and serves as subroutine pool for execution
+ * of Call elements.
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener {
+public class Arranger 
+extends LangFrame
+implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, LangEventListener
+{
 
 	// START KGU#630 2019-01-13: Enh.#662/4
 	/** Preference specifying whether group-relative coordinaes are to be stored in an arrangement file (default: absolute coordinates) */
@@ -157,6 +162,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// END KGU 2018-03-21
 	
 	// START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
+	/** Indicates whether this object represents the main thread (process root) */
 	private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 	
@@ -201,11 +207,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	public static final LangTextHolder msgDoCreateGroup = new LangTextHolder("Do you still insist on creating yet another group?");
 	// END KGU#626 2019-01-02
 	
-	// START KGU#624 2018-12-26: Enh. #655 - (temporary) limit for the listing of selected diagrams in a message box
+	// START KGU#624 2018-12-26: Enh. #655 (temporary) workaround for message texts (a scrollable JList would be better)
+	/** Limit for the listing of selected diagrams in a message box */
 	protected static final int ROOT_LIST_LIMIT = 20;
 	// END KGU#624 2018-12-26
 	
 	// START KGU#911 2021-01-11: Enh. #910
+	/** Name of a special arrangement group for DiagramController includables */
 	public static final String DIAGRAM_CONTROLLER_GROUP_NAME = "Diagram Controllers";
 	// END KGU#911 2021-01-11
 
@@ -214,6 +222,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     //public Arranger() {
     //    initComponents();
     //}
+	/** Singleton instance */
     private static Arranger mySelf = null;
 
     /**
@@ -263,8 +272,8 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     // START KGU#155 2016-03-08: added for bugfix #97
     /**
-     * Allows to find out whether an Arranger instance is created without
-     * creating it.
+     * Allows to find out whether an Arranger instance has been created (without
+     * inadvertently creating it now).
      * @return true iff there is already an Arranger instance
      */
     public static boolean hasInstance() {
@@ -274,7 +283,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     
     // START KGU#679 2019-03-13: Enh. #698
     /**
-     * @return the name of this pool if it has got one, otherwise null
+     * @return the name of this pool (will be the simple class name here)
      */
     @Override
     public String getName()

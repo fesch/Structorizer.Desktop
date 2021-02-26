@@ -379,7 +379,7 @@ public class BasGenerator extends Generator
 				//		this.commentSymbolLeft() + " Exit point from above loop.");
 				addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
 						this.commentSymbolLeft() + " Exit point from above loop.",
-						_indent, _loop.isDisabled());
+						_indent, _loop.isDisabled(false));
 				// END KGU#277 2016-10-13
 			}
 		}
@@ -497,7 +497,7 @@ public class BasGenerator extends Generator
 
 		if(!appendAsComment(_inst, _indent)) {
 			// START KGU#277 2016-10-13: Enh. #270
-			boolean disabled = _inst.isDisabled();
+			boolean disabled = _inst.isDisabled(false);
 			// END KGU#277 2016-10-13
 			// START KGU 2014-11-16
 			appendComment(_inst, _indent);
@@ -743,7 +743,7 @@ public class BasGenerator extends Generator
 
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "IF " + condition + " THEN");
-    	boolean disabled = _alt.isDisabled();
+    	boolean disabled = _alt.isDisabled(false);
     	addCode(transformKeyword("IF ") + condition + " " + transformKeyword("THEN"), _indent, disabled);
     	// END KGU#277 2016-10-13
     	generateCode(_alt.qTrue, indentPlusOne);
@@ -778,7 +778,7 @@ public class BasGenerator extends Generator
 
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "SELECT CASE " + selection);
-        boolean disabled =_case.isDisabled(); 
+        boolean disabled =_case.isDisabled(false); 
         addCode(transformKeyword("SELECT CASE ") + discriminator, _indent, disabled);
         // END KGU#277 2016-10-13
 
@@ -835,7 +835,7 @@ public class BasGenerator extends Generator
     	//code.add(this.getLineNumber() + _indent + "FOR " +
     	//		parts[0] + " = " + transform(parts[1], false) +
     	//		" TO " + transform(parts[2], false) + increment);
-    	boolean disabled = _for.isDisabled();
+    	boolean disabled = _for.isDisabled(false);
     	addCode(transformKeyword("FOR ") + parts[0] + " = " + transform(parts[1], false) +
     			transformKeyword(" TO ") + transform(parts[2], false) + increment, _indent, disabled);
     	// END KGU#277 2016-10-13
@@ -869,7 +869,7 @@ public class BasGenerator extends Generator
 		String valueList = _for.getValueList();
 		StringList items = this.extractForInListItems(_for);
 		// START KGU#277 2016-10-13: Enh. #270
-		boolean disabled = _for.isDisabled();
+		boolean disabled = _for.isDisabled(false);
 		// END KGU#277 2016-10-13
 		// START KGU#171 2016-03-31: Enh. #144
 		//if (items != null)
@@ -986,7 +986,7 @@ public class BasGenerator extends Generator
             // The traditional BASIC while loop looks like WHILE condition ... WEND
             // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "DO WHILE " + condition);
-            boolean disabled = _while.isDisabled();
+            boolean disabled = _while.isDisabled(false);
             addCode(transformKeyword("DO WHILE ") + condition, _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_while.q, _indent+this.getIndent());
@@ -1014,7 +1014,7 @@ public class BasGenerator extends Generator
 
             // START KGU#277 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "DO");
-            boolean disabled = _repeat.isDisabled();
+            boolean disabled = _repeat.isDisabled(false);
             addCode(transformKeyword("DO"), _indent, disabled);
             // END KGU#277 2016-10-13
             generateCode(_repeat.q, _indent + this.getIndent());
@@ -1037,7 +1037,7 @@ public class BasGenerator extends Generator
 
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "DO");
-        boolean disabled = _forever.isDisabled();
+        boolean disabled = _forever.isDisabled(false);
         addCode(transformKeyword("DO"), _indent, disabled);
         // END KGU#277 2016-10-13
         generateCode(_forever.q, _indent+this.getIndent());
@@ -1100,7 +1100,7 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(this.getLineNumber() + _indent + line);
-				addCode(transform(line), _indent, _call.isDisabled());
+				addCode(transform(line), _indent, _call.isDisabled(false));
 				// END KGU#277 2016-10-13
 				// END KGU#2 2015-12-18
 			}
@@ -1112,7 +1112,7 @@ public class BasGenerator extends Generator
 	{
 		if(!appendAsComment(_jump, _indent)) {
 			// START #277 2016-10-13: Enh. #270
-			boolean disabled = _jump.isDisabled();
+			boolean disabled = _jump.isDisabled(false);
 			// END KGU#277 2016-10-13
 			// START KGU 2014-11-16
 			appendComment(_jump, _indent);
@@ -1220,7 +1220,7 @@ public class BasGenerator extends Generator
 
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(this.getLineNumber());
-		boolean disabled = _para.isDisabled();
+		boolean disabled = _para.isDisabled(false);
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-13
 		appendComment("==========================================================", _indent);
@@ -1263,7 +1263,7 @@ public class BasGenerator extends Generator
 	protected void generateCode(Try _try, String _indent)
 	{
 
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		appendComment(_try, _indent);
 
 		String indent1 = _indent + this.getIndent();

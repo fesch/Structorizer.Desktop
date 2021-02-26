@@ -92,7 +92,7 @@ import lu.fisch.structorizer.parsers.GENParser;
 public class ImportOptionDialog extends LangDialog {
 	
 	// START KGU#701 2019-03-29: Issues #557, #718
-	private static final int MAX_DIAGRAMS = 250;	// was 150 before, no longer needed so strict
+	private static final int MAX_DIAGRAMS = 300;	// was 150 before, no longer needed so strict
 	// END KGU#701 2019-03-29
 
     public boolean goOn = false;

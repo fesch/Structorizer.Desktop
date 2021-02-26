@@ -166,6 +166,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
  *      Kay Gürtzig     2021-02-08      Enh. #928: New Analyser check 29 (structured CASE discriminator)
  *      Kay Gürtzig     2021-02-22      Enh. #410: New field "namespace" to reflect e.g. class context
+ *      Kay Gürtzig     2021-02-26      Enh. #410: Method getMethodName and getParameterDeclarations decomposed
+ *                                      to static methods also usable by e.g. Call elements representing method
+ *                                      declarations
  *      
  ******************************************************************************************************
  *
@@ -3366,7 +3369,7 @@ public class Root extends Element {
 
     			@Override
     			public boolean visitPreOrder(Element _ele) {
-    				if (!_ele.disabled) {
+    				if (!_ele.isDisabled(true)) {	// FIXME shouldn't this be isDisabled(false)?
     					_ele.updateTypeMap(typeMap);
     				}
     				return true;
@@ -3521,7 +3524,7 @@ public class Root extends Element {
     	{
     		Element ele = _node.getElement(i);
     		// START KGU#277 2016-10-13: Enh. #270 - disabled elements are to be handled as if they wouldn't exist
-    		if (ele.disabled) continue;
+    		if (ele.isDisabled(true)) continue;
     		// END KGU#277 2016-10-13
     		String eleClassName = ele.getClass().getSimpleName();
     		
@@ -4806,7 +4809,7 @@ public class Root extends Element {
 						}
 						else {	// tag assumed to be "record" or "struct"
 						// END KGU#542 2019-11-17
-							this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+							extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
 							for (int j = 0; j < compNames.count(); j++) {
 								String compName = compNames.get(j);
 								if (!Function.testIdentifier(compName, false, null) || compNames.subSequence(0, j-1).contains(compName)) {
@@ -5548,6 +5551,7 @@ public class Root extends Element {
      * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
      * @return the program/subroutine name
      * @see #getMethodName()
+     * @see #getMethodName(String, DiagramType, boolean)
      * @see #getQualifiedName(boolean)
      * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
@@ -5560,8 +5564,23 @@ public class Root extends Element {
     public String getMethodName(boolean _replaceBlanks)
     // END KGU#456 2017-11-04
     {
-    	String rootText = getText().getLongString();
+    	return getMethodName(this.getText().getLongString(), this.diagrType, _replaceBlanks);
+    }
+    
+    /**
+     * Extracts the diagram name from the given Root text {@code rootText}, regarding
+     * the assumed {@link DiagramType} {@code rootType}.
+     * @param rootText - the header of a diagram as long (unbroken) text
+     * @param rootType - the assumed diagram type (main, subroutine, includable etc.)
+     * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
+     * @return the program/subroutine name
+     * @see #extractMethodParamDecls(String, StringList, StringList, StringList)
+     */
+    protected static String getMethodName(String rootText, DiagramType rootType, boolean _replaceBlanks)
+    // END KGU#456 2017-11-04
+    {
     	int pos;
+    	boolean isSubroutine = rootType == DiagramType.DT_SUB;
 
     	// START KGU#457 2017-11-05: Issue #454 We should check for Pascal-style result type in advance
     	boolean returnTypeFollows = false;
@@ -5571,7 +5590,7 @@ public class Root extends Element {
     	// END KGU#457 2017-11-05
     	if ((pos = rootText.indexOf('(')) > -1) rootText = rootText.substring(0, pos);
     	// START KGU#457 2017-11-05: Issue #454
-    	if (this.isSubroutine() && !returnTypeFollows && (pos = rootText.indexOf(']')) > 0) {
+    	if (isSubroutine && !returnTypeFollows && (pos = rootText.indexOf(']')) > 0) {
     		// This seems to be part of a return type specification
     		rootText = rootText.substring(pos+1);
     	}
@@ -5596,7 +5615,7 @@ public class Root extends Element {
     	// With a program or include, we just concatenate the strings by underscores
     	// START KGU#457 2017-11-05: Issue #454
     	//if (isSubroutine())
-    	if (isSubroutine() && !returnTypeFollows)
+    	if (isSubroutine && !returnTypeFollows)
     	// END KGU#457 2017-11-05
     	{
     		String[] tokens = rootText.split(" ");
@@ -5608,7 +5627,7 @@ public class Root extends Element {
     			// START KGU#911 2021-01-10: Enh. #910 - DiagramController names start with "$"
     			//if (Function.testIdentifier(tokens[i], false, null))
     			if (Function.testIdentifier(tokens[i], false, null)
-    					|| this.diagrType == DiagramType.DT_INCL_DIAGRCTRL
+    					|| rootType == DiagramType.DT_INCL_DIAGRCTRL
     					&& tokens[i].startsWith("$")
     					&& Function.testIdentifier(tokens[i].substring(1), false, null))
     			// END KGU#911 2021-01-10
@@ -5741,7 +5760,7 @@ public class Root extends Element {
      * @param paramNames - {@link StringList} to be expanded by the found parameter names
      * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
      * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
-     * @return true iff the text contains a parameter list at all
+     * @return {@code true} iff the text contains a parameter list at all
      * @see #getParameterNames()
      * @see #getParameterTypes()
      * @see #getResultType()
@@ -5799,30 +5818,7 @@ public class Root extends Element {
         	try
         	{
         		String rootText = this.getText().getText();
-        		// START KGU#580 2018-09-24: Bugfix #605 we must not mutilate identifiers ending with "var".
-        		//rootText = rootText.replace("var ", "");
-        		Matcher varMatcher = VAR_PATTERN.matcher(rootText);
-        		if (varMatcher.matches()) {
-        			rootText = varMatcher.replaceAll("$1$2");
-        		}
-        		// END KGU#580
-        		if (rootText.indexOf("(") >= 0)
-        		{
-        			// FIXME: This is getting too simple now!
-        			rootText = rootText.substring(rootText.indexOf("(")+1).trim();
-        			rootText = rootText.substring(0,rootText.lastIndexOf(")")).trim();
-        			// START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
-        			hasParamList = true;
-        			// END KGU#253 2016-09-22
-        		}
-        		// START KGU#222 2016-07-28: If there is no parenthesis then we shouldn't add anything...
-        		else
-        		{
-        			rootText = "";
-        		}
-        		// END KGU#222 2016-07-28
-
-        		extractDeclarationsFromList(rootText, paramNames, paramTypes, paramDefaults);
+        		hasParamList = extractMethodParamDecls(rootText, paramNames, paramTypes, paramDefaults);
         		// START KGU#371 2019-03-07: Enh. #395 Use cached values if available, otherwise fill cache
         		parameterList = new ArrayList<Param>(paramNames.count());
         		synchronized(this) {
@@ -5842,6 +5838,49 @@ public class Root extends Element {
         // START KGU#253 2016-09-22
     }
     // END KGU#78 2015-11-25
+
+	// START KGU#408 2021-02-26: Enh. #410 Facilitate the task for Calls representing method declarations
+	/**
+	 * Extracts the parameter declarations from the given routine declaration text
+	 * {@code rootText} and puts them to the passed {@link StringList}s as fa as not
+	 * being {@code null}.
+	 * @param rootText - the unbroken text of the method declaration
+	 * @param paramNames - list to add the names of the parameters (in order of occurrence), or {@code null}
+	 * @param paramTypes - list to add the types of the parameters (in order of occurrence), or {@code null}
+	 * @param paramDefaults- list to add the literals of the parameter defaults (in oder of occurrence), or {@code null}
+	 * @return {@code true} iff the text contains a parameter list at all
+	 * @see #getMethodName(String, DiagramType, boolean)
+	 */
+	protected static boolean extractMethodParamDecls(String rootText, StringList paramNames, StringList paramTypes,
+			StringList paramDefaults) {
+		boolean hasParamList = false;
+		// START KGU#580 2018-09-24: Bugfix #605 we must not mutilate identifiers ending with "var".
+		//rootText = rootText.replace("var ", "");
+		Matcher varMatcher = VAR_PATTERN.matcher(rootText);
+		if (varMatcher.matches()) {
+			rootText = varMatcher.replaceAll("$1$2");
+		}
+		// END KGU#580
+		if (rootText.indexOf("(") >= 0)
+		{
+			// FIXME: This is getting too simple now!
+			rootText = rootText.substring(rootText.indexOf("(")+1).trim();
+			rootText = rootText.substring(0,rootText.lastIndexOf(")")).trim();
+			// START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
+			hasParamList = true;
+			// END KGU#253 2016-09-22
+		}
+		// START KGU#222 2016-07-28: If there is no parenthesis then we shouldn't add anything...
+		else
+		{
+			rootText = "";
+		}
+		// END KGU#222 2016-07-28
+
+		extractDeclarationsFromList(rootText, paramNames, paramTypes, paramDefaults);
+		return hasParamList;
+	}
+	// END KGU#408 2021-02-26
     
     // START KGU#305 2016-12-12: Enh. #305 - representaton fo a Root list
     /**
@@ -6534,7 +6573,7 @@ public class Root extends Element {
 		for (int i=0; i<_node.getSize(); i++)
 		{
 			Element ele = _node.getElement(i);
-			if (ele.disabled) continue;
+			if (ele.isDisabled(true)) continue;
 			
 			String eleClassName = ele.getClass().getSimpleName();
 
@@ -6855,7 +6894,7 @@ public class Root extends Element {
 			public boolean visitPreOrder(Element _ele) {
 				// START KGU#632 2019-01-08: Nobody needs a disabled Call ...
 				//if (_ele instanceof Call) {
-				if (_ele instanceof Call && !_ele.isDisabled()) {
+				if (_ele instanceof Call && !_ele.isDisabled(false)) {
 				// END KGU#632 2019-01-08
 					calls.add((Call)_ele);
 				}

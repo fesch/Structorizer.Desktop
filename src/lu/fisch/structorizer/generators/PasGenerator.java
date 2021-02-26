@@ -624,7 +624,7 @@ public class PasGenerator extends Generator
 	{
 		if (!appendAsComment(_inst, _indent)) {
 			
-			boolean isDisabled = _inst.isDisabled();
+			boolean isDisabled = _inst.isDisabled(false);
 
 			// START KGU#424 2017-09-25: Avoid the comment here if the element contains mere declarations
 			//insertComment(_inst, _indent);
@@ -942,7 +942,7 @@ public class PasGenerator extends Generator
 	@Override
     protected void generateCode(Alternative _alt, String _indent)
     {
-    	boolean isDisabled = _alt.isDisabled();
+    	boolean isDisabled = _alt.isDisabled(false);
 
     	// START KGU 2014-11-16
     	appendComment(_alt, _indent);
@@ -978,7 +978,7 @@ public class PasGenerator extends Generator
     @Override
     protected void generateCode(Case _case, String _indent)
     {
-    	boolean isDisabled = _case.isDisabled();
+    	boolean isDisabled = _case.isDisabled(false);
 
     	// START KGU 2014-11-16
     	appendComment(_case, _indent);
@@ -1032,7 +1032,7 @@ public class PasGenerator extends Generator
     	}
     	// END KGU#61 2016-03-23
 
-    	boolean isDisabled = _for.isDisabled();
+    	boolean isDisabled = _for.isDisabled(false);
     	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
     	//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
     	//code.add(_indent + "begin");
@@ -1087,7 +1087,7 @@ public class PasGenerator extends Generator
 	protected boolean generateForInCode(For _for, String _indent)
 	{
 		boolean done = false;
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 		String var = _for.getCounterVar();
 		StringList items = this.extractForInListItems(_for);
 		if (items != null)
@@ -1239,7 +1239,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(While _while, String _indent)
 	{
-		boolean isDisabled = _while.isDisabled();
+		boolean isDisabled = _while.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_while, _indent);
 		// END KGU 2014-11-16
@@ -1265,7 +1265,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		boolean isDisabled = _repeat.isDisabled();
+		boolean isDisabled = _repeat.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
@@ -1290,7 +1290,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		boolean isDisabled = _forever.isDisabled();
+		boolean isDisabled = _forever.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
@@ -1312,7 +1312,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Call _call, String _indent)
 	{
-		boolean isDisabled = _call.isDisabled();
+		boolean isDisabled = _call.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_call, _indent);
 		// END KGU 2014-11-16
@@ -1329,7 +1329,7 @@ public class PasGenerator extends Generator
 	{
 		if (!appendAsComment(_jump, _indent)) {
 			
-			boolean isDisabled = _jump.isDisabled();
+			boolean isDisabled = _jump.isDisabled(false);
 
 			appendComment(_jump, _indent);
 
@@ -1420,7 +1420,7 @@ public class PasGenerator extends Generator
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		
 		// START KGU 2014-11-16
 		appendComment(_para, _indent);
@@ -1458,7 +1458,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateCode(Try _try, String _indent)
 	{
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		
 		appendComment(_try, _indent);
 

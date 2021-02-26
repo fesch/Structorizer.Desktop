@@ -291,12 +291,14 @@ public class NSDParser extends DefaultHandler {
 			Instruction ele = new Instruction(StringList.getNew("???"));
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			//if(attributes.getIndex("rotated")!=-1)  {if (attributes.getValue("rotated").equals("1")) {ele.rotated=true;}}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// START KGU#258 2016-09-25: Enh. #253
@@ -318,11 +320,13 @@ public class NSDParser extends DefaultHandler {
 			
 			// read attributes
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// START KGU#258 2016-09-25: Enh. #253
@@ -343,14 +347,21 @@ public class NSDParser extends DefaultHandler {
 			Call ele = new Call(StringList.getNew("???"));
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
+			// START KGU#408 2021-02-26: Enh. #410 new attribute
+			if (attributes.getIndex("ismethoddecl") != -1)  {
+				ele.isMethodDeclaration = "1".equals(attributes.getValue("ismethoddecl"));
+			}
+			// END KGU#408 2021-02-26
 			
-			// START KGU#258/KGU#376 2017-05-17: Enh. #253, #389: Now we have to rafctor at least one keyword
+			// START KGU#258/KGU#376 2017-05-17: Enh. #253, #389: Now we have to refactor at least one keyword
 			if (this.refactorKeywords)
 			{
 				ele.refactorKeywords(savedParserPrefs, ignoreCase);
@@ -358,7 +369,7 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#258/KGU#376 2017-05-17
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -368,11 +379,13 @@ public class NSDParser extends DefaultHandler {
 			Alternative ele = new Alternative(StringList.getNew("???"));
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// START KGU#258 2016-09-25: Enh. #253
@@ -398,11 +411,13 @@ public class NSDParser extends DefaultHandler {
 			
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// START KGU#258 2016-09-25: Enh. #253
@@ -416,7 +431,7 @@ public class NSDParser extends DefaultHandler {
 			ele.q.setColor(ele.getColor());
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -430,26 +445,28 @@ public class NSDParser extends DefaultHandler {
 //			// END KGU#134 2016-01-08
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			// START KGU#3 2015-10-29: New attributes for cleaner loop parameter analysis
 			int got = 0;
-			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar")); got++;}
-			if(attributes.getIndex("startValue")!=-1)  {ele.setStartValue(attributes.getValue("startValue")); got++;}
+			if (attributes.getIndex("counterVar") != -1)  {ele.setCounterVar(attributes.getValue("counterVar")); got++;}
+			if (attributes.getIndex("startValue") != -1)  {ele.setStartValue(attributes.getValue("startValue")); got++;}
 			// START KGU#134 2016-01-08: Bugfix #99 Test for mis-spelled attribute name (issue99Versions)
-			else if (attributes.getIndex("StartValue")!=-1)  {ele.setStartValue(attributes.getValue("StartValue")); got++;}
+			else if (attributes.getIndex("StartValue") != -1)  {ele.setStartValue(attributes.getValue("StartValue")); got++;}
 			// END KGU#134 2016-01-08
-			if(attributes.getIndex("endValue")!=-1)  {ele.setEndValue(attributes.getValue("endValue")); got++;}
-			if(attributes.getIndex("stepConst")!=-1)  {ele.setStepConst(attributes.getValue("stepConst")); got++;}
+			if (attributes.getIndex("endValue") != -1)  {ele.setEndValue(attributes.getValue("endValue")); got++;}
+			if (attributes.getIndex("stepConst") != -1)  {ele.setStepConst(attributes.getValue("stepConst")); got++;}
 			//ele.isConsistent = ele.checkConsistency();
 			// END KGU#3 2015-10-29
 			
 			// START KGU#258 2016-10-04: Enh. #253
-			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			boolean reliable = attributes.getIndex("reliable") != -1 && attributes.getValue("reliable").equals("true");
 			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
 			//ele.isConsistent = (reliable || ele.checkConsistency());
 			if (reliable)
@@ -542,7 +559,7 @@ public class NSDParser extends DefaultHandler {
 			ele.q.setColor(ele.getColor());
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -552,11 +569,13 @@ public class NSDParser extends DefaultHandler {
 			Forever ele = new Forever(StringList.getNew("???"));
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// Enh. #253: In a Forever loop, there isn't anything to refactor
@@ -575,11 +594,13 @@ public class NSDParser extends DefaultHandler {
 			Repeat ele = new Repeat(StringList.getNew("???"));
 			
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// START KGU#258 2016-09-25: Enh. #253
@@ -593,7 +614,7 @@ public class NSDParser extends DefaultHandler {
 			ele.q.setColor(ele.getColor());
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 		}
@@ -603,12 +624,14 @@ public class NSDParser extends DefaultHandler {
 			Case ele = new Case(StringList.getNew("???"));
 
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
 			ele.qs.clear();
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 
 			// START KGU#258 2016-09-25: Enh. #253
@@ -619,7 +642,7 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#258 2016-09-25
 			
 			// place stack
-			lastE=ele;
+			lastE = ele;
 			stack.push(ele);
 			lastQ.addElement(ele);
 			cStack.push(ele);
@@ -633,8 +656,8 @@ public class NSDParser extends DefaultHandler {
 			lastQ.parent = cStack.peek();	// the Case element
 			// END KGU 2016-12-21: Bugfix #317
 			//lastQ.setColor(lastQ.parent.getColor());
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			// handle stacks
@@ -647,12 +670,14 @@ public class NSDParser extends DefaultHandler {
 			Parallel ele = new Parallel(StringList.getNew("1"));
 
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			ele.qs.clear();
-			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 
 			// place stack
@@ -670,7 +695,7 @@ public class NSDParser extends DefaultHandler {
 			lastQ.parent=((Parallel) pStack.peek());
 			//lastQ.setColor(lastQ.parent.getColor());
 			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			// handle stacks
@@ -684,11 +709,13 @@ public class NSDParser extends DefaultHandler {
 			Try ele = new Try(StringList.getNew("???"));
 			
 			// read attributes
-			if (attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
-			if (attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if (attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text"));}
+			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
+			}
 			// START KGU#277 2016-10-13: Enh. #270
-			if (attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("disabled"));}
+			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
 			
 			// Enh. #253 No keyword refactoring necessary
@@ -710,8 +737,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = root.children;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -721,8 +748,8 @@ public class NSDParser extends DefaultHandler {
 			// create new queue
 			lastQ = ((Alternative) lastE).qTrue;
 			// START KGU 2016-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			ifStack.push(((Alternative) lastE).qFalse);
@@ -733,8 +760,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = ifStack.pop();
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -744,8 +771,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = ((For) lastE).q;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -755,8 +782,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = ((Forever) lastE).q;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -766,8 +793,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = ((While) lastE).q;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -777,8 +804,8 @@ public class NSDParser extends DefaultHandler {
 			// handle stacks
 			lastQ = ((Repeat) lastE).q;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -789,8 +816,8 @@ public class NSDParser extends DefaultHandler {
 			// create new queue
 			lastQ = tryStack.peek().qTry;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -799,8 +826,8 @@ public class NSDParser extends DefaultHandler {
 		{
 			lastQ = tryStack.peek().qCatch;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
@@ -809,8 +836,8 @@ public class NSDParser extends DefaultHandler {
 		{
 			lastQ = tryStack.peek().qFinally;
 			// START KGU 2106-12-21: Bugfix #317
-			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
-				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
 			// END KGU 2016-12-21
 			qStack.push(lastQ);
