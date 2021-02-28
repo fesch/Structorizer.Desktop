@@ -165,16 +165,12 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #920: `Infinity' introduced as literal
  *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
  *      Kay Gürtzig     2021-02-08      Enh. #928: New Analyser check 29 (structured CASE discriminator)
- *      Kay Gürtzig     2021-02-28      Issue #947: Enhanced cyclic inclusion detection considered but given up (see comment)
+ *      Kay Gürtzig     2021-02-28      Issue #947: Enhanced cyclic inclusion detection implemented
  *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
- *      2021-02-28 (KGU#946 - Issue #947)
- *      - An attempt was made to detect indirect cyclic inclusion via subroutines in analyse_23(), but the
- *        risks and efforts seemed in no relation to the potential benefits: An additional stack of calls
- *        would have had to be passed in order to avoid being caught in call recursions.
  *      2019-03-07 (KGU#371)
  *      - Parameter list analysis has become still more complex, so it seemed sensible to cache the
  *        parameter list while the text doesn't change.
