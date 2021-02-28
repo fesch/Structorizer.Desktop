@@ -1435,11 +1435,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		// END KGU#906 2021-01-18
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
-			// END KGU#456 2017-11-06
+		// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense
 			//if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
 			if (!isAutoUpdating && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
-				// END KGU#532 2018-06-25
+			// END KGU#532 2018-06-25
 				int chosen = JOptionPane.showOptionDialog(this,
 						Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
 						Menu.lblHint.getText(),

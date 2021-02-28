@@ -223,6 +223,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
  *      Kay Gürtzig     2021-02-04      Enh. #926: Element selection now scrolls to the related Analyser warnings
  *      Kay Gürtzig     2021-02-12      Bugfix #936 in exportGroup() - failed on a group never having been saved
+ *      Kay Gürtzig     2021-02-28      Issue #905: Faulty redrawing policy after AnalyserPreference changes fixed
  *
  ******************************************************************************************************
  *
@@ -4031,7 +4032,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
-				showInputBox(data, element.getClass().getSimpleName(), false, mayCommit);
+				// START KGU#946 2021-02-28: We could get wrong Root type information when induced from errorlist
+				//showInputBox(data, element.getClass().getSimpleName(), false, mayCommit);
+				String elemType = element.getClass().getSimpleName();
+				if (element instanceof Root) {
+					if (((Root)element).isSubroutine()) {
+						elemType = "Function";
+					}
+					else if (((Root)element).isInclude()) {
+						elemType = "Includable";
+					}
+				}
+				showInputBox(data, elemType, false, mayCommit);
+				// END KGU#946 2021-02-28
 				// END KGU#42 2015-10-14
 
 				if (data.result == true)
@@ -5036,8 +5049,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				referredRoot.setText(inclName);
 				referredRoot.setInclude();
 			}
-			myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 		}
+		myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
 		if (referredRoot != null) {
 			referredRoot.setChanged(false);
 			// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
@@ -8885,7 +8898,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//root.getVarNames();	// Is done by root.analyse() itself
 			analyse();
 			// START KGU#906 2021-01-02: Enh. #905
-			if (markersWereOn != Element.E_ANALYSER_MARKER) {
+			// START KGU#906 2021-02-28: Issue #905 We have to redraw on test set modifications, too
+			//if (markersWereOn != Element.E_ANALYSER_MARKER) {
+			if (markersWereOn || (markersWereOn != Element.E_ANALYSER_MARKER)) {
+			// END KGU#906 2021-02-28
 				redraw();
 			}
 			// END KGU#906 2021-01-02
@@ -9866,6 +9882,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (NSDControl != null)
 		{
+			// START KGU#946 2021-02-28: Bugfix #947: Now the type is distinguished before calling this
+			boolean isRoot = _elementType.equals("Root")
+					|| _elementType.equals("Function")
+					|| _elementType.equals("Includable");
+			// END KGU#946 2021-02-28
 			// START KGU#170 2016-04-01: Issue #143 - on opening the editor a comment popup should vanish
 			hideComments();
 			// END KGU#170 2016-04-01
@@ -9916,7 +9937,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				inputbox = ipbFor;
 			}
 			// START KGU#363 2017-03-13: Enh. #372
-			else if (_elementType.equals("Root")) {
+			// START KGU#946 2021-02-28: Bugfix #947: Now the type is distinguished before calling this
+			//else if (_elementType.equals("Root")) {
+			else if (isRoot) {
+			// END KGU#946 2021-02-28
 				InputBoxRoot ipbRt = new InputBoxRoot(getFrame(), true);
 //				ipbRt.licenseInfo.rootName = root.getMethodName();
 //				ipbRt.licenseInfo.licenseName = _data.licenseName;
@@ -9966,8 +9990,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.txtText.setText(_data.text.getText());
 			inputbox.txtComment.setText(_data.comment.getText());
 			// START KGU#43 2015-10-12: Breakpoint support
-			boolean notRoot = getSelected() != root;
-			inputbox.chkBreakpoint.setVisible(notRoot);
+			// START KGU#946 2021-02-28: Bugfix #947 - it might be a different Root we summon here...
+			//boolean notRoot = getSelected() != root;
+			//inputbox.chkBreakpoint.setVisible(notRoot);
+			inputbox.chkBreakpoint.setVisible(!isRoot);
+			// END KGU#946 2021-02-28
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// START KGU#686 2019-03-17: Enh. #56 - Introduction of Try
 			if (_elementType.equals("Try") || _elementType.equals("Forever")) {
@@ -9987,13 +10014,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
 			// START KGU#213 2016-10-13: Enh. #215 - Make it invisible if zero
 			//inputbox.lblBreakTriggerText.setVisible(notRoot);
-			inputbox.lblBreakTriggerText.setVisible(notRoot && _data.breakTriggerCount > 0);
+			inputbox.lblBreakTriggerText.setVisible(!isRoot && _data.breakTriggerCount > 0);
 			// END KGU#213 2016-10-13
 			inputbox.lblBreakTrigger.setText(Integer.toString(_data.breakTriggerCount));
 			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
 			// START KGU#277 2016-10-13: Enh. #270
-			inputbox.chkDisabled.setVisible(notRoot);
+			inputbox.chkDisabled.setVisible(!isRoot);
 			inputbox.chkDisabled.setSelected(_data.disabled);
 			// END KGU#277 2016-10-13
 

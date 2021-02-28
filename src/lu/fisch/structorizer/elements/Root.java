@@ -165,11 +165,16 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #920: `Infinity' introduced as literal
  *      Kay Gürtzig     2021-02-04      Bugfix #925: Type entry production for const parameters mended
  *      Kay Gürtzig     2021-02-08      Enh. #928: New Analyser check 29 (structured CASE discriminator)
+ *      Kay Gürtzig     2021-02-28      Issue #947: Enhanced cyclic inclusion detection considered but given up (see comment)
  *      
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
+ *      2021-02-28 (KGU#946 - Issue #947)
+ *      - An attempt was made to detect indirect cyclic inclusion via subroutines in analyse_23(), but the
+ *        risks and efforts seemed in no relation to the potential benefits: An additional stack of calls
+ *        would have had to be passed in order to avoid being caught in call recursions.
  *      2019-03-07 (KGU#371)
  *      - Parameter list analysis has become still more complex, so it seemed sensible to cache the
  *        parameter list while the text doesn't change.
@@ -4917,9 +4922,17 @@ public class Root extends Element {
 	 * @param _constants - incremental constant definition map
 	 * @param _importStack - names of imported includables
 	 * @param _analysedImports - 
+	 * @param _callerSet - in case of indirect cycles via routine call, the set of calling roots,
+	 *        otherwise {@code null}
 	 * @param _types - type definitions and declarations
 	 */
-	private void analyse_23(Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, StringList _importStack, HashMap<String, StringList> _analysedImports, HashMap<String, TypeMapEntry> _types)
+	private void analyse_23(Vector<DetectedError> _errors,
+			StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants,
+			StringList _importStack, HashMap<String, StringList> _analysedImports,
+			// START KGU#946 2021-02-28: Bugfix #947
+			HashSet<Root> _callerSet,
+			// END KGU#946 2021-02-28
+			HashMap<String, TypeMapEntry> _types)
 	{
 		// START KGU#376 2017-07-01: Enh. #389 - obsolete
 //		Subqueue node = (Subqueue)_call.parent;
@@ -4940,6 +4953,25 @@ public class Root extends Element {
 //		}
 //		String name = (_call).getSignatureString();
 		if (this.includeList == null) {
+			// START KGU#946 2021-02-28: Bugfix #947 drill down if we follow a call chain...
+			if (check(23) &&
+					(_callerSet != null && !_callerSet.contains(this) /* in this case Arranger must have an instance */
+					|| (this.isInclude() || this.isSubroutine()) && Arranger.hasInstance() && !this.collectCalls().isEmpty())) {
+				if (this.isInclude()) {
+					String name = this.getMethodName();
+					if(_importStack.contains(name)) {
+						//error  = new DetectedError("Import of diagram «%1» is recursive! (Recursion path: %1 <- %2)");
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_2, name), this), 23);
+						return;
+					}
+					_importStack.add(name);
+				}
+				if (_callerSet == null) {
+					_callerSet = new HashSet<Root>();
+				}
+				this.analyse_23_inCalledRoutines(_errors, this, _importStack, _analysedImports, _types, _callerSet);
+			}
+			// END KGU#946 2021-02-28
 			return;
 		}
 		for (int i = 0; i < includeList.count(); i++) {
@@ -4986,8 +5018,27 @@ public class Root extends Element {
 					if (this.isInclude()) {
 						_importStack.add(this.getMethodName());
 					}
-					importedRoot.analyse_23(impErrors, importedVars, importedUncVars, _constants, _importStack, _analysedImports, importedTypes);
-					analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants, subResultFlags, importedTypes);
+					importedRoot.analyse_23(impErrors, importedVars, importedUncVars, _constants,
+							_importStack, _analysedImports, _callerSet, importedTypes);
+					// START KGU#946 2021-02-28: Bugfix #947: Check cyclic inclusions via Calls
+					//analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants, subResultFlags, importedTypes);
+					/* The identification of an inclusion loop via Calls is to be done with care,
+					 * lest we should pay the benefit bitterly with performance degrading and even
+					 * getting caught in an eternal recursion here!
+					 */
+					HashSet<Root> callers = _callerSet;
+					if (callers == null) {
+						/* Don't analyse this Includable fully in case of an indirect call (then
+						 * only cyclic inclusion is to be tested)!
+						 */
+						analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants,
+								subResultFlags, importedTypes);
+						callers = new HashSet<Root>();
+					}
+					if (check(23)) {
+						analyse_23_inCalledRoutines(_errors, importedRoot, _importStack, _analysedImports, _types, callers);
+					}
+					// END KGU#946 2021-02-028
 					_analysedImports.put(name, _importStack.copy());
 					if (this.isInclude()) {
 						_importStack.remove(_importStack.count()-1);
@@ -5044,6 +5095,36 @@ public class Root extends Element {
 		}		
 		// END KGU#376 2017-07-01
 
+	}
+	/**
+	 * CHECK #23: Helper method to check indirect cyclic includes (via subroutine calls)
+	 * for {@link #analyse_23(Vector, StringList, StringList, HashMap, StringList, HashMap, HashSet, HashMap)}
+	 * @param _errors - global error list
+	 * @param _importStack - names of already imported includables
+	 * @param _analysedImports - map from Includables to the corresponding _importStack
+	 * @param _callerSet - the set of calling roots to avoid eternal recursion
+	 * @param _types - type definitions and declarations
+	 */
+	private void analyse_23_inCalledRoutines(Vector<DetectedError> _errors, Root _root, StringList _importStack,
+			HashMap<String, StringList> _analysedImports, HashMap<String, TypeMapEntry> _types,
+			HashSet<Root> _callers) {
+		// If _root is an includable then it would be detected via the _importStack in case of a cycle
+		if (!_root.isInclude()) {
+			_callers.add(_root);
+		}
+		for (Call call: _root.collectCalls()) {
+			Function called = call.getCalledRoutine();
+			if (called != null && called.isFunction()) {
+				Vector<Root> callCands = Arranger.getInstance().findRoutinesBySignature(
+						called.getName(), called.paramCount(), _root);
+				// Should we check all candidates?
+				if (callCands.size() == 1 && !_callers.contains(callCands.get(0))) {
+					// Don't let the variables etc. have an impact here
+					callCands.get(0).analyse_23(_errors, new StringList(), new StringList(), new HashMap<String, String>(),
+							_importStack, _analysedImports, _callers, _types);
+				}
+			}
+		}
 	}
 	
 	// START KGU#514 2018-04-03: Bugfix #528
@@ -5879,7 +5960,7 @@ public class Root extends Element {
 
         // START KGU#376 2017-07-01: Enh. #389 - Now includes are a Root property (again)
         LinkedHashMap<String, String> importedConstants = new LinkedHashMap<String, String>();
-        this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), typeDefinitions);
+        this.analyse_23(errors, vars, uncertainVars, importedConstants, new StringList(), new HashMap<String,StringList>(), null, typeDefinitions);
         // END KGU#376 2017-07-01
 
         vars.add(rootVars);
