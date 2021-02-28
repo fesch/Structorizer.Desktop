@@ -120,6 +120,7 @@ public class ProcessingParser extends JavaParser {
 		super.initializeBuildNSD();
 		Root mainRoot = new Root();
 		mainRoot.setText(progName);
+		mainRoot.children.addElement(new Call("setup()"));
 		Forever mainLoop = new Forever();
 		mainLoop.getBody().addElement(new Call("draw()"));
 		mainRoot.children.addElement(mainLoop);
@@ -179,7 +180,8 @@ public class ProcessingParser extends JavaParser {
 			defs.setColor(colorConst);
 			defs.setComment("Processing standard Math constants");
 			root.children.insertElementAt(defs, 0);
-			root.children.addElement(new Call("setup()"));
+			// This must not be in invoked here because setup() includes diagram (#947)
+			//root.children.addElement(new Call("setup()"));
 		}
 		return false;
 	}
