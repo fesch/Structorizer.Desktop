@@ -46,7 +46,8 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-02-16      First Issue (generated with GOLDprog.exe)
  *      Kay Gürtzig     2021-02-23      Functionally complete implementation
- *      Kay Gürtzig     2021-02-26      Revision of the class and method handling, minr fixes
+ *      Kay Gürtzig     2021-02-26      Revision of the class and method handling, minor fixes
+ *      Kay Gürtzig     2021-02-27      Supporting method hooks for ProcessingParser inserted.
  *
  ******************************************************************************************************
  *
@@ -108,13 +109,6 @@ public class JavaParser extends CodeParser
 			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER3,
 			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER4,
 			RuleConstants.PROD_LOCALCLASSDECLARATION,
-			RuleConstants.PROD_FIELDDECLARATION_SEMI,
-			RuleConstants.PROD_FIELDDECLARATION_SEMI2,
-			RuleConstants.PROD_METHODDECLARATION,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION2,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION3,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION4,
 			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER,
 			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER2,
 			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER3,
@@ -124,6 +118,13 @@ public class JavaParser extends CodeParser
 			RuleConstants.PROD_ENUMCONSTANTS_COMMA,
 			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN,
 			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER,
+			RuleConstants.PROD_FIELDDECLARATION_SEMI,
+			RuleConstants.PROD_FIELDDECLARATION_SEMI2,
+			RuleConstants.PROD_METHODDECLARATION,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION2,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION3,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION4,
 			RuleConstants.PROD_STATICINITIALIZER_STATIC,
 			RuleConstants.PROD_LOCALVARIABLEDECLARATION_FINAL,
 			RuleConstants.PROD_LOCALVARIABLEDECLARATION,
@@ -194,7 +195,6 @@ public class JavaParser extends CodeParser
 
  	@Override
 	public String[] getFileExtensions() {
-		// TODO specify the usual file name extensions for Java SE 8 source files here!";
 		final String[] exts = { "java" };
 		return exts;
 	}
@@ -576,9 +576,9 @@ public class JavaParser extends CodeParser
 //		final int PROD_CLASSORINTERFACETYPE                                         =  55;  // <ClassOrInterfaceType> ::= <Name>
 //		final int PROD_CLASSTYPE                                                    =  56;  // <ClassType> ::= <ClassOrInterfaceType>
 //		final int PROD_INTERFACETYPE                                                =  57;  // <InterfaceType> ::= <ClassOrInterfaceType>
-//		final int PROD_TYPEVARIABLE_IDENTIFIER                                      =  58;  // <TypeVariable> ::= <Annotations> Identifier
-//		final int PROD_ARRAYTYPE                                                    =  59;  // <ArrayType> ::= <PrimitiveType> <Dims>
-//		final int PROD_ARRAYTYPE2                                                   =  60;  // <ArrayType> ::= <Name> <Dims>
+		final int PROD_TYPEVARIABLE_IDENTIFIER                                      =  58;  // <TypeVariable> ::= <Annotations> Identifier
+		final int PROD_ARRAYTYPE                                                    =  59;  // <ArrayType> ::= <PrimitiveType> <Dims>
+		final int PROD_ARRAYTYPE2                                                   =  60;  // <ArrayType> ::= <Name> <Dims>
 //		final int PROD_NAME                                                         =  61;  // <Name> ::= <SimpleName>
 //		final int PROD_NAME2                                                        =  62;  // <Name> ::= <QualifiedName>
 		final int PROD_SIMPLENAME_IDENTIFIER                                        =  63;  // <SimpleName> ::= Identifier
@@ -1023,9 +1023,6 @@ public class JavaParser extends CodeParser
 					// END KGU#193 2016-05-04
 					) {
 				String strLine;
-//				boolean withinComment = false;	// Registers a block comment context
-//				boolean inDeclaration = false;	// e.g. package or import declaration
-//				boolean mayBeClassDeclaration = false;
 				// Filter BOM sequence?
 				boolean first = "UTF-8".equals(_encoding);
 				//Read File Line By Line
@@ -1033,55 +1030,6 @@ public class JavaParser extends CodeParser
 				{
 					checkCancelled();
 					
-					// TODO The following checks should better be done without line restriction
-//					if (wrapInClass) {
-//						int len = strLine.length();
-//						for (int i = 0; i < len; i++) {
-//							char ch = strLine.charAt(i);
-//							char ch1 = '\0';
-//							if (i+1 < len) {
-//								ch1 = strLine.charAt(i+1);
-//							}
-//							if (withinComment) {
-//								// The only thing to do here is to check for the end of the comment
-//								if (ch == '*' && ch1 == '/') {
-//									withinComment = false;
-//									i++;
-//								}
-//							}
-//							else switch (ch) {
-//							case '/':
-//								// Likely to be a comment
-//								if (ch1 == '*') {
-//									withinComment = true;
-//									i++;
-//								}
-//								else if (ch1 == '/') {
-//									i = len;
-//								}
-//								break;
-//							case 'p':
-//								// Might be "package" or "public" etc.
-//								if (!inDeclaration) {
-//									String tail = strLine.substring(i);
-//									if (tail.equals("package") || tail.startsWith("package ")) {
-//										inDeclaration = true;
-//										i += "package".length();
-//									}
-//									else {
-//										/* TODO Check the possible modifiers for a class
-//										 * or interface declaration unless we are already
-//										 * within a class or interface declaration
-//										 */
-//									}
-//								}
-//								break;
-//							case '@':
-//								// Seems to be an annotation
-//								// TODO Find its end: tokenize? What about comments then?
-//							}
-//						}
-//					}
 					if (first && strLine.length() >= 1) {
 						/* Cut off the BOM sequence (0xEF, 0xBB, 0xBF) if there is any
 						 * (As code point, it is represented as 0xfeff, interestingly)
@@ -1112,13 +1060,14 @@ public class JavaParser extends CodeParser
 			}
 
 			//System.out.println(srcCode);
+			doExtraPreparations(srcCode, file);
 
 			// trim and save as new file
 			checkCancelled();
 			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 			
 			try (OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8")) {
-				ow.write(srcCode.toString().trim()+"\n");
+				ow.write(srcCode.toString().trim());
 			}
 		}
 		catch (Exception e) 
@@ -1128,6 +1077,16 @@ public class JavaParser extends CodeParser
 			e.printStackTrace();	
 		}
 		return interm;
+	}
+
+	/**
+	 * Allows subclasses to do some extra preparations to the preprocessed
+	 * content given as {@code _srcCode}, considering the source file {@code _file}
+	 * @param _srcCode - the pre-processed file content
+	 * @param _file - the file object for the source file (e.g. to fetch the name from)
+	 */
+	protected void doExtraPreparations(StringBuilder _srcCode, File _file) {
+		// We don't have to do anything here
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
@@ -1155,6 +1114,17 @@ public class JavaParser extends CodeParser
 		operatorMap.put(">>", "shr");
 		operatorMap.put("=", "<-");
 		operatorMap.put("!=", "<>");
+	}
+	
+	/**
+	 * Subclassable configuration method. Decides whether methods of the top-level
+	 * class or interface are to be qualified or not.
+	 * @return {@code true} if methods on the top-level class hierarchy are to be
+	 * equipped with namespace prefix, {@code false} otherwise.
+	 */
+	protected boolean qualifyTopLevelMethods()
+	{
+		return true;
 	}
 	
 	/* (non-Javadoc)
@@ -1264,6 +1234,7 @@ public class JavaParser extends CodeParser
 				// Fetch comment and append modifiers
 				String modifiers = "";
 				int ixName = 1;
+				Reduction redClass = _reduction;
 				if (ruleId == RuleConstants.PROD_NORMALCLASSDECLARATION
 						|| ruleId == RuleConstants.PROD_LOCALCLASSDECLARATION) {
 					// Get modifiers (in order to append them to the comment)
@@ -1300,7 +1271,7 @@ public class JavaParser extends CodeParser
 				
 				classRoot.setText(name);
 				
-				this.equipWithSourceComment(classRoot, _reduction);
+				this.equipWithSourceComment(classRoot, redClass);
 				// Get type parameters (if any)
 				String typePars = this.getContent_R(_reduction.get(2));
 				int ixBody = ixName + 2;
@@ -1321,11 +1292,14 @@ public class JavaParser extends CodeParser
 						classRoot.comment.add(imports);
 					}
 				}
-				classRoot.comment.add(category.toUpperCase()
-						+ (this.includables.size() > 1 ? " in class " + qualifier : ""));
+				classRoot.comment.insert(category.toUpperCase()
+						+ (this.includables.size() > 1 ? " in class " + qualifier : ""), 0);
 				classRoot.getComment().add((modifiers + " " + category).trim());
 				if (!typePars.trim().isEmpty()) {
-					classRoot.getComment().add("==== type parameters: " + typePars);
+					classRoot.comment.add("==== type parameters: " + typePars);
+				}
+				if (!inh.isEmpty()) {
+					classRoot.comment.add("==== " + inh);
 				}
 				// Now descend into the body
 				this.buildNSD_R(_reduction.get(ixBody).asReduction(), classRoot.children);
@@ -1393,7 +1367,9 @@ public class JavaParser extends CodeParser
 				Root subRoot = new Root();
 				this.equipWithSourceComment(subRoot, _reduction);
 				String qualifier = includables.peek().getQualifiedName();
-				subRoot.setNamespace(qualifier);
+				if (includables.size() > 1 || qualifyTopLevelMethods()) {
+					subRoot.setNamespace(qualifier);
+				}
 				subRoot.comment.add((ruleId == RuleConstants.PROD_METHODDECLARATION ? "METHOD" : "CONSTRUCTOR")
 						+ " for class " + qualifier);
 				if (ruleId == RuleConstants.PROD_CONSTRUCTORDECLARATION
@@ -2147,10 +2123,10 @@ public class JavaParser extends CodeParser
 					addRoot(itemBody);
 					includables.push(itemBody);
 					this.buildNSD_R(classBodies.get(itemName), itemBody.children);
-					this.dissolveDummyContainers(itemBody);
 					includables.pop();
 				}
 			}
+			this.dissolveDummyContainers(enumRoot);
 		}
 		else {
 			// This is going to be a type definition
@@ -2450,7 +2426,8 @@ public class JavaParser extends CodeParser
 				// <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs>
 				// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs> <Dims>
 				// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs>
-				/* FIXME: Here it gets somewhat difficult to say what to do:
+				/* FIXME:
+				 * Here it gets somewhat difficult to say what to do:
 				 * We might assign an element with the highest index such that
 				 * an array of the requested size gets created (and filled with 0),
 				 * but this would hardly be helpful in case of multidimensional
@@ -2466,6 +2443,8 @@ public class JavaParser extends CodeParser
 			{
 				// <ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
 				// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>
+				
+				// For Structorizer, we just concentrate on the <ArrayInitializer>
 				Reduction redInit = exprRed.get(exprRed.size()-1).asReduction();
 				// PROD_ARRAYINITIALIZER_LBRACE_COMMA_RBRACE:
 				//                     <ArrayInitializer> ::= '{' <VariableInitializers> ',' '}'
@@ -2524,9 +2503,17 @@ public class JavaParser extends CodeParser
 				/* We don't have a sensible casting mechanism in Structorizer.
 				 * Just leave as is in a way
 				 */
-				String cast = "(" + this.getContent_R(exprRed.get(1));
+				String cast = "(" + this.translateType(exprRed.get(1));
 				if (exprRed.size() > 4) {
-					cast += this.getContent_R(exprRed.get(2));
+					String dims = this.getContent_R(exprRed.get(2));
+					if (this.optionTranslate) {
+						for (int i = 0; i < dims.length()/2; i++) {
+							cast = "array of " + cast;
+						}
+					}
+					else {
+						cast += dims;
+					}
 				}
 				cast += ")";
 				exprs.add(this.decomposeExpression(exprRed.get(exprRed.size()-1), false, false));
@@ -2537,7 +2524,6 @@ public class JavaParser extends CodeParser
 				
 			default:
 				exprs.add(this.getContent_R(exprToken));
-			
 			}
 			
 		}
@@ -2757,8 +2743,8 @@ public class JavaParser extends CodeParser
 	/**
 	 * Returns processed variable declarations as StringList
 	 * @param token - {@link Token} representing <VariableDeclarators> 
-	 * @param typeDescr TODO
-	 * @param asConst TODO
+	 * @param typeDescr - the parsed type description in the syntactically preferred syntax
+	 * @param asConst - whether the declaration is to be a constant (or a variable otherwise)
 	 * @return {@link StringList} of variable declarations in order of occurrence
 	 * @throws ParserCancelled 
 	 */
@@ -2820,7 +2806,8 @@ public class JavaParser extends CodeParser
 	 * @param initToken - {@link Token} representing the first header zone 
 	 * @param condToken - {@link Token} representing the second header zone
 	 * @param incrToken - {@link Token} representing the third header zone
-	 * @return either a {@link For} element or null.
+	 * @return either a {@link For} element or {@code null}.
+	 * 
 	 * @see #checkForInit(Token, String)
 	 * @see #checkForCond(Token, String, boolean)
 	 * @see #checkForIncr(Token)
@@ -2847,13 +2834,17 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
-	 * Checks the increment zone of a Java {@code for} loop given by {@link #Token} {@code incrToken} 
+	 * Checks the increment zone of a Java {@code for} loop given by {@link #Token} {@code incrToken}
 	 * whether the instruction is suited for a Structorizer FOR loop.<br/>
-	 * This is assumed in exactly the following cases:<br/>
-	 * 1. {@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}<br/>  
-	 * 2. {@code <id>--}, {@code --<id>}, {@code <id> -= <intlit>}, or {@code <id> = <id> - <intlit>}  
+	 * This is assumed in exactly the following cases:
+	 * <ol>
+	 * <li>{@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}</li>  
+	 * <li>{@code <id>--}, {@code --<id>}, {@code <id> -= <intlit>}, or {@code <id> = <id> - <intlit>}</li>
+	 * </ol>
 	 * @param incrToken - the token representing the third zone of a {@code for} loop header
-	 * @return null or a string array of: [0] the id, [1] '+' or '-', [2] the int literal of the increment/decrement
+	 * @return null or a string array of: [0] the id, [1] '+' or '-', [2] the {@code int} literal
+	 *     of the increment/decrement
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForCond(Token, String, boolean)
 	 * @see #checkForInit(Token, String)
@@ -2962,7 +2953,8 @@ public class JavaParser extends CodeParser
 	 * @param condToken - the token representing the second zone of a {@code for} loop header
 	 * @param id - the expected loop variable id to be tested
 	 * @param upward - whether there is an increment or decrement
-	 * @return the end value of the Structorizer counting FOR loop if suited, null otherwise
+	 * @return the end value of the Structorizer counting FOR loop if suited, {@code null} otherwise
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
 	 * @see #checkForInit(Token, String)
@@ -2999,7 +2991,9 @@ public class JavaParser extends CodeParser
 	 * where {@code <id>} is the given {@code <id>}. 
 	 * @param initToken - the token representing the first zone of a {@code for} loop header
 	 * @param id - the expected loop variable id to be tested
-	 * @return the start value expression or null if the {@code id} doesn't match or the staeement isn't suited
+	 * @return the start value expression, or {@code null} if the {@code id} doesn't match or
+	 *       the statement isn't suited
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
 	 * @see #checkForCond(Token, String, boolean)
@@ -3210,18 +3204,63 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
-	 * @param token
-	 * @return
+	 * Tries to translate the Java type represented by {@code token} according
+	 * to the syntactic preferences held in {@link #optionTranslate}, i.e. either
+	 * to a documented Structorizer type description syntax (rather Pascal-like)
+	 * or not at all.
+	 * @param token - the {@link Token} representing a {@code <Type>} rule or symbol
+	 * @return an appropriate type description
 	 * @throws ParserCancelled 
 	 */
 	private String translateType(Token token) throws ParserCancelled {
-		// TODO Auto-generated method stub
+		if (optionTranslate) {
+			Reduction red = token.asReduction();
+			if (red != null) {
+				int ruleId = red.getParent().getTableIndex();
+				switch (ruleId) {
+				case RuleConstants.PROD_TYPEVARIABLE_IDENTIFIER:
+				{
+					// <TypeVariable> ::= <Annotations> Identifier
+					// Ignore the annotations
+					return getContent_R(red.get(1));
+				}
+				
+				case RuleConstants.PROD_ARRAYTYPE:
+				case RuleConstants.PROD_ARRAYTYPE2:
+				{
+					// <ArrayType> ::= <PrimitiveType> <Dims>
+					// <ArrayType> ::= <Name> <Dims>
+					String type = this.translateType(red.get(0));
+					String dims = this.getContent_R(red.get(1));
+					for (int i = 0; i < dims.length()/2; i++) {
+						type = "array of " + type;
+					}
+					return type;
+				}
+				
+				default:
+					return getContent_R(token);
+				}
+			}
+		}
 		return getContent_R(token);
 	}
 	
+	/**
+	 * Given the Java operator symbol {@code opr}, either lets it pass as is (if
+	 * {@link #optionTranslate} is {@code false}) or returns a Structorizer-
+	 * preferred, more verbose (or, say Pascal-like) operator symbol.<br/>
+	 * Just applies {@link #operatorMap}, actually.<br/>
+	 * <b>WARNING:</b> Avoid to apply this method twice to the same operator!<br/>
+	 * The result will not be padded!
+	 * @param opr - a Java operator symbol
+	 * @return an operator symbol possibly better suited for Structorizer
+	 */
 	private String translateOperator(String opr)
 	{
-		// We will always translate the operators - as they can be displayed in C mode.
+		/* We will always translate the operators - as they can be displayed in C mode.
+		 * but most of the operator translation is already done in decomposeExpression().
+		 */
 		if (operatorMap.containsKey(opr)) {
 			opr = operatorMap.get(opr);
 		}
@@ -3236,7 +3275,7 @@ public class JavaParser extends CodeParser
 	 * way 
 	 * @return composed and translated text.
 	 */
-	private String translateContent(String _content)
+	protected String translateContent(String _content)
 	{
 		String output = getKeyword("output");
 		StringList outputTokens = StringList.explodeWithDelimiter("System.out.println", ".");

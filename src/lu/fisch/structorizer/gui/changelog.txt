@@ -20,7 +20,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version: 3.30-18 (2021-02-26)
+Current version: 3.31 (2021-02-28)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
@@ -225,6 +225,7 @@ Current development version: 3.30-18 (2021-02-26)
 - 17: Issue #943: Java version now displayed in the About dialog Paths tab.
 - 18: Enh. #410: Java import implemented (+ new diagram field "namespace") <2>
 - 18: Bugfix #419: "(Re-)break lines" missed to redraw the reshaped diagram <2>
+- 18: Enh. #932: "Processing" source code import implemented [K.-H. Becker]2
 - 18: Issue #943: Java home path now also displayed in the About dialog <2>
 - 18: Issue #944: Version hint announcing the planned code upgrade to Java 11 <2>
 - 18: Bugfix #945: "Disabled" status of PARALLEL elements had not been saved <2>

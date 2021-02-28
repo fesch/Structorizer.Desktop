@@ -2,7 +2,7 @@
 <plugins>
     
 	<plugin title="Pascal" 				class="lu.fisch.structorizer.parsers.D7Parser" icon="" />
-	<plugin title="ANSI-C99" 				class="lu.fisch.structorizer.parsers.C99Parser" icon="" >
+	<plugin title="ANSI-C99" 			class="lu.fisch.structorizer.parsers.C99Parser" icon="" >
 		<option name="typeNames" type="String" title="Externally defined type names" help="Comma-separated list of typedefs defined outside the source but referred to within (just to pass the syntax check)" />
 		<option name="redundantNames" type="String" title="Redundant pre-processor names or macros" help="Comma-separated list of names or macros (with empty parentheses) to be ignored on parsing" />
 		<option name="use_WINAPI_defines" type="Boolean" title="Use type names and defines from WINAPI" help="Enable this if the source file refers to many WINAPI type names or dummy defines line WINAPI" />
@@ -15,9 +15,11 @@
 		<option name="fixedColumnIndicator" type="Unsigned" title="Indicator column in fixed format" help="Number of the indicator column (in fixed format)" />
 		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format)" />
 	</plugin>
-	<plugin title="Java SE 8" 				class="lu.fisch.structorizer.parsers.JavaParser" icon="">
-		<!-- option name="wrap_in_dummy_class" type="Boolean" title="Wrap bare code in a dummy class" help="If the Java file to be imported contains only fragments, e.g. a method or interpreter instructions, you should enable this." />
-		<option name="convert_syntax" type="Boolean" title="Convert operators, declarations etc. to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations, and expressions." /-->
+	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations and expressions." />
+	</plugin>
+	<plugin title="Processing" 			class="lu.fisch.structorizer.parsers.ProcessingParser" icon="">
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations and expressions." />
 	</plugin>
     
 </plugins>

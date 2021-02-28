@@ -218,6 +218,11 @@ public class Call extends Instruction {
 	@Override
 	public ImageIcon getIcon()
 	{
+		// START KGU#408 2021-02-27: Enh. #410 Now same mechanism as in Instruction needed
+		if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
+			return IconLoader.getIcon(85);
+		}
+		// END KGU#408 2021-02-27
 		return IconLoader.getIcon(58);
 	}
 	// END KGU#122 2016-01-03

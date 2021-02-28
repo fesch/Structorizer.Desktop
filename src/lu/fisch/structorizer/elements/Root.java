@@ -5576,7 +5576,7 @@ public class Root extends Element {
      * @return the program/subroutine name
      * @see #extractMethodParamDecls(String, StringList, StringList, StringList)
      */
-    protected static String getMethodName(String rootText, DiagramType rootType, boolean _replaceBlanks)
+    public static String getMethodName(String rootText, DiagramType rootType, boolean _replaceBlanks)
     // END KGU#456 2017-11-04
     {
     	int pos;
