@@ -443,7 +443,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
 		String suffix = Integer.toHexString(_para.hashCode());
@@ -504,7 +504,7 @@ public class CPlusPlusGenerator extends CGenerator {
 			}
 		});
 		for (Parallel par: containedParallels) {
-			boolean isDisabled = par.isDisabled();
+			boolean isDisabled = par.isDisabled(false);
 			String functNameBase = "ThrFunc" + Integer.toHexString(par.hashCode()) + "_";
 			Root root = Element.getRoot(par);
 			// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export

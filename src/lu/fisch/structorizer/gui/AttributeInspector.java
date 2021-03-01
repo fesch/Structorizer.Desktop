@@ -319,7 +319,7 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		keyFieldMap.put("input", this.txtInput);
 		keyFieldMap.put("output", this.txtOutput);
 
-		lblRoot.setText(root.getSignatureString(false));
+		lblRoot.setText(root.getSignatureString(false, false));
 		txtFilePath.setText(root.filename == null ? "" : root.filename);
 		txtFilePath.setEditable(false);
 		txtFilePath.addKeyListener(keyListener);

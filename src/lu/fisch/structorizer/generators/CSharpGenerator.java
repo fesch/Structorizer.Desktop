@@ -771,7 +771,7 @@ public class CSharpGenerator extends CGenerator
 	protected void generateCode(Parallel _para, String _indent)
 	{
 
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		Root root = Element.getRoot(_para);
 		String indentPlusOne = _indent + this.getIndent();
 		String suffix = Integer.toHexString(_para.hashCode());
@@ -851,7 +851,7 @@ public class CSharpGenerator extends CGenerator
 				appendComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 			}
 			for (Parallel par: containedParallels) {
-				boolean isDisabled = par.isDisabled();
+				boolean isDisabled = par.isDisabled(false);
 				String workerNameBase = "Worker" + Integer.toHexString(par.hashCode()) + "_";
 				Root root = Element.getRoot(par);
 				// START KGU#676 2019-03-30: Enh. #696 special pool in case of batch export
@@ -976,7 +976,7 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected void appendCatchHeading(Try _try, String _indent) {
 		
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		String varName = _try.getExceptionVarName();
 		String head = "catch ()";
 		String exName = "ex" + Integer.toHexString(_try.hashCode());

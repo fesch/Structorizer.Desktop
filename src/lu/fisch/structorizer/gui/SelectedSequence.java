@@ -718,7 +718,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	public void setDisabled(boolean disable) {
 		for (int i = 0; i < this.getSize(); i++)
 		{
-			this.getElement(i).disabled = disable;
+			this.getElement(i).setDisabled(disable);
 		}
 	}
 	// END KGU#277 2016-10-13

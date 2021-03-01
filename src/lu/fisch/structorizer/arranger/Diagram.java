@@ -39,6 +39,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2018-12-26  Enh. #655 method getName() introduced
  *      Kay Gürtzig     2019-01-20  Bugfix #667 in method getName().
  *      Kay Gürtzig     2019-03-10  Issue #698: Inheritance changed to ArchiveRecord, indentations aligned
+ *      Kay Gürtzig     2021-02-24  Enh. #410: Signature change tracking now also checks the namespace
  *
  ******************************************************************************************************
  *
@@ -81,7 +82,10 @@ public class Diagram extends ArchiveRecord
 	{
 		super(root,  point);
 		// START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
-		signature = root.getSignatureString(true);
+		// START KGU#408 2021-02-24: Enh. #410 - involve namespace info
+		//signature = root.getSignatureString(true);
+		signature = root.getSignatureString(true, true);
+		// END KGU#408 2021-02-24
 		// END KGU#330 2017-01-13
 	}
 
@@ -116,10 +120,24 @@ public class Diagram extends ArchiveRecord
 	public boolean checkSignatureChange()
 	{
 		String oldSignature = this.signature;
-		this.signature = this.root.getSignatureString(true);
+		// START KGU#408 2021-02-24: Enh. #410 - involve namespace info
+		//this.signature = root.getSignatureString(true);
+		this.signature = root.getSignatureString(true, true);
+		// END KGU#408 2021-02-24
 		return !this.signature.equals(oldSignature);
 	}
 	// END KGU#330 2017-01-13
+	
+	// START KGU#408 2021-02-28: Enh. #410
+	/**
+	 * @return the cached signature string of the recently held {@link Root} or
+	 * possibly {@code null}
+	 */
+	public String getCachedSignature()
+	{
+		return this.signature;
+	}
+	// END KGU#408 2021-02-28
 	
 	// START KGU#624 2018-12-26: Enh. #655
 	/** @return the pure diagram name (extracted from the cached signature) */
@@ -140,6 +158,12 @@ public class Diagram extends ArchiveRecord
 				name = name.substring(1);
 			}
 			// END KGU#639 2019-01-20
+			// START KGU#408 2021-02-24: Enh. #410 - to be consistent with prior mechanisms we must skip prefix
+			int posDot = name.lastIndexOf('.');
+			if (posDot >= 0) {
+				name = name.substring(posDot+1);
+			}
+			// END KGU#408 2021-02-24
 		}
 		return name;
 	}

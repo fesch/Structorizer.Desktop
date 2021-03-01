@@ -129,7 +129,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-23      Enh. #896: Readiness for dragging now indicated by different cursor
  *      Kay Gürtzig     2020-12-29      Issue #901: Time-consuming actions set WAIT_CURSOR now
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
- *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams 
+ *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams
+ *      Kay Gürtzig     2021-02-24      Enh. #410: Root search methods enhanced by namespace similarity ranking
+ *      Kay Gürtzig     2021-03-01      Enh. #410: Temporary pool notification suppression introduced
  *
  ******************************************************************************************************
  *
@@ -374,6 +376,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
 	};
 	// END KGU#312 2016-12-29
+	// START KGU#408 2021-03-01: Enh. ##410 Again monstruous contention
+	private boolean notifications_enabled = true;
+	private int deferred_notifications = 0;
+	// END KGU#408 2021-03-01
 	// START KGU#385 2017-04-22: Enh. #62
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
@@ -641,7 +647,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
 	/**
 	 * Tries to load all nsd files contained in the array `files´ such that the diagrams
-	 * may be held by this.  
+	 * may be held by this.
 	 * @param files - array of File objects associated to NSD file names 
 	 * @return number of successfully loaded files.
 	 */
@@ -652,30 +658,35 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// END KGU#624 2018-12-22
 		// We try to load as many files of the list as possible and collect the error messages
 		int nLoaded = 0;
+		int toBeLoaded = files.length;
+		// TODO delegate this to a worker thread with a large number (e.g. > 20) of files
 		String troubles = "";
-		for (int i = 0; i < files.length; i++)
-		{
-			//String filename = files[i].toString();
-			String errorMessage = loadFile(files[i]);
-			// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
-			//if (!troubles.isEmpty()) { troubles += "\n"; }
-			//troubles += "\"" + filename + "\": " + errorMessage;
-			//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
-			if (!errorMessage.isEmpty())
-			{
-				if (!troubles.isEmpty()) { troubles += "\n"; }
-				String trouble = "\"" + files[i].getAbsolutePath() + "\": " + errorMessage;
-				troubles += trouble;
-				logger.log(Level.INFO, "Arranger failed to load " + trouble);	
+		Cursor origCursor = getCursor();
+		try {
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			for (int i = 0; i < toBeLoaded; i++) {
+				//String filename = files[i].toString();
+				String errorMessage = loadFile(files[i]);
+				// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
+				//if (!troubles.isEmpty()) { troubles += "\n"; }
+				//troubles += "\"" + filename + "\": " + errorMessage;
+				//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+				if (!errorMessage.isEmpty()) {
+					if (!troubles.isEmpty()) { troubles += "\n"; }
+					String trouble = "\"" + files[i].getAbsolutePath() + "\": " + errorMessage;
+					troubles += trouble;
+					logger.log(Level.INFO, "Arranger failed to load " + trouble);	
+				}
+				else {
+					nLoaded++;
+				}
+				// END KGU#153 2016-03-03
 			}
-			else
-			{
-				nLoaded++;
-			}
-			// END KGU#153 2016-03-03
 		}
-		if (!troubles.isEmpty())
-		{
+		finally {
+			setCursor(origCursor);
+		}
+		if (!troubles.isEmpty()) {
 			JOptionPane.showMessageDialog(this, troubles, msgFileLoadError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
 		// START KGU#278 2016-10-11: Enh. #267
@@ -1029,7 +1040,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#679 2019-03-13
 		// START KGU#746 2019-10-05: The status change of the group wasn't shown in Arranger index
-		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// START KGU#408 2021-03-01: This is a low-level change
+		//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED);
+		// END KGU#408 2021-03-01
 		// END KGU#746 2019-10-05
 		return done ? group : null;
 	}
@@ -1090,6 +1104,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		LinkedList<Root> savedRoots = null;
+		enableNotification(false);
 		try
 		{
 			// Prepare to save the arr file (if portable is false then this is the outfile)
@@ -1249,7 +1264,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 					// In the other cases the diagram already resides in the archive or can be shared
 					else if (diagr.root.shadowFilepath == null) {
-						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false) + ": " +
+						sharedDiagrams.addOrdered(diagr.root.getSignatureString(false, false) + ": " +
 								groupNames.concatenate(", ").replace(Group.DEFAULT_GROUP_NAME, ArrangerIndex.msgDefaultGroupName.getText()));
 						if (savedRoots.contains(diagr.root)) {
 							for (String grName: diagr.getGroupNames()) {
@@ -1297,6 +1312,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			
 			JOptionPane.showMessageDialog(initiator, msgSaveError.getText() + " " + ex.getMessage() + "!" + (!causes.isEmpty() ? "\n" + causes.getText() : ""),
 					"Error", JOptionPane.ERROR_MESSAGE, null);
+		}
+		finally {
+			enableNotification(true);
 		}
 		return done;
 	}
@@ -3019,7 +3037,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#624 2018-12-21
 			repaint();
 			// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// START KGU#408 2021-03-01: Enh. #410 - no need to rebuild the tree
+			//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// END KGU#408 2021-03-01
 			// END KGU#318 2017-01-05
 		}
 		else
@@ -3714,7 +3735,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#630 2019-01-09
 					List<Diagram> hitDiagrs = this.getHitDiagrams(Math.round(e.getX() / zoomFactor), Math.round(e.getY() / zoomFactor));
 					for (Diagram diagr: hitDiagrs) {
-						String description = diagr.root.getSignatureString(false);
+						String description = diagr.root.getSignatureString(false, false);
 						javax.swing.JMenuItem menuItem = new javax.swing.JMenuItem(description, diagr.root.getIcon());
 						menuItem.setToolTipText(msgTooltipSelectThis.getText()
 								.replace("%1", msgDiagram.getText().replace("%", description))
@@ -3990,11 +4011,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (diagr != null) {
 			String oldRootName = diagr.getName();
 			if (diagr.checkSignatureChange()) {
+				int changes = IRoutinePoolListener.RPC_POOL_CHANGED
+						| IRoutinePoolListener.RPC_STATUS_CHANGED;
 				String newRootName = source.getMethodName();
 				if (!oldRootName.equals(newRootName)) {
 					removeFromNameMap(oldRootName, diagr);
 					addToNameMap(newRootName, diagr);
 					//printNameMap(3953);	// FIXME DEBUG
+					changes |= IRoutinePoolListener.RPC_NAME_CHANGED;
 				}
 				// START KGU#626 2018-12-31: Update the root lists in the groups
 				for (String groupName: diagr.getGroupNames()) {
@@ -4007,7 +4031,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 				}
 				// END KGU#626 2018-12-31
-				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+				this.notifyChangeListeners(changes);
 			}
 			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
 			if (source.hasChanged()) {
@@ -4060,7 +4084,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int, boolean)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel)
 	{
@@ -4075,7 +4099,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
 	 * @see #findDiagram(Root, int)
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 */
 	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
@@ -4120,11 +4144,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 							fName = "[" + diagram.root.proposeFileName() + "]";
 						}
 						String message = msgInsertionConflict[resemblance-3].getText().
-								replace("%1", root.getSignatureString(false)).
+								replace("%1", root.getSignatureString(false, false)).
 								replace("%2", fName);
 						JOptionPane.showMessageDialog(this.getParent(), message,
 								this.titleDiagramConflict.getText(),
-								JOptionPane.WARNING_MESSAGE);			
+								JOptionPane.WARNING_MESSAGE);
 					}
 					if (resemblance <= equalityLevel)
 					{
@@ -4223,7 +4247,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findIncludesByName(java.lang.String)
 	 */
 	@Override
-	public Vector<Root> findIncludesByName(String rootName, Root includer)
+	public Vector<Root> findIncludesByName(String rootName, Root includer, boolean filterByClosestPath)
 	{
 		/* The most efficient strategy for group-aware retrieval is supposed to
 		 * be first to fetch all matching Roots (in most cases the result will
@@ -4241,6 +4265,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			incls = filterRootsByGroups(includer, incls, false);
 		}
 		// END KGU#700 2019-03-28
+		
+		// START KGU#408 2021-02-24: Enh. #410 Additional check for namespace match
+		if (incls.size() > 0 && includer != null && includer.getNamespace() != null) {
+			incls = sortRootsByNamespace(includer.getNamespace(), incls, filterByClosestPath);
+		}
+		// END KGU#408 2021-02-24
 		return incls;
 	}
 	// END KGU#376 2017-04-11
@@ -4250,7 +4280,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
 	 */
 	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller)
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller, boolean filterByClosestPath)
 	{
 		/* The most efficient strategy for group-aware retrieval is supposed to
 		 * be first to fetch all matching Roots (in most cases the result will
@@ -4287,6 +4317,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			functions = filterRootsByGroups(caller, functions, false);
 		}
 		// END KGU#700 2019-03-28
+		
+		// START KGU#408 2021-02-24: Enh. #410 Additional check for namespace match
+		if (functions.size() > 0 && caller != null && caller.getNamespace() != null) {
+			functions = sortRootsByNamespace(caller.getNamespace(), functions, filterByClosestPath);
+		}
+		// END KGU#408 2021-02-24
 		return functions;
 	}
 	// END KGU#2 2015-11-24
@@ -4347,7 +4383,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		Collections.sort(selectedRoots, Root.SIGNATURE_ORDER);
 		StringList signatures = new StringList();
 		for (Root root: selectedRoots) {
-			signatures.add(root.getSignatureString(withPath));
+			signatures.add(root.getSignatureString(withPath, false));
 		}
 		return signatures;
 	}
@@ -4378,11 +4414,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * Returns a {@link Vector} of only those elements of {@code roots} that
 	 * share at least one group with {@code discriminator} if {@code discriminator}
 	 * is member of at least one group. If {@code strictly} is false, then in case of
-	 * an empy intersection the original set of roots will be returned (unfiltered).
+	 * an empty intersection the original set of roots will be returned (unfiltered).
 	 * @param discriminator - a {@link Root} object the associated groups of which decide membership
 	 * @param roots - collection of candidate {@link Root} objects
-	 * @param strictly - if true then an empy vector is returned if none of the roots shares a group
-	 * with discriminator, otherwise all given roots will be returned in case te filtered set became empty
+	 * @param strictly - if {@code true} then an empty vector is returned if none of the
+	 *  roots shares a group with {@code discriminator}, otherwise all given roots will
+	 *  be returned in case the filtered set became empty
+	 * @return the filtered collection of members of {@code roots}
 	 */
 	private Vector<Root> filterRootsByGroups(Root discriminator, Vector<Root> roots, boolean strictly) {
 		Vector<Root> filteredRoots = new Vector<Root>();
@@ -4405,6 +4443,53 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		return filteredRoots;
 	}
 	// END KGU#700 2019-03-28
+	
+	// START KGU#408 2021-02-24: Enh. #410 Additional namespace field on behalf of Java import
+	/**
+	 * Returns a {@link Vector} of the given elements of {@code roots} that is sorted
+	 * from maximum to minimum coincidence of the name space prefixes with given
+	 * {@code namespace}. Result set may be restricted to the best-matching partition.
+	 * @param namespace - the qualifier to be matched against
+	 * @param roots - the candidate {@link Root}s
+	 * @param onlyBestMatch - if {@code true} and there are differences in the length
+	 *   of the common namespace prefix then only the best-matching category will be
+	 *   returned
+	 * @return the sorted and possibly filtered collection of members of {@code roots}
+	 */
+	private Vector<Root> sortRootsByNamespace(String namespace, Vector<Root> roots, boolean onlyBestMatch) {
+		Vector<Root> orderedRoots = new Vector<Root>();
+		StringList path = StringList.explode(namespace, "\\.");
+		Vector<Vector<Root>> partition = new Vector<Vector<Root>>(path.count()+1);
+		for (int i = 0; i <= path.count(); i++) {
+			partition.add(new Vector<Root>());
+		}
+		for (int i = 0; i < roots.size(); i++) {
+			Root cand = roots.get(i);
+			if (cand.getNamespace() == null) {
+				partition.get(0).add(cand);
+			}
+			else {
+				StringList pathI = StringList.explode(cand.getNamespace(), "\\.");
+				int minLgth = Math.min(path.count(), pathI.count());
+				for (int j = 0; j < minLgth; j++) {
+					if (!path.get(j).equals(pathI.get(j))) {
+						partition.get(j).add(cand);
+						break;
+					}
+					else if (j+1 == minLgth) {
+						partition.get(j+1).add(cand);
+					}
+				}
+			}
+		}
+		for (int i = partition.size() - 1; i >= 0; i--) {
+			if (orderedRoots.addAll(partition.get(i)) && onlyBestMatch) {
+				break;
+			}
+		}
+		return orderedRoots;
+	}
+	// END KGU#408 2021-02-24
 
 	// START KGU#305 2016-12-16
 	/**
@@ -4687,7 +4772,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: calls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), root, false);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							fct.getSignatureString(), candidates);
 				}
@@ -4696,7 +4781,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			if (root.includeList != null) {
 				for (int i = 0; i < root.includeList.count(); i++) {
 					String inclName = root.includeList.get(i);
-					Vector<Root> candidates = this.findIncludesByName(inclName, root);
+					Vector<Root> candidates = this.findIncludesByName(inclName, root, false);
 					handleReferenceCandidates(selectedRoots, missingSignatures, duplicateSignatures, rootQueue, addedDiagrams,
 							inclName, candidates);
 				}
@@ -4775,14 +4860,38 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private void notifyChangeListeners(int _flags)
 	// END KGU#624 2018-12-21
 	{
-		for (IRoutinePoolListener listener: listeners) {
-			// START KGU#624 2018-12-21: Enh. #655
-			//listener.routinePoolChanged(this);
-			listener.routinePoolChanged(this, _flags);
-			// END KGU#624 2018-12-21
+		if (this.notifications_enabled ) {
+			for (IRoutinePoolListener listener: listeners) {
+				// START KGU#624 2018-12-21: Enh. #655
+				//listener.routinePoolChanged(this);
+				listener.routinePoolChanged(this, _flags);
+				// END KGU#624 2018-12-21
+			}
+		}
+		else {
+			deferred_notifications |= _flags;
 		}
 	}
 	// END KGU#305 2016-12-16
+	
+	// START KGU#408 2021-03-01: Enh. #410 Acceleration attempt 
+	@Override
+	public void enableNotification(boolean enable)
+	{
+		this.notifications_enabled = enable;
+		if (enable && deferred_notifications != 0) {
+			notifyChangeListeners(deferred_notifications);
+			deferred_notifications = 0;
+		}
+		
+	}
+
+	@Override
+	public boolean isNotificationEnabled()
+	{
+		return this.notifications_enabled;
+	}
+	// END KGU#408 2021-03-01
 
 	// START KGU#497 2018-02-17: Enh. #512
 	/**
@@ -5299,7 +5408,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			for (Call call: containedCalls) {
 				Function fct = call.getCalledRoutine();
 				if (fct != null && fct.isFunction()) {
-					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null);
+					Vector<Root> candidates = this.findRoutinesBySignature(fct.getName(), fct.paramCount(), null, false);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
@@ -5308,7 +5417,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			StringList includeNames = diagr.root.includeList;
 			if (includeNames != null) {
 				for (int i = 0; i < includeNames.count(); i++) {
-					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null);
+					Vector<Root> candidates = this.findIncludesByName(includeNames.get(i), null, false);
 					if (containsUnsharedPartner(candidates, diagr, members, group.getName(), groupNames)) {
 						return true;
 					}
@@ -5446,7 +5555,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			this.groups.remove(oldName);
 			groups.put(newName, group);
 		}
-		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_NAME_CHANGED);
 		return true;
 	}
 

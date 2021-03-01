@@ -882,7 +882,7 @@ About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
 About.pnlTabbed.tab.2=Лицензия
 About.pnlTabbed.tab.3=Папки
-About.msgPaths.text=Файл Ини:\n%1\n\nПапка журнала:\n%2\n\nПапка инсталляции:\n%3\n
+About.msgPaths.text=Файл Ини:\n%1\n\nПапка журнала:\n%2\n\nПапка инсталляции:\n%3\n\nJava VM (версия %4):\n%5\n
 About.btnOK.text=ОК
 About.btnOK.tooltip=Кончить окно.
 

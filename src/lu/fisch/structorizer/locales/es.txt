@@ -479,6 +479,8 @@ Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
 Menu.msgVersionHint_3_30_15.text=Este nuevo editor para elementos\ndel tipo @c es opcional.\nPromete mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nSi prefieres el diseño tradicional,\nsin embargo, puedes deshabilitar la opción\n"%1"\nen las %2.
+Menu.msgJavaUpgradeHint_3_30_18.text=Los productores de Structorizer entienden abandonar la compatibilidad con Java versión 8\na mediados del año 2021 y avanzar el codigo tal que va a requrir Java 11 VM\npor lo menos.\nYa ahora Structorizer se puede usar en base de Java 11+, pero versiones\nfuturas de Structrizer no funcionarán en versiones obsolescentes\nde Java (< 11).\nNo juega ningun papel si se trata de una distribucion por Oracle\no de algún OpenJDK.
+Menu.msgJavaUpgradeHint_3_30_18a.text=\nFíjate de que Java WebStart oficiálmente dejó de estar soportado\ndespués de Java 8, pero hay alternativas como Open Webstart (https://openwebstart.com)\nsi quieres quedarte con la distribución JNLP de Structorizer.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -822,6 +824,8 @@ InputBoxRoot.btnCancel.tooltip=Cancelar los cambios.
 InputBoxRoot.btnAttributes.text=Propiedades
 InputBoxRoot.btnAttributes.tooltip=Abre un diálogo para inspiciar propiedades de este diagrama.
 InputBoxRoot.btnAddIncludable.text=Añadir
+InputBoxRoot.lblNamespace.text=Espacio de nombres (prefijo)
+InputBoxRoot.lblNamespace.tooltip=Un cualificador jerárquico (y opcional), constando de identificadores separados por puntos, como prefijo
 
 -----[ InputBoxCase ]-----
 InputBoxCase.title[getInsertionType():insert]=Insertar ramificación @c...
@@ -995,7 +999,7 @@ About.pnlTabbed.tab.0=Personas implicadas
 About.pnlTabbed.tab.1=Diario de cambios
 About.pnlTabbed.tab.2=Licencia
 About.pnlTabbed.tab.3=Rutas
-About.msgPaths.text=Fichero Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n
+About.msgPaths.text=Fichero Ini:\n%1\n\nCarpeta de protocolo:\n%2\n\nRuta de instalación:\n%3\n\nJava VM (versión %4):\n%5\n
 About.btnOK.text=Aceptar
 About.btnOK.tooltip=Cerrar el diálogo.
 
@@ -1402,6 +1406,7 @@ ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilidad del grupo y de sus diagram
 ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
 ArrangerIndex.popupIndexExport.text=Exportar diagrama/grupo
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
+ArrangerIndex.popupIndexShowQualifiers.text=Mostrar prefijos
 ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados

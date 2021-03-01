@@ -205,6 +205,8 @@ package lu.fisch.structorizer.executor;
  *                                      Bugfix #922: Corrected handling of mixed substructure in setVar()
  *                                      Issue #923: Manipulations of FOR-IN loop variables are not illegal
  *      Kay Gürtzig     2021-02-03      Issue #920: Acceptance of infinity as symbol ∞
+ *      Kay Gürtzig     2021-02-24      Enh. #410: Additional namespace filter applied for callees and includables
+ *      Kay Gürtzig     2021-02-28      Bugfix #947: Detection of cyclic inclusion added.
  *
  ******************************************************************************************************
  *
@@ -375,6 +377,7 @@ import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.parsers.CodeParser;
 //import lu.fisch.structorizer.syntax.ExprParser;
 import lu.fisch.utils.BString;
@@ -1080,7 +1083,7 @@ public class Executor implements Runnable
 					if (running) {
 						JOptionPane.showMessageDialog(null, Control.msgUseStopButton.getText(),
 								mySelf.getClass().getSimpleName() + ": "
-										+ mySelf.diagram.getRoot().getSignatureString(false),
+										+ mySelf.diagram.getRoot().getSignatureString(false, false),
 								JOptionPane.WARNING_MESSAGE);
 					}
 					else {
@@ -1679,6 +1682,10 @@ public class Executor implements Runnable
 		// END KGU#78 2015-11-25
 		// END KGU#384 207-04-22
 		
+		// START KGU#946 2021-02-28: Bugfix #947 We must also track during include list processing
+		this.addToStackTrace(root, arguments, false);
+		// END KGU#946 2021-02-28
+		
 		// START KGU#376 2017-07-01: Enh. #389 - perform all specified includes
 		trouble = importSpecifiedIncludables(root);
 		// END KGU#376 2017-07-01
@@ -1827,7 +1834,11 @@ public class Executor implements Runnable
 		// END KGU#376 2017-04-22
 
 		// START KGU#159 2017-02-17: Now we permanently maintain the stacktrace
-		addToStackTrace(root, arguments);
+		// START KGU#946 2021-02-28: Bugfix #947 Update the provisional stacktrace entry
+		//addToStackTrace(root, arguments);
+		this.dropFromStackTrace(false);
+		addToStackTrace(root, arguments, true);
+		// END KGU#946 2021-02-28
 		// END KGU#159 2017-03-17
 	
 		if (trouble.equals(""))
@@ -2067,7 +2078,7 @@ public class Executor implements Runnable
 		if (successful || this.withinTryBlock)
 		// END KGU#686 2019-03-56
 		{
-			dropFromStackTrace();
+			dropFromStackTrace(true);
 		}
 		
 		// START KGU#2 (#9) 2015-11-13: Need the status
@@ -2151,6 +2162,11 @@ public class Executor implements Runnable
 						}
 						catch (EvalError ex) {}
 					}
+					// START KGU#946 2021-02-28: Bugfix #947 We must never include a root we are being called from
+					else if (imp.isCalling) {
+						errorString = Menu.error23_2.getText().replace("%", imp.getMethodName());
+					}
+					// END KGU#946 2021-02-28
 					else {
 						// END KGU#376 2017-04-21
 						executeCall(imp, null, null);
@@ -2306,8 +2322,8 @@ public class Executor implements Runnable
 		this.context.root.isCalling = true;
 		// END KGU#508 2018-03-19
 		this.callers.push(this.context);
-		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// END KGU#384 2017-04-22
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		// START KGU#376 2017-04-21: Update all current imports before sub execution
 		for (int i = 0; i < context.importList.count(); i++) {
 			String impName = context.importList.get(i);
@@ -2367,6 +2383,10 @@ public class Executor implements Runnable
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
 		// END KGU#430 2017-10-12
 		
+		// START KGU#946 2021-02-28: Bugfix #947 - With includables, the stack display wasn't upated
+		this.control.updateCallLevel(this.callers.size());
+		// END KGU#946 2021-02-28
+
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
 		// END KGU#156 2016-03-11
@@ -2493,6 +2513,10 @@ public class Executor implements Runnable
 		// END KGU#430 2017-10-12
 		entry.root.isCalling = false;
 
+		// START KGU#946 2021-02-28: Bugfix #947 - With includables, the stack display wasn't upated
+		this.control.updateCallLevel(this.callers.size());
+		// END KGU#946 2021-02-28
+
 		// START KGU#686 2019-03-17: Enh. #56 Don't fetch the result if failed
 		if (ok) {
 		// END KGU#686 2019-03-17
@@ -2522,7 +2546,10 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#2 2015-11-24: Stack trace support for execution errors
-	private void addToStackTrace(Root _root, Object[] _arguments)
+	// START KGU#946 2021-02-28: Bugfix #947 We must also track during include list processing
+	//private void addToStackTrace(Root _root, Object[] _arguments)
+	private void addToStackTrace(Root _root, Object[] _arguments, boolean _allowLogging)
+	// END KGU#946 2021-02-28
 	{
 		String argumentString = "";
 		if (_arguments != null)
@@ -2536,7 +2563,10 @@ public class Executor implements Runnable
 		}
 		this.stackTrace.add(_root.getMethodName() + argumentString);
 		// START KGU#569 2018-08-03: Enh. #577 - optional call trace in console window
-		if (this.console.logCalls()) {
+		// START KGU#946 2021-02-28: Bugfix #947 No logging on provisional addition
+		//if (this.console.logCalls()) {
+		if (_allowLogging && this.console.logCalls()) {
+		// END KGU#946 2021-02-28
 			int depth = this.stackTrace.count() - 1;
 			for (int i = 0; i < Math.min(MAX_STACK_INDENT, depth); i++) {
 				this.console.write("  ");
@@ -2550,14 +2580,17 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#159 2016-03-17: #133 Stacktrace should always be available on demand, not only on error
-	private void dropFromStackTrace()
+	private void dropFromStackTrace(boolean _allowLogging)
 	{
 		int size = this.stackTrace.count();
 		if (size > 0)
 		{
 			size--;
 			// START KGU#569 2018-08-03: Enh. #577 - optional call trace in console window
-			if (this.console.logCalls()) {
+			// START KGU#946 2021-02-28: Bugfix #947 No logging on provisional addition
+			//if (this.console.logCalls()) {
+			if (_allowLogging && this.console.logCalls()) {
+			// END KGU#946 2021-02-28
 				for (int i = 0; i < Math.min(MAX_STACK_INDENT, size); i++) {
 					this.console.write("  ");
 				}
@@ -2615,6 +2648,7 @@ public class Executor implements Runnable
 	
 	/**
 	 * Searches all known pools for a unique includable diagram with given name
+	 * and maximum namespace coincidence with current root in the context
 	 * @param name - diagram name
 	 * @return a {@link Root} of type INCLUDABLE with given name if uniquely
 	 *         found, {@code null} otherwise
@@ -2627,7 +2661,8 @@ public class Executor implements Runnable
 	
     /**
      * Searches all known pools for subroutines with a signature compatible to
-     * {@code name(arg1, arg2, ..., arg_nArgs)}
+     * {@code name(arg1, arg2, ..., arg_nArgs)} and maximum namespace coincidence
+     * with current root in the context
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
      * @return a {@link Root} that matches the specification if uniquely found,
@@ -2669,15 +2704,16 @@ public class Executor implements Runnable
     		IRoutinePool pool = iter.next();
     		Vector<Root> candidates = null;
     		if (nArgs >= 0) {
-    			candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
+    			// START KGU#408 2021-02-24: Enh. #410 Involve the namespace if possible
+    			//candidates = pool.findRoutinesBySignature(name, nArgs, context.root);
+    			candidates = pool.findRoutinesBySignature(name, nArgs, context.root, true);
+    			// END KGU#408 2021-02-24
     		}
     		else {
-    			// Why the heck this circumvention? 
-//    			candidates = new Vector<Root>();
-//    			for (Root cand: pool.findIncludesByName(name, context.root)) {
-//    				candidates.add(cand);
-//    			}
-    			candidates = pool.findIncludesByName(name, context.root);
+    			// START KGU#408 2021-02-24: Enh. #410 Involve the namespace if possible
+    			//candidates = pool.findIncludesByName(name, context.root);
+    			candidates = pool.findIncludesByName(name, context.root, true);
+    			// END KGU#408 2021-02-24
     		}
     		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
     		//for (int c = 0; subroutine == null && c < candidates.size(); c++)
@@ -4983,7 +5019,7 @@ public class Executor implements Runnable
 	{
 		String trouble = new String();
 		// START KGU#277 2016-10-13: Enh. #270: skip the element if disabled
-		if (element.disabled) {
+		if (element.isDisabled(true)) {
 			return trouble;
 		}
 		// END KGU#277 2016-10-13

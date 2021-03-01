@@ -811,7 +811,7 @@ public class C99Parser extends CPreParser
 				String content = _reduction.get(0).asString() + ":";
 				Instruction el = new Instruction(content);
 				el.setColor(Color.RED);	// will only be seen if the user enables the element
-				el.disabled = true;
+				el.setDisabled(true);
 				this.equipWithSourceComment(el, _reduction);
 				el.getComment().add("FIXME: Goto instructions are not supported in structured algorithms!");
 				_parentNode.addElement(el);
@@ -1320,7 +1320,7 @@ public class C99Parser extends CPreParser
 		//System.out.println(sr.getParentRule().getText());  // <<<<<<<
 		while (sr.getParent().getTableIndex() == RuleConstants.PROD_CASESTMTS_CASE_COLON)
 		{
-			Reduction stmList = (Reduction) sr.get(3).getData();
+			Reduction stmList = sr.get(3).asReduction();
 			if (stmList.getParent().getTableIndex() == RuleConstants.PROD_STMTLIST) {
 				// non-empty statement list, so we will have to set up a branch
 				j++;
@@ -2727,7 +2727,7 @@ public class C99Parser extends CPreParser
 			}
 		}
 		// END KGU#652 2019-02-13
-		for (int i=0; i<_reduction.size(); i++)
+		for (int i = 0; i < _reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
 			/* -------- Begin code example for text retrieval and translation -------- */

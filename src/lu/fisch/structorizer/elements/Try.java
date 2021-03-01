@@ -479,7 +479,7 @@ public class Try extends Element {
 	 */
 	@Override
 	protected void addFullText(StringList _lines, boolean _instructionsOnly) {
-		if (!this.isDisabled()) {
+		if (!this.isDisabled(false)) {
 			this.qTry.addFullText(_lines, _instructionsOnly);
 			// FIXME the contents of the catch block may not be wanted
 			if (!_instructionsOnly) {

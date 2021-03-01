@@ -98,6 +98,8 @@ package lu.fisch.structorizer.gui;
  *                                      several public comments added.
  *      Kay Gürtzig     2021-01-02      Enh. #905: New INI property "drawAnalyserMarks"
  *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
+ *      Bob Fisch       2021-02-17      Attempt to solve issue #912 (Opening Structorizer via file doubleclick on OS X)
+ *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
  *
  ******************************************************************************************************
  *
@@ -1339,6 +1341,16 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 */
 	public void popupWelcomePane()
 	{
+		// START KGU#941 2021-02-24: Issue #944
+		String javaVersion = System.getProperty("java.version");
+		int javaMajor = 1;
+		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
+			try {
+				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
+			}
+			catch (NumberFormatException e) {}
+		}
+		// END KGU#941 2021-02-24
 		// START KGU#456 2017-11-06: Enh. #452
 		//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 		if (this.isNew) {
@@ -1432,12 +1444,30 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			}
 		}
 		// END KGU#906 2021-01-18
+		// START KGU#941 2021-02-24: Issue #944: Temporary update hint
+		else if (javaMajor < 11
+				&& (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo(Element.E_VERSION) < 0)
+				&& !System.getProperty("os.name").toLowerCase().startsWith("mac os x")) {
+			if (menu != null) {
+				String message = Menu.msgJavaUpgradeHint_3_30_18.getText();
+				if (Ini.getInstallDirectory().getAbsolutePath().endsWith("webstart")) {
+					message += Menu.msgJavaUpgradeHint_3_30_18a.getText();
+				}
+				JOptionPane.showMessageDialog(this,
+						message,
+						Element.E_VERSION,
+						JOptionPane.INFORMATION_MESSAGE,
+						IconLoader.getIconImage("078_java.png", 2.0));
+				this.suppressUpdateHint = Element.E_VERSION;
+			}
+		}
+		// END KGU#941 2021-02-24
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
-			// END KGU#456 2017-11-06
+		// END KGU#456 2017-11-06
 			// START KGU#532 2018-06-25: In a webstart environment the message doesn't make sense
 			//if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
 			if (!isAutoUpdating && !Element.E_VERSION.equals(this.suppressUpdateHint)) {    	    		
-				// END KGU#532 2018-06-25
+			// END KGU#532 2018-06-25
 				int chosen = JOptionPane.showOptionDialog(this,
 						Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
 						Menu.lblHint.getText(),
@@ -1521,12 +1551,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
 		if (_source instanceof Arranger && this.editor != null) {
-			if ((_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0) {
+			if ((_flags & (IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_NAME_CHANGED)) != 0) {
 				// START KGU#626 2019-01-01: Enh. #657
 				//this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 				this.editor.updateArrangerIndex(Arranger.getSortedGroups());
 				// END KGU#626 2019-01-01
-			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED | IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
+			} else if ((_flags & (IRoutinePoolListener.RPC_POSITIONS_CHANGED
+					| IRoutinePoolListener.RPC_STATUS_CHANGED
+					| IRoutinePoolListener.RPC_GROUP_COLOR_CHANGED)) != 0) {
 				this.editor.repaintArrangerIndex();
 			}
 			// START KGU#701 2019-03-30: Issue #718
@@ -1636,46 +1668,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		// END FISRO 2021-02-17
 	}
 	
-//	public void testOSX912() {
-//		try {
-//			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
-//			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
-//			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
-//			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
-//			Method methGF = evClass.getMethod("getFiles", new Class[0]);
-//			if (methSOFH != null && methOF != null) {
-//				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
-//						new Class[] {fhInterface}, new InvocationHandler() {
-//							@Override
-//							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-//								if (method.getDeclaringClass() == fhInterface
-//										&& method.equals(methOF)
-//										&& args.length == 1
-//										&& args[0].getClass() == evClass) {
-//									Object files = methGF.invoke(args[0], new Object[0]);
-//									if (files instanceof List<?>) {
-//										for (File file: (List<File>)files) {
-//											loadFile(file.getAbsolutePath());
-//										}
-//									}
-//									else {
-//										logger.warning("Failed to get the file list from assumend OpenFilesEvent");
-//									}
-//								}
-//								return null;
-//							}});
-//				try {
-//					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
-//				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
-//					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
-//				}
-//			}
-//		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
-//			// TODO Auto-generated catch block
-//			exc.printStackTrace();
-//		}
-//	}
-
 	/**
 	 * General file handler for OS X; fed to the OSXAdapter as the method to call
 	 * when a file associated to Structorizer is double-clicked or dragged onto it.

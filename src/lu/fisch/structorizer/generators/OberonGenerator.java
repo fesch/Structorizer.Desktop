@@ -546,7 +546,7 @@ public class OberonGenerator extends Generator {
 //		}
 		if (!appendAsComment(_inst, _indent)) {
 			
-			boolean isDisabled = _inst.isDisabled();
+			boolean isDisabled = _inst.isDisabled(false);
 			
 			appendComment(_inst, _indent);
 
@@ -960,7 +960,7 @@ public class OberonGenerator extends Generator {
 
 	protected void generateCode(Alternative _alt, String _indent)
 	{
-		boolean isDisabled = _alt.isDisabled();
+		boolean isDisabled = _alt.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_alt, _indent);
 		// END KGU 2014-11-16
@@ -981,7 +981,7 @@ public class OberonGenerator extends Generator {
 
 	protected void generateCode(Case _case, String _indent)
 	{
-		boolean isDisabled = _case.isDisabled();
+		boolean isDisabled = _case.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_case, _indent);
 		// END KGU 2014-11-16
@@ -1033,7 +1033,7 @@ public class OberonGenerator extends Generator {
 		}
 		// END KGU#61 2016-03-23
 
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 
 		// START KGU#3 2015-11-02: New reliable loop parameter mechanism
 		//code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
@@ -1067,7 +1067,7 @@ public class OberonGenerator extends Generator {
 		String arrayName = "array" + postfix;
 		String indexName = "index" + postfix;
 		String itemType = "FIXME_" + postfix;
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 
 		if (items != null)
 		{
@@ -1213,7 +1213,7 @@ public class OberonGenerator extends Generator {
 
 	protected void generateCode(While _while, String _indent)
 	{
-		boolean isDisabled = _while.isDisabled();
+		boolean isDisabled = _while.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_while, _indent);
 		// END KGU 2014-11-16
@@ -1227,7 +1227,7 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		boolean isDisabled = _repeat.isDisabled();
+		boolean isDisabled = _repeat.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
 		// END KGU 2014-11-16
@@ -1241,7 +1241,7 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		boolean isDisabled = _forever.isDisabled();
+		boolean isDisabled = _forever.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
@@ -1252,7 +1252,7 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Call _call, String _indent)
 	{
-		boolean isDisabled = _call.isDisabled();
+		boolean isDisabled = _call.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_call, _indent);
 		// END KGU 2014-11-16
@@ -1271,7 +1271,7 @@ public class OberonGenerator extends Generator {
 				// START KGU#877 2020-10-16: Bugfix #874 name extraction may fail (e.g. non-ASCII letters)
 				if (call != null) {
 				// END KGU#877 2020-10-16
-					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot);
+					java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(call.getName(), call.paramCount(), owningRoot, false);
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);
@@ -1304,7 +1304,7 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		boolean isDisabled = _jump.isDisabled();
+		boolean isDisabled = _jump.isDisabled(false);
 		// START KGU 2014-11-16
 		appendComment(_jump, _indent);
 		// END KGU 2014-11-16
@@ -1364,7 +1364,7 @@ public class OberonGenerator extends Generator {
 	// START KGU#47 2015-12-20: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		appendComment(_para, _indent);
 
 		addCode("", "", isDisabled);

@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-10-04      Bugfix #757: JTextArea size for include list.
  *      Kay Gürtzig     2020-04-13      Issue #842 Includable selection aid, indentation aligned
  *      Kay Gürtzig     2021-01-26      Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
+ *      Kay Gürtzig     2021-02-23      Enh. #410: New field txtNamespace on occasion of Java import implementation
  *
  ******************************************************************************************************
  *
@@ -50,20 +51,26 @@ package lu.fisch.structorizer.gui;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.util.Vector;
 
 import javax.swing.BoxLayout;
+import javax.swing.InputVerifier;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.RootAttributes;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.locales.LangEvent;
 import lu.fisch.structorizer.locales.LangEventListener;
 import lu.fisch.structorizer.locales.LangTextHolder;
@@ -115,6 +122,12 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 	public JPanel pnlIncludables;			// To be realised in a popup
 	private StringList availableIncludables;
 	// END KGU#838 2020-08-13
+	
+	// START KGU#408 2021-02-23: Enh.# 410 - new filed for package name etc.
+	public JLabel lblNamespace;
+	public JTextField txtNamespace;
+	private JPanel pnlNamespace;
+	// END KGU#408 2021-02-23
 	
 	public RootAttributes licenseInfo = new RootAttributes();
 	private Frame frame;
@@ -216,8 +229,79 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 		pnlIncludables.add(scrIncludeList);
 		// END KGU#838 2020-04-13
 
+		// START KGU#408 2021-02-23: Enh. #410 new text field namespace
+		lblNamespace = new JLabel("Name space (prefix)");
+		txtNamespace = new JTextField();
+		InputVerifier namespaceVerifier = new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				boolean isOk = false;
+				if (input == txtNamespace) {
+					String qualifier = txtNamespace.getText();
+					isOk = qualifier.isEmpty()
+							|| Function.testIdentifier(qualifier, true, ".")
+							&& !qualifier.startsWith(".")
+							&& !qualifier.endsWith(".")
+							&& !qualifier.contains("..");
+				}
+				return isOk;
+			}
+			public boolean shouldYieldFocus(JComponent input) {
+				boolean isOk = true;
+				if (input == txtNamespace) {
+					isOk = this.verify(input);
+					String qualifier = txtNamespace.getText();
+					while (qualifier.startsWith(".")) { qualifier = qualifier.substring(1); }
+					while (qualifier.endsWith(".")) { qualifier = qualifier.substring(0, qualifier.length()-1); }
+					while (qualifier.contains("..")) { qualifier = qualifier.replace("..", "."); }
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < qualifier.length(); i++) {
+						char ch = qualifier.charAt(i);
+						if (ch >= 'A' && ch <= 'Z'
+								|| ch >= 'a' && ch <= 'z'
+								|| ch >= '0' && ch <= '9'
+								|| ch == '.' || ch == '_') {
+							sb.append(ch);
+						}
+						else {
+							sb.append('_');
+						}
+					}
+					txtNamespace.setText(sb.toString());
+					licenseInfo.namespace = txtNamespace.getText();
+				}
+				if (!isOk) {
+					Toolkit.getDefaultToolkit().beep();
+				}
+				return isOk;
+			}
+		};
+		txtNamespace.setInputVerifier(namespaceVerifier);
+		txtNamespace.addKeyListener(this);
+		scalableComponents.add(txtNamespace);
+		
+		pnlNamespace = new JPanel();
+		pnlNamespace.setLayout(new BoxLayout(pnlNamespace, BoxLayout.X_AXIS));
+		pnlNamespace.add(lblNamespace);
+		pnlNamespace.add(txtNamespace);
+		
 		_gbc.gridx = 1;
-		_gbc.gridy = (lineNo += _gbc.gridheight);
+		_gbc.gridy = lineNo;
+		_gbc.gridwidth = 18;
+		_gbc.gridheight = 1;
+		_gbc.fill = GridBagConstraints.HORIZONTAL;
+		_gbc.weightx = 1;
+		_gbc.weighty = 0;
+		_gbc.anchor = GridBagConstraints.NORTH;
+		_gb.setConstraints(pnlNamespace, _gbc);
+		_panel.add(pnlNamespace);
+		
+		lineNo++;
+		// END KGU#408 2021-02-23		
+		
+		_gbc.gridx = 1;
+		//_gbc.gridy = (lineNo += _gbc.gridheight);
+		_gbc.gridy = lineNo;
 		_gbc.gridwidth = 18;
 		_gbc.gridheight = 1;
 		_gbc.fill = GridBagConstraints.BOTH;
@@ -480,4 +564,26 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 		lblIncludeList.removeLangEventListener(this);
 	}
 	// END KGU#620 2018-12-20
+	
+	// START KGU#408 2021-02-23: Enh. #410 handling of the new namespace field
+	@Override
+	public void setVisible(boolean b)
+	{
+		if (this.licenseInfo != null) {
+			if (b) {
+				if (this.licenseInfo.namespace != null) {
+					txtNamespace.setText(this.licenseInfo.namespace);
+				}
+				// FIXME While the further dependencies are not implemented we better disable it
+				if (txtNamespace.getText().isEmpty()) {
+					pnlNamespace.setVisible(false);
+				}
+			}
+			else {
+				this.licenseInfo.namespace = txtNamespace.getText();
+			}
+		}
+		super.setVisible(b);
+	}
+	// END KGU#408 2021-02-23
 }

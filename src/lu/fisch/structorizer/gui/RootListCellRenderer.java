@@ -82,7 +82,7 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     @Override
     public Component getListCellRendererComponent(JList<? extends Root> list, Root root, int index, boolean isSelected,
             boolean cellHasFocus) {
-        String s = root.getSignatureString(true);
+        String s = root.getSignatureString(true, false);
         boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
         setText(s);
         // START KGU#318/KGU#376 2017-04-29: Enh. #319, #389: show coverage status of (imported) main diagrams

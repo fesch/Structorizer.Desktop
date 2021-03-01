@@ -608,7 +608,7 @@ public class PythonGenerator extends Generator
 	protected void generateCode(Instruction _inst, String _indent)
 	{
 		if(!appendAsComment(_inst, _indent)) {
-			boolean isDisabled = _inst.isDisabled();
+			boolean isDisabled = _inst.isDisabled(false);
 			// START KGU 2014-11-16
 			appendComment(_inst, _indent);
 			// END KGU 2014-11-16
@@ -699,7 +699,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Alternative _alt, String _indent)
 	{
-		boolean isDisabled = _alt.isDisabled();
+		boolean isDisabled = _alt.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_alt, _indent);
@@ -729,7 +729,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Case _case, String _indent)
 	{
-		boolean isDisabled = _case.isDisabled();
+		boolean isDisabled = _case.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_case, _indent);
@@ -778,7 +778,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for .isDisabled();
+		boolean isDisabled = _for .isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_for, _indent);
@@ -835,7 +835,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(While _while, String _indent)
 	{
-		boolean isDisabled = _while.isDisabled();
+		boolean isDisabled = _while.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_while, _indent);
@@ -860,7 +860,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		boolean isDisabled = _repeat.isDisabled();
+		boolean isDisabled = _repeat.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
@@ -884,7 +884,7 @@ public class PythonGenerator extends Generator
 
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		boolean isDisabled = _forever.isDisabled();
+		boolean isDisabled = _forever.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_forever, _indent);
@@ -904,7 +904,7 @@ public class PythonGenerator extends Generator
 	{
 		if(!appendAsComment(_call, _indent))
 		{
-			boolean isDisabled = _call.isDisabled();
+			boolean isDisabled = _call.isDisabled(false);
 			// START KGU 2014-11-16
 			appendComment(_call, _indent);
 			// END KGU 2014-11-16
@@ -923,7 +923,7 @@ public class PythonGenerator extends Generator
 	{
 		if(!appendAsComment(_jump, _indent))
 		{
-			boolean isDisabled = _jump.isDisabled();
+			boolean isDisabled = _jump.isDisabled(false);
 			// START KGU 2014-11-16
 			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
@@ -988,7 +988,7 @@ public class PythonGenerator extends Generator
 	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		boolean isDisabled = _para.isDisabled();
+		boolean isDisabled = _para.isDisabled(false);
 		Root root = Element.getRoot(_para);
 		String suffix = Integer.toHexString(_para.hashCode());
 
@@ -1072,7 +1072,7 @@ public class PythonGenerator extends Generator
 			}
 		});
 		for (Parallel par: containedParallels) {
-			boolean isDisabled = par.isDisabled();
+			boolean isDisabled = par.isDisabled(false);
 			String functNameBase = "thread" + Integer.toHexString(par.hashCode()) + "_";
 			int i = 0;
 			// We still don't care for synchronisation, mutual exclusion etc.
@@ -1115,7 +1115,7 @@ public class PythonGenerator extends Generator
 	// START KGU#686 2019-03-21: Enh. #56
 	protected void generateCode(Try _try, String _indent)
 	{
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		this.appendComment(_try, _indent);
 		
 		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
@@ -1174,7 +1174,7 @@ public class PythonGenerator extends Generator
 			// We leave it to the caller what to do
 			return false;
 		}
-		setDefHandled(_root.getSignatureString(false), typeKey);
+		setDefHandled(_root.getSignatureString(false, false), typeKey);
 		if (_type.isRecord()) {
 			// START KGU#795 2020-02-12: Issue #807 Use dictionaries instead of external library recordtype
 			//String typeDef = _type.typeName + " = recordtype(\"" + _type.typeName + "\" \"";
@@ -1335,7 +1335,7 @@ public class PythonGenerator extends Generator
 			}
 		}
 		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
-		this.setDefHandled(_root.getSignatureString(false), varName);
+		this.setDefHandled(_root.getSignatureString(false, false), varName);
 		return true;
 	}
 	// END KGU#767 2019-11-24

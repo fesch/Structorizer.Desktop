@@ -477,6 +477,8 @@ Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
 Menu.msgVersionHint_3_30_15.text=Dieser neu entworfene Editor für @c-Elemente\nist optional.\nEr kann den Zusammenhang zwischen\nFall-Listen und den zugehörigen Zweigen\nbeim Umordnen bewahren.\n\nWenn Sie den traditionellen Elementeditor\nbevorzugen, dann können Sie das Häkchen bei\n"%1"\nin den %2 entfernen.
+Menu.msgJavaUpgradeHint_3_30_18.text=Die Structorizer-Entwickler haben vor, die Kombatibilität zu Java 8\ngegen Mitte 2021 aufzugeben und die Code-Basis zu erneuern, wodurch wenigstens\neine Java-11-VM vorausgesetzt wird.\nStructorizer läuft bereits jetzt auch auf Java 11+, but zukünftige Versionen\nwerden nicht länger auf veralteten Java-Umgebungen < 11 ausführbar sein. Dabei\nspielt es keine Rolle, ob Oracle Java oder ein OpenJDK verwendet wird.
+Menu.msgJavaUpgradeHint_3_30_18a.text=\nBeachte, dass die Untertützung von Java WebStart offiziell mit Java endete,\nes gibt aber äquivalente Alternativen wie Open Webstart (https://openwebstart.com),\nfalls du an der JNLP-Verteilung von Structorizer festhalten magst.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
@@ -821,6 +823,8 @@ InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBoxRoot.btnAttributes.text=Attribute
 InputBoxRoot.btnAttributes.tooltip=Öffnet ein Fenster zur Anzeige der Attribute und Eigenschaften dieses Diagramms.
 InputBoxRoot.btnAddIncludable.text=Anfügen
+InputBoxRoot.lblNamespace.text=Namensraum (Präfix)
+InputBoxRoot.lblNamespace.tooltip=Optionaler punkt-getrennter hierachischer Qualifizier als Namenspräfix
 
 -----[ InputBoxCase ]-----
 InputBoxCase.title[getInsertionType():insert]=Neue @c hinzufügen ...
@@ -994,7 +998,7 @@ About.pnlTabbed.tab.0=Beteiligte Personen
 About.pnlTabbed.tab.1=Änderungs-Protokoll
 About.pnlTabbed.tab.2=Lizenzen
 About.pnlTabbed.tab.3=Dateipfade
-About.msgPaths.text=Konfigurationsdatei:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n
+About.msgPaths.text=Konfigurationsdatei:\n%1\n\nLog-Verzeichnis:\n%2\n\nInstallationspfad:\n%3\n\nJava VM (Version %4):\n%5\n
 About.btnOK.text=Schließen
 About.btnOK.tooltip=Schließen des Fensters.
 
@@ -1418,6 +1422,7 @@ ArrangerIndex.popupIndexDrawGroup.tooltip=Sichtbarkeit dieser Gruppe und iherer 
 ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
 ArrangerIndex.popupIndexExport.text=Diagramm/Gruppe exportieren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
+ArrangerIndex.popupIndexShowQualifiers.text=Namenspräfixe anzeigen (ggf.)
 ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen

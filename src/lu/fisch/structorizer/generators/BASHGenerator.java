@@ -680,7 +680,7 @@ public class BASHGenerator extends Generator {
 			// END KGU#405 2017-05-19
 			//if (posAsgnOpr > 0)
 			boolean isRoutine = this.routinePool != null 
-					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null).isEmpty();
+					&& !this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), null, false).isEmpty();
 			// START KGU#803 2020-02-16: Issue #816 don't assign the result of functions directly
 			//if (posAsgnOpr > 0 && !isRoutine)
 			// END KGU 2019-12-01
@@ -1106,7 +1106,7 @@ public class BASHGenerator extends Generator {
 	{
 		super.generateCode(_subqueue, _indent);
 		if (_subqueue.isNoOp()) {
-			addCode(":", _indent, _subqueue.isDisabled());
+			addCode(":", _indent, _subqueue.isDisabled(false));
 		}
 	}
 
@@ -1116,7 +1116,7 @@ public class BASHGenerator extends Generator {
 		if(!appendAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
 			appendComment(_inst, _indent);
-			boolean disabled = _inst.isDisabled();
+			boolean disabled = _inst.isDisabled(false);
 			// END KGU 2014-11-16
 			StringList text = _inst.getUnbrokenText(); 
 			// START KGU#803 2020-02-16: Issue #816
@@ -1257,7 +1257,7 @@ public class BASHGenerator extends Generator {
 
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		boolean disabled = _alt.isDisabled();
+		boolean disabled = _alt.isDisabled(false);
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
 		}
@@ -1319,7 +1319,7 @@ public class BASHGenerator extends Generator {
 	
 	protected void generateCode(Case _case, String _indent) {
 		
-		boolean disabled = _case.isDisabled();
+		boolean disabled = _case.isDisabled(false);
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
 		}
@@ -1370,7 +1370,7 @@ public class BASHGenerator extends Generator {
 	protected void generateCode(For _for, String _indent) {
 
 		// START KGU#277 2016-10-13: Enh. #270
-		boolean disabled = _for.isDisabled(); 
+		boolean disabled = _for.isDisabled(false); 
 		// END KGU#277 2016-10-13
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
@@ -1466,7 +1466,7 @@ public class BASHGenerator extends Generator {
 	protected void generateCode(While _while, String _indent) {
 		
 		// START KGU#277 2016-10-14: Enh. #270
-		boolean disabled = _while.isDisabled();
+		boolean disabled = _while.isDisabled(false);
 		// END KGU#277 2016-10-14
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
@@ -1514,7 +1514,7 @@ public class BASHGenerator extends Generator {
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
 		// START KGU#277 2016-10-14: Enh. #270
-		boolean disabled = _repeat.isDisabled();
+		boolean disabled = _repeat.isDisabled(false);
 		// END KGU#277 2016-10-14
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
@@ -1560,7 +1560,7 @@ public class BASHGenerator extends Generator {
 		
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add("");
-		boolean disabled = _forever.isDisabled();
+		boolean disabled = _forever.isDisabled(false);
 		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
 			addCode("", "", disabled);
 		}
@@ -1589,7 +1589,7 @@ public class BASHGenerator extends Generator {
 			appendComment(_call, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
-			boolean disabled = _call.isDisabled();
+			boolean disabled = _call.isDisabled(false);
 			// END KGU#277 2016-10-14
 			StringList callText = _call.getUnbrokenText();
 			for (int i = 0; i < callText.count(); i++)
@@ -1604,7 +1604,7 @@ public class BASHGenerator extends Generator {
 				if (fct != null && fct.isFunction() && Instruction.isAssignment(line)) {
 					if (this.routinePool != null) {
 						Root routine = null;
-						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root);
+						Vector<Root> cands = this.routinePool.findRoutinesBySignature(fct.getName(), fct.paramCount(), root, false);
 						if (cands.size() >= 1) {
 							routine = cands.firstElement();
 							String routineId = Integer.toHexString(routine.hashCode());
@@ -1665,7 +1665,7 @@ public class BASHGenerator extends Generator {
 			appendComment(_jump, _indent);
 			// END KGU 2014-11-16
 			// START KGU#277 2016-10-14: Enh. #270
-			boolean disabled = _jump.isDisabled();
+			boolean disabled = _jump.isDisabled(false);
 			// END KGU#277 2016-10-14
 			// START KGU#803 2020-02-16: Issue #816
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
@@ -1698,7 +1698,7 @@ public class BASHGenerator extends Generator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		// START KGU#277 2016-10-14: Enh. #270
-		boolean disabled = _para.isDisabled();
+		boolean disabled = _para.isDisabled(false);
 		// END KGU#277 2016-10-14
 		appendComment(_para, _indent);
 		appendComment("==========================================================", _indent);
@@ -1999,7 +1999,7 @@ public class BASHGenerator extends Generator {
 				String modifier = getLocalDeclarator(isConst, typeEntry);
 				addCode(modifier + parName + "=" + argVar(i), indent, false);
 			}
-			this.setDefHandled(_root.getSignatureString(false), parName);
+			this.setDefHandled(_root.getSignatureString(false, false), parName);
 			// END KGU#803 2020-02-18
 		}
 		for (int i = minArgs; i < paraNames.count(); i++)
@@ -2022,7 +2022,7 @@ public class BASHGenerator extends Generator {
 				modifier = this.getNameRefDeclarator(isConst);
 			}
 			addCode(modifier + parName + "=" + argVar(i), indent + this.getIndent(), false);
-			this.setDefHandled(_root.getSignatureString(false), paraNames.get(i));
+			this.setDefHandled(_root.getSignatureString(false, false), paraNames.get(i));
 			// END KGU#803 2020-02-18
 			addCode("fi", indent, false);
 		}

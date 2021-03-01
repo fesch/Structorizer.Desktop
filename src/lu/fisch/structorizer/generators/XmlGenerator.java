@@ -52,6 +52,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.06.30      Enh. #389: New attribute "includeList" added.
  *      Kay Gürtzig     2019-03-17      Enh. #56: Method generateCode(Try, String) implemented.
  *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
+ *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
+ *      Kay Gürtzig     2021-02-26      Bugfix #945: Disabled status of parallel elements had not been saved
  *
  ******************************************************************************************************
  *
@@ -198,18 +200,22 @@ public class XmlGenerator extends Generator
 	{
 		String r = "0";
 		//if(_inst.rotated==true) {r="1";}
-		code.add(_indent+"<instruction text=\""+BString.encodeToHtml(_inst.getText().getCommaText())+"\" comment=\""+
-												BString.encodeToHtml(_inst.getComment().getCommaText())+"\" color=\""+
-												_inst.getHexColor()+"\" rotated=\""+r+"\" disabled=\""+
-												(_inst.disabled ? "1" : "0") + "\"></instruction>");
+		code.add(_indent + "<instruction text=\"" + BString.encodeToHtml(_inst.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_inst.getComment().getCommaText()) +
+				"\" color=\"" + _inst.getHexColor() +
+				"\" rotated=\"" + r +
+				"\" disabled=\"" + (_inst.isDisabled(true) ? "1" : "0") +
+				"\"></instruction>");
 	}
 	
 	@Override
 	protected void generateCode(Alternative _alt, String _indent)
 	{
-		code.add(_indent+"<alternative text=\""+BString.encodeToHtml(_alt.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_alt.getComment().getCommaText())+"\" color=\""+
-				 _alt.getHexColor()+"\" disabled=\""+ (_alt.disabled ? "1" : "0") + "\">");
+		code.add(_indent + "<alternative text=\"" + BString.encodeToHtml(_alt.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_alt.getComment().getCommaText()) +
+				"\" color=\"" + _alt.getHexColor() +
+				"\" disabled=\"" + (_alt.isDisabled(true) ? "1" : "0") +
+				"\">");
 		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qTrue>");
 		//generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
@@ -226,9 +232,11 @@ public class XmlGenerator extends Generator
 	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
-		code.add(_indent+"<case text=\""+BString.encodeToHtml(_case.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_case.getComment().getCommaText())+"\" color=\""+
-				 _case.getHexColor()+"\" disabled=\""+ (_case.disabled ? "1" : "0") + "\">");
+		code.add(_indent + "<case text=\"" + BString.encodeToHtml(_case.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_case.getComment().getCommaText()) +
+				"\" color=\"" + _case.getHexColor() +
+				"\" disabled=\"" + (_case.isDisabled(true) ? "1" : "0") +
+				"\">");
 		for(int i=0;i<_case.qs.size();i++)
 		{
 			// START KGU 2016-12-21: Bugfix #317
@@ -238,15 +246,19 @@ public class XmlGenerator extends Generator
 			generateCode(_case.qs.get(i), _indent+this.getIndent(), "qCase");
 			// END KGU 2016-12-21
 		}
-		code.add(_indent+"</case>");
+		code.add(_indent + "</case>");
 	}
 
 	@Override
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		code.add(_indent+"<parallel text=\""+BString.encodeToHtml(_para.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_para.getComment().getCommaText())+"\" color=\""+
-				 _para.getHexColor()+"\">");
+		code.add(_indent + "<parallel text=\"" + BString.encodeToHtml(_para.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_para.getComment().getCommaText()) +
+				"\" color=\"" + _para.getHexColor() +
+				// START KGU#942 2021-02-26: Bugfix #945 Had been missing... (enh. #270)
+				"\" disabled=\"" + (_para.isDisabled(true) ? "1" : "0") +
+				// END KGU#942 2021-02-26
+				"\">");
 		for(int i=0;i<_para.qs.size();i++)
 		{
 			// START KGU 2016-12-21: Bugfix #317
@@ -256,7 +268,7 @@ public class XmlGenerator extends Generator
 			generateCode(_para.qs.get(i), _indent+this.getIndent(), "qPara");
 			// END KGU 2016-12-21
 		}
-		code.add(_indent+"</parallel>");
+		code.add(_indent + "</parallel>");
 	}
 
 	@Override
@@ -303,8 +315,9 @@ public class XmlGenerator extends Generator
 				"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
 				// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
 				(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(CodeParser.getKeyword("postForIn"))) : "") +
-				"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
-				(_for.disabled ? "1" : "0") + "\">");
+				"\" color=\"" + _for.getHexColor() +
+				"\" disabled=\"" + (_for.isDisabled(true) ? "1" : "0") +
+				"\">");
 		// END KGU#118 2015-12-31
 		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qFor>");
@@ -312,81 +325,96 @@ public class XmlGenerator extends Generator
 		//code.add(_indent+this.getIndent()+"</qFor>");
 		generateCode(_for.q, _indent+this.getIndent(), "qFor");
 		// END KGU 2016-12-21
-		code.add(_indent+"</for>");
+		code.add(_indent + "</for>");
 	}
 	
 	@Override
 	protected void generateCode(While _while, String _indent)
 	{
-		code.add(_indent+"<while text=\""+BString.encodeToHtml(_while.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_while.getComment().getCommaText())+"\" color=\""+
-				 _while.getHexColor()+"\" disabled=\""+(_while.disabled ? "1" : "0") + "\">");
+		code.add(_indent + "<while text=\"" + BString.encodeToHtml(_while.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_while.getComment().getCommaText()) +
+				"\" color=\"" + _while.getHexColor() +
+				"\" disabled=\"" + (_while.isDisabled(true) ? "1" : "0") +
+				"\">");
 		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qWhile>");
 		//generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qWhile>");
 		generateCode(_while.q, _indent+this.getIndent(), "qWhile");
 		// END KGU 2016-12-21
-		code.add(_indent+"</while>");
+		code.add(_indent + "</while>");
 	}
 	
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		code.add(_indent+"<repeat text=\""+BString.encodeToHtml(_repeat.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_repeat.getComment().getCommaText())+"\" color=\""+
-				 _repeat.getHexColor()+"\" disabled=\""+ (_repeat.disabled ? "1" : "0") + "\">");
+		code.add(_indent + "<repeat text=\"" + BString.encodeToHtml(_repeat.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_repeat.getComment().getCommaText()) +
+				"\" color=\"" + _repeat.getHexColor() +
+				"\" disabled=\"" + (_repeat.isDisabled(true) ? "1" : "0") +
+				"\">");
 		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qRepeat>");
 		//generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qRepeat>");
 		generateCode(_repeat.q, _indent+this.getIndent(), "qRepeat");
 		// END KGU 2016-12-21
-		code.add(_indent+"</repeat>");
+		code.add(_indent + "</repeat>");
 	}
 	
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		code.add(_indent+"<forever comment=\""+
-				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
-				 _forever.getHexColor()+"\" disabled=\""+(_forever.disabled ? "1" : "0") + "\">");
+		code.add(_indent+"<forever comment=\"" +
+				BString.encodeToHtml(_forever.getComment().getCommaText()) + 
+				"\" color=\"" + _forever.getHexColor() +
+				"\" disabled=\"" + (_forever.isDisabled(true) ? "1" : "0") +
+				"\">");
 		// START KGU 2016-12-21: Bugfix #317
 		//code.add(_indent+this.getIndent()+"<qForever>");
 		//generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qForever>");
 		generateCode(_forever.q, _indent+this.getIndent(), "qForever");
 		// END KGU 2016-12-21
-		code.add(_indent+"</forever>");
+		code.add(_indent + "</forever>");
 	}
 	
 	@Override
 	protected void generateCode(Call _call, String _indent)
 	{
-		code.add(_indent+"<call text=\""+BString.encodeToHtml(_call.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_call.getComment().getCommaText())+"\" color=\""+
-				 _call.getHexColor()+"\" disabled=\""+(_call.disabled ? "1" : "0") + "\"></call>");
+		code.add(_indent + "<call text=\"" + BString.encodeToHtml(_call.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_call.getComment().getCommaText()) +
+				"\" color=\"" + _call.getHexColor() + 
+				"\" disabled=\"" + (_call.isDisabled(true) ? "1" : "0") +
+				// START KGU#408 2021-02-26: Enh. #410
+				"\" ismethoddecl=\"" + (_call.isMethodDeclaration ? "1" : "0") +
+				// END KGU#408 2021-02-26
+				"\"></call>");
 	}
 	
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		code.add(_indent+"<jump text=\""+BString.encodeToHtml(_jump.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_jump.getComment().getCommaText())+"\" color=\""+
-				 _jump.getHexColor()+"\" disabled=\""+(_jump.disabled ? "1" : "0") + "\"></jump>");
+		code.add(_indent + "<jump text=\"" + BString.encodeToHtml(_jump.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_jump.getComment().getCommaText()) +
+				"\" color=\"" + _jump.getHexColor() +
+				"\" disabled=\"" + (_jump.isDisabled(true) ? "1" : "0") +
+				"\"></jump>");
 	}
 	
 	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
 	@Override
 	protected void generateCode(Try _try, String _indent)
 	{
-		code.add(_indent+"<try text=\""+BString.encodeToHtml(_try.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_try.getComment().getCommaText())+"\" color=\""+
-				 _try.getHexColor()+"\" disabled=\""+(_try.disabled ? "1" : "0") + "\">");
+		code.add(_indent+"<try text=\""+BString.encodeToHtml(_try.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_try.getComment().getCommaText()) +
+				"\" color=\"" + _try.getHexColor() +
+				"\" disabled=\"" + (_try.isDisabled(true) ? "1" : "0") +
+				"\">");
 		generateCode(_try.qTry, _indent + this.getIndent(), "qTry");
 		generateCode(_try.qCatch, _indent + this.getIndent(), "qCatch");
 		generateCode(_try.qFinally, _indent + this.getIndent(), "qFinally");
-		code.add(_indent+"</try>");
+		code.add(_indent + "</try>");
 	}
 	// END KGU#686 2019-03-17
 
@@ -395,9 +423,9 @@ public class XmlGenerator extends Generator
 	{
 		String colorAttr = "";
 		if (_subqueue.getSize() == 0) {
-			colorAttr = " color=\""+_subqueue.getHexColor() + "\"";
+			colorAttr = " color=\"" + _subqueue.getHexColor() + "\"";
 		}
-		code.add(_indent+"<" + tagName + colorAttr + ">");
+		code.add(_indent + "<" + tagName + colorAttr + ">");
 		generateCode(_subqueue, _indent + this.getIndent());
 		code.add(_indent+"</" + tagName + ">");
 	}
@@ -442,6 +470,12 @@ public class XmlGenerator extends Generator
 			pp_attributes += " includeList=\"" + _root.includeList.concatenate(",").trim() + "\"";
 		}
 		// END KGU#376 2017-06-30
+		
+		// START KGU#408 2021-02-22: Enh. #410
+		if (_root.getNamespace() != null) {
+			pp_attributes += " namespace=\"" + _root.getNamespace() + "\"";
+		}
+		// END KGU#376 2021-02-22
 		
 		// START KGU#363 2017-03-10: Enh. #372 These are no parser preferences but the mechanism is convenient
 		if (_root.getAuthor() != null) {
