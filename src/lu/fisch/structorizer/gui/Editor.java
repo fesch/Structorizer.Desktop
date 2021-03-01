@@ -1831,8 +1831,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 //		this.doButtonsLocal();
 //	}
 	/**
-	 * Rebuilds the Arranger index from scratch according to the group information give
-	 * with {@code _groups}.
+	 * Rebuilds the Arranger index from scratch according to the group information
+	 * given with {@code _groups}.
 	 * @param _groups - sorted list of all currently held {@link Group} objects
 	 */
 	public void updateArrangerIndex(Vector<Group> _groups)

@@ -43,6 +43,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-13      Enh. #698: Moved from executor to archivar package
  *      Kay Gürtzig     2019-03-28      Enh. #657: Argument added to findIncludesByName() and findRoitinesBySignature()
  *      Kay Gürtzig     2019-03-30      Issue #720: Method findIncludingRoots(String, boolean) added.
+ *      Kay Gürtzig     2021-03-01      New default methods enableNotification(b) and isNotificationEnabled()
  *
  ******************************************************************************************************
  *
@@ -99,8 +100,8 @@ public interface IRoutinePool {
 	 * Gathers all diagrams responding to the name passed in. 
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as method name
 	 * @return a collection of {@link Root} objects having the passed-in name as diagram or routine name.
-	 * @see #findIncludesByName(String, Root)
-	 * @see #findRoutinesBySignature(String, int, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
+	 * @see #findRoutinesBySignature(String, int, Root, boolean)
 	 * @see #getAllRoots()
 	 */
 	public Vector<Root> findDiagramsByName(String rootName);
@@ -110,12 +111,15 @@ public interface IRoutinePool {
 	 * in an implementor-specific way according to some relation with {@code includer} if given.
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as diagram name
 	 * @param includer - the interested {@link Root} object (potentially restricting search), may be null
+	 * @param filterByClosestPath - if {@code true} and {@code includer} is given and has an associated
+	 *        {@link Root#getNamespace()} then only includables with maximum namespace similarity (longest
+	 *        common prefix) will be returned.
 	 * @return a collection of {@link Root} objects of type Includable having the passed-in name.
 	 * @see #findDiagramsByName(String)
-	 * @see #findRoutinesBySignature(String, int, Root)
+	 * @see #findRoutinesBySignature(String, int, Root, boolean)
 	 * @see #findIncludingRoots(String, boolean)
 	 */
-	public Vector<Root> findIncludesByName(String rootName, Root includer);
+	public Vector<Root> findIncludesByName(String rootName, Root includer, boolean filterByClosestPath);
 
 	/**
 	 * Gathers all subroutine diagrams responding to the name passed in and accepting most
@@ -124,12 +128,15 @@ public interface IRoutinePool {
 	 * @param rootName - a String the {@link Root} objects looked for ought to respond to as method name
 	 * @param argCount - number of parameters required
 	 * @param caller - the interested {@link Root} object (potentially restricting search), may be null
+	 * @param filterByClosestPath if {@code true} and {@code caller} is given and has an associated
+	 *        {@link Root#getNamespace()} then only subroutines with maximum namespace similarity
+	 *        (longest common prefix) will be returned.
 	 * @return a collection of Root objects meeting the specified signature.
 	 * @see #findDiagramsByName(String)
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 * @see #findIncludingRoots(String, boolean)
 	 */
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller);
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount, Root caller, boolean filterByClosestPath);
 	
 	// START KGU#703 2019-03-30: Issue #720 - Needed a convenient retrieval for Roots referring to an Includable
 	/**
@@ -140,7 +147,7 @@ public interface IRoutinePool {
 	 * @param includableName - name of an includable diagram (existence is not checked)
 	 * @param recursively - whether to involve indirect references
 	 * @return the vector of found roots
-	 * @see #findIncludesByName(String, Root)
+	 * @see #findIncludesByName(String, Root, boolean)
 	 * @see #findIncludingRoots(Root, boolean)
 	 */
 	public default Set<Root> findIncludingRoots(String includableName, boolean recursively)
@@ -198,5 +205,28 @@ public interface IRoutinePool {
 	 * @see #addChangeListener(IRoutinePoolListener)
 	 */
 	public void removeChangeListener(IRoutinePoolListener _listener);
+	
+	// START KGU#408 2021-03-01: Enh. #410
+	/**
+	 * Subclasses may override this dummy method in order to allow or disable notifications
+	 * temporarily.<br/>
+	 * If this method is overridden then method {@link #isNotificationEnabled()} should also
+	 * be re-implemented in the proper way.
+	 * @param enable - whether it is allowed to send pool change notifications or not
+	 */
+	public default void enableNotification(boolean enable)
+	{}
+	
+	/**
+	 * @return the current notification status ({@code true} if pool change notifications
+	 * are enabled, {@code false} otherwise. This dummy method always returns {@code true}.
+	 */
+	public default boolean isNotificationEnabled()
+	{
+		return true;
+	}
+	// END KGU#804 2021-03-01
+	
+
 	
 }

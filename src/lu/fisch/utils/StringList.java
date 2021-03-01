@@ -1430,7 +1430,7 @@ public class StringList {
     	return this;
     }
     // END KGU 2017-10-29
-        
+    
     public static void main(String[] args)
     {
         StringList sl = new StringList();

@@ -71,7 +71,7 @@ public interface ILoop {
 
 		@Override
 		public boolean visitPreOrder(Element _ele) {
-			if (_ele instanceof Jump && !_ele.disabled && (!exactly || ((Jump)_ele).isLeave())) {
+			if (_ele instanceof Jump && !_ele.isDisabled(true) && (!exactly || ((Jump)_ele).isLeave())) {
 				if (_ele.parent instanceof Subqueue && ((Subqueue)_ele.parent).isReachable(_ele, true)) {
 					int up = ((Jump)_ele).getLevelsUp();
 					isLeavable = exactly && up == loopLevel || up >= loopLevel;
@@ -101,9 +101,10 @@ public interface ILoop {
 	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
 	/**
 	 * Checks whether this element or one of its ancestors is disabled 
+	 * @param individually - if {@code true} then only the individual setting will be reported
 	 * @return true if directly or indirectly disabled
 	 */
-	public boolean isDisabled();
+	public boolean isDisabled(boolean individually);
 	// END KGU#277 2016-10-13
 	
 	// START KGU 2017-10-21

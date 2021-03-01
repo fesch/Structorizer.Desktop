@@ -763,7 +763,7 @@ public class Alternative extends Element implements IFork {
 	@Override
 	protected void addFullText(StringList _lines, boolean _instructionsOnly)
 	{
-		if (!this.isDisabled()) {
+		if (!this.isDisabled(false)) {
 			if (!_instructionsOnly) {
 				// START KGU#453 2017-11-01: Bugfix 447 Someone might have placed line continuation backslashes...
 				//_lines.add(this.getText());	// Text of the condition

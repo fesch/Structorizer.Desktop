@@ -50,6 +50,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
  *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
  *      Kay Gürtzig     2021-01-04      Enh. #906: New field pauseAfterCall to support the debug mode "step over"
+ *      Kay Gürtzig     2021-02-26      Enh. #410: New field isMethodDeclaration and method derivatates for
+ *                                      the representation of imported methods (OOP approach)
  *
  ******************************************************************************************************
  *
@@ -114,6 +116,10 @@ public class Call extends Instruction {
 	/** One-time flag for pausing after execution */
 	public boolean pauseAfterCall = false;
 	// END KGU#907 2021-01-04
+	// START KGU#408 2021-02-26: Enh. #410
+	/** Is this a method declaration in a class-representing Includable rather than a call? */
+	public boolean isMethodDeclaration = false;
+	// END KGU#408 2021-02-26
 
 	public Call()
 	{
@@ -175,7 +181,10 @@ public class Call extends Instruction {
 		// END KGU 2016-07-30: Just delegate the basics to super
 		
 		// Now draw the Call-specific lines
-		_canvas.setColor(Color.BLACK);
+		// START KGU#408 2021-02-26: Enh. #410 - textColor will reflect the isMethodDeclaration
+		//_canvas.setColor(Color.BLACK);
+		_canvas.setColor(this.getTextColor());
+		// END KGU#408 2021-02-26
 		_canvas.moveTo(_top_left.left  + (E_PADDING / 2), _top_left.top);
 		_canvas.lineTo(_top_left.left  + (E_PADDING / 2), _top_left.bottom);
 		_canvas.moveTo(_top_left.right - (E_PADDING / 2), _top_left.top);
@@ -209,6 +218,11 @@ public class Call extends Instruction {
 	@Override
 	public ImageIcon getIcon()
 	{
+		// START KGU#408 2021-02-27: Enh. #410 Now same mechanism as in Instruction needed
+		if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
+			return IconLoader.getIcon(85);
+		}
+		// END KGU#408 2021-02-27
 		return IconLoader.getIcon(58);
 	}
 	// END KGU#122 2016-01-03
@@ -230,10 +244,31 @@ public class Call extends Instruction {
 	public Element copy()
 	{
 		Element ele = new Call(this.getText().copy());
+		// START KGU#408 2021-02-26: Enh. #410 May be used as mere reference
+		((Call)ele).isMethodDeclaration = this.isMethodDeclaration;
+		// END KGU#408 2021-02-26
 		// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
 		return copyDetails(ele, false, true);
 		// END KGU#199 2016-07-07
 	}
+	
+	// START KGU#408 2021-02-26: Enh. #410
+	@Override
+	public boolean isDisabled(boolean individually)
+	{
+		return super.isDisabled(individually) || this.isMethodDeclaration;
+	}
+	
+	@Override
+	protected Color getTextColor()
+	{
+		Color declColor = Color.DARK_GRAY;
+		if (!this.isMethodDeclaration || declColor.equals(getFillColor())) {
+			return super.getTextColor();
+		}
+		return declColor;
+	}
+	// END KGU#408 2021-02-26
 	
 //	// START KGU#376 2017-04-11: Enh. #389 - secific support for import calls / KGU#376 2017-07-01 withdrawn
 //	/* (non-Javadoc)
@@ -266,7 +301,7 @@ public class Call extends Instruction {
 	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
 	 * a procedure or function call syntax as described in the user guide.
-	 * Otherwise null will be returned.
+	 * Otherwise {@code null} will be returned.
 	 * @return signature string, e.g. "factorial(1)", or null
 	 */
 	public String getSignatureString()
@@ -283,6 +318,54 @@ public class Call extends Instruction {
 		return signature;
 	}
 	// END #178 2016-07-19
+	
+	// START KGU#408 2021-02-26: Enh. #410 Differing behaviour in case of a method reference
+	/**
+	 * Returns a {@link Function} object describing the signature of
+	 * <ul>
+	 * <li> the referred method declaration (in case this obect represents a method reference),</li>
+	 * <li> the called routine if the text complies to the call syntax described in the user guide,</li>
+	 * <li> {@code null} otherwise.</li>
+	 * <ul>
+	 * @return Function object or {@code null}.
+	 * @see #isFunctionCall()
+	 * @see #isProcedureCall()
+	 */
+	@Override
+	public Function getCalledRoutine()
+	{
+		// START KGU#408 2021-02-26: Enh. #410 Different kind of retrieval for method declaration
+		if (this.isMethodDeclaration) {
+			String decl = this.getText().getLongString();
+			StringList paramNames = new StringList();
+			boolean hasParamList = Root.extractMethodParamDecls(decl, paramNames, null, null);
+			String methodName = Root.getMethodName(decl, Root.DiagramType.DT_SUB, true);
+			if (hasParamList) {
+				return new Function(methodName + "(" + paramNames.concatenate(", ") + ")");
+			}
+			return null;
+		}
+		// END KGU#408 2021-02-26
+		return super.getCalledRoutine();
+	}
+	
+	/**
+	 * @return true iff this Call contains a method declaration reference.
+	 * @see #isMereDeclaration(String) 
+	 */
+	public boolean isMereDeclaratory()
+	{
+		return isMethodDeclaration || super.isMereDeclaratory();
+	}
+	
+	public void updateTypeMapFromLine(HashMap<String, TypeMapEntry> typeMap, String line, int lineNo)
+	{
+		// Don't do anything if it is a method declaration reference
+		if (!isMethodDeclaration) {
+			super.updateTypeMapFromLine(typeMap, line, lineNo);
+		}
+	}
+	// END KGU#408 2021-02-26
 	
 	// START KGU#117 2016-03-07: Enh. #77
 	/**
@@ -331,7 +414,7 @@ public class Call extends Instruction {
 		if (called != null) {
 			String signature = called.getSignatureString();
 			Root myRoot = Element.getRoot(this);
-			if (myRoot.getSignatureString(false).equals(signature)) {
+			if (myRoot.getSignatureString(false, false).equals(signature)) {
 				typeSpec = myRoot.getResultType();
 			}
 			// START KGU#676 2019-03-31: Issue #696 batch export
@@ -340,7 +423,7 @@ public class Call extends Instruction {
 			else if (myRoot.specialRoutinePool != null || Arranger.hasInstance()) {
 				IRoutinePool pool = myRoot.specialRoutinePool;
 				if (pool == null) { pool = Arranger.getInstance(); }
-				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot);
+				Vector<Root> routines = pool.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot, true);
 			// END KGU#676 2019-03-31
 				if (routines.size() == 1) {
 					typeSpec = routines.get(0).getResultType();

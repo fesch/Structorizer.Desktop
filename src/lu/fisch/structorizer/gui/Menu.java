@@ -125,6 +125,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-10      Enh. #910: Effective menu support for actual DiagramControllers
  *      Kay Gürtzig     2021-01-13      "About" icon replaced
  *      Kay Gürtzig     2021-02-11      Enh. #893: Revalidation of the preference menu enforced after locale setting
+ *      Kay Gürtzig     2021-02-24      Issue #944: Version info announcing Java upgrade to 11 added
  *
  ******************************************************************************************************
  *
@@ -833,7 +834,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#893 2020-12-20
 	// ===================== TEMPORARY VERSION HINTS =======================
 	// START KGU#906 2021-01-18: Enh. #905 FIXME temporary message for version 3.30-14
-	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder("New indicator symbols\n"
+	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder(
+			"New indicator symbols\n"
 			+ "may remind you\n"
 			+ "that there are Analyser\n"
 			+ "warnings for the marked\n"
@@ -851,6 +853,19 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			+ "\"%1\"\n"
 			+ "in the %2.");
 	// END KGU#916 2021-01-28
+	// START KGU#941 2021-02-24: Issue #944 FIXME temporary version hint for 3.30-18+
+	public static final LangTextHolder msgJavaUpgradeHint_3_30_18 = new LangTextHolder(
+			"The Structorizer developers plan to give up Java version 8 compatibility\n"
+			+ "by mid 2021 and to upgrade the code base such that it will require a Java 11 VM\n"
+			+ "at least.\n"
+			+ "You can run Structorizer already now with Java VMs 11+, but future versions\n"
+			+ "will no longer be usable on obsolete Java versions < 11. It does not matter\n"
+			+ "whether Oracle Java or an OpenJDK is used.");
+	public static final LangTextHolder msgJavaUpgradeHint_3_30_18a = new LangTextHolder(
+			"\nBe aware that Java WebStart support officially ended with Java 8,\n"
+			+ "but there are alternatives like Open Webstart (https://openwebstart.com)\n"
+			+ "if you want to adhere to the Structorizer JNLP delivery.");
+	// END KGU#941 2021-02-24
 	//=======================================================================
 	
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary

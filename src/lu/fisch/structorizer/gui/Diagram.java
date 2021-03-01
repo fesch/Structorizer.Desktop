@@ -223,6 +223,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-30      Bugfix #921: recursive type retrieval for outsizing, handling of enum types
  *      Kay Gürtzig     2021-02-04      Enh. #926: Element selection now scrolls to the related Analyser warnings
  *      Kay Gürtzig     2021-02-12      Bugfix #936 in exportGroup() - failed on a group never having been saved
+ *      Kay Gürtzig     2021-02-24      Bugfix #419: rebreakLines() did not redraw though it induces reshaping
  *      Kay Gürtzig     2021-02-28      Issue #905: Faulty redrawing policy after AnalyserPreference changes fixed
  *
  ******************************************************************************************************
@@ -2613,8 +2614,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (done && rootToSave != this.root) {
 			JOptionPane.showMessageDialog(
 					this.getFrame(),
-					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false))
-					.replace("%2", rootToSave.getSignatureString(true)));
+					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false, false))
+					.replace("%2", rootToSave.getSignatureString(true, false)));
 			this.setRoot(rootToSave, true, true);
 		}
 		return done;
@@ -3928,14 +3929,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#911 2021-01-11
 				
 				EditData data = new EditData();
-				data.title="Add new instruction ...";
+				data.title = "Add new instruction ...";
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
 				showInputBox(data, "Instruction", true, true);
 				// END KGU#42 2015-10-14
 
-				if (data.result==true)
+				if (data.result == true)
 				{
 					// START KGU#480 2018-01-21: Enh. #490 we have to replace DiagramController aliases by the original names
 					//Element ele = new Instruction(data.text.getText());
@@ -3949,7 +3950,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// END KGU#43 2015-10-17
 					// START KGU#277 2016-10-13: Enh. #270
-					ele.disabled = data.disabled;
+					ele.setDisabled(data.disabled);
 					// END KGU#277 2016-10-13
 					// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
@@ -3988,7 +3989,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				data.breakTriggerCount = element.getBreakTriggerCount();
 				// END KGU#213 2016-08-01				
 				// START KGU#277 2016-10-13: Enh. #270
-				data.disabled = element.disabled;
+				data.disabled = element.isDisabled(true);
 				// END KGU#277 2016-10-13
 			
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
@@ -4088,7 +4089,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//element.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
 					// START KGU#277 2016-10-13: Enh. #270
-					element.disabled = data.disabled;
+					element.setDisabled(data.disabled);
 					// END KGU#277 2016-10-13
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
@@ -4422,12 +4423,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			IElementSequence elements = (IElementSequence)getSelected();
 			for (int i = 0; allDisabled && i < elements.getSize(); i++)
 			{
-				allDisabled = elements.getElement(i).disabled;
+				allDisabled = elements.getElement(i).isDisabled(true);
 			}
 			elements.setDisabled(!allDisabled);
 		}
 		else {
-			getSelected().disabled = !getSelected().disabled;
+			getSelected().setDisabled(!getSelected().isDisabled(true));
 		}
 		
 		redraw();
@@ -4479,7 +4480,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU 2015-10-17
 				// START KGU#277 2016-10-13: Enh. #270
-				_ele.disabled = data.disabled;
+				_ele.setDisabled(data.disabled);
 				// END KGU#277 2016-10-13
 				// START KGU#213 2016-08-01: Enh. #215
 				//_ele.setBreakTriggerCount(data.breakTriggerCount);
@@ -4763,7 +4764,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			} while (includableName == null || !Function.testIdentifier(includableName, false, null));
 			Root incl = null;
 			if (Arranger.hasInstance()) {
-				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root);
+				Vector<Root> includes = Arranger.getInstance().findIncludesByName(includableName, root, false);
 				if (!includes.isEmpty()) {
 					incl = includes.firstElement();
 					incl.addUndo();
@@ -4905,7 +4906,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (selected != null && selected instanceof Call) {
 			Function called = ((Call)selected).getCalledRoutine();
 			// We don't want to open an editor in case of a recursive call.
-			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false))));
+			canEdit = (called != null && !(called.getSignatureString().equals(root.getSignatureString(false, false))));
 		}
 		// START KGU#770 2021-01-27: Enh. #917 Also support Includables
 		else if (selected != null && selected instanceof Root) {
@@ -4938,7 +4939,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// Try to find the subroutine in Arranger
 			if (Arranger.hasInstance()) {
 				Vector<Root> candidates = Arranger.getInstance()
-						.findRoutinesBySignature(called.getName(), called.paramCount(), root);
+						.findRoutinesBySignature(called.getName(), called.paramCount(), root, false);
 				// Open a choice list if the group approach alone wasn't successful
 				referredRoot = chooseReferredRoot(candidates, Menu.msgChooseSubroutine.getText());
 			}
@@ -5032,7 +5033,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// Try to find the Includable in Arranger
 			Vector<Root> candidates = Arranger.getInstance()
-					.findIncludesByName(inclName, (Root)selected);
+					.findIncludesByName(inclName, (Root)selected, false);
 			// Prevent cyclic inclusion
 			candidates.remove(root);
 			// Open a choice list if the group approach alone wasn't successful
@@ -5163,7 +5164,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String[] choices = new String[candidates.size()];
 			int i = 0;
 			for (Root cand: candidates) {
-				choices[i++] = cand.getSignatureString(true);
+				choices[i++] = cand.getSignatureString(true, false);
 			}
 			String input = (String) JOptionPane.showInputDialog(getFrame(),
 					Menu.msgChooseSubroutine.getText().replace("%", rootType),
@@ -5689,7 +5690,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#282 2016-10-16
 	
-	// START KGU#602 2018-10-26: Enh. #619
+	// START KGU#602 2018-10-26: Enh. #419
 	/**
 	 * Adjusts line breaking for the selected element(s). Requests the details
 	 * interactively from the user.
@@ -5803,6 +5804,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (!changed) {
 					root.undo(false);
 				}
+				// START KGU#940 2021-02-24: Bugfix #419 - Drawing update had been missing
+				redraw();
+				// END KGU#940 2021-02-24
 				// START KGU#705 2019-09-23: Enh. #738
 				updateCodePreview();
 				// END KGU#705 2019-09-23
@@ -7085,8 +7089,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.lastCodeImportDir = file.getParentFile();
 			// END KGU#354 2017-04-26
 
+			Cursor origCursor = getCursor();
+			boolean arrangerNotifies = Arranger.hasInstance() && Arranger.getInstance().isNotificationEnabled();
 			try
 			{
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
 				// load and parse source-code
 				//CParser cp = new CParser("C-ANSI.cgt");
@@ -7207,6 +7214,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//this.arrangeNSD();
 						this.arrangeNSD(file.getName());
 						// END KGU#626 2018-12-28
+						Arranger.getInstance().enableNotification(false);
 					}
 					if (firstRoot != null)
 					{
@@ -7304,6 +7312,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#705 2019-09-24: Enh. #738
 				updateCodePreview();
 				// END KGU#705 2019-09-24
+				setCursor(origCursor);
+				if (Arranger.hasInstance()) {
+					Arranger.getInstance().enableNotification(arrangerNotifies);
+				}
 			}
 		}
 	} 
@@ -10651,7 +10663,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		incl.setComment(comment);
 		incl.children.addElement(new Instruction("restart()"));
-		incl.disabled = true;
+		incl.setDisabled(true);
 		return incl;
 	}
 	
@@ -10706,7 +10718,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//	mask <<= 1;
 		//}
 		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
-			if (entry.getValue() == null || !entry.getValue().isDisabled()) {
+			if (entry.getValue() == null || !entry.getValue().isDisabled(false)) {
 				controllers.add(entry.getKey());
 			}
 		}
@@ -11441,8 +11453,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root incl = entry.getValue();
 				// Turtleizer (incl == null) cannot be disabled
 				if (incl != null) {
-					boolean statusChanged = incl.disabled == selected;
-					incl.disabled = !selected;
+					boolean statusChanged = incl.isDisabled(true) == selected;
+					incl.setDisabled(!selected);
 					if (selected && !Arranger.getInstance().getAllRoots().contains(incl)) {
 						Arranger.getInstance().addToPool(incl, this.getFrame(),
 								Arranger.DIAGRAM_CONTROLLER_GROUP_NAME);
@@ -11477,7 +11489,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		for (Map.Entry<DiagramController, Root> entry: diagramControllers.entrySet()) {
 			if (entry.getKey().getClass().getName().equals(className)) {
-				return entry.getValue() == null || !entry.getValue().disabled;
+				return entry.getValue() == null || !entry.getValue().isDisabled(true);
 			}
 		}
 		return false;

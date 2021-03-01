@@ -419,7 +419,7 @@ public class JsGenerator extends CGenerator {
 	 */
 	@Override
 	protected void appendCatchHeading(Try _try, String _indent) {
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		String varName = _try.getExceptionVarName();
 		String exName = "ex" + Integer.toHexString(_try.hashCode());;
 		String head = "catch (" + exName + ")";
@@ -616,10 +616,10 @@ public class JsGenerator extends CGenerator {
 			decl += " = " + constValue;
 		}
 		appendDeclComment(_root, _indent, _name);
-		setDefHandled(_root.getSignatureString(false), _name);
+		setDefHandled(_root.getSignatureString(false, false), _name);
 		code.add(_indent + this.getModifiers(_root, _name) + decl + ";");
 		// Add a comment if there is no type info or internal declaration is not allowed
-		setDefHandled(_root.getSignatureString(false), _name);
+		setDefHandled(_root.getSignatureString(false, false), _name);
 		// END KGU#424 2017-09-26
 	}
 	

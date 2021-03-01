@@ -282,7 +282,7 @@ public class TexGenerator extends Generator {
 	@Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-		if (!_inst.disabled) {
+		if (!_inst.isDisabled(true)) {
 			StringList lines = _inst.getUnbrokenText();
 			for (int i=0; i<lines.count(); i++)
 			{
@@ -335,7 +335,7 @@ public class TexGenerator extends Generator {
 		s.add(makeIndent(_indent)+'\ifend');
 */
 		
-		if (!_alt.disabled) {
+		if (!_alt.isDisabled(true)) {
 			// START KGU#453 2017-11-02: Issue #447 - line continuation support was inconsistent
 			//code.add(_indent + "\\ifthenelse{"+Math.max(1, 8-2*_alt.getText().count()) + "}{" + Math.max(1, 8-2*_alt.getText().count()) + "}{\\(" + transform(_alt.getUnbrokenText().getLongString()) + "\\)}{" + Element.preAltT + "}{" + Element.preAltF + "}");
 			String indentPlus1 = _indent + this.getIndent();
@@ -385,7 +385,7 @@ public class TexGenerator extends Generator {
 	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
-		if (!_case.disabled) {
+		if (!_case.isDisabled(true)) {
 			// START KGU#483 2017-12-31: Issue #497 - we need a trick to activate the default branch
 			//code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
 			String indentPlus1 = _indent + this.getIndent();
@@ -420,7 +420,7 @@ public class TexGenerator extends Generator {
 
 	protected void generateCode(For _for, String _indent)
 	{
-		if (!_for.disabled) {
+		if (!_for.isDisabled(true)) {
 			// START KGU#483 2017-12-30: Bugfix #497 - we should at least mark the keywords
 			//code.add(_indent + "\\while{\\(" + transform(_for.getUnbrokenText().getLongString()) + "\\)}");
 			String content = "";
@@ -471,7 +471,7 @@ public class TexGenerator extends Generator {
 
 	protected void generateCode(While _while, String _indent)
 	{
-		if (!_while.disabled) {
+		if (!_while.isDisabled(true)) {
 			code.add(_indent + "\\while{\\(" + transform(_while.getUnbrokenText().getLongString()) + "\\)}");
 			generateCode(_while.q, _indent + this.getIndent());
 			code.add(_indent + "\\whileend");
@@ -480,7 +480,7 @@ public class TexGenerator extends Generator {
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		if (!_repeat.disabled) {
+		if (!_repeat.isDisabled(true)) {
 			code.add(_indent + "\\until{\\(" + transform(_repeat.getUnbrokenText().getLongString()) + "\\)}");
 			generateCode(_repeat.q, _indent + this.getIndent());
 			code.add(_indent + "\\untilend");
@@ -489,7 +489,7 @@ public class TexGenerator extends Generator {
 	
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		if (!_forever.isDisabled()) {
+		if (!_forever.isDisabled(false)) {
 			code.add(_indent+"\\forever");
 			generateCode(_forever.q, _indent + this.getIndent());
 			code.add(_indent+"\\foreverend");
@@ -499,7 +499,7 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Call _call, String _indent)
 	{
 		StringList lines = _call.getUnbrokenText();
-		for(int i=0; !_call.disabled && i<lines.count(); i++)
+		for (int i = 0; !_call.isDisabled(true) && i < lines.count(); i++)
 		{
 			// START KGU#2 2015-12-19: Wrong command, should be \sub
 			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
@@ -510,7 +510,7 @@ public class TexGenerator extends Generator {
 	
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		if (!_jump.disabled) {
+		if (!_jump.isDisabled(true)) {
 			StringList lines = _jump.getUnbrokenText();
 			// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 			//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
@@ -551,7 +551,7 @@ public class TexGenerator extends Generator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		// Ignore it if there are no threads or if the element is disabled
-		if (!_para.qs.isEmpty() && !_para.disabled)
+		if (!_para.qs.isEmpty() && !_para.isDisabled(true))
 		{
 			// Since substructure is not allowed (at least a call would have been sensible!),
 			// we transfer all non-atomic threads into virtual Roots

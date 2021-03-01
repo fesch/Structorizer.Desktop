@@ -2091,7 +2091,7 @@ public class D7Parser extends CodeParser
 	protected boolean subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled {
 		// START KGU#821 2020-03-08: Issue #833 - Need a chance to get rid of superfluous diagrams
 		boolean isSuperfluous = false;
-		getLogger().config(root.getSignatureString(false));
+		getLogger().config(root.getSignatureString(false, false));
 		if (unitName != null && root.isProgram() && root.getMethodName().equals("???")) {
 			root.setText(unitName + DEFAULT_GLOBAL_SUFFIX);
 			root.setInclude(true);

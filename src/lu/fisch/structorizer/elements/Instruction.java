@@ -71,6 +71,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Enh. #739: Support for enum type definitions
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Warning symbol for hidden declarations, support for backlink
+ *      Kay Gürtzig     2021-02-26      Bugfix #946: Endless loop in getAssignedVarname()
  *
  ******************************************************************************************************
  *
@@ -390,7 +391,7 @@ public class Instruction extends Element {
 //			canvas.drawRect(_top_left);
 			canvas.drawRect(myrect);
 			// START KGU#277 2016-10-13: Enh. #270
-			if (_element.disabled) {
+			if (_element.isDisabled(true)) {
 //				canvas.hatchRect(_top_left, 5, 10);
 				canvas.hatchRect(myrect, 5, 10);
 			}
@@ -514,7 +515,7 @@ public class Instruction extends Element {
 	@Override
 	protected void addFullText(StringList _lines, boolean _instructionsOnly)
 	{
-		if (!this.isDisabled()) {
+		if (!this.isDisabled(false)) {
 			// START KGU#413 2017-06-09: Enh. #416 cope with user-inserted line breaks
 			//_lines.add(this.getText());
 			// START KGU#388 2017-09-13: Enh. #423: We must not add type definition lines
@@ -1021,10 +1022,10 @@ public class Instruction extends Element {
 	// to decide whether an Instruction element complies to the Call syntax and
 	// may be transmuted.)
 	/**
-	 * Returns a Function object describing the signature of the called routine
-	 * if the text complies to the call syntax described in the user guide,
-	 * or null otherwise.
-	 * @return Function object or null.
+	 * Returns a {@link Function} object describing the signature of the called
+	 * routine if the text complies to the call syntax described in the user guide,
+	 * or {@code null} otherwise.
+	 * @return Function object or {@code null}.
 	 * @see #isFunctionCall()
 	 * @see #isProcedureCall()
 	 */
@@ -1229,7 +1230,7 @@ public class Instruction extends Element {
 				// END KGU#542 2019-11-17
 					StringList compNames = new StringList();
 					StringList compTypes = new StringList();
-					this.extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+					extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
 					addRecordTypeToTypeMap(typeMap, typename, typeSpec, compNames, compTypes, lineNo);
 				// START KGU#542 2019-11-17: Enh. #739
 				}
@@ -1301,10 +1302,13 @@ public class Instruction extends Element {
 			//	varName = tokens.get(i-2) + "." + varName;
 			//	i -= 2;
 			//}
+			// START KGU#944 2021-02-26: Bugfix #946
+			boolean forgetVarname = false;
+			// END KGU#944 2021-02-26
 			while (i > 1 && varName != null && tokens.get(i-1).equals(".")) {
 				String preDotToken = tokens.get(i-2);
 				if (Function.testIdentifier(preDotToken, false, null)) {
-					varName = tokens.get(i-2) + "." + varName;
+					varName = preDotToken + "." + varName;
 					i -= 2;
 				}
 				else {
@@ -1318,6 +1322,39 @@ public class Instruction extends Element {
 						varName = preDotToken;	// Start again with the identifier prior to the indices
 						i -= 2;	// this ought to be the token index of varName
 					}
+					// START KGU#944 2021-02-26: Bugfix #946 This could run into an endless loop
+					else if (preDotToken.startsWith("(") && preDotToken.endsWith(")") && entireTarget) {
+						// Might be a function or method call - then we might give up, e.g.
+						// alternatives.get(nAlts - 1).qFalse <- caseElem.qs.get(lineNo - 1)
+						if (i - 2 > 0 && Function.testIdentifier(tokens.get(i-3), false, null)) {
+							// okay, seems to be a function or method call, indeed
+							varName = null;
+							i -= 3; // This is now the position of the function name
+							// Check if it is a method, in this case the show might go on...
+							if (i > 1 && tokens.get(i-1).equals(".")
+									&& Function.testIdentifier(preDotToken = tokens.get(i-2), false, null)) {
+								varName = preDotToken;
+								i -= 2;
+								forgetVarname = true;
+							}
+						}
+						else {
+							/* TODO --> issue #800
+							 * The content of the parenthesis might be a casted expression or
+							 * whatsoever. Without a detailed syntax analysis we are lost here
+							 * It can't be sensible to proceed for now. But on the other hand
+							 * it is already unlikely that a declaration is involved, and we
+							 * are to deliver the correct start index i ...
+							 */
+							i = 0;
+							varName = null;
+						}
+					}
+					else {
+						// Get the hell outa here! The preceding dot makes this varName wrong
+						varName = null;
+					}
+					// END KGU#944 2021-02-26
 				}
 			}
 			// END KGU#780 2019-12-01
@@ -1326,6 +1363,11 @@ public class Instruction extends Element {
 			if (entireTarget) {
 				varName = tokens.concatenate(null, i);
 			}
+			// START KGU#944 2021-02-26: Bugfix #946
+			else if (forgetVarname) {
+				varName = null;
+			};
+			// END KGU#944 2021-02-26
 			// END KGU#784 2019-12-02
 		}
 		return varName;
@@ -1440,7 +1482,10 @@ public class Instruction extends Element {
 			int myIndex = (myParent).getIndexOf(this);
 			Element pred = null;
 			while (myIndex > 0
-					&& (pred = myParent.getElement(myIndex-1)).getClass().getSimpleName().equals("Instruction")
+					// START KGU#408 2021-02-26
+					//&& (pred = myParent.getElement(myIndex-1)).getClass().getSimpleName().equals("Instruction")
+					&& (pred = myParent.getElement(myIndex-1)) instanceof Instruction
+					// END KGU#408 2021-02-26
 					&& ((Instruction)pred).isMereDeclaratory()) {
 				surrogate = (Instruction)pred;
 				myIndex--;
@@ -1468,7 +1513,10 @@ public class Instruction extends Element {
 			int index = firstIndex+1;
 			Element succ = null;
 			while (index < myParent.getSize()
-					&& (succ = myParent.getElement(index)).getClass().getSimpleName().equals("Instruction")
+					// START KGU#408 2021-02-26: Enh. #410 Mofied Call behaviour
+					//&& (succ = myParent.getElement(index)).getClass().getSimpleName().equals("Instruction")
+					&& (succ = myParent.getElement(index)) instanceof Instruction
+					// END KGU#408 2021-02-26
 					&& ((Instruction)succ).isMereDeclaratory()) {
 				index++;
 			}

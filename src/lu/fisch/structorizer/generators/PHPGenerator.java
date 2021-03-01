@@ -504,7 +504,7 @@ public class PHPGenerator extends Generator
 		// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
 		if (!appendAsComment(_inst, _indent)) {
 			
-			boolean isDisabled = _inst.isDisabled();
+			boolean isDisabled = _inst.isDisabled(false);
 			Root root = Element.getRoot(_inst);
 			StringList declVars = root.getMereDeclarationNames(false);
 			
@@ -635,7 +635,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(Alternative _alt, String _indent)
 	{
-		boolean isDisabled = _alt.isDisabled();
+		boolean isDisabled = _alt.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_alt, _indent);
@@ -663,7 +663,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(Case _case, String _indent)
 	{
-		boolean isDisabled = _case.isDisabled();
+		boolean isDisabled = _case.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_case, _indent);
@@ -713,7 +713,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(For _for, String _indent)
 	{
-		boolean isDisabled = _for.isDisabled();
+		boolean isDisabled = _for.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_for, _indent);
@@ -778,7 +778,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(While _while, String _indent)
 	{
-		boolean isDisabled = _while.isDisabled();
+		boolean isDisabled = _while.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_while, _indent);
@@ -799,7 +799,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		boolean isDisabled = _repeat.isDisabled();
+		boolean isDisabled = _repeat.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_repeat, _indent);
@@ -825,7 +825,7 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Forever _forever, String _indent)
     {
-        boolean isDisabled = _forever.isDisabled();
+        boolean isDisabled = _forever.isDisabled(false);
         
         // START KGU 2014-11-16
         appendComment(_forever, _indent);
@@ -840,7 +840,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(Call _call, String _indent)
 	{
-		boolean isDisabled = _call.isDisabled();
+		boolean isDisabled = _call.isDisabled(false);
 
 		// START KGU 2014-11-16
 		appendComment(_call, _indent);
@@ -859,7 +859,7 @@ public class PHPGenerator extends Generator
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		boolean isDisabled = _jump.isDisabled();
+		boolean isDisabled = _jump.isDisabled(false);
 		
 		// START KGU 2014-11-16
 		appendComment(_jump, _indent);
@@ -935,7 +935,7 @@ public class PHPGenerator extends Generator
 	// START KGU#686 2019-03-21: Enh. #56
 	protected void generateCode(Try _try, String _indent)
 	{
-		boolean isDisabled = _try.isDisabled();
+		boolean isDisabled = _try.isDisabled(false);
 		String indentPlus1 = _indent + this.getIndent();
 		String varName = _try.getExceptionVarName();
 		String exName = "ex" + Integer.toHexString(_try.hashCode());
