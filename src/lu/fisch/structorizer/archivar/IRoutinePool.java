@@ -43,6 +43,7 @@ package lu.fisch.structorizer.archivar;
  *      Kay Gürtzig     2019-03-13      Enh. #698: Moved from executor to archivar package
  *      Kay Gürtzig     2019-03-28      Enh. #657: Argument added to findIncludesByName() and findRoitinesBySignature()
  *      Kay Gürtzig     2019-03-30      Issue #720: Method findIncludingRoots(String, boolean) added.
+ *      Kay Gürtzig     2021-03-01      New default methods enableNotification(b) and isNotificationEnabled()
  *
  ******************************************************************************************************
  *
@@ -204,5 +205,28 @@ public interface IRoutinePool {
 	 * @see #addChangeListener(IRoutinePoolListener)
 	 */
 	public void removeChangeListener(IRoutinePoolListener _listener);
+	
+	// START KGU#408 2021-03-01: Enh. #410
+	/**
+	 * Subclasses may override this dummy method in order to allow or disable notifications
+	 * temporarily.<br/>
+	 * If this method is overridden then method {@link #isNotificationEnabled()} should also
+	 * be re-implemented in the proper way.
+	 * @param enable - whether it is allowed to send pool change notifications or not
+	 */
+	public default void enableNotification(boolean enable)
+	{}
+	
+	/**
+	 * @return the current notification status ({@code true} if pool change notifications
+	 * are enabled, {@code false} otherwise. This dummy method always returns {@code true}.
+	 */
+	public default boolean isNotificationEnabled()
+	{
+		return true;
+	}
+	// END KGU#804 2021-03-01
+	
+
 	
 }

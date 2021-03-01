@@ -128,6 +128,17 @@ public class Diagram extends ArchiveRecord
 	}
 	// END KGU#330 2017-01-13
 	
+	// START KGU#408 2021-02-28: Enh. #410
+	/**
+	 * @return the cached signature string of the recently held {@link Root} or
+	 * possibly {@code null}
+	 */
+	public String getCachedSignature()
+	{
+		return this.signature;
+	}
+	// END KGU#408 2021-02-28
+	
 	// START KGU#624 2018-12-26: Enh. #655
 	/** @return the pure diagram name (extracted from the cached signature) */
 	public String getName()

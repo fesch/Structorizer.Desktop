@@ -7076,8 +7076,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.lastCodeImportDir = file.getParentFile();
 			// END KGU#354 2017-04-26
 
+			Cursor origCursor = getCursor();
+			boolean arrangerNotifies = Arranger.hasInstance() && Arranger.getInstance().isNotificationEnabled();
 			try
 			{
+				setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
 				// load and parse source-code
 				//CParser cp = new CParser("C-ANSI.cgt");
@@ -7198,6 +7201,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//this.arrangeNSD();
 						this.arrangeNSD(file.getName());
 						// END KGU#626 2018-12-28
+						Arranger.getInstance().enableNotification(false);
 					}
 					if (firstRoot != null)
 					{
@@ -7295,6 +7299,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#705 2019-09-24: Enh. #738
 				updateCodePreview();
 				// END KGU#705 2019-09-24
+				setCursor(origCursor);
+				if (Arranger.hasInstance()) {
+					Arranger.getInstance().enableNotification(arrangerNotifies);
+				}
 			}
 		}
 	} 

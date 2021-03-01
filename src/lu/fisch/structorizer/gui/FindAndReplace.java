@@ -1306,7 +1306,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	// START KGU#684 2019-06-13: Bugfix #728
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
-		if ((_flags & IRoutinePoolListener.RPC_POOL_CHANGED) != 0
+		if ((_flags & (IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_NAME_CHANGED)) != 0
 				&& this.cmbScope.getSelectedItem() == Scope.OPENED_DIAGRAMS) {
 			this.resetResults();
 		}

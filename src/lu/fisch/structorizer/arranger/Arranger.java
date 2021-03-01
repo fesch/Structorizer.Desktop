@@ -81,6 +81,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-01-20  Enh. #801: Key F1 now tries to open the PDF help file if offline
  *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
  *      Kay Gürtzig     2020-12-28  Slight modifications to the status bar layout (icons, tooltip)
+ *      Kay Gürtzig     2021-03-01  Enh. #410: Temporary pool notification suppression introduced
  *
  ******************************************************************************************************
  *
@@ -1920,6 +1921,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 			// END KGU#626 2018-12-31
 		// START KGU#624 2018-12-21: Enh. #655
 		}
+		else if ((_flags & (RPC_NAME_CHANGED | RPC_STATUS_CHANGED)) != 0) {
+			Collections.sort(routines, Root.SIGNATURE_ORDER);
+			Collections.sort(groups, Group.NAME_ORDER);
+		}
 		if ((_flags & RPC_SELECTION_CHANGED) != 0) {
 			doButtons();
 			updateStatusSelection();
@@ -1945,6 +1950,23 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 		}
 	}
 	// END KGU#305 2016-12-16
+	
+	@Override
+	public void enableNotification(boolean enable)
+	{
+		if (this.surface != null) {
+			this.surface.enableNotification(enable);
+		}
+	}
+
+	@Override
+	public boolean isNotificationEnabled()
+	{
+		if (this.surface != null) {
+			return this.surface.isNotificationEnabled();
+		}
+		return true;
+	}
 
 	// START KGU#305 2016-12-17: Enh. #305 External removal request (from  Arranger index)
 	/**
@@ -2125,7 +2147,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 		if (attrInsp.isCommitted()) {
 			_root.addUndo(true);
 			_root.adoptAttributes(attrInsp.licenseInfo);
-			this.routinePoolChanged(surface, RPC_POOL_CHANGED);
+			// START KGU#408 2021-02-28: Enh. #410 Can't be a big issue...
+			//this.routinePoolChanged(surface, RPC_POOL_CHANGED);
+			this.routinePoolChanged(surface, RPC_STATUS_CHANGED);
+			// END KGU#408 2021-02-28
 		}
 	}
 	// END KGU#363/KGU#624 2018-12-27

@@ -28,7 +28,7 @@ public interface Updater
 {
     /**
      * Informs the Updater that something's changed
-     * @param source
+     * @param source - the diagram that induced the changed
      */
     public void update(Root source);
     

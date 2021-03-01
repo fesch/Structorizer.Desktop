@@ -79,6 +79,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Vector;
 
 import javax.swing.AbstractAction;
@@ -176,7 +177,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
 	// END KGU#669 2019-03-01
 	// START KGU#408 2021-02-26: Enh. #410 It ought to be possible to hide the qualifiers
-	protected final JCheckBoxMenuItem popupIndexShowQualifiers = new JCheckBoxMenuItem("Show qualifiers");
+	protected final JCheckBoxMenuItem popupIndexShowQualifiers = new JCheckBoxMenuItem("Show qualifiers as prefix");
 	// END KGU#408 2021-02-26
 	// START KGU#705 2019-10-03: Added on occasion of Enh. #738 (code preview) for regularity
 	protected final JMenuItem popupIndexHide = new JMenuItem("Hide Arranger index");
@@ -726,6 +727,15 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				showQualifiers.put(ArrangerIndex.this, popupIndexShowQualifiers.isSelected());
+				int nGroups = arrangerIndexTop.getChildCount();
+				Vector<Group> groups = new Vector<Group>();
+				for (int i = 0; i < nGroups; i++) {
+					Object groupObject = ((DefaultMutableTreeNode)arrangerIndexTop.getChildAt(i)).getUserObject();
+					if (groupObject instanceof Group) {
+						groups.add((Group)groupObject);
+					}
+				}
+				update(groups);
 				repaint();
 			}
 		});
@@ -798,15 +808,30 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		Vector<Integer> rowsToExpand = new Vector<Integer>(expandedGroups.size());
 		arrangerIndexTop.removeAllChildren();
 		if (_groups != null) {
+			// START KGU#408 2021-02-28: Enh. #410 hierarchical presentation of imported OOP diagrams
+			boolean qualifiedNames = popupIndexShowQualifiers == null
+					|| popupIndexShowQualifiers.isSelected();
+			// END KGU#408 2021-02-28
 			for (int i = 0; i < _groups.size(); i++) {
 				Group group = _groups.get(i);
 				if (expandedGroups.contains(group)) {
 					rowsToExpand.add(i);
 				}
 				DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
-				for (Root aRoot: group.getSortedRoots()) {
-					groupNode.add(new DefaultMutableTreeNode(aRoot));
+				// START KGU#408 2021-02-28: Enh. #410 hierarchical presentation of imported OOP diagrams
+				//for (Root aRoot: group.getSortedRoots()) {
+				//	groupNode.add(new DefaultMutableTreeNode(aRoot));
+				//}
+				Vector<Root> roots = group.getSortedRoots();
+				if (qualifiedNames) {
+					for (Root aRoot: roots) {
+						groupNode.add(new DefaultMutableTreeNode(aRoot));
+					}
 				}
+				else {
+					rebuildGroupAsTree(groupNode, roots);
+				}
+				// END KGU#408 2021-02-28
 				arrangerIndexTop.add(groupNode);
 			}
 		}
@@ -820,6 +845,167 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		}
 		this.doButtonsLocal();
 	}
+
+	/**
+	 * Rebuilds the group node as a multi-level diagram tree, regarding namespace
+	 * hierarchy 
+	 * @param groupNode - the group node to attach the root node to
+	 * @param roots - the sorted vector of member diagrams
+	 */
+	private void rebuildGroupAsTree(DefaultMutableTreeNode groupNode, Vector<Root> roots) {
+		// This algorithm works but needs too much time
+		Vector<StringList> qualifiers = new Vector<StringList>();
+		int ixSubs = roots.size();	// Index of the first subroutine
+		int ixIncl = ixSubs;		// Index of the first includable
+		/* According to the sorting strategy (lexicographic by qualified
+		 * name), nodes the qualified name of which represents a prefix
+		 * of others will precede the latter ones. So we can 
+		 */
+		// Preparation loop: Fetch and decompose the qualified names
+		for (Root aRoot: roots) {
+			if (aRoot.isSubroutine()) {
+				ixSubs = Math.min(ixSubs, qualifiers.size());
+			}
+			else if (aRoot.isInclude()) {
+				ixIncl = Math.min(ixIncl, qualifiers.size());
+			}
+			qualifiers.add(StringList.explode(aRoot.getQualifiedName(true), "\\."));
+		}
+		/* Now try to place the uncontained nodes per category first and attach
+		 * them their descendants
+		 */
+		int[] ranges = new int[] {0, ixSubs, ixSubs, ixIncl, ixIncl, roots.size()};
+		for (int k = 0; k < ranges.length - 1; k += 2) {
+			for (int j = ranges[k]; j < ranges[k+1]; j++) {
+				StringList path = qualifiers.get(j);
+				if (path == null) {
+					continue;
+				}
+				boolean placeIt = path.count() <= 1;
+				if (!placeIt) {
+					// Look for prefixes among the following categories
+					boolean isContained = false;
+					for (int c = k + 2; c < ranges.length -1; c += 2) {
+						isContained = checkContainingNodes(path, qualifiers, ranges[c], ranges[c+1]);
+						if (isContained) {
+							break;
+						}
+					}
+					placeIt = !isContained;
+				}
+				if (placeIt) {
+					DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(roots.get(j));
+					groupNode.add(rootNode);
+					qualifiers.set(j, null);	// Mark it as done
+					// Now look for direct child nodes
+					int[] ranges2 = ranges.clone();
+					ranges2[k] = j + 1;	// in the current category only subsequent entries are of interest
+					findAndAddChildren(rootNode, path, qualifiers, roots, ranges2);
+				}
+			}
+		}
+		// Just to make sure we haven't forgotten any: Gather the remnants
+		for (int j = 0; j < roots.size(); j++) {
+			if (qualifiers.get(j) != null) {
+				groupNode.add(new DefaultMutableTreeNode(roots.get(j)));
+			}
+		}
+	}
+	/**
+	 * Checks if a prefix of the given path is among the lexicographically sorted
+	 * qualified names in index range from ixStart to ixEnd-1.
+	 * @param path - a StringList representing the path
+	 * @param qualifiers - the vector of all occurring paths in this group, may contain
+	 *      {@code null} entries (if the respective node is already placed)
+	 * @param ixSubs
+	 * @param ixIncl
+	 * @return
+	 */
+	private boolean checkContainingNodes(StringList path, Vector<StringList> qualifiers, int ixStart, int ixEnd) {
+		String qualName = path.concatenate(".");
+		for (int i = ixStart; i < ixEnd; i++) {
+			StringList path2 = qualifiers.get(i);
+			if (path2 != null) {
+				if (path.indexOf(path2, 0, true) == 0) {
+					return true;
+				}
+				else if (qualName.compareTo(path2.concatenate(".")) > 0) {
+					// A containing path may not come anymore
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Finds diagrams the associated qualified name of which is a direct "child" of the given
+	 * {@code path}
+	 * @param rootNode - the already established node associated to decomposed qualified name {@code path}
+	 * @param path - the split qualified name a a StringList
+	 * @param qualifiers - the vector of split qualified names according to the order of {@code roots}.
+	 * @param roots - the sorted Roots of the currently processed Group
+	 * @param ranges - an array of index values where always two consecutive ones define an index
+	 *    range.
+	 */
+	private void findAndAddChildren(DefaultMutableTreeNode rootNode, StringList path, Vector<StringList> qualifiers,
+			Vector<Root> roots, int[] ranges) {
+		int len = path.count();
+		String qualName = path.concatenate(".");
+		for (int k = 0; k < ranges.length-1; k+=2) {
+			for (int i = ranges[k]; i < ranges[k+1]; i++) {
+				StringList path2 = qualifiers.get(i);
+				if (path2 != null) {
+					if (path2.indexOf(path, 0, true) == 0 && path2.count() == len+1) {
+						DefaultMutableTreeNode subNode = new DefaultMutableTreeNode(roots.get(i));
+						rootNode.add(subNode);
+						qualifiers.set(i, null);
+						int[] subranges = ranges.clone();
+						subranges[k] = i + 1;
+						findAndAddChildren(subNode, path2, qualifiers, roots, subranges);
+					}
+					else if (qualName.compareTo(path2.concatenate(".")) > 0) {
+						// No further matching entries in this range
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+//	/**
+//	 * Rebuilds the group node as a multi-level diagram tree, regarding namespace
+//	 * hierarchy (second approach) 
+//	 * @param groupNode - the group node to attach the root node to
+//	 * @param roots - the sorted vector of member diagrams
+//	 */
+//	private void rebuildGroupAsTree(DefaultMutableTreeNode groupNode, Vector<Root> roots) {
+//		// We build a horizontal name and Root hierarchy, ideally in linear time
+//		LinkedHashMap<String, Object> mains = new LinkedHashMap<String, Object>();
+//		LinkedHashMap<String, Object> subs = new LinkedHashMap<String, Object>();
+//		LinkedHashMap<String, Object> incls = new LinkedHashMap<String, Object>();
+//		for (Root aRoot: roots) {
+//			LinkedHashMap<String, Object> tree = mains;
+//			if (aRoot.isSubroutine()) {
+//				tree = subs;
+//			}
+//			else if (aRoot.isInclude()) {
+//				tree = incls;
+//			}
+//			String qualName = aRoot.getQualifiedName(true);
+//			StringList qualifier = StringList.explode(qualName, "\\.");
+//			for (int i = 0; i < qualifier.count(); i++) {
+//				String part = qualifier.get(i);
+//				Object entry = stage.get(qualifier.get(0));
+//				if (entry == null) {
+//					entry = new LinkedHashMap<String, Object>();
+//					stage.put(part, entry);
+//				}
+//
+//			}
+//		}
+//	}
+
 	// END KGU#626 2019-01-01
 
 	// START KGU#626 2019-01-04: Enh. #657

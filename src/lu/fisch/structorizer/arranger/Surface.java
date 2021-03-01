@@ -131,6 +131,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-30      Issue #901: WAIT_CURSOR also applied to saveDiagrams() and saveGroups()
  *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams
  *      Kay Gürtzig     2021-02-24      Enh. #410: Root search methods enhanced by namespace similarity ranking
+ *      Kay Gürtzig     2021-03-01      Enh. #410: Temporary pool notification suppression introduced
  *
  ******************************************************************************************************
  *
@@ -375,6 +376,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
 	};
 	// END KGU#312 2016-12-29
+	// START KGU#408 2021-03-01: Enh. ##410 Again monstruous contention
+	private boolean notifications_enabled = true;
+	private int deferred_notifications = 0;
+	// END KGU#408 2021-03-01
 	// START KGU#385 2017-04-22: Enh. #62
 	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
 	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
@@ -1035,7 +1040,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#679 2019-03-13
 		// START KGU#746 2019-10-05: The status change of the group wasn't shown in Arranger index
-		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// START KGU#408 2021-03-01: This is a low-level change
+		//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED);
+		// END KGU#408 2021-03-01
 		// END KGU#746 2019-10-05
 		return done ? group : null;
 	}
@@ -1096,6 +1104,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 		}
 		LinkedList<Root> savedRoots = null;
+		enableNotification(false);
 		try
 		{
 			// Prepare to save the arr file (if portable is false then this is the outfile)
@@ -1303,6 +1312,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			
 			JOptionPane.showMessageDialog(initiator, msgSaveError.getText() + " " + ex.getMessage() + "!" + (!causes.isEmpty() ? "\n" + causes.getText() : ""),
 					"Error", JOptionPane.ERROR_MESSAGE, null);
+		}
+		finally {
+			enableNotification(true);
 		}
 		return done;
 	}
@@ -3025,7 +3037,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#624 2018-12-21
 			repaint();
 			// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
-			this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// START KGU#408 2021-03-01: Enh. #410 - no need to rebuild the tree
+			//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
+			// END KGU#408 2021-03-01
 			// END KGU#318 2017-01-05
 		}
 		else
@@ -3996,11 +4011,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		if (diagr != null) {
 			String oldRootName = diagr.getName();
 			if (diagr.checkSignatureChange()) {
+				int changes = IRoutinePoolListener.RPC_POOL_CHANGED
+						| IRoutinePoolListener.RPC_STATUS_CHANGED;
 				String newRootName = source.getMethodName();
 				if (!oldRootName.equals(newRootName)) {
 					removeFromNameMap(oldRootName, diagr);
 					addToNameMap(newRootName, diagr);
 					//printNameMap(3953);	// FIXME DEBUG
+					changes |= IRoutinePoolListener.RPC_NAME_CHANGED;
 				}
 				// START KGU#626 2018-12-31: Update the root lists in the groups
 				for (String groupName: diagr.getGroupNames()) {
@@ -4013,7 +4031,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 				}
 				// END KGU#626 2018-12-31
-				this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+				this.notifyChangeListeners(changes);
 			}
 			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
 			if (source.hasChanged()) {
@@ -4842,14 +4860,38 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private void notifyChangeListeners(int _flags)
 	// END KGU#624 2018-12-21
 	{
-		for (IRoutinePoolListener listener: listeners) {
-			// START KGU#624 2018-12-21: Enh. #655
-			//listener.routinePoolChanged(this);
-			listener.routinePoolChanged(this, _flags);
-			// END KGU#624 2018-12-21
+		if (this.notifications_enabled ) {
+			for (IRoutinePoolListener listener: listeners) {
+				// START KGU#624 2018-12-21: Enh. #655
+				//listener.routinePoolChanged(this);
+				listener.routinePoolChanged(this, _flags);
+				// END KGU#624 2018-12-21
+			}
+		}
+		else {
+			deferred_notifications |= _flags;
 		}
 	}
 	// END KGU#305 2016-12-16
+	
+	// START KGU#408 2021-03-01: Enh. #410 Acceleration attempt 
+	@Override
+	public void enableNotification(boolean enable)
+	{
+		this.notifications_enabled = enable;
+		if (enable && deferred_notifications != 0) {
+			notifyChangeListeners(deferred_notifications);
+			deferred_notifications = 0;
+		}
+		
+	}
+
+	@Override
+	public boolean isNotificationEnabled()
+	{
+		return this.notifications_enabled;
+	}
+	// END KGU#408 2021-03-01
 
 	// START KGU#497 2018-02-17: Enh. #512
 	/**
@@ -5513,7 +5555,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			this.groups.remove(oldName);
 			groups.put(newName, group);
 		}
-		this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		this.notifyChangeListeners(IRoutinePoolListener.RPC_NAME_CHANGED);
 		return true;
 	}
 
