@@ -4939,9 +4939,6 @@ public class COBOLParser extends CodeParser
 				char firstNonSpaceInLine = srcLineCode.trim().charAt(0);
 				// word continuation
 				if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
-					if (posAndLength.pos <= 0 || posAndLength.pos-1 > srcCode.length()) {
-						System.err.println("Wrong index");
-					}
 					srcCode.insert(posAndLength.pos - 1, srcLineCode);
 					posAndLength.pos += srcLineCode.length();
 					return;
