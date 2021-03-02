@@ -1,4 +1,4 @@
-! -----------------------------------------------------------------------------
+﻿! -----------------------------------------------------------------------------
 ! COBOL  -  COmmon Business Oriented Language
 ! GnuCOBOL grammar: COBOL 85,2002,2014 + multitude of vendor extensions
 !
@@ -31,6 +31,9 @@
 !       * added more alias names (in general this should be done by
 !         dialect aware preprocessing!)
 !       * fixed escaped literal terminators in NationalLiteral and ZLiteral
+!    21-03-02: Kay Gürtzig
+!       * Order of sections in <_configuration_section> revised (repository
+!         before special_names)
 !
 ! -----------------------------------------------------------------------------
 !
@@ -39,7 +42,7 @@
 !   COBOL but doesn't either handle COPY or REPLACE statements nor most compiler
 !   directives).
 ! * GOLD parser has no option to tell the grammar-compiler which shift to prefer
-!   in case of conflicts (bison has %prec for this), see "Resolving Conglicts"
+!   in case of conflicts (bison has %prec for this), see "Resolving Conflicts"
 !   in http://goldparser.org/about/future-work.htm - therefore we have many
 !   shift-reduce conflicts and may parse wrong in these places.
 ! * GOLD parser has no option to define states / recognize terminals according
@@ -50,13 +53,13 @@
 !   recognized it isn't resolved. They should either be replaced by its values
 !   (especially for Picture_Def) and/or by a special token that we check here
 !   instead of COBOLWord.
-! * There is no option to define context-sensitive words which is needed in
+! * There is no option to define context-sensitive words, which is needed in
 !   general or remove / add words from the token list which is needed as it
 !   includes a lot of extensions from different vendors that will break parsing
 !   of source that is valid with another vendor (an example for both is the
 !   extension TAB as screen option which breaks the otherwise normal COBOLWord).
 ! * Lots of "FIXME" and "HACK" entries and stuff that we may have to place in a
-!   preparser, espacially "COMMA_DELIM" and replacing of constant values to a
+!   preparser, especially "COMMA_DELIM" and replacing of constant values to a
 !   different token than COBOLWord.
 ! * The C code that is part of the grammar should be investigated for parsing
 !   hints and removed afterwards.
@@ -64,7 +67,7 @@
 ! -----------------------------------------------------------------------------
 
 "Name"    = 'GnuCOBOL'
-"Version" = '1.0'
+"Version" = '1.1'
 
 "Author"  = 'Original Written by Keisuke Nishida, Roger While, Simon Sobisch, Edward Hart'
 
@@ -1318,7 +1321,7 @@ SECURITY                       = 'SECURITY'
     !* CONFIGURATION SECTION *!
 
 <_configuration_section>
-::=  <_configuration_header>  <_source_object_computer_paragraphs>  <_special_names_paragraph>  <_special_names_sentence_list>  <_repository_paragraph>
+::=  <_configuration_header>  <_source_object_computer_paragraphs>  <_repository_paragraph>  <_special_names_paragraph>  <_special_names_sentence_list> 
 
 
 <_configuration_header>

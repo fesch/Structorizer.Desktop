@@ -2008,7 +2008,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD__ENVIRONMENT_DIVISION                                                 =  192;  // <_environment_division> ::= <_environment_header> <_configuration_section> <_input_output_section>
 //		final int PROD__ENVIRONMENT_HEADER                                                   =  193;  // <_environment_header> ::=
 //		final int PROD__ENVIRONMENT_HEADER_ENVIRONMENT_DIVISION_TOK_DOT                      =  194;  // <_environment_header> ::= ENVIRONMENT DIVISION 'TOK_DOT'
-//		final int PROD__CONFIGURATION_SECTION                                                =  195;  // <_configuration_section> ::= <_configuration_header> <_source_object_computer_paragraphs> <_special_names_paragraph> <_special_names_sentence_list> <_repository_paragraph>
+//		final int PROD__CONFIGURATION_SECTION                                                =  195;  // <_configuration_section> ::= <_configuration_header> <_source_object_computer_paragraphs> <_repository_paragraph> <_special_names_paragraph> <_special_names_sentence_list>
 //		final int PROD__CONFIGURATION_HEADER                                                 =  196;  // <_configuration_header> ::=
 //		final int PROD__CONFIGURATION_HEADER_CONFIGURATION_SECTION_TOK_DOT                   =  197;  // <_configuration_header> ::= CONFIGURATION SECTION 'TOK_DOT'
 //		final int PROD__SOURCE_OBJECT_COMPUTER_PARAGRAPHS                                    =  198;  // <_source_object_computer_paragraphs> ::=
@@ -4150,10 +4150,10 @@ public class COBOLParser extends CodeParser
 	private static final int TEXTCOLUMN_VARIABLE = 500;
 
 	// START KGU#946 2021-03-01: Bugfix #851/3
-	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("(^|.*?(\\W|\\s)+?)[0-9]+?").matcher("");
-	private static final Matcher RIGHT_DIGIT_SEQUENCE = Pattern.compile("[0-9]+?([eE][+-]?[0-9]+|(\\W|\\s)+?.*?|$)").matcher("");
+	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]+$").matcher("");
+	private static final Matcher RIGHT_DIGIT_SEQUENCE = Pattern.compile("^[0-9]+([eE][+-]?[0-9]+)?(\\W.*)?$").matcher("");
 	/** The decimal point surrogate used in the grammar to fix DecimalLiteral and FloatLiteral */
-	private static final String DEC_PT_SURR = "?";
+	private static final String DEC_PT_SURR = "\u25AA";
 	// END KGU#946 2021-03-01
 	
 	// START KGU#473 2017-12-04: Bugfix #485
@@ -4355,8 +4355,8 @@ public class COBOLParser extends CodeParser
 								i+1 < tokens0.count() && RIGHT_DIGIT_SEQUENCE.reset(tokens0.get(i+1)).matches()) {
 							/* We must reconcatenate the literal, use a decimal point surrogate
 							 * to protect it against TOK_DOT splitting */
-							tokens0.set(i, tokens0.get(i-1) + DEC_PT_SURR + tokens0.get(i+1));
-							tokens0.set(i-1, "");
+							token = tokens0.get(i-1) + DEC_PT_SURR + tokens0.get(i+1);
+							tokens.remove(tokens.count()-1);
 							tokens0.set(i+1, "");
 						}
 						else {
@@ -4386,13 +4386,16 @@ public class COBOLParser extends CodeParser
 			// START KGU#946 2021-03-01: Bugfix #851/3 We must reconcatenate float literals
 			int posDot = -1;
 			while (!decimComma && (posDot = tokens.indexOf(".", posDot + 1)) >= 0) {
+				System.out.print("Starting digSeq matching in " + tokens.get(posDot-1) + " ... ");
 				if (posDot >= 1 && LEFT_DIGIT_SEQUENCE.reset(tokens.get(posDot-1)).matches()
 					&& posDot+1 < tokens.count() && RIGHT_DIGIT_SEQUENCE.reset(tokens.get(posDot+1)).matches()) {
 					// We must reconcatenate the literal, use a decimal point surrogate
 					tokens.set(posDot-1, tokens.get(posDot-1) + DEC_PT_SURR + tokens.get(posDot+1));
 					tokens.remove(posDot, posDot+2);
 					replacementsDone = true;
+					System.err.print(" !!! ");
 				}
+				System.out.println("done.");
 			}
 			// END KGU#946 2021-03-01
 			tokens = StringList.explode(tokens, "\\s+");
