@@ -225,6 +225,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-12      Bugfix #936 in exportGroup() - failed on a group never having been saved
  *      Kay Gürtzig     2021-02-24      Bugfix #419: rebreakLines() did not redraw though it induces reshaping
  *      Kay Gürtzig     2021-02-28      Issue #905: Faulty redrawing policy after AnalyserPreference changes fixed
+ *      Kay Gürtzig     2021-03-01      Bugfix #950: Arranger notifications were accidently switched off on code import
+ *      Kay Gürtzig     2021-03-02      Bugfix #951: On FilesDrop for source files the language-specific options weren't used
  *
  ******************************************************************************************************
  *
@@ -834,9 +836,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									// START KGU#395 2017-07-02: Enh. #357
 									String parserClassName = parser.getClass().getSimpleName();
 									for (int j = 0; j < parserPlugins.size(); j++) {
-										GENPlugin plug = parserPlugins.get(i);
-										if (plug.getKey().equals(parserClassName)) 
-										setPluginSpecificOptions(parser, parserClassName, plug.options);
+										// START KGU#948 2021-03-02: Bugfix #951 wrong index used
+										//GENPlugin plug = parserPlugins.get(i);
+										GENPlugin plug = parserPlugins.get(j);
+										// END KGU#948 2021-03-02
+										if (plug.getKey().equals(parserClassName)) {
+											setPluginSpecificOptions(parser, parserClassName, plug.options);
+											break;
+										}
 									}
 									// END KGU#395 2017-07-02
 									List<Root> newRoots = parser.parse(filename, charSet, logPath);
@@ -7090,7 +7097,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#354 2017-04-26
 
 			Cursor origCursor = getCursor();
-			boolean arrangerNotifies = Arranger.hasInstance() && Arranger.getInstance().isNotificationEnabled();
 			try
 			{
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -7314,7 +7320,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#705 2019-09-24
 				setCursor(origCursor);
 				if (Arranger.hasInstance()) {
-					Arranger.getInstance().enableNotification(arrangerNotifies);
+					// KGU#947 2021-03-01 Bugfix #950 Bad implementation caused permanent loss of notifications
+					Arranger.getInstance().enableNotification(true);
 				}
 			}
 		}

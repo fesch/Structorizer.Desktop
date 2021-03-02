@@ -20,6 +20,15 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
+Current development version 3.31-01 (2021-03-02)
+- 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
+- 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
+      - Decimal and float literals weren't recognised,
+      - recognition / conversion of decimal commas implemented,
+      - possible index range error during file preparation with fix file format.
+- 01: Bugfix #950: Synchronisation Arranger -> Arranger index could get shut off <2>
+- 01: Bugfix #951: On source files dropping, the import options were ignored <2>
+
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
