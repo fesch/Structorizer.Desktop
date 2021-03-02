@@ -4386,16 +4386,13 @@ public class COBOLParser extends CodeParser
 			// START KGU#946 2021-03-01: Bugfix #851/3 We must reconcatenate float literals
 			int posDot = -1;
 			while (!decimComma && (posDot = tokens.indexOf(".", posDot + 1)) >= 0) {
-				System.out.print("Starting digSeq matching in " + tokens.get(posDot-1) + " ... ");
 				if (posDot >= 1 && LEFT_DIGIT_SEQUENCE.reset(tokens.get(posDot-1)).matches()
 					&& posDot+1 < tokens.count() && RIGHT_DIGIT_SEQUENCE.reset(tokens.get(posDot+1)).matches()) {
 					// We must reconcatenate the literal, use a decimal point surrogate
 					tokens.set(posDot-1, tokens.get(posDot-1) + DEC_PT_SURR + tokens.get(posDot+1));
 					tokens.remove(posDot, posDot+2);
 					replacementsDone = true;
-					System.err.print(" !!! ");
 				}
-				System.out.println("done.");
 			}
 			// END KGU#946 2021-03-01
 			tokens = StringList.explode(tokens, "\\s+");
