@@ -5929,6 +5929,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.E_BREAKPOINTCOLOR = Color.RED;
 		}
 		redraw();
+		doButtons();
 	}
 	
 	/**

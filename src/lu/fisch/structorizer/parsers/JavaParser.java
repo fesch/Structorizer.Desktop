@@ -51,6 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-27      Supporting method hooks for ProcessingParser inserted.
  *      Kay Gürtzig     2021-03-04      Bugfix #955 ".class" replacement in file preparation didn't work,
  *                                      Multi-catch clauses let the parser fail (and must be converted)
+ *                                      Issue #956 omit declarations if optionImportVarDecl is false
  *
  ******************************************************************************************************
  *
@@ -1408,13 +1409,15 @@ public class JavaParser extends CodeParser
 				this.applyMethodHeader(_reduction.get(ixHeader).asReduction(), subRoot);
 					// Add the body elements to the class Root instead
 				Root classRoot = includables.peek();
-				// Prepare a disabled instruction element showing the declaration
-				Call decl = new Call(subRoot.getText());
-				decl.isMethodDeclaration = true;
-				decl.setComment(subRoot.getComment());
-				decl.setColor(colorDecl);
-				// Append the declaration
-				((Forever)classRoot.children.getElement(1)).getBody().addElement(decl);
+				if (optionImportVarDecl) { // KGU#951 2021-03-04: Issue #956 consider import option
+					// Prepare a disabled instruction element showing the declaration
+					Call decl = new Call(subRoot.getText());
+					decl.isMethodDeclaration = true;
+					decl.setComment(subRoot.getComment());
+					decl.setColor(colorDecl);
+					// Append the declaration
+					((Forever)classRoot.children.getElement(1)).getBody().addElement(decl);
+				}
 				// Add the method as is to the pool
 				subRoot.addToIncludeList(includables.peek());
 				addRoot(subRoot);
@@ -1433,6 +1436,18 @@ public class JavaParser extends CodeParser
 				boolean isConst = ruleId == RuleConstants.PROD_LOCALVARIABLEDECLARATION_FINAL;
 				String type = this.translateType(_reduction.get(isConst ? 1 : 0));
 				StringList vars = this.processVarDeclarators(_reduction.get(isConst ? 2 : 1), type, isConst);
+				// START KGU#951 2021-03-04: Issue #956 consider import option
+				if (!optionImportVarDecl && !isConst) {
+					for (int i = vars.count()-1; i >= 0; i--) {
+						if (!Instruction.isAssignment(vars.get(i))) {
+							vars.remove(i);
+						}
+					}
+				}
+				if (vars.isEmpty()) {
+					break;
+				}
+				// END KGU#951 2021-03-04
 				Instruction ele = new Instruction(vars);
 				if (isConst) {
 					ele.setColor(colorConst);
@@ -1560,10 +1575,12 @@ public class JavaParser extends CodeParser
 				// What do we do with the type? We might insert a declaration and disable it
 				String type = this.translateType(_reduction.get(ixType));
 				String loopVar = this.getContent_R(_reduction.get(ixType + 1));
-				Instruction instr = new Instruction("var " + loopVar + ": " + type);
-				instr.setDisabled(true);
-				instr.setColor(colorMisc);
-				_parentNode.addElement(instr);
+				if (optionImportVarDecl) {	// KGU#951 2021-03-04 issue #956
+					Instruction instr = new Instruction("var " + loopVar + ": " + type);
+					instr.setDisabled(true);
+					instr.setColor(colorMisc);
+					_parentNode.addElement(instr);
+				}
 				//String valList = this.translateContent(this.getContent_R(_reduction.get(ixType + 3)));
 				StringList valList = decomposeExpression(_reduction.get(ixType + 3), false, false);
 				int ixLast = valList.count() - 1;

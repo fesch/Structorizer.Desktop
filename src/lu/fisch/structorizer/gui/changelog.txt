@@ -30,6 +30,7 @@ Current development version 3.31-02 (2021-03-04)
 - 02: Issue #954: Breakpoints may now generally be disabled rather than removed <2>
 - 02: Bugfix #955: Several flaws on Java import with "class" literals, multi-catch
       clauses and try statements with several single- or multi-catch clauses. <2>
+- 02: Issue #956: No impact of option "Import var declarations" on Java parser <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
