@@ -57,7 +57,7 @@
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.3, Feb. 2021'
+"Version" = '0.4, Mar. 2021'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
