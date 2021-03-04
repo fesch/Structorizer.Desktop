@@ -31,8 +31,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.06.20      First Issue
- *      Kay Gürtzig     2018.01.22      Issue #484: Layout modified such that text fields will get all remaining width
+ *      Kay Gürtzig     2017-06-20      First Issue
+ *      Kay Gürtzig     2018-01-22      Issue #484: Layout modified such that text fields will get all remaining width
  *                                      Moreover, bug in item list processing fixed.
  *
  ******************************************************************************************************
@@ -101,11 +101,10 @@ public class PluginOptionDialog extends LangDialog {
 		plugin = _plugin;
 		optionVals = _optionValues;
 		initComponents();
-        setModal(true);
+		setModal(true);
 	}
 
 	private void initComponents() {
-		
 		
 		InputVerifier charVerifier = new InputVerifier() {
 			@Override

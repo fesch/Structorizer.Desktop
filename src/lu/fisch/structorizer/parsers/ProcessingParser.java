@@ -33,6 +33,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-02-27      First Issue (on behalf of enhancement request #932)
+ *      Kay Gürtzig     2021-03-04      Issue #957 file preparation now cares for import declarations
  *
  ******************************************************************************************************
  *
@@ -93,13 +94,78 @@ public class ProcessingParser extends JavaParser {
 	private String progName = null;
 	
 	@Override
-	protected void doExtraPreparations(StringBuilder _srcCode, File _file) {
+	protected void doExtraPreparations(StringBuilder _srcCode, File _file) throws ParserCancelled
+	{
 		progName = _file.getName();
 		if (progName.contains(".")) {
 			progName = progName.substring(0, progName.indexOf('.'));
 		}
 		progName = Root.getMethodName(progName, Root.DiagramType.DT_MAIN, true);
-		_srcCode.insert(0, "public class " + progName + "Processing {\n");
+		// START KGU#954 2021-03-04: Issue #957 Skip import lines before inserting the definition
+		//_srcCode.insert(0, "public class " + progName + "Processing {\n");
+		int posIns = 0;
+		if (_srcCode.indexOf("import") >= 0) {
+			int posNextLine = -1;
+			int posLine = posNextLine + 1;
+			boolean inComment = false;
+			boolean inImportClause = false;
+			int length = _srcCode.length();
+			boolean isNoise = true;
+			while (isNoise && posLine < length && (posNextLine = _srcCode.indexOf("\n", posLine)) >= 0) {
+				char[] lineChars = new char[posNextLine - posLine];
+				_srcCode.getChars(posLine, posNextLine, lineChars, 0);
+				String line = new String(lineChars);
+				for (int i = 0; i < lineChars.length; i++) {
+					char ch = lineChars[i];
+					if (inComment) {
+						if (ch == '*' && i+1 < lineChars.length && lineChars[i+1] == '/') {
+							inComment = false;
+							i++;
+						}
+					}
+					else if (inImportClause && ch == ';') {
+						/* The syntactic consistency of the import clause is not our business
+						 * here (we'll leave this to the parser), we just grope for the ending
+						 * semicolon
+						 */
+						inImportClause = false;
+					}
+					else if (ch == '/' && i+1 < lineChars.length) {
+						if (lineChars[i+1] == '/') {
+							// Line comment - skip to next line
+							break;
+						}
+						else if (lineChars[i+1] == '*') {
+							// Block comment starts here
+							inComment = true;
+							i++;
+						}
+					}
+					else if (!inImportClause && !Character.isWhitespace(ch)) {
+						if (!line.substring(i).startsWith("import") || i + 6 >= lineChars.length
+								|| !Character.isWhitespace(lineChars[i + 6])) {
+							// Okay this is something else ...
+							if (i > 0) {
+								// insert a newline here if necessary ...
+								posLine += i;
+								_srcCode.insert(posLine++, "\n");
+							}
+							isNoise = false;
+							posIns = posLine;
+							// ... and leave the loop
+							break;
+						}
+						// May we dare to skip the line? No, it might still open a comment block
+						inImportClause = true;
+						i += 6;
+					}
+				} // for (int i = 0; i < lineChars.length; i++)
+				posLine = posNextLine + 1;
+				this.checkCancelled();
+			} // while (isNoise && ...)
+		}
+		_srcCode.insert(posIns, "public class " + progName + "Processing {\n");
+		// END KGU#954 2021-03-04
 		_srcCode.append("}\n");
 	}
 

@@ -51,7 +51,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-27      Supporting method hooks for ProcessingParser inserted.
  *      Kay Gürtzig     2021-03-04      Bugfix #955 ".class" replacement in file preparation didn't work,
  *                                      Multi-catch clauses let the parser fail (and must be converted)
- *                                      Issue #956 omit declarations if optionImportVarDecl is false
+ *                                      Issue #956 omit declarations if optionImportVarDecl is false,
+ *                                      don't decompose expressions if optionTranslate is off
  *
  ******************************************************************************************************
  *
@@ -1106,8 +1107,9 @@ public class JavaParser extends CodeParser
 	 * content given as {@code _srcCode}, considering the source file {@code _file}
 	 * @param _srcCode - the pre-processed file content
 	 * @param _file - the file object for the source file (e.g. to fetch the name from)
+	 * @throws ParserCancelled 
 	 */
-	protected void doExtraPreparations(StringBuilder _srcCode, File _file) {
+	protected void doExtraPreparations(StringBuilder _srcCode, File _file) throws ParserCancelled {
 		// We don't have to do anything here
 	}
 
@@ -2262,6 +2264,12 @@ public class JavaParser extends CodeParser
 				if (exprRed.get(1).asReduction().getParent().getTableIndex() == RuleConstants.PROD_ASSIGNMENTOPERATOR_EQ) {
 					exprs.add(target + " <- " + value);
 				}
+				// START KGU#955 2021-03-04: Issue #956 The decomposition should only be done if optionTranslate is false
+				else if (!optionTranslate) {
+					// Leave the expression as is
+					exprs.add(target + getContent_R(exprRed.get(1)) + value);
+				}
+				// END KGU#955 2021-03-04
 				else {
 					// Decompose the combined assignment
 					String opr = getContent_R(exprRed.get(1)).trim();
@@ -2283,7 +2291,15 @@ public class JavaParser extends CodeParser
 				String target = lhs.get(lhs.count() -1);
 				String opr = exprRed.get(0).asString().substring(1);
 				exprs.add(lhs.subSequence(0, lhs.count()-1));
-				exprs.add(target + " <- " + target + " " + opr + " 1");
+				// START KGU#955 2021-03-04: Issue #956 Decompose only if optionTranslate is false
+				//exprs.add(target + " <- " + target + " " + opr + " 1");
+				if (optionTranslate) {
+					exprs.add(target + " <- " + target + " " + opr + " 1");
+				}
+				else {
+					exprs.add(opr + opr + target);
+				}
+				// END KGU#955 2021-03-04
 				if (!isStatement) {
 					exprs.add(target);
 				}
@@ -2299,12 +2315,27 @@ public class JavaParser extends CodeParser
 				String target = lhs.get(lhs.count() -1);
 				String opr = exprRed.get(1).asString().substring(1);
 				exprs.add(lhs.subSequence(0, lhs.count()-1));
-				String tempName = "temp" + Integer.toHexString(exprRed.hashCode());
-				exprs.add(tempName + " <- " + target);
-				exprs.add(target + " <- " + target + " " + opr + " 1");
-				if (!isStatement) {
-					exprs.add(tempName);
+				// START KGU#955 2021-03-04: Issue #956 Decompose only if optionTranslate is false
+				//String tempName = "temp" + Integer.toHexString(exprRed.hashCode());
+				//exprs.add(tempName + " <- " + target);
+				//exprs.add(target + " <- " + target + " " + opr + " 1");
+				//if (!isStatement) {
+				//	exprs.add(tempName);
+				//}
+				if (optionTranslate) {
+					String tempName = "temp" + Integer.toHexString(exprRed.hashCode());
+					if (!isStatement) {
+						exprs.add(tempName + " <- " + target);
+					}
+					exprs.add(target + " <- " + target + " " + opr + " 1");
+					if (!isStatement) {
+						exprs.add(tempName);
+					}
 				}
+				else {
+					exprs.add(target + opr + opr);
+				}
+				// END KGU#955 2021-03-04
 			}
 			break;
 			
