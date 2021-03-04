@@ -33,10 +33,11 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue for Iden GOLDEngine
- *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
- *      Kay Gürtzig     2018.03.26      Imports revised
- *      Kay Gürtzig     2018.06.30      Enh. #553: hooks for possible thread cancellation inserted.
+ *      Kay Gürtzig     2017-03-02      First Issue for Iden GOLDEngine
+ *      Kay Gürtzig     2017-03-11      Parameter annotations and some comments corrected, indentation unified
+ *      Kay Gürtzig     2018-03-26      Imports revised
+ *      Kay Gürtzig     2018-06-30      Enh. #553: hooks for possible thread cancellation inserted.
+ *      Kay Gürtzig     2021-02-17      Some updates to interface changes and e.g. date formatting 
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-23      Functionally complete implementation
  *      Kay Gürtzig     2021-02-26      Revision of the class and method handling, minor fixes
  *      Kay Gürtzig     2021-02-27      Supporting method hooks for ProcessingParser inserted.
+ *      Kay Gürtzig     2021-03-04      Bugfix #955 ".class" replacement in file preparation didn't work,
+ *                                      Multi-catch clauses let the parser fail (and must be converted)
  *
  ******************************************************************************************************
  *
@@ -156,6 +159,15 @@ public class JavaParser extends CodeParser
 			RuleConstants.PROD_LABELEDSTATEMENT_IDENTIFIER_COLON,
 			RuleConstants.PROD_LABELEDSTATEMENTNOSHORTIF_IDENTIFIER_COLON,
 			RuleConstants.PROD_EXPRESSIONSTATEMENT_SEMI,
+			// START KGU#953 2021-03-04: Issue #955: Comments for Try statements had not been gathered
+			RuleConstants.PROD_TRYSTATEMENT_TRY,
+			RuleConstants.PROD_TRYSTATEMENT_TRY2,
+			RuleConstants.PROD_TRYSTATEMENT_TRY3,
+			RuleConstants.PROD_TRYSTATEMENT_TRY4,
+			RuleConstants.PROD_TRYSTATEMENT_TRY5,
+			RuleConstants.PROD_TRYSTATEMENT_TRY6,
+			RuleConstants.PROD_TRYSTATEMENT_TRY7,
+			// END KGU#953 2021-03-04
 	};
 	
 	//---------------------- Grammar specification ---------------------------
@@ -352,166 +364,168 @@ public class JavaParser extends CodeParser
 //		final int SYM_CASTEXPRESSION                       = 136;  // <CastExpression>
 //		final int SYM_CATCHCLAUSE                          = 137;  // <CatchClause>
 //		final int SYM_CATCHES                              = 138;  // <Catches>
-//		final int SYM_CHARACTERLITERAL                     = 139;  // <CharacterLiteral>
-//		final int SYM_CLASSBODY                            = 140;  // <ClassBody>
-//		final int SYM_CLASSBODYDECLARATION                 = 141;  // <ClassBodyDeclaration>
-//		final int SYM_CLASSBODYDECLARATIONS                = 142;  // <ClassBodyDeclarations>
-//		final int SYM_CLASSBODYOPT                         = 143;  // <ClassBodyOpt>
-//		final int SYM_CLASSDECLARATION                     = 144;  // <ClassDeclaration>
-//		final int SYM_CLASSINSTANCECREATIONEXPRESSION      = 145;  // <ClassInstanceCreationExpression>
-//		final int SYM_CLASSMEMBERDECLARATION               = 146;  // <ClassMemberDeclaration>
-//		final int SYM_CLASSORINTERFACETYPE                 = 147;  // <ClassOrInterfaceType>
-//		final int SYM_CLASSTYPE                            = 148;  // <ClassType>
-//		final int SYM_CLASSTYPELIST                        = 149;  // <ClassTypeList>
-//		final int SYM_COMPILATIONUNIT                      = 150;  // <CompilationUnit>
-//		final int SYM_CONDITIONALANDEXPRESSION             = 151;  // <ConditionalAndExpression>
-//		final int SYM_CONDITIONALEXPRESSION                = 152;  // <ConditionalExpression>
-//		final int SYM_CONDITIONALOREXPRESSION              = 153;  // <ConditionalOrExpression>
-//		final int SYM_CONSTANTDECLARATION                  = 154;  // <ConstantDeclaration>
-//		final int SYM_CONSTANTEXPRESSION                   = 155;  // <ConstantExpression>
-//		final int SYM_CONSTRUCTORBODY                      = 156;  // <ConstructorBody>
-//		final int SYM_CONSTRUCTORDECLARATION               = 157;  // <ConstructorDeclaration>
-//		final int SYM_CONSTRUCTORDECLARATOR                = 158;  // <ConstructorDeclarator>
-//		final int SYM_CONTINUESTATEMENT                    = 159;  // <ContinueStatement>
-		final int SYM_DECIMALINTEGERLITERAL                = 160;  // <DecimalIntegerLiteral>
-//		final int SYM_DIMEXPR                              = 161;  // <DimExpr>
-//		final int SYM_DIMEXPRS                             = 162;  // <DimExprs>
-//		final int SYM_DIMS                                 = 163;  // <Dims>
-//		final int SYM_DOSTATEMENT                          = 164;  // <DoStatement>
-//		final int SYM_ELEMENTVALUE                         = 165;  // <ElementValue>
-//		final int SYM_ELEMENTVALUEARRAYINITIALIZER         = 166;  // <ElementValueArrayInitializer>
-//		final int SYM_ELEMENTVALUEPAIR                     = 167;  // <ElementValuePair>
-//		final int SYM_ELEMENTVALUEPAIRS                    = 168;  // <ElementValuePairs>
-//		final int SYM_ELEMENTVALUES                        = 169;  // <ElementValues>
-//		final int SYM_EMPTYSTATEMENT                       = 170;  // <EmptyStatement>
-//		final int SYM_ENHANCEDFORSTATEMENT                 = 171;  // <EnhancedForStatement>
-//		final int SYM_ENHANCEDFORSTATEMENTNOSHORTIF        = 172;  // <EnhancedForStatementNoShortIf>
-//		final int SYM_ENUMBODY                             = 173;  // <EnumBody>
-//		final int SYM_ENUMBODYDECLARATIONSOPT              = 174;  // <EnumBodyDeclarationsOpt>
-//		final int SYM_ENUMCONSTANT                         = 175;  // <EnumConstant>
-//		final int SYM_ENUMCONSTANTS                        = 176;  // <EnumConstants>
-//		final int SYM_ENUMDECLARATION                      = 177;  // <EnumDeclaration>
-//		final int SYM_EQUALITYEXPRESSION                   = 178;  // <EqualityExpression>
-//		final int SYM_EXCLUSIVEOREXPRESSION                = 179;  // <ExclusiveOrExpression>
-//		final int SYM_EXPLICITCONSTRUCTORINVOCATION        = 180;  // <ExplicitConstructorInvocation>
-//		final int SYM_EXPRESSION                           = 181;  // <Expression>
-//		final int SYM_EXPRESSIONOPT                        = 182;  // <ExpressionOpt>
-//		final int SYM_EXPRESSIONSTATEMENT                  = 183;  // <ExpressionStatement>
-//		final int SYM_EXTENDSINTERFACES                    = 184;  // <ExtendsInterfaces>
-//		final int SYM_FIELDACCESS                          = 185;  // <FieldAccess>
-//		final int SYM_FIELDDECLARATION                     = 186;  // <FieldDeclaration>
-//		final int SYM_FINALLY2                             = 187;  // <Finally>
-//		final int SYM_FLOATINGPOINTTYPE                    = 188;  // <FloatingPointType>
-//		final int SYM_FLOATPOINTLITERAL                    = 189;  // <FloatPointLiteral>
-//		final int SYM_FORINITOPT                           = 190;  // <ForInitOpt>
-//		final int SYM_FORMALPARAMETER                      = 191;  // <FormalParameter>
-//		final int SYM_FORMALPARAMETERLIST                  = 192;  // <FormalParameterList>
-//		final int SYM_FORSTATEMENT                         = 193;  // <ForStatement>
-//		final int SYM_FORSTATEMENTNOSHORTIF                = 194;  // <ForStatementNoShortIf>
-//		final int SYM_FORUPDATEOPT                         = 195;  // <ForUpdateOpt>
-//		final int SYM_IFTHENELSESTATEMENT                  = 196;  // <IfThenElseStatement>
-//		final int SYM_IFTHENELSESTATEMENTNOSHORTIF         = 197;  // <IfThenElseStatementNoShortIf>
-//		final int SYM_IFTHENSTATEMENT                      = 198;  // <IfThenStatement>
-//		final int SYM_IMPORTDECLARATION                    = 199;  // <ImportDeclaration>
-//		final int SYM_IMPORTDECLARATIONS                   = 200;  // <ImportDeclarations>
-//		final int SYM_INCLUSIVEOREXPRESSION                = 201;  // <InclusiveOrExpression>
-//		final int SYM_INSTANCEINITIALIZER                  = 202;  // <InstanceInitializer>
-//		final int SYM_INTEGERLITERAL                       = 203;  // <IntegerLiteral>
-//		final int SYM_INTEGRALTYPE                         = 204;  // <IntegralType>
-//		final int SYM_INTERFACEBODY                        = 205;  // <InterfaceBody>
-//		final int SYM_INTERFACEDECLARATION                 = 206;  // <InterfaceDeclaration>
-//		final int SYM_INTERFACEMEMBERDECLARATION           = 207;  // <InterfaceMemberDeclaration>
-//		final int SYM_INTERFACEMEMBERDECLARATIONS          = 208;  // <InterfaceMemberDeclarations>
-//		final int SYM_INTERFACES                           = 209;  // <Interfaces>
-//		final int SYM_INTERFACETYPE                        = 210;  // <InterfaceType>
-//		final int SYM_INTERFACETYPELIST                    = 211;  // <InterfaceTypeList>
-//		final int SYM_LABELEDSTATEMENT                     = 212;  // <LabeledStatement>
-//		final int SYM_LABELEDSTATEMENTNOSHORTIF            = 213;  // <LabeledStatementNoShortIf>
-//		final int SYM_LASTFORMALPARAMETER                  = 214;  // <LastFormalParameter>
-//		final int SYM_LEFTHANDSIDE                         = 215;  // <LeftHandSide>
-//		final int SYM_LITERAL                              = 216;  // <Literal>
-//		final int SYM_LOCALCLASSDECLARATION                = 217;  // <LocalClassDeclaration>
-//		final int SYM_LOCALCLASSMODIFIERS                  = 218;  // <LocalClassModifiers>
-//		final int SYM_LOCALVARIABLEDECLARATION             = 219;  // <LocalVariableDeclaration>
-//		final int SYM_LOCALVARIABLEDECLARATIONSTATEMENT    = 220;  // <LocalVariableDeclarationStatement>
-//		final int SYM_MARKERANNOTATION                     = 221;  // <MarkerAnnotation>
-//		final int SYM_METHODBODY                           = 222;  // <MethodBody>
-//		final int SYM_METHODDECLARATION                    = 223;  // <MethodDeclaration>
-//		final int SYM_METHODDECLARATOR                     = 224;  // <MethodDeclarator>
-//		final int SYM_METHODHEADER                         = 225;  // <MethodHeader>
-//		final int SYM_METHODINVOCATION                     = 226;  // <MethodInvocation>
-//		final int SYM_MODIFIER                             = 227;  // <Modifier>
-//		final int SYM_MODIFIERS                            = 228;  // <Modifiers>
-//		final int SYM_MULTIPLICATIVEEXPRESSION             = 229;  // <MultiplicativeExpression>
-//		final int SYM_NAME                                 = 230;  // <Name>
-//		final int SYM_NORMALANNOTATION                     = 231;  // <NormalAnnotation>
-//		final int SYM_NORMALCLASSDECLARATION               = 232;  // <NormalClassDeclaration>
-//		final int SYM_NUMERICTYPE                          = 233;  // <NumericType>
-//		final int SYM_PACKAGEDECLARATION                   = 234;  // <PackageDeclaration>
-//		final int SYM_POSTDECREMENTEXPRESSION              = 235;  // <PostDecrementExpression>
-//		final int SYM_POSTFIXEXPRESSION                    = 236;  // <PostfixExpression>
-//		final int SYM_POSTINCREMENTEXPRESSION              = 237;  // <PostIncrementExpression>
-//		final int SYM_PREDECREMENTEXPRESSION               = 238;  // <PreDecrementExpression>
-//		final int SYM_PREINCREMENTEXPRESSION               = 239;  // <PreIncrementExpression>
-//		final int SYM_PRIMARY                              = 240;  // <Primary>
-//		final int SYM_PRIMARYNONEWARRAY                    = 241;  // <PrimaryNoNewArray>
-//		final int SYM_PRIMITIVETYPE                        = 242;  // <PrimitiveType>
-//		final int SYM_PURECLASSDECLARATION                 = 243;  // <PureClassDeclaration>
-//		final int SYM_QUALIFIEDNAME                        = 244;  // <QualifiedName>
-//		final int SYM_QUALPREFIXOPT                        = 245;  // <QualPrefixOpt>
-//		final int SYM_RECEIVERPARAMETER                    = 246;  // <ReceiverParameter>
-//		final int SYM_REFERENCETYPE                        = 247;  // <ReferenceType>
-//		final int SYM_RELATIONALEXPRESSION                 = 248;  // <RelationalExpression>
-//		final int SYM_RESOURCE                             = 249;  // <Resource>
-//		final int SYM_RESOURCES                            = 250;  // <Resources>
-//		final int SYM_RESOURCESPECIFICATION                = 251;  // <ResourceSpecification>
-//		final int SYM_RETURNSTATEMENT                      = 252;  // <ReturnStatement>
-//		final int SYM_SHIFTEXPRESSION                      = 253;  // <ShiftExpression>
-//		final int SYM_SIMPLENAME                           = 254;  // <SimpleName>
-//		final int SYM_SINGLEELEMENTANNOTATION              = 255;  // <SingleElementAnnotation>
-//		final int SYM_SINGLESTATICIMPORTDECLARATION        = 256;  // <SingleStaticImportDeclaration>
-//		final int SYM_SINGLETYPEIMPORTDECLARATION          = 257;  // <SingleTypeImportDeclaration>
-//		final int SYM_STATEMENT                            = 258;  // <Statement>
-//		final int SYM_STATEMENTEXPRESSION                  = 259;  // <StatementExpression>
-//		final int SYM_STATEMENTEXPRESSIONLIST              = 260;  // <StatementExpressionList>
-//		final int SYM_STATEMENTNOSHORTIF                   = 261;  // <StatementNoShortIf>
-//		final int SYM_STATEMENTWITHOUTTRAILINGSUBSTATEMENT = 262;  // <StatementWithoutTrailingSubstatement>
-//		final int SYM_STATICIMPORTONDEMANDDECLARATION      = 263;  // <StaticImportOnDemandDeclaration>
-//		final int SYM_STATICINITIALIZER                    = 264;  // <StaticInitializer>
-//		final int SYM_SUPER2                               = 265;  // <Super>
-//		final int SYM_SWITCHBLOCK                          = 266;  // <SwitchBlock>
-//		final int SYM_SWITCHBLOCKSTATEMENTGROUP            = 267;  // <SwitchBlockStatementGroup>
-//		final int SYM_SWITCHBLOCKSTATEMENTGROUPS           = 268;  // <SwitchBlockStatementGroups>
-//		final int SYM_SWITCHLABEL                          = 269;  // <SwitchLabel>
-//		final int SYM_SWITCHLABELS                         = 270;  // <SwitchLabels>
-//		final int SYM_SWITCHSTATEMENT                      = 271;  // <SwitchStatement>
-//		final int SYM_SYNCHRONIZEDSTATEMENT                = 272;  // <SynchronizedStatement>
-//		final int SYM_THROWS2                              = 273;  // <Throws>
-//		final int SYM_THROWSTATEMENT                       = 274;  // <ThrowStatement>
-//		final int SYM_TRYSTATEMENT                         = 275;  // <TryStatement>
-//		final int SYM_TYPE                                 = 276;  // <Type>
-//		final int SYM_TYPEARGUMENT                         = 277;  // <TypeArgument>
-//		final int SYM_TYPEARGUMENTS                        = 278;  // <TypeArguments>
-//		final int SYM_TYPEBOUNDOPT                         = 279;  // <TypeBoundOpt>
-//		final int SYM_TYPEDECLARATION                      = 280;  // <TypeDeclaration>
-//		final int SYM_TYPEDECLARATIONS                     = 281;  // <TypeDeclarations>
-//		final int SYM_TYPEIMPORTONDEMANDDECLARATION        = 282;  // <TypeImportOnDemandDeclaration>
-//		final int SYM_TYPENAME                             = 283;  // <TypeName>
-//		final int SYM_TYPEPARAMETER                        = 284;  // <TypeParameter>
-//		final int SYM_TYPEPARAMETERS                       = 285;  // <TypeParameters>
-//		final int SYM_TYPEPARAMETERSOPT                    = 286;  // <TypeParametersOpt>
-//		final int SYM_TYPEVARIABLE                         = 287;  // <TypeVariable>
-//		final int SYM_UNARYEXPRESSION                      = 288;  // <UnaryExpression>
-//		final int SYM_UNARYEXPRESSIONNOTPLUSMINUS          = 289;  // <UnaryExpressionNotPlusMinus>
-//		final int SYM_VARIABLEDECLARATOR                   = 290;  // <VariableDeclarator>
-//		final int SYM_VARIABLEDECLARATORID                 = 291;  // <VariableDeclaratorId>
-//		final int SYM_VARIABLEDECLARATORS                  = 292;  // <VariableDeclarators>
-//		final int SYM_VARIABLEINITIALIZER                  = 293;  // <VariableInitializer>
-//		final int SYM_VARIABLEINITIALIZERS                 = 294;  // <VariableInitializers>
-//		final int SYM_WHILESTATEMENT                       = 295;  // <WhileStatement>
-//		final int SYM_WHILESTATEMENTNOSHORTIF              = 296;  // <WhileStatementNoShortIf>
-//		final int SYM_WILDCARD                             = 297;  // <Wildcard>
-//		final int SYM_WILDCARDBOUNDSOPT                    = 298;  // <WildcardBoundsOpt>
+//		final int SYM_CATCHFORMALPARAMETER                 = 139;  // <CatchFormalParameter>
+//		final int SYM_CATCHTYPE                            = 140;  // <CatchType>
+//		final int SYM_CHARACTERLITERAL                     = 141;  // <CharacterLiteral>
+//		final int SYM_CLASSBODY                            = 142;  // <ClassBody>
+//		final int SYM_CLASSBODYDECLARATION                 = 143;  // <ClassBodyDeclaration>
+//		final int SYM_CLASSBODYDECLARATIONS                = 144;  // <ClassBodyDeclarations>
+//		final int SYM_CLASSBODYOPT                         = 145;  // <ClassBodyOpt>
+//		final int SYM_CLASSDECLARATION                     = 146;  // <ClassDeclaration>
+//		final int SYM_CLASSINSTANCECREATIONEXPRESSION      = 147;  // <ClassInstanceCreationExpression>
+//		final int SYM_CLASSMEMBERDECLARATION               = 148;  // <ClassMemberDeclaration>
+//		final int SYM_CLASSORINTERFACETYPE                 = 149;  // <ClassOrInterfaceType>
+//		final int SYM_CLASSTYPE                            = 150;  // <ClassType>
+//		final int SYM_CLASSTYPELIST                        = 151;  // <ClassTypeList>
+//		final int SYM_COMPILATIONUNIT                      = 152;  // <CompilationUnit>
+//		final int SYM_CONDITIONALANDEXPRESSION             = 153;  // <ConditionalAndExpression>
+//		final int SYM_CONDITIONALEXPRESSION                = 154;  // <ConditionalExpression>
+//		final int SYM_CONDITIONALOREXPRESSION              = 155;  // <ConditionalOrExpression>
+//		final int SYM_CONSTANTDECLARATION                  = 156;  // <ConstantDeclaration>
+//		final int SYM_CONSTANTEXPRESSION                   = 157;  // <ConstantExpression>
+//		final int SYM_CONSTRUCTORBODY                      = 158;  // <ConstructorBody>
+//		final int SYM_CONSTRUCTORDECLARATION               = 159;  // <ConstructorDeclaration>
+//		final int SYM_CONSTRUCTORDECLARATOR                = 160;  // <ConstructorDeclarator>
+//		final int SYM_CONTINUESTATEMENT                    = 161;  // <ContinueStatement>
+		final int SYM_DECIMALINTEGERLITERAL                = 162;  // <DecimalIntegerLiteral>
+//		final int SYM_DIMEXPR                              = 163;  // <DimExpr>
+//		final int SYM_DIMEXPRS                             = 164;  // <DimExprs>
+//		final int SYM_DIMS                                 = 165;  // <Dims>
+//		final int SYM_DOSTATEMENT                          = 166;  // <DoStatement>
+//		final int SYM_ELEMENTVALUE                         = 167;  // <ElementValue>
+//		final int SYM_ELEMENTVALUEARRAYINITIALIZER         = 168;  // <ElementValueArrayInitializer>
+//		final int SYM_ELEMENTVALUEPAIR                     = 169;  // <ElementValuePair>
+//		final int SYM_ELEMENTVALUEPAIRS                    = 170;  // <ElementValuePairs>
+//		final int SYM_ELEMENTVALUES                        = 171;  // <ElementValues>
+//		final int SYM_EMPTYSTATEMENT                       = 172;  // <EmptyStatement>
+//		final int SYM_ENHANCEDFORSTATEMENT                 = 173;  // <EnhancedForStatement>
+//		final int SYM_ENHANCEDFORSTATEMENTNOSHORTIF        = 174;  // <EnhancedForStatementNoShortIf>
+//		final int SYM_ENUMBODY                             = 175;  // <EnumBody>
+//		final int SYM_ENUMBODYDECLARATIONSOPT              = 176;  // <EnumBodyDeclarationsOpt>
+//		final int SYM_ENUMCONSTANT                         = 177;  // <EnumConstant>
+//		final int SYM_ENUMCONSTANTS                        = 178;  // <EnumConstants>
+//		final int SYM_ENUMDECLARATION                      = 179;  // <EnumDeclaration>
+//		final int SYM_EQUALITYEXPRESSION                   = 180;  // <EqualityExpression>
+//		final int SYM_EXCLUSIVEOREXPRESSION                = 181;  // <ExclusiveOrExpression>
+//		final int SYM_EXPLICITCONSTRUCTORINVOCATION        = 182;  // <ExplicitConstructorInvocation>
+//		final int SYM_EXPRESSION                           = 183;  // <Expression>
+//		final int SYM_EXPRESSIONOPT                        = 184;  // <ExpressionOpt>
+//		final int SYM_EXPRESSIONSTATEMENT                  = 185;  // <ExpressionStatement>
+//		final int SYM_EXTENDSINTERFACES                    = 186;  // <ExtendsInterfaces>
+//		final int SYM_FIELDACCESS                          = 187;  // <FieldAccess>
+//		final int SYM_FIELDDECLARATION                     = 188;  // <FieldDeclaration>
+//		final int SYM_FINALLY2                             = 189;  // <Finally>
+//		final int SYM_FLOATINGPOINTTYPE                    = 190;  // <FloatingPointType>
+//		final int SYM_FLOATPOINTLITERAL                    = 191;  // <FloatPointLiteral>
+//		final int SYM_FORINITOPT                           = 192;  // <ForInitOpt>
+//		final int SYM_FORMALPARAMETER                      = 193;  // <FormalParameter>
+//		final int SYM_FORMALPARAMETERLIST                  = 194;  // <FormalParameterList>
+//		final int SYM_FORSTATEMENT                         = 195;  // <ForStatement>
+//		final int SYM_FORSTATEMENTNOSHORTIF                = 196;  // <ForStatementNoShortIf>
+//		final int SYM_FORUPDATEOPT                         = 197;  // <ForUpdateOpt>
+//		final int SYM_IFTHENELSESTATEMENT                  = 198;  // <IfThenElseStatement>
+//		final int SYM_IFTHENELSESTATEMENTNOSHORTIF         = 199;  // <IfThenElseStatementNoShortIf>
+//		final int SYM_IFTHENSTATEMENT                      = 200;  // <IfThenStatement>
+//		final int SYM_IMPORTDECLARATION                    = 201;  // <ImportDeclaration>
+//		final int SYM_IMPORTDECLARATIONS                   = 202;  // <ImportDeclarations>
+//		final int SYM_INCLUSIVEOREXPRESSION                = 203;  // <InclusiveOrExpression>
+//		final int SYM_INSTANCEINITIALIZER                  = 204;  // <InstanceInitializer>
+//		final int SYM_INTEGERLITERAL                       = 205;  // <IntegerLiteral>
+//		final int SYM_INTEGRALTYPE                         = 206;  // <IntegralType>
+//		final int SYM_INTERFACEBODY                        = 207;  // <InterfaceBody>
+//		final int SYM_INTERFACEDECLARATION                 = 208;  // <InterfaceDeclaration>
+//		final int SYM_INTERFACEMEMBERDECLARATION           = 209;  // <InterfaceMemberDeclaration>
+//		final int SYM_INTERFACEMEMBERDECLARATIONS          = 210;  // <InterfaceMemberDeclarations>
+//		final int SYM_INTERFACES                           = 211;  // <Interfaces>
+//		final int SYM_INTERFACETYPE                        = 212;  // <InterfaceType>
+//		final int SYM_INTERFACETYPELIST                    = 213;  // <InterfaceTypeList>
+//		final int SYM_LABELEDSTATEMENT                     = 214;  // <LabeledStatement>
+//		final int SYM_LABELEDSTATEMENTNOSHORTIF            = 215;  // <LabeledStatementNoShortIf>
+//		final int SYM_LASTFORMALPARAMETER                  = 216;  // <LastFormalParameter>
+//		final int SYM_LEFTHANDSIDE                         = 217;  // <LeftHandSide>
+//		final int SYM_LITERAL                              = 218;  // <Literal>
+//		final int SYM_LOCALCLASSDECLARATION                = 219;  // <LocalClassDeclaration>
+//		final int SYM_LOCALCLASSMODIFIERS                  = 220;  // <LocalClassModifiers>
+//		final int SYM_LOCALVARIABLEDECLARATION             = 221;  // <LocalVariableDeclaration>
+//		final int SYM_LOCALVARIABLEDECLARATIONSTATEMENT    = 222;  // <LocalVariableDeclarationStatement>
+//		final int SYM_MARKERANNOTATION                     = 223;  // <MarkerAnnotation>
+//		final int SYM_METHODBODY                           = 224;  // <MethodBody>
+//		final int SYM_METHODDECLARATION                    = 225;  // <MethodDeclaration>
+//		final int SYM_METHODDECLARATOR                     = 226;  // <MethodDeclarator>
+//		final int SYM_METHODHEADER                         = 227;  // <MethodHeader>
+//		final int SYM_METHODINVOCATION                     = 228;  // <MethodInvocation>
+//		final int SYM_MODIFIER                             = 229;  // <Modifier>
+//		final int SYM_MODIFIERS                            = 230;  // <Modifiers>
+//		final int SYM_MULTIPLICATIVEEXPRESSION             = 231;  // <MultiplicativeExpression>
+//		final int SYM_NAME                                 = 232;  // <Name>
+//		final int SYM_NORMALANNOTATION                     = 233;  // <NormalAnnotation>
+//		final int SYM_NORMALCLASSDECLARATION               = 234;  // <NormalClassDeclaration>
+//		final int SYM_NUMERICTYPE                          = 235;  // <NumericType>
+//		final int SYM_PACKAGEDECLARATION                   = 236;  // <PackageDeclaration>
+//		final int SYM_POSTDECREMENTEXPRESSION              = 237;  // <PostDecrementExpression>
+//		final int SYM_POSTFIXEXPRESSION                    = 238;  // <PostfixExpression>
+//		final int SYM_POSTINCREMENTEXPRESSION              = 239;  // <PostIncrementExpression>
+//		final int SYM_PREDECREMENTEXPRESSION               = 240;  // <PreDecrementExpression>
+//		final int SYM_PREINCREMENTEXPRESSION               = 241;  // <PreIncrementExpression>
+//		final int SYM_PRIMARY                              = 242;  // <Primary>
+//		final int SYM_PRIMARYNONEWARRAY                    = 243;  // <PrimaryNoNewArray>
+//		final int SYM_PRIMITIVETYPE                        = 244;  // <PrimitiveType>
+//		final int SYM_PURECLASSDECLARATION                 = 245;  // <PureClassDeclaration>
+//		final int SYM_QUALIFIEDNAME                        = 246;  // <QualifiedName>
+//		final int SYM_QUALPREFIXOPT                        = 247;  // <QualPrefixOpt>
+//		final int SYM_RECEIVERPARAMETER                    = 248;  // <ReceiverParameter>
+//		final int SYM_REFERENCETYPE                        = 249;  // <ReferenceType>
+//		final int SYM_RELATIONALEXPRESSION                 = 250;  // <RelationalExpression>
+//		final int SYM_RESOURCE                             = 251;  // <Resource>
+//		final int SYM_RESOURCES                            = 252;  // <Resources>
+//		final int SYM_RESOURCESPECIFICATION                = 253;  // <ResourceSpecification>
+//		final int SYM_RETURNSTATEMENT                      = 254;  // <ReturnStatement>
+//		final int SYM_SHIFTEXPRESSION                      = 255;  // <ShiftExpression>
+//		final int SYM_SIMPLENAME                           = 256;  // <SimpleName>
+//		final int SYM_SINGLEELEMENTANNOTATION              = 257;  // <SingleElementAnnotation>
+//		final int SYM_SINGLESTATICIMPORTDECLARATION        = 258;  // <SingleStaticImportDeclaration>
+//		final int SYM_SINGLETYPEIMPORTDECLARATION          = 259;  // <SingleTypeImportDeclaration>
+//		final int SYM_STATEMENT                            = 260;  // <Statement>
+//		final int SYM_STATEMENTEXPRESSION                  = 261;  // <StatementExpression>
+//		final int SYM_STATEMENTEXPRESSIONLIST              = 262;  // <StatementExpressionList>
+//		final int SYM_STATEMENTNOSHORTIF                   = 263;  // <StatementNoShortIf>
+//		final int SYM_STATEMENTWITHOUTTRAILINGSUBSTATEMENT = 264;  // <StatementWithoutTrailingSubstatement>
+//		final int SYM_STATICIMPORTONDEMANDDECLARATION      = 265;  // <StaticImportOnDemandDeclaration>
+//		final int SYM_STATICINITIALIZER                    = 266;  // <StaticInitializer>
+//		final int SYM_SUPER2                               = 267;  // <Super>
+//		final int SYM_SWITCHBLOCK                          = 268;  // <SwitchBlock>
+//		final int SYM_SWITCHBLOCKSTATEMENTGROUP            = 269;  // <SwitchBlockStatementGroup>
+//		final int SYM_SWITCHBLOCKSTATEMENTGROUPS           = 270;  // <SwitchBlockStatementGroups>
+//		final int SYM_SWITCHLABEL                          = 271;  // <SwitchLabel>
+//		final int SYM_SWITCHLABELS                         = 272;  // <SwitchLabels>
+//		final int SYM_SWITCHSTATEMENT                      = 273;  // <SwitchStatement>
+//		final int SYM_SYNCHRONIZEDSTATEMENT                = 274;  // <SynchronizedStatement>
+//		final int SYM_THROWS2                              = 275;  // <Throws>
+//		final int SYM_THROWSTATEMENT                       = 276;  // <ThrowStatement>
+//		final int SYM_TRYSTATEMENT                         = 277;  // <TryStatement>
+//		final int SYM_TYPE                                 = 278;  // <Type>
+//		final int SYM_TYPEARGUMENT                         = 279;  // <TypeArgument>
+//		final int SYM_TYPEARGUMENTS                        = 280;  // <TypeArguments>
+//		final int SYM_TYPEBOUNDOPT                         = 281;  // <TypeBoundOpt>
+//		final int SYM_TYPEDECLARATION                      = 282;  // <TypeDeclaration>
+//		final int SYM_TYPEDECLARATIONS                     = 283;  // <TypeDeclarations>
+//		final int SYM_TYPEIMPORTONDEMANDDECLARATION        = 284;  // <TypeImportOnDemandDeclaration>
+//		final int SYM_TYPENAME                             = 285;  // <TypeName>
+//		final int SYM_TYPEPARAMETER                        = 286;  // <TypeParameter>
+//		final int SYM_TYPEPARAMETERS                       = 287;  // <TypeParameters>
+//		final int SYM_TYPEPARAMETERSOPT                    = 288;  // <TypeParametersOpt>
+//		final int SYM_TYPEVARIABLE                         = 289;  // <TypeVariable>
+//		final int SYM_UNARYEXPRESSION                      = 290;  // <UnaryExpression>
+//		final int SYM_UNARYEXPRESSIONNOTPLUSMINUS          = 291;  // <UnaryExpressionNotPlusMinus>
+//		final int SYM_VARIABLEDECLARATOR                   = 292;  // <VariableDeclarator>
+//		final int SYM_VARIABLEDECLARATORID                 = 293;  // <VariableDeclaratorId>
+//		final int SYM_VARIABLEDECLARATORS                  = 294;  // <VariableDeclarators>
+//		final int SYM_VARIABLEINITIALIZER                  = 295;  // <VariableInitializer>
+//		final int SYM_VARIABLEINITIALIZERS                 = 296;  // <VariableInitializers>
+//		final int SYM_WHILESTATEMENT                       = 297;  // <WhileStatement>
+//		final int SYM_WHILESTATEMENTNOSHORTIF              = 298;  // <WhileStatementNoShortIf>
+//		final int SYM_WILDCARD                             = 299;  // <Wildcard>
+//		final int SYM_WILDCARDBOUNDSOPT                    = 300;  // <WildcardBoundsOpt>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -852,127 +866,134 @@ public class JavaParser extends CodeParser
 //		final int PROD_CATCHES                                                      = 331;  // <Catches> ::= <CatchClause>
 		final int PROD_CATCHES2                                                     = 332;  // <Catches> ::= <Catches> <CatchClause>
 //		final int PROD_CATCHCLAUSE_CATCH_LPAREN_RPAREN                              = 333;  // <CatchClause> ::= catch '(' <FormalParameter> ')' <Block>
-//		final int PROD_FINALLY_FINALLY                                              = 334;  // <Finally> ::= finally <Block>
-//		final int PROD_RESOURCESPECIFICATION_LPAREN_RPAREN                          = 335;  // <ResourceSpecification> ::= '(' <Resources> ')'
-//		final int PROD_RESOURCESPECIFICATION_LPAREN_SEMI_RPAREN                     = 336;  // <ResourceSpecification> ::= '(' <Resources> ';' ')'
-//		final int PROD_RESOURCES                                                    = 337;  // <Resources> ::= <Resource>
-		final int PROD_RESOURCES_SEMI                                               = 338;  // <Resources> ::= <Resources> ';' <Resource>
-//		final int PROD_RESOURCE_EQ                                                  = 339;  // <Resource> ::= <Type> <VariableDeclaratorId> '=' <Expression>
-		final int PROD_RESOURCE_FINAL_EQ                                            = 340;  // <Resource> ::= final <Type> <VariableDeclaratorId> '=' <Expression>
-//		final int PROD_PRIMARY                                                      = 341;  // <Primary> ::= <PrimaryNoNewArray>
-//		final int PROD_PRIMARY2                                                     = 342;  // <Primary> ::= <ArrayCreationExpression>
-//		final int PROD_PRIMARYNONEWARRAY                                            = 343;  // <PrimaryNoNewArray> ::= <Literal>
-//		final int PROD_PRIMARYNONEWARRAY_THIS                                       = 344;  // <PrimaryNoNewArray> ::= this
-		final int PROD_PRIMARYNONEWARRAY_LPAREN_RPAREN                              = 345;  // <PrimaryNoNewArray> ::= '(' <Expression> ')'
-//		final int PROD_PRIMARYNONEWARRAY2                                           = 346;  // <PrimaryNoNewArray> ::= <ClassInstanceCreationExpression>
-//		final int PROD_PRIMARYNONEWARRAY3                                           = 347;  // <PrimaryNoNewArray> ::= <FieldAccess>
-//		final int PROD_PRIMARYNONEWARRAY4                                           = 348;  // <PrimaryNoNewArray> ::= <MethodInvocation>
-//		final int PROD_PRIMARYNONEWARRAY5                                           = 349;  // <PrimaryNoNewArray> ::= <ArrayAccess>
-		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN            = 350;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
-		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN2           = 351;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
-//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3           = 352;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
-//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN4           = 353;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
-//		final int PROD_ARGUMENTLIST                                                 = 354;  // <ArgumentList> ::= <Expression>
-		final int PROD_ARGUMENTLIST_COMMA                                           = 355;  // <ArgumentList> ::= <ArgumentList> ',' <Expression>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW                                  = 356;  // <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs> <Dims>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW2                                 = 357;  // <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW3                                 = 358;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs> <Dims>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW4                                 = 359;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW5                                 = 360;  // <ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
-		final int PROD_ARRAYCREATIONEXPRESSION_NEW6                                 = 361;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>
-//		final int PROD_DIMEXPRS                                                     = 362;  // <DimExprs> ::= <DimExpr>
-//		final int PROD_DIMEXPRS2                                                    = 363;  // <DimExprs> ::= <DimExprs> <DimExpr>
-//		final int PROD_DIMEXPR_LBRACKET_RBRACKET                                    = 364;  // <DimExpr> ::= '[' <Expression> ']'
-//		final int PROD_DIMS_LBRACKET_RBRACKET                                       = 365;  // <Dims> ::= '[' ']'
-//		final int PROD_DIMS_LBRACKET_RBRACKET2                                      = 366;  // <Dims> ::= <Dims> '[' ']'
-		final int PROD_FIELDACCESS_DOT_IDENTIFIER                                   = 367;  // <FieldAccess> ::= <Primary> '.' Identifier
-		final int PROD_FIELDACCESS_SUPER_DOT_IDENTIFIER                             = 368;  // <FieldAccess> ::= super '.' Identifier
-		final int PROD_METHODINVOCATION_LPAREN_RPAREN                               = 369;  // <MethodInvocation> ::= <Name> '(' <ArgumentList> ')'
-		final int PROD_METHODINVOCATION_LPAREN_RPAREN2                              = 370;  // <MethodInvocation> ::= <Name> '(' ')'
-		final int PROD_METHODINVOCATION_DOT_IDENTIFIER_LPAREN_RPAREN                = 371;  // <MethodInvocation> ::= <Primary> '.' Identifier '(' <ArgumentList> ')'
-		final int PROD_METHODINVOCATION_DOT_IDENTIFIER_LPAREN_RPAREN2               = 372;  // <MethodInvocation> ::= <Primary> '.' Identifier '(' ')'
-		final int PROD_METHODINVOCATION_SUPER_DOT_IDENTIFIER_LPAREN_RPAREN          = 373;  // <MethodInvocation> ::= super '.' Identifier '(' <ArgumentList> ')'
-		final int PROD_METHODINVOCATION_SUPER_DOT_IDENTIFIER_LPAREN_RPAREN2         = 374;  // <MethodInvocation> ::= super '.' Identifier '(' ')'
-		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET                                = 375;  // <ArrayAccess> ::= <Name> '[' <Expression> ']'
-		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET2                               = 376;  // <ArrayAccess> ::= <PrimaryNoNewArray> '[' <Expression> ']'
-//		final int PROD_POSTFIXEXPRESSION                                            = 377;  // <PostfixExpression> ::= <Primary>
-//		final int PROD_POSTFIXEXPRESSION2                                           = 378;  // <PostfixExpression> ::= <Name>
-//		final int PROD_POSTFIXEXPRESSION3                                           = 379;  // <PostfixExpression> ::= <PostIncrementExpression>
-//		final int PROD_POSTFIXEXPRESSION4                                           = 380;  // <PostfixExpression> ::= <PostDecrementExpression>
-		final int PROD_POSTINCREMENTEXPRESSION_PLUSPLUS                             = 381;  // <PostIncrementExpression> ::= <PostfixExpression> '++'
-		final int PROD_POSTDECREMENTEXPRESSION_MINUSMINUS                           = 382;  // <PostDecrementExpression> ::= <PostfixExpression> '--'
-//		final int PROD_UNARYEXPRESSION                                              = 383;  // <UnaryExpression> ::= <PreIncrementExpression>
-//		final int PROD_UNARYEXPRESSION2                                             = 384;  // <UnaryExpression> ::= <PreDecrementExpression>
-		final int PROD_UNARYEXPRESSION_PLUS                                         = 385;  // <UnaryExpression> ::= '+' <UnaryExpression>
-		final int PROD_UNARYEXPRESSION_MINUS                                        = 386;  // <UnaryExpression> ::= '-' <UnaryExpression>
-//		final int PROD_UNARYEXPRESSION3                                             = 387;  // <UnaryExpression> ::= <UnaryExpressionNotPlusMinus>
-		final int PROD_PREINCREMENTEXPRESSION_PLUSPLUS                              = 388;  // <PreIncrementExpression> ::= '++' <UnaryExpression>
-		final int PROD_PREDECREMENTEXPRESSION_MINUSMINUS                            = 389;  // <PreDecrementExpression> ::= '--' <UnaryExpression>
-//		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS                                  = 390;  // <UnaryExpressionNotPlusMinus> ::= <PostfixExpression>
-		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS_TILDE                            = 391;  // <UnaryExpressionNotPlusMinus> ::= '~' <UnaryExpression>
-		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS_EXCLAM                           = 392;  // <UnaryExpressionNotPlusMinus> ::= '!' <UnaryExpression>
-//		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS2                                 = 393;  // <UnaryExpressionNotPlusMinus> ::= <CastExpression>
-		final int PROD_CASTEXPRESSION_LPAREN_RPAREN                                 = 394;  // <CastExpression> ::= '(' <PrimitiveType> <Dims> ')' <UnaryExpression>
-		final int PROD_CASTEXPRESSION_LPAREN_RPAREN2                                = 395;  // <CastExpression> ::= '(' <PrimitiveType> ')' <UnaryExpression>
-		final int PROD_CASTEXPRESSION_LPAREN_RPAREN3                                = 396;  // <CastExpression> ::= '(' <Expression> ')' <UnaryExpressionNotPlusMinus>
-		final int PROD_CASTEXPRESSION_LPAREN_RPAREN4                                = 397;  // <CastExpression> ::= '(' <Name> <Dims> ')' <UnaryExpressionNotPlusMinus>
-//		final int PROD_MULTIPLICATIVEEXPRESSION                                     = 398;  // <MultiplicativeExpression> ::= <UnaryExpression>
-		final int PROD_MULTIPLICATIVEEXPRESSION_TIMES                               = 399;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '*' <UnaryExpression>
-		final int PROD_MULTIPLICATIVEEXPRESSION_DIV                                 = 400;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
-		final int PROD_MULTIPLICATIVEEXPRESSION_PERCENT                             = 401;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '%' <UnaryExpression>
-//		final int PROD_ADDITIVEEXPRESSION                                           = 402;  // <AdditiveExpression> ::= <MultiplicativeExpression>
-		final int PROD_ADDITIVEEXPRESSION_PLUS                                      = 403;  // <AdditiveExpression> ::= <AdditiveExpression> '+' <MultiplicativeExpression>
-		final int PROD_ADDITIVEEXPRESSION_MINUS                                     = 404;  // <AdditiveExpression> ::= <AdditiveExpression> '-' <MultiplicativeExpression>
-//		final int PROD_SHIFTEXPRESSION                                              = 405;  // <ShiftExpression> ::= <AdditiveExpression>
-		final int PROD_SHIFTEXPRESSION_LTLT                                         = 406;  // <ShiftExpression> ::= <ShiftExpression> '<<' <AdditiveExpression>
-		final int PROD_SHIFTEXPRESSION_GTGT                                         = 407;  // <ShiftExpression> ::= <ShiftExpression> '>>' <AdditiveExpression>
-		final int PROD_SHIFTEXPRESSION_GTGTGT                                       = 408;  // <ShiftExpression> ::= <ShiftExpression> '>>>' <AdditiveExpression>
-//		final int PROD_RELATIONALEXPRESSION                                         = 409;  // <RelationalExpression> ::= <ShiftExpression>
-		final int PROD_RELATIONALEXPRESSION_LT                                      = 410;  // <RelationalExpression> ::= <RelationalExpression> '<' <ShiftExpression>
-		final int PROD_RELATIONALEXPRESSION_GT                                      = 411;  // <RelationalExpression> ::= <RelationalExpression> '>' <ShiftExpression>
-		final int PROD_RELATIONALEXPRESSION_LTEQ                                    = 412;  // <RelationalExpression> ::= <RelationalExpression> '<=' <ShiftExpression>
-		final int PROD_RELATIONALEXPRESSION_GTEQ                                    = 413;  // <RelationalExpression> ::= <RelationalExpression> '>=' <ShiftExpression>
-		final int PROD_RELATIONALEXPRESSION_INSTANCEOF                              = 414;  // <RelationalExpression> ::= <RelationalExpression> instanceof <ReferenceType>
-//		final int PROD_EQUALITYEXPRESSION                                           = 415;  // <EqualityExpression> ::= <RelationalExpression>
-		final int PROD_EQUALITYEXPRESSION_EQEQ                                      = 416;  // <EqualityExpression> ::= <EqualityExpression> '==' <RelationalExpression>
-		final int PROD_EQUALITYEXPRESSION_EXCLAMEQ                                  = 417;  // <EqualityExpression> ::= <EqualityExpression> '!=' <RelationalExpression>
-//		final int PROD_ANDEXPRESSION                                                = 418;  // <AndExpression> ::= <EqualityExpression>
-		final int PROD_ANDEXPRESSION_AMP                                            = 419;  // <AndExpression> ::= <AndExpression> '&' <EqualityExpression>
-//		final int PROD_EXCLUSIVEOREXPRESSION                                        = 420;  // <ExclusiveOrExpression> ::= <AndExpression>
-		final int PROD_EXCLUSIVEOREXPRESSION_CARET                                  = 421;  // <ExclusiveOrExpression> ::= <ExclusiveOrExpression> '^' <AndExpression>
-//		final int PROD_INCLUSIVEOREXPRESSION                                        = 422;  // <InclusiveOrExpression> ::= <ExclusiveOrExpression>
-		final int PROD_INCLUSIVEOREXPRESSION_PIPE                                   = 423;  // <InclusiveOrExpression> ::= <InclusiveOrExpression> '|' <ExclusiveOrExpression>
-//		final int PROD_CONDITIONALANDEXPRESSION                                     = 424;  // <ConditionalAndExpression> ::= <InclusiveOrExpression>
-		final int PROD_CONDITIONALANDEXPRESSION_AMPAMP                              = 425;  // <ConditionalAndExpression> ::= <ConditionalAndExpression> '&&' <InclusiveOrExpression>
-//		final int PROD_CONDITIONALOREXPRESSION                                      = 426;  // <ConditionalOrExpression> ::= <ConditionalAndExpression>
-		final int PROD_CONDITIONALOREXPRESSION_PIPEPIPE                             = 427;  // <ConditionalOrExpression> ::= <ConditionalOrExpression> '||' <ConditionalAndExpression>
-//		final int PROD_CONDITIONALEXPRESSION                                        = 428;  // <ConditionalExpression> ::= <ConditionalOrExpression>
-		final int PROD_CONDITIONALEXPRESSION_QUESTION_COLON                         = 429;  // <ConditionalExpression> ::= <ConditionalOrExpression> '?' <Expression> ':' <ConditionalExpression>
-//		final int PROD_ASSIGNMENTEXPRESSION                                         = 430;  // <AssignmentExpression> ::= <ConditionalExpression>
-//		final int PROD_ASSIGNMENTEXPRESSION2                                        = 431;  // <AssignmentExpression> ::= <Assignment>
-		final int PROD_ASSIGNMENT                                                   = 432;  // <Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
-//		final int PROD_LEFTHANDSIDE                                                 = 433;  // <LeftHandSide> ::= <Name>
-//		final int PROD_LEFTHANDSIDE2                                                = 434;  // <LeftHandSide> ::= <FieldAccess>
-//		final int PROD_LEFTHANDSIDE3                                                = 435;  // <LeftHandSide> ::= <ArrayAccess>
-		final int PROD_ASSIGNMENTOPERATOR_EQ                                        = 436;  // <AssignmentOperator> ::= '='
-//		final int PROD_ASSIGNMENTOPERATOR_TIMESEQ                                   = 437;  // <AssignmentOperator> ::= '*='
-//		final int PROD_ASSIGNMENTOPERATOR_DIVEQ                                     = 438;  // <AssignmentOperator> ::= '/='
-//		final int PROD_ASSIGNMENTOPERATOR_PERCENTEQ                                 = 439;  // <AssignmentOperator> ::= '%='
-		final int PROD_ASSIGNMENTOPERATOR_PLUSEQ                                    = 440;  // <AssignmentOperator> ::= '+='
-		final int PROD_ASSIGNMENTOPERATOR_MINUSEQ                                   = 441;  // <AssignmentOperator> ::= '-='
-//		final int PROD_ASSIGNMENTOPERATOR_LTLTEQ                                    = 442;  // <AssignmentOperator> ::= '<<='
-//		final int PROD_ASSIGNMENTOPERATOR_GTGTEQ                                    = 443;  // <AssignmentOperator> ::= '>>='
-//		final int PROD_ASSIGNMENTOPERATOR_GTGTGTEQ                                  = 444;  // <AssignmentOperator> ::= '>>>='
-//		final int PROD_ASSIGNMENTOPERATOR_AMPEQ                                     = 445;  // <AssignmentOperator> ::= '&='
-//		final int PROD_ASSIGNMENTOPERATOR_CARETEQ                                   = 446;  // <AssignmentOperator> ::= '^='
-//		final int PROD_ASSIGNMENTOPERATOR_PIPEEQ                                    = 447;  // <AssignmentOperator> ::= '|='
-//		final int PROD_EXPRESSION                                                   = 448;  // <Expression> ::= <AssignmentExpression>
-//		final int PROD_CONSTANTEXPRESSION                                           = 449;  // <ConstantExpression> ::= <Expression>
+		final int PROD_CATCHFORMALPARAMETER_FINAL                                   = 334;  // <CatchFormalParameter> ::= final <CatchType> <VariableDeclaratorId>
+//		final int PROD_CATCHFORMALPARAMETER                                         = 335;  // <CatchFormalParameter> ::= <CatchType> <VariableDeclaratorId>
+//		final int PROD_CATCHTYPE                                                    = 336;  // <CatchType> ::= <ClassType>
+		final int PROD_CATCHTYPE_PIPE                                               = 337;  // <CatchType> ::= <CatchType> '|' <ClassType>
+//		final int PROD_FINALLY_FINALLY                                              = 338;  // <Finally> ::= finally <Block>
+//		final int PROD_RESOURCESPECIFICATION_LPAREN_RPAREN                          = 339;  // <ResourceSpecification> ::= '(' <Resources> ')'
+//		final int PROD_RESOURCESPECIFICATION_LPAREN_SEMI_RPAREN                     = 340;  // <ResourceSpecification> ::= '(' <Resources> ';' ')'
+//		final int PROD_RESOURCES                                                    = 341;  // <Resources> ::= <Resource>
+		final int PROD_RESOURCES_SEMI                                               = 342;  // <Resources> ::= <Resources> ';' <Resource>
+//		final int PROD_RESOURCE_EQ                                                  = 343;  // <Resource> ::= <Type> <VariableDeclaratorId> '=' <Expression>
+		final int PROD_RESOURCE_FINAL_EQ                                            = 344;  // <Resource> ::= final <Type> <VariableDeclaratorId> '=' <Expression>
+//		final int PROD_PRIMARY                                                      = 345;  // <Primary> ::= <PrimaryNoNewArray>
+//		final int PROD_PRIMARY2                                                     = 346;  // <Primary> ::= <ArrayCreationExpression>
+//		final int PROD_PRIMARYNONEWARRAY                                            = 347;  // <PrimaryNoNewArray> ::= <Literal>
+//		final int PROD_PRIMARYNONEWARRAY_THIS                                       = 348;  // <PrimaryNoNewArray> ::= this
+		final int PROD_PRIMARYNONEWARRAY_LPAREN_RPAREN                              = 349;  // <PrimaryNoNewArray> ::= '(' <Expression> ')'
+//		final int PROD_PRIMARYNONEWARRAY2                                           = 350;  // <PrimaryNoNewArray> ::= <ClassInstanceCreationExpression>
+//		final int PROD_PRIMARYNONEWARRAY3                                           = 351;  // <PrimaryNoNewArray> ::= <FieldAccess>
+//		final int PROD_PRIMARYNONEWARRAY4                                           = 352;  // <PrimaryNoNewArray> ::= <MethodInvocation>
+//		final int PROD_PRIMARYNONEWARRAY5                                           = 353;  // <PrimaryNoNewArray> ::= <ArrayAccess>
+		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN            = 354;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
+		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN2           = 355;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
+//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3           = 356;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
+//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN4           = 357;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
+//		final int PROD_ARGUMENTLIST                                                 = 358;  // <ArgumentList> ::= <Expression>
+		final int PROD_ARGUMENTLIST_COMMA                                           = 359;  // <ArgumentList> ::= <ArgumentList> ',' <Expression>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW                                  = 360;  // <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs> <Dims>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW2                                 = 361;  // <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW3                                 = 362;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs> <Dims>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW4                                 = 363;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <DimExprs>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW5                                 = 364;  // <ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
+		final int PROD_ARRAYCREATIONEXPRESSION_NEW6                                 = 365;  // <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>
+//		final int PROD_DIMEXPRS                                                     = 366;  // <DimExprs> ::= <DimExpr>
+//		final int PROD_DIMEXPRS2                                                    = 367;  // <DimExprs> ::= <DimExprs> <DimExpr>
+//		final int PROD_DIMEXPR_LBRACKET_RBRACKET                                    = 368;  // <DimExpr> ::= '[' <Expression> ']'
+//		final int PROD_DIMS_LBRACKET_RBRACKET                                       = 369;  // <Dims> ::= '[' ']'
+//		final int PROD_DIMS_LBRACKET_RBRACKET2                                      = 370;  // <Dims> ::= <Dims> '[' ']'
+		final int PROD_FIELDACCESS_DOT_IDENTIFIER                                   = 371;  // <FieldAccess> ::= <Primary> '.' Identifier
+		final int PROD_FIELDACCESS_SUPER_DOT_IDENTIFIER                             = 372;  // <FieldAccess> ::= super '.' Identifier
+		final int PROD_METHODINVOCATION_LPAREN_RPAREN                               = 373;  // <MethodInvocation> ::= <Name> '(' <ArgumentList> ')'
+		final int PROD_METHODINVOCATION_LPAREN_RPAREN2                              = 374;  // <MethodInvocation> ::= <Name> '(' ')'
+		final int PROD_METHODINVOCATION_DOT_IDENTIFIER_LPAREN_RPAREN                = 375;  // <MethodInvocation> ::= <Primary> '.' Identifier '(' <ArgumentList> ')'
+		final int PROD_METHODINVOCATION_DOT_IDENTIFIER_LPAREN_RPAREN2               = 376;  // <MethodInvocation> ::= <Primary> '.' Identifier '(' ')'
+		final int PROD_METHODINVOCATION_SUPER_DOT_IDENTIFIER_LPAREN_RPAREN          = 377;  // <MethodInvocation> ::= super '.' Identifier '(' <ArgumentList> ')'
+		final int PROD_METHODINVOCATION_SUPER_DOT_IDENTIFIER_LPAREN_RPAREN2         = 378;  // <MethodInvocation> ::= super '.' Identifier '(' ')'
+		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET                                = 379;  // <ArrayAccess> ::= <Name> '[' <Expression> ']'
+		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET2                               = 380;  // <ArrayAccess> ::= <PrimaryNoNewArray> '[' <Expression> ']'
+//		final int PROD_POSTFIXEXPRESSION                                            = 381;  // <PostfixExpression> ::= <Primary>
+//		final int PROD_POSTFIXEXPRESSION2                                           = 382;  // <PostfixExpression> ::= <Name>
+//		final int PROD_POSTFIXEXPRESSION3                                           = 383;  // <PostfixExpression> ::= <PostIncrementExpression>
+//		final int PROD_POSTFIXEXPRESSION4                                           = 384;  // <PostfixExpression> ::= <PostDecrementExpression>
+		final int PROD_POSTINCREMENTEXPRESSION_PLUSPLUS                             = 385;  // <PostIncrementExpression> ::= <PostfixExpression> '++'
+		final int PROD_POSTDECREMENTEXPRESSION_MINUSMINUS                           = 386;  // <PostDecrementExpression> ::= <PostfixExpression> '--'
+//		final int PROD_UNARYEXPRESSION                                              = 387;  // <UnaryExpression> ::= <PreIncrementExpression>
+//		final int PROD_UNARYEXPRESSION2                                             = 388;  // <UnaryExpression> ::= <PreDecrementExpression>
+		final int PROD_UNARYEXPRESSION_PLUS                                         = 389;  // <UnaryExpression> ::= '+' <UnaryExpression>
+		final int PROD_UNARYEXPRESSION_MINUS                                        = 390;  // <UnaryExpression> ::= '-' <UnaryExpression>
+//		final int PROD_UNARYEXPRESSION3                                             = 391;  // <UnaryExpression> ::= <UnaryExpressionNotPlusMinus>
+		final int PROD_PREINCREMENTEXPRESSION_PLUSPLUS                              = 392;  // <PreIncrementExpression> ::= '++' <UnaryExpression>
+		final int PROD_PREDECREMENTEXPRESSION_MINUSMINUS                            = 393;  // <PreDecrementExpression> ::= '--' <UnaryExpression>
+//		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS                                  = 394;  // <UnaryExpressionNotPlusMinus> ::= <PostfixExpression>
+		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS_TILDE                            = 395;  // <UnaryExpressionNotPlusMinus> ::= '~' <UnaryExpression>
+		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS_EXCLAM                           = 396;  // <UnaryExpressionNotPlusMinus> ::= '!' <UnaryExpression>
+//		final int PROD_UNARYEXPRESSIONNOTPLUSMINUS2                                 = 397;  // <UnaryExpressionNotPlusMinus> ::= <CastExpression>
+		final int PROD_CASTEXPRESSION_LPAREN_RPAREN                                 = 398;  // <CastExpression> ::= '(' <PrimitiveType> <Dims> ')' <UnaryExpression>
+		final int PROD_CASTEXPRESSION_LPAREN_RPAREN2                                = 399;  // <CastExpression> ::= '(' <PrimitiveType> ')' <UnaryExpression>
+		final int PROD_CASTEXPRESSION_LPAREN_RPAREN3                                = 400;  // <CastExpression> ::= '(' <Expression> ')' <UnaryExpressionNotPlusMinus>
+		final int PROD_CASTEXPRESSION_LPAREN_RPAREN4                                = 401;  // <CastExpression> ::= '(' <Name> <Dims> ')' <UnaryExpressionNotPlusMinus>
+//		final int PROD_MULTIPLICATIVEEXPRESSION                                     = 402;  // <MultiplicativeExpression> ::= <UnaryExpression>
+		final int PROD_MULTIPLICATIVEEXPRESSION_TIMES                               = 403;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '*' <UnaryExpression>
+		final int PROD_MULTIPLICATIVEEXPRESSION_DIV                                 = 404;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
+		final int PROD_MULTIPLICATIVEEXPRESSION_PERCENT                             = 405;  // <MultiplicativeExpression> ::= <MultiplicativeExpression> '%' <UnaryExpression>
+//		final int PROD_ADDITIVEEXPRESSION                                           = 406;  // <AdditiveExpression> ::= <MultiplicativeExpression>
+		final int PROD_ADDITIVEEXPRESSION_PLUS                                      = 407;  // <AdditiveExpression> ::= <AdditiveExpression> '+' <MultiplicativeExpression>
+		final int PROD_ADDITIVEEXPRESSION_MINUS                                     = 408;  // <AdditiveExpression> ::= <AdditiveExpression> '-' <MultiplicativeExpression>
+//		final int PROD_SHIFTEXPRESSION                                              = 409;  // <ShiftExpression> ::= <AdditiveExpression>
+		final int PROD_SHIFTEXPRESSION_LTLT                                         = 410;  // <ShiftExpression> ::= <ShiftExpression> '<<' <AdditiveExpression>
+		final int PROD_SHIFTEXPRESSION_GTGT                                         = 411;  // <ShiftExpression> ::= <ShiftExpression> '>>' <AdditiveExpression>
+		final int PROD_SHIFTEXPRESSION_GTGTGT                                       = 412;  // <ShiftExpression> ::= <ShiftExpression> '>>>' <AdditiveExpression>
+//		final int PROD_RELATIONALEXPRESSION                                         = 413;  // <RelationalExpression> ::= <ShiftExpression>
+		final int PROD_RELATIONALEXPRESSION_LT                                      = 414;  // <RelationalExpression> ::= <RelationalExpression> '<' <ShiftExpression>
+		final int PROD_RELATIONALEXPRESSION_GT                                      = 415;  // <RelationalExpression> ::= <RelationalExpression> '>' <ShiftExpression>
+		final int PROD_RELATIONALEXPRESSION_LTEQ                                    = 416;  // <RelationalExpression> ::= <RelationalExpression> '<=' <ShiftExpression>
+		final int PROD_RELATIONALEXPRESSION_GTEQ                                    = 417;  // <RelationalExpression> ::= <RelationalExpression> '>=' <ShiftExpression>
+		final int PROD_RELATIONALEXPRESSION_INSTANCEOF                              = 418;  // <RelationalExpression> ::= <RelationalExpression> instanceof <ReferenceType>
+//		final int PROD_EQUALITYEXPRESSION                                           = 419;  // <EqualityExpression> ::= <RelationalExpression>
+		final int PROD_EQUALITYEXPRESSION_EQEQ                                      = 420;  // <EqualityExpression> ::= <EqualityExpression> '==' <RelationalExpression>
+		final int PROD_EQUALITYEXPRESSION_EXCLAMEQ                                  = 421;  // <EqualityExpression> ::= <EqualityExpression> '!=' <RelationalExpression>
+//		final int PROD_ANDEXPRESSION                                                = 422;  // <AndExpression> ::= <EqualityExpression>
+		final int PROD_ANDEXPRESSION_AMP                                            = 423;  // <AndExpression> ::= <AndExpression> '&' <EqualityExpression>
+//		final int PROD_EXCLUSIVEOREXPRESSION                                        = 424;  // <ExclusiveOrExpression> ::= <AndExpression>
+		final int PROD_EXCLUSIVEOREXPRESSION_CARET                                  = 425;  // <ExclusiveOrExpression> ::= <ExclusiveOrExpression> '^' <AndExpression>
+//		final int PROD_INCLUSIVEOREXPRESSION                                        = 426;  // <InclusiveOrExpression> ::= <ExclusiveOrExpression>
+		final int PROD_INCLUSIVEOREXPRESSION_PIPE                                   = 427;  // <InclusiveOrExpression> ::= <InclusiveOrExpression> '|' <ExclusiveOrExpression>
+//		final int PROD_CONDITIONALANDEXPRESSION                                     = 428;  // <ConditionalAndExpression> ::= <InclusiveOrExpression>
+		final int PROD_CONDITIONALANDEXPRESSION_AMPAMP                              = 429;  // <ConditionalAndExpression> ::= <ConditionalAndExpression> '&&' <InclusiveOrExpression>
+//		final int PROD_CONDITIONALOREXPRESSION                                      = 430;  // <ConditionalOrExpression> ::= <ConditionalAndExpression>
+		final int PROD_CONDITIONALOREXPRESSION_PIPEPIPE                             = 431;  // <ConditionalOrExpression> ::= <ConditionalOrExpression> '||' <ConditionalAndExpression>
+//		final int PROD_CONDITIONALEXPRESSION                                        = 432;  // <ConditionalExpression> ::= <ConditionalOrExpression>
+		final int PROD_CONDITIONALEXPRESSION_QUESTION_COLON                         = 433;  // <ConditionalExpression> ::= <ConditionalOrExpression> '?' <Expression> ':' <ConditionalExpression>
+//		final int PROD_ASSIGNMENTEXPRESSION                                         = 434;  // <AssignmentExpression> ::= <ConditionalExpression>
+//		final int PROD_ASSIGNMENTEXPRESSION2                                        = 435;  // <AssignmentExpression> ::= <Assignment>
+		final int PROD_ASSIGNMENT                                                   = 436;  // <Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+//		final int PROD_LEFTHANDSIDE                                                 = 437;  // <LeftHandSide> ::= <Name>
+//		final int PROD_LEFTHANDSIDE2                                                = 438;  // <LeftHandSide> ::= <FieldAccess>
+//		final int PROD_LEFTHANDSIDE3                                                = 439;  // <LeftHandSide> ::= <ArrayAccess>
+		final int PROD_ASSIGNMENTOPERATOR_EQ                                        = 440;  // <AssignmentOperator> ::= '='
+//		final int PROD_ASSIGNMENTOPERATOR_TIMESEQ                                   = 441;  // <AssignmentOperator> ::= '*='
+//		final int PROD_ASSIGNMENTOPERATOR_DIVEQ                                     = 442;  // <AssignmentOperator> ::= '/='
+//		final int PROD_ASSIGNMENTOPERATOR_PERCENTEQ                                 = 443;  // <AssignmentOperator> ::= '%='
+		final int PROD_ASSIGNMENTOPERATOR_PLUSEQ                                    = 444;  // <AssignmentOperator> ::= '+='
+		final int PROD_ASSIGNMENTOPERATOR_MINUSEQ                                   = 445;  // <AssignmentOperator> ::= '-='
+//		final int PROD_ASSIGNMENTOPERATOR_LTLTEQ                                    = 446;  // <AssignmentOperator> ::= '<<='
+//		final int PROD_ASSIGNMENTOPERATOR_GTGTEQ                                    = 447;  // <AssignmentOperator> ::= '>>='
+//		final int PROD_ASSIGNMENTOPERATOR_GTGTGTEQ                                  = 448;  // <AssignmentOperator> ::= '>>>='
+//		final int PROD_ASSIGNMENTOPERATOR_AMPEQ                                     = 449;  // <AssignmentOperator> ::= '&='
+//		final int PROD_ASSIGNMENTOPERATOR_CARETEQ                                   = 450;  // <AssignmentOperator> ::= '^='
+//		final int PROD_ASSIGNMENTOPERATOR_PIPEEQ                                    = 451;  // <AssignmentOperator> ::= '|='
+//		final int PROD_EXPRESSION                                                   = 452;  // <Expression> ::= <AssignmentExpression>
+//		final int PROD_CONSTANTEXPRESSION                                           = 453;  // <ConstantExpression> ::= <Expression>
 	};
 
 	//----------------------------- Preprocessor -----------------------------
 	
-	static final StringList CLASS_LITERAL = StringList.explodeWithDelimiter(".class", ".");
+	// START KGU#953 2021-03-04: Bugfix #955 The original approach seemed clever but left an empty string at start
+	//static final StringList CLASS_LITERAL = StringList.explodeWithDelimiter(".class", ".");
+	static final StringList CLASS_LITERAL = StringList.explode(".:class", ":");
+	// END KGU#953 2021-03-04
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
@@ -1685,15 +1706,28 @@ public class JavaParser extends CodeParser
 					// PROD_CATCHES:  <Catches> ::= <CatchClause>
 					// PROD_CATCHES2: <Catches> ::= <Catches> <CatchClause>
 					// PROD_CATCHCLAUSE_CATCH_LPAREN_RPAREN:
-					//                <CatchClause> ::= catch '(' <FormalParameter> ')' <Block>
+					//                <CatchClause> ::= catch '(' <CatchFormalParameter> ')' <Block>
 					Reduction redCatches = _reduction.get(ixBlock+1).asReduction();
 					if (redCatches.getParent().getTableIndex() != RuleConstants.PROD_CATCHES2) {
-						// A single clause - no Case necessary
-						String[] param = this.getFormalParameter(redCatches.get(2).asReduction());
+						// A single clause - possibly no Case necessary, but might be multi-catch clause
+						// START KGU#952 2021-03-04: Bugfix #955/2
+						//String[] param = this.getFormalParameter(redCatches.get(2).asReduction());
+						//ele.setText(param[0]);
+						//ele.comment.add(param[1]);
+						//this.buildNSD_R(redCatches.get(4).asReduction(), ele.qCatch);
+						StringList param = this.getCatchParameter(redCatches.get(2).asReduction());
 						// Set the actual catch variable
-						ele.setText(param[0]);
-						ele.comment.add(param[1]);
-						this.buildNSD_R(redCatches.get(4).asReduction(), ele.qCatch);
+						ele.setText(param.get(0));
+						ele.comment.add(param.get(1));
+						if (param.count() == 3) {
+							this.buildNSD_R(redCatches.get(4).asReduction(), ele.qCatch);
+						}
+						else {
+							Case catchCase = new Case(param.get(0) + " instanceof\n" + param.concatenate(", ", 2) + "\ndefault");
+							ele.qCatch.addElement(catchCase);
+							this.buildNSD_R(redCatches.get(4).asReduction(), catchCase.qs.get(0));
+						}
+						// END KGU#953 2021-03-04
 					}
 					else {
 						// Get all catch clauses and build a Case element from them
@@ -1709,12 +1743,19 @@ public class JavaParser extends CodeParser
 							else {
 								redCatches = null;
 							}
-							String[] param = this.getFormalParameter(redClause);
+							// START KGU#953 2021-03-04: Bugfix #955
+							//String[] param = this.getFormalParameter(redClause);
+							//distr.insert(param[1], 1);
+							//Subqueue sq = new Subqueue();
+							// This would require a type cast, actually...
+							//sq.addElement(new Instruction(param[0] + " <- exception"));
+							StringList param = this.getCatchParameter(redClause.get(2).asReduction());
 							// FIXME the built-in function to retrieve the type name should be applied here too
-							distr.insert(param[1], 1);
+							distr.insert(param.concatenate(", ", 2), 1);	// The types as selectors
 							Subqueue sq = new Subqueue();
 							// This would require a type cast, actually...
-							sq.addElement(new Instruction(param[0] + " <- exception"));
+							sq.addElement(new Instruction((param.get(1) + " " + param.get(0) + " <- exception").trim()));
+							// END KGU#953 2021-03-04
 							this.buildNSD_R(redClause.get(4).asReduction(), sq);
 							handlers.push(sq);
 						} while(redCatches != null);
@@ -1726,6 +1767,9 @@ public class JavaParser extends CodeParser
 							catchCase.qs.set(ixBranch++, sq);
 							sq.parent = catchCase;
 						}
+						// START KGU#953 2021-03-04: Bugfix #955 Forgotten to place the Case element
+						ele.qCatch.addElement(catchCase);
+						// END KGU#953 2021-03-04
 					}
 				}
 				int ixFinally = 0;
@@ -2704,9 +2748,10 @@ public class JavaParser extends CodeParser
 
 	/**
 	 * Derive a single formal parameter from the given {@link Reduction} and returns a
-	 * suited Strung describing its declaration in a Structorizer-compatible way.
+	 * suited String describing its declaration in a Structorizer-compatible way.
 	 * @param redFP - the {@link Reduction} to be analysed
-	 * @return an array of [0] name, [1] type description, and [2] "const" (if to be applied)
+	 * @return an array of [0] name, [1] type description, and [2] "const" (if to be
+	 *   applied, otherwise "")
 	 * @throws ParserCancelled 
 	 */
 	private String[] getFormalParameter(Reduction redFP) throws ParserCancelled {
@@ -2738,6 +2783,46 @@ public class JavaParser extends CodeParser
 				type,
 				isConst ? "const" : ""
 		};
+	}
+
+	// START KGU#953 2021-03-04: Bugfix #955/2 Multi-Catch clauses had not been supported
+	/**
+	 * Extracts one or more formal parameters from the given {@link Reduction} and returns a
+	 * suited String describing its declaration in a Structorizer-compatible way.
+	 * @param redCFP - the {@link Reduction} to be analysed
+	 * @return a StringList of 0. name, 1. "const" or "", 2. ... n-1. type descriptions
+	 * @throws ParserCancelled 
+	 */
+	private StringList getCatchParameter(Reduction redCFP) throws ParserCancelled {
+		// PROD_CATCHFORMALPARAMETER_FINAL <CatchFormalParameter> ::= final <CatchType> <VariableDeclaratorId>
+		// PROD_CATCHFORMALPARAMETER       <CatchFormalParameter> ::= <CatchType> <VariableDeclaratorId>
+		StringList result = new StringList();
+		int ruleId = redCFP.getParent().getTableIndex();
+		int ixTypes = 0;
+		int ixVar = 1;
+		boolean isConst = ruleId == RuleConstants.PROD_CATCHFORMALPARAMETER_FINAL;
+		if (isConst) {
+			ixTypes++;
+			ixVar++;
+		}
+		Token tokCTs = redCFP.get(ixTypes);
+		// PROD_CATCHTYPE      <CatchType> ::= <ClassType>
+		// PROD_CATCHTYPE_PIPE <CatchType> ::= <CatchType> '|' <ClassType>
+		do {
+			Token tokCT = tokCTs;
+			Reduction redCT = tokCTs.asReduction();
+			if (redCT != null && redCT.getParent().getTableIndex() == RuleConstants.PROD_CATCHTYPE_PIPE) {
+				tokCTs = redCT.get(0);
+				tokCT = redCT.get(2);
+			}
+			else {
+				tokCTs = null;
+			}
+			result.add(translateType(tokCT));
+		} while (tokCTs != null);
+		result.add(isConst ? "const" : "");
+		result.add(getContent_R(redCFP.get(ixVar)));
+		return result.reverse();
 	}
 
 	/**

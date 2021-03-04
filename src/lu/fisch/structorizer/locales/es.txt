@@ -344,7 +344,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Control de Ejecución ...
-Menu.menuDebugDropBrkpts.text=Eliminar todos breakpoints
+Menu.menuDebugDropBrkpts.text=Ignorar todos breakpoints
 Menu.menuDebugBreakpoint.text=Poner/eliminar breakpoint
 Menu.menuDebugBreakTrigger.text=Fija condición de parar ...
 Menu.menuDebugDisable.text=Desactivar/Reactivar
@@ -667,7 +667,7 @@ Editor.btnDisable.tooltip=Desactivar/reactivar los elementos seleccionados.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Activar Control de Ejecución ...
-Editor.btnDropBrk.tooltip=Eliminar todos breakpoints.
+Editor.btnDropBrk.tooltip=Ignorar todos los breakpoints.
 // display mode
 Editor.ttSwitchComments.text=¡Se presentan comentarios en lugar de textos!
 Editor.ttOperatorsC.text=¡Operadores están simbolizados en estilo C!

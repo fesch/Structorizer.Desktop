@@ -52,6 +52,8 @@
 ! V 0.3     2021-02-22  Kay Gürtzig     <MethodDeclaration> stuff modified
 !                                       FloatingPointLiteral spec corrected,
 !                                       Try with resources added
+! V 0.4     2021-03-04  Kay Gürtzig     Multi-catch clauses had not been
+!                                       modelled
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
@@ -238,7 +240,7 @@ Comment Line = '//'
 !<Dims>  ::= <Annotations> '[' ']'
 !         |  <Annotations> '[' ']' <Dims>
 
-! This was another simplification from the Java 1.0/2.0 versuion
+! This was another simplification from the Java 1.0/2.0 version
 !<ArrayType>
 !        ::= <PrimitiveType> '[' ']'
 !         |  <Name> '[' ']'
@@ -809,7 +811,15 @@ Comment Line = '//'
          |  <Catches> <CatchClause>
 
 <CatchClause>
-        ::= 'catch' '(' <FormalParameter> ')' <Block>
+        ::= 'catch' '(' <CatchFormalParameter> ')' <Block>
+         
+<CatchFormalParameter>
+        ::= 'final' <CatchType> <VariableDeclaratorId>
+         |  <CatchType> <VariableDeclaratorId>
+         
+<CatchType>
+        ::= <ClassType>
+         |  <CatchType> '|' <ClassType>
 
 <Finally> 
         ::= 'finally' <Block>

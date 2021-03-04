@@ -342,7 +342,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Debugger ...
-Menu.menuDebugDropBrkpts.text=Haltepunkte entfernen
+Menu.menuDebugDropBrkpts.text=Haltepunkte ignorieren
 Menu.menuDebugBreakpoint.text=Haltepunkt setzen/löschen
 Menu.menuDebugBreakTrigger.text=Haltepunktauslösung festlegen...
 Menu.menuDebugDisable.text=Deaktivieren/Aktivieren
@@ -665,7 +665,7 @@ Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
 // debug
 Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
 Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
-Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
+Editor.btnDropBrk.tooltip=Alle Haltepunkte ignorieren
 Editor.btnDisable.tooltip=(De-)Aktivieren der ausgewählten Elemente.
 // display mode
 Editor.ttSwitchComments.text=Texte und Kommentare sind vertauscht!
