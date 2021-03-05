@@ -19,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.31-02 (2021-03-04)
+Current development version 3.31-02 (2021-03-05)
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,
@@ -33,6 +33,8 @@ Current development version 3.31-02 (2021-03-04)
 - 02: Issue #956: No impact of option "Import var declarations" on Java parser <2>
 - 02: Issue #957: "Processing" import now copes with import declarations <2>
 - 02: Issue #958: Relative positioning of specific import/export option dialog <2>
+- 02: Bugfix #959: Processing import: conversion functions and web color literals <2>
+- 02: Issue #960: Processing import now automatically declares system variables <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>

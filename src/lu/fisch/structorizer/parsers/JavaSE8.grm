@@ -54,10 +54,12 @@
 !                                       Try with resources added
 ! V 0.4     2021-03-04  Kay Gürtzig     Multi-catch clauses had not been
 !                                       modelled
+! V 0.5     2021-03-04  Kay Gürtzig     Some additions to support "Processing"
+!                                       code
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.4, Mar. 2021'
+"Version" = '0.5, March 2021'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
@@ -91,7 +93,8 @@ StartWithZeroDecimalIntegerLiteral = '0'{LongTypeSuffix}?
 HexIntegerLiteral = '0'('x'|'X'){HexDigit}+{LongTypeSuffix}?
 OctalIntegerLiteral = '0'{OctalCharSet}+{LongTypeSuffix}?
 Ellipsis = '...'
-
+! Specific addition for a "Processing" color literal (web color notation)
+WebColorLiteral = '#'{HexDigit}{HexDigit}{HexDigit}{HexDigit}{HexDigit}{HexDigit}
 
 "Case Sensitive" = 'True'
 "Start Symbol"   = <CompilationUnit>
@@ -121,7 +124,6 @@ Comment Line = '//'
          |  HexIntegerLiteral  
          |  OctalIntegerLiteral
 
-
 <Literal> 
         ::= <IntegerLiteral>
          |  <FloatPointLiteral>
@@ -129,6 +131,7 @@ Comment Line = '//'
          |  <CharacterLiteral>
          |  StringLiteral
          |  NullLiteral
+         |  WebColorLiteral ! Non-Java addition for "Processing" code
 
 !==================== Annotations ==================
 
@@ -849,6 +852,7 @@ Comment Line = '//'
          |  <FieldAccess>
          |  <MethodInvocation>
          |  <ArrayAccess>
+         |  <ProcessingTypeConversion>  ! Non-Java addition for "Processing" code
 
 ! This would be okay according to the language specification but causes syntax errors during parsing
 ! So we better use a simple preprocessing workaround: replace all ".class." occurrences by something
@@ -901,7 +905,20 @@ Comment Line = '//'
          |  <Primary> '.' Identifier '(' ')'
          |  'super' '.' Identifier '(' <ArgumentList> ')'
          |  'super' '.' Identifier '(' ')'
-
+         
+! Non-Java expression kind to let "Processing" code pass
+<ProcessingTypeConversion>
+        ::= 'binary'   '(' <Expression> ')'
+         |  'hex'      '(' <Expression> ')'
+         |  'unbinary' '(' <Expression> ')'
+         |  'unhex'    '(' <Expression> ')'
+         |  'int'      '(' <Expression> ')'
+         |  'byte'     '(' <Expression> ')'
+         |  'char'     '(' <Expression> ')'
+         |  'str'      '(' <Expression> ')'
+         |  'float'    '(' <Expression> ')'
+         |  'boolean'  '(' <Expression> ')'
+         
 <ArrayAccess> 
         ::= <Name> '[' <Expression> ']'
          |  <PrimaryNoNewArray> '[' <Expression> ']'

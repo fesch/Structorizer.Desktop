@@ -34,16 +34,25 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-02-27      First Issue (on behalf of enhancement request #932)
  *      Kay Gürtzig     2021-03-04      Issue #957 file preparation now cares for import declarations
+ *      Kay Gürtzig     2021-03-05      Bugfix #959: Support for Processing conversion functions,
+ *                                      Issue #960: Processing system variables automatically initialised,
+ *                                      way more standard constants defined (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      Basically uses the JavaParser with some specific modifications, does not try to make sense
  *      of application-specific functions like loop(), noLoop(), push(), pop() etc.
+ *      
+ *      2021-03-05 Kay Gürtzig (issue #960)
+ *      - constant definitions taken from:
+ *        https://github.com/processing/processing/blob/master/core/src/processing/core/PConstants.java
  *
  ******************************************************************************************************///
 
 import java.io.File;
+
+import com.creativewidgetworks.goldparser.engine.Reduction;
 
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
@@ -194,6 +203,37 @@ public class ProcessingParser extends JavaParser {
 		addRoot(mainRoot);
 	}
 	
+	// START KGU#957 2021-03-05: Issue #959 - Processing conversion function handling
+	/**
+	 * Decomposes a conversion function, i.e. the expression to be converted.
+	 * @param exprRed - a {@code <ProcessingTypeConversion>} reduction
+	 * @return a StringList containing the necessary sequence of Structorizer instructions
+	 * and expressions to achieve the same effect.
+	 * @throws ParserCancelled if the user aborted the import process
+	 */
+	protected StringList decomposeProcessingTypeConversion(Reduction exprRed) throws ParserCancelled
+	{
+		// <ProcessingTypeConversion> ::= binary '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= hex '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= unbinary '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= unhex '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= int '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= byte '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= char '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= str '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= float '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= boolean '(' <Expression> ')'
+		StringList exprs = this.decomposeExpression(exprRed.get(2), false, false);
+		int ixLast = exprs.count() - 1;
+		/* As a first approach we just put the original name and don't try some smart
+		 * reinterpretation: A simple casting will not usually do, and Structorizer
+		 * does not even devour a casting expression, anyway...
+		 */
+		exprs.set(ixLast, this.getContent_R(exprRed.get(0)) + "(" + exprs.get(ixLast) + ")");
+		return exprs;
+	}
+	// END KGU#957 2021-03-05
+
 	/**
 	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
 	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
@@ -233,15 +273,133 @@ public class ProcessingParser extends JavaParser {
 		if (root.isInclude() && root.getMethodName().equals(progName + "Processing")) {
 			// Define some important Processing constants
 			final String mathConstants = 
-					"const PI <- " + Double.toString(Math.PI) + "\n" +
-					"const HALF_PI <- " + Double.toString(Math.PI/2) + "\n" +
-					"const QUARTER_PI <- " + Double.toString(Math.PI/4) + "\n" +
-					"const TWO_PI <- " + Double.toString(Math.PI*2) + "\n" +
-					"const TAU <- TWO_PI";
-			Instruction defs = new Instruction("type ColorMode = enum{RGB, HSB}");
-			defs.setColor(colorConst);
-			defs.setComment("Processing standard enumerator");
+					"const PI <- " + Float.toString((float)Math.PI) + "\n" +
+					"const HALF_PI <- " + Float.toString((float)Math.PI/2) + "\n" +
+					"const QUARTER_PI <- " + Float.toString((float)Math.PI/4) + "\n" +
+					"const TWO_PI <- " + Float.toString((float)Math.PI*2) + "\n" +
+					"const TAU <- TWO_PI\n" +
+					"const DEG_TO_RAD <- PI/180.0\n" +
+					"const RAD_TO_DEG <- 1/DEG_TO_RAD\n";
+			// START KGU#958 2021-03-05: Issue #960
+			//Instruction defs = new Instruction("type ColorMode = enum{RGB, HSB}");
+			final String keyConstants =
+					"const BACKSPACE <- char(8)\n" +
+					"const TAB <- char(9)\n" +
+					"const ENTER <- char(10)\n" +
+					"const RETURN <- char(13)\n" +
+					"const ESC <- char(27)\n" +
+					"const DELETE <- char(127)";
+			final String strokeConstants =
+					"const SQUARE <- 1 << 0\n" +
+					"const ROUND <- 1 << 1\n" +
+					"const PROJECT <- 1 << 2\n" +
+					"const MITER <- 1 << 3\n" +
+					"const BEVEL <- 1 << 4\n";
+			final String blendModeConstants = 
+					"const REPLACE <- 0\n" +
+					"const BLEND <- 1 << 0\n" +
+					"const ADD <- 1 << 1\n" +
+					"const SUBTRACT <- 1 << 2\n" +
+					"const LIGHTEST <- 1 << 3\n" +
+					"const DARKEST <- 1 << 4\n" +
+					"const DIFFERENCE <- 1 << 5\n" +
+					"const EXCLUSION <- 1 << 6\n" +
+					"const MULTIPLY <- 1 << 7\n" +
+					"const SCREEN <- 1 << 8\n" +
+					"const OVERLAY <- 1 << 9\n" +
+					"const HARD_LIGHT <- 1 << 10\n" +
+					"const SOFT_LIGHT <- 1 << 11\n" +
+					"const DODGE <- 1 << 12\n" +
+					"const BURN <- 1 << 13\n";
+			final String rendererConstants =
+					"const JAVA2D <- \"processing.awt.PGraphicsJava2D\"\n"
+					+ "const P2D <- \"processing.awt.PGraphics2D\"\n"
+					+ "const P3D <- \"processing.awt.PGraphics3D\"\n"
+					+ "const FX2D <- \"processing.awt.PGraphicsFX2D\"\n"
+					+ "const PDF <- \"processing.awt.PGraphicsPDF\"\n"
+					+ "const SVG <- \"processing.awt.PGraphicsSVG\"\n"
+					+ "const DXF <- \"processing.awt.RawDXF\"";
+			final String shapeEnumerator =
+					"type Shapes = enum{\\\n"
+					+ "GROUP,\\\n"
+					+ "POINT = 2, POINTS, LINE, LINES,\\\n"
+					+ "TRIANGLE = 8, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN,\\\n"
+					+ "QUAD = 16, QUADS, QUAD_STRIP,\\\n"
+					+ "POLYGON = 20, PATH,\\\n"
+					+ "RECT = 30, ELLIPSE, ARC,\\\n"
+					+ "SPHERE = 40, BOX,"
+					+ "LINE_STRIP = 50, LINE_LOOP\\\n"
+					+ "}";
+			final String systemVariables1 = 
+					"var width: int <- 100\n" +
+					"var height: int <- 100\n" +
+					"var pixelWidth: int <- width\n" +
+					"var pixelHeight: int <- height\n" +
+					"var frameCount: int <- 0\n" +
+					"var frameRate: int <- 60";
+			final String systemVariables2 = 
+					"var key: char <- '\0'\n" +
+					"var keyPressed: boolean <- false\n" +
+					"var keyCode: KeyCode <- NONE\n";
+			Instruction defs = new Instruction(systemVariables2);
+			defs.setColor(colorGlobal);
+			defs.setComment("Processing system variables initialization, part 2");
 			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(systemVariables1);
+			defs.setColor(colorGlobal);
+			defs.setComment("Processing system variables initialization, part 1");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type KeyCodes = enum{NONE, SHIFT = 16, CONTROL, ALT, LEFT = 37, RIGHT = 39, DOWN = 40, UP = 224}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard key code enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type FileTypes = enum{TIFF, TARGA, JPEG, GIF}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard file type enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type Lighting = enum{AMBIENT, DIRECTIONAL, SPOT}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard lighting enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type VertAlignmentModes = enum{BASELINE, TOP, BOTTOM}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard vertical alignment mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ArcModes = enum{CHORD = 2, PIE}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard arc drawing mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ShapeModes = enum{CORNER, CORNERS, RADIUS, CENTER, DIAMETER = CENTER}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard shape drawing mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(shapeEnumerator);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard shape type enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ColorMode = enum{RGB, ARGB, HSB, ALPHA}");
+			// END KGU#958 2021-03-05
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard color mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			// START KGU#958 2021-03-05: Issue #960
+			defs = new Instruction(rendererConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard renderer constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(blendModeConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard blend mode constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(strokeConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard stroke constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(keyConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard key constants");
+			root.children.insertElementAt(defs, 0);
+			// END KGU#958 2021-03-05
 			defs = new Instruction(mathConstants);
 			defs.setColor(colorConst);
 			defs.setComment("Processing standard Math constants");
