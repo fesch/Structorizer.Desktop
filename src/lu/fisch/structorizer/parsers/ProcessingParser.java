@@ -58,6 +58,7 @@ import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.utils.StringList;
 
@@ -234,12 +235,42 @@ public class ProcessingParser extends JavaParser {
 	}
 	// END KGU#957 2021-03-05
 
+	// START KGU#959 2021-03-06: Issue #961 extracted from decomposeExpression() for overloading
 	/**
-	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
-	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
-	 * the text phrase.
-	 * @param _content - A string already assembled, may be used as prefix, ignored or combined in another
-	 * way 
+	 * Checks whether the passed-in instruction line (which must adhere to a
+	 * method invocation with or without assigned result, where the assignment
+	 * symbol if contained is expected to be "<-") represents some built-in
+	 * function or command, e.g. an output instruction, and if so converts it
+	 * accordingly. If it is notzhing specific then just returns {@code null}.
+	 * @param line - an built instruction line with call syntax (qualified names
+	 * possible)
+	 * @return a representing {@link Element} or {@code null}
+	 */
+	protected Instruction convertInvocation(String line)
+	{
+		Instruction ele = null;
+		if (line.startsWith("exit(")) {
+			ele = new Jump(getKeyword("preExit") + " "
+					+ line.substring("exit(".length(), line.length()-1));
+		}
+		else if (line.startsWith("println(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("println(".length(), line.length()-1));
+		}
+		else if (line.startsWith("print(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("print(".length(), line.length()-1));
+		}		
+		return ele;
+	}
+	// END KGU#959 2021-03-05
+
+	/**
+	 * Helper method to retrieve and compose the text of the given reduction,
+	 * combine it with previously assembled string _content and adapt it to
+	 * syntactical conventions of Structorizer. Finally return the text phrase.
+	 * @param _content - A string already assembled, may be used as prefix,
+	 *   ignored or combined in another way 
 	 * @return composed and translated text.
 	 */
 	@Override
@@ -256,7 +287,7 @@ public class ProcessingParser extends JavaParser {
 		}
 
 		// Rather not necessary, but who knows...
-		tokens.removeAll(StringList.explodeWithDelimiter("Math.", "."), true);
+		tokens.removeAll(StringList.explode("Math,.", ","), true);
 
 		return _content.trim();
 	}

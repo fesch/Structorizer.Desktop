@@ -39,6 +39,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-12-22      KGU#311: New auxiliary method getSourceLength()
  *      Kay Gürtzig     2017-01-29      Enh. #335: Enhancements for better type analysis
  *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check w.r.t. non-ascii letters
+ *      Kay Gürtzig     2021-03-05      Bugfix #961: Metod isFunction() extended (for method tests)
  *
  ******************************************************************************************************
  *
@@ -133,22 +134,22 @@ public class Function
         //		posLP < str.indexOf(")") && posLP >=0 &&
         //        countChar(str,'(') == countChar(str,')') &&
         //        str.endsWith(")");
-        this.isFunc = isFunction(this.str);
+        this.isFunc = isFunction(this.str, false);
         // END KGU#332 2017-01-29
         if (this.isFunc)
         {
             int posLP = str.indexOf("(");
-        	// START KGU#2 (#9) 2015-11-13: In general, we don't want to flatten the case!
-        	//this.name = str.substring(0, posLP).trim().toLowerCase();
-        	this.name = str.substring(0, posLP).trim();
-        	// END KGU#2 (#9) 2015-11-13
-        	String params = str.substring(posLP+1, str.length()-1).trim();
-        	if (!params.equals(""))
-        	{
-        		// START KGU#106 2015-12-12: Face nested function calls with comma-separated arguments!
-        		//this.parameters = StringList.explode(params, ",");
-        		this.parameters = Element.splitExpressionList(params, ",");
-        		// END KGU#106 2015-12-12
+            // START KGU#2 (#9) 2015-11-13: In general, we don't want to flatten the case!
+            //this.name = str.substring(0, posLP).trim().toLowerCase();
+            this.name = str.substring(0, posLP).trim();
+            // END KGU#2 (#9) 2015-11-13
+            String params = str.substring(posLP+1, str.length()-1).trim();
+            if (!params.equals(""))
+            {
+                // START KGU#106 2015-12-12: Face nested function calls with comma-separated arguments!
+                //this.parameters = StringList.explode(params, ",");
+                this.parameters = Element.splitExpressionList(params, ",");
+                // END KGU#106 2015-12-12
             }
 //            // START KGU#341 2017-02-06
 //            String nPars = Integer.toString(this.parameters.count());
@@ -196,13 +197,17 @@ public class Function
 
     // START KGU#332 2017-01-29: Enh. #335
     /**
-     * Tests whether the passed-in expression expr may represent a subroutine call
-     * i.e. consists of an identifier followed by a parenthesized comma-separated
-     * list of argument expressions
+     * Tests whether the passed-in expression {@code expr} may represent a routine
+     * or method call i.e. if it consists of an identifier or qualified name,
+     * followed by a parenthesized comma-separated list of argument expressions
      * @param expr - an expression
+     * @param acceptQualifiers - whether qualified names are accepted (method calls)
      * @return true if the expression has got function call syntax
      */
-    public static boolean isFunction(String expr)
+    // START KGU#959 2021-03-05: Issue #961 We need a possibility to detect method calls
+    //public static boolean isFunction(String expr)
+    public static boolean isFunction(String expr, boolean acceptQualifiers)
+    // END KGU#959 2021-03-05
     {
     	expr = expr.trim();
         int posLP = expr.indexOf("(");
@@ -210,22 +215,29 @@ public class Function
         //boolean isFunc = posLP < expr.indexOf(")") && posLP >=0 &&
         boolean isFunc = posLP < expr.indexOf(")") && posLP >0 &&
         // END KGU#560 2018-07
-        		countChar(expr,'(') == countChar(expr,')') &&
-        		expr.endsWith(")");
+                countChar(expr,'(') == countChar(expr,')') &&
+                expr.endsWith(")");
         // The test above is way too easy, it would also hold for e.g. "(a+b)*(c+d)";
         // So we restrict the result in the following
         if (isFunc) {
-        	isFunc = testIdentifier(expr.substring(0, posLP), false, null);
-        	// Tokenize string between the outer parentheses 
-        	StringList tokens = Element.splitLexically(expr.substring(posLP+1, expr.length()-1), true);
-        	int parLevel = 0;	// parenthesis level, must never get < 0
-        	for (int i = 0; isFunc && i < tokens.count(); i++) {
-        		String token = tokens.get(i);
-        		if (token.equals("(")) parLevel++;
-        		else if (token.equals(")")) {
-        			isFunc = --parLevel >= 0;
-        		}
-        	}
+            // START KGU#959 2021-03-05: Issue #961 Raw approach to accept qualified names
+            //isFunc = testIdentifier(expr.substring(0, posLP), false, null);
+            String extraChars = null;
+            if (acceptQualifiers) {
+                extraChars = ".";
+            }
+            isFunc = testIdentifier(expr.substring(0, posLP), false, extraChars);
+            // END KGU#959 2021-03-05
+            // Tokenize string between the outer parentheses 
+            StringList tokens = Element.splitLexically(expr.substring(posLP+1, expr.length()-1), true);
+            int parLevel = 0;	// parenthesis level, must never get < 0
+            for (int i = 0; isFunc && i < tokens.count(); i++) {
+                String token = tokens.get(i);
+                if (token.equals("(")) parLevel++;
+                else if (token.equals(")")) {
+                    isFunc = --parLevel >= 0;
+                }
+            }
         }
         return isFunc;
     }
@@ -239,11 +251,11 @@ public class Function
      */
     public String getSignatureString()
     {
-    	String sigStr = null;
-    	if (this.isFunc) {
-    		sigStr = this.getName() + "(" + this.paramCount() + ")";
-    	}
-    	return sigStr;
+        String sigStr = null;
+        if (this.isFunc) {
+            sigStr = this.getName() + "(" + this.paramCount() + ")";
+        }
+        return sigStr;
     }
     // END KGU 2017-02-21
     
@@ -309,7 +321,7 @@ public class Function
 
     public String getParam(int count)
     {
-    	// START KGU#56 2015-10-27: Analysis now only done once by the constructor
+        // START KGU#56 2015-10-27: Analysis now only done once by the constructor
 //        if (isFunction())
 //        {
 //            String params = str.trim().substring(str.trim().indexOf("(")+1,str.length()-1).trim();
@@ -320,10 +332,10 @@ public class Function
 //            }
 //            else return null;
 //        }
-    	if (this.parameters != null)
-    	{
-    		return this.parameters.get(count);
-    	}
+        if (this.parameters != null)
+        {
+            return this.parameters.get(count);
+        }
         // END KGU#56 2015-10-27
         else return null;
     }
@@ -340,11 +352,11 @@ public class Function
     public String getResultType(String defaultType)
     {
 //    	return getResultType(false, defaultType);
-    	String type = knownResultTypes.get(this.name + "#" + this.paramCount());
-    	if (type == null) {
-    		type = defaultType;
-    	}
-    	return type;
+        String type = knownResultTypes.get(this.name + "#" + this.paramCount());
+        if (type == null) {
+            type = defaultType;
+        }
+        return type;
     }
     
 //    /**
@@ -432,7 +444,7 @@ public class Function
      */
     public int getSourceLength()
     {
-    	return str.length();
+        return str.length();
     }
     // END KGU#311 2016-12-22
     

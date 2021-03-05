@@ -2286,7 +2286,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		String valueList = _for.getValueList();
 		StringList items = null;
-		boolean isComplexObject = Function.isFunction(valueList) || this.varNames.contains(valueList);
+		boolean isComplexObject = Function.isFunction(valueList, false) || this.varNames.contains(valueList);
 		if (valueList.startsWith("{") && valueList.endsWith("}"))
 		{
 			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");

@@ -146,7 +146,7 @@ public class CaseEditHelper {
 				catch (EvalError exc) {}
 			}
 		}
-		else if (Function.isFunction(expr)) {
+		else if (Function.isFunction(expr, false)) {
 			try {
 				// Might help - if not: there is a next try
 				value = interpreter.eval("Math." + expr + ";");

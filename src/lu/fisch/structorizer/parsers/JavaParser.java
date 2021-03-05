@@ -53,7 +53,8 @@ package lu.fisch.structorizer.parsers;
  *                                      Multi-catch clauses let the parser fail (and must be converted)
  *                                      Issue #956 omit declarations if optionImportVarDecl is false,
  *                                      don't decompose expressions if optionTranslate is off
- *      Kay Gürtzig     2021-03-05      Bugfix #959: Grammar tweaked to let Processing converters pass.
+ *      Kay Gürtzig     2021-03-05      Bugfix #959: Grammar tweaked to let Processing converters pass;
+ *                                      bugfix #961: The conversion of output instructions had not worked
  *
  ******************************************************************************************************
  *
@@ -104,87 +105,6 @@ import lu.fisch.utils.StringList;
 public class JavaParser extends CodeParser
 {
 
-	/** Rule ids representing statements, used as stoppers for comment retrieval (enh. #420) */
-	private static final int[] statementIds = new int[]{
-			/* TODO: Fill in the RuleConstants members of those productions that are
-			 * to be associated with comments found in their syntax subtrees or their
-			 * immediate environment. */
-			RuleConstants.PROD_NORMALCLASSDECLARATION,
-			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER,
-			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER2,
-			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER3,
-			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER4,
-			RuleConstants.PROD_LOCALCLASSDECLARATION,
-			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER,
-			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER2,
-			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER3,
-			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER4,
-			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER,
-			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER2,
-			RuleConstants.PROD_ENUMCONSTANTS_COMMA,
-			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN,
-			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER,
-			RuleConstants.PROD_FIELDDECLARATION_SEMI,
-			RuleConstants.PROD_FIELDDECLARATION_SEMI2,
-			RuleConstants.PROD_METHODDECLARATION,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION2,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION3,
-			RuleConstants.PROD_CONSTRUCTORDECLARATION4,
-			RuleConstants.PROD_STATICINITIALIZER_STATIC,
-			RuleConstants.PROD_LOCALVARIABLEDECLARATION_FINAL,
-			RuleConstants.PROD_LOCALVARIABLEDECLARATION,
-			RuleConstants.PROD_IFTHENSTATEMENT_IF_LPAREN_RPAREN,
-			RuleConstants.PROD_IFTHENELSESTATEMENT_IF_LPAREN_RPAREN_ELSE,
-			RuleConstants.PROD_IFTHENELSESTATEMENTNOSHORTIF_IF_LPAREN_RPAREN_ELSE,
-			RuleConstants.PROD_SWITCHSTATEMENT_SWITCH_LPAREN_RPAREN,
-			RuleConstants.PROD_BASICFORSTATEMENT_FOR_LPAREN_SEMI_SEMI_RPAREN,
-			RuleConstants.PROD_BASICFORSTATEMENTNOSHORTIF_FOR_LPAREN_SEMI_SEMI_RPAREN,
-			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_COLON_RPAREN,
-			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_COLON_RPAREN,
-			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_FINAL_COLON_RPAREN,
-			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_FINAL_COLON_RPAREN,
-			RuleConstants.PROD_SWITCHLABEL_DEFAULT_COLON,
-			RuleConstants.PROD_WHILESTATEMENT_WHILE_LPAREN_RPAREN,
-			RuleConstants.PROD_WHILESTATEMENTNOSHORTIF_WHILE_LPAREN_RPAREN,
-			RuleConstants.PROD_DOSTATEMENT_DO_WHILE_LPAREN_RPAREN_SEMI,
-			RuleConstants.PROD_BREAKSTATEMENT_BREAK_IDENTIFIER_SEMI,
-			RuleConstants.PROD_BREAKSTATEMENT_BREAK_SEMI,
-			RuleConstants.PROD_CONTINUESTATEMENT_CONTINUE_IDENTIFIER_SEMI,
-			RuleConstants.PROD_CONTINUESTATEMENT_CONTINUE_SEMI,
-			RuleConstants.PROD_RETURNSTATEMENT_RETURN_SEMI,
-			RuleConstants.PROD_RETURNSTATEMENT_RETURN_SEMI2,
-			RuleConstants.PROD_THROWSTATEMENT_THROW_SEMI,
-			RuleConstants.PROD_SYNCHRONIZEDSTATEMENT_SYNCHRONIZED_LPAREN_RPAREN,
-			RuleConstants.PROD_LABELEDSTATEMENT_IDENTIFIER_COLON,
-			RuleConstants.PROD_LABELEDSTATEMENTNOSHORTIF_IDENTIFIER_COLON,
-			RuleConstants.PROD_EXPRESSIONSTATEMENT_SEMI,
-			RuleConstants.PROD_LABELEDSTATEMENT_IDENTIFIER_COLON,
-			RuleConstants.PROD_LABELEDSTATEMENTNOSHORTIF_IDENTIFIER_COLON,
-			RuleConstants.PROD_EXPRESSIONSTATEMENT_SEMI,
-			// START KGU#953 2021-03-04: Issue #955: Comments for Try statements had not been gathered
-			RuleConstants.PROD_TRYSTATEMENT_TRY,
-			RuleConstants.PROD_TRYSTATEMENT_TRY2,
-			RuleConstants.PROD_TRYSTATEMENT_TRY3,
-			RuleConstants.PROD_TRYSTATEMENT_TRY4,
-			RuleConstants.PROD_TRYSTATEMENT_TRY5,
-			RuleConstants.PROD_TRYSTATEMENT_TRY6,
-			RuleConstants.PROD_TRYSTATEMENT_TRY7,
-			// END KGU#953 2021-03-04
-			// START KGU#957 2021-03-05: Bugfix #959
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BINARY_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_HEX_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_UNBINARY_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_UNHEX_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_INT_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BYTE_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_CHAR_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_STR_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_FLOAT_LPAREN_RPAREN,
-			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BOOLEAN_LPAREN_RPAREN,
-			// END KGU#957 2021-03-05
-	};
-	
 	//---------------------- Grammar specification ---------------------------
 
 	@Override
@@ -1022,6 +942,89 @@ public class JavaParser extends CodeParser
 //		final int PROD_CONSTANTEXPRESSION                                           = 465;  // <ConstantExpression> ::= <Expression>
 	};
 
+	//----------------------------- Comment configuration -----------------------------
+
+	/** Rule ids representing statements, used as stoppers for comment retrieval (enh. #420) */
+	private static final int[] statementIds = new int[]{
+			/* TODO: Fill in the RuleConstants members of those productions that are
+			 * to be associated with comments found in their syntax subtrees or their
+			 * immediate environment. */
+			RuleConstants.PROD_NORMALCLASSDECLARATION,
+			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER,
+			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER2,
+			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER3,
+			RuleConstants.PROD_PURECLASSDECLARATION_CLASS_IDENTIFIER4,
+			RuleConstants.PROD_LOCALCLASSDECLARATION,
+			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER,
+			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER2,
+			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER3,
+			RuleConstants.PROD_INTERFACEDECLARATION_INTERFACE_IDENTIFIER4,
+			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER,
+			RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER2,
+			RuleConstants.PROD_ENUMCONSTANTS_COMMA,
+			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER_LPAREN_RPAREN,
+			RuleConstants.PROD_ENUMCONSTANT_IDENTIFIER,
+			RuleConstants.PROD_FIELDDECLARATION_SEMI,
+			RuleConstants.PROD_FIELDDECLARATION_SEMI2,
+			RuleConstants.PROD_METHODDECLARATION,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION2,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION3,
+			RuleConstants.PROD_CONSTRUCTORDECLARATION4,
+			RuleConstants.PROD_STATICINITIALIZER_STATIC,
+			RuleConstants.PROD_LOCALVARIABLEDECLARATION_FINAL,
+			RuleConstants.PROD_LOCALVARIABLEDECLARATION,
+			RuleConstants.PROD_IFTHENSTATEMENT_IF_LPAREN_RPAREN,
+			RuleConstants.PROD_IFTHENELSESTATEMENT_IF_LPAREN_RPAREN_ELSE,
+			RuleConstants.PROD_IFTHENELSESTATEMENTNOSHORTIF_IF_LPAREN_RPAREN_ELSE,
+			RuleConstants.PROD_SWITCHSTATEMENT_SWITCH_LPAREN_RPAREN,
+			RuleConstants.PROD_BASICFORSTATEMENT_FOR_LPAREN_SEMI_SEMI_RPAREN,
+			RuleConstants.PROD_BASICFORSTATEMENTNOSHORTIF_FOR_LPAREN_SEMI_SEMI_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_COLON_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_COLON_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENT_FOR_LPAREN_FINAL_COLON_RPAREN,
+			RuleConstants.PROD_ENHANCEDFORSTATEMENTNOSHORTIF_FOR_LPAREN_FINAL_COLON_RPAREN,
+			RuleConstants.PROD_SWITCHLABEL_DEFAULT_COLON,
+			RuleConstants.PROD_WHILESTATEMENT_WHILE_LPAREN_RPAREN,
+			RuleConstants.PROD_WHILESTATEMENTNOSHORTIF_WHILE_LPAREN_RPAREN,
+			RuleConstants.PROD_DOSTATEMENT_DO_WHILE_LPAREN_RPAREN_SEMI,
+			RuleConstants.PROD_BREAKSTATEMENT_BREAK_IDENTIFIER_SEMI,
+			RuleConstants.PROD_BREAKSTATEMENT_BREAK_SEMI,
+			RuleConstants.PROD_CONTINUESTATEMENT_CONTINUE_IDENTIFIER_SEMI,
+			RuleConstants.PROD_CONTINUESTATEMENT_CONTINUE_SEMI,
+			RuleConstants.PROD_RETURNSTATEMENT_RETURN_SEMI,
+			RuleConstants.PROD_RETURNSTATEMENT_RETURN_SEMI2,
+			RuleConstants.PROD_THROWSTATEMENT_THROW_SEMI,
+			RuleConstants.PROD_SYNCHRONIZEDSTATEMENT_SYNCHRONIZED_LPAREN_RPAREN,
+			RuleConstants.PROD_LABELEDSTATEMENT_IDENTIFIER_COLON,
+			RuleConstants.PROD_LABELEDSTATEMENTNOSHORTIF_IDENTIFIER_COLON,
+			RuleConstants.PROD_EXPRESSIONSTATEMENT_SEMI,
+			RuleConstants.PROD_LABELEDSTATEMENT_IDENTIFIER_COLON,
+			RuleConstants.PROD_LABELEDSTATEMENTNOSHORTIF_IDENTIFIER_COLON,
+			RuleConstants.PROD_EXPRESSIONSTATEMENT_SEMI,
+			// START KGU#953 2021-03-04: Issue #955: Comments for Try statements had not been gathered
+			RuleConstants.PROD_TRYSTATEMENT_TRY,
+			RuleConstants.PROD_TRYSTATEMENT_TRY2,
+			RuleConstants.PROD_TRYSTATEMENT_TRY3,
+			RuleConstants.PROD_TRYSTATEMENT_TRY4,
+			RuleConstants.PROD_TRYSTATEMENT_TRY5,
+			RuleConstants.PROD_TRYSTATEMENT_TRY6,
+			RuleConstants.PROD_TRYSTATEMENT_TRY7,
+			// END KGU#953 2021-03-04
+			// START KGU#957 2021-03-05: Bugfix #959
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BINARY_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_HEX_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_UNBINARY_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_UNHEX_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_INT_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BYTE_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_CHAR_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_STR_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_FLOAT_LPAREN_RPAREN,
+			RuleConstants.PROD_PROCESSINGTYPECONVERSION_BOOLEAN_LPAREN_RPAREN,
+			// END KGU#957 2021-03-05
+	};
+	
 	//----------------------------- Preprocessor -----------------------------
 	
 	// START KGU#953 2021-03-04: Bugfix #955 The original approach seemed clever but left an empty string at start
@@ -1995,12 +1998,16 @@ public class JavaParser extends CodeParser
 				// <StatementExpression> ::= <ClassInstanceCreationExpression>
 				StringList exprLines = decomposeExpression(_reduction.get(0), true, false);
 				// Separate all method invocations
-				int i= 0;
+				int i = 0;
 				boolean commentDone = false;
 				Instruction ele = null;
 				while (exprLines.count() > 0 && i < exprLines.count()) {
 					String line = exprLines.get(i);
-					if (Instruction.isFunctionCall(line) || Instruction.isProcedureCall(line)) {
+					// START KGU#959 2021-03-05 Bugfix #961
+					//if (Instruction.isFunctionCall(line) || Instruction.isProcedureCall(line)) {
+					if (Instruction.isFunctionCall(line, true)
+							|| Instruction.isProcedureCall(line, true)) {
+					// END KGU#959 2021-03-05
 						if (i > 0) {
 							// Make an instruction for the preceding lines (if there are any)
 							ele = new Instruction(exprLines.subSequence(0, i));
@@ -2011,18 +2018,24 @@ public class JavaParser extends CodeParser
 						}
 						/* Now care for the method invocation line itself. Also
 						 * check whether it might be some specific action like
-						 * System.exit() or System.out.print[ln]()
+						 * System.exit() or System.out.println()
 						 */
+						// START KGU#959 2021-03-05: Issue #961: give subclasses a chance for own conversions
 						if (line.startsWith("System.exit(")) {
-							ele = new Jump(getKeyword("preExit") + " " + line.substring("System.exit".length()));
+							ele = new Jump(getKeyword("preExit") + " "
+									+ line.substring("System.exit(".length(), line.length()-1));
 						}
 						else if (line.startsWith("System.out.println(")) {
-							ele = new Instruction(getKeyword("output") + " " + line.substring("System.out.println".length()));
+							ele = new Instruction(getKeyword("output") + " "
+									+ line.substring("System.out.println(".length(), line.length()-1));
 						}
 						else if (line.startsWith("System.out.print(")) {
-							ele = new Instruction(getKeyword("output") + " " + line.substring("System.out.print".length()));
+							ele = new Instruction(getKeyword("output") + " "
+									+ line.substring("System.out.print(".length(), line.length()-1));
 						}
-						else {
+						//else {
+						if ((ele = convertInvocation(line)) == null) {
+						// END KGU#959 2021-03-05
 							ele = new Instruction(line);
 						}
 						if (!commentDone) {
@@ -2066,6 +2079,36 @@ public class JavaParser extends CodeParser
 		}
 	}
 
+	// START KGU#959 2021-03-06: Issue #961 extracted from decomposeExpression() for overloading
+	/**
+	 * Checks whether the passed-in instruction line (which must adhere to a
+	 * method invocation with or without assigned result, where the assignment
+	 * symbol if contained is expected to be "<-") represents some built-in
+	 * function or command, e.g. an output instruction, and if so converts it
+	 * accordingly. If it is notzhing specific then just returns {@code null}.
+	 * @param line - an built instruction line with call syntax (qualified names
+	 * possible)
+	 * @return a representing {@link Element} or {@code null}
+	 */
+	protected Instruction convertInvocation(String line)
+	{
+		Instruction ele = null;
+		if (line.startsWith("System.exit(")) {
+			ele = new Jump(getKeyword("preExit") + " "
+					+ line.substring("System.exit(".length(), line.length()-1));
+		}
+		else if (line.startsWith("System.out.println(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("System.out.println(".length(), line.length()-1));
+		}
+		else if (line.startsWith("System.out.print(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("System.out.print(".length(), line.length()-1));
+		}		
+		return ele;
+	}
+	// END KGU#959 2021-03-05
+	
 	/**
 	 * @param classRoot
 	 */
@@ -3497,7 +3540,7 @@ public class JavaParser extends CodeParser
 			tokens.insert(output, ix);
 		}
 		
-		tokens.removeAll(StringList.explodeWithDelimiter("Math.", "."), true);
+		tokens.removeAll(StringList.explode("Math,.", ","), true);
 
 		return _content.trim();
 	}

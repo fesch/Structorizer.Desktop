@@ -624,22 +624,36 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 	}
 	
-	/** @return true iff the given {@code line} has the syntax of a procedure invocation */
-	public static boolean isProcedureCall(String line)
+	/**
+	 * Checks whether the given {@code line} consists of a procedure call (or method
+	 * invocation without result assignment).
+	 * @param withQualifiers - whether a qualified procedure name is also to be accepted.
+	 * @return true iff the given {@code line} has the syntax of a procedure invocation */
+	public static boolean isProcedureCall(String line, boolean withQualifiers)
 	{
-		// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
+		// START KGU#298 2016-11-22: Bugfix #296 - unawareness had led to wrong transmutations
 		//Function fct = new Function(line);
 		//return fct.isFunction();
-		return !isJump(line) && !isOutput(line) && Function.isFunction(line);
+		// START KGU#959 2021-03-05: Bugfix #961 allow method checks
+		//return !isJump(line) && !isOutput(line) && Function.isFunction(line);
+		return !isJump(line) && !isOutput(line) && Function.isFunction(line, withQualifiers);
+		// END KGU#959 2021-03-05
 		// END KGU#298 2016-11-22
 	}
-	/** @return true iff {@code this} has exactly one instruction line and the line complies to {@link #isProcedureCall(String)} */
-	public boolean isProcedureCall()
+	/**
+	 * Checks whether this element logically consists a single procedure call line.
+	 * @param withQualifiers - whether qualified names are also to be accepted.
+	 * @return true iff {@code this} has exactly one instruction line and the line complies
+	 *  to {@link #isProcedureCall(String, boolean)} */
+	public boolean isProcedureCall(boolean withQualifiers)
 	{
 		// START KGU#413 2017-06-09: Enh. #416 cope with user-defined line breaks
 		//return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));
 		StringList lines = this.getUnbrokenText();
-		return lines.count() == 1 && Instruction.isProcedureCall(lines.get(0));
+		// START KGU#959 2021-03-05: Bugfix #961 allow method checks
+		//return lines.count() == 1 && Instruction.isProcedureCall(lines.get(0));
+		return lines.count() == 1 && Instruction.isProcedureCall(lines.get(0), withQualifiers);
+		// END KGU#959 2021-03-05
 		// END KGU#413 2017-06-09
 	}
 
@@ -652,8 +666,14 @@ public class Instruction extends Element {
 	}
 	// END #274 2016-10-16
 	
-	/** @return true iff the given {@code line} is an assignment with a function invocation as expression */
-	public static boolean isFunctionCall(String line)
+	/**
+	 * Checks whether the given {@code line} is an assignment with a function or method
+	 * invocation as expression.
+	 * @param withQualifiers - if {@code true} then qualified function names will also be
+	 * accepted (otherwise not)
+	 * @return {@code true} iff the given {@code line} is an assignment with a function
+	 * invocation as expression */
+	public static boolean isFunctionCall(String line, boolean withQualifiers)
 	{
 		boolean isFunc = false;
 		StringList tokens = Element.splitLexically(line, true);
@@ -661,15 +681,23 @@ public class Instruction extends Element {
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos > 0)
 		{
-			isFunc = Function.isFunction(tokens.concatenate("", asgnPos+1));
+			// START KGU#959 2021-03-05: Bugfix #961 allow method checks
+			//isFunc = Function.isFunction(tokens.concatenate("", asgnPos+1));
+			isFunc = Function.isFunction(tokens.concatenate("", asgnPos+1), withQualifiers);
+			// END KGU#959 2021-03-05
 		}
 		return isFunc;
 	}
-	/** @return true iff {@code this} consists of exactly one instruction line and the line complies to {@link #isFunctionCall(String)} */
-	public boolean isFunctionCall()
+	/**
+	 * Checks whether this element contains exactly one line and that assigns the value
+	 * of a function (or method) call to the target variable.
+	 * @param withQualifiers - whether qualified names are also to be accepted.
+	 * @return true iff {@code this} consists of exactly one instruction line and this
+	 * line complies to {@link #isFunctionCall(String, boolean)} */
+	public boolean isFunctionCall(boolean withQualifiers)
 	{
 		StringList lines = this.getUnbrokenText();
-		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0));
+		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0), false);
 	}
 	// END KGU#199 2016-07-06
 	
@@ -1026,8 +1054,8 @@ public class Instruction extends Element {
 	 * routine if the text complies to the call syntax described in the user guide,
 	 * or {@code null} otherwise.
 	 * @return Function object or {@code null}.
-	 * @see #isFunctionCall()
-	 * @see #isProcedureCall()
+	 * @see #isFunctionCall(boolean)
+	 * @see #isProcedureCall(boolean)
 	 */
 	public Function getCalledRoutine() {
 		if (this.getUnbrokenText().count() == 1) {
@@ -1071,8 +1099,8 @@ public class Instruction extends Element {
 	 * @param _signatures - a {@link StringList} of symbolic subroutine signatures {@code "<name>#<argcount>"}
 	 * @return true if this contains a call matching one of the signatures given.
 	 * @see #getCalledRoutine()
-	 * @see #isFunctionCall()
-	 * @see #isProcedureCall()
+	 * @see #isFunctionCall(boolean)
+	 * @see #isProcedureCall(boolean)
 	 */
 	public boolean isCallOfOneOf(StringList _signatures)
 	{

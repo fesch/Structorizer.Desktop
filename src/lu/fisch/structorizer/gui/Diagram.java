@@ -3670,8 +3670,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
-						|| instr.isFunctionCall()
-						|| instr.isProcedureCall();
+						|| instr.isFunctionCall(false)
+						|| instr.isProcedureCall(false);
 			}
 			else if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 1)
 			{
@@ -4988,7 +4988,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU#744 2019-10-05
 				String result = "";
-				if (((Call)selected).isFunctionCall()) {
+				if (((Call)selected).isFunctionCall(false)) {
 					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
 					lineTokens.removeAll(" ");
 					String var = Call.getAssignedVarname(lineTokens, true);
@@ -5316,7 +5316,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			elem = new Instruction(instr);
 		}
-		else if (instr.isProcedureCall() || instr.isFunctionCall())
+		else if (instr.isProcedureCall(false) || instr.isFunctionCall(false))
 		{
 			elem = new Call(instr);
 		}

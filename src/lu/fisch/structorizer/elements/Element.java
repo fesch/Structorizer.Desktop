@@ -3591,7 +3591,7 @@ public abstract class Element {
 			// END KGU#388 2017-07-12
 		}
 		// Otherwise check if it's a built-in function with unambiguous type
-		else if (Function.isFunction(expr)) {
+		else if (Function.isFunction(expr, false)) {
 			typeSpec = (new Function(expr).getResultType(""));
 		}
 		// START KGU#782 2019-12-02 For certain purposes, e.g. export of FOR-IN loops char detection may be essential
