@@ -55,6 +55,8 @@ package lu.fisch.structorizer.parsers;
  *                                      don't decompose expressions if optionTranslate is off
  *      Kay Gürtzig     2021-03-05      Bugfix #959: Grammar tweaked to let Processing converters pass;
  *                                      bugfix #961: The conversion of output instructions had not worked
+ *      Kay Gürtzig     2021-03-06      Bugfix #962: Constructor bodies had not been imported,
+ *                                      KGU#961: Array initialiser conversion in declarations improved
  *
  ******************************************************************************************************
  *
@@ -1423,6 +1425,7 @@ public class JavaParser extends CodeParser
 				// <ConstructorDeclaration> ::= <Annotations> <ConstructorDeclarator> <ConstructorBody>
 				// Ignore the annotations (or add them as comment?)
 				int ixHeader = 1;
+				int ixBody = 2;
 				Root subRoot = new Root();
 				this.equipWithSourceComment(subRoot, _reduction);
 				String qualifier = includables.peek().getQualifiedName();
@@ -1459,7 +1462,17 @@ public class JavaParser extends CodeParser
 				subRoot.addToIncludeList(includables.peek());
 				addRoot(subRoot);
 				// Now build the method body
-				this.buildNSD_R(_reduction.get(2).asReduction(), subRoot.children);
+				// START KGU#960 2021-03-06: Bugfix #962 The boy of constructors wasn't always imported
+				//this.buildNSD_R(_reduction.get(2).asReduction(), subRoot.children);
+				switch (ruleId) {
+				case RuleConstants.PROD_CONSTRUCTORDECLARATION:
+					ixBody++;	// No break here!
+				case RuleConstants.PROD_CONSTRUCTORDECLARATION2:
+				case RuleConstants.PROD_CONSTRUCTORDECLARATION3:
+					ixBody++;
+				}
+				this.buildNSD_R(_reduction.get(ixBody).asReduction(), subRoot.children);
+				// END KGU#960 2021-03-06
 			}
 			break;
 			
@@ -3570,6 +3583,16 @@ public class JavaParser extends CodeParser
 		// START KGU#537 2018-07-01: Enh. #553
 		checkCancelled();
 		// END KGU#537 2018-07-01
+		// START KGU#961 2021-03-06: Specific handling for array initialisations
+		int ruleId = _reduction.getParent().getTableIndex();
+		if (optionTranslate && (ruleId == RuleConstants.PROD_ARRAYCREATIONEXPRESSION_NEW5
+				|| ruleId == RuleConstants.PROD_ARRAYCREATIONEXPRESSION_NEW6)) {
+			// <ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
+			// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>
+			// Skip the formal creation prefix and concentrate on the actual initialiser
+			_reduction = _reduction.get(3).asReduction();
+		}
+		// END KGU#961 2021-03-06
 		for (int i = 0; i < _reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);

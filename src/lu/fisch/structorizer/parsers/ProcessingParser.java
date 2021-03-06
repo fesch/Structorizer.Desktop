@@ -36,7 +36,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-03-04      Issue #957 file preparation now cares for import declarations
  *      Kay Gürtzig     2021-03-05      Bugfix #959: Support for Processing conversion functions,
  *                                      Issue #960: Processing system variables automatically initialised,
- *                                      way more standard constants defined (see comment)
+ *                                      way more standard constants defined (see comment);
+ *                                      bugfix #961: The conversion of output instructions had not worked
  *
  ******************************************************************************************************
  *
