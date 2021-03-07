@@ -38,6 +38,8 @@ package lu.fisch.structorizer.parsers;
  *                                      Issue #960: Processing system variables automatically initialised,
  *                                      way more standard constants defined (see comment);
  *                                      bugfix #961: The conversion of output instructions had not worked
+ *      Kay Gürtzig     2021-03-08      Issue #964 The central draw() loop shall not be inserted if draw() was
+ *                                      not defined.
  *
  ******************************************************************************************************
  *
@@ -181,6 +183,18 @@ public class ProcessingParser extends JavaParser {
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
+	
+	// START KGU#962 2021-03-08: Issue #964 Detect the definition of the central draw() method
+	private boolean hasDrawMethod = false;
+	
+	protected void addRoot(Root newRoot)
+	{
+		if (newRoot.isSubroutine() && newRoot.getQualifiedName().equals("draw")) {
+			hasDrawMethod = true;
+		}
+		super.addRoot(newRoot);
+	}
+	// END KGU#962 2021-03-08
 
 	@Override
 	protected boolean qualifyTopLevelMethods()
@@ -198,9 +212,11 @@ public class ProcessingParser extends JavaParser {
 		Root mainRoot = new Root();
 		mainRoot.setText(progName);
 		mainRoot.children.addElement(new Call("setup()"));
-		Forever mainLoop = new Forever();
-		mainLoop.getBody().addElement(new Call("draw()"));
-		mainRoot.children.addElement(mainLoop);
+		// START KGU#962 2021-03-08: Issue #964 Now done afterwards when we know that a draw method exists
+		//Forever mainLoop = new Forever();
+		//mainLoop.getBody().addElement(new Call("draw()"));
+		//mainRoot.children.addElement(mainLoop);
+		// END KGU#962 2021-03-08
 		mainRoot.addToIncludeList(progName + "Processing");
 		addRoot(mainRoot);
 	}
@@ -439,6 +455,13 @@ public class ProcessingParser extends JavaParser {
 			// This must not be in invoked here because setup() includes diagram (#947)
 			//root.children.addElement(new Call("setup()"));
 		}
+		// START KGU#962 2021-03-08: Issue #964 Add draw loop if a draw method exists
+		else if (root.isProgram() && root.getMethodName().equals(progName) && this.hasDrawMethod) {
+			Forever mainLoop = new Forever();
+			mainLoop.getBody().addElement(new Call("draw()"));
+			root.children.addElement(mainLoop);
+		}
+		// END KGU#962 2021-03-08
 		return false;
 	}
 
