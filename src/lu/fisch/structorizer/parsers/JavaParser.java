@@ -1159,7 +1159,7 @@ public class JavaParser extends CodeParser
 	/** Represents the class definitions in the hierarchical class context */
 	private Stack<Root> includables = null;
 	
-	private boolean optionTranslate = false;
+	private boolean optionConvertSyntax = false;
 	
 	/** Maps the labels of labelled statements to the respective first element of the statement */
 	private HashMap<String, Element> labels = new HashMap<String, Element>();
@@ -1204,7 +1204,7 @@ public class JavaParser extends CodeParser
 		root.children.addElement(new Forever());
 		root.children.addElement(new Forever());
 		
-		optionTranslate = (Boolean)this.getPluginOption("convert_syntax", false);
+		optionConvertSyntax = (Boolean)this.getPluginOption("convert_syntax", false);
 		
 		// START KGU#407 2018-03-26: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
@@ -2353,7 +2353,7 @@ public class JavaParser extends CodeParser
 					exprs.add(target + " <- " + value);
 				}
 				// START KGU#955 2021-03-04: Issue #956 The decomposition should only be done if optionTranslate is false
-				else if (!optionTranslate) {
+				else if (!optionConvertSyntax) {
 					// Leave the expression as is
 					exprs.add(target + getContent_R(exprRed.get(1)) + value);
 				}
@@ -2381,7 +2381,7 @@ public class JavaParser extends CodeParser
 				exprs.add(lhs.subSequence(0, lhs.count()-1));
 				// START KGU#955 2021-03-04: Issue #956 Decompose only if optionTranslate is false
 				//exprs.add(target + " <- " + target + " " + opr + " 1");
-				if (optionTranslate) {
+				if (optionConvertSyntax) {
 					exprs.add(target + " <- " + target + " " + opr + " 1");
 				}
 				else {
@@ -2410,7 +2410,7 @@ public class JavaParser extends CodeParser
 				//if (!isStatement) {
 				//	exprs.add(tempName);
 				//}
-				if (optionTranslate) {
+				if (optionConvertSyntax) {
 					String tempName = "temp" + Integer.toHexString(exprRed.hashCode());
 					if (!isStatement) {
 						exprs.add(tempName + " <- " + target);
@@ -2652,6 +2652,10 @@ public class JavaParser extends CodeParser
 				// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>
 				
 				// For Structorizer, we just concentrate on the <ArrayInitializer>
+				String prefix = "";
+				if (!optionConvertSyntax) {
+					prefix = "new " + translateType(exprRed.get(1)) + this.getContent_R(exprRed.get(2));
+				}
 				Reduction redInit = exprRed.get(exprRed.size()-1).asReduction();
 				// PROD_ARRAYINITIALIZER_LBRACE_COMMA_RBRACE:
 				//                     <ArrayInitializer> ::= '{' <VariableInitializers> ',' '}'
@@ -2679,7 +2683,7 @@ public class JavaParser extends CodeParser
 						initExprs.push(this.decomposeExpression(tokenVal, false, false));
 					} while (tokenVals != null);
 				}
-				StringList result = StringList.getNew("{");
+				StringList result = StringList.getNew(prefix + "{");
 				while (!initExprs.isEmpty()) {
 					StringList valExprs = initExprs.pop();
 					int ixLast = valExprs.count()-1;
@@ -2713,7 +2717,7 @@ public class JavaParser extends CodeParser
 				String cast = "(" + this.translateType(exprRed.get(1));
 				if (exprRed.size() > 4) {
 					String dims = this.getContent_R(exprRed.get(2));
-					if (this.optionTranslate) {
+					if (this.optionConvertSyntax) {
 						for (int i = 0; i < dims.length()/2; i++) {
 							cast = "array of " + cast;
 						}
@@ -3031,12 +3035,13 @@ public class JavaParser extends CodeParser
 			if (declToken.asReduction() != null
 					&& declToken.asReduction().getParent().getTableIndex() == RuleConstants.PROD_VARIABLEDECLARATOR_EQ) {
 				declToken0 = declToken.asReduction().get(0);
+				// In a declaration context we can hardly decompose the expression into several lines
 				valStr = this.translateContent(this.getContent_R(declToken.asReduction().get(2)));
 			}
 			String var = this.getContent_R(declToken0);
 			// FIXME: Consider desired syntax
 			if (typeDescr != null) {
-				if (optionTranslate) {
+				if (optionConvertSyntax) {
 					var += ": " + typeDescr;
 				}
 				else {
@@ -3046,7 +3051,7 @@ public class JavaParser extends CodeParser
 			if (asConst) {
 				var = "const " + var;
 			}
-			else if (optionTranslate) {
+			else if (optionConvertSyntax) {
 				var = "var " + var;
 			}
 			if (valStr != null) {
@@ -3098,8 +3103,8 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
-	 * Checks the increment zone of a Java {@code for} loop given by {@link #Token} {@code incrToken}
-	 * whether the instruction is suited for a Structorizer FOR loop.<br/>
+	 * Checks whether the increment zone of a Java {@code for} loop given by {@link #Token}
+	 * {@code incrToken} is suited for a Structorizer FOR loop.<br/>
 	 * This is assumed in exactly the following cases:
 	 * <ol>
 	 * <li>{@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}</li>  
@@ -3469,7 +3474,7 @@ public class JavaParser extends CodeParser
 
 	/**
 	 * Tries to translate the Java type represented by {@code token} according
-	 * to the syntactic preferences held in {@link #optionTranslate}, i.e. either
+	 * to the syntactic preferences held in {@link #optionConvertSyntax}, i.e. either
 	 * to a documented Structorizer type description syntax (rather Pascal-like)
 	 * or not at all.
 	 * @param token - the {@link Token} representing a {@code <Type>} rule or symbol
@@ -3477,7 +3482,7 @@ public class JavaParser extends CodeParser
 	 * @throws ParserCancelled 
 	 */
 	private String translateType(Token token) throws ParserCancelled {
-		if (optionTranslate) {
+		if (optionConvertSyntax) {
 			Reduction red = token.asReduction();
 			if (red != null) {
 				int ruleId = red.getParent().getTableIndex();
@@ -3512,7 +3517,7 @@ public class JavaParser extends CodeParser
 	
 	/**
 	 * Given the Java operator symbol {@code opr}, either lets it pass as is (if
-	 * {@link #optionTranslate} is {@code false}) or returns a Structorizer-
+	 * {@link #optionConvertSyntax} is {@code false}) or returns a Structorizer-
 	 * preferred, more verbose (or, say Pascal-like) operator symbol.<br/>
 	 * Just applies {@link #operatorMap}, actually.<br/>
 	 * <b>WARNING:</b> Avoid to apply this method twice to the same operator!<br/>
@@ -3585,7 +3590,7 @@ public class JavaParser extends CodeParser
 		// END KGU#537 2018-07-01
 		// START KGU#961 2021-03-06: Specific handling for array initialisations
 		int ruleId = _reduction.getParent().getTableIndex();
-		if (optionTranslate && (ruleId == RuleConstants.PROD_ARRAYCREATIONEXPRESSION_NEW5
+		if (optionConvertSyntax && (ruleId == RuleConstants.PROD_ARRAYCREATIONEXPRESSION_NEW5
 				|| ruleId == RuleConstants.PROD_ARRAYCREATIONEXPRESSION_NEW6)) {
 			// <ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
 			// <ArrayCreationExpression> ::= new <ClassOrInterfaceType> <Dims> <ArrayInitializer>

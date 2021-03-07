@@ -4924,13 +4924,13 @@ public class COBOLParser extends CodeParser
 					strLine = "*>" + srcLineCode;
 				}
 			} else if (srcLineIndicator == '/') {
-				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+				if (srcLineCode.trim().isEmpty()) {
 					strLine = "*> page eject requested" + "\n" + "*>";
 				} else {
 					strLine = "*> page eject requested" + "\n" + "*>" + srcLineCode;
 				}
 			} else if (srcLineIndicator == 'D' && !srcCodeDebugLines) {
-				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+				if (srcLineCode.trim().isEmpty()) {
 					strLine = "*> DEBUG: ";
 				} else {
 					strLine = "*> DEBUG: " + srcLineCode;
@@ -5056,7 +5056,7 @@ public class COBOLParser extends CodeParser
 		if (firstToken.startsWith(">>D")) {
 			if (!srcCodeDebugLines) {
 				if (codeLine.trim().length() == 0) {
-					resultLine  = "*> DEBUG: ";
+					resultLine = "*> DEBUG: ";
 				} else {
 					resultLine = "*> DEBUG: " + codeLine;
 				}

@@ -34,6 +34,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-06-20      First Issue
  *      Kay Gürtzig     2018-01-22      Issue #484: Layout modified such that text fields will get all remaining width
  *                                      Moreover, bug in item list processing fixed.
+ *      Kay Gürtzig     2021-03-07      KGU#961: Preparations for option localisation, combined with
+ *                                      subtle layout improvements
  *
  ******************************************************************************************************
  *
@@ -47,7 +49,7 @@ import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -90,6 +92,9 @@ public class PluginOptionDialog extends LangDialog {
 	protected JLabel[] comboLabels = null;
 	protected JComboBox<String>[] comboBoxes = null;
 	protected HashMap<String, JComponent> optionComponents = new HashMap<String, JComponent>();
+	// START KGU#961 2021-03-07: Complementary approach to allow option translations
+	protected HashMap<String, JComponent> optionLabels = new HashMap<String, JComponent>();
+	// END KGU#961 2021-03-07
 	protected final LangTextHolder msgNoValidInteger = new LangTextHolder("Value for '%' must be an integral number!");
 	protected final LangTextHolder msgNoValidUnsigned = new LangTextHolder("Value for '%' must be a cardinal number (unsigned integer)!");
 	protected final LangTextHolder msgNoValidCharacter = new LangTextHolder("Value for '%' must be a single character!");
@@ -273,13 +278,16 @@ public class PluginOptionDialog extends LangDialog {
 					comp.setSelectedItem(value);
 				}
 				comp.addKeyListener(keyListener);
-				JLabel lbl = new JLabel(caption + "  ");
+				JLabel lbl = new JLabel(caption);
 				JPanel pnl = new JPanel();
-				pnl.setLayout(new GridLayout(1, 0));
-				pnl.setBorder(new EmptyBorder(0, 2, 0,2));
+				pnl.setLayout(new GridLayout(1, 0, 5, 0));
+				pnl.setBorder(new EmptyBorder(0, 2, 0, 2));
 				pnl.add(lbl);
 				pnl.add(comp);
 				optionComponents.put(key, comp);
+				// START KGU#961 2021-03-07: New approach for plugin-specific translations
+				optionLabels.put(key, lbl);
+				// END KGU#961 2021-03-07
 				// START KGU#472 2018-01-22: Issue #484
 				//pnlOptions.add(pnl);
 				gbc.gridy++;
@@ -319,7 +327,7 @@ public class PluginOptionDialog extends LangDialog {
 					comp.setToolTipText(tooltip);
 				}
 				comp.addKeyListener(keyListener);
-				JLabel lbl = new JLabel(caption + "  ");
+				JLabel lbl = new JLabel(caption);
 				// START KGU#472 2018-01-22: Issue #484 
 //				JPanel pnl = new JPanel();
 //				pnl.setLayout(new GridLayout(1, 0));
@@ -327,16 +335,22 @@ public class PluginOptionDialog extends LangDialog {
 //				pnl.add(lbl);
 //				pnl.add(comp);
 				optionComponents.put(key, comp);
+				// START KGU#961 2021-03-07: New approach for plugin-specific translations
+				optionLabels.put(key, lbl);
+				// END KGU#961 2021-03-07
 //				pnlOptions.add(pnl);
 				gbc.gridy++;
 				gbc.gridwidth = 1;
 				gbc.weightx = 0.0;
 				gbc.fill = GridBagConstraints.NONE;
+				gbc.insets = new Insets(0, 0, 0, 5);
 				pnlOptions.add(lbl, gbc);
+				
 				gbc.fill = GridBagConstraints.HORIZONTAL;
 				gbc.gridwidth = GridBagConstraints.REMAINDER;
 				gbc.gridx++;
 				gbc.weightx = 1.0;
+				gbc.insets.right = 0;
 				pnlOptions.add(comp, gbc);
 				gbc.gridx = 1;
 				// END KGU#472 2018-01-22
@@ -417,5 +431,16 @@ public class PluginOptionDialog extends LangDialog {
 			this.optionVals.put(entry.getKey(), value);
 		}
 	}
+	
+	// START KGU#961 2021-03-07: Hook for a condition in the locale file
+	/**
+	 * @return the simplified class name for the plugin-associated Java class, e.g.
+	 * "CGenerator" or "JavaParser".
+	 */
+	public String getPluginKey()
+	{
+		return plugin.getKey();
+	}
+	// END KGU#961 2021-03-07
 
 }

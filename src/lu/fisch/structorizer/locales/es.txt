@@ -133,6 +133,7 @@
  *      Kay Gürtzig     2020-12-14  Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25  Enh. #915: Messages for new class InputBoxCase added
+ *      Kay Gürtzig     2021-03-07  KGU#961: Translations for known plugin options added.
  *
  ******************************************************************************************************
  *
@@ -1175,10 +1176,30 @@ SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
 PluginOptionDialog.msgNoValidInteger.text=¡El valor para '%' tiene que ser un número entero!
 PluginOptionDialog.msgNoValidUnsigned.text=¡El valor para '%' tiene que ser un número entero positivo!
 PluginOptionDialog.msgNoValidCharacter.text=¡El valor para '%' tiene que ser un solo carácter!
-PluginOptionDialog.msgNoValidDouble.text=¡El valor para '%' tiene que ser un númbero (con punto decimal)!
+PluginOptionDialog.msgNoValidDouble.text=¡El valor para '%' tiene que ser un número (con punto decimal)!
 PluginOptionDialog.msgVerificationError.text=Error de verificación
 PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
+PluginOptionDialog.optionComponents.convert_syntax.text=Convertir declaraciones/expresiones a un estilo como Pascal
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opción aumenta la probabilidad de poder ejecutar o re-exportar el resultado en Structorizer
+PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=Importar líneas debug
+PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=Si es activada, líneas debug serán importadas como código válido, de otro modo serían convertidas en comentarios "DEBUG ...".
+PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=Coma decimal (en lugar de punto decimal) en el código
+PluginOptionDialog.optionComponents.decimalComma.tooltip[getPluginKey():COBOLParser]=Activa la opción si literales decimales o float están escritos con coma en lugar de punto decimal.
+PluginOptionDialog.optionComponents.fixedForm.text[getPluginKey():COBOLParser]=Formato fijo
+PluginOptionDialog.optionComponents.fixedForm.tooltip[getPluginKey():COBOLParser]=Activa la opción si el código tiene formato fijo (columnas fijas), de otra manera formato variable (libre) de lineas será supuesto.
+PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLParser]=Columna indicadora (con formato fijo)
+PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=Número de la columna, en la cual se encuentran los indicadores en el formato fijo (estándar: 7).
+PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=Columna del texto ignorable (con formato fijo)
+PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=Número des la columna, a partir de la cual comienza la llamada zona de nombe de programa en las líneas (estándar: 73).
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Nombres de tipos externos
+PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=Lista de nombres de tipos typedef (separados con coma), que serán referenciados en el código sin que sus definiciones ocurran en el archivo (para hacer el análisis de sintaxis pasar).
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Nombres y macros redundantes del preprocesor
+PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=Liste separada con comas de nombres o macros (co paréntesis vacía), que hay que ignarar al importar (por ej. puras decoraciones como "INOUT").
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=Usar nombres y tipos del WINAPI
+PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde el WINAPI (por ejemplo "WINAPI").
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Usar nombres y tipos de MinGw
+PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde MinGw.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferidos nombres de elementos

@@ -132,6 +132,7 @@
  *      Kay Gürtzig         2021-01-23  Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig         2021-02-07  Enh. #915: New messages and tooltips for InputBoxCase
+ *      Kay Gürtzig         2021-03-07  KGU#961: Translations for known plugin options added.
  *
  ******************************************************************************************************
  *
@@ -1124,8 +1125,8 @@ ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Schlüsselwörter anpassen zu lassen.
-ImportOptionDialog.chkVarDeclarations.text=Variablendeklarationen mit importieren
-ImportOptionDialog.chkVarDeclarations.tooltip=Ist diese Option gewählt, können Parser gefundene Variablendeklarationen in @{Instruction}selemente legen.
+ImportOptionDialog.chkVarDeclarations.text=Deklarationen für Variable (und ggf. Methoden) mit importieren
+ImportOptionDialog.chkVarDeclarations.tooltip=Ist diese Option gewählt, können Parser gefundene Variablendeklarationen in @{Instruction}selemente legen (und Methodenverweise im Fall einer Klasse erzeugen).
 ImportOptionDialog.chkCommentImport.text=Quellcode-Kommentare mit importieren
 ImportOptionDialog.chkCommentImport.tooltip=Diese Option erlaubt dem Parser, die Elemente der generierten Diagramme mit den am nächsten im Quellcode gefundenen Kommentaren auszustatten.
 ImportOptionDialog.chkInsertOptKeywords.text=Optionale Schlüsselwörter um Bedingungen herum setzen
@@ -1178,6 +1179,26 @@ PluginOptionDialog.msgNoValidDouble.text=Der Wert für '%' muss eine Zahl sein (
 PluginOptionDialog.msgVerificationError.text=Fehler bei Eingabeprüfung
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Abbrechen
+PluginOptionDialog.optionComponents.convert_syntax.text=Deklarationen/Ausdrücke usw. in Pascal-ähnlichen Stil wandeln
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=Diese Einstellung vergrößert die Chancen der Ausführbarkeit oder des Re-Exports in Structorizer
+PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=Debug-Zeilen importieren
+PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=Falls aktiviert, werden Debug-Zeilen ggf. als gültiger Code importiert, anderenfalls in Kommentarzeilen "DEBUG ..." umgewandelt.
+PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=Dezimalkomma (statt Dezimalpunkt) im Quelltext
+PluginOptionDialog.optionComponents.decimalComma.tooltip[getPluginKey():COBOLParser]=Aktivieren, falls Dezimal- und Float-Literale im Quelltext mit Dezimalkomma statt Dezimalpunkt geschrieben sind
+PluginOptionDialog.optionComponents.fixedForm.text[getPluginKey():COBOLParser]=Festes Zeilenformat
+PluginOptionDialog.optionComponents.fixedForm.tooltip[getPluginKey():COBOLParser]=Aktivieren, falls der Quellcode in festem Zeilenformat (feste Spalten) vorliegt, anderenfalls wird variables (freies) Format angenommen.
+PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLParser]=Indikatorspalte bei festem Format
+PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=Nummer der Spalte, in der bei festem Format die Indikatorzeichen stehen (Standard: 7).
+PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=Spalte des zu ignorierenden Texts bei festem Format
+PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=Nummer der Spalte, in der der sogenannte Programmnamenbereich der Zeilen beginnt (Standard: 73).
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Extern definierte Typenamen
+PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=Kommagetrennte Liste von typedef-Namen, die nicht in der Quelldatei definiert, aber benutzt werden (damit die Syntaxprüfung nicht fehlschlägt).
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Redundante Präprozessornamen oder Makros
+PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=Kommagetrennte Liste von Namen oder Makros (mit leerer Klammer), die beim Parsen zu ignorieren sind (z.B. bloße Kennzeichnungen wie "INOUT").
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=Namen und Typen der WINAPI benutzt
+PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen der WINAPI enthält (wie z.B. "WINAPI").
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Namen und Typen von MinGw benutzt
+PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen von MinGw enthält.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen
