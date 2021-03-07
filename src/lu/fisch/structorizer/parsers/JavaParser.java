@@ -1502,6 +1502,9 @@ public class JavaParser extends CodeParser
 				if (isConst) {
 					ele.setColor(colorConst);
 				}
+				else {
+					ele.setColor(colorDecl);
+				}
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 			}
 			break;
