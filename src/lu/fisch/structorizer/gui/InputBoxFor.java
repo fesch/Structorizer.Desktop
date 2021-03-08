@@ -710,7 +710,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 			txtParserInfo.setText(msgMissingBrace1.getText());
 			// END KGU#247 2016-09-23
 		}
-		else if (Function.isFunction(forInValueList))
+		else if (Function.isFunction(forInValueList, false))
 		{
 			// START KGU#410 2017-07-01: Enh. #413 - for the split function we know that it returns an array
 			Function fct = new Function(forInValueList);

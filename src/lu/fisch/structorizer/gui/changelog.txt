@@ -10,8 +10,7 @@ Known issues:
   on Windows the image format may be JPG instead of PNG.
 - Pascal import does not cope with unit name aliases.
 - COBOL import may fail if certain single-letter identifiers are used (rename them!),
-  also if the code contains a SPECIAL-NAMES clause or float literals.
-- COBOL import does not cope with some statement variants and variable redefinitions.
+  it does not cope with some statement variants and variable redefinitions, either.
 - Java import does not cope with type arguments in casting prefixes or array element
   types and fails if two or more closing angular brackets (in case of nested type
   arguments) meet without separating blank. It does not cope with lambda expressions,
@@ -20,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.31-01 (2021-03-02)
+Current development version 3.31-02 (2021-03-08)
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,
@@ -28,6 +27,19 @@ Current development version 3.31-01 (2021-03-02)
       - possible index range error during file preparation with fix file format.
 - 01: Bugfix #950: Synchronisation Arranger -> Arranger index could get shut off <2>
 - 01: Bugfix #951: On source files dropping, the import options were ignored <2>
+- 02: Issue #954: Breakpoints may now generally be disabled rather than removed <2>
+- 02: Bugfix #955: Several flaws on Java import with "class" literals, multi-catch
+      clauses and try statements with several single- or multi-catch clauses. <2>
+- 02: Issue #956: No impact of option "Import var declarations" on Java parser <2>
+- 02: Issue #957: "Processing" import now copes with import declarations <2>
+- 02: Issue #958: Relative positioning of specific import/export option dialog <2>
+- 02: Bugfix #959: Processing import: conversion functions and web color literals <2>
+- 02: Issue #960: Processing import now automatically declares system variables <2>
+- 02: Bugfix #961: Java import did not detect and convert output instructions <2>
+- 02: Bugfix #962: Constructor bodies weren't always imported from Java code <2>
+- 02: Substantial progress in the Italian localisation <Alessandro Simonetta et al.>
+- 02: Localisations for plugin-specific import options added (DE, ES) <2>
+- 02: Issue #964: Processing import shall not place a draw() loop without draw() <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>

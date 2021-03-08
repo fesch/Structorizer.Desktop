@@ -227,6 +227,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-28      Issue #905: Faulty redrawing policy after AnalyserPreference changes fixed
  *      Kay Gürtzig     2021-03-01      Bugfix #950: Arranger notifications were accidently switched off on code import
  *      Kay Gürtzig     2021-03-02      Bugfix #951: On FilesDrop for source files the language-specific options weren't used
+ *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *
  ******************************************************************************************************
  *
@@ -253,6 +254,7 @@ import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop
 
 import java.io.*;
 import java.lang.reflect.Method;
+//import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -578,7 +580,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/** Additional {@link Mainform} for editing of subroutines */
 	private Mainform subForm = null;
 	// END KGU#667 2019-02-26
-
 
     /*========================================
      * CONSTRUCTOR
@@ -3669,8 +3670,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
-						|| instr.isFunctionCall()
-						|| instr.isProcedureCall();
+						|| instr.isFunctionCall(false)
+						|| instr.isProcedureCall(false);
 			}
 			else if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 1)
 			{
@@ -4987,7 +4988,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU#744 2019-10-05
 				String result = "";
-				if (((Call)selected).isFunctionCall()) {
+				if (((Call)selected).isFunctionCall(false)) {
 					StringList lineTokens = Element.splitLexically(call.getUnbrokenText().get(0), true);
 					lineTokens.removeAll(" ");
 					String var = Call.getAssignedVarname(lineTokens, true);
@@ -5315,7 +5316,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			elem = new Instruction(instr);
 		}
-		else if (instr.isProcedureCall() || instr.isFunctionCall())
+		else if (instr.isProcedureCall(false) || instr.isFunctionCall(false))
 		{
 			elem = new Call(instr);
 		}
@@ -5907,10 +5908,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void clearBreakpoints()
 	{
+		// FIXME (Issue #954): All clones in the Executor call stack must also be cleared!
 		root.clearBreakpoints();
 		redraw();
 	}
 
+	// START KGU#952 2021-03-03: Issue #954
+	/**
+	 * Disables (or enables) the supervision of Breakpoints by {@link Executor}
+	 * @param disable - if {@code true} then all breakpoints in all diagrams will
+	 * be disabled, otherwise they will be activated again.
+	 */
+	public void disableBreakpoints(boolean disable)
+	{
+		Element.E_BREAKPOINTS_ENABLED = !disable;
+		if (disable) {
+			Element.E_BREAKPOINTCOLOR = Element.E_COMMENTCOLOR;
+		}
+		else {
+			Element.E_BREAKPOINTCOLOR = Color.RED;
+		}
+		redraw();
+		doButtons();
+	}
+	
 	/**
 	 * Clears all execution flags and counts throughout the entire diagram held as
 	 * {@link #root}.

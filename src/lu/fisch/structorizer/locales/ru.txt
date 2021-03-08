@@ -280,7 +280,7 @@ Menu.menuDebug.mnemonic=в
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Открыть Turtleizer ...
 Menu.menuDebugExecute.text=Выполнить ...
-Menu.menuDebugDropBrkpts.text=Удалить все точки останова
+Menu.menuDebugDropBrkpts.text=Игнорировать все точки останова
 Menu.menuDebugBreakpoint.text=Сменить точку останова
 Menu.menuDebugBreakTrigger.text=Счетчик точки останова
 Menu.menuDebugDisable.text=Подавить
@@ -590,8 +590,8 @@ Editor.btnExpand.tooltip=Увеличить выбранный элемент .
 // debug
 Editor.btnTurtle.tooltip=Открыть Turtleizer ...
 Editor.btnMake.tooltip=Выполнить ...
-Editor.btnDropBrk.tooltip=Удалить все остановочные точки
-Editor.btnDisable.tooltip=
+Editor.btnDropBrk.tooltip=Игнорировать все точки останова
+Editor.btnDisable.tooltip=Подавить элемент
 // display mode
 Editor.ttSwitchComments.text=Тексты обменены с комментариями!
 Editor.ttOperatorsC.text=Операторы изображаемые как в языке C!

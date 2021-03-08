@@ -1017,7 +1017,7 @@ public class PythonGenerator extends Generator
 			}
 			if (sq.getSize() == 1) {
 				Element el = sq.getElement(0);
-				if (el instanceof Call && ((Call)el).isProcedureCall()) {
+				if (el instanceof Call && ((Call)el).isProcedureCall(false)) {
 					threadFunc = ((Call)el).getCalledRoutine().getName();
 					// START KGU#819 2020-03-08: Bugfix #831 - In case of a call we can (and must) simply copy the arg list.
 					String line = ((Call)el).getUnbrokenText().get(0);
@@ -1078,7 +1078,7 @@ public class PythonGenerator extends Generator
 			// We still don't care for synchronisation, mutual exclusion etc.
 			for (Subqueue sq: par.qs) {
 				Element el = null;
-				if (sq.getSize() == 1 && (el = sq.getElement(0)) instanceof Call && ((Call)el).isProcedureCall()) {
+				if (sq.getSize() == 1 && (el = sq.getElement(0)) instanceof Call && ((Call)el).isProcedureCall(false)) {
 					// Don't generate a thread function for single procedure calls
 					continue;
 				}

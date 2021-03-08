@@ -895,7 +895,7 @@ public class BASHGenerator extends Generator {
 	}
 	protected String transformExpression(String expr, boolean isAssigned, boolean asArgument)
 	{
-		if (Function.isFunction(expr)) {
+		if (Function.isFunction(expr, false)) {
 			// It cannot be a diagram call here, so it must be some built-in function
 			expr = this.transformExpression(new Function(expr));
 			if (isAssigned || asArgument) {

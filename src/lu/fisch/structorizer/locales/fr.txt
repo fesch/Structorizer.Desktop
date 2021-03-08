@@ -251,7 +251,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtelizer ...
 Menu.menuDebugExecute.text=Exécuteur ...
-Menu.menuDebugDropBrkpts.text=Suprimer les points d'arrêt
+Menu.menuDebugDropBrkpts.text=Ignorer les points d'arrêt
 Menu.menuDebugBreakpoint.text=Basculer le point d'arrêt
 Menu.menuDebugBreakTrigger.text=Condition d'arrêt ...
 Menu.menuDebugDisable.text=Inactiver
@@ -399,7 +399,7 @@ Editor.btnExpand.tooltip=Exploser l'élément sélectionné.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Ouvrir Turtelizer ...
 Editor.btnMake.tooltip=Ouvrir l'exécuteur ...
-Editor.btnDropBrk.tooltip=Supprimer les points d'arrêt.
+Editor.btnDropBrk.tooltip=Ignorer les points d'arrêt.
 // Popup menu
 Editor.popupCut.text=Couper
 Editor.popupCopy.text=Copier

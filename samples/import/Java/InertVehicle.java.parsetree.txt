@@ -1,0 +1,556 @@
++-<CompilationUnit> ::= <PackageDeclaration> <TypeDeclarations>
+| +-<PackageDeclaration> ::= package <Name> ';'
+| | +-package
+| | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | +-<SimpleName> ::= Identifier
+| | | | | +-de
+| | | | +-.
+| | | | +-fhe
+| | | +-.
+| | | +-traffic
+| | +-;
+| +-<ClassDeclaration> ::= <Annotations> <NormalClassDeclaration>
+| | +-<Annotations> ::= 
+| | +-<NormalClassDeclaration> ::= <Modifiers> <PureClassDeclaration>
+| | | +-<Modifier> ::= public
+| | | | +-public
+| | | +-<PureClassDeclaration> ::= class Identifier <TypeParametersOpt> <ClassBody>
+| | | | +-class
+| | | | +-InertVehicle
+| | | | +-<TypeParametersOpt> ::= 
+| | | | +-<ClassBody> ::= '{' <ClassBodyDeclarations> '}'
+| | | | | +-{
+| | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | | | | | +-<ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+| | | | | | | | | | | | | | | | +-<ClassDeclaration> ::= <Annotations> <EnumDeclaration>
+| | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | +-<EnumDeclaration> ::= <Modifiers> enum Identifier <EnumBody>
+| | | | | | | | | | | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | | | | | | | | | | +-public
+| | | | | | | | | | | | | | | | | | +-enum
+| | | | | | | | | | | | | | | | | | +-LengthUnit
+| | | | | | | | | | | | | | | | | | +-<EnumBody> ::= '{' <EnumConstants> <EnumBodyDeclarationsOpt> '}'
+| | | | | | | | | | | | | | | | | | | +-{
+| | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-MILLIMETRE
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-CENTIMETRE
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-INCH
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-DECIMETRE
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | | +-FOOT
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | | +-YARD
+| | | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | | +-METRE
+| | | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | +-KILOMETRE
+| | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | +-MILE
+| | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | +-<EnumBodyDeclarationsOpt> ::= 
+| | | | | | | | | | | | | | | | | | | +-}
+| | | | | | | | | | | | | | | | +-<ClassDeclaration> ::= <Annotations> <EnumDeclaration>
+| | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | +-<EnumDeclaration> ::= <Modifiers> enum Identifier <EnumBody>
+| | | | | | | | | | | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | | | | | | | | | | +-public
+| | | | | | | | | | | | | | | | | | +-enum
+| | | | | | | | | | | | | | | | | | +-SpeedUnit
+| | | | | | | | | | | | | | | | | | +-<EnumBody> ::= '{' <EnumConstants> <EnumBodyDeclarationsOpt> '}'
+| | | | | | | | | | | | | | | | | | | +-{
+| | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | +-<EnumConstants> ::= <EnumConstants> ',' <EnumConstant>
+| | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | +-METRESPERSECOND
+| | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | | +-KILOMETRESPERHOUR
+| | | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | +-<EnumConstant> ::= <Annotations> Identifier <ClassBodyOpt>
+| | | | | | | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | | | | | | +-MILESPERHOUR
+| | | | | | | | | | | | | | | | | | | | | +-<ClassBodyOpt> ::= 
+| | | | | | | | | | | | | | | | | | | +-<EnumBodyDeclarationsOpt> ::= 
+| | | | | | | | | | | | | | | | | | | +-}
+| | | | | | | | | | | | | | | +-<FieldDeclaration> ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+| | | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | | +-<Modifiers> ::= <Modifiers> <Modifier>
+| | | | | | | | | | | | | | | | | +-<Modifier> ::= private
+| | | | | | | | | | | | | | | | | | +-private
+| | | | | | | | | | | | | | | | | +-<Modifier> ::= static
+| | | | | | | | | | | | | | | | | | +-static
+| | | | | | | | | | | | | | | | +-<ArrayType> ::= <PrimitiveType> <Dims>
+| | | | | | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | | | | | +-<Dims> ::= '[' ']'
+| | | | | | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | | | | | +-<VariableDeclarator> ::= <VariableDeclaratorId> '=' <VariableInitializer>
+| | | | | | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | | | | | +-LENGTH2METRE
+| | | | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | | | | +-<ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
+| | | | | | | | | | | | | | | | | | +-new
+| | | | | | | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | | | | | | +-<Dims> ::= '[' ']'
+| | | | | | | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | | | | | | | +-<ArrayInitializer> ::= '{' <VariableInitializers> '}'
+| | | | | | | | | | | | | | | | | | | +-{
+| | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-0.001
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | +-0.01
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | | | | +-0.0254
+| | | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | | | +-0.1
+| | | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | | +-0.3048
+| | | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | | +-0.9144
+| | | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | | +-1.0
+| | | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | +-1000.0
+| | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | +-1609.344
+| | | | | | | | | | | | | | | | | | | +-}
+| | | | | | | | | | | | | | | | +-;
+| | | | | | | | | | | | | | +-<FieldDeclaration> ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+| | | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | | +-<Modifiers> ::= <Modifiers> <Modifier>
+| | | | | | | | | | | | | | | | +-<Modifier> ::= private
+| | | | | | | | | | | | | | | | | +-private
+| | | | | | | | | | | | | | | | +-<Modifier> ::= static
+| | | | | | | | | | | | | | | | | +-static
+| | | | | | | | | | | | | | | +-<ArrayType> ::= <PrimitiveType> <Dims>
+| | | | | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | | | | +-<Dims> ::= '[' ']'
+| | | | | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | | | | +-<VariableDeclarator> ::= <VariableDeclaratorId> '=' <VariableInitializer>
+| | | | | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | | | | +-SPEED2MPS
+| | | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | | | +-<ArrayCreationExpression> ::= new <PrimitiveType> <Dims> <ArrayInitializer>
+| | | | | | | | | | | | | | | | | +-new
+| | | | | | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | | | | | +-<Dims> ::= '[' ']'
+| | | | | | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | | | | | | +-<ArrayInitializer> ::= '{' <VariableInitializers> '}'
+| | | | | | | | | | | | | | | | | | +-{
+| | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | +-<VariableInitializers> ::= <VariableInitializers> ',' <VariableInitializer>
+| | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | +-1.0
+| | | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
+| | | | | | | | | | | | | | | | | | | | | +-<DecimalIntegerLiteral> ::= StartWithNoZeroDecimalIntegerLiteral
+| | | | | | | | | | | | | | | | | | | | | | +-1
+| | | | | | | | | | | | | | | | | | | | | +-/
+| | | | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | | | +-3.6
+| | | | | | | | | | | | | | | | | | | +-,
+| | | | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | | | +-0.44704
+| | | | | | | | | | | | | | | | | | +-}
+| | | | | | | | | | | | | | | +-;
+| | | | | | | | | | | | | +-<FieldDeclaration> ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+| | | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | | +-<Modifier> ::= private
+| | | | | | | | | | | | | | | +-private
+| | | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | | +-<VariableDeclarator> ::= <VariableDeclaratorId> '=' <VariableInitializer>
+| | | | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | | | +-lastPosition
+| | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | | +-<DecimalIntegerLiteral> ::= StartWithZeroDecimalIntegerLiteral
+| | | | | | | | | | | | | | | | +-0
+| | | | | | | | | | | | | | +-;
+| | | | | | | | | | | | +-<FieldDeclaration> ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+| | | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | | +-<Modifier> ::= private
+| | | | | | | | | | | | | | +-private
+| | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | +-<VariableDeclarator> ::= <VariableDeclaratorId> '=' <VariableInitializer>
+| | | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | | +-speed
+| | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | +-<DecimalIntegerLiteral> ::= StartWithZeroDecimalIntegerLiteral
+| | | | | | | | | | | | | | | +-0
+| | | | | | | | | | | | | +-;
+| | | | | | | | | | | +-<FieldDeclaration> ::= <Annotations> <Modifiers> <Type> <VariableDeclarators> ';'
+| | | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | | +-<Modifier> ::= private
+| | | | | | | | | | | | | +-private
+| | | | | | | | | | | | +-<IntegralType> ::= long
+| | | | | | | | | | | | | +-long
+| | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | +-lastTime
+| | | | | | | | | | | | +-;
+| | | | | | | | | | +-<ConstructorDeclaration> ::= <Annotations> <Modifiers> <ConstructorDeclarator> <ConstructorBody>
+| | | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | | | +-public
+| | | | | | | | | | | +-<ConstructorDeclarator> ::= <SimpleName> '(' ')'
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-InertVehicle
+| | | | | | | | | | | | +-(
+| | | | | | | | | | | | +-)
+| | | | | | | | | | | +-<ConstructorBody> ::= '{' <BlockStatements> '}'
+| | | | | | | | | | | | +-{
+| | | | | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-lastTime
+| | | | | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-System
+| | | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | | +-currentTimeMillis
+| | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | +-;
+| | | | | | | | | | | | +-}
+| | | | | | | | | +-<ConstructorDeclaration> ::= <Annotations> <Modifiers> <ConstructorDeclarator> <ConstructorBody>
+| | | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | | +-public
+| | | | | | | | | | +-<ConstructorDeclarator> ::= <SimpleName> '(' <FormalParameterList> ')'
+| | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | +-InertVehicle
+| | | | | | | | | | | +-(
+| | | | | | | | | | | +-<FormalParameterList> ::= <FormalParameterList> ',' <FormalParameter>
+| | | | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | | | +-double
+| | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | +-startPos
+| | | | | | | | | | | | +-,
+| | | | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | +-LengthUnit
+| | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | +-unit
+| | | | | | | | | | | +-)
+| | | | | | | | | | +-<ConstructorBody> ::= '{' <BlockStatements> '}'
+| | | | | | | | | | | +-{
+| | | | | | | | | | | +-<BlockStatements> ::= <BlockStatements> <BlockStatement>
+| | | | | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-lastPosition
+| | | | | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '*' <UnaryExpression>
+| | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | +-startPos
+| | | | | | | | | | | | | | | +-*
+| | | | | | | | | | | | | | | +-<ArrayAccess> ::= <Name> '[' <Expression> ']'
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-LENGTH2METRE
+| | | | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | | | +-unit
+| | | | | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | | | | +-ordinal
+| | | | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | | +-;
+| | | | | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-lastTime
+| | | | | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-System
+| | | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | | +-currentTimeMillis
+| | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | +-;
+| | | | | | | | | | | +-}
+| | | | | | | | +-<MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
+| | | | | | | | | +-<Annotations> ::= 
+| | | | | | | | | +-<MethodHeader> ::= <Modifiers> <Type> <MethodDeclarator>
+| | | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | | +-public
+| | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | +-double
+| | | | | | | | | | +-<MethodDeclarator> ::= Identifier '(' <FormalParameterList> ')'
+| | | | | | | | | | | +-getPosition
+| | | | | | | | | | | +-(
+| | | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-LengthUnit
+| | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | +-unit
+| | | | | | | | | | | +-)
+| | | | | | | | | +-<Block> ::= '{' <BlockStatements> '}'
+| | | | | | | | | | +-{
+| | | | | | | | | | +-<BlockStatements> ::= <BlockStatements> <BlockStatement>
+| | | | | | | | | | | +-<LocalVariableDeclarationStatement> ::= <LocalVariableDeclaration> ';'
+| | | | | | | | | | | | +-<LocalVariableDeclaration> ::= <Type> <VariableDeclarators>
+| | | | | | | | | | | | | +-<IntegralType> ::= long
+| | | | | | | | | | | | | | +-long
+| | | | | | | | | | | | | +-<VariableDeclarator> ::= <VariableDeclaratorId> '=' <VariableInitializer>
+| | | | | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | | | | +-thisTime
+| | | | | | | | | | | | | | +-=
+| | | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-System
+| | | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | | +-currentTimeMillis
+| | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | +-;
+| | | | | | | | | | | +-<ReturnStatement> ::= return <Expression> ';'
+| | | | | | | | | | | | +-return
+| | | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
+| | | | | | | | | | | | | +-<PrimaryNoNewArray> ::= '(' <Expression> ')'
+| | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | +-<AdditiveExpression> ::= <AdditiveExpression> '+' <MultiplicativeExpression>
+| | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | +-lastPosition
+| | | | | | | | | | | | | | | +-+
+| | | | | | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '*' <UnaryExpression>
+| | | | | | | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
+| | | | | | | | | | | | | | | | | +-<PrimaryNoNewArray> ::= '(' <Expression> ')'
+| | | | | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | | | | +-<AdditiveExpression> ::= <AdditiveExpression> '-' <MultiplicativeExpression>
+| | | | | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | | | | +-thisTime
+| | | | | | | | | | | | | | | | | | | +--
+| | | | | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | | | | +-lastTime
+| | | | | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | | | | | +-/
+| | | | | | | | | | | | | | | | | +-<FloatPointLiteral> ::= FloatingPointLiteral
+| | | | | | | | | | | | | | | | | | +-1000.0
+| | | | | | | | | | | | | | | | +-*
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-speed
+| | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | +-/
+| | | | | | | | | | | | | +-<ArrayAccess> ::= <Name> '[' <Expression> ']'
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-LENGTH2METRE
+| | | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | | +-unit
+| | | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | | +-ordinal
+| | | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | | +-]
+| | | | | | | | | | | | +-;
+| | | | | | | | | | +-}
+| | | | | | | +-<MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
+| | | | | | | | +-<Annotations> ::= 
+| | | | | | | | +-<MethodHeader> ::= <Modifiers> <Type> <MethodDeclarator>
+| | | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | | +-public
+| | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | +-double
+| | | | | | | | | +-<MethodDeclarator> ::= Identifier '(' <FormalParameterList> ')'
+| | | | | | | | | | +-getSpeed
+| | | | | | | | | | +-(
+| | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | +-SpeedUnit
+| | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | +-unit
+| | | | | | | | | | +-)
+| | | | | | | | +-<Block> ::= '{' <BlockStatements> '}'
+| | | | | | | | | +-{
+| | | | | | | | | +-<ReturnStatement> ::= return <Expression> ';'
+| | | | | | | | | | +-return
+| | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '/' <UnaryExpression>
+| | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | +-speed
+| | | | | | | | | | | +-/
+| | | | | | | | | | | +-<ArrayAccess> ::= <Name> '[' <Expression> ']'
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-SPEED2MPS
+| | | | | | | | | | | | +-[
+| | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-unit
+| | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | +-ordinal
+| | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | +-)
+| | | | | | | | | | | | +-]
+| | | | | | | | | | +-;
+| | | | | | | | | +-}
+| | | | | | +-<MethodDeclaration> ::= <Annotations> <MethodHeader> <MethodBody>
+| | | | | | | +-<Annotations> ::= 
+| | | | | | | +-<MethodHeader> ::= <Modifiers> void <MethodDeclarator>
+| | | | | | | | +-<Modifier> ::= public
+| | | | | | | | | +-public
+| | | | | | | | +-void
+| | | | | | | | +-<MethodDeclarator> ::= Identifier '(' <FormalParameterList> ')'
+| | | | | | | | | +-setSpeed
+| | | | | | | | | +-(
+| | | | | | | | | +-<FormalParameterList> ::= <FormalParameterList> ',' <FormalParameter>
+| | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | +-<FloatingPointType> ::= double
+| | | | | | | | | | | | +-double
+| | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | +-newSpeed
+| | | | | | | | | | +-,
+| | | | | | | | | | +-<FormalParameter> ::= <Type> <VariableDeclaratorId>
+| | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | +-SpeedUnit
+| | | | | | | | | | | +-<VariableDeclaratorId> ::= Identifier
+| | | | | | | | | | | | +-unit
+| | | | | | | | | +-)
+| | | | | | | +-<Block> ::= '{' <BlockStatements> '}'
+| | | | | | | | +-{
+| | | | | | | | +-<BlockStatements> ::= <BlockStatements> <BlockStatement>
+| | | | | | | | | +-<BlockStatements> ::= <BlockStatements> <BlockStatement>
+| | | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-lastPosition
+| | | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | | +-=
+| | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' <ArgumentList> ')'
+| | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | +-getPosition
+| | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-LengthUnit
+| | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | +-METRE
+| | | | | | | | | | | | | +-)
+| | | | | | | | | | | +-;
+| | | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-lastTime
+| | | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | | +-=
+| | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | +-System
+| | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | +-currentTimeMillis
+| | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | +-)
+| | | | | | | | | | | +-;
+| | | | | | | | | +-<ExpressionStatement> ::= <StatementExpression> ';'
+| | | | | | | | | | +-<Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
+| | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | +-speed
+| | | | | | | | | | | +-<AssignmentOperator> ::= '='
+| | | | | | | | | | | | +-=
+| | | | | | | | | | | +-<MultiplicativeExpression> ::= <MultiplicativeExpression> '*' <UnaryExpression>
+| | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | +-newSpeed
+| | | | | | | | | | | | +-*
+| | | | | | | | | | | | +-<ArrayAccess> ::= <Name> '[' <Expression> ']'
+| | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | +-SPEED2MPS
+| | | | | | | | | | | | | +-[
+| | | | | | | | | | | | | +-<MethodInvocation> ::= <Name> '(' ')'
+| | | | | | | | | | | | | | +-<QualifiedName> ::= <Name> '.' Identifier
+| | | | | | | | | | | | | | | +-<SimpleName> ::= Identifier
+| | | | | | | | | | | | | | | | +-unit
+| | | | | | | | | | | | | | | +-.
+| | | | | | | | | | | | | | | +-ordinal
+| | | | | | | | | | | | | | +-(
+| | | | | | | | | | | | | | +-)
+| | | | | | | | | | | | | +-]
+| | | | | | | | | | +-;
+| | | | | | | | +-}
+| | | | | +-}

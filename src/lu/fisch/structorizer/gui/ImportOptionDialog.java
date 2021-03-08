@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-26  Enh. #419: New line length limitation option
  *      Kay Gürtzig     2019-03-29  Issue #557, #718: Limit for the max. number of roots could be enlarged
  *      Kay Gürtzig     2020-03-09  Issue #833: New option for the insertion of optional keywords (e.g. "preAlt")
+ *      Kay Gürtzig     2021-03-04  Issue #958: Relative positioning of PluginOptionDialog
  *
  ******************************************************************************************************
  *
@@ -109,7 +110,7 @@ public class ImportOptionDialog extends LangDialog {
     //{
     public ImportOptionDialog(Frame _frame, Vector<GENPlugin> _plugins)
     {
-    	plugins = _plugins;
+        plugins = _plugins;
     // END KGU#416 2017-06-20
         initComponents();
         setModal(true);
@@ -503,9 +504,12 @@ public class ImportOptionDialog extends LangDialog {
 
     // START KGU#416 2017-06-20: Enh. #354,#357
     protected void openSpecificOptionDialog(String TitleFormat, GENPlugin plugin, HashMap<String, String> optionValues) {
-    	PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
-    	pod.setTitle(TitleFormat.replace("%", plugin.title));
-    	pod.setVisible(true);
+        PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
+        pod.setTitle(TitleFormat.replace("%", plugin.title));
+        // START KGU#956 2021-03-04: Issue #958
+        pod.setLocationRelativeTo(this);
+        // END KGU#956 2021-03-04
+        pod.setVisible(true);
     }
     // END KGU#416 2017-06-20
 

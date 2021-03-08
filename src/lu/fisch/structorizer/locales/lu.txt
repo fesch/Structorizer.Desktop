@@ -206,7 +206,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Executor ...
-Menu.menuDebugDropBrkpts.text=Breakpoints läschen
+Menu.menuDebugDropBrkpts.text=Breakpoints ausschalten
 Menu.menuDebugBreakpoint.text=Breakpoint un/ausschalten
 Menu.menuDebugBreakTrigger.text=Break trigger ...
 Menu.menuDebugDisable.text=
@@ -332,7 +332,7 @@ Editor.btnColors.*.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Turtleizer opmaachen …
 Editor.btnMake.tooltip=Executor opmaachen …
-Editor.btnDropBrk.tooltip=Breakpoints läschen
+Editor.btnDropBrk.tooltip=Breakpoints ausschalten
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopéieren

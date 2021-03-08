@@ -247,7 +247,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Abrir Turtleizer ...
 Menu.menuDebugExecute.text=Abrir Executor ...
-Menu.menuDebugDropBrkpts.text=Remover todos os breakpoints.
+Menu.menuDebugDropBrkpts.text=Ignorar todos os breakpoints.
 Menu.menuDebugBreakpoint.text=Alternar breakpoint
 Menu.menuDebugBreakTrigger.text=
 Menu.menuDebugDisable.text=
@@ -390,7 +390,7 @@ Editor.btnExpand.tooltip=Expandir o elemento selecionado.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Abrir Executor ...
-Editor.btnDropBrk.tooltip=Remover todos os breakpoints.
+Editor.btnDropBrk.tooltip=Ignorar todos os breakpoints.
 
 // Popup menu
 Editor.popupCut.text=Recortar

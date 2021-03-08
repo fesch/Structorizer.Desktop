@@ -5,21 +5,21 @@
 	<plugin title="ANSI-C99" 			class="lu.fisch.structorizer.parsers.C99Parser" icon="" >
 		<option name="typeNames" type="String" title="Externally defined type names" help="Comma-separated list of typedefs defined outside the source but referred to within (just to pass the syntax check)" />
 		<option name="redundantNames" type="String" title="Redundant pre-processor names or macros" help="Comma-separated list of names or macros (with empty parentheses) to be ignored on parsing" />
-		<option name="use_WINAPI_defines" type="Boolean" title="Use type names and defines from WINAPI" help="Enable this if the source file refers to many WINAPI type names or dummy defines line WINAPI" />
+		<option name="use_WINAPI_defines" type="Boolean" title="Use type names and defines from WINAPI" help="Enable this if the source file refers to many WINAPI type names or dummy defines like WINAPI" />
 		<option name="use_MinGw_defines" type="Boolean" title="Use type names and defines from MinGw" help="Enable this if the source file refers to many MinGw type names or dummy defines" />
 	</plugin>
 	<plugin title="COBOL" 				class="lu.fisch.structorizer.parsers.COBOLParser" icon="" >
-		<option name="debugLines" type="Boolean" title="Debug Lines" />
-		<option name="decimalComma" type="Boolean" title="Decimal comma (instead of decimal point)" />
-		<option name="fixedForm" type="Boolean" title="Fixed-form format" help="Select this if the source file is in fixed-form reference format, otherwise free-form is assumed"/>
-		<option name="fixedColumnIndicator" type="Unsigned" title="Indicator column in fixed format" help="Number of the indicator column (in fixed format)" />
-		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format)" />
+		<option name="debugLines" type="Boolean" title="Debug Lines" help="Select this to mport debug lines as valid code, otherwise they will be converted to comments &quot;DEBUG ...&quot;." />
+		<option name="decimalComma" type="Boolean" title="Decimal comma (instead of decimal point)" help="Select this if decimal and float literals are written with decimal comma instead of decimal point in the code."/>
+		<option name="fixedForm" type="Boolean" title="Fixed-form format" help="Select this if the source file is in fixed-form reference format, otherwise free-form will be assumed."/>
+		<option name="fixedColumnIndicator" type="Unsigned" title="Indicator column in fixed format" help="Number of the indicator column (in fixed format; default: 7)." />
+		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format; default: 73)." />
 	</plugin>
 	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
-		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations and expressions." />
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer " />
 	</plugin>
 	<plugin title="Processing" 			class="lu.fisch.structorizer.parsers.ProcessingParser" icon="">
-		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="Enable this if you prefer the rather Pascal-like syntax of declarations and expressions." />
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" />
 	</plugin>
     
 </plugins>

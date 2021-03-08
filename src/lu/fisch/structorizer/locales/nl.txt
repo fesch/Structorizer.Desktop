@@ -271,7 +271,7 @@ Menu.menuDebug.mnemonic=f
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Uitvoeren ...
-Menu.menuDebugDropBrkpts.text=Breakpunten wissen
+Menu.menuDebugDropBrkpts.text=Breakpunten negeren
 Menu.menuDebugBreakpoint.text=Breakpunt aan/uit
 Menu.menuDebugBreakTrigger.text=Break trigger opgeven ...
 Menu.menuDebugDisable.text=Aan/Uit
@@ -589,7 +589,7 @@ Editor.btnExpand.tooltip=Het geselecteerde element uitvouwen.
 // debug
 Editor.btnTurtle.tooltip=Turtleizer openen ...
 Editor.btnMake.tooltip=Uitvoeren openen ...
-Editor.btnDropBrk.tooltip=Alle breakpunten verwijderen.
+Editor.btnDropBrk.tooltip=Alle breakpunten negeren.
 Editor.btnDisable.tooltip=Geselecteerd(e) element(en) aan/uit.
 // display mode
 Editor.ttSwitchComments.text=Tekst en commentaar zijn verwisseld

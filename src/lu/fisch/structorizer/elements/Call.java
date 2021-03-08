@@ -328,8 +328,8 @@ public class Call extends Instruction {
 	 * <li> {@code null} otherwise.</li>
 	 * <ul>
 	 * @return Function object or {@code null}.
-	 * @see #isFunctionCall()
-	 * @see #isProcedureCall()
+	 * @see #isFunctionCall(boolean)
+	 * @see #isProcedureCall(boolean)
 	 */
 	@Override
 	public Function getCalledRoutine()

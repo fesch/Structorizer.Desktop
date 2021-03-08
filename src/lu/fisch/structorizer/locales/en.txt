@@ -128,6 +128,7 @@
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig     2021-02-07      Enh. #915: New messages and tooltips for InputBoxCase
+ *      Kay Gürtzig     2021-03-07      KGU#961: Translation skeleton for known plugin options added.
  *
  ******************************************************************************************************
  *
@@ -341,7 +342,7 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Executor ...
-Menu.menuDebugDropBrkpts.text=Clear breakpoints
+Menu.menuDebugDropBrkpts.text=Ignore all breakpoints
 Menu.menuDebugBreakpoint.text=Toggle breakpoint
 Menu.menuDebugBreakTrigger.text=Specify break trigger ...
 Menu.menuDebugDisable.text=Disable/enable
@@ -664,7 +665,7 @@ Editor.btnExpand.tooltip=Expand the selected element.
 // debug
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
-Editor.btnDropBrk.tooltip=Remove all breakpoints.
+Editor.btnDropBrk.tooltip=Ignore all breakpoints.
 Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // display mode
 Editor.ttSwitchComments.text=Text and comments are exchanged!
@@ -1124,8 +1125,8 @@ ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
 ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
-ImportOptionDialog.chkVarDeclarations.text=Import variable declarations
-ImportOptionDialog.chkVarDeclarations.tooltip=With this option enabled, parsers will make @{Instruction} elements from variable declarations.
+ImportOptionDialog.chkVarDeclarations.text=Import variable (and method) declarations
+ImportOptionDialog.chkVarDeclarations.tooltip=With this option enabled, parsers will make @{Instruction} elements from variable declarations (and create method references in case of OOP).
 ImportOptionDialog.chkCommentImport.text=Import source code comments
 ImportOptionDialog.chkCommentImport.tooltip=With this option enabled, parser may equip derived elements with comments found closest in the source code.
 ImportOptionDialog.chkInsertOptKeywords.text=Place configured optional keywords around conditions
@@ -1178,6 +1179,26 @@ PluginOptionDialog.msgNoValidDouble.text=Value for '%' must be a number
 PluginOptionDialog.msgVerificationError.text=Input verification failed
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancel
+PluginOptionDialog.optionComponents.convert_syntax.text=
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=
+PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.decimalComma.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedForm.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedForm.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Element Name Preferences

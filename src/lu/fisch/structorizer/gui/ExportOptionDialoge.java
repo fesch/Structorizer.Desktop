@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-02-15  Enh. #681: New spinner for triggering a change proposal for preferred generator
  *      Kay Gürtzig     2020-03-17  Enh. #837: New option for the proposed export directory
  *      Kay Gürtzig     2020-04-22  Enh. #855: New options for array size / string length defaults
+ *      Kay Gürtzig     2021-03-04  Issue #958: Relative positioning of PluginOptionDialog
  *
  ******************************************************************************************************
  *
@@ -627,6 +628,9 @@ public class ExportOptionDialoge extends LangDialog
     protected void openSpecificOptionDialog(String TitleFormat, GENPlugin plugin, HashMap<String, String> optionValues) {
         PluginOptionDialog pod = new PluginOptionDialog(plugin, optionValues);
         pod.setTitle(TitleFormat.replace("%", plugin.title));
+        // START KGU#956 2021-03-04: Issue #958
+        pod.setLocationRelativeTo(this);
+        // END KGU#956 2021-03-04
         pod.setVisible(true);
     }
     // END KGU#416 2017-06-20

@@ -51,6 +51,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2019-09-30  KGU#736 Precaution against newlines in tooltips
  *      Kay Gürtzig     2021-01-28  New static convenience method getValue(String, String, boolean)
  *      Kay Gürtzig     2021-02-11  Enh. #893 Now also registers and serves LangEventListeners
+ *      Kay Gürtzig     2021-03-07  Bugfix in setLocale() w.r.t. hash tables (on occasion of KGU#961)
  *
  ******************************************************************************************************
  *
@@ -810,13 +811,20 @@ public class Locales {
                                 // START KGU#242 2016-09-04
                                 else if ((fieldClass.getName().equals("java.util.HashMap") || fieldClass.getName().equals("java.util.Hashtable")) && pieces.count() > 3)
                                 {
-                                    String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
+                                    // START KGU#961 2021-03-07: piece2 is in lower case, we must retrieve it again
+                                    //String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
+                                    String mapKey = pieces.get(2);
+                                    String piece1_2 = pieces.get(1) + "[" + mapKey + "]";
+                                    // END KGU#961 2021-03-07
                                     Method method = fieldClass.getMethod("get", new Class[]{Object.class});
                                     // On startup we might be faster here than the initialization of the components, such
                                     // that we must face nasty NullPointerExceptions if we don't prevent
                                     if (target != null) {
                                         try {
-                                            target = method.invoke(target, piece2);
+                                            // START KGU#961 2021-03-07: piece2 is in lower case, we must retrieve it again
+                                            //target = method.invoke(target, piece2);
+                                            target = method.invoke(target, mapKey);
+                                            // END KGU#961 2021-03-07
                                             if (target == null)
                                             {
                                                 logger.log(Level.WARNING, "LANG: No Element <{0}.{1}> found!",

@@ -33,21 +33,35 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-02-27      First Issue (on behalf of enhancement request #932)
+ *      Kay Gürtzig     2021-03-04      Issue #957 file preparation now cares for import declarations
+ *      Kay Gürtzig     2021-03-05      Bugfix #959: Support for Processing conversion functions,
+ *                                      Issue #960: Processing system variables automatically initialised,
+ *                                      way more standard constants defined (see comment);
+ *                                      bugfix #961: The conversion of output instructions had not worked
+ *      Kay Gürtzig     2021-03-08      Issue #964 The central draw() loop shall not be inserted if draw() was
+ *                                      not defined.
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      Basically uses the JavaParser with some specific modifications, does not try to make sense
  *      of application-specific functions like loop(), noLoop(), push(), pop() etc.
+ *      
+ *      2021-03-05 Kay Gürtzig (issue #960)
+ *      - constant definitions taken from:
+ *        https://github.com/processing/processing/blob/master/core/src/processing/core/PConstants.java
  *
  ******************************************************************************************************///
 
 import java.io.File;
 
+import com.creativewidgetworks.goldparser.engine.Reduction;
+
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.utils.StringList;
 
@@ -93,17 +107,94 @@ public class ProcessingParser extends JavaParser {
 	private String progName = null;
 	
 	@Override
-	protected void doExtraPreparations(StringBuilder _srcCode, File _file) {
+	protected void doExtraPreparations(StringBuilder _srcCode, File _file) throws ParserCancelled
+	{
 		progName = _file.getName();
 		if (progName.contains(".")) {
 			progName = progName.substring(0, progName.indexOf('.'));
 		}
 		progName = Root.getMethodName(progName, Root.DiagramType.DT_MAIN, true);
-		_srcCode.insert(0, "public class " + progName + "Processing {\n");
+		// START KGU#954 2021-03-04: Issue #957 Skip import lines before inserting the definition
+		//_srcCode.insert(0, "public class " + progName + "Processing {\n");
+		int posIns = 0;
+		if (_srcCode.indexOf("import") >= 0) {
+			int posNextLine = -1;
+			int posLine = posNextLine + 1;
+			boolean inComment = false;
+			boolean inImportClause = false;
+			int length = _srcCode.length();
+			boolean isNoise = true;
+			while (isNoise && posLine < length && (posNextLine = _srcCode.indexOf("\n", posLine)) >= 0) {
+				char[] lineChars = new char[posNextLine - posLine];
+				_srcCode.getChars(posLine, posNextLine, lineChars, 0);
+				String line = new String(lineChars);
+				for (int i = 0; i < lineChars.length; i++) {
+					char ch = lineChars[i];
+					if (inComment) {
+						if (ch == '*' && i+1 < lineChars.length && lineChars[i+1] == '/') {
+							inComment = false;
+							i++;
+						}
+					}
+					else if (inImportClause && ch == ';') {
+						/* The syntactic consistency of the import clause is not our business
+						 * here (we'll leave this to the parser), we just grope for the ending
+						 * semicolon
+						 */
+						inImportClause = false;
+					}
+					else if (ch == '/' && i+1 < lineChars.length) {
+						if (lineChars[i+1] == '/') {
+							// Line comment - skip to next line
+							break;
+						}
+						else if (lineChars[i+1] == '*') {
+							// Block comment starts here
+							inComment = true;
+							i++;
+						}
+					}
+					else if (!inImportClause && !Character.isWhitespace(ch)) {
+						if (!line.substring(i).startsWith("import") || i + 6 >= lineChars.length
+								|| !Character.isWhitespace(lineChars[i + 6])) {
+							// Okay this is something else ...
+							if (i > 0) {
+								// insert a newline here if necessary ...
+								posLine += i;
+								_srcCode.insert(posLine++, "\n");
+							}
+							isNoise = false;
+							posIns = posLine;
+							// ... and leave the loop
+							break;
+						}
+						// May we dare to skip the line? No, it might still open a comment block
+						inImportClause = true;
+						i += 6;
+					}
+				} // for (int i = 0; i < lineChars.length; i++)
+				posLine = posNextLine + 1;
+				this.checkCancelled();
+			} // while (isNoise && ...)
+		}
+		_srcCode.insert(posIns, "public class " + progName + "Processing {\n");
+		// END KGU#954 2021-03-04
 		_srcCode.append("}\n");
 	}
 
 	//---------------------- Build methods for structograms ---------------------------
+	
+	// START KGU#962 2021-03-08: Issue #964 Detect the definition of the central draw() method
+	private boolean hasDrawMethod = false;
+	
+	protected void addRoot(Root newRoot)
+	{
+		if (newRoot.isSubroutine() && newRoot.getQualifiedName().equals("draw")) {
+			hasDrawMethod = true;
+		}
+		super.addRoot(newRoot);
+	}
+	// END KGU#962 2021-03-08
 
 	@Override
 	protected boolean qualifyTopLevelMethods()
@@ -121,19 +212,82 @@ public class ProcessingParser extends JavaParser {
 		Root mainRoot = new Root();
 		mainRoot.setText(progName);
 		mainRoot.children.addElement(new Call("setup()"));
-		Forever mainLoop = new Forever();
-		mainLoop.getBody().addElement(new Call("draw()"));
-		mainRoot.children.addElement(mainLoop);
+		// START KGU#962 2021-03-08: Issue #964 Now done afterwards when we know that a draw method exists
+		//Forever mainLoop = new Forever();
+		//mainLoop.getBody().addElement(new Call("draw()"));
+		//mainRoot.children.addElement(mainLoop);
+		// END KGU#962 2021-03-08
 		mainRoot.addToIncludeList(progName + "Processing");
 		addRoot(mainRoot);
 	}
 	
+	// START KGU#957 2021-03-05: Issue #959 - Processing conversion function handling
 	/**
-	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
-	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
-	 * the text phrase.
-	 * @param _content - A string already assembled, may be used as prefix, ignored or combined in another
-	 * way 
+	 * Decomposes a conversion function, i.e. the expression to be converted.
+	 * @param exprRed - a {@code <ProcessingTypeConversion>} reduction
+	 * @return a StringList containing the necessary sequence of Structorizer instructions
+	 * and expressions to achieve the same effect.
+	 * @throws ParserCancelled if the user aborted the import process
+	 */
+	protected StringList decomposeProcessingTypeConversion(Reduction exprRed) throws ParserCancelled
+	{
+		// <ProcessingTypeConversion> ::= binary '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= hex '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= unbinary '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= unhex '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= int '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= byte '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= char '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= str '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= float '(' <Expression> ')'
+		// <ProcessingTypeConversion> ::= boolean '(' <Expression> ')'
+		StringList exprs = this.decomposeExpression(exprRed.get(2), false, false);
+		int ixLast = exprs.count() - 1;
+		/* As a first approach we just put the original name and don't try some smart
+		 * reinterpretation: A simple casting will not usually do, and Structorizer
+		 * does not even devour a casting expression, anyway...
+		 */
+		exprs.set(ixLast, this.getContent_R(exprRed.get(0)) + "(" + exprs.get(ixLast) + ")");
+		return exprs;
+	}
+	// END KGU#957 2021-03-05
+
+	// START KGU#959 2021-03-06: Issue #961 extracted from decomposeExpression() for overloading
+	/**
+	 * Checks whether the passed-in instruction line (which must adhere to a
+	 * method invocation with or without assigned result, where the assignment
+	 * symbol if contained is expected to be "<-") represents some built-in
+	 * function or command, e.g. an output instruction, and if so converts it
+	 * accordingly. If it is notzhing specific then just returns {@code null}.
+	 * @param line - an built instruction line with call syntax (qualified names
+	 * possible)
+	 * @return a representing {@link Element} or {@code null}
+	 */
+	protected Instruction convertInvocation(String line)
+	{
+		Instruction ele = null;
+		if (line.startsWith("exit(")) {
+			ele = new Jump(getKeyword("preExit") + " "
+					+ line.substring("exit(".length(), line.length()-1));
+		}
+		else if (line.startsWith("println(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("println(".length(), line.length()-1));
+		}
+		else if (line.startsWith("print(")) {
+			ele = new Instruction(getKeyword("output") + " "
+					+ line.substring("print(".length(), line.length()-1));
+		}		
+		return ele;
+	}
+	// END KGU#959 2021-03-05
+
+	/**
+	 * Helper method to retrieve and compose the text of the given reduction,
+	 * combine it with previously assembled string _content and adapt it to
+	 * syntactical conventions of Structorizer. Finally return the text phrase.
+	 * @param _content - A string already assembled, may be used as prefix,
+	 *   ignored or combined in another way 
 	 * @return composed and translated text.
 	 */
 	@Override
@@ -150,7 +304,7 @@ public class ProcessingParser extends JavaParser {
 		}
 
 		// Rather not necessary, but who knows...
-		tokens.removeAll(StringList.explodeWithDelimiter("Math.", "."), true);
+		tokens.removeAll(StringList.explode("Math,.", ","), true);
 
 		return _content.trim();
 	}
@@ -167,15 +321,133 @@ public class ProcessingParser extends JavaParser {
 		if (root.isInclude() && root.getMethodName().equals(progName + "Processing")) {
 			// Define some important Processing constants
 			final String mathConstants = 
-					"const PI <- " + Double.toString(Math.PI) + "\n" +
-					"const HALF_PI <- " + Double.toString(Math.PI/2) + "\n" +
-					"const QUARTER_PI <- " + Double.toString(Math.PI/4) + "\n" +
-					"const TWO_PI <- " + Double.toString(Math.PI*2) + "\n" +
-					"const TAU <- TWO_PI";
-			Instruction defs = new Instruction("type ColorMode = enum{RGB, HSB}");
-			defs.setColor(colorConst);
-			defs.setComment("Processing standard enumerator");
+					"const PI <- " + Float.toString((float)Math.PI) + "\n" +
+					"const HALF_PI <- " + Float.toString((float)Math.PI/2) + "\n" +
+					"const QUARTER_PI <- " + Float.toString((float)Math.PI/4) + "\n" +
+					"const TWO_PI <- " + Float.toString((float)Math.PI*2) + "\n" +
+					"const TAU <- TWO_PI\n" +
+					"const DEG_TO_RAD <- PI/180.0\n" +
+					"const RAD_TO_DEG <- 1/DEG_TO_RAD\n";
+			// START KGU#958 2021-03-05: Issue #960
+			//Instruction defs = new Instruction("type ColorMode = enum{RGB, HSB}");
+			final String keyConstants =
+					"const BACKSPACE <- char(8)\n" +
+					"const TAB <- char(9)\n" +
+					"const ENTER <- char(10)\n" +
+					"const RETURN <- char(13)\n" +
+					"const ESC <- char(27)\n" +
+					"const DELETE <- char(127)";
+			final String strokeConstants =
+					"const SQUARE <- 1 << 0\n" +
+					"const ROUND <- 1 << 1\n" +
+					"const PROJECT <- 1 << 2\n" +
+					"const MITER <- 1 << 3\n" +
+					"const BEVEL <- 1 << 4\n";
+			final String blendModeConstants = 
+					"const REPLACE <- 0\n" +
+					"const BLEND <- 1 << 0\n" +
+					"const ADD <- 1 << 1\n" +
+					"const SUBTRACT <- 1 << 2\n" +
+					"const LIGHTEST <- 1 << 3\n" +
+					"const DARKEST <- 1 << 4\n" +
+					"const DIFFERENCE <- 1 << 5\n" +
+					"const EXCLUSION <- 1 << 6\n" +
+					"const MULTIPLY <- 1 << 7\n" +
+					"const SCREEN <- 1 << 8\n" +
+					"const OVERLAY <- 1 << 9\n" +
+					"const HARD_LIGHT <- 1 << 10\n" +
+					"const SOFT_LIGHT <- 1 << 11\n" +
+					"const DODGE <- 1 << 12\n" +
+					"const BURN <- 1 << 13\n";
+			final String rendererConstants =
+					"const JAVA2D <- \"processing.awt.PGraphicsJava2D\"\n"
+					+ "const P2D <- \"processing.awt.PGraphics2D\"\n"
+					+ "const P3D <- \"processing.awt.PGraphics3D\"\n"
+					+ "const FX2D <- \"processing.awt.PGraphicsFX2D\"\n"
+					+ "const PDF <- \"processing.awt.PGraphicsPDF\"\n"
+					+ "const SVG <- \"processing.awt.PGraphicsSVG\"\n"
+					+ "const DXF <- \"processing.awt.RawDXF\"";
+			final String shapeEnumerator =
+					"type Shapes = enum{\\\n"
+					+ "GROUP,\\\n"
+					+ "POINT = 2, POINTS, LINE, LINES,\\\n"
+					+ "TRIANGLE = 8, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN,\\\n"
+					+ "QUAD = 16, QUADS, QUAD_STRIP,\\\n"
+					+ "POLYGON = 20, PATH,\\\n"
+					+ "RECT = 30, ELLIPSE, ARC,\\\n"
+					+ "SPHERE = 40, BOX,"
+					+ "LINE_STRIP = 50, LINE_LOOP\\\n"
+					+ "}";
+			final String systemVariables1 = 
+					"var width: int <- 100\n" +
+					"var height: int <- 100\n" +
+					"var pixelWidth: int <- width\n" +
+					"var pixelHeight: int <- height\n" +
+					"var frameCount: int <- 0\n" +
+					"var frameRate: int <- 60";
+			final String systemVariables2 = 
+					"var key: char <- '\0'\n" +
+					"var keyPressed: boolean <- false\n" +
+					"var keyCode: KeyCode <- NONE\n";
+			Instruction defs = new Instruction(systemVariables2);
+			defs.setColor(colorGlobal);
+			defs.setComment("Processing system variables initialization, part 2");
 			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(systemVariables1);
+			defs.setColor(colorGlobal);
+			defs.setComment("Processing system variables initialization, part 1");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type KeyCodes = enum{NONE, SHIFT = 16, CONTROL, ALT, LEFT = 37, RIGHT = 39, DOWN = 40, UP = 224}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard key code enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type FileTypes = enum{TIFF, TARGA, JPEG, GIF}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard file type enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type Lighting = enum{AMBIENT, DIRECTIONAL, SPOT}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard lighting enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type VertAlignmentModes = enum{BASELINE, TOP, BOTTOM}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard vertical alignment mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ArcModes = enum{CHORD = 2, PIE}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard arc drawing mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ShapeModes = enum{CORNER, CORNERS, RADIUS, CENTER, DIAMETER = CENTER}");
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard shape drawing mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(shapeEnumerator);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard shape type enumerator");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction("type ColorMode = enum{RGB, ARGB, HSB, ALPHA}");
+			// END KGU#958 2021-03-05
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard color mode enumerator");
+			root.children.insertElementAt(defs, 0);
+			// START KGU#958 2021-03-05: Issue #960
+			defs = new Instruction(rendererConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard renderer constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(blendModeConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard blend mode constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(strokeConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard stroke constants");
+			root.children.insertElementAt(defs, 0);
+			defs = new Instruction(keyConstants);
+			defs.setColor(colorConst);
+			defs.setComment("Processing standard key constants");
+			root.children.insertElementAt(defs, 0);
+			// END KGU#958 2021-03-05
 			defs = new Instruction(mathConstants);
 			defs.setColor(colorConst);
 			defs.setComment("Processing standard Math constants");
@@ -183,6 +455,13 @@ public class ProcessingParser extends JavaParser {
 			// This must not be in invoked here because setup() includes diagram (#947)
 			//root.children.addElement(new Call("setup()"));
 		}
+		// START KGU#962 2021-03-08: Issue #964 Add draw loop if a draw method exists
+		else if (root.isProgram() && root.getMethodName().equals(progName) && this.hasDrawMethod) {
+			Forever mainLoop = new Forever();
+			mainLoop.getBody().addElement(new Call("draw()"));
+			root.children.addElement(mainLoop);
+		}
+		// END KGU#962 2021-03-08
 		return false;
 	}
 

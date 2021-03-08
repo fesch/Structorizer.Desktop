@@ -4227,7 +4227,7 @@ public class Root extends Element {
 	private void analyse_15(Call ele, Vector<DetectedError> _errors)
 	{
 		// START KGU#376 2017-04-11: Enh. #389 - new call type / undone 2017-07-01
-		if (!ele.isProcedureCall() && !ele.isFunctionCall())
+		if (!ele.isProcedureCall(false) && !ele.isFunctionCall(false))
 		//if (!ele.isProcedureCall() && !ele.isFunctionCall() && !ele.isImportCall())
 		// END KGU#376 2017-04-11
 		{

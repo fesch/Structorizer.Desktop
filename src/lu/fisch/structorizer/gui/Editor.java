@@ -91,6 +91,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-13      Icon for "About ..." menu item replaced
  *      Kay Gürtzig     2021-01-27      Enh. #917: popupEditSub enhanced to work also for included diagrams
  *      Kay Gürtzig     2021-01-28      Accelerator associations for the context menu items set.
+ *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "btnDropBrk" button
  *
  ******************************************************************************************************
  *
@@ -243,7 +244,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JButton btnTurtle = new JButton(IconLoader.getIcon(54));
 	// END KGU#486 2018-02-06
 	// START KGU 2015-10-12: Breakpoint wiping
-	protected final JButton btnDropBrk = new JButton(IconLoader.getIcon(104));
+	// START KGU#952 2021-03-03: Issue #954 modified functionality
+	//protected final JButton btnDropBrk = new JButton(IconLoader.getIcon(104));
+	protected final JToggleButton btnDropBrk = new JToggleButton(IconLoader.getIcon(104));
+	// END KGU#952 2021-03-03
 	// END KGU 2015-10-12
 	// colors
 	// START KGU#245 2018-07-02: Individual color buttons converted to an array
@@ -912,7 +916,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnMake.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
 		toolbar.add(btnDropBrk, false);
 		btnDropBrk.setFocusable(false);
-		btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		// START KGU#952 2021-03-03: Issue #954 modified functionality
+		//btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		btnDropBrk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				diagram.disableBreakpoints(((JToggleButton)event.getSource()).isSelected()); 
+			} 
+		});
+		// END KGU#952 2021-03-03
 		// START KGU#310 2016-12-14: Moved hitherto from toolbar "Collapsing"
 		toolbar.add(btnDisable, false);
 		btnDisable.setFocusable(false);
@@ -1414,9 +1425,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());
 		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed(false) || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
+
+		// executor
 		// START KGU#277 2016-10-13: Enh. #270
 		btnDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
 		// END KGU#277 2016-01-13
+		// START KGU#952 2021-03-03: Issue #954 New breakpoint functionality
+		this.btnDropBrk.setSelected(!Element.E_BREAKPOINTS_ENABLED);
+		// END KGU#952 2021-03-03
 
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected

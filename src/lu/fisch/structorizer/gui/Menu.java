@@ -126,6 +126,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-13      "About" icon replaced
  *      Kay Gürtzig     2021-02-11      Enh. #893: Revalidation of the preference menu enforced after locale setting
  *      Kay Gürtzig     2021-02-24      Issue #944: Version info announcing Java upgrade to 11 added
+ *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *
  ******************************************************************************************************
  *
@@ -439,7 +440,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuDebugExecute = new JMenuItem("Executor ...", IconLoader.getIcon(4));
 	protected final JMenuItem menuDebugBreakpoint = new JMenuItem("Toggle breakpoint", IconLoader.getIcon(103));
 	protected final JMenuItem menuDebugBreakTrigger = new JMenuItem("Specify break trigger ...", IconLoader.getIcon(112));
-	protected final JMenuItem menuDebugDropBrkpts = new JMenuItem("Clear breakpoints", IconLoader.getIcon(104));
+	// START KGU#952 2021-03-03: Issue #954 - modified behaviour
+	//protected final JMenuItem menuDebugDropBrkpts = new JMenuItem("Clear breakpoints", IconLoader.getIcon(104));
+	protected final JCheckBoxMenuItem menuDebugDropBrkpts = new JCheckBoxMenuItem("Ignore breakpoints", IconLoader.getIcon(104));
+	// END KGU#952 2021-03-03
 	protected final JMenuItem menuDebugDisable = new JMenuItem("Disable", IconLoader.getIcon(26));
 	// END KGU#310 2016-12-14
 
@@ -1802,7 +1806,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// END KGU#911 2021-01-10
 		
 		menuDebug.add(menuDebugDropBrkpts);
-		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		// START KGU#952 2021-03-03: Issue #954 Modified behaviour
+		//menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		menuDebugDropBrkpts.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				diagram.disableBreakpoints(menuDebugDropBrkpts.isSelected()); 
+			}
+		});
+		// END KGU#952 2021-03-03
 
 		menuDebug.addSeparator();
 
@@ -2118,6 +2129,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			//}
 			menuDebugControllers.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#911 2021-01-10
+			// START KGU#952 2021-03-03: Issue #954 modified behaviour
+			menuDebugDropBrkpts.setSelected(!Element.E_BREAKPOINTS_ENABLED);
+			// END KGU#954 2021-03-03
 
 			// copy & paste
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy

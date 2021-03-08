@@ -4924,13 +4924,13 @@ public class COBOLParser extends CodeParser
 					strLine = "*>" + srcLineCode;
 				}
 			} else if (srcLineIndicator == '/') {
-				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+				if (srcLineCode.trim().isEmpty()) {
 					strLine = "*> page eject requested" + "\n" + "*>";
 				} else {
 					strLine = "*> page eject requested" + "\n" + "*>" + srcLineCode;
 				}
 			} else if (srcLineIndicator == 'D' && !srcCodeDebugLines) {
-				if (srcLineCode.length() < 1 || srcLineCode.trim().length() == 0) {
+				if (srcLineCode.trim().isEmpty()) {
 					strLine = "*> DEBUG: ";
 				} else {
 					strLine = "*> DEBUG: " + srcLineCode;
@@ -4939,9 +4939,6 @@ public class COBOLParser extends CodeParser
 				char firstNonSpaceInLine = srcLineCode.trim().charAt(0);
 				// word continuation
 				if (firstNonSpaceInLine != '\'' && firstNonSpaceInLine != '"') {
-					if (posAndLength.pos <= 0 || posAndLength.pos-1 > srcCode.length()) {
-						System.err.println("Wrong index");
-					}
 					srcCode.insert(posAndLength.pos - 1, srcLineCode);
 					posAndLength.pos += srcLineCode.length();
 					return;
@@ -5059,7 +5056,7 @@ public class COBOLParser extends CodeParser
 		if (firstToken.startsWith(">>D")) {
 			if (!srcCodeDebugLines) {
 				if (codeLine.trim().length() == 0) {
-					resultLine  = "*> DEBUG: ";
+					resultLine = "*> DEBUG: ";
 				} else {
 					resultLine = "*> DEBUG: " + codeLine;
 				}
