@@ -92,6 +92,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-27      Enh. #917: popupEditSub enhanced to work also for included diagrams
  *      Kay Gürtzig     2021-01-28      Accelerator associations for the context menu items set.
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "btnDropBrk" button
+ *      Kay Gürtzig     2021-03-09      Issue #966: Precaution for dark look & feel themes
  *
  ******************************************************************************************************
  *
@@ -104,6 +105,8 @@ import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -128,14 +131,19 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// Controller
 	NSDController NSDControll = null;
 
-//    // Toolbars
-//    protected MyToolbar toolbar = null;
+//	// Toolbars
+//	protected MyToolbar toolbar = null;
 	
 	// Splitpanes
 	JSplitPane sp;
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
 	JSplitPane sp305;
 	// END KGU#305 2016-12-12
+	
+	// START KGU#964 2021-03-09: Issue #966 Bad preview readability with dark themes
+	/** Standard background colour of the code preview */
+	private static final Color CODE_PREVIEW_BACKGROUND = new Color(237, 237, 255);
+	// END KGU#964 2021-03-09
 
 	// lists
 	DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
@@ -508,7 +516,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		try {
 			txtCode.setTabSize(4);
-			txtCode.setBackground(new Color(237, 237, 255));
+			// START KGU#964 2021-03-09: Issue #966 problem with dark themes
+			//txtCode.setBackground(new Color(237, 237, 255));
+			Color fg = txtCode.getForeground();
+			// Text brighter than GRAY would be bad on CODE_PREVIEW_BACKGROUND, so check brightness
+			float[] hsb = new float[3];
+			Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsb);
+			if (hsb[2] >= 0.5) {
+				txtCode.setForeground(Color.DARK_GRAY);
+			}
+			txtCode.setBackground(CODE_PREVIEW_BACKGROUND);
+			// END KGU#964 2021-03-09
 			txtCode.getDocument().insertString(0, "", null);
 		} catch (BadLocationException e) {
 			// TODO Auto-generated catch block
@@ -564,6 +582,32 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		//doButtons();
 		//container.validate();
+		// START KGU#964 2021-03-09: Issue #966
+		UIManager.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				if ("lookAndFeel".equals(evt.getPropertyName())) {
+					// It takes its time until the UI will be updated, so better ask for the default
+					Color fg = UIManager.getColor("TextArea.foreground");
+					if (fg == null) {
+						// Only if that fails fall back to the current setting (may be obsolete)
+						fg = Editor.this.txtCode.getForeground();
+					}
+					// Get the foreground (= text) brightness (in range 0.0 ... 0.1)
+					float[] hsb = new float[3];
+					Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsb);
+					if (hsb[2] >= 0.5) {
+						// Make the text dark enough for good contrast
+						fg = Color.DARK_GRAY;
+					}
+					txtCode.setForeground(fg);
+					// We insist on the chosen background, for highlighting consistency
+					txtCode.setBackground(CODE_PREVIEW_BACKGROUND);
+				}
+			}
+			
+		});
+		// END KGU#964 2021-03-09
 	}
 
 	// START KGU#705 2019-10-02: Enh. #738

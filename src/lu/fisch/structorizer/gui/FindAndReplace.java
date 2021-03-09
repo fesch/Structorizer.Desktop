@@ -57,6 +57,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2020-12-30      Issue #901: Ensure wait cursor at least on action "replace all"
  *      Kay Gürtzig     2021-01-11      Enh. #910: Precautions against modifications of immutable elements
  *      Kay Gürtzig     2021-01-28      Bugfix #918: Missing Root type filter, unwanted checkbox for the #910 type
+ *      Kay Gürtzig     2021-03-09      Issue #966: Tuning of highlight colours in case of dark luf themes
  *
  ******************************************************************************************************
  *
@@ -83,6 +84,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -781,6 +784,20 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			
 			// -------------- Text View ---------------
 			
+			// START KGU#964 2021-03-09: Issue #966 Face dark L&F themes!
+			Color hlColor2 = Color.YELLOW;
+			Color fg = UIManager.getDefaults().getColor("TextPane.foreground");
+			if (fg != null) {
+				float[] hsb = new float[3];
+				// This is a primitive brightness model but sufficient for a rough estimate
+				Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsb);
+				if (hsb[2] > 0.5) {
+					// Seems to be a dark theme (bright text), so use a darker highlighting
+					hlColor2 = Color.GRAY;
+				}
+			}
+			// END KGU#964 2021-03-09
+			
 			pnlPreview.setLayout(new GridLayout(0, 1));
 			pnlPreview.setBorder(BorderFactory.createTitledBorder("Contents"));
 
@@ -794,7 +811,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			docText = txtText.getStyledDocument();
 			//Style defStyle = doc.getStyle("default");
 			Style hilStyle = docText.addStyle("highlight", null);
-			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			// START KGU#964 2021-03-09: Issue #966
+			//hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle.addAttribute(StyleConstants.Background, hlColor2);
+			// END KGU#964 2021-03-09
 			hilStyle = docText.addStyle("emphasis", null);
 			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
@@ -811,7 +831,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			docComm = txtComm.getStyledDocument();
 			//Style defStyle = doc.getStyle("default");
 			hilStyle = docComm.addStyle("highlight", null);
-			hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			// START KGU#964 2021-03-09: Issue #966
+			//hilStyle.addAttribute(StyleConstants.Background, Color.YELLOW);
+			hilStyle.addAttribute(StyleConstants.Background, hlColor2);
+			// END KGU#964 2021-03-09
 			hilStyle = docComm.addStyle("emphasis", null);
 			hilStyle.addAttribute(StyleConstants.Background, Color.ORANGE);
 
@@ -975,6 +998,34 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 		
 		this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 		//this.addWindowListener(this);
+		
+		// START KGU#964 2021-03-09: Issue #966 Precaution against dark themes
+		UIManager.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				if ("lookAndFeel".equals(evt.getPropertyName())) {
+					Color hlColor2 = Color.YELLOW;
+					Color fg = UIManager.getDefaults().getColor("TextPane.foreground");
+					if (fg != null) {
+						float[] hsb = new float[3];
+						// This is a primitive brightness model but sufficient for a rough estimate
+						Color.RGBtoHSB(fg.getRed(), fg.getGreen(), fg.getBlue(), hsb);
+						if (hsb[2] > 0.5) {
+							// Seems to be a dark theme (bright text), so use a darker highlighting
+							hlColor2 = Color.GRAY;
+						}
+					}
+					Style hlStyle = txtText.getStyle("highlight");
+					hlStyle.removeAttribute(StyleConstants.Background);
+					hlStyle.addAttribute(StyleConstants.Background, hlColor2);
+					hlStyle = txtComm.getStyle("highlight");
+					hlStyle.removeAttribute(StyleConstants.Background);
+					hlStyle.addAttribute(StyleConstants.Background, hlColor2);
+					txtText.repaint();
+					txtComm.repaint();
+				}
+			}});
+		// END KGU#964 2021-03-09
 	}
 
 	/**
