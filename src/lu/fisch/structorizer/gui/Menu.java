@@ -396,7 +396,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuPreferencesLanguagePreview = new JCheckBoxMenuItem("Translator preview", IconLoader.getIcon(113));
 	// END KGU#892 2020-12-21
 	// START KGU#479 2017-12-14: Enh. #492
-	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.getIcon(57));
+	protected final JMenuItem menuPreferencesElements = new JMenuItem("Element names ...", IconLoader.getIcon(74));
 	// END KGU#479 2017-12-14
 	// START KGU#480 2018-01-18: Enh. #490 - Aliases for controller API
 	// START KGU#486 2018-02-06: Issue #4
