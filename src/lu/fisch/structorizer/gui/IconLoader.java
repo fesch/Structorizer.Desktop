@@ -81,6 +81,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-09/11   Enh. #910: 125_plug added, deprecated field `from' removed
  *      Kay Gürtzig     2021-01-13      126_info added to replace 017 in some places.
  *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
+ *      Kay Gürtzig     2021-03-18      Issue #966: Icon 081 (language) replaced
  *
  ******************************************************************************************************
  *
@@ -191,7 +192,7 @@ public class IconLoader {
 			"078_java.png",
 			"079_marker.png",
 			"080_pulldown.png",	// for value presenter
-			"081_pen.png",
+			"081_earth.png",	// 2021-03-18 #966: replaces "081_pen.png",
 			"082_din.png",
 			"083_loupe.png",	// Analyser
 			"084_pencil.png",	// for Value Presenter
