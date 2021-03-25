@@ -336,6 +336,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 	protected final JMenu menuDiagramType = new JMenu("Type");
 	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main", IconLoader.getIcon(22));
+        protected final JCheckBoxMenuItem menuDiagramARM = new JCheckBoxMenuItem("GNU compiler for ARM", IconLoader.getIcon(129));
 	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub", IconLoader.getIcon(21));
 	//START KGU#376 2017-05-16: Enh. #389
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
@@ -1365,7 +1366,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagram.add(menuDiagramExpand);
 		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
 		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
-
+//ARM 
+                menuDiagram.add(menuDiagramARM); 
+                menuDiagramARM.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperationArmVisual(menuDiagramARM.isSelected()); doButtons(); } } );
 		// START KGU#310 2016-12-14: Moved to menu Debug
 //		// START KGU#277 2016-10-13: Enh. #270
 //		menuDiagram.add(menuDebugDisable);

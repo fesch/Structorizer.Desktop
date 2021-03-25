@@ -947,6 +947,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#123 2016-01-04: Issue #65
 		this.setAutoscrolls(true);
 		// END KGU#123 2016--01-04
+                
 
 		// popup for comment
 		JPanel jp = new JPanel();
@@ -9119,7 +9120,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#705 2019-09-24
-
+/*
+* Show arm visual
+* @param _arm - true to switch in arm mode
+*/
+public void setOperationArmVisual(boolean _arm) {
+Element.ARM_VISUAL = _arm;
+if(_arm) {
+Element.E_VARIABLE_ARM = true;
+}
+this.resetDrawingInfo();
+NSDControl.doButtons();
+updateCodePreview();
+redraw();
+}
     // START KGU#258 2016-09-26: Enh. #253
     /**
      * Opens the import options dialog and processes configuration changes.

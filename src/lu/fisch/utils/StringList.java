@@ -1352,6 +1352,25 @@ public class StringList {
     }
     // END KGU#129 2016-01-08
 
+
+	// ARM
+	public int replaceIfContains(String _stringOld, String _stringNew){
+		int _fromIndex = 0;
+		int _toIndex = count();
+		int nReplaced = 0;
+		String c;
+
+		for (int i = Math.max(0, _fromIndex); i < Math.min(_toIndex, count()); i++){
+			c = strings.get(i).replace(_stringOld ,_stringNew);
+			strings.setElementAt(c, i);
+
+			nReplaced++;
+
+		}
+
+		return nReplaced;
+	}
+
     @Override
     public String toString()
     {
