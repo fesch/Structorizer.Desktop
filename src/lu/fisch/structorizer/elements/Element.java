@@ -250,6 +250,9 @@ import javax.swing.ImageIcon;
  * @author Bob Fisch
  */
 public abstract class Element {
+
+        public static boolean ARM_VISUAL=false;
+	public static boolean E_VARIABLE_ARM=false;
 	
 	/** This enumeration type distinguishes drawing contexts for selection display */
 	// START KGU#906 2021-01-06: Enh. #905 need another context to suppress triangles
