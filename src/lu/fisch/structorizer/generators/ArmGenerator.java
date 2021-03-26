@@ -149,30 +149,42 @@ public class ArmGenerator extends Generator {
     protected void generateInstructionLine(String line, boolean isDisabled) {
         line = variablesToRegisters(line);
         switch (getMode(line)) {
-            case "Assignment" ->
+            case "Assignment" :
                 generateAssignment(line, isDisabled);
-            case "Expression" ->
+                break;
+            case "Expression" :
                 generateExpr(line, isDisabled);
-            case "Memory" ->
+                break;
+            case "Memory" :
                 generateMemAss(line, isDisabled);
-            case "AExpression" ->
+                break;
+            case "AExpression" :
                 generateArrayExpr(line, isDisabled);
-            case "AAssignment" ->
+                break;
+            case "AAssignment" :
                 generateArrayAssign(line, isDisabled);
-            case "AInitialization" ->
+                break;
+            case "AInitialization" :
                 generateArrayIniz(line, isDisabled);
-            case "Address" ->
+                break;
+            case "Address" :
                 generateIndAss(line, isDisabled);
-            case "BooleanAssignment" ->
+                break;
+            case "BooleanAssignment" :
                 generateAssignment(line.replace("true", "1").replace("false", "0"), isDisabled);
-            case "StringAInitialization" ->
+                break;
+            case "StringAInitialization" :
                 generateString(line, isDisabled);
-            case "CharAInitialization" ->
+                break;
+            case "CharAInitialization" :
                 generateAssignment(line.replace("\"", "'"), isDisabled);
-            case "Instruction" ->
+                break;
+            case "Instruction" :
                 addCode(line, "\t\t", isDisabled);
-            case "NotImplemented" ->
+                break;
+            case "NotImplemented" :
                 appendComment("Error: Not implemented yet\n" + line, "\t\t");
+                break;
         }
     }
 
@@ -730,12 +742,6 @@ public class ArmGenerator extends Generator {
             }
 
         } else if (arr[1].contains("R")) {
-            // word v <- {1, 2, 3}
-            // [v]
-            // [R1] == indirizzo(R1)
-            // [R1, +- R0 || 1, SHIFT]
-            // STR R0, [R1, R2] -> R0 -> memoria[R1+R2]
-            // STR R0, [R1, R2] -> R0 -> memoria[R1+R2] array: v
             addCode("STR " + expr + ", " + "[" + arName + ", " + arr[1], "\t\t", isDisabled);
 
         } else {
