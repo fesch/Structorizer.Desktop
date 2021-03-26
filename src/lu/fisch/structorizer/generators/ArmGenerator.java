@@ -17,11 +17,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 /**
  * @authors Daniele De Menna, Robert Dorinel Milos, Alessandro Simonetta, Giulio Palumbo, Maurizio Fiusco
  */
-
 package lu.fisch.structorizer.generators;
 
 import lu.fisch.structorizer.elements.*;
@@ -32,9 +30,11 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 public class ArmGenerator extends Generator {
+
     /**
      * INSTRUCTIONS PATTERNS
-     **/
+     *
+     */
     private final Pattern assignmentPattern = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-Z]+)(<-|:=)(R([0-9]|1[0-4])|[a-zA-Z]+|-?[0-9]+|0x([0-9]|[a-f])+)", Pattern.CASE_INSENSITIVE);
     private final Pattern expressionAssignment = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-Z]+)(<-|:=)(R([0-9]|1[0-4])|[a-zA-Z]+|[0-9]+|0x([0-9]|[a-f])+)(-|\\+|\\*|and|or)(R([0-9]|1[0-4])|[a-zA-Z]+|[0-9]+|0x([0-9]|[a-f])+)", Pattern.CASE_INSENSITIVE);
     private final Pattern memoryAssignmentPattern1 = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-Z]+)(<-|:=)(memoria|memory)\\[(R([0-9]|1[0-4])|[a-zA-Z]+)(\\+(R([0-9]|1[0-4])|[a-zA-Z]+|[0-9]+|0x([0-9]|[a-f])+))?]", Pattern.CASE_INSENSITIVE);
@@ -49,20 +49,21 @@ public class ArmGenerator extends Generator {
 
     /**
      * ALTERNATIVE/WHILE PATTERNS
-     **/
-
+     *
+     */
     private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
 
-    private final boolean t = !Element.ARM_VISUAL;
+    private final boolean t = !Element.ARM_GNU;
 
     protected HashMap<String, TypeMapEntry> typeMap;
-    // Variabili globali utilizzate per tener conto del numero di blocchi identici presenti nel codice
     private int arrayCounter = 0;
     private int COUNTER = 0;
     private String[] difference = {":", "#", ".data", ".text"};
     private HashMap<String, String> variables = new HashMap<>();
 
-    /************ Fields ***********************/
+    /**
+     * ********** Fields **********************
+     */
     @Override
     protected String getDialogTitle() {
         return "Export ARM ...";
@@ -148,18 +149,30 @@ public class ArmGenerator extends Generator {
     protected void generateInstructionLine(String line, boolean isDisabled) {
         line = variablesToRegisters(line);
         switch (getMode(line)) {
-            case "Assignment" -> generateAssignment(line, isDisabled);
-            case "Expression" -> generateExpr(line, isDisabled);
-            case "Memory" -> generateMemAss(line, isDisabled);
-            case "AExpression" -> generateArrayExpr(line, isDisabled);
-            case "AAssignment" -> generateArrayAssign(line, isDisabled);
-            case "AInitialization" -> generateArrayIniz(line, isDisabled);
-            case "Address" -> generateIndAss(line, isDisabled);
-            case "BooleanAssignment" -> generateAssignment(line.replace("true", "1").replace("false", "0"), isDisabled);
-            case "StringAInitialization" -> generateString(line, isDisabled);
-            case "CharAInitialization" -> generateAssignment(line.replace("\"", "'"), isDisabled);
-            case "Instruction" -> addCode(line, "\t\t", isDisabled);
-            case "NotImplemented" -> appendComment("Error: Not implemented yet\n" + line, "\t\t");
+            case "Assignment" ->
+                generateAssignment(line, isDisabled);
+            case "Expression" ->
+                generateExpr(line, isDisabled);
+            case "Memory" ->
+                generateMemAss(line, isDisabled);
+            case "AExpression" ->
+                generateArrayExpr(line, isDisabled);
+            case "AAssignment" ->
+                generateArrayAssign(line, isDisabled);
+            case "AInitialization" ->
+                generateArrayIniz(line, isDisabled);
+            case "Address" ->
+                generateIndAss(line, isDisabled);
+            case "BooleanAssignment" ->
+                generateAssignment(line.replace("true", "1").replace("false", "0"), isDisabled);
+            case "StringAInitialization" ->
+                generateString(line, isDisabled);
+            case "CharAInitialization" ->
+                generateAssignment(line.replace("\"", "'"), isDisabled);
+            case "Instruction" ->
+                addCode(line, "\t\t", isDisabled);
+            case "NotImplemented" ->
+                appendComment("Error: Not implemented yet\n" + line, "\t\t");
         }
     }
 
@@ -173,7 +186,7 @@ public class ArmGenerator extends Generator {
 
         if (topLevel) {
             code.add(difference[2]);
-            code.add(difference[3]);
+            code.add(difference[3] + "\n");
         }
 
         generateBody(_root, _indent);
@@ -203,7 +216,6 @@ public class ArmGenerator extends Generator {
         }
     }
 
-
     // Generate code for If instruction
     @Override
     protected void generateCode(Alternative _alt, String _indent) {
@@ -229,11 +241,11 @@ public class ArmGenerator extends Generator {
         String k;
 
         // Check if the q false exist (we wont empty code blocks)
-        if (_alt.qFalse.getSize() != 0)
+        if (_alt.qFalse.getSize() != 0) {
             k = "else";
-        else
+        } else {
             k = "end";
-
+        }
 
         String[] key = {k, "then"};
         // Generate the alternative code with multiCondition
@@ -250,8 +262,9 @@ public class ArmGenerator extends Generator {
 
         // Check the empty blocks for adding the right labels and the branch instructions
         if (_alt.qFalse.getSize() != 0) {
-            if (_alt.qTrue.getSize() != 0)
+            if (_alt.qTrue.getSize() != 0) {
                 addCode("B end_" + counter, "\t\t", isDisabled);
+            }
             // Aggiungiamo il nome del blocco else
             addCode("else_" + counter + difference[0], "", isDisabled);
             // generiamo il codice del blocco else
@@ -264,9 +277,7 @@ public class ArmGenerator extends Generator {
         unifyFlow();
     }
 
-
     // Generate code for Switch instruction
-
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + "\t\t");
 
@@ -300,7 +311,6 @@ public class ArmGenerator extends Generator {
             // add it
             addCode(c, "", isDisabled);
 
-
         }
 
         // Now we need to add the labels for the block
@@ -330,7 +340,6 @@ public class ArmGenerator extends Generator {
         appendComment(_for, _indent + "\t\t");
 
         // As always we check the t variable
-
         if (t) {
             difference[0] = "";
             difference[1] = "";
@@ -365,7 +374,6 @@ public class ArmGenerator extends Generator {
             }
 
             // Let's add the # if we need it
-
             if (!startValueStr.startsWith("#") && !startValueStr.startsWith("R")) {
                 startValueStr = "#" + startValueStr;
             }
@@ -378,7 +386,6 @@ public class ArmGenerator extends Generator {
             }
 
             //Write the code for the For
-
             String mov = "\t\tMOV " + counterStr + " , " + startValueStr + "\n";
             String cmp = "for_" + counter + difference[0] + "\n\t\tCMP " + counterStr + " ," + endValueStr + "\n";
 
@@ -407,7 +414,6 @@ public class ArmGenerator extends Generator {
         }
     }
 
-
     // Generate code for While instruction
     @Override
     protected void generateCode(While _while, String _indent) {
@@ -418,7 +424,6 @@ public class ArmGenerator extends Generator {
             appendComment("Wrong condition syntax", "\t\t");
             return;
         }
-
 
         if (t) {
             difference[0] = "";
@@ -459,7 +464,6 @@ public class ArmGenerator extends Generator {
 
         int counter = COUNTER;
 
-
         String[] key = {"do", "continue"};
         String condition = _repeat.getUnbrokenText().getLongString().trim();
         condition = condition.replace("until", "").replace("(", "").replace(")", "");
@@ -484,7 +488,6 @@ public class ArmGenerator extends Generator {
         appendComment(_forever, _indent + "\t\t");
 
         int counter = COUNTER;
-
 
         // Create While True Block
         addCode("whileTrue_" + counter + difference[0], "", isDisabled);
@@ -520,14 +523,12 @@ public class ArmGenerator extends Generator {
     }
 
     // Not supported
-
     @Override
     protected void generateCode(Jump _jump, String _indent) {
         appendComment("================= NOT SUPPORTED FIND AN EQUIVALENT =================", "");
     }
 
     // Not supported
-
     @Override
     protected void generateCode(Parallel _para, String _indent) {
 
@@ -550,15 +551,13 @@ public class ArmGenerator extends Generator {
     }
 
 //////// TODO from this point we got all method used for supporting the translation (maybe we can put them in another class)
-
-
     /* Translates multiple conditions, takes the condition, counter, keywords as inputs
     EXAMPLE: condition = "R0 < R1 and R1 > R2", counter = 1, key[then, else]
     in prima posizione va il blocco contenente la keyword corrispondente al successo dell'operazione,
     in seconda posizione il blocco corrispondente al fallimento dell'operazione.
 
     If there are condition with "and" and "or" a good translation.
-    */
+     */
     protected String multiCondition(String condition, boolean reverse, String[] key) {
         int counter = COUNTER;
         COUNTER = COUNTER + 1;
@@ -583,10 +582,7 @@ public class ArmGenerator extends Generator {
         return c;
     }
 
-
     // This method is used for the instruction of operator like (=, >, <, ...)
-
-
     protected String[] getVariable(String condition, boolean reverse) {
         condition = condition.replace("==", "=");
         String op = "";
@@ -613,8 +609,7 @@ public class ArmGenerator extends Generator {
                 op = "BEQ";
                 sep = "=";
             }
-        }
-        // Altrimenti ritorna l'operazione opposta ed il separatore corrispondente
+        } // Altrimenti ritorna l'operazione opposta ed il separatore corrispondente
         else {
             if (condition.contains(">=")) {
                 op = "BLT";
@@ -644,9 +639,9 @@ public class ArmGenerator extends Generator {
 
         // TODO Change this for the other compiler
         // Aggiungo l'asterisco
-
-        if (!variable[2].startsWith("R"))
+        if (!variable[2].startsWith("R")) {
             variable[2] = "#" + variable[2] + "";
+        }
 
         return variable;
 
@@ -688,9 +683,7 @@ public class ArmGenerator extends Generator {
 
             // Aumento il contatore
             arrayCounter = arrayCounter + 1;
-        }
-
-        // If the assignment doesn't use a register but a variable
+        } // If the assignment doesn't use a register but a variable
         else {
 
             String[] t = varName.split(" ");
@@ -710,7 +703,6 @@ public class ArmGenerator extends Generator {
         }
 
     }
-
 
     // Genera codice per Array:
     /*
@@ -733,8 +725,9 @@ public class ArmGenerator extends Generator {
                 int dim = Integer.parseInt(returnDim(arName));
                 index = (int) (index * Math.pow(2, dim));
                 addCode("STR " + expr + ", [" + arName + ", #" + index + "]", "\t\t", isDisabled);
-            } else
+            } else {
                 appendComment("The array " + arName + " is not inizialized", "\t\t");
+            }
 
         } else if (arr[1].contains("R")) {
             // word v <- {1, 2, 3}
@@ -766,8 +759,9 @@ public class ArmGenerator extends Generator {
         String arName = expr.split("\\[")[0];
 
         // array size
-        if (!t)
+        if (!t) {
             dim = returnDim(arName);
+        }
 
         if (!tokens[1].split("\\[")[1].startsWith("R") && dim != null) {
             // Find index
@@ -785,10 +779,11 @@ public class ArmGenerator extends Generator {
                 rIndex = difference[1] + rIndex;
             }
 
-            if (!dim.equals("0"))
+            if (!dim.equals("0")) {
                 addCode("LDR " + varName + ", [" + arName + ", " + rIndex + ", LSL #" + dim + "]", "\t\t", isDisabled);
-            else
+            } else {
                 addCode("LDR " + varName + ", [" + arName + ", " + rIndex + "]", "\t\t", isDisabled);
+            }
         } else {
             appendComment("The array is not initialized", "\t\t");
         }
@@ -806,18 +801,18 @@ public class ArmGenerator extends Generator {
         String expr = tokens[1];    // Original expression
         String varName = tokens[0];
 
-        if (expr.startsWith("R") || expr.startsWith("r"))
+        if (expr.startsWith("R") || expr.startsWith("r")) {
             c = "MOV " + varName + ", " + expr;
-        else if (expr.contains("-"))
+        } else if (expr.contains("-")) {
             c = isNegative(varName, expr);
-        else
+        } else {
             c = getInstructionConstant(varName, expr);
+        }
 
         addCode(c, "\t\t", isDisabled);
     }
 
     // Simple expression without array
-
     protected void generateExpr(String line, boolean isDisabled) {
         line = line.replace(" ", "");
         String[] tokens = line.split("<-|:=");
@@ -834,36 +829,34 @@ public class ArmGenerator extends Generator {
         if (expr.contains("MUL") && variable[0].contains("R") && variable[2].contains("R")) {
             addCode("LSL " + varName + ", " + variable[0] + ", " + variable[2], "\t\t", isDisabled);
             op = 0;
-        }
-
-        // Variable register
+        } // Variable register
         else if (expr.contains("MUL") && !variable[0].contains("R") && variable[2].contains("R")) {
             int val = Integer.parseInt(variable[0]);
             // Mi ricavo il valore per il quale shiftare
             op = multiply(val);
-            if (isPowerOfTwo(val))
-                // aggiungo l'operazione di shift
+            if (isPowerOfTwo(val)) // aggiungo l'operazione di shift
+            {
                 addCode("LSL " + varName + ", " + variable[2] + ", " + "#" + op, "\t\t", isDisabled);
-            else if (isPowerOfTwo(val - 1))
-                // se il numero non era una potenza di due aggiungo l'operazione di add
+            } else if (isPowerOfTwo(val - 1)) // se il numero non era una potenza di due aggiungo l'operazione di add
+            {
                 addCode("ADD " + varName + ", " + variable[2] + ", LSL " + variable[2] + ", " + "#" + op, "\t\t", isDisabled);
-            else
+            } else {
                 addCode(String.format("MUL %s, %s, #%s", varName, variable[2], val), "\t\t", isDisabled);
-        }
-
-        // Register variable
+            }
+        } // Register variable
         else if (expr.contains("MUL") && variable[0].contains("R") && !variable[2].contains("R")) {
             // ricavo il valore per il quale shiftare
             int val = Integer.parseInt(variable[2]);
             boolean powerTwo = isPowerOfTwo(val);
             op = multiply(val);
-            if (powerTwo)
-                // aggiungo l'operazione di shift
+            if (powerTwo) // aggiungo l'operazione di shift
+            {
                 addCode("LSL " + varName + ", " + variable[0] + ", " + "#" + op, "\t\t", isDisabled);
-            else if (isPowerOfTwo(val - 1))
+            } else if (isPowerOfTwo(val - 1)) {
                 addCode("ADD " + varName + ", " + variable[0] + ", LSL " + variable[0] + ", " + "#" + op, "\t\t", isDisabled);
-            else
+            } else {
                 addCode(String.format("MUL %s, %s, #%s", varName, variable[0], val), "\t\t", isDisabled);
+            }
         }
 
         line = line.replace(" ", "");
@@ -946,8 +939,8 @@ public class ArmGenerator extends Generator {
 
     /**
      * Transforms a string in a char array
-     **/
-
+     *
+     */
     public void generateString(String line, boolean isDisabled) {
         line = line.replace(" ", "");
         String[] split = line.split("<-|:=");
@@ -957,8 +950,9 @@ public class ArmGenerator extends Generator {
 
         for (int i = 0; i < split[1].length(); i++) {
             array.append("'").append(split[1].charAt(i)).append("'");
-            if (i != split[1].length() - 1)
+            if (i != split[1].length() - 1) {
                 array.append(", ");
+            }
         }
 
         generateArrayIniz(String.format(c, split[0], array), isDisabled);
@@ -968,7 +962,6 @@ public class ArmGenerator extends Generator {
      * Returns an available register
      * Else returns null
      */
-
     protected String notUsedRegister(String line) {
         String[] register = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11"};
 
@@ -994,7 +987,6 @@ public class ArmGenerator extends Generator {
             /* If row i contains register, instruction adr and 'v'
              * then we found where the array gets assigned to a register.
              */
-
             if (c[i].contains(register) && c[i].contains("ADR") && c[i].contains("v")) {
 
                 tokens = c[i].split(",");
@@ -1037,9 +1029,7 @@ public class ArmGenerator extends Generator {
             if (i + 1 < v.length) {
 
                 next = v[i + 1];
-            }
-
-            // Altrimenti inseriamo un carattere di fine array
+            } // Altrimenti inseriamo un carattere di fine array
             else {
                 next = "£";
             }
@@ -1052,8 +1042,9 @@ public class ArmGenerator extends Generator {
             } else if (next.startsWith("|")) {
                 reverse = false;
                 j = 1;
-                if (v[i].startsWith("!"))
+                if (v[i].startsWith("!")) {
                     reverse = true;
+                }
             }
 
             String[] act = getVariable(v[i], reverse);
@@ -1068,7 +1059,6 @@ public class ArmGenerator extends Generator {
     /*
      *  Returns array dim
      */
-
     protected String returnDim(String register) {
 
         String r = findArrayType(register);
@@ -1104,8 +1094,9 @@ public class ArmGenerator extends Generator {
 
     /* Function to check if x is power of 2*/
     protected boolean isPowerOfTwo(int n) {
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         double v = Math.log(n) / Math.log(2);
         return (int) (Math.ceil(v)) == (int) (Math.floor(v));
@@ -1113,50 +1104,52 @@ public class ArmGenerator extends Generator {
 
     protected String getOperation(String expr) {
 
-        if (expr.contains("+"))
+        if (expr.contains("+")) {
             return "+";
-        if (expr.contains("*"))
+        }
+        if (expr.contains("*")) {
             return "*";
-        if (expr.contains("-"))
+        }
+        if (expr.contains("-")) {
             return "-";
+        }
 
         return null;
     }
 
     /*  getMode uses regexes to verify which ARM instruction is line1 */
-
     public String getMode(String line1) {
         String line = line1.replace(" ", "");
         String mode = "NotImplemented";
-        if (booleanAssignmentPattern.matcher(line).matches())
+        if (booleanAssignmentPattern.matcher(line).matches()) {
             mode = "BooleanAssignment";
-        else if (assignmentPattern.matcher(line).matches())
+        } else if (assignmentPattern.matcher(line).matches()) {
             mode = "Assignment";
-        else if (expressionAssignment.matcher(line).matches())
+        } else if (expressionAssignment.matcher(line).matches()) {
             mode = "Expression";
-        else if (memoryAssignmentPattern1.matcher(line).matches())
+        } else if (memoryAssignmentPattern1.matcher(line).matches()) {
             mode = "Memory";
-        else if (memoryAssignmentPattern2.matcher(line).matches())
+        } else if (memoryAssignmentPattern2.matcher(line).matches()) {
             mode = "Memory";
-        else if (arrayExpressionPattern.matcher(line).matches())
+        } else if (arrayExpressionPattern.matcher(line).matches()) {
             mode = "AExpression";
-        else if (arrayAssignmentPattern.matcher(line).matches())
+        } else if (arrayAssignmentPattern.matcher(line).matches()) {
             mode = "AAssignment";
-        else if (stringInitializationPattern.matcher(line).matches())
+        } else if (stringInitializationPattern.matcher(line).matches()) {
             mode = "StringAInitialization";
-        else if (charInitializationPattern.matcher(line).matches())
+        } else if (charInitializationPattern.matcher(line).matches()) {
             mode = "CharAInitialization";
-        else if (arrayInitializationPattern.matcher(line).matches())
+        } else if (arrayInitializationPattern.matcher(line).matches()) {
             mode = "AInitialization";
-        else if (address.matcher(line).matches())
+        } else if (address.matcher(line).matches()) {
             mode = "Address";
-        else if (isArmInstruction(line))
+        } else if (isArmInstruction(line)) {
             mode = "Instruction";
+        }
         return mode;
     }
 
     // Changes variables to a register
-
     public void setVariables(String line) {
         String Rl;
         String[] tokens = line.split("<-|:=|(R([0-9]|1[0-4])|0x([0-9]|[a-fA-F])+|[0-9]+|[+*-]|(memoria|memory)\\[|]|\\[)");
@@ -1172,8 +1165,9 @@ public class ArmGenerator extends Generator {
 
                 line = line + Rl; //i <- j + kR0R1R2
 
-                if (!variables.containsKey(s))
+                if (!variables.containsKey(s)) {
                     variables.put(s, Rl);
+                }
             }
         }
     }
@@ -1211,8 +1205,9 @@ public class ArmGenerator extends Generator {
         if (_line.contains("<-") || _line.contains(":=")) {
             String[] parts = _line.split("<-|:=");
             value = parts[1].split("\\(")[0];
-        } else
+        } else {
             value = _line.split("\\(")[0];
+        }
 
         return value;
     }
@@ -1223,10 +1218,11 @@ public class ArmGenerator extends Generator {
         for (String s : register) {
             String c = code.getText();
             if (c.contains(s)) {
-                if (_usedRegister.equals(""))
+                if (_usedRegister.equals("")) {
                     _usedRegister += s;
-                else
+                } else {
                     _usedRegister += ", " + s;
+                }
             }
         }
         return _usedRegister;
@@ -1252,48 +1248,51 @@ public class ArmGenerator extends Generator {
         int UINT12MAX = 4096;
         String c;
         try {
-            if (value.contains("'"))
+            if (value.contains("'")) {
                 c = "MOV " + register + ", #" + value;
-            else if (Integer.parseInt(value) >= UINT12MAX)
+            } else if (Integer.parseInt(value) >= UINT12MAX) {
                 c = "LDR " + register + ", =" + value;
-            else
+            } else {
                 c = "MOV " + register + ", #" + value;
+            }
         } catch (NumberFormatException e) {
             value = value.replace("0x", "");
             int hexValue = Integer.parseInt(value, 16);
-            if (hexValue < UINT12MAX)
+            if (hexValue < UINT12MAX) {
                 c = "MOV " + register + ", #0x" + value;
-            else
+            } else {
                 c = "LDR " + register + ", =0x" + value;
+            }
         }
         return c;
     }
 
     /*
     Replaces variables with registers
-    */
-
+     */
     public String variablesToRegisters(String line) {
         String[] lineSplit = line.split(" ?(<-|:=|\\{|}|\\[|\\(|\\)|-|\\+|\\*|<|>|>=|<=|==|=|,|!=|(indirizzo|address)\\([\\w]+\\)|(memoria|memory)\\[|]) ?");
         ArrayList<String> splitted = new ArrayList<>();
 
         for (String s : lineSplit) {
-            if (!s.equals(""))
+            if (!s.equals("")) {
                 splitted.add(s);
+            }
         }
 
         String newS = line;
         for (String s : splitted) {
             String f = checkVariables(s, newS);
-            if (f != null && !isArmInstruction(line))
+            if (f != null && !isArmInstruction(line)) {
                 newS = newS.replace(s, f);
+            }
         }
         return newS;
     }
 
     /*
     Returns true if key is a register
-    */
+     */
     public boolean isNotRegister(String key) {
         key = key.replace(" ", "").replace("r", "R");
         String[] registers = {"R1", "R2", "R3", "R0", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12"};
@@ -1308,7 +1307,7 @@ public class ArmGenerator extends Generator {
 
     /*
     Key contains the variable, oldKey contains already assigned variables
-    */
+     */
     public void setVariables(String key, String oldKey) {
         String Rl;
         if (!key.equals("")) {
@@ -1318,8 +1317,9 @@ public class ArmGenerator extends Generator {
                 return;
             }
 
-            if (!variables.containsKey(key))
+            if (!variables.containsKey(key)) {
                 variables.put(key, Rl);
+            }
         }
     }
 
@@ -1333,8 +1333,9 @@ public class ArmGenerator extends Generator {
             Integer.parseInt(key);
         } catch (NumberFormatException e) {
             if (isNotRegister(key) && !key.startsWith("0x") && !key.contains("'") && !key.contains("\"") && !type.matcher(key).matches()) {
-                if (!variables.containsKey(key))
+                if (!variables.containsKey(key)) {
                     setVariables(key, oldKey);
+                }
                 key = variables.get(key);
             }
         }
@@ -1343,20 +1344,20 @@ public class ArmGenerator extends Generator {
     }
 
     // A list of prefixes that we can use for the debugger
-
     public boolean isArmInstruction(String line) {
         String[] instruction = {
-                "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
-                "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
-                "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
-                "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
-                "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
-                "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
+            "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
+            "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
+            "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
+            "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
+            "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
+            "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
         };
         line = line.toLowerCase();
         for (String s : instruction) {
-            if (line.contains(s))
+            if (line.contains(s)) {
                 return true;
+            }
         }
         return false;
     }
