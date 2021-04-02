@@ -18,7 +18,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-// VERSION 2.1
 
 package lu.fisch.structorizer.generators;
 
@@ -130,7 +129,7 @@ public class ArmGenerator extends Generator {
      * If the variable is true then the generator will translate the code for the GNU compiler
      * else the generator will translate the code for the Keil compiler
      */
-    private final boolean gnuEnabled = !Element.ARM_GNU;
+    private final boolean gnuEnabled = Element.ARM_GNU;
 
     /**
      * Variable used for naming arrays (v_0, v_1...)
