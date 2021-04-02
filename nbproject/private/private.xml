@@ -6,6 +6,9 @@
         <group>
             <file>file:/Users/ale/NetBeansProjects/Structorizer.Desktop/src/lu/fisch/structorizer/elements/Element.java</file>
             <file>file:/Users/ale/NetBeansProjects/Structorizer.Desktop/src/lu/fisch/structorizer/gui/Diagram.java</file>
+            <file>file:/Users/ale/NetBeansProjects/Structorizer.Desktop/src/lu/fisch/structorizer/generators/ArmGenerator.java</file>
+            <file>file:/Users/ale/NetBeansProjects/Structorizer.Desktop/src/lu/fisch/structorizer/locales/it.txt</file>
+            <file>file:/Users/ale/NetBeansProjects/Structorizer.Desktop/src/lu/fisch/utils/StringList.java</file>
         </group>
     </open-files>
 </project-private>
