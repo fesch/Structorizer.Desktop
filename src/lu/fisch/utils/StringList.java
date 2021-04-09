@@ -16,48 +16,49 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+*/
+
 package lu.fisch.utils;
 
-/**
- * ****************************************************************************************************
+/******************************************************************************************************
  *
- * Author: Bob Fisch
+ *      Author:         Bob Fisch
  *
- * Description: A dynamic list of strings. Copies the behaviour of a
- * "TStringList" in Delphi.
- *
- ******************************************************************************************************
- *
- * Revision List
- *
- * Author Date Description ------ ---- ----------- Bob Fisch 2007.12.09 First
- * Issue Kay Gürtzig 2015.11.04 Methods indexOf added. Kay Gürtzig 2015.11.24
- * Method clear added. Kay Gürtzig 2015.12.01 Methods replaceAll, replaceAllCi
- * added. Kay Gürtzig 2015.12.01 Methods concatenate(...) added; getText() etc.
- * reduced to them. Kay Gürtzig 2016.01.08 Method replaceAllBetween() added,
- * replaceAll etc. reduced to it. Kay Gürtzig 2016.03.26 Method subSequence()
- * added. Kay Gürtzig 2016.04.03 Method int removeAll(StringList, int, boolean)
- * added Bob Fisch 2016.08.01 added method "toArray()" and "remove(int)" (which
- * is a synonym to delete(int)) Kay Gürtzig 2017.01.31 Method remove(int,int)
- * added. Kay Gürtzig 2017.03.31 Methods addOrderedIfNew and addByLengthIfNew
- * revised (now with return value) Kay Gürtzig 2017.06.18 Methods
- * explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore) Kay
- * Gürtzig 2017.10.02 New functional variant with null separator for methods
- * concatenate(...) Kay Gürtzig 2017.10.28 Method trim() added. Kay Gürtzig
- * 2019-02-15 Method isEmpty() added Kay Gürtzig 2019-03-03 Bugfix in method
- * explodeFirstOnly(String, String) Kay Gürtzig 2019-03-05 New method variants
- * explodeWithDelimiter() for case-independent splitting Kay Gürtzig 2019-11-20
- * New methods count(String), count(String, boolean), insert(StringList, int)
- * Kay Gürtzig 2020-03-18 Internal bugfix KGU#827 in toString, getCommaText() -
- * caused errors with null elements
+ *      Description:    A dynamic list of strings.
+ *						Copies the behaviour of a "TStringList" in Delphi.
  *
  ******************************************************************************************************
  *
- * Comment:	/
+ *      Revision List
  *
- *****************************************************************************************************
- */
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.11.04      Methods indexOf added.
+ *      Kay Gürtzig     2015.11.24      Method clear added.
+ *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
+ *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
+ *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
+ *      Kay Gürtzig     2016.03.26      Method subSequence() added.
+ *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
+ *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
+ *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
+ *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
+ *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
+ *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
+ *      Kay Gürtzig     2017.10.28      Method trim() added.
+ *      Kay Gürtzig     2019-02-15      Method isEmpty() added
+ *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
+ *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
+ *      Kay Gürtzig     2019-11-20      New methods count(String), count(String, boolean), insert(StringList, int)
+ *      Kay Gürtzig     2020-03-18      Internal bugfix KGU#827 in toString, getCommaText() - caused errors with null elements
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************/
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -158,12 +159,13 @@ public class StringList {
      * </tbody>
      * </table>
      *
-     * @see #explode(String, String)
-     * @see #explode(StringList, String)
-     * @see #explodeWithDelimiter(String, String, boolean)
      * @param _source - the string to be split
      * @param _by - the splitting regular expression
      * @return the StringLits containing all splitting shards
+     *
+     * @see #explode(String, String)
+     * @see #explode(StringList, String)
+     * @see #explodeWithDelimiter(String, String, boolean)
      */
     public static StringList explodeFirstOnly(String _source, String _by) {
         // START KGU 2019-03-03: Bugfix explodeFirstOnly("test=, pas =", "=") returned {"test", ", pas "} instead of {"test", ", pas ="}
@@ -377,6 +379,7 @@ public class StringList {
      * string will be inserted.
      *
      * @param _string
+     * 
      * @see #add(String)
      * @see #addOrderedIfNew(String)
      * @see #addIfNew(String)
@@ -411,6 +414,7 @@ public class StringList {
      * be inserted.
      *
      * @param _string the string to be inserted
+     * 
      * @see #add(String)
      * @see #addIfNew(String)
      * @see #addOrdered(String)
@@ -441,6 +445,7 @@ public class StringList {
      *
      * @param _string - The string to be added
      * @return true if the string was new
+     * 
      * @see #add(String)
      * @see #addOrdered(String)
      * @see #addOrderedIfNew(String)
@@ -461,6 +466,7 @@ public class StringList {
      *
      * @param _string - The string to be added
      * @return true if the string was new
+     * 
      * @see #add(String)
      * @see #addIfNew(String)
      * @see #addOrdered(String)
@@ -497,6 +503,7 @@ public class StringList {
      * no matter whether there might already be an equal string element in this.
      *
      * @param _string - The string to be added
+     * 
      * @see #add(String)
      * @see #addIfNew(String)
      * @see #addIfNew(StringList)
@@ -517,6 +524,7 @@ public class StringList {
      *
      * @param _string - The string to be added
      * @return true if some of the strings of _stringList was added
+     * 
      * @see #add(String)
      * @see #addIfNew(String)
      * @see #add(StringList)
@@ -563,6 +571,7 @@ public class StringList {
      * @param _backwardFrom - the index of the element from which (including!)
      * {@code _string} is looked for backwards.
      * @return element index or -1
+     * 
      * @see #indexOf(String)
      * @see #indexOf(String, boolean)
      * @see #indexOf(String, int)
@@ -886,6 +895,7 @@ public class StringList {
      *
      * @param str - the string to search for
      * @return the number of occurrences
+     * 
      * @see #count(String, boolean)
      */
     public int count(String _str) {
@@ -1019,24 +1029,6 @@ public class StringList {
             add(StringList.explode(buffer.toString(), "\n"));
         } catch (IOException ex) {
         }
-
-        /*		try
-		{
-			BTextfile inp = new BTextfile(_filename);
-			inp.reset();
-			strings.clear();
-			while(!inp.eof())
-			{
-				String s = inp.readln();
-				strings.add(s);
-			}
-			inp.close();
-		}
-		catch (Exception e)
-		{
-			System.out.println(e.getMessage());
-		}
-         */
     }
 
     public void saveToFile(String _filename) {
@@ -1045,12 +1037,6 @@ public class StringList {
             Writer out = new OutputStreamWriter(fos, "UTF-8");
             out.write(this.getText());
             out.close();
-            /*
-            BTextfile inp = new BTextfile(_filename);
-            inp.rewrite();
-            inp.write(this.getText());
-            inp.close();
-             */
         } catch (IOException ex) {
             System.err.println("StringListsaveToFile(): " + ex.getMessage());
         }
@@ -1185,12 +1171,16 @@ public class StringList {
 
     // START KGU#92 2015-12-01: New method to facilitate bugfix #41
     /**
-     * Replaces all elements being equal to the given string _stringOld by
-     * _stringNew
+     * Replaces all elements being equal to the given string {@code _stringOld}
+     * by {@code _stringNew}
      *
      * @param _stringOld - the searched string
-     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @param _stringNew - the string to replace occurrences of {@code _stringOld}
      * @return number of replacements
+     * 
+     * @see #replaceAllBetween(String, String, boolean, int, int)
+     * @see #replaceAllCi(String, String)
+     * @see #replaceIfContains(String, String)
      */
     public int replaceAll(String _stringOld, String _stringNew) {
         // START KGU#129 2016-01-08: Delegated to common submethod
@@ -1220,6 +1210,10 @@ public class StringList {
      * @param _stringOld - the searched string
      * @param _stringNew - the string to replace occurrences of _stringOld
      * @return number of replacements
+     * 
+     * @see #replaceAll(String, String)
+     * @see #replaceAllBetween(String, String, boolean, int, int)
+     * @see #replaceIfContains(String, String)
      */
     public int replaceAllCi(String _stringOld, String _stringNew) {
         // START KGU#129 2016-01-08: Delegated to common submethod
@@ -1255,6 +1249,10 @@ public class StringList {
      * @param _fromIndex - index of first element to be affected
      * @param _toIndex - index beyond the last element to be affected
      * @return number of replacements
+     * 
+     * @see #replaceAll(String, String)
+     * @see #replaceAllCi(String, String)
+     * @see #replaceIfContains(String, String)
      */
     public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _fromIndex, int _toIndex) {
         int nReplaced = 0;
@@ -1269,38 +1267,49 @@ public class StringList {
     }
     // END KGU#129 2016-01-08
 
-    // START AS 4 ARM
+    // START AS 2021-03-25: Enh. #967 (for ARMGenerator)
     /**
-     * Replaces all elements that contains the
-     * given string _stringOld by _stringNew.
+     * Replaces string {@code _stringOld} by {@code _stringNew} in all elements.
      *
      * @param _stringOld - the searched string
-     * @param _stringNew - the string to replace occurrences of _stringOld
-     * @return number of replacements
+     * @param _stringNew - the string to replace occurrences of {@code _stringOld}
+     * 
+     * @see #replaceAll(String, String)
+     * @see #replaceAllCi(String, String)
+     * @see #replaceAllBetween(String, String, boolean, int, int)
      */
     public void replaceIfContains(String _stringOld, String _stringNew) {
-        String c="";
         for (int i = 0; i < count(); i++) {
-            c = strings.get(i).replace(_stringOld, _stringNew);
+            String c = strings.get(i).replace(_stringOld, _stringNew);
             strings.setElementAt(c, i);
         }
     }
-    // END AS 4 ARM
+    // END AS 2021-03-25
+    
     @Override
     public String toString() {
-        // START KGU#827 2020-03-18 - result should be paranthesized
+        // START KGU#827 2020-03-18 - result should be parenthesized
         //return getCommaText();
         return "[" + getCommaText() + "]";
         // END KGU#827 2020-03-18
     }
 
     // START KGU 2015-11-24
+    /**
+     * Empties this StringList.
+     */
     public void clear() {
         this.strings.clear();
     }
     // END KGU 2015-11-24
 
     // START BOB 2016-08-01
+    /**
+     * Creates a String array with same elements as this contains.
+     * (This means that elements containing newlines will be copied to
+     * the array 1:1.)
+     * @return the resulting strung array
+     */
     public String[] toArray() {
         String[] array = new String[count()];
         for (int i = 0; i < count(); i++) {
@@ -1344,6 +1353,7 @@ public class StringList {
      * this!
      *
      * @return this StringList after having been trimmed.
+     * 
      * @see #removeAll(String)
      * @see #removeAll(String, boolean)
      * @see #remove(int)

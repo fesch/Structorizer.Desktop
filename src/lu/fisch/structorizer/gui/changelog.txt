@@ -19,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.31-02 (2021-03-08)
+Current development version 3.31-03 (2021-04-09)
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,
@@ -40,6 +40,7 @@ Current development version 3.31-02 (2021-03-08)
 - 02: Substantial progress in the Italian localisation <Alessandro Simonetta et al.>
 - 02: Localisations for plugin-specific import options added (DE, ES) <2>
 - 02: Issue #964: Processing import shall not place a draw() loop without draw() <2>
+- 03: Enh. #967: Generator for ARM code introduced <Alessandro Simonetta et al.>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>

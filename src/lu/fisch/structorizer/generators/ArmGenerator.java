@@ -21,6 +21,28 @@
 
 package lu.fisch.structorizer.generators;
 
+/******************************************************************************************************
+*
+*      Author:         Alessandro Simonetta et al.
+*
+*      Description:    Generaor class
+*
+******************************************************************************************************
+*
+*      Revision List
+*
+*      Author          Date            Description
+*      ------          ----            -----------
+*      See @author     2021-03-25      Provided per Pull request on Enh. #96
+*      A. Simonetta    2021-04-02      Several revisions as requested
+*      Kay Gürtzig     2020-04-09      Syntax correction, some adaptations to fit into Structorizer environment
+*
+******************************************************************************************************
+*
+*      Comment:
+*
+******************************************************************************************************///
+
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.utils.StringList;
 
@@ -31,12 +53,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
+ * Description: This class generates ARM code.
  * @author Daniele De Menna
  * @author Robert Dorinel Milos
  * @author Alessandro Simonetta,
  * @author Giulio Palumbo
  * @author Maurizio Fiusco
- * Description: This class generates ARM code.
  */
 public class ArmGenerator extends Generator {
 
@@ -630,39 +652,52 @@ public class ArmGenerator extends Generator {
         String newline;
         ARM_OPERATIONS mode = getMode(line);
 
-        if (mode == ARM_OPERATIONS.ASSIGNMENT) {
+        switch (mode) {
+        case ASSIGNMENT:
             newline = variablesToRegisters(line);
             generateAssignment(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.EXPRESSION) {
+            break;
+        case EXPRESSION:
             newline = variablesToRegisters(line);
             generateExpr(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.MEMORY) {
+            break;
+        case MEMORY:
             newline = variablesToRegisters(line);
             generateMemoryAssignment(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.ARRAY_EXPRESSION) {
+            break;
+        case ARRAY_EXPRESSION:
             newline = variablesToRegisters(line);
             generateArrayExpr(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.ARRAY_ASSIGNMENT) {
+            break;
+        case ARRAY_ASSIGNMENT:
             newline = variablesToRegisters(line);
             generateArrayAssignment(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.ARRAY_INITIALIZATION) {
+            break;
+        case ARRAY_INITIALIZATION:
             generateArrayInitialization(line, isDisabled);
-        } else if (mode == ARM_OPERATIONS.ADDRESS) {
+            break;
+        case ADDRESS:
             generateAddressAssignment(line, isDisabled);
-        } else if (mode == ARM_OPERATIONS.BOOLEAN_ASSIGNMENT) {
+            break;
+        case BOOLEAN_ASSIGNMENT:
             newline = variablesToRegisters(line);
             generateAssignment(newline.replace("true", "1").replace("false", "0"), isDisabled);
-        } else if (mode == ARM_OPERATIONS.STRING_ARRAY_INITIALIZATION) {
+            break;
+        case STRING_ARRAY_INITIALIZATION:
             newline = variablesToRegisters(line);
             generateString(newline, isDisabled);
-        } else if (mode == ARM_OPERATIONS.CHAR_ARRAY_INITIALIZATION) {
+            break;
+        case CHAR_ARRAY_INITIALIZATION:
             newline = variablesToRegisters(line);
             generateAssignment(newline.replace("\"", "'"), isDisabled);
-        } else if (mode == ARM_OPERATIONS.INSTRUCTION) {
+            break;
+        case INSTRUCTION:
             newline = variablesToRegisters(line);
             addCode(newline, getIndent(), isDisabled);
-        } else if (mode == ARM_OPERATIONS.NOT_IMPLEMENTED) {
+            break;
+        case NOT_IMPLEMENTED:
             appendComment("Error: Not implemented yet\n" + line, getIndent());
+            break;
         }
     }
 
@@ -1526,6 +1561,6 @@ public class ArmGenerator extends Generator {
 
         result.add(item.toString());
 
-        return result.toArray(String[]::new);
+        return result.toArray(new String[result.size()]);
     }
 }
