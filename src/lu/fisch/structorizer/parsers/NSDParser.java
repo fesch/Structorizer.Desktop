@@ -975,7 +975,7 @@ public class NSDParser extends DefaultHandler {
 		// setup a new root
 		root = new Root();
 		
-    	// START KGU#363 2017-05-21: Enh. #372: Fetch the default modification data from the file
+		// START KGU#363 2017-05-21: Enh. #372: Fetch the default modification data from the file
 		// START KGU#363 2018-09-11: Bugfix - Zipped legacy diagrams without modification attribute always got current date
 		//root.fetchAuthorDates(_file);
 		root.fetchAuthorDates(_file, _zipFile);

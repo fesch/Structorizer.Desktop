@@ -207,6 +207,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-02-03      Issue #920: Acceptance of infinity as symbol ∞
  *      Kay Gürtzig     2021-02-24      Enh. #410: Additional namespace filter applied for callees and includables
  *      Kay Gürtzig     2021-02-28      Bugfix #947: Detection of cyclic inclusion added.
+ *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative currentDirectory (caused NPE)
  *
  ******************************************************************************************************
  *
@@ -343,6 +344,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -2853,15 +2855,24 @@ public class Executor implements Runnable
 	{
 		try
 		{
-			// STRT KGU#384 2017-04-22: Redesign of execution context
+			// START KGU#384 2017-04-22: Redesign of execution context
 			//interpreter = new Interpreter();
 			Interpreter interpreter = this.context.interpreter;
 			// END KGU#384 2017-04-22
 
 			// START KGU 2016-12-18: #314: Support for simple text file API
 			interpreter.set("executorFileMap", this.openFiles);
-			interpreter.set("executorCurrentDirectory", 
-					(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
+			// START KGU#969 2021-04-14: Bugfix #969 - beware of relative paths!
+			//interpreter.set("executorCurrentDirectory", 
+			//		(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
+			File currDir = diagram.currentDirectory;
+			if (currDir != null && currDir.exists() && !currDir.isDirectory()) {
+				currDir = currDir.getAbsoluteFile().getParentFile();
+			}
+			if (currDir != null) {
+				interpreter.set("executorCurrentDirectory", currDir.getAbsolutePath());
+			}
+			// END KGU#969 2021-04-14
 			// END KGU 2016-12-18
 
 			for (int i = 0; i < builtInFunctions.length; i++) {

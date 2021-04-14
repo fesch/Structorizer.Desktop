@@ -228,6 +228,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-01      Bugfix #950: Arranger notifications were accidently switched off on code import
  *      Kay Gürtzig     2021-03-02      Bugfix #951: On FilesDrop for source files the language-specific options weren't used
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
+ *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
  *
  ******************************************************************************************************
  *
@@ -2365,8 +2366,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
 				}
 				root.filename = _filename;
-				currentDirectory = new File(root.filename);
-				addRecentFile(root.filename);
+				// START KGU#969 2021-04-14: Bugfix #969 - precaution against relative paths
+				//currentDirectory = new File(root.filename);
+				//addRecentFile(root.filename);
+				currentDirectory = f.getAbsoluteFile();
+				addRecentFile(f.getAbsolutePath());
+				// END KGU#969 2021-04-14
 				
 				// START KGU#183 2016-04-23: Issue #169
 				selected = root;
@@ -2558,7 +2563,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			arr.setVisible(true);
 			// START KGU#316 2016-12-28: Enh. #318
 			addRecentFile(arrFile.getAbsolutePath());
-			this.currentDirectory = arrFile;
+			// START KGU# 2021-04-14: Bugfix #969
+			//this.currentDirectory = arrFile;
+			this.currentDirectory = arrFile.getAbsoluteFile();
+			// END KGU# 2021-04-14
 			// END KGU#316 2016-12-28
 		}
 	}

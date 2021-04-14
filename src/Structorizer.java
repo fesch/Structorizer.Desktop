@@ -289,7 +289,7 @@ public class Structorizer
 				// END KGU#722 2019-08-06
 			}
 			// END KGU#538 2018-07-01
-			// START KGU#602 2018-10-25: Enh. #416
+			// START KGU#602 2018-10-25: Enh. #416 - line length constraint
 			else if (args[i].equals("-l") && parser != null && i+1 < args.length) {
 				// START KGU#722 2019-08-07: Enh. #741
 				if (openFound || generator == null && parser == null) {
