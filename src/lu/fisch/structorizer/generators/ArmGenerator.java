@@ -35,7 +35,8 @@ package lu.fisch.structorizer.generators;
 *      ------          ----            -----------
 *      See @author     2021-03-25      Provided per Pull request on Enh. #96
 *      A. Simonetta    2021-04-02      Several revisions as requested
-*      Kay Gürtzig     2020-04-09      Syntax correction, some adaptations to fit into Structorizer environment
+*      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
+*      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
 *
 ******************************************************************************************************
 *
@@ -227,13 +228,27 @@ public class ArmGenerator extends Generator {
 
     @Override
     public String generateCode(Root _root, String _indent, boolean _public) {
-        if (topLevel && gnuEnabled) {
-            code.add(difference[0][2]);
-            code.add(difference[0][3] + "\n");
-        } else if (topLevel) {
-            code.add(difference[1][2]);
-            code.add(difference[1][3] + "\n");
+        // START KGU#705 2021-04-14: Enh. #738 (Direct code changes compromise codeMap)
+        //if (topLevel && gnuEnabled) {
+        //    code.add(difference[0][2]);
+        //    code.add(difference[0][3] + "\n");
+        //} else if (topLevel) {
+        //    code.add(difference[1][2]);
+        //    code.add(difference[1][3] + "\n");
+        //}
+        int line0 = code.count();
+        if (codeMap!= null) {
+            // register the triple of start line no, end line no, and indentation depth
+            // (tab chars count as 1 char for the text positioning!)
+            codeMap.put(_root, new int[]{line0, line0, _indent.length()});
         }
+        if (topLevel) {
+            int variant = gnuEnabled ? 0 : 1;
+            addCode(difference[variant][2], "", false);
+            addCode(difference[variant][3], "", false);
+            addCode("", "", false);	// Just a newline
+        }
+        // END KGU#705 2021-04-14
 
         for (Map.Entry<String, String> entry : mVariables.entrySet()) {
             mVariables.put(entry.getKey(), "");
@@ -241,6 +256,12 @@ public class ArmGenerator extends Generator {
 
         generateBody(_root, _indent);
 
+        // START KGU#705 2019-09-23: Enh. #738
+        if (codeMap != null) {
+            // Update the end line no relative to the start line no
+            codeMap.get(_root)[1] += (code.count() - line0);
+        }
+        // END KGU#705 2019-09-23
         return code.getText();
     }
 
@@ -393,14 +414,14 @@ public class ArmGenerator extends Generator {
     protected void generateCode(For _for, String _indent) {
         appendComment(_for, _indent + getIndent());
 
-        String colon = difference[1][0];
+        // Check if option gnuEnabled is set on GNU or Keil.
+        int variant = gnuEnabled ? 0 : 1;
+        String colon = difference[variant][0];
 
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
-
-        boolean isDisabled = _for.isDisabled(true);
+        // START KGU 2021-04-14 Argument was wrong
+        //boolean isDisabled = _for.isDisabled(true);
+        boolean isDisabled = _for.isDisabled(false);
+        // END KGU 2021-04-14
 
         // Extract all the text from the block.
         String counterStr = _for.getCounterVar();
@@ -461,10 +482,11 @@ public class ArmGenerator extends Generator {
         int s = counter + 1;
 
         // This part is something similar to unifyFlow (we can do it better)
+        // FIXME (KGU) This might compromise highlighting ranges
         if (code.indexOf("end_" + counter + colon) == code.indexOf("end_" + s + colon) - 1) {
-            code.replaceIfContains("B end_" + s, "B end_" + counter);
-            code.replaceIfContains("end_" + s + colon, "");
-            code.replaceIfContains("end_" + s, "end_" + counter);
+            code.replaceInElements("B end_" + s, "B end_" + counter);
+            code.replaceInElements("end_" + s + colon, "");
+            code.replaceInElements("end_" + s, "end_" + counter);
         }
     }
 
@@ -1320,13 +1342,13 @@ public class ArmGenerator extends Generator {
             if (lines[i].startsWith("end_")) {
                 if (lines[i + 1].contains("B end_")) {
                     // Removes end_0:
-                    code.replaceIfContains(lines[i], "");
-                    code.replaceIfContains(lines[i].replace(":", ""), lines[i + 1].replace(getIndent() + "B ", ""));
+                    code.replaceInElements(lines[i], "");
+                    code.replaceInElements(lines[i].replace(":", ""), lines[i + 1].replace(getIndent() + "B ", ""));
                 }
                 if (lines[i + 1].startsWith("end_")) {
                     code.replaceAll(lines[i], lines[i] + ":");
-                    code.replaceIfContains(lines[i] + ":", "");
-                    code.replaceIfContains(lines[i].replace(":", ""), lines[i + 1].replace(":", "").replace("\"]", ""));
+                    code.replaceInElements(lines[i] + ":", "");
+                    code.replaceInElements(lines[i].replace(":", ""), lines[i + 1].replace(":", "").replace("\"]", ""));
                 }
             }
         }
@@ -1335,7 +1357,7 @@ public class ArmGenerator extends Generator {
     // FIXME This inserts after the first line of code! And it will confuse the code preview!
     // We need to append some information (array initializations) at the top of the code, if you have a way to do it we'd be glad to use it
     private void appendTop(String line) {
-        code.insert(line, 1);
+        insertCode(line, 1);
     }
 
     /**

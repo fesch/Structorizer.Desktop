@@ -33,25 +33,27 @@ package lu.fisch.utils;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.11.04      Methods indexOf added.
- *      Kay Gürtzig     2015.11.24      Method clear added.
- *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
- *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
- *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
- *      Kay Gürtzig     2016.03.26      Method subSequence() added.
- *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
- *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
- *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
- *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
- *      Kay Gürtzig     2017.06.18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
- *      Kay Gürtzig     2017.10.02      New functional variant with null separator for methods concatenate(...)
- *      Kay Gürtzig     2017.10.28      Method trim() added.
+ *      Bob Fisch       2007-12-09      First Issue
+ *      Kay Gürtzig     2015-11-04      Methods indexOf added.
+ *      Kay Gürtzig     2015-11-24      Method clear added.
+ *      Kay Gürtzig     2015-12-01      Methods replaceAll, replaceAllCi added.
+ *      Kay Gürtzig     2015-12-01      Methods concatenate(...) added; getText() etc. reduced to them.
+ *      Kay Gürtzig     2016-01-08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
+ *      Kay Gürtzig     2016-03-26      Method subSequence() added.
+ *      Kay Gürtzig     2016-04-03      Method int removeAll(StringList, int, boolean) added
+ *      Bob Fisch       2016-08-01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
+ *      Kay Gürtzig     2017-01-31      Method remove(int,int) added. 
+ *      Kay Gürtzig     2017-03-31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
+ *      Kay Gürtzig     2017-06-18      Methods explodeWithDelimiter() revised (don't mistake '_by' for a regex anymore)
+ *      Kay Gürtzig     2017-10-02      New functional variant with null separator for methods concatenate(...)
+ *      Kay Gürtzig     2017-10-28      Method trim() added.
  *      Kay Gürtzig     2019-02-15      Method isEmpty() added
  *      Kay Gürtzig     2019-03-03      Bugfix in method explodeFirstOnly(String, String)
  *      Kay Gürtzig     2019-03-05      New method variants explodeWithDelimiter() for case-independent splitting
  *      Kay Gürtzig     2019-11-20      New methods count(String), count(String, boolean), insert(StringList, int)
  *      Kay Gürtzig     2020-03-18      Internal bugfix KGU#827 in toString, getCommaText() - caused errors with null elements
+ *      A. Simonetta    2021-03-25      Issue #967: New method replaceIfContains
+ *      Kay Gürtzig     2021-04-09      Renamed method replaceIfContains to replaceInElements
  *
  ******************************************************************************************************
  *
@@ -1180,7 +1182,7 @@ public class StringList {
      * 
      * @see #replaceAllBetween(String, String, boolean, int, int)
      * @see #replaceAllCi(String, String)
-     * @see #replaceIfContains(String, String)
+     * @see #replaceInElements(String, String)
      */
     public int replaceAll(String _stringOld, String _stringNew) {
         // START KGU#129 2016-01-08: Delegated to common submethod
@@ -1213,7 +1215,7 @@ public class StringList {
      * 
      * @see #replaceAll(String, String)
      * @see #replaceAllBetween(String, String, boolean, int, int)
-     * @see #replaceIfContains(String, String)
+     * @see #replaceInElements(String, String)
      */
     public int replaceAllCi(String _stringOld, String _stringNew) {
         // START KGU#129 2016-01-08: Delegated to common submethod
@@ -1252,7 +1254,7 @@ public class StringList {
      * 
      * @see #replaceAll(String, String)
      * @see #replaceAllCi(String, String)
-     * @see #replaceIfContains(String, String)
+     * @see #replaceInElements(String, String)
      */
     public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _fromIndex, int _toIndex) {
         int nReplaced = 0;
@@ -1278,7 +1280,7 @@ public class StringList {
      * @see #replaceAllCi(String, String)
      * @see #replaceAllBetween(String, String, boolean, int, int)
      */
-    public void replaceIfContains(String _stringOld, String _stringNew) {
+    public void replaceInElements(String _stringOld, String _stringNew) {
         for (int i = 0; i < count(); i++) {
             String c = strings.get(i).replace(_stringOld, _stringNew);
             strings.setElementAt(c, i);
