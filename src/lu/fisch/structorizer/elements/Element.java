@@ -250,9 +250,10 @@ import javax.swing.ImageIcon;
  * @author Bob Fisch
  */
 public abstract class Element {
-        // START AS 4 ARM
-        public static boolean ARM_GNU=false;
-	// END AS 4 ARM
+	
+	// START AS 2021-03-25: Enh. #967 (ARM code variant) - KGU 2021-04-15 disabled
+	//public static boolean ARM_GNU = false;
+	// END AS 2021-03-25
 	/** This enumeration type distinguishes drawing contexts for selection display */
 	// START KGU#906 2021-01-06: Enh. #905 need another context to suppress triangles
 	//public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};

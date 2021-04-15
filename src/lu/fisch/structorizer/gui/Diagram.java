@@ -228,11 +228,16 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-02      Bugfix #951: On FilesDrop for source files the language-specific options weren't used
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
+ *      Kay Gürtzig     2021-04-16      Enh. #967: ARM code export options retrieved from Ini instead from menu item
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *      
+ *      2021-04-16 (Kay Gürtzig, #967 = ARM code export)
+ *      - Alessandro Simonetta had added a Dialog menu item to switch among two ARM code syntax versions
+ *        (GNU/KEIL). As this is not a diagram property, the mechanism was replaced by a plugin-specific
+ *        Boolean export option "gnuCode". On this occasion the option retrieval code had to be fixed.
  *      2016-07-31 (Kay Gürtzig, #158)
  *      - It turned out that circular horizontal selection move is not sensible. It compromises usability
  *        rather than it helps. With active horizontal mouse scrolling the respective diagram margin is
@@ -7135,7 +7140,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Export the given diagram {@code _root} to the programming language
 	 * associated to the generator {@code _generatorClassName}.
 	 *
-	 * @param _generatorClassName - class name of he generator to be used
+	 * @param _generatorClassName - class name of the generator to be used
 	 * @param _specificOptions - generator-specific options
 	 */
 	public void export(Root _root, String _generatorClassName, Vector<HashMap<String, String>> _specificOptions) {
@@ -7162,7 +7167,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#815 2020-03-20
 			// START KGU#395 2017-05-11: Enh. #357
-			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
+			// START KGU#968 2021-04-16: Enh. #967 turned out that the wrong class name was passed
+			//this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
+			this.setPluginSpecificOptions(gen, gen.getClass().getSimpleName(), _specificOptions);
+			// END KGU#968 2021-04-16
 			// END KGU#395 2017-05-11
 			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -7354,7 +7362,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (plugin.title.equals(generatorName)) {
 						Class<?> genClass = Class.forName(plugin.className);
 						gen = (Generator) genClass.getDeclaredConstructor().newInstance();
-						fetchPluginSpecificExportOptions(gen);
+						setPluginSpecificOptions(gen, plugin.getKey(), plugin.options);
 						String code = gen.deriveCode(root,
 								NSDControl.getFrame(),
 								arranger,
@@ -8717,20 +8725,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#705 2019-09-24
-	// START AS 4 ARM
-	/**
-	 * Sets the Element.ARM_VISUAL based on the menu choice 
-	 * 
-	 * @param _arm - true to switch in arm GNU mode (false for KEIL syntax compiler)
-	 */  
-	public void setOperationArmVisual(boolean _arm) {
-		Element.ARM_GNU = _arm;
-		this.resetDrawingInfo();
-		NSDControl.doButtons();
-		updateCodePreview();
-		redraw();
-	}
-	//END AS 4 ARM
+	
+	// START AS 2021-03-25: Enh. #967 (mode for ARM code export) - KGU 2021-04-15 replaced by export option
+	///**
+	// * Sets the Element.ARM_VISUAL based on the menu choice 
+	// * 
+	// * @param _arm - true to switch in arm GNU mode (false for KEIL syntax compiler)
+	// */  
+	//public void setOperationArmVisual(boolean _arm) {
+	//	Element.ARM_GNU = _arm;
+	//	this.resetDrawingInfo();
+	//	NSDControl.doButtons();
+	//	updateCodePreview();
+	//	redraw();
+	//}
+	//END AS 2021-03-25
+	
 	// START KGU#258 2016-09-26: Enh. #253
 	/**
 	 * Opens the import options dialog and processes configuration changes.

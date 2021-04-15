@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
 *      A. Simonetta    2021-04-02      Several revisions as requested
 *      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
 *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
+*      Kay Gürtzig     2021-04-15      Source for 
 *
 ******************************************************************************************************
 *
@@ -152,7 +153,10 @@ public class ArmGenerator extends Generator {
      * If the variable is true then the generator will translate the code for the GNU compiler
      * else the generator will translate the code for the Keil compiler
      */
-    private final boolean gnuEnabled = Element.ARM_GNU;
+    // START KGU#968 2021-04-15: Setting now comes from an export options
+    //private final boolean gnuEnabled = Element.ARM_GNU;
+    private boolean gnuEnabled = false;
+    // END KGU#968 2021-04-15
 
     /**
      * Variable used for naming arrays (v_0, v_1...)
@@ -228,6 +232,12 @@ public class ArmGenerator extends Generator {
 
     @Override
     public String generateCode(Root _root, String _indent, boolean _public) {
+        // START KGU#968 2021-04-15: New mechanism to retrieve gnuEnabled option
+        Object optionGnu = this.getPluginOption("gnuCode", gnuEnabled);
+        if (optionGnu instanceof Boolean) {
+            gnuEnabled = (Boolean) optionGnu;
+        }
+        // END KGU#968 2021-04-15
         // START KGU#705 2021-04-14: Enh. #738 (Direct code changes compromise codeMap)
         //if (topLevel && gnuEnabled) {
         //    code.add(difference[0][2]);

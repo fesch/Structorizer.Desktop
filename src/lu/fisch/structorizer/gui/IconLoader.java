@@ -239,8 +239,8 @@ public class IconLoader {
 			"125_plug.png",			// introduced with 3.30-14 for #910
 			"126_info.png",			// is to replace the 017_Eye.png in the main toolbox
 			"127_merge.png",		// introduced with 3.30-16 for #915
-			"128_split.png",		// introduced with 3.30-16 for #915
-                        "129_arm.png"
+			"128_split.png"			// introduced with 3.30-16 for #915
+			//"129_arm.png"			// intended for #967 (ARM code export), but not used
 	};
 	
 	private static final int[] ICON_SIZES = {

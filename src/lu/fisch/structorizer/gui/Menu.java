@@ -127,11 +127,18 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-11      Enh. #893: Revalidation of the preference menu enforced after locale setting
  *      Kay Gürtzig     2021-02-24      Issue #944: Version info announcing Java upgrade to 11 added
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
+ *      Kay Gürtzig     2021-04-15      Enh. #967: menu item menuDiagramARM as introduced by A. Simonetta disabled 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
- *
+ *      
+ *      2021-04-15 Enh. #967 - ARMGenerator (Kay Gürtzig)
+ *      - Alessandro Simonetta (AS) introduced a new checkbox menu item in the Diagram menu to switch
+ *        among Gnu and Keil assembler syntax for ARM code export. While there is no Executor support
+ *        for ARM code content of diagram elements, however, this makes little sense. So a plugin-specific
+ *        export option was inserted to control the ARMGenerator mode instead.
+ * 
  ******************************************************************************************************///
 
 
@@ -336,7 +343,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 	protected final JMenu menuDiagramType = new JMenu("Type");
 	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main", IconLoader.getIcon(22));
-        protected final JCheckBoxMenuItem menuDiagramARM = new JCheckBoxMenuItem("GNU compiler for ARM", IconLoader.getIcon(129));
+	// START AS 2021-03-25: Enh. #967 - KGU 2021-04-15 disabled in favour of a plugin-specific export option
+	//protected final JCheckBoxMenuItem menuDiagramARM = new JCheckBoxMenuItem("GNU compiler for ARM", IconLoader.getIcon(129));
+	// END AS 2021-03-25
 	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub", IconLoader.getIcon(21));
 	//START KGU#376 2017-05-16: Enh. #389
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
@@ -1366,9 +1375,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagram.add(menuDiagramExpand);
 		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
 		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
-//ARM 
-                menuDiagram.add(menuDiagramARM); 
-                menuDiagramARM.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperationArmVisual(menuDiagramARM.isSelected()); doButtons(); } } );
+		// START AS 2021-03-25: Enh. #967 - KGU 2021-04-15 disabled in favour of a plugin-specific export option
+		// ARM export mode
+		//menuDiagram.add(menuDiagramARM); 
+		//menuDiagramARM.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperationArmVisual(menuDiagramARM.isSelected()); doButtons(); } } );
+		// END AS 2021-03-25
 		// START KGU#310 2016-12-14: Moved to menu Debug
 //		// START KGU#277 2016-10-13: Enh. #270
 //		menuDiagram.add(menuDebugDisable);

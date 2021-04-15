@@ -3810,8 +3810,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#705 2019-09-23: Enh. #738
 	/**
-	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)} for live
-	 * code preview as there is no file selection etc. 
+	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)}
+	 * for live code preview as there is no file selection etc.<br/>
+	 * Plugin-specific options should already have been assigned, general export options
+	 * will be fetched from {@link Ini} here.
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool - {@link Arranger} or some other routine pool for subroutine analysis
