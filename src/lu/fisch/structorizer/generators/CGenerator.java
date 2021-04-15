@@ -896,7 +896,7 @@ public class CGenerator extends Generator {
 	
 	// START KGU#332 2017-01-27: Enh. #335
 	/**
-	 * States whether constant definitions or varaible declarations may occur anywhere in
+	 * States whether constant definitions or variable declarations may occur anywhere in
 	 * the code or only at block beginning
 	 * @return true if declarations may be mixed among instructions
 	 */

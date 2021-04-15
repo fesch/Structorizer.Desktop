@@ -40,8 +40,9 @@ Current development version 3.31-03 (2021-04-14)
 - 02: Substantial progress in the Italian localisation <Alessandro Simonetta et al.>
 - 02: Localisations for plugin-specific import options added (DE, ES) <2>
 - 02: Issue #964: Processing import shall not place a draw() loop without draw() <2>
+- 03: Issue #966: Precautions for dark look & feel themes (colour tuning, icons) <2>
 - 03: Enh. #967: Generator for ARM code introduced <Alessandro Simonetta et al.>
-
+- 03: Bugfix #969: Possible debugger numbing after startup with file arguments <2>
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>

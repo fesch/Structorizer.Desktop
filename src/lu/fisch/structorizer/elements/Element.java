@@ -342,7 +342,7 @@ public abstract class Element {
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
-	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
+	" - IT: Andrea Maiani <andreamaiani@gmail.com>, A. Simonetta (University of Rome Tor Vergata)\n"+
 	" - ZH-CN: Wang Lei <wanglei@hollysys.com>\n"+
 	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+

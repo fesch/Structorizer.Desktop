@@ -594,8 +594,11 @@ public class TurtleBox implements DelayableDiagramController
 			statusViewport = new JLabel();
 			statusZoom = new JLabel();
 			// START KGU#889 2020-12-26: Enh. #890/8+11
-			imgSnapPoints = new ImageIcon(this.getClass().getResource("snap_points_16.png"));
-			imgSnapLines = new ImageIcon(this.getClass().getResource("snap_lines_16.png"));
+			// START KGU#964 2021-03-11: Issue #966 - consider L&F theme
+			//imgSnapPoints = new ImageIcon(this.getClass().getResource("snap_points_16.png"));
+			//imgSnapLines = new ImageIcon(this.getClass().getResource("snap_lines_16.png"));
+			this.adaptIconsToTheme();
+			// END KGU#964 2021-03-11
 			statusSnap = new JLabel();
 			// END KGU#889 2020-12-26
 			//statusSelection = new JLabel("0");
@@ -621,7 +624,10 @@ public class TurtleBox implements DelayableDiagramController
 			statusTurtle.setToolTipText("Current turtle position");
 			statusSize.setToolTipText("Extent of the drawn area");
 			statusViewport.setToolTipText("Current scrolling viewport");
-			statusZoom.setIcon(new ImageIcon(this.getClass().getResource("magnifier_16.png")));
+			// START KGU#964 2021-03-11: Issue #966 - consider L&F theme
+			//statusZoom.setIcon(new ImageIcon(this.getClass().getResource("magnifier_16.png")));
+			this.adaptIconsToTheme();
+			// END KGU#964 2021-03-11
 			statusZoom.setToolTipText("Zoom factor");
 			// START KGU#889 2020-12-26: Enh. #890/8+11
 			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
@@ -848,7 +854,7 @@ public class TurtleBox implements DelayableDiagramController
 		 * Updates the {@link #statusSnap} label in the status bar.
 		 * @see #updateStatus()
 		 */
-		private void updateSnapStatus() {
+		protected void updateSnapStatus() {
 			statusSnap.setIcon(snapLines ? imgSnapLines : imgSnapPoints);
 			String snapTarget = null;
 			if (snapLines) {
@@ -1993,6 +1999,31 @@ public class TurtleBox implements DelayableDiagramController
 							)
 					);
 		}
+
+		// START KGU#964 2021-03-11: Issue #966 Precaution for dark themes
+		/**
+		 * Adapts the status bar icons to the current UI theme (light / dark)
+		 */
+		public void adaptIconsToTheme() {
+			Color bg = UIManager.getColor("Label.background");
+			if (bg != null) {
+				float hsb[] = new float[3];
+				Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), hsb);
+				if (hsb[2] < 0.5) {
+					// dark theme - use icon set with bright colours
+					imgSnapPoints = new ImageIcon(this.getClass().getResource("snap_points_16_dk.png"));
+					imgSnapLines = new ImageIcon(this.getClass().getResource("snap_lines_16_dk.png"));
+					statusZoom.setIcon(new ImageIcon(this.getClass().getResource("magnifier_16_dk.png")));
+				}
+				else {
+					// light theme - use normal icon set
+					imgSnapPoints = new ImageIcon(this.getClass().getResource("snap_points_16.png"));
+					imgSnapLines = new ImageIcon(this.getClass().getResource("snap_lines_16.png"));
+					statusZoom.setIcon(new ImageIcon(this.getClass().getResource("magnifier_16.png")));
+				}
+			}
+		}
+		// END KGU#964 2021-03-11
 	}
 
 	/** The GUI frame - while null, it hasn't been materialized (light-weight instance) */
@@ -2027,6 +2058,10 @@ public class TurtleBox implements DelayableDiagramController
 				// END KGU#894 2020-12-28
 			}
 			catch (Exception ex) {}
+			// START KGU#964 2021-03-11: Issue #966 Precaution for dark themes
+			frame.adaptIconsToTheme();
+			frame.updateSnapStatus();
+			// END KGU#964 2021-03-11
 		}
 	}
 	// END KGU#685 2020-12-11

@@ -71,6 +71,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -100,6 +102,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -140,7 +143,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	private final HashSet<DefaultMutableTreeNode> expandedGroupNodes = new HashSet<DefaultMutableTreeNode>();
 	/** Original (standard) Arranger index background color  - may get wrong with an L&F change! */
 	private Color arrangerIndexBackground = null;
-	private static final Color ARRANGER_INDEX_UNFOCUSSED_BACKGROUND = Color.LIGHT_GRAY;
+	// START KGU#964 2021-03-10: Issue #966 Consider dark themes
+	//private static final Color ARRANGER_INDEX_UNFOCUSSED_BACKGROUND = Color.LIGHT_GRAY;
+	private static final Color LIGHT_INDEX_UNFOCUSSED_BACKGROUND = Color.LIGHT_GRAY;
+	private static final Color DARK_INDEX_UNFOCUSSED_BACKGROUND = Color.DARK_GRAY;
+	private static Color unfocussedBackground = null;
+	// END KGU#964 2021-03-10
 
 	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
 	protected final JPopupMenu popupIndex = new JPopupMenu();
@@ -497,6 +505,11 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		pnlGroupInfo.add(buttonBar, BorderLayout.SOUTH);
 		
 		arrangerIndexBackground = this.getBackground();
+		// START KGU#964 2021-03-10: Issue #966 Decide whether this is a light or dark theme
+		float[] hsb = new float[3];
+		Color.RGBtoHSB(arrangerIndexBackground.getRed(), arrangerIndexBackground.getGreen(), arrangerIndexBackground.getBlue(), hsb);
+		unfocussedBackground = hsb[2] > 0.5 ? LIGHT_INDEX_UNFOCUSSED_BACKGROUND : DARK_INDEX_UNFOCUSSED_BACKGROUND;
+		// END KGU#964 2021-03-10
 		this.setRootVisible(false);
 		this.setCellRenderer(new ArrangerIndexCellRenderer());
 		this.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);		
@@ -526,7 +539,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			}
 			@Override
 			public void focusLost(FocusEvent event) {
-				setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+				// START KGU#964 2021-03-10: Issue #966
+				//setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+				setBackground(unfocussedBackground);
+				// END KGU#964 2021-03-10
 			}});
 		this.setShowsRootHandles(true);
 		// START KGU#305 2016-12-15: Enh. #305 - react to space and enter
@@ -559,13 +575,33 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		actMap.put("SHIFT_ALT_R", new ArrangerIndexAction("RENAME_GROUP"));
 		
 		if (!this.isFocusOwner()) {
-			this.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+			// START KGU#964 2021-03-10: Issue #966
+			//this.setBackground(ARRANGER_INDEX_UNFOCUSSED_BACKGROUND);
+			setBackground(unfocussedBackground);
+			// END KGU#964 2021-03-10
 		}
 		// END KGU#305 2016-12-15
 		
 		scrollInfo.setWheelScrollingEnabled(true);
 		
 		createPopupMenu();
+		
+		// START KGU#964 2021-03-10: Issue #966
+		UIManager.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				if ("lookAndFeel".equals(evt.getPropertyName())) {
+					Color bg = UIManager.getColor("Tree.background");
+					if (bg != null) {
+						arrangerIndexBackground = bg;
+						float[] hsb = new float[3];
+						Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), hsb);
+						unfocussedBackground = hsb[2] > 0.5 ? LIGHT_INDEX_UNFOCUSSED_BACKGROUND : DARK_INDEX_UNFOCUSSED_BACKGROUND;
+					}
+				}
+				
+			}});
+		// END KGU#964 2021-03-10
 	}
 
 	/**
