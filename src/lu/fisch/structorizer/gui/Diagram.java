@@ -6842,11 +6842,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				parser = parser.getClass().getDeclaredConstructor().newInstance();
 				// END KGU#354 2017-05-11
 				// START KGU#395 2017-07-02: Enh. #357
-				String parserClassName = parser.getClass().getSimpleName();
+				String pluginKey = parser.getClass().getSimpleName();
 				for (int i = 0; i < parserPlugins.size(); i++) {
 					GENPlugin plug = parserPlugins.get(i);
-					if (plug.getKey().equals(parserClassName)) {
-						this.setPluginSpecificOptions(parser, parserClassName, plug.options);
+					if (plug.getKey().equals(pluginKey)) {
+						this.setPluginSpecificOptions(parser, pluginKey, plug.options);
 					}
 				}
 				// END KGU#395 2017-07-02
@@ -7395,25 +7395,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		});
 		//highlightCodeForSelection();
 	}
-
-	private void fetchPluginSpecificExportOptions(Generator _generator) {
-		for (GENPlugin plugin : Menu.generatorPlugins) {
-			if (plugin.className.equals(_generator.getClass().getName())) {
-				// FIXME: Improve performance here! Avoid repetitive retrieval but ensure sensitiveness to changes
-				setPluginSpecificOptions(_generator, plugin.className, plugin.options);
-				break;
-			}
-		}
-	}
 	// END KGU#705 2019-09-23
 
 	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
-	private void setPluginSpecificOptions(IPluginClass _gen, String _generatorClassName,
+	/**
+	 * Retrieves the plugin-specific values for the options given by map
+	 * {@code _specificOptions} from the {@link Ini} instance and sets
+	 * them on generator {@code _gen}.
+	 * 
+	 * @param _gen - the code generator instance
+	 * @param _pluginKey - the key of the plugin (the simple class name
+	 * of {@code _gen})
+	 * @param _specificOptions - vector of the plugin-specific option
+	 * specifications (as key-value maps with keys "name", "type", "title",
+	 * "help")
+	 */
+	private void setPluginSpecificOptions(IPluginClass _gen, String _pluginKey,
 			Vector<HashMap<String, String>> _specificOptions) {
 		Ini ini = Ini.getInstance();
 		for (HashMap<String, String> optionSpec : _specificOptions) {
 			String optionKey = optionSpec.get("name");
-			String valueStr = ini.getProperty(_generatorClassName + "." + optionKey, "");
+			String valueStr = ini.getProperty(_pluginKey + "." + optionKey, "");
 			Object value = null;
 			String type = optionSpec.get("type");
 			String items = optionSpec.get("items");
@@ -7443,7 +7445,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					logger.log(Level.SEVERE, "{0}: {1} on converting \"{2}\" to {3} for {4}",
 							new Object[]{
-									_gen.getClass().getSimpleName(),
+									_pluginKey,
 									message,
 									valueStr,
 									type,
