@@ -19,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.31-03 (2021-04-15)
+Current development version 3.31-03 (2021-04-24)
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,

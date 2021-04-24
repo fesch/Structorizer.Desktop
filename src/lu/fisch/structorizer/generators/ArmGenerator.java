@@ -1,4 +1,3 @@
-
 /*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
@@ -18,6 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+// VERSION 2.1
 
 package lu.fisch.structorizer.generators;
 
@@ -33,11 +33,12 @@ package lu.fisch.structorizer.generators;
 *
 *      Author          Date            Description
 *      ------          ----            -----------
-*      See @author     2021-03-25      Provided per Pull request on Enh. #96
+*      See @author     2021-03-25      Provided per Pull request on Enh. #967
 *      A. Simonetta    2021-04-02      Several revisions as requested
 *      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
 *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
-*      Kay Gürtzig     2021-04-15      Source for 
+*      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
+*      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
 *
 ******************************************************************************************************
 *
@@ -48,10 +49,7 @@ package lu.fisch.structorizer.generators;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.utils.StringList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -74,18 +72,17 @@ public class ArmGenerator extends Generator {
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
 
-    private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) ?%s ?%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
-    private static final Pattern expression = Pattern.compile(String.format("(%s|%s) ?%s ?%s ?%s ?%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
-    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) ?%s ?(memoria|memory)\\[(%s|%s)( ?\\+ ?%s)?]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
-    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( ?\\+ ?%s)?] ?%s ?(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
-    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) ?%s ?(%s|%s)\\[(%s|%s|%s)]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
-
-    private final Pattern arrayAssignmentPattern = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-Z]+)\\[(R([0-9]|1[0-4])|[a-zA-Z]+|[\\d]+)(\\+(R([0-9]|1[0-4])|[a-zA-Z]+|[0-9]+|0x([0-9]|[a-f])+))?](<-|:=)(R([0-9]|1[0-4])|[a-zA-Z]+)", Pattern.CASE_INSENSITIVE);
-    private final Pattern arrayInitializationPattern = Pattern.compile("(word|hword|byte|octa|quad)?(R([0-9]|1[0-4])|[a-zA-z]+[\\d]*)(<-|:=)\\{([\\d]+|0x([0-9]|[a-f])+)(,([\\d]+|0x([0-9]|[a-f])+))*}", Pattern.CASE_INSENSITIVE);
-    private final Pattern address = Pattern.compile("R([0-9]|1[0-4])(<-|:=)(indirizzo|address)\\(([a-zA-Z]+[0-9]*|R([0-9]|1[0-4]))\\)", Pattern.CASE_INSENSITIVE);
-    private final Pattern stringInitializationPattern = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-z]+)(<-|:=)\"[\\w]{2,}\"");
-    private final Pattern charInitializationPattern = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-z]+)(<-|:=)\"[\\w]\"");
-    private final Pattern booleanAssignmentPattern = Pattern.compile("(R([0-9]|1[0-4])|[a-zA-z]+)(<-|:=)(true|false)");
+    private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
+    private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
+    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
+    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
+    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s)\\[(%s|%s|%s)( *\\+ *%s)?] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
 
     /**
      * Enum type for getMode()
@@ -102,11 +99,13 @@ public class ArmGenerator extends Generator {
         STRING_ARRAY_INITIALIZATION,
         CHAR_ARRAY_INITIALIZATION,
         INSTRUCTION,
+        INPUT,
+        OUTPUT,
         NOT_IMPLEMENTED
     }
 
     // Reserved words that can't be used as variables
-    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa"};
+    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa", "input", "output", "INPUT", "OUTPUT"};
     // HashMap used for available registers and already assigned variables
     private static final HashMap<String, String> mVariables = new HashMap<>();
 
@@ -726,6 +725,24 @@ public class ArmGenerator extends Generator {
         case INSTRUCTION:
             newline = variablesToRegisters(line);
             addCode(newline, getIndent(), isDisabled);
+        case INPUT:
+            if (gnuEnabled) {
+                newline = variablesToRegisters(line);
+                String register = newline.split(" ")[1];
+                addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
+            } else {
+                appendComment("Error: INPUT operation available only in GNU\n" + line, getIndent());
+            }
+            break;
+        case OUTPUT:
+            if (gnuEnabled) {
+                newline = variablesToRegisters(line);
+                String register = newline.split(" ")[1];
+                String availableRegister = getAvailableRegister();
+                addCode(String.format("LDR %s, =0xFF201000\n%sSTR %s, [%s]", availableRegister, getIndent(), register, availableRegister), getIndent(), isDisabled);
+            } else {
+                appendComment("Error: OUTPUT operation available only in GNU\n" + line, getIndent());
+            }
             break;
         case NOT_IMPLEMENTED:
             appendComment("Error: Not implemented yet\n" + line, getIndent());
@@ -755,19 +772,24 @@ public class ArmGenerator extends Generator {
             mode = ARM_OPERATIONS.MEMORY;
         } else if (arrayExpression.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ARRAY_EXPRESSION;
-        } else if (arrayAssignmentPattern.matcher(line).matches()) {
+        } else if (arrayAssignment.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ARRAY_ASSIGNMENT;
-        } else if (stringInitializationPattern.matcher(line).matches()) {
+        } else if (stringInitialization.matcher(line).matches()) {
             mode = ARM_OPERATIONS.STRING_ARRAY_INITIALIZATION;
-        } else if (charInitializationPattern.matcher(line).matches()) {
+        } else if (charInitialization.matcher(line).matches()) {
             mode = ARM_OPERATIONS.CHAR_ARRAY_INITIALIZATION;
-        } else if (arrayInitializationPattern.matcher(line).matches()) {
+        } else if (arrayInitialization.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ARRAY_INITIALIZATION;
         } else if (address.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ADDRESS;
+        } else if (line.toLowerCase().contains("input")) {
+            mode = ARM_OPERATIONS.INPUT;
+        } else if (line.toLowerCase().contains("output")) {
+            mode = ARM_OPERATIONS.OUTPUT;
         } else if (isArmInstruction(line)) {
             mode = ARM_OPERATIONS.INSTRUCTION;
         }
+
         return mode;
     }
 
@@ -1508,6 +1530,19 @@ public class ArmGenerator extends Generator {
         return stringPositions;
     }
 
+    private String getAvailableRegister() {
+        String available = "";
+        for (Map.Entry<String, String> entry1 : mVariables.entrySet()) {
+            // we get the first available register
+            if (entry1.getValue().equals("")) {
+                available = entry1.getKey();
+                break;
+            }
+        }
+
+        return available;
+    }
+
     /**
      * This method returns the register assigned to variable
      *
@@ -1527,14 +1562,8 @@ public class ArmGenerator extends Generator {
 
         // if there aren't any assigned registers to the variable
         if (register.equals("")) {
-            for (Map.Entry<String, String> entry1 : mVariables.entrySet()) {
-                // we get the first available register
-                if (entry1.getValue().equals("")) {
-                    register = entry1.getKey();
-                    mVariables.put(register, variable);
-                    break;
-                }
-            }
+            register = getAvailableRegister();
+            mVariables.put(register, variable);
         }
 
         return register;
@@ -1555,10 +1584,13 @@ public class ArmGenerator extends Generator {
                 "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
                 "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
         };
-        line = line.split(" ")[0];
-        line = line.toLowerCase();
+
+        if (line.contains("<-"))
+            return false;
+
+        String checkLine = line.split(" ")[0].toLowerCase();
         for (String s : instruction) {
-            if (line.contains(s)) {
+            if (checkLine.contains(s)) {
                 return true;
             }
         }
@@ -1580,7 +1612,7 @@ public class ArmGenerator extends Generator {
 
         while (i < expressionSplit.length) {
             // If we find one of the supported operations inside the expression
-            if (expressionSplit[i].matches(supportedOperationsPattern)) {
+            if (expressionSplit[i].matches(supportedOperationsPattern) && !expressionSplit[i + 1].matches(numberPattern)) {
                 result.add(item.toString()); // add the register
                 result.add(expressionSplit[i]); // add the operation
                 item = new StringBuilder(); // reset
