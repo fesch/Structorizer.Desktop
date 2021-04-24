@@ -39,6 +39,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
 *      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
 *      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
+*      Kay Gürtzig     2021-04-24      Some corrections to the fixes of A. Simonetta
 *
 ******************************************************************************************************
 *
@@ -47,6 +48,7 @@ package lu.fisch.structorizer.generators;
 ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
 import java.util.*;
@@ -83,6 +85,10 @@ public class ArmGenerator extends Generator {
     private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
+    // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison; patterns will be set when code generation is started
+    private static Pattern inputPattern = null;
+    private static Pattern outputPattern = null;
+    // END KGU#968 2021-04-24
 
     /**
      * Enum type for getMode()
@@ -236,6 +242,12 @@ public class ArmGenerator extends Generator {
         if (optionGnu instanceof Boolean) {
             gnuEnabled = (Boolean) optionGnu;
         }
+        // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
+        String inputKeyword = CodeParser.getKeywordOrDefault("input", "input");
+        String outputKeyword = CodeParser.getKeywordOrDefault("output", "output");
+        inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
+        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        // END KGU#968 2021-04-24
         // END KGU#968 2021-04-15
         // START KGU#705 2021-04-14: Enh. #738 (Direct code changes compromise codeMap)
         //if (topLevel && gnuEnabled) {
@@ -729,7 +741,11 @@ public class ArmGenerator extends Generator {
             if (gnuEnabled) {
                 newline = variablesToRegisters(line);
                 String register = newline.split(" ")[1];
-                addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
+                // START KGU#968 2021-04-24: We must add two lines via two calls (for correct line counting)
+                //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
+                addCode(String.format("LDR %s, =0xFF200050", register), getIndent(), isDisabled);
+                addCode(String.format("LDR %s, [%s]", register, register), getIndent(), isDisabled);
+                // END KGU#968 2021-04-24
             } else {
                 appendComment("Error: INPUT operation available only in GNU\n" + line, getIndent());
             }
@@ -739,7 +755,11 @@ public class ArmGenerator extends Generator {
                 newline = variablesToRegisters(line);
                 String register = newline.split(" ")[1];
                 String availableRegister = getAvailableRegister();
-                addCode(String.format("LDR %s, =0xFF201000\n%sSTR %s, [%s]", availableRegister, getIndent(), register, availableRegister), getIndent(), isDisabled);
+                // START KGU#968 2021-04-24: We must add two lines via two calls (for correct line counting)
+                //addCode(String.format("LDR %s, =0xFF201000\n%sSTR %s, [%s]", availableRegister, getIndent(), register, availableRegister), getIndent(), isDisabled);
+                addCode(String.format("LDR %s, =0xFF201000", availableRegister), getIndent(), isDisabled);
+                addCode(String.format("STR %s, [%s]", register, availableRegister), getIndent(), isDisabled);
+                // END KGU#968 2021-04-24
             } else {
                 appendComment("Error: OUTPUT operation available only in GNU\n" + line, getIndent());
             }
@@ -757,6 +777,11 @@ public class ArmGenerator extends Generator {
      * @return string that represents what is the instruction
      */
     private ARM_OPERATIONS getMode(String line1) {
+        // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison
+        boolean isInput = inputPattern != null && inputPattern.matcher(line1).matches();
+        boolean isOutput = outputPattern != null && outputPattern.matcher(line1).matches();
+        
+        // END KGU#968 2021-04-24
         String line = line1.replace(" ", "");
         ARM_OPERATIONS mode = ARM_OPERATIONS.NOT_IMPLEMENTED;
 
@@ -782,10 +807,16 @@ public class ArmGenerator extends Generator {
             mode = ARM_OPERATIONS.ARRAY_INITIALIZATION;
         } else if (address.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ADDRESS;
-        } else if (line.toLowerCase().contains("input")) {
+        // START KGU#968 2021-04-24: Correct input/output detection
+        //} else if (line.toLowerCase().contains("input")) {
+        //    mode = ARM_OPERATIONS.INPUT;
+        //} else if (line.toLowerCase().contains("output")) {
+        //    mode = ARM_OPERATIONS.OUTPUT;
+        } else if (isInput) {
             mode = ARM_OPERATIONS.INPUT;
-        } else if (line.toLowerCase().contains("output")) {
+        } else if (isOutput) {
             mode = ARM_OPERATIONS.OUTPUT;
+        // END KGU#968 2021-04-24
         } else if (isArmInstruction(line)) {
             mode = ARM_OPERATIONS.INSTRUCTION;
         }
