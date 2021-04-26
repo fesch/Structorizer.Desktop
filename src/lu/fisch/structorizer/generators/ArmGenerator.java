@@ -39,7 +39,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
 *      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
 *      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
-*      Kay Gürtzig     2021-04-24      Some corrections to the fixes of A. Simonetta
+*      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
 *
 ******************************************************************************************************
 *
@@ -111,7 +111,7 @@ public class ArmGenerator extends Generator {
     }
 
     // Reserved words that can't be used as variables
-    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa", "input", "output", "INPUT", "OUTPUT"};
+    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa"/*, "input", "output", "INPUT", "OUTPUT"*/};
     // HashMap used for available registers and already assigned variables
     private static final HashMap<String, String> mVariables = new HashMap<>();
 
@@ -306,17 +306,14 @@ public class ArmGenerator extends Generator {
         // Extract the text in the block
         String condition = _alt.getUnbrokenText().getLongString().trim();
 
+        // FIXME - this seems to be an inappropriate reaction!
         if (!conditionPattern.matcher(condition.replace(" ", "")).matches()) {
-            appendComment("Wrong condition syntax", getIndent());
+            appendComment("Inappropriate condition syntax - Alternative skipped!", getIndent());
             return;
         }
 
-        String colon = difference[1][0];
+        String colon = difference[gnuEnabled ? 0 : 1][0];
 
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
         appendComment(_alt, _indent + getIndent());
@@ -336,7 +333,13 @@ public class ArmGenerator extends Generator {
         String[] key = {k, "then"};
         // Generate the alternative code with multiCondition
         c = multiCondition(condition, true, key);
-        addCode(c, "", isDisabled);
+        // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
+        //addCode(c, "", isDisabled);
+        String[] cSplit = c.split("\\n");
+        for (int i = 0; i < cSplit.length; i++) {
+            addCode(cSplit[i], "", isDisabled);
+        }
+        // END KGU#968 2021-04-25
 
         if (_alt.qTrue.getSize() != 0) {
             // If "then" block is not empty then we add the label
@@ -366,12 +369,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + getIndent());
 
-        String colon = difference[1][0];
-
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
+        String colon = difference[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _case.isDisabled(true);
         int counter = COUNTER;
@@ -379,7 +377,20 @@ public class ArmGenerator extends Generator {
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
-        String variable = lines.get(0);
+        String variable = lines.get(0);	// FIXME the discriminator expression might be more complex
+        // START KGU#968 2021-04-25: Issue #967 Keep structure preferences in mind
+        // FIXME This looks scary if the discriminator expression happens to be a somewhat complex expression, e.g. a nested function call...
+        // We are currently not supporting complex expressions
+        //variable = variable.replace(")", "").replace("(", "").replace("!", "").replace(" ", "");
+        StringList tokens = Element.splitLexically(variable, true);
+        Element.cutOutRedundantMarkers(tokens);
+        tokens.removeAll("(");
+        tokens.removeAll(")");
+        //tokens.removeAll("!");	// ???
+        variable = tokens.concatenate();
+        // END KGU#968 2021-04-25
+        // FIXME Shouldn't the "variable" be replaced by a register?
+        variable = variablesToRegisters(variable);
 
         String count;
 
@@ -389,10 +400,6 @@ public class ArmGenerator extends Generator {
             for (String line : split) {
                 count = "" + counter + "_" + i + "";
 
-                // FIXME This looks scary if the discriminator expression happens to be a somewhat complex expression, e.g. a nested function call...
-                // We are currently not supporting complex expressions
-
-                variable = variable.replace(")", "").replace("(", "").replace("!", "").replace(" ", "");
                 String operator = line;
                 if (!operator.startsWith("#") && !operator.startsWith("R"))
                     operator = "#" + operator;
@@ -492,7 +499,13 @@ public class ArmGenerator extends Generator {
             c = mov + cmp + bge;
         }
         // Adding the code
-        addCode(c, "", isDisabled);
+        // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
+        //addCode(c, "", isDisabled);
+        String[] cSplit = c.split("\\n");
+        for (int i = 0; i < cSplit.length; i++) {
+            addCode(cSplit[i], "", isDisabled);
+        }
+        // END KGU#968 2021-04-25
         // Generate the code into the block
         generateCode(_for.q, "");
         addCode(operation, "", isDisabled);
@@ -521,12 +534,7 @@ public class ArmGenerator extends Generator {
             return;
         }
 
-        String colon = difference[1][0];
-
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
+        String colon = difference[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
@@ -535,14 +543,28 @@ public class ArmGenerator extends Generator {
         String[] key = {"end", "code"};
         // Remove all the chars that we don't need from the string
         // FIXME Sure we don't need any of them? What if it is a nested complex Boolean expression?
-        // for the moment we translate only instruction with n && or with n ||, not both at the same time, then we don't need brackets
-        condition = condition.replace("(", "").replace(")", "").replace("while", "").replace(" ", "");
+        // for the moment we translate only instruction with n && or n ||, not both at the same time, then we don't need brackets
+        // START KGU#968 2021-04-25: Issue #967 Keep user configuration in mind
+        //condition = condition.replace("(", "").replace(")", "").replace("while", "").replace(" ", "");
+        StringList tokens = Element.splitLexically(condition, true);
+        Element.cutOutRedundantMarkers(tokens);
+        tokens.removeAll("(");
+        tokens.removeAll(")");
+        tokens.removeAll(" ");	// Sure?
+        condition = tokens.concatenate(null);
+        // END KGU#968 2021-04-25
         // Use multiCondition to translate the code again (like alternative)
         String c = multiCondition(condition, true, key);
         // Add the label
         addCode("while_" + counter + colon, "", isDisabled);
         // Add the code
-        addCode(c, "", isDisabled);
+        // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
+        //addCode(c, "", isDisabled);
+        String[] cSplit = c.split("\\n");
+        for (int i = 0; i < cSplit.length; i++) {
+            addCode(cSplit[i], "", isDisabled);
+        }
+        // END KGU#968 2021-04-25
         // Generate the code into the block
         generateCode(_while.q, _indent);
         // Add the label and the branch instruction
@@ -552,12 +574,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Repeat _repeat, String _indent) {
-        String colon = difference[1][0];
-
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
+        String colon = difference[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _repeat.isDisabled(true);
 
@@ -567,7 +584,16 @@ public class ArmGenerator extends Generator {
 
         String[] key = {"do", "continue"};
         String condition = _repeat.getUnbrokenText().getLongString().trim();
-        condition = condition.replace("until", "").replace("(", "").replace(")", "");
+        // FIXME inappropriate handling of condition syntax
+        // for the moment we translate only instruction with n && or n ||, not both at the same time, then we don't need brackets
+        // START KGU#968 2021-04-25: Issue #967 Keep structure preferences in mind
+        //condition = condition.replace("until", "").replace("(", "").replace(")", "");
+        StringList tokens = Element.splitLexically(condition, true);
+        Element.cutOutRedundantMarkers(tokens);
+        tokens.removeAll("(");
+        tokens.removeAll(")");
+        condition = tokens.concatenate();
+        // END KGU#968 2021-04-25
 
         String c = multiCondition(condition, false, key);
 
@@ -575,17 +601,18 @@ public class ArmGenerator extends Generator {
 
         generateCode(_repeat.q, "");
 
-        addCode(c, "", isDisabled);
+        // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
+        //addCode(c, "", isDisabled);
+        String[] cSplit = c.split("\\n");
+        for (int i = 0; i < cSplit.length; i++) {
+            addCode(cSplit[i], "", isDisabled);
+        }
+        // END KGU#968 2021-04-25
     }
 
     @Override
     protected void generateCode(Forever _forever, String _indent) {
-        String colon = difference[1][0];
-
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            colon = difference[0][0];
-        }
+        String colon = difference[gnuEnabled? 0 : 1][0];
 
         boolean isDisabled = _forever.isDisabled(true);
         appendComment(_forever, _indent + getIndent());
@@ -739,20 +766,43 @@ public class ArmGenerator extends Generator {
             addCode(newline, getIndent(), isDisabled);
         case INPUT:
             if (gnuEnabled) {
-                newline = variablesToRegisters(line);
-                String register = newline.split(" ")[1];
-                // START KGU#968 2021-04-24: We must add two lines via two calls (for correct line counting)
+                // START KGU#968 2021-04-25: Remove the keyword and a possible prompt string
+                //newline = variablesToRegisters(line);
+                //String register = newline.split(" ")[1];
+                StringList tokens = Element.splitLexically(line, true);
+                StringList inputTokens = Element.splitLexically(CodeParser.getKeywordOrDefault("input", "input"), true);
+                // Check for a prompt string literal and remove it (plus a possible comma)
+                int ix = inputTokens.count();
+                while (ix < tokens.count() && tokens.get(ix).trim().isEmpty()) {
+                    ix++;
+                }
+                if (ix < tokens.count() && (tokens.get(ix).startsWith("\"") || tokens.get(ix).startsWith("'"))) {
+                    tokens.remove(ix);
+                }
+                while (ix < tokens.count() && (tokens.get(ix).trim().isEmpty() || tokens.get(ix).equals(","))) {
+                    ix++;
+                }
+                newline = variablesToRegisters(tokens.concatenate(null, ix));
+                String register = newline.split(" ")[0];
+                // END KGU#968 2021-04-25
+                // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
                 //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
                 addCode(String.format("LDR %s, =0xFF200050", register), getIndent(), isDisabled);
                 addCode(String.format("LDR %s, [%s]", register, register), getIndent(), isDisabled);
                 // END KGU#968 2021-04-24
             } else {
-                appendComment("Error: INPUT operation available only in GNU\n" + line, getIndent());
+                appendComment("Error: INPUT operation only supported with GNU code\n" + line, getIndent());
             }
             break;
         case OUTPUT:
             if (gnuEnabled) {
-                newline = variablesToRegisters(line);
+                // START KGU#968 2021-04-26: Remove the keyword
+                //newline = variablesToRegisters(line);
+                //String register = newline.split(" ")[1];
+                StringList tokens = Element.splitLexically(line, true);
+                StringList inputTokens = Element.splitLexically(CodeParser.getKeywordOrDefault("output", "output"), true);
+                newline = variablesToRegisters(tokens.concatenate(null, inputTokens.count()));
+                // END KGU#968 2021-04-26
                 String register = newline.split(" ")[1];
                 String availableRegister = getAvailableRegister();
                 // START KGU#968 2021-04-24: We must add two lines via two calls (for correct line counting)
@@ -761,7 +811,7 @@ public class ArmGenerator extends Generator {
                 addCode(String.format("STR %s, [%s]", register, availableRegister), getIndent(), isDisabled);
                 // END KGU#968 2021-04-24
             } else {
-                appendComment("Error: OUTPUT operation available only in GNU\n" + line, getIndent());
+                appendComment("Error: OUTPUT operation only supported with GNU code\n" + line, getIndent());
             }
             break;
         case NOT_IMPLEMENTED:
@@ -1082,12 +1132,7 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String hashtag = difference[1][1];
-
-        // Check if the variable gnuEnabled is set on GNU or Keil.
-        if (gnuEnabled) {
-            hashtag = difference[0][1];
-        }
+        String hashtag = difference[gnuEnabled ? 0 : 1][1];
 
         String firstOperator = tokens[0]; // firstOperator must be a register or a variable
         String secondOperator = tokens[1]; // secondOperator can be a register, a variable or a hex number
@@ -1636,22 +1681,39 @@ public class ArmGenerator extends Generator {
      * @return an array containing the split expression
      */
     private String[] parseExpression(String expression) {
-        String[] expressionSplit = expression.split("");
+        //String[] expressionSplit = expression.split("");
+        StringList tokens = Element.splitLexically(expression, true);
         ArrayList<String> result = new ArrayList<>();
         StringBuilder item = new StringBuilder();
-        int i = 0;
+        boolean afterOpr = true;
 
-        while (i < expressionSplit.length) {
+        //int i = 0;
+        //while (i < expressionSplit.length) {
+        for (int i = 0; i < tokens.count(); i++) {
             // If we find one of the supported operations inside the expression
-            if (expressionSplit[i].matches(supportedOperationsPattern) && !expressionSplit[i + 1].matches(numberPattern)) {
+            //if (expressionSplit[i].matches(supportedOperationsPattern) && !expressionSplit[i + 1].matches(numberPattern)) {
+            String token = tokens.get(i);
+            if (token.matches(supportedOperationsPattern) && !afterOpr) {
                 result.add(item.toString()); // add the register
-                result.add(expressionSplit[i]); // add the operation
+                //result.add(expressionSplit[i]); // add the operation
+                if (token.equals("&&")) {	// add the operator symbol
+                    result.add("&");	// FIXME this is an incorrect "approximation"
+                }
+                else if (token.equals("||")) {
+                    result.add("|");	// FIXME this is an incorrect "approximation"
+                }
+                else {
+                    result.add(token);
+                }
+                afterOpr = true;
                 item = new StringBuilder(); // reset
             } else {
-                item.append(expressionSplit[i]);
+                //item.append(expressionSplit[i]);
+                item.append(token);
+                afterOpr = false;
             }
 
-            i++;
+            //i++;
         }
 
         result.add(item.toString());
