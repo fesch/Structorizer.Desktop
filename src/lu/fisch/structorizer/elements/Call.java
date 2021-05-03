@@ -326,7 +326,7 @@ public class Call extends Instruction {
 	 * <li> the referred method declaration (in case this obect represents a method reference),</li>
 	 * <li> the called routine if the text complies to the call syntax described in the user guide,</li>
 	 * <li> {@code null} otherwise.</li>
-	 * <ul>
+	 * </ul>
 	 * @return Function object or {@code null}.
 	 * @see #isFunctionCall(boolean)
 	 * @see #isProcedureCall(boolean)

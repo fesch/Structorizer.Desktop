@@ -2040,8 +2040,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				else if (jump.isExit())
 				// END KGU#380 2017-04-14
 				{
-					// Doesn't return a regular result but we won't get to the end, so a default return is
-					// not required, we handle this as if a result would have been returned.
+					/* Doesn't return a regular result but we won't get to the end,
+					 * so a default return is not required, we handle this as if a
+					 * result would have been returned.*/
 					//surelyReturns = true;
 					return true;
 				}
