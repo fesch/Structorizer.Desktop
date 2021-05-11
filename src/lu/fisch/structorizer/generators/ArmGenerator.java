@@ -42,12 +42,14 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
 *      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
 *      Kay Gürtzig     2021-05-02      Mechanisms to support EXIT instructions, subroutines, CALLs added
+*      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
 *
 ******************************************************************************************************
 *
 *      Comment:
 *      TODO: - Register recycling (e.g. via LRU) -> all variables need an address in memory/stack then
 *            - Compilation of more complex expressions
+*            - How to return to the OS (or to prevent main from running into the subroutines?)
 *
 ******************************************************************************************************///
 
@@ -295,7 +297,7 @@ public class ArmGenerator extends Generator {
             addCode(difference[variant][3], "", false);
             addCode("", "", false);	// Just a newline
         }
-        
+        String colon = difference[variant][0];
         // END KGU#705 2021-04-14
 
         for (Map.Entry<String, String> entry : mVariables.entrySet()) {
@@ -310,7 +312,7 @@ public class ArmGenerator extends Generator {
             if (topLevel && _root.isProgram()) {
                 // FIXME reserved size should be type-dependant! Think of arrays in particular!
                 insertCode(getIndent() + ".space 4", 1);
-                insertCode(varName + difference[variant][0], 1);
+                insertCode(varName + colon, 1);
             }
             // FIXME - we should reserve space on stack and a register for address operations 
             //if (i < 12) {
@@ -318,6 +320,7 @@ public class ArmGenerator extends Generator {
             //}
         }
         if (_root.isSubroutine()) {
+        	addCode(procName + colon, "", false);
             // Push all registers (FIXME: Could we reduce the register set to the actual needs?)
             addCode("STMFD SP!, {R0-R12}", getIndent(), false);
             // Now get the arguments from the stack
@@ -338,7 +341,7 @@ public class ArmGenerator extends Generator {
         while (i >= 0 && code.get(i).trim().isEmpty()) {
             i--;
         }
-        // If the code does not end with return anyway
+        // Add a return mechanism if the code does not end with return anyway
         if (_root.isSubroutine() && !this.alwaysReturns && i >= 0
                 && !code.get(i).trim().equals("MOVS PC, LR")) {
             // Provide the result value if this is a function
@@ -359,14 +362,26 @@ public class ArmGenerator extends Generator {
             addCode("LDMFD SP!, {R0-R12}", getIndent(), false);
             addCode("MOVS PC, LR", getIndent(), false);
         }
+        addSepaLine();
         // END KGU#968 2021-05-02
 
-        // START KGU#705 2019-09-23: Enh. #738
+        // START KGU#968 2021-05-11: Issue #967
+        // Somehow we must end the main program, in particular if subroutines will follow
+        if (_root.isProgram()) {
+            // Add an endless loop to the end of a main program
+            addCode("stop" + procName + colon, "", false);
+            addCode("B stop" + procName, getIndent(), false);
+        }
+        // END KGU#968 2021-05-02
+        // START KGU#705 2021-04-14: Enh. #738
         if (codeMap != null) {
             // Update the end line no relative to the start line no
             codeMap.get(_root)[1] += (code.count() - line0);
         }
-        // END KGU#705 2019-09-23
+        // END KGU#705 2021-04-14
+        if (topLevel) {
+            this.subroutineInsertionLine = code.count();
+        }
         return code.getText();
     }
 
@@ -784,9 +799,7 @@ public class ArmGenerator extends Generator {
         // Add pointer to While True Block
         addCode("B whileTrue_" + counter + "\n", getIndent(), isDisabled);
 
-        if (code.count() > 0 && !code.get(code.count() - 1).isEmpty()) {
-            addCode("", "", isDisabled);
-        }
+        addSepaLine();
         // START KGU#968 2021-05-02: Map the jumpTable entry to the end label (and add one for breaks)
         Integer labelRef = jumpTable.get(_forever);
         if (labelRef != null && labelRef >= 0) {
@@ -1353,7 +1366,7 @@ public class ArmGenerator extends Generator {
         String varName = tokens[0];
         String expr = tokens[1];
         String type = "";
-        // FIXME: There could be a nested structure!
+        // FIXME: There could be a nested structure (not according to the pattern, though)!
         expr = expr.replace("{", "").replace("}", "");
 
         // If the assignment uses a register as an array
@@ -1367,11 +1380,12 @@ public class ArmGenerator extends Generator {
             }
 
             // GNU Compiler
+            // FIXME a name V_# or v_# might collide with a user-chosen variable name
             if (gnuEnabled) {
-                appendTop("v_" + arrayCounter + difference[0][0] + "\t" + type + "\t" + expr);
+                addToDataSection("v_" + arrayCounter + difference[0][0] + "\t" + type + "\t" + expr);
                 addCode("ADR " + varName + ", v_" + arrayCounter, getIndent(), isDisabled);
             } else {
-                appendTop("V_" + arrayCounter + getIndent() + "DCD" + expr);
+                addToDataSection("V_" + arrayCounter + getIndent() + "DCD" + expr);
                 addCode("LDR " + varName + ", =V_" + arrayCounter, getIndent(), isDisabled);
             }
 
@@ -1386,10 +1400,9 @@ public class ArmGenerator extends Generator {
             }
             // GNU compiler
             if (gnuEnabled) {
-                expr = expr.replace("{", "").replace("}", "");
-                appendTop(varName + difference[0][0] + getIndent() + type + "\t" + expr);
+                addToDataSection(varName + difference[0][0] + getIndent() + type + "\t" + expr);
             } else {
-                appendTop(varName + getIndent() + "DCD" + expr);
+                addToDataSection(varName + getIndent() + "DCD" + expr);
             }
         }
     }
@@ -1793,7 +1806,7 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method removes multiple labels that are not used<br/>
+     * This method removes redundant multiple labels (and abridges references to them)<br/>
      * EXAMPLES:<br/>
      * {@code end_0:}<br/>
      * {@code end_1:}<br/>
@@ -1836,9 +1849,13 @@ public class ArmGenerator extends Generator {
         }
     }
 
-    // FIXME This inserts after the first line of code! And it will confuse the code preview!
-    // We need to append some information (array initializations) at the top of the code, if you have a way to do it we'd be glad to use it
-    private void appendTop(String line) {
+    /**
+     * Adds the given line between the data section header and the text
+     * section header.
+     * 
+     * @param line - the line to be inserted
+     */
+    private void addToDataSection(String line) {
         insertCode(line, 1);
     }
 

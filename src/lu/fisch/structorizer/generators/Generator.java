@@ -1507,7 +1507,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which is supposed
 	 * to be a single line, otherwise counting trouble is likely to occur) into the {@link #code}
-	 * before line number {@code atLine}, i.e. updates all lines references within {@link #codeMap}
+	 * before line number {@code atLine}, i.e. updates all line references within {@link #codeMap}
 	 * if existent.
 	 * @param text - the line to be inserted at {@code atLine}
 	 * @param atLine - the number of the line (code entry) before which {@code text} is to be inserted
