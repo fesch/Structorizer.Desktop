@@ -47,6 +47,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-03      Enh. #828: Configuration for group export
  *      Kay Gürtzig     2020-10-19      Bugfix #877: Division by zero exception on batch export (Alternative)
  *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig     2021-05-12      Bugfix #975: Backslashes (and tilde symbols) hadn't been escaped in text literals
  *
  ******************************************************************************************************
  *
@@ -216,6 +217,10 @@ public class TexGenerator extends Generator {
 		tokens.replaceAll("!=", "\\neq");
 		tokens.replaceAll("<=", "\\leq");
 		tokens.replaceAll(">=", "\\geq");
+		// START KGU#974 2021-05-12: Bugfix #975 Precaution against further critical characters
+		tokens.replaceAll("\\", "\\backslash{}");
+		tokens.replaceAll("~", "\\~{}");
+		// END KGU#974 2021-05-12
 		String[] keywords = CodeParser.getAllProperties();
 		HashSet<String> keys = new HashSet<String>(keywords.length);
 		for (String keyword: keywords) {
@@ -231,13 +236,26 @@ public class TexGenerator extends Generator {
 				}
 				tokens.set(i,  token);
 			}
-			// Cut strings out of math mode and disarm quotes
-			else if (len >= 2 && token.charAt(0) == '"' && token.charAt(len-1) == '"') {
-				tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
+			// Cut strings out of inline math mode and disarm quotes
+			// START KGU#974 2021-05-12: Bugfix #975 we must disarm backslashes as well
+			//else if (len >= 2 && token.charAt(0) == '"' && token.charAt(len-1) == '"') {
+			//	tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
+			//}
+			//else if (len >= 2 && token.charAt(0) == '\'' && token.charAt(len-1) == '\'') {
+			//	tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
+			//}
+			else if (len >= 2
+					&& (token.charAt(0) == '"' && token.charAt(len-1) == '"' 
+					|| token.charAt(0) == '\'' && token.charAt(len-1) == '\'')) {
+				tokens.set(i, "\\)"
+					+ token.replace("\\", "\\textbackslash{}")
+					.replace("\"", "\"{}")
+					.replace("'", "'{}")
+					.replace("^", "\\^{}")
+					.replace("~", "\\textasciitilde{}")	// There may be more symbols to be escaped...
+					+ "\\(");
 			}
-			else if (len >= 2 && token.charAt(0) == '\'' && token.charAt(len-1) == '\'') {
-				tokens.set(i, "\\)" + token.replace("\"", "\"{}").replace("'", "'{}").replace("^", "\\^{}") + "\\(");
-			}
+			// END KGU#974 2021-05-12
 			else if (keys.contains(token)) {
 				tokens.set(i, "\\)\\pKey{" + token + "}\\(");
 			}
