@@ -40,6 +40,7 @@ Current development version 3.31-03 (2021-05-12)
 - 02: Substantial progress in the Italian localisation <Alessandro Simonetta et al.>
 - 02: Localisations for plugin-specific import options added (DE, ES) <2>
 - 02: Issue #964: Processing import shall not place a draw() loop without draw() <2>
+- 03: Issue #932: Processing definitions now in separate diagram [Henning Kiel] 2
 - 03: Issue #966: Precautions for dark look & feel themes (colour tuning, icons) <2>
 - 03: Bugfix #969: Possible debugger numbing after startup with file arguments <2>
 - 03: Enh. #972: Row filtering mechanism for Translator introduced [Henning Kiel]2
