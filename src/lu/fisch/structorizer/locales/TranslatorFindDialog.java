@@ -31,7 +31,8 @@ package lu.fisch.structorizer.locales;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.12.11      First Issue (for enh.req. #425)
+ *      Kay Gürtzig     2017-12-11      First Issue (for enh.req. #425)
+ *      Kay Gürtzig     2021-05-12      Insets adjusted.
  *
  ******************************************************************************************************
  *
@@ -196,10 +197,11 @@ public class TranslatorFindDialog extends JDialog {
 				1, 1,
 				0.0, 0.0,
 				GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-				new Insets(0,0,0,0),
+				new Insets(0,5,0,0),
 				0, 0);
 		pnlFind.add(lblFind, gbc);
 		gbc.gridx++;
+		gbc.insets.left = 0;
 		pnlFind.add(cbbPattern, gbc);
 		gbc.gridx++;
 		pnlFind.add(btnPrev, gbc);
@@ -208,6 +210,7 @@ public class TranslatorFindDialog extends JDialog {
 		
 		gbc.gridx = 1;
 		gbc.gridy = 2;
+		gbc.insets.left = 5;
 		pnlFind.add(lblColumns, gbc);
 		
 		GridBagConstraints gbcCols = new GridBagConstraints(
@@ -222,6 +225,7 @@ public class TranslatorFindDialog extends JDialog {
 			pnlCols.add(box, gbcCols);
 		}
 		gbc.gridx++;
+		gbc.insets.left = 0;
 		pnlFind.add(pnlCols, gbc);
 		
 		gbc.gridx++;

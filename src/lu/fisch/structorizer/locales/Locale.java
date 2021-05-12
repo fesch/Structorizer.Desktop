@@ -306,11 +306,11 @@ public class Locale {
         String[] sectionNames = getSectionNames();
         
         for (int i = 0; i < sectionNames.length; i++) {
-        	String val = getValueIfPresent(sectionNames[i], key);
-        	if (val != null)
-        	{
-        		return !(val.equals(value));
-        	}
+            String val = getValueIfPresent(sectionNames[i], key);
+            if (val != null)
+            {
+                return !(val.equals(value));
+            }
             // END KGU 2016-08-08
         }
         return value != null && !value.isEmpty();
