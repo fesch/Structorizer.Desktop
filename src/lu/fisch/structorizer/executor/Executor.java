@@ -5257,7 +5257,7 @@ public class Executor implements Runnable
 						trouble = tryAssignment(cmd, element, i);
 					}
 					// START KGU#332 2017-01-17/19: Enh. #335 - tolerate a Pascal variable declaration
-					else if (cmd.matches("^var.*:.*") || (isBasic = cmd.matches("^dim.* as .*"))) {
+					else if (cmd.matches("^var\\s.+?:.*") || (isBasic = cmd.matches("^dim\\s.+? as .*"))) {
 						// START KGU#388 2017-09-14: Enh. #423
 						element.updateTypeMapFromLine(this.context.dynTypeMap, cmd, i);
 						// END KGU#388 2017-09-14

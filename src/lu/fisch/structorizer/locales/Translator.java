@@ -56,6 +56,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2021-02-09      Enh. #929: Context menus for the locale buttons introduced.
  *      Kay Gürtzig     2021-02-11      Enh. Reloading via button_empty enabled (special handling). Mechanism
  *                                      of resetting the locale revised (loadLocale())
+ *      Kay Gürtzig     2021-05-11      Enh. #972: Row filtering by status implemented, Find dialog adapted
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,8 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -91,6 +94,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -98,6 +102,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.AbstractAction;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.GroupLayout.ParallelGroup;
 import javax.swing.GroupLayout.SequentialGroup;
@@ -111,6 +116,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
+import javax.swing.RowFilter;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -118,6 +124,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.gui.ElementNames;
@@ -137,9 +145,13 @@ import lu.fisch.utils.StringList;
 public class Translator extends javax.swing.JFrame implements PropertyChangeListener, DocumentListener
 // END KGU 2016-08-04
 {
+    private static final Color BACKGROUND = new Color(255, 255, 204);
     
     private final Locales locales = Locales.getInstance();
-    private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
+    private final HashMap<String,JTable> tables = new HashMap<>();
+    // START KGU#972 2021-05-11: Enh. #972 Allow filtering for (initial) row status
+    private final HashMap<String, HashSet<Integer>> shownRows = new HashMap<>();
+    // END KGU#972 2021-05-11
     
     private String loadedLocaleName = null;
     public static Locale loadedLocale = null;
@@ -165,11 +177,33 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // START KGU#418 2017-12-11: Enh. #425
     private TranslatorFindDialog searchDialog = null;
     // START KGU#919 2021-01-28: Issue #919 More precise change detection
-    private Object editCache;
-    private JTable editTab;
-    private int editRow = -1;
+    private Object editCache;	// Previous value of the table cell currently being edited, or null
+    private JTable editTab;		// Reference to the JTable, a cell of which is currently being edited, or null
+    private int editRow = -1;	// Index of the table row with the cell currently being edited, or -1
     // END KGU#919 2021-01-28
     // END KGU#418 2017-12-11
+    
+    // START KGU#972 2021-05-11: Enh. 972 Status filtering
+    private static class TranslatorRowFilter extends RowFilter<TableModel, Integer>
+    {
+        private String tabKey;
+
+        public TranslatorRowFilter(String tabName)
+        {
+            tabKey = tabName;
+        }
+
+        @Override
+        public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+            if (instance == null) {
+                return true;
+            }
+            HashSet<Integer> rowsToShow = instance.shownRows.get(tabKey);
+            return rowsToShow == null || rowsToShow.contains(entry.getIdentifier());
+        }
+
+    }
+    // END KGU#972 2021-05-11
     
     public static Translator getInstance() 
     {
@@ -379,10 +413,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // END KGU#709 2019-06-07
 
     /**
+     * Loads the specified {@link Locale} (be it a product Locale or a Locale
+     * version from file), cares for caching changes of the currently presented
+     * Locale (if there are any).
      * 
-     * @param localeName
-     * @param toLoadFromFile
-     * @return
+     * @param localeName - name of the Locale to be loaded
+     * @param toLoadFromFile - whether a locale file is to be loaded in place of
+     * Locale {@code localeName}.
+     * @return {@code true} if the loading succeeded, {@code false} if the user
+     * cancelled the loading after some warning
      */
 	public boolean loadLocale(String localeName, boolean toLoadFromFile)
     {
@@ -407,7 +446,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
          *     unchanged afterwards
          *     --> ask for approval to forget it (replace the locale)
          * What role does it play if a loading from file is expected?
-         * None in case of the same name
+         * --> None in case of the same name
          */
         
         headerText.getDocument().removeDocumentListener(this);
@@ -491,7 +530,6 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     }
                     // END KGU 2016-09-05
                 }
-                
 
                 cacheUnsavedData();
             }
@@ -600,6 +638,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         }
         finally {
+            // START KGU#972 2021-05-11: Enh. #972 reset the filter
+            radio_all.setEnabled(true);
+            radio_empty.setEnabled(true);
+            radio_modified.setEnabled(true);
+            radio_all.doClick();
+            // END KGU#972 2021-05-11
             headerText.getDocument().addDocumentListener(this);
         }
         return true;
@@ -890,7 +934,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         localeIcons = new Vector<ImageIcon>();
         loadIcons = new Vector<ImageIcon>();
         // END KGU#929 2021-02-11
-        
+
         // START KGU#393/KGU#418 2017-11-20: Issues #400, #425
         KeyListener myKeyListener = new KeyListener() {
 
@@ -924,6 +968,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     if (evt.isControlDown()) {
                         if (searchDialog == null) {
                             searchDialog = new TranslatorFindDialog(Translator.this);
+                            searchDialog.setLocationRelativeTo(instance);
                         }
                         searchDialog.setVisible(true);
                     }
@@ -1065,8 +1110,48 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         setMinimumSize(new java.awt.Dimension((int)(500 * scaleFactor), (int)(300 * scaleFactor)));
         // END KGU 2016-08-04
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 204));
-        jPanel1.setPreferredSize(new java.awt.Dimension((int)(655*scaleFactor), (int)(48*scaleFactor)));
+        // START KGU#972 2021-05-11: Enh. #972
+        ButtonGroup grpFilter = new ButtonGroup();
+        radio_all = new javax.swing.JRadioButton("Show all rows", true);
+        radio_empty = new javax.swing.JRadioButton("Only missing translations", false);
+        radio_modified = new javax.swing.JRadioButton("Missing and modified translations", false);
+        javax.swing.JRadioButton filterButtons[] = new javax.swing.JRadioButton [] {
+                radio_all, radio_empty, radio_modified
+        };
+        ItemListener filterListener = new ItemListener()
+        {
+            @Override
+            public void itemStateChanged(ItemEvent evt) {
+                Object src = evt.getSource();
+                if (instance != null && src instanceof javax.swing.JRadioButton && ((javax.swing.JRadioButton) src).isSelected()) {
+                    if (src == radio_all) {
+                        // Reset all filters
+                        shownRows.clear();
+                        for (String sectionName: tables.keySet()) {
+                            JTable table = tables.get(sectionName);
+                            ((TableRowSorter<?>)table.getRowSorter()).setRowFilter(null);
+                        }
+                    }
+                    else {
+                        setFilter(src == radio_empty);
+                    }
+                }
+            }
+        };
+        for (int i = 0; i < filterButtons.length; i++) {
+            grpFilter.add(filterButtons[i]);
+            filterButtons[i].addItemListener(filterListener);
+            filterButtons[i].addKeyListener(myKeyListener);
+            filterButtons[i].setEnabled(false);
+            filterButtons[i].setBackground(BACKGROUND);
+        }
+        // END KGU#972 2021-05-11
+
+        jPanel1.setBackground(BACKGROUND);
+        // START KGU#972 2021-05-11: Enh. #972
+        //jPanel1.setPreferredSize(new java.awt.Dimension((int)(655*scaleFactor), (int)(48*scaleFactor)));
+        jPanel1.setPreferredSize(new java.awt.Dimension((int)(655*scaleFactor), (int)(52*scaleFactor) + radio_all.getPreferredSize().height));
+        // END KGU#972 2021-05-11
 
         for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
         {
@@ -1170,6 +1255,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
+        
         SequentialGroup sGroup = jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1);
@@ -1188,6 +1274,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_save)
                 .addContainerGap())
+            // START KGU#972 2021-05-11: Enh. #972
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap(jLabel1.getPreferredSize().width + 10, jLabel1.getPreferredSize().width + 10)
+                .addComponent(radio_all)
+                .addContainerGap()
+                .addComponent(radio_empty)
+                .addContainerGap()
+                .addComponent(radio_modified)
+            )
+            // END KGU#972 2021-05-11
         );
         int btnHeight = (int)(35 * scaleFactor);
         ParallelGroup pGroup = jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1204,6 +1300,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pGroup)
+                // START KGU#972 2021-05-11: Enh. #972
+                .addContainerGap(5, 5)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(radio_all)
+                        .addComponent(radio_empty)
+                        .addComponent(radio_modified))
+                // END KGU#972 2021-05-11
                 .addContainerGap(7, Short.MAX_VALUE))
         );
 
@@ -1228,6 +1331,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             public void actionPerformed(ActionEvent evt) {
                 if (searchDialog == null) {
                     searchDialog = new TranslatorFindDialog(Translator.this);
+                    searchDialog.setLocationRelativeTo(instance);
                 }
                 searchDialog.setVisible(true);
             }
@@ -1242,6 +1346,38 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
 
     /**
+     * Prepares the filtering for empty or modified rows in the tables of
+     * the current locale
+     * 
+     * @param forEmptyRows - if {@code true} then only rows with missing translations
+     * will be shown, otherwise those with modified translations.
+     */
+    protected void setFilter(boolean forEmptyRows) {
+        for (String sectionName: tables.keySet()) {
+            JTable table = tables.get(sectionName);
+            TableModel model = table.getModel();
+            HashSet<Integer> rowsToShow = new HashSet<>();
+            for (int row = 0; row < model.getRowCount(); row++) {
+                String key = (String) model.getValueAt(row, 0);
+                String val = (String)model.getValueAt(row, 2);
+                if (key != null && key.startsWith(Locale.startOfSubSection)) {
+                    rowsToShow.add(row);
+                }
+                else if (forEmptyRows && val == null || val.trim().isEmpty()) {
+                    rowsToShow.add(row);
+                }
+                else if (!forEmptyRows && loadedLocale.valueDiffersFrom(key, val)) {
+                    rowsToShow.add(row);
+                }
+            }
+            shownRows.put(sectionName, rowsToShow);
+            // START KGU#972 2021-05-11: Enh. #972 Prepare filtering
+            ((TableRowSorter<?>)table.getRowSorter()).setRowFilter(new TranslatorRowFilter(sectionName));
+            // END KGU#972 2021-05-11
+        }
+    }
+
+	/**
      * @param forLoad - whether the icons shall show an open symbol
      */
     private void replaceButtonIcons(boolean forLoad) {
@@ -1862,6 +1998,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private Vector<ImageIcon> localeIcons;
     private Vector<ImageIcon> loadIcons;
     // END KGU#929 2021-02-08
+    // START KGU#972 2021-05-11: Enh. #972 2021-05-11 Allow filtering by row status
+    private javax.swing.JRadioButton radio_all;
+    private javax.swing.JRadioButton radio_empty;
+    private javax.swing.JRadioButton radio_modified;
+    // END KGU#972 2021-05-11
     // End of variables declaration
 
     @Override
@@ -1913,11 +2054,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 			do {
 				if (_forward) {
 					while (!found && ++row < lastRow) {
+						// START KGU#972 2021-05-11: Enh. #972 Be aware of possible filtering!
+						int trueRow = table.convertRowIndexToModel(row);
+						// END KGU#972 2021-05-11
 						for (int col = 0; !found && col < nCols; col++) {
 							if (!_columns[col]) {
 								continue;
 							}
-							String val = ((String)tableModel.getValueAt(row, col));
+							// START KGU#972 2021-05-11: Enh. #972 Be aware of possible filtering!
+							//String val = ((String)tableModel.getValueAt(row, col));
+							String val = ((String)tableModel.getValueAt(trueRow, col));
+							// END KGU#972 2021-05-11
 							if (val != null) {
 								if (!_caseSensitive) {
 									val = val.toLowerCase();
@@ -1934,11 +2081,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 				}
 				else {
 					while (!found && --row >= lastRow) {
+						// START KGU#972 2021-05-11: Enh. #972 Be aware of possible filtering!
+						int trueRow = table.convertRowIndexToModel(row);
+						// END KGU#972 2021-05-11
 						for (int col = 0; !found && col < nCols; col++) {
 							if (!_columns[col]) {
 								continue;
 							}
-							String val = ((String)tableModel.getValueAt(row, col));
+							// START KGU#972 2021-05-11: Enh. #972 Be aware of possible filtering!
+							//String val = ((String)tableModel.getValueAt(row, col));
+							String val = ((String)tableModel.getValueAt(trueRow, col));
+							// END KGU#972 2021-05-11
 							if (val != null) {
 								if (!_caseSensitive) {
 									val = val.toLowerCase();

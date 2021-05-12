@@ -39,6 +39,7 @@ package lu.fisch.structorizer.locales;
  *                                      Cell renderer shall highlight also deleted texts as modifications
  *      Kay Gürtzig     2017-12-12      Enh. #491: Tooltip for long master texts (otherwise not completely readable)
  *      Kay Gürtzig     2019-06-06      Enh. #726: Fourth column with pull-down buttons for launching more powerful editor
+ *      Kay Gürtzig     2021-05-11      Enh. #972: Row filtering prepared
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import lu.fisch.structorizer.gui.IconLoader;
 
@@ -96,6 +98,14 @@ public class Tab extends javax.swing.JPanel {
         model.setRowCount(0);
         table.getColumnModel().getColumn(0).setHeaderValue("String");
         
+        // START KGU#972 2021-05-11: Enh. #972 Prepare filtering
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);	// This is simply to allow the addition of a filter
+        // We must not allow manual sorting as this would mix up sections
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            sorter.setSortable(col, false);
+        }
+        // END KGU#972 2021-05-11
         table.getColumnModel().getColumn(2).setHeaderValue("Please load a language!");
         table.getTableHeader().repaint();
     }
@@ -204,6 +214,9 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         }
         // END KGU#709 2019-06-06
         TableModel model = table.getModel();
+        // START KGU#972 2021-05-11: Enh. #972 Be aware of filtering!
+        row = table.convertRowIndexToModel(row);
+        // END KGU#972 2021-05-11
         String key = (String) model.getValueAt(row, 0);
         
         if (key!=null && key.startsWith(Locale.startOfSubSection))
