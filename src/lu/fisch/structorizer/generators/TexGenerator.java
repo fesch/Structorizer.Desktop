@@ -220,6 +220,7 @@ public class TexGenerator extends Generator {
 		// START KGU#974 2021-05-12: Bugfix #975 Precaution against further critical characters
 		tokens.replaceAll("\\", "\\backslash{}");
 		tokens.replaceAll("~", "\\~{}");
+		tokens.replaceAll("&", "\\&");
 		// END KGU#974 2021-05-12
 		String[] keywords = CodeParser.getAllProperties();
 		HashSet<String> keys = new HashSet<String>(keywords.length);
@@ -248,11 +249,22 @@ public class TexGenerator extends Generator {
 					&& (token.charAt(0) == '"' && token.charAt(len-1) == '"' 
 					|| token.charAt(0) == '\'' && token.charAt(len-1) == '\'')) {
 				tokens.set(i, "\\)"
-					+ token.replace("\\", "\\textbackslash{}")
+					+ token.replace("{", "‽{")
+					.replace("}", "‽}")
+					.replace("\\", "\\textbackslash{}")
 					.replace("\"", "\"{}")
 					.replace("'", "'{}")
 					.replace("^", "\\^{}")
-					.replace("~", "\\textasciitilde{}")	// There may be more symbols to be escaped...
+					.replace("~", "\\textasciitilde{}")
+					.replace("&", "\\&")
+					.replace("#", "\\#")
+					.replace("°", "\\textdegree")
+					.replace("^", "\\^{}")
+					.replace("%", "\\%")
+					.replace("$", "\\$")
+					.replace("‽{", "\\{")
+					.replace("‽}", "\\}")
+					// There may be more symbols to be escaped...
 					+ "\\(");
 			}
 			// END KGU#974 2021-05-12
