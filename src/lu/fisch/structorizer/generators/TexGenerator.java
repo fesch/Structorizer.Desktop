@@ -32,22 +32,24 @@ package lu.fisch.structorizer.generators;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2007.12.27      First Issue
- *      Bob Fisch       2008.04.12      Added "Fields" section for generator to be used as plugin
- *      Kay Gürtzig     2015.10.18      Adaptations to updated Generator structure and interface
- *      Kay Gürtzig     2015.11.01      KGU#18/KGU#23 Transformation decomposed
- *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
- *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
- *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done.
- *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
- *      Kay Gürtzig     2017.05.16      Enh. #372: Export of copyright information
- *      Kay Gürtzig     2017.12.30/31   Bugfix #497: Text export had been defective, Parallel export was useless
- *      Kay Gürtzig     2018.01.02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
+ *      Bob Fisch       2007-12-27      First Issue
+ *      Bob Fisch       2008-04-12      Added "Fields" section for generator to be used as plugin
+ *      Kay Gürtzig     2015-10-18      Adaptations to updated Generator structure and interface
+ *      Kay Gürtzig     2015-11-01      KGU#18/KGU#23 Transformation decomposed
+ *      Kay Gürtzig     2015-12-18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
+ *      Kay Gürtzig     2016-07-20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
+ *      Kay Gürtzig     2016-09-25      Enh. #253: CodeParser.keywordMap refactoring done.
+ *      Kay Gürtzig     2016-10-14      Enh. #270: Disabled elements are skipped here now
+ *      Kay Gürtzig     2017-05-16      Enh. #372: Export of copyright information
+ *      Kay Gürtzig     2017-12-30/31   Bugfix #497: Text export had been defective, Parallel export was useless
+ *      Kay Gürtzig     2018-01-02      Issue #497: FOR-IN loop list conversion fixed, height arg reduced, includedRoots involved
  *      Kay Gürtzig     2019-09-27      Enh. #738: Support for code preview map on Root level
  *      Kay Gürtzig     2020-04-03      Enh. #828: Configuration for group export
  *      Kay Gürtzig     2020-10-19      Bugfix #877: Division by zero exception on batch export (Alternative)
  *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig     2021-05-12      Bugfix #975: Backslashes (and tilde symbols) hadn't been escaped in text literals
+ *      Kay Gürtzig     2021-06-06      Bugfix #975: ^ within tokens replaced by \textasciicircum rather than \hat{}
+ *                                      method transformText extracted for the token-internal substitution
  *
  ******************************************************************************************************
  *
@@ -99,13 +101,13 @@ public class TexGenerator extends Generator {
 		return exts;
 	}
 	
-    // START KGU 2015-10-18: New pseudo field
-    @Override
-    protected String commentSymbolLeft()
-    {
-    	return "%";
-    }
-    // END KGU 2015-10-18
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "%";
+	}
+	// END KGU 2015-10-18
 	
 	// START KGU#78 2015-12-18: Enh. #23 - Irrelevant here (?) but necessary now
 	/* (non-Javadoc)
@@ -210,7 +212,7 @@ public class TexGenerator extends Generator {
 		// END KGU#920 2021-02-03
 		tokens.replaceAll("{", "\\{");
 		tokens.replaceAll("}", "\\}");
-		tokens.replaceAll("%", "\\)\\pKey{mod}\\(");
+		tokens.replaceAll("%", "\\bmod");
 		tokens.replaceAll("&&", "\\wedge");
 		tokens.replaceAll("||", "\\vee");
 		tokens.replaceAll("==", "=");
@@ -221,6 +223,7 @@ public class TexGenerator extends Generator {
 		tokens.replaceAll("\\", "\\backslash{}");
 		tokens.replaceAll("~", "\\~{}");
 		tokens.replaceAll("&", "\\&");
+		tokens.replaceAll("^", "\\^{}");
 		// END KGU#974 2021-05-12
 		String[] keywords = CodeParser.getAllProperties();
 		HashSet<String> keys = new HashSet<String>(keywords.length);
@@ -249,21 +252,8 @@ public class TexGenerator extends Generator {
 					&& (token.charAt(0) == '"' && token.charAt(len-1) == '"' 
 					|| token.charAt(0) == '\'' && token.charAt(len-1) == '\'')) {
 				tokens.set(i, "\\)"
-					+ token.replace("{", "‽{")
-					.replace("}", "‽}")
-					.replace("\\", "\\textbackslash{}")
-					.replace("\"", "\"{}")
-					.replace("'", "'{}")
-					.replace("^", "\\^{}")
-					.replace("~", "\\textasciitilde{}")
-					.replace("&", "\\&")
-					.replace("#", "\\#")
-					.replace("°", "\\textdegree")
-					.replace("^", "\\^{}")
-					.replace("%", "\\%")
-					.replace("$", "\\$")
-					.replace("‽{", "\\{")
-					.replace("‽}", "\\}")
+					// Replacements within string literals
+					+ transformText(token)
 					// There may be more symbols to be escaped...
 					+ "\\(");
 			}
@@ -272,7 +262,7 @@ public class TexGenerator extends Generator {
 				tokens.set(i, "\\)\\pKey{" + token + "}\\(");
 			}
 			else if (token.contains("^")) {
-				tokens.set(i, token.replace("^", "\\hat{}"));
+				tokens.set(i, token.replace("^", "\\textasciicircum{}"));
 			}
 		}
 		return tokens.concatenate();
@@ -309,6 +299,32 @@ public class TexGenerator extends Generator {
 		return _input;
 	}
 
+	/**
+	 * Transforms mere text (or string literal contents) to LaTeX syntax
+	 * @param text - the source string
+	 * @return the LaTeX-compatible text
+	 */
+	private String transformText(String text)
+	{
+		return text.replace("{", "‽{")
+		.replace("}", "‽}")
+		.replace("\\", "\\textbackslash{}")
+		.replace("|", "\\textbar{}")
+		.replace("\"", "\"{}")
+		.replace("'", "'{}")
+		.replace("^", "\\textasciicircum{}")
+		.replace("~", "\\textasciitilde{}")
+		.replace("<", "\\textless")
+		.replace(">", "\\textgreater")
+		.replace("&", "\\&")
+		.replace("#", "\\#")
+		.replace("°", "\\textdegree")
+		.replace("%", "\\%")
+		.replace("$", "\\$")
+		.replace("‽{", "\\{")
+		.replace("‽}", "\\}");
+	}
+
 	@Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -340,7 +356,7 @@ public class TexGenerator extends Generator {
 					String varName = Instruction.getAssignedVarname(tokens, false);
 					code.add(_indent+this.getIndent()+this.getIndent() + "\\description{" + varName + "}{"
 							+ transform(line) + "}");
-					code.add(_indent+this.getIndent() + "\\end{declaration}");    				
+					code.add(_indent+this.getIndent() + "\\end{declaration}");
 					code.add(_indent + "}");
 				}
 				else {
@@ -448,6 +464,7 @@ public class TexGenerator extends Generator {
 		}
 	}
 
+	@Override
 	protected void generateCode(For _for, String _indent)
 	{
 		if (!_for.isDisabled(true)) {
@@ -499,6 +516,7 @@ public class TexGenerator extends Generator {
 		return _item.length() >= 2 && _item.charAt(0) == '"' && _item.charAt(_item.length()-1) == '"';
 	}
 
+	@Override
 	protected void generateCode(While _while, String _indent)
 	{
 		if (!_while.isDisabled(true)) {
@@ -508,6 +526,7 @@ public class TexGenerator extends Generator {
 		}
 	}
 	
+	@Override
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		if (!_repeat.isDisabled(true)) {
@@ -517,6 +536,7 @@ public class TexGenerator extends Generator {
 		}
 	}
 	
+	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
 		if (!_forever.isDisabled(false)) {
@@ -528,16 +548,19 @@ public class TexGenerator extends Generator {
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		StringList lines = _call.getUnbrokenText();
-		for (int i = 0; !_call.isDisabled(true) && i < lines.count(); i++)
-		{
-			// START KGU#2 2015-12-19: Wrong command, should be \sub
-			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
-			code.add(_indent + "\\sub{\\("+transform(lines.get(i))+"\\)}");
-			// END KGU#2 2015-12-19
+		if (!_call.isDisabled(false)) {
+			StringList lines = _call.getUnbrokenText();
+			for (int i = 0; !_call.isDisabled(true) && i < lines.count(); i++)
+			{
+				// START KGU#2 2015-12-19: Wrong command, should be \sub
+				//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
+				code.add(_indent + "\\sub{\\("+transform(lines.get(i))+"\\)}");
+				// END KGU#2 2015-12-19
+			}
 		}
 	}
 	
+	@Override
 	protected void generateCode(Jump _jump, String _indent)
 	{
 		if (!_jump.isDisabled(true)) {
@@ -559,7 +582,7 @@ public class TexGenerator extends Generator {
 				{
 					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 					//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
-					String line = _jump.getText().get(i);
+					String line = lines.get(i);
 					String command = "exit";	// Just the default
 					String padding = "";	// StrukTeX handles the text orientation differently in exit and return macros
 					// START KGU#483 2017-12-31: Issue #497 - distinction between return and exit repaired but then withdrawn
@@ -578,6 +601,7 @@ public class TexGenerator extends Generator {
 	}
 	
 	// START KGU#47 2015-12-19: Hadn't been generated at all - Trouble is: structure must not be recursive!
+	@Override
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		// Ignore it if there are no threads or if the element is disabled
@@ -661,7 +685,7 @@ public class TexGenerator extends Generator {
 			code.add("\\documentclass[a4paper,10pt]{article}");
 			code.add("");
 			code.add("\\usepackage{struktex}");
-			code.add("\\usepackage{german}");
+			code.add("\\usepackage{ngerman}");
 			// START KGU#483 2017-12-31: Issue #497 - there might also be usepackage additions
 			this.appendUserIncludes("");
 			// END KGU#483 2017-12-31
@@ -669,18 +693,19 @@ public class TexGenerator extends Generator {
 			// START KGU#483 2017-12-31: Issue #497
 			//code.add("\\title{Structorizer StrukTeX Export}");
 			File file = _root.getFile();
-			code.add("\\title{Structorizer StrukTeX Export" + (file != null ? " of " + file.getName().replace(" ","_").replace("_", "\\_") : "") + "}");
+			code.add("\\title{Structorizer StrukTeX Export"
+					+ (file != null ? " of " + transformText(file.getName()) : "") + "}");
 			// END KGU#483 2017-12-31
 			// START KGU#363 2017-05-16: Enh. #372
 			//code.add("\\author{Structorizer "+Element.E_VERSION+"}");
 			if (this.optionExportLicenseInfo()) {
-				code.add("\\author{" + _root.getAuthor() + "}");
+				code.add("\\author{" + transformText(_root.getAuthor()) + "}");
 			} else {
-				code.add("\\author{Structorizer "+Element.E_VERSION+"}");
+				code.add("\\author{Structorizer " + Element.E_VERSION + "}");
 			}
 			// END KGU#363 2017-05-16
 			// START KGU#483 2017-12-31: Issue #497
-			code.add("\\date{"+ DateFormat.getDateInstance().format(new Date()) +"}");
+			code.add("\\date{" + DateFormat.getDateInstance().format(new Date()) + "}");
 			// END KGU#483 2017-12-31
 			code.add("");
 			code.add("\\begin{document}");
@@ -692,7 +717,10 @@ public class TexGenerator extends Generator {
 		// START KGU#483 2017-12-30: Bugfix #497 - we must escape underscores in the name
 		//code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
 		code.add("% TODO: Tune the width and height argument if necessary!");
-		code.add("\\begin{struktogramm}("+Math.round((_root.width - 2 * E_PADDING) * PIXEL_TO_MM)+","+Math.round(_root.height * PIXEL_TO_MM / 2)+")["+transform(_root.getMethodName())+"]");
+		code.add("\\begin{struktogramm}("
+				+ Math.round((_root.width - 2 * E_PADDING) * PIXEL_TO_MM) + ","
+				+ Math.round(_root.height * PIXEL_TO_MM / 2) + ")["
+				+ transformText(_root.getMethodName()) + "]");
 		generateParameterDecl(_root);
 		// END KGU#483 2017-12-30
 		generateCode(_root.children, this.getIndent());
@@ -702,7 +730,9 @@ public class TexGenerator extends Generator {
 		while (!this.tasks.isEmpty()) {
 			Root task = tasks.removeFirst();
 			code.add("% TODO: Tune the width and height argument if necessary!");
-			code.add("\\begin{struktogramm}("+Math.round(task.width * PIXEL_TO_MM)+","+Math.round(task.height * PIXEL_TO_MM / 2)+")["+transform(task.getText().get(0))+"]");
+			code.add("\\begin{struktogramm}(" + Math.round(task.width * PIXEL_TO_MM) + ","
+					+ Math.round(task.height * PIXEL_TO_MM / 2) + ")["
+					+transformText(task.getText().get(0)) + "]");
 			generateCode(task.children, this.getIndent());
 			code.add("\\end{struktogramm}");			
 		}

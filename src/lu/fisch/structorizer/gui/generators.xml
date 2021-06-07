@@ -20,5 +20,14 @@
 		<option type="Boolean" name="underscores2hyphens" title="Underscores to hyphens in names" help="Decide if underscores in identifiers are to be replaced by hyphens"/>
 		<option type="Unsigned" name="dataLevelIncrement" title="Data level increment" help="The step in the level numbers in composed data items"/>
 	</plugin -->
-
+	<plugin title="LaTeX Algorithm"		class="lu.fisch.structorizer.generators.TexAlgGenerator"    icon="">
+		<option type="Enum" name="package" title="LaTeX package to be used" help="Choose your preferred package for algorithms">
+			<item value="algorithmicx" />
+			<item value="algorithmic" />
+			<item value="algorithm2e" />
+			<item value="pseudocode" />
+		</option>
+		<option type="Unsigned" name="numberingInterval" title="Line numbering step" help="If supported: 0 for no numbering, 1 for each line, n for every nth line" />
+		<option type="Boolean" name="appendSemicolon" title="Put a semicolon after any instruction" help="Check this if instructions are to be followed by ';'" />
+	</plugin>
 </plugins>

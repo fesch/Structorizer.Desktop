@@ -229,6 +229,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-02      Bugfix #951: On FilesDrop for source files the language-specific options weren't used
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
+ *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
  *
  ******************************************************************************************************
  *
@@ -843,7 +844,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 										GENPlugin plug = parserPlugins.get(j);
 										// END KGU#948 2021-03-02
 										if (plug.getKey().equals(parserClassName)) {
-											setPluginSpecificOptions(parser, parserClassName, plug.options);
+											setPluginSpecificOptions(parser, plug.options);
 											break;
 										}
 									}
@@ -6833,6 +6834,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", PapGenerator.class.getSimpleName())+"\n" + message,
 					Menu.msgTitleError.getText(),
@@ -7165,7 +7167,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				for (int i = 0; i < parserPlugins.size(); i++) {
 					GENPlugin plug = parserPlugins.get(i);
 					if (plug.getKey().equals(parserClassName)) 
-						this.setPluginSpecificOptions(parser, parserClassName, plug.options);
+						this.setPluginSpecificOptions(parser, plug.options);
 				}
 				// END KGU#395 2017-07-02
 				// START KGU#537 2018-06-30: Enh. #553
@@ -7469,7 +7471,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Export the given diagram {@code _root} to the programming language associated to the
 	 * generator {@code _generatorClassName}.
-	 * @param _generatorClassName - class name of he generator to be used
+	 * @param _generatorClassName - class name of the generator to be used
 	 * @param _specificOptions - generator-specific options 
 	 */
 	public void export(Root _root, String _generatorClassName, Vector<HashMap<String, String>> _specificOptions)
@@ -7498,7 +7500,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#815 2020-03-20
 			// START KGU#395 2017-05-11: Enh. #357
-			this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
+			this.setPluginSpecificOptions(gen, _specificOptions);
 			// END KGU#395 2017-05-11
 			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -7570,8 +7572,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
-					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
+					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName) + "\n" + message,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
@@ -7620,7 +7623,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (options == null) {
 				options = new Vector<HashMap<String, String>>();
 			}
-			this.setPluginSpecificOptions(gen, generatorName, options);
+			this.setPluginSpecificOptions(gen, options);
 			// START KGU#396 2020-04-01: Temporary extra mechanism for #440
 			if (extraOptions != null) {
 				for (Map.Entry<String, Object> option: extraOptions.entrySet()) {
@@ -7649,6 +7652,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
 			if (message == null || message.isEmpty()) message = ex.toString();
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
 					Menu.msgTitleError.getText(),
@@ -7701,6 +7705,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String message = ex.getLocalizedMessage();
 				if (message == null) message = ex.getMessage();
 				if (message == null || message.isEmpty()) message = ex.toString();
+				logger.log(Level.CONFIG, message, ex);
 				JOptionPane.showMessageDialog(this.getFrame(),
 						Menu.msgErrorUsingGenerator.getText().replace("%", generatorName)+"\n" + message,
 						Menu.msgTitleError.getText(),
@@ -7721,21 +7726,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		for (GENPlugin plugin: Menu.generatorPlugins) {
 			if (plugin.className.equals(_generator.getClass().getName())) {
 				// FIXME: Improve performance here! Avoid repetitive retrieval but ensure sensitiveness to changes
-				setPluginSpecificOptions(_generator, plugin.className, plugin.options);
+				setPluginSpecificOptions(_generator, plugin.options);
 				break;
 			}
 		}
 	}
 	// END KGU#705 2019-09-23
 
-	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
-	private void setPluginSpecificOptions(IPluginClass _gen, String _generatorClassName,
+	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20, KGU#975 2021-06-03
+	/**
+	 * Retrieves plugin-specific options for the plugin-related class instance
+	 * {@code _pluginInstance} (e.g. a generator or parser) from Ini and fills
+	 * the option map of {@code _pluginInstance}.
+	 * @param _pluginInstance - instance of a plugin-related class
+	 * @param _specificOptions - the option specifications of the related plugin
+	 */
+	private void setPluginSpecificOptions(IPluginClass _pluginInstance,
 			Vector<HashMap<String, String>> _specificOptions)
 	{
 		Ini ini = Ini.getInstance();
+		// START KGU#975 2021-06-03: Bugfix a fully qualified name is unsuited for propery retrieval
+		String className = _pluginInstance.getClass().getSimpleName();
+		// END KGU#975 2021-06-03
 		for (HashMap<String, String> optionSpec: _specificOptions) {
 			String optionKey = optionSpec.get("name");
-			String valueStr = ini.getProperty(_generatorClassName + "." + optionKey, "");
+			String valueStr = ini.getProperty(className + "." + optionKey, "");
 			Object value = null;
 			String type = optionSpec.get("type");
 			String items = optionSpec.get("items");
@@ -7770,7 +7785,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (message == null || message.isEmpty()) message = ex.toString();
 					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
 							new Object[]{
-									_gen.getClass().getSimpleName(),
+									className,
 									message,
 									valueStr,
 									type,
@@ -7778,7 +7793,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 			if (value != null) {
-				_gen.setPluginOption(optionKey, value);
+				_pluginInstance.setPluginOption(optionKey, value);
 			}
 		}
 	}

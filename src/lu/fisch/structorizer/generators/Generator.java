@@ -3035,6 +3035,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
 	 * @see #optionCodeLineNumbering()
@@ -3121,6 +3122,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Call, String)
 	 * @see #generateCode(Jump, String)
 	 * @see #generateCode(Parallel, String)
+	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @param _subqueue - the {@link lu.fisch.structorizer.elements.Subqueue}
 	 * @param _indent - the indentation string valid for the given element's level
@@ -3130,12 +3132,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected void generateCode(Subqueue _subqueue, String _indent)
 	// END KGU#383 2017-04-18
 	{
-		// code.add(_indent+"");
 		for(int i=0; i<_subqueue.getSize(); i++)
 		{
 			generateCode(_subqueue.getElement(i),_indent);
 		}
-		// code.add(_indent+"");
 	}
 
 	/******** Public Methods *************/
