@@ -27,7 +27,7 @@
 			<item value="algorithm2e" />
 			<item value="pseudocode" />
 		</option>
-		<option type="Unsigned" name="numberingInterval" title="Line numbering step" help="If supported: 0 for no numbering, 1 for each line, n for every nth line" />
+		<option type="Unsigned" name="numberingInterval" title="Line numbering step" help="As far as supported by the package: 0 for no numbering, 1 for each line, n for every nth line" />
 		<option type="Boolean" name="appendSemicolon" title="Put a semicolon after any instruction" help="Check this if instructions are to be followed by ';'" />
 	</plugin>
 </plugins>
