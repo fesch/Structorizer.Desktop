@@ -38,7 +38,7 @@ import lu.fisch.utils.StringList;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017-06-20      First Issue
- *      Kay Gürtzig     2021-06-08      Method setPluginSpecificOptions() added (obtained from Diagram)
+ *      Kay Gürtzig     2021-06-08      Method setPluginOptionsFromIni() added (extracted from Diagram)
  *
  ******************************************************************************************************
  *
