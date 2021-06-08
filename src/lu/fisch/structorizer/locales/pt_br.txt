@@ -619,7 +619,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em
 ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida 
 ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.
 ExportOptionDialoge.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
-ExportOptionDialoge.lineNumbersCheckBox.text=Gerar números de linhas ao exportar para BASIC.
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
 ExportOptionDialoge.chkExportSubroutines.text=Envolver subprogramas chamados.
 ExportOptionDialoge.lbPrefGenerator.text=Exportar para código de preferência: 
@@ -628,6 +627,16 @@ ExportOptionDialoge.chkCharsetAll.text=Listar tudo?
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar ... 
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=Valor para '%' tem de ser um número inteiro!
+PluginOptionDialog.msgNoValidUnsigned.text=Valor para '%' tem de ser um número inteiro natural!
+PluginOptionDialog.msgNoValidCharacter.text=Valor para '%' tem de ser um caractere singular!
+PluginOptionDialog.msgNoValidDouble.text=Valor para '%' tem de ser um número
+PluginOptionDialog.msgVerificationError.text=Verificação de entrada fracassou
+PluginOptionDialog.btnOk.text=OK
+PluginOptionDialog.btnCancel.text=Cancelar
+PluginOptionDialog.optionComponents.lineNumbering.text=Gerar números de linhas ao exportar
 
 -----[ FindAndReplace ]-----
 FindAndReplace.chkRootTypes.0.text=@n

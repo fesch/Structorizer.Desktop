@@ -1,0 +1,504 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\algblockdefx[CASE]{Case}{EndCase}
+  [1]{\textbf{case} \(#1\) \textbf{of}}
+  {\textbf{end\ case}}
+\algblockdefx[SELECT]{Selector}{EndSelector}
+  [1]{#1\textbf{: begin}}
+  {\textbf{end}}
+\algblockdefx[OTHER]{Other}{EndOther}
+  {\textbf{otherwise: begin}}
+  {\textbf{end}}
+\algblockdefx[TRY]{Try}{EndTry}
+  {\textbf{try}}
+  {\textbf{end\ try}}
+\algblockdefx[CATCH]{Catch}{EndCatch}
+  [1]{\textbf{catch} (#1)}
+  {\textbf{end\ catch}}\algblockdefx[FINALLY]{Finally}{EndFinally}
+  {\textbf{finally}}
+  {\textbf{end\ finally}}
+\algblockdefx[PARALLEL]{Para}{EndPara}
+  {\textbf{parallel}}
+  {\textbf{end\ parallel}}
+\algblockdefx[THREAD]{Thread}{EndThread}
+  [1]{\textbf{thread} #1}
+  [1]{\textbf{end\ thread} #1}
+\algblockdefx[DECLARATION]{Decl}{EndDecl}
+  [1][]{\textbf{#1}}
+  {}
+
+\title{Structorizer LaTeX pseudocode Export of ELIZA_2.3.arrz}
+\author{Kay Gürtzig}
+\date{08.06.2021}
+
+\begin{document}
+
+\begin{algorithm}
+\caption{adjustSpelling(1)}
+\begin{algorithmic}[5]
+\Function{adjustSpelling}{sentence}
+\State \Comment{ Cares for correct letter case among others }
+  \Decl{Parameters:}
+    \State sentence: string
+  \EndDecl
+  \Decl{Result type:}
+    \State string
+  \EndDecl
+  \State \(result\gets\ sentence\)
+  \State \(position\gets\ 1\)
+  \While{\((position\leq\ length(sentence))\wedge(copy(sentence,position,1)=\)"{}\ "{}\()\)}
+    \State \(position\gets\ position+1\)
+  \EndWhile
+  \If{\(position\leq\ length(sentence)\)}
+    \State \(start\gets\ copy(sentence,1,position)\)
+    \State \(delete(result,1,position)\)
+    \State \(insert(uppercase(start),result,1)\)
+  \EndIf
+  \ForAll{\(word \in \{\)"{}\ i\ "{}\(,\)"{}\ i\textbackslash{}'{}"{}\(\}\)}
+    \State \(position\gets\ pos(word,result)\)
+    \While{\(position>0\)}
+      \State \(delete(result,position+1,1)\)
+      \State \(insert(\)"{}I"{}\(,result,position+1)\)
+      \State \(position\gets\ pos(word,result)\)
+    \EndWhile
+  \EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{checkGoodBye(2)}
+\begin{algorithmic}[5]
+\Function{checkGoodBye}{text, phrases}
+\State \Comment{ Checks whether the given text contains some kind of }
+\State \Comment{ good-bye phrase inducing the end of the conversation }
+\State \Comment{ and if so writes a correspding good-bye message and }
+\State \Comment{ returns true, otherwise false }
+  \Decl{Parameters:}
+    \State text: string
+    \State phrases: array\ of\ array[0..1]of\ string
+  \EndDecl
+  \Decl{Result type:}
+    \State boolean
+  \EndDecl
+  \ForAll{\(pair \in phrases\)}
+    \If{\(pos(pair[0],text)>0\)}
+      \State \(\)print\((pair[1])\)
+      \State \textbf{return} \(true\)
+    \EndIf
+  \EndFor
+  \State \textbf{return} \(false\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{conjugateStrings(4)}
+\begin{algorithmic}[5]
+\Function{conjugateStrings}{sentence, key, keyPos, flexions}
+  \Decl{Parameters:}
+    \State sentence: string
+    \State key: string
+    \State keyPos: integer
+    \State flexions: array\ of\ array[0..1]of\ string
+  \EndDecl
+  \Decl{Result type:}
+    \State string
+  \EndDecl
+  \State \(result\gets\)"{}\ "{}\(+copy(sentence,keyPos+length(key),length(sentence))+\)"{}\ "{}\(\)
+  \ForAll{\(pair \in flexions\)}
+    \State \(left\gets\)"{}"{}\(\)
+    \State \(right\gets\ result\)
+    \State \(position\gets\ pos(pair[0],right)\)
+    \While{\(position>0\)}
+      \State \(left\gets\ left+copy(right,1,position-1)+pair[1]\)
+      \State \(right\gets\ copy(right,position+length(pair[0]),length(right))\)
+      \State \(position\gets\ pos(pair[0],right)\)
+    \EndWhile
+    \State \(result\gets\ left+right\)
+  \EndFor
+  \State \(position\gets\ pos(\)"{}\ \ "{}\(,result)\)
+  \Comment{Eliminate multiple spaces}
+  \While{\(position>0\)}
+    \State \(result\gets\ copy(result,1,position-1)+copy(result,position+1,length(result))\)
+    \State \(position\gets\ pos(\)"{}\ \ "{}\(,result)\)
+  \EndWhile
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{normalizeInput(1)}
+\begin{algorithmic}[5]
+\Function{normalizeInput}{sentence}
+\State \Comment{ Converts the sentence to lowercase, eliminates all }
+\State \Comment{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }
+\State \Comment{ sentence among blanks }
+  \Decl{Parameters:}
+    \State sentence: string
+  \EndDecl
+  \Decl{Result type:}
+    \State string
+  \EndDecl
+  \State \(sentence\gets\ lowercase(sentence)\)
+  \ForAll{\(symbol \in \{\)'{}.'{}\(,\)'{},'{}\(,\)'{};'{}\(,\)'{}!'{}\(,\)'{}?'{}\(\}\)}
+    \State \(position\gets\ pos(symbol,sentence)\)
+    \While{\(position>0\)}
+      \State \(sentence\gets\ copy(sentence,1,position-1)+copy(sentence,position+1,length(sentence))\)
+      \State \(position\gets\ pos(symbol,sentence)\)
+    \EndWhile
+  \EndFor
+  \State \(result\gets\)"{}\ "{}\(+sentence+\)"{}\ "{}\(\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{setupGoodByePhrases(0)}
+\begin{algorithmic}[5]
+\Function{setupGoodByePhrases}{}
+  \Decl{Result type:}
+    \State array of array[0..1] of string
+  \EndDecl
+  \State \(phrases[0]\gets\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)
+  \State \(phrases[1]\gets\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)
+  \State \textbf{return} \(phrases\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{setupReflexions(0)}
+\begin{algorithmic}[5]
+\Function{setupReflexions}{}
+\State \Comment{ Returns an array of pairs of mutualy substitutable  }
+  \Decl{Result type:}
+    \State array of array[0..1] of string
+  \EndDecl
+  \State \(reflexions[0]\gets\{\)"{}\ are\ "{}\(,\)"{}\ am\ "{}\(\}\)
+  \State \(reflexions[1]\gets\{\)"{}\ were\ "{}\(,\)"{}\ was\ "{}\(\}\)
+  \State \(reflexions[2]\gets\{\)"{}\ you\ "{}\(,\)"{}\ I\ "{}\(\}\)
+  \State \(reflexions[3]\gets\{\)"{}\ your"{}\(,\)"{}\ my"{}\(\}\)
+  \State \(reflexions[4]\gets\{\)"{}\ i\textbackslash{}'{}ve\ "{}\(,\)"{}\ you\textbackslash{}'{}ve\ "{}\(\}\)
+  \State \(reflexions[5]\gets\{\)"{}\ i\textbackslash{}'{}m\ "{}\(,\)"{}\ you\textbackslash{}'{}re\ "{}\(\}\)
+  \State \(reflexions[6]\gets\{\)"{}\ me\ "{}\(,\)"{}\ you\ "{}\(\}\)
+  \State \(reflexions[7]\gets\{\)"{}\ my\ "{}\(,\)"{}\ your\ "{}\(\}\)
+  \State \(reflexions[8]\gets\{\)"{}\ i\ "{}\(,\)"{}\ you\ "{}\(\}\)
+  \State \(reflexions[9]\gets\{\)"{}\ am\ "{}\(,\)"{}\ are\ "{}\(\}\)
+  \State \textbf{return} \(reflexions\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{setupReplies(0)}
+\begin{algorithmic}[5]
+\Function{setupReplies}{}
+\State \Comment{ This routine sets up the reply rings addressed by the key words defined in }
+\State \Comment{ routine `setupKeywords()´ and mapped hitherto by the cross table defined }
+\State \Comment{ in `setupMapping()´ }
+  \Decl{Result type:}
+    \State array of array of string
+  \EndDecl
+  \State \(var\ replies:array\ of\ array\ of\ String\)
+  \State \Comment{ We start with the highest index for performance reasons }
+  \State \Comment{ (is to avoid frequent array resizing) }
+  \State \(replies[29]\gets\{\)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\)"{}I\ see."{}\(,\)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\)"{}Can\ you\ elaborate\ on\ that?"{}\(,\)"{}That\ is\ quite\ interesting."{}\(\}\)
+  \State \(replies[0]\gets\{\)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\)
+  \State \(replies[1]\gets\{\)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\)
+  \State \(replies[2]\gets\{\)"{}What\ makes\ you\ think\ I\ am*?"{}\(,\)"{}Does\ it\ please\ you\ to\ believe\ I\ am*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be*?"{}\(,\)"{}Do\ you\ sometimes\ wish\ you\ were*?"{}\(\}\)
+  \State \(replies[3]\gets\{\)"{}Don'{}t\ you\ really*?"{}\(,\)"{}Why\ don'{}t\ you*?"{}\(,\)"{}Do\ you\ wish\ to\ be\ able\ to*?"{}\(,\)"{}Does\ that\ trouble\ you*?"{}\(\}\)
+  \State \(replies[4]\gets\{\)"{}Do\ you\ often\ feel*?"{}\(,\)"{}Are\ you\ afraid\ of\ feeling*?"{}\(,\)"{}Do\ you\ enjoy\ feeling*?"{}\(\}\)
+  \State \(replies[5]\gets\{\)"{}Do\ you\ really\ believe\ I\ don'{}t*?"{}\(,\)"{}Perhaps\ in\ good\ time\ I\ will*."{}\(,\)"{}Do\ you\ want\ me\ to*?"{}\(\}\)
+  \State \(replies[6]\gets\{\)"{}Do\ you\ think\ you\ should\ be\ able\ to*?"{}\(,\)"{}Why\ can'{}t\ you*?"{}\(\}\)
+  \State \(replies[7]\gets\{\)"{}Why\ are\ you\ interested\ in\ whether\ or\ not\ I\ am*?"{}\(,\)"{}Would\ you\ prefer\ if\ I\ were\ not*?"{}\(,\)"{}Perhaps\ in\ your\ fantasies\ I\ am*?"{}\(\}\)
+  \State \(replies[8]\gets\{\)"{}How\ do\ you\ know\ you\ can'{}t*?"{}\(,\)"{}Have\ you\ tried?"{}\(,\)"{}Perhaps\ you\ can\ now*."{}\(\}\)
+  \State \(replies[9]\gets\{\)"{}Did\ you\ come\ to\ me\ because\ you\ are*?"{}\(,\)"{}How\ long\ have\ you\ been*?"{}\(,\)"{}Do\ you\ believe\ it\ is\ normal\ to\ be*?"{}\(,\)"{}Do\ you\ enjoy\ being*?"{}\(\}\)
+  \State \(replies[10]\gets\{\)"{}We\ were\ discussing\ you--not\ me."{}\(,\)"{}Oh,\ I*."{}\(,\)"{}You'{}re\ not\ really\ talking\ about\ me,\ are\ you?"{}\(\}\)
+  \State \(replies[11]\gets\{\)"{}What\ would\ it\ mean\ to\ you\ if\ you\ got*?"{}\(,\)"{}Why\ do\ you\ want*?"{}\(,\)"{}Suppose\ you\ soon\ got*..."{}\(,\)"{}What\ if\ you\ never\ got*?"{}\(,\)"{}I\ sometimes\ also\ want*."{}\(\}\)
+  \State \(replies[12]\gets\{\)"{}Why\ do\ you\ ask?"{}\(,\)"{}Does\ that\ question\ interest\ you?"{}\(,\)"{}What\ answer\ would\ please\ you\ the\ most?"{}\(,\)"{}What\ do\ you\ think?"{}\(,\)"{}Are\ such\ questions\ on\ your\ mind\ often?"{}\(,\)"{}What\ is\ it\ that\ you\ really\ want\ to\ know?"{}\(,\)"{}Have\ you\ asked\ anyone\ else?"{}\(,\)"{}Have\ you\ asked\ such\ questions\ before?"{}\(,\)"{}What\ else\ comes\ to\ mind\ when\ you\ ask\ that?"{}\(\}\)
+  \State \(replies[13]\gets\{\)"{}Names\ don'{}t\ interest\ me."{}\(,\)"{}I\ don'{}t\ care\ about\ names\ --\ please\ go\ on."{}\(\}\)
+  \State \(replies[14]\gets\{\)"{}Is\ that\ the\ real\ reason?"{}\(,\)"{}Don'{}t\ any\ other\ reasons\ come\ to\ mind?"{}\(,\)"{}Does\ that\ reason\ explain\ anything\ else?"{}\(,\)"{}What\ other\ reasons\ might\ there\ be?"{}\(\}\)
+  \State \(replies[15]\gets\{\)"{}Please\ don'{}t\ apologize!"{}\(,\)"{}Apologies\ are\ not\ necessary."{}\(,\)"{}What\ feelings\ do\ you\ have\ when\ you\ apologize?"{}\(,\)"{}Don'{}t\ be\ so\ defensive!"{}\(\}\)
+  \State \(replies[16]\gets\{\)"{}What\ does\ that\ dream\ suggest\ to\ you?"{}\(,\)"{}Do\ you\ dream\ often?"{}\(,\)"{}What\ persons\ appear\ in\ your\ dreams?"{}\(,\)"{}Are\ you\ disturbed\ by\ your\ dreams?"{}\(\}\)
+  \State \(replies[17]\gets\{\)"{}How\ do\ you\ do\ ...please\ state\ your\ problem."{}\(\}\)
+  \State \(replies[18]\gets\{\)"{}You\ don'{}t\ seem\ quite\ certain."{}\(,\)"{}Why\ the\ uncertain\ tone?"{}\(,\)"{}Can'{}t\ you\ be\ more\ positive?"{}\(,\)"{}You\ aren'{}t\ sure?"{}\(,\)"{}Don'{}t\ you\ know?"{}\(\}\)
+  \State \(replies[19]\gets\{\)"{}Are\ you\ saying\ no\ just\ to\ be\ negative?"{}\(,\)"{}You\ are\ being\ a\ bit\ negative."{}\(,\)"{}Why\ not?"{}\(,\)"{}Are\ you\ sure?"{}\(,\)"{}Why\ no?"{}\(\}\)
+  \State \(replies[20]\gets\{\)"{}Why\ are\ you\ concerned\ about\ my*?"{}\(,\)"{}What\ about\ your\ own*?"{}\(\}\)
+  \State \(replies[21]\gets\{\)"{}Can\ you\ think\ of\ a\ specific\ example?"{}\(,\)"{}When?"{}\(,\)"{}What\ are\ you\ thinking\ of?"{}\(,\)"{}Really,\ always?"{}\(\}\)
+  \State \(replies[22]\gets\{\)"{}Do\ you\ really\ think\ so?"{}\(,\)"{}But\ you\ are\ not\ sure\ you*?"{}\(,\)"{}Do\ you\ doubt\ you*?"{}\(\}\)
+  \State \(replies[23]\gets\{\)"{}In\ what\ way?"{}\(,\)"{}What\ resemblance\ do\ you\ see?"{}\(,\)"{}What\ does\ the\ similarity\ suggest\ to\ you?"{}\(,\)"{}What\ other\ connections\ do\ you\ see?"{}\(,\)"{}Could\ there\ really\ be\ some\ connection?"{}\(,\)"{}How?"{}\(,\)"{}You\ seem\ quite\ positive."{}\(\}\)
+  \State \(replies[24]\gets\{\)"{}Are\ you\ sure?"{}\(,\)"{}I\ see."{}\(,\)"{}I\ understand."{}\(\}\)
+  \State \(replies[25]\gets\{\)"{}Why\ do\ you\ bring\ up\ the\ topic\ of\ friends?"{}\(,\)"{}Do\ your\ friends\ worry\ you?"{}\(,\)"{}Do\ your\ friends\ pick\ on\ you?"{}\(,\)"{}Are\ you\ sure\ you\ have\ any\ friends?"{}\(,\)"{}Do\ you\ impose\ on\ your\ friends?"{}\(,\)"{}Perhaps\ your\ love\ for\ friends\ worries\ you."{}\(\}\)
+  \State \(replies[26]\gets\{\)"{}Do\ computers\ worry\ you?"{}\(,\)"{}Are\ you\ talking\ about\ me\ in\ particular?"{}\(,\)"{}Are\ you\ frightened\ by\ machines?"{}\(,\)"{}Why\ do\ you\ mention\ computers?"{}\(,\)"{}What\ do\ you\ think\ machines\ have\ to\ do\ with\ your\ problem?"{}\(,\)"{}Don'{}t\ you\ think\ computers\ can\ help\ people?"{}\(,\)"{}What\ is\ it\ about\ machines\ that\ worries\ you?"{}\(\}\)
+  \State \(replies[27]\gets\{\)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)
+  \State \(replies[28]\gets\{\)"{}Tell\ me\ more\ about\ your\ family."{}\(,\)"{}Who\ else\ in\ your\ family*?"{}\(,\)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)
+  \State \(setupReplies\gets\ replies\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{checkRepetition(2)}
+\begin{algorithmic}[5]
+\Function{checkRepetition}{history, newInput}
+\State \Comment{ Checks whether newInput has occurred among the recently cached }
+\State \Comment{ input strings in the histArray component of history and updates the history. }
+  \Decl{Parameters:}
+    \State history: History
+    \State newInput: string
+  \EndDecl
+  \Decl{Result type:}
+    \State boolean
+  \EndDecl
+  \Decl{Includes:}
+    \State History
+  \EndDecl
+  \State \(hasOccurred\gets\ false\)
+  \If{\(length(newInput)>4\)}
+    \State \(histDepth\gets\ length(history.histArray)\)
+    \For{\(i \gets 0\) \textbf{to} \(histDepth-1\) \textbf{by} \(1\)}
+      \If{\(newInput=history.histArray[i]\)}
+        \State \(hasOccurred\gets\ true\)
+      \EndIf
+    \EndFor
+    \State \(history.histArray[history.histIndex]\gets\ newInput\)
+    \State \(history.histIndex\gets(history.histIndex+1)\bmod(histDepth)\)
+  \EndIf
+  \State \textbf{return} \(hasOccurred\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{findKeyword(2)}
+\begin{algorithmic}[5]
+\Function{findKeyword}{keyMap, sentence}
+\State \Comment{ Looks for the occurrence of the first of the strings }
+\State \Comment{ contained in keywords within the given sentence (in }
+\State \Comment{ array order). }
+\State \Comment{ Returns an array of }
+\State \Comment{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\State \Comment{ 1: the position inside sentence (0 if not found) }
+  \Decl{Parameters:}
+    \State keyMap: array\ of\ KeyMapEntry
+    \State sentence: string
+  \EndDecl
+  \Decl{Result type:}
+    \State array[0..1] of integer
+  \EndDecl
+  \Decl{Includes:}
+    \State KeyMapEntry
+  \EndDecl
+  \State \(result\gets\{-1,0\}\)
+  \Comment{Contains the index of the keyword and its position in sentence}
+  \State \(i\gets\ 0\)
+  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}
+    \State \(var\ entry:KeyMapEntry\gets\ keyMap[i]\)
+    \State \(position\gets\ pos(entry.keyword,sentence)\)
+    \If{\(position>0\)}
+      \State \(result[0]\gets\ i\)
+      \State \(result[1]\gets\ position\)
+    \EndIf
+    \State \(i\gets\ i+1\)
+  \EndWhile
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{setupKeywords(0)}
+\begin{algorithmic}[5]
+\Function{setupKeywords}{}
+\State \Comment{ The lower the index the higher the rank of the keyword (search is sequential). }
+\State \Comment{ The index of the first keyword found in a user sentence maps to a respective }
+\State \Comment{ reply ring as defined in `setupReplies()´. }
+  \Decl{Result type:}
+    \State array of KeyMapEntry
+  \EndDecl
+  \Decl{Includes:}
+    \State KeyMapEntry
+  \EndDecl
+  \State \(keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\)
+  \Comment{The empty key string (last entry) is the default clause - will always be found}
+  \State \(keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)
+  \State \(keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)
+  \State \(keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)
+  \State \(keywords[3]\gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)
+  \State \(keywords[4]\gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)
+  \State \(keywords[5]\gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)
+  \State \(keywords[6]\gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)
+  \State \(keywords[7]\gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)
+  \State \(keywords[8]\gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)
+  \State \(keywords[9]\gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)
+  \State \(keywords[10]\gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)
+  \State \(keywords[11]\gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)
+  \State \(keywords[12]\gets\ KeyMapEntry\{\)"{}you\ "{}\(,10\}\)
+  \State \(keywords[13]\gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)
+  \State \(keywords[14]\gets\ KeyMapEntry\{\)"{}what\ "{}\(,12\}\)
+  \State \(keywords[15]\gets\ KeyMapEntry\{\)"{}how\ "{}\(,12\}\)
+  \State \(keywords[16]\gets\ KeyMapEntry\{\)"{}who\ "{}\(,12\}\)
+  \State \(keywords[17]\gets\ KeyMapEntry\{\)"{}where\ "{}\(,12\}\)
+  \State \(keywords[18]\gets\ KeyMapEntry\{\)"{}when\ "{}\(,12\}\)
+  \State \(keywords[19]\gets\ KeyMapEntry\{\)"{}why\ "{}\(,12\}\)
+  \State \(keywords[20]\gets\ KeyMapEntry\{\)"{}name\ "{}\(,13\}\)
+  \State \(keywords[21]\gets\ KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)
+  \State \(keywords[22]\gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)
+  \State \(keywords[23]\gets\ KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)
+  \State \(keywords[24]\gets\ KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)
+  \State \(keywords[25]\gets\ KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)
+  \State \(keywords[26]\gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)
+  \State \(keywords[27]\gets\ KeyMapEntry\{\)"{}\ no"{}\(,19\}\)
+  \State \(keywords[28]\gets\ KeyMapEntry\{\)"{}your\ "{}\(,20\}\)
+  \State \(keywords[29]\gets\ KeyMapEntry\{\)"{}always\ "{}\(,21\}\)
+  \State \(keywords[30]\gets\ KeyMapEntry\{\)"{}think\ "{}\(,22\}\)
+  \State \(keywords[31]\gets\ KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)
+  \State \(keywords[32]\gets\ KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)
+  \State \(keywords[33]\gets\ KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)
+  \State \(keywords[34]\gets\ KeyMapEntry\{\)"{}computer"{}\(,26\}\)
+  \State \(keywords[35]\gets\ KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)
+  \State \(keywords[36]\gets\ KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)
+  \State \(keywords[37]\gets\ KeyMapEntry\{\)"{}father\ "{}\(,28\}\)
+  \State \(keywords[38]\gets\ KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)
+  \State \textbf{return} \(keywords\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{ELIZA}
+\begin{algorithmic}[5]
+\Procedure{ELIZA}{ }
+\State \Comment{ Concept and lisp implementation published by Joseph Weizenbaum (MIT): }
+\State \Comment{ "{}ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine"{} - In: }
+\State \Comment{ Computational Linguistis 1(1966)9, pp. 36-45 }
+\State \Comment{ Revision history: }
+\State \Comment{ 2016-10-06 Initial version }
+\State \Comment{ 2017-03-29 Two diagrams updated (comments translated to English) }
+\State \Comment{ 2017-03-29 More keywords and replies added }
+\State \Comment{ 2019-03-14 Replies and mapping reorganised for easier maintenance }
+\State \Comment{ 2019-03-15 key map joined from keyword array and index map }
+\State \Comment{ 2019-03-28 Keyword "{}bot"{} inserted (same reply ring as "{}computer"{}) }
+\State \Comment{ 2019-11-28 New global type "{}History"{} (to ensure a homogenous array) }
+  \Decl{Includes:}
+    \State History, KeyMapEntry
+  \EndDecl
+  \State \(\)print\((\)"{}*************\ ELIZA\ **************"{}\()\)
+  \Comment{Title information}
+  \State \(\)print\((\)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\()\)
+  \State \(\)print\((\)"{}**********************************"{}\()\)
+  \State \(\)print\((\)"{}*\ Adapted\ for\ Basic\ on\ IBM\ PC\ by"{}\()\)
+  \State \(\)print\((\)"{}*\ -\ Patricia\ Danielson"{}\()\)
+  \State \(\)print\((\)"{}*\ -\ Paul\ Hashfield"{}\()\)
+  \State \(\)print\((\)"{}**********************************"{}\()\)
+  \State \(\)print\((\)"{}*\ Adapted\ for\ Structorizer\ by"{}\()\)
+  \State \(\)print\((\)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\()\)
+  \State \(\)print\((\)"{}*\ Version:\ 2.3\ (2020-02-24)"{}\()\)
+  \State \(\)print\((\)"{}*\ (Requires\ at\ least\ Structorizer\ 3.30-03\ to\ run)"{}\()\)
+  \State \(\)print\((\)"{}**********************************"{}\()\)
+  \State \Comment{ Stores the last five inputs of the user in a ring buffer, }
+  \State \Comment{ the second component is the rolling (over-)write index. }
+  \State \(history\gets\ History\{\{\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\},0\}\)
+  \State \(const\ replies\gets\Call{setupReplies}{}\)
+  \State \(const\ reflexions\gets\Call{setupReflexions}{}\)
+  \State \(const\ byePhrases\gets\Call{setupGoodByePhrases}{}\)
+  \State \(const\ keyMap\gets\Call{setupKeywords}{}\)
+  \State \(offsets[length(keyMap)-1]\gets\ 0\)
+  \State \(isGone\gets\ false\)
+  \State \(\)print\((\)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\()\)
+  \Comment{Starter}
+  \Repeat
+    \State \(\)input\((userInput)\)
+    \State \Comment{ Converts the input to lowercase, cuts out interpunctation }
+    \State \Comment{ and pads the string }
+    \State \(userInput\gets\Call{normalizeInput}{userInput}\)
+    \State \(isGone\gets\Call{checkGoodBye}{userInput,byePhrases}\)
+    \If{\(!isGone\)}
+      \State \(reply\gets\)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)
+      \State \(isRepeated\gets\Call{checkRepetition}{history,userInput}\)
+      \If{\(!isRepeated\)}
+        \State \(findInfo\gets\Call{findKeyword}{keyMap,userInput}\)
+        \State \(keyIndex\gets\ findInfo[0]\)
+        \If{\(keyIndex<0\)}
+          \State \(keyIndex\gets\ length(keyMap)-1\)
+          \Comment{Should never happen...}
+        \EndIf
+        \State \(var\ entry:KeyMapEntry\gets\ keyMap[keyIndex]\)
+        \State \(varPart\gets\)"{}"{}\(\)
+        \Comment{Variable part of the reply}
+        \If{\(length(entry.keyword)>0\)}
+          \State \(varPart\gets\Call{conjugateStrings}{userInput,entry.keyword,findInfo[1],reflexions}\)
+        \EndIf
+        \State \(replyRing\gets\ replies[entry.index]\)
+        \State \(reply\gets\ replyRing[offsets[keyIndex]]\)
+        \State \(offsets[keyIndex]\gets(offsets[keyIndex]+1)\bmod\ length(replyRing)\)
+        \State \(posAster\gets\ pos(\)"{}*"{}\(,reply)\)
+        \If{\(posAster>0\)}
+          \If{\(varPart=\)"{}\ "{}\(\)}
+            \State \(reply\gets\)"{}You\ will\ have\ to\ elaborate\ more\ for\ me\ to\ help\ you."{}\(\)
+          \Else
+            \State \(delete(reply,posAster,1)\)
+            \State \(insert(varPart,reply,posAster)\)
+          \EndIf
+        \EndIf
+        \State \(reply\gets\Call{adjustSpelling}{reply}\)
+      \EndIf
+      \State \(\)print\((reply)\)
+    \EndIf
+  \Until{\(isGone\)}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{History}
+\begin{algorithmic}[5]
+\Procedure{History}{ }
+\State \Comment{ Defines a history type, consisting of an array and a rotating index }
+  \State \Comment{ histArray contains the most recent user replies as ring buffer; }
+  \State \Comment{ histIndex is the index where the next reply is to be stored (= index of the oldest }
+  \State \Comment{ cached user reply). }
+  \State \Comment{ Note: The depth of the history is to be specified by initializing a variable of this type, }
+  \State \Comment{ e.g. for a history of depth 5: }
+  \State \Comment{ myhistory \textless- History\{\{"{}"{}, "{}"{}, "{}"{}, "{}"{}, "{}"{}\}, 0\} }
+  \Decl{type:}
+    \State \(History = record\{histArray:array\ of\ string;histIndex:int\}\)
+  \EndDecl
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{KeyMapEntry}
+\begin{algorithmic}[5]
+\Procedure{KeyMapEntry}{ }
+\State \Comment{ Defines the map entry type of the same name }
+  \Decl{type:}
+    \State \(KeyMapEntry = record\{keyword:string;index:int\}\)
+  \EndDecl
+  \Comment{Associates a key word in the text with an index in the reply ring array}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

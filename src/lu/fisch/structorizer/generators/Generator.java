@@ -112,6 +112,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-25      Bugfix #863/1: Duplicate routine export to PapDesigner and StrukTex
  *      Kay Gürtzig     2020-04-28      Bugfix #828: Unreferenced subroutines were missing on group export with 1 main
  *      Kay Gürtzig     2021-02-13      Bugfix #937: Endless loop precaution in topological sorting
+ *      Kay Gürtzig     2021-06-08      Enh. #953: Export option adaptations for LaTeX algorithm export
  *
  ******************************************************************************************************
  *
@@ -287,7 +288,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#162 2016-03-31
 	private boolean exportAsComments = false;
 	private boolean startBlockNextLine = false;
-	private boolean generateLineNumbers = false;
+	// START KGU#113 2021-06-07: Enh. #67 replaced by plugin-specific options
+	//private boolean generateLineNumbers = false;
+	// END KGU#113 2021-06-07
 	private String exportCharset = Charset.defaultCharset().name();
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
@@ -630,21 +633,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU 2016-04-04
 	}
 	// END KGU#16 2015-12-18	
-	
-	// START KGU#113 2015-12-18: Enh. #67 - Line numbering for BASIC export
-	/**
-	 * Returns the value of the export option for languages BASIC (and possibly COBOL)
-	 * whether to generate line numbers at the beginning of every single line. The way
-	 * how to generate these numbers is completely the task of the inheriting generator.
-	 * @return true if lines are to start with numbers.
-	 */
-	protected boolean optionCodeLineNumbering() {
-		// START KGU 2016-04-04: Issue #151 - Get rid of the inflationary eod threads
-		//return (eod.lineNumbersCheckBox.isSelected());
-		return this.generateLineNumbers;
-		// END KGU 2016-04-04
-	}
-	// END KGU#113 2015-12-18	
 	
 	// START KGU#178 2016-07-19: Enh. #160 - recursive implication of subroutines
 	/**
@@ -2693,7 +2681,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
 	 * @see #appendAsComment(Element, String)
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2722,7 +2709,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _alt - the {@link lu.fisch.structorizer.elements.Alernative} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2755,7 +2741,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2791,7 +2776,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _for - the {@link lu.fisch.structorizer.elements.For} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2822,7 +2806,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2853,7 +2836,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _repeat - the {@link lu.fisch.structorizer.elements.Repeat} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2884,7 +2866,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -2913,7 +2894,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
@@ -2939,7 +2919,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
@@ -2969,7 +2948,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _para - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -3004,7 +2982,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @param _try - the {@link lu.fisch.structorizer.elements.Try}
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
@@ -3038,7 +3015,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @see #optionCodeLineNumbering()
 	 * @see #optionBlockBraceNextLine()
 	 * @param _ele - the {@link lu.fisch.structorizer.elements.Element}
 	 * @param _indent - the indentation string valid for the given Instruction
@@ -3879,7 +3855,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 			exportAsComments = ini.getProperty("genExportComments","false").equals("true");
 			startBlockNextLine = !ini.getProperty("genExportBraces", "false").equals("true");
-			generateLineNumbers = ini.getProperty("genExportLineNumbers", "false").equals("true");
+			// START KGU#113 2021-06-07: Enh. #67 Converted to a BASIC-plugin-specific option
+			//generateLineNumbers = ini.getProperty("genExportLineNumbers", "false").equals("true");
+			// END KGU#113 2021-06-07
 			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
 			suppressTransformation = ini.getProperty("genExportnoConversion", "false").equals("true");
 			exportSubroutines = considerSubroutineOption && ini.getProperty("genExportSubroutines", "false").equals("true");
@@ -4417,7 +4395,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					break;
 				case 'L': // The opposite of 'l'
 				case 'l':
-					generateLineNumbers = ch == 'l';
+					// START KGU#113 2021-06-07: Enh. #67 Converted to a plugin-specific option
+					//generateLineNumbers = ch == 'l';
+					this.setPluginOption("lineNumbering", ch == 'l');	// for BASIC/COBOL
+					this.setPluginOption("numberingInterval", ch == 'l' ? 1 : 0);	// for LaTeX
+					// END KGU#113 2021-06-07
 					break;
 				case 'T': // The opposite of 't'
 				case 't':

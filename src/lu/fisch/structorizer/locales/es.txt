@@ -134,6 +134,7 @@
  *      Kay Gürtzig     2021-01-23  Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25  Enh. #915: Messages for new class InputBoxCase added
  *      Kay Gürtzig     2021-03-07  KGU#961: Translations for known plugin options added.
+ *      Kay Gürtzig     2021-06-07  Enh. #953: Translations for new generator plugin options added
  *
  ******************************************************************************************************
  *
@@ -1098,7 +1099,6 @@ ExportOptionDialoge.noConversionCheckBox.text=No conversión del contenido de ex
 ExportOptionDialoge.noConversionCheckBox.tooltip=Habilita esta opción si el contenido de los textos ya está escrito en la sintaxis del código de destinación.
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
-ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
 ExportOptionDialoge.chkExportLicenseInfo.text=Exportar atributos sobre el autor y la licencia.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
@@ -1200,6 +1200,15 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde el WINAPI (por ejemplo "WINAPI").
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Usar nombres y tipos de MinGw
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde MinGw.
+PluginOptionDialog.optionComponents.lineNumbering.text=Generar números de linea
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Esta opción también modifica todo el sintaxis hacia Vintage BASIC.
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Esta opción continuamente numera las lineas de código exportadas.
+PluginOptionDialog.optionLabels.numberingInterval.text=Interval de numeración de lineas
+PluginOptionDialog.optionComponents.numberingInterval.tooltip=En la medida de ser soportado por el paquete: 0 impide numeración, 1 numera cada linea, n numera cada n-ésima linea
+PluginOptionDialog.optionLabels.package.text=Paquete destino de LaTeX
+PluginOptionDialog.optionComponents.package.tooltip=Escoge su paquete preferido para expresar algoritmos
+PluginOptionDialog.optionComponents.appendSemicolon.text=Poner punto y coma detrás de cada instrucción
+PluginOptionDialog.optionComponents.appendSemicolon.tooltip=Activa esta opción si las instrucciones deben ser seguidas por ';'
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferidos nombres de elementos

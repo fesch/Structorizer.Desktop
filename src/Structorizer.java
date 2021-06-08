@@ -81,6 +81,7 @@
  *      Bob Fisch       2020-05-25      New command line option "-restricted" to suppress code export and import
  *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *      Kay Gürtzig     2020-06-06      Issue #870: Command line option "-restricted" withdrawn
+ *      Kay Gürtzig     2021-06-08      Issue #67, #953: retrieval mechanism for plugin-specific options from ini
  *
  ******************************************************************************************************
  *
@@ -672,6 +673,9 @@ public class Structorizer
 			BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("generators.xml"));
 			GENParser genp = new GENParser();
 			Vector<GENPlugin> plugins = genp.parse(buff);
+			// START KGU#977 2021-06-08: Issues #667, #953 We may have to fetch plugin-specific options
+			Vector<HashMap<String, String>> pluginOptions = null;
+			// END KGU#977 2021-06-08
 			try { buff.close();	} catch (IOException e) {}
 			for (int i=0; genClassName == null && i < plugins.size(); i++)
 			{
@@ -682,13 +686,20 @@ public class Structorizer
 				if (className.equalsIgnoreCase(_generatorName))
 				{
 					genClassName = plugin.className;
+					// START KGU#977 2021-06-08: Issues #667, #953 We may have to fetch plugin-specific options
+					pluginOptions = plugin.options;
+					// END KGU#977 2021-06-08
 				}
 				else
 				{
 					for (int j = 0; j < names.count(); j++)
 					{
-						if (names.get(j).trim().equalsIgnoreCase(_generatorName))
+						if (names.get(j).trim().equalsIgnoreCase(_generatorName)) {
 							genClassName = plugin.className;
+							// START KGU#977 2021-06-08: Issues #667, #953 We may have to fetch plugin-specific options
+							pluginOptions = plugin.options;
+							// END KGU#977 2021-06-08
+						}
 						usage += " | " + names.get(j).trim();
 					}
 				}
@@ -705,6 +716,26 @@ public class Structorizer
 			{
 				Class<?> genClass = Class.forName(genClassName);
 				Generator gen = (Generator) genClass.getDeclaredConstructor().newInstance();
+				// START KGU#977 2021-06-08: Issues #67, #953 Provide plugin-specific options in advance
+				if (settingsGiven && pluginOptions != null) {
+					StringList problems = gen.setPluginOptionsFromIni(pluginOptions);
+					for (int i = 0; i < problems.count(); i++) {
+						System.err.println(problems.get(i));
+					}
+				}
+				// Report the retrieved options
+				if (!pluginOptions.isEmpty()) {
+					System.out.println("Retrieved generator-specific options:");
+					for (HashMap<String, String> option: pluginOptions) {
+						String optionName = option.get("name");
+						Object optionValue = gen.getPluginOption(optionName, null);
+						if (optionValue != null) {
+							System.out.println(" + " + optionName + " = " + optionValue);
+						}
+					}
+					System.out.println();
+				}
+				// END KGU#977 2021-06-08
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 				//if (!roots.isEmpty())
 				//gen.exportCode(roots, codeFileName, _switches, charSet);
@@ -1305,57 +1336,73 @@ public class Structorizer
 					ini.load();
 				}
 				// END KGU#538 2018-07-01
+				// START KGU#977 2021-06-08: Delegated to the IPluginClass (on occasion of enh. #953)
+				StringList problems = parser.setPluginOptionsFromIni(plugin.options);
+				for (int i = 0; i < problems.count(); i++) {
+					System.err.println(problems.get(i));
+				}
+				for (HashMap<String, String> option: plugin.options) {
+					String optionName = option.get("name");
+					Object optionValue = parser.getPluginOption(optionName, null);
+					if (optionValue != null) {
+						System.out.println(" + " + optionName + " = " + optionValue);
+					}
+				}
+				System.out.println();
+				// END KGU#977 2021-06-08
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		for (HashMap<String, String> optionSpec: plugin.options) {
-			String optionKey = optionSpec.get("name");
-			String valueStr = ini.getProperty(plugin.getKey() + "." + optionKey, "");
-			Object value = null;
-			String type = optionSpec.get("type");
-			String items = optionSpec.get("items");
-			// Now convert the option into the specified type
-			if (!valueStr.isEmpty() && type != null || items != null) {
-				// Better we fail with just a single option than with the entire method
-				try {
-					if (items != null) {
-						value = valueStr;
-					}
-					else if (type.equalsIgnoreCase("character")) {
-						value = valueStr.charAt(0);
-					}
-					else if (type.equalsIgnoreCase("boolean")) {
-						value = Boolean.parseBoolean(valueStr);
-					}
-					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
-						value = Integer.parseInt(valueStr);
-					}
-					else if (type.equalsIgnoreCase("unsiged")) {
-						value = Integer.parseUnsignedInt(valueStr);
-					}
-					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
-						value = Double.parseDouble(valueStr);
-					}
-					else if (type.equalsIgnoreCase("string")) {
-						value = valueStr;
-					}
-				}
-				catch (NumberFormatException ex) {
-					System.err.println("*** Structorizer.CloneWithPluginSpecificOptions("
-							+ plugin.getKey()
-							+ "): " + ex.getMessage() + " on converting \""
-							+ valueStr + "\" to " + type + " for " + optionKey);
-				}
-			}
-			System.out.println(" + " + optionKey + " = " + value);
-			if (value != null) {
-				parser.setPluginOption(optionKey, value);
-			}
-		}
-		if (!plugin.options.isEmpty()) {
-			System.out.println("");
-		}
+		// START KGU#977 2021-06-08: Delegated to the IPluginClass (on occasion of enh. #953)
+//		for (HashMap<String, String> optionSpec: plugin.options) {
+//			String optionKey = optionSpec.get("name");
+//			String valueStr = ini.getProperty(plugin.getKey() + "." + optionKey, "");
+//			Object value = null;
+//			String type = optionSpec.get("type");
+//			String items = optionSpec.get("items");
+//			// Now convert the option into the specified type
+//			if (!valueStr.isEmpty() && type != null || items != null) {
+//				// Better we fail with just a single option than with the entire method
+//				try {
+//					if (items != null) {
+//						value = valueStr;
+//					}
+//					else if (type.equalsIgnoreCase("character")) {
+//						value = valueStr.charAt(0);
+//					}
+//					else if (type.equalsIgnoreCase("boolean")) {
+//						value = Boolean.parseBoolean(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+//						value = Integer.parseInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("unsiged")) {
+//						value = Integer.parseUnsignedInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+//						value = Double.parseDouble(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("string")) {
+//						value = valueStr;
+//					}
+//				}
+//				catch (NumberFormatException ex) {
+//					System.err.println("*** Structorizer.CloneWithPluginSpecificOptions("
+//							+ plugin.getKey()
+//							+ "): " + ex.getMessage() + " on converting \""
+//							+ valueStr + "\" to " + type + " for " + optionKey);
+//				}
+//			}
+//			System.out.println(" + " + optionKey + " = " + value);
+//			if (value != null) {
+//				parser.setPluginOption(optionKey, value);
+//			}
+//		}
+//		if (!plugin.options.isEmpty()) {
+//			System.out.println("");
+//		}
+		// END KGU#977 2021-06-08
 		return parser;
 	}
 	// END KGU#416 2017-07-02

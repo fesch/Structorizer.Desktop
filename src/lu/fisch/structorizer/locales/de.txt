@@ -1097,7 +1097,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Keine Umwandlung der Elementinhalt
 ExportOptionDialoge.noConversionCheckBox.tooltip=Aktivieren Sie diese Option, wenn Ihre Struktogrammtexte bereits in der Zielsprache formuliert sind.
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
-ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
 ExportOptionDialoge.chkExportLicenseInfo.text=Autorenschafts- and Lizenzattribute exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
@@ -1199,6 +1198,15 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen der WINAPI enthält (wie z.B. "WINAPI").
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Namen und Typen von MinGw benutzt
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen von MinGw enthält.
+PluginOptionDialog.optionComponents.lineNumbering.text=Zeilennummern mitgenerieren.
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Diese Option ändert zugleich die gesamte Syntax hin zu Vintage-BASIC.
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Diese Option nummeriert die exportierten Code-Zeilen fortlaufend.
+PluginOptionDialog.optionLabels.numberingInterval.text=Intervall für Zeilennummerierung
+PluginOptionDialog.optionComponents.numberingInterval.tooltip=Sowiet durch Package unterstützt: 0 für aus, 1 für jede Zeile, n für jede n-te Zeile
+PluginOptionDialog.optionLabels.package.text=Zu verwendendes LaTeX-Package
+PluginOptionDialog.optionComponents.package.tooltip=Bitte bevorzugtes Algorithmen-Package auswählen
+PluginOptionDialog.optionComponents.appendSemicolon.text=Anweisungen mit Semikolon abschließen
+PluginOptionDialog.optionComponents.appendSemicolon.tooltip=Falls aktiviert, wird hinter jede Anweisung ein ';' angefügt.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen

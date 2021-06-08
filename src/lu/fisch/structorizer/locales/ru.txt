@@ -979,7 +979,6 @@ ExportOptionDialoge.noConversionCheckBox.text=
 ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=Экспортировать инструкции кaк комментарии.
 ExportOptionDialoge.bracesCheckBox.text=
-ExportOptionDialoge.lineNumbersCheckBox.text=
 ExportOptionDialoge.chkExportSubroutines.text=
 ExportOptionDialoge.chkExportLicenseInfo.text=
 ExportOptionDialoge.lbPrefGenerator.text=Предпочитаемый язык для экспортa

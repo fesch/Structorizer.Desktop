@@ -253,7 +253,7 @@ public class TexGenerator extends Generator {
 					|| token.charAt(0) == '\'' && token.charAt(len-1) == '\'')) {
 				tokens.set(i, "\\)"
 					// Replacements within string literals
-					+ transformText(token)
+					+ transformStringContent(token)
 					// There may be more symbols to be escaped...
 					+ "\\(");
 			}
@@ -304,7 +304,7 @@ public class TexGenerator extends Generator {
 	 * @param text - the source string
 	 * @return the LaTeX-compatible text
 	 */
-	private String transformText(String text)
+	private String transformStringContent(String text)
 	{
 		return text.replace("{", "‽{")
 		.replace("}", "‽}")
@@ -312,6 +312,8 @@ public class TexGenerator extends Generator {
 		.replace("|", "\\textbar{}")
 		.replace("\"", "\"{}")
 		.replace("'", "'{}")
+		.replace("´", "\\textasciiacute{}")
+		.replace("`", "\\textasciigrave{}")
 		.replace("^", "\\textasciicircum{}")
 		.replace("~", "\\textasciitilde{}")
 		.replace("<", "\\textless")
@@ -325,6 +327,26 @@ public class TexGenerator extends Generator {
 		.replace("‽}", "\\}");
 	}
 
+	private String transformText(String _input)
+	{
+		_input = transformStringContent(_input);
+		_input = _input
+				// Escape underscores and blanks
+				.replace("_", "\\_")
+				.replace(" ","\\ ")
+				// Special German characters (UTF-8 -> LaTeX)
+				.replace("\u00F6","\"o")
+				.replace("\u00D6","\"O")
+				.replace("\u00E4","\"a")
+				.replace("\u00C4","\"A")
+				.replace("\u00FC","\"u")
+				.replace("\u00DC","\"U")
+				.replace("\u00E9","\"e")
+				.replace("\u00CB","\"E")
+				.replace("\u00DF","\\ss{}");
+		return _input;
+	}
+	
 	@Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{

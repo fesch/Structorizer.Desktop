@@ -230,6 +230,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
  *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
+ *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
  *
  ******************************************************************************************************
  *
@@ -7744,58 +7745,64 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void setPluginSpecificOptions(IPluginClass _pluginInstance,
 			Vector<HashMap<String, String>> _specificOptions)
 	{
-		Ini ini = Ini.getInstance();
-		// START KGU#975 2021-06-03: Bugfix a fully qualified name is unsuited for propery retrieval
-		String className = _pluginInstance.getClass().getSimpleName();
-		// END KGU#975 2021-06-03
-		for (HashMap<String, String> optionSpec: _specificOptions) {
-			String optionKey = optionSpec.get("name");
-			String valueStr = ini.getProperty(className + "." + optionKey, "");
-			Object value = null;
-			String type = optionSpec.get("type");
-			String items = optionSpec.get("items");
-			// Now convert the option into the specified type
-			if (!valueStr.isEmpty() && type != null || items != null) {
-				// Better we fail with just a single option than with the entire method
-				try {
-					if (items != null) {
-						value = valueStr;
-					}
-					else if (type.equalsIgnoreCase("character")) {
-						value = valueStr.charAt(0);
-					}
-					else if (type.equalsIgnoreCase("boolean")) {
-						value = Boolean.parseBoolean(valueStr);
-					}
-					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
-						value = Integer.parseInt(valueStr);
-					}
-					else if (type.equalsIgnoreCase("unsigned")) {
-						value = Integer.parseUnsignedInt(valueStr);
-					}
-					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
-						value = Double.parseDouble(valueStr);
-					}
-					else if (type.equalsIgnoreCase("string")) {
-						value = valueStr;
-					}
-				}
-				catch (NumberFormatException ex) {
-					String message = ex.getMessage();
-					if (message == null || message.isEmpty()) message = ex.toString();
-					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
-							new Object[]{
-									className,
-									message,
-									valueStr,
-									type,
-									optionKey});
-				}
-			}
-			if (value != null) {
-				_pluginInstance.setPluginOption(optionKey, value);
-			}
+		// START KGU#977 2021-06-08: Issue #67, enh. #953 Content delegated to IPluginClass
+//		Ini ini = Ini.getInstance();
+//		// START KGU#975 2021-06-03: Bugfix a fully qualified name is unsuited for propery retrieval
+//		String className = _pluginInstance.getClass().getSimpleName();
+//		// END KGU#975 2021-06-03
+//		for (HashMap<String, String> optionSpec: _specificOptions) {
+//			String optionKey = optionSpec.get("name");
+//			String valueStr = ini.getProperty(className + "." + optionKey, "");
+//			Object value = null;
+//			String type = optionSpec.get("type");
+//			String items = optionSpec.get("items");
+//			// Now convert the option into the specified type
+//			if (!valueStr.isEmpty() && type != null || items != null) {
+//				// Better we fail with just a single option than with the entire method
+//				try {
+//					if (items != null) {
+//						value = valueStr;
+//					}
+//					else if (type.equalsIgnoreCase("character")) {
+//						value = valueStr.charAt(0);
+//					}
+//					else if (type.equalsIgnoreCase("boolean")) {
+//						value = Boolean.parseBoolean(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+//						value = Integer.parseInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("unsigned")) {
+//						value = Integer.parseUnsignedInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+//						value = Double.parseDouble(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("string")) {
+//						value = valueStr;
+//					}
+//				}
+//				catch (NumberFormatException ex) {
+//					String message = ex.getMessage();
+//					if (message == null || message.isEmpty()) message = ex.toString();
+//					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
+//							new Object[]{
+//									className,
+//									message,
+//									valueStr,
+//									type,
+//									optionKey});
+//				}
+//			}
+//			if (value != null) {
+//				_pluginInstance.setPluginOption(optionKey, value);
+//			}
+//		}
+		StringList errors = _pluginInstance.setPluginOptionsFromIni(_specificOptions);
+		for (int i = 0; i < errors.count(); i++) {
+			logger.log(Level.SEVERE, errors.get(i));
 		}
+		// END KGU#977 2021-06-08
 	}
 	// END KGU#395 2017-05-11
 
@@ -9001,7 +9008,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 eod.commentsCheckBox.setSelected(false);
             // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
             eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "false").equals("true"));
-            eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "false").equals("true"));
+            // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+            //eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "false").equals("true"));
+            // END KGU#113 2021-06-07
             // END KGU#16/KGU#113 2015-12-18
             // START KGU#178 2016-07-20: Enh. #160
             eod.chkExportSubroutines.setSelected(ini.getProperty("genExportSubroutines", "false").equals("true"));
@@ -9030,6 +9039,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04 
+            // START KGU#975 2021-06-07: Enh. #953 Restore the last selected plugin choice
+            eod.cbOptionPlugins.setSelectedItem(ini.getProperty("expPluginChoice", ""));
+            // END KGU#975 2021-06-07
             // START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
             for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
                 GENPlugin plugin = Menu.generatorPlugins.get(i);
@@ -9054,7 +9066,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
                 // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
                 ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
-                ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+                // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+                //ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+                // END KGU#113 2021-06-07
                 // END KGU#16/KGU#113 2015-12-18
                 // START KGU#178 2016-07-20: Enh. #160
                 ini.setProperty("genExportSubroutines", String.valueOf(eod.chkExportSubroutines.isSelected()));
@@ -9110,6 +9124,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     // END KGU#416 2017-06-20
                 }
                 // END KGU#351 2017-02-26
+                // START KGU#975 2021-06-07: Enh. #953 Restore the last selected plugin choice
+                ini.setProperty("expPluginChoice", (String)eod.cbOptionPlugins.getSelectedItem());
+                // END KGU#975 2021-06-07
                 ini.save();
                 // START KGU#705 2019-09-23: Enh. #738
                 this.updateCodePreview();

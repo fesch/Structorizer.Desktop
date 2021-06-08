@@ -1,0 +1,205 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[inoutnumbered]{algorithm2e}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\SetKwInput{Input}{input}
+\SetKwInput{Output}{output}
+\SetKwBlock{Parallel}{parallel}{end}
+\SetKwFor{Thread}{thread}{:}{end}
+\SetKwBlock{Try}{try}{end}
+\SetKwFor{Catch}{catch (}{)}{end}
+\SetKwBlock{Finally}{finally}{end}
+\SetKwProg{Prog}{Program}{ }{end}
+\SetKwProg{Proc}{Procedure}{ }{end}
+\SetKwProg{Func}{Function}{ }{end}
+\SetKwProg{Incl}{Includable}{ }{end}
+
+\SetKw{preLeave}{leave}
+\SetKw{preExit}{exit}
+\SetKw{preThrow}{throw}
+\PrintSemicolon
+\title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
+\author{Kay Gürtzig}
+\date{08.06.2021}
+
+\begin{document}
+\LinesNumbered
+
+\begin{procedure}
+\caption{drawBarChart(values, nValues)}
+\tcc{ Draws a bar chart from the array "{}values"{} of size nValues. }
+\tcc{ Turtleizer must be activated and will scale the chart into a square of }
+\tcc{ 500 x 500 pixels }
+\tcc{ Note: The function is not robust against empty array or totally equal values. }
+\Proc{\FuncSty{drawBarChart(}\ArgSty{values, nValues}\FuncSty{)}}{
+\KwData{\(values\): array of double}
+\KwData{\(nValues\): ?}
+  \tcc{ Used range of the Turtleizer screen }
+  \(const\ xSize\leftarrow{}500\)\;
+  \(const\ ySize\leftarrow{}500\)\;
+  \(kMin\leftarrow{}0\)\;
+  \(kMax\leftarrow{}0\)\;
+  \For{\(k\leftarrow 1\) \KwTo \(nValues-1\) \textbf{by} \(1\)}{
+    \eIf{\(values[k]>values[kMax]\)}{
+      \(kMax\leftarrow{}k\)\;
+    }{
+      \If{\(values[k]<values[kMin]\)}{
+        \(kMin\leftarrow{}k\)\;
+      }
+    }
+  }
+  \(valMin\leftarrow{}values[kMin]\)\;
+  \(valMax\leftarrow{}values[kMax]\)\;
+  \(yScale\leftarrow{}valMax*1.0/(ySize-1)\)\;
+  \(yAxis\leftarrow{}ySize-1\)\;
+  \If{\(valMin<0\)}{
+    \eIf{\(valMax>0\)}{
+      \(yAxis\leftarrow{}valMax*ySize*1.0/(valMax-valMin)\)\;
+      \(yScale\leftarrow{}(valMax-valMin)*1.0/(ySize-1)\)\;
+    }{
+      \(yAxis\leftarrow{}1\)\;
+      \(yScale\leftarrow{}valMin*1.0/(ySize-1)\)\;
+    }
+  }
+  \tcc{ draw coordinate axes }
+  \(gotoXY(1,ySize-1)\)\;
+  \(forward(ySize-1)\)\;
+  \(penUp()\)\;
+  \(backward(yAxis)\)\;
+  \(right(90)\)\;
+  \(penDown()\)\;
+  \(forward(xSize-1)\)\;
+  \(penUp()\)\;
+  \(backward(xSize-1)\)\;
+  \(stripeWidth\leftarrow{}xSize/nValues\)\;
+  \For{\(k\leftarrow 0\) \KwTo \(nValues-1\) \textbf{by} \(1\)}{
+    \(stripeHeight\leftarrow{}values[k]*1.0/yScale\)\;
+    \Switch{k\bmod\ 3}{
+      \Case{0}{
+        \(setPenColor(255,0,0)\)\;
+      }
+      \Case{1}{
+        \(setPenColor(0,255,0)\)\;
+      }
+      \Case{2}{
+        \(setPenColor(0,0,255)\)\;
+      }
+    }
+    \(fd(1)\)\;
+    \(left(90)\)\;
+    \(penDown()\)\;
+    \(fd(stripeHeight)\)\;
+    \(right(90)\)\;
+    \(fd(stripeWidth-1)\)\;
+    \(right(90)\)\;
+    \(forward(stripeHeight)\)\;
+    \(left(90)\)\;
+    \(penUp()\)\;
+  }
+}
+\end{procedure}
+
+
+\begin{function}
+\caption{readNumbers(fileName, numbers, maxNumbers)}
+\tcc{ Tries to read as many integer values as possible upto maxNumbers }
+\tcc{ from file fileName into the given array numbers. }
+\tcc{ Returns the number of the actually read numbers. May cause an exception. }
+\Func{\FuncSty{readNumbers(}\ArgSty{fileName, numbers, maxNumbers}\FuncSty{)}:integer}{
+\KwData{\(fileName\): string}
+\KwData{\(numbers\): array of integer}
+\KwData{\(maxNumbers\): integer}
+\KwResult{integer}
+  \(nNumbers\leftarrow{}0\)\;
+  \(fileNo\leftarrow{}fileOpen(fileName)\)\;
+  \If{\(fileNo\leq\ 0\)}{
+    \preThrow{\("File could not be opened!"\)}\;
+  }
+  \Try{
+    \While{\(!fileEOF(fileNo)\wedge\ nNumbers<maxNumbers\)}{
+      \(number\leftarrow{}fileReadInt(fileNo)\)\;
+      \(numbers[nNumbers]\leftarrow{}number\)\;
+      \(nNumbers\leftarrow{}nNumbers+1\)\;
+    }
+  }
+  \Catch{error}{
+    \preThrow{\(\)}\;
+  }
+  \Finally{
+    \(fileClose(fileNo)\)\;
+  }
+  \Return{\(nNumbers\)};
+}
+\end{function}
+
+
+\begin{algorithm}
+\caption{DrawRandomHistogram}
+\tcc{ Reads a random number file and draws a histogram accotrding to the }
+\tcc{ user specifications }
+\Prog{\FuncSty{DrawRandomHistogram}}{
+  \(fileNo\leftarrow{}-10\)\;
+  \Repeat{\(fileNo>0\vee\ file\_name=\)"{}"{}\(\)}{
+    \Input{\(\)"{}Name/path\ of\ the\ number\ file"{}\(file\_name\)}
+    \(fileNo\leftarrow{}fileOpen(file\_name)\)\;
+  }
+  \If{\(fileNo>0\)}{
+    \(fileClose(fileNo)\)\;
+    \Input{\(\)"{}number\ of\ intervals"{}\(,nIntervals\)}
+    \tcc{ Initialize the interval counters }
+    \For{\(k\leftarrow 0\) \KwTo \(nIntervals-1\) \textbf{by} \(1\)}{
+      \(count[k]\leftarrow{}0\)\;
+    }
+    \tcc{ Index of the most populated interval }
+    \(kMaxCount\leftarrow{}0\)\;
+    \(numberArray\leftarrow{}\{\}\)\;
+    \(nObtained\leftarrow{}0\)\;
+    \Try{
+      \(nObtained\leftarrow{}readNumbers(file\_name,numberArray,10000)\)\;
+    }
+    \Catch{failure}{
+      \Output{\(failure\)}
+    }
+    \eIf{\(nObtained>0\)}{
+      \(min\leftarrow{}numberArray[0]\)\;
+      \(max\leftarrow{}numberArray[0]\)\;
+      \For{\(i\leftarrow 1\) \KwTo \(nObtained-1\) \textbf{by} \(1\)}{
+        \eIf{\(numberArray[i]<min\)}{
+          \(min\leftarrow{}numberArray[i]\)\;
+        }{
+          \If{\(numberArray[i]>max\)}{
+            \(max\leftarrow{}numberArray[i]\)\;
+          }
+        }
+      }
+      \tcc{ Interval width }
+      \(width\leftarrow{}(max-min)*1.0/nIntervals\)\;
+      \For{\(i\leftarrow 0\) \KwTo \(nObtained-1\) \textbf{by} \(1\)}{
+        \(value\leftarrow{}numberArray[i]\)\;
+        \(k\leftarrow{}1\)\;
+        \While{\(k<nIntervals\wedge\ value>min+k*width\)}{
+          \(k\leftarrow{}k+1\)\;
+        }
+        \(count[k-1]\leftarrow{}count[k-1]+1\)\;
+        \If{\(count[k-1]>count[kMaxCount]\)}{
+          \(kMaxCount\leftarrow{}k-1\)\;
+        }
+      }
+      \(drawBarChart(count,nIntervals)\)\;
+      \Output{\(\)"{}Interval\ with\ max\ count:\ "{}\(,kMaxCount,\)"{}\ ("{}\(,count[kMaxCount],\)"{})"{}\(\)}
+      \For{\(k\leftarrow 0\) \KwTo \(nIntervals-1\) \textbf{by} \(1\)}{
+        \Output{\(count[k],\)"{}\ numbers\ in\ interval\ "{}\(,k,\)"{}\ ("{}\(,min+k*width,\)"{}\ ...\ "{}\(,min+(k+1)*width,\)"{})"{}\(\)}
+      }
+    }{
+      \Output{\(\)"{}No\ numbers\ read."{}\(\)}
+    }
+  }
+}
+\end{algorithm}
+
+\end{document}

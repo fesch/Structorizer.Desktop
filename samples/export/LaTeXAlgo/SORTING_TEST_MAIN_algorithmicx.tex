@@ -1,0 +1,341 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\algblockdefx[CASE]{Case}{EndCase}
+  [1]{\textbf{case} \(#1\) \textbf{of}}
+  {\textbf{end\ case}}
+\algblockdefx[SELECT]{Selector}{EndSelector}
+  [1]{#1\textbf{: begin}}
+  {\textbf{end}}
+\algblockdefx[OTHER]{Other}{EndOther}
+  {\textbf{otherwise: begin}}
+  {\textbf{end}}
+\algblockdefx[TRY]{Try}{EndTry}
+  {\textbf{try}}
+  {\textbf{end\ try}}
+\algblockdefx[CATCH]{Catch}{EndCatch}
+  [1]{\textbf{catch} (#1)}
+  {\textbf{end\ catch}}\algblockdefx[FINALLY]{Finally}{EndFinally}
+  {\textbf{finally}}
+  {\textbf{end\ finally}}
+\algblockdefx[PARALLEL]{Para}{EndPara}
+  {\textbf{parallel}}
+  {\textbf{end\ parallel}}
+\algblockdefx[THREAD]{Thread}{EndThread}
+  [1]{\textbf{thread} #1}
+  [1]{\textbf{end\ thread} #1}
+\algblockdefx[DECLARATION]{Decl}{EndDecl}
+  [1][]{\textbf{#1}}
+  {}
+
+\title{Structorizer LaTeX pseudocode Export of SORTING_TEST.arrz}
+\author{Kay Gürtzig}
+\date{08.06.2021}
+
+\begin{document}
+
+\begin{algorithm}
+\caption{bubbleSort(1)}
+\begin{algorithmic}[5]
+\Procedure{bubbleSort}{values}
+\State \Comment{ Implements the well-known BubbleSort algorithm. }
+\State \Comment{ Compares neigbouring elements and swaps them in case of an inversion. }
+\State \Comment{ Repeats this while inversions have been found. After every }
+\State \Comment{ loop passage at least one element (the largest one out of the }
+\State \Comment{ processed subrange) finds its final place at the end of the }
+\State \Comment{ subrange. }
+  \Decl{Parameters:}
+    \State values: ?
+  \EndDecl
+  \State \(ende\gets\ length(values)-2\)
+  \Repeat
+    \State \(posSwapped\gets-1\)
+    \Comment{The index of the most recent swapping (-1 means no swapping done).}
+    \For{\(i \gets 0\) \textbf{to} \(ende\) \textbf{by} \(1\)}
+      \If{\(values[i]>values[i+1]\)}
+        \State \(temp\gets\ values[i]\)
+        \State \(values[i]\gets\ values[i+1]\)
+        \State \(values[i+1]\gets\ temp\)
+        \State \(posSwapped\gets\ i\)
+      \EndIf
+    \EndFor
+    \State \(ende\gets\ posSwapped-1\)
+  \Until{\(posSwapped<0\)}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{maxHeapify(3)}
+\begin{algorithmic}[5]
+\Procedure{maxHeapify}{heap, i, range}
+\State \Comment{ Given a max-heap '{}heap´ with element at index '{}i´ possibly }
+\State \Comment{ violating the heap property wrt. its subtree upto and including }
+\State \Comment{ index range-1, restores heap property in the subtree at index i }
+\State \Comment{ again. }
+  \Decl{Parameters:}
+    \State heap: ?
+    \State i: ?
+    \State range: ?
+  \EndDecl
+  \State \(right\gets(i+1)*2\)
+  \Comment{Indices of left and right child of node i}
+  \State \(left\gets\ right-1\)
+  \State \(max\gets\ i\)
+  \Comment{Index of the (local) maximum}
+  \If{\(left<range\wedge\ heap[left]>heap[i]\)}
+    \State \(max\gets\ left\)
+  \EndIf
+  \If{\(right<range\wedge\ heap[right]>heap[max]\)}
+    \State \(max\gets\ right\)
+  \EndIf
+  \If{\(max\neq\ i\)}
+    \State \(temp\gets\ heap[i]\)
+    \State \(heap[i]\gets\ heap[max]\)
+    \State \(heap[max]\gets\ temp\)
+    \State \(\Call{maxHeapify}{heap,max,range}\)
+  \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{partition(4)}
+\begin{algorithmic}[5]
+\Function{partition}{values, start, stop, p}
+\State \Comment{ Partitions array '{}values´ between indices '{}start´ und '{}stop´-1 with }
+\State \Comment{ respect to the pivot element initially at index '{}p´ into smaller }
+\State \Comment{ and greater elements. }
+\State \Comment{ Returns the new (and final) index of the pivot element (which }
+\State \Comment{ separates the sequence of smaller elements from the sequence }
+\State \Comment{ of greater elements). }
+\State \Comment{ This is not the most efficient algorithm (about half the swapping }
+\State \Comment{ might still be avoided) but it is pretty clear. }
+  \Decl{Parameters:}
+    \State values: ?
+    \State start: ?
+    \State stop: ?
+    \State p: ?
+  \EndDecl
+  \Decl{Result type:}
+    \State int
+  \EndDecl
+  \State \(pivot\gets\ values[p]\)
+  \Comment{Cache the pivot element}
+  \State \(values[p]\gets\ values[start]\)
+  \Comment{Exchange the pivot element with the start element}
+  \State \(values[start]\gets\ pivot\)
+  \State \(p\gets\ start\)
+  \State \(start\gets\ start+1\)
+  \Comment{Beginning and end of the remaining undiscovered range}
+  \State \(stop\gets\ stop-1\)
+  \State \Comment{ Still unseen elements? }
+  \State \Comment{ Loop invariants: }
+  \State \Comment{ 1. p = start - 1 }
+  \State \Comment{ 2. pivot = values[p] }
+  \State \Comment{ 3. i \textless start → values[i] ≤ pivot }
+  \State \Comment{ 4. stop \textless i → pivot \textless values[i] }
+  \While{\(start\leq\ stop\)}
+    \State \(seen\gets\ values[start]\)
+    \Comment{Fetch the first element of the undiscovered area}
+    \If{\(seen\leq\ pivot\)}\Comment{Does the checked element belong to the smaller area?}
+      \State \(values[p]\gets\ seen\)
+      \Comment{Insert the seen element between smaller area and pivot element}
+      \State \(values[start]\gets\ pivot\)
+      \State \Comment{ Shift the border between lower and undicovered area, }
+      \State \Comment{ update pivot position. }
+      \State \(p\gets\ p+1\)
+      \State \(start\gets\ start+1\)
+    \Else
+      \State \(values[start]\gets\ values[stop]\)
+      \Comment{Insert the checked element between undiscovered and larger area}
+      \State \(values[stop]\gets\ seen\)
+      \State \(stop\gets\ stop-1\)
+      \Comment{Shift the border between undiscovered and larger area}
+    \EndIf
+  \EndWhile
+  \State \textbf{return} \(p\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{testSorted(1)}
+\begin{algorithmic}[5]
+\Function{testSorted}{numbers}
+\State \Comment{ Checks whether or not the passed-in array is (ascendingly) sorted. }
+  \Decl{Parameters:}
+    \State numbers: ?
+  \EndDecl
+  \Decl{Result type:}
+    \State bool
+  \EndDecl
+  \State \(isSorted\gets\ true\)
+  \State \(i\gets\ 0\)
+  \While{\(isSorted\wedge(i\leq\ length(numbers)-2)\)}\Comment{As we compare with the following element, we must stop at the penultimate index}
+    \If{\(numbers[i]>numbers[i+1]\)}\Comment{Is there an inversion?}
+      \State \(isSorted\gets\ false\)
+    \Else
+      \State \(i\gets\ i+1\)
+    \EndIf
+  \EndWhile
+  \State \textbf{return} \(isSorted\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{buildMaxHeap(1)}
+\begin{algorithmic}[5]
+\Procedure{buildMaxHeap}{heap}
+\State \Comment{ Runs through the array heap and converts it to a max-heap }
+\State \Comment{ in a bottom-up manner, i.e. starts above the "{}leaf"{} level }
+\State \Comment{ (index \textgreater= length(heap) div 2) and goes then up towards }
+\State \Comment{ the root. }
+  \Decl{Parameters:}
+    \State heap: ?
+  \EndDecl
+  \State \(lgth\gets\ length(heap)\)
+  \For{\(k \gets lgth\oprdiv\ 2-1\) \textbf{to} \(0\) \textbf{by} \(-1\)}
+    \State \(\Call{maxHeapify}{heap,k,lgth}\)
+  \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{quickSort(3)}
+\begin{algorithmic}[5]
+\Procedure{quickSort}{values, start, stop}
+\State \Comment{ Recursively sorts a subrange of the given array '{}values´.  }
+\State \Comment{ start is the first index of the subsequence to be sorted, }
+\State \Comment{ stop is the index BEHIND the subsequence to be sorted. }
+  \Decl{Parameters:}
+    \State values: ?
+    \State start: ?
+    \State stop: ?
+  \EndDecl
+  \If{\(stop\geq\ start+2\)}\Comment{At least 2 elements? (Less don'{}t make sense.)}
+    \State \Comment{ Select a pivot element, be p its index. }
+    \State \Comment{ (here: randomly chosen element out of start ... stop-1) }
+    \State \(p\gets\ random(stop-start)+start\)
+    \State \Comment{ Partition the array into smaller and greater elements }
+    \State \Comment{ Get the resulting (and final) position of the pivot element }
+    \State \(p\gets\Call{partition}{values,start,stop,p}\)
+    \Para\Comment{Sort subsequances separately and independently ...}
+      \Thread 1
+        \State \(\Call{quickSort}{values,start,p}\)
+        \Comment{Sort left (lower) array part}
+      \EndThread 1
+      \Thread 2
+        \State \(\Call{quickSort}{values,p+1,stop}\)
+        \Comment{Sort right (higher) array part}
+      \EndThread 2
+    \EndPara
+  \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{heapSort(1)}
+\begin{algorithmic}[5]
+\Procedure{heapSort}{values}
+\State \Comment{ Sorts the array '{}values´ of numbers according to he heap sort }
+\State \Comment{ algorithm }
+  \Decl{Parameters:}
+    \State values: ?
+  \EndDecl
+  \State \(\Call{buildMaxHeap}{values}\)
+  \State \(heapRange\gets\ length(values)\)
+  \For{\(k \gets heapRange-1\) \textbf{to} \(1\) \textbf{by} \(-1\)}
+    \State \(heapRange\gets\ heapRange-1\)
+    \State \(maximum\gets\ values[0]\)
+    \Comment{Swap the maximum value (root of the heap) to the heap end}
+    \State \(values[0]\gets\ values[heapRange]\)
+    \State \(values[heapRange]\gets\ maximum\)
+    \State \(\Call{maxHeapify}{values,0,heapRange}\)
+  \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{SORTING_TEST_MAIN}
+\begin{algorithmic}[5]
+\Procedure{SORTING\_TEST\_MAIN}{ }
+\State \Comment{ Creates three equal arrays of numbers and has them sorted with different sorting algorithms }
+\State \Comment{ to allow performance comparison via execution counting ("{}Collect Runtime Data"{} should }
+\State \Comment{ sensibly be switched on). }
+\State \Comment{ Requested input data are: Number of elements (size) and filing mode. }
+  \Repeat
+    \State \(\)input\((elementCount)\)
+  \Until{\(elementCount\geq\ 1\)}
+  \Repeat
+    \State \(\)input\((\)"{}Filling:\ 1\ =\ random,\ 2\ =\ increasing,\ 3\ =\ decreasing"{}\(,modus)\)
+  \Until{\(modus=1\vee\ modus=2\vee\ modus=3\)}
+  \For{\(i \gets 0\) \textbf{to} \(elementCount-1\) \textbf{by} \(1\)}
+    \Case{modus}
+      \Selector{1}
+        \State \(values1[i]\gets\ random(10000)\)
+      \EndSelector
+      \Selector{2}
+        \State \(values1[i]\gets\ i\)
+      \EndSelector
+      \Selector{3}
+        \State \(values1[i]\gets-i\)
+      \EndSelector
+    \EndCase
+  \EndFor
+  \For{\(i \gets 0\) \textbf{to} \(elementCount-1\) \textbf{by} \(1\)}
+    \State \(values2[i]\gets\ values1[i]\)
+    \State \(values3[i]\gets\ values1[i]\)
+  \EndFor
+  \Para
+    \Thread 1
+      \State \(\Call{bubbleSort}{values1}\)
+    \EndThread 1
+    \Thread 2
+      \State \(\Call{quickSort}{values2,0,elementCount}\)
+    \EndThread 2
+    \Thread 3
+      \State \(\Call{heapSort}{values3}\)
+    \EndThread 3
+  \EndPara
+  \State \(ok1\gets\Call{testSorted}{values1}\)
+  \State \(ok2\gets\Call{testSorted}{values2}\)
+  \State \(ok3\gets\Call{testSorted}{values3}\)
+  \If{\(!ok1\vee!ok2\vee!ok3\)}
+    \For{\(i \gets 0\) \textbf{to} \(elementCount-1\) \textbf{by} \(1\)}
+      \If{\(values1[i]\neq\ values2[i]\vee\ values1[i]\neq\ values3[i]\)}
+        \State \(\)print\((\)"{}Difference\ at\ ["{}\(,i,\)"{}]:\ "{}\(,values1[i],\)"{}\ \textless-\textgreater\ "{}\(,values2[i],\)"{}\ \textless-\textgreater\ "{}\(,values3[i])\)
+      \EndIf
+    \EndFor
+  \EndIf
+  \Repeat
+    \State \(\)input\((\)"{}Show\ arrays\ (yes/no)?"{}\(,show)\)
+  \Until{\(show=\)"{}yes"{}\(\vee\ show=\)"{}no"{}\(\)}
+  \If{\(show=\)"{}yes"{}\(\)}
+    \For{\(i \gets 0\) \textbf{to} \(elementCount-1\) \textbf{by} \(1\)}
+      \State \(\)print\((\)"{}["{}\(,i,\)"{}]:\textbackslash{}t"{}\(,values1[i],\)"{}\textbackslash{}t"{}\(,values2[i],\)"{}\textbackslash{}t"{}\(,values3[i])\)
+    \EndFor
+  \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

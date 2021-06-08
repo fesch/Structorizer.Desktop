@@ -589,7 +589,6 @@ ExportOptionDialoge.noConversionCheckBox.text=
 ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=
 ExportOptionDialoge.bracesCheckBox.text=
-ExportOptionDialoge.lineNumbersCheckBox.text=
 ExportOptionDialoge.chkExportSubroutines.text=
 ExportOptionDialoge.lbPrefGenerator.text=
 ExportOptionDialoge.lbCharset.text=

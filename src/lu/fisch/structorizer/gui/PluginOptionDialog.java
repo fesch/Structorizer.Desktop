@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -410,8 +411,10 @@ public class PluginOptionDialog extends LangDialog {
 		// END KGU#472 2018-01-22
 
 		GUIScaler.rescaleComponents(this);
-
+		
 		pack();
+
+		this.setMinimumSize(new Dimension(250, 50));
 
 	}
 

@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-04-08      Issue #828 modifications supporting group export
  *      Kay Gürtzig         2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig         2021-02-03      Issue #920: Attempt to transform "Infinity" literal
+ *      Kay Gürtzig         2021-06-07      Issue #67: lineNumering option made plugin-specific
  *
  ******************************************************************************************************
  *
@@ -259,6 +260,23 @@ public class BasGenerator extends Generator
 		return "PRINT $1";
 	}
 
+	// START KGU#113 2021-06-07: Enh. #67 - Line numbering now as plugin-specific option
+	/**
+	 * Returns the value of the export option whether to generate line numbers
+	 * at the beginning of every single line.
+	 * @return true if lines are to start with numbers.
+	 */
+	protected boolean optionCodeLineNumbering() {
+		// START KGU 2016-04-04: Issue #151 - Get rid of the inflationary eod threads
+		//return (eod.lineNumbersCheckBox.isSelected());
+		// START KGU#113 2021-06-07: Enh. #67 Converted to a plugin-specific option
+		//return this.generateLineNumbers;
+		Object optionVal = this.getPluginOption("lineNumbering", false);
+		return optionVal instanceof Boolean && (Boolean)optionVal;
+		// END KGU 2016-04-04
+	}
+	// END KGU#113 2015-12-18	
+	
 	// START KGU 2019-12-01 - Use different case styles for Vintage BASIC and modern BASIC
 	private String transformKeyword(String keyword)
 	{
