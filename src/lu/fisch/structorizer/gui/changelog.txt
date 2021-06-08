@@ -44,6 +44,7 @@ Current development version 3.31-04 (2021-06-09)
 - 03: Issue #966: Precautions for dark look & feel themes (colour tuning, icons) <2>
 - 03: Bugfix #969: Possible debugger numbing after startup with file arguments <2>
 - 03: Enh. #972: Row filtering mechanism for Translator introduced [Henning Kiel]2
+- 04: Issue #67: Export option "generate line numbers" was made BASIC-specific <2> 
 - 04: Enh. #953: LaTeX algorithm/pseudocode export (4 packages) [Karl-Heinz Becker]2
 - 04: Bugfix #974: Two defects on Processing definition import (one severe) <2>
 - 04: Bugfix #975: StrukTeX export didn't cope well with backslashes in literals <2>
