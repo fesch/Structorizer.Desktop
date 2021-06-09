@@ -129,6 +129,8 @@
 
 \begin{procedure}
 \caption{digit1(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{Fnbackward}{backward}
 \tcc{ Draws\ digit\ 1\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit1(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -138,15 +140,16 @@
   \(forward(h/2.0)\)\;
   \(penDown()\)\;
   \(right(45)\)\;
-  \(forward(h/sqrt(2),colorNo)\)\;
+  \(\Fnforward(h/sqrt(2),colorNo)\)\;
   \(left(45)\)\;
-  \(backward(h,colorNo)\)\;
+  \(\Fnbackward(h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{digit4(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ digit\ 4\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit4(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -163,11 +166,11 @@
   \(forward(c+b)\)\;
   \(penDown()\)\;
   \(left(90)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(left(180-angle)\)\;
-  \(forward(sqrt(h*h/4.0+sqr(h/2.0-c)),colorNo)\)\;
+  \(\Fnforward(sqrt(h*h/4.0+sqr(h/2.0-c)),colorNo)\)\;
   \(left(90+angle)\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(penUp()\)\;
   \(left(90)\)\;
   \(backward(h/2.0)\)\;
@@ -178,6 +181,7 @@
 
 \begin{procedure}
 \caption{digit7(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ digit\ 7\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit7(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -188,9 +192,9 @@
   \(forward(h)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(right(angle)\)\;
-  \(forward(h*sqrt(1.25),colorNo)\)\;
+  \(\Fnforward(h*sqrt(1.25),colorNo)\)\;
   \(left(angle)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
@@ -202,6 +206,7 @@
 
 \begin{procedure}
 \caption{letterA(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ A\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterA(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -211,16 +216,16 @@
   \(hypo\leftarrow{}sqrt(h*h+width*width/4.0)\)\;
   \(rotAngle\leftarrow{}toDegrees(atan(width/2.0/h))\)\;
   \(right(rotAngle)\)\;
-  \(forward(hypo/2.0,colorNo)\)\;
+  \(\Fnforward(hypo/2.0,colorNo)\)\;
   \(right(90-rotAngle)\)\;
-  \(forward(width/2.0,colorNo)\)\;
+  \(\Fnforward(width/2.0,colorNo)\)\;
   \(penUp()\)\;
   \(backward(width/2.0)\)\;
   \(penDown()\)\;
   \(left(90-rotAngle)\)\;
-  \(forward(hypo/2.0,colorNo)\)\;
+  \(\Fnforward(hypo/2.0,colorNo)\)\;
   \(left(2*rotAngle)\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(rotAngle)\)\;
 }
 \end{procedure}
@@ -228,27 +233,28 @@
 
 \begin{procedure}
 \caption{letterE(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ E\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterE(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
 \KwData{\(h\): ?}
 \KwData{\(colorNo\): ?}
   \(width\leftarrow{}h/2.0\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(right(90)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
   \(right(90)\)\;
   \(penDown()\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
   \(left(90)\)\;
   \(penDown()\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90)\)\;
 }
 \end{procedure}
@@ -256,21 +262,22 @@
 
 \begin{procedure}
 \caption{letterF(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ F\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterF(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
 \KwData{\(h\): ?}
 \KwData{\(colorNo\): ?}
   \(width\leftarrow{}h/2.0\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(right(90)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
   \(right(90)\)\;
   \(penDown()\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
@@ -284,26 +291,27 @@
 
 \begin{procedure}
 \caption{letterH(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ H\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterH(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
 \KwData{\(h\): ?}
 \KwData{\(colorNo\): ?}
   \(width\leftarrow{}h/2.0\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(penUp()\)\;
   \(right(90)\)\;
   \(forward(width)\)\;
   \(right(90)\)\;
   \(penDown()\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(penUp()\)\;
   \(backward(width)\)\;
   \(left(90)\)\;
   \(penDown()\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(left(180)\)\;
 }
 \end{procedure}
@@ -311,6 +319,7 @@
 
 \begin{procedure}
 \caption{letterI(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ I\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterI(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -324,17 +333,17 @@
   \(right(90)\)\;
   \(forward(c)\)\;
   \(penDown()\)\;
-  \(forward(b,colorNo)\)\;
+  \(\Fnforward(b,colorNo)\)\;
   \(penUp()\)\;
   \(backward(b/2.0)\)\;
   \(left(90)\)\;
   \(penDown()\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(penUp()\)\;
   \(right(90)\)\;
   \(backward(b/2.0)\)\;
   \(penDown()\)\;
-  \(forward(b,colorNo)\)\;
+  \(\Fnforward(b,colorNo)\)\;
   \(penUp()\)\;
   \(forward(b/2+c)\)\;
   \(left(90)\)\;
@@ -346,6 +355,7 @@
 
 \begin{procedure}
 \caption{letterK(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ K\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterK(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -353,15 +363,15 @@
 \KwData{\(colorNo\): ?}
   \(width\leftarrow{}h/2.0\)\;
   \(diag\leftarrow{}h/sqrt(2.0)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(penUp()\)\;
   \(right(90)\)\;
   \(forward(width)\)\;
   \(right(135)\)\;
   \(penDown()\)\;
-  \(forward(diag,colorNo)\)\;
+  \(\Fnforward(diag,colorNo)\)\;
   \(left(90)\)\;
-  \(forward(diag,colorNo)\)\;
+  \(\Fnforward(diag,colorNo)\)\;
   \(left(135)\)\;
 }
 \end{procedure}
@@ -369,18 +379,19 @@
 
 \begin{procedure}
 \caption{letterL(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ L\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterL(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
 \KwData{\(h\): ?}
 \KwData{\(colorNo\): ?}
   \(width\leftarrow{}h/2.0\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(penUp()\)\;
   \(backward(h)\)\;
   \(right(90)\)\;
   \(penDown()\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90)\)\;
 }
 \end{procedure}
@@ -388,6 +399,7 @@
 
 \begin{procedure}
 \caption{letterM(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ M\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterM(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -396,19 +408,20 @@
   \(width\leftarrow{}h/2.0\)\;
   \(hypo\leftarrow{}sqrt(width*width+h*h)/2.0\)\;
   \(rotAngle\leftarrow{}toDegrees(atan(width/h))\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(2*rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(-h,colorNo)\)\;
+  \(\Fnforward(-h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{letterN(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ N\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterN(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -417,11 +430,11 @@
   \(width\leftarrow{}h/2.0\)\;
   \(hypo\leftarrow{}sqrt(width*width+h*h)\)\;
   \(rotAngle\leftarrow{}toDegrees(atan(width/h))\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(rotAngle)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(penUp()\)\;
   \(backward(h)\)\;
   \(penDown()\)\;
@@ -431,6 +444,7 @@
 
 \begin{procedure}
 \caption{letterT(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ T\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterT(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -441,12 +455,12 @@
   \(forward(h)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(penUp()\)\;
   \(backward(width/2.0)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(left(90)\)\;
   \(penUp()\)\;
   \(forward(width/2.0)\)\;
@@ -458,6 +472,7 @@
 
 \begin{procedure}
 \caption{letterV(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ V\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterV(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -470,9 +485,9 @@
   \(forward(h)\)\;
   \(left(rotAngle)\)\;
   \(penDown()\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(2*rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(penUp()\)\;
   \(left(rotAngle)\)\;
   \(backward(h)\)\;
@@ -483,6 +498,7 @@
 
 \begin{procedure}
 \caption{letterW(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ W\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterW(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -496,17 +512,17 @@
   \(forward(h)\)\;
   \(left(rotAngle)\)\;
   \(penDown()\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(2*rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(penUp()\)\;
   \(left(90+rotAngle)\)\;
   \(forward(width\_3)\)\;
   \(right(90-rotAngle)\)\;
   \(penDown()\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(2*rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(penUp()\)\;
   \(left(rotAngle)\)\;
   \(backward(h)\)\;
@@ -517,6 +533,7 @@
 
 \begin{procedure}
 \caption{letterX(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ X\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterX(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -526,13 +543,13 @@
   \(hypo\leftarrow{}sqrt(width*width+h*h)\)\;
   \(rotAngle\leftarrow{}toDegrees(atan(width/h))\)\;
   \(right(rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(penUp()\)\;
   \(left(90+rotAngle)\)\;
   \(forward(width)\)\;
   \(right(90-rotAngle)\)\;
   \(penDown()\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(rotAngle)\)\;
 }
 \end{procedure}
@@ -540,6 +557,7 @@
 
 \begin{procedure}
 \caption{letterY(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ Y\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterY(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -552,14 +570,14 @@
   \(forward(h)\)\;
   \(left(rotAngle)\)\;
   \(penDown()\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(rotAngle)\)\;
   \(penUp()\)\;
   \(backward(h/2.0)\)\;
   \(penDown()\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(right(rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(left(rotAngle)\)\;
   \(penUp()\)\;
   \(backward(h)\)\;
@@ -570,6 +588,7 @@
 
 \begin{procedure}
 \caption{letterZ(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ letter\ Z\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterZ(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -582,11 +601,11 @@
   \(forward(h)\)\;
   \(right(90)\)\;
   \(penDown()\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90-rotAngle)\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(right(90-rotAngle)\)\;
-  \(forward(width,colorNo)\)\;
+  \(\Fnforward(width,colorNo)\)\;
   \(left(90)\)\;
 }
 \end{procedure}
@@ -594,6 +613,7 @@
 
 \begin{procedure}
 \caption{polygonPart(a,\textbackslash{}\ n,\textbackslash{}\ ctrclkws,\textbackslash{}\ nEdges,\textbackslash{}\ color)}
+\SetKwFunction{Fnforward}{forward}
 \tcc{ Draws\ nEdges\ edges\ of\ a\ regular\ n-polygon\ with\ edge\ length\ a }
 \tcc{ counter-clockwise,\ if\ ctrclkws\ is\ true,\ or\ clockwise\ if\ ctrclkws\ is\ false. }
 \Proc{\FuncSty{polygonPart(}\ArgSty{a,\ n,\ ctrclkws,\ nEdges,\ color}\FuncSty{)}}{
@@ -608,7 +628,7 @@
   }
   \For{\(k\leftarrow 1\) \KwTo \(nEdges\) \textbf{by} \(1\)}{
     \(right(rotAngle)\)\;
-    \(forward(a,color)\)\;
+    \(\Fnforward(a,color)\)\;
   }
 }
 \end{procedure}
@@ -616,6 +636,7 @@
 
 \begin{procedure}
 \caption{charDummy(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ a\ dummy\ character\ (small\ centered\ square)\ with\ font\ height\ h\ and }
 \tcc{ the\ colour\ encoded\ by\ colorNo }
 \Proc{\FuncSty{charDummy(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -634,7 +655,7 @@
   \(right(90)\)\;
   \(penDown()\)\;
   \tcc{ Draws\ the\ square\ with\ edge\ length\ b }
-  \(polygonPart(b,4,true,4,colorNo)\)\;
+  \(\FnpolygonPart(b,4,true,4,colorNo)\)\;
   \(penUp()\)\;
   \(left(90)\)\;
   \(forward(b+c)\)\;
@@ -647,6 +668,8 @@
 
 \begin{procedure}
 \caption{comma(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ a\ comma\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{comma(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -664,13 +687,13 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ 3\ edges\ of\ a\ square\ with\ edge\ length\ c }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(c,4,true,3,colorNo)\)\;
+  \(\FnpolygonPart(c,4,true,3,colorNo)\)\;
   \(left(90)\)\;
-  \(forward(c/2.0,colorNo)\)\;
+  \(\Fnforward(c/2.0,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(left(180-rotAngle)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(penUp()\)\;
   \(right(90-rotAngle)\)\;
   \(forward((c+b)/2.0)\)\;
@@ -682,6 +705,8 @@
 
 \begin{procedure}
 \caption{digit2(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 2\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit2(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -697,11 +722,11 @@
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,4,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,4,colorNo)\)\;
   \(right(angle)\)\;
-  \(forward(h/2.0*sqrt(1+sqr(1+2*c/h)),colorNo)\)\;
+  \(\Fnforward(h/2.0*sqrt(1+sqr(1+2*c/h)),colorNo)\)\;
   \(left(90+angle)\)\;
-  \(forward(h/2.0,colorNo)\)\;
+  \(\Fnforward(h/2.0,colorNo)\)\;
   \(left(90)\)\;
 }
 \end{procedure}
@@ -709,6 +734,7 @@
 
 \begin{procedure}
 \caption{digit3(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 3\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit3(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -724,14 +750,14 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,6,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,6,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b)\)\;
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,5,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,5,colorNo)\)\;
   \(penUp()\)\;
   \(left(45)\)\;
   \(forward(h-c)\)\;
@@ -745,6 +771,8 @@
 
 \begin{procedure}
 \caption{digit5(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 5\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit5(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -760,11 +788,11 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,6,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,6,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(h/2.0,4,false,2,colorNo)\)\;
+  \(\FnpolygonPart(h/2.0,4,false,2,colorNo)\)\;
   \(penUp()\)\;
   \(left(90)\)\;
   \(backward(h)\)\;
@@ -775,6 +803,8 @@
 
 \begin{procedure}
 \caption{digit6(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 6\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit6(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -790,15 +820,15 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ all\ 8\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,8,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,8,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b)\)\;
   \(penDown()\)\;
-  \(forward(2*c+b,colorNo)\)\;
+  \(\Fnforward(2*c+b,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,3,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,3,colorNo)\)\;
   \(penUp()\)\;
   \(left(135)\)\;
   \(backward(h-c)\)\;
@@ -809,6 +839,7 @@
 
 \begin{procedure}
 \caption{digit8(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 8\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit8(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -824,7 +855,7 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ all\ 8\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,8,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,8,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b)\)\;
@@ -834,7 +865,7 @@
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ 7\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,7,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,7,colorNo)\)\;
   \(penUp()\)\;
   \(left(45)\)\;
   \(forward(h/2.0)\)\;
@@ -848,6 +879,8 @@
 
 \begin{procedure}
 \caption{digit9(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ digit\ 9\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit9(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -863,11 +896,11 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(2*c+b,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(2*c+b,colorNo)\)\;
   \tcc{ Counterclockwise\ draw\ 7\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,7,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,7,colorNo)\)\;
   \(penUp()\)\;
   \(left(45)\)\;
   \(backward(h/2.0+c)\)\;
@@ -878,6 +911,8 @@
 
 \begin{procedure}
 \caption{exclMk(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ an\ exclamation\ mark\ in\ the\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{exclMk(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -902,11 +937,11 @@
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b/2 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b/2.0,8,false,5,colorNo)\)\;
+  \(\FnpolygonPart(b/2.0,8,false,5,colorNo)\)\;
   \(right(rotAngle2)\)\;
-  \(forward(hypo,colorNo)\)\;
+  \(\Fnforward(hypo,colorNo)\)\;
   \(left(2*rotAngle2)\)\;
-  \(forward(-hypo,colorNo)\)\;
+  \(\Fnforward(-hypo,colorNo)\)\;
   \(penUp()\)\;
   \(forward(hypo)\)\;
   \(right(rotAngle2)\)\;
@@ -916,7 +951,7 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(c,4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(c,4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward((c+b)/2.0)\)\;
   \(left(90)\)\;
@@ -928,6 +963,7 @@
 
 \begin{procedure}
 \caption{fullSt(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ a\ full\ stop\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{fullSt(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -943,7 +979,7 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(c,4,true,4,colorNo)\)\;
+  \(\FnpolygonPart(c,4,true,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward((c+b)/2.0)\)\;
   \(left(90)\)\;
@@ -954,6 +990,8 @@
 
 \begin{procedure}
 \caption{letterAe(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnletterA}{letterA}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ "A\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterAe(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -964,14 +1002,14 @@
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(max(h/16.0,1),4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(max(h/16.0,1),4,false,4,colorNo)\)\;
   \(right(90)\)\;
   \(penUp()\)\;
   \(forward(h/2.0)\)\;
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(max(h/16.0,1),4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(max(h/16.0,1),4,false,4,colorNo)\)\;
   \(right(90)\)\;
   \(penUp()\)\;
   \(forward(h)\)\;
@@ -979,13 +1017,15 @@
   \(forward(h/2.0)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(letterA(h,colorNo)\)\;
+  \(\FnletterA(h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{letterB(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ B\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterB(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -995,19 +1035,19 @@
   \(b\leftarrow{}h*0.5/(sqrt(2.0)+1)\)\;
   \tcc{ Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon }
   \(c\leftarrow{}b/sqrt(2.0)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(c+b,colorNo)\)\;
+  \(\Fnforward(c+b,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \(polygonPart(b,8,false,4,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,4,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b+c)\)\;
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \(polygonPart(b,8,false,4,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,4,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b+2*c)\)\;
@@ -1019,6 +1059,8 @@
 
 \begin{procedure}
 \caption{letterC(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ C\ in\ the\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterC(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1036,19 +1078,19 @@
   \(right(180)\)\;
   \tcc{ Clockwise\ draws\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
   \tcc{ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,3,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,3,colorNo)\)\;
   \(left(rotAngle)\)\;
   \(penUp()\)\;
   \(forward(2*b+2*c)\)\;
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draws\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ iin\ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penUp()\)\;
   \(forward(c)\)\;
   \(left(90)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penDown()\)\;
   \(left(90)\)\;
 }
@@ -1057,6 +1099,8 @@
 
 \begin{procedure}
 \caption{letterD(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ D\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterD(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1066,17 +1110,17 @@
   \(b\leftarrow{}h*0.5/(sqrt(2.0)+1)\)\;
   \tcc{ Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon }
   \(c\leftarrow{}b/sqrt(2.0)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(c+b,colorNo)\)\;
+  \(\Fnforward(c+b,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
   \tcc{ encoded\ by\ colorNo }
-  \(polygonPart(b,8,false,2,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,2,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
   \tcc{ encoded\ by\ colorNo }
-  \(polygonPart(b,8,false,2,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,2,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(penUp()\)\;
   \(left(180)\)\;
   \(forward(b+2*c)\)\;
@@ -1088,6 +1132,8 @@
 
 \begin{procedure}
 \caption{letterG(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ G\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterG(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1103,10 +1149,10 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
   \tcc{ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(left(90)\)\;
-  \(forward(b/2.0+c,colorNo)\)\;
+  \(\Fnforward(b/2.0+c,colorNo)\)\;
   \(penUp()\)\;
   \(backward(b/2.0+c)\)\;
   \(right(90)\)\;
@@ -1114,12 +1160,12 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
   \tcc{ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penUp()\)\;
   \(forward(c)\)\;
   \(left(90)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penDown()\)\;
   \(left(90)\)\;
 }
@@ -1128,6 +1174,8 @@
 
 \begin{procedure}
 \caption{letterJ(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ J\ in\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterJ(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1145,9 +1193,9 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
   \tcc{ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,3,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,3,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(h-c,colorNo)\)\;
+  \(\Fnforward(h-c,colorNo)\)\;
   \(penUp()\)\;
   \(backward(h)\)\;
   \(penDown()\)\;
@@ -1157,6 +1205,8 @@
 
 \begin{procedure}
 \caption{letterO(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ O\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterO(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1172,12 +1222,12 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penUp()\)\;
   \(forward(c)\)\;
   \(left(90)\)\;
@@ -1190,6 +1240,8 @@
 
 \begin{procedure}
 \caption{letterP(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ P\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterP(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1199,13 +1251,13 @@
   \(b\leftarrow{}h*0.5/(sqrt(2.0)+1)\)\;
   \tcc{ Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon }
   \(c\leftarrow{}b/sqrt(2.0)\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(c+b,colorNo)\)\;
+  \(\Fnforward(c+b,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,4,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,4,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(penUp()\)\;
   \(backward(b+2*c)\)\;
   \(left(90)\)\;
@@ -1218,6 +1270,8 @@
 
 \begin{procedure}
 \caption{letterQ(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ Q\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterQ(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1235,12 +1289,12 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \tcc{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,true,4,colorNo)\)\;
-  \(forward(b+2*c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,4,colorNo)\)\;
+  \(\Fnforward(b+2*c,colorNo)\)\;
   \(penUp()\)\;
   \(forward(c)\)\;
   \(left(90)\)\;
@@ -1248,7 +1302,7 @@
   \(right(rotAngle)\)\;
   \(backward(b)\)\;
   \(penDown()\)\;
-  \(forward(b,colorNo)\)\;
+  \(\Fnforward(b,colorNo)\)\;
   \(left(90+rotAngle)\)\;
 }
 \end{procedure}
@@ -1256,6 +1310,8 @@
 
 \begin{procedure}
 \caption{letterR(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Zeichnet\ den\ Buchstaben\ R\ von\ der\ Turtleposition\ aus }
 \tcc{ mit\ Zeilenh"ohe\ h }
 \Proc{\FuncSty{letterR(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1267,15 +1323,15 @@
   \(c\leftarrow{}b/sqrt(2.0)\)\;
   \tcc{ 360\textdegree/8 }
   \(rotAngle\leftarrow{}45\)\;
-  \(forward(h,colorNo)\)\;
+  \(\Fnforward(h,colorNo)\)\;
   \(right(90)\)\;
-  \(forward(c+b,colorNo)\)\;
+  \(\Fnforward(c+b,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,4,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,4,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(left(90+rotAngle)\)\;
-  \(forward(sqrt(2.0)*(b+2*c),colorNo)\)\;
+  \(\Fnforward(sqrt(2.0)*(b+2*c),colorNo)\)\;
   \(left(90+rotAngle)\)\;
 }
 \end{procedure}
@@ -1283,6 +1339,7 @@
 
 \begin{procedure}
 \caption{letterS(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ S\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterS(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1300,10 +1357,10 @@
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,true,6,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,6,colorNo)\)\;
   \tcc{ Clockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ encoded\ by\ colorNo }
-  \(polygonPart(b,8,false,5,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,5,colorNo)\)\;
   \(right(rotAngle)\)\;
   \(penUp()\)\;
   \(forward(2*b+3*c)\)\;
@@ -1315,6 +1372,8 @@
 
 \begin{procedure}
 \caption{letterU(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ U\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterU(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1329,15 +1388,15 @@
   \(penUp()\)\;
   \(forward(c)\)\;
   \(penDown()\)\;
-  \(forward(h-c,colorNo)\)\;
+  \(\Fnforward(h-c,colorNo)\)\;
   \(penUp()\)\;
   \(backward(h-c)\)\;
   \(penDown()\)\;
   \(right(180)\)\;
   \tcc{ Counterclockwise\ draw\ 3\ edges\ of\ an\ octagoin\ with\ edge\ length\ b\ in\ colour\ specified\ by\ colorNo }
-  \(polygonPart(b,8,true,3,colorNo)\)\;
+  \(\FnpolygonPart(b,8,true,3,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(h-c,colorNo)\)\;
+  \(\Fnforward(h-c,colorNo)\)\;
   \(penUp()\)\;
   \(backward(h)\)\;
   \(penDown()\)\;
@@ -1347,6 +1406,8 @@
 
 \begin{procedure}
 \caption{qstnMk(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ a\ question\ mark\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{qstnMk(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1363,10 +1424,10 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(b,8,false,5,colorNo)\)\;
-  \(forward(c,colorNo)\)\;
+  \(\FnpolygonPart(b,8,false,5,colorNo)\)\;
+  \(\Fnforward(c,colorNo)\)\;
   \(left(rotAngle)\)\;
-  \(forward(b/2.0,colorNo)\)\;
+  \(\Fnforward(b/2.0,colorNo)\)\;
   \(penUp()\)\;
   \(forward(c)\)\;
   \(left(90)\)\;
@@ -1374,7 +1435,7 @@
   \(penDown()\)\;
   \tcc{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(c,4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(c,4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward((c+b)/2.0)\)\;
   \(left(90)\)\;
@@ -1386,6 +1447,8 @@
 
 \begin{procedure}
 \caption{digit0(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{Fnforward}{forward}
+\SetKwFunction{FnletterO}{letterO}
 \tcc{ Draws\ digit\ 0\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{digit0(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1396,18 +1459,20 @@
   \(penDown()\)\;
   \(right(45)\)\;
   \(len\leftarrow{}h/sqrt(2)\)\;
-  \(forward(len,colorNo)\)\;
+  \(\Fnforward(len,colorNo)\)\;
   \(penUp()\)\;
   \(backward(len)\)\;
   \(left(45)\)\;
   \(backward(h/4.0)\)\;
-  \(letterO(h,colorNo)\)\;
+  \(\FnletterO(h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{letterOe(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnletterO}{letterO}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ "O\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterOe(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1419,14 +1484,14 @@
   \(right(90)\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/8 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(h/8,4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(h/8,4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward(h/2)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/8 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(h/8,4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(h/8,4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward(h)\)\;
   \(penDown()\)\;
@@ -1435,13 +1500,15 @@
   \(forward(h/2)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(letterO(h,colorNo)\)\;
+  \(\FnletterO(h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{letterUe(h,\textbackslash{}\ colorNo)}
+\SetKwFunction{FnletterU}{letterU}
+\SetKwFunction{FnpolygonPart}{polygonPart}
 \tcc{ Draws\ letter\ "U\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
 \tcc{ from\ the\ current\ turtle\ position. }
 \Proc{\FuncSty{letterUe(}\ArgSty{h,\ colorNo}\FuncSty{)}}{
@@ -1454,13 +1521,13 @@
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(max(h/16,1),4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(max(h/16,1),4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward(h/2-2*max(h/8,1)-max(h/16,1))\)\;
   \(penDown()\)\;
   \tcc{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
   \tcc{ in\ the\ colour\ endcoded\ by\ colorNo }
-  \(polygonPart(max(h/16,1),4,false,4,colorNo)\)\;
+  \(\FnpolygonPart(max(h/16,1),4,false,4,colorNo)\)\;
   \(penUp()\)\;
   \(forward(max(h/8,1))\)\;
   \(penDown()\)\;
@@ -1471,13 +1538,58 @@
   \(forward(h/2)\)\;
   \(penDown()\)\;
   \(right(90)\)\;
-  \(letterU(h,colorNo)\)\;
+  \(\FnletterU(h,colorNo)\)\;
 }
 \end{procedure}
 
 
 \begin{procedure}
 \caption{drawText(text,\textbackslash{}\ h,\textbackslash{}\ c)}
+\SetKwFunction{Fnblank}{blank}
+\SetKwFunction{FnqstnMk}{qstnMk}
+\SetKwFunction{FnletterOe}{letterOe}
+\SetKwFunction{FnletterA}{letterA}
+\SetKwFunction{FnletterE}{letterE}
+\SetKwFunction{FnletterD}{letterD}
+\SetKwFunction{FnletterC}{letterC}
+\SetKwFunction{FnletterUe}{letterUe}
+\SetKwFunction{FnletterB}{letterB}
+\SetKwFunction{FncharDummy}{charDummy}
+\SetKwFunction{FnletterY}{letterY}
+\SetKwFunction{FnletterX}{letterX}
+\SetKwFunction{FnfullSt}{fullSt}
+\SetKwFunction{FnletterW}{letterW}
+\SetKwFunction{FnletterV}{letterV}
+\SetKwFunction{FnletterZ}{letterZ}
+\SetKwFunction{FnletterI}{letterI}
+\SetKwFunction{Fndigit9}{digit9}
+\SetKwFunction{FnletterH}{letterH}
+\SetKwFunction{FnletterG}{letterG}
+\SetKwFunction{Fncomma}{comma}
+\SetKwFunction{FnletterAe}{letterAe}
+\SetKwFunction{FnletterF}{letterF}
+\SetKwFunction{FnletterM}{letterM}
+\SetKwFunction{Fndigit5}{digit5}
+\SetKwFunction{FnletterL}{letterL}
+\SetKwFunction{Fndigit6}{digit6}
+\SetKwFunction{FnletterK}{letterK}
+\SetKwFunction{Fndigit7}{digit7}
+\SetKwFunction{FnletterJ}{letterJ}
+\SetKwFunction{Fndigit8}{digit8}
+\SetKwFunction{FnletterQ}{letterQ}
+\SetKwFunction{Fndigit1}{digit1}
+\SetKwFunction{FnletterP}{letterP}
+\SetKwFunction{FnexclMk}{exclMk}
+\SetKwFunction{Fndigit2}{digit2}
+\SetKwFunction{FnletterO}{letterO}
+\SetKwFunction{Fndigit3}{digit3}
+\SetKwFunction{FnletterN}{letterN}
+\SetKwFunction{Fndigit4}{digit4}
+\SetKwFunction{FnletterU}{letterU}
+\SetKwFunction{FnletterT}{letterT}
+\SetKwFunction{FnletterS}{letterS}
+\SetKwFunction{FnletterR}{letterR}
+\SetKwFunction{Fndigit0}{digit0}
 \tcc{ Has\ the\ turtle\ draw\ the\ given\ string\ '{}text\textasciiacute{}\ with\ font\ height\ '{}h\textasciiacute{}\ (in }
 \tcc{ pixels)\ and\ the\ colour\ coded\ by\ integer\ '{}c\textasciiacute{}\ from\ the\ current\ Turtle }
 \tcc{ position\ to\ the\ Turtle\ canvas.\ If\ the\ turtle\ looks\ North\ then }
@@ -1507,139 +1619,139 @@
     \(letter\leftarrow{}uppercase(copy(text,k,1))\)\;
     \Switch{letter}{
       \Case{\)"{}A"{}\(}{
-        \(letterA(h,c)\)\;
+        \(\FnletterA(h,c)\)\;
       }
       \Case{\)"{}B"{}\(}{
-        \(letterB(h,c)\)\;
+        \(\FnletterB(h,c)\)\;
       }
       \Case{\)"{}C"{}\(}{
-        \(letterC(h,c)\)\;
+        \(\FnletterC(h,c)\)\;
       }
       \Case{\)"{}D"{}\(}{
-        \(letterD(h,c)\)\;
+        \(\FnletterD(h,c)\)\;
       }
       \Case{\)"{}E"{}\(}{
-        \(letterE(h,c)\)\;
+        \(\FnletterE(h,c)\)\;
       }
       \Case{\)"{}F"{}\(}{
-        \(letterF(h,c)\)\;
+        \(\FnletterF(h,c)\)\;
       }
       \Case{\)"{}G"{}\(}{
-        \(letterG(h,c)\)\;
+        \(\FnletterG(h,c)\)\;
       }
       \Case{\)"{}H"{}\(}{
-        \(letterH(h,c)\)\;
+        \(\FnletterH(h,c)\)\;
       }
       \Case{\)"{}I"{}\(}{
-        \(letterI(h,c)\)\;
+        \(\FnletterI(h,c)\)\;
       }
       \Case{\)"{}J"{}\(}{
-        \(letterJ(h,c)\)\;
+        \(\FnletterJ(h,c)\)\;
       }
       \Case{\)"{}K"{}\(}{
-        \(letterK(h,c)\)\;
+        \(\FnletterK(h,c)\)\;
       }
       \Case{\)"{}L"{}\(}{
-        \(letterL(h,c)\)\;
+        \(\FnletterL(h,c)\)\;
       }
       \Case{\)"{}M"{}\(}{
-        \(letterM(h,c)\)\;
+        \(\FnletterM(h,c)\)\;
       }
       \Case{\)"{}N"{}\(}{
-        \(letterN(h,c)\)\;
+        \(\FnletterN(h,c)\)\;
       }
       \Case{\)"{}O"{}\(}{
-        \(letterO(h,c)\)\;
+        \(\FnletterO(h,c)\)\;
       }
       \Case{\)"{}P"{}\(}{
-        \(letterP(h,c)\)\;
+        \(\FnletterP(h,c)\)\;
       }
       \Case{\)"{}Q"{}\(}{
-        \(letterQ(h,c)\)\;
+        \(\FnletterQ(h,c)\)\;
       }
       \Case{\)"{}R"{}\(}{
-        \(letterR(h,c)\)\;
+        \(\FnletterR(h,c)\)\;
       }
       \Case{\)"{}S"{}\(}{
-        \(letterS(h,c)\)\;
+        \(\FnletterS(h,c)\)\;
       }
       \Case{\)"{}T"{}\(}{
-        \(letterT(h,c)\)\;
+        \(\FnletterT(h,c)\)\;
       }
       \Case{\)"{}U"{}\(}{
-        \(letterU(h,c)\)\;
+        \(\FnletterU(h,c)\)\;
       }
       \Case{\)"{}V"{}\(}{
-        \(letterV(h,c)\)\;
+        \(\FnletterV(h,c)\)\;
       }
       \Case{\)"{}W"{}\(}{
-        \(letterW(h,c)\)\;
+        \(\FnletterW(h,c)\)\;
       }
       \Case{\)"{}X"{}\(}{
-        \(letterX(h,c)\)\;
+        \(\FnletterX(h,c)\)\;
       }
       \Case{\)"{}Y"{}\(}{
-        \(letterY(h,c)\)\;
+        \(\FnletterY(h,c)\)\;
       }
       \Case{\)"{}Z"{}\(}{
-        \(letterZ(h,c)\)\;
+        \(\FnletterZ(h,c)\)\;
       }
       \Case{\)"{}\ "{}\(}{
-        \(blank(h,c)\)\;
+        \(\Fnblank(h,c)\)\;
       }
       \Case{\)"{}!"{}\(}{
-        \(exclMk(h,c)\)\;
+        \(\FnexclMk(h,c)\)\;
       }
       \Case{\)"{}?"{}\(}{
-        \(qstnMk(h,c)\)\;
+        \(\FnqstnMk(h,c)\)\;
       }
       \Case{\)"{}."{}\(}{
-        \(fullSt(h,c)\)\;
+        \(\FnfullSt(h,c)\)\;
       }
       \Case{\)"{},"{}\(}{
-        \(comma(h,c)\)\;
+        \(\Fncomma(h,c)\)\;
       }
       \Case{\)"{}"A"{}\(}{
-        \(letterAe(h,c)\)\;
+        \(\FnletterAe(h,c)\)\;
       }
       \Case{\)"{}"O"{}\(}{
-        \(letterOe(h,c)\)\;
+        \(\FnletterOe(h,c)\)\;
       }
       \Case{\)"{}"U"{}\(}{
-        \(letterUe(h,c)\)\;
+        \(\FnletterUe(h,c)\)\;
       }
       \Case{\)"{}0"{}\(}{
-        \(digit0(h,c)\)\;
+        \(\Fndigit0(h,c)\)\;
       }
       \Case{\)"{}1"{}\(}{
-        \(digit1(h,c)\)\;
+        \(\Fndigit1(h,c)\)\;
       }
       \Case{\)"{}2"{}\(}{
-        \(digit2(h,c)\)\;
+        \(\Fndigit2(h,c)\)\;
       }
       \Case{\)"{}3"{}\(}{
-        \(digit3(h,c)\)\;
+        \(\Fndigit3(h,c)\)\;
       }
       \Case{\)"{}4"{}\(}{
-        \(digit4(h,c)\)\;
+        \(\Fndigit4(h,c)\)\;
       }
       \Case{\)"{}5"{}\(}{
-        \(digit5(h,c)\)\;
+        \(\Fndigit5(h,c)\)\;
       }
       \Case{\)"{}6"{}\(}{
-        \(digit6(h,c)\)\;
+        \(\Fndigit6(h,c)\)\;
       }
       \Case{\)"{}7"{}\(}{
-        \(digit7(h,c)\)\;
+        \(\Fndigit7(h,c)\)\;
       }
       \Case{\)"{}8"{}\(}{
-        \(digit8(h,c)\)\;
+        \(\Fndigit8(h,c)\)\;
       }
       \Case{\)"{}9"{}\(}{
-        \(digit9(h,c)\)\;
+        \(\Fndigit9(h,c)\)\;
       }
       \Other{
-        \(charDummy(h,c)\)\;
+        \(\FncharDummy(h,c)\)\;
       }
     }
     \(right(90)\)\;
@@ -1657,6 +1769,7 @@
 
 \begin{algorithm}
 \caption{TextDemo}
+\SetKwFunction{FndrawText}{drawText}
 \tcc{ Demo\ program\ for\ routine\ drawText() }
 \tcc{ Asks\ the\ user\ to\ enter\ a\ text,\ a\ wanted\ text\ height\ and\ colour, }
 \tcc{ and\ then\ draws\ this\ string\ onto\ the\ turtle\ screen.\ Places\ every }
@@ -1679,11 +1792,11 @@
       }
       \(y\leftarrow{}y+height+2\)\;
       \(gotoXY(0,y-2)\)\;
-      \(drawText(text,height,colour)\)\;
+      \(\FndrawText(text,height,colour)\)\;
     }
   }
   \(gotoXY(0,y+15)\)\;
-  \(drawText(\)"{}Thank\ you,\ bye."{}\(,10,4)\)\;
+  \(\FndrawText(\)"{}Thank\ you,\ bye."{}\(,10,4)\)\;
   \(hideTurtle()\)\;
 }
 \end{algorithm}

@@ -316,6 +316,16 @@
 
 \begin{algorithm}
 \caption{ELIZA}
+\SetKwFunction{FnsetupGoodByePhrases}{setupGoodByePhrases}
+\SetKwFunction{FncheckGoodBye}{checkGoodBye}
+\SetKwFunction{FnconjugateStrings}{conjugateStrings}
+\SetKwFunction{FnsetupReplies}{setupReplies}
+\SetKwFunction{FnsetupReflexions}{setupReflexions}
+\SetKwFunction{FncheckRepetition}{checkRepetition}
+\SetKwFunction{FnfindKeyword}{findKeyword}
+\SetKwFunction{FnsetupKeywords}{setupKeywords}
+\SetKwFunction{FnadjustSpelling}{adjustSpelling}
+\SetKwFunction{FnnormalizeInput}{normalizeInput}
 \tcc{ Concept\ and\ lisp\ implementation\ published\ by\ Joseph\ Weizenbaum\ (MIT): }
 \tcc{ "{}ELIZA\ -\ A\ Computer\ Program\ For\ the\ Study\ of\ Natural\ Language\ Communication\ Between\ Man\ and\ Machine"{}\ -\ In: }
 \tcc{ Computational\ Linguistis\ 1(1966)9,\ pp.\ 36-45 }
@@ -344,10 +354,10 @@
   \tcc{ Stores\ the\ last\ five\ inputs\ of\ the\ user\ in\ a\ ring\ buffer, }
   \tcc{ the\ second\ component\ is\ the\ rolling\ (over-)write\ index. }
   \(history\leftarrow{}History\{\{\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\},0\}\)\;
-  \(const\ replies\leftarrow{}setupReplies()\)\;
-  \(const\ reflexions\leftarrow{}setupReflexions()\)\;
-  \(const\ byePhrases\leftarrow{}setupGoodByePhrases()\)\;
-  \(const\ keyMap\leftarrow{}setupKeywords()\)\;
+  \(const\ replies\leftarrow{}\FnsetupReplies()\)\;
+  \(const\ reflexions\leftarrow{}\FnsetupReflexions()\)\;
+  \(const\ byePhrases\leftarrow{}\FnsetupGoodByePhrases()\)\;
+  \(const\ keyMap\leftarrow{}\FnsetupKeywords()\)\;
   \(offsets[length(keyMap)-1]\leftarrow{}0\)\;
   \(isGone\leftarrow{}false\)\;
   \tcc{ Starter }
@@ -356,13 +366,13 @@
     \Input{\(userInput\)}
     \tcc{ Converts\ the\ input\ to\ lowercase,\ cuts\ out\ interpunctation }
     \tcc{ and\ pads\ the\ string }
-    \(userInput\leftarrow{}normalizeInput(userInput)\)\;
-    \(isGone\leftarrow{}checkGoodBye(userInput,byePhrases)\)\;
+    \(userInput\leftarrow{}\FnnormalizeInput(userInput)\)\;
+    \(isGone\leftarrow{}\FncheckGoodBye(userInput,byePhrases)\)\;
     \If{\(!isGone\)}{
       \(reply\leftarrow{}\)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)\;
-      \(isRepeated\leftarrow{}checkRepetition(history,userInput)\)\;
+      \(isRepeated\leftarrow{}\FncheckRepetition(history,userInput)\)\;
       \If{\(!isRepeated\)}{
-        \(findInfo\leftarrow{}findKeyword(keyMap,userInput)\)\;
+        \(findInfo\leftarrow{}\FnfindKeyword(keyMap,userInput)\)\;
         \(keyIndex\leftarrow{}findInfo[0]\)\;
         \If{\(keyIndex<0\)}{
           \tcc{ Should\ never\ happen... }
@@ -372,7 +382,7 @@
         \tcc{ Variable\ part\ of\ the\ reply }
         \(varPart\leftarrow{}\)"{}"{}\(\)\;
         \If{\(length(entry.keyword)>0\)}{
-          \(varPart\leftarrow{}conjugateStrings(userInput,entry.keyword,findInfo[1],reflexions)\)\;
+          \(varPart\leftarrow{}\FnconjugateStrings(userInput,entry.keyword,findInfo[1],reflexions)\)\;
         }
         \(replyRing\leftarrow{}replies[entry.index]\)\;
         \(reply\leftarrow{}replyRing[offsets[keyIndex]]\)\;
@@ -386,7 +396,7 @@
             \(insert(varPart,reply,posAster)\)\;
           }
         }
-        \(reply\leftarrow{}adjustSpelling(reply)\)\;
+        \(reply\leftarrow{}\FnadjustSpelling(reply)\)\;
       }
       \Output{\(reply\)}
     }

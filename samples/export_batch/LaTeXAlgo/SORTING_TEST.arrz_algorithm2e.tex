@@ -60,6 +60,7 @@
 
 \begin{procedure}
 \caption{maxHeapify(heap,\textbackslash{}\ i,\textbackslash{}\ range)}
+\SetKwFunction{FnmaxHeapify}{maxHeapify}
 \tcc{ Given\ a\ max-heap\ '{}heap\textasciiacute{}\ with\ element\ at\ index\ '{}i\textasciiacute{}\ possibly }
 \tcc{ violating\ the\ heap\ property\ wrt.\ its\ subtree\ upto\ and\ including }
 \tcc{ index\ range-1,\ restores\ heap\ property\ in\ the\ subtree\ at\ index\ i }
@@ -83,7 +84,7 @@
     \(temp\leftarrow{}heap[i]\)\;
     \(heap[i]\leftarrow{}heap[max]\)\;
     \(heap[max]\leftarrow{}temp\)\;
-    \(maxHeapify(heap,max,range)\)\;
+    \(\FnmaxHeapify(heap,max,range)\)\;
   }
 }
 \end{procedure}
@@ -169,6 +170,7 @@
 
 \begin{procedure}
 \caption{buildMaxHeap(heap)}
+\SetKwFunction{FnmaxHeapify}{maxHeapify}
 \tcc{ Runs\ through\ the\ array\ heap\ and\ converts\ it\ to\ a\ max-heap }
 \tcc{ in\ a\ bottom-up\ manner,\ i.e.\ starts\ above\ the\ "{}leaf"{}\ level }
 \tcc{ (index\ \textgreater=\ length(heap)\ div\ 2)\ and\ goes\ then\ up\ towards }
@@ -177,7 +179,7 @@
 \KwData{\(heap\): ?}
   \(lgth\leftarrow{}length(heap)\)\;
   \For{\(k\leftarrow lgth\oprdiv\ 2-1\) \KwTo \(0\) \textbf{by} \(-1\)}{
-    \(maxHeapify(heap,k,lgth)\)\;
+    \(\FnmaxHeapify(heap,k,lgth)\)\;
   }
 }
 \end{procedure}
@@ -185,6 +187,8 @@
 
 \begin{procedure}
 \caption{quickSort(values,\textbackslash{}\ start,\textbackslash{}\ stop)}
+\SetKwFunction{Fnpartition}{partition}
+\SetKwFunction{FnquickSort}{quickSort}
 \tcc{ Recursively\ sorts\ a\ subrange\ of\ the\ given\ array\ '{}values\textasciiacute{}.\  }
 \tcc{ start\ is\ the\ first\ index\ of\ the\ subsequence\ to\ be\ sorted, }
 \tcc{ stop\ is\ the\ index\ BEHIND\ the\ subsequence\ to\ be\ sorted. }
@@ -199,16 +203,16 @@
     \(p\leftarrow{}random(stop-start)+start\)\;
     \tcc{ Partition\ the\ array\ into\ smaller\ and\ greater\ elements }
     \tcc{ Get\ the\ resulting\ (and\ final)\ position\ of\ the\ pivot\ element }
-    \(p\leftarrow{}partition(values,start,stop,p)\)\;
+    \(p\leftarrow{}\Fnpartition(values,start,stop,p)\)\;
     \tcc{ Sort\ subsequances\ separately\ and\ independently\ ... }
     \Parallel{
       \Thread{1}{
         \tcc{ Sort\ left\ (lower)\ array\ part }
-        \(quickSort(values,start,p)\)\;
+        \(\FnquickSort(values,start,p)\)\;
       }
       \Thread{2}{
         \tcc{ Sort\ right\ (higher)\ array\ part }
-        \(quickSort(values,p+1,stop)\)\;
+        \(\FnquickSort(values,p+1,stop)\)\;
       }
     }
   }
@@ -218,11 +222,13 @@
 
 \begin{procedure}
 \caption{heapSort(values)}
+\SetKwFunction{FnmaxHeapify}{maxHeapify}
+\SetKwFunction{FnbuildMaxHeap}{buildMaxHeap}
 \tcc{ Sorts\ the\ array\ '{}values\textasciiacute{}\ of\ numbers\ according\ to\ he\ heap\ sort }
 \tcc{ algorithm }
 \Proc{\FuncSty{heapSort(}\ArgSty{values}\FuncSty{)}}{
 \KwData{\(values\): ?}
-  \(buildMaxHeap(values)\)\;
+  \(\FnbuildMaxHeap(values)\)\;
   \(heapRange\leftarrow{}length(values)\)\;
   \For{\(k\leftarrow heapRange-1\) \KwTo \(1\) \textbf{by} \(-1\)}{
     \(heapRange\leftarrow{}heapRange-1\)\;
@@ -230,7 +236,7 @@
     \(maximum\leftarrow{}values[0]\)\;
     \(values[0]\leftarrow{}values[heapRange]\)\;
     \(values[heapRange]\leftarrow{}maximum\)\;
-    \(maxHeapify(values,0,heapRange)\)\;
+    \(\FnmaxHeapify(values,0,heapRange)\)\;
   }
 }
 \end{procedure}
@@ -241,6 +247,10 @@
 
 \begin{algorithm}
 \caption{SORTING\_TEST\_MAIN}
+\SetKwFunction{FnbubbleSort}{bubbleSort}
+\SetKwFunction{FntestSorted}{testSorted}
+\SetKwFunction{FnquickSort}{quickSort}
+\SetKwFunction{FnheapSort}{heapSort}
 \tcc{ Creates\ three\ equal\ arrays\ of\ numbers\ and\ has\ them\ sorted\ with\ different\ sorting\ algorithms }
 \tcc{ to\ allow\ performance\ comparison\ via\ execution\ counting\ ("{}Collect\ Runtime\ Data"{}\ should }
 \tcc{ sensibly\ be\ switched\ on). }
@@ -272,18 +282,18 @@
   }
   \Parallel{
     \Thread{1}{
-      \(bubbleSort(values1)\)\;
+      \(\FnbubbleSort(values1)\)\;
     }
     \Thread{2}{
-      \(quickSort(values2,0,elementCount)\)\;
+      \(\FnquickSort(values2,0,elementCount)\)\;
     }
     \Thread{3}{
-      \(heapSort(values3)\)\;
+      \(\FnheapSort(values3)\)\;
     }
   }
-  \(ok1\leftarrow{}testSorted(values1)\)\;
-  \(ok2\leftarrow{}testSorted(values2)\)\;
-  \(ok3\leftarrow{}testSorted(values3)\)\;
+  \(ok1\leftarrow{}\FntestSorted(values1)\)\;
+  \(ok2\leftarrow{}\FntestSorted(values2)\)\;
+  \(ok3\leftarrow{}\FntestSorted(values3)\)\;
   \If{\(!ok1\vee!ok2\vee!ok3\)}{
     \For{\(i\leftarrow 0\) \KwTo \(elementCount-1\) \textbf{by} \(1\)}{
       \If{\(values1[i]\neq\ values2[i]\vee\ values1[i]\neq\ values3[i]\)}{

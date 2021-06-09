@@ -143,6 +143,7 @@
 
 \begin{algorithm}
 \caption{ComputeSum}
+\SetKwFunction{FnreadNumbers}{readNumbers}
 \tcc{ Computes\ the\ sum\ and\ average\ of\ the\ numbers\ read\ from\ a\ user-specified }
 \tcc{ text\ file\ (which\ might\ have\ been\ created\ via\ generateRandomNumberFile(4)). }
 \tcc{  }
@@ -159,7 +160,7 @@
     \(values\leftarrow{}\{\}\)\;
     \(nValues\leftarrow{}0\)\;
     \Try{
-      \(nValues\leftarrow{}readNumbers(file\_name,values,1000)\)\;
+      \(nValues\leftarrow{}\FnreadNumbers(file\_name,values,1000)\)\;
     }
     \Catch{failure}{
       \Output{\(failure\)}
@@ -178,6 +179,8 @@
 
 \begin{algorithm}
 \caption{DrawRandomHistogram}
+\SetKwFunction{FnreadNumbers}{readNumbers}
+\SetKwFunction{FndrawBarChart}{drawBarChart}
 \tcc{ Reads\ a\ random\ number\ file\ and\ draws\ a\ histogram\ accotrding\ to\ the }
 \tcc{ user\ specifications }
 \Prog{\FuncSty{DrawRandomHistogram}}{
@@ -198,7 +201,7 @@
     \(numberArray\leftarrow{}\{\}\)\;
     \(nObtained\leftarrow{}0\)\;
     \Try{
-      \(nObtained\leftarrow{}readNumbers(file\_name,numberArray,10000)\)\;
+      \(nObtained\leftarrow{}\FnreadNumbers(file\_name,numberArray,10000)\)\;
     }
     \Catch{failure}{
       \Output{\(failure\)}
@@ -228,7 +231,7 @@
           \(kMaxCount\leftarrow{}k-1\)\;
         }
       }
-      \(drawBarChart(count,nIntervals)\)\;
+      \(\FndrawBarChart(count,nIntervals)\)\;
       \Output{\(\)"{}Interval\ with\ max\ count:\ "{}\(,kMaxCount,\)"{}\ ("{}\(,count[kMaxCount],\)"{})"{}\(\)}
       \For{\(k\leftarrow 0\) \KwTo \(nIntervals-1\) \textbf{by} \(1\)}{
         \Output{\(count[k],\)"{}\ numbers\ in\ interval\ "{}\(,k,\)"{}\ ("{}\(,min+k*width,\)"{}\ ...\ "{}\(,min+(k+1)*width,\)"{})"{}\(\)}
