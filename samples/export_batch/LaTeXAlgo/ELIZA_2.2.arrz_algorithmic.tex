@@ -19,7 +19,7 @@
 \caption{adjustSpelling(sentence)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Cares\ for\ correct\ letter\ case\ among\ others }
+\STATE \COMMENT{ Cares for correct letter case among others }
   \STATE \(result\gets\ sentence\)
   \STATE \(position\gets\ 1\)
   \WHILE{\((position\leq\ length(sentence))\ \AND(copy(sentence,position,1)=\)"{}\ "{}\()\)}
@@ -45,13 +45,13 @@
 
 \floatname{algorithm}{Function}
 \begin{algorithm}
-\caption{checkGoodBye(text,\ phrases)}
+\caption{checkGoodBye(text, phrases)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Checks\ whether\ the\ given\ text\ contains\ some\ kind\ of }
-\STATE \COMMENT{ good-bye\ phrase\ inducing\ the\ end\ of\ the\ conversation }
-\STATE \COMMENT{ and\ if\ so\ writes\ a\ correspding\ good-bye\ message\ and }
-\STATE \COMMENT{ returns\ true,\ otherwise\ false }
+\STATE \COMMENT{ Checks whether the given text contains some kind of }
+\STATE \COMMENT{ good-bye phrase inducing the end of the conversation }
+\STATE \COMMENT{ and if so writes a correspding good-bye message and }
+\STATE \COMMENT{ returns true, otherwise false }
   \FORALL{\(pair \in phrases\)}
     \IF{\(pos(pair[0],text)>0\)}
       \STATE \(saidBye\gets\TRUE\)
@@ -67,11 +67,11 @@
 
 \floatname{algorithm}{Function}
 \begin{algorithm}
-\caption{checkRepetition(history,\ newInput)}
+\caption{checkRepetition(history, newInput)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Checks\ whether\ newInput\ has\ occurred\ among\ the\ last }
-\STATE \COMMENT{ length(history)\ -\ 1\ input\ strings\ and\ updates\ the\ history }
+\STATE \COMMENT{ Checks whether newInput has occurred among the last }
+\STATE \COMMENT{ length(history) - 1 input strings and updates the history }
   \STATE \(hasOccurred\gets\FALSE\)
   \IF{\(length(newInput)>4\)}
     \STATE \(currentIndex\gets\ history[0];\)
@@ -91,7 +91,7 @@
 
 \floatname{algorithm}{Function}
 \begin{algorithm}
-\caption{conjugateStrings(sentence,\ key,\ keyPos,\ flexions)}
+\caption{conjugateStrings(sentence, key, keyPos, flexions)}
 \begin{algorithmic}[5]
 
   \STATE \(result\gets\)"{}\ "{}\(+copy(sentence,keyPos+length(key),length(sentence))+\)"{}\ "{}\(\)
@@ -107,7 +107,7 @@
     \STATE \(result\gets\ left+right\)
   \ENDFOR
   \STATE \(position\gets\ pos(\)"{}\ \ "{}\(,result)\)
-  \COMMENT{Eliminate\ multiple\ spaces}
+  \COMMENT{Eliminate multiple spaces}
   \WHILE{\(position>0\)}
     \STATE \(result\gets\ copy(result,1,position-1)+copy(result,position+1,length(result))\)
     \STATE \(position\gets\ pos(\)"{}\ \ "{}\(,result)\)
@@ -119,17 +119,17 @@
 
 \floatname{algorithm}{Function}
 \begin{algorithm}
-\caption{findKeyword(keyMap,\ sentence)}
+\caption{findKeyword(keyMap, sentence)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Looks\ for\ the\ occurrence\ of\ the\ first\ of\ the\ strings }
-\STATE \COMMENT{ contained\ in\ keywords\ within\ the\ given\ sentence\ (in }
-\STATE \COMMENT{ array\ order). }
-\STATE \COMMENT{ Returns\ an\ array\ of }
-\STATE \COMMENT{ 0:\ the\ index\ of\ the\ first\ identified\ keyword\ (if\ any,\ otherwise\ -1), }
-\STATE \COMMENT{ 1:\ the\ position\ inside\ sentence\ (0\ if\ not\ found) }
+\STATE \COMMENT{ Looks for the occurrence of the first of the strings }
+\STATE \COMMENT{ contained in keywords within the given sentence (in }
+\STATE \COMMENT{ array order). }
+\STATE \COMMENT{ Returns an array of }
+\STATE \COMMENT{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\STATE \COMMENT{ 1: the position inside sentence (0 if not found) }
   \STATE \(result\gets\{-1,0\}\)
-  \COMMENT{Contains\ the\ index\ of\ the\ keyword\ and\ its\ position\ in\ sentence}
+  \COMMENT{Contains the index of the keyword and its position in sentence}
   \STATE \(i\gets\ 0\)
   \WHILE{\((result[0]<0)\ \AND(i<length(keyMap))\)}
     \STATE \(var\ entry:KeyMapEntry\gets\ keyMap[i]\)
@@ -150,9 +150,9 @@
 \caption{normalizeInput(sentence)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Converts\ the\ sentence\ to\ lowercase,\ eliminates\ all }
-\STATE \COMMENT{ interpunction\ (i.e.\ '{},'{},\ '{}.'{},\ '{};'{}),\ and\ pads\ the }
-\STATE \COMMENT{ sentence\ among\ blanks }
+\STATE \COMMENT{ Converts the sentence to lowercase, eliminates all }
+\STATE \COMMENT{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }
+\STATE \COMMENT{ sentence among blanks }
   \STATE \(sentence\gets\ lowercase(sentence)\)
   \FORALL{\(symbol \in \{\)'{}.'{}\(,\)'{},'{}\(,\)'{};'{}\(,\)'{}!'{}\(,\)'{}?'{}\(\}\)}
     \STATE \(position\gets\ pos(symbol,sentence)\)
@@ -185,11 +185,11 @@
 \caption{setupKeywords()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ The\ lower\ the\ index\ the\ higher\ the\ rank\ of\ the\ keyword\ (search\ is\ sequential). }
-\STATE \COMMENT{ The\ index\ of\ the\ first\ keyword\ found\ in\ a\ user\ sentence\ maps\ to\ a\ respective }
-\STATE \COMMENT{ reply\ ring\ as\ defined\ in\ \textasciigrave{}setupReplies()\textasciiacute{}. }
+\STATE \COMMENT{ The lower the index the higher the rank of the keyword (search is sequential). }
+\STATE \COMMENT{ The index of the first keyword found in a user sentence maps to a respective }
+\STATE \COMMENT{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
   \STATE \(keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\)
-  \COMMENT{The\ empty\ key\ string\ (last\ entry)\ is\ the\ default\ clause\ -\ will\ always\ be\ found}
+  \COMMENT{The empty key string (last entry) is the default clause - will always be found}
   \STATE \(keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)
   \STATE \(keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)
   \STATE \(keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)
@@ -240,7 +240,7 @@
 \caption{setupReflexions()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Returns\ an\ array\ of\ pairs\ of\ mutualy\ substitutable\  }
+\STATE \COMMENT{ Returns an array of pairs of mutualy substitutable  }
   \STATE \(reflexions[0]\gets\{\)"{}\ are\ "{}\(,\)"{}\ am\ "{}\(\}\)
   \STATE \(reflexions[1]\gets\{\)"{}\ were\ "{}\(,\)"{}\ was\ "{}\(\}\)
   \STATE \(reflexions[2]\gets\{\)"{}\ you\ "{}\(,\)"{}\ I\ "{}\(\}\)
@@ -262,12 +262,12 @@
 \caption{setupReplies()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ This\ routine\ sets\ up\ the\ reply\ rings\ addressed\ by\ the\ key\ words\ defined\ in }
-\STATE \COMMENT{ routine\ \textasciigrave{}setupKeywords()\textasciiacute{}\ and\ mapped\ hitherto\ by\ the\ cross\ table\ defined }
-\STATE \COMMENT{ in\ \textasciigrave{}setupMapping()\textasciiacute{} }
+\STATE \COMMENT{ This routine sets up the reply rings addressed by the key words defined in }
+\STATE \COMMENT{ routine \textasciigrave{}setupKeywords()\textasciiacute{} and mapped hitherto by the cross table defined }
+\STATE \COMMENT{ in \textasciigrave{}setupMapping()\textasciiacute{} }
   \STATE \(var\ replies:array\ of\ array\ of\ String\)
-  \STATE \COMMENT{ We\ start\ with\ the\ highest\ index\ for\ performance\ reasons }
-  \STATE \COMMENT{ (is\ to\ avoid\ frequent\ array\ resizing) }
+  \STATE \COMMENT{ We start with the highest index for performance reasons }
+  \STATE \COMMENT{ (is to avoid frequent array resizing) }
   \STATE \(replies[29]\gets\{\)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\)"{}I\ see."{}\(,\)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\)"{}Can\ you\ elaborate\ on\ that?"{}\(,\)"{}That\ is\ quite\ interesting."{}\(\}\)
   \STATE \(replies[0]\gets\{\)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\)
   \STATE \(replies[1]\gets\{\)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\)
@@ -312,18 +312,18 @@
 \caption{ELIZA()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Concept\ and\ lisp\ implementation\ published\ by\ Joseph\ Weizenbaum\ (MIT): }
-\STATE \COMMENT{ "{}ELIZA\ -\ A\ Computer\ Program\ For\ the\ Study\ of\ Natural\ Language\ Communication\ Between\ Man\ and\ Machine"{}\ -\ In: }
-\STATE \COMMENT{ Computational\ Linguistis\ 1(1966)9,\ pp.\ 36-45 }
-\STATE \COMMENT{ Revision\ history: }
-\STATE \COMMENT{ 2016-10-06\ Initial\ version }
-\STATE \COMMENT{ 2017-03-29\ Two\ diagrams\ updated\ (comments\ translated\ to\ English) }
-\STATE \COMMENT{ 2017-03-29\ More\ keywords\ and\ replies\ added }
-\STATE \COMMENT{ 2019-03-14\ Replies\ and\ mapping\ reorganised\ for\ easier\ maintenance }
-\STATE \COMMENT{ 2019-03-15\ key\ map\ joined\ from\ keyword\ array\ and\ index\ map }
-\STATE \COMMENT{ 2019-03-28\ Keyword\ "{}bot"{}\ inserted\ (same\ reply\ ring\ as\ "{}computer"{}) }
+\STATE \COMMENT{ Concept and lisp implementation published by Joseph Weizenbaum (MIT): }
+\STATE \COMMENT{ "{}ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine"{} - In: }
+\STATE \COMMENT{ Computational Linguistis 1(1966)9, pp. 36-45 }
+\STATE \COMMENT{ Revision history: }
+\STATE \COMMENT{ 2016-10-06 Initial version }
+\STATE \COMMENT{ 2017-03-29 Two diagrams updated (comments translated to English) }
+\STATE \COMMENT{ 2017-03-29 More keywords and replies added }
+\STATE \COMMENT{ 2019-03-14 Replies and mapping reorganised for easier maintenance }
+\STATE \COMMENT{ 2019-03-15 key map joined from keyword array and index map }
+\STATE \COMMENT{ 2019-03-28 Keyword "{}bot"{} inserted (same reply ring as "{}computer"{}) }
   \PRINT\(\)"{}*************\ ELIZA\ **************"{}\(\)
-  \COMMENT{Title\ information}
+  \COMMENT{Title information}
   \PRINT\(\)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\(\)
   \PRINT\(\)"{}**********************************"{}\(\)
   \PRINT\(\)"{}*\ Adapted\ for\ Basic\ on\ IBM\ PC\ by"{}\(\)
@@ -334,8 +334,8 @@
   \PRINT\(\)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(\)
   \PRINT\(\)"{}*\ Version:\ 2.2\ (2019-03-28)"{}\(\)
   \PRINT\(\)"{}**********************************"{}\(\)
-  \STATE \COMMENT{ Stores\ the\ last\ five\ inputs\ of\ the\ user\ in\ a\ ring\ buffer, }
-  \STATE \COMMENT{ the\ first\ element\ is\ the\ current\ insertion\ index }
+  \STATE \COMMENT{ Stores the last five inputs of the user in a ring buffer, }
+  \STATE \COMMENT{ the first element is the current insertion index }
   \STATE \(history\gets\{0,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\}\)
   \STATE \(const\ replies\gets\ setupReplies()\)
   \STATE \(const\ reflexions\gets\ setupReflexions()\)
@@ -347,8 +347,8 @@
   \COMMENT{Starter}
   \REPEAT
     \STATE\ \textbf{input}\ \(userInput\)
-    \STATE \COMMENT{ Converts\ the\ input\ to\ lowercase,\ cuts\ out\ interpunctation }
-    \STATE \COMMENT{ and\ pads\ the\ string }
+    \STATE \COMMENT{ Converts the input to lowercase, cuts out interpunctation }
+    \STATE \COMMENT{ and pads the string }
     \STATE \(userInput\gets\ normalizeInput(userInput)\)
     \STATE \(isGone\gets\ checkGoodBye(userInput,byePhrases)\)
     \IF{\(\NOT\ isGone\)}
@@ -359,11 +359,11 @@
         \STATE \(keyIndex\gets\ findInfo[0]\)
         \IF{\(keyIndex<0\)}
           \STATE \(keyIndex\gets\ length(keyMap)-1\)
-          \COMMENT{Should\ never\ happen...}
+          \COMMENT{Should never happen...}
         \ENDIF
         \STATE \(var\ entry:KeyMapEntry\gets\ keyMap[keyIndex]\)
         \STATE \(varPart\gets\)"{}"{}\(\)
-        \COMMENT{Variable\ part\ of\ the\ reply}
+        \COMMENT{Variable part of the reply}
         \IF{\(length(entry.keyword)>0\)}
           \STATE \(varPart\gets\ conjugateStrings(userInput,entry.keyword,findInfo[1],reflexions)\)
         \ENDIF
@@ -394,7 +394,7 @@
 \caption{KeyMapEntry()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Defines\ the\ map\ entry\ type\ of\ the\ same\ name }
+\STATE \COMMENT{ Defines the map entry type of the same name }
   \STATE \(type\ KeyMapEntry=record\{keyword:string;index:int\}\)
 
 \end{algorithmic}

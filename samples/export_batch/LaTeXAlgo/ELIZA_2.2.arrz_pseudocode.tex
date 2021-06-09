@@ -15,7 +15,7 @@
 
 \begin{pseudocode}{adjustSpelling}{sentence }
 \label{adjustSpelling}
-\COMMENT{ Cares\ for\ correct\ letter\ case\ among\ others }\\
+\COMMENT{ Cares for correct letter case among others }\\
 \PROCEDURE{adjustSpelling}{sentence}
   result\gets\ sentence\\
   position\gets\ 1\\
@@ -41,12 +41,12 @@
 \end{pseudocode}
 
 
-\begin{pseudocode}{checkGoodBye}{text,\ phrases }
+\begin{pseudocode}{checkGoodBye}{text, phrases }
 \label{checkGoodBye}
-\COMMENT{ Checks\ whether\ the\ given\ text\ contains\ some\ kind\ of }\\
-\COMMENT{ good-bye\ phrase\ inducing\ the\ end\ of\ the\ conversation }\\
-\COMMENT{ and\ if\ so\ writes\ a\ correspding\ good-bye\ message\ and }\\
-\COMMENT{ returns\ true,\ otherwise\ false }\\
+\COMMENT{ Checks whether the given text contains some kind of }\\
+\COMMENT{ good-bye phrase inducing the end of the conversation }\\
+\COMMENT{ and if so writes a correspding good-bye message and }\\
+\COMMENT{ returns true, otherwise false }\\
 \PROCEDURE{checkGoodBye}{text, phrases}
   \FOREACH pair \in phrases \DO
     \IF pos(pair[0],text)>0 \THEN
@@ -60,10 +60,10 @@
 \end{pseudocode}
 
 
-\begin{pseudocode}{checkRepetition}{history,\ newInput }
+\begin{pseudocode}{checkRepetition}{history, newInput }
 \label{checkRepetition}
-\COMMENT{ Checks\ whether\ newInput\ has\ occurred\ among\ the\ last }\\
-\COMMENT{ length(history)\ -\ 1\ input\ strings\ and\ updates\ the\ history }\\
+\COMMENT{ Checks whether newInput has occurred among the last }\\
+\COMMENT{ length(history) - 1 input strings and updates the history }\\
 \PROCEDURE{checkRepetition}{history, newInput}
   hasOccurred\gets\FALSE\\
   \IF length(newInput)>4 \THEN
@@ -80,7 +80,7 @@
 \end{pseudocode}
 
 
-\begin{pseudocode}{conjugateStrings}{sentence,\ key,\ keyPos,\ flexions }
+\begin{pseudocode}{conjugateStrings}{sentence, key, keyPos, flexions }
 \label{conjugateStrings}
 \PROCEDURE{conjugateStrings}{sentence, key, keyPos, flexions}
   result\gets\)"{}\ "{}\(+copy(sentence,keyPos+length(key),length(sentence))+\)"{}\ "{}\(\\
@@ -97,7 +97,7 @@
     \END\\
     result\gets\ left+right\\
   \END\\
-  \COMMENT{ Eliminate\ multiple\ spaces }\\
+  \COMMENT{ Eliminate multiple spaces }\\
   position\gets\ pos(\)"{}\ \ "{}\(,result)\\
   \WHILE position>0 \DO
   \BEGIN
@@ -108,16 +108,16 @@
 \end{pseudocode}
 
 
-\begin{pseudocode}{findKeyword}{keyMap,\ sentence }
+\begin{pseudocode}{findKeyword}{keyMap, sentence }
 \label{findKeyword}
-\COMMENT{ Looks\ for\ the\ occurrence\ of\ the\ first\ of\ the\ strings }\\
-\COMMENT{ contained\ in\ keywords\ within\ the\ given\ sentence\ (in }\\
-\COMMENT{ array\ order). }\\
-\COMMENT{ Returns\ an\ array\ of }\\
-\COMMENT{ 0:\ the\ index\ of\ the\ first\ identified\ keyword\ (if\ any,\ otherwise\ -1), }\\
-\COMMENT{ 1:\ the\ position\ inside\ sentence\ (0\ if\ not\ found) }\\
+\COMMENT{ Looks for the occurrence of the first of the strings }\\
+\COMMENT{ contained in keywords within the given sentence (in }\\
+\COMMENT{ array order). }\\
+\COMMENT{ Returns an array of }\\
+\COMMENT{ 0: the index of the first identified keyword (if any, otherwise -1), }\\
+\COMMENT{ 1: the position inside sentence (0 if not found) }\\
 \PROCEDURE{findKeyword}{keyMap, sentence}
-  \COMMENT{ Contains\ the\ index\ of\ the\ keyword\ and\ its\ position\ in\ sentence }\\
+  \COMMENT{ Contains the index of the keyword and its position in sentence }\\
   result\gets\{-1,0\}\\
   i\gets\ 0\\
   \WHILE (result[0]<0)\ \AND(i<length(keyMap)) \DO
@@ -137,9 +137,9 @@
 
 \begin{pseudocode}{normalizeInput}{sentence }
 \label{normalizeInput}
-\COMMENT{ Converts\ the\ sentence\ to\ lowercase,\ eliminates\ all }\\
-\COMMENT{ interpunction\ (i.e.\ '{},'{},\ '{}.'{},\ '{};'{}),\ and\ pads\ the }\\
-\COMMENT{ sentence\ among\ blanks }\\
+\COMMENT{ Converts the sentence to lowercase, eliminates all }\\
+\COMMENT{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }\\
+\COMMENT{ sentence among blanks }\\
 \PROCEDURE{normalizeInput}{sentence}
   sentence\gets\ lowercase(sentence)\\
   \FOREACH symbol \in \{\)'{}.'{}\(,\)'{},'{}\(,\)'{};'{}\(,\)'{}!'{}\(,\)'{}?'{}\(\} \DO
@@ -168,11 +168,11 @@
 
 \begin{pseudocode}{setupKeywords}{ }
 \label{setupKeywords}
-\COMMENT{ The\ lower\ the\ index\ the\ higher\ the\ rank\ of\ the\ keyword\ (search\ is\ sequential). }\\
-\COMMENT{ The\ index\ of\ the\ first\ keyword\ found\ in\ a\ user\ sentence\ maps\ to\ a\ respective }\\
-\COMMENT{ reply\ ring\ as\ defined\ in\ \textasciigrave{}setupReplies()\textasciiacute{}. }\\
+\COMMENT{ The lower the index the higher the rank of the keyword (search is sequential). }\\
+\COMMENT{ The index of the first keyword found in a user sentence maps to a respective }\\
+\COMMENT{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }\\
 \PROCEDURE{setupKeywords}{}
-  \COMMENT{ The\ empty\ key\ string\ (last\ entry)\ is\ the\ default\ clause\ -\ will\ always\ be\ found }\\
+  \COMMENT{ The empty key string (last entry) is the default clause - will always be found }\\
   keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\\
   keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\\
   keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\\
@@ -220,7 +220,7 @@
 
 \begin{pseudocode}{setupReflexions}{ }
 \label{setupReflexions}
-\COMMENT{ Returns\ an\ array\ of\ pairs\ of\ mutualy\ substitutable\  }\\
+\COMMENT{ Returns an array of pairs of mutualy substitutable  }\\
 \PROCEDURE{setupReflexions}{}
   reflexions[0]\gets\{\)"{}\ are\ "{}\(,\)"{}\ am\ "{}\(\}\\
   reflexions[1]\gets\{\)"{}\ were\ "{}\(,\)"{}\ was\ "{}\(\}\\
@@ -239,13 +239,13 @@
 
 \begin{pseudocode}{setupReplies}{ }
 \label{setupReplies}
-\COMMENT{ This\ routine\ sets\ up\ the\ reply\ rings\ addressed\ by\ the\ key\ words\ defined\ in }\\
-\COMMENT{ routine\ \textasciigrave{}setupKeywords()\textasciiacute{}\ and\ mapped\ hitherto\ by\ the\ cross\ table\ defined }\\
-\COMMENT{ in\ \textasciigrave{}setupMapping()\textasciiacute{} }\\
+\COMMENT{ This routine sets up the reply rings addressed by the key words defined in }\\
+\COMMENT{ routine \textasciigrave{}setupKeywords()\textasciiacute{} and mapped hitherto by the cross table defined }\\
+\COMMENT{ in \textasciigrave{}setupMapping()\textasciiacute{} }\\
 \PROCEDURE{setupReplies}{}
   var\ replies:array\ of\ array\ of\ String\\
-  \COMMENT{ We\ start\ with\ the\ highest\ index\ for\ performance\ reasons }\\
-  \COMMENT{ (is\ to\ avoid\ frequent\ array\ resizing) }\\
+  \COMMENT{ We start with the highest index for performance reasons }\\
+  \COMMENT{ (is to avoid frequent array resizing) }\\
   replies[29]\gets\{\)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\)"{}I\ see."{}\(,\)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\)"{}Can\ you\ elaborate\ on\ that?"{}\(,\)"{}That\ is\ quite\ interesting."{}\(\}\\
   replies[0]\gets\{\)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\\
   replies[1]\gets\{\)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\\
@@ -286,18 +286,18 @@
 
 \begin{pseudocode}{ELIZA}{ }
 \label{ELIZA}
-\COMMENT{ Concept\ and\ lisp\ implementation\ published\ by\ Joseph\ Weizenbaum\ (MIT): }\\
-\COMMENT{ "{}ELIZA\ -\ A\ Computer\ Program\ For\ the\ Study\ of\ Natural\ Language\ Communication\ Between\ Man\ and\ Machine"{}\ -\ In: }\\
-\COMMENT{ Computational\ Linguistis\ 1(1966)9,\ pp.\ 36-45 }\\
-\COMMENT{ Revision\ history: }\\
-\COMMENT{ 2016-10-06\ Initial\ version }\\
-\COMMENT{ 2017-03-29\ Two\ diagrams\ updated\ (comments\ translated\ to\ English) }\\
-\COMMENT{ 2017-03-29\ More\ keywords\ and\ replies\ added }\\
-\COMMENT{ 2019-03-14\ Replies\ and\ mapping\ reorganised\ for\ easier\ maintenance }\\
-\COMMENT{ 2019-03-15\ key\ map\ joined\ from\ keyword\ array\ and\ index\ map }\\
-\COMMENT{ 2019-03-28\ Keyword\ "{}bot"{}\ inserted\ (same\ reply\ ring\ as\ "{}computer"{}) }\\
+\COMMENT{ Concept and lisp implementation published by Joseph Weizenbaum (MIT): }\\
+\COMMENT{ "{}ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine"{} - In: }\\
+\COMMENT{ Computational Linguistis 1(1966)9, pp. 36-45 }\\
+\COMMENT{ Revision history: }\\
+\COMMENT{ 2016-10-06 Initial version }\\
+\COMMENT{ 2017-03-29 Two diagrams updated (comments translated to English) }\\
+\COMMENT{ 2017-03-29 More keywords and replies added }\\
+\COMMENT{ 2019-03-14 Replies and mapping reorganised for easier maintenance }\\
+\COMMENT{ 2019-03-15 key map joined from keyword array and index map }\\
+\COMMENT{ 2019-03-28 Keyword "{}bot"{} inserted (same reply ring as "{}computer"{}) }\\
 \MAIN
-  \COMMENT{ Title\ information }\\
+  \COMMENT{ Title information }\\
   \OUTPUT{\)"{}*************\ ELIZA\ **************"{}\(}\\
   \OUTPUT{\)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\(}\\
   \OUTPUT{\)"{}**********************************"{}\(}\\
@@ -309,8 +309,8 @@
   \OUTPUT{\)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(}\\
   \OUTPUT{\)"{}*\ Version:\ 2.2\ (2019-03-28)"{}\(}\\
   \OUTPUT{\)"{}**********************************"{}\(}\\
-  \COMMENT{ Stores\ the\ last\ five\ inputs\ of\ the\ user\ in\ a\ ring\ buffer, }\\
-  \COMMENT{ the\ first\ element\ is\ the\ current\ insertion\ index }\\
+  \COMMENT{ Stores the last five inputs of the user in a ring buffer, }\\
+  \COMMENT{ the first element is the current insertion index }\\
   history\gets\{0,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\}\\
   const\ replies\gets\CALL{setupReplies}{}\\
   const\ reflexions\gets\CALL{setupReflexions}{}\\
@@ -322,8 +322,8 @@
   \OUTPUT{\)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\(}\\
   \REPEAT
     \)input\(userInput\\
-    \COMMENT{ Converts\ the\ input\ to\ lowercase,\ cuts\ out\ interpunctation }\\
-    \COMMENT{ and\ pads\ the\ string }\\
+    \COMMENT{ Converts the input to lowercase, cuts out interpunctation }\\
+    \COMMENT{ and pads the string }\\
     userInput\gets\CALL{normalizeInput}{userInput}\\
     isGone\gets\CALL{checkGoodBye}{userInput,byePhrases}\\
     \IF \NOT\ isGone \THEN
@@ -336,11 +336,11 @@
         keyIndex\gets\ findInfo[0]\\
         \IF keyIndex<0 \THEN
         \BEGIN
-          \COMMENT{ Should\ never\ happen... }\\
+          \COMMENT{ Should never happen... }\\
           keyIndex\gets\ length(keyMap)-1\\
         \END\\
         var\ entry:KeyMapEntry\gets\ keyMap[keyIndex]\\
-        \COMMENT{ Variable\ part\ of\ the\ reply }\\
+        \COMMENT{ Variable part of the reply }\\
         varPart\gets\)"{}"{}\(\\
         \IF length(entry.keyword)>0 \THEN
           varPart\gets\CALL{conjugateStrings}{userInput,entry.keyword,findInfo[1],reflexions}\\
@@ -367,7 +367,7 @@
 
 \begin{pseudocode}{KeyMapEntry}{ }
 \label{KeyMapEntry}
-\COMMENT{ Defines\ the\ map\ entry\ type\ of\ the\ same\ name }\\
+\COMMENT{ Defines the map entry type of the same name }\\
 
   type\ KeyMapEntry=record\{keyword:string;index:int\}\\
 

@@ -32,7 +32,7 @@
 
 \begin{function}
 \caption{adjustSpelling(sentence)}
-\tcc{ Cares\ for\ correct\ letter\ case\ among\ others }
+\tcc{ Cares for correct letter case among others }
 \Func{\FuncSty{adjustSpelling(}\ArgSty{sentence}\FuncSty{)}:string}{
 \KwData{\(sentence\): string}
 \KwResult{string}
@@ -59,14 +59,14 @@
 
 
 \begin{function}
-\caption{checkGoodBye(text,\textbackslash{}\ phrases)}
-\tcc{ Checks\ whether\ the\ given\ text\ contains\ some\ kind\ of }
-\tcc{ good-bye\ phrase\ inducing\ the\ end\ of\ the\ conversation }
-\tcc{ and\ if\ so\ writes\ a\ correspding\ good-bye\ message\ and }
-\tcc{ returns\ true,\ otherwise\ false }
-\Func{\FuncSty{checkGoodBye(}\ArgSty{text,\ phrases}\FuncSty{)}:boolean}{
+\caption{checkGoodBye(text, phrases)}
+\tcc{ Checks whether the given text contains some kind of }
+\tcc{ good-bye phrase inducing the end of the conversation }
+\tcc{ and if so writes a correspding good-bye message and }
+\tcc{ returns true, otherwise false }
+\Func{\FuncSty{checkGoodBye(}\ArgSty{text, phrases}\FuncSty{)}:boolean}{
 \KwData{\(text\): string}
-\KwData{\(phrases\): array\ of\ array[0..1]\ of\ string}
+\KwData{\(phrases\): array of array[0..1] of string}
 \KwResult{boolean}
   \ForEach{\(pair \in phrases\)}{
     \If{\(pos(pair[0],text)>0\)}{
@@ -81,10 +81,10 @@
 
 
 \begin{function}
-\caption{checkRepetition(history,\textbackslash{}\ newInput)}
-\tcc{ Checks\ whether\ newInput\ has\ occurred\ among\ the\ last }
-\tcc{ length(history)\ -\ 1\ input\ strings\ and\ updates\ the\ history }
-\Func{\FuncSty{checkRepetition(}\ArgSty{history,\ newInput}\FuncSty{)}:boolean}{
+\caption{checkRepetition(history, newInput)}
+\tcc{ Checks whether newInput has occurred among the last }
+\tcc{ length(history) - 1 input strings and updates the history }
+\Func{\FuncSty{checkRepetition(}\ArgSty{history, newInput}\FuncSty{)}:boolean}{
 \KwData{\(history\): array}
 \KwData{\(newInput\): string}
 \KwResult{boolean}
@@ -105,12 +105,12 @@
 
 
 \begin{function}
-\caption{conjugateStrings(sentence,\textbackslash{}\ key,\textbackslash{}\ keyPos,\textbackslash{}\ flexions)}
-\Func{\FuncSty{conjugateStrings(}\ArgSty{sentence,\ key,\ keyPos,\ flexions}\FuncSty{)}:string}{
+\caption{conjugateStrings(sentence, key, keyPos, flexions)}
+\Func{\FuncSty{conjugateStrings(}\ArgSty{sentence, key, keyPos, flexions}\FuncSty{)}:string}{
 \KwData{\(sentence\): string}
 \KwData{\(key\): string}
 \KwData{\(keyPos\): integer}
-\KwData{\(flexions\): array\ of\ array[0..1]\ of\ string}
+\KwData{\(flexions\): array of array[0..1] of string}
 \KwResult{string}
   \(result\leftarrow{}\)"{}\ "{}\(+copy(sentence,keyPos+length(key),length(sentence))+\)"{}\ "{}\(\)\;
   \ForEach{\(pair \in flexions\)}{
@@ -124,7 +124,7 @@
     }
     \(result\leftarrow{}left+right\)\;
   }
-  \tcc{ Eliminate\ multiple\ spaces }
+  \tcc{ Eliminate multiple spaces }
   \(position\leftarrow{}pos(\)"{}\ \ "{}\(,result)\)\;
   \While{\(position>0\)}{
     \(result\leftarrow{}copy(result,1,position-1)+copy(result,position+1,length(result))\)\;
@@ -135,18 +135,18 @@
 
 
 \begin{function}
-\caption{findKeyword(keyMap,\textbackslash{}\ sentence)}
-\tcc{ Looks\ for\ the\ occurrence\ of\ the\ first\ of\ the\ strings }
-\tcc{ contained\ in\ keywords\ within\ the\ given\ sentence\ (in }
-\tcc{ array\ order). }
-\tcc{ Returns\ an\ array\ of }
-\tcc{ 0:\ the\ index\ of\ the\ first\ identified\ keyword\ (if\ any,\ otherwise\ -1), }
-\tcc{ 1:\ the\ position\ inside\ sentence\ (0\ if\ not\ found) }
-\Func{\FuncSty{findKeyword(}\ArgSty{keyMap,\ sentence}\FuncSty{)}:array[0..1]\ of\ integer}{
-\KwData{\(keyMap\): array\ of\ KeyMapEntry}
+\caption{findKeyword(keyMap, sentence)}
+\tcc{ Looks for the occurrence of the first of the strings }
+\tcc{ contained in keywords within the given sentence (in }
+\tcc{ array order). }
+\tcc{ Returns an array of }
+\tcc{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\tcc{ 1: the position inside sentence (0 if not found) }
+\Func{\FuncSty{findKeyword(}\ArgSty{keyMap, sentence}\FuncSty{)}:array[0..1] of integer}{
+\KwData{\(keyMap\): array of KeyMapEntry}
 \KwData{\(sentence\): string}
-\KwResult{array[0..1]\ of\ integer}
-  \tcc{ Contains\ the\ index\ of\ the\ keyword\ and\ its\ position\ in\ sentence }
+\KwResult{array[0..1] of integer}
+  \tcc{ Contains the index of the keyword and its position in sentence }
   \(result\leftarrow{}\{-1,0\}\)\;
   \(i\leftarrow{}0\)\;
   \While{\((result[0]<0)\wedge(i<length(keyMap))\)}{
@@ -164,9 +164,9 @@
 
 \begin{function}
 \caption{normalizeInput(sentence)}
-\tcc{ Converts\ the\ sentence\ to\ lowercase,\ eliminates\ all }
-\tcc{ interpunction\ (i.e.\ '{},'{},\ '{}.'{},\ '{};'{}),\ and\ pads\ the }
-\tcc{ sentence\ among\ blanks }
+\tcc{ Converts the sentence to lowercase, eliminates all }
+\tcc{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }
+\tcc{ sentence among blanks }
 \Func{\FuncSty{normalizeInput(}\ArgSty{sentence}\FuncSty{)}:string}{
 \KwData{\(sentence\): string}
 \KwResult{string}
@@ -185,8 +185,8 @@
 
 \begin{function}
 \caption{setupGoodByePhrases()}
-\Func{\FuncSty{setupGoodByePhrases(}\ArgSty{}\FuncSty{)}:array\ of\ array[0..1]\ of\ string}{
-\KwResult{array\ of\ array[0..1]\ of\ string}
+\Func{\FuncSty{setupGoodByePhrases(}\ArgSty{}\FuncSty{)}:array of array[0..1] of string}{
+\KwResult{array of array[0..1] of string}
   \(phrases[0]\leftarrow{}\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)\;
   \(phrases[1]\leftarrow{}\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)\;
   \Return{\(phrases\)}
@@ -196,12 +196,12 @@
 
 \begin{function}
 \caption{setupKeywords()}
-\tcc{ The\ lower\ the\ index\ the\ higher\ the\ rank\ of\ the\ keyword\ (search\ is\ sequential). }
-\tcc{ The\ index\ of\ the\ first\ keyword\ found\ in\ a\ user\ sentence\ maps\ to\ a\ respective }
-\tcc{ reply\ ring\ as\ defined\ in\ \textasciigrave{}setupReplies()\textasciiacute{}. }
-\Func{\FuncSty{setupKeywords(}\ArgSty{}\FuncSty{)}:array\ of\ KeyMapEntry}{
-\KwResult{array\ of\ KeyMapEntry}
-  \tcc{ The\ empty\ key\ string\ (last\ entry)\ is\ the\ default\ clause\ -\ will\ always\ be\ found }
+\tcc{ The lower the index the higher the rank of the keyword (search is sequential). }
+\tcc{ The index of the first keyword found in a user sentence maps to a respective }
+\tcc{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
+\Func{\FuncSty{setupKeywords(}\ArgSty{}\FuncSty{)}:array of KeyMapEntry}{
+\KwResult{array of KeyMapEntry}
+  \tcc{ The empty key string (last entry) is the default clause - will always be found }
   \(keywords[39]\leftarrow{}KeyMapEntry\{\)"{}"{}\(,29\}\)\;
   \(keywords[0]\leftarrow{}KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)\;
   \(keywords[1]\leftarrow{}KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)\;
@@ -249,9 +249,9 @@
 
 \begin{function}
 \caption{setupReflexions()}
-\tcc{ Returns\ an\ array\ of\ pairs\ of\ mutualy\ substitutable\  }
-\Func{\FuncSty{setupReflexions(}\ArgSty{}\FuncSty{)}:array\ of\ array[0..1]\ of\ string}{
-\KwResult{array\ of\ array[0..1]\ of\ string}
+\tcc{ Returns an array of pairs of mutualy substitutable  }
+\Func{\FuncSty{setupReflexions(}\ArgSty{}\FuncSty{)}:array of array[0..1] of string}{
+\KwResult{array of array[0..1] of string}
   \(reflexions[0]\leftarrow{}\{\)"{}\ are\ "{}\(,\)"{}\ am\ "{}\(\}\)\;
   \(reflexions[1]\leftarrow{}\{\)"{}\ were\ "{}\(,\)"{}\ was\ "{}\(\}\)\;
   \(reflexions[2]\leftarrow{}\{\)"{}\ you\ "{}\(,\)"{}\ I\ "{}\(\}\)\;
@@ -269,14 +269,14 @@
 
 \begin{function}
 \caption{setupReplies()}
-\tcc{ This\ routine\ sets\ up\ the\ reply\ rings\ addressed\ by\ the\ key\ words\ defined\ in }
-\tcc{ routine\ \textasciigrave{}setupKeywords()\textasciiacute{}\ and\ mapped\ hitherto\ by\ the\ cross\ table\ defined }
-\tcc{ in\ \textasciigrave{}setupMapping()\textasciiacute{} }
-\Func{\FuncSty{setupReplies(}\ArgSty{}\FuncSty{)}:array\ of\ array\ of\ string}{
-\KwResult{array\ of\ array\ of\ string}
+\tcc{ This routine sets up the reply rings addressed by the key words defined in }
+\tcc{ routine \textasciigrave{}setupKeywords()\textasciiacute{} and mapped hitherto by the cross table defined }
+\tcc{ in \textasciigrave{}setupMapping()\textasciiacute{} }
+\Func{\FuncSty{setupReplies(}\ArgSty{}\FuncSty{)}:array of array of string}{
+\KwResult{array of array of string}
   \(var\ replies:array\ of\ array\ of\ String\)\;
-  \tcc{ We\ start\ with\ the\ highest\ index\ for\ performance\ reasons }
-  \tcc{ (is\ to\ avoid\ frequent\ array\ resizing) }
+  \tcc{ We start with the highest index for performance reasons }
+  \tcc{ (is to avoid frequent array resizing) }
   \(replies[29]\leftarrow{}\{\)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\)"{}I\ see."{}\(,\)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\)"{}Can\ you\ elaborate\ on\ that?"{}\(,\)"{}That\ is\ quite\ interesting."{}\(\}\)\;
   \(replies[0]\leftarrow{}\{\)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\)\;
   \(replies[1]\leftarrow{}\{\)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\)\;
@@ -327,18 +327,18 @@
 \SetKwFunction{FnsetupKeywords}{setupKeywords}
 \SetKwFunction{FnadjustSpelling}{adjustSpelling}
 \SetKwFunction{FnnormalizeInput}{normalizeInput}
-\tcc{ Concept\ and\ lisp\ implementation\ published\ by\ Joseph\ Weizenbaum\ (MIT): }
-\tcc{ "{}ELIZA\ -\ A\ Computer\ Program\ For\ the\ Study\ of\ Natural\ Language\ Communication\ Between\ Man\ and\ Machine"{}\ -\ In: }
-\tcc{ Computational\ Linguistis\ 1(1966)9,\ pp.\ 36-45 }
-\tcc{ Revision\ history: }
-\tcc{ 2016-10-06\ Initial\ version }
-\tcc{ 2017-03-29\ Two\ diagrams\ updated\ (comments\ translated\ to\ English) }
-\tcc{ 2017-03-29\ More\ keywords\ and\ replies\ added }
-\tcc{ 2019-03-14\ Replies\ and\ mapping\ reorganised\ for\ easier\ maintenance }
-\tcc{ 2019-03-15\ key\ map\ joined\ from\ keyword\ array\ and\ index\ map }
-\tcc{ 2019-03-28\ Keyword\ "{}bot"{}\ inserted\ (same\ reply\ ring\ as\ "{}computer"{}) }
+\tcc{ Concept and lisp implementation published by Joseph Weizenbaum (MIT): }
+\tcc{ "{}ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine"{} - In: }
+\tcc{ Computational Linguistis 1(1966)9, pp. 36-45 }
+\tcc{ Revision history: }
+\tcc{ 2016-10-06 Initial version }
+\tcc{ 2017-03-29 Two diagrams updated (comments translated to English) }
+\tcc{ 2017-03-29 More keywords and replies added }
+\tcc{ 2019-03-14 Replies and mapping reorganised for easier maintenance }
+\tcc{ 2019-03-15 key map joined from keyword array and index map }
+\tcc{ 2019-03-28 Keyword "{}bot"{} inserted (same reply ring as "{}computer"{}) }
 \Prog{\FuncSty{ELIZA}}{
-  \tcc{ Title\ information }
+  \tcc{ Title information }
   \Output{\(\)"{}*************\ ELIZA\ **************"{}\(\)}
   \Output{\(\)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\(\)}
   \Output{\(\)"{}**********************************"{}\(\)}
@@ -350,8 +350,8 @@
   \Output{\(\)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(\)}
   \Output{\(\)"{}*\ Version:\ 2.2\ (2019-03-28)"{}\(\)}
   \Output{\(\)"{}**********************************"{}\(\)}
-  \tcc{ Stores\ the\ last\ five\ inputs\ of\ the\ user\ in\ a\ ring\ buffer, }
-  \tcc{ the\ first\ element\ is\ the\ current\ insertion\ index }
+  \tcc{ Stores the last five inputs of the user in a ring buffer, }
+  \tcc{ the first element is the current insertion index }
   \(history\leftarrow{}\{0,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\}\)\;
   \(const\ replies\leftarrow{}\FnsetupReplies()\)\;
   \(const\ reflexions\leftarrow{}\FnsetupReflexions()\)\;
@@ -363,8 +363,8 @@
   \Output{\(\)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\(\)}
   \Repeat{\(isGone\)}{
     \Input{\(userInput\)}
-    \tcc{ Converts\ the\ input\ to\ lowercase,\ cuts\ out\ interpunctation }
-    \tcc{ and\ pads\ the\ string }
+    \tcc{ Converts the input to lowercase, cuts out interpunctation }
+    \tcc{ and pads the string }
     \(userInput\leftarrow{}\FnnormalizeInput(userInput)\)\;
     \(isGone\leftarrow{}\FncheckGoodBye(userInput,byePhrases)\)\;
     \If{\(!isGone\)}{
@@ -374,11 +374,11 @@
         \(findInfo\leftarrow{}\FnfindKeyword(keyMap,userInput)\)\;
         \(keyIndex\leftarrow{}findInfo[0]\)\;
         \If{\(keyIndex<0\)}{
-          \tcc{ Should\ never\ happen... }
+          \tcc{ Should never happen... }
           \(keyIndex\leftarrow{}length(keyMap)-1\)\;
         }
         \(var\ entry:KeyMapEntry\leftarrow{}keyMap[keyIndex]\)\;
-        \tcc{ Variable\ part\ of\ the\ reply }
+        \tcc{ Variable part of the reply }
         \(varPart\leftarrow{}\)"{}"{}\(\)\;
         \If{\(length(entry.keyword)>0\)}{
           \(varPart\leftarrow{}\FnconjugateStrings(userInput,entry.keyword,findInfo[1],reflexions)\)\;
@@ -406,7 +406,7 @@
 
 \begin{algorithm}
 \caption{KeyMapEntry}
-\tcc{ Defines\ the\ map\ entry\ type\ of\ the\ same\ name }
+\tcc{ Defines the map entry type of the same name }
 \Incl{\FuncSty{KeyMapEntry}}{
   \(type\ KeyMapEntry=record\{keyword:string;index:int\}\)\;
 }

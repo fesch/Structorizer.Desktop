@@ -9,14 +9,14 @@
 \DeclareMathOperator{\oprshl}{shl}
 \DeclareMathOperator{\oprshr}{shr}
 \title{Structorizer LaTeX pseudocode Export of TextWriter.arrz}
-\author{Kay\ G"urtzig}
+\author{Kay G"urtzig}
 \date{09.06.2021}
 
 \begin{document}
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{backward(len,\ color)}
+\caption{backward(len, color)}
 \begin{algorithmic}[5]
 
   \IF{\(color=1\)}
@@ -47,10 +47,10 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{blank(h,\ colorNo)}
+\caption{blank(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ a\ blank\ for\ font\ height\ h,\ ignoring\ the\ colorNo }
+\STATE \COMMENT{ Draws a blank for font height h, ignoring the colorNo }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(penUp()\)
   \STATE \(right(90)\)
@@ -63,7 +63,7 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{forward(len,\ color)}
+\caption{forward(len, color)}
 \begin{algorithmic}[5]
 
   \IF{\(color=1\)}
@@ -94,11 +94,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit1(h,\ colorNo)}
+\caption{digit1(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 1\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 1 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(penUp()\)
   \STATE \(forward(h/2.0)\)
   \STATE \(penDown()\)
@@ -113,17 +113,17 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit4(h,\ colorNo)}
+\caption{digit4(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 4\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 4 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(angle\gets\ toDegrees(atan(1-2.0*c/h))\)
-  \COMMENT{inner\ angle\ at\ top\ of\ the\ triangle}
+  \COMMENT{inner angle at top of the triangle}
   \STATE \(right(90)\)
   \STATE \(penUp()\)
   \STATE \(forward(c+b)\)
@@ -145,11 +145,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit7(h,\ colorNo)}
+\caption{digit7(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 7\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 7 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(angle\gets\ 90+toDegrees(atan(0.5))\)
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
@@ -170,11 +170,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterA(h,\ colorNo)}
+\caption{letterA(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ A\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter A in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(h*h+width*width/4.0)\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/2.0/h))\)
@@ -197,11 +197,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterE(h,\ colorNo)}
+\caption{letterE(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ E\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter E in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
@@ -226,11 +226,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterF(h,\ colorNo)}
+\caption{letterF(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ F\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter F in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
@@ -255,11 +255,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterH(h,\ colorNo)}
+\caption{letterH(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ H\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter H in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(forward(h,colorNo)\)
   \STATE \(penUp()\)
@@ -283,15 +283,15 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterI(h,\ colorNo)}
+\caption{letterI(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ I\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter I in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(right(90)\)
   \STATE \(forward(c)\)
@@ -319,11 +319,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterK(h,\ colorNo)}
+\caption{letterK(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ K\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter K in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(diag\gets\ h/sqrt(2.0)\)
   \STATE \(forward(h,colorNo)\)
@@ -343,11 +343,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterL(h,\ colorNo)}
+\caption{letterL(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ L\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter L in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(forward(h,colorNo)\)
   \STATE \(penUp()\)
@@ -363,11 +363,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterM(h,\ colorNo)}
+\caption{letterM(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ M\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter M in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(width*width+h*h)/2.0\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/h))\)
@@ -385,11 +385,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterN(h,\ colorNo)}
+\caption{letterN(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ N\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter N in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(width*width+h*h)\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/h))\)
@@ -408,11 +408,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterT(h,\ colorNo)}
+\caption{letterT(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ T\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter T in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
@@ -436,11 +436,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterV(h,\ colorNo)}
+\caption{letterV(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ V\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter V in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(h*h+width*width/4.0)\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/2.0/h))\)
@@ -462,11 +462,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterW(h,\ colorNo)}
+\caption{letterW(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ W\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter W in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(width\_3\gets\ width/3.0\)
   \STATE \(hypo\gets\ sqrt(width\_3*width\_3+h*h)\)
@@ -497,11 +497,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterX(h,\ colorNo)}
+\caption{letterX(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ X\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter X in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(width*width+h*h)\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/h))\)
@@ -521,11 +521,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterY(h,\ colorNo)}
+\caption{letterY(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ Y\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter Y in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(width*width+h*h)/2.0\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/h))\)
@@ -552,11 +552,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterZ(h,\ colorNo)}
+\caption{letterZ(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ Z\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter Z in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(hypo\gets\ sqrt(width*width+h*h)\)
   \STATE \(rotAngle\gets\ toDegrees(atan(width/h))\)
@@ -577,11 +577,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{polygonPart(a,\ n,\ ctrclkws,\ nEdges,\ color)}
+\caption{polygonPart(a, n, ctrclkws, nEdges, color)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ nEdges\ edges\ of\ a\ regular\ n-polygon\ with\ edge\ length\ a }
-\STATE \COMMENT{ counter-clockwise,\ if\ ctrclkws\ is\ true,\ or\ clockwise\ if\ ctrclkws\ is\ false. }
+\STATE \COMMENT{ Draws nEdges edges of a regular n-polygon with edge length a }
+\STATE \COMMENT{ counter-clockwise, if ctrclkws is true, or clockwise if ctrclkws is false. }
   \STATE \(rotAngle\gets\ 360.0/n\)
   \IF{\(ctrclkws\)}
     \STATE \(rotAngle\gets-rotAngle\)
@@ -597,16 +597,16 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{charDummy(h,\ colorNo)}
+\caption{charDummy(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ a\ dummy\ character\ (small\ centered\ square)\ with\ font\ height\ h\ and }
-\STATE \COMMENT{ the\ colour\ encoded\ by\ colorNo }
+\STATE \COMMENT{ Draws a dummy character (small centered square) with font height h and }
+\STATE \COMMENT{ the colour encoded by colorNo }
   \STATE \(width\gets\ h/2.0\)
   \STATE \(b\gets\ width/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length\ (here:\ edge\ lengzh\ of\ the\ square)}
+  \COMMENT{Octagon edge length (here: edge lengzh of the square)}
   \STATE \(c\gets(width-b)/2.0\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(d\gets\ b/sqrt(2.0)\)
   \STATE \(penUp()\)
   \STATE \(forward(h/2.0-b/2.0)\)
@@ -615,7 +615,7 @@
   \STATE \(right(90)\)
   \STATE \(penDown()\)
   \STATE \(polygonPart(b,4,\TRUE,4,colorNo)\)
-  \COMMENT{Draws\ the\ square\ with\ edge\ length\ b}
+  \COMMENT{Draws the square with edge length b}
   \STATE \(penUp()\)
   \STATE \(left(90)\)
   \STATE \(forward(b+c)\)
@@ -629,23 +629,23 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{comma(h,\ colorNo)}
+\caption{comma(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ a\ comma\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws a comma in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ toDegrees(atan(0.5))\)
   \STATE \(hypo\gets\ c*sqrt(1.25)\)
   \STATE \(penUp()\)
   \STATE \(right(90)\)
   \STATE \(forward((c+b)/2.0+c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 3\ edges\ of\ a\ square\ with\ edge\ length\ c }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 3 edges of a square with edge length c }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(c,4,\TRUE,3,colorNo)\)
   \STATE \(left(90)\)
   \STATE \(forward(c/2.0,colorNo)\)
@@ -665,21 +665,21 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit2(h,\ colorNo)}
+\caption{digit2(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 2\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 2 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(angle\gets\ toDegrees(atan(h/(h+2*c)))\)
   \STATE \(penUp()\)
   \STATE \(forward(h-c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,4,colorNo)\)
   \STATE \(right(angle)\)
   \STATE \(forward(h/2.0*sqrt(1+sqr(1+2*c/h)),colorNo)\)
@@ -693,28 +693,28 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit3(h,\ colorNo)}
+\caption{digit3(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 3\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 3 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,6,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(180)\)
   \STATE \(forward(b)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 5 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,5,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(45)\)
@@ -730,25 +730,25 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit5(h,\ colorNo)}
+\caption{digit5(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 5\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 5 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,6,colorNo)\)
   \STATE \(forward(c,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(h/2.0,4,\FALSE,2,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(90)\)
@@ -761,29 +761,29 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit6(h,\ colorNo)}
+\caption{digit6(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 6\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 6 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ all\ 8\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw all 8 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,8,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(180)\)
   \STATE \(forward(b)\)
   \STATE \(penDown()\)
   \STATE \(forward(2*c+b,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 3 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,3,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(135)\)
@@ -796,21 +796,21 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit8(h,\ colorNo)}
+\caption{digit8(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 8\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 8 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ all\ 8\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw all 8 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,8,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(180)\)
@@ -819,8 +819,8 @@
   \STATE \(forward(b)\)
   \STATE \(left(135)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ 7\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 7 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,7,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(45)\)
@@ -836,25 +836,25 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit9(h,\ colorNo)}
+\caption{digit9(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 9\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 9 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(2*c+b,colorNo)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 7\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 7 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,7,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(45)\)
@@ -867,15 +867,15 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{exclMk(h,\ colorNo)}
+\caption{exclMk(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ an\ exclamation\ mark\ in\ the\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws an exclamation mark in the colour encoded by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(width\gets\ h/2.0\)
   \STATE \(length1\gets\ h-(b+c)/2.0\)
   \STATE \(length2\gets\ length1-2*c\)
@@ -889,8 +889,8 @@
   \STATE \(forward(width/2.0)\)
   \STATE \(left(90+rotAngle)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b/2 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 5 edges of an octagon with edge length b/2 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b/2.0,8,\FALSE,5,colorNo)\)
   \STATE \(right(rotAngle2)\)
   \STATE \(forward(hypo,colorNo)\)
@@ -903,8 +903,8 @@
   \STATE \(left(90)\)
   \STATE \(forward(c/2.0)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(c,4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward((c+b)/2.0)\)
@@ -918,21 +918,21 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{fullSt(h,\ colorNo)}
+\caption{fullSt(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ a\ full\ stop\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws a full stop in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(penUp()\)
   \STATE \(right(90)\)
   \STATE \(forward((c+b)/2.0+c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(c,4,\TRUE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward((c+b)/2.0)\)
@@ -945,23 +945,23 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterAe(h,\ colorNo)}
+\caption{letterAe(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ "A\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter "A in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(max(h/16.0,1),4,\FALSE,4,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(penUp()\)
   \STATE \(forward(h/2.0)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(max(h/16.0,1),4,\FALSE,4,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(penUp()\)
@@ -978,27 +978,27 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterB(h,\ colorNo)}
+\caption{letterB(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ B\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter B in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(forward(c+b,colorNo)\)
   \STATE \(polygonPart(b,8,\FALSE,4,colorNo)\)
-  \COMMENT{Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b}
+  \COMMENT{Clockwise draw 4 edges of an octagon with edge length b}
   \STATE \(forward(c,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(180)\)
   \STATE \(forward(b+c)\)
   \STATE \(penDown()\)
   \STATE \(polygonPart(b,8,\FALSE,4,colorNo)\)
-  \COMMENT{Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b}
+  \COMMENT{Clockwise draw 4 edges of an octagon with edge length b}
   \STATE \(forward(c,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(left(180)\)
@@ -1012,30 +1012,30 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterC(h,\ colorNo)}
+\caption{letterC(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ C\ in\ the\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter C in the colour encoded by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ triangle\ at\ the\ octagon\ corner}
+  \COMMENT{Cathetus of the outer triangle at the octagon corner}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Clockwise\ draws\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
-  \STATE \COMMENT{ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draws 3 edges of an octagon with edge length b in the colour }
+  \STATE \COMMENT{ encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,3,colorNo)\)
   \STATE \(left(rotAngle)\)
   \STATE \(penUp()\)
   \STATE \(forward(2*b+2*c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draws\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ iin\ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draws 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ iin the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
   \STATE \(penUp()\)
@@ -1051,24 +1051,24 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterD(h,\ colorNo)}
+\caption{letterD(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ D\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter D in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(forward(c+b,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
-  \STATE \COMMENT{ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b in the colour }
+  \STATE \COMMENT{ encoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,2,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 2\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in\ the\ colour }
-  \STATE \COMMENT{ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b in the colour }
+  \STATE \COMMENT{ encoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,2,colorNo)\)
   \STATE \(forward(c,colorNo)\)
   \STATE \(penUp()\)
@@ -1083,21 +1083,21 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterG(h,\ colorNo)}
+\caption{letterG(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ G\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter G in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon.}
+  \COMMENT{Cathetus of the corner triangle outside the octagon.}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
-  \STATE \COMMENT{ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b in }
+  \STATE \COMMENT{ the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(c,colorNo)\)
   \STATE \(left(90)\)
@@ -1107,8 +1107,8 @@
   \STATE \(right(90)\)
   \STATE \(forward(b+c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
-  \STATE \COMMENT{ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b in }
+  \STATE \COMMENT{ the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
   \STATE \(penUp()\)
@@ -1124,23 +1124,23 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterJ(h,\ colorNo)}
+\caption{letterJ(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ J\ in\ colour\ encoded\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter J in colour encoded by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 3\ edges\ of\ an\ octagon\ with\ edge\ length\ b\ in }
-  \STATE \COMMENT{ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 3 edges of an octagon with edge length b in }
+  \STATE \COMMENT{ the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,3,colorNo)\)
   \STATE \(left(rotAngle)\)
   \STATE \(forward(h-c,colorNo)\)
@@ -1154,25 +1154,25 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterO(h,\ colorNo)}
+\caption{letterO(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ O\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter O in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
   \STATE \(penUp()\)
@@ -1188,20 +1188,20 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterP(h,\ colorNo)}
+\caption{letterP(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ P\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter P in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ corner\ triangle\ outside\ the\ octagon}
+  \COMMENT{Cathetus of the corner triangle outside the octagon}
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(forward(c+b,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,4,colorNo)\)
   \STATE \(forward(c,colorNo)\)
   \STATE \(penUp()\)
@@ -1217,27 +1217,27 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterQ(h,\ colorNo)}
+\caption{letterQ(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ Q\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter Q in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,4,colorNo)\)
   \STATE \(forward(b+2*c,colorNo)\)
   \STATE \(penUp()\)
@@ -1256,22 +1256,22 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterR(h,\ colorNo)}
+\caption{letterR(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Zeichnet\ den\ Buchstaben\ R\ von\ der\ Turtleposition\ aus }
-\STATE \COMMENT{ mit\ Zeilenh"ohe\ h }
+\STATE \COMMENT{ Zeichnet den Buchstaben R von der Turtleposition aus }
+\STATE \COMMENT{ mit Zeilenh"ohe h }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(forward(h,colorNo)\)
   \STATE \(right(90)\)
   \STATE \(forward(c+b,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 4\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,4,colorNo)\)
   \STATE \(forward(c,colorNo)\)
   \STATE \(left(90+rotAngle)\)
@@ -1284,26 +1284,26 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterS(h,\ colorNo)}
+\caption{letterS(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ S\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter S in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Side\ length\ of\ the\ (outer)\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Side length of the (outer) corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
   \STATE \(forward(c)\)
   \STATE \(penDown()\)
   \STATE \(right(180)\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 6\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\TRUE,6,colorNo)\)
-  \STATE \COMMENT{ Clockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ encoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw 5 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour encoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,5,colorNo)\)
   \STATE \(right(rotAngle)\)
   \STATE \(penUp()\)
@@ -1317,15 +1317,15 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterU(h,\ colorNo)}
+\caption{letterU(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ U\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter U in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{edge\ length\ of\ a\ regular\ octagon}
+  \COMMENT{edge length of a regular octagon}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
@@ -1337,7 +1337,7 @@
   \STATE \(penDown()\)
   \STATE \(right(180)\)
   \STATE \(polygonPart(b,8,\TRUE,3,colorNo)\)
-  \COMMENT{Counterclockwise\ draw\ 3\ edges\ of\ an\ octagoin\ with\ edge\ length\ b\ in\ colour\ specified\ by\ colorNo}
+  \COMMENT{Counterclockwise draw 3 edges of an octagoin with edge length b in colour specified by colorNo}
   \STATE \(left(rotAngle)\)
   \STATE \(forward(h-c,colorNo)\)
   \STATE \(penUp()\)
@@ -1350,22 +1350,22 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{qstnMk(h,\ colorNo)}
+\caption{qstnMk(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ a\ question\ mark\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws a question mark in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(b\gets\ h*0.5/(sqrt(2.0)+1)\)
-  \COMMENT{Octagon\ edge\ length}
+  \COMMENT{Octagon edge length}
   \STATE \(c\gets\ b/sqrt(2.0)\)
-  \COMMENT{Cathetus\ of\ the\ outer\ corner\ triangle\ of\ the\ octagon}
+  \COMMENT{Cathetus of the outer corner triangle of the octagon}
   \STATE \(rotAngle\gets\ 45\)
   \COMMENT{360\textdegree/8}
   \STATE \(penUp()\)
   \STATE \(forward(h-c)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ 5\ edges\ of\ an\ octagon\ with\ edge\ length\ b }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw 5 edges of an octagon with edge length b }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(b,8,\FALSE,5,colorNo)\)
   \STATE \(forward(c,colorNo)\)
   \STATE \(left(rotAngle)\)
@@ -1375,8 +1375,8 @@
   \STATE \(left(90)\)
   \STATE \(forward(c/2.0)\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Counterclockwise\ draw\ all\ 4\ edges\ of\ a\ squarfe\ with\ edge\ length\ c }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(c,4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward((c+b)/2.0)\)
@@ -1390,11 +1390,11 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{digit0(h,\ colorNo)}
+\caption{digit0(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ digit\ 0\ in\ the\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws digit 0 in the colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(penUp()\)
   \STATE \(forward(h/4.0)\)
   \STATE \(penDown()\)
@@ -1413,24 +1413,24 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterOe(h,\ colorNo)}
+\caption{letterOe(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ "O\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter "O in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
   \STATE \(penDown()\)
   \STATE \(right(90)\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/8 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/8 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(h/8,4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward(h/2)\)
   \STATE \(penDown()\)
   \STATE \(right(90)\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/8 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/8 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(h/8,4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
@@ -1448,24 +1448,24 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{letterUe(h,\ colorNo)}
+\caption{letterUe(h, colorNo)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Draws\ letter\ "U\ in\ colour\ specified\ by\ colorNo\ with\ font\ height\ h }
-\STATE \COMMENT{ from\ the\ current\ turtle\ position. }
+\STATE \COMMENT{ Draws letter "U in colour specified by colorNo with font height h }
+\STATE \COMMENT{ from the current turtle position. }
   \STATE \(penUp()\)
   \STATE \(forward(h)\)
   \STATE \(right(90)\)
   \STATE \(forward(max(h/8,1))\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(max(h/16,1),4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward(h/2-2*max(h/8,1)-max(h/16,1))\)
   \STATE \(penDown()\)
-  \STATE \COMMENT{ Clockwise\ draw\ all\ 4\ edges\ of\ a\ square\ with\ edge\ length\ h/16 }
-  \STATE \COMMENT{ in\ the\ colour\ endcoded\ by\ colorNo }
+  \STATE \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }
+  \STATE \COMMENT{ in the colour endcoded by colorNo }
   \STATE \(polygonPart(max(h/16,1),4,\FALSE,4,colorNo)\)
   \STATE \(penUp()\)
   \STATE \(forward(max(h/8,1))\)
@@ -1485,29 +1485,29 @@
 
 \floatname{algorithm}{Procedure}
 \begin{algorithm}
-\caption{drawText(text,\ h,\ c)}
+\caption{drawText(text, h, c)}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Has\ the\ turtle\ draw\ the\ given\ string\ '{}text\textasciiacute{}\ with\ font\ height\ '{}h\textasciiacute{}\ (in }
-\STATE \COMMENT{ pixels)\ and\ the\ colour\ coded\ by\ integer\ '{}c\textasciiacute{}\ from\ the\ current\ Turtle }
-\STATE \COMMENT{ position\ to\ the\ Turtle\ canvas.\ If\ the\ turtle\ looks\ North\ then }
-\STATE \COMMENT{ the\ text\ will\ be\ written\ rightwards.\ In\ the\ event,\ the\ turtle\ will\ be }
-\STATE \COMMENT{ placed\ behind\ the\ text\ in\ original\ orientation\ (such\ that\ the\ next\ text }
-\STATE \COMMENT{ would\ be\ written\ like\ a\ continuation.\ Colour\ codes: }
-\STATE \COMMENT{ 1\ =\ black }
-\STATE \COMMENT{ 2\ =\ red }
-\STATE \COMMENT{ 3\ =\ yellow }
-\STATE \COMMENT{ 4\ =\ green }
-\STATE \COMMENT{ 5\ =\ cyan }
-\STATE \COMMENT{ 6\ =\ blue }
-\STATE \COMMENT{ 7\ =\ pink }
-\STATE \COMMENT{ 8\ =\ grey }
-\STATE \COMMENT{ 9\ =\ orange }
-\STATE \COMMENT{ 10\ =\ violet }
-\STATE \COMMENT{ All\ letters\ (ASCII)\ will\ be\ converted\ to\ uppercase, }
-\STATE \COMMENT{ the\ set\ of\ representable\ special\ characters\ is:\ decimal\ digits, }
-\STATE \COMMENT{ '{}.'{},\ '{},'{},\ '{}!'{},\ '{}?'{},\ '{}"A'{},\ '{}"O'{},\ '{}"U'{}.\ Other\ characters\ will\ be\ shown\ as\ a\ small }
-\STATE \COMMENT{ centred\ square\ (dummy\ character). }
+\STATE \COMMENT{ Has the turtle draw the given string '{}text\textasciiacute{} with font height '{}h\textasciiacute{} (in }
+\STATE \COMMENT{ pixels) and the colour coded by integer '{}c\textasciiacute{} from the current Turtle }
+\STATE \COMMENT{ position to the Turtle canvas. If the turtle looks North then }
+\STATE \COMMENT{ the text will be written rightwards. In the event, the turtle will be }
+\STATE \COMMENT{ placed behind the text in original orientation (such that the next text }
+\STATE \COMMENT{ would be written like a continuation. Colour codes: }
+\STATE \COMMENT{ 1 = black }
+\STATE \COMMENT{ 2 = red }
+\STATE \COMMENT{ 3 = yellow }
+\STATE \COMMENT{ 4 = green }
+\STATE \COMMENT{ 5 = cyan }
+\STATE \COMMENT{ 6 = blue }
+\STATE \COMMENT{ 7 = pink }
+\STATE \COMMENT{ 8 = grey }
+\STATE \COMMENT{ 9 = orange }
+\STATE \COMMENT{ 10 = violet }
+\STATE \COMMENT{ All letters (ASCII) will be converted to uppercase, }
+\STATE \COMMENT{ the set of representable special characters is: decimal digits, }
+\STATE \COMMENT{ '{}.'{}, '{},'{}, '{}!'{}, '{}?'{}, '{}"A'{}, '{}"O'{}, '{}"U'{}. Other characters will be shown as a small }
+\STATE \COMMENT{ centred square (dummy character). }
   \STATE \(gap\gets\ h/10.0\)
   \FOR{\(k \gets 1\) \TO \(length(text)\) \textbf{by} \(1\)}
     \STATE \(letter\gets\ uppercase(copy(text,k,1))\)
@@ -1621,10 +1621,10 @@
 \caption{TextDemo()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Demo\ program\ for\ routine\ drawText() }
-\STATE \COMMENT{ Asks\ the\ user\ to\ enter\ a\ text,\ a\ wanted\ text\ height\ and\ colour, }
-\STATE \COMMENT{ and\ then\ draws\ this\ string\ onto\ the\ turtle\ screen.\ Places\ every }
-\STATE \COMMENT{ entered\ text\ to\ a\ new\ line. }
+\STATE \COMMENT{ Demo program for routine drawText() }
+\STATE \COMMENT{ Asks the user to enter a text, a wanted text height and colour, }
+\STATE \COMMENT{ and then draws this string onto the turtle screen. Places every }
+\STATE \COMMENT{ entered text to a new line. }
   \PRINT\(\)"{}This\ is\ a\ demo\ program\ for\ text\ writing\ with\ Turleizer."{}\(\)
   \STATE \(showTurtle()\)
   \STATE \(penDown()\)
@@ -1632,7 +1632,7 @@
   \REPEAT
     \STATE\ \textbf{input}\ \(\)"{}Enter\ some\ text\ (empty\ string\ to\ exit)"{}\(,text\)
     \STATE \(text\gets\)"{}"{}\(+text\)
-    \COMMENT{Make\ sure\ the\ content\ is\ interpreted\ as\ string}
+    \COMMENT{Make sure the content is interpreted as string}
     \IF{\(text\neq\)"{}"{}\(\)}
       \REPEAT
         \STATE\ \textbf{input}\ \(\)"{}Height\ of\ the\ text\ (pixels)"{}\(,height\)

@@ -36,7 +36,7 @@
   {}
 
 \title{Structorizer LaTeX pseudocode Export of SORTING\_TEST.arrz}
-\author{Kay\ G"urtzig}
+\author{Kay G"urtzig}
 \date{09.06.2021}
 
 \begin{document}
@@ -45,11 +45,11 @@
 \caption{bubbleSort(1)}
 \begin{algorithmic}[5]
 \Procedure{bubbleSort}{values}
-\State \Comment{ Implements\ the\ well-known\ BubbleSort\ algorithm. }
-\State \Comment{ Compares\ neigbouring\ elements\ and\ swaps\ them\ in\ case\ of\ an\ inversion. }
-\State \Comment{ Repeats\ this\ while\ inversions\ have\ been\ found.\ After\ every }
-\State \Comment{ loop\ passage\ at\ least\ one\ element\ (the\ largest\ one\ out\ of\ the }
-\State \Comment{ processed\ subrange)\ finds\ its\ final\ place\ at\ the\ end\ of\ the }
+\State \Comment{ Implements the well-known BubbleSort algorithm. }
+\State \Comment{ Compares neigbouring elements and swaps them in case of an inversion. }
+\State \Comment{ Repeats this while inversions have been found. After every }
+\State \Comment{ loop passage at least one element (the largest one out of the }
+\State \Comment{ processed subrange) finds its final place at the end of the }
 \State \Comment{ subrange. }
   \Decl{Parameters:}
     \State values: ?
@@ -57,7 +57,7 @@
   \State \(ende\gets\ length(values)-2\)
   \Repeat
     \State \(posSwapped\gets-1\)
-    \Comment{The\ index\ of\ the\ most\ recent\ swapping\ (-1\ means\ no\ swapping\ done).}
+    \Comment{The index of the most recent swapping (-1 means no swapping done).}
     \For{\(i \gets 0\) \textbf{to} \(ende\) \textbf{by} \(1\)}
       \If{\(values[i]>values[i+1]\)}
         \State \(temp\gets\ values[i]\)
@@ -77,9 +77,9 @@
 \caption{maxHeapify(3)}
 \begin{algorithmic}[5]
 \Procedure{maxHeapify}{heap, i, range}
-\State \Comment{ Given\ a\ max-heap\ '{}heap\textasciiacute{}\ with\ element\ at\ index\ '{}i\textasciiacute{}\ possibly }
-\State \Comment{ violating\ the\ heap\ property\ wrt.\ its\ subtree\ upto\ and\ including }
-\State \Comment{ index\ range-1,\ restores\ heap\ property\ in\ the\ subtree\ at\ index\ i }
+\State \Comment{ Given a max-heap '{}heap\textasciiacute{} with element at index '{}i\textasciiacute{} possibly }
+\State \Comment{ violating the heap property wrt. its subtree upto and including }
+\State \Comment{ index range-1, restores heap property in the subtree at index i }
 \State \Comment{ again. }
   \Decl{Parameters:}
     \State heap: ?
@@ -87,10 +87,10 @@
     \State range: ?
   \EndDecl
   \State \(right\gets(i+1)*2\)
-  \Comment{Indices\ of\ left\ and\ right\ child\ of\ node\ i}
+  \Comment{Indices of left and right child of node i}
   \State \(left\gets\ right-1\)
   \State \(max\gets\ i\)
-  \Comment{Index\ of\ the\ (local)\ maximum}
+  \Comment{Index of the (local) maximum}
   \If{\(left<range\wedge\ heap[left]>heap[i]\)}
     \State \(max\gets\ left\)
   \EndIf
@@ -112,14 +112,14 @@
 \caption{partition(4)}
 \begin{algorithmic}[5]
 \Function{partition}{values, start, stop, p}
-\State \Comment{ Partitions\ array\ '{}values\textasciiacute{}\ between\ indices\ '{}start\textasciiacute{}\ und\ '{}stop\textasciiacute{}-1\ with }
-\State \Comment{ respect\ to\ the\ pivot\ element\ initially\ at\ index\ '{}p\textasciiacute{}\ into\ smaller }
-\State \Comment{ and\ greater\ elements. }
-\State \Comment{ Returns\ the\ new\ (and\ final)\ index\ of\ the\ pivot\ element\ (which }
-\State \Comment{ separates\ the\ sequence\ of\ smaller\ elements\ from\ the\ sequence }
-\State \Comment{ of\ greater\ elements). }
-\State \Comment{ This\ is\ not\ the\ most\ efficient\ algorithm\ (about\ half\ the\ swapping }
-\State \Comment{ might\ still\ be\ avoided)\ but\ it\ is\ pretty\ clear. }
+\State \Comment{ Partitions array '{}values\textasciiacute{} between indices '{}start\textasciiacute{} und '{}stop\textasciiacute{}-1 with }
+\State \Comment{ respect to the pivot element initially at index '{}p\textasciiacute{} into smaller }
+\State \Comment{ and greater elements. }
+\State \Comment{ Returns the new (and final) index of the pivot element (which }
+\State \Comment{ separates the sequence of smaller elements from the sequence }
+\State \Comment{ of greater elements). }
+\State \Comment{ This is not the most efficient algorithm (about half the swapping }
+\State \Comment{ might still be avoided) but it is pretty clear. }
   \Decl{Parameters:}
     \State values: ?
     \State start: ?
@@ -130,37 +130,37 @@
     \State int
   \EndDecl
   \State \(pivot\gets\ values[p]\)
-  \Comment{Cache\ the\ pivot\ element}
+  \Comment{Cache the pivot element}
   \State \(values[p]\gets\ values[start]\)
-  \Comment{Exchange\ the\ pivot\ element\ with\ the\ start\ element}
+  \Comment{Exchange the pivot element with the start element}
   \State \(values[start]\gets\ pivot\)
   \State \(p\gets\ start\)
   \State \(start\gets\ start+1\)
-  \Comment{Beginning\ and\ end\ of\ the\ remaining\ undiscovered\ range}
+  \Comment{Beginning and end of the remaining undiscovered range}
   \State \(stop\gets\ stop-1\)
-  \State \Comment{ Still\ unseen\ elements? }
-  \State \Comment{ Loop\ invariants: }
-  \State \Comment{ 1.\ p\ =\ start\ -\ 1 }
-  \State \Comment{ 2.\ pivot\ =\ values[p] }
-  \State \Comment{ 3.\ i\ \textless\ start\ \textrightarrow{}\ values[i]\ ≤\ pivot }
-  \State \Comment{ 4.\ stop\ \textless\ i\ \textrightarrow{}\ pivot\ \textless\ values[i] }
+  \State \Comment{ Still unseen elements? }
+  \State \Comment{ Loop invariants: }
+  \State \Comment{ 1. p = start - 1 }
+  \State \Comment{ 2. pivot = values[p] }
+  \State \Comment{ 3. i \textless start \textrightarrow{} values[i] ≤ pivot }
+  \State \Comment{ 4. stop \textless i \textrightarrow{} pivot \textless values[i] }
   \While{\(start\leq\ stop\)}
     \State \(seen\gets\ values[start]\)
-    \Comment{Fetch\ the\ first\ element\ of\ the\ undiscovered\ area}
-    \If{\(seen\leq\ pivot\)}\Comment{Does\ the\ checked\ element\ belong\ to\ the\ smaller\ area?}
+    \Comment{Fetch the first element of the undiscovered area}
+    \If{\(seen\leq\ pivot\)}\Comment{Does the checked element belong to the smaller area?}
       \State \(values[p]\gets\ seen\)
-      \Comment{Insert\ the\ seen\ element\ between\ smaller\ area\ and\ pivot\ element}
+      \Comment{Insert the seen element between smaller area and pivot element}
       \State \(values[start]\gets\ pivot\)
-      \State \Comment{ Shift\ the\ border\ between\ lower\ and\ undicovered\ area, }
-      \State \Comment{ update\ pivot\ position. }
+      \State \Comment{ Shift the border between lower and undicovered area, }
+      \State \Comment{ update pivot position. }
       \State \(p\gets\ p+1\)
       \State \(start\gets\ start+1\)
     \Else
       \State \(values[start]\gets\ values[stop]\)
-      \Comment{Insert\ the\ checked\ element\ between\ undiscovered\ and\ larger\ area}
+      \Comment{Insert the checked element between undiscovered and larger area}
       \State \(values[stop]\gets\ seen\)
       \State \(stop\gets\ stop-1\)
-      \Comment{Shift\ the\ border\ between\ undiscovered\ and\ larger\ area}
+      \Comment{Shift the border between undiscovered and larger area}
     \EndIf
   \EndWhile
   \State \textbf{return} \(p\)
@@ -173,7 +173,7 @@
 \caption{testSorted(1)}
 \begin{algorithmic}[5]
 \Function{testSorted}{numbers}
-\State \Comment{ Checks\ whether\ or\ not\ the\ passed-in\ array\ is\ (ascendingly)\ sorted. }
+\State \Comment{ Checks whether or not the passed-in array is (ascendingly) sorted. }
   \Decl{Parameters:}
     \State numbers: ?
   \EndDecl
@@ -182,8 +182,8 @@
   \EndDecl
   \State \(isSorted\gets\ true\)
   \State \(i\gets\ 0\)
-  \While{\(isSorted\wedge(i\leq\ length(numbers)-2)\)}\Comment{As\ we\ compare\ with\ the\ following\ element,\ we\ must\ stop\ at\ the\ penultimate\ index}
-    \If{\(numbers[i]>numbers[i+1]\)}\Comment{Is\ there\ an\ inversion?}
+  \While{\(isSorted\wedge(i\leq\ length(numbers)-2)\)}\Comment{As we compare with the following element, we must stop at the penultimate index}
+    \If{\(numbers[i]>numbers[i+1]\)}\Comment{Is there an inversion?}
       \State \(isSorted\gets\ false\)
     \Else
       \State \(i\gets\ i+1\)
@@ -199,10 +199,10 @@
 \caption{buildMaxHeap(1)}
 \begin{algorithmic}[5]
 \Procedure{buildMaxHeap}{heap}
-\State \Comment{ Runs\ through\ the\ array\ heap\ and\ converts\ it\ to\ a\ max-heap }
-\State \Comment{ in\ a\ bottom-up\ manner,\ i.e.\ starts\ above\ the\ "{}leaf"{}\ level }
-\State \Comment{ (index\ \textgreater=\ length(heap)\ div\ 2)\ and\ goes\ then\ up\ towards }
-\State \Comment{ the\ root. }
+\State \Comment{ Runs through the array heap and converts it to a max-heap }
+\State \Comment{ in a bottom-up manner, i.e. starts above the "{}leaf"{} level }
+\State \Comment{ (index \textgreater= length(heap) div 2) and goes then up towards }
+\State \Comment{ the root. }
   \Decl{Parameters:}
     \State heap: ?
   \EndDecl
@@ -219,29 +219,29 @@
 \caption{quickSort(3)}
 \begin{algorithmic}[5]
 \Procedure{quickSort}{values, start, stop}
-\State \Comment{ Recursively\ sorts\ a\ subrange\ of\ the\ given\ array\ '{}values\textasciiacute{}.\  }
-\State \Comment{ start\ is\ the\ first\ index\ of\ the\ subsequence\ to\ be\ sorted, }
-\State \Comment{ stop\ is\ the\ index\ BEHIND\ the\ subsequence\ to\ be\ sorted. }
+\State \Comment{ Recursively sorts a subrange of the given array '{}values\textasciiacute{}.  }
+\State \Comment{ start is the first index of the subsequence to be sorted, }
+\State \Comment{ stop is the index BEHIND the subsequence to be sorted. }
   \Decl{Parameters:}
     \State values: ?
     \State start: ?
     \State stop: ?
   \EndDecl
-  \If{\(stop\geq\ start+2\)}\Comment{At\ least\ 2\ elements?\ (Less\ don'{}t\ make\ sense.)}
-    \State \Comment{ Select\ a\ pivot\ element,\ be\ p\ its\ index. }
-    \State \Comment{ (here:\ randomly\ chosen\ element\ out\ of\ start\ ...\ stop-1) }
+  \If{\(stop\geq\ start+2\)}\Comment{At least 2 elements? (Less don'{}t make sense.)}
+    \State \Comment{ Select a pivot element, be p its index. }
+    \State \Comment{ (here: randomly chosen element out of start ... stop-1) }
     \State \(p\gets\ random(stop-start)+start\)
-    \State \Comment{ Partition\ the\ array\ into\ smaller\ and\ greater\ elements }
-    \State \Comment{ Get\ the\ resulting\ (and\ final)\ position\ of\ the\ pivot\ element }
+    \State \Comment{ Partition the array into smaller and greater elements }
+    \State \Comment{ Get the resulting (and final) position of the pivot element }
     \State \(p\gets\Call{partition}{values,start,stop,p}\)
-    \Para\Comment{Sort\ subsequances\ separately\ and\ independently\ ...}
+    \Para\Comment{Sort subsequances separately and independently ...}
       \Thread 1
         \State \(\Call{quickSort}{values,start,p}\)
-        \Comment{Sort\ left\ (lower)\ array\ part}
+        \Comment{Sort left (lower) array part}
       \EndThread 1
       \Thread 2
         \State \(\Call{quickSort}{values,p+1,stop}\)
-        \Comment{Sort\ right\ (higher)\ array\ part}
+        \Comment{Sort right (higher) array part}
       \EndThread 2
     \EndPara
   \EndIf
@@ -254,7 +254,7 @@
 \caption{heapSort(1)}
 \begin{algorithmic}[5]
 \Procedure{heapSort}{values}
-\State \Comment{ Sorts\ the\ array\ '{}values\textasciiacute{}\ of\ numbers\ according\ to\ he\ heap\ sort }
+\State \Comment{ Sorts the array '{}values\textasciiacute{} of numbers according to he heap sort }
 \State \Comment{ algorithm }
   \Decl{Parameters:}
     \State values: ?
@@ -264,7 +264,7 @@
   \For{\(k \gets heapRange-1\) \textbf{to} \(1\) \textbf{by} \(-1\)}
     \State \(heapRange\gets\ heapRange-1\)
     \State \(maximum\gets\ values[0]\)
-    \Comment{Swap\ the\ maximum\ value\ (root\ of\ the\ heap)\ to\ the\ heap\ end}
+    \Comment{Swap the maximum value (root of the heap) to the heap end}
     \State \(values[0]\gets\ values[heapRange]\)
     \State \(values[heapRange]\gets\ maximum\)
     \State \(\Call{maxHeapify}{values,0,heapRange}\)
@@ -281,10 +281,10 @@
 \caption{SORTING\_TEST\_MAIN}
 \begin{algorithmic}[5]
 \Procedure{SORTING\_TEST\_MAIN}{ }
-\State \Comment{ Creates\ three\ equal\ arrays\ of\ numbers\ and\ has\ them\ sorted\ with\ different\ sorting\ algorithms }
-\State \Comment{ to\ allow\ performance\ comparison\ via\ execution\ counting\ ("{}Collect\ Runtime\ Data"{}\ should }
-\State \Comment{ sensibly\ be\ switched\ on). }
-\State \Comment{ Requested\ input\ data\ are:\ Number\ of\ elements\ (size)\ and\ filing\ mode. }
+\State \Comment{ Creates three equal arrays of numbers and has them sorted with different sorting algorithms }
+\State \Comment{ to allow performance comparison via execution counting ("{}Collect Runtime Data"{} should }
+\State \Comment{ sensibly be switched on). }
+\State \Comment{ Requested input data are: Number of elements (size) and filing mode. }
   \Repeat
     \State \(\)input\((elementCount)\)
   \Until{\(elementCount\geq\ 1\)}

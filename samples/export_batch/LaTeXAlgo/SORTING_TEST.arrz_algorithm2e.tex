@@ -24,7 +24,7 @@
 \SetKw{preThrow}{throw}
 \DontPrintSemicolon
 \title{Structorizer LaTeX pseudocode Export of SORTING\_TEST.arrz}
-\author{Kay\ G"urtzig}
+\author{Kay G"urtzig}
 \date{09.06.2021}
 
 \begin{document}
@@ -32,17 +32,17 @@
 
 \begin{procedure}
 \caption{bubbleSort(values)}
-\tcc{ Implements\ the\ well-known\ BubbleSort\ algorithm. }
-\tcc{ Compares\ neigbouring\ elements\ and\ swaps\ them\ in\ case\ of\ an\ inversion. }
-\tcc{ Repeats\ this\ while\ inversions\ have\ been\ found.\ After\ every }
-\tcc{ loop\ passage\ at\ least\ one\ element\ (the\ largest\ one\ out\ of\ the }
-\tcc{ processed\ subrange)\ finds\ its\ final\ place\ at\ the\ end\ of\ the }
+\tcc{ Implements the well-known BubbleSort algorithm. }
+\tcc{ Compares neigbouring elements and swaps them in case of an inversion. }
+\tcc{ Repeats this while inversions have been found. After every }
+\tcc{ loop passage at least one element (the largest one out of the }
+\tcc{ processed subrange) finds its final place at the end of the }
 \tcc{ subrange. }
 \Proc{\FuncSty{bubbleSort(}\ArgSty{values}\FuncSty{)}}{
 \KwData{\(values\): ?}
   \(ende\leftarrow{}length(values)-2\)\;
   \Repeat{\(posSwapped<0\)}{
-    \tcc{ The\ index\ of\ the\ most\ recent\ swapping\ (-1\ means\ no\ swapping\ done). }
+    \tcc{ The index of the most recent swapping (-1 means no swapping done). }
     \(posSwapped\leftarrow{}-1\)\;
     \For{\(i\leftarrow 0\) \KwTo \(ende\) \textbf{by} \(1\)}{
       \If{\(values[i]>values[i+1]\)}{
@@ -59,20 +59,20 @@
 
 
 \begin{procedure}
-\caption{maxHeapify(heap,\textbackslash{}\ i,\textbackslash{}\ range)}
+\caption{maxHeapify(heap, i, range)}
 \SetKwFunction{FnmaxHeapify}{maxHeapify}
-\tcc{ Given\ a\ max-heap\ '{}heap\textasciiacute{}\ with\ element\ at\ index\ '{}i\textasciiacute{}\ possibly }
-\tcc{ violating\ the\ heap\ property\ wrt.\ its\ subtree\ upto\ and\ including }
-\tcc{ index\ range-1,\ restores\ heap\ property\ in\ the\ subtree\ at\ index\ i }
+\tcc{ Given a max-heap '{}heap\textasciiacute{} with element at index '{}i\textasciiacute{} possibly }
+\tcc{ violating the heap property wrt. its subtree upto and including }
+\tcc{ index range-1, restores heap property in the subtree at index i }
 \tcc{ again. }
-\Proc{\FuncSty{maxHeapify(}\ArgSty{heap,\ i,\ range}\FuncSty{)}}{
+\Proc{\FuncSty{maxHeapify(}\ArgSty{heap, i, range}\FuncSty{)}}{
 \KwData{\(heap\): ?}
 \KwData{\(i\): ?}
 \KwData{\(range\): ?}
-  \tcc{ Indices\ of\ left\ and\ right\ child\ of\ node\ i }
+  \tcc{ Indices of left and right child of node i }
   \(right\leftarrow{}(i+1)*2\)\;
   \(left\leftarrow{}right-1\)\;
-  \tcc{ Index\ of\ the\ (local)\ maximum }
+  \tcc{ Index of the (local) maximum }
   \(max\leftarrow{}i\)\;
   \If{\(left<range\wedge\ heap[left]>heap[i]\)}{
     \(max\leftarrow{}left\)\;
@@ -91,53 +91,53 @@
 
 
 \begin{function}
-\caption{partition(values,\textbackslash{}\ start,\textbackslash{}\ stop,\textbackslash{}\ p)}
-\tcc{ Partitions\ array\ '{}values\textasciiacute{}\ between\ indices\ '{}start\textasciiacute{}\ und\ '{}stop\textasciiacute{}-1\ with }
-\tcc{ respect\ to\ the\ pivot\ element\ initially\ at\ index\ '{}p\textasciiacute{}\ into\ smaller }
-\tcc{ and\ greater\ elements. }
-\tcc{ Returns\ the\ new\ (and\ final)\ index\ of\ the\ pivot\ element\ (which }
-\tcc{ separates\ the\ sequence\ of\ smaller\ elements\ from\ the\ sequence }
-\tcc{ of\ greater\ elements). }
-\tcc{ This\ is\ not\ the\ most\ efficient\ algorithm\ (about\ half\ the\ swapping }
-\tcc{ might\ still\ be\ avoided)\ but\ it\ is\ pretty\ clear. }
-\Func{\FuncSty{partition(}\ArgSty{values,\ start,\ stop,\ p}\FuncSty{)}:int}{
+\caption{partition(values, start, stop, p)}
+\tcc{ Partitions array '{}values\textasciiacute{} between indices '{}start\textasciiacute{} und '{}stop\textasciiacute{}-1 with }
+\tcc{ respect to the pivot element initially at index '{}p\textasciiacute{} into smaller }
+\tcc{ and greater elements. }
+\tcc{ Returns the new (and final) index of the pivot element (which }
+\tcc{ separates the sequence of smaller elements from the sequence }
+\tcc{ of greater elements). }
+\tcc{ This is not the most efficient algorithm (about half the swapping }
+\tcc{ might still be avoided) but it is pretty clear. }
+\Func{\FuncSty{partition(}\ArgSty{values, start, stop, p}\FuncSty{)}:int}{
 \KwData{\(values\): ?}
 \KwData{\(start\): ?}
 \KwData{\(stop\): ?}
 \KwData{\(p\): ?}
 \KwResult{int}
-  \tcc{ Cache\ the\ pivot\ element }
+  \tcc{ Cache the pivot element }
   \(pivot\leftarrow{}values[p]\)\;
-  \tcc{ Exchange\ the\ pivot\ element\ with\ the\ start\ element }
+  \tcc{ Exchange the pivot element with the start element }
   \(values[p]\leftarrow{}values[start]\)\;
   \(values[start]\leftarrow{}pivot\)\;
   \(p\leftarrow{}start\)\;
-  \tcc{ Beginning\ and\ end\ of\ the\ remaining\ undiscovered\ range }
+  \tcc{ Beginning and end of the remaining undiscovered range }
   \(start\leftarrow{}start+1\)\;
   \(stop\leftarrow{}stop-1\)\;
-  \tcc{ Still\ unseen\ elements? }
-  \tcc{ Loop\ invariants: }
-  \tcc{ 1.\ p\ =\ start\ -\ 1 }
-  \tcc{ 2.\ pivot\ =\ values[p] }
-  \tcc{ 3.\ i\ \textless\ start\ \textrightarrow{}\ values[i]\ ≤\ pivot }
-  \tcc{ 4.\ stop\ \textless\ i\ \textrightarrow{}\ pivot\ \textless\ values[i] }
+  \tcc{ Still unseen elements? }
+  \tcc{ Loop invariants: }
+  \tcc{ 1. p = start - 1 }
+  \tcc{ 2. pivot = values[p] }
+  \tcc{ 3. i \textless start \textrightarrow{} values[i] ≤ pivot }
+  \tcc{ 4. stop \textless i \textrightarrow{} pivot \textless values[i] }
   \While{\(start\leq\ stop\)}{
-    \tcc{ Fetch\ the\ first\ element\ of\ the\ undiscovered\ area }
+    \tcc{ Fetch the first element of the undiscovered area }
     \(seen\leftarrow{}values[start]\)\;
-    \tcc{ Does\ the\ checked\ element\ belong\ to\ the\ smaller\ area? }
+    \tcc{ Does the checked element belong to the smaller area? }
     \eIf{\(seen\leq\ pivot\)}{
-      \tcc{ Insert\ the\ seen\ element\ between\ smaller\ area\ and\ pivot\ element }
+      \tcc{ Insert the seen element between smaller area and pivot element }
       \(values[p]\leftarrow{}seen\)\;
       \(values[start]\leftarrow{}pivot\)\;
-      \tcc{ Shift\ the\ border\ between\ lower\ and\ undicovered\ area, }
-      \tcc{ update\ pivot\ position. }
+      \tcc{ Shift the border between lower and undicovered area, }
+      \tcc{ update pivot position. }
       \(p\leftarrow{}p+1\)\;
       \(start\leftarrow{}start+1\)\;
     }{
-      \tcc{ Insert\ the\ checked\ element\ between\ undiscovered\ and\ larger\ area }
+      \tcc{ Insert the checked element between undiscovered and larger area }
       \(values[start]\leftarrow{}values[stop]\)\;
       \(values[stop]\leftarrow{}seen\)\;
-      \tcc{ Shift\ the\ border\ between\ undiscovered\ and\ larger\ area }
+      \tcc{ Shift the border between undiscovered and larger area }
       \(stop\leftarrow{}stop-1\)\;
     }
   }
@@ -148,15 +148,15 @@
 
 \begin{function}
 \caption{testSorted(numbers)}
-\tcc{ Checks\ whether\ or\ not\ the\ passed-in\ array\ is\ (ascendingly)\ sorted. }
+\tcc{ Checks whether or not the passed-in array is (ascendingly) sorted. }
 \Func{\FuncSty{testSorted(}\ArgSty{numbers}\FuncSty{)}:bool}{
 \KwData{\(numbers\): ?}
 \KwResult{bool}
   \(isSorted\leftarrow{}true\)\;
   \(i\leftarrow{}0\)\;
-  \tcc{ As\ we\ compare\ with\ the\ following\ element,\ we\ must\ stop\ at\ the\ penultimate\ index }
+  \tcc{ As we compare with the following element, we must stop at the penultimate index }
   \While{\(isSorted\wedge(i\leq\ length(numbers)-2)\)}{
-    \tcc{ Is\ there\ an\ inversion? }
+    \tcc{ Is there an inversion? }
     \eIf{\(numbers[i]>numbers[i+1]\)}{
       \(isSorted\leftarrow{}false\)\;
     }{
@@ -171,10 +171,10 @@
 \begin{procedure}
 \caption{buildMaxHeap(heap)}
 \SetKwFunction{FnmaxHeapify}{maxHeapify}
-\tcc{ Runs\ through\ the\ array\ heap\ and\ converts\ it\ to\ a\ max-heap }
-\tcc{ in\ a\ bottom-up\ manner,\ i.e.\ starts\ above\ the\ "{}leaf"{}\ level }
-\tcc{ (index\ \textgreater=\ length(heap)\ div\ 2)\ and\ goes\ then\ up\ towards }
-\tcc{ the\ root. }
+\tcc{ Runs through the array heap and converts it to a max-heap }
+\tcc{ in a bottom-up manner, i.e. starts above the "{}leaf"{} level }
+\tcc{ (index \textgreater= length(heap) div 2) and goes then up towards }
+\tcc{ the root. }
 \Proc{\FuncSty{buildMaxHeap(}\ArgSty{heap}\FuncSty{)}}{
 \KwData{\(heap\): ?}
   \(lgth\leftarrow{}length(heap)\)\;
@@ -186,32 +186,32 @@
 
 
 \begin{procedure}
-\caption{quickSort(values,\textbackslash{}\ start,\textbackslash{}\ stop)}
+\caption{quickSort(values, start, stop)}
 \SetKwFunction{Fnpartition}{partition}
 \SetKwFunction{FnquickSort}{quickSort}
-\tcc{ Recursively\ sorts\ a\ subrange\ of\ the\ given\ array\ '{}values\textasciiacute{}.\  }
-\tcc{ start\ is\ the\ first\ index\ of\ the\ subsequence\ to\ be\ sorted, }
-\tcc{ stop\ is\ the\ index\ BEHIND\ the\ subsequence\ to\ be\ sorted. }
-\Proc{\FuncSty{quickSort(}\ArgSty{values,\ start,\ stop}\FuncSty{)}}{
+\tcc{ Recursively sorts a subrange of the given array '{}values\textasciiacute{}.  }
+\tcc{ start is the first index of the subsequence to be sorted, }
+\tcc{ stop is the index BEHIND the subsequence to be sorted. }
+\Proc{\FuncSty{quickSort(}\ArgSty{values, start, stop}\FuncSty{)}}{
 \KwData{\(values\): ?}
 \KwData{\(start\): ?}
 \KwData{\(stop\): ?}
-  \tcc{ At\ least\ 2\ elements?\ (Less\ don'{}t\ make\ sense.) }
+  \tcc{ At least 2 elements? (Less don'{}t make sense.) }
   \If{\(stop\geq\ start+2\)}{
-    \tcc{ Select\ a\ pivot\ element,\ be\ p\ its\ index. }
-    \tcc{ (here:\ randomly\ chosen\ element\ out\ of\ start\ ...\ stop-1) }
+    \tcc{ Select a pivot element, be p its index. }
+    \tcc{ (here: randomly chosen element out of start ... stop-1) }
     \(p\leftarrow{}random(stop-start)+start\)\;
-    \tcc{ Partition\ the\ array\ into\ smaller\ and\ greater\ elements }
-    \tcc{ Get\ the\ resulting\ (and\ final)\ position\ of\ the\ pivot\ element }
+    \tcc{ Partition the array into smaller and greater elements }
+    \tcc{ Get the resulting (and final) position of the pivot element }
     \(p\leftarrow{}\Fnpartition(values,start,stop,p)\)\;
-    \tcc{ Sort\ subsequances\ separately\ and\ independently\ ... }
+    \tcc{ Sort subsequances separately and independently ... }
     \Parallel{
       \Thread{1}{
-        \tcc{ Sort\ left\ (lower)\ array\ part }
+        \tcc{ Sort left (lower) array part }
         \(\FnquickSort(values,start,p)\)\;
       }
       \Thread{2}{
-        \tcc{ Sort\ right\ (higher)\ array\ part }
+        \tcc{ Sort right (higher) array part }
         \(\FnquickSort(values,p+1,stop)\)\;
       }
     }
@@ -224,7 +224,7 @@
 \caption{heapSort(values)}
 \SetKwFunction{FnmaxHeapify}{maxHeapify}
 \SetKwFunction{FnbuildMaxHeap}{buildMaxHeap}
-\tcc{ Sorts\ the\ array\ '{}values\textasciiacute{}\ of\ numbers\ according\ to\ he\ heap\ sort }
+\tcc{ Sorts the array '{}values\textasciiacute{} of numbers according to he heap sort }
 \tcc{ algorithm }
 \Proc{\FuncSty{heapSort(}\ArgSty{values}\FuncSty{)}}{
 \KwData{\(values\): ?}
@@ -232,7 +232,7 @@
   \(heapRange\leftarrow{}length(values)\)\;
   \For{\(k\leftarrow heapRange-1\) \KwTo \(1\) \textbf{by} \(-1\)}{
     \(heapRange\leftarrow{}heapRange-1\)\;
-    \tcc{ Swap\ the\ maximum\ value\ (root\ of\ the\ heap)\ to\ the\ heap\ end }
+    \tcc{ Swap the maximum value (root of the heap) to the heap end }
     \(maximum\leftarrow{}values[0]\)\;
     \(values[0]\leftarrow{}values[heapRange]\)\;
     \(values[heapRange]\leftarrow{}maximum\)\;
@@ -251,10 +251,10 @@
 \SetKwFunction{FntestSorted}{testSorted}
 \SetKwFunction{FnquickSort}{quickSort}
 \SetKwFunction{FnheapSort}{heapSort}
-\tcc{ Creates\ three\ equal\ arrays\ of\ numbers\ and\ has\ them\ sorted\ with\ different\ sorting\ algorithms }
-\tcc{ to\ allow\ performance\ comparison\ via\ execution\ counting\ ("{}Collect\ Runtime\ Data"{}\ should }
-\tcc{ sensibly\ be\ switched\ on). }
-\tcc{ Requested\ input\ data\ are:\ Number\ of\ elements\ (size)\ and\ filing\ mode. }
+\tcc{ Creates three equal arrays of numbers and has them sorted with different sorting algorithms }
+\tcc{ to allow performance comparison via execution counting ("{}Collect Runtime Data"{} should }
+\tcc{ sensibly be switched on). }
+\tcc{ Requested input data are: Number of elements (size) and filing mode. }
 \Prog{\FuncSty{SORTING\_TEST\_MAIN}}{
   \Repeat{\(elementCount\geq\ 1\)}{
     \Input{\(elementCount\)}
@@ -275,7 +275,7 @@
       }
     }
   }
-  \tcc{ Copy\ the\ array\ for\ exact\ comparability }
+  \tcc{ Copy the array for exact comparability }
   \For{\(i\leftarrow 0\) \KwTo \(elementCount-1\) \textbf{by} \(1\)}{
     \(values2[i]\leftarrow{}values1[i]\)\;
     \(values3[i]\leftarrow{}values1[i]\)\;
