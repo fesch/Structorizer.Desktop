@@ -333,7 +333,6 @@ public class TexGenerator extends Generator {
 		_input = _input
 				// Escape underscores and blanks
 				.replace("_", "\\_")
-				.replace(" ","\\ ")
 				// Special German characters (UTF-8 -> LaTeX)
 				.replace("\u00F6","\"o")
 				.replace("\u00D6","\"O")
