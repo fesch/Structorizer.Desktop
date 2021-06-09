@@ -3,7 +3,6 @@
 
 	<plugin title="Pascal / Delphi" class="lu.fisch.structorizer.generators.PasGenerator"       icon="" case_matters="0" reserved_words="and,array,begin,case,const,div,do,downto,else,end,file,for,function,goto,if,in,label,message,mod,nil,not,of,or,packed,procedure,program,record,repeat,set,shl,shr,then,to,type,until,var,while,with" />
 	<plugin title="Oberon" 			class="lu.fisch.structorizer.generators.OberonGenerator"    icon="" reserved_words="ARRAY,BEGIN,BY,CASE,CONST,DIV,DO,ELSE,ELSIF,END,EXIT,FOR,IF,IMPORT,IN,IS,LOOP,MOD,MODULE,NIL,OF,OR,POINTER,PROCEDURE,RECORD,REPEAT,RETURN,THEN,TO,TYPE,UNTIL,VAR,WHILE,WITH,BOOLEAN,CHAR,FALSE,HALT,INTEGER,LONG,LONGINT,LONGREAL,NEW,REAL,SET,SHORT,SHORTINT,TRUE" />
-	<plugin title="StrukTeX" 		class="lu.fisch.structorizer.generators.TexGenerator"       icon="" />
 	<plugin title="Perl" 			class="lu.fisch.structorizer.generators.PerlGenerator"      icon="" case_matters="0" reserved_words="and,cmp,continue,do,else,elsif,eq,exp,for,foreach,ge,gt,if,le,lock,lt,ne,no,or,package,qq,qr,qw,qx,sub,tr,unless,until,while,xor" />
 	<plugin title="ksh" 			class="lu.fisch.structorizer.generators.KSHGenerator"       icon="" reserved_words="if,then,else,elif,fi,select,case,in,esac,for,do,done,while,until,function,return" />
 	<plugin title="bash" 			class="lu.fisch.structorizer.generators.BASHGenerator"      icon="" reserved_words="if,then,else,elif,fi,select,case,in,esac,for,do,done,while,until,function,return" />
@@ -23,7 +22,8 @@
 		<option type="Boolean" name="lineNumbering" title="Generate code line numbers" help="This option consecutively numbers the exported code lines."/>
 		<option type="Unsigned" name="dataLevelIncrement" title="Data level increment" help="The step in the level numbers in composed data items"/>
 	</plugin -->
-	<plugin title="LaTeX/Algorithm"		class="lu.fisch.structorizer.generators.TexAlgGenerator"    icon="">
+	<plugin title="StrukTeX" 		class="lu.fisch.structorizer.generators.TexGenerator"       icon="" />
+	<plugin title="LaTeX/Algorithm"	class="lu.fisch.structorizer.generators.TexAlgGenerator"    icon="">
 		<option type="Enum" name="package" title="LaTeX package to be used" help="Choose your preferred package for algorithms">
 			<item value="algorithmicx" />
 			<item value="algorithmic" />
