@@ -231,6 +231,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
  *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
  *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
+ *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
  *
  ******************************************************************************************************
  *
@@ -544,23 +545,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private Highlighter codeHighlighter = null;
 	// END KGU#705 2019-09-23
 
-    // recently opened files
-    protected Vector<String> recentFiles = new Vector<String>();
+	// recently opened files
+	protected Vector<String> recentFiles = new Vector<String>();
 
-    // popup for comment
-    /** The Label the comment popup consists of */
-    private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
-    /** The popup for the comment */
-    private JPopupMenu pop = new JPopupMenu();
-    // START KGU#902 2021-01-01: Enh. #903
-    /** The Element that most recently fed the {@link #lblPop} */
-    private Element poppedElement = null;
-    // END KGU#902 2021-01-01
+	// popup for comment
+	/** The Label the comment popup consists of */
+	private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
+	/** The popup for the comment */
+	private JPopupMenu pop = new JPopupMenu();
+	// START KGU#902 2021-01-01: Enh. #903
+	/** The Element that most recently fed the {@link #lblPop} */
+	private Element poppedElement = null;
+	// END KGU#902 2021-01-01
 
-    // toolbar management
-    public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();    
-    /** Toolbars that are to be disabled in simplified mode */
-    public Vector<MyToolbar> expertToolbars = new Vector<MyToolbar>();    
+	// toolbar management
+	public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();    
+	/** Toolbars that are to be disabled in simplified mode */
+	public Vector<MyToolbar> expertToolbars = new Vector<MyToolbar>();    
 
 	private FindAndReplace findDialog = null;
 	
@@ -1713,13 +1714,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();	// This is to make sure the drawing rectangles are correct
 		// START KGU#705 2019-09-24: Enh. 738
 		if (show_CODE_PREVIEW && codeHighlighter != null && element.executed) {
-			codeHighlighter.removeAllHighlights();
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					highlightCodeForElement(element, true);
-				}
-			});
+			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+			try {
+			// END KGU#978 2021-06-09
+				codeHighlighter.removeAllHighlights();
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						highlightCodeForElement(element, true);
+					}
+				});
+			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+			}
+			catch (NullPointerException ex) {
+				logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+			}
+			// END KGU#978 2021-06-09
 		}
 		// END KGU#705 2019-09-24
 	}
@@ -2002,7 +2012,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (show_CODE_PREVIEW && codePreviewMap != null) {
 			int pos = -1;
 			if (codeHighlighter != null) {
-				codeHighlighter.removeAllHighlights();
+				// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+				//codeHighlighter.removeAllHighlights();
+				try {
+					codeHighlighter.removeAllHighlights();
+				}
+				catch (NullPointerException ex) {
+					logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+				}
+				// END KGU#978 2021-06-09
 			}
 			if (this.selected != null) {
 				if (this.selected instanceof IElementSequence) {
@@ -2054,7 +2072,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					int p0 = pos + interval[2];
 					int p1 = codePreview.getLineEndOffset(line);
 					if (p0 < p1) {
-						codeHighlighter.addHighlight(p0, p1, ele.executed ? execHighlightPainter : codeHighlightPainter);
+						// START KGU#978 2021-06-09: Workaround for mysterious error #977
+						//codeHighlighter.addHighlight(p0, p1, ele.executed ? execHighlightPainter : codeHighlightPainter);
+						try {
+							// Possibly a GUI initialisation problem...
+							HighlightPainter hlPainter = ele.executed ? execHighlightPainter : codeHighlightPainter;
+							if (hlPainter == null) {
+								hlPainter = new DefaultHighlighter.DefaultHighlightPainter(
+										ele.executed ? Element.E_RUNNINGCOLOR : Element.E_DRAWCOLOR);
+							}
+							codeHighlighter.addHighlight(p0, p1, hlPainter);
+						}
+						catch (NullPointerException ex) {
+							logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+						}
+						// END KGU#978 2021-06-09
 						if (scrollTo) {
 							// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
 							Rectangle viewRect = codePreview.modelToView(pos);
@@ -2112,7 +2144,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			selectedDown = selected;
 			this.redraw(element);
 			if (codeHighlighter != null) {
-				codeHighlighter.removeAllHighlights();
+				// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+				//codeHighlighter.removeAllHighlights();
+				try {
+					codeHighlighter.removeAllHighlights();
+				}
+				catch (NullPointerException ex) {
+					logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+				}
+				// END KGU#978 2021-06-09
 			}
 			this.highlightCodeForElement(element, false);
 		}

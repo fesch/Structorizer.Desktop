@@ -48,6 +48,7 @@ Current development version 3.31-04 (2021-06-09)
 - 04: Enh. #953: LaTeX algorithm/pseudocode export (4 packages) [Karl-Heinz Becker]2
 - 04: Bugfix #974: Two defects on Processing definition import (one severe) <2>
 - 04: Bugfix #975: StrukTeX export didn't cope well with backslashes in literals <2>
+- 04: Issue #977 workaround: Silent highlight error let the execution get locked <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
