@@ -1007,7 +1007,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Geen conversie van de inhoud van e
 ExportOptionDialoge.noConversionCheckBox.tooltip=Selecteer deze optie als de tekstinhoud van de elementen al de syntaxis van de doeltaal weergeeft.
 ExportOptionDialoge.commentsCheckBox.text=Instructies als commentaar exporteren.
 ExportOptionDialoge.bracesCheckBox.text=Openingsaccolade op dezelfde regel plaatsen (C/C++/Java enz.).
-ExportOptionDialoge.lineNumbersCheckBox.text=Regelnummers toevoegen bij exporteren naar BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Aangeroepen subroutines ook exporteren.
 ExportOptionDialoge.chkExportLicenseInfo.text=Attributen auteur en licentie exporteren.
 ExportOptionDialoge.lbPrefGenerator.text=Favoriete code voor export:
@@ -1089,6 +1088,7 @@ PluginOptionDialog.msgNoValidDouble.text=Waarde van '%' moet een getal zijn
 PluginOptionDialog.msgVerificationError.text=Invoercontrole is mislukt
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Annuleren
+PluginOptionDialog.optionComponents.lineNumbering.text=Regelnummers toevoegen bij exporteren
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Voorkeuren voor namen van elementen

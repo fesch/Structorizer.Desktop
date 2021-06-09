@@ -1037,7 +1037,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Nessuna conversione del contenuto 
 ExportOptionDialoge.noConversionCheckBox.tooltip=Seleziona questa opzione se il testo contenente i tuoi elementi è già rappresentato nel linguaggio prescelto.
 ExportOptionDialoge.commentsCheckBox.text=Esporta istruzioni come commenti.
 ExportOptionDialoge.bracesCheckBox.text=Inserisci parentesi di inzio blocco in linea (C/C++/Java etc..)
-ExportOptionDialoge.lineNumbersCheckBox.text=Genera numeri di riga quando esporti in BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Includi le subroutine chiamate.
 ExportOptionDialoge.chkExportLicenseInfo.text=
 ExportOptionDialoge.lbPrefGenerator.text=Export Code preferito:
@@ -1119,6 +1118,7 @@ PluginOptionDialog.msgNoValidDouble.text=Il valore per '%' deve essere un numero
 PluginOptionDialog.msgVerificationError.text=Verifica dell'input fallita
 PluginOptionDialog.btnOk.text=
 PluginOptionDialog.btnCancel.text=Cancella
+PluginOptionDialog.optionComponents.lineNumbering.text=Genera numeri di riga
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferenze sul nome

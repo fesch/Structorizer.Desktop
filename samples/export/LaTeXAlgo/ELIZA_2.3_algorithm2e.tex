@@ -1,0 +1,429 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[inoutnumbered]{algorithm2e}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\SetKwInput{Input}{input}
+\SetKwInput{Output}{output}
+\SetKwBlock{Parallel}{parallel}{end}
+\SetKwFor{Thread}{thread}{:}{end}
+\SetKwBlock{Try}{try}{end}
+\SetKwFor{Catch}{catch (}{)}{end}
+\SetKwBlock{Finally}{finally}{end}
+\SetKwProg{Prog}{Program}{ }{end}
+\SetKwProg{Proc}{Procedure}{ }{end}
+\SetKwProg{Func}{Function}{ }{end}
+\SetKwProg{Incl}{Includable}{ }{end}
+
+\SetKw{preLeave}{leave}
+\SetKw{preExit}{exit}
+\SetKw{preThrow}{throw}
+\DontPrintSemicolon
+\title{Structorizer LaTeX pseudocode Export of ELIZA\_2.3.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
+
+\begin{document}
+\LinesNumbered
+
+\begin{function}
+\caption{adjustSpelling(sentence)}
+\tcc{ Cares for correct letter case among others }
+\Func{\FuncSty{adjustSpelling(}\ArgSty{sentence}\FuncSty{)}:string}{
+\KwData{\(sentence\): string}
+\KwResult{string}
+  \(result\leftarrow{}sentence\)\;
+  \(position\leftarrow{}1\)\;
+  \While{\((position\leq\ length(sentence))\wedge(copy(sentence,position,1)=\)"{}\ "{}\()\)}{
+    \(position\leftarrow{}position+1\)\;
+  }
+  \If{\(position\leq\ length(sentence)\)}{
+    \(start\leftarrow{}copy(sentence,1,position)\)\;
+    \(delete(result,1,position)\)\;
+    \(insert(uppercase(start),result,1)\)\;
+  }
+  \ForEach{\(word \in \{\)"{}\ i\ "{}\(,\)"{}\ i\textbackslash{}'{}"{}\(\}\)}{
+    \(position\leftarrow{}pos(word,result)\)\;
+    \While{\(position>0\)}{
+      \(delete(result,position+1,1)\)\;
+      \(insert(\)"{}I"{}\(,result,position+1)\)\;
+      \(position\leftarrow{}pos(word,result)\)\;
+    }
+  }
+}
+\end{function}
+
+
+\begin{function}
+\caption{checkGoodBye(text, phrases)}
+\tcc{ Checks whether the given text contains some kind of }
+\tcc{ good-bye phrase inducing the end of the conversation }
+\tcc{ and if so writes a correspding good-bye message and }
+\tcc{ returns true, otherwise false }
+\Func{\FuncSty{checkGoodBye(}\ArgSty{text, phrases}\FuncSty{)}:boolean}{
+\KwData{\(text\): string}
+\KwData{\(phrases\): array of array[0..1] of string}
+\KwResult{boolean}
+  \ForEach{\(pair \in phrases\)}{
+    \If{\(pos(pair[0],text)>0\)}{
+      \Output{\(pair[1]\)}
+      \Return{\(true\)}
+    }
+  }
+  \Return{\(false\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{checkRepetition(history, newInput)}
+\tcc{ Checks whether newInput has occurred among the recently cached }
+\tcc{ input strings in the histArray component of history and updates the history. }
+\Func{\FuncSty{checkRepetition(}\ArgSty{history, newInput}\FuncSty{)}:boolean}{
+\KwData{\(history\): History}
+\KwData{\(newInput\): string}
+\KwResult{boolean}
+  \(hasOccurred\leftarrow{}false\)\;
+  \If{\(length(newInput)>4\)}{
+    \(histDepth\leftarrow{}length(history.histArray)\)\;
+    \For{\(i\leftarrow 0\) \KwTo \(histDepth-1\) \textbf{by} \(1\)}{
+      \If{\(newInput=history.histArray[i]\)}{
+        \(hasOccurred\leftarrow{}true\)\;
+      }
+    }
+    \(history.histArray[history.histIndex]\leftarrow{}newInput\)\;
+    \(history.histIndex\leftarrow{}(history.histIndex+1)\bmod(histDepth)\)\;
+  }
+  \Return{\(hasOccurred\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{conjugateStrings(sentence, key, keyPos, flexions)}
+\Func{\FuncSty{conjugateStrings(}\ArgSty{sentence, key, keyPos, flexions}\FuncSty{)}:string}{
+\KwData{\(sentence\): string}
+\KwData{\(key\): string}
+\KwData{\(keyPos\): integer}
+\KwData{\(flexions\): array of array[0..1] of string}
+\KwResult{string}
+  \(result\leftarrow{}\)"{}\ "{}\(+copy(sentence,keyPos+length(key),length(sentence))+\)"{}\ "{}\(\)\;
+  \ForEach{\(pair \in flexions\)}{
+    \(left\leftarrow{}\)"{}"{}\(\)\;
+    \(right\leftarrow{}result\)\;
+    \(position\leftarrow{}pos(pair[0],right)\)\;
+    \While{\(position>0\)}{
+      \(left\leftarrow{}left+copy(right,1,position-1)+pair[1]\)\;
+      \(right\leftarrow{}copy(right,position+length(pair[0]),length(right))\)\;
+      \(position\leftarrow{}pos(pair[0],right)\)\;
+    }
+    \(result\leftarrow{}left+right\)\;
+  }
+  \tcc{ Eliminate multiple spaces }
+  \(position\leftarrow{}pos(\)"{}\ \ "{}\(,result)\)\;
+  \While{\(position>0\)}{
+    \(result\leftarrow{}copy(result,1,position-1)+copy(result,position+1,length(result))\)\;
+    \(position\leftarrow{}pos(\)"{}\ \ "{}\(,result)\)\;
+  }
+}
+\end{function}
+
+
+\begin{function}
+\caption{findKeyword(keyMap, sentence)}
+\tcc{ Looks for the occurrence of the first of the strings }
+\tcc{ contained in keywords within the given sentence (in }
+\tcc{ array order). }
+\tcc{ Returns an array of }
+\tcc{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\tcc{ 1: the position inside sentence (0 if not found) }
+\Func{\FuncSty{findKeyword(}\ArgSty{keyMap, sentence}\FuncSty{)}:array[0..1] of integer}{
+\KwData{\(keyMap\): array of KeyMapEntry}
+\KwData{\(sentence\): string}
+\KwResult{array[0..1] of integer}
+  \tcc{ Contains the index of the keyword and its position in sentence }
+  \(result\leftarrow{}\{-1,0\}\)\;
+  \(i\leftarrow{}0\)\;
+  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}{
+    \(var\ entry:KeyMapEntry\leftarrow{}keyMap[i]\)\;
+    \(position\leftarrow{}pos(entry.keyword,sentence)\)\;
+    \If{\(position>0\)}{
+      \(result[0]\leftarrow{}i\)\;
+      \(result[1]\leftarrow{}position\)\;
+    }
+    \(i\leftarrow{}i+1\)\;
+  }
+}
+\end{function}
+
+
+\begin{function}
+\caption{normalizeInput(sentence)}
+\tcc{ Converts the sentence to lowercase, eliminates all }
+\tcc{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }
+\tcc{ sentence among blanks }
+\Func{\FuncSty{normalizeInput(}\ArgSty{sentence}\FuncSty{)}:string}{
+\KwData{\(sentence\): string}
+\KwResult{string}
+  \(sentence\leftarrow{}lowercase(sentence)\)\;
+  \ForEach{\(symbol \in \{\)'{}.'{}\(,\)'{},'{}\(,\)'{};'{}\(,\)'{}!'{}\(,\)'{}?'{}\(\}\)}{
+    \(position\leftarrow{}pos(symbol,sentence)\)\;
+    \While{\(position>0\)}{
+      \(sentence\leftarrow{}copy(sentence,1,position-1)+copy(sentence,position+1,length(sentence))\)\;
+      \(position\leftarrow{}pos(symbol,sentence)\)\;
+    }
+  }
+  \(result\leftarrow{}\)"{}\ "{}\(+sentence+\)"{}\ "{}\(\)\;
+}
+\end{function}
+
+
+\begin{function}
+\caption{setupGoodByePhrases()}
+\Func{\FuncSty{setupGoodByePhrases(}\ArgSty{}\FuncSty{)}:array of array[0..1] of string}{
+\KwResult{array of array[0..1] of string}
+  \(phrases[0]\leftarrow{}\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)\;
+  \(phrases[1]\leftarrow{}\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)\;
+  \Return{\(phrases\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{setupKeywords()}
+\tcc{ The lower the index the higher the rank of the keyword (search is sequential). }
+\tcc{ The index of the first keyword found in a user sentence maps to a respective }
+\tcc{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
+\Func{\FuncSty{setupKeywords(}\ArgSty{}\FuncSty{)}:array of KeyMapEntry}{
+\KwResult{array of KeyMapEntry}
+  \tcc{ The empty key string (last entry) is the default clause - will always be found }
+  \(keywords[39]\leftarrow{}KeyMapEntry\{\)"{}"{}\(,29\}\)\;
+  \(keywords[0]\leftarrow{}KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)\;
+  \(keywords[1]\leftarrow{}KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)\;
+  \(keywords[2]\leftarrow{}KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)\;
+  \(keywords[3]\leftarrow{}KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)\;
+  \(keywords[4]\leftarrow{}KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)\;
+  \(keywords[5]\leftarrow{}KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)\;
+  \(keywords[6]\leftarrow{}KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)\;
+  \(keywords[7]\leftarrow{}KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)\;
+  \(keywords[8]\leftarrow{}KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)\;
+  \(keywords[9]\leftarrow{}KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)\;
+  \(keywords[10]\leftarrow{}KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)\;
+  \(keywords[11]\leftarrow{}KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)\;
+  \(keywords[12]\leftarrow{}KeyMapEntry\{\)"{}you\ "{}\(,10\}\)\;
+  \(keywords[13]\leftarrow{}KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)\;
+  \(keywords[14]\leftarrow{}KeyMapEntry\{\)"{}what\ "{}\(,12\}\)\;
+  \(keywords[15]\leftarrow{}KeyMapEntry\{\)"{}how\ "{}\(,12\}\)\;
+  \(keywords[16]\leftarrow{}KeyMapEntry\{\)"{}who\ "{}\(,12\}\)\;
+  \(keywords[17]\leftarrow{}KeyMapEntry\{\)"{}where\ "{}\(,12\}\)\;
+  \(keywords[18]\leftarrow{}KeyMapEntry\{\)"{}when\ "{}\(,12\}\)\;
+  \(keywords[19]\leftarrow{}KeyMapEntry\{\)"{}why\ "{}\(,12\}\)\;
+  \(keywords[20]\leftarrow{}KeyMapEntry\{\)"{}name\ "{}\(,13\}\)\;
+  \(keywords[21]\leftarrow{}KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)\;
+  \(keywords[22]\leftarrow{}KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)\;
+  \(keywords[23]\leftarrow{}KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)\;
+  \(keywords[24]\leftarrow{}KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)\;
+  \(keywords[25]\leftarrow{}KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)\;
+  \(keywords[26]\leftarrow{}KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)\;
+  \(keywords[27]\leftarrow{}KeyMapEntry\{\)"{}\ no"{}\(,19\}\)\;
+  \(keywords[28]\leftarrow{}KeyMapEntry\{\)"{}your\ "{}\(,20\}\)\;
+  \(keywords[29]\leftarrow{}KeyMapEntry\{\)"{}always\ "{}\(,21\}\)\;
+  \(keywords[30]\leftarrow{}KeyMapEntry\{\)"{}think\ "{}\(,22\}\)\;
+  \(keywords[31]\leftarrow{}KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)\;
+  \(keywords[32]\leftarrow{}KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)\;
+  \(keywords[33]\leftarrow{}KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)\;
+  \(keywords[34]\leftarrow{}KeyMapEntry\{\)"{}computer"{}\(,26\}\)\;
+  \(keywords[35]\leftarrow{}KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)\;
+  \(keywords[36]\leftarrow{}KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)\;
+  \(keywords[37]\leftarrow{}KeyMapEntry\{\)"{}father\ "{}\(,28\}\)\;
+  \(keywords[38]\leftarrow{}KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)\;
+  \Return{\(keywords\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{setupReflexions()}
+\tcc{ Returns an array of pairs of mutualy substitutable  }
+\Func{\FuncSty{setupReflexions(}\ArgSty{}\FuncSty{)}:array of array[0..1] of string}{
+\KwResult{array of array[0..1] of string}
+  \(reflexions[0]\leftarrow{}\{\)"{}\ are\ "{}\(,\)"{}\ am\ "{}\(\}\)\;
+  \(reflexions[1]\leftarrow{}\{\)"{}\ were\ "{}\(,\)"{}\ was\ "{}\(\}\)\;
+  \(reflexions[2]\leftarrow{}\{\)"{}\ you\ "{}\(,\)"{}\ I\ "{}\(\}\)\;
+  \(reflexions[3]\leftarrow{}\{\)"{}\ your"{}\(,\)"{}\ my"{}\(\}\)\;
+  \(reflexions[4]\leftarrow{}\{\)"{}\ i\textbackslash{}'{}ve\ "{}\(,\)"{}\ you\textbackslash{}'{}ve\ "{}\(\}\)\;
+  \(reflexions[5]\leftarrow{}\{\)"{}\ i\textbackslash{}'{}m\ "{}\(,\)"{}\ you\textbackslash{}'{}re\ "{}\(\}\)\;
+  \(reflexions[6]\leftarrow{}\{\)"{}\ me\ "{}\(,\)"{}\ you\ "{}\(\}\)\;
+  \(reflexions[7]\leftarrow{}\{\)"{}\ my\ "{}\(,\)"{}\ your\ "{}\(\}\)\;
+  \(reflexions[8]\leftarrow{}\{\)"{}\ i\ "{}\(,\)"{}\ you\ "{}\(\}\)\;
+  \(reflexions[9]\leftarrow{}\{\)"{}\ am\ "{}\(,\)"{}\ are\ "{}\(\}\)\;
+  \Return{\(reflexions\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{setupReplies()}
+\tcc{ This routine sets up the reply rings addressed by the key words defined in }
+\tcc{ routine \textasciigrave{}setupKeywords()\textasciiacute{} and mapped hitherto by the cross table defined }
+\tcc{ in \textasciigrave{}setupMapping()\textasciiacute{} }
+\Func{\FuncSty{setupReplies(}\ArgSty{}\FuncSty{)}:array of array of string}{
+\KwResult{array of array of string}
+  \(var\ replies:array\ of\ array\ of\ String\)\;
+  \tcc{ We start with the highest index for performance reasons }
+  \tcc{ (is to avoid frequent array resizing) }
+  \(replies[29]\leftarrow{}\{\)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\)"{}I\ see."{}\(,\)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\)"{}Can\ you\ elaborate\ on\ that?"{}\(,\)"{}That\ is\ quite\ interesting."{}\(\}\)\;
+  \(replies[0]\leftarrow{}\{\)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\)\;
+  \(replies[1]\leftarrow{}\{\)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\)\;
+  \(replies[2]\leftarrow{}\{\)"{}What\ makes\ you\ think\ I\ am*?"{}\(,\)"{}Does\ it\ please\ you\ to\ believe\ I\ am*?"{}\(,\)"{}Perhaps\ you\ would\ like\ to\ be*?"{}\(,\)"{}Do\ you\ sometimes\ wish\ you\ were*?"{}\(\}\)\;
+  \(replies[3]\leftarrow{}\{\)"{}Don'{}t\ you\ really*?"{}\(,\)"{}Why\ don'{}t\ you*?"{}\(,\)"{}Do\ you\ wish\ to\ be\ able\ to*?"{}\(,\)"{}Does\ that\ trouble\ you*?"{}\(\}\)\;
+  \(replies[4]\leftarrow{}\{\)"{}Do\ you\ often\ feel*?"{}\(,\)"{}Are\ you\ afraid\ of\ feeling*?"{}\(,\)"{}Do\ you\ enjoy\ feeling*?"{}\(\}\)\;
+  \(replies[5]\leftarrow{}\{\)"{}Do\ you\ really\ believe\ I\ don'{}t*?"{}\(,\)"{}Perhaps\ in\ good\ time\ I\ will*."{}\(,\)"{}Do\ you\ want\ me\ to*?"{}\(\}\)\;
+  \(replies[6]\leftarrow{}\{\)"{}Do\ you\ think\ you\ should\ be\ able\ to*?"{}\(,\)"{}Why\ can'{}t\ you*?"{}\(\}\)\;
+  \(replies[7]\leftarrow{}\{\)"{}Why\ are\ you\ interested\ in\ whether\ or\ not\ I\ am*?"{}\(,\)"{}Would\ you\ prefer\ if\ I\ were\ not*?"{}\(,\)"{}Perhaps\ in\ your\ fantasies\ I\ am*?"{}\(\}\)\;
+  \(replies[8]\leftarrow{}\{\)"{}How\ do\ you\ know\ you\ can'{}t*?"{}\(,\)"{}Have\ you\ tried?"{}\(,\)"{}Perhaps\ you\ can\ now*."{}\(\}\)\;
+  \(replies[9]\leftarrow{}\{\)"{}Did\ you\ come\ to\ me\ because\ you\ are*?"{}\(,\)"{}How\ long\ have\ you\ been*?"{}\(,\)"{}Do\ you\ believe\ it\ is\ normal\ to\ be*?"{}\(,\)"{}Do\ you\ enjoy\ being*?"{}\(\}\)\;
+  \(replies[10]\leftarrow{}\{\)"{}We\ were\ discussing\ you--not\ me."{}\(,\)"{}Oh,\ I*."{}\(,\)"{}You'{}re\ not\ really\ talking\ about\ me,\ are\ you?"{}\(\}\)\;
+  \(replies[11]\leftarrow{}\{\)"{}What\ would\ it\ mean\ to\ you\ if\ you\ got*?"{}\(,\)"{}Why\ do\ you\ want*?"{}\(,\)"{}Suppose\ you\ soon\ got*..."{}\(,\)"{}What\ if\ you\ never\ got*?"{}\(,\)"{}I\ sometimes\ also\ want*."{}\(\}\)\;
+  \(replies[12]\leftarrow{}\{\)"{}Why\ do\ you\ ask?"{}\(,\)"{}Does\ that\ question\ interest\ you?"{}\(,\)"{}What\ answer\ would\ please\ you\ the\ most?"{}\(,\)"{}What\ do\ you\ think?"{}\(,\)"{}Are\ such\ questions\ on\ your\ mind\ often?"{}\(,\)"{}What\ is\ it\ that\ you\ really\ want\ to\ know?"{}\(,\)"{}Have\ you\ asked\ anyone\ else?"{}\(,\)"{}Have\ you\ asked\ such\ questions\ before?"{}\(,\)"{}What\ else\ comes\ to\ mind\ when\ you\ ask\ that?"{}\(\}\)\;
+  \(replies[13]\leftarrow{}\{\)"{}Names\ don'{}t\ interest\ me."{}\(,\)"{}I\ don'{}t\ care\ about\ names\ --\ please\ go\ on."{}\(\}\)\;
+  \(replies[14]\leftarrow{}\{\)"{}Is\ that\ the\ real\ reason?"{}\(,\)"{}Don'{}t\ any\ other\ reasons\ come\ to\ mind?"{}\(,\)"{}Does\ that\ reason\ explain\ anything\ else?"{}\(,\)"{}What\ other\ reasons\ might\ there\ be?"{}\(\}\)\;
+  \(replies[15]\leftarrow{}\{\)"{}Please\ don'{}t\ apologize!"{}\(,\)"{}Apologies\ are\ not\ necessary."{}\(,\)"{}What\ feelings\ do\ you\ have\ when\ you\ apologize?"{}\(,\)"{}Don'{}t\ be\ so\ defensive!"{}\(\}\)\;
+  \(replies[16]\leftarrow{}\{\)"{}What\ does\ that\ dream\ suggest\ to\ you?"{}\(,\)"{}Do\ you\ dream\ often?"{}\(,\)"{}What\ persons\ appear\ in\ your\ dreams?"{}\(,\)"{}Are\ you\ disturbed\ by\ your\ dreams?"{}\(\}\)\;
+  \(replies[17]\leftarrow{}\{\)"{}How\ do\ you\ do\ ...please\ state\ your\ problem."{}\(\}\)\;
+  \(replies[18]\leftarrow{}\{\)"{}You\ don'{}t\ seem\ quite\ certain."{}\(,\)"{}Why\ the\ uncertain\ tone?"{}\(,\)"{}Can'{}t\ you\ be\ more\ positive?"{}\(,\)"{}You\ aren'{}t\ sure?"{}\(,\)"{}Don'{}t\ you\ know?"{}\(\}\)\;
+  \(replies[19]\leftarrow{}\{\)"{}Are\ you\ saying\ no\ just\ to\ be\ negative?"{}\(,\)"{}You\ are\ being\ a\ bit\ negative."{}\(,\)"{}Why\ not?"{}\(,\)"{}Are\ you\ sure?"{}\(,\)"{}Why\ no?"{}\(\}\)\;
+  \(replies[20]\leftarrow{}\{\)"{}Why\ are\ you\ concerned\ about\ my*?"{}\(,\)"{}What\ about\ your\ own*?"{}\(\}\)\;
+  \(replies[21]\leftarrow{}\{\)"{}Can\ you\ think\ of\ a\ specific\ example?"{}\(,\)"{}When?"{}\(,\)"{}What\ are\ you\ thinking\ of?"{}\(,\)"{}Really,\ always?"{}\(\}\)\;
+  \(replies[22]\leftarrow{}\{\)"{}Do\ you\ really\ think\ so?"{}\(,\)"{}But\ you\ are\ not\ sure\ you*?"{}\(,\)"{}Do\ you\ doubt\ you*?"{}\(\}\)\;
+  \(replies[23]\leftarrow{}\{\)"{}In\ what\ way?"{}\(,\)"{}What\ resemblance\ do\ you\ see?"{}\(,\)"{}What\ does\ the\ similarity\ suggest\ to\ you?"{}\(,\)"{}What\ other\ connections\ do\ you\ see?"{}\(,\)"{}Could\ there\ really\ be\ some\ connection?"{}\(,\)"{}How?"{}\(,\)"{}You\ seem\ quite\ positive."{}\(\}\)\;
+  \(replies[24]\leftarrow{}\{\)"{}Are\ you\ sure?"{}\(,\)"{}I\ see."{}\(,\)"{}I\ understand."{}\(\}\)\;
+  \(replies[25]\leftarrow{}\{\)"{}Why\ do\ you\ bring\ up\ the\ topic\ of\ friends?"{}\(,\)"{}Do\ your\ friends\ worry\ you?"{}\(,\)"{}Do\ your\ friends\ pick\ on\ you?"{}\(,\)"{}Are\ you\ sure\ you\ have\ any\ friends?"{}\(,\)"{}Do\ you\ impose\ on\ your\ friends?"{}\(,\)"{}Perhaps\ your\ love\ for\ friends\ worries\ you."{}\(\}\)\;
+  \(replies[26]\leftarrow{}\{\)"{}Do\ computers\ worry\ you?"{}\(,\)"{}Are\ you\ talking\ about\ me\ in\ particular?"{}\(,\)"{}Are\ you\ frightened\ by\ machines?"{}\(,\)"{}Why\ do\ you\ mention\ computers?"{}\(,\)"{}What\ do\ you\ think\ machines\ have\ to\ do\ with\ your\ problem?"{}\(,\)"{}Don'{}t\ you\ think\ computers\ can\ help\ people?"{}\(,\)"{}What\ is\ it\ about\ machines\ that\ worries\ you?"{}\(\}\)\;
+  \(replies[27]\leftarrow{}\{\)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)\;
+  \(replies[28]\leftarrow{}\{\)"{}Tell\ me\ more\ about\ your\ family."{}\(,\)"{}Who\ else\ in\ your\ family*?"{}\(,\)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)\;
+  \(setupReplies\leftarrow{}replies\)\;
+}
+\end{function}
+
+
+\begin{algorithm}
+\caption{ELIZA}
+\SetKwFunction{FnsetupGoodByePhrases}{setupGoodByePhrases}
+\SetKwFunction{FncheckGoodBye}{checkGoodBye}
+\SetKwFunction{FnconjugateStrings}{conjugateStrings}
+\SetKwFunction{FnsetupReplies}{setupReplies}
+\SetKwFunction{FnsetupReflexions}{setupReflexions}
+\SetKwFunction{FncheckRepetition}{checkRepetition}
+\SetKwFunction{FnfindKeyword}{findKeyword}
+\SetKwFunction{FnsetupKeywords}{setupKeywords}
+\SetKwFunction{FnadjustSpelling}{adjustSpelling}
+\SetKwFunction{FnnormalizeInput}{normalizeInput}
+\tcc{ Concept and lisp implementation published by Joseph Weizenbaum (MIT): }
+\tcc{ "{}ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine"{} - In: }
+\tcc{ Computational Linguistis 1(1966)9, pp. 36-45 }
+\tcc{ Revision history: }
+\tcc{ 2016-10-06 Initial version }
+\tcc{ 2017-03-29 Two diagrams updated (comments translated to English) }
+\tcc{ 2017-03-29 More keywords and replies added }
+\tcc{ 2019-03-14 Replies and mapping reorganised for easier maintenance }
+\tcc{ 2019-03-15 key map joined from keyword array and index map }
+\tcc{ 2019-03-28 Keyword "{}bot"{} inserted (same reply ring as "{}computer"{}) }
+\tcc{ 2019-11-28 New global type "{}History"{} (to ensure a homogenous array) }
+\Prog{\FuncSty{ELIZA}}{
+  \tcc{ Title information }
+  \Output{\(\)"{}*************\ ELIZA\ **************"{}\(\)}
+  \Output{\(\)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\(\)}
+  \Output{\(\)"{}**********************************"{}\(\)}
+  \Output{\(\)"{}*\ Adapted\ for\ Basic\ on\ IBM\ PC\ by"{}\(\)}
+  \Output{\(\)"{}*\ -\ Patricia\ Danielson"{}\(\)}
+  \Output{\(\)"{}*\ -\ Paul\ Hashfield"{}\(\)}
+  \Output{\(\)"{}**********************************"{}\(\)}
+  \Output{\(\)"{}*\ Adapted\ for\ Structorizer\ by"{}\(\)}
+  \Output{\(\)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(\)}
+  \Output{\(\)"{}*\ Version:\ 2.3\ (2020-02-24)"{}\(\)}
+  \Output{\(\)"{}*\ (Requires\ at\ least\ Structorizer\ 3.30-03\ to\ run)"{}\(\)}
+  \Output{\(\)"{}**********************************"{}\(\)}
+  \tcc{ Stores the last five inputs of the user in a ring buffer, }
+  \tcc{ the second component is the rolling (over-)write index. }
+  \(history\leftarrow{}History\{\{\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(,\)"{}"{}\(\},0\}\)\;
+  \(const\ replies\leftarrow{}\FnsetupReplies()\)\;
+  \(const\ reflexions\leftarrow{}\FnsetupReflexions()\)\;
+  \(const\ byePhrases\leftarrow{}\FnsetupGoodByePhrases()\)\;
+  \(const\ keyMap\leftarrow{}\FnsetupKeywords()\)\;
+  \(offsets[length(keyMap)-1]\leftarrow{}0\)\;
+  \(isGone\leftarrow{}false\)\;
+  \tcc{ Starter }
+  \Output{\(\)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\(\)}
+  \Repeat{\(isGone\)}{
+    \Input{\(userInput\)}
+    \tcc{ Converts the input to lowercase, cuts out interpunctation }
+    \tcc{ and pads the string }
+    \(userInput\leftarrow{}\FnnormalizeInput(userInput)\)\;
+    \(isGone\leftarrow{}\FncheckGoodBye(userInput,byePhrases)\)\;
+    \If{\(!isGone\)}{
+      \(reply\leftarrow{}\)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)\;
+      \(isRepeated\leftarrow{}\FncheckRepetition(history,userInput)\)\;
+      \If{\(!isRepeated\)}{
+        \(findInfo\leftarrow{}\FnfindKeyword(keyMap,userInput)\)\;
+        \(keyIndex\leftarrow{}findInfo[0]\)\;
+        \If{\(keyIndex<0\)}{
+          \tcc{ Should never happen... }
+          \(keyIndex\leftarrow{}length(keyMap)-1\)\;
+        }
+        \(var\ entry:KeyMapEntry\leftarrow{}keyMap[keyIndex]\)\;
+        \tcc{ Variable part of the reply }
+        \(varPart\leftarrow{}\)"{}"{}\(\)\;
+        \If{\(length(entry.keyword)>0\)}{
+          \(varPart\leftarrow{}\FnconjugateStrings(userInput,entry.keyword,findInfo[1],reflexions)\)\;
+        }
+        \(replyRing\leftarrow{}replies[entry.index]\)\;
+        \(reply\leftarrow{}replyRing[offsets[keyIndex]]\)\;
+        \(offsets[keyIndex]\leftarrow{}(offsets[keyIndex]+1)\bmod\ length(replyRing)\)\;
+        \(posAster\leftarrow{}pos(\)"{}*"{}\(,reply)\)\;
+        \If{\(posAster>0\)}{
+          \eIf{\(varPart=\)"{}\ "{}\(\)}{
+            \(reply\leftarrow{}\)"{}You\ will\ have\ to\ elaborate\ more\ for\ me\ to\ help\ you."{}\(\)\;
+          }{
+            \(delete(reply,posAster,1)\)\;
+            \(insert(varPart,reply,posAster)\)\;
+          }
+        }
+        \(reply\leftarrow{}\FnadjustSpelling(reply)\)\;
+      }
+      \Output{\(reply\)}
+    }
+  }
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{History}
+\tcc{ Defines a history type, consisting of an array and a rotating index }
+\Incl{\FuncSty{History}}{
+  \tcc{ histArray contains the most recent user replies as ring buffer; }
+  \tcc{ histIndex is the index where the next reply is to be stored (= index of the oldest }
+  \tcc{ cached user reply). }
+  \tcc{ Note: The depth of the history is to be specified by initializing a variable of this type, }
+  \tcc{ e.g. for a history of depth 5: }
+  \tcc{ myhistory \textless- History\{\{"{}"{}, "{}"{}, "{}"{}, "{}"{}, "{}"{}\}, 0\} }
+  \(type\ History=record\{histArray:array\ of\ string;histIndex:int\}\)\;
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{KeyMapEntry}
+\tcc{ Defines the map entry type of the same name }
+\Incl{\FuncSty{KeyMapEntry}}{
+  \tcc{ Associates a key word in the text with an index in the reply ring array }
+  \(type\ KeyMapEntry=record\{keyword:string;index:int\}\)\;
+}
+\end{algorithm}
+
+\end{document}

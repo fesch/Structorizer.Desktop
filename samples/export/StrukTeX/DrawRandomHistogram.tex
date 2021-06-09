@@ -1,16 +1,16 @@
 \documentclass[a4paper,10pt]{article}
 
 \usepackage{struktex}
-\usepackage{german}
+\usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
 \author{Kay Gürtzig}
-\date{19.10.2020}
+\date{08.06.2021}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(226,232)[drawBarChart]
+\begin{struktogramm}(234,252)[drawBarChart]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(array\ of\ double\)}
@@ -59,7 +59,7 @@
   \assign{\(stripeWidth\ \gets\ xSize\ /\ nValues\)}
   \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
     \assign{\(stripeHeight\ \gets\ values[k]\ *\ 1.0\ /\ yScale\)}
-    \case{6}{4}{\(k\ \)\pKey{mod}\(\ 3\)}{0}
+    \case{6}{4}{\(k\ \bmod\ 3\)}{0}
         \assign{\(setPenColor(255,0,0)\)}
       \switch{1}
         \assign{\(setPenColor(0,\ 255,0)\)}
@@ -81,7 +81,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(220,122)[readNumbers]
+\begin{struktogramm}(223,133)[readNumbers]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{fileName}}{type: \(string\)}
@@ -115,7 +115,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(322,297)[DrawRandomHistogram]
+\begin{struktogramm}(337,309)[DrawRandomHistogram]
   \assign{\(fileNo\ \gets\ -10\)}
   \until{\(fileNo\ >\ 0\ \vee\ file\_name\ =\ \)"{}"{}\(\)}
     \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}

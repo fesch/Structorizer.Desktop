@@ -1,0 +1,1503 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{pseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of TextWriter.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
+
+\begin{document}
+
+\begin{pseudocode}{backward}{len, color }
+\label{backward}
+\PROCEDURE{backward}{len, color}
+  \IF color=1 \THEN
+    backward(len)\\
+  \ELSEIF color=2 \THEN
+    backward(len)\\
+  \ELSEIF color=3 \THEN
+    backward(len)\\
+  \ELSEIF color=4 \THEN
+    backward(len)\\
+  \ELSEIF color=5 \THEN
+    backward(len)\\
+  \ELSEIF color=6 \THEN
+    backward(len)\\
+  \ELSEIF color=7 \THEN
+    backward(len)\\
+  \ELSEIF color=8 \THEN
+    backward(len)\\
+  \ELSEIF color=9 \THEN
+    backward(len)\\
+  \ELSEIF color=10 \THEN
+    backward(len)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{blank}{h, colorNo }
+\label{blank}
+\COMMENT{ Draws a blank for font height h, ignoring the colorNo }\\
+\PROCEDURE{blank}{h, colorNo}
+  width\gets\ h/2.0\\
+  penUp()\\
+  right(90)\\
+  forward(width)\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{forward}{len, color }
+\label{forward}
+\PROCEDURE{forward}{len, color}
+  \IF color=1 \THEN
+    forward(len)\\
+  \ELSEIF color=2 \THEN
+    forward(len)\\
+  \ELSEIF color=3 \THEN
+    forward(len)\\
+  \ELSEIF color=4 \THEN
+    forward(len)\\
+  \ELSEIF color=5 \THEN
+    forward(len)\\
+  \ELSEIF color=6 \THEN
+    forward(len)\\
+  \ELSEIF color=7 \THEN
+    forward(len)\\
+  \ELSEIF color=8 \THEN
+    forward(len)\\
+  \ELSEIF color=9 \THEN
+    forward(len)\\
+  \ELSEIF color=10 \THEN
+    forward(len)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit1}{h, colorNo }
+\label{digit1}
+\COMMENT{ Draws digit 1 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit1}{h, colorNo}
+  penUp()\\
+  forward(h/2.0)\\
+  penDown()\\
+  right(45)\\
+  \CALL{forward}{h/sqrt(2),colorNo}\\
+  left(45)\\
+  \CALL{backward}{h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit4}{h, colorNo }
+\label{digit4}
+\COMMENT{ Draws digit 4 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit4}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ inner angle at top of the triangle }\\
+  angle\gets\ toDegrees(atan(1-2.0*c/h))\\
+  right(90)\\
+  penUp()\\
+  forward(c+b)\\
+  penDown()\\
+  left(90)\\
+  \CALL{forward}{h,colorNo}\\
+  left(180-angle)\\
+  \CALL{forward}{sqrt(h*h/4.0+sqr(h/2.0-c)),colorNo}\\
+  left(90+angle)\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  penUp()\\
+  left(90)\\
+  backward(h/2.0)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit7}{h, colorNo }
+\label{digit7}
+\COMMENT{ Draws digit 7 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit7}{h, colorNo}
+  angle\gets\ 90+toDegrees(atan(0.5))\\
+  penUp()\\
+  forward(h)\\
+  penDown()\\
+  right(90)\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  right(angle)\\
+  \CALL{forward}{h*sqrt(1.25),colorNo}\\
+  left(angle)\\
+  penUp()\\
+  forward(h/2.0)\\
+  left(90)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterA}{h, colorNo }
+\label{letterA}
+\COMMENT{ Draws letter A in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterA}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(h*h+width*width/4.0)\\
+  rotAngle\gets\ toDegrees(atan(width/2.0/h))\\
+  right(rotAngle)\\
+  \CALL{forward}{hypo/2.0,colorNo}\\
+  right(90-rotAngle)\\
+  \CALL{forward}{width/2.0,colorNo}\\
+  penUp()\\
+  backward(width/2.0)\\
+  penDown()\\
+  left(90-rotAngle)\\
+  \CALL{forward}{hypo/2.0,colorNo}\\
+  left(2*rotAngle)\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(rotAngle)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterE}{h, colorNo }
+\label{letterE}
+\COMMENT{ Draws letter E in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterE}{h, colorNo}
+  width\gets\ h/2.0\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{width,colorNo}\\
+  right(90)\\
+  penUp()\\
+  forward(h/2.0)\\
+  right(90)\\
+  penDown()\\
+  \CALL{forward}{width,colorNo}\\
+  left(90)\\
+  penUp()\\
+  forward(h/2.0)\\
+  left(90)\\
+  penDown()\\
+  \CALL{forward}{width,colorNo}\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterF}{h, colorNo }
+\label{letterF}
+\COMMENT{ Draws letter F in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterF}{h, colorNo}
+  width\gets\ h/2.0\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{width,colorNo}\\
+  right(90)\\
+  penUp()\\
+  forward(h/2.0)\\
+  right(90)\\
+  penDown()\\
+  \CALL{forward}{width,colorNo}\\
+  left(90)\\
+  penUp()\\
+  forward(h/2.0)\\
+  left(90)\\
+  forward(width)\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterH}{h, colorNo }
+\label{letterH}
+\COMMENT{ Draws letter H in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterH}{h, colorNo}
+  width\gets\ h/2.0\\
+  \CALL{forward}{h,colorNo}\\
+  penUp()\\
+  right(90)\\
+  forward(width)\\
+  right(90)\\
+  penDown()\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  right(90)\\
+  \CALL{forward}{width,colorNo}\\
+  penUp()\\
+  backward(width)\\
+  left(90)\\
+  penDown()\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  left(180)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterI}{h, colorNo }
+\label{letterI}
+\COMMENT{ Draws letter I in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterI}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  right(90)\\
+  forward(c)\\
+  penDown()\\
+  \CALL{forward}{b,colorNo}\\
+  penUp()\\
+  backward(b/2.0)\\
+  left(90)\\
+  penDown()\\
+  \CALL{forward}{h,colorNo}\\
+  penUp()\\
+  right(90)\\
+  backward(b/2.0)\\
+  penDown()\\
+  \CALL{forward}{b,colorNo}\\
+  penUp()\\
+  forward(b/2+c)\\
+  left(90)\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterK}{h, colorNo }
+\label{letterK}
+\COMMENT{ Draws letter K in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterK}{h, colorNo}
+  width\gets\ h/2.0\\
+  diag\gets\ h/sqrt(2.0)\\
+  \CALL{forward}{h,colorNo}\\
+  penUp()\\
+  right(90)\\
+  forward(width)\\
+  right(135)\\
+  penDown()\\
+  \CALL{forward}{diag,colorNo}\\
+  left(90)\\
+  \CALL{forward}{diag,colorNo}\\
+  left(135)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterL}{h, colorNo }
+\label{letterL}
+\COMMENT{ Draws letter L in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterL}{h, colorNo}
+  width\gets\ h/2.0\\
+  \CALL{forward}{h,colorNo}\\
+  penUp()\\
+  backward(h)\\
+  right(90)\\
+  penDown()\\
+  \CALL{forward}{width,colorNo}\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterM}{h, colorNo }
+\label{letterM}
+\COMMENT{ Draws letter M in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterM}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(width*width+h*h)/2.0\\
+  rotAngle\gets\ toDegrees(atan(width/h))\\
+  \CALL{forward}{h,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(2*rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{-h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterN}{h, colorNo }
+\label{letterN}
+\COMMENT{ Draws letter N in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterN}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(width*width+h*h)\\
+  rotAngle\gets\ toDegrees(atan(width/h))\\
+  \CALL{forward}{h,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(rotAngle)\\
+  \CALL{forward}{h,colorNo}\\
+  penUp()\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterT}{h, colorNo }
+\label{letterT}
+\COMMENT{ Draws letter T in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterT}{h, colorNo}
+  width\gets\ h/2.0\\
+  penUp()\\
+  forward(h)\\
+  penDown()\\
+  right(90)\\
+  \CALL{forward}{width,colorNo}\\
+  penUp()\\
+  backward(width/2.0)\\
+  penDown()\\
+  right(90)\\
+  \CALL{forward}{h,colorNo}\\
+  left(90)\\
+  penUp()\\
+  forward(width/2.0)\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterV}{h, colorNo }
+\label{letterV}
+\COMMENT{ Draws letter V in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterV}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(h*h+width*width/4.0)\\
+  rotAngle\gets\ toDegrees(atan(width/2.0/h))\\
+  penUp()\\
+  forward(h)\\
+  left(rotAngle)\\
+  penDown()\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(2*rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  penUp()\\
+  left(rotAngle)\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterW}{h, colorNo }
+\label{letterW}
+\COMMENT{ Draws letter W in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterW}{h, colorNo}
+  width\gets\ h/2.0\\
+  width\_3\gets\ width/3.0\\
+  hypo\gets\ sqrt(width\_3*width\_3+h*h)\\
+  rotAngle\gets\ toDegrees(atan(width\_3/h))\\
+  penUp()\\
+  forward(h)\\
+  left(rotAngle)\\
+  penDown()\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(2*rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  penUp()\\
+  left(90+rotAngle)\\
+  forward(width\_3)\\
+  right(90-rotAngle)\\
+  penDown()\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(2*rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  penUp()\\
+  left(rotAngle)\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterX}{h, colorNo }
+\label{letterX}
+\COMMENT{ Draws letter X in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterX}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(width*width+h*h)\\
+  rotAngle\gets\ toDegrees(atan(width/h))\\
+  right(rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  penUp()\\
+  left(90+rotAngle)\\
+  forward(width)\\
+  right(90-rotAngle)\\
+  penDown()\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(rotAngle)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterY}{h, colorNo }
+\label{letterY}
+\COMMENT{ Draws letter Y in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterY}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(width*width+h*h)/2.0\\
+  rotAngle\gets\ toDegrees(atan(width/h))\\
+  penUp()\\
+  forward(h)\\
+  left(rotAngle)\\
+  penDown()\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(rotAngle)\\
+  penUp()\\
+  backward(h/2.0)\\
+  penDown()\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  right(rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  left(rotAngle)\\
+  penUp()\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterZ}{h, colorNo }
+\label{letterZ}
+\COMMENT{ Draws letter Z in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterZ}{h, colorNo}
+  width\gets\ h/2.0\\
+  hypo\gets\ sqrt(width*width+h*h)\\
+  rotAngle\gets\ toDegrees(atan(width/h))\\
+  penUp()\\
+  forward(h)\\
+  right(90)\\
+  penDown()\\
+  \CALL{forward}{width,colorNo}\\
+  left(90-rotAngle)\\
+  \CALL{forward}{-hypo,colorNo}\\
+  right(90-rotAngle)\\
+  \CALL{forward}{width,colorNo}\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{polygonPart}{a, n, ctrclkws, nEdges, color }
+\label{polygonPart}
+\COMMENT{ Draws nEdges edges of a regular n-polygon with edge length a }\\
+\COMMENT{ counter-clockwise, if ctrclkws is true, or clockwise if ctrclkws is false. }\\
+\PROCEDURE{polygonPart}{a, n, ctrclkws, nEdges, color}
+  rotAngle\gets\ 360.0/n\\
+  \IF ctrclkws \THEN
+    rotAngle\gets-rotAngle\\
+  \FOR k \gets 1 \TO nEdges  \DO
+  \BEGIN
+    right(rotAngle)\\
+    \CALL{forward}{a,color}\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{charDummy}{h, colorNo }
+\label{charDummy}
+\COMMENT{ Draws a dummy character (small centered square) with font height h and }\\
+\COMMENT{ the colour encoded by colorNo }\\
+\PROCEDURE{charDummy}{h, colorNo}
+  width\gets\ h/2.0\\
+  \COMMENT{ Octagon edge length (here: edge lengzh of the square) }\\
+  b\gets\ width/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets(width-b)/2.0\\
+  d\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(h/2.0-b/2.0)\\
+  right(90)\\
+  forward(c)\\
+  right(90)\\
+  penDown()\\
+  \COMMENT{ Draws the square with edge length b }\\
+  \CALL{polygonPart}{b,4,\TRUE,4,colorNo}\\
+  penUp()\\
+  left(90)\\
+  forward(b+c)\\
+  left(90)\\
+  backward(h/2.0-b/2.0)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{comma}{h, colorNo }
+\label{comma}
+\COMMENT{ Draws a comma in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{comma}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  rotAngle\gets\ toDegrees(atan(0.5))\\
+  hypo\gets\ c*sqrt(1.25)\\
+  penUp()\\
+  right(90)\\
+  forward((c+b)/2.0+c)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw 3 edges of a square with edge length c }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{c,4,\TRUE,3,colorNo}\\
+  left(90)\\
+  \CALL{forward}{c/2.0,colorNo}\\
+  right(90)\\
+  \CALL{forward}{c,colorNo}\\
+  left(180-rotAngle)\\
+  \CALL{forward}{hypo,colorNo}\\
+  penUp()\\
+  right(90-rotAngle)\\
+  forward((c+b)/2.0)\\
+  left(90)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit2}{h, colorNo }
+\label{digit2}
+\COMMENT{ Draws digit 2 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit2}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  angle\gets\ toDegrees(atan(h/(h+2*c)))\\
+  penUp()\\
+  forward(h-c)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,4,colorNo}\\
+  right(angle)\\
+  \CALL{forward}{h/2.0*sqrt(1+sqr(1+2*c/h)),colorNo}\\
+  left(90+angle)\\
+  \CALL{forward}{h/2.0,colorNo}\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit3}{h, colorNo }
+\label{digit3}
+\COMMENT{ Draws digit 3 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit3}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,6,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw 5 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,5,colorNo}\\
+  penUp()\\
+  left(45)\\
+  forward(h-c)\\
+  left(90)\\
+  forward(h/2.0)\\
+  left(90)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit5}{h, colorNo }
+\label{digit5}
+\COMMENT{ Draws digit 5 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit5}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,6,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{h/2.0,4,\FALSE,2,colorNo}\\
+  penUp()\\
+  left(90)\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit6}{h, colorNo }
+\label{digit6}
+\COMMENT{ Draws digit 6 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit6}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw all 8 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,8,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b)\\
+  penDown()\\
+  \CALL{forward}{2*c+b,colorNo}\\
+  \COMMENT{ Clockwise draw 3 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,3,colorNo}\\
+  penUp()\\
+  left(135)\\
+  backward(h-c)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit8}{h, colorNo }
+\label{digit8}
+\COMMENT{ Draws digit 8 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit8}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw all 8 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,8,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b)\\
+  right(45)\\
+  forward(b)\\
+  left(135)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw 7 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,7,colorNo}\\
+  penUp()\\
+  left(45)\\
+  forward(h/2.0)\\
+  left(90)\\
+  forward(c)\\
+  left(90)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit9}{h, colorNo }
+\label{digit9}
+\COMMENT{ Draws digit 9 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit9}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{2*c+b,colorNo}\\
+  \COMMENT{ Counterclockwise draw 7 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,7,colorNo}\\
+  penUp()\\
+  left(45)\\
+  backward(h/2.0+c)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{exclMk}{h, colorNo }
+\label{exclMk}
+\COMMENT{ Draws an exclamation mark in the colour encoded by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{exclMk}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  width\gets\ h/2.0\\
+  length1\gets\ h-(b+c)/2.0\\
+  length2\gets\ length1-2*c\\
+  hypo\gets\ sqrt(width*width/16.0+length2*length2)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  rotAngle2\gets\ toDegrees(atan(width/4.0/length2))\\
+  penUp()\\
+  forward(length1)\\
+  right(90)\\
+  forward(width/2.0)\\
+  left(90+rotAngle)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw 5 edges of an octagon with edge length b/2 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b/2.0,8,\FALSE,5,colorNo}\\
+  right(rotAngle2)\\
+  \CALL{forward}{hypo,colorNo}\\
+  left(2*rotAngle2)\\
+  \CALL{forward}{-hypo,colorNo}\\
+  penUp()\\
+  forward(hypo)\\
+  right(rotAngle2)\\
+  forward(c)\\
+  left(90)\\
+  forward(c/2.0)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{c,4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward((c+b)/2.0)\\
+  left(90)\\
+  backward(c)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{fullSt}{h, colorNo }
+\label{fullSt}
+\COMMENT{ Draws a full stop in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{fullSt}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  right(90)\\
+  forward((c+b)/2.0+c)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{c,4,\TRUE,4,colorNo}\\
+  penUp()\\
+  forward((c+b)/2.0)\\
+  left(90)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterAe}{h, colorNo }
+\label{letterAe}
+\COMMENT{ Draws letter "A in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterAe}{h, colorNo}
+  penUp()\\
+  forward(h)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{max(h/16.0,1),4,\FALSE,4,colorNo}\\
+  right(90)\\
+  penUp()\\
+  forward(h/2.0)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{max(h/16.0,1),4,\FALSE,4,colorNo}\\
+  right(90)\\
+  penUp()\\
+  forward(h)\\
+  right(90)\\
+  forward(h/2.0)\\
+  penDown()\\
+  right(90)\\
+  \CALL{letterA}{h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterB}{h, colorNo }
+\label{letterB}
+\COMMENT{ Draws letter B in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterB}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{c+b,colorNo}\\
+  \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }\\
+  \CALL{polygonPart}{b,8,\FALSE,4,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b+c)\\
+  penDown()\\
+  \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }\\
+  \CALL{polygonPart}{b,8,\FALSE,4,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b+2*c)\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterC}{h, colorNo }
+\label{letterC}
+\COMMENT{ Draws letter C in the colour encoded by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterC}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer triangle at the octagon corner }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Clockwise draws 3 edges of an octagon with edge length b in the colour }\\
+  \COMMENT{ encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,3,colorNo}\\
+  left(rotAngle)\\
+  penUp()\\
+  forward(2*b+2*c)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draws 4 edges of an octagon with edge length b }\\
+  \COMMENT{ iin the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penUp()\\
+  forward(c)\\
+  left(90)\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterD}{h, colorNo }
+\label{letterD}
+\COMMENT{ Draws letter D in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterD}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{c+b,colorNo}\\
+  \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b in the colour }\\
+  \COMMENT{ encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,2,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  \COMMENT{ Clockwise draw 2 edges of an octagon with edge length b in the colour }\\
+  \COMMENT{ encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,2,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  penUp()\\
+  left(180)\\
+  forward(b+2*c)\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterG}{h, colorNo }
+\label{letterG}
+\COMMENT{ Draws letter G in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterG}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon. }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b in }\\
+  \COMMENT{ the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  left(90)\\
+  \CALL{forward}{b/2.0+c,colorNo}\\
+  penUp()\\
+  backward(b/2.0+c)\\
+  right(90)\\
+  forward(b+c)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b in }\\
+  \COMMENT{ the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penUp()\\
+  forward(c)\\
+  left(90)\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterJ}{h, colorNo }
+\label{letterJ}
+\COMMENT{ Draws letter J in colour encoded by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterJ}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 3 edges of an octagon with edge length b in }\\
+  \COMMENT{ the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,3,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{h-c,colorNo}\\
+  penUp()\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterO}{h, colorNo }
+\label{letterO}
+\COMMENT{ Draws letter O in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterO}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penUp()\\
+  forward(c)\\
+  left(90)\\
+  forward(b+2*c)\\
+  penDown()\\
+  left(90)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterP}{h, colorNo }
+\label{letterP}
+\COMMENT{ Draws letter P in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterP}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the corner triangle outside the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{c+b,colorNo}\\
+  \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,4,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  penUp()\\
+  backward(b+2*c)\\
+  left(90)\\
+  forward(b+2*c)\\
+  penDown()\\
+  left(180)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterQ}{h, colorNo }
+\label{letterQ}
+\COMMENT{ Draws letter Q in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterQ}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  \COMMENT{ Counterclockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,4,colorNo}\\
+  \CALL{forward}{b+2*c,colorNo}\\
+  penUp()\\
+  forward(c)\\
+  left(90)\\
+  forward(b+2*c)\\
+  right(rotAngle)\\
+  backward(b)\\
+  penDown()\\
+  \CALL{forward}{b,colorNo}\\
+  left(90+rotAngle)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterR}{h, colorNo }
+\label{letterR}
+\COMMENT{ Zeichnet den Buchstaben R von der Turtleposition aus }\\
+\COMMENT{ mit Zeilenh"ohe h }\\
+\PROCEDURE{letterR}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  \CALL{forward}{h,colorNo}\\
+  right(90)\\
+  \CALL{forward}{c+b,colorNo}\\
+  \COMMENT{ Clockwise draw 4 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,4,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  left(90+rotAngle)\\
+  \CALL{forward}{sqrt(2.0)*(b+2*c),colorNo}\\
+  left(90+rotAngle)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterS}{h, colorNo }
+\label{letterS}
+\COMMENT{ Draws letter S in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterS}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Side length of the (outer) corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 6 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,6,colorNo}\\
+  \COMMENT{ Clockwise draw 5 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour encoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,5,colorNo}\\
+  right(rotAngle)\\
+  penUp()\\
+  forward(2*b+3*c)\\
+  penDown()\\
+  left(180)\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterU}{h, colorNo }
+\label{letterU}
+\COMMENT{ Draws letter U in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterU}{h, colorNo}
+  \COMMENT{ edge length of a regular octagon }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(c)\\
+  penDown()\\
+  \CALL{forward}{h-c,colorNo}\\
+  penUp()\\
+  backward(h-c)\\
+  penDown()\\
+  right(180)\\
+  \COMMENT{ Counterclockwise draw 3 edges of an octagoin with edge length b in colour specified by colorNo }\\
+  \CALL{polygonPart}{b,8,\TRUE,3,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{h-c,colorNo}\\
+  penUp()\\
+  backward(h)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{qstnMk}{h, colorNo }
+\label{qstnMk}
+\COMMENT{ Draws a question mark in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{qstnMk}{h, colorNo}
+  \COMMENT{ Octagon edge length }\\
+  b\gets\ h*0.5/(sqrt(2.0)+1)\\
+  \COMMENT{ Cathetus of the outer corner triangle of the octagon }\\
+  c\gets\ b/sqrt(2.0)\\
+  \COMMENT{ 360\textdegree/8 }\\
+  rotAngle\gets\ 45\\
+  penUp()\\
+  forward(h-c)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw 5 edges of an octagon with edge length b }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{b,8,\FALSE,5,colorNo}\\
+  \CALL{forward}{c,colorNo}\\
+  left(rotAngle)\\
+  \CALL{forward}{b/2.0,colorNo}\\
+  penUp()\\
+  forward(c)\\
+  left(90)\\
+  forward(c/2.0)\\
+  penDown()\\
+  \COMMENT{ Counterclockwise draw all 4 edges of a squarfe with edge length c }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{c,4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward((c+b)/2.0)\\
+  left(90)\\
+  backward(c)\\
+  penDown()\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{digit0}{h, colorNo }
+\label{digit0}
+\COMMENT{ Draws digit 0 in the colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{digit0}{h, colorNo}
+  penUp()\\
+  forward(h/4.0)\\
+  penDown()\\
+  right(45)\\
+  len\gets\ h/sqrt(2)\\
+  \CALL{forward}{len,colorNo}\\
+  penUp()\\
+  backward(len)\\
+  left(45)\\
+  backward(h/4.0)\\
+  \CALL{letterO}{h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterOe}{h, colorNo }
+\label{letterOe}
+\COMMENT{ Draws letter "O in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterOe}{h, colorNo}
+  penUp()\\
+  forward(h)\\
+  penDown()\\
+  right(90)\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/8 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{h/8,4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward(h/2)\\
+  penDown()\\
+  right(90)\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/8 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{h/8,4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward(h)\\
+  penDown()\\
+  right(90)\\
+  penUp()\\
+  forward(h/2)\\
+  penDown()\\
+  right(90)\\
+  \CALL{letterO}{h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{letterUe}{h, colorNo }
+\label{letterUe}
+\COMMENT{ Draws letter "U in colour specified by colorNo with font height h }\\
+\COMMENT{ from the current turtle position. }\\
+\PROCEDURE{letterUe}{h, colorNo}
+  penUp()\\
+  forward(h)\\
+  right(90)\\
+  forward(max(h/8,1))\\
+  penDown()\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{max(h/16,1),4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward(h/2-2*max(h/8,1)-max(h/16,1))\\
+  penDown()\\
+  \COMMENT{ Clockwise draw all 4 edges of a square with edge length h/16 }\\
+  \COMMENT{ in the colour endcoded by colorNo }\\
+  \CALL{polygonPart}{max(h/16,1),4,\FALSE,4,colorNo}\\
+  penUp()\\
+  forward(max(h/8,1))\\
+  penDown()\\
+  right(90)\\
+  penUp()\\
+  forward(h)\\
+  right(90)\\
+  forward(h/2)\\
+  penDown()\\
+  right(90)\\
+  \CALL{letterU}{h,colorNo}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{drawText}{text, h, c }
+\label{drawText}
+\COMMENT{ Has the turtle draw the given string '{}text\textasciiacute{} with font height '{}h\textasciiacute{} (in }\\
+\COMMENT{ pixels) and the colour coded by integer '{}c\textasciiacute{} from the current Turtle }\\
+\COMMENT{ position to the Turtle canvas. If the turtle looks North then }\\
+\COMMENT{ the text will be written rightwards. In the event, the turtle will be }\\
+\COMMENT{ placed behind the text in original orientation (such that the next text }\\
+\COMMENT{ would be written like a continuation. Colour codes: }\\
+\COMMENT{ 1 = black }\\
+\COMMENT{ 2 = red }\\
+\COMMENT{ 3 = yellow }\\
+\COMMENT{ 4 = green }\\
+\COMMENT{ 5 = cyan }\\
+\COMMENT{ 6 = blue }\\
+\COMMENT{ 7 = pink }\\
+\COMMENT{ 8 = grey }\\
+\COMMENT{ 9 = orange }\\
+\COMMENT{ 10 = violet }\\
+\COMMENT{ All letters (ASCII) will be converted to uppercase, }\\
+\COMMENT{ the set of representable special characters is: decimal digits, }\\
+\COMMENT{ '{}.'{}, '{},'{}, '{}!'{}, '{}?'{}, '{}"A'{}, '{}"O'{}, '{}"U'{}. Other characters will be shown as a small }\\
+\COMMENT{ centred square (dummy character). }\\
+\PROCEDURE{drawText}{text, h, c}
+  gap\gets\ h/10.0\\
+  \FOR k \gets 1 \TO length(text)  \DO
+  \BEGIN
+    letter\gets\ uppercase(copy(text,k,1))\\
+    \IF letter=\)"{}A"{}\( \THEN
+      \CALL{letterA}{h,c}\\
+    \ELSEIF letter=\)"{}B"{}\( \THEN
+      \CALL{letterB}{h,c}\\
+    \ELSEIF letter=\)"{}C"{}\( \THEN
+      \CALL{letterC}{h,c}\\
+    \ELSEIF letter=\)"{}D"{}\( \THEN
+      \CALL{letterD}{h,c}\\
+    \ELSEIF letter=\)"{}E"{}\( \THEN
+      \CALL{letterE}{h,c}\\
+    \ELSEIF letter=\)"{}F"{}\( \THEN
+      \CALL{letterF}{h,c}\\
+    \ELSEIF letter=\)"{}G"{}\( \THEN
+      \CALL{letterG}{h,c}\\
+    \ELSEIF letter=\)"{}H"{}\( \THEN
+      \CALL{letterH}{h,c}\\
+    \ELSEIF letter=\)"{}I"{}\( \THEN
+      \CALL{letterI}{h,c}\\
+    \ELSEIF letter=\)"{}J"{}\( \THEN
+      \CALL{letterJ}{h,c}\\
+    \ELSEIF letter=\)"{}K"{}\( \THEN
+      \CALL{letterK}{h,c}\\
+    \ELSEIF letter=\)"{}L"{}\( \THEN
+      \CALL{letterL}{h,c}\\
+    \ELSEIF letter=\)"{}M"{}\( \THEN
+      \CALL{letterM}{h,c}\\
+    \ELSEIF letter=\)"{}N"{}\( \THEN
+      \CALL{letterN}{h,c}\\
+    \ELSEIF letter=\)"{}O"{}\( \THEN
+      \CALL{letterO}{h,c}\\
+    \ELSEIF letter=\)"{}P"{}\( \THEN
+      \CALL{letterP}{h,c}\\
+    \ELSEIF letter=\)"{}Q"{}\( \THEN
+      \CALL{letterQ}{h,c}\\
+    \ELSEIF letter=\)"{}R"{}\( \THEN
+      \CALL{letterR}{h,c}\\
+    \ELSEIF letter=\)"{}S"{}\( \THEN
+      \CALL{letterS}{h,c}\\
+    \ELSEIF letter=\)"{}T"{}\( \THEN
+      \CALL{letterT}{h,c}\\
+    \ELSEIF letter=\)"{}U"{}\( \THEN
+      \CALL{letterU}{h,c}\\
+    \ELSEIF letter=\)"{}V"{}\( \THEN
+      \CALL{letterV}{h,c}\\
+    \ELSEIF letter=\)"{}W"{}\( \THEN
+      \CALL{letterW}{h,c}\\
+    \ELSEIF letter=\)"{}X"{}\( \THEN
+      \CALL{letterX}{h,c}\\
+    \ELSEIF letter=\)"{}Y"{}\( \THEN
+      \CALL{letterY}{h,c}\\
+    \ELSEIF letter=\)"{}Z"{}\( \THEN
+      \CALL{letterZ}{h,c}\\
+    \ELSEIF letter=\)"{}\ "{}\( \THEN
+      \CALL{blank}{h,c}\\
+    \ELSEIF letter=\)"{}!"{}\( \THEN
+      \CALL{exclMk}{h,c}\\
+    \ELSEIF letter=\)"{}?"{}\( \THEN
+      \CALL{qstnMk}{h,c}\\
+    \ELSEIF letter=\)"{}."{}\( \THEN
+      \CALL{fullSt}{h,c}\\
+    \ELSEIF letter=\)"{},"{}\( \THEN
+      \CALL{comma}{h,c}\\
+    \ELSEIF letter=\)"{}"A"{}\( \THEN
+      \CALL{letterAe}{h,c}\\
+    \ELSEIF letter=\)"{}"O"{}\( \THEN
+      \CALL{letterOe}{h,c}\\
+    \ELSEIF letter=\)"{}"U"{}\( \THEN
+      \CALL{letterUe}{h,c}\\
+    \ELSEIF letter=\)"{}0"{}\( \THEN
+      \CALL{digit0}{h,c}\\
+    \ELSEIF letter=\)"{}1"{}\( \THEN
+      \CALL{digit1}{h,c}\\
+    \ELSEIF letter=\)"{}2"{}\( \THEN
+      \CALL{digit2}{h,c}\\
+    \ELSEIF letter=\)"{}3"{}\( \THEN
+      \CALL{digit3}{h,c}\\
+    \ELSEIF letter=\)"{}4"{}\( \THEN
+      \CALL{digit4}{h,c}\\
+    \ELSEIF letter=\)"{}5"{}\( \THEN
+      \CALL{digit5}{h,c}\\
+    \ELSEIF letter=\)"{}6"{}\( \THEN
+      \CALL{digit6}{h,c}\\
+    \ELSEIF letter=\)"{}7"{}\( \THEN
+      \CALL{digit7}{h,c}\\
+    \ELSEIF letter=\)"{}8"{}\( \THEN
+      \CALL{digit8}{h,c}\\
+    \ELSEIF letter=\)"{}9"{}\( \THEN
+      \CALL{digit9}{h,c}\\
+    \ELSE
+      \CALL{charDummy}{h,c}\\
+    right(90)\\
+    penUp()\\
+    forward(gap)\\
+    penDown()\\
+    left(90)\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\COMMENT{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }\\
+
+
+\begin{pseudocode}{TextDemo}{ }
+\label{TextDemo}
+\COMMENT{ Demo program for routine drawText() }\\
+\COMMENT{ Asks the user to enter a text, a wanted text height and colour, }\\
+\COMMENT{ and then draws this string onto the turtle screen. Places every }\\
+\COMMENT{ entered text to a new line. }\\
+\MAIN
+  \OUTPUT{\)"{}This\ is\ a\ demo\ program\ for\ text\ writing\ with\ Turleizer."{}\(}\\
+  showTurtle()\\
+  penDown()\\
+  y\gets\ 0\\
+  \REPEAT
+    \)input\(\)"{}Enter\ some\ text\ (empty\ string\ to\ exit)"{}\(,text\\
+    \COMMENT{ Make sure the content is interpreted as string }\\
+    text\gets\)"{}"{}\(+text\\
+    \IF text\neq\)"{}"{}\( \THEN
+    \BEGIN
+      \REPEAT
+        \)input\(\)"{}Height\ of\ the\ text\ (pixels)"{}\(,height\\
+      \UNTIL height\geq\ 5\\
+      \REPEAT
+        \)input\(\)"{}Colour\ (1=black,\ 2=red,\ 3=yellow,\ 4=green,\ 5=cyan,\ 6=blue,\ 7=pink,\ 8=gray,\ 9=orange,\ 10=violet)"{}\(,colour\\
+      \UNTIL colour\geq\ 1\ \AND\ colour\leq\ 10\\
+      y\gets\ y+height+2\\
+      gotoXY(0,y-2)\\
+      \CALL{drawText}{text,height,colour}\\
+    \END\\
+  \UNTIL text=\)"{}"{}\(\\
+  gotoXY(0,y+15)\\
+  \CALL{drawText}{\)"{}Thank\ you,\ bye."{}\(,10,4}\\
+  hideTurtle()\\
+\ENDMAIN
+\end{pseudocode}
+
+\end{document}

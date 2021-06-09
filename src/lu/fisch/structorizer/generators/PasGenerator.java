@@ -672,7 +672,7 @@ public class PasGenerator extends Generator
 						addCode("exit;", _indent, isDisabled);
 					}
 					// START KGU#737 2019-10-01: Issue #754
-					continue;	// There is nothing more t be done about this line!
+					continue;	// There is nothing more to be done about this line!
 					// END KGU#737 2019-10-01
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)

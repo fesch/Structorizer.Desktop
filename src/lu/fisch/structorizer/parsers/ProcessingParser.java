@@ -41,6 +41,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-03-08      Issue #964 The central draw() loop shall not be inserted if draw() was
  *                                      not defined.
  *      Kay Gürtzig     2021-05-12      Issue #932: Processing standard definitions separated from main
+ *      Kay Gürtzig     2021-05-12      Bugfix #974: A severe and an annoying typo in the ProcessingStandardDefinitions
  *
  ******************************************************************************************************
  *
@@ -484,22 +485,24 @@ public class ProcessingParser extends JavaParser {
 				"const TWO_PI <- " + Float.toString((float)Math.PI*2) + "\n" +
 				"const TAU <- TWO_PI\n" +
 				"const DEG_TO_RAD <- PI/180.0\n" +
-				"const RAD_TO_DEG <- 1/DEG_TO_RAD\n";
+				"const RAD_TO_DEG <- 1/DEG_TO_RAD";
 		// START KGU#958 2021-03-05: Issue #960
 		//Instruction defs = new Instruction("type ColorMode = enum{RGB, HSB}");
 		final String keyConstants =
-				"const BACKSPACE <- char(8)\n" +
-				"const TAB <- char(9)\n" +
-				"const ENTER <- char(10)\n" +
-				"const RETURN <- char(13)\n" +
-				"const ESC <- char(27)\n" +
-				"const DELETE <- char(127)";
+				// START KGU#973 2021-05-12: Bugfix #974 - char(...) replaced by chr(...)
+				"const BACKSPACE <- chr(8)\n" +
+				"const TAB <- chr(9)\n" +
+				"const ENTER <- chr(10)\n" +
+				"const RETURN <- chr(13)\n" +
+				"const ESC <- chr(27)\n" +
+				"const DELETE <- chr(127)";
+				// END KGU#973 2021-05-12
 		final String strokeConstants =
 				"const SQUARE <- 1 << 0\n" +
 				"const ROUND <- 1 << 1\n" +
 				"const PROJECT <- 1 << 2\n" +
 				"const MITER <- 1 << 3\n" +
-				"const BEVEL <- 1 << 4\n";
+				"const BEVEL <- 1 << 4";
 		final String blendModeConstants = 
 				"const REPLACE <- 0\n" +
 				"const BLEND <- 1 << 0\n" +
@@ -515,7 +518,7 @@ public class ProcessingParser extends JavaParser {
 				"const HARD_LIGHT <- 1 << 10\n" +
 				"const SOFT_LIGHT <- 1 << 11\n" +
 				"const DODGE <- 1 << 12\n" +
-				"const BURN <- 1 << 13\n";
+				"const BURN <- 1 << 13";
 		final String rendererConstants =
 				"const JAVA2D <- \"processing.awt.PGraphicsJava2D\"\n"
 				+ "const P2D <- \"processing.awt.PGraphics2D\"\n"
@@ -543,9 +546,12 @@ public class ProcessingParser extends JavaParser {
 				"var frameCount: int <- 0\n" +
 				"var frameRate: int <- 60";
 		final String systemVariables2 = 
-				"var key: char <- '\0'\n" +
+				// START KGU#973 2021-05-12: Bugfix #974
+				//"var key: char <- '\0'\n" +
+				"var key: char <- chr(0)\n" +
+				// END KGU#973 2021-05-12
 				"var keyPressed: boolean <- false\n" +
-				"var keyCode: KeyCode <- NONE\n";
+				"var keyCode: KeyCode <- NONE";
 		
 		if (stdDefinitionsIncluded) {
 			Root stdDefs = new Root();

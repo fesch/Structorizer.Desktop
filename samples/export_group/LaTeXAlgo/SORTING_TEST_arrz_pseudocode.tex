@@ -1,0 +1,265 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{pseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of SORTING\_TEST.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
+
+\begin{document}
+
+\begin{pseudocode}{bubbleSort}{values }
+\label{bubbleSort}
+\COMMENT{ Implements the well-known BubbleSort algorithm. }\\
+\COMMENT{ Compares neigbouring elements and swaps them in case of an inversion. }\\
+\COMMENT{ Repeats this while inversions have been found. After every }\\
+\COMMENT{ loop passage at least one element (the largest one out of the }\\
+\COMMENT{ processed subrange) finds its final place at the end of the }\\
+\COMMENT{ subrange. }\\
+\PROCEDURE{bubbleSort}{values}
+  ende\gets\ length(values)-2\\
+  \REPEAT
+    \COMMENT{ The index of the most recent swapping (-1 means no swapping done). }\\
+    posSwapped\gets-1\\
+    \FOR i \gets 0 \TO ende  \DO
+      \IF values[i]>values[i+1] \THEN
+      \BEGIN
+        temp\gets\ values[i]\\
+        values[i]\gets\ values[i+1]\\
+        values[i+1]\gets\ temp\\
+        posSwapped\gets\ i\\
+      \END\\
+    ende\gets\ posSwapped-1\\
+  \UNTIL posSwapped<0\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{maxHeapify}{heap, i, range }
+\label{maxHeapify}
+\COMMENT{ Given a max-heap '{}heap\textasciiacute{} with element at index '{}i\textasciiacute{} possibly }\\
+\COMMENT{ violating the heap property wrt. its subtree upto and including }\\
+\COMMENT{ index range-1, restores heap property in the subtree at index i }\\
+\COMMENT{ again. }\\
+\PROCEDURE{maxHeapify}{heap, i, range}
+  \COMMENT{ Indices of left and right child of node i }\\
+  right\gets(i+1)*2\\
+  left\gets\ right-1\\
+  \COMMENT{ Index of the (local) maximum }\\
+  max\gets\ i\\
+  \IF left<range\ \AND\ heap[left]>heap[i] \THEN
+    max\gets\ left\\
+  \IF right<range\ \AND\ heap[right]>heap[max] \THEN
+    max\gets\ right\\
+  \IF max\neq\ i \THEN
+  \BEGIN
+    temp\gets\ heap[i]\\
+    heap[i]\gets\ heap[max]\\
+    heap[max]\gets\ temp\\
+    \CALL{maxHeapify}{heap,max,range}\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{partition}{values, start, stop, p }
+\label{partition}
+\COMMENT{ Partitions array '{}values\textasciiacute{} between indices '{}start\textasciiacute{} und '{}stop\textasciiacute{}-1 with }\\
+\COMMENT{ respect to the pivot element initially at index '{}p\textasciiacute{} into smaller }\\
+\COMMENT{ and greater elements. }\\
+\COMMENT{ Returns the new (and final) index of the pivot element (which }\\
+\COMMENT{ separates the sequence of smaller elements from the sequence }\\
+\COMMENT{ of greater elements). }\\
+\COMMENT{ This is not the most efficient algorithm (about half the swapping }\\
+\COMMENT{ might still be avoided) but it is pretty clear. }\\
+\PROCEDURE{partition}{values, start, stop, p}
+  \COMMENT{ Cache the pivot element }\\
+  pivot\gets\ values[p]\\
+  \COMMENT{ Exchange the pivot element with the start element }\\
+  values[p]\gets\ values[start]\\
+  values[start]\gets\ pivot\\
+  p\gets\ start\\
+  \COMMENT{ Beginning and end of the remaining undiscovered range }\\
+  start\gets\ start+1\\
+  stop\gets\ stop-1\\
+  \COMMENT{ Still unseen elements? }\\
+  \COMMENT{ Loop invariants: }\\
+  \COMMENT{ 1. p = start - 1 }\\
+  \COMMENT{ 2. pivot = values[p] }\\
+  \COMMENT{ 3. i \textless start \textrightarrow{} values[i] ≤ pivot }\\
+  \COMMENT{ 4. stop \textless i \textrightarrow{} pivot \textless values[i] }\\
+  \WHILE start\leq\ stop \DO
+  \BEGIN
+    \COMMENT{ Fetch the first element of the undiscovered area }\\
+    seen\gets\ values[start]\\
+    \COMMENT{ Does the checked element belong to the smaller area? }\\
+    \IF seen\leq\ pivot \THEN
+    \BEGIN
+      \COMMENT{ Insert the seen element between smaller area and pivot element }\\
+      values[p]\gets\ seen\\
+      values[start]\gets\ pivot\\
+      \COMMENT{ Shift the border between lower and undicovered area, }\\
+      \COMMENT{ update pivot position. }\\
+      p\gets\ p+1\\
+      start\gets\ start+1\\
+    \END\\
+    \ELSE
+    \BEGIN
+      \COMMENT{ Insert the checked element between undiscovered and larger area }\\
+      values[start]\gets\ values[stop]\\
+      values[stop]\gets\ seen\\
+      \COMMENT{ Shift the border between undiscovered and larger area }\\
+      stop\gets\ stop-1\\
+    \END\\
+  \END\\
+  \RETURN{p}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{testSorted}{numbers }
+\label{testSorted}
+\COMMENT{ Checks whether or not the passed-in array is (ascendingly) sorted. }\\
+\PROCEDURE{testSorted}{numbers}
+  isSorted\gets\TRUE\\
+  i\gets\ 0\\
+  \COMMENT{ As we compare with the following element, we must stop at the penultimate index }\\
+  \WHILE isSorted\ \AND(i\leq\ length(numbers)-2) \DO
+  \BEGIN
+    \COMMENT{ Is there an inversion? }\\
+    \IF numbers[i]>numbers[i+1] \THEN
+      isSorted\gets\FALSE\\
+    \ELSE
+      i\gets\ i+1\\
+  \END\\
+  \RETURN{isSorted}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{buildMaxHeap}{heap }
+\label{buildMaxHeap}
+\COMMENT{ Runs through the array heap and converts it to a max-heap }\\
+\COMMENT{ in a bottom-up manner, i.e. starts above the "{}leaf"{} level }\\
+\COMMENT{ (index \textgreater= length(heap) div 2) and goes then up towards }\\
+\COMMENT{ the root. }\\
+\PROCEDURE{buildMaxHeap}{heap}
+  lgth\gets\ length(heap)\\
+  \FOR k \gets lgth\oprdiv\ 2-1 \DOWNTO 0  \DO
+    \CALL{maxHeapify}{heap,k,lgth}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{quickSort}{values, start, stop }
+\label{quickSort}
+\COMMENT{ Recursively sorts a subrange of the given array '{}values\textasciiacute{}.  }\\
+\COMMENT{ start is the first index of the subsequence to be sorted, }\\
+\COMMENT{ stop is the index BEHIND the subsequence to be sorted. }\\
+\PROCEDURE{quickSort}{values, start, stop}
+  \COMMENT{ At least 2 elements? (Less don'{}t make sense.) }\\
+  \IF stop\geq\ start+2 \THEN
+  \BEGIN
+    \COMMENT{ Select a pivot element, be p its index. }\\
+    \COMMENT{ (here: randomly chosen element out of start ... stop-1) }\\
+    p\gets\ random(stop-start)+start\\
+    \COMMENT{ Partition the array into smaller and greater elements }\\
+    \COMMENT{ Get the resulting (and final) position of the pivot element }\\
+    p\gets\CALL{partition}{values,start,stop,p}\\
+    \COMMENT{ Sort subsequances separately and independently ... }\\
+    \textbf{parallel}\BEGIN
+      \textbf{thread}\ 1\BEGIN
+        \COMMENT{ Sort left (lower) array part }\\
+        \CALL{quickSort}{values,start,p}\\
+      \END\\
+      \textbf{thread}\ 2\BEGIN
+        \COMMENT{ Sort right (higher) array part }\\
+        \CALL{quickSort}{values,p+1,stop}\\
+      \END\\
+    \END\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{heapSort}{values }
+\label{heapSort}
+\COMMENT{ Sorts the array '{}values\textasciiacute{} of numbers according to he heap sort }\\
+\COMMENT{ algorithm }\\
+\PROCEDURE{heapSort}{values}
+  \CALL{buildMaxHeap}{values}\\
+  heapRange\gets\ length(values)\\
+  \FOR k \gets heapRange-1 \DOWNTO 1  \DO
+  \BEGIN
+    heapRange\gets\ heapRange-1\\
+    \COMMENT{ Swap the maximum value (root of the heap) to the heap end }\\
+    maximum\gets\ values[0]\\
+    values[0]\gets\ values[heapRange]\\
+    values[heapRange]\gets\ maximum\\
+    \CALL{maxHeapify}{values,0,heapRange}\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{SORTING\_TEST\_MAIN}{ }
+\label{SORTING\_TEST\_MAIN}
+\COMMENT{ Creates three equal arrays of numbers and has them sorted with different sorting algorithms }\\
+\COMMENT{ to allow performance comparison via execution counting ("{}Collect Runtime Data"{} should }\\
+\COMMENT{ sensibly be switched on). }\\
+\COMMENT{ Requested input data are: Number of elements (size) and filing mode. }\\
+\MAIN
+  \REPEAT
+    \)input\(elementCount\\
+  \UNTIL elementCount\geq\ 1\\
+  \REPEAT
+    \)input\(\)"{}Filling:\ 1\ =\ random,\ 2\ =\ increasing,\ 3\ =\ decreasing"{}\(,modus\\
+  \UNTIL modus=1\ \OR\ modus=2\ \OR\ modus=3\\
+  \FOR i \gets 0 \TO elementCount-1  \DO
+  \BEGIN
+    \IF modus=1 \THEN
+      values1[i]\gets\ random(10000)\\
+    \ELSEIF modus=2 \THEN
+      values1[i]\gets\ i\\
+    \ELSEIF modus=3 \THEN
+      values1[i]\gets-i\\
+  \END\\
+  \COMMENT{ Copy the array for exact comparability }\\
+  \FOR i \gets 0 \TO elementCount-1  \DO
+  \BEGIN
+    values2[i]\gets\ values1[i]\\
+    values3[i]\gets\ values1[i]\\
+  \END\\
+  \textbf{parallel}\BEGIN
+    \textbf{thread}\ 1\BEGIN
+      \CALL{bubbleSort}{values1}\\
+    \END\\
+    \textbf{thread}\ 2\BEGIN
+      \CALL{quickSort}{values2,0,elementCount}\\
+    \END\\
+    \textbf{thread}\ 3\BEGIN
+      \CALL{heapSort}{values3}\\
+    \END\\
+  \END\\
+  ok1\gets\CALL{testSorted}{values1}\\
+  ok2\gets\CALL{testSorted}{values2}\\
+  ok3\gets\CALL{testSorted}{values3}\\
+  \IF \NOT\ ok1\ \OR\ \NOT\ ok2\ \OR\ \NOT\ ok3 \THEN
+    \FOR i \gets 0 \TO elementCount-1  \DO
+      \IF values1[i]\neq\ values2[i]\ \OR\ values1[i]\neq\ values3[i] \THEN
+        \OUTPUT{\)"{}Difference\ at\ ["{}\(,i,\)"{}]:\ "{}\(,values1[i],\)"{}\ \textless-\textgreater\ "{}\(,values2[i],\)"{}\ \textless-\textgreater\ "{}\(,values3[i]}\\
+  \REPEAT
+    \)input\(\)"{}Show\ arrays\ (yes/no)?"{}\(,show\\
+  \UNTIL show=\)"{}yes"{}\(\ \OR\ show=\)"{}no"{}\(\\
+  \IF show=\)"{}yes"{}\( \THEN
+    \FOR i \gets 0 \TO elementCount-1  \DO
+      \OUTPUT{\)"{}["{}\(,i,\)"{}]:\textbackslash{}t"{}\(,values1[i],\)"{}\textbackslash{}t"{}\(,values2[i],\)"{}\textbackslash{}t"{}\(,values3[i]}\\
+\ENDMAIN
+\end{pseudocode}
+
+\end{document}

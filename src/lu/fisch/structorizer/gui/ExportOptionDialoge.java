@@ -32,24 +32,25 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Bob Fisch       2012.07.02  First Issue
- *      Kay Gürtzig     2016.04.01  Enh. #144: noConversionCheckBox and cbPrefGenerator added
- *      Kay Gürtzig     2016.04.04  Enh. #149: cbCharset added
- *      Kay Gürtzig     2016.07.20  Enh. #160: new option to involve called subroutines (= KGU#178)
- *      Kay Gürtzig     2016.07.25  Size setting dropped. With the current layout, pack() is fine (KGU#212).
- *      Kay Gürtzig     2016.07.26  Bug #204: Constructor API modified to ensure language translation before pack()
- *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
- *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
- *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
- *      Kay Gürtzig     2017.02.27  Enh. #346: New tab for configuration of user-specific include directives
- *      Kay Gürtzig     2017.05.09  Issue #400: keyListener at all controls
- *      Kay Gürtzig     2017.05.11  Enh. #372: New option to export license attributes
- *      Kay Gürtzig     2017.06.20  Enh. #354/#357: generator-specific option mechanism implemented
- *      Kay Gürtzig     2018.01.22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand).
+ *      Bob Fisch       2012-07-02  First Issue
+ *      Kay Gürtzig     2016-04-01  Enh. #144: noConversionCheckBox and cbPrefGenerator added
+ *      Kay Gürtzig     2016-04-04  Enh. #149: cbCharset added
+ *      Kay Gürtzig     2016-07-20  Enh. #160: new option to involve called subroutines (= KGU#178)
+ *      Kay Gürtzig     2016-07-25  Size setting dropped. With the current layout, pack() is fine (KGU#212).
+ *      Kay Gürtzig     2016-07-26  Bug #204: Constructor API modified to ensure language translation before pack()
+ *      Kay Gürtzig     2016-11-11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017-01-07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017-01-09  Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017-02-27  Enh. #346: New tab for configuration of user-specific include directives
+ *      Kay Gürtzig     2017-05-09  Issue #400: keyListener at all controls
+ *      Kay Gürtzig     2017-05-11  Enh. #372: New option to export license attributes
+ *      Kay Gürtzig     2017-06-20  Enh. #354/#357: generator-specific option mechanism implemented
+ *      Kay Gürtzig     2018-01-22  Issue #484: Layout of the "Includes" tab fixed (text fields now expand).
  *      Kay Gürtzig     2019-02-15  Enh. #681: New spinner for triggering a change proposal for preferred generator
  *      Kay Gürtzig     2020-03-17  Enh. #837: New option for the proposed export directory
  *      Kay Gürtzig     2020-04-22  Enh. #855: New options for array size / string length defaults
  *      Kay Gürtzig     2021-03-04  Issue #958: Relative positioning of PluginOptionDialog
+ *      Kay Gürtzig     2021-06-07  Issue #67: BASIC/COBOL lineNumering option removed (now plugin-specific)
  *
  ******************************************************************************************************
  *
@@ -145,7 +146,9 @@ public class ExportOptionDialoge extends LangDialog
         commentsCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         bracesCheckBox = new javax.swing.JCheckBox();
-        lineNumbersCheckBox = new javax.swing.JCheckBox();
+        // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+        //lineNumbersCheckBox = new javax.swing.JCheckBox();
+        // END KGU#113 2021-06-07
         jButton1 = new javax.swing.JButton();
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
         //lbVoid = new javax.swing.JLabel();
@@ -200,17 +203,17 @@ public class ExportOptionDialoge extends LangDialog
         lbVoid1.setText(" ");	// FIXME: Can we replace this by insets?
         lbCharset.setText("Character Set: ");
         lbCharset.setMinimumSize(
-        		new Dimension(lbCharset.getMinimumSize().width, cbCharset.getPreferredSize().height));
+                new Dimension(lbCharset.getMinimumSize().width, cbCharset.getPreferredSize().height));
         cbCharset.setMaximumSize(
-        		new Dimension(150, cbCharset.getPreferredSize().height));
+                new Dimension(150, cbCharset.getPreferredSize().height));
         charsetListChanged(null);
         chkCharsetAll.setText("List all?");
         chkCharsetAll.setMinimumSize(
-        		new Dimension(chkCharsetAll.getMinimumSize().width, cbCharset.getPreferredSize().height));
+                new Dimension(chkCharsetAll.getMinimumSize().width, cbCharset.getPreferredSize().height));
         chkCharsetAll.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent evt) {
-        		charsetListChanged((String)cbCharset.getSelectedItem());
-        	}
+            public void actionPerformed(ActionEvent evt) {
+                charsetListChanged((String)cbCharset.getSelectedItem());
+            }
         });
         // END KGU#168 2016-04-04
 
@@ -256,30 +259,32 @@ public class ExportOptionDialoge extends LangDialog
         bracesCheckBox.setText("Put block-opening brace on same line (C/C++/Java etc.).");
         //bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");	// ??
         bracesCheckBox.addActionListener(new ActionListener() {
-			@Override
+            @Override
             public void actionPerformed(ActionEvent evt) {
                 bracesCheckBoxActionPerformed(evt);
             }
         });
 
-        lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
-        lineNumbersCheckBox.addActionListener(new ActionListener() {
-			@Override
-            public void actionPerformed(ActionEvent evt) {
-                lineNumbersCheckBoxActionPerformed(evt);
-            }
-        });
+        // START KGU#113 2021-06-07: Issue #67 removed, now plugin-specific
+        //lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
+        //lineNumbersCheckBox.addActionListener(new ActionListener() {
+        //    @Override
+        //    public void actionPerformed(ActionEvent evt) {
+        //        lineNumbersCheckBoxActionPerformed(evt);
+        //    }
+        //});
+        // END KGU#113 2021-06-07
 
         // START KGU#178 2016-07-20: Enh. #160
         chkExportSubroutines.setText("Involve called subroutines");
         chkExportSubroutines.addActionListener(new ActionListener() {
-			@Override
-        	public void actionPerformed(ActionEvent evt) {
-        		subroutinesCheckBoxActionPerformed(evt);
-        	}
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                subroutinesCheckBoxActionPerformed(evt);
+            }
         });
         // END KGU#178 2016-07-20
-        
+
         // START KGU#363 2017-05-11: Enh. #372
         chkExportLicenseInfo.setText("Export author and license attributes");
         chkExportLicenseInfo.addActionListener(new ActionListener() {
@@ -420,7 +425,9 @@ public class ExportOptionDialoge extends LangDialog
                     // END KGU#162 2016-03-31
                     .add(commentsCheckBox)
                     .add(bracesCheckBox)
-                    .add(lineNumbersCheckBox)
+                    // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+                    //.add(lineNumbersCheckBox)
+                    // END KGU#113 2021-06-07
                     // START KGU#178 2016-07-20: Enh. #160
                     .add(chkExportSubroutines)
                     // END KGU#178 2016-07-20
@@ -471,8 +478,10 @@ public class ExportOptionDialoge extends LangDialog
                 .add(commentsCheckBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(bracesCheckBox)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lineNumbersCheckBox)
+                // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+                //.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                //.add(lineNumbersCheckBox)
+                // END KGU#113 2021-06-07
                 // START KGU#178 2016-07-20: Enh. #160
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkExportSubroutines)
@@ -592,7 +601,9 @@ public class ExportOptionDialoge extends LangDialog
         noConversionCheckBox.addKeyListener(keyListener);
         commentsCheckBox.addKeyListener(keyListener);
         bracesCheckBox.addKeyListener(keyListener);
-        lineNumbersCheckBox.addKeyListener(keyListener);
+        // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+        //lineNumbersCheckBox.addKeyListener(keyListener);
+        // END KGU#113 2021-06-07
         chkExportSubroutines.addKeyListener(keyListener);
         // START KGU#816 2020-03-17: Enh. #837
         this.chkDirectoryFromNsd.addKeyListener(keyListener);
@@ -655,10 +666,6 @@ public class ExportOptionDialoge extends LangDialog
         // TODO add your handling code here:
     }//GEN-LAST:event_bracesCheckBoxActionPerformed
 
-    private void lineNumbersCheckBoxActionPerformed(ActionEvent evt) {//GEN-FIRST:event_lineNumbersCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_lineNumbersCheckBoxActionPerformed
-    
     // START KGU#171 2016-04-01: Enh. #144
     private void preferredGeneratorChanged(ItemEvent evt) {
     	// TODO inform the Menu? No need, value will be retrieved by Diagram
@@ -806,7 +813,9 @@ public class ExportOptionDialoge extends LangDialog
     public javax.swing.JButton jButton1;
     public javax.swing.JLabel jLabel1;
     //private javax.swing.JPanel jPanel1;
-    public javax.swing.JCheckBox lineNumbersCheckBox;
+    // START KGU#113 2021-06-07: Issue #67 now plugin-specific
+    //public javax.swing.JCheckBox lineNumbersCheckBox;
+    // END KGU#113 2021-06-07
     // START KGU#162 2016-03-31: Enh. #144 - new option to suppress all content transformation
     public javax.swing.JCheckBox noConversionCheckBox;
     // END KGU#162 2016-03-31

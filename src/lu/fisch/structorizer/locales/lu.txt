@@ -495,7 +495,6 @@ PrintPreview.btnOK.tooltip=Den Diagramm elo ausdrécken.
 ExportOptionDialoge.title=Astellunge fir de Code-Export
 ExportOptionDialoge.commentsCheckBox.text=Uweisungen als Kommentar exportéieren.
 ExportOptionDialoge.bracesCheckBox.text=Block opmaachent Klammer an selwecht Linn setzen (C/C++/Java etc.)
-ExportOptionDialoge.lineNumbersCheckBox.text=Linnennummern beim Export op BASIC erstellen.
 ExportOptionDialoge.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren

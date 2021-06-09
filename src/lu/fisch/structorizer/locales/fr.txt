@@ -633,7 +633,6 @@ ExportOptionDialoge.noConversionCheckBox.text=
 ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=Exporter les @{Instruction}s en tant que commentaires
 ExportOptionDialoge.bracesCheckBox.text=
-ExportOptionDialoge.lineNumbersCheckBox.text=
 ExportOptionDialoge.chkExportSubroutines.text=
 ExportOptionDialoge.lbPrefGenerator.text=
 ExportOptionDialoge.lbCharset.text=

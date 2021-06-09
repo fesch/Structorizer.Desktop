@@ -1,16 +1,16 @@
 \documentclass[a4paper,10pt]{article}
 
 \usepackage{struktex}
-\usepackage{german}
+\usepackage{ngerman}
 
-\title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
+\title{Structorizer StrukTeX Export of ELIZA_2.3.arrz}
 \author{Kay Gürtzig}
-\date{19.10.2020}
+\date{08.06.2021}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(173,114)[adjustSpelling]
+\begin{struktogramm}(175,123)[adjustSpelling]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -31,7 +31,7 @@
     \assign{\(insert(uppercase(start),\ result,\ 1)\)}
   \change
   \ifend
-  \while{\(\forall word\in \{\)"{}\ i\ "{}\(,\ \)"{}\ i\'{}"{}\(\}\)}
+  \while{\(\forall word\in \{\)"{}\ i\ "{}\(,\ \)"{}\ i\textbackslash{}'{}"{}\(\}\)}
     \assign{\(position\ \gets\ pos(word,\ result)\)}
     \while{\(position\ >\ 0\)}
       \assign{\(delete(result,\ position+1,\ 1)\)}
@@ -43,7 +43,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(185,61)[checkGoodBye]
+\begin{struktogramm}(187,67)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -65,7 +65,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(162,95)[checkRepetition]
+\begin{struktogramm}(175,103)[checkRepetition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{history}}{type: \(History\)}
@@ -90,7 +90,7 @@
       \ifend
     \whileend
     \assign{\(history.histArray[history.histIndex]\ \gets\ newInput\)}
-    \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \)\pKey{mod}\(\ (histDepth)\)}
+    \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
   \change
   \ifend
   \assign{\(\)\pKey{return}\(\ hasOccurred\)}
@@ -98,7 +98,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(268,102)[conjugateStrings]
+\begin{struktogramm}(270,111)[conjugateStrings]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -131,10 +131,10 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(223,99)[findKeyword]
+\begin{struktogramm}(225,109)[findKeyword]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{keyMap}}{type: \(const\ array\ of\ KeyMapEntry\)}
+      \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
       \description{\pVar{sentence}}{type: \(string\)}
     \end{declaration}
     \begin{declaration}[Result type:]
@@ -160,7 +160,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(242,69)[normalizeInput]
+\begin{struktogramm}(247,75)[normalizeInput]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -182,20 +182,20 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(185,31)[setupGoodByePhrases]
+\begin{struktogramm}(190,34)[setupGoodByePhrases]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
     \end{declaration}
   }
-  \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
-  \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
+  \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
+  \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
   \assign{\(\)\pKey{return}\(\ phrases\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(125,150)[setupKeywords]
+\begin{struktogramm}(136,162)[setupKeywords]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of KeyMapEntry}{}
@@ -208,15 +208,15 @@
   \assign{\(keywords[0]\ \gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,\ 0\}\)}
   \assign{\(keywords[1]\ \gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,\ 1\}\)}
   \assign{\(keywords[2]\ \gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,\ 2\}\)}
-  \assign{\(keywords[3]\ \gets\ KeyMapEntry\{\)"{}you\'{}re\ "{}\(,\ 2\}\)}
+  \assign{\(keywords[3]\ \gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,\ 2\}\)}
   \assign{\(keywords[4]\ \gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,\ 3\}\)}
   \assign{\(keywords[5]\ \gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,\ 4\}\)}
-  \assign{\(keywords[6]\ \gets\ KeyMapEntry\{\)"{}why\ don\'{}t\ you\ "{}\(,\ 5\}\)}
-  \assign{\(keywords[7]\ \gets\ KeyMapEntry\{\)"{}why\ can\'{}t\ i\ "{}\(,\ 6\}\)}
+  \assign{\(keywords[6]\ \gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,\ 5\}\)}
+  \assign{\(keywords[7]\ \gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,\ 6\}\)}
   \assign{\(keywords[8]\ \gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,\ 7\}\)}
-  \assign{\(keywords[9]\ \gets\ KeyMapEntry\{\)"{}i\ can\'{}t\ "{}\(,\ 8\}\)}
+  \assign{\(keywords[9]\ \gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,\ 8\}\)}
   \assign{\(keywords[10]\ \gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,\ 9\}\)}
-  \assign{\(keywords[11]\ \gets\ KeyMapEntry\{\)"{}i\'{}m\ "{}\(,\ 9\}\)}
+  \assign{\(keywords[11]\ \gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,\ 9\}\)}
   \assign{\(keywords[12]\ \gets\ KeyMapEntry\{\)"{}you\ "{}\(,\ 10\}\)}
   \assign{\(keywords[13]\ \gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,\ 11\}\)}
   \assign{\(keywords[14]\ \gets\ KeyMapEntry\{\)"{}what\ "{}\(,\ 12\}\)}
@@ -249,7 +249,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(116,90)[setupReflexions]
+\begin{struktogramm}(117,98)[setupReflexions]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -259,8 +259,8 @@
   \assign{\(reflexions[1]\ \gets\ \{\)"{}\ were\ "{}\(,\ \)"{}\ was\ "{}\(\}\)}
   \assign{\(reflexions[2]\ \gets\ \{\)"{}\ you\ "{}\(,\ \)"{}\ I\ "{}\(\}\)}
   \assign{\(reflexions[3]\ \gets\ \{\)"{}\ your"{}\(,\ \)"{}\ my"{}\(\}\)}
-  \assign{\(reflexions[4]\ \gets\ \{\)"{}\ i\'{}ve\ "{}\(,\ \)"{}\ you\'{}ve\ "{}\(\}\)}
-  \assign{\(reflexions[5]\ \gets\ \{\)"{}\ i\'{}m\ "{}\(,\ \)"{}\ you\'{}re\ "{}\(\}\)}
+  \assign{\(reflexions[4]\ \gets\ \{\)"{}\ i\textbackslash{}'{}ve\ "{}\(,\ \)"{}\ you\textbackslash{}'{}ve\ "{}\(\}\)}
+  \assign{\(reflexions[5]\ \gets\ \{\)"{}\ i\textbackslash{}'{}m\ "{}\(,\ \)"{}\ you\textbackslash{}'{}re\ "{}\(\}\)}
   \assign{\(reflexions[6]\ \gets\ \{\)"{}\ me\ "{}\(,\ \)"{}\ you\ "{}\(\}\)}
   \assign{\(reflexions[7]\ \gets\ \{\)"{}\ my\ "{}\(,\ \)"{}\ your\ "{}\(\}\)}
   \assign{\(reflexions[8]\ \gets\ \{\)"{}\ i\ "{}\(,\ \)"{}\ you\ "{}\(\}\)}
@@ -270,7 +270,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(153,549)[setupReplies]
+\begin{struktogramm}(159,590)[setupReplies]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array of string}{}
@@ -316,7 +316,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(284,347)[ELIZA]
+\begin{struktogramm}(295,379)[ELIZA]
   \assign{%
     \begin{declaration}[Requires:]
       \description{History, KeyMapEntry}{}
@@ -341,13 +341,13 @@
   \sub{\(const\ keyMap\ \gets\ setupKeywords()\)}
   \assign{\(offsets[length(keyMap)-1]\ \gets\ 0\)}
   \assign{\(isGone\ \gets\ false\)}
-  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Hi!\ I\'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\'{}s\ your\ problem?"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\(\)}
   \until{\(isGone\)}
     \assign{\(\)\pKey{INPUT}\(\ userInput\)}
     \sub{\(userInput\ \gets\ normalizeInput(userInput)\)}
     \sub{\(isGone\ \gets\ checkGoodBye(userInput,\ byePhrases)\)}
     \ifthenelse{5}{1}{\(!\ isGone\)}{T}{F}
-      \assign{\(reply\ \gets\ \)"{}Please\ don\'{}t\ repeat\ yourself!"{}\(\)}
+      \assign{\(reply\ \gets\ \)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)}
       \sub{\(isRepeated\ \gets\ checkRepetition(history,\ userInput)\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
       \ifthenelse{3}{1}{\(!\ isRepeated\)}{T}{F}
@@ -367,7 +367,7 @@
         \ifend
         \assign{\(replyRing\ \gets\ replies[entry.index]\)}
         \assign{\(reply\ \gets\ replyRing[offsets[keyIndex]]\)}
-        \assign{\(offsets[keyIndex]\ \gets\ (offsets[keyIndex]\ +\ 1)\ \)\pKey{mod}\(\ length(replyRing)\)}
+        \assign{\(offsets[keyIndex]\ \gets\ (offsets[keyIndex]\ +\ 1)\ \bmod\ length(replyRing)\)}
         \assign{\(posAster\ \gets\ pos(\)"{}*"{}\(,\ reply)\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
         \ifthenelse{1}{1}{\(posAster\ >\ 0\)}{T}{F}
@@ -391,7 +391,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(152,39)[History]
+\begin{struktogramm}(157,44)[History]
   \assign{%
     \begin{declaration}[type:]
       \description{History}{record\ \{\ histArray\ :\ array\ of\ string\ ;\ histIndex\ :\ int\ \}}
@@ -401,7 +401,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(142,28)[KeyMapEntry]
+\begin{struktogramm}(147,31)[KeyMapEntry]
   \assign{%
     \begin{declaration}[type:]
       \description{KeyMapEntry}{record\ \{\ keyword\ :\ string\ ;\ index\ :\ int\ \}}
