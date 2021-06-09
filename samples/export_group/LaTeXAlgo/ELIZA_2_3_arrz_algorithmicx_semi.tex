@@ -35,9 +35,9 @@
   [1][]{\textbf{#1}}
   {}
 
-\title{Structorizer LaTeX pseudocode Export of ELIZA_2.3.arrz}
-\author{Kay Gürtzig}
-\date{08.06.2021}
+\title{Structorizer LaTeX pseudocode Export of ELIZA\_2.3.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
 
 \begin{document}
 
@@ -209,8 +209,8 @@
 \begin{algorithmic}[5]
 \Function{setupReplies}{}
 \State \Comment{ This routine sets up the reply rings addressed by the key words defined in }
-\State \Comment{ routine `setupKeywords()´ and mapped hitherto by the cross table defined }
-\State \Comment{ in `setupMapping()´ }
+\State \Comment{ routine \textasciigrave{}setupKeywords()\textasciiacute{} and mapped hitherto by the cross table defined }
+\State \Comment{ in \textasciigrave{}setupMapping()\textasciiacute{} }
   \Decl{Result type:}
     \State array of array of string
   \EndDecl
@@ -329,7 +329,7 @@
 \Function{setupKeywords}{}
 \State \Comment{ The lower the index the higher the rank of the keyword (search is sequential). }
 \State \Comment{ The index of the first keyword found in a user sentence maps to a respective }
-\State \Comment{ reply ring as defined in `setupReplies()´. }
+\State \Comment{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
   \Decl{Result type:}
     \State array of KeyMapEntry
   \EndDecl

@@ -9,8 +9,8 @@
 \DeclareMathOperator{\oprshl}{shl}
 \DeclareMathOperator{\oprshr}{shr}
 \title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
-\author{Kay Gürtzig}
-\date{08.06.2021}
+\author{Kay G"urtzig}
+\date{09.06.2021}
 
 \begin{document}
 
@@ -168,12 +168,12 @@
   \STATE \(stripeWidth\gets\ xSize/nValues\);
   \FOR{\(k \gets 0\) \TO \(nValues-1\) \textbf{by} \(1\)}
     \STATE \(stripeHeight\gets\ values[k]*1.0/yScale\);
-    \STATE \(discr9e26fcb2 <- k mod 3\);
-    \IF{\(discr9e26fcb2=0\)}
+    \STATE \(discr607e3da0 <- k mod 3\);
+    \IF{\(discr607e3da0=0\)}
       \STATE \(setPenColor(255,0,0)\);
-    \ELSIF{\(discr9e26fcb2=1\)}
+    \ELSIF{\(discr607e3da0=1\)}
       \STATE \(setPenColor(0,255,0)\);
-    \ELSIF{\(discr9e26fcb2=2\)}
+    \ELSIF{\(discr607e3da0=2\)}
       \STATE \(setPenColor(0,0,255)\);
     \ENDIF
     \STATE \(fd(1)\);
@@ -235,7 +235,7 @@
   \STATE \(nNumbers\gets\ 0\);
   \STATE \(fileNo\gets\ fileOpen(fileName)\);
   \IF{\(fileNo\leq\ 0\)}
-    \STATE \textbf{throw} \("File could not be opened!"\);
+    \STATE \textbf{throw} \(\)"{}File could not be opened!"{}\(\);
   \ENDIF
   \STATE \textbf{try}  \BODY
     \WHILE{\(\NOT\ fileEOF(fileNo)\ \AND\ nNumbers<maxNumbers\)}

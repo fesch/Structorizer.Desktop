@@ -8,8 +8,8 @@
 \DeclareMathOperator{\oprshl}{shl}
 \DeclareMathOperator{\oprshr}{shr}
 \title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
-\author{Kay Gürtzig}
-\date{08.06.2021}
+\author{Kay G"urtzig}
+\date{09.06.2021}
 
 \begin{document}
 
@@ -156,12 +156,12 @@
   \FOR k \gets 0 \TO nValues-1  \DO
   \BEGIN
     stripeHeight\gets\ values[k]*1.0/yScale;\\
-    discrf828a529 <- k mod 3;\\
-    \IF discrf828a529=0 \THEN
+    discr607e3da0 <- k mod 3;\\
+    \IF discr607e3da0=0 \THEN
       setPenColor(255,0,0);\\
-    \ELSEIF discrf828a529=1 \THEN
+    \ELSEIF discr607e3da0=1 \THEN
       setPenColor(0,255,0);\\
-    \ELSEIF discrf828a529=2 \THEN
+    \ELSEIF discr607e3da0=2 \THEN
       setPenColor(0,0,255);\\
     fd(1);\\
     left(90);\\
@@ -216,7 +216,7 @@
   nNumbers\gets\ 0;\\
   fileNo\gets\ fileOpen(fileName);\\
   \IF fileNo\leq\ 0 \THEN
-    \textbf{throw}\ "File could not be opened!";\\
+    \textbf{throw}\ \)"{}File could not be opened!"{}\(;\\
   \textbf{try} \BEGIN
     \WHILE \NOT\ fileEOF(fileNo)\ \AND\ nNumbers<maxNumbers \DO
     \BEGIN
