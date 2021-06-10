@@ -291,10 +291,10 @@ public abstract class Element {
 	// START KGU#791 2020-01-20: Enh. #801 - support for offline help
 	public static final String E_HELP_FILE = "structorizer_user_guide.pdf";
 	/** Estimated size of the User Guide PDF file (to be adapted when User Guide significantly grows) */
-	public static final long E_HELP_FILE_SIZE = 10700000;
+	public static final long E_HELP_FILE_SIZE = 11700000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.31-04";
+	public static final String E_VERSION = "3.31-05";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
