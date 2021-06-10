@@ -127,6 +127,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Improved drawing of Analyser flags and backlink support
  *      Kay Gürtzig     2021-02-24      Enh. #410: "?" added as lexical delimiter and operator symbol
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified breakpoint behaviour
+ *      Kay Gürtzig     2021-06-10      Enh. #979: New method getAnalyserMarkerBounds() to support tooltip
  *
  ******************************************************************************************************
  *
@@ -615,6 +616,7 @@ public abstract class Element {
 	// END KGU#575 2018-09-17
 	
 	// START KGU#906 2021-01-02: Enh. #905 Draw markers on elements with related Analyser reports
+	/** Defines the bit number of the canvas flag for drawing Analyser markers or not */
 	protected static final int CANVAS_FLAGNO_ERROR_CHECK = 0;
 	// END KGU#906 2021-01-02
 
@@ -2203,8 +2205,8 @@ public abstract class Element {
 	/**
 	 * Retrieves the the most specific (i.e. smallest or deepest nested) Element
 	 * containing coordinate (_x, _y) and flags it as {@link #selected}.
-	 * @param _x
-	 * @param _y
+	 * @param _x - element-local (i.e. w.r.t. {@link #rect}) horizontal coordinate
+	 * @param _y - element-local (i.e. w.r.t. {@link #rect}) vertical coordinate
 	 * @return the selected Element (if any)
 	 * @see #getElementByCoord(int, int)
 	 * @see #findSelected()
@@ -2231,8 +2233,8 @@ public abstract class Element {
 	 * Retrieves the most specific (i.e. smallest or deepest nested) Element
 	 * containing coordinate {@code (_x, _y)}. Does not touch the {@link #selected}
 	 * state of any of the elements along the path.
-	 * @param _x
-	 * @param _y
+	 * @param _x - element-local (i.e. w.r.t. {@link #rect}) horizontal coordinate
+	 * @param _y - element-local (i.e. w.r.t. {@link #rect}) vertical coordinate
 	 * @return the (sub-)Element at the given coordinate (null if there is none such)
 	 * @see #getElementByCoord(int, int, boolean)
 	 */
@@ -2258,8 +2260,8 @@ public abstract class Element {
 	 * {@code _forSelection} is true). Other elements along the search path
 	 * are marked as unselected (i.e. their {@link #selected} attribute is
 	 * reset).
-	 * @param _x
-	 * @param _y
+	 * @param _x - element-local (i.e. w.r.t. {@link #rect}) horizontal coordinate
+	 * @param _y - element-local (i.e. w.r.t. {@link #rect}) vertical coordinate
 	 * @param _forSelection - whether the identified element is to be selected
 	 * @return the (sub-)Element at the given coordinate (null, if there is none such)
 	 */
@@ -2277,7 +2279,7 @@ public abstract class Element {
 		// END KGU#136 2016-03-01
 		{
 			//System.out.println("YES");
-			return this;         
+			return this;
 		}
 		else 
 		{
@@ -2286,7 +2288,7 @@ public abstract class Element {
 			{
 				selected = false;	
 			}
-			return null;    
+			return null;
 		}
 	}
 	// END KGU 2015-10-09
@@ -2365,7 +2367,7 @@ public abstract class Element {
 	}
 	// END KGU 2015-10-11
 
-	// START KGU#906 2021-01-02: Enh.
+	// START KGU#906 2021-01-02: Enh. #905
 	/**
 	 * Places a small red triangle in the upper left corner if this element
 	 * is referred to by some {@link DetectedError} record in the owning
@@ -2417,28 +2419,16 @@ public abstract class Element {
 					else {
 						_canvas.setColor(Color.BLUE);
 					}
-					int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
-					int xBase = _rect.left + E_PADDING/4;
-					int yBase = _rect.top + E_PADDING/4 + height;
-					if (this.isCollapsed(true)) {
-						// Put it below or aside the icon
-						int iconHeight = this.getIcon().getIconHeight();
-						if (yBase + iconHeight < _rect.bottom) {
-							yBase += iconHeight;
-						}
-						else {
-							xBase += this.getIcon().getIconWidth();
-						}
-					}
+					Rect markerBounds = getAnalyserMarkerBounds(_rect);
 					int[] xCoords = new int[] {
-							xBase,		// left base corner
-							xBase + E_PADDING/2,	// right base corner
-							xBase + E_PADDING/4		// top corner
+							markerBounds.left,		// left base corner
+							markerBounds.right,		// right base corner
+							markerBounds.left + E_PADDING/4		// top corner
 					};
 					int[] yCoords = new int[] {
-							yBase,			// left base corner
-							yBase,			// right base corner
-							yBase - height	// top corner
+							markerBounds.bottom,	// left base corner
+							markerBounds.bottom,	// right base corner
+							markerBounds.top		// top corner
 					};
 					_canvas.fillPoly(new Polygon(xCoords, yCoords, xCoords.length));
 					_canvas.setColor(oldCol);
@@ -2449,6 +2439,32 @@ public abstract class Element {
 		}
 	}
 	// END KGU#906 2021-01-02
+	
+	// START KGU#979 2021-06-10: Enh. #979 - tooltip on the Analyser marker 
+	/**
+	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
+	 * Element rectangle {@code Rect}
+	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
+	 * @return the "driehoekje" bounds with respect to {@code _rect}
+	 */
+	public Rect getAnalyserMarkerBounds(Rect _rect)
+	{
+		int height = (int)Math.round(E_PADDING * Math.sin(Math.PI/3) / 2);
+		int xBase = _rect.left + E_PADDING/4;
+		int yBase = _rect.top + E_PADDING/4 + height;
+		if (this.isCollapsed(true)) {
+			// Put it below or aside the icon
+			int iconHeight = this.getIcon().getIconHeight();
+			if (yBase + iconHeight < _rect.bottom) {
+				yBase += iconHeight;
+			}
+			else {
+				xBase += this.getIcon().getIconWidth();
+			}
+		}
+		return new Rect(xBase, yBase - height, xBase + E_PADDING/2, yBase);
+	}
+	// END KGU#979 2021-06-10
 
 	/**
 	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 

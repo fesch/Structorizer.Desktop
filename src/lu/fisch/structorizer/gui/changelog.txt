@@ -49,6 +49,7 @@ Current development version 3.31-05 (2021-06-10)
 - 04: Bugfix #974: Two defects on Processing definition import (one severe) <2>
 - 04: Bugfix #975: StrukTeX export didn't cope well with backslashes in literals <2>
 - 04: Issue #977 workaround: Silent highlight error let the execution get locked <2>
+- 05: Enh. #979: An Analyser warning tooltip now appears over marker triangles <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>

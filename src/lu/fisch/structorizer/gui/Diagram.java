@@ -232,6 +232,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
  *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
  *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
+ *      Kay Gürtzig     2021-06-10      Enh. #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
  *
  ******************************************************************************************************
  *
@@ -1001,12 +1002,82 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (e.getSource() == this && NSDControl != null)
 		{
 			boolean popVisible = false;
-			if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
+			// START KGU#979 2021-06-10: Enh. #979
+			//if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
+			Element selEle = null;
+			boolean popupDone = false;
+			if (Element.E_ANALYSER && Element.E_ANALYSER_MARKER && !((Editor) NSDControl).popup.isVisible()) {
+				if ((selEle = root.getElementByCoord(e.getX(), e.getY(), false)) != null) {
+					// Check if the analyser marker region is hit
+					Rect rectEl = selEle.getRectOffDrawPoint();
+					Rect rectMk = selEle.getAnalyserMarkerBounds(rectEl);
+					if (rectMk.contains(e.getPoint())) {
+						// Now check whether the element has associated warnings
+						HashMap<Element, Vector<DetectedError>> errorMap = selEle.getRelatedErrors(true);
+						if (!errorMap.isEmpty()) {
+							FontMetrics fm = lblPop.getFontMetrics(lblPop.getFont());
+							int width = 0;
+							int lines = 0;
+							StringBuilder sb = new StringBuilder();
+							sb.append("<html>");
+							String text = "";
+							for (Entry<Element, Vector<DetectedError>> entry: errorMap.entrySet()) {
+								if (errorMap.size() > 1) {
+									text = ElementNames.getElementName(entry.getKey(), false, null);
+									StringList elText = entry.getKey().getText();
+									String elText1 = "";
+									if (elText.count() > 0) {
+										elText1 = elText.get(0);
+										if (elText.count() > 1) {
+											elText1 += " ...";
+										}
+									}
+									text += "(" + elText1 + ")";
+									sb.append(BString.encodeToHtml(text));
+									sb.append(":<br/>");
+									width = Math.max(width, fm.stringWidth(text));
+									lines++;
+								}
+								for (DetectedError err: entry.getValue()) {
+									text = err.getMessage();
+									if (err.isWarning()) {
+										sb.append("<span style=\"color: #FF0000;\">");
+									}
+									else {
+										sb.append("<span style=\"color: #0000FF;\">");
+									}
+									sb.append(BString.encodeToHtml(text));
+									sb.append("</span><br/>");
+									width = Math.max(width, fm.stringWidth(text));
+									lines++;
+								}
+							}
+							sb.append("</html>");
+							lblPop.setText(sb.toString());
+							lblPop.setPreferredSize(
+									new Dimension(
+											8 + width,
+											lines * fm.getHeight()
+											)
+									);
+							poppedElement = null;
+							int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+							int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+							pop.setLocation(x+e.getX(),
+									y+e.getY()+16);
+							popVisible = true;
+							popupDone = true;
+						}
+					}
+				}
+			}
+			if (!popupDone && Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
+			// END KGU#979 2021-06-10
 			{
 				//System.out.println("=================== MOUSE MOVED (" + e.getX()+ ", " +e.getY()+ ")======================");
 				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
 				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				selEle = root.getElementByCoord(e.getX(), e.getY(), false);
 				// END KGU#25 2015-10-11
 				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
