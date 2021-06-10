@@ -127,7 +127,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Improved drawing of Analyser flags and backlink support
  *      Kay Gürtzig     2021-02-24      Enh. #410: "?" added as lexical delimiter and operator symbol
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified breakpoint behaviour
- *      Kay Gürtzig     2021-06-10      Enh. #979: New method getAnalyserMarkerBounds() to support tooltip
+ *      Kay Gürtzig     2021-06-10      Enh. #926, #979: New method getAnalyserMarkerBounds() to support tooltip
  *
  ******************************************************************************************************
  *
@@ -2440,7 +2440,7 @@ public abstract class Element {
 	}
 	// END KGU#906 2021-01-02
 	
-	// START KGU#979 2021-06-10: Enh. #979 - tooltip on the Analyser marker 
+	// START KGU#979 2021-06-10: Enh. #926, #979 - tooltip on the Analyser marker 
 	/**
 	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
 	 * Element rectangle {@code Rect}

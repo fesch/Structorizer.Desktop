@@ -232,7 +232,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
  *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
  *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
- *      Kay Gürtzig     2021-06-10      Enh. #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
+ *      Kay Gürtzig     2021-06-10      Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
  *
  ******************************************************************************************************
  *
@@ -1002,7 +1002,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (e.getSource() == this && NSDControl != null)
 		{
 			boolean popVisible = false;
-			// START KGU#979 2021-06-10: Enh. #979
+			// START KGU#979 2021-06-10: Enh. #926, #979
 			//if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
 			Element selEle = null;
 			boolean popupDone = false;
@@ -1032,7 +1032,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 											elText1 += " ...";
 										}
 									}
-									text += "(" + elText1 + ")";
+									text += " (" + elText1 + ")";
 									sb.append(BString.encodeToHtml(text));
 									sb.append(":<br/>");
 									width = Math.max(width, fm.stringWidth(text));
