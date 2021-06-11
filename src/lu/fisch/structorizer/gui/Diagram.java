@@ -232,7 +232,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
  *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
  *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
- *      Kay Gürtzig     2021-06-10      Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
+ *      Kay Gürtzig     2021-06-10/11   Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
  *
  ******************************************************************************************************
  *
@@ -1006,7 +1006,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
 			Element selEle = null;
 			boolean popupDone = false;
+			// Don't show an Analyser tooltip while the context menu (NSDControl.popup) is open
 			if (Element.E_ANALYSER && Element.E_ANALYSER_MARKER && !((Editor) NSDControl).popup.isVisible()) {
+				// Analyser tooltip has priority over comment tooltip
 				if ((selEle = root.getElementByCoord(e.getX(), e.getY(), false)) != null) {
 					// Check if the analyser marker region is hit
 					Rect rectEl = selEle.getRectOffDrawPoint();
@@ -1022,9 +1024,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							sb.append("<html>");
 							String text = "";
 							for (Entry<Element, Vector<DetectedError>> entry: errorMap.entrySet()) {
-								if (errorMap.size() > 1) {
-									text = ElementNames.getElementName(entry.getKey(), false, null);
-									StringList elText = entry.getKey().getText();
+								Element errEle = entry.getKey();
+								if (errorMap.size() > 1 || errEle != selEle) {
+									// This is a collapsed element, i.e., potentially represents several elements
+									text = ElementNames.getElementName(errEle, false, null);
+									StringList elText = errEle.getText();
 									String elText1 = "";
 									if (elText.count() > 0) {
 										elText1 = elText.get(0);
@@ -1060,6 +1064,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 											lines * fm.getHeight()
 											)
 									);
+							// Ensure that the comment tooltip isn't suppressed when the marker gets left
 							poppedElement = null;
 							int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
 							int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
@@ -1070,14 +1075,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 					}
 				}
+				else {
+					// No element hit, hence nothing else to do.
+					popupDone = true;
+				}
 			}
+			// Don't show a comment tooltip while the context menu (NSDControl.popup) is open
 			if (!popupDone && Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
 			// END KGU#979 2021-06-10
 			{
 				//System.out.println("=================== MOUSE MOVED (" + e.getX()+ ", " +e.getY()+ ")======================");
 				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
 				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				// START KGU#979 2021-06-11: Enh. #979 no need to retrieve twice
+				//Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				if (selEle == null) {
+					selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				}
+				// END KGU#979 2021-06-11
 				// END KGU#25 2015-10-11
 				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
@@ -1100,23 +1115,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						StringList comment = selEle.appendHtmlComment(sb);
 						lblPop.setText(sb.toString());
 						int maxWidth = 0;
-						int si = 0;
+						FontMetrics fm = lblPop.getFontMetrics(lblPop.getFont()); 
 						for (int i = 0; i < comment.count(); i++)
 						{
-							if (maxWidth < comment.get(i).length())
-							{
-								maxWidth = comment.get(i).length();
-								si=i;
-							}
+							String line = comment.get(i);
+							maxWidth = Math.max(maxWidth, fm.stringWidth(line));
 						}
-						int width = lblPop.getFontMetrics(lblPop.getFont()).
-								stringWidth(comment.get(si));
 						if (lblPop.getText().contains("<strong>")) {
-							width *= 1.2;
+							maxWidth *= 1.2;
 						}
 						lblPop.setPreferredSize(
 								new Dimension(
-										8 + width,
+										8 + maxWidth,
 										comment.count() * lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 										)
 								);
