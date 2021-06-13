@@ -100,6 +100,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
  *      Bob Fisch       2021-02-17      Attempt to solve issue #912 (Opening Structorizer via file doubleclick on OS X)
  *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
+ *      Kay Gürtzig     2021-06-13      Issue #944: Code adapted for Java 11 (begun)
  *
  ******************************************************************************************************
  *
@@ -1342,14 +1343,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	public void popupWelcomePane()
 	{
 		// START KGU#941 2021-02-24: Issue #944
-		String javaVersion = System.getProperty("java.version");
-		int javaMajor = 1;
-		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
-			try {
-				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
-			}
-			catch (NumberFormatException e) {}
-		}
+//		String javaVersion = System.getProperty("java.version");
+//		int javaMajor = 1;
+//		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
+//			try {
+//				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
+//			}
+//			catch (NumberFormatException e) {}
+//		}
 		// END KGU#941 2021-02-24
 		// START KGU#456 2017-11-06: Enh. #452
 		//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
@@ -1663,7 +1664,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //				}
 //			}
 //		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
-//			// FIXME Before Java 9, this can just be ignored. Not so, afterwards, though.
+//			// Before Java 9, this can just be ignored. Not so, afterwards, though.
 //			exc.printStackTrace();
 //		}
 		// END KGU 2021-02-18
