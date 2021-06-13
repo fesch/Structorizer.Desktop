@@ -22,7 +22,7 @@ set -e
 #
 ################################################################################
 
-# get dir of symblic
+# get dir of symbolic link
 DIR="$(dirname "$(readlink -f "$0")")"
 
 # check if JAVA binary is found
@@ -36,6 +36,7 @@ then
 fi
 
 # check for correct Java version
+REQVERSION=11
 JAVAVER=$(java -version 2>&1)
 
 # Try new version scheme VER.MINOR.PATCHLEVEL first
@@ -46,12 +47,12 @@ then
   VERSION=$(echo $JAVAVER | head -1 | cut -d. -f 2 )
 fi
 
-if [ $VERSION -lt 11 ]
+if [ $VERSION -lt $REQVERSION ]
 then
-  echo "Your Java Version is $VERSION, but version 11 is required. Please update."
+  echo "Your Java version is $VERSION, but version $REQVERSION is required. Please update."
   exit 1
 fi
 
 # actual start
-#echo "Your Java Version is $VERSION, all fine."
+#echo "Your Java version is $VERSION, all fine."
 java -jar "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" "$@"
