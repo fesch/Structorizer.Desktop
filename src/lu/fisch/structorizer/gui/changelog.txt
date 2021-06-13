@@ -19,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.31-05 (2021-06-11)
+Current development version 3.31-05 (2021-06-12)
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,
@@ -50,6 +50,7 @@ Current development version 3.31-05 (2021-06-11)
 - 04: Bugfix #975: StrukTeX export didn't cope well with backslashes in literals <2>
 - 04: Issue #977 workaround: Silent highlight error let the execution get locked <2>
 - 05: Enh. #926/#979: Now Analyser warning tooltip appears over marker triangles <2>
+- 05: Issue #944: Code now requires >= Java 9 (recommended: Java 11) <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>

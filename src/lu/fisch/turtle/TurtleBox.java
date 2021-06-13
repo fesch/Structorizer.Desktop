@@ -1950,7 +1950,9 @@ public class TurtleBox implements DelayableDiagramController
 
 		/**
 		 * Tries to open the online User Guide with the Arranger page in the browser
-		 * @param keyBindings TODO
+		 * @param keyBindings - if {@code true} then the Key bindings page will be opened
+		 * at the key bindings for TurtleBox, otherwise the general Turtleizer page will
+		 * be opened.
 		 */
 		public void helpTurtleizer(boolean keyBindings)
 		{

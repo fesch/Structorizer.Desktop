@@ -1680,7 +1680,8 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	// START KGU#624 2018-12-24: Enh. #655
 	/**
 	 * Tries to open the online User Guide with the Arranger page in the browser
-	 * @param keyBindings TODO
+	 * @param keyBindings - if {@code true} then the Key Bindings page with the Arranger
+	 * entries will be opened, otherwise the Arranger page.
 	 */
 	public void helpArranger(boolean keyBindings)
 	{
@@ -2065,7 +2066,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	 * If the saving of diagrams was interrupted then the saving of groups won't be
 	 * tried here.
 	 * @param initiator - the originating GUI component
-	 * @param goingToClose TODO
+	 * @param goingToClose - indicates whether the application (!) is going to close
 	 * @return true if the saving attempt had been completed, false if vetoed
 	 */
 	public boolean saveAll(Component initiator, boolean goingToClose) {
@@ -2162,7 +2163,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	 * of reference points and filenames (this way not being portable) or be a compressed archive
 	 * containing the list file as well as the referenced NSD files will be produced such that it
 	 * can be ported to a different location and extracted there.
-	 * @param initiator TODO
+	 * @param initiator - the component initiating the group saving
 	 * @param group - the {@link Group} to be saved
 	 * @return the eventually associated {@link Group} object if the saving succeeded without error,
 	 * otherwise null.

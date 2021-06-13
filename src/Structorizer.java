@@ -1256,7 +1256,7 @@ public class Structorizer
 	 * (Later there might be a change to get it from a configuration file.)
 	 * @param suitedParsers - a vector of parsers accepting the file extension
 	 * @param filename - name of the file to be parsed (for dialog purposes)
-	 * @param scnr TODO
+	 * @param scnr - the {@link Scanner} instance to be used for input
 	 * @return a {@link CodeParser} instance if there was a valid choice or null 
 	 */
 	private static CodeParser disambiguateParser(Vector<CodeParser> suitedParsers, String filename, Scanner scnr)

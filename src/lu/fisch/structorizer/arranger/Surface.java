@@ -2228,13 +2228,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				}
 				else if (leap.y < bottom) {
 					// START KGU#697 2019-03-26: Bugfix - leap must be cloned!
-					//lastLeap = leap;	// FIXME! clone!
+					//lastLeap = leap;
 					lastLeap = (Point)leap.clone();
 					// END KGU#697 2019-03-26
 					leap.y = bottom;
 				}
 				else {
-					lastLeap = leap;	// FIXME! clone?
+					lastLeap = leap;
 				}
 				nextLeap.y = lastLeap.y;
 			}
@@ -3152,7 +3152,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
 	/**
 	 * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty
-	 * @param initiator TODO
+	 * @param initiator - the component initiating this action
 	 * @return Whether saving is complete (or confirmed though being incomplete) 
 	 */
 	// START KGU#177 2016-04-14: Enh. #158 - report all diagram (file) names without saving possibility
@@ -3318,7 +3318,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Removes all diagrams from the Arranger surface after having asked for changes to
 	 * be saved.
-	 * @param initiator TODO
+	 * @param initiator - the component initiating this action
 	 * @return whether this action was complete.
 	 */
 	public boolean removeAllDiagrams(Component initiator)
@@ -4604,8 +4604,6 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
-		// TODO Auto-generated method stub
-
 	}
 
 	// START KGU#305 2016-12-12: Enh. #305
@@ -5281,10 +5279,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * or moved to thwe default group.<br/>
 	 * If {@code group} gets empty then the user may interactively decide whether it is to be deleted.
 	 * @param group - the {@link Group} from which {@code root} is to be detached.
-	 * @param root
-	 * @param removeOrphaned
-	 * @param initiator TODO
-	 * @return
+	 * @param root - the {@link Root} to be detached
+	 * @param removeOrphaned - whether automatically to remove diagrams not belonging to any other group
+	 * @param initiator - the component initiating this action or {@code null}
+	 * @return whether the removal had an effect
 	 */
 	public boolean removeDiagramFromGroup(Group group, Root root, boolean removeOrphaned, Component initiator) {
 		boolean done = false;

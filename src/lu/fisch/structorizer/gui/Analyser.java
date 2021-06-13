@@ -32,7 +32,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2008.04.18      First Issue
+ *      Bob Fisch       2008-04-18      First Issue
  *
  ******************************************************************************************************
  *

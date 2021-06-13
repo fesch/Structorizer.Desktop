@@ -54,12 +54,14 @@ Copyright © 2003-2007 Apple, Inc., All Rights Reserved
 */
  
 package lu.fisch.structorizer.gui;
+
+// FIXME: Is this class still needed for Java >= 9? And what replacement may be required?
  
 import java.awt.Image;
 import java.lang.reflect.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import static lu.fisch.structorizer.gui.Mainform.logger;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
+//import static lu.fisch.structorizer.gui.Mainform.logger;
 public class OSXAdapter implements InvocationHandler {
     
     private static final boolean silent = false;

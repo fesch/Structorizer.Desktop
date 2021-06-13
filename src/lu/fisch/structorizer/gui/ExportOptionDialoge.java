@@ -646,14 +646,7 @@ public class ExportOptionDialoge extends LangDialog
     }
     // END KGU#416 2017-06-20
 
-//    private void licenseInfoCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_licenseInfoCheckBoxActionPerformed
-//    {//GEN-HEADEREND:event_licenseInfoCheckBoxActionPerformed
-//        // TODO add your handling code here:
-//    }//GEN-LAST:event_licenseInfoCheckBoxActionPerformed
-
     protected void licenseInfoCheckBoxActionPerformed(ActionEvent evt) {
-        // TODO Auto-generated method stub
-        
     }
 
     private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
@@ -663,7 +656,6 @@ public class ExportOptionDialoge extends LangDialog
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void bracesCheckBoxActionPerformed(ActionEvent evt) {//GEN-FIRST:event_bracesCheckBoxActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_bracesCheckBoxActionPerformed
 
     // START KGU#171 2016-04-01: Enh. #144
@@ -674,7 +666,6 @@ public class ExportOptionDialoge extends LangDialog
     
     // START KGU#178 2016-07-20: Enh. #160
     private void subroutinesCheckBoxActionPerformed(ActionEvent evt) {
-        // TODO add your handling code here:    	
     }
     // END KGU#178 2016-07-20
     

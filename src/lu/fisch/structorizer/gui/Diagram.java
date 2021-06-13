@@ -252,6 +252,7 @@ package lu.fisch.structorizer.gui;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.*;
 import java.awt.datatransfer.*;
 
@@ -2117,10 +2118,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			if (pos >= 0) {
 				try {
-					// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
-					Rectangle viewRect = codePreview.modelToView(pos);
+					Rectangle2D viewRect = codePreview.modelToView2D(pos);
 					// Scroll to make the rectangle visible
-					codePreview.scrollRectToVisible(viewRect);
+					codePreview.scrollRectToVisible(viewRect.getBounds());
 				}
 				catch (BadLocationException e) {
 					// FIXME DEBUG (should not occur)
@@ -2169,10 +2169,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						// END KGU#978 2021-06-09
 						if (scrollTo) {
-							// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
-							Rectangle viewRect = codePreview.modelToView(pos);
+							Rectangle2D viewRect = codePreview.modelToView2D(pos);
 							// Scroll to make the rectangle visible
-							codePreview.scrollRectToVisible(viewRect);
+							codePreview.scrollRectToVisible(viewRect.getBounds());
 						}
 					}
 				} catch (BadLocationException e) {
@@ -7837,7 +7836,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				highlightCodeForSelection();
 			}
 		});
