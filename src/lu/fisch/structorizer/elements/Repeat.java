@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2021-09-17      Enh. #979: Correct detection of Analyser marker bounds for popup
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,7 @@ public class Repeat extends Element implements ILoop {
 	//private Rect r = new Rect();
 	// END KGU#136 2016-02-27
 	// START KGU#136 2016-03-01: Bugfix #97
+	/** Represents the body rectangle distance from element left and bottom(!) */
 	private Point pt0Body = new Point(0,0);
 	// END KGU#136 2016-03-01
 
@@ -461,4 +463,22 @@ public class Repeat extends Element implements ILoop {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+	
+	// START KGU#979 2021-09-17: Enh. #926, #979 - tooltip on the Analyser marker 
+	/**
+	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
+	 * Element rectangle {@code Rect}
+	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
+	 * @return the "driehoekje" bounds with respect to {@code _rect}
+	 */
+	@Override
+	public Rect getAnalyserMarkerBounds(Rect _rect, boolean _outer)
+	{
+		if (_outer) {
+			_rect = _rect.copy();
+			_rect.top = _rect.bottom - pt0Body.y;
+		}
+		return super.getAnalyserMarkerBounds(_rect, _outer);
+	}
+	// END KGU#979 2021-06-10
 }

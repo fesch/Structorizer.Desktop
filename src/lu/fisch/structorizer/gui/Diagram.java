@@ -1013,7 +1013,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if ((selEle = root.getElementByCoord(e.getX(), e.getY(), false)) != null) {
 					// Check if the analyser marker region is hit
 					Rect rectEl = selEle.getRectOffDrawPoint();
-					Rect rectMk = selEle.getAnalyserMarkerBounds(rectEl);
+					Rect rectMk = selEle.getAnalyserMarkerBounds(rectEl, true);
 					if (rectMk.contains(e.getPoint())) {
 						// Now check whether the element has associated warnings
 						HashMap<Element, Vector<DetectedError>> errorMap = selEle.getRelatedErrors(true);

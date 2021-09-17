@@ -260,8 +260,7 @@ public class ParserPreferences extends LangDialog {
 		// END KGU#657 2019-02-17
 
 		//======== this ========
-		setModal(true);
-		setResizable(false);
+		setResizable(false);	// This also suppresses the dialog icon holding the size menu
 		setTitle("Parser Preferences");
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());

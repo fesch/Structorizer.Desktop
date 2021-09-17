@@ -218,7 +218,7 @@ public class AnalyserPreferences extends LangDialog {
 
 		//======== this ========
 		setTitle("Analyser preferences");
-		setResizable(false);
+		setResizable(false);	// This also suppresses the dialog icon holding the size menu
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 

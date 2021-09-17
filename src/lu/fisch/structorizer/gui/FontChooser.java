@@ -161,7 +161,7 @@ public class FontChooser extends LangDialog
 
 		//======== fontChooser ========
 		{
-			this.setResizable(false);
+			this.setResizable(false);	// This also suppresses the dialog icon holding the size menu
 			this.setTitle("Font");
 			Container fontChooserContentPane = getContentPane();
 			fontChooserContentPane.setLayout(new BorderLayout());
