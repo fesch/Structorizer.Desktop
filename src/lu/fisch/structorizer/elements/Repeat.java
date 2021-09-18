@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2021-09-17      Enh. #979: Correct detection of Analyser marker bounds for popup
  *
  ******************************************************************************************************
  *
@@ -461,4 +462,26 @@ public class Repeat extends Element implements ILoop {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+
+	// START KGU#979 2021-09-17: Enh. #926, #979 - tooltip on the Analyser marker 
+	/**
+	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
+	 * Element rectangle {@code Rect}
+	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
+	 * @param _outer - whether {@code _rect} is the total bounds or just the text field's bounds
+	 * @return the "driehoekje" bounds with respect to {@code _rect}
+	 */
+	@Override
+	public Rect getAnalyserMarkerBounds(Rect _rect, boolean _outer)
+	{
+		// START KGU#979 2021-09-18: Bugfix #979 Bias in case of collapsed state
+		//if (_outer) {
+		if (_outer && !this.isCollapsed(false)) {
+		// END KGU#979 2021-09-18
+			_rect = _rect.copy();
+			_rect.top = _rect.bottom - pt0Body.y;
+		}
+		return super.getAnalyserMarkerBounds(_rect, _outer);
+	}
+	// END KGU#979 2021-06-17
 }
