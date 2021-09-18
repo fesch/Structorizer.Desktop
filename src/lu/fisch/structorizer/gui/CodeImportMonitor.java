@@ -31,7 +31,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2018.06.30      First Issue
+ *      Kay Gürtzig     2018-06-30      First Issue
  *
  ******************************************************************************************************
  *

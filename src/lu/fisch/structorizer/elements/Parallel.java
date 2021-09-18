@@ -331,21 +331,21 @@ public class Parallel extends Element
 
             if (qs.size() != 0)
             {
-            	for (int i = 0; i < nTasks; i++)
-            	{
-            		// START KGU#136 2016-03-01: Bugfix #97
-            		x0Branches.addElement(fullWidth);
-            		// END KGU#136 2016-03-01
-            		Rect rtt = qs.get(i).prepareDraw(_canvas);
-            		// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
-            		//fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
-            		fullWidth += Math.max(rtt.right, E_PADDING / 2);
-            		// END KGU#151 2016-03-01
-            		if (maxHeight < rtt.bottom)
-            		{
-            			maxHeight = rtt.bottom;
-            		}
-            	}
+                for (int i = 0; i < nTasks; i++)
+                {
+                    // START KGU#136 2016-03-01: Bugfix #97
+                    x0Branches.addElement(fullWidth);
+                    // END KGU#136 2016-03-01
+                    Rect rtt = qs.get(i).prepareDraw(_canvas);
+                    // START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+                    //fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
+                    fullWidth += Math.max(rtt.right, E_PADDING / 2);
+                    // END KGU#151 2016-03-01
+                    if (maxHeight < rtt.bottom)
+                    {
+                        maxHeight = rtt.bottom;
+                    }
+                }
             }
 
             rect0.right = Math.max(rect0.right, fullWidth)+1;
@@ -510,71 +510,71 @@ public class Parallel extends Element
 	// END KGU 2016-07-30
 
 	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#getIcon()
-     */
-    @Override
-    public ImageIcon getIcon()
-    {
-        return IconLoader.getIcon(91);
-    }
-    // END KGU#122 2016-01-03
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getIcon()
+	 */
+	@Override
+	public ImageIcon getIcon()
+	{
+		return IconLoader.getIcon(91);
+	}
+	// END KGU#122 2016-01-03
 
-    // START KGU#535 2018-06-28
-    /**
-     * @return the (somewhat smaller) element-type-specific icon image intended to be used in
-     * the {@link FindAndReplace} dialog.
-     * @see #getIcon()
-     */
-    @Override
-    public ImageIcon getMiniIcon()
-    {
-        return IconLoader.getIcon(48);
-    }
-    // END KGU 2018-06-28
+	// START KGU#535 2018-06-28
+	/**
+	 * @return the (somewhat smaller) element-type-specific icon image intended to be used in
+	 * the {@link FindAndReplace} dialog.
+	 * @see #getIcon()
+	 */
+	@Override
+	public ImageIcon getMiniIcon()
+	{
+		return IconLoader.getIcon(48);
+	}
+	// END KGU 2018-06-28
 
-    // START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-    @Override
-    public Element getElementByCoord(int _x, int _y, boolean _forSelection)
-    {
-            Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-    		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
-        	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
-    		//if (!this.isCollapsed())
-    		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
-    		// START KGU#207 2016-07-21
-    		{
-    		// END KGU#121 2016-01-03
-    			Element selCh = null;
-    			Element pre = null;
-    			for(int i = 0; i < qs.size(); i++)
-    			{
-    				// START KGU#136 2016-03-01: Bugfix #97
-    				//Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
-    				if (i < x0Branches.size()) {
-    					int xOff = x0Branches.get(i);
-        				pre = qs.get(i).getElementByCoord(_x - xOff, _y - y0Branches, _forSelection);
-    				}
-    				// END KGU#136 2016-03-01
-    				if (pre != null)
-    				{
-    					selCh = pre;
-    				}
-    			}
+	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
+	{
+		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
+		// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		//if (!this.isCollapsed())
+		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
+		// END KGU#207 2016-07-21
+		{
+		// END KGU#121 2016-01-03
+			Element selCh = null;
+			Element pre = null;
+			for(int i = 0; i < qs.size(); i++)
+			{
+				// START KGU#136 2016-03-01: Bugfix #97
+				//Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
+				if (i < x0Branches.size()) {
+					int xOff = x0Branches.get(i);
+					pre = qs.get(i).getElementByCoord(_x - xOff, _y - y0Branches, _forSelection);
+				}
+				// END KGU#136 2016-03-01
+				if (pre != null)
+				{
+					selCh = pre;
+				}
+			}
 
-    			if (selCh != null)
-    			{
-    				if (_forSelection) selected = false;
-    				selMe = selCh;
-    			}
-    		// START KGU#121 2016-01-03: Bugfix #87 (continued)
-    		}
-    		// END KGU#121 2016-01-03
+			if (selCh != null)
+			{
+				if (_forSelection) selected = false;
+				selMe = selCh;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
+		}
+		// END KGU#121 2016-01-03
 
-            return selMe;
-    }
-    // END KGU 2015-10-11
-    
+		return selMe;
+	}
+	// END KGU 2015-10-11
+
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
@@ -589,20 +589,20 @@ public class Parallel extends Element
 		return sel;
 	}
 	// END KGU#183 2016-04-24
-	    
-    public Element copy() // Problem here???
-    {
-            Parallel ele = new Parallel(this.getText().getText());
-            copyDetails(ele, false);
-            ele.qs.clear();
-            for(int i=0; i<qs.size(); i++)
-            {
-                    Subqueue sq = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
-                    sq.parent = ele;
-                    ele.qs.add(sq);
-            }
-            return ele;
-    }
+
+	public Element copy() // Problem here???
+	{
+		Parallel ele = new Parallel(this.getText().getText());
+		copyDetails(ele, false);
+		ele.qs.clear();
+		for(int i=0; i<qs.size(); i++)
+		{
+			Subqueue sq = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
+			sq.parent = ele;
+			ele.qs.add(sq);
+		}
+		return ele;
+	}
 
 	// START KGU#119 2016-01-02: Bugfix #78
 	/**
@@ -646,13 +646,13 @@ public class Parallel extends Element
 	public boolean isTestCovered(boolean _deeply)
 	{
 		boolean covered = true;
-    	if (qs!= null)
-    	{
-    		for (int i = 0; covered && i < qs.size(); i++)
-    		{
-    			covered = qs.get(i).isTestCovered(_deeply);
-    		}
-    	}		
+		if (qs!= null)
+		{
+			for (int i = 0; covered && i < qs.size(); i++)
+			{
+				covered = qs.get(i).isTestCovered(_deeply);
+			}
+		}		
 		return covered;
 	}
 	// END KGU#117 2016-03-06

@@ -32,17 +32,17 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date            Description
  *      ------			----			-----------
- *      Kay Gürtzig     2016.04.08      First Issue (implementing enhancement request #137 / KGU#160)
- *      Kay Gürtzig     2016.04.12      Functionality accomplished
- *      Kay Gürtzig     2016.04.25      Scrolling to last line ensured
- *      Kay Gürtzig     2016.04.26      Converted to JTextPane in order to allow styled output
- *      Kay Gürtzig     2016.09.25      Bugfix #251 averting Nimbus disrespect of panel settings 
- *      Kay Gürtzig     2016.10.11      Enh. #268: Inheritance changed, font selecting opportunities added
- *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
- *      Kay Gürtzig     2016.11.22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
- *      Kay Gürtzig     2018.03.13      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal)
- *      Kay Gürtzig     2018.08.03      Enh. #577: New checkbox menu items "menuLogMeta" and "menuLogCalls"
- *      Kay Gürtzig     2018.08.09      Issue #577: New menu item and accelerator for saving the log
+ *      Kay Gürtzig     2016-04-08      First Issue (implementing enhancement request #137 / KGU#160)
+ *      Kay Gürtzig     2016-04-12      Functionality accomplished
+ *      Kay Gürtzig     2016-04-25      Scrolling to last line ensured
+ *      Kay Gürtzig     2016-04-26      Converted to JTextPane in order to allow styled output
+ *      Kay Gürtzig     2016-09-25      Bugfix #251 averting Nimbus disrespect of panel settings 
+ *      Kay Gürtzig     2016-10-11      Enh. #268: Inheritance changed, font selecting opportunities added
+ *      Kay Gürtzig     2016-10-17      Issue #268: Font setting source and target corrected (doc's default style)
+ *      Kay Gürtzig     2016-11-22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
+ *      Kay Gürtzig     2018-03-13      Enh. #519: Font resizing via ctrl + mouse wheel (newboerg's proposal)
+ *      Kay Gürtzig     2018-08-03      Enh. #577: New checkbox menu items "menuLogMeta" and "menuLogCalls"
+ *      Kay Gürtzig     2018-08-09      Issue #577: New menu item and accelerator for saving the log
  *
  ******************************************************************************************************
  *
@@ -166,7 +166,7 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 			public void actionPerformed(ActionEvent arg0) {
 				save();
 			}});
-		menuContentSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuContentSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 		// END KGU#569 2018-08-03
 
 		JMenuBar menuBar = new JMenuBar();

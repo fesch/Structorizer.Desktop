@@ -111,6 +111,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -528,9 +530,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			txtCode.setBackground(CODE_PREVIEW_BACKGROUND);
 			// END KGU#964 2021-03-09
 			txtCode.getDocument().insertString(0, "", null);
-		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (BadLocationException ex) {
+			Logger.getLogger(Editor.class.getName()).log(Level.CONFIG, "Trouble on adapting Arranger Index to theme", ex);
 		}
 		txtCode.setEditable(false);
 		txtCode.addKeyListener(new KeyListener() {
@@ -1017,9 +1018,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	 * Sets up the pop-up menus with all submenus and shortcuts and actions
 	 */
 	private void createPopupMenu() {
-		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
 		// OS-dependent key mask for menu shortcuts
-		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
 		popup.add(popupCut);
 		popupCut.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.cutNSD(); doButtons(); } } );
@@ -1261,7 +1261,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		popupCode.addSeparator();
 		
-		popupCodeExport.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())));
+		popupCodeExport.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())));
 		popupCodeExport.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {

@@ -100,6 +100,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-18      Enh. #905: Temporary popup dialog on startup to explain the triangles
  *      Bob Fisch       2021-02-17      Attempt to solve issue #912 (Opening Structorizer via file doubleclick on OS X)
  *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
+ *      Kay Gürtzig     2021-06-13      Issue #944: Code adapted for Java 11 (begun)
  *
  ******************************************************************************************************
  *
@@ -125,18 +126,18 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
-import java.lang.reflect.InvocationHandler;
+//import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+//import java.lang.reflect.Method;
+//import java.lang.reflect.Proxy;
 import java.util.LinkedList;
-import java.util.List;
+//import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.*;
-//import java.awt.desktop.OpenFilesEvent;
-//import java.awt.desktop.OpenFilesHandler;
+import java.awt.desktop.OpenFilesEvent;
+import java.awt.desktop.OpenFilesHandler;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -1342,14 +1343,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	public void popupWelcomePane()
 	{
 		// START KGU#941 2021-02-24: Issue #944
-		String javaVersion = System.getProperty("java.version");
-		int javaMajor = 1;
-		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
-			try {
-				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
-			}
-			catch (NumberFormatException e) {}
-		}
+//		String javaVersion = System.getProperty("java.version");
+//		int javaMajor = 1;
+//		if (javaVersion != null && javaVersion.indexOf(".") > 0) {
+//			try {
+//				javaMajor = Integer.parseInt(javaVersion.substring(0, javaVersion.indexOf(".")));
+//			}
+//			catch (NumberFormatException e) {}
+//		}
 		// END KGU#941 2021-02-24
 		// START KGU#456 2017-11-06: Enh. #452
 		//if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
@@ -1445,22 +1446,22 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		}
 		// END KGU#906 2021-01-18
 		// START KGU#941 2021-02-24: Issue #944: Temporary update hint
-		else if (javaMajor < 11
-				&& (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo(Element.E_VERSION) < 0)
-				&& !System.getProperty("os.name").toLowerCase().startsWith("mac os x")) {
-			if (menu != null) {
-				String message = Menu.msgJavaUpgradeHint_3_30_18.getText();
-				if (Ini.getInstallDirectory().getAbsolutePath().endsWith("webstart")) {
-					message += Menu.msgJavaUpgradeHint_3_30_18a.getText();
-				}
-				JOptionPane.showMessageDialog(this,
-						message,
-						Element.E_VERSION,
-						JOptionPane.INFORMATION_MESSAGE,
-						IconLoader.getIconImage("078_java.png", 2.0));
-				this.suppressUpdateHint = Element.E_VERSION;
-			}
-		}
+//		else if (javaMajor < 11
+//				&& (this.suppressUpdateHint.isEmpty() || this.suppressUpdateHint.compareTo(Element.E_VERSION) < 0)
+//				&& !System.getProperty("os.name").toLowerCase().startsWith("mac os x")) {
+//			if (menu != null) {
+//				String message = Menu.msgJavaUpgradeHint_3_30_18.getText();
+//				if (Ini.getInstallDirectory().getAbsolutePath().endsWith("webstart")) {
+//					message += Menu.msgJavaUpgradeHint_3_30_18a.getText();
+//				}
+//				JOptionPane.showMessageDialog(this,
+//						message,
+//						Element.E_VERSION,
+//						JOptionPane.INFORMATION_MESSAGE,
+//						IconLoader.getIconImage("078_java.png", 2.0));
+//				this.suppressUpdateHint = Element.E_VERSION;
+//			}
+//		}
 		// END KGU#941 2021-02-24
 		else if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
 		// END KGU#456 2017-11-06
@@ -1606,6 +1607,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			 * event of the double-clicked file that led to launching Structorizer might slip through!
 			 */
 			OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadFile", new Class[]{String.class}));
+			// FIXME: For which of the remaining parts do we need some replacement with Java 11?
 			OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
 			OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
 			OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
@@ -1619,51 +1621,52 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		// START FISRO 2021-02-17: Issue #912
 		// this is the new way (>JDK8) on OSX
 		// START KGU 2021-02-18: Bugfix #940 Methods/classes not available before Java 9 - try via reflection
-//		Desktop.getDesktop().setOpenFileHandler(new OpenFilesHandler() {
-//			@Override
-//			public void openFiles(OpenFilesEvent e) {
-//				for (File file: e.getFiles()) {
-//					loadFile(file.getAbsolutePath());
-//				}
-//			}
-//		});
-		try {
-			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
-			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
-			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
-			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
-			Method methGF = evClass.getMethod("getFiles", new Class[0]);
-			if (methSOFH != null && methOF != null) {
-				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
-						new Class[] {fhInterface}, new InvocationHandler() {
-							@Override
-							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-								if (method.getDeclaringClass() == fhInterface
-										&& method.equals(methOF)
-										&& args.length == 1
-										&& args[0].getClass() == evClass) {
-									Object files = methGF.invoke(args[0], new Object[0]);
-									if (files instanceof List<?>) {
-										for (File file: (List<File>)files) {
-											loadFile(file.getAbsolutePath());
-										}
-									}
-									else {
-										logger.warning("Failed to get the file list from assumend OpenFilesEvent");
-									}
-								}
-								return null;
-							}});
-				try {
-					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
-				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
-					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
+		Desktop.getDesktop().setOpenFileHandler(new OpenFilesHandler() {
+			@Override
+			public void openFiles(OpenFilesEvent e) {
+				for (File file: e.getFiles()) {
+					loadFile(file.getAbsolutePath());
 				}
 			}
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
-			// FIXME Before Java 9, this can just be ignored. Not so, afterwards, though.
-			exc.printStackTrace();
-		}
+		});
+		// This workaround for Java versions < 9 should be obsolete by now and and be removed
+//		try {
+//			Class<?> fhInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
+//			Method methSOFH = Desktop.class.getMethod("setOpenFileHandler", new Class[] {fhInterface});
+//			Class<?> evClass = Class.forName("java.awt.desktop.OpenFilesEvent");
+//			Method methOF = fhInterface.getMethod("openFiles", new Class[] {evClass});
+//			Method methGF = evClass.getMethod("getFiles", new Class[0]);
+//			if (methSOFH != null && methOF != null) {
+//				Object ofhProxy = Proxy.newProxyInstance(fhInterface.getClassLoader(),
+//						new Class[] {fhInterface}, new InvocationHandler() {
+//							@Override
+//							public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+//								if (method.getDeclaringClass() == fhInterface
+//										&& method.equals(methOF)
+//										&& args.length == 1
+//										&& args[0].getClass() == evClass) {
+//									Object files = methGF.invoke(args[0], new Object[0]);
+//									if (files instanceof List<?>) {
+//										for (File file: (List<File>)files) {
+//											loadFile(file.getAbsolutePath());
+//										}
+//									}
+//									else {
+//										logger.warning("Failed to get the file list from assumed OpenFilesEvent");
+//									}
+//								}
+//								return null;
+//							}});
+//				try {
+//					methSOFH.invoke(Desktop.getDesktop(), ofhProxy);
+//				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException exc) {
+//					logger.warning("Failed to set OpenFileHandler (Java 9 +)");
+//				}
+//			}
+//		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException exc) {
+//			// Before Java 9, this can just be ignored. Not so, afterwards, though.
+//			exc.printStackTrace();
+//		}
 		// END KGU 2021-02-18
 		// END FISRO 2021-02-17
 	}

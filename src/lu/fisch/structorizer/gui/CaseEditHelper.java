@@ -46,6 +46,8 @@ package lu.fisch.structorizer.gui;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import bsh.EvalError;
 import bsh.Interpreter;
@@ -117,8 +119,10 @@ public class CaseEditHelper {
 							enumValues.put(constName, (Integer)val);
 						}
 					} catch (EvalError exc) {
-						// TODO Auto-generated catch block
-						exc.printStackTrace();
+						Logger.getLogger(this.getClass().getName()).log(
+								Level.CONFIG,
+								"Trouble on retrieving enumerator info for \"" + constName + "\"",
+								exc);
 					}
 				}
 			}

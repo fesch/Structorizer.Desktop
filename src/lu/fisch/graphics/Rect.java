@@ -34,12 +34,13 @@ import java.awt.Rectangle;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-09      First Issue
  *      Kay Gürtzig     2015-11-24      Conversions to and from java.awt.Rectangle
  *      Kay Gürtzig     2018-02-17      Method to generate a scaled copy added (to facilitate enh. #512)
  *      Kay Gürtzig     2019-03-11      2 methods add(...) added to translate a given Rect instance
+ *      Kay Gürtzig     2021-06-10      Enh. #979: Method contains(Point) added
  *
  ******************************************************************************************************
  *
@@ -147,6 +148,19 @@ public class Rect{
 	{
 		return new Rectangle(left, top, right-left, bottom - top);
 	}
+	
+	// START KGU#979 2021-06-10: New convenience method for enh. #979
+	/**
+	 * Check whether the given point {@code pt} lies within or on the border of
+	 * this rectangle
+	 * @param pt - the point to check
+	 * @return {@code true} iff {@code pt} is contained by {@code this}
+	 */
+	public boolean contains(Point pt)
+	{
+		return left <= pt.x && right >= pt.x && top <= pt.y && bottom >= pt.y;
+	}
+	// END KGU#979 2021-06-10
 
 	@Override
 	public String toString()
