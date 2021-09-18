@@ -233,6 +233,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
  *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
  *      Kay Gürtzig     2021-06-10/11   Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
+ *      Kay Gürtzig     2021-09-18      Bugfix #983: Summoning a subroutine to an editor unduly turned it 'changed'
  *
  ******************************************************************************************************
  *
@@ -5064,11 +5065,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #canEditSub()
 	 */
 	public void editSubNSD() {
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		boolean isNew = false;
+		// END KGU#981 2021-09-18
 		// START KGU#770 2021-01-27: Enh. #917
 		Root referredRoot = null;
 		String targetGroupName = null;	// This will be relevant for a new diagram
 		Collection<Group> myGroups = null;
 		// END KGU#770 2021-01-27
+		
+		// 1. Take care of subroutine calls
 		if (selected instanceof Call && this.canEditSub()) {
 			Call call = (Call)selected;
 			Function called = call.getCalledRoutine();
@@ -5139,9 +5145,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				referredRoot.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
 				referredRoot.setProgram(false);
+				// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+				isNew = true;
+				// END KGU#981 2021-09-18
 			}
 		// START KGU#770 2021-01-27: Enh. #917
 		}
+		// 2. Take care of referenced includable diagrams
 		else if (selected instanceof Root && this.canEditSub()) {
 			StringList includeNames = ((Root)selected).includeList;
 			if (root.isInclude() && includeNames.contains(root.getMethodName())) {
@@ -5188,10 +5198,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				referredRoot = new Root();
 				referredRoot.setText(inclName);
 				referredRoot.setInclude();
+				// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+				isNew = true;
+				// END KGU#981 2021-09-18
 			}
 		}
+		
+		// 3. Now care about group context
 		myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
-		if (referredRoot != null) {
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		//if (referredRoot != null) {
+		if (isNew) {
+		// END KGU#981 2021-09-18
 			referredRoot.setChanged(false);
 			// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
 			if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
@@ -5210,79 +5228,84 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				targetGroupName = myGroups.iterator().next().getName();
 			}
 		// END KGU#770 2021-01-27
-			// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
-			//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
-			if (
-					subForm == null ||
-					subForm.diagram == null ||
-					subForm.diagram.getRoot() != referredRoot &&
-					(!subForm.diagram.saveNSD(true) || !subForm.setRoot(referredRoot))
-					)
-			{
-			// END KGU#744 2019-10-05
-				subForm = new Mainform(false);
-				subForm.addWindowListener(new WindowListener() {
-					@Override
-					public void windowOpened(WindowEvent e) {}
-					@Override
-					public void windowClosing(WindowEvent e) {
-						// A dead Mainform causes enormous trouble if we try to work with it.
-						if (subForm == e.getSource()) {
-							subForm = null;
-						}
-					}
-					@Override
-					public void windowClosed(WindowEvent e) {
-						((Mainform)(e.getSource())).removeWindowListener(this);
-						// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
-						if (subForm == e.getSource()) {
-							subForm = null;
-						}
-						// END KGU#744 2019-10-05
-					}
-					@Override
-					public void windowIconified(WindowEvent e) {}
-					@Override
-					public void windowDeiconified(WindowEvent e) {}
-					@Override
-					public void windowActivated(WindowEvent e) {}
-					@Override
-					public void windowDeactivated(WindowEvent e) {}
-					
-				});
-			}
-			if (subForm.diagram.getRoot() != referredRoot) {
-				subForm.setRoot(referredRoot);
-			}
-			// If it is a new root then add it to Arranger
-			if (targetGroupName != null) {
-				Arranger.getInstance().addToPool(referredRoot, subForm, targetGroupName);
-			}
-			// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be added to Arranger
-			else {
-				Arranger.getInstance().addToPool(referredRoot, subForm);
-			}
-			Arranger.getInstance().setVisible(true);
-			// END KGU#744 2019-10-05
-			if (!subForm.isVisible()) {
-				subForm.setVisible(true);
-			}
-			// START KGU#744 2019-10-05: Bugfix #758
-			int state = subForm.getExtendedState();
-			if ((state & Frame.ICONIFIED) != 0) {
-				subForm.setExtendedState(state & ~Frame.ICONIFIED);
-			}
-			// END KGU#744 2019-10-05
-			Point loc = NSDControl.getFrame().getLocation();
-			Point locSub = subForm.getLocation();
-			if (loc.equals(locSub)) {
-				subForm.setLocation(loc.x + 20, loc.y + 20);
-			}
-			// START KGU#770 2021-01-27: Enh. #689, #917
-			// We must of course give the focus to the opened editor
-			subForm.requestFocus();
-			// END KGU#770 2021-01-27
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
 		}
+		// END KGU#981 2021-09-18
+		// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
+		//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+		if (
+				subForm == null ||
+				subForm.diagram == null ||
+				subForm.diagram.getRoot() != referredRoot &&
+				(!subForm.diagram.saveNSD(true) || !subForm.setRoot(referredRoot))
+				)
+		{
+		// END KGU#744 2019-10-05
+			subForm = new Mainform(false);
+			subForm.addWindowListener(new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {}
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// A dead Mainform causes enormous trouble if we try to work with it.
+					if (subForm == e.getSource()) {
+						subForm = null;
+					}
+				}
+				@Override
+				public void windowClosed(WindowEvent e) {
+					((Mainform)(e.getSource())).removeWindowListener(this);
+					// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
+					if (subForm == e.getSource()) {
+						subForm = null;
+					}
+					// END KGU#744 2019-10-05
+				}
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				@Override
+				public void windowActivated(WindowEvent e) {}
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+
+			});
+		}
+		if (subForm.diagram.getRoot() != referredRoot) {
+			subForm.setRoot(referredRoot);
+		}
+		// Associate the arranged diagram to the subForm
+		if (targetGroupName != null) {
+			Arranger.getInstance().addToPool(referredRoot, subForm, targetGroupName);
+		}
+		// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be associated
+		else {
+			Arranger.getInstance().addToPool(referredRoot, subForm);
+		}
+		Arranger.getInstance().setVisible(true);
+		// END KGU#744 2019-10-05
+		if (!subForm.isVisible()) {
+			subForm.setVisible(true);
+		}
+		// START KGU#744 2019-10-05: Bugfix #758
+		int state = subForm.getExtendedState();
+		if ((state & Frame.ICONIFIED) != 0) {
+			subForm.setExtendedState(state & ~Frame.ICONIFIED);
+		}
+		// END KGU#744 2019-10-05
+		Point loc = NSDControl.getFrame().getLocation();
+		Point locSub = subForm.getLocation();
+		if (loc.equals(locSub)) {
+			subForm.setLocation(loc.x + 20, loc.y + 20);
+		}
+		// START KGU#770 2021-01-27: Enh. #689, #917
+		// We must of course give the focus to the opened editor
+		subForm.requestFocus();
+		// END KGU#770 2021-01-27
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		//}
+		// END KGU#981 2021-09-18
 	}
 		
 	/**
