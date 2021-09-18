@@ -2445,7 +2445,7 @@ public abstract class Element {
 	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
 	 * Element rectangle {@code Rect}
 	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
-	 * @param _outer - whether _rect is the total bound or just the text field's bound
+	 * @param _outer - whether {@code _rect} is the total bounds or just the text field's bounds
 	 * @return the "driehoekje" bounds with respect to {@code _rect}
 	 */
 	public Rect getAnalyserMarkerBounds(Rect _rect, boolean _outer)
