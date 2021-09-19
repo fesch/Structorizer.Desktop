@@ -295,7 +295,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 11700000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.31-05";
+	public static final String E_VERSION = "3.32";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2445,7 +2445,7 @@ public abstract class Element {
 	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
 	 * Element rectangle {@code Rect}
 	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
-	 * @param _outer - whether _rect is the total bound or just the text field's bound
+	 * @param _outer - whether {@code _rect} is the total bounds or just the text field's bounds
 	 * @return the "driehoekje" bounds with respect to {@code _rect}
 	 */
 	public Rect getAnalyserMarkerBounds(Rect _rect, boolean _outer)
