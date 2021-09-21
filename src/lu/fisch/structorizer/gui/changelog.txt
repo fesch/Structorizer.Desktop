@@ -19,8 +19,8 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.32-01 (2021-09-20)
-- 01:
+Current development version 3.32-01 (2021-09-21)
+- 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>

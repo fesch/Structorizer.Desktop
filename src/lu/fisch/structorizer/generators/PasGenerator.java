@@ -93,6 +93,7 @@ package lu.fisch.structorizer.generators;
  *                                          corrected
  *      Kay Gürtzig         2020-04-22      Enh. #855: New configurable default array size considered
  *      Kay Gürtzig         2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
+ *      Kay Gürtzig         2021-09-21      Bugfix #987: Duplicate comments for subroutines, inconsistent multi-line comments
  *
  ******************************************************************************************************
  *
@@ -338,7 +339,10 @@ public class PasGenerator extends Generator
 		else if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
 			return this.insertComment(_sl.get(0), _indent, _atLine);
 		}
-		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight(), _atLine);
+		// START KGU#983 2021-09-21: Bugfix #987 - this was inconsistent with appendComment()
+		//return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight(), _atLine);
+		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "  ", this.commentSymbolRight(), _atLine);
+		// END KGU#983 2021-09-21
 	}
 	// END KGU#815 2020-03-26
 
@@ -1582,11 +1586,13 @@ public class PasGenerator extends Generator
 				this.appendGeneratorIncludes(_indent, false);
 				// END KGU#815/KGU#824 2020-03-19
 				addSepaLine();
+				// START KGU#815/KGU#983 2021-09-21: Bugfix #987 - duplicate comment for subroutines (cf. #828)
 				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
-				if (!_root.isInclude() && _public) {
-					appendComment(_root, _indent);
-				}
+				//if (!_root.isInclude() && _public) {
+				//	appendComment(_root, _indent);
+				//}
 				// END KGU#194/KGU#376 2017-09-22
+				// END KGU#815/KGU#983 2021-09-21
 
 				// START KGU#815 2020-03-16: Enh. #828
 				//code.add(_indent + pr + " " + signature + ";");
