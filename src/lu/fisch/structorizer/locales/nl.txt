@@ -60,6 +60,7 @@
  *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
+ *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
  *
  ******************************************************************************************************
  *
@@ -759,6 +760,10 @@ InputBoxCase.btnAddRow.tooltip=Regel voor een nieuw geval toevoegen (en de komma
 InputBoxCase.btnDelRows.tooltip=Geselecteerd geval-regel verwijderen (in verband met de associeerde tak!)
 InputBoxCase.btnUpRow.tooltip=Geselecteerd geval-regel naar boven verplaatsen
 InputBoxCase.btnDnRow.tooltip=Geselecteerd geval-regel naar beneden verplaatsen
+InputBoxCase.btnMergeRows.tooltip=Geselecteerde geval-regels fusioneren (ongeoorloofd met verschillend niet-lege taks)
+InputBoxCase.btnSplitRow.tooltip=Geselecteerd geval-regel separeren
+InputBoxCase.btnEnumAssist.tooltip=Zorgen ervoor dat een geval-regel bestaan voor elke enumerator waarde, dat onjuist geval-regels verdwijnen (behalve met niet-lege tak)
+InputBoxCase.btnCheckRows.tooltip=Consistentie keuren en problemen rapporteren
 InputBoxCase.chkMoveBranches.text=Takken meeverplaatsen
 InputBoxCase.chkMoveBranches.tooltip=Als activeerd (gerecommandeerd), de connectie van de takken met de verplaatste regelen wordt bewaardt.
 InputBoxCase.chkDefaultBranch.text=Anderszins-tak:
