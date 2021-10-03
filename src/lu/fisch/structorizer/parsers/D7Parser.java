@@ -73,6 +73,7 @@ package lu.fisch.structorizer.parsers;
  *                                      by a modification of the block comment in PasGenerator.
  *      Kay Gürtzig     2021-02-15/16   Unicode import enabled after eliminating a grammar ambiguity, comment
  *                                      processing no longer necessary, either, hence \n substitution also dropped
+ *      Kay Gürtzig     2021-10-03      Mechanism to ensure case-sensitive matching of result variables with function name
  *
  ******************************************************************************************************
  *
@@ -802,72 +803,72 @@ public class D7Parser extends CodeParser
 	};
 	// END KGU#358 2017-03-29
 
-    // START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
-    private static final int[] statementIds = new int[]{
-    	RuleConstants.PROD_PACKAGEHEADER_PACKAGE_SEMI,
-    	RuleConstants.PROD_OPTREQUIRESCLAUSE_REQUIRES_SEMI,
-    	RuleConstants.PROD_OPTCONTAINSCLAUSE_CONTAINS_SEMI,
-    	RuleConstants.PROD_EXPORTDECLLIST,
-    	RuleConstants.PROD_EXPORTDECLLIST2,
-    	RuleConstants.PROD_EXPORTDECLITEM,
-    	RuleConstants.PROD_EXPORTDECLITEM2,
-    	RuleConstants.PROD_EXPORTDECLITEM3,
-    	RuleConstants.PROD_EXPORTDECLITEM4,
-    	RuleConstants.PROD_EXPORTDECLITEM_FORWARD_SEMI,
-    	RuleConstants.PROD_CALLSECTION,
-    	RuleConstants.PROD_CALLSECTION2,
-    	RuleConstants.PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION,
-    	RuleConstants.PROD_INITSECTION_INITIALIZATION_END,
-    	RuleConstants.PROD_INITSECTION_INITIALIZATION_FINALIZATION_END,
-    	RuleConstants.PROD_INITSECTION,
-    	RuleConstants.PROD_INITSECTION_END,
-        RuleConstants.PROD_STATEMENT,
-        RuleConstants.PROD_STATEMENT2,
-        RuleConstants.PROD_STATEMENT3,
-        RuleConstants.PROD_STATEMENT4,
-        RuleConstants.PROD_STATEMENT5,
-        RuleConstants.PROD_STATEMENT6,
-        RuleConstants.PROD_STATEMENT7,
-        RuleConstants.PROD_STATEMENT8,
-        RuleConstants.PROD_STATEMENT9,
-        RuleConstants.PROD_STATEMENT10,
-        RuleConstants.PROD_STATEMENT11,
-        RuleConstants.PROD_STATEMENT12,
-        RuleConstants.PROD_STATEMENT13,
-        RuleConstants.PROD_STATEMENT14,
-        RuleConstants.PROD_STATEMENT15,
-        RuleConstants.PROD_ASSIGNMENTSTMT,
-        RuleConstants.PROD_ASSIGNMENTSTMT_AT_COLONEQ,
-        RuleConstants.PROD_CALLSTMT,
-        RuleConstants.PROD_CALLSTMT_WRITE_LPAREN_RPAREN,
-        RuleConstants.PROD_CALLSTMT_WRITELN_LPAREN_RPAREN,
-        RuleConstants.PROD_CALLSTMT_INHERITED,
-        RuleConstants.PROD_GOTOSTATEMENT_GOTO,
-        RuleConstants.PROD_GOTOSTATEMENT_GOTO2,
-        RuleConstants.PROD_COMPOUNDSTMT_BEGIN_END,
-        RuleConstants.PROD_IFSTATEMENT_IF_THEN_ELSE,
-        RuleConstants.PROD_IFSTATEMENT_IF_THEN,
-        RuleConstants.PROD_IFSTATEMENT_IF_SYNERROR_THEN,
-        RuleConstants.PROD_CASESTATEMENT_CASE_OF_END,
-        RuleConstants.PROD_FORSTATEMENT_FOR_COLONEQ_DO,
-        RuleConstants.PROD_WHILESTATEMENT_WHILE_DO,
-        RuleConstants.PROD_WITHSTATEMENT_WITH_DO,
-        RuleConstants.PROD_REPEATSTATEMENT_REPEAT_UNTIL,
-        RuleConstants.PROD_ASSEMBLERSTMT_ASM_END,
-        RuleConstants.PROD_RAISESTMT_RAISE_SYNERROR,
-        RuleConstants.PROD_RAISESTMT_RAISE,
-        RuleConstants.PROD_RAISESTMT_RAISE_AT,
-    	RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE,
-    };
-    // END KGU#407 2017-06-22
-    // END KGU#387 2021-02-15
-    
-    // START KGU#843 2020-04-11: Bugfix #847 - We must convert all operator names to lower-case
-    /** Production rule heads designating operator symbols */
-    private static final StringList OPR_RULE_HEADS = StringList.explode("<MulOp>,<RelOp>,<AddOp>", ",");
-    /** Identifiers belonging to literals or functions the names of which will only be accepted in lowercase by Structorizer */
-    private static final StringList NAMES_TO_LOWER = StringList.explode("FALSE,TRUE,CHR,ORD,POS,COPY,DELETE,INSERT,UPPERCASE,LOWERCASE", ",");
-    // END KGU#843 2020-04-11
+	// START KGU#407 2017-06-22: Enh. #420 - rule ids representing statements, used as stoppers for comment rerieval
+	private static final int[] statementIds = new int[]{
+			RuleConstants.PROD_PACKAGEHEADER_PACKAGE_SEMI,
+			RuleConstants.PROD_OPTREQUIRESCLAUSE_REQUIRES_SEMI,
+			RuleConstants.PROD_OPTCONTAINSCLAUSE_CONTAINS_SEMI,
+			RuleConstants.PROD_EXPORTDECLLIST,
+			RuleConstants.PROD_EXPORTDECLLIST2,
+			RuleConstants.PROD_EXPORTDECLITEM,
+			RuleConstants.PROD_EXPORTDECLITEM2,
+			RuleConstants.PROD_EXPORTDECLITEM3,
+			RuleConstants.PROD_EXPORTDECLITEM4,
+			RuleConstants.PROD_EXPORTDECLITEM_FORWARD_SEMI,
+			RuleConstants.PROD_CALLSECTION,
+			RuleConstants.PROD_CALLSECTION2,
+			RuleConstants.PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION,
+			RuleConstants.PROD_INITSECTION_INITIALIZATION_END,
+			RuleConstants.PROD_INITSECTION_INITIALIZATION_FINALIZATION_END,
+			RuleConstants.PROD_INITSECTION,
+			RuleConstants.PROD_INITSECTION_END,
+			RuleConstants.PROD_STATEMENT,
+			RuleConstants.PROD_STATEMENT2,
+			RuleConstants.PROD_STATEMENT3,
+			RuleConstants.PROD_STATEMENT4,
+			RuleConstants.PROD_STATEMENT5,
+			RuleConstants.PROD_STATEMENT6,
+			RuleConstants.PROD_STATEMENT7,
+			RuleConstants.PROD_STATEMENT8,
+			RuleConstants.PROD_STATEMENT9,
+			RuleConstants.PROD_STATEMENT10,
+			RuleConstants.PROD_STATEMENT11,
+			RuleConstants.PROD_STATEMENT12,
+			RuleConstants.PROD_STATEMENT13,
+			RuleConstants.PROD_STATEMENT14,
+			RuleConstants.PROD_STATEMENT15,
+			RuleConstants.PROD_ASSIGNMENTSTMT,
+			RuleConstants.PROD_ASSIGNMENTSTMT_AT_COLONEQ,
+			RuleConstants.PROD_CALLSTMT,
+			RuleConstants.PROD_CALLSTMT_WRITE_LPAREN_RPAREN,
+			RuleConstants.PROD_CALLSTMT_WRITELN_LPAREN_RPAREN,
+			RuleConstants.PROD_CALLSTMT_INHERITED,
+			RuleConstants.PROD_GOTOSTATEMENT_GOTO,
+			RuleConstants.PROD_GOTOSTATEMENT_GOTO2,
+			RuleConstants.PROD_COMPOUNDSTMT_BEGIN_END,
+			RuleConstants.PROD_IFSTATEMENT_IF_THEN_ELSE,
+			RuleConstants.PROD_IFSTATEMENT_IF_THEN,
+			RuleConstants.PROD_IFSTATEMENT_IF_SYNERROR_THEN,
+			RuleConstants.PROD_CASESTATEMENT_CASE_OF_END,
+			RuleConstants.PROD_FORSTATEMENT_FOR_COLONEQ_DO,
+			RuleConstants.PROD_WHILESTATEMENT_WHILE_DO,
+			RuleConstants.PROD_WITHSTATEMENT_WITH_DO,
+			RuleConstants.PROD_REPEATSTATEMENT_REPEAT_UNTIL,
+			RuleConstants.PROD_ASSEMBLERSTMT_ASM_END,
+			RuleConstants.PROD_RAISESTMT_RAISE_SYNERROR,
+			RuleConstants.PROD_RAISESTMT_RAISE,
+			RuleConstants.PROD_RAISESTMT_RAISE_AT,
+			RuleConstants.PROD_OPTEXCEPTIONELSE_ELSE,
+	};
+	// END KGU#407 2017-06-22
+	// END KGU#387 2021-02-15
+
+	// START KGU#843 2020-04-11: Bugfix #847 - We must convert all operator names to lower-case
+	/** Production rule heads designating operator symbols */
+	private static final StringList OPR_RULE_HEADS = StringList.explode("<MulOp>,<RelOp>,<AddOp>", ",");
+	/** Identifiers belonging to literals or functions the names of which will only be accepted in lowercase by Structorizer */
+	private static final StringList NAMES_TO_LOWER = StringList.explode("FALSE,TRUE,CHR,ORD,POS,COPY,DELETE,INSERT,UPPERCASE,LOWERCASE", ",");
+	// END KGU#843 2020-04-11
 
 // START KGU#387 2021-02-16: Issue #939 workaround no longer necessary
 //    // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party regex library
@@ -889,6 +890,14 @@ public class D7Parser extends CodeParser
 	// START KGU#194 2016-05-08: Bugfix #185 - if being a unit we must retain its name
 	private String unitName = null;
 	// END KGU#194 2016-05-08
+	
+	// START KGU#991 2021-10-03: Issue #991 Ensure exact spelling of result variables
+	/**
+	 * Holds the function name within a function declaration to adopt its exact case-
+	 * aware spelling for the result variable.
+	 */
+	private String functionName = null;
+	// END KGU#991 2021-10-03
 	
 	// START KGU#821 2020-03-07: Issue #833 We must process parameterless routines
 	/** List of the names of detected parameterless routines (in order to add parentheses) */
@@ -1424,6 +1433,9 @@ public class D7Parser extends CodeParser
 				// FIXME transfer declarations to a global includable if prevRoot 
 				
 				// END KGU#376 2017-09-22
+				// START KGU#991 2021-10-03: Issue #991 Uncache the function name on leaving definition context
+				functionName = null;
+				// END KGU#991 2021-10-03
 				root = prevRoot;
 			}
 			// END KGU#194 2016-05-08
@@ -1448,15 +1460,24 @@ public class D7Parser extends CodeParser
 					 )
 			{
 				content = new String();
+				// Get the routine name
 				content = getContent_R(_reduction.get(1).asReduction(), content);
+				// START KGU#991 2021-10-03: Issue #991 Cache the exact name spelling to coerce the result variable
+				if (ruleHead.equals("<FuncHeading>")) {
+					functionName = content.trim();
+					// This will be cleared at the end of <FunctionDecl>
+				}
+				// END KGU#991 2021-10-03
 				
 				Reduction secReduc = _reduction.get(2).asReduction();
-				if (secReduc.size()!=0)
+				if (secReduc.size() != 0)
 				{
-					content = getContent_R(secReduc,content);
+					// Append the parameter list
+					content = getContent_R(secReduc, content);
 				}
 				// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
 				else {
+					// No parameter list -> ensure parentheses
 					paramlessRoutineNames.add(content);
 					content += "()";
 				}
@@ -2045,9 +2066,20 @@ public class D7Parser extends CodeParser
 				//		// END KGU#192 2016-05-02
 				//		tokenData.trim().equalsIgnoreCase("div"))
 				String ruleHead = _reduction.getParent().getHead().toString();
-				if (tokenIsId && ruleHead.equals("<RefId>") && NAMES_TO_LOWER.contains(tokenData, false)) {
-					tokenData = tokenData.toLowerCase();
+				// START KGU#991 2021-10-03 Issue #991 Inside a function definition coerce result var spelling
+				//if (tokenIsId && ruleHead.equals("<RefId>") && NAMES_TO_LOWER.contains(tokenData, false)) {
+				//	tokenData = tokenData.toLowerCase();
+				//}
+				if (tokenIsId && ruleHead.equals("<RefId>")) {
+					if (NAMES_TO_LOWER.contains(tokenData, false)) {
+						tokenData = tokenData.toLowerCase();
+					}
+					else if (functionName != null && functionName.equalsIgnoreCase(tokenData)) {
+						// Make sure that function name and result variable exactly match
+						tokenData = functionName;
+					}
 				}
+				// END KGU#991 2021-10-03
 				if (OPR_RULE_HEADS.contains(ruleHead))
 				// END KGU#843 2020-04-11
 				{

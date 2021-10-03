@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-12-02      KGU#784 Defective type descriptions in argument lists and thread function operators
  *      Kay Gürtzig     2020-03-20/23   Enh. #828 bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig     2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig     2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *
  ******************************************************************************************************
  *
@@ -199,9 +200,15 @@ public class CPlusPlusGenerator extends CGenerator {
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
 			_root.collectParameters(paramNames, paramTypes, null);
+			// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
 			// Start with the result type
 			fnHeader = transformType(_root.getResultType(),
-					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+					// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+					//((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+					((_root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName)) ? "int" : "void"));
+					// END KGU#990 2021-10-02
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
 			returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
 			if (returnsArray) {

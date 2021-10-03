@@ -113,6 +113,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-28      Bugfix #828: Unreferenced subroutines were missing on group export with 1 main
  *      Kay Gürtzig     2021-02-13      Bugfix #937: Endless loop precaution in topological sorting
  *      Kay Gürtzig     2021-06-08      Enh. #953: Export option adaptations for LaTeX algorithm export
+ *      Kay Gürtzig     2021-10-03      Issue #990: Precaution against fake result type associations
  *
  ******************************************************************************************************
  *
@@ -3147,6 +3148,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.returns = false;
 		// END KGU#828 2020-03-18
 		boolean alwaysReturns = mapJumps(_root.children);
+		// START KGU#990 2021-10-03: Bugfix #990 - precaution against fake result type association
+		_root.returnsValue = this.returns;
+		// END KGU#990 2021-10-03
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes, null);
@@ -3473,7 +3477,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			init.setComment("Automatically created initialization procedure for " + incl.getMethodName());
 			init.setProgram(false);
 			/* Since this initialisation procedure is not used for a library as a whole,
-			 * it will never required to be public - the library initialisation routine
+			 * it is never required to be public - the library initialisation routine
 			 * will call the specific initialisation procedures for all involved Includables
 			 * internally.
 			 */

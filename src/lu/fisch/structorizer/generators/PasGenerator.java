@@ -94,6 +94,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-04-22      Enh. #855: New configurable default array size considered
  *      Kay Gürtzig         2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
  *      Kay Gürtzig         2021-09-21      Bugfix #987: Duplicate comments for subroutines, inconsistent multi-line comments
+ *      Kay Gürtzig         2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *
  ******************************************************************************************************
  *
@@ -353,7 +354,11 @@ public class PasGenerator extends Generator
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
-		String signature = _root.getMethodName();
+		// START KGU#990 2021-10-02: Bugfix #990 we need the method name for a comparison
+		//String signature = _root.getMethodName();
+		String fnName = _root.getMethodName();
+		String signature = fnName;
+		// END KGU#990 2021-10-02
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes, null);
@@ -381,7 +386,13 @@ public class PasGenerator extends Generator
 				// END KGU#371 2019-03-08
 			}
 			signature += ")";
-			if (resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			// START KGU#990 2021-10-02: Bugfix #990 _root is not necessarily the current Root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
+			// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+			//if (resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			if (resultType != null || _root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName))
+			// END KGU#990 2021-10-02
 			{
 				resultType = transformType(_root.getResultType(), "Integer");
 				signature += ": " + resultType;
@@ -482,6 +493,11 @@ public class PasGenerator extends Generator
 			int maxIndex = typeInfo.getMaxIndex(i);
 			// START KGU#854 2020-04-22: Enh. #855
 			if (maxIndex < 0) {
+				// START KGU#994 2021-10-03 We must not risk a negative start index
+				if (minIndex < 0) {
+					minIndex = 0;
+				}
+				// END KGU#994 2021-10-03
 				maxIndex = minIndex + this.optionDefaultArraySize() - 1;
 			}
 			// END KGU#854 2020-04-22
@@ -2077,12 +2093,20 @@ public class PasGenerator extends Generator
 		//HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();	// KGU 2018-07-22: became obsolete by new field typeMap
 		// END KGU#261 2017-01-16
 		// START KGU#593 2018-10-05: Bugfix #619 - the function result variable must not be declared (again) here!
-		String functionName = null;
+		// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+		//String functionName = null;
+		String functionName = _root.getMethodName();
+		// END KGU#990 2021-10-03
 		// START KGU 2020-03-25: This seemed to be too slacky
 		//if (_root.getResultType() != null) {
-		if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet) {
+		// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+		//if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet) {
+		if (_root.getResultType() == null && _root.returnsValue != Boolean.TRUE && !_varNames.contains("result", false) && !_varNames.contains(functionName)) {
+		// END KGU#990 2021-10-03
 		// END KGU 2020-03-25
-			functionName = _root.getMethodName();
+			// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+			functionName = null;
+			// END KGU#990 2021-10-03
 		}
 		// END KGU#593 2018-10-05
 		for (int v = 0; v < _varNames.count(); v++) {

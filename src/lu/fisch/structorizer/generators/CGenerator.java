@@ -110,6 +110,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-10-01      Bugfix #989: No expression translation in EXIT elements to C, C++, etc.
+ *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *
  ******************************************************************************************************
  *
@@ -403,8 +404,14 @@ public class CGenerator extends Generator {
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
 			_root.collectParameters(paramNames, paramTypes, null);
+			// START KGU#990 2021-10-02: Bugfix #990 _root is not necessarily the current Root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
 			fnHeader = transformTypeWithLookup(_root.getResultType(),
-					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+					// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+					//((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+					((_root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName)) ? "int" : "void"));
+					// END KGU#990 2021-10-02
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
 			returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
 			if (returnsArray) {
@@ -2091,28 +2098,28 @@ public class CGenerator extends Generator {
 				//if (line.matches(preReturnMatch))
 				if (_jump.isReturn())
 				{
-					// START KGU#988 2021-10-01: Bugfix #989 missing expression translation
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
 					//addCode("return " + line.substring(preReturn.length()).trim() + ";",
 					addCode("return " + transform(line.substring(preReturn.length()).trim()) + ";",
-					// END KGU#988 2021-10-01
+					// END KGU#989 2021-10-01
 							_indent, isDisabled);
 				}
 				//else if (line.matches(preExitMatch))
 				else if (_jump.isExit())
 				{
-					// START KGU#988 2021-10-01: Bugfix #989 missing expression translation
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
 					//appendExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 					appendExitInstr(transform(line.substring(preExit.length()).trim()), _indent, isDisabled);
-					// END KGU#988 2021-10-01
+					// END KGU#989 2021-10-01
 				}
 				// START KGU#686 2019-03-20: Enh. #56 Throw has to be implemented
 				else if (_jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
-					// START KGU#988 2021-10-01: Bugfix #989 missing expression translation
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
 					//this.generateThrowWith(line.substring(
 					//		CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim(), _indent, isDisabled);
 					this.generateThrowWith(transform(line.substring(
 							CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim()), _indent, isDisabled);
-					// END KGU#988 2021-10-01
+					// END KGU#989 2021-10-01
 				}
 				// END KGU#686 2019-03-20
 				// Has it already been matched with a loop? Then syntax must have been okay...
