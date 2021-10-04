@@ -96,6 +96,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-09-21      Bugfix #987: Duplicate comments for subroutines, inconsistent multi-line comments
  *      Kay Gürtzig         2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *                                          Bugfix #993: Wrong handling of constant parameters
+ *                                          Fix KGU#994: Strange array index ranges like [-1..49] could occur
  *
  ******************************************************************************************************
  *
@@ -503,7 +504,7 @@ public class PasGenerator extends Generator
 			int maxIndex = typeInfo.getMaxIndex(i);
 			// START KGU#854 2020-04-22: Enh. #855
 			if (maxIndex < 0) {
-				// START KGU#994 2021-10-03 We must not risk a negative start index
+				// START KGU#994 2021-10-03: We must not risk a negative start index
 				if (minIndex < 0) {
 					minIndex = 0;
 				}
@@ -2171,11 +2172,20 @@ public class PasGenerator extends Generator
 					int maxIndex = typeInfo.getMaxIndex(level++);
 					// START KGU#854 2020-04-22: Enh. #855
 					if (maxIndex < 0) {
-						maxIndex = this.optionDefaultArraySize() - 1;
+						// START KGU#994 2021-10-04: We must not risk a negative start index
+						//maxIndex = this.optionDefaultArraySize() - 1;
+						if (minIndex < 0) {
+							minIndex = 0;
+						}
+						maxIndex = minIndex + this.optionDefaultArraySize() - 1;
+						// END KGU#994 2021-10-03
 					}
 					// END KGU#854 2020-04-22
 					String indexRange = "";
-					if (maxIndex > 0) {
+					// START KGU#994 2021-10-04: Ignore contradictory values
+					//if (maxIndex > 0) {
+					if (maxIndex > 0 && maxIndex >= minIndex) {
+					// END KGU#994 2021-10-04
 						indexRange = "[" + minIndex +
 								".." + maxIndex + "] ";
 					}

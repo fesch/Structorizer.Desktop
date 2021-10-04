@@ -62,7 +62,7 @@ var
     and pads the string
   }
   userInput: string;
-  replyRing: array [-1..49] of string;
+  replyRing: array [0..49] of string;
   reply: String;
   posAster: Longint;
   offsets: array [0..49] of Longint;
@@ -128,7 +128,7 @@ end;
 function checkGoodBye(text: string; phrases: array [0..49] of array [0..1] of string): boolean;
 
 var
-  pair: array [-1..49] of string;
+  pair: array [0..49] of string;
 
 begin
   { TODO: Rewrite this loop (there was no way to convert this automatically) }
@@ -151,7 +151,7 @@ var
   right: String;
   result: String;
   position: Longint;
-  pair: array [-1..49] of string;
+  pair: array [0..49] of string;
   left: String;
 
 begin

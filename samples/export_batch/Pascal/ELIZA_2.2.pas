@@ -37,17 +37,17 @@ const
   keyMap = setupKeywords();
 
 var
-  indexddee238a: 1..5;
-  arrayddee238a: array [1..5] of string;
-  indexbc76fe72: 1..2;
-  arraybc76fe72: array [1..2] of string;
+  index95939a68: 1..5;
+  array95939a68: array [1..5] of string;
+  index32fa162b: 1..2;
+  array32fa162b: array [1..2] of string;
   varPart: String;
   {
     Converts the input to lowercase, cuts out interpunctation
     and pads the string
   }
   userInput: string;
-  replyRing: array [-1..49] of string;
+  replyRing: array [0..49] of string;
   reply: String;
   posAster: Longint;
   offsets: array [0..49] of Longint;
@@ -85,11 +85,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  arraybc76fe72[1] := ' i ';
-  arraybc76fe72[2] := ' i\''';
-  for indexbc76fe72 := 1 to 2 do
+  array32fa162b[1] := ' i ';
+  array32fa162b[2] := ' i\''';
+  for index32fa162b := 1 to 2 do
   begin
-    word := arraybc76fe72[indexbc76fe72];
+    word := array32fa162b[index32fa162b];
     position := pos(word, result);
     while (position > 0) do
     begin
@@ -114,7 +114,7 @@ function checkGoodBye(text: string; phrases: array [0..49] of array [0..1] of st
 
 var
   saidBye: boolean;
-  pair: array [-1..49] of string;
+  pair: array [0..49] of string;
 
 begin
   { TODO: Rewrite this loop (there was no way to convert this automatically) }
@@ -168,7 +168,7 @@ var
   right: String;
   result: String;
   position: Longint;
-  pair: array [-1..49] of string;
+  pair: array [0..49] of string;
   left: String;
 
 begin
@@ -253,14 +253,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  arrayddee238a[1] := '.';
-  arrayddee238a[2] := ',';
-  arrayddee238a[3] := ';';
-  arrayddee238a[4] := '!';
-  arrayddee238a[5] := '?';
-  for indexddee238a := 1 to 5 do
+  array95939a68[1] := '.';
+  array95939a68[2] := ',';
+  array95939a68[3] := ';';
+  array95939a68[4] := '!';
+  array95939a68[5] := '?';
+  for index95939a68 := 1 to 5 do
   begin
-    symbol := arrayddee238a[indexddee238a];
+    symbol := array95939a68[index95939a68];
     position := pos(symbol, sentence);
     while (position > 0) do
     begin
