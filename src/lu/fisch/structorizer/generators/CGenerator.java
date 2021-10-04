@@ -111,6 +111,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-10-01      Bugfix #989: No expression translation in EXIT elements to C, C++, etc.
  *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
+ *                                              Bugfix #993: Wrong handling of constant parameters
  *
  ******************************************************************************************************
  *
@@ -395,6 +396,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
+		final String CONST_PREFIX = "const ";
 		int lines = 0;	// Result value = number of inserted lines
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
@@ -424,9 +426,19 @@ public class CGenerator extends Generator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//fnHeader += transformArrayDeclaration(
+				//		transformTypeWithLookup(paramTypes.get(p), "???").trim(),
+				//		paramNames.get(p));
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					fnHeader += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
 				fnHeader += transformArrayDeclaration(
-						transformTypeWithLookup(paramTypes.get(p), "???").trim(),
+						transformTypeWithLookup(pType, "???").trim(),
 						paramNames.get(p));
+				// END KGU#993 2021-10-03
 				// END KGU#140 2017-01-31
 			}
 			// START KGU#800 2020-02-15: Issue #814
@@ -2535,9 +2547,17 @@ public class CGenerator extends Generator {
 		// END KGU#676 2019-03-30
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
+		// START KGU#993 2021-10-03: Bugfix #993 constant parameters must not be defined here again!
+		StringList parNames = _root.getParameterNames();
+		// END KGU#993 2021-10-03
 		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 		for (String constName: _root.constants.keySet()) {
-			appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());			
+			// START KGU#993 2021-10-03: Bugfix #993 constant parameters must not be defined here again!
+			//appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());
+			if (!parNames.contains(constName)) {
+				appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());
+			}
+			// END KGU#993 2021-10-03
 		}
 		// END KGU#375 2017-04-12
 		// START KGU#388 2017-09-26: Enh. #423 Place the necessary type definitions here

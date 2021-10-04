@@ -191,6 +191,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
+		final String CONST_PREFIX = "const ";
 		int lines = 0; 	// Result value = number of inserted lines
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
@@ -224,7 +225,15 @@ public class CPlusPlusGenerator extends CGenerator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(paramTypes.get(p), "???").trim(), paramNames.get(p));
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//fnHeader += transformArrayDeclaration(transformType(paramTypes.get(p), "???").trim(), paramNames.get(p));
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					fnHeader += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
+				fnHeader += transformArrayDeclaration(transformType(pType, "???").trim(), paramNames.get(p));
+				// END KGU#993 2021-10-03
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);
 				if (defVal != null) {

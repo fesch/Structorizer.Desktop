@@ -3,14 +3,14 @@
 \usepackage{struktex}
 \usepackage{ngerman}
 
-\title{Structorizer StrukTeX Export of ELIZA_2.3.arrz}
-\author{Kay Gürtzig}
-\date{08.06.2021}
+\title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
+\author{Kay G"urtzig}
+\date{04.10.2021}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(175,123)[adjustSpelling]
+\begin{struktogramm}(153,107)[adjustSpelling]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -25,7 +25,7 @@
     \assign{\(position\ \gets\ position\ +\ 1\)}
   \whileend
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(position\ \leq\ length(sentence)\)}{true}{false}
+  \ifthenelse{10}{2}{\(position\ \leq\ length(sentence)\)}{T}{F}
     \assign{\(start\ \gets\ copy(sentence,\ 1,\ position)\)}
     \assign{\(delete(result,\ 1,\ position)\)}
     \assign{\(insert(uppercase(start),\ result,\ 1)\)}
@@ -43,7 +43,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(187,67)[checkGoodBye]
+\begin{struktogramm}(165,56)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -54,7 +54,7 @@
     \end{declaration}
   }
   \while{\(\forall pair\in phrases\)}
-    \ifthenelse{5}{1}{\(pos(pair[0],\ text)\ >\ 0\)}{true}{false}
+    \ifthenelse{5}{1}{\(pos(pair[0],\ text)\ >\ 0\)}{T}{F}
       \assign{\(\)\pKey{OUTPUT}\(\ pair[1]\)}
       \exit{\(\)\pKey{return}\(\ true\)}
     \change
@@ -65,7 +65,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(270,111)[conjugateStrings]
+\begin{struktogramm}(238,96)[conjugateStrings]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -98,7 +98,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(247,75)[normalizeInput]
+\begin{struktogramm}(214,64)[normalizeInput]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -120,7 +120,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(190,34)[setupGoodByePhrases]
+\begin{struktogramm}(170,29)[setupGoodByePhrases]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -133,7 +133,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(117,98)[setupReflexions]
+\begin{struktogramm}(102,85)[setupReflexions]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -154,7 +154,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(159,590)[setupReplies]
+\begin{struktogramm}(140,535)[setupReplies]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array of string}{}
@@ -200,7 +200,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(175,103)[checkRepetition]
+\begin{struktogramm}(146,87)[checkRepetition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{history}}{type: \(History\)}
@@ -215,11 +215,11 @@
   }
   \assign{\(hasOccurred\ \gets\ false\)}
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(length(newInput)\ >\ 4\)}{true}{false}
+  \ifthenelse{10}{2}{\(length(newInput)\ >\ 4\)}{T}{F}
     \assign{\(histDepth\ \gets\ length(history.histArray)\)}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(histDepth-1\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(newInput\ =\ history.histArray[i]\)}{true}{false}
+      \ifthenelse{3}{1}{\(newInput\ =\ history.histArray[i]\)}{T}{F}
         \assign{\(hasOccurred\ \gets\ true\)}
       \change
       \ifend
@@ -233,7 +233,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(225,109)[findKeyword]
+\begin{struktogramm}(199,90)[findKeyword]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
@@ -251,7 +251,7 @@
   \while{\((result[0]\ <\ 0)\ \wedge\ (i\ <\ length(keyMap))\)}
     \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[i]\)}
     \assign{\(position\ \gets\ pos(entry.keyword,\ sentence)\)}
-    \ifthenelse{5}{1}{\(position\ >\ 0\)}{true}{false}
+    \ifthenelse{5}{1}{\(position\ >\ 0\)}{T}{F}
       \assign{\(result[0]\ \gets\ i\)}
       \assign{\(result[1]\ \gets\ position\)}
     \change
@@ -262,7 +262,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(136,162)[setupKeywords]
+\begin{struktogramm}(113,145)[setupKeywords]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of KeyMapEntry}{}
@@ -316,7 +316,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(317,379)[ELIZA]
+\begin{struktogramm}(258,322)[ELIZA]
   \assign{%
     \begin{declaration}[Requires:]
       \description{History, KeyMapEntry}{}
@@ -346,22 +346,22 @@
     \assign{\(\)\pKey{INPUT}\(\ userInput\)}
     \sub{\(userInput\ \gets\ normalizeInput(userInput)\)}
     \sub{\(isGone\ \gets\ checkGoodBye(userInput,\ byePhrases)\)}
-    \ifthenelse{5}{1}{\(!\ isGone\)}{true}{false}
+    \ifthenelse{5}{1}{\(!\ isGone\)}{T}{F}
       \assign{\(reply\ \gets\ \)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)}
       \sub{\(isRepeated\ \gets\ checkRepetition(history,\ userInput)\)}
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
-      \ifthenelse{3}{1}{\(!\ isRepeated\)}{true}{false}
+      \ifthenelse{3}{1}{\(!\ isRepeated\)}{T}{F}
         \sub{\(findInfo\ \gets\ findKeyword(keyMap,\ userInput)\)}
         \assign{\(keyIndex\ \gets\ findInfo[0]\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(keyIndex\ <\ 0\)}{true}{false}
+        \ifthenelse{1}{1}{\(keyIndex\ <\ 0\)}{T}{F}
           \assign{\(keyIndex\ \gets\ length(keyMap)-1\)}
         \change
         \ifend
         \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[keyIndex]\)}
         \assign{\(varPart\ \gets\ \)"{}"{}\(\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(length(entry.keyword)\ >\ 0\)}{true}{false}
+        \ifthenelse{1}{1}{\(length(entry.keyword)\ >\ 0\)}{T}{F}
           \sub{\(varPart\ \gets\ conjugateStrings(userInput,\ entry.keyword,\ findInfo[1],\ reflexions)\)}
         \change
         \ifend
@@ -370,9 +370,9 @@
         \assign{\(offsets[keyIndex]\ \gets\ (offsets[keyIndex]\ +\ 1)\ \bmod\ length(replyRing)\)}
         \assign{\(posAster\ \gets\ pos(\)"{}*"{}\(,\ reply)\)}
         % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-        \ifthenelse{1}{1}{\(posAster\ >\ 0\)}{true}{false}
+        \ifthenelse{1}{1}{\(posAster\ >\ 0\)}{T}{F}
           % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{1}{1}...
-          \ifthenelse{1}{1}{\(varPart\ =\ \)"{}\ "{}\(\)}{true}{false}
+          \ifthenelse{1}{1}{\(varPart\ =\ \)"{}\ "{}\(\)}{T}{F}
             \assign{\(reply\ \gets\ \)"{}You\ will\ have\ to\ elaborate\ more\ for\ me\ to\ help\ you."{}\(\)}
           \change
             \assign{\(delete(reply,\ posAster,\ 1)\)}
@@ -391,7 +391,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(157,44)[History]
+\begin{struktogramm}(137,35)[History]
   \assign{%
     \begin{declaration}[type:]
       \description{History}{record\ \{\ histArray\ :\ array\ of\ string\ ;\ histIndex\ :\ int\ \}}
@@ -401,7 +401,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(147,31)[KeyMapEntry]
+\begin{struktogramm}(129,26)[KeyMapEntry]
   \assign{%
     \begin{declaration}[type:]
       \description{KeyMapEntry}{record\ \{\ keyword\ :\ string\ ;\ index\ :\ int\ \}}

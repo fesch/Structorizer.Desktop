@@ -95,6 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
  *      Kay Gürtzig         2021-09-21      Bugfix #987: Duplicate comments for subroutines, inconsistent multi-line comments
  *      Kay Gürtzig         2021-10-03      Bugfix #990: Made-up result types on exported procedures
+ *                                          Bugfix #993: Wrong handling of constant parameters
  *
  ******************************************************************************************************
  *
@@ -354,6 +355,7 @@ public class PasGenerator extends Generator
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
+		final String CONST_PREFIX = "const ";
 		// START KGU#990 2021-10-02: Bugfix #990 we need the method name for a comparison
 		//String signature = _root.getMethodName();
 		String fnName = _root.getMethodName();
@@ -377,7 +379,15 @@ public class PasGenerator extends Generator
 				signature += ((p > 0) ? "; " : "");
 				// START KGU#800 2020-02-15: Type name surrogate unified to ???
 				//signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
-				signature += (paramNames.get(p) + ": " + transformType(paramTypes.get(p), "???")).trim();
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//signature += (paramNames.get(p) + ": " + transformType(paramTypes.get(p), "???")).trim();
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					signature += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
+				signature += (paramNames.get(p) + ": " + transformType(pType, "???")).trim();
+				// END KGU#993 2021-10-03
 				// END KGU#800 2020-02-15
 				// START KGU#371 2019-03-08: Enh. #385
 				if (p >= minArgs) {
@@ -1944,13 +1954,19 @@ public class PasGenerator extends Generator
 	protected boolean generateConstDefs(Root _root, String _indent, StringList _complexConsts, boolean _sectionBegun) {
 		if (!_root.constants.isEmpty()) {
 			String indentPlus1 = _indent + this.getIndent();
+			// START KGU#993 2021-10-03: Bugfix #993 - We must not re-define constant parameters!
+			StringList params = _root.getParameterNames();
+			// END KGU#993 2021-10-03
 			// _root.constants is expected to be a LinkedHashMap, such that topological
 			// ordering should not be necessary
 			for (Entry<String, String> constEntry: _root.constants.entrySet()) {
 				String constName = constEntry.getKey();
 				// We must make sure that the constant hasn't been included from a diagram
 				// already handled at top level.
-				if (wasDefHandled(_root, constName, true)) {
+				// START KGU#993 2021-10-03: Bugfix #993 - skip constant parameters as well
+				//if (wasDefHandled(_root, constName, true)) {
+				if (params.contains(constName) || wasDefHandled(_root, constName, true)) {
+				// END KGU#993 2021-10-03
 					continue;
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
@@ -1964,7 +1980,8 @@ public class PasGenerator extends Generator
 				}
 				expr = transform(expr);
 				// END KGU#452 2019-11-17
-				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
+				TypeMapEntry constType = typeMap.get(constEntry.getKey());
+				// Only simple-type constants may be defined directly in the const section
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
 						code.add(_indent + "const");
@@ -1976,6 +1993,7 @@ public class PasGenerator extends Generator
 					// END KGU#424 2017-09-25
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
 				}
+				// Constants of complex types must be decomposed and thus lose their constancy
 				else {
 					StringList generatedInit = null;
 					int lineNo = code.count();

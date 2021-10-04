@@ -37,10 +37,10 @@ const
   keyMap = setupKeywords();
 
 var
-  index645848ab: 1..5;
-  array645848ab: array [1..5] of string;
-  index9aaba44a: 1..2;
-  array9aaba44a: array [1..2] of string;
+  indexd975144d: 1..5;
+  arrayd975144d: array [1..5] of string;
+  indexf3864169: 1..2;
+  arrayf3864169: array [1..2] of string;
   varPart: String;
   {
     Converts the input to lowercase, cuts out interpunctation
@@ -85,11 +85,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  array9aaba44a[1] := ' i ';
-  array9aaba44a[2] := ' i\''';
-  for index9aaba44a := 1 to 2 do
+  arrayf3864169[1] := ' i ';
+  arrayf3864169[2] := ' i\''';
+  for indexf3864169 := 1 to 2 do
   begin
-    word := array9aaba44a[index9aaba44a];
+    word := arrayf3864169[indexf3864169];
     position := pos(word, result);
     while (position > 0) do
     begin
@@ -208,9 +208,7 @@ end;
   0: the index of the first identified keyword (if any, otherwise -1),
   1: the position inside sentence (0 if not found)
 }
-function findKeyword(keyMap: const array of KeyMapEntry; sentence: string): array [0..1] of Longint;
-
-  keyMap = null;
+function findKeyword(const keyMap: array [0..49] of KeyMapEntry; sentence: string): array [0..1] of Longint;
 
 var
   result: array [0..1] of Longint;
@@ -255,14 +253,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  array645848ab[1] := '.';
-  array645848ab[2] := ',';
-  array645848ab[3] := ';';
-  array645848ab[4] := '!';
-  array645848ab[5] := '?';
-  for index645848ab := 1 to 5 do
+  arrayd975144d[1] := '.';
+  arrayd975144d[2] := ',';
+  arrayd975144d[3] := ';';
+  arrayd975144d[4] := '!';
+  arrayd975144d[5] := '?';
+  for indexd975144d := 1 to 5 do
   begin
-    symbol := array645848ab[index645848ab];
+    symbol := arrayd975144d[indexd975144d];
     position := pos(symbol, sentence);
     while (position > 0) do
     begin
