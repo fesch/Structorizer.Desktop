@@ -917,7 +917,11 @@ public class CGenerator extends Generator {
 	// START KGU#332 2017-01-27: Enh. #335
 	/**
 	 * States whether constant definitions or variable declarations may occur anywhere in
-	 * the code or only at block beginning
+	 * the code or only at block beginning.<b/>
+	 * Note that this option only applies to explicit declarations in e.g. Instruction or
+	 * Call elements; in case of a mere first assignment somewhere we could not be sure that
+	 * a declaration in this place would cover all occurrences (e.g., if introduced in
+	 * several branches of an Alternative or Case element).
 	 * @return true if declarations may be mixed among instructions
 	 */
 	protected boolean isInternalDeclarationAllowed()
