@@ -45,6 +45,11 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************
  */
 
+/**
+ * This class represents an Element-related Analyser issue for the error list
+ * or warning pop-up.
+ * @author Bob Fisch
+ */
 public class DetectedError 
 {
 		private String message = new String();

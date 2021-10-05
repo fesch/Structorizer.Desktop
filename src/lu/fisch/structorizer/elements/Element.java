@@ -245,7 +245,7 @@ import javax.swing.ImageIcon;
 
 /**
  * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
- * i.e. the basic algorithmic structure blocks.
+ * i.e., the basic algorithmic structure blocks.
  * Provides primitives and utilities for drawing, syntax analysis, preferences,
  * and traversal.
  * @author Bob Fisch

@@ -21,7 +21,8 @@
 package lu.fisch.structorizer.elements;
 
 /**
- *
+ * This interface is meant to be implemented by observers of {@link Root} changes or
+ * replacements.
  * @author robertfisch
  */
 public interface Updater

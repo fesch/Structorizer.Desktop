@@ -110,6 +110,11 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 
+/**
+ * This Structorizer class represents a procedure or function Call in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Call extends Instruction {
 	
 	// START KGU#907 2021-01-04: Enh. #906 - special break mechanism for stepping through Calls

@@ -43,9 +43,10 @@ import lu.fisch.graphics.Rect;
  ******************************************************************************************************///
 
 /**
+ * Implementors of the interface are {@link Element} subclasses representing some
+ * kind of forking (i.e. Alternative or Selection).
+ * This interface presents the common behaviour.
  * @author Kay Gürtzig
- * Implementors of the interface are Element subclasses representing some kind of forking (i.e. Alternative
- * or Selection). This interface presents the common behaviour
  */
 public interface IFork {
 	

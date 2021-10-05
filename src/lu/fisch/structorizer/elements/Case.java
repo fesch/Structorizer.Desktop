@@ -85,7 +85,11 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
-
+/**
+ * This Structorizer class represents a multi-way Case selection in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Case extends Element implements IFork
 {
 	

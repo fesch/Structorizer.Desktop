@@ -43,7 +43,8 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 /**
- * Parameter record for subroutine diagrams, contains name, type, and possibly a default value
+ * Parameter record for subroutine diagrams, contains name, type, and possibly
+ * a default value
  * @author robertfisch
  */
 public class Param {
