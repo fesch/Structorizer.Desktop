@@ -129,6 +129,7 @@
  *      Kay Gürtzig     2021-01-25      Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig     2021-02-07      Enh. #915: New messages and tooltips for InputBoxCase
  *      Kay Gürtzig     2021-03-07      KGU#961: Translation skeleton for known plugin options added.
+ *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for Analyser brackets check
  *
  ******************************************************************************************************
  *
@@ -567,13 +568,17 @@ Menu.hint26.4.text=Now you may e.g. export your diagram as graphics file: → Me
 Menu.error27.text=Some @c selector items (e.g. «%») don't seem to be integer constants.
 Menu.error28.text=There are multiple (conflicting) selector items (%) in the @c element!
 Menu.error29.text=The choice value «%» is of a structured type and hence unsuited for @c!
+Menu.error30_1.text=There are %1 more opening than closing brackets in line %2, '%3' was expected next!
+Menu.error30_2.text=There is at least one more closing '%1' than opening brackets in line %2!
+Menu.error30_3.text=There is a closing '%1' where '%3' is expected in line %2!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
 AnalyserPreferences.contentPanel.tab.0=Algorithmic
-AnalyserPreferences.contentPanel.tab.1=Names / Conventions
-AnalyserPreferences.contentPanel.tab.2=Hints / Tutoring
+AnalyserPreferences.contentPanel.tab.1=General Syntax
+AnalyserPreferences.contentPanel.tab.2=Names / Conventions
+AnalyserPreferences.contentPanel.tab.3=Hints / Tutoring
 AnalyserPreferences.checkboxes.1.text=Check for modified loop variable.
 AnalyserPreferences.checkboxes.2.text=Check for endless loop (as far as detectable!)
 AnalyserPreferences.checkboxes.3.text=Check for non-initialized variables.
@@ -603,6 +608,7 @@ AnalyserPreferences.checkboxes.26.text=Short "hello world" tour
 AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer constants.
 AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
 AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured type.
+AnalyserPreferences.checkboxes.30.text=Check that brackets are balanced and correctly nested.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 

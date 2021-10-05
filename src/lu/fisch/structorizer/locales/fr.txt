@@ -324,6 +324,10 @@ Menu.errorLineReference.text= (ligne %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=
+AnalyserPreferences.contentPanel.tab.0=Algorithmique
+AnalyserPreferences.contentPanel.tab.1=Syntaxe générale
+AnalyserPreferences.contentPanel.tab.2=Noms / Arrangements
+AnalyserPreferences.contentPanel.tab.3=Indications / Tutoriels
 AnalyserPreferences.checkboxes.1.text=Test sur la variable de contrôle d'une boucle "@{For}".
 AnalyserPreferences.checkboxes.2.text=Test sur les boucles infinies. (Pour autant que c'est possible!)
 AnalyserPreferences.checkboxes.3.text=Test sur les variables non initialisées.

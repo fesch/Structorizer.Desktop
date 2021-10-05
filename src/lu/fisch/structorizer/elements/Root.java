@@ -172,6 +172,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-28      Issue #947: Enhanced cyclic inclusion detection implemented
  *      Kay Gürtzig     2021-10-02      Bugfix #990: Fields returnsValue and alwaysReturns introduced to support export
  *      Kay Gürtzig     2021-10-03      Issue #991: Inconsistent Analyser check for result mechanism (case-ignorant)
+ *      Kay Gürtzig     2021-10-05      Enh. #992: New Analyser check 30 against bracket faults
  *      
  ******************************************************************************************************
  *
@@ -237,6 +238,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EmptyStackException;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -764,7 +766,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false,	true,	true,	true			// 26 .. 29
+		false,	true,	true,	true,	true	// 26 .. 30
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -3585,7 +3587,7 @@ public class Root extends Element {
     		{
     			analyse_8(ele, _errors);
     		}
-
+    		
     		// CHECK  #5: non-uppercase var
     		// CHECK  #7: correct identifiers
     		// CHECK #13: Competitive return mechanisms
@@ -3612,6 +3614,11 @@ public class Root extends Element {
     			// END KGU#388 2017-09-16
     			// END KGU#375 2017-04-04
     		}
+
+    		// START KGU#992 2021-10-05: Enh. #992
+    		// CHECK #30: Bracket balancing
+    		analyse_30(ele, _errors);
+    		// END KGU#992 2021-10-05
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
     		// START KGU#375 2017-04-05: Enh. #388 linewise analysis for Instruction elements
@@ -5257,6 +5264,12 @@ public class Root extends Element {
 	// END KGU#514 2018-04-03
 	
 	// START KGU#758 2019-11-08: Enh. #770 - check CASE elements
+	/**
+	 * CHECK 27: CASE selectors be integer constants
+	 * CHECK 28: duplicate CASE selectors
+	 * @param _case -  Case element to be analysed
+	 * @param _errors - global error list
+	 */
 	private void analyse_27_28(Case _case, Vector<DetectedError> _errors)
 	{
 		HashSet<String> selectors = new HashSet<String>();
@@ -5307,6 +5320,12 @@ public class Root extends Element {
 	// END KGU#758 2019-11-08
 	
 	// START KGU#928 2021-02-08: Enh. #928 - check for structured types
+	/**
+	 * CHECK 29: CASE discriminators of structured types
+	 * @param _case - Case element to be analysed
+	 * @param _errors - global error list
+	 * @param _types - type definitions
+	 */
 	private void analyse_29(Case _case, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types)
 	{
 		StringList text = _case.getUnbrokenText();
@@ -5323,6 +5342,53 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#928 2021-02-08
+	
+	// START KGU#992 2021-10-05: Enh. #992
+	/**
+	 * CHECK 30: Unbalanced or badly nested parentheses, brackets etc.
+	 * @param _ele - element to be analysed
+	 * @param _errors - global error list
+	 */
+	private void analyse_30(Element _ele, Vector<DetectedError> _errors) {
+		if (!check(30)) {
+			return;
+		}
+		StringList unbrokenLines = _ele.getUnbrokenText();
+		for (int i = 0; i < unbrokenLines.count(); i++) {
+			StringList tokens = Element.splitLexically(unbrokenLines.get(i), true);
+			Stack<Character> brackets = new Stack<Character>();
+			for (int j = 0; j < tokens.count(); j++) {
+				String token = tokens.get(j);
+				if (token.equals("(")) {
+					brackets.push(')');
+				}
+				else if (token.equals("[")) {
+					brackets.push(']');
+				}
+				else if (token.equals("{")) {
+					brackets.push('}');
+				}
+				else if (token.equals(")") || token.equals("]") || token.equals("}")) {
+					try {
+						char top = brackets.pop();
+						if (top != token.charAt(0)) {
+							//error  = new DetectedError("There is a closing '%1' where '%3' is expected in line %2!", _case);
+							addError(_errors, new DetectedError(errorMsg(Menu.error30_3, new String[] {token, Integer.toString(i+1), Character.toString(top)}), _ele), 30);
+						}
+					}
+					catch (EmptyStackException ex) {
+						//error  = new DetectedError("There is at least one more closing '%1' than opening brackets in line %2!", _case);
+						addError(_errors, new DetectedError(errorMsg(Menu.error30_2, new String[] {token, Integer.toString(i+1)}), _ele), 30);
+					}
+				}
+			}
+			if (!brackets.isEmpty()) {
+				//error  = new DetectedError("There are %1 more opening than closing brackets in line %2, '%3' was expected next!", _ele);
+				addError(_errors, new DetectedError(errorMsg(Menu.error30_1, new String[] {Integer.toString(brackets.size()), Integer.toString(i+1), Character.toString(brackets.pop())}), _ele), 30);
+			}
+		}
+	}
+	// END KGU#992 2021-10-05
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**

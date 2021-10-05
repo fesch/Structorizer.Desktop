@@ -19,12 +19,13 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.32-01 (2021-10-04)
+Current development version 3.32-01 (2021-10-05)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Missing translation of EXIT expressions on export to C etc. <2>
 - 01: Bugfix #990: Procedures could obtain made-up result types on group export <2>
 - 01: Bugfix #991: Analyser check for ensured function results was defective <2>
+- 01: Enh. #992: New Analyser check for bracket balance and nesting <2>
 - 01: Bugfix #993: Defective export of constant routine parameters <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer

@@ -507,13 +507,17 @@ Menu.hint26.4.text=
 Menu.error27.text=
 Menu.error28.text=
 Menu.error29.text=
+Menu.error30_1.text=
+Menu.error30_2.text=
+Menu.error30_3.text=
 Menu.errorLineReference.text=(riga %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
 AnalyserPreferences.contentPanel.tab.0=Algoritmico
-AnalyserPreferences.contentPanel.tab.1=Nomi e convenzioni
-AnalyserPreferences.contentPanel.tab.2=Suggerimenti / Tutoraggio
+AnalyserPreferences.contentPanel.tab.1=Sintassi generale
+AnalyserPreferences.contentPanel.tab.2=Nomi e convenzioni
+AnalyserPreferences.contentPanel.tab.3=Suggerimenti / Tutoraggio
 AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
 AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
 AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
@@ -543,6 +547,7 @@ AnalyserPreferences.checkboxes.26.text=Piccolo tour "ciao mondo"
 AnalyserPreferences.checkboxes.27.text=
 AnalyserPreferences.checkboxes.28.text=
 AnalyserPreferences.checkboxes.29.text=
+AnalyserPreferences.checkboxes.30.text=
 AnalyserPreferences.lblDrawWarningSign.text=
 AnalyserPreferences.okButton.text=OK
 
