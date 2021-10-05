@@ -2921,7 +2921,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #getIndent()
-	 * @param _inst - the {@link lu.fisch.structorizer.elements.Instruction}
+	 * @param _jump - the {@link Jump} to be translated
 	 * @param _indent - the indentation string valid for the given Instruction
 	 */
 	protected void generateCode(Jump _jump, String _indent)

@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
 *      Kay Gürtzig     2021-05-02      Mechanisms to support EXIT instructions, subroutines, CALLs added
 *      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
+*      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
 *
 ******************************************************************************************************
 *
@@ -101,12 +102,17 @@ public class ArmGenerator extends Generator {
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
     //private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
     private static final Pattern conditionPattern = Pattern.compile(
-            String.format("\\((%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)",
+            String.format("\\((%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((&&|\\|\\|)(%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)",
                     registerPattern1, variablePattern,
                     registerPattern1, variablePattern,
                     registerPattern1, variablePattern,
                     registerPattern1, variablePattern));
     // END KGU#968 2021-05-02
+    // START KGU#968 2021-10-05: Special support for [negated] registers or variables as conditions
+    private static final Pattern atomicCondPattern = Pattern.compile(
+            String.format("\\(!?(%s|%s)\\)",
+                    registerPattern1, variablePattern));
+    // END KGU#968 2021-10-05
     // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison; patterns will be set when code generation is started
     private static Pattern inputPattern = null;
     private static Pattern outputPattern = null;
@@ -268,7 +274,7 @@ public class ArmGenerator extends Generator {
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
         String inputKeyword = CodeParser.getKeywordOrDefault("input", "input");
         String outputKeyword = CodeParser.getKeywordOrDefault("output", "output");
-		String procName = _root.getMethodName();
+        String procName = _root.getMethodName();
         inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
         outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
         alwaysReturns = mapJumps(_root.children);
@@ -402,46 +408,29 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Alternative _alt, String _indent) {
-        // Extract the text in the block
-        String condition = _alt.getUnbrokenText().getLongString().trim();
-
-        //if (!conditionPattern.matcher(condition.replace(" ", "")).matches()) {
-        StringList tokens = Element.splitLexically(condition, true);
-        Element.cutOutRedundantMarkers(tokens);
-        tokens.removeAll(" ");
-        condition = tokens.concatenate();
-        if (!condition.startsWith("(") || !condition.endsWith(")")) {
-            // To help the matching
-            condition = "(" + condition + ")";
-        }
-        if (!conditionPattern.matcher(condition).matches()) {
-        // END KGU#968 2021-05-03
-            // FIXME - this seems to be an inappropriate reaction!
-            appendComment("Inappropriate condition syntax - Alternative skipped!", getIndent());
-            return;
-        }
-
         String colon = difference[gnuEnabled ? 0 : 1][0];
-
+        
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
         appendComment(_alt, _indent + getIndent());
-        // The local caching of COUNTER is essential here because multiCondition will upgrade it
+        // The local caching of COUNTER is essential here because multiCondition will update it
         int counter = COUNTER;
 
-        String c;
-        String k;
+        String k = "end";
 
-        // Check if the q false exist (we wont empty code blocks)
+        // Check if the False branch exists (we won't empty code blocks)
         if (_alt.qFalse.getSize() != 0) {
             k = "else";
         } else {
             k = "end";
         }
-
-        String[] key = {k, "then"};
+        String[] keys = {k, "then"};
         // Generate the alternative code with multiCondition
-        c = multiCondition(condition, true, key);
+        String c = processCondition(_alt, "if", keys, true);
+        if (c == null) {
+            return;
+        }
+
         // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
         //addCode(c, "", isDisabled);
         String[] cSplit = c.split("\\n");
@@ -474,7 +463,7 @@ public class ArmGenerator extends Generator {
         unifyFlow();
     }
 
-    @Override
+	@Override
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + getIndent());
 
@@ -675,47 +664,22 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(While _while, String _indent) {
-        // Extract the text
-        String condition = _while.getUnbrokenText().getLongString().trim();
-
-        // START KGU#968 2021-05-03: Matching was rather obscure
-        //if (!conditionPattern.matcher(condition.replace(" ", "")).matches()) {
-        StringList tokens = Element.splitLexically(condition, true);
-        Element.cutOutRedundantMarkers(tokens);
-        tokens.removeAll(" ");
-        condition = tokens.concatenate();
-        if (!condition.startsWith("(") || !condition.endsWith(")")) {
-            // To help the matching
-            condition = "(" + condition + ")";
-        }
-        if (!conditionPattern.matcher(condition).matches()) {
-        // END KGU#968 2021-05-03
-            // FIXME - this seems to be an inappropriate reaction!
-            appendComment("Wrong condition syntax", getIndent());
-            return;
-        }
-
         String colon = difference[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
         int counter = COUNTER;
 
-        String[] key = {"end", "code"};
-        // Remove all the chars that we don't need from the string
-        // FIXME Sure we don't need any of them? What if it is a nested complex Boolean expression?
-        // for the moment we translate only instruction with n && or n ||, not both at the same time, then we don't need brackets
-        // START KGU#968 2021-04-25: Issue #967 Keep user configuration in mind
-        //condition = condition.replace("(", "").replace(")", "").replace("while", "").replace(" ", "");
-        tokens.removeAll("(");
-        tokens.removeAll(")");
-        tokens.removeAll(" ");	// Sure?
-        condition = tokens.concatenate(null);
-        // END KGU#968 2021-04-25
-        // Use multiCondition to translate the code again (like alternative)
-        String c = multiCondition(condition, true, key);
+        String[] keys = {"end", "code"};
+
+        String c = processCondition(_while, "while", keys, true);
+        if (c == null) {
+            return;
+        }
+
         // Add the label
         addCode("while_" + counter + colon, "", isDisabled);
+
         // Add the code
         // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
         //addCode(c, "", isDisabled);
@@ -747,18 +711,7 @@ public class ArmGenerator extends Generator {
 
         int counter = COUNTER;
 
-        String[] key = {"do", "continue"};
-        String condition = _repeat.getUnbrokenText().getLongString().trim();
-        // FIXME inappropriate handling of condition syntax
-        // for the moment we translate only instruction with n && or n ||, not both at the same time, then we don't need brackets
-        // START KGU#968 2021-04-25: Issue #967 Keep structure preferences in mind
-        //condition = condition.replace("until", "").replace("(", "").replace(")", "");
-        StringList tokens = Element.splitLexically(condition, true);
-        Element.cutOutRedundantMarkers(tokens);
-        tokens.removeAll("(");
-        tokens.removeAll(")");
-        condition = tokens.concatenate();
-        // END KGU#968 2021-04-25
+        String[] keys = {"do", "continue"};
         // START KGU#968 2021-05-02: Map the jumpTable entry to the end label (and add one for breaks)
         Integer labelRef = jumpTable.get(_repeat);
         if (labelRef != null && labelRef >= 0) {
@@ -767,7 +720,10 @@ public class ArmGenerator extends Generator {
         }
         // END KGU#968 2021-05-02
 
-        String c = multiCondition(condition, false, key);
+        String c = processCondition(_repeat, "until", keys, false);
+        if (c == null) {
+            return;
+        }
 
         addCode("do_" + counter + colon, "", isDisabled);
 
@@ -876,12 +832,14 @@ public class ArmGenerator extends Generator {
                     addCode("MOV R0, #0", this.getIndent(), isDisabled);
                     addCode("SWP R0, R0, [SP]", this.getIndent(), isDisabled);
                     addCode("BL " + called.getName(), getIndent(), isDisabled);
+                    // Is it a function call? Then produce an assignment with variable mapping
                     if (_call.isAssignment()) {
                         // Get the result value
                         StringList tokens = Element.splitLexically(lines.get(0), true);
                         tokens.removeAll(" ");
                         String target = Call.getAssignedVarname(tokens, false);
                         target = variablesToRegisters(target);
+                        appendComment("Subroutine result:", getIndent());
                         addCode(String.format("LDR %s, [SP]", target), getIndent(), isDisabled);
                     }
                     addCode(String.format("ADD SP, #%d", (params.size()+1) * 4), getIndent(), isDisabled);
@@ -910,12 +868,6 @@ public class ArmGenerator extends Generator {
         }
     }
 
-    /**
-     * Not supported
-     *
-     * @param _jump   - the {@link lu.fisch.structorizer.elements.Jump} element to be exported
-     * @param _indent - the indentation string valid for the given Instruction
-     */
     @Override
     protected void generateCode(Jump _jump, String _indent) {
         // FIXME Implement a subroutine return, a loop exit
@@ -949,7 +901,7 @@ public class ArmGenerator extends Generator {
                     String line = transform(lines.get(i)).trim();
                     if (!line.isEmpty())
                     {
-                    	isEmpty = false;
+                        isEmpty = false;
                     }
                     if (Jump.isReturn(line))
                     {
@@ -963,6 +915,7 @@ public class ArmGenerator extends Generator {
                             else {
                                 String reg = getAvailableRegister();
                                 generateInstructionLine(reg + " <- " + argument, isDisabled);
+                                argument = reg;
                             }
                             addCode(String.format("STR %s, [SP,#13,#2]", argument), getIndent(), isDisabled);
                         }
@@ -976,12 +929,12 @@ public class ArmGenerator extends Generator {
                         if (topLevel && root.isProgram()) {
                             String arg = "";
                             if (!argument.isEmpty()) {
-                                if (arg.matches(variablePattern)) {
+                                if (argument.matches(variablePattern)) {
                                     arg = (this.variablesToRegisters(argument) + " ").split(" ")[0];
                                 }
                                 else {
                                     String reg = getAvailableRegister();
-                                    generateInstructionLine(reg + " <- " + arg, isDisabled);
+                                    generateInstructionLine(reg + " <- " + argument, isDisabled);
                                     arg = reg;
                                 }
                             } else {
@@ -1021,7 +974,7 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * Not supported
+     * Not actually supported
      *
      * @param _para   - the {@link lu.fisch.structorizer.elements.Parallel} element to be exported
      * @param _indent - the indentation string valid for the given Instruction
@@ -1139,7 +1092,7 @@ public class ArmGenerator extends Generator {
                 addCode(String.format("LDR %s, [%s]", register, register), getIndent(), isDisabled);
                 // END KGU#968 2021-04-24
             } else {
-                appendComment("Error: INPUT operation only supported with GNU code\n" + line, getIndent());
+                appendComment("ERROR: INPUT operation only supported with GNU code\n" + line, getIndent());
             }
             break;
         case OUTPUT:
@@ -1182,19 +1135,19 @@ public class ArmGenerator extends Generator {
                 }
                 // END KGU#968 2021-04-26
             } else {
-                appendComment("Error: OUTPUT operation only supported with GNU code\n" + line, getIndent());
+                appendComment("ERROR: OUTPUT operation only supported with GNU code\n" + line, getIndent());
             }
             break;
         case NOT_IMPLEMENTED:
-            appendComment("Error: Not implemented yet\n" + line, getIndent());
+            appendComment("ERROR: Not implemented yet\n" + line, getIndent());
             break;
         }
     }
 
     /**
-     * This method uses regexes to verify which ARM instruction is line1
+     * This method uses regex tests to verify which ARM instruction is {@code line1}
      *
-     * @param line1 the string that contains the instruction to translate
+     * @param line1 - the string that contains the instruction to translate
      * @return string that represents what is the instruction
      */
     private ARM_OPERATIONS getMode(String line1) {
@@ -1246,13 +1199,13 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * Translates multiple conditions, takes the condition, counter, keywords as inputs
-     * EXAMPLE: condition = "R0 < R1 and R1 > R2", counter = 1, key[then, else]<br/>
+     * Translates multiple conditions, takes the condition, counter, keywords as inputs<br/>
+     * EXAMPLE: condition = "{@code R0 < R1 && R1 > R2}", counter = 1, key[then, else]<br/>
      * <b>NOTE: By now only conditions with one kind of operators (and / or) can be translated!</b><br/>
-     * This method upgrades the COUNTER global variable
+     * This method increments the {@link #COUNTER} field!
      *
-     * @param condition - the string that contains the condition
-     * @param reverse   - the boolean used for reversing the condition with the not operator
+     * @param condition - the string that contains the condition with unified operators
+     * @param reverse   - the boolean used for reversing the condition with the {@code not} operator
      * @param key       - the list of the Strings used for the labels
      */
     // FIXME Doesn't splitCondition() already replace/remove the verbose operators?
@@ -1284,14 +1237,14 @@ public class ArmGenerator extends Generator {
     /**
      * This method is used for the instruction of operator like (=, >, <, ...)
      *
-     * @param condition - the string that contains the condition
-     * @param inverse   - the boolean used for reversing the condition with the not operator
+     * @param condition - the condition expression string
+     * @param inverse   - is the condition inverted by a {@code not} operator?
      * @return an array that contains the first operator, arm instruction, and the second operator
      */
     private String[] getCondition(String condition, boolean inverse) {
         // FIXME Is it certain that the expression contains only one relation operator? Otherwise trouble is ahead...
         //  Shouldn't it have been more sensible first to split around the original operators and then to replace them?
-        // when this method is called there is just one relation operator in the condition because we split them in multiCondition
+        // when this method is called there is just one relation operator in the condition because we split them in multiCondition()
         condition = condition.replace("==", "=");
         String op = "";
         String sep = "";
@@ -1352,6 +1305,70 @@ public class ArmGenerator extends Generator {
         return variable;
 
     }
+
+    // START KGU#968 2021-10-05
+    /**
+     * Processes the condition expression of the passed-in Element {@code _ele}
+     * (should be an {@link Alternative}, {@link While}, or {@link Repeat} object)
+     * and returns either {@code null} (in case the transformation failed) or a
+     * multi-line instruction sequence as translation.
+     * @param _ele - The element the code for which is to be generated
+     * @param prefix - an element-class-specific prefix for the error message
+     * @param keys - a pair of keys for creating the jump labels
+     * @param inverse - whether the condition is to be logically inverted
+     * @return the ARM instruction sequence or {@code null}
+     */
+    private String processCondition(Element _ele, String prefix, String[] keys, boolean inverse)
+    {
+        // Extract the text in the block
+        String condition = _ele.getUnbrokenText().getLongString().trim();
+
+        StringList tokens = Element.splitLexically(condition, true);
+        Element.cutOutRedundantMarkers(tokens);
+        tokens.removeAll(" ");
+        Element.unifyOperators(tokens, false);
+        condition = tokens.concatenate(null);
+        if (!condition.startsWith("(") || !condition.endsWith(")")) {
+            // To help the matching
+            condition = "(" + condition + ")";
+        }
+        condition = prepareAtomicCondition(condition);
+        if (!conditionPattern.matcher(condition).matches()) {
+            // FIXME - this seems to be an inappropriate reaction!
+            appendComment("ERROR: Unsupported condition syntax - " + _ele.getClass().getSimpleName() + " skipped!", getIndent());
+            appendComment(prefix + " " + condition, getIndent());
+            return null;
+        }
+
+        condition = condition.replace("(", "").replace(")", "");
+
+        // Generate the condition code with multiCondition
+        return multiCondition(condition, inverse, keys);
+    }
+    
+    /**
+     * Converts an atomic condition, i.e., a pure or negated register or variable name
+     * into a comparison against 0. Other expressions remain untouched.<br/>
+     * Examples:<ul>
+     * <li>{@code (R4)} &rarr; {@code (R4!=0)} </li>
+     * <li>{@code (!isBool)} &rarr; {@code (isBool==0)} </li>
+     * </ul>
+     * @param tokens - a condensed condition string <b>with already unified
+     *  operators and surrounding parentheses</b>.
+     * @return possibly the modified condition or the passed argument itself
+     */
+    private String prepareAtomicCondition(String condition) {
+        if (atomicCondPattern.matcher(condition).matches()) {
+            String opr = "!=";
+            if (condition.charAt(1) == '!') {
+                opr = "==";
+                condition = "(" + condition.substring(2);
+            }
+            condition = condition.substring(0, condition.length()-1) + opr + "0)";
+        }
+        return condition;
+    }
+    // END KGU#968 2021-10-05
 
     /**
      * This method translates array initializations
@@ -1436,7 +1453,7 @@ public class ArmGenerator extends Generator {
             addCode("STR " + expr + ", " + "[" + arName + ", " + arr[1], getIndent(), isDisabled);
 
         } else {
-            appendComment("Error, no free register or no ar type specified", "");
+            appendComment("ERROR, no free register or no array type specified", "");
         }
     }
 
@@ -1492,11 +1509,11 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method translates variable or register assignments
-     * EXAMPLE: R0 <- 1
+     * This method translates variable or register assignments<br/>
+     * EXAMPLE: {@code R0 <- 1}
      *
-     * @param line       the string that contains the instruction to translate
-     * @param isDisabled whether this element or one of its ancestors is disabled
+     * @param line       - the string that contains the instruction to translate
+     * @param isDisabled - whether this element or one of its ancestors is disabled
      */
     private void generateAssignment(String line, boolean isDisabled) {
         String code;

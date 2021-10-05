@@ -125,6 +125,12 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 
+/**
+ * This Structorizer class represents a "jump" (i.e. some "exit", actually) element
+ * in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Jump extends Instruction {
 
 	// START KGU#258 2016-09-26: Enh. #253
