@@ -42,6 +42,19 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * *****************************************************************************************************
+ *
+ *      Modification List
+ *
+ *      Author          Date			Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2021-10-05      Annotations and type arguments added to avoid Java warnings,
+ *                                      bugfix in containsImbeddedComp, method comments revised,
+ *                                      external accessibility of field curImbeddedTBRs withdrawn
+ *
+ * *****************************************************************************************************
+ */
 
 package com.kobrix.notebook.gui;
 
@@ -49,24 +62,28 @@ import java.awt.*;
 import java.util.*;
 import javax.swing.*;
 
+@SuppressWarnings("serial")
 public class AKDockLayout extends BorderLayout
 {
-  private ArrayList north = new ArrayList(1);
-  private ArrayList south = new ArrayList(1);
-  private ArrayList east = new ArrayList(1);
-  private ArrayList west = new ArrayList(1);
+  private ArrayList<Component> north = new ArrayList<Component>(1);
+  private ArrayList<Component> south = new ArrayList<Component>(1);
+  private ArrayList<Component> east = new ArrayList<Component>(1);
+  private ArrayList<Component> west = new ArrayList<Component>(1);
   private Component center = null;
   private int northHeight, southHeight, eastWidth, westWidth;
 
-  public Object[] curImbeddedTBRs=new Object[4];
+  // START KGU 2021-10-05: Access reduced to private
+  //public Object[] curImbeddedTBRs = new Object[4];
+  private Object[] curImbeddedTBRs = new Object[4];
+  // END KGU 2021-10-05
   public static final int TOP = SwingConstants.TOP;
   public static final int BOTTOM = SwingConstants.BOTTOM;
   public static final int LEFT = SwingConstants.LEFT;
   public static final int RIGHT = SwingConstants.RIGHT;
 
   public AKDockLayout(){
-    curImbeddedTBRs[0]=north; curImbeddedTBRs[1]=south;
-    curImbeddedTBRs[2]=west; curImbeddedTBRs[3]=east;
+    curImbeddedTBRs[0] = north; curImbeddedTBRs[1] = south;
+    curImbeddedTBRs[2] = west; curImbeddedTBRs[3] = east;
   }
 
     @Override
@@ -146,9 +163,15 @@ public class AKDockLayout extends BorderLayout
     }
   }
 
-// Returns the ideal width for a vertically oriented toolbar
-// and the ideal height for a horizontally oriented tollbar:
-  private Dimension getPreferredDimension(ArrayList comps) {
+/**
+ * Returns the ideal width for a vertically oriented toolbar
+ * and the ideal height for a horizontally oriented toolbar:
+ * 
+ * @param comps - list of the toolbar components
+ * @return a {@link Dimension} object with the maximum preferred
+ * width and height.
+ */
+  private Dimension getPreferredDimension(ArrayList<Component> comps) {
     int w = 0, h = 0;
 
     for (int i = 0; i < comps.size(); i++) {
@@ -161,7 +184,7 @@ public class AKDockLayout extends BorderLayout
     return new Dimension(w, h);
   }
 
-  private void placeComponents(Container target, ArrayList comps,
+  private void placeComponents(Container target, ArrayList<Component> comps,
                                int x, int y, int w, int h, int orientation) {
     int offset = 0;
     Component c = null;
@@ -284,20 +307,36 @@ public class AKDockLayout extends BorderLayout
     //Gen.propChngSup.firePropertyChange("flipem","",new Double(Math.random()));
   }
 
-  /**Description: ????????? ????, ???? ????????? ???????????? ? ???? */
+  /**
+   * Checks whether the given component is part of any toolbar (no matter whether
+   * top, left, bottom, or right).
+   * @param c - The component looked for
+   * @return {@code true} if the component is part, {@code false} otherwise
+   * @see #containsImbeddedComp(Component, int)
+   */
   public boolean containsImbeddedComp(Component c){
     for(int i=0; i<this.curImbeddedTBRs.length; i++){
-      if( ((ArrayList)curImbeddedTBRs[i]).contains(c)) return true;
+      if ( ((ArrayList<?>)curImbeddedTBRs[i]).contains(c) ) return true;
     }
     return false;
   }
 
-  /**Description: ????????? ????, ???? ????????? ???????????? ? ???? ?
-   * ???????????? ??? ????? (SwingConstants top,left,bottom,right):
-   * top:1, left:2, bottom:3, right:4 */
+  /**
+   * Checks whether the given component is part of the toolbar at the specified
+   * docking position (analogous to SwingConstants {@link #TOP}, {@link #LEFT},
+   * {@link #BOTTOM}, {@link #RIGHT}).
+   * @param c - The component looked for
+   * @param inx - Docking position top:1, left:2, bottom:3, right:4
+   * @return {@code true} if the component is part of the respective toolbar,
+   * {@code false} otherwise
+   * @see #containsImbeddedComp(Component)
+   */
   public boolean containsImbeddedComp(Component c, int inx){
-    if(inx>0 && inx<5 && ((ArrayList)curImbeddedTBRs[inx+1]).contains(c)) return true;
-    return false;
+    // START KGU 2021-10-05: Bugfix - wrong index offset
+    //if(inx>0 && inx<5 && ((ArrayList<?>)curImbeddedTBRs[inx+1]).contains(c)) return true;
+    //return false;
+    return inx > 0 && inx < 5 && ((ArrayList<?>)curImbeddedTBRs[inx-1]).contains(c);
+    // END KGU 2021-10-05
   }
 
 }
