@@ -93,6 +93,10 @@ package lu.fisch.structorizer.generators;
  *                                          corrected
  *      Kay Gürtzig         2020-04-22      Enh. #855: New configurable default array size considered
  *      Kay Gürtzig         2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
+ *      Kay Gürtzig         2021-09-21      Bugfix #987: Duplicate comments for subroutines, inconsistent multi-line comments
+ *      Kay Gürtzig         2021-10-03      Bugfix #990: Made-up result types on exported procedures
+ *                                          Bugfix #993: Wrong handling of constant parameters
+ *                                          Fix KGU#994: Strange array index ranges like [-1..49] could occur
  *
  ******************************************************************************************************
  *
@@ -338,7 +342,10 @@ public class PasGenerator extends Generator
 		else if (_sl.count() == 1 && !_sl.get(0).contains("\n")) {
 			return this.insertComment(_sl.get(0), _indent, _atLine);
 		}
-		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight(), _atLine);
+		// START KGU#983 2021-09-21: Bugfix #987 - this was inconsistent with appendComment()
+		//return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "* ", this.commentSymbolRight(), _atLine);
+		return this.insertBlockComment(_sl, _indent, this.commentSymbolLeft(), "  ", this.commentSymbolRight(), _atLine);
+		// END KGU#983 2021-09-21
 	}
 	// END KGU#815 2020-03-26
 
@@ -349,7 +356,12 @@ public class PasGenerator extends Generator
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
-		String signature = _root.getMethodName();
+		final String CONST_PREFIX = "const ";
+		// START KGU#990 2021-10-02: Bugfix #990 we need the method name for a comparison
+		//String signature = _root.getMethodName();
+		String fnName = _root.getMethodName();
+		String signature = fnName;
+		// END KGU#990 2021-10-02
 		StringList paramNames = new StringList();
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes, null);
@@ -368,7 +380,15 @@ public class PasGenerator extends Generator
 				signature += ((p > 0) ? "; " : "");
 				// START KGU#800 2020-02-15: Type name surrogate unified to ???
 				//signature += (_paramNames.get(p) + ": " + transformType(_paramTypes.get(p), "{type?}")).trim();
-				signature += (paramNames.get(p) + ": " + transformType(paramTypes.get(p), "???")).trim();
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//signature += (paramNames.get(p) + ": " + transformType(paramTypes.get(p), "???")).trim();
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					signature += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
+				signature += (paramNames.get(p) + ": " + transformType(pType, "???")).trim();
+				// END KGU#993 2021-10-03
 				// END KGU#800 2020-02-15
 				// START KGU#371 2019-03-08: Enh. #385
 				if (p >= minArgs) {
@@ -377,7 +397,13 @@ public class PasGenerator extends Generator
 				// END KGU#371 2019-03-08
 			}
 			signature += ")";
-			if (resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			// START KGU#990 2021-10-02: Bugfix #990 _root is not necessarily the current Root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
+			// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+			//if (resultType != null || this.returns || this.isResultSet || this.isFunctionNameSet)
+			if (resultType != null || _root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName))
+			// END KGU#990 2021-10-02
 			{
 				resultType = transformType(_root.getResultType(), "Integer");
 				signature += ": " + resultType;
@@ -478,6 +504,11 @@ public class PasGenerator extends Generator
 			int maxIndex = typeInfo.getMaxIndex(i);
 			// START KGU#854 2020-04-22: Enh. #855
 			if (maxIndex < 0) {
+				// START KGU#994 2021-10-03: We must not risk a negative start index
+				if (minIndex < 0) {
+					minIndex = 0;
+				}
+				// END KGU#994 2021-10-03
 				maxIndex = minIndex + this.optionDefaultArraySize() - 1;
 			}
 			// END KGU#854 2020-04-22
@@ -672,7 +703,7 @@ public class PasGenerator extends Generator
 						addCode("exit;", _indent, isDisabled);
 					}
 					// START KGU#737 2019-10-01: Issue #754
-					continue;	// There is nothing more t be done about this line!
+					continue;	// There is nothing more to be done about this line!
 					// END KGU#737 2019-10-01
 				}
 				// START KGU#375 2107-09-21: Enh. #388 constant definitions must not be generated here (preamble stuff)
@@ -1582,11 +1613,13 @@ public class PasGenerator extends Generator
 				this.appendGeneratorIncludes(_indent, false);
 				// END KGU#815/KGU#824 2020-03-19
 				addSepaLine();
+				// START KGU#815/KGU#983 2021-09-21: Bugfix #987 - duplicate comment for subroutines (cf. #828)
 				// START KGU#194/KGU#376 2017-09-22: Bugfix #185, Enh. #389 - the function header shall have the comment
-				if (!_root.isInclude() && _public) {
-					appendComment(_root, _indent);
-				}
+				//if (!_root.isInclude() && _public) {
+				//	appendComment(_root, _indent);
+				//}
 				// END KGU#194/KGU#376 2017-09-22
+				// END KGU#815/KGU#983 2021-09-21
 
 				// START KGU#815 2020-03-16: Enh. #828
 				//code.add(_indent + pr + " " + signature + ";");
@@ -1922,13 +1955,19 @@ public class PasGenerator extends Generator
 	protected boolean generateConstDefs(Root _root, String _indent, StringList _complexConsts, boolean _sectionBegun) {
 		if (!_root.constants.isEmpty()) {
 			String indentPlus1 = _indent + this.getIndent();
+			// START KGU#993 2021-10-03: Bugfix #993 - We must not re-define constant parameters!
+			StringList params = _root.getParameterNames();
+			// END KGU#993 2021-10-03
 			// _root.constants is expected to be a LinkedHashMap, such that topological
 			// ordering should not be necessary
 			for (Entry<String, String> constEntry: _root.constants.entrySet()) {
 				String constName = constEntry.getKey();
 				// We must make sure that the constant hasn't been included from a diagram
 				// already handled at top level.
-				if (wasDefHandled(_root, constName, true)) {
+				// START KGU#993 2021-10-03: Bugfix #993 - skip constant parameters as well
+				//if (wasDefHandled(_root, constName, true)) {
+				if (params.contains(constName) || wasDefHandled(_root, constName, true)) {
+				// END KGU#993 2021-10-03
 					continue;
 				}
 				// START KGU#388 2017-09-19: Enh. #423 Modern Pascal allows structured constants
@@ -1942,7 +1981,8 @@ public class PasGenerator extends Generator
 				}
 				expr = transform(expr);
 				// END KGU#452 2019-11-17
-				TypeMapEntry constType = typeMap.get(constEntry.getKey()); 
+				TypeMapEntry constType = typeMap.get(constEntry.getKey());
+				// Only simple-type constants may be defined directly in the const section
 				if (constType == null || (!constType.isArray() && !constType.isRecord())) {
 					if (!_sectionBegun) {
 						code.add(_indent + "const");
@@ -1954,6 +1994,7 @@ public class PasGenerator extends Generator
 					// END KGU#424 2017-09-25
 					code.add(indentPlus1 + constEntry.getKey() + " = " + expr + ";");
 				}
+				// Constants of complex types must be decomposed and thus lose their constancy
 				else {
 					StringList generatedInit = null;
 					int lineNo = code.count();
@@ -2071,12 +2112,20 @@ public class PasGenerator extends Generator
 		//HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();	// KGU 2018-07-22: became obsolete by new field typeMap
 		// END KGU#261 2017-01-16
 		// START KGU#593 2018-10-05: Bugfix #619 - the function result variable must not be declared (again) here!
-		String functionName = null;
+		// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+		//String functionName = null;
+		String functionName = _root.getMethodName();
+		// END KGU#990 2021-10-03
 		// START KGU 2020-03-25: This seemed to be too slacky
 		//if (_root.getResultType() != null) {
-		if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet) {
+		// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+		//if (_root.getResultType() != null || this.returns || this.isResultSet || this.isFunctionNameSet) {
+		if (_root.getResultType() == null && _root.returnsValue != Boolean.TRUE && !_varNames.contains("result", false) && !_varNames.contains(functionName)) {
+		// END KGU#990 2021-10-03
 		// END KGU 2020-03-25
-			functionName = _root.getMethodName();
+			// START KGU#990 2021-10-03: Bugfix #990 _root may not be the current root
+			functionName = null;
+			// END KGU#990 2021-10-03
 		}
 		// END KGU#593 2018-10-05
 		for (int v = 0; v < _varNames.count(); v++) {
@@ -2123,11 +2172,20 @@ public class PasGenerator extends Generator
 					int maxIndex = typeInfo.getMaxIndex(level++);
 					// START KGU#854 2020-04-22: Enh. #855
 					if (maxIndex < 0) {
-						maxIndex = this.optionDefaultArraySize() - 1;
+						// START KGU#994 2021-10-04: We must not risk a negative start index
+						//maxIndex = this.optionDefaultArraySize() - 1;
+						if (minIndex < 0) {
+							minIndex = 0;
+						}
+						maxIndex = minIndex + this.optionDefaultArraySize() - 1;
+						// END KGU#994 2021-10-03
 					}
 					// END KGU#854 2020-04-22
 					String indexRange = "";
-					if (maxIndex > 0) {
+					// START KGU#994 2021-10-04: Ignore contradictory values
+					//if (maxIndex > 0) {
+					if (maxIndex > 0 && maxIndex >= minIndex) {
+					// END KGU#994 2021-10-04
 						indexRange = "[" + minIndex +
 								".." + maxIndex + "] ";
 					}

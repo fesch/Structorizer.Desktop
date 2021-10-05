@@ -1,0 +1,238 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{pseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
+
+\begin{document}
+
+\begin{pseudocode}{ComputeSum}{ }
+\label{ComputeSum}
+\COMMENT{ Computes the sum and average of the numbers read from a user-specified }\\
+\COMMENT{ text file (which might have been created via generateRandomNumberFile(4)). }\\
+\COMMENT{  }\\
+\COMMENT{ This program is part of an arrangement used to test group code export (issue }\\
+\COMMENT{ \#828) with FileAPI dependency. }\\
+\COMMENT{ The input check loop has been disabled (replaced by a simple unchecked input }\\
+\COMMENT{ instruction) in order to test the effect of indirect FileAPI dependency (only the }\\
+\COMMENT{ called subroutine directly requires FileAPI now). }\\
+\MAIN
+  fileNo\gets\ 1000\\
+  \COMMENT{ Disable this if you enable the loop below! }\\
+  \)input\(\)"{}Name/path\ of\ the\ number\ file"{}\(file\_name\\
+  \IF fileNo>0 \THEN
+  \BEGIN
+    values\gets\{\}\\
+    nValues\gets\ 0\\
+    \textbf{try} \BEGIN
+      nValues\gets\CALL{readNumbers}{file\_name,values,1000}\\
+    \END\\
+    \textbf{catch}\ (failure)\BEGIN
+      \OUTPUT{failure}\\
+      \EXIT -7\\
+    \END\\
+    sum\gets\ 0.0\\
+    \FOR k \gets 0 \TO nValues-1  \DO
+      sum\gets\ sum+values[k]\\
+    \OUTPUT{\)"{}sum\ =\ "{}\(,sum}\\
+    \OUTPUT{\)"{}average\ =\ "{}\(,sum/nValues}\\
+  \END\\
+\ENDMAIN
+\end{pseudocode}
+
+
+\begin{pseudocode}{DrawRandomHistogram}{ }
+\label{DrawRandomHistogram}
+\COMMENT{ Reads a random number file and draws a histogram accotrding to the }\\
+\COMMENT{ user specifications }\\
+\MAIN
+  fileNo\gets-10\\
+  \REPEAT
+    \)input\(\)"{}Name/path\ of\ the\ number\ file"{}\(file\_name\\
+    fileNo\gets\ fileOpen(file\_name)\\
+  \UNTIL fileNo>0\ \OR\ file\_name=\)"{}"{}\(\\
+  \IF fileNo>0 \THEN
+  \BEGIN
+    fileClose(fileNo)\\
+    \)input\(\)"{}number\ of\ intervals"{}\(,nIntervals\\
+    \COMMENT{ Initialize the interval counters }\\
+    \FOR k \gets 0 \TO nIntervals-1  \DO
+      count[k]\gets\ 0\\
+    \COMMENT{ Index of the most populated interval }\\
+    kMaxCount\gets\ 0\\
+    numberArray\gets\{\}\\
+    nObtained\gets\ 0\\
+    \textbf{try} \BEGIN
+      nObtained\gets\CALL{readNumbers}{file\_name,numberArray,10000}\\
+    \END\\
+    \textbf{catch}\ (failure)\BEGIN
+      \OUTPUT{failure}\\
+    \END\\
+    \IF nObtained>0 \THEN
+    \BEGIN
+      min\gets\ numberArray[0]\\
+      max\gets\ numberArray[0]\\
+      \FOR i \gets 1 \TO nObtained-1  \DO
+        \IF numberArray[i]<min \THEN
+          min\gets\ numberArray[i]\\
+        \ELSE
+          \IF numberArray[i]>max \THEN
+            max\gets\ numberArray[i]\\
+      \COMMENT{ Interval width }\\
+      width\gets(max-min)*1.0/nIntervals\\
+      \FOR i \gets 0 \TO nObtained-1  \DO
+      \BEGIN
+        value\gets\ numberArray[i]\\
+        k\gets\ 1\\
+        \WHILE k<nIntervals\ \AND\ value>min+k*width \DO
+          k\gets\ k+1\\
+        count[k-1]\gets\ count[k-1]+1\\
+        \IF count[k-1]>count[kMaxCount] \THEN
+          kMaxCount\gets\ k-1\\
+      \END\\
+      \CALL{drawBarChart}{count,nIntervals}\\
+      \OUTPUT{\)"{}Interval\ with\ max\ count:\ "{}\(,kMaxCount,\)"{}\ ("{}\(,count[kMaxCount],\)"{})"{}\(}\\
+      \FOR k \gets 0 \TO nIntervals-1  \DO
+        \OUTPUT{count[k],\)"{}\ numbers\ in\ interval\ "{}\(,k,\)"{}\ ("{}\(,min+k*width,\)"{}\ ...\ "{}\(,min+(k+1)*width,\)"{})"{}\(}\\
+    \END\\
+    \ELSE
+      \OUTPUT{\)"{}No\ numbers\ read."{}\(}\\
+  \END\\
+\ENDMAIN
+\end{pseudocode}
+
+
+\begin{pseudocode}{drawBarChart}{values, nValues }
+\label{drawBarChart}
+\COMMENT{ Draws a bar chart from the array "{}values"{} of size nValues. }\\
+\COMMENT{ Turtleizer must be activated and will scale the chart into a square of }\\
+\COMMENT{ 500 x 500 pixels }\\
+\COMMENT{ Note: The function is not robust against empty array or totally equal values. }\\
+\PROCEDURE{drawBarChart}{values, nValues}
+  \COMMENT{ Used range of the Turtleizer screen }\\
+  const\ xSize\gets\ 500\\
+  const\ ySize\gets\ 500\\
+  kMin\gets\ 0\\
+  kMax\gets\ 0\\
+  \FOR k \gets 1 \TO nValues-1  \DO
+    \IF values[k]>values[kMax] \THEN
+      kMax\gets\ k\\
+    \ELSE
+      \IF values[k]<values[kMin] \THEN
+        kMin\gets\ k\\
+  valMin\gets\ values[kMin]\\
+  valMax\gets\ values[kMax]\\
+  yScale\gets\ valMax*1.0/(ySize-1)\\
+  yAxis\gets\ ySize-1\\
+  \IF valMin<0 \THEN
+    \IF valMax>0 \THEN
+    \BEGIN
+      yAxis\gets\ valMax*ySize*1.0/(valMax-valMin)\\
+      yScale\gets(valMax-valMin)*1.0/(ySize-1)\\
+    \END\\
+    \ELSE
+    \BEGIN
+      yAxis\gets\ 1\\
+      yScale\gets\ valMin*1.0/(ySize-1)\\
+    \END\\
+  \COMMENT{ draw coordinate axes }\\
+  gotoXY(1,ySize-1)\\
+  forward(ySize-1)\\
+  penUp()\\
+  backward(yAxis)\\
+  right(90)\\
+  penDown()\\
+  forward(xSize-1)\\
+  penUp()\\
+  backward(xSize-1)\\
+  stripeWidth\gets\ xSize/nValues\\
+  \FOR k \gets 0 \TO nValues-1  \DO
+  \BEGIN
+    stripeHeight\gets\ values[k]*1.0/yScale\\
+    discr607e3da0 <- k mod 3\\
+    \IF discr607e3da0=0 \THEN
+      setPenColor(255,0,0)\\
+    \ELSEIF discr607e3da0=1 \THEN
+      setPenColor(0,255,0)\\
+    \ELSEIF discr607e3da0=2 \THEN
+      setPenColor(0,0,255)\\
+    fd(1)\\
+    left(90)\\
+    penDown()\\
+    fd(stripeHeight)\\
+    right(90)\\
+    fd(stripeWidth-1)\\
+    right(90)\\
+    forward(stripeHeight)\\
+    left(90)\\
+    penUp()\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{generateRandomNumberFile}{fileName, count, minVal, maxVal }
+\label{generateRandomNumberFile}
+\COMMENT{ Writes a text file with name fileName, consisting of count lines, each containing }\\
+\COMMENT{ a random number in the range from minVal to maxVal (both inclusive). }\\
+\COMMENT{ Returns either the number of written number if all went well or some potential }\\
+\COMMENT{ error code if something went wrong. }\\
+\PROCEDURE{generateRandomNumberFile}{fileName, count, minVal, maxVal}
+  fileNo\gets\ fileCreate(fileName)\\
+  \IF fileNo\leq\ 0 \THEN
+    \RETURN{fileNo}\\
+  \textbf{try} \BEGIN
+    \FOR k \gets 1 \TO count  \DO
+    \BEGIN
+      number\gets\ minVal+random(maxVal-minVal+1)\\
+      fileWriteLine(fileNo,number)\\
+    \END\\
+  \END\\
+  \textbf{catch}\ (error)\BEGIN
+    \OUTPUT{error}\\
+    \RETURN{-7}\\
+  \END\\
+  \textbf{finally} \BEGIN
+    fileClose(fileNo)\\
+  \END\\
+  \RETURN{count}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{readNumbers}{fileName, numbers, maxNumbers }
+\label{readNumbers}
+\COMMENT{ Tries to read as many integer values as possible upto maxNumbers }\\
+\COMMENT{ from file fileName into the given array numbers. }\\
+\COMMENT{ Returns the number of the actually read numbers. May cause an exception. }\\
+\PROCEDURE{readNumbers}{fileName, numbers, maxNumbers}
+  nNumbers\gets\ 0\\
+  fileNo\gets\ fileOpen(fileName)\\
+  \IF fileNo\leq\ 0 \THEN
+    \textbf{throw}\ \)"{}File could not be opened!"{}\(\\
+  \textbf{try} \BEGIN
+    \WHILE \NOT\ fileEOF(fileNo)\ \AND\ nNumbers<maxNumbers \DO
+    \BEGIN
+      number\gets\ fileReadInt(fileNo)\\
+      numbers[nNumbers]\gets\ number\\
+      nNumbers\gets\ nNumbers+1\\
+    \END\\
+  \END\\
+  \textbf{catch}\ (error)\BEGIN
+    \textbf{throw}\ \\
+  \END\\
+  \textbf{finally} \BEGIN
+    fileClose(fileNo)\\
+  \END\\
+  \RETURN{nNumbers}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+\end{document}

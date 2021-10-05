@@ -229,6 +229,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative paths in currentDirectory
  *      Kay Gürtzig     2021-04-16      Enh. #967: ARM code export options retrieved from Ini instead from menu item
+ *      Kay Gürtzig     2021-06-03      Bugfix KGU#975: Signature of setPluginSpecificOptions() refactored
+ *      Kay Gürtzig     2021-06-08      Enh. #953: Modifications for ExportOptionDialog (line numbering option)
+ *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
+ *      Kay Gürtzig     2021-06-10/11   Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
+ *      Kay Gürtzig     2021-09-18      Bugfix #983: Summoning a subroutine to an editor unduly turned it 'changed'
  *
  ******************************************************************************************************
  *
@@ -252,6 +257,7 @@ package lu.fisch.structorizer.gui;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.*;
 import java.awt.datatransfer.*;
 
@@ -600,26 +606,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	protected Vector<String> recentFiles = new Vector<String>();
 
 	// popup for comment
-	/**
-	 * The Label the comment popup consists of
-	 */
-	private JLabel lblPop = new JLabel("", SwingConstants.CENTER);
-	/**
-	 * The popup for the comment
-	 */
+	/** The Label the comment popup consists of */
+	private JLabel lblPop = new JLabel("",SwingConstants.CENTER);
+	/** The popup for the comment */
 	private JPopupMenu pop = new JPopupMenu();
 	// START KGU#902 2021-01-01: Enh. #903
-	/**
-	 * The Element that most recently fed the {@link #lblPop}
-	 */
+	/** The Element that most recently fed the {@link #lblPop} */
 	private Element poppedElement = null;
 	// END KGU#902 2021-01-01
 
 	// toolbar management
 	public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
-	/**
-	 * Toolbars that are to be disabled in simplified mode
-	 */
+	/** Toolbars that are to be disabled in simplified mode */
 	public Vector<MyToolbar> expertToolbars = new Vector<MyToolbar>();
 
 	private FindAndReplace findDialog = null;
@@ -898,14 +896,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								parser = parser.getClass().getDeclaredConstructor().newInstance();
 								// END KGU#354 2017-05-12
 								// START KGU#395 2017-07-02: Enh. #357
-								String parserClassName = parser.getClass().getSimpleName();
+								String pluginKey = parser.getClass().getSimpleName();
 								for (int j = 0; j < parserPlugins.size(); j++) {
 									// START KGU#948 2021-03-02: Bugfix #951 wrong index used
 									//GENPlugin plug = parserPlugins.get(i);
 									GENPlugin plug = parserPlugins.get(j);
 									// END KGU#948 2021-03-02
-									if (plug.getKey().equals(parserClassName)) {
-										setPluginSpecificOptions(parser, parserClassName, plug.options);
+									if (plug.getKey().equals(pluginKey)) {
+										setPluginSpecificOptions(parser, plug.options);
 										break;
 									}
 								}
@@ -1053,11 +1051,97 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		if (e.getSource() == this && NSDControl != null) {
 			boolean popVisible = false;
-			if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible()) {
+			// START KGU#979 2021-06-10: Enh. #926, #979
+			//if (Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
+			Element selEle = null;
+			boolean popupDone = false;
+			// Don't show an Analyser tooltip while the context menu (NSDControl.popup) is open
+			if (Element.E_ANALYSER && Element.E_ANALYSER_MARKER && !((Editor) NSDControl).popup.isVisible()) {
+				// Analyser tooltip has priority over comment tooltip
+				if ((selEle = root.getElementByCoord(e.getX(), e.getY(), false)) != null) {
+					// Check if the analyser marker region is hit
+					Rect rectEl = selEle.getRectOffDrawPoint();
+					Rect rectMk = selEle.getAnalyserMarkerBounds(rectEl, true);
+					if (rectMk.contains(e.getPoint())) {
+						// Now check whether the element has associated warnings
+						HashMap<Element, Vector<DetectedError>> errorMap = selEle.getRelatedErrors(true);
+						if (!errorMap.isEmpty()) {
+							FontMetrics fm = lblPop.getFontMetrics(lblPop.getFont());
+							int width = 0;
+							int lines = 0;
+							StringBuilder sb = new StringBuilder();
+							sb.append("<html>");
+							String text = "";
+							for (Entry<Element, Vector<DetectedError>> entry: errorMap.entrySet()) {
+								Element errEle = entry.getKey();
+								if (errorMap.size() > 1 || errEle != selEle) {
+									// This is a collapsed element, i.e., potentially represents several elements
+									text = ElementNames.getElementName(errEle, false, null);
+									StringList elText = errEle.getText();
+									String elText1 = "";
+									if (elText.count() > 0) {
+										elText1 = elText.get(0);
+										if (elText.count() > 1) {
+											elText1 += " ...";
+										}
+									}
+									text += " (" + elText1 + ")";
+									sb.append(BString.encodeToHtml(text));
+									sb.append(":<br/>");
+									width = Math.max(width, fm.stringWidth(text));
+									lines++;
+								}
+								for (DetectedError err: entry.getValue()) {
+									text = err.getMessage();
+									if (err.isWarning()) {
+										sb.append("<span style=\"color: #FF0000;\">");
+									}
+									else {
+										sb.append("<span style=\"color: #0000FF;\">");
+									}
+									sb.append(BString.encodeToHtml(text));
+									sb.append("</span><br/>");
+									width = Math.max(width, fm.stringWidth(text));
+									lines++;
+								}
+							}
+							sb.append("</html>");
+							lblPop.setText(sb.toString());
+							lblPop.setPreferredSize(
+									new Dimension(
+											8 + width,
+											lines * fm.getHeight()
+											)
+									);
+							// Ensure that the comment tooltip isn't suppressed when the marker gets left
+							poppedElement = null;
+							int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+							int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+							pop.setLocation(x+e.getX(),
+									y+e.getY()+16);
+							popVisible = true;
+							popupDone = true;
+						}
+					}
+				}
+				else {
+					// No element hit, hence nothing else to do.
+					popupDone = true;
+				}
+			}
+			// Don't show a comment tooltip while the context menu (NSDControl.popup) is open
+			if (!popupDone && Element.E_SHOWCOMMENTS && !((Editor) NSDControl).popup.isVisible())
+			// END KGU#979 2021-06-10
+			{
 				//System.out.println("=================== MOUSE MOVED (" + e.getX()+ ", " +e.getY()+ ")======================");
 				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
 				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				// START KGU#979 2021-06-11: Enh. #979 no need to retrieve twice
+				//Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				if (selEle == null) {
+					selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				}
+				// END KGU#979 2021-06-11
 				// END KGU#25 2015-10-11
 				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
@@ -1079,21 +1163,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						StringList comment = selEle.appendHtmlComment(sb);
 						lblPop.setText(sb.toString());
 						int maxWidth = 0;
-						int si = 0;
-						for (int i = 0; i < comment.count(); i++) {
-							if (maxWidth < comment.get(i).length()) {
-								maxWidth = comment.get(i).length();
-								si = i;
-							}
+						FontMetrics fm = lblPop.getFontMetrics(lblPop.getFont()); 
+						for (int i = 0; i < comment.count(); i++)
+						{
+							String line = comment.get(i);
+							maxWidth = Math.max(maxWidth, fm.stringWidth(line));
 						}
-						int width = lblPop.getFontMetrics(lblPop.getFont()).
-								stringWidth(comment.get(si));
 						if (lblPop.getText().contains("<strong>")) {
-							width *= 1.2;
+							maxWidth *= 1.2;
 						}
 						lblPop.setPreferredSize(
 								new Dimension(
-										8 + width,
+										8 + maxWidth,
 										comment.count() * lblPop.getFontMetrics(lblPop.getFont()).getHeight()
 										)
 								);
@@ -1154,11 +1235,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (selectedDown.getClass().getSimpleName().equals("Root")
 							|| selectedDown.getClass().getSimpleName().equals("Subqueue")
 							|| bSome.getClass().getSimpleName().equals("Root")
-							|| // START KGU#911 2021-01-10: Enh. #910
-							selectedDown.isImmutable() || bSome.isImmutable()
-							|| // END KGU#911 2021-01-10
+							// START KGU#911 2021-01-10: Enh. #910
+							|| selectedDown.isImmutable() || bSome.isImmutable()
+							// END KGU#911 2021-01-10
 							//root.checkChild(bSome, selectedDown))
-							bSome.isDescendantOf(selectedDown)) {
+							|| bSome.isDescendantOf(selectedDown)) {
 						Element.E_DRAWCOLOR = Color.RED;
 					} else {
 						Element.E_DRAWCOLOR = Color.GREEN;
@@ -1713,13 +1794,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();	// This is to make sure the drawing rectangles are correct
 		// START KGU#705 2019-09-24: Enh. 738
 		if (show_CODE_PREVIEW && codeHighlighter != null && element.executed) {
-			codeHighlighter.removeAllHighlights();
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					highlightCodeForElement(element, true);
-				}
-			});
+			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+			try {
+			// END KGU#978 2021-06-09
+				codeHighlighter.removeAllHighlights();
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						highlightCodeForElement(element, true);
+					}
+				});
+			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+			}
+			catch (NullPointerException ex) {
+				logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+			}
+			// END KGU#978 2021-06-09
 		}
 		// END KGU#705 2019-09-24
 	}
@@ -1990,7 +2080,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (show_CODE_PREVIEW && codePreviewMap != null) {
 			int pos = -1;
 			if (codeHighlighter != null) {
-				codeHighlighter.removeAllHighlights();
+				// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+				//codeHighlighter.removeAllHighlights();
+				try {
+					codeHighlighter.removeAllHighlights();
+				}
+				catch (NullPointerException ex) {
+					logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+				}
+				// END KGU#978 2021-06-09
 			}
 			if (this.selected != null) {
 				if (this.selected instanceof IElementSequence) {
@@ -2007,10 +2105,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			if (pos >= 0) {
 				try {
-					// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
-					Rectangle viewRect = codePreview.modelToView(pos);
+					Rectangle2D viewRect = codePreview.modelToView2D(pos);
 					// Scroll to make the rectangle visible
-					codePreview.scrollRectToVisible(viewRect);
+					codePreview.scrollRectToVisible(viewRect.getBounds());
 				} catch (BadLocationException e) {
 					// FIXME DEBUG (should not occur)
 					e.printStackTrace();
@@ -2042,12 +2139,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					int p0 = pos + interval[2];
 					int p1 = codePreview.getLineEndOffset(line);
 					if (p0 < p1) {
-						codeHighlighter.addHighlight(p0, p1, ele.executed ? execHighlightPainter : codeHighlightPainter);
+						// START KGU#978 2021-06-09: Workaround for mysterious error #977
+						//codeHighlighter.addHighlight(p0, p1, ele.executed ? execHighlightPainter : codeHighlightPainter);
+						try {
+							// Possibly a GUI initialisation problem...
+							HighlightPainter hlPainter = ele.executed ? execHighlightPainter : codeHighlightPainter;
+							if (hlPainter == null) {
+								hlPainter = new DefaultHighlighter.DefaultHighlightPainter(
+										ele.executed ? Element.E_RUNNINGCOLOR : Element.E_DRAWCOLOR);
+							}
+							codeHighlighter.addHighlight(p0, p1, hlPainter);
+						}
+						catch (NullPointerException ex) {
+							logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+						}
+						// END KGU#978 2021-06-09
 						if (scrollTo) {
-							// FIXME: from Java 9 on, modelToView() is to be replaced by modelToView2D()
-							Rectangle viewRect = codePreview.modelToView(pos);
+							Rectangle2D viewRect = codePreview.modelToView2D(pos);
 							// Scroll to make the rectangle visible
-							codePreview.scrollRectToVisible(viewRect);
+							codePreview.scrollRectToVisible(viewRect.getBounds());
 						}
 					}
 				} catch (BadLocationException e) {
@@ -2100,7 +2210,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			selectedDown = selected;
 			this.redraw(element);
 			if (codeHighlighter != null) {
-				codeHighlighter.removeAllHighlights();
+				// START KGU#978 2021-06-09: Workaround for mysterious bug #977
+				//codeHighlighter.removeAllHighlights();
+				try {
+					codeHighlighter.removeAllHighlights();
+				}
+				catch (NullPointerException ex) {
+					logger.log(Level.CONFIG, "Strange error #977 in code preview", ex);
+				}
+				// END KGU#978 2021-06-09
 			}
 			this.highlightCodeForElement(element, false);
 		}
@@ -4835,11 +4953,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #canEditSub()
 	 */
 	public void editSubNSD() {
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		boolean isNew = false;
+		// END KGU#981 2021-09-18
 		// START KGU#770 2021-01-27: Enh. #917
 		Root referredRoot = null;
 		String targetGroupName = null;	// This will be relevant for a new diagram
 		Collection<Group> myGroups = null;
 		// END KGU#770 2021-01-27
+		
+		// 1. Take care of subroutine calls
 		if (selected instanceof Call && this.canEditSub()) {
 			Call call = (Call) selected;
 			Function called = call.getCalledRoutine();
@@ -4909,10 +5032,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				referredRoot.setText(called.getName() + "(" + params.concatenate(paramSeparator) + ")" + result);
 				referredRoot.setProgram(false);
+				// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+				isNew = true;
+				// END KGU#981 2021-09-18
 			}
 		// START KGU#770 2021-01-27: Enh. #917
-		} else if (selected instanceof Root && this.canEditSub()) {
-			StringList includeNames = ((Root) selected).includeList;
+		}
+		// 2. Take care of referenced includable diagrams
+		else if (selected instanceof Root && this.canEditSub()) {
+			StringList includeNames = ((Root)selected).includeList;
 			if (root.isInclude() && includeNames.contains(root.getMethodName())) {
 				root.addUndo();
 				includeNames.removeAll(root.getMethodName());
@@ -4956,10 +5084,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				referredRoot = new Root();
 				referredRoot.setText(inclName);
 				referredRoot.setInclude();
+				// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+				isNew = true;
+				// END KGU#981 2021-09-18
 			}
 		}
+		
+		// 3. Now care about group context
 		myGroups = Arranger.getInstance().getGroupsFromRoot(root, true);
-		if (referredRoot != null) {
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		//if (referredRoot != null) {
+		if (isNew) {
+		// END KGU#981 2021-09-18
 			referredRoot.setChanged(false);
 			// Now care for the group context. If the parent diagram hadn't been in Arranger then put it there now
 			if (myGroups.isEmpty() && Arranger.getInstance().getGroupsFromRoot(root, false).isEmpty()) {
@@ -4976,87 +5112,83 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				targetGroupName = myGroups.iterator().next().getName();
 			}
 		// END KGU#770 2021-01-27
-			// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
-			//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
-			if (subForm == null
-					|| subForm.diagram == null
-					|| subForm.diagram.getRoot() != referredRoot
-					&& (!subForm.diagram.saveNSD(true) || !subForm.setRoot(referredRoot))) {
-			// END KGU#744 2019-10-05
-				subForm = new Mainform(false);
-				subForm.addWindowListener(new WindowListener() {
-					@Override
-					public void windowOpened(WindowEvent e) {
-					}
-
-					@Override
-					public void windowClosing(WindowEvent e) {
-						// A dead Mainform causes enormous trouble if we try to work with it.
-						if (subForm == e.getSource()) {
-							subForm = null;
-						}
-					}
-
-					@Override
-					public void windowClosed(WindowEvent e) {
-						((Mainform) (e.getSource())).removeWindowListener(this);
-						// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
-						if (subForm == e.getSource()) {
-							subForm = null;
-						}
-						// END KGU#744 2019-10-05
-					}
-
-					@Override
-					public void windowIconified(WindowEvent e) {
-					}
-
-					@Override
-					public void windowDeiconified(WindowEvent e) {
-					}
-
-					@Override
-					public void windowActivated(WindowEvent e) {
-					}
-
-					@Override
-					public void windowDeactivated(WindowEvent e) {
-					}
-
-				});
-			}
-			if (subForm.diagram.getRoot() != referredRoot) {
-				subForm.setRoot(referredRoot);
-			}
-			// If it is a new root then add it to Arranger
-			if (targetGroupName != null) {
-				Arranger.getInstance().addToPool(referredRoot, subForm, targetGroupName);
-			}
-			// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be added to Arranger
-			else {
-				Arranger.getInstance().addToPool(referredRoot, subForm);
-			}
-			Arranger.getInstance().setVisible(true);
-			// END KGU#744 2019-10-05
-			if (!subForm.isVisible()) {
-				subForm.setVisible(true);
-			}
-			// START KGU#744 2019-10-05: Bugfix #758
-			int state = subForm.getExtendedState();
-			if ((state & Frame.ICONIFIED) != 0) {
-				subForm.setExtendedState(state & ~Frame.ICONIFIED);
-			}
-			// END KGU#744 2019-10-05
-			Point loc = NSDControl.getFrame().getLocation();
-			Point locSub = subForm.getLocation();
-			if (loc.equals(locSub)) {
-				subForm.setLocation(loc.x + 20, loc.y + 20);
-			}
-			// START KGU#770 2021-01-27: Enh. #689, #917
-			// We must of course give the focus to the opened editor
-			subForm.requestFocus();
-			// END KGU#770 2021-01-27
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
 		}
+		// END KGU#981 2021-09-18
+		// START KGU#744 2019-10-05: Issue #758 - In case the connected subForm already handles the subroutine don't force to save it
+		//if (subForm == null || subForm.diagram == null || !subForm.diagram.saveNSD(true) || !subForm.setRoot(subroutine)) {
+		if (subForm == null
+				|| subForm.diagram == null
+				|| subForm.diagram.getRoot() != referredRoot
+				&& (!subForm.diagram.saveNSD(true) || !subForm.setRoot(referredRoot))) {
+		// END KGU#744 2019-10-05
+			subForm = new Mainform(false);
+			subForm.addWindowListener(new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {
+				}
+
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// A dead Mainform causes enormous trouble if we try to work with it.
+					if (subForm == e.getSource()) {
+						subForm = null;
+					}
+				}
+				public void windowClosed(WindowEvent e) {
+					((Mainform)(e.getSource())).removeWindowListener(this);
+					// START KGU#744 2019-10-05: Bugfix #758 We are not always informed on windowClosing
+					if (subForm == e.getSource()) {
+						subForm = null;
+					}
+				}
+				@Override
+				public void windowIconified(WindowEvent e) {}
+				@Override
+				public void windowDeiconified(WindowEvent e) {}
+				@Override
+				public void windowActivated(WindowEvent e) {}
+				@Override
+				public void windowDeactivated(WindowEvent e) {}
+
+			});
+		}
+		if (subForm.diagram.getRoot() != referredRoot) {
+		}
+		if (subForm.diagram.getRoot() != referredRoot) {
+			subForm.setRoot(referredRoot);
+		}
+		// Associate the arranged diagram to the subForm
+		if (targetGroupName != null) {
+			Arranger.getInstance().addToPool(referredRoot, subForm, targetGroupName);
+		}
+		// START KGU#744 2019-10-05: Bugfix #758 - The subroutine has always to be associated
+		else {
+			Arranger.getInstance().addToPool(referredRoot, subForm);
+		}
+		Arranger.getInstance().setVisible(true);
+		// END KGU#744 2019-10-05
+		if (!subForm.isVisible()) {
+			subForm.setVisible(true);
+		}
+		// START KGU#744 2019-10-05: Bugfix #758
+		int state = subForm.getExtendedState();
+		if ((state & Frame.ICONIFIED) != 0) {
+			subForm.setExtendedState(state & ~Frame.ICONIFIED);
+		}
+		// END KGU#744 2019-10-05
+		Point loc = NSDControl.getFrame().getLocation();
+		Point locSub = subForm.getLocation();
+		if (loc.equals(locSub)) {
+			subForm.setLocation(loc.x + 20, loc.y + 20);
+		}
+		// START KGU#770 2021-01-27: Enh. #689, #917
+		// We must of course give the focus to the opened editor
+		subForm.requestFocus();
+		// END KGU#770 2021-01-27
+		// START KGU#981 2021-09-18: Bugfix #983 Undue modifications of already existing diagrams
+		//}
+		// END KGU#981 2021-09-18
 	}
 
 	/**
@@ -6615,6 +6747,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (message == null || message.isEmpty()) {
 				message = ex.toString();
 			}
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", PapGenerator.class.getSimpleName()) + "\n" + message,
 					Menu.msgTitleError.getText(),
@@ -6846,7 +6979,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				for (int i = 0; i < parserPlugins.size(); i++) {
 					GENPlugin plug = parserPlugins.get(i);
 					if (plug.getKey().equals(pluginKey)) {
-						this.setPluginSpecificOptions(parser, pluginKey, plug.options);
+						this.setPluginSpecificOptions(parser, plug.options);
 					}
 				}
 				// END KGU#395 2017-07-02
@@ -7167,10 +7300,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#815 2020-03-20
 			// START KGU#395 2017-05-11: Enh. #357
-			// START KGU#968 2021-04-16: Enh. #967 turned out that the wrong class name was passed
-			//this.setPluginSpecificOptions(gen, _generatorClassName, _specificOptions);
-			this.setPluginSpecificOptions(gen, gen.getClass().getSimpleName(), _specificOptions);
-			// END KGU#968 2021-04-16
+			this.setPluginSpecificOptions(gen, _specificOptions);
+			// END KGU#395 2017-05-11
+			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			// END KGU#901 2020-12-29
 			// END KGU#395 2017-05-11
 			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -7243,6 +7377,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (message == null || message.isEmpty()) {
 				message = ex.toString();
 			}
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName) + "\n" + message,
 					Menu.msgTitleError.getText(),
@@ -7296,7 +7431,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (options == null) {
 				options = new Vector<HashMap<String, String>>();
 			}
-			this.setPluginSpecificOptions(gen, generatorName, options);
+			this.setPluginSpecificOptions(gen, options);
 			// START KGU#396 2020-04-01: Temporary extra mechanism for #440
 			if (extraOptions != null) {
 				for (Map.Entry<String, Object> option : extraOptions.entrySet()) {
@@ -7327,6 +7462,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (message == null || message.isEmpty()) {
 				message = ex.toString();
 			}
+			logger.log(Level.CONFIG, message, ex);
 			JOptionPane.showMessageDialog(this.getFrame(),
 					Menu.msgErrorUsingGenerator.getText().replace("%", generatorName) + "\n" + message,
 					Menu.msgTitleError.getText(),
@@ -7362,7 +7498,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (plugin.title.equals(generatorName)) {
 						Class<?> genClass = Class.forName(plugin.className);
 						gen = (Generator) genClass.getDeclaredConstructor().newInstance();
-						setPluginSpecificOptions(gen, plugin.getKey(), plugin.options);
+						setPluginSpecificOptions(gen, plugin.options);
 						String code = gen.deriveCode(root,
 								NSDControl.getFrame(),
 								arranger,
@@ -7380,6 +7516,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (message == null || message.isEmpty()) {
 					message = ex.toString();
 				}
+				logger.log(Level.CONFIG, message, ex);
 				JOptionPane.showMessageDialog(this.getFrame(),
 						Menu.msgErrorUsingGenerator.getText().replace("%", generatorName) + "\n" + message,
 						Menu.msgTitleError.getText(),
@@ -7389,7 +7526,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
 				highlightCodeForSelection();
 			}
 		});
@@ -7397,65 +7533,73 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#705 2019-09-23
 
-	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20
+	// START KGU#395 2017-05-11: Enh. #357 / Revised KGU#416 2017-06-20, KGU#975 2021-06-03
 	/**
-	 * Retrieves the plugin-specific values for the options given by map
-	 * {@code _specificOptions} from the {@link Ini} instance and sets
-	 * them on generator {@code _gen}.
-	 * 
-	 * @param _gen - the code generator instance
-	 * @param _pluginKey - the key of the plugin (the simple class name
-	 * of {@code _gen})
+	 * Retrieves plugin-specific options for the plugin-related class instance
+	 * {@code _pluginInstance} (e.g. a generator or parser) from Ini and fills
+	 * the option map of {@code _pluginInstance}.
+	 * @param _pluginInstance - instance of a plugin-related class
 	 * @param _specificOptions - vector of the plugin-specific option
 	 * specifications (as key-value maps with keys "name", "type", "title",
 	 * "help")
 	 */
-	private void setPluginSpecificOptions(IPluginClass _gen, String _pluginKey,
-			Vector<HashMap<String, String>> _specificOptions) {
-		Ini ini = Ini.getInstance();
-		for (HashMap<String, String> optionSpec : _specificOptions) {
-			String optionKey = optionSpec.get("name");
-			String valueStr = ini.getProperty(_pluginKey + "." + optionKey, "");
-			Object value = null;
-			String type = optionSpec.get("type");
-			String items = optionSpec.get("items");
-			// Now convert the option into the specified type
-			if (!valueStr.isEmpty() && type != null || items != null) {
-				// Better we fail with just a single option than with the entire method
-				try {
-					if (items != null) {
-						value = valueStr;
-					} else if (type.equalsIgnoreCase("character")) {
-						value = valueStr.charAt(0);
-					} else if (type.equalsIgnoreCase("boolean")) {
-						value = Boolean.parseBoolean(valueStr);
-					} else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
-						value = Integer.parseInt(valueStr);
-					} else if (type.equalsIgnoreCase("unsigned")) {
-						value = Integer.parseUnsignedInt(valueStr);
-					} else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
-						value = Double.parseDouble(valueStr);
-					} else if (type.equalsIgnoreCase("string")) {
-						value = valueStr;
-					}
-				} catch (NumberFormatException ex) {
-					String message = ex.getMessage();
-					if (message == null || message.isEmpty()) {
-						message = ex.toString();
-					}
-					logger.log(Level.SEVERE, "{0}: {1} on converting \"{2}\" to {3} for {4}",
-							new Object[]{
-									_pluginKey,
-									message,
-									valueStr,
-									type,
-									optionKey});
-				}
-			}
-			if (value != null) {
-				_gen.setPluginOption(optionKey, value);
-			}
+	private void setPluginSpecificOptions(IPluginClass _pluginInstance,
+			Vector<HashMap<String, String>> _specificOptions)
+	{
+//		// END KGU#975 2021-06-03
+//		for (HashMap<String, String> optionSpec: _specificOptions) {
+//			String optionKey = optionSpec.get("name");
+//			String valueStr = ini.getProperty(className + "." + optionKey, "");
+//			Object value = null;
+//			String type = optionSpec.get("type");
+//			String items = optionSpec.get("items");
+//			// Now convert the option into the specified type
+//			if (!valueStr.isEmpty() && type != null || items != null) {
+//				// Better we fail with just a single option than with the entire method
+//				try {
+//					if (items != null) {
+//						value = valueStr;
+//					}
+//					else if (type.equalsIgnoreCase("character")) {
+//						value = valueStr.charAt(0);
+//					}
+//					else if (type.equalsIgnoreCase("boolean")) {
+//						value = Boolean.parseBoolean(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("integer")) {
+//						value = Integer.parseInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("unsigned")) {
+//						value = Integer.parseUnsignedInt(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float")) {
+//						value = Double.parseDouble(valueStr);
+//					}
+//					else if (type.equalsIgnoreCase("string")) {
+//						value = valueStr;
+//					}
+//				}
+//				catch (NumberFormatException ex) {
+//					String message = ex.getMessage();
+//					if (message == null || message.isEmpty()) message = ex.toString();
+//					logger.log(Level.SEVERE,"{0}: {1} on converting \"{2}\" to {3} for {4}",
+//							new Object[]{
+//									className,
+//									message,
+//									valueStr,
+//									type,
+//									optionKey});
+//				}
+//			}
+//			if (value != null) {
+//				_pluginInstance.setPluginOption(optionKey, value);
+//			}
+//		}
+		StringList errors = _pluginInstance.setPluginOptionsFromIni(_specificOptions);
+		for (int i = 0; i < errors.count(); i++) {
+			logger.log(Level.SEVERE, errors.get(i));
 		}
+		// END KGU#977 2021-06-08
 	}
 	// END KGU#395 2017-05-11
 
@@ -8577,7 +8721,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Opens the export options dialog and processes configuration changes.
 	 */
-	public void exportOptions() {
+	public void exportOptions()
+	{
 		try {
 			Ini ini = Ini.getInstance();
 			ini.load();
@@ -8589,7 +8734,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
 			eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "false").equals("true"));
-			eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "false").equals("true"));
+			// START KGU#113 2021-06-07: Issue #67 now plugin-specific
+			//eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "false").equals("true"));
+			// END KGU#113 2021-06-07
 			// END KGU#16/KGU#113 2015-12-18
 			// START KGU#178 2016-07-20: Enh. #160
 			eod.chkExportSubroutines.setSelected(ini.getProperty("genExportSubroutines", "false").equals("true"));
@@ -8641,7 +8788,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
 				// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
 				ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
-				ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+				// START KGU#113 2021-06-07: Issue #67 now plugin-specific
+				//ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+				// END KGU#113 2021-06-07
 				// END KGU#16/KGU#113 2015-12-18
 				// START KGU#178 2016-07-20: Enh. #160
 				ini.setProperty("genExportSubroutines", String.valueOf(eod.chkExportSubroutines.isSelected()));

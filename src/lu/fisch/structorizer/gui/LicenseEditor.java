@@ -266,9 +266,8 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 	//@SuppressWarnings("unchecked")
 	private void initComponents() {
 
-		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
 		// OS-dependent key mask for menu shortcuts
-		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
 		panel = new JPanel();
 

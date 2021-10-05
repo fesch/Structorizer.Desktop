@@ -246,7 +246,6 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 		root = _licenseInfo.root;
 		licenseInfo = _licenseInfo;
 		initComponents();
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -987,14 +986,10 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 
 	@Override
 	public void windowActivated(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void windowClosed(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -1006,20 +1001,14 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 
 	@Override
 	public void windowDeactivated(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void windowDeiconified(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void windowIconified(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

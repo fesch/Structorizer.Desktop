@@ -1,0 +1,227 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\algblockdefx[CASE]{Case}{EndCase}
+  [1]{\textbf{case} \(#1\) \textbf{of}}
+  {\textbf{end\ case}}
+\algblockdefx[SELECT]{Selector}{EndSelector}
+  [1]{#1\textbf{: begin}}
+  {\textbf{end}}
+\algblockdefx[OTHER]{Other}{EndOther}
+  {\textbf{otherwise: begin}}
+  {\textbf{end}}
+\algblockdefx[TRY]{Try}{EndTry}
+  {\textbf{try}}
+  {\textbf{end\ try}}
+\algblockdefx[CATCH]{Catch}{EndCatch}
+  [1]{\textbf{catch} (#1)}
+  {\textbf{end\ catch}}\algblockdefx[FINALLY]{Finally}{EndFinally}
+  {\textbf{finally}}
+  {\textbf{end\ finally}}
+\algblockdefx[PARALLEL]{Para}{EndPara}
+  {\textbf{parallel}}
+  {\textbf{end\ parallel}}
+\algblockdefx[THREAD]{Thread}{EndThread}
+  [1]{\textbf{thread} #1}
+  [1]{\textbf{end\ thread} #1}
+\algblockdefx[DECLARATION]{Decl}{EndDecl}
+  [1][]{\textbf{#1}}
+  {}
+
+\title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
+\author{Kay G"urtzig}
+\date{09.06.2021}
+
+\begin{document}
+
+\begin{algorithm}
+\caption{drawBarChart(2)}
+\begin{algorithmic}[5]
+\Procedure{drawBarChart}{values, nValues}
+\State \Comment{ Draws a bar chart from the array "{}values"{} of size nValues. }
+\State \Comment{ Turtleizer must be activated and will scale the chart into a square of }
+\State \Comment{ 500 x 500 pixels }
+\State \Comment{ Note: The function is not robust against empty array or totally equal values. }
+  \Decl{Parameters:}
+    \State values: array\ of\ double
+    \State nValues: ?
+  \EndDecl
+  \State \(const\ xSize\gets\ 500\)
+  \Comment{Used range of the Turtleizer screen}
+  \State \(const\ ySize\gets\ 500\)
+  \State \(kMin\gets\ 0\)
+  \State \(kMax\gets\ 0\)
+  \For{\(k \gets 1\) \textbf{to} \(nValues-1\) \textbf{by} \(1\)}
+    \If{\(values[k]>values[kMax]\)}
+      \State \(kMax\gets\ k\)
+    \Else
+      \If{\(values[k]<values[kMin]\)}
+        \State \(kMin\gets\ k\)
+      \EndIf
+    \EndIf
+  \EndFor
+  \State \(valMin\gets\ values[kMin]\)
+  \State \(valMax\gets\ values[kMax]\)
+  \State \(yScale\gets\ valMax*1.0/(ySize-1)\)
+  \State \(yAxis\gets\ ySize-1\)
+  \If{\(valMin<0\)}
+    \If{\(valMax>0\)}
+      \State \(yAxis\gets\ valMax*ySize*1.0/(valMax-valMin)\)
+      \State \(yScale\gets(valMax-valMin)*1.0/(ySize-1)\)
+    \Else
+      \State \(yAxis\gets\ 1\)
+      \State \(yScale\gets\ valMin*1.0/(ySize-1)\)
+    \EndIf
+  \EndIf
+  \State \(gotoXY(1,ySize-1)\)
+  \Comment{draw coordinate axes}
+  \State \(forward(ySize-1)\)
+  \State \(penUp()\)
+  \State \(backward(yAxis)\)
+  \State \(right(90)\)
+  \State \(penDown()\)
+  \State \(forward(xSize-1)\)
+  \State \(penUp()\)
+  \State \(backward(xSize-1)\)
+  \State \(stripeWidth\gets\ xSize/nValues\)
+  \For{\(k \gets 0\) \textbf{to} \(nValues-1\) \textbf{by} \(1\)}
+    \State \(stripeHeight\gets\ values[k]*1.0/yScale\)
+    \Case{k\bmod\ 3}
+      \Selector{0}
+        \State \(setPenColor(255,0,0)\)
+      \EndSelector
+      \Selector{1}
+        \State \(setPenColor(0,255,0)\)
+      \EndSelector
+      \Selector{2}
+        \State \(setPenColor(0,0,255)\)
+      \EndSelector
+    \EndCase
+    \State \(fd(1)\)
+    \State \(left(90)\)
+    \State \(penDown()\)
+    \State \(fd(stripeHeight)\)
+    \State \(right(90)\)
+    \State \(fd(stripeWidth-1)\)
+    \State \(right(90)\)
+    \State \(forward(stripeHeight)\)
+    \State \(left(90)\)
+    \State \(penUp()\)
+  \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{readNumbers(3)}
+\begin{algorithmic}[5]
+\Function{readNumbers}{fileName, numbers, maxNumbers}
+\State \Comment{ Tries to read as many integer values as possible upto maxNumbers }
+\State \Comment{ from file fileName into the given array numbers. }
+\State \Comment{ Returns the number of the actually read numbers. May cause an exception. }
+  \Decl{Parameters:}
+    \State fileName: string
+    \State numbers: array\ of\ integer
+    \State maxNumbers: integer
+  \EndDecl
+  \Decl{Result type:}
+    \State integer
+  \EndDecl
+  \State \(nNumbers\gets\ 0\)
+  \State \(fileNo\gets\ fileOpen(fileName)\)
+  \If{\(fileNo\leq\ 0\)}
+    \State \textbf{throw} \(\)"{}File could not be opened!"{}\(\)
+  \EndIf
+  \Try
+    \While{\(!fileEOF(fileNo)\wedge\ nNumbers<maxNumbers\)}
+      \State \(number\gets\ fileReadInt(fileNo)\)
+      \State \(numbers[nNumbers]\gets\ number\)
+      \State \(nNumbers\gets\ nNumbers+1\)
+    \EndWhile
+  \EndTry
+  \Catch error
+    \State \textbf{throw} \(\)
+  \EndCatch %1
+  \Finally
+    \State \(fileClose(fileNo)\)
+  \EndFinally
+  \State \textbf{return} \(nNumbers\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{DrawRandomHistogram}
+\begin{algorithmic}[5]
+\Procedure{DrawRandomHistogram}{ }
+\State \Comment{ Reads a random number file and draws a histogram accotrding to the }
+\State \Comment{ user specifications }
+  \State \(fileNo\gets-10\)
+  \Repeat
+    \State \(\)input\((\)"{}Name/path\ of\ the\ number\ file"{}\(file\_name)\)
+    \State \(fileNo\gets\ fileOpen(file\_name)\)
+  \Until{\(fileNo>0\vee\ file\_name=\)"{}"{}\(\)}
+  \If{\(fileNo>0\)}
+    \State \(fileClose(fileNo)\)
+    \State \(\)input\((\)"{}number\ of\ intervals"{}\(,nIntervals)\)
+    \For{\(k \gets 0\) \textbf{to} \(nIntervals-1\) \textbf{by} \(1\)}
+      \State \(count[k]\gets\ 0\)
+    \EndFor
+    \State \(kMaxCount\gets\ 0\)
+    \Comment{Index of the most populated interval}
+    \State \(numberArray\gets\{\}\)
+    \State \(nObtained\gets\ 0\)
+    \Try
+      \State \(nObtained\gets\Call{readNumbers}{file\_name,numberArray,10000}\)
+    \EndTry
+    \Catch failure
+      \State \(\)print\((failure)\)
+    \EndCatch %1
+    \If{\(nObtained>0\)}
+      \State \(min\gets\ numberArray[0]\)
+      \State \(max\gets\ numberArray[0]\)
+      \For{\(i \gets 1\) \textbf{to} \(nObtained-1\) \textbf{by} \(1\)}
+        \If{\(numberArray[i]<min\)}
+          \State \(min\gets\ numberArray[i]\)
+        \Else
+          \If{\(numberArray[i]>max\)}
+            \State \(max\gets\ numberArray[i]\)
+          \EndIf
+        \EndIf
+      \EndFor
+      \State \(width\gets(max-min)*1.0/nIntervals\)
+      \Comment{Interval width}
+      \For{\(i \gets 0\) \textbf{to} \(nObtained-1\) \textbf{by} \(1\)}
+        \State \(value\gets\ numberArray[i]\)
+        \State \(k\gets\ 1\)
+        \While{\(k<nIntervals\wedge\ value>min+k*width\)}
+          \State \(k\gets\ k+1\)
+        \EndWhile
+        \State \(count[k-1]\gets\ count[k-1]+1\)
+        \If{\(count[k-1]>count[kMaxCount]\)}
+          \State \(kMaxCount\gets\ k-1\)
+        \EndIf
+      \EndFor
+      \State \(\Call{drawBarChart}{count,nIntervals}\)
+      \State \(\)print\((\)"{}Interval\ with\ max\ count:\ "{}\(,kMaxCount,\)"{}\ ("{}\(,count[kMaxCount],\)"{})"{}\()\)
+      \For{\(k \gets 0\) \textbf{to} \(nIntervals-1\) \textbf{by} \(1\)}
+        \State \(\)print\((count[k],\)"{}\ numbers\ in\ interval\ "{}\(,k,\)"{}\ ("{}\(,min+k*width,\)"{}\ ...\ "{}\(,min+(k+1)*width,\)"{})"{}\()\)
+      \EndFor
+    \Else
+      \State \(\)print\((\)"{}No\ numbers\ read."{}\()\)
+    \EndIf
+  \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

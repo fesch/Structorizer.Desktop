@@ -507,13 +507,17 @@ Menu.hint26.4.text=
 Menu.error27.text=
 Menu.error28.text=
 Menu.error29.text=
+Menu.error30_1.text=
+Menu.error30_2.text=
+Menu.error30_3.text=
 Menu.errorLineReference.text=(riga %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
 AnalyserPreferences.contentPanel.tab.0=Algoritmico
-AnalyserPreferences.contentPanel.tab.1=Nomi e convenzioni
-AnalyserPreferences.contentPanel.tab.2=Suggerimenti / Tutoraggio
+AnalyserPreferences.contentPanel.tab.1=Sintassi generale
+AnalyserPreferences.contentPanel.tab.2=Nomi e convenzioni
+AnalyserPreferences.contentPanel.tab.3=Suggerimenti / Tutoraggio
 AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
 AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
 AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
@@ -543,6 +547,7 @@ AnalyserPreferences.checkboxes.26.text=Piccolo tour "ciao mondo"
 AnalyserPreferences.checkboxes.27.text=
 AnalyserPreferences.checkboxes.28.text=
 AnalyserPreferences.checkboxes.29.text=
+AnalyserPreferences.checkboxes.30.text=
 AnalyserPreferences.lblDrawWarningSign.text=
 AnalyserPreferences.okButton.text=OK
 
@@ -1037,7 +1042,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Nessuna conversione del contenuto 
 ExportOptionDialoge.noConversionCheckBox.tooltip=Seleziona questa opzione se il testo contenente i tuoi elementi è già rappresentato nel linguaggio prescelto.
 ExportOptionDialoge.commentsCheckBox.text=Esporta istruzioni come commenti.
 ExportOptionDialoge.bracesCheckBox.text=Inserisci parentesi di inzio blocco in linea (C/C++/Java etc..)
-ExportOptionDialoge.lineNumbersCheckBox.text=Genera numeri di riga quando esporti in BASIC.
 ExportOptionDialoge.chkExportSubroutines.text=Includi le subroutine chiamate.
 ExportOptionDialoge.chkExportLicenseInfo.text=
 ExportOptionDialoge.lbPrefGenerator.text=Export Code preferito:
@@ -1119,6 +1123,7 @@ PluginOptionDialog.msgNoValidDouble.text=Il valore per '%' deve essere un numero
 PluginOptionDialog.msgVerificationError.text=Verifica dell'input fallita
 PluginOptionDialog.btnOk.text=
 PluginOptionDialog.btnCancel.text=Cancella
+PluginOptionDialog.optionComponents.lineNumbering.text=Genera numeri di riga
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferenze sul nome

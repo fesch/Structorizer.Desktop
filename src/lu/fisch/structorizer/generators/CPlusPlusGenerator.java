@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-12-02      KGU#784 Defective type descriptions in argument lists and thread function operators
  *      Kay Gürtzig     2020-03-20/23   Enh. #828 bugfix #836: Group export implemented, batch export improved
  *      Kay Gürtzig     2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
+ *      Kay Gürtzig     2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *
  ******************************************************************************************************
  *
@@ -190,6 +191,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
+		final String CONST_PREFIX = "const ";
 		int lines = 0; 	// Result value = number of inserted lines
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
@@ -199,9 +201,15 @@ public class CPlusPlusGenerator extends CGenerator {
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
 			_root.collectParameters(paramNames, paramTypes, null);
+			// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
 			// Start with the result type
 			fnHeader = transformType(_root.getResultType(),
-					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+					// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+					//((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+					((_root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName)) ? "int" : "void"));
+					// END KGU#990 2021-10-02
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
 			returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
 			if (returnsArray) {
@@ -217,7 +225,15 @@ public class CPlusPlusGenerator extends CGenerator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(paramTypes.get(p), "???").trim(), paramNames.get(p));
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//fnHeader += transformArrayDeclaration(transformType(paramTypes.get(p), "???").trim(), paramNames.get(p));
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					fnHeader += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
+				fnHeader += transformArrayDeclaration(transformType(pType, "???").trim(), paramNames.get(p));
+				// END KGU#993 2021-10-03
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);
 				if (defVal != null) {

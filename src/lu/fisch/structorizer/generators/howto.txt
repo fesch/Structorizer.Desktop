@@ -10,7 +10,7 @@ This is just a little file that explains
 WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
 ===========================================
 Author:      Kay Gürtzig
-Last update: 2019-03-18
+Last update: 2021-05-31
 
 There are two possible approaches to add a new generator to Structorizer:
 You might start from scratch or copy an existing generator for a language
@@ -258,7 +258,21 @@ and accomplish the outcome step by step, consider more export options etc.
 		"preThrow" for raising exceptions,
 		"input", "output" for input and output instructions.
 	4.2	Export options
-		(TODO)
+		There are some general export options retrievable via inherited methods
+		the generator should be	aware of:
+		- Character set:                  getExportCharset()
+		- Don't convert content           suppressTransformation
+		- block opening position:         optionBlockBraceNextLine()
+		- line number generation:         optionCodeLineNumbering()
+		- Involve called subroutines:     optionExportSubroutines()
+		- Export author and licence info: optionExportLicenseInfo()
+		- Default array size:             optionDefaultArraySize()
+		- Default string length:          optionDefaultStringLength()
+		In addition, some generator-specific options may be configured
+		via the corresponding plugin entry in file "generators.xml" (see
+		section 7). The values may be obtained via method getPluginOption().
+		The obtained object will simply have to be cast into the expected
+		type.
 		
 5.	Helper methods for element text transformation
 	The most important helper methods are:
@@ -329,8 +343,20 @@ and accomplish the outcome step by step, consider more export options etc.
 	If letter case does NOT matter (like in Pascal) you ought to provide
 	an attribute case_matters="0"; the default is that case matters (as
 	in C, Java etc.), so you may omit the attribute or write:
-	case_matters="1".  
-	
+	case_matters="1".
+	The plugin node may contain generator-specific option specifications
+	(see also section 4.2). Each may be defined by an <option> node with
+	following attributes: 'name', 'type', 'title', 'help'. The value of
+	attribute 'type' may be one of "Boolean", "Integer", "Unsigned", "Double",
+	"Character", "String", or "Enum". In case of "Enum" a list of sub nodes
+	<item> is expected, each contributing a string specified via attribute
+	'value', e.g.
+	<option name="foo" type="Boolean" title="Foo" help="Check this" />
+	<option name="bar" type="Enum" title="Bar" help="Kind of guy">
+		<item value="good" />
+		<item value="bad" />
+		<item value="ugly" />
+	</option>
 8.	Batch Mode test
 	Make sure the generator also works fine in batch mode (i.e. from
 	command line):

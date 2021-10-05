@@ -32,7 +32,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.31      First Issue
+ *      Bob Fisch       2007-12-31      First Issue
  *
  ******************************************************************************************************
  *
@@ -87,25 +87,13 @@ public class ColorChooser extends LangDialog
 		return RESULT;
 	}
 
-	/*public ColorChooser()
-	{
-		super();
-		setModal(true);
-		initComponents();
-	}*/
-	
 	public ColorChooser(Frame owner) 
 	{
 		super(owner);
-                setModal(true);
+		setModal(true);
 		initComponents();
 	}
 	
-	/*public ColorChooser(Dialog owner) {
-		super(owner);
-		initComponents();
-	}*/
-
 	private void modalButtonActionPerformed(ActionEvent e) 
 	{
 		if (e.getSource()==btnOK) {RESULT=true;}

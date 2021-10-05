@@ -186,7 +186,7 @@ public class Colors extends LangDialog {
 		// END KGU#622 2018-12-20
 
 		//======== this ========
-		setResizable(false);
+		setResizable(false);	// This also suppresses the dialog icon holding the size menu
 		setTitle("Color Preferences");
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());

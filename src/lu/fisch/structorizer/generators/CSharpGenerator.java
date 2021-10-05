@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *      Kay Gürtzig             2020-03-27      Enh. #828: Group export support accomplished
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *
  ******************************************************************************************************
  *
@@ -1147,7 +1148,15 @@ public class CSharpGenerator extends CGenerator
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
-				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
+				String pType = _paramTypes.get(p);
+				if (pType != null && pType.startsWith("const ")) {
+					fnHeader += "const ";
+					pType = pType.substring("const ".length());
+				}
+				fnHeader += transformArrayDeclaration(transformType(pType, "???").trim(), _paramNames.get(p));
+				// END KGU#993 2021-10-03
 				// END KGU#140 2017-01-31
 				// START KGU#371 2019-03-07: Enh. #385
 				String defVal = defaultVals.get(p);

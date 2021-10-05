@@ -10,7 +10,7 @@ This is just a little file that explains
 ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
 =========================================
 Author:      Kay Gürtzig
-Last update: 2021-02-15
+Last update: 2021-05-31
 
 Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
 combination with a compiled grammar for the source language to derive a structogram
@@ -147,12 +147,18 @@ Import options are available via members named "option..." of the parent class C
 Language-dependent options can be configured within the respective <plugin> tag in file
 parsers.xml. Each <option> tag is supposed to have the following attributes:
 - name: an identifier string used as internal key,
-- type: one of "Boolean", "Integer", "Unsigned", "Double", "Character", or "String",
+- type: one of "Boolean", "Integer", "Unsigned", "Double", "Character", "String", or
+  "Enum",
 - title: the external caption for the import option dialog (should be English)
 - help: A short (English) description used as tooltip popup in the import option dialog.
-If the option values are enumerable then instead of the type attribute, a sequence of
-<item> subtags should be placed within the <option> tag, each specifying one of the
-selectable values in its value attribute.
+If the option values are enumerable (i.e. type="Enum") then a sequence of <item> nodes
+should be placed within the <option> tag, each specifying one of the selectable values
+in its 'value' attribute, e.g.
+	<option name="bar" type="Enum" title="Bar" help="Kind of guy">
+		<item value="good" />
+		<item value="bad" />
+		<item value="ugly" />
+	</option>
 In order to obtain the value, the parser must use method
 	getPluginOption(String key, Object default)
 

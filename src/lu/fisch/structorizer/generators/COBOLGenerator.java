@@ -38,6 +38,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-16      Issue #739: Enumeration type export prepared
  *      Kay Gürtzig             2020-04-19      Declaration part advanced.
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
+ *      Kay Gürtzig             2021-06-07      Issue #67: lineNumering option made plugin-specific
  *      
  ******************************************************************************************************
  *
@@ -454,6 +455,23 @@ public class COBOLGenerator extends Generator {
 		return levelIncr;
 	}
 	// END KGU#395 2020-04-17
+	
+	// START KGU#113 2021-06-07: Enh. #67 - Line numbering now as plugin-specific option
+	/**
+	 * Returns the value of the export option whether to generate line numbers
+	 * at the beginning of every single line.
+	 * @return true if lines are to start with numbers.
+	 */
+	private boolean optionCodeLineNumbering() {
+		// START KGU 2016-04-04: Issue #151 - Get rid of the inflationary eod threads
+		//return (eod.lineNumbersCheckBox.isSelected());
+		// START KGU#113 2021-06-07: Enh. #67 Converted to a plugin-specific option
+		//return this.generateLineNumbers;
+		Object optionVal = this.getPluginOption("lineNumbering", false);
+		return optionVal instanceof Boolean && (boolean)optionVal;
+		// END KGU 2016-04-04
+	}
+	// END KGU#113 2015-12-18	
 	
 	/************ Code Generation **************/
 	

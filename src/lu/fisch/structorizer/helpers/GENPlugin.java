@@ -62,13 +62,15 @@ public class GENPlugin
 	// END KGU#239 2017-04-23
 	// START KGU#354/KGU#395 2017-05-11: Enh. #534 Allow configurable options
 	/**
-	 * Vector of option specifications forming hash tables of strings each:<br/>
-	 * name: option key (mandatory)<br/>
-	 * type: a simple value class name (Boolean, Character, Integer, Unsigned, Double, String)
-	 * items: a string of the form "{item1; item2; ... itemN}"<br/>
-	 * title: external caption (English)<br/>
-	 * help: a tooltip help<br/>
-	 * default: a possible default value
+	 * Vector of option specifications forming hash tables of strings each:
+	 * <ul>
+	 * <li>name: option key (mandatory)</li>
+	 * <li>type: a simple value class name (Boolean, Character, Integer, Unsigned, Double, String)</li>
+	 * <li>items: a string of the form "{item1; item2; ... itemN}"</li>
+	 * <li>title: external caption (English)</li>
+	 * <li>help: a tooltip help</li>
+	 * <li>default: a possible default value</li>
+	 * </ul>
 	 */
 	public Vector<HashMap<String, String>> options = new Vector<HashMap<String, String>>();
 	// END KGU#354/KGU#395 2017-05-11

@@ -1,11 +1,11 @@
 \documentclass[a4paper,10pt]{article}
 
 \usepackage{struktex}
-\usepackage{german}
+\usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
-\author{Kay Gürtzig}
-\date{19.10.2020}
+\author{Kay G"urtzig}
+\date{04.10.2021}
 
 \begin{document}
 
@@ -57,7 +57,7 @@
   \assign{\(stripeWidth\ \gets\ xSize\ /\ nValues\)}
   \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
     \assign{\(stripeHeight\ \gets\ values[k]\ *\ 1.0\ /\ yScale\)}
-    \case{6}{4}{\(k\ \)\pKey{mod}\(\ 3\)}{0}
+    \case{6}{4}{\(k\ \bmod\ 3\)}{0}
         \assign{\(setPenColor(255,0,0)\)}
       \switch{1}
         \assign{\(setPenColor(0,\ 255,0)\)}

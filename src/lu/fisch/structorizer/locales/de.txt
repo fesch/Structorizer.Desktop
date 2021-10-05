@@ -133,6 +133,7 @@
  *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig         2021-02-07  Enh. #915: New messages and tooltips for InputBoxCase
  *      Kay Gürtzig         2021-03-07  KGU#961: Translations for known plugin options added.
+ *      Kay Gürtzig         2021-10-05      Enh. #992: Messages for Analyser brackets check
  *
  ******************************************************************************************************
  *
@@ -568,13 +569,17 @@ Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportier
 Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
 Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.error29.text=Der Auswahlwert «%» ist von strukturiertem Typ und somit ungeeignet für @c!
+Menu.error30_1.text=In Zeile %2 gibt es %1 öffnende Klammer(n) mehr als schließende, als nächstes '%3' erwartet!
+Menu.error30_2.text=In Zeile %2 gibt es mindestens eine schließende '%1' mehr als öffnende Klammern!
+Menu.error30_3.text=In Zeile %2 gibt es eine Klammer '%1', wo '%3' erwartet würde!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
 AnalyserPreferences.contentPanel.tab.0=Algorithmisch
-AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
-AnalyserPreferences.contentPanel.tab.2=Hinweise / Anleitungen
+AnalyserPreferences.contentPanel.tab.1=Syntax, allgemein
+AnalyserPreferences.contentPanel.tab.2=Bezeichner / Konventionen
+AnalyserPreferences.contentPanel.tab.3=Hinweise / Anleitungen
 AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von @d-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
@@ -604,6 +609,7 @@ AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
+AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und richtig verschachtelt sind.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -1097,7 +1103,6 @@ ExportOptionDialoge.noConversionCheckBox.text=Keine Umwandlung der Elementinhalt
 ExportOptionDialoge.noConversionCheckBox.tooltip=Aktivieren Sie diese Option, wenn Ihre Struktogrammtexte bereits in der Zielsprache formuliert sind.
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
-ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
 ExportOptionDialoge.chkExportLicenseInfo.text=Autorenschafts- and Lizenzattribute exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
@@ -1199,6 +1204,15 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen der WINAPI enthält (wie z.B. "WINAPI").
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Namen und Typen von MinGw benutzt
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen von MinGw enthält.
+PluginOptionDialog.optionComponents.lineNumbering.text=Zeilennummern mitgenerieren.
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Diese Option ändert zugleich die gesamte Syntax hin zu Vintage-BASIC.
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Diese Option nummeriert die exportierten Code-Zeilen fortlaufend.
+PluginOptionDialog.optionLabels.numberingInterval.text=Intervall für Zeilennummerierung
+PluginOptionDialog.optionComponents.numberingInterval.tooltip=Sowiet durch Package unterstützt: 0 für aus, 1 für jede Zeile, n für jede n-te Zeile
+PluginOptionDialog.optionLabels.package.text=Zu verwendendes LaTeX-Package
+PluginOptionDialog.optionComponents.package.tooltip=Bitte bevorzugtes Algorithmen-Package auswählen
+PluginOptionDialog.optionComponents.appendSemicolon.text=Anweisungen mit Semikolon abschließen
+PluginOptionDialog.optionComponents.appendSemicolon.tooltip=Falls aktiviert, wird hinter jede Anweisung ein ';' angefügt.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen

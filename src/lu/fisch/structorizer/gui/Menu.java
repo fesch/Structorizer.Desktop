@@ -128,6 +128,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-24      Issue #944: Version info announcing Java upgrade to 11 added
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-15      Enh. #967: menu item menuDiagramARM as introduced by A. Simonetta disabled 
+ *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for new Analyser check 30 against bracket faults
  *
  ******************************************************************************************************
  *
@@ -623,6 +624,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#927 2021-02-08: Enh. #915
 	public static final LangTextHolder error29 = new LangTextHolder("A structured discriminator («%») is unsuited for CASE!");
 	// END KGU#927 2021-02-08
+	// START KGU#992 2021-10-05: Enh. #992
+	public static final LangTextHolder error30_1 = new LangTextHolder("There are %1 more opening than closing brackets in line %2, '%3' was expected next!");
+	public static final LangTextHolder error30_2 = new LangTextHolder("There is at least one more closing '%1' than opening brackets in line %2!");
+	public static final LangTextHolder error30_3 = new LangTextHolder("There is a closing '%1' where '%3' is expected in line %2!");
+	// END KGU#992 2021-10-05
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");
@@ -867,19 +873,6 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			+ "\"%1\"\n"
 			+ "in the %2.");
 	// END KGU#916 2021-01-28
-	// START KGU#941 2021-02-24: Issue #944 FIXME temporary version hint for 3.30-18+
-	public static final LangTextHolder msgJavaUpgradeHint_3_30_18 = new LangTextHolder(
-			"The Structorizer developers plan to give up Java version 8 compatibility\n"
-			+ "by mid 2021 and to upgrade the code base such that it will require a Java 11 VM\n"
-			+ "at least.\n"
-			+ "You can run Structorizer already now with Java VMs 11+, but future versions\n"
-			+ "will no longer be usable on obsolete Java versions < 11. It does not matter\n"
-			+ "whether Oracle Java or an OpenJDK is used.");
-	public static final LangTextHolder msgJavaUpgradeHint_3_30_18a = new LangTextHolder(
-			"\nBe aware that Java WebStart support officially ended with Java 8,\n"
-			+ "but there are alternatives like Open Webstart (https://openwebstart.com)\n"
-			+ "if you want to adhere to the Structorizer JNLP delivery.");
-	// END KGU#941 2021-02-24
 	//=======================================================================
 	
 	// START KGU#725 2019-09-13: Enh. #746 - for later re-translation if necessary
@@ -902,7 +895,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		
 		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
 		// OS-dependent key mask for menu shortcuts
-		int menuShortcutKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int menuShortcutKeyMask = ((Toolkit) Toolkit.getDefaultToolkit()).getMenuShortcutKeyMaskEx();
 
 		// START KGU#240 2016-09-01: Bugfix #233 - Configured key binding F10 for CASE insertion wasn't effective
 		menubar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0), "none");

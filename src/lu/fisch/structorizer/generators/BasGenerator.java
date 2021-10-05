@@ -69,6 +69,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-04-08      Issue #828 modifications supporting group export
  *      Kay Gürtzig         2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig         2021-02-03      Issue #920: Attempt to transform "Infinity" literal
+ *      Kay Gürtzig         2021-06-07      Issue #67: lineNumering option made plugin-specific
+ *      Kay Gürtzig         2021-10-03/04   Bugfix #993: Wrong handling of constant parameters, array types, and mere declarations
  *
  ******************************************************************************************************
  *
@@ -259,6 +261,23 @@ public class BasGenerator extends Generator
 		return "PRINT $1";
 	}
 
+	// START KGU#113 2021-06-07: Enh. #67 - Line numbering now as plugin-specific option
+	/**
+	 * Returns the value of the export option whether to generate line numbers
+	 * at the beginning of every single line.
+	 * @return true if lines are to start with numbers.
+	 */
+	protected boolean optionCodeLineNumbering() {
+		// START KGU 2016-04-04: Issue #151 - Get rid of the inflationary eod threads
+		//return (eod.lineNumbersCheckBox.isSelected());
+		// START KGU#113 2021-06-07: Enh. #67 Converted to a plugin-specific option
+		//return this.generateLineNumbers;
+		Object optionVal = this.getPluginOption("lineNumbering", false);
+		return optionVal instanceof Boolean && (Boolean)optionVal;
+		// END KGU 2016-04-04
+	}
+	// END KGU#113 2015-12-18	
+	
 	// START KGU 2019-12-01 - Use different case styles for Vintage BASIC and modern BASIC
 	private String transformKeyword(String keyword)
 	{
@@ -436,6 +455,12 @@ public class BasGenerator extends Generator
 
 		String interm = super.transform(_input);
 		
+		// START KGU#993 2021-10-04: Issue #993
+		if (interm.startsWith("const ")) {
+			interm = this.transformKeyword("CONST") + interm.substring("const".length());
+		}
+		// END KGU#993 2021-10-04
+		
 		// Operator translations; KGU#93: now in transformTokens() 
 //		interm = interm.replace(" == ", " = ");
 //		interm = interm.replace(" != ", " <> ");
@@ -471,6 +496,40 @@ public class BasGenerator extends Generator
 			if (_type.equalsIgnoreCase("int")) _type = "Integer";
 			else if (_type.equalsIgnoreCase("string") || _type.equals("char[]")) _type = "String";
 			// To be continued if required...
+			// START KGU#993 2021-10-03: Bugfix #993: Need an array translation for arglists
+			else if (_type.startsWith("array ") || _type.startsWith("array[")) {
+				_type = _type.substring("array".length());
+				int posOf = _type.indexOf(" of ");
+				String elemType = _default;
+				if (posOf >= 0) {
+					elemType = transformType(_type.substring(posOf + " of ".length()), _default);
+					_type = _type.substring(0, posOf);
+				}
+				// Intermediate step: make _type the index range or size
+				_type = _type.trim();
+				if (_type.startsWith("[") && _type.endsWith("]")) {
+					// Cut the brackets off and transform a potential range
+					_type = _type.substring(1, _type.length()-1).replace("..", this.transformKeyword(" TO "));
+				}
+				else {
+					int size = this.optionDefaultArraySize();
+					if (size <= 0) {
+						_type ="";
+					}
+					_type = "" + size;
+				}
+				// Combine the index ranges if elemType is an array itself
+				int posPar = elemType.indexOf('(');
+				if (posPar > 0) {
+					_type = elemType.substring(0, posPar+1)
+							+ _type
+							+ "," + elemType.substring(posPar + 1);
+				}
+				else {
+					_type = elemType + "(" + _type + ")";
+				}
+			}
+			// END KGU#993 2021-10-03
 		}
 		return _type;
 	}
@@ -577,7 +636,12 @@ public class BasGenerator extends Generator
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine += " : " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					}
-					addCode(codeLine, _indent, disabled);
+					// START KGU#993 2021-10-04: Bugfix #993 We suppress unused declarations
+					//addCode(codeLine, _indent, disabled);
+					if (!Instruction.isMereDeclaration(line)) {
+						addCode(codeLine, _indent, disabled);
+					}
+					// END KGU#993 2021-10-04
 					// END KGU#277/KGU#284 2016-10-13/16
 				// START KGU#100 2016-01-22: Enh. #84 (continued)
 				}
@@ -1398,13 +1462,29 @@ public class BasGenerator extends Generator
 			// END KGU#371 2019-03-08
 			for (int p = 0; p < _paramNames.count(); p++) {
 				signature += ((p > 0) ? ", " : "");
+				// START KGU#993 2021-10-03: Bugfix #993 Wrong handling of const and array parameters
+				String pType = null;
+				if (_paramTypes != null) {
+					pType = _paramTypes.get(p);
+					if (pType != null && pType.startsWith("const ")) {
+						signature += transformKeyword("CONST ");
+						pType = pType.substring("const ".length());
+					}
+				}
+				// END KGU#993 2021-10-03
 				signature += (_paramNames.get(p)).trim();
 				if (_paramTypes != null)
 				{
-					String type = this.transformType(_paramTypes.get(p), "");
+					// START KGU#993 2021-10-03: Bugfix #993 Wrong handling of const and array parameters
+					//String type = this.transformType(_paramTypes.get(p), "");
+					String type = "";
+					if (pType != null) {
+						type = this.transformType(pType, "");
+					}
+					// END KGU#993 2021-10-03
 					if (!type.isEmpty())
 					{
-						signature += " AS " + type;
+						signature += transformKeyword(" AS ") + type;
 					}
 				}
 				// START KGU#371 2019-03-08: Enh. #385 Deal with optional arguments#
@@ -1454,6 +1534,9 @@ public class BasGenerator extends Generator
 							varName += "()";
 							typeName = typeName.substring(1);
 						}
+						// START KGU#993 2021-10-04: Issue #993
+						varName = varName.replace(")(", ",");
+						// END KGU#993 2021-10-04
 					}
 					addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + typeName, _indent, false);
 				}

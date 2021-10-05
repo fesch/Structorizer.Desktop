@@ -1,11 +1,11 @@
 \documentclass[a4paper,10pt]{article}
 
 \usepackage{struktex}
-\usepackage{german}
+\usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
-\author{Kay Gürtzig}
-\date{19.10.2020}
+\author{Kay G"urtzig}
+\date{04.10.2021}
 
 \begin{document}
 
@@ -130,7 +130,7 @@
     \end{declaration}
   }
   \assign{\(lgth\ \gets\ length(heap)\)}
-  \while{\pKey{for}\(k\ \gets\ lgth\ div\ 2\ -\ 1\)\pKey{to}\(0\)\pKey{step}\(-1\)}
+  \while{\pKey{for}\(k\ \gets\ lgth\ div\ 2\ -\ 1\)\pKey{to}\(0\)\pKey{by}\(-1\)}
     \sub{\(maxHeapify(heap,\ k,\ lgth)\)}
   \whileend
 \end{struktogramm}
@@ -165,7 +165,7 @@
   }
   \sub{\(buildMaxHeap(values)\)}
   \assign{\(heapRange\ \gets\ length(values)\)}
-  \while{\pKey{for}\(k\ \gets\ heapRange\ -\ 1\)\pKey{to}\(1\)\pKey{step}\(-1\)}
+  \while{\pKey{for}\(k\ \gets\ heapRange\ -\ 1\)\pKey{to}\(1\)\pKey{by}\(-1\)}
     \assign{\(heapRange\ \gets\ heapRange\ -\ 1\)}
     \assign{\(maximum\ \gets\ values[0]\)}
     \assign{\(values[0]\ \gets\ values[heapRange]\)}
@@ -209,7 +209,7 @@
   \ifthenelse{6}{6}{\(!\ ok1\ \vee\ !\ ok2\ \vee\ !\ ok3\)}{T}{F}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount-1\)}
       \ifthenelse{6}{6}{\(values1[i]\ \neq\ values2[i]\ \vee\ values1[i]\ \neq\ values3[i]\)}{T}{F}
-        \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Difference\ at\ ["{}\(,\ i,\ \)"{}]:\ "{}\(,\ values1[i],\ \)"{}\ <->\ "{}\(,\ values2[i],\ \)"{}\ <->\ "{}\(,\ values3[i]\)}
+        \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Difference\ at\ ["{}\(,\ i,\ \)"{}]:\ "{}\(,\ values1[i],\ \)"{}\ \textless-\textgreater\ "{}\(,\ values2[i],\ \)"{}\ \textless-\textgreater\ "{}\(,\ values3[i]\)}
       \change
       \ifend
     \whileend
@@ -220,7 +220,7 @@
   \untilend
   \ifthenelse{6}{6}{\(show\ =\ \)"{}yes"{}\(\)}{T}{F}
     \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(elementCount\ -\ 1\)}
-      \assign{\(\)\pKey{OUTPUT}\(\ \)"{}["{}\(,\ i,\ \)"{}]:\t"{}\(,\ values1[i],\ \)"{}\t"{}\(,\ values2[i],\ \)"{}\t"{}\(,\ values3[i]\)}
+      \assign{\(\)\pKey{OUTPUT}\(\ \)"{}["{}\(,\ i,\ \)"{}]:\textbackslash{}t"{}\(,\ values1[i],\ \)"{}\textbackslash{}t"{}\(,\ values2[i],\ \)"{}\textbackslash{}t"{}\(,\ values3[i]\)}
     \whileend
   \change
   \ifend

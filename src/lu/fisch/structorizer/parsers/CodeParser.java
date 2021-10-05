@@ -1453,6 +1453,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	}
 
 	// START KGU#466 2019-08-02: Issue #733 - Support selective preference export
+	/**
+	 * @return an array of parser-related property keys (for selective preference export)
+	 */
 	public static String[] getPreferenceKeys()
 	{
 		return new String[] {"Parser*"};

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017-01-29      Enh. #335: Enhancements for better type analysis
  *      Kay Gürtzig     2020-10-16      Bugfix #874: Too strict identifier check w.r.t. non-ascii letters
  *      Kay Gürtzig     2021-03-05      Bugfix #961: Metod isFunction() extended (for method tests)
+ *      Kay Gürtzig     2021-06-06      sgn function added to knownResultTypes
  *
  ******************************************************************************************************
  *
@@ -67,6 +68,7 @@ public class Function
 		//knownResultTypes.put("abs#1", "numeric");
 		//knownResultTypes.put("max#2", "numeric");
 		//knownResultTypes.put("min#2", "numeric");
+		knownResultTypes.put("sgn#1", "int");
 		knownResultTypes.put("round#1", "int");
 		knownResultTypes.put("ceil#1", "double");
 		knownResultTypes.put("floor#1", "double");

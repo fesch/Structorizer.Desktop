@@ -32,29 +32,30 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2008.05.23      First Issue
- *      Kay Gürtzig     2015.11.03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
- *      Kay Gürtzig     2015.11.25      check15 (issue #9 = KGU#2) and check16 (issue #23 = KGU#78) added
- *      Kay Gürtzig     2015.11.28      check17 (KGU#47) for inconsistency risks in Parallel sections added
- *      Kay Gürtzig     2016.08.12      Enh. #231: check18 and check19 added (identifier collisions),
+ *      Bob Fisch       2008-05-23      First Issue
+ *      Kay Gürtzig     2015-11-03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
+ *      Kay Gürtzig     2015-11-25      check15 (issue #9 = KGU#2) and check16 (issue #23 = KGU#78) added
+ *      Kay Gürtzig     2015-11-28      check17 (KGU#47) for inconsistency risks in Parallel sections added
+ *      Kay Gürtzig     2016-08-12      Enh. #231: check18 and check19 added (identifier collisions),
  *                                      checkbox management reorganised with arrays for easier maintenance
- *      Kay Gürtzig     2016.09.21      Enh. #249: check20 added (subroutine syntax)
- *      Kay Gürtzig     2016.09.22      checkboxes index mapping modified, duplicate entries removed from
+ *      Kay Gürtzig     2016-09-21      Enh. #249: check20 added (subroutine syntax)
+ *      Kay Gürtzig     2016-09-22      checkboxes index mapping modified, duplicate entries removed from
  *                                      checkboxOrder, order of checkboxes modified
- *      Kay Gürtzig     2016.11.10      Enh. #286: Tabs introduced, configuration array checkboxOrder replaced
+ *      Kay Gürtzig     2016-11-10      Enh. #286: Tabs introduced, configuration array checkboxOrder replaced
  *                                      by map checkboxTabs.
- *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround
- *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21 (variable names I, l, O)
+ *      Kay Gürtzig     2016-11-11      Issue #81: DPI-awareness workaround
+ *      Kay Gürtzig     2017-01-07      Enh. #329: New Analyser error21 (variable names I, l, O)
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
- *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
- *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
- *      Kay Gürtzig     2017.05.09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2017.09.13      Enh. #423: New Analyser error24 (type definitions)
- *      Kay Gürtzig     2017.11.04      Enh. #452: Charm initiative: start hints tab 
+ *      Kay Gürtzig     2017-01-09      Bugfix #330: Scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017-04-04      Enh. #388: New check for constant definitions (no. 22)
+ *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced, keyListener at all controls
+ *      Kay Gürtzig     2017-09-13      Enh. #423: New Analyser error24 (type definitions)
+ *      Kay Gürtzig     2017-11-04      Enh. #452: Charm initiative: start hints tab 
  *      Kay Gürtzig     2019-11-08      Enh. #770: New analyser checks 27, 28 (CASE elements)
  *      Kay Gürtzig     2021-01-02      Enh. #905: New general checkbox for warning signs in elements
  *      Kay Gürtzig     2021-02-04      Enh. #905: Decomposed checkbox/label in order to provide an icon
  *      Kay Gürtzig     2021-02-08      Enh. #928: New CASE check 29 (unstructured discriminator expression)
+ *      Kay Gürtzig     2021-10-05      Enh. #992: New tab with check 30 for parentheses, brackets, and braces.
  *
  ******************************************************************************************************
  *
@@ -113,7 +114,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*26*/"Short \"hello world\" tour.",
 		/*27*/"Check that CASE selector items are integer constants.",
 		/*28*/"Check that CASE selector lists are disjoint.",
-		/*29*/"Check that the CASE choice value is not of a structured type."
+		/*29*/"Check that the CASE choice value is not of a structured type.",
+		/*30*/"Check that brackets are balanced and correctly nested."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -135,6 +137,10 @@ public class AnalyserPreferences extends LangDialog {
 				20, 13,	15, 23,
 				0,// jumps and parallel sections
 				16, 17
+		});
+		// START KGU#992 2021-10-05: Enh. #992
+		checkboxTabs.put("General Syntax", new int[]{
+				30
 		});
 		checkboxTabs.put("Naming / Conventions", new int[]{
 				// identifiers and naming conventions
@@ -218,7 +224,7 @@ public class AnalyserPreferences extends LangDialog {
 
 		//======== this ========
 		setTitle("Analyser preferences");
-		setResizable(false);
+		setResizable(false);	// This also suppresses the dialog icon holding the size menu
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 
@@ -388,7 +394,7 @@ public class AnalyserPreferences extends LangDialog {
 				g2.fillPolygon(xCoords, yCoords, xCoords.length);
 			}
 			finally {
-				// FIXME: This is somewhat rush as we cannot be sure drawImage was ready
+				// FIXME: This is somewhat rash as we cannot be sure drawImage was ready
 				if (g2 != null) {
 					g2.dispose();
 				}
