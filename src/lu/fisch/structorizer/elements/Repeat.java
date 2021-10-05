@@ -71,6 +71,11 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
+/**
+ * This Structorizer class represents a foot-controlled "Repeat" loop in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Repeat extends Element implements ILoop {
 	
 	public Subqueue q = new Subqueue();

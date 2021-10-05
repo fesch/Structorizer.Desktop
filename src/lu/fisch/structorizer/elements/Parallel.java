@@ -76,6 +76,11 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
+/**
+ * This Structorizer class represents a parallel section element in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Parallel extends Element
 {
 	

@@ -126,8 +126,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 
 /**
- * This Structorizer class represents a "jump" (i.e. some "exit", actually) element
- * in a diagram.
+ * This Structorizer class represents a "jump" (i.e., an exit) element in a diagram.
  * 
  * @author Bob Fisch
  */

@@ -47,9 +47,9 @@ package lu.fisch.structorizer.elements;
  */
 
 /**
+ * Implementors of the interface are {@link Element} subclasses representing some
+ * kind of loop. This interface presents the common behaviour.
  * @author Kay Gürtzig
- * Implementors of the interface are Element subclasses representing some kind of loop. This interface
- * presents the common behaviour
  */
 public interface ILoop {
 	

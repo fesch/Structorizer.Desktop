@@ -43,7 +43,7 @@ package lu.fisch.structorizer.elements;
 /**
  * Interface for visitor objects on diagram traversal, offering a visit in preOrder
  * and another in postOrder e.g. for information gathering, status changes or the like.
- * For access to private attributes the visitor may need a privileged partner object.
+ * For access to private attributes, the visitor may need a privileged partner object.
  * @author Kay Gürtzig
  */
 public interface IElementVisitor {

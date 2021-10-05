@@ -80,6 +80,11 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
+/**
+ * This Structorizer class represents an "IF statement" in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Alternative extends Element implements IFork {
 
 	public Subqueue qFalse = new Subqueue();
