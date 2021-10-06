@@ -749,7 +749,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #setRootIfNotRunning(Root)
 	 */
 	//public boolean setRoot(Root root, boolean askToSave)
-	public boolean setRoot(Root root, boolean askToSave, boolean draw) // END KGU#430 2017-10-12
+	public boolean setRoot(Root root, boolean askToSave, boolean draw)
+	// END KGU#430 2017-10-12
 	{
 		if (root != null) {
 			// Save if something has been changed
@@ -828,7 +829,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 				if (!checkRunning()) {
 					return;	// Don't proceed if the root is being executed
-				}					// END KGU#157 2016-03-16
+				}
+				// END KGU#157 2016-03-16
 				// START KGU#392 2017-05-07: Enh. #399
 				String unsuitedFiles = "";
 				// END KGU#392 2017-05-07
@@ -1364,7 +1366,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// START KGU#87 2015-11-23: Ensure a redrawing after a Subqueue had been selected 
 						//selected=ele;
 						//if(selectedDown!=ele) 
-						if (selectedDown != ele || selected instanceof IElementSequence) // END KGU#87 2015-11-23
+						if (selectedDown != ele || selected instanceof IElementSequence)
+						// END KGU#87 2015-11-23
 						{
 							redraw();
 						}
@@ -2056,7 +2059,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Resets the selected state on all elements of the current {@link Root} and
 	 * redraws the diagram if {@code refresh} is true.
 	 */
-	public void unselectAll(boolean refresh) // END KGU#430 2017-10-12
+	public void unselectAll(boolean refresh)
+	// END KGU#430 2017-10-12
 	{
 		if (root != null) {
 			root.selectElementByCoord(-1, -1);
@@ -2226,17 +2230,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#705 2019-09-26
 
 	/**
-	 * Method: print
-	 * <p>
-	 *
-	 * This class is responsible for rendering a page using the provided
+	 * This method is responsible for rendering a page using the provided
 	 * parameters. The result will be a grid where each cell will be half an
 	 * inch by half an inch.
 	 *
-	 * @param g a value of type Graphics
-	 * @param pageFormat a value of type PageFormat
-	 * @param page a value of type int
-	 * @return a value of type int
+	 * @param g - a value of type Graphics
+	 * @param pageFormat - a value of type PageFormat
+	 * @param page - a value of type int
+	 * @return an int code for the status (either {@link java.awt.print.Printable#PAGE_EXISTS}
+	 * if the page could be printed or {@link java.awt.print.Printable#NO_SUCH_PAGE} if it failed.
 	 */
 	public int print(Graphics g, PageFormat pageFormat, int page) {
 		if (page == 0) {
@@ -2393,7 +2395,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String ext = ExtFileFilter.getExtension(_filepath);
 		if (ext.equals("arr") || ext.equals("arrz")) {
 			loadArrangement(new File(_filepath));
-		} // START KGU#521 2018-06-08: Bugfix #536
+		}
+		// START KGU#521 2018-06-08: Bugfix #536
 		//else {
 		else if (ext.equals("nsd")) {
 		// END KGU#521 2018-06-08
@@ -3054,7 +3057,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * a user dialog will be popped up first
 	 * @return true if the user did not cancel the save request
 	 */
-	public boolean saveNSD(boolean _askToSave) // START KGU#320 2017-01-04: Bugfix (#321)
+	public boolean saveNSD(boolean _askToSave)
+	// START KGU#320 2017-01-04: Bugfix #321 - we need an opportunity to save another Root
 	{
 		// START KGU#456 2017-11-05: Enh. #452
 		//return saveNSD(this.root, _askToSave);
@@ -3340,7 +3344,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			boolean fileExisted = f.exists();
 			// START KGU#316 2016-12-28: Enh. 318
 			//if (fileExisted)
-			if (fileExisted && root.shadowFilepath == null) // END KGU#316 2016-12-28
+			if (fileExisted && root.shadowFilepath == null)
+			// END KGU#316 2016-12-28
 			{
 				File tmpFile = File.createTempFile("Structorizer", ".nsd");
 				filename = tmpFile.getAbsolutePath();
@@ -3365,7 +3370,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					root.filename = filename;
 					root.shadowFilepath = null;
 				}
-			} else if (fileExisted) // END KGU#316 2016-12-28
+			} else if (fileExisted)
+			// END KGU#316 2016-12-28
 			{
 				File backUp = new File(root.filename + ".bak");
 				if (backUp.exists()) {
@@ -5152,8 +5158,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				public void windowDeactivated(WindowEvent e) {}
 
 			});
-		}
-		if (subForm.diagram.getRoot() != referredRoot) {
 		}
 		if (subForm.diagram.getRoot() != referredRoot) {
 			subForm.setRoot(referredRoot);
@@ -7305,10 +7309,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
 			// END KGU#901 2020-12-29
-			// END KGU#395 2017-05-11
-			// START KGU#901 2020-12-29: Issue #901 applay WAIT_CURSOR for time-consuming actions
-			setCursor(new Cursor(Cursor.WAIT_CURSOR));
-			// END KGU#901 2020-12-29
 			// START KGU 2017-04-26: Remember the export directory
 			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
 			// START KGU#654 2019-02-16: Enh. #681 Don't overwrite the last export dir in case the export failed or was cancelled
@@ -8190,11 +8190,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
 				for (String key : CodeParser.keywordSet()) {
-					// START KGU#288 2016-11-06: Issue #279 - method getOrDefault may not be available
-					//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
-					//if (!keyword.trim().isEmpty())
 					String keyword = CodeParser.getKeyword(key);
-					if (keyword != null && !keyword.trim().isEmpty()) // END KGU#288 2016-11-06
+					if (keyword != null && !keyword.trim().isEmpty())
 					{
 						// Complete strings aren't likely to be found in a key, so don't bother
 						oldKeywordMap.put(key, Element.splitLexically(keyword, false));
