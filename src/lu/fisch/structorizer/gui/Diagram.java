@@ -8765,6 +8765,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#168 2016-04-04: Issue #149 Charsets for export
 			eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
 			// END KGU#168 2016-04-04 
+			// START KGU#975 2021-06-07: Enh. #953 Restore the last selected plugin choice
+			eod.cbOptionPlugins.setSelectedItem(ini.getProperty("expPluginChoice", ""));
+			// END KGU#975 2021-06-07
 			// START KGU#351 2017-02-26: Enh. #346 / KGU#416 2017-06-20 Revised
 			for (int i = 0; i < Menu.generatorPlugins.size(); i++) {
 				GENPlugin plugin = Menu.generatorPlugins.get(i);
@@ -8846,6 +8849,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#416 2017-06-20
 				}
 				// END KGU#351 2017-02-26
+				// START KGU#975 2021-06-07: Enh. #953 Restore the last selected plugin choice
+				ini.setProperty("expPluginChoice", (String)eod.cbOptionPlugins.getSelectedItem());
+				// END KGU#975 2021-06-07
 				ini.save();
 				// START KGU#705 2019-09-23: Enh. #738
 				this.updateCodePreview();
