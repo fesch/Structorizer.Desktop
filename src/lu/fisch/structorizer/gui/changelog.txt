@@ -19,7 +19,7 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and component access
   nor with cleanly handling usual and associative arrays as parameters or results.
 
-Current development version 3.32-01 (2021-10-05)
+Current development version 3.32-01 (2021-10-06)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Missing translation of EXIT expressions on export to C etc. <2>

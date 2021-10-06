@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-05-02      Mechanisms to support EXIT instructions, subroutines, CALLs added
 *      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
 *      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
+*      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
 *
 ******************************************************************************************************
 *
@@ -117,6 +118,19 @@ public class ArmGenerator extends Generator {
     private static Pattern inputPattern = null;
     private static Pattern outputPattern = null;
     // END KGU#968 2021-04-24
+    
+    // START KGU#968 2021-10-06: Revised from a local variable in isArmInstruction()
+    private static final String[] ARM_INSTRUCTIONS = {
+            "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
+            "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
+            "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
+            "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
+            "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
+            "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
+    };
+    // This set will contain all the strings from ARM_INSTRUCTIONS
+    private static final HashSet<String> ARM_INSTR_LOOKUP = new HashSet<String>();
+    // END KGU#968 2021-10-06
 
     /**
      * Enum type for getMode()
@@ -375,6 +389,7 @@ public class ArmGenerator extends Generator {
         // Somehow we must end the main program, in particular if subroutines will follow
         if (_root.isProgram()) {
             // Add an endless loop to the end of a main program
+            appendComment("Endless loop generated at the end of program", getIndent());
             addCode("stop" + procName + colon, "", false);
             addCode("B stop" + procName, getIndent(), false);
         }
@@ -401,7 +416,12 @@ public class ArmGenerator extends Generator {
             StringList lines = _inst.getUnbrokenText();
             for (int i = 0; i < lines.count(); i++) {
                 String line = lines.get(i);
-                generateInstructionLine(line, isDisabled);
+                // START KGU#968 2021-10-06: skip type definitions and declarations
+                //generateInstructionLine(line, isDisabled);
+                if (!Instruction.isMereDeclaration(line)) {
+                    generateInstructionLine(line, isDisabled);
+                }
+                // END KGU#968 2021-10-06
             }
         }
     }
@@ -1191,7 +1211,10 @@ public class ArmGenerator extends Generator {
         } else if (isOutput) {
             mode = ARM_OPERATIONS.OUTPUT;
         // END KGU#968 2021-04-24
-        } else if (isArmInstruction(line)) {
+        // START KGU#968 2021-10-06: line does not contain spaces, so better use line1 here
+        //} else if (isArmInstruction(line)) {
+        } else if (isArmInstruction(line1)) {
+        // END KGU#968 2021-10-16
             mode = ARM_OPERATIONS.INSTRUCTION;
         }
 
@@ -2075,24 +2098,40 @@ public class ArmGenerator extends Generator {
      * @return whether line is an arm instruction or not
      */
     private boolean isArmInstruction(String line) {
-        String[] instruction = {
-                "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
-                "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
-                "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
-                "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
-                "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
-                "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
-        };
-
-        if (line.contains("<-"))
-            return false;
-
-        String checkLine = line.split(" ")[0].toLowerCase();
-        for (String s : instruction) {
-            if (checkLine.contains(s)) {
+        // START KGU#968 2021-10-06: This was too vague and inefficient
+        //String[] instruction = {
+        //        "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
+        //        "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
+        //        "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
+        //        "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
+        //        "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
+        //        "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
+        //};
+        //
+        //if (line.contains("<-"))
+        //    return false;
+        //
+        //String checkLine = line.split(" ")[0].toLowerCase();
+        //for (String s : instruction) {
+        //    if (checkLine.contains(s)) {
+        //        return true;
+        //    }
+        //}
+        if (ARM_INSTR_LOOKUP.isEmpty()) {
+            // Fill the instruction name set once (lazy initialisation)
+            for (String s: ARM_INSTRUCTIONS) {
+                ARM_INSTR_LOOKUP.add(s);
+            }
+        }
+        StringList tokens = Element.splitLexically(line.toLowerCase(), true);
+        tokens.removeAll(" ");
+        for (int i = 0; i < tokens.count(); i++) {
+            // FIXME: Should we ignore the position? A variable "b" would easily provoke a false positive...
+            if (ARM_INSTR_LOOKUP.contains(tokens.get(i))) {
                 return true;
             }
         }
+        // END KGU#968 2021-10-06
         return false;
     }
 
