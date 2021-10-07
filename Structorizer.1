@@ -1,4 +1,4 @@
-.TH Structorizer 1 "7 August 2019" "version 3.29-13" "User's Manual"
+.TH Structorizer 1 "7 October 2021" "version 3.32-01" "User's Manual"
 .SH NAME
 Structorizer \- Editor for Nassi-Shneiderman diagrams (NSD)
 and tool for algorithm design and analysis based on them.
@@ -35,7 +35,7 @@ some syntactic rules, the diagrams may even be executed, debugged, and analysed
 (see the home page for a full description of the features and the user interface).
 \fBStructorizer\fP can also export the algorithms as program stubs to different
 programming languages, and it may import source code of some programming languages
-and display the algorithmic conetnt as Nassi-Shneiderman diagram.
+and display the algorithmic content as Nassi-Shneiderman diagram.
 .br
 Used as a command-line tool, \fBStructorizer\fP either converts saved NSD files
 (or ARR or ARRZ files, respecively) to program source in one of several available
@@ -123,6 +123,14 @@ Accepted names (case-insensitive) of parsers are:
 .B COBOL
 .br
 .B COBOLParser
+.br
+.B Java-SE8
+.br
+.B JavaParser
+.br
+.B Processing
+.br
+.B ProcessingParser
 .RE
 .TP
 .BI \-s " setting\-file"
@@ -167,8 +175,6 @@ Accepted names (case-insensitive) of generators are:
 .B Python
 .br
 .B Basic
-.br
-.B COBOL
 .br
 .B KSH
 .br
