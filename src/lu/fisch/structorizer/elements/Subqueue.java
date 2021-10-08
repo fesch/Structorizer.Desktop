@@ -77,6 +77,17 @@ import java.awt.Rectangle;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 
+/**
+ * This Structorizer class represents an sequence in a diagram and is used
+ * to form the entire algorithm of the diagram "root", the body of loops, a
+ * branch of an alternative or multi-selecion, a thread of a parallel section,
+ * etc.<br/>
+ * Subqueues are the glue in the element hierarchy of any diagram, i.e.,
+ * vertically there is always a Subqueue between an element and its logical
+ * parent.
+ * 
+ * @author Bob Fisch
+ */
 public class Subqueue extends Element implements IElementSequence {
 
 	public Subqueue()

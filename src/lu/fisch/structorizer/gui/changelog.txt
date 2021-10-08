@@ -6,142 +6,209 @@
 <2>     -->     idea and coding done by Kay Gürtzig
 
 Known issues:
-- Copying diagram images to the clipboard may fail with some OS/JRE combination (#685),
-  on Windows the image format may be JPG instead of PNG.
+- Copying diagram images to the clipboard may fail with some OS/JRE combination
+  (#685), on Windows the image format may be JPG instead of PNG.
 - Pascal import does not cope with unit name aliases.
-- COBOL import may fail if certain single-letter identifiers are used (rename them!),
-  it does not cope with some statement variants and variable redefinitions, either.
-- Java import does not cope with type arguments in casting prefixes or array element
-  types and fails if two or more closing angular brackets (in case of nested type
-  arguments) meet without separating blank. It does not cope with lambda expressions,
-  either. The imported diagrams will usually not be executable, anyway (because of
-  unsupported OOP context).
-- Shell export neither copes with nested array/record initialisers and component access
-  nor with cleanly handling usual and associative arrays as parameters or results.
+- COBOL import may fail if certain single-letter identifiers are used (rename
+  them!), it does not cope with some statement variants and variable
+  redefinitions, either.
+- Java import does not cope with type arguments in casting prefixes or array
+  element types and fails if two or more closing angular brackets (in case of
+  nested type arguments) meet without separating blank. It does not cope with
+  lambda expressions, either. The imported diagrams will usually not be
+  executable, anyway (because of unsupported OOP context).
+- Shell export neither copes with nested array/record initialisers and
+  component access nor with cleanly handling usual and associative arrays as
+  parameters or results.
+
+Current development version 3.32-01 (2021-10-07)
+- 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
+- 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
+- 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
+      to translate on export to C, C++, C#, Java etc. <2>
+- 01: Bugfix #990: Procedures were sometimes given a made-up result type on
+      code export, particularly on group export <2>
+- 01: Bugfix #991: The Analyser check to ensure function results failed to warn
+      on case-ignorant function name assignment attempts <2>
+- 01: Enh. #992: New Analyser check for bracket balance and nesting added <2>
+- 01: Bugfix #993: Constant routine parameters, particularly of array types,
+      were not correctly exported to Pascal, Oberon, C, and other languages <2>
+- 01: Bugfix #995: Unjustified Analyser warnings about dubious initialization
+      and missing line numbers in case of multi-line instruction warnings <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
-- 01: Bugfix #851/2: COBOL import: SPECIAL-NAMES sections caused parser abort <2>
+- 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
 - 01: Bugfix #851/3: COBOL import flaws concerning floating-point literals <2>:
       - Decimal and float literals weren't recognised,
       - recognition / conversion of decimal commas implemented,
-      - possible index range error during file preparation with fix file format.
-- 01: Bugfix #950: Synchronisation Arranger -> Arranger index could get shut off <2>
-- 01: Bugfix #951: On source files dropping, the import options were ignored <2>
-- 02: Issue #954: Breakpoints may now generally be disabled rather than removed <2>
-- 02: Bugfix #955: Several flaws on Java import with "class" literals, multi-catch
-      clauses and try statements with several single- or multi-catch clauses. <2>
-- 02: Issue #956: No impact of option "Import var declarations" on Java parser <2>
+      - possible index range error during file preparation with fix format.
+- 01: Bugfix #950: Synchronisation Arranger -> Arranger index went lost <2>
+- 01: Bugfix #951: Import via source files dropping ignored import options <2>
+- 02: Issue #954: STOP off button now disables rather removes breakpoints <2>
+- 02: Bugfix #955: Several flaws on Java import with "class" literals, multi-
+      catch clauses and try statements comprising several catch clauses. <2>
+- 02: Issue #956: Java parsing ignored option "Import var declarations" <2>
 - 02: Issue #957: "Processing" import now copes with import declarations <2>
-- 02: Issue #958: Relative positioning of specific import/export option dialog <2>
-- 02: Bugfix #959: Processing import: conversion functions and web color literals <2>
-- 02: Issue #960: Processing import now automatically declares system variables <2>
-- 02: Bugfix #961: Java import did not detect and convert output instructions <2>
-- 02: Bugfix #962: Constructor bodies weren't always imported from Java code <2>
-- 02: Substantial progress in the Italian localisation <Alessandro Simonetta et al.>
+- 02: Issue #958: Relative placing of special import/export option dialog <2>
+- 02: Bugfix #959: Processing import now injects conversion functions and web
+      colour literals in created diagram groups <2>
+- 02: Issue #960: Processing import now declares standard system variables <2>
+- 02: Bugfix #961: Java import did not detect/convert output instructions <2>
+- 02: Bugfix #962: Constructor body import from Java sources often failed <2>
+- 02: Substantial Italian localisation progress <Alessandro Simonetta et al.>
 - 02: Localisations for plugin-specific import options added (DE, ES) <2>
-- 02: Issue #964: Processing import shall not place a draw() loop without draw() <2>
-- 03: Issue #932: Processing definitions now in separate diagram [Henning Kiel] 2
-- 03: Issue #966: Precautions for dark look & feel themes (colour tuning, icons) <2>
-- 03: Bugfix #969: Possible debugger numbing after startup with file arguments <2>
-- 03: Enh. #972: Row filtering mechanism for Translator introduced [Henning Kiel]2
-- 04: Issue #67: Export option "generate line numbers" was made BASIC-specific <2> 
-- 04: Enh. #953: LaTeX algorithm/pseudocode export (4 packages) [Karl-Heinz Becker]2
+- 02: Issue #964: Processing import placed a draw() loop without draw() <2>
+- 03: Issue #932: Processing definitions -> separate diagram [Henning Kiel] 2
+- 03: Issue #966: Precautions for dark look & feel themes (tuning, icons) <2>
+- 03: Bugfix #969: After starting up Structorizer with file arguments (e.g.
+      by double-clicking nsd or arr files, the debugger used to get numbed <2>
+- 03: Enh. #972: Row-filtering radio buttons for Translator introduced
+      [Henning Kiel]2
+- 04: Issue #67: Export option "generate line numbers" was made a language-
+      specific option (for BASIC in the first place) <2> 
+- 04: Enh. #953: Generators for 4 different LaTeX algorithm/pseudocode packages
+      added [Karl-Heinz Becker]2
 - 04: Bugfix #974: Two defects on Processing definition import (one severe) <2>
-- 04: Bugfix #975: StrukTeX export didn't cope well with backslashes in literals <2>
-- 04: Issue #977 workaround: Silent highlight error let the execution get locked <2>
-- 05: Enh. #926/#979: Now Analyser warning tooltip appears over marker triangles <2>
-- 05: Issue #944: Code now requires Java >= 11 <2>
-- 06: Bugfix #983: 'Edit subroutine' unduly flagged the summoned diagram 'changed' <2>
+- 04: Bugfix #975: StrukTeX export did not cope well with backslashes occurring
+      in string literals <2>
+- 04: Issue #977 workaround: Silent highlight errors locked the execution <2>
+- 05: Enh. #926/#979: Now tooltips with the warning texts appear over marker
+      triangles in flawed elements <2>
+- 05: Issue #944: Structorizer now requires Java versions >= 11 <2>
+- 06: Bugfix #983: Menu actions 'Edit subroutine' / 'Edit included diagram...'
+      unduly flagged the summoned diagram 'changed' <2>
 
 Version: 3.31 (2021-03-01)
 - 01: Bugfix #759: Dried up another source of stale Mainforms. <2>
 - 01: Bugfix #761: Code preview defect flooded the log stream. <2>
 - 01: Precautions against empty error messages on startup <2>
-- 01: Bugfix #705: Find&Replace: Flawed traversal in CASE/PARALLEL branches <2>
+- 01: Bugfix #705: Find&Replace: Branches of CASE and PARALLEL elements were
+      not searched (i.e. at most one of them) <2>
 - 01: Bugfix #763: Stale file precautions on loading / saving arrangements <2>
-- 01: Bugfix #764: Group modifications failed to update the associated .arr file <2>
-- 01: Bugfix #765: KSH export of diagrams using record types failed with error <2>
+- 01: Bugfix #764: Group modifications failed to update the associated .arr
+      file <2>
+- 01: Bugfix #765: KSH export of diagrams using record types failed with an
+      error <2>
 - 01: Deprecated ANSI-C73 import disabled (ANSI-C99 parser subsumes it) <2>
-- 02: Bugfix #752: Incomplete declarations in C, Java etc. no longer outcommented <2>
-- 02: Issue #766: Deterministic order of subroutines on code export <2>
-- 02: Bugfix #769: Commas in string literals compromised CASE branch selection <2>
-- 02: Enh. #770: New Analyser checks for CASE elements (selector consistency) <2>
-- 02: Bugfix #771: Unhandled syntax errors during execution (e.g. type names) <2>
-- 02: Bugfix #772: Possible NullPointerException averting Pascal code preview <2>
+- 02: Bugfix #752: Incomplete declarations in C, Java etc. are no longer out-
+      commented because they must be manually completed anyway <2>
+- 02: Issue #766: Deterministic order of subroutines on code export forced <2>
+- 02: Bugfix #769: Commas in string literals used as selectors compromised
+      CASE branch selection on execution <2>
+- 02: Enh. #770: New Analyser checks concerning selector consistency in CASE
+      elements introduced <2>
+- 02: Bugfix #771: Java type names in expressions provoked unhandled syntax
+      errors during execution that drove the debugger into a locked state <2>
+- 02: Bugfix #772: Internal exceptions used to avert Pascal code preview <2>
 - 02: Bugfix #773: Export of declarations to Oberon, Pascal [K.-P. Reimers]2
-- 03: Enh. #388: Support for constants on Perl export (had been missing) <2>
-- 03: Enh. #423: Support for record types on Perl export (had been missing) <2>
-- 03: Enh. #739: Enum type definitions introduced (incl. C99, Pascal import) <2>
-- 03: Issue #766: Deterministic export order had not worked for deep hierarchies <2>
-- 03: Bugfix #770: Not all CASE selectors were checked to be constant integers <2>
+- 03: Enh. #388: Missing support for constants on Perl export provided <2>
+- 03: Enh. #423: Missing support for record types on Perl export added <2>
+- 03: Enh. #739: Enum type definitions introduced (including import) <2>
+- 03: Issue #766: Deterministic export order failed for deep hierarchies <2>
+- 03: Bugfix #770: Integer-const check for CASE selectors was incomplete <2>
 - 03: Enh. #775: More type-sensitive export of input instructions to OBERON <2>
-- 03: Bugfix #776: Global variables are locally eclipsed on Pascal/Oberon export <2>
+- 03: Bugfix #776: Global vars are locally eclipsed on Pascal/Oberon export <2>
 - 03: Bugfix #777: Concurrent changes of favourite export language handled. <2>
 - 03: Bugfix #778: License text was not exported with "fresh" diagrams <2>
-- 03: Bugfix #779: Defective Oberon export of main program diagrams with I/O <2>
-- 03: Issue #780: Parameterless procedures in Oberon without parentheses [K.-P. R.]2
+- 03: Bugfix #779: Defective Oberon export of program diagrams with I/O <2>
+- 03: Issue #780: Parameterless procedures now exported to Oberon without
+      parentheses [K.-P. Reimers]2
 - 03: Bugfix #782: Code export of global (included) declarations was wrong. <2>
-- 03: Bugfix #783: No or nonsense code export for assignments of unknown structs <2>
-- 03: Bugfix #784: Suppression of mere variable declarations on bash/ksh export <2>
-- 03: Bugfix #786: Record access in index expressions used to fail on execution <2>
+- 03: Bugfix #783: No or nonsense code export for assignments of unknown
+      recrds/structs <2>
+- 03: Bugfix #784: Mere variable declarations were to be suppressed on export
+      to shell scripts (bash/ksh) <2>
+- 03: Bugfix #786: Record component access within index expressions used to
+      fail on execution <2>
 - 03: Bugfix #787: Multiplied top-level type definitions on Pascal export <2>
-- 03: Bugfix #788: Arrz file extraction to a user-specific folder did not work. <2>
-- 03: Bugfix #789: Wrong BASIC export of function calls (started with "CALL") <2>
-- 03: Bugfix #790: BASIC export failed with line continuation and initialisers <2>
-- 03: Bugfix #791: Shell export flaws (function calls, array/assoc declarators) <2>
-- 04: Bugfix #793: Wrong Perl export of initialised explicit var declarations <2>
-- 04: Bugfix #794: Code preview fails with error if license is not configured <2>
-- 05: Enh. #801: Mechanism to show User Guide as PDF in offline mode <2>
-- 05: Bugfix #802: Placement of license texts and User Guides was flawed by #741 <2>
-- 05: Bugfix #805: Language happened to change on deriving a subroutine from CALL <2>
-- 05: Issue #806: Format string splitting on C99 import improved [Rolf Schmidt]2
-- 05: Issue #806: More sensible printf/scanf format strings on C export [R. Schmidt]2
-- 05: Issue #807: Python 'recordtype' lib ref replaced by dictionary [R. Schmidt]2
-- 05: Bugfix #808: Missing C, Js export of var declarations with ':=' [Rolf Schmidt]2
-- 05: Bugfix #809: C99 import flaws: typename replacement in comments, return 0; <2>
-- 05: Bugfix #810: Javascript export produced nonsense for multi-variable input <2>
-- 05: Bugfix #811: C99 import of floating-point number literals like 123e4 fixed <2>
-- 05: Bugfix #812: Defective declaration of global variables on Python export <2>
+- 03: Bugfix #788: Arranger archive (.arrz file) extraction to a user-specific
+      folder did not work. <2>
+- 03: Bugfix #789: Function calls were wrongly exported to BASIC (started with
+      "CALL") <2>
+- 03: Bugfix #790: BASIC export failed where line continuation or initialisers
+      occurred <2>
+- 03: Bugfix #791: Several shell export flaws (function calls, array/assoc
+      declarators) were fixed <2>
+- 04: Bugfix #793: Wrong Perl export result of initialised explicit var
+      declarations <2>
+- 04: Bugfix #794: Code preview failed with an error if no user license text
+      is configured <2>
+- 05: Enh. #801: Mechanism added to show User Guide as PDF in offline mode <2>
+- 05: Bugfix #802: Placement of license texts and downloaded User Guides went
+      to inappropriate folders (impact of fix #741) <2>
+- 05: Bugfix #805: The dialog language happened to change on deriving a
+      subroutine from a CALL (new Structorizer instance got wrong config) <2>
+- 05: Issue #806: Format string splitting on C99 import improved [R. Schmidt]2
+- 05: Issue #806: Input/Output instruction export to C now with more sensible
+      printf/scanf format strings (better type inferencing used) [R. Schmidt]2
+- 05: Issue #807: Python 'recordtype' library reference replaced by dictionary
+      type [R. Schmidt]2
+- 05: Bugfix #808: Missing C and Javascript export of variable declarations
+      with operator ':=' [Rolf Schmidt]2
+- 05: Bugfix #809: Two C99 import flaws fixed: type name surrogate replacement
+      in comments, unwanted "return 0" element at end of "main" diagrams <2>
+- 05: Bugfix #810: Javascript export of multi-variable input elements resulted
+      in nonsense <2>
+- 05: Bugfix #811: C99 parser failed at certain floating-point number literals
+      like 123e4 <2>
+- 05: Bugfix #812: Defective handling of global variables on Python export <2>
 - 05: Issue #814: Empty parameter lists are now exported to C as ...(void) <2>
-- 05: Issue #815: Combined file filters introduced in open dialogs [Rolf Schmidt]2
-- 05: Issue #816: Function calls in exported bash, ksh code revised [Rolf Schmidt]2
+- 05: Issue #815: File open dialogs now equipped with combined file filters
+      where sensible and possible [Rolf Schmidt]2
+- 05: Issue #816: Function calls in exported shell code revised [Rolf Schmidt]2
 - 06: Issue #816: Local variable/constant declarations in bash/ksh functions <2>
-- 06: Issue #816: Passing of arrays/records to/from bash/ksh functions revised <2>
-- 06: Bugfix #818: Replacement of diagrams unpinned in Arranger caused trouble <2>
-- 06: Bugfix #820: Try didn't respect exit but averted later error reporting <2>
-- 06: Bugfix #821: Shell function arguments and array items wrongly put in $( ) <2>
-- 06: Issue #822: Executor no longer aborts on empty instruction lines [R. Schmidt]2
-- 06: Bugfix #823: Executor accidently mutilated expressions (all spaces gone) <2>
-- 06: Bugfix #824: Shell export of REPEAT loops was flawed in several aspects <2>
+- 06: Issue #816: Shell export with revised passing of arrays/records to/from
+      bash/ksh functions <2>
+- 06: Bugfix #818: Replacement of diagrams being unpinned in Arranger caused
+      trouble <2>
+- 06: Bugfix #820: TRY blocks erroneously caught "exit" events and, on the other
+      hand, averted later error reporting after having caught an error <2>
+- 06: Bugfix #821: Function arguments and array items were wrongly put in $( )
+      on shell (bash/ksh) export <2>
+- 06: Issue #822: Executor now tolerates empty instruction lines instead of
+      aborting [R. Schmidt]2
+- 06: Bugfix #823: Executor accidently mutilated expressions (all whitespace
+      gone) with risk of mis-interpretation <2>
+- 06: Bugfix #824: Shell export of REPEAT loops was flawed in several aspects,
+      moreover a condition conversion method was laden with bugs. <2>
 - 06: Bugfix #825: Analyser had ignored the interior of TRY elements <2>
-- 06: Issue #826: User input is to accept backslashes as in Windows file paths <2>
-- 07: Bugfix #228: Code export error for routines with Pascal result mechanism <2>
-- 07: Enh. #440 part 1: Diagram export to PapDesigner files <2>
+- 06: Issue #826: User input is to accept backslashes as in Windows file
+      paths <2>
+- 07: Bugfix #228: Code export of routine diagrams with Pascal result mechanism
+      could cause NullPointerExceptions <2>
+- 07: Enh. #440 part 1: Diagram export to PapDesigner files implemented <2>
 - 07: Enh. #828: New feature allowing code export for an arrangement group <2>
 - 07: Issue #829: Debugger doesn't automatically close anymore [mawa290669]2
-- 07: Bugfix #831: Wrong shebang and thread arguments on Python export [R.Schmidt]2
-- 07: Bugfix #833: Pascal import now ensures parentheses at subroutines [K.-P. R.]2
+- 07: Bugfix #831: Python export placed an obsolete shebang and forgot thread
+      arguments in Parallel sections [R.Schmidt]2
+- 07: Bugfix #833: The Pascal import now ensures that parameterless procedures
+      now obtain parentheses in the diagram header [K.-P. Reimers]2
 - 07: Issue #834: Tooltip help for menu item Diagram > DIN? (in EN, DE, ES) <2>
-- 07: Bugfix #835: Structure preference keywords compromised imported conditions <2>
-- 07: Bugfix #836: Consistency lacks with batch code export (combined with #828) <2>
-- 07: Enh. #837: New export option to control the code export directory proposal <2>
+- 07: Bugfix #835: Injection of structure preference keywords on code import
+      compromised imported conditions and is now made optional <2>
+- 07: Bugfix #836: Inconsistencies in the result files of batch code export (in
+      combination with #828 as well) <2>
+- 07: Enh. #837: New export option to control the proposal for the code export
+      directory <2>
 - 07: Bugfix #838: Defective IMPORT line generation on Oberon export <2>
-- 07: Bugfix #839: Procedures exported after functions were faked as functions <2>
-- 07: Bugfix #840: Code export wrongly used information from disabled elements <2>
-- 07: Bugfix #841: Analyser check against missing parameter list did not work <2>
-- 07: Bugfix #843: Handling of global declarations in PHP export was missing <2>
+- 07: Bugfix #839: Procedures exported after functions were accidently given
+      the result types of the preceding function <2>
+- 07: Bugfix #840: Code export wrongly gathered structural information from
+      disabled elements <2>
+- 07: Bugfix #841: Analyser test against missing parameter list out of work <2>
+- 07: Bugfix #843: Missing handling of global declarations in PHP export <2>
 - 07: Bugfix #844: Sensible export of arrays and record types/vars to PHP <2>
-- 08: Issue #828/#836: The fallback to all diagrams of an arr file on batch export
-      without specified entry points or contained programs hadn't worked <2>
-- 08: Enh. #842: Improved usability of the include list editor [H.-U. Hölscher]2
+- 08: Issue #828/#836: The fallback to all diagrams of an arr file on batch
+      export without specified entry points or contained programs failed <2>
+- 08: Enh. #842: Improved include list editor usability [H.-U. Hölscher]2
 - 08: Bugfix #847: Inconsistent handling of upper-/lower-case operand names <2>
 - 08: Bugfix #848: Incomplete variable synchronisation with Includables <2>
 - 08: Bugfix #849: New log file name scheme change of release 3.30 ensured <2>
 - 08: Issue #851/1: Declarations for auxiliary variables on COBOL import <2>
 - 08: Issue #851/4: Provisional import of SORT statements from COBOL <2>
-- 08: Issue #851/5: Solution for the import of PERFORM ... THRU ... from COBOL <2>
-- 08: Bugfix #852: Case-ignorant F&R replacements failed for certain strings <2>
-- 08: Bugfix #853: Batch export with relative paths of and in .arr file failed <2>
+- 08: Issue #851/5: Solution for the import of PERFORM THRU from COBOL <2>
+- 08: Bugfix #852: Case-ignorant F&R replacements failed for some strings <2>
+- 08: Bugfix #853: Batch export with relative paths in .arr file failed <2>
 - 08: Bugfix #854: Topological order of type definitions on export ensured <2>
 - 08: Enh. #855 New configurable default array/string sizes for code export <2>
 - 08: Bugfix #856: The dump of preferences subsets did not behave correctly <2>
@@ -155,32 +222,32 @@ Version: 3.31 (2021-03-01)
 - 09: Bugfix #862/2: Batch export no longer produces duplicate entry points <2>
 - 09: Bugfix #862/3: Batch import produced defective arrangement lists <2>
 - 09: Bugfix #863/1: Duplicate routines on PapDesigner/StrukTex export <2>
-- 09: Bugfix #863/2: Wrong assignment symbols in CALLs on PapDesigner export <2>
+- 09: Bugfix #863/2: Wrong assignment symbols in CALL export to PapDesigner <2>
 - 09: Issue #864: Parameter list transformation for PapDesigner export <2>
 - 09: Bugfix #865: Flaw in parameter recognition on subroutine generation <2>
 - 09: Issue #866: Selection expansion/reduction in the diagram revised <2>
 - 09a: New command line option "-restricted" to prevent export/import [CPNV]
-- 10: Bugfix #868: Inadvertent popup of the code preview context menu on start <2>
-- 11: Issue #870: Now ini property "noExportImport=1" prevents code export/import;
-      group export prevention had been forgotten [CPNV]2
-- 11: Issue #733: GUI scale factor not to be overwritten by central ini file <2>
-- 11: Enh. #872: New display mode to present operators in C style [BloodyRain2k]2
-- 11: Bugfix #873: Compromised type definition export to C++, C#, Java mended <2>
+- 10: Bugfix #868: Inadvertent popup of code preview context menu on start <2>
+- 11: Issue #870: Now ini property "noExportImport=1" prevents code export/
+      import; group export prevention had been forgotten [CPNV]2
+- 11: Issue #733: GUI scale factor protected against central ini file <2>
+- 11: Enh. #872: New mode to display operators in C style [BloodyRain2k]2
+- 11: Bugfix #873: Type definition export to C++, C#, Java was compromised <2>
 - 11: Bugfix #874: Error on code export/preview of CALLs with non-ASCII names,
       identifiers with non-ASCII letters now tolerated but warned <2>
 - 11: Bugfix #875: Saving policy mended for virgin group members and groups,
       unnecessary save requests on replacing diagrams in work area avoided <2>
-- 11: Bugfix #876: Defective saving and restoring of Ini properties via menu <2>
+- 11: Bugfix #876: Defective saving / restoring of Ini properties via menu <2>
 - 11: Bugfix #877: Division by zero error on batch export to StrukTeX <2>
-- 11: Issue #879: Bad handling of user input looking like a record initializer <2>
+- 11: Issue #879: Bad handling of user input resembling record initializers <2>
 - 12: Enh. #704: Turtleizer now scrollable, with status bar, and popup menu <2>
 - 12: Issue #801: User Guide download now with progress bar in background <2>
 - 12: Issue #829: Experimentally keeping open the debug control now revoked <2>
 - 12: Enh. #880: Turtleizer zooming function implemented and accomplished <2>
 - 12: Issue #881: Highlighting of bit operators and Boolean literals <2>
-- 12: Issue #882: Translation of the random function to PHP added [S. Roschewitz]2
-- 12: Bugfix #884: Flaws of header inference for virgin diagrams (#875) mended <2>
-- 12: Bugfix #885: Incorrect display mode indicator state (#872) in some case <2>
+- 12: Issue #882: Random function translation to PHP ensured [S. Roschewitz]2
+- 12: Bugfix #884: Header inference for virgin diagrams (#875) was flawed <2>
+- 12: Bugfix #885: Sporadic incorrect display mode indicator state (#872) <2>
 - 12: Bugfix #887: Concurrent Turtleizer instances led to dysfunction. <2>
 - 13: Issue #890: Several improvements of the Turtleizer GUI (#704/#880) <2>:
        1. SVG export with less annoying scale factor request;
@@ -188,35 +255,36 @@ Version: 3.31 (2021-03-01)
        3. New function to scroll to the coordinate origin;
        4. Mere turtle moves without visible trace omitted on (CSV) export;
        5. Option to choose separator character for the CSV export;
-       6. Stroke style for the axes of coordinates now compensates the zoom factor;
-       7. Tooltip showing the turtle-world coordinate at current mouse position;
-       8. Measuring function with two possible snap modes and configurable radius;
+       6. Stroke style for the axes of coordinates now compensates zoom factor;
+       7. Turtle-world coordinates shown in tooltip at current mouse position;
+       8. Measuring function with two snap modes and configurable radius;
        9. Turtle image with higher resolution for zoom factors > 1;
       10. F1 opens the help page for the Turtleizer GUI in the browser;
       11. Status bar icons for more intuitive recognition.
 - 13: Issue #891: Dutch locale fixed, revised, and completed <Jaap Woldringh>
-- 13: Bugfix #892: "Save as" and double-click trouble with arranged diagrams <2>
+- 13: Bugfix #892: "Save as" and double-click hassle with arranged diagrams <2>
 - 13: Enh. #893: Translator preview indication in language preference menu <2>
-- 13: Bugfix #894: Wrong mechanism to fit the Turtleizer picture into canvas <2>
+- 13: Bugfix #894: Bad mechanism to fit the Turtleizer picture into canvas <2>
 - 13: Bugfix #895: GUI scaling of the Turtleizer popup menu for "Nimbus" <2>
-- 13: Enh. #896 <2>:
+- 13: Enh. #896: Usability improvements for dragging objects <2>
       1. Move cursor on readiness for moving diagrams in Arranger
          or diagram elements within a diagram in the Structorizer work area;
-      2. by holding Shift key down, elements may now be moved above the target <2>
-- 13: Bugfix #897: Numeric angle degradation + endless loop risk in Turtleizer <2>
-- 13: Bugfix #898: Executor errors on pre-evaluation of Turtleizer functions <2>
-- 13: Bugfix #900: Find&Replace failed for only comments, bad "whole word" test <2>
+      2. Holding Shift key down, elements may now be dragged above the target
+- 13: Bugfix #897: Turtleizer numeric angle degradation + endless loop risk <2>
+- 13: Bugfix #898: Executor errors on Turtleizer function pre-evaluation <2>
+- 13: Bugfix #900: Find&Replace failed if search was restricted to comments
+      only, the "whole word" option also caused trouble <2>
 - 13: Issue #901: Now the wait cursor is applied on time-consuming actions <2>
 - 14: Bugfix #569 A scrolling insufficiency on report list selection fixed <2>
 - 14: Issue #872 Wrong conversion '=' -> '==' in routine headers for C style <2>
 - 14: Issue #901 Wait cursor applied to further time-consuming actions <2>
-- 14: Bugfix #902 <2>:
-      1. Fixes a focus loss in Arranger index on selecting diagram or group nodes;
-      2. Ensures that quitting the "add/move to group" dialog correctly cancels;
-      3. Raises a confirmation dialog before dissolving groups via key binding
-- 14: Enh. #903 Syntax highlighting also applies in "Switch text/comment" mode <2>
-- 14: Bugfix #904 Display of controller aliases suppressed other function names <2>
-- 14: Enh. #905 Marker symbol on elements with Analyser warnings or tutorials <2>
+- 14: Bugfix #902: Arranger index impairments <2>:
+      1. Focus loss in Arranger index on selecting diagram or group nodes;
+      2. Quitting the "add/move to group" dialog via escape dind't cancel;
+      3. Confirmation dialog before dissolving groups via key binding ensured.
+- 14: Enh. #903 Syntax highlighting also works in "Switch text/comment" mode <2>
+- 14: Bugfix #904 Controller alias display suppressed other function names <2>
+- 14: Enh. #905 Marker symbols on elements with warnings or tutorials <2>
 - 14: Enh. #906 Executor now allows either to step into or step over a CALL <2>
 - 14: Bugfix #907 A step of the tutorial "Hello world" was always skipped <2>
 - 14: Bugfix #908 The variable content was not legible on editing with Nimbus <2>
@@ -1526,7 +1594,7 @@ Version 1.11 (2006-10-25)
 Version 1.10 (2006-10-22)
 - Undo / Redo functionality [MARSE]
 - NSD can be scrolled if larger
-  then the visible area [MARSE]
+  than the visible area [MARSE]
 - Automatic NSD title or savename
   proposal [MARSE]
 - Fixed "const"-section recognition

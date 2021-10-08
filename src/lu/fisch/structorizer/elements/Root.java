@@ -170,6 +170,10 @@ package lu.fisch.structorizer.elements;
  *                                      to static methods also usable by e.g. Call elements representing method
  *                                      declarations
  *      Kay Gürtzig     2021-02-28      Issue #947: Enhanced cyclic inclusion detection implemented
+ *      Kay Gürtzig     2021-10-02      Bugfix #990: Fields returnsValue and alwaysReturns introduced to support export
+ *      Kay Gürtzig     2021-10-03      Issue #991: Inconsistent Analyser check for result mechanism (case-ignorant)
+ *      Kay Gürtzig     2021-10-05      Enh. #992: New Analyser check 30 against bracket faults
+ *      Kay Gürtzig     2021-10-07      Bugfix #995: False Analyser accusations about insecure initialization status
  *      
  ******************************************************************************************************
  *
@@ -235,6 +239,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EmptyStackException;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -365,6 +370,10 @@ public class Root extends Element {
 	public String licenseName = null;
 	public String licenseText = null;
 	public String origin = "Structorizer " + E_VERSION;
+	
+	// START KGU#990 2021-10-02: Bugfix #990
+	public Boolean returnsValue = null;
+	// END KGU#990 2021-10-02
 	
 	// START KGU#371 2019-03-07: Enh. #385 for performance reasons, we cache the parameter list here
 	/** Cached parameter list, each entry is composed of name, type, and default, each as Strings (defaults may be null) */
@@ -758,7 +767,7 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false,	true,	true,	true			// 26 .. 29
+		false,	true,	true,	true,	true	// 26 .. 30
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -2049,9 +2058,9 @@ public class Root extends Element {
 	/**
 	 * Adds a new entry to the undo stack, including a snapshot of the editable Root attributes (like author name,
 	 * license data etc.) if {@code _cacheAttributes} is true. Only to be called before changes to the attributes
-	 * are expected. Otherwise {@link #addUndo()} should be used.
+	 * are expected. Otherwise {@link #addUndo()} should be used.<br/>
 	 * Clears the redo stack.
-	 * @param _cacheAttributes - pecifies whether diagram attributes are also to be cached.
+	 * @param _cacheAttributes - specifies whether diagram attributes are also to be cached.
 	 * @see #addUndo()
 	 */
 	public void addUndo(boolean _cacheAttributes)
@@ -2071,6 +2080,9 @@ public class Root extends Element {
 			this.modifiedby0 = this.modifiedby;
 		}
 		// END KGU#363 3018-09-12
+		// START KGU#990 2021-10-02: Bugfix #990 New fields for export facilitation
+		this.returnsValue = null;
+		// END KGU#990 2021-10-02
 		// START KGU#376 2017-07-01: Enh. #389
 		if (this.includeList != null) {
 			oldChildren.diagramRefs = this.includeList.concatenate(",");
@@ -3089,8 +3101,8 @@ public class Root extends Element {
     }
 
     /**
-     * Extract all variable names of the entire program and store them in
-     * this.variables.
+     * Extracts all variable names of the entire program and stores them in
+     * {@link #variables}, ignoring previously cached results.
      * @return list of variable names
      * @see #getVarNames()
      */
@@ -3117,8 +3129,11 @@ public class Root extends Element {
     }
     
     /**
-     * Extract the names of all variables assigned or introduced within passed-in element _ele.
+     * Extracts the names of all variables assigned or introduced within passed-in element
+     * {@code _ele} and its possible substructure.
+     * @param _ele - the element to be scanned for introduced variables
      * @return list of variable names
+     * @see #getVarNames(Element, boolean)
      */
     public StringList getVarNames(Element _ele)
     {
@@ -3126,18 +3141,48 @@ public class Root extends Element {
     	return getVarNames(_ele, true, false);
     }
 
+    /**
+     * Extracts the names of all variables assigned or introduced within passed-in element
+     * {@code _ele}, possibly ignoring its substructure or not.
+     * @param _ele - the element to be scanned for introduced variables
+     * @param _onlyEle - whether possible substructure is to be ignored
+     * @return list of variable names
+     * @see #getVarNames(Element, boolean, boolean)
+     */
     public StringList getVarNames(Element _ele, boolean _onlyEle)
     {
-    	// All variables, not only those from body (sub-structure)
-    	return getVarNames(_ele, _onlyEle, false);
+        // All variables, not only those from body (i.e. sub-structure)
+        return getVarNames(_ele, _onlyEle, false);
     }
 
+    /**
+     * Extracts the names of all variables assigned or introduced within passed-in element
+     * {@code _ele}, possibly either ignoring its substructure or only regarding its
+     * substructure, e.g. in case of loops.<br/>
+     * <b>Note that {@code _onlyEle} and {@code _onlyBody} may not both be {@code true}!</b>
+     * @param _ele - the element to be scanned for introduced variables
+     * @param _onlyEle - whether possible substructure of {@code _ele} is to be ignored
+     * @param _onlyBody - whether only the substructure of {@code _ele} is to be scanned
+     * @return list of variable names
+     * @see #getVarNames(Element, boolean, boolean, boolean)
+     */
     public StringList getVarNames(Element _ele, boolean _onlyEle, boolean _onlyBody)
     {
-    	
-    	return getVarNames(_ele, _onlyEle, _onlyBody, false);
+        return getVarNames(_ele, _onlyEle, _onlyBody, false);
     }
 
+    /**
+     * Extracts the names of all variables assigned or introduced within passed-in element
+     * {@code _ele}, possibly either ignoring its substructure or only regarding its
+     * substructure, e.g. in case of loops.<br/>
+     * <b>Note that {@code _onlyEle} and {@code _onlyBody} may not both be {@code true}!</b>
+     * @param _ele - the element to be scanned for introduced variables
+     * @param _onlyEle - whether possible substructure of {@code _ele} is to be ignored
+     * @param _onlyBody - whether only the substructure of {@code _ele} is to be scanned
+     * @param _entireProg - relevant for the case {@code _ele} is {@code this} and
+     *     {@code _onlyEle <> true} or {@code _onlyBody = true}
+     * @return list of variable names
+     */
     private StringList getVarNames(Element _ele, boolean _onlyEle, boolean _onlyBody, boolean _entireProg)
     {
 
@@ -3161,48 +3206,49 @@ public class Root extends Element {
             	}
             }
 
-            // get body text
+            // get relevant text
             StringList lines;
             if (_onlyEle && !_onlyBody)
             {
-                    // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
-                    //lines = _ele.getText().copy();
-                    lines = _ele.getUnbrokenText();
-                    if (_ele instanceof Instruction) {
-                    	int i = 0;
-                    	while (i < lines.count()) {
-                    		if (Instruction.isTypeDefinition(lines.get(i), null)) {
-                    			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
-                    			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
-                    			if (constVals != null) {
-                    				// We simply generate singular constant definition lines
-                    				for (Entry<String, String> enumItem: constVals.entrySet()) {
-                    					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
-                    				}
-                    			}
-                    			// END KGU#542 2019-11-17
-                    			lines.remove(i);
-                    		}
-                    		else {
-                    			i++;
-                    		}
-                    	}
-                    }
-                    // END KGU#388/KGU#413 2017-09-13: Enh. #416, #423
+                // START KGU#388/KGU#413 2017-09-13: Enh. #416, #423
+                //lines = _ele.getText().copy();
+                lines = _ele.getUnbrokenText();
+                if (_ele instanceof Instruction) {
+                	// Get rid of lines that may not introduce variables
+                	int i = 0;
+                	while (i < lines.count()) {
+                		if (Instruction.isTypeDefinition(lines.get(i), null)) {
+                			// START KGU#542 2019-11-17: Enh. #739 We must extract enumerators here
+                			HashMap<String, String> constVals = this.extractEnumerationConstants(lines.get(i));
+                			if (constVals != null) {
+                				// We simply generate singular constant definition lines
+                				for (Entry<String, String> enumItem: constVals.entrySet()) {
+                					lines.insert("const " + enumItem.getKey() + " <- " + enumItem.getValue(), i++);
+                				}
+                			}
+                			// END KGU#542 2019-11-17
+                			lines.remove(i);
+                		}
+                		else {
+                			i++;
+                		}
+                	}
+                }
+                // END KGU#388/KGU#413 2017-09-13: Enh. #416, #423
             }
             else if (_entireProg)
             {
-                    // START KGU#39 2015-10-16: Use object methods now
-                    //lines = getFullText();
-                    lines = this.getFullText(_onlyBody);
-                    // END KGU#39 2015-10-16
+                // START KGU#39 2015-10-16: Use object methods now
+                //lines = getFullText();
+                lines = this.getFullText(_onlyBody);
+                // END KGU#39 2015-10-16
             }
             else
             {
-                    // START KGU#39 2015-10-16: Use object methods now
-                    //lines = getFullText(_ele);
-                    lines = _ele.getFullText(true);
-                    // START KGU#39 2015-10-16
+                // START KGU#39 2015-10-16: Use object methods now
+                //lines = getFullText(_ele);
+                lines = _ele.getFullText(true);
+                // START KGU#39 2015-10-16
             }
             
             varNames.add(getVarNames(lines, this.constants));
@@ -3410,6 +3456,9 @@ public class Root extends Element {
 		this.variables = null;
 		this.constants.clear();
 		this.clearTypeInfo();
+		// START KGU#990 2021-10-02: Bugfix #990 - new fields to facilitate export
+		this.returnsValue = null;
+		// END KGU#990 2021-10-02
 		if (clearDrawInfo || E_VARHIGHLIGHT) {
 			this.resetDrawingInfoDown();
 		}
@@ -3449,41 +3498,40 @@ public class Root extends Element {
 	}
 	// END KGU#261/KGU#332 2017-02-01
 
-    
-    // START BFI 2015-12-10
-    /**
-     * Identifies parameter names, types, and default values of the routine and returns an array list
-     * of Param objects being name-type-default triples.
-     * This is just a different aggregation of the same results {@link #getParameterNames()},
-     * {@link #getParameterTypes()}, and {@link #getParameterDefaults()} would provide.
-     * @return the list of the declared parameters
-     */
-    public ArrayList<Param> getParams()
-    {
-        // START KGU#371 2019-03-07: Enh. #385 Now we cache this list for beter performance
-        //ArrayList<Param> resultVars = new ArrayList<Param>();
- 
-        //StringList names = new StringList();
-        //StringList types = new StringList();
-        //collectParameters(names, types);
-        //for (int i = 0; i < names.count(); i++)
-        //{
-        //    resultVars.add(new Param(names.get(i), types.get(i)));
-        //}
+	// START BFI 2015-12-10
+	/**
+	 * Identifies parameter names, types, and default values of the routine and returns an array list
+	 * of Param objects being name-type-default triples.
+	 * This is just a different aggregation of the same results {@link #getParameterNames()},
+	 * {@link #getParameterTypes()}, and {@link #getParameterDefaults()} would provide.
+	 * @return the list of the declared parameters
+	 */
+	public ArrayList<Param> getParams()
+	{
+		// START KGU#371 2019-03-07: Enh. #385 Now we cache this list for beter performance
+		//ArrayList<Param> resultVars = new ArrayList<Param>();
 
-        //return resultVars;
-        if (parameterList == null) {
-            // Method fills parameterList
-            collectParameters(null, null, null);
-        }
-        if (parameterList == null) {
-        	return new ArrayList<Param>();
-        }
-        return parameterList;
-        // END KGU#371 2019-03-07
-    }    
-    // END BFI 2015-12-10
-    
+		//StringList names = new StringList();
+		//StringList types = new StringList();
+		//collectParameters(names, types);
+		//for (int i = 0; i < names.count(); i++)
+		//{
+		//    resultVars.add(new Param(names.get(i), types.get(i)));
+		//}
+
+		//return resultVars;
+		if (parameterList == null) {
+			// Method fills parameterList
+			collectParameters(null, null, null);
+		}
+		if (parameterList == null) {
+			return new ArrayList<Param>();
+		}
+		return parameterList;
+		// END KGU#371 2019-03-07
+	}
+	// END BFI 2015-12-10
+	
     // START KGU 2016-03-25: JLabel replaced by new class LangTextHolder
     //private String errorMsg(JLabel _label, String _rep)
     private String errorMsg(LangTextHolder _label, String _subst)
@@ -3539,7 +3587,7 @@ public class Root extends Element {
     		{
     			analyse_8(ele, _errors);
     		}
-
+    		
     		// CHECK  #5: non-uppercase var
     		// CHECK  #7: correct identifiers
     		// CHECK #13: Competitive return mechanisms
@@ -3567,6 +3615,11 @@ public class Root extends Element {
     			// END KGU#375 2017-04-04
     		}
 
+    		// START KGU#992 2021-10-05: Enh. #992
+    		// CHECK #30: Bracket balancing
+    		analyse_30(ele, _errors);
+    		// END KGU#992 2021-10-05
+
     		// CHECK: non-initialised var (except REPEAT)  (#3)
     		// START KGU#375 2017-04-05: Enh. #388 linewise analysis for Instruction elements
 //    		StringList myUsed = getUsedVarNames(ele, true, true);
@@ -3592,8 +3645,16 @@ public class Root extends Element {
     				if (!Instruction.isTypeDefinition(line, _types)) {
     				// END KGU#388 2017-09-13
     					myUsed = getUsedVarNames(line, keywords);
-    					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
-    					initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
+    					// START KGU#985 2021-10-07: Bugfix #995 - Pass line number, respect "healing"
+    					//analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
+    					//initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
+    					analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, j);
+    					StringList asgdVars = this.getVarNames(StringList.getNew(line), constantDefs);
+    					initVars.add(asgdVars);
+    					for (int k = 0; k < asgdVars.count(); k++) {
+    						_uncertainVars.removeAll(asgdVars.get(k));
+    					}
+    					// END KGU#985 2021-10-07
     				// START KGU#388 2017-09-13: Enh. #423
     				}
     				// END KGU#388 2017-09-13
@@ -3850,7 +3911,7 @@ public class Root extends Element {
     // START KGU 2016-03-24: Decomposed analyser methods
     
     /**
-     * CHECK  #1: loop var modified
+     * CHECK  #1: loop var modified<br/>
      * CHECK #14: loop parameter consistency
      * @param ele - For element to be analysed
      * @param _errors - global list of errors
@@ -3870,9 +3931,9 @@ public class Root extends Element {
 		// END KGU#61 2016-03-21
 
 		/*
-        System.out.println("MODIFIED : "+modifiedVars);
-        System.out.println("LOOP     : "+loopVars);
-        /**/
+		System.out.println("MODIFIED : "+modifiedVars);
+		System.out.println("LOOP     : "+loopVars);
+		/**/
 
 		if (loopVars.isEmpty())
 		{
@@ -3944,10 +4005,10 @@ public class Root extends Element {
 		StringList loopVars = getUsedVarNames(ele, true, true);
 
 		/*
-    	System.out.println(eleClassName + " : " + ele.getText().getLongString());
-    	System.out.println("Used : "+usedVars);
-    	System.out.println("Loop : "+loopVars);
-    	/**/
+		System.out.println(eleClassName + " : " + ele.getText().getLongString());
+		System.out.println("Used : "+usedVars);
+		System.out.println("Loop : "+loopVars);
+		/**/
 
 		boolean check = false;
 		for(int j=0; j<loopVars.count(); j++)
@@ -4007,9 +4068,9 @@ public class Root extends Element {
 
 
 	/**
-	 * Three checks in one loop: (#5) & (#7) & (#13)
-	 * CHECK  #5: non-uppercase var
-	 * CHECK  #7: correct identifiers
+	 * Three checks in one loop:<br/>
+	 * CHECK  #5: non-uppercase var<br/>
+	 * CHECK  #7: correct identifiers<br/>
 	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - the element to be checked
 	 * @param _errors - the global error list
@@ -4069,7 +4130,7 @@ public class Root extends Element {
 
 				{
 					//error  = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, myVar), ele), 13);                                            	
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, myVar), ele), 13);
 				}
 			}
 			else if (this.isSubroutine() && myVar.equals(getMethodName()))
@@ -4079,7 +4140,7 @@ public class Root extends Element {
 
 				{
 					//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, myVar), ele), 13);                                            	
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, myVar), ele), 13);
 				}
 			}
 			// END KGU#78 2015-11-25
@@ -4102,8 +4163,8 @@ public class Root extends Element {
 	}
 
 	/**
-	 * Two checks (#10) + (#11)
-	 * CHECK #10: wrong multi-line instruction
+	 * Two checks:<br/>
+	 * CHECK #10: wrong multi-line instruction<br/>
 	 * CHECK #11: wrong assignment (comparison operator in assignment)
 	 * @param ele - Element to be analysed
 	 * @param _errors - global error list
@@ -4305,7 +4366,7 @@ public class Root extends Element {
 	}
 
 	/**
-	 * CHECK #16: Correct usage of Jump, including return
+	 * CHECK #16: Correct usage of Jump, including return<br/>
 	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - JUMP element to be analysed
 	 * @param _errors - global error list
@@ -4375,14 +4436,15 @@ public class Root extends Element {
 			if (!line.substring(preReturn.length()).trim().isEmpty()) {
 				_resultFlags[0] = true;
 				_myVars.addIfNew("§ANALYSER§RETURNS");
+				// START KGU#78 2015-11-25: Different result mechanisms?
+				if (_resultFlags[1] || _resultFlags[2])
+				{
+					//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, preReturn), ele), 13);
+				}
+				// END KGU#78 2015-11-25
 			}
 			// END KGU#343 2017-02-07
-			// START KGU#78 2015-11-25: Different result mechanisms?
-			if (_resultFlags[1] || _resultFlags[2])
-			{
-				//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, preReturn), ele), 13);
-			}
 			// Check if we are inside a Parallel construct
 			while (parent != null && !(parent instanceof Root) && !(parent instanceof Parallel))
 			{
@@ -4448,7 +4510,7 @@ public class Root extends Element {
 	}
 
 	/**
-	 * CHECK #16: Correct usage of return (suspecting hidden Jump)
+	 * CHECK #16: Correct usage of return (suspecting hidden Jump)<br/>
 	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - Instruction to be analysed
 	 * @param _errors - global error list
@@ -4606,8 +4668,8 @@ public class Root extends Element {
 	
 	// START KGU#239 2016-08-12: Enh. #23?
 	/**
-	 * CHECK #18: Variable names only differing in case
-	 * CHECK #19: Possible name collisions with reserved words
+	 * CHECK #18: Variable names only differing in case<br/>
+	 * CHECK #19: Possible name collisions with reserved words<br/>
 	 * CHECK #21: Discourage use of variable names 'I', 'l', and 'O'
 	 * @param _ele - the element to be checked
 	 * @param _errors - the global error list
@@ -4724,7 +4786,7 @@ public class Root extends Element {
 	// END KGU#253 2016-09-22
     
 	/**
-	 * CHECK #22: constants depending on non-constants and constant modifications
+	 * CHECK #22: constants depending on non-constants and constant modifications<br/>
 	 * CHECK #24: type definitions
 	 * @param _instr - Instruction element to be analysed
 	 * @param _errors - global error list
@@ -4732,6 +4794,8 @@ public class Root extends Element {
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _definedConsts - constant definitions registered so far
 	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 * @see #analyse_24(Element, Vector, HashMap)
+	 * @see #analyse_24_tokens(Element, Vector, HashMap, StringList)
 	 */
 	private void analyse_22_24(Instruction _instr, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _definedConsts, HashMap<String, TypeMapEntry> _types)
 	{
@@ -4912,6 +4976,8 @@ public class Root extends Element {
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
 	 * @param _tokens - tokens of the current line, ideally without any instruction keywords
+	 * @see #analyse_22_24(Instruction, Vector, StringList, StringList, HashMap, HashMap)
+	 * @see #analyse_24(Element, Vector, HashMap)
 	 */
 	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
 			HashMap<String, TypeMapEntry> _types, StringList _tokens) {
@@ -4989,6 +5055,7 @@ public class Root extends Element {
 	 * @param _callerSet - in case of indirect cycles via routine call, the set of calling roots,
 	 *        otherwise {@code null}
 	 * @param _types - type definitions and declarations
+	 * @see #analyse_23_inCalledRoutines(Vector, Root, StringList, HashMap, HashMap, HashSet)
 	 */
 	private void analyse_23(Vector<DetectedError> _errors,
 			StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants,
@@ -5156,7 +5223,7 @@ public class Root extends Element {
 				}
 			}
 		// START KGU#376 2017-07-01
-		}		
+		}
 		// END KGU#376 2017-07-01
 
 	}
@@ -5164,10 +5231,13 @@ public class Root extends Element {
 	 * CHECK #23: Helper method to check indirect cyclic includes (via subroutine calls)
 	 * for {@link #analyse_23(Vector, StringList, StringList, HashMap, StringList, HashMap, HashSet, HashMap)}
 	 * @param _errors - global error list
+	 * @param _root - the calling {@link Root}
 	 * @param _importStack - names of already imported includables
 	 * @param _analysedImports - map from Includables to the corresponding _importStack
 	 * @param _callerSet - the set of calling roots to avoid eternal recursion
 	 * @param _types - type definitions and declarations
+	 * @param _callers - set of direct or indirect callers of routine {@code _root}
+	 * @see #analyse_23(Vector, StringList, StringList, HashMap, StringList, HashMap, HashSet, HashMap)
 	 */
 	private void analyse_23_inCalledRoutines(Vector<DetectedError> _errors, Root _root, StringList _importStack,
 			HashMap<String, StringList> _analysedImports, HashMap<String, TypeMapEntry> _types,
@@ -5210,6 +5280,12 @@ public class Root extends Element {
 	// END KGU#514 2018-04-03
 	
 	// START KGU#758 2019-11-08: Enh. #770 - check CASE elements
+	/**
+	 * CHECK 27: CASE selectors be integer constants<br/>
+	 * CHECK 28: duplicate CASE selectors
+	 * @param _case -  Case element to be analysed
+	 * @param _errors - global error list
+	 */
 	private void analyse_27_28(Case _case, Vector<DetectedError> _errors)
 	{
 		HashSet<String> selectors = new HashSet<String>();
@@ -5260,6 +5336,12 @@ public class Root extends Element {
 	// END KGU#758 2019-11-08
 	
 	// START KGU#928 2021-02-08: Enh. #928 - check for structured types
+	/**
+	 * CHECK 29: CASE discriminators of structured types
+	 * @param _case - Case element to be analysed
+	 * @param _errors - global error list
+	 * @param _types - type definitions
+	 */
 	private void analyse_29(Case _case, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types)
 	{
 		StringList text = _case.getUnbrokenText();
@@ -5276,6 +5358,53 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#928 2021-02-08
+	
+	// START KGU#992 2021-10-05: Enh. #992
+	/**
+	 * CHECK 30: Unbalanced or badly nested parentheses, brackets etc.
+	 * @param _ele - element to be analysed
+	 * @param _errors - global error list
+	 */
+	private void analyse_30(Element _ele, Vector<DetectedError> _errors) {
+		if (!check(30)) {
+			return;
+		}
+		StringList unbrokenLines = _ele.getUnbrokenText();
+		for (int i = 0; i < unbrokenLines.count(); i++) {
+			StringList tokens = Element.splitLexically(unbrokenLines.get(i), true);
+			Stack<Character> brackets = new Stack<Character>();
+			for (int j = 0; j < tokens.count(); j++) {
+				String token = tokens.get(j);
+				if (token.equals("(")) {
+					brackets.push(')');
+				}
+				else if (token.equals("[")) {
+					brackets.push(']');
+				}
+				else if (token.equals("{")) {
+					brackets.push('}');
+				}
+				else if (token.equals(")") || token.equals("]") || token.equals("}")) {
+					try {
+						char top = brackets.pop();
+						if (top != token.charAt(0)) {
+							//error  = new DetectedError("There is a closing '%1' where '%3' is expected in line %2!", _case);
+							addError(_errors, new DetectedError(errorMsg(Menu.error30_3, new String[] {token, Integer.toString(i+1), Character.toString(top)}), _ele), 30);
+						}
+					}
+					catch (EmptyStackException ex) {
+						//error  = new DetectedError("There is at least one more closing '%1' than opening brackets in line %2!", _case);
+						addError(_errors, new DetectedError(errorMsg(Menu.error30_2, new String[] {token, Integer.toString(i+1)}), _ele), 30);
+					}
+				}
+			}
+			if (!brackets.isEmpty()) {
+				//error  = new DetectedError("There are %1 more opening than closing brackets in line %2, '%3' was expected next!", _ele);
+				addError(_errors, new DetectedError(errorMsg(Menu.error30_1, new String[] {Integer.toString(brackets.size()), Integer.toString(i+1), Character.toString(brackets.pop())}), _ele), 30);
+			}
+		}
+	}
+	// END KGU#992 2021-10-05
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**
@@ -6269,7 +6398,10 @@ public class Root extends Element {
 //                setsResultUc = vars.contains("RESULT", true);
 //                setsResultWc = vars.contains("Result", true);
 //            }
-            boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
+            // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
+            //boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
+            boolean setsProcName = vars.contains(programName);
+            // END KGU#991 2021-10-03
             boolean maySetResultCi = uncertainVars.contains("result", false);
 //            boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
 //            if (maySetResultCi)
@@ -6278,30 +6410,44 @@ public class Root extends Element {
 //            	maySetResultUc = uncertainVars.contains("RESULT", true);
 //            	maySetResultWc = uncertainVars.contains("Result", true);
 //            }
-            boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
+            // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
+            //boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
+            boolean maySetProcName = uncertainVars.contains(programName);	// Why case-independent?
+            // END KGU#991 2021-10-03
             // END KGU#78 2015-11-25
             // START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
             boolean doesReturn = vars.contains("§ANALYSER§RETURNS");
             boolean mayReturn = resultFlags[0];
             // END KGU#343 2017-02-07
+            // START KGU#990 2021-10-02: Bugfix #990 new flag fields to facilitate export
+            returnsValue = mayReturn;
+            // END KGU#990 2021-10-02
             
-            
-            if (!setsResultCi && !setsProcNameCi && !doesReturn &&
-            		!maySetResultCi && !maySetProcNameCi && !mayReturn)
+            // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
+            //if (!setsResultCi && !setsProcNameCi && !doesReturn &&
+            //		!maySetResultCi && !maySetProcNameCi && !mayReturn)
+            if (!setsResultCi && !setsProcName && !doesReturn &&
+            		!maySetResultCi && !maySetProcName && !mayReturn)
+            // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function does not return any result!",this);
             	error = new DetectedError(errorMsg(Menu.error13_1,""),this);
             	addError(errors,error,13);
             }
-            else if (!setsResultCi && !setsProcNameCi && !doesReturn &&
-            		(maySetResultCi || maySetProcNameCi || mayReturn))
+            // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
+            //else if (!setsResultCi && !setsProcNameCi && !doesReturn &&
+            //		(maySetResultCi || maySetProcNameCi || mayReturn))
+            else if (!setsResultCi && !setsProcName && !doesReturn &&
+            		(maySetResultCi || maySetProcName || mayReturn))
+            // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function may not return a result!",this);
             	error = new DetectedError(errorMsg(Menu.error13_2,""),this);
             	addError(errors,error,13);
             }
             // START KGU#78 2015-11-25: Check competitive approaches
-            else if (maySetResultCi && maySetProcNameCi)
+            //else if (maySetResultCi && maySetProcNameCi)
+            else if (maySetResultCi && maySetProcName)
             {
             	//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
             	error = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);

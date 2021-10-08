@@ -43,11 +43,13 @@ package lu.fisch.structorizer.elements;
 
 /**
  * @author Kay Gürtzig
- * Helper structure for the communication between classes
- * {@link lu.fisch.structorizer.gui.Diagram},
- * {@link lu.fisch.structorizer.gui.InputBoxRoot},
- * {@link lu.fisch.structorizer.gui.AttributeInspector},
- * {@link lu.fisch.structorizer.gui.LicensEditor}, and for undo actions
+ * Helper structure for the communication between classes<ul>
+ * <li> {@link lu.fisch.structorizer.elements.Root},</li>
+ * <li> {@link lu.fisch.structorizer.gui.Diagram},</li>
+ * <li> {@link lu.fisch.structorizer.gui.InputBoxRoot},</li>
+ * <li> {@link lu.fisch.structorizer.gui.AttributeInspector},</li>
+ * <li> {@link lu.fisch.structorizer.gui.LicenseEditor},</li>
+ * </ul> and for undo actions
  */
 public class RootAttributes {
 

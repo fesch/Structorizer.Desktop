@@ -101,6 +101,13 @@ import lu.fisch.structorizer.parsers.CodeParser;
 //import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
+/**
+ * This Structorizer class represents a simple activity (instruction element) in a diagram.
+ * Special cases are <b>input</b> and <b>output</b> instructions, which are distinguished
+ * by specific initial keywords in the text.
+ * 
+ * @author Bob Fisch
+ */
 public class Instruction extends Element {
 	
 	// START KGU#258 2016-09-26: Enh. #253

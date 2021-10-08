@@ -71,6 +71,11 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
+/**
+ * This Structorizer class represents a head-controlled "While" loop in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class While extends Element implements ILoop {
 
 	// START KGU#258 2016-09-26: Enh. #253

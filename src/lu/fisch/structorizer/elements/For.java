@@ -92,7 +92,12 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.*;
 
-
+/**
+ * This Structorizer class represents either a counter-controlled or a collection-
+ * controlled For loop in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class For extends Element implements ILoop {
 
 	// START KGU#61 2016-03-20: Enh. #84/#135

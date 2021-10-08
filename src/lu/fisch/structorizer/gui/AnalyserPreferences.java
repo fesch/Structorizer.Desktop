@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-02      Enh. #905: New general checkbox for warning signs in elements
  *      Kay Gürtzig     2021-02-04      Enh. #905: Decomposed checkbox/label in order to provide an icon
  *      Kay Gürtzig     2021-02-08      Enh. #928: New CASE check 29 (unstructured discriminator expression)
+ *      Kay Gürtzig     2021-10-05      Enh. #992: New tab with check 30 for parentheses, brackets, and braces.
  *
  ******************************************************************************************************
  *
@@ -113,7 +114,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*26*/"Short \"hello world\" tour.",
 		/*27*/"Check that CASE selector items are integer constants.",
 		/*28*/"Check that CASE selector lists are disjoint.",
-		/*29*/"Check that the CASE choice value is not of a structured type."
+		/*29*/"Check that the CASE choice value is not of a structured type.",
+		/*30*/"Check that brackets are balanced and correctly nested."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -135,6 +137,10 @@ public class AnalyserPreferences extends LangDialog {
 				20, 13,	15, 23,
 				0,// jumps and parallel sections
 				16, 17
+		});
+		// START KGU#992 2021-10-05: Enh. #992
+		checkboxTabs.put("General Syntax", new int[]{
+				30
 		});
 		checkboxTabs.put("Naming / Conventions", new int[]{
 				// identifiers and naming conventions

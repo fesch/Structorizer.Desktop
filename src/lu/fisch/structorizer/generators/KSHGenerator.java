@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-02-24      Issues #816,#821: generateCode(Root) partially decomposed
  *      Kay Gürtzig             2020-03-18      Bugfix #839 - sticky returns flag mended
  *      Kay Gürtzig             2020-03-19/29   Enh. #828: Modifications to support group export
+ *      Kay Gürtzig             2021-10-03      Bugfix #990: returnsValue field of the handled root filled
  *
  ******************************************************************************************************
  *
@@ -251,6 +252,9 @@ public class KSHGenerator extends BASHGenerator {
 		// END KGU#828 2020-03-18
 		boolean alwaysReturns = mapJumps(_root.children);
 		// END KGU#803 2020-02-16
+		// START KGU#990 2021-10-03: Bugfix #990
+		_root.returnsValue = this.returns;
+		// END KGU#990 2021-10-03
 		
 		// START KGU#178 2016-07-20: Enh. #160
 		

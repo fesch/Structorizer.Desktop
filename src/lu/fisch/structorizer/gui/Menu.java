@@ -127,6 +127,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-11      Enh. #893: Revalidation of the preference menu enforced after locale setting
  *      Kay Gürtzig     2021-02-24      Issue #944: Version info announcing Java upgrade to 11 added
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
+ *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for new Analyser check 30 against bracket faults
  *
  ******************************************************************************************************
  *
@@ -613,6 +614,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// START KGU#927 2021-02-08: Enh. #915
 	public static final LangTextHolder error29 = new LangTextHolder("A structured discriminator («%») is unsuited for CASE!");
 	// END KGU#927 2021-02-08
+	// START KGU#992 2021-10-05: Enh. #992
+	public static final LangTextHolder error30_1 = new LangTextHolder("There are %1 more opening than closing brackets in line %2, '%3' was expected next!");
+	public static final LangTextHolder error30_2 = new LangTextHolder("There is at least one more closing '%1' than opening brackets in line %2!");
+	public static final LangTextHolder error30_3 = new LangTextHolder("There is a closing '%1' where '%3' is expected in line %2!");
+	// END KGU#992 2021-10-05
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");

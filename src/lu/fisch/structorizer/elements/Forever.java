@@ -72,6 +72,11 @@ import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
+/**
+ * This Structorizer class represents an eternal (uncontrolled) loop in a diagram.
+ * 
+ * @author Bob Fisch
+ */
 public class Forever extends Element implements ILoop {
 	
 	public Subqueue q = new Subqueue();

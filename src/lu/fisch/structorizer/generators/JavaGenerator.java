@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-17      Enh. #828: New configuration method prepareGeneratorIncludeItem()
  *      Kay Gürtzig             2020-04-01      Enh. #348: Parallel code generation refined (result mechanism)
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *
  ******************************************************************************************************
  *
@@ -1337,7 +1338,15 @@ public class JavaGenerator extends CGenerator
 					// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
 					//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 					//		_paramNames.get(p)).trim();
-					fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
+					// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+					//fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "???").trim(), _paramNames.get(p));
+					String pType = _paramTypes.get(p);
+					if (pType != null && pType.startsWith("const ")) {
+						fnHeader += "final ";
+						pType = pType.substring("const ".length());
+					}
+					fnHeader += transformArrayDeclaration(transformType(pType, "???").trim(), _paramNames.get(p));
+					// END KGU#993 2021-10-03
 					// END KGU#140 2017-02-01
 				}
 				fnHeader += ")";

@@ -245,7 +245,7 @@ import javax.swing.ImageIcon;
 
 /**
  * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
- * i.e. the basic algorithmic structure blocks.
+ * i.e., the basic algorithmic structure blocks.
  * Provides primitives and utilities for drawing, syntax analysis, preferences,
  * and traversal.
  * @author Bob Fisch
@@ -295,7 +295,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 11700000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32";
+	public static final String E_VERSION = "3.32-01";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -4408,13 +4408,15 @@ public abstract class Element {
     // (The obvious disadvantage is slightly reduced performance, of course)
     /**
      * Returns the serialised texts held within this element and its substructure.
-     * The argument _instructionsOnly controls whether mere expressions like logical conditions or
-     * even call statements are included. As a rule, no lines that may not potentially introduce new
-     * variables are added if true (which not only reduces time and space requirements but also avoids
-     * "false positives" in variable detection). 
-     * Uses addFullText() - so possibly better override that method if necessary.
-     * @param _instructionsOnly - if true then only the texts of Instruction elements are included
-     * @return the composed StringList
+     * The argument {@code _instructionsOnly} controls whether mere expressions like
+     * logical conditions or even call statements are included. As a rule, no lines
+     * that may not potentially introduce new variables are added if {@code true}
+     * (which not only reduces time and space requirements but also avoids "false positives"
+     * in variable detection).<br/>
+     * Uses {@link #addFullText(StringList, boolean)} - so possibly better override that method if
+     * necessary.
+     * @param _instructionsOnly - if {@code true} then only the texts of Instruction elements are included
+     * @return the composed {@link StringList}
      */
     public StringList getFullText(boolean _instructionsOnly)
     {
@@ -4439,13 +4441,16 @@ public abstract class Element {
     
     // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
     /**
-     * Converts the operator symbols accepted by Structorizer into Java operators:
-     * - Assignment:		"<-"
-     * - Comparison:		"==", "<", ">", "<=", ">=", "!="
-     * - Logic:				"&&", "||", "!", "^"
-     * - Arithmetics:		"div" and usual Java operators (e.g. "mod" -> "%")
+     * Converts the operator symbols accepted by Structorizer into mostly Java operators:
+     * <ul>
+     * <li>Assignment:	"<-"</li>
+     * <li>Comparison:	"==", "<", ">", "<=", ">=", "!="</li>
+     * <li>Logic:		"&&", "||", "!", "^"</li>
+     * <li>Arithmetics:	usual Java operators plus "div" (e.g. "mod" -> "%")</li>
+     * </ul>
      * @param _expression - an Element's text in practically unknown syntax
-     * @return an equivalent of the _expression String with replaced operators
+     * @return an equivalent of the {@code _expression} String with replaced operators
+     * @see #unifyOperators(StringList, boolean)
      */
     public static String unifyOperators(String _expression)
     {
@@ -4459,16 +4464,15 @@ public abstract class Element {
     
 	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
     /**
-     * Converts the operator symbols accepted by Structorizer into intermediate operators
-     * (mostly Java operators):
+     * Converts the operator symbols accepted by Structorizer into mostly Java operators:
      * <ul>
-     * <li>Assignment:		"<-"</li>
-     * <li>Comparison*:		"==", "<", ">", "<=", ">=", "!="</li>
-     * <li>Logic*:			"&&", "||", "!", "^"</li>
-     * <li>Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")</li>
+     * <li>Assignment:	"<-"</li>
+     * <li>Comparison*:	"==", "<", ">", "<=", ">=", "!="</li>
+     * <li>Logic*:		"&&", "||", "!", "^"</li>
+     * <li>Arithmetics:	usual Java operators plus "div" (e. g. "mod" -> "%")</li>
      * </ul>
      * @param _tokens - a tokenised line of an Element's text (in practically unknown syntax)
-     * @param _assignmentOnly - if true then only assignment operator will be unified
+     * @param _assignmentOnly - if {@code true} then only assignment operators will be unified
      * @return total number of deletions / replacements
      */
     public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)
@@ -4480,21 +4484,21 @@ public abstract class Element {
         if (!_assignmentOnly)
         // END KGU#115 2015-12-23
         {
-        	count += _tokens.replaceAll("=", "==");
-        	count += _tokens.replaceAll("<>", "!=");
-        	count += _tokens.replaceAllCi("mod", "%");
-        	count += _tokens.replaceAllCi("shl", "<<");
-        	count += _tokens.replaceAllCi("shr", ">>");
-        	count += _tokens.replaceAllCi("and", "&&");
-        	count += _tokens.replaceAllCi("or", "||");
-        	count += _tokens.replaceAllCi("not", "!");
-        	count += _tokens.replaceAllCi("xor", "^");
-        	// START KGU#843 2020-04-11: Bugfix #847 Inconsistency in handling operators (we don't count this, though)
-        	_tokens.replaceAllCi("DIV", "div");
-        	// END KGU#843 2020-04-11
-        	// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
-        	_tokens.replaceAll("\u221E", "Infinity");
-        	// END KGU#920 2021-02-03
+            count += _tokens.replaceAll("=", "==");
+            count += _tokens.replaceAll("<>", "!=");
+            count += _tokens.replaceAllCi("mod", "%");
+            count += _tokens.replaceAllCi("shl", "<<");
+            count += _tokens.replaceAllCi("shr", ">>");
+            count += _tokens.replaceAllCi("and", "&&");
+            count += _tokens.replaceAllCi("or", "||");
+            count += _tokens.replaceAllCi("not", "!");
+            count += _tokens.replaceAllCi("xor", "^");
+            // START KGU#843 2020-04-11: Bugfix #847 Inconsistency in handling operators (we don't count this, though)
+            _tokens.replaceAllCi("DIV", "div");
+            // END KGU#843 2020-04-11
+            // START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
+            _tokens.replaceAll("\u221E", "Infinity");
+            // END KGU#920 2021-02-03
         }
         return count;
     }
@@ -4509,29 +4513,28 @@ public abstract class Element {
      * Conventions of the intermediate language:<br/>
      * Operators (note the surrounding spaces - no double spaces will exist):
      * <ul>
-     * <li>Assignment:		" <- "
-     * <li>Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
-     * <li>Logic:				" && ", " || ", " §NOT§ ", " ^ "
-     * <li>Arithmetics:		usual Java operators without padding
-     * <li>Control key words:<br/>
-     * -	If, Case:		none (wiped off)<br/>
-     * -	While, Repeat:	none (wiped off)<br/>
-     * -	For:			unchanged<br/>
-     * -	Forever:		none (wiped off)</li>
+     * <li>Assignment:	" <- "
+     * <li>Comparison:	" = ", " < ", " > ", " <= ", " >= ", " <> "
+     * <li>Logic:		" && ", " || ", " §NOT§ ", " ^ "
+     * <li>Arithmetics:	usual Java operators without padding
+     * <li>Control key words:<ul>
+     *   <li>If, Case:		none (wiped off)</li>
+     *   <li>While, Repeat:	none (wiped off)</li>
+     *   <li>For:			unchanged</li>
+     *   <li>Forever:		none (wiped off)</li>
+     * </ul></li>
      * </ul>
-     * 
      * @return a padded intermediate language equivalent of the stored text
      */
-    
     public StringList getIntermediateText()
     {
-    	StringList interSl = new StringList();
-    	StringList lines = this.getUnbrokenText();
-    	for (int i = 0; i < lines.count(); i++)
-    	{
-    		interSl.add(transformIntermediate(lines.get(i)));
-    	}
-    	return interSl;
+        StringList interSl = new StringList();
+        StringList lines = this.getUnbrokenText();
+        for (int i = 0; i < lines.count(); i++)
+        {
+            interSl.add(transformIntermediate(lines.get(i)));
+        }
+        return interSl;
     }
     
     /**
@@ -4550,7 +4553,7 @@ public abstract class Element {
     }
     
     /**
-     * Creates a (hopefully) lossless representation of the _text String as a
+     * Creates a (hopefully) lossless representation of the {@code _text} String as a
      * tokens list of a common intermediate language (code generation phase 1).
      * This allows the language-specific Generator subclasses to concentrate
      * on the translation into their target language (code generation phase 2).
@@ -4559,13 +4562,14 @@ public abstract class Element {
      * <ul>
      * <li>Assignment:		"<-"</li>
      * <li>Comparison:		"=", "<", ">", "<=", ">=", "<>"</li>
-     * <li>Logic:				"&&", "||", "!", "^"</li>
+     * <li>Logic:			"&&", "||", "!", "^"</li>
      * <li>Arithmetics:		usual Java operators</li>
-     * <li>Control key words:<br/>
-     * -	If, Case:		none (wiped off)<br/>
-     * -	While, Repeat:	none (wiped off)<br/>
-     * -	For:			unchanged<br/>
-     * -	Forever:		none (wiped off)</li>
+     * <li>Control key words:<ul>
+     *   <li>If, Case:		none (wiped off)</li>
+     *   <li>While, Repeat:	none (wiped off)</li>
+     *   <li>For:			unchanged</li>
+     *   <li>Forever:		none (wiped off)</li>
+     * </ul></li>
      * </ul>
      * @param _text - a line of the Structorizer element
      * //@return a padded intermediate language equivalent of the stored text
@@ -4659,6 +4663,7 @@ public abstract class Element {
     // END KGU#162 2016-03-31
     
     // START KGU#152 2016-03-02: Better self-description of Elements
+    @Override
     public String toString()
     {
     	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
@@ -4668,41 +4673,41 @@ public abstract class Element {
     			// END KGU#261 2017-01-19
     }
     // END KGU#152 2016-03-02
-    
+
 	// START KGU#258 2016-09-26: Enh. #253
-    /**
-     * Returns a fixed array of names of parser preferences being relevant for
-     * the current type of Element (e.g. in case of refactoring)
-     * @return Arrays of key strings for CodeParser.keywordMap
-     */
-    protected abstract String[] getRelevantParserKeys();
-    
-    /**
-     * Looks up the associated token sequence in _splitOldKeywords for any of the parser preference names
-     * provided by getRelevantParserKeys(). If there is such a token sequence then it will be
-     * replaced throughout my text by the associated current parser preference for the respective name
-     * @param _oldKeywords - a map of tokenized former non-empty parser preference keywords to be replaced
-     * @param _ignoreCase - whether case is to be ignored on comparison.
-     */
-    public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
-    {
-    	String[] relevantKeys = getRelevantParserKeys();
-    	if (relevantKeys != null && !_splitOldKeywords.isEmpty())
-    	{
-    		StringList result = new StringList();
-    		for (int i = 0; i < this.text.count(); i++)
-    		{
-    			result.add(refactorLine(text.get(i), _splitOldKeywords, relevantKeys, _ignoreCase));
-    		}
-    		this.text = result;
-    	}
+	/**
+	 * Returns a fixed array of names of parser preferences being relevant for
+	 * the current type of Element (e.g. in case of refactoring)
+	 * @return Arrays of key strings for CodeParser.keywordMap
+	 */
+	protected abstract String[] getRelevantParserKeys();
+
+	/**
+	 * Looks up the associated token sequence in _splitOldKeywords for any of the parser preference names
+	 * provided by getRelevantParserKeys(). If there is such a token sequence then it will be
+	 * replaced throughout my text by the associated current parser preference for the respective name
+	 * @param _oldKeywords - a map of tokenized former non-empty parser preference keywords to be replaced
+	 * @param _ignoreCase - whether case is to be ignored on comparison.
+	 */
+	public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
+	{
+		String[] relevantKeys = getRelevantParserKeys();
+		if (relevantKeys != null && !_splitOldKeywords.isEmpty())
+		{
+			StringList result = new StringList();
+			for (int i = 0; i < this.text.count(); i++)
+			{
+				result.add(refactorLine(text.get(i), _splitOldKeywords, relevantKeys, _ignoreCase));
+			}
+			this.text = result;
+		}
 	}
 	
 	/**
-     * Looks up the associated token sequence in _splitOldKeys for any of the parser
-     * preference names provided by _prefNames. If there is such a token sequence
-     * then it will be replaced throughout {@code _line} by the associated current
-     * parser preference for the respective name.
+	 * Looks up the associated token sequence in _splitOldKeys for any of the parser
+	 * preference names provided by _prefNames. If there is such a token sequence
+	 * then it will be replaced throughout {@code _line} by the associated current
+	 * parser preference for the respective name.
 	 * @param _line - line of element text
 	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
 	 * @param _prefNames - Array of parser preference names being relevant for this kind of element

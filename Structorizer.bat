@@ -14,6 +14,7 @@
 ::      Kay Gürtzig                   2017-07-04    Drive variable added to path
 ::      Kay Gürtzig                   2018-11-27    Precaution against installation path with blanks
 ::      Kay Gürtzig                   2021-06-13    Issue #944: Java version check (against 11) inserted
+::      Kay Gürtzig                   2021-09-23    Bugfix #988: Syntax error in nested "if" statement mended
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -26,7 +27,7 @@ set JAVAVER=%JAVAVER:"=_%
 for /f "tokens=2 delims=_" %%a in ("%JAVAVER%") do set JAVAVER=%%a
 for /f "tokens=1,2 delims=." %%a in ("%JAVAVER%") do (
 	set VERSION=%%a
-	if %VERSION% equ 1 set VERSION=%%b
+	if %%VERSION%% equ 1 set VERSION=%%b
 )
 if %VERSION% lss %REQVERSION% (
 	echo on

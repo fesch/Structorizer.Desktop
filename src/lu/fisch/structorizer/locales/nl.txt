@@ -60,6 +60,7 @@
  *      Jaap Woldringh  2020-12-20/25   Enh. #704: New messages for Turtleizer GUI, many revisions
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
+ *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
  *
  ******************************************************************************************************
  *
@@ -492,13 +493,18 @@ Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaa
 Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Enkele @c-keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
 Menu.error28.text=Er zijn meerdere (botsende) keuze-elementen (%) in het @c-element!
+Menu.error29.text=
+Menu.error30_1.text=
+Menu.error30_2.text=
+Menu.error30_3.text=
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Voorkeuren Analyser
 AnalyserPreferences.contentPanel.tab.0=Algoritmisch
-AnalyserPreferences.contentPanel.tab.1=Namen/conventies
-AnalyserPreferences.contentPanel.tab.2=Hints/Lessen
+AnalyserPreferences.contentPanel.tab.1=Algemeene Syntaxis
+AnalyserPreferences.contentPanel.tab.2=Namen/conventies
+AnalyserPreferences.contentPanel.tab.3=Hints/Lessen
 AnalyserPreferences.checkboxes.1.text=Controle op gewijzigde lusvariabelen.
 AnalyserPreferences.checkboxes.2.text=Controle op eindeloze lussen (voor zover detecteerbaar!)
 AnalyserPreferences.checkboxes.3.text=Controle op niet geinitialiseerde variabelen.
@@ -527,6 +533,8 @@ AnalyserPreferences.checkboxes.25.text=Gids voor de eerste programma-instructies
 AnalyserPreferences.checkboxes.26.text=Korte rondleiding "hallo wereld"
 AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante gehele getallen zijn.
 AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
+AnalyserPreferences.checkboxes.29.text=
+AnalyserPreferences.checkboxes.30.text=
 AnalyserPreferences.lblDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -759,6 +767,10 @@ InputBoxCase.btnAddRow.tooltip=Regel voor een nieuw geval toevoegen (en de komma
 InputBoxCase.btnDelRows.tooltip=Geselecteerd geval-regel verwijderen (in verband met de associeerde tak!)
 InputBoxCase.btnUpRow.tooltip=Geselecteerd geval-regel naar boven verplaatsen
 InputBoxCase.btnDnRow.tooltip=Geselecteerd geval-regel naar beneden verplaatsen
+InputBoxCase.btnMergeRows.tooltip=Geselecteerde geval-regels fusioneren (ongeoorloofd met verschillend niet-lege taks)
+InputBoxCase.btnSplitRow.tooltip=Geselecteerd geval-regel separeren
+InputBoxCase.btnEnumAssist.tooltip=Zorgen ervoor dat een geval-regel bestaan voor elke enumerator waarde, dat onjuist geval-regels verdwijnen (behalve met niet-lege tak)
+InputBoxCase.btnCheckRows.tooltip=Consistentie keuren en problemen rapporteren
 InputBoxCase.chkMoveBranches.text=Takken meeverplaatsen
 InputBoxCase.chkMoveBranches.tooltip=Als activeerd (gerecommandeerd), de connectie van de takken met de verplaatste regelen wordt bewaardt.
 InputBoxCase.chkDefaultBranch.text=Anderszins-tak:

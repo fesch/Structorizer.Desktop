@@ -499,8 +499,9 @@ Menu.errorLineReference.text=(строка %)
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Настройки анализатора
 AnalyserPreferences.contentPanel.tab.0=Алгоритм
-AnalyserPreferences.contentPanel.tab.1=Названия / соглашения
-AnalyserPreferences.contentPanel.tab.2=
+AnalyserPreferences.contentPanel.tab.1=Всеобщий синтаксис
+AnalyserPreferences.contentPanel.tab.2=Названия / соглашения
+AnalyserPreferences.contentPanel.tab.3=Указания / введения
 AnalyserPreferences.checkboxes.1.text=Проверять изменение переменной цикла.
 AnalyserPreferences.checkboxes.2.text=Проверять конец цикла (возможен бесконечный цикл!).
 AnalyserPreferences.checkboxes.3.text=Проверять неинициализированные переменные.

@@ -133,6 +133,7 @@
  *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig         2021-02-07  Enh. #915: New messages and tooltips for InputBoxCase
  *      Kay Gürtzig         2021-03-07  KGU#961: Translations for known plugin options added.
+ *      Kay Gürtzig         2021-10-05      Enh. #992: Messages for Analyser brackets check
  *
  ******************************************************************************************************
  *
@@ -568,13 +569,17 @@ Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportier
 Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
 Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.error29.text=Der Auswahlwert «%» ist von strukturiertem Typ und somit ungeeignet für @c!
+Menu.error30_1.text=In Zeile %2 gibt es %1 öffnende Klammer(n) mehr als schließende, als nächstes '%3' erwartet!
+Menu.error30_2.text=In Zeile %2 gibt es mindestens eine schließende '%1' mehr als öffnende Klammern!
+Menu.error30_3.text=In Zeile %2 gibt es eine Klammer '%1', wo '%3' erwartet würde!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
 AnalyserPreferences.contentPanel.tab.0=Algorithmisch
-AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
-AnalyserPreferences.contentPanel.tab.2=Hinweise / Anleitungen
+AnalyserPreferences.contentPanel.tab.1=Syntax, allgemein
+AnalyserPreferences.contentPanel.tab.2=Bezeichner / Konventionen
+AnalyserPreferences.contentPanel.tab.3=Hinweise / Anleitungen
 AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von @d-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
@@ -604,6 +609,7 @@ AnalyserPreferences.checkboxes.26.text=Kurzer "Hallo Welt"-Kurs
 AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlkonstanten sind.
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
+AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und richtig verschachtelt sind.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 

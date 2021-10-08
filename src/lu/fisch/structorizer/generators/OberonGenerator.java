@@ -1502,7 +1502,16 @@ public class OberonGenerator extends Generator {
 			for (int p = 0; p < nParams; p++) {
 				// START KGU#800 2020-02-15: Type name surrogate unified to ???
 				//String type = transformType(_paramTypes.get(p), "(*type?*)");
-				String type = transformType(_paramTypes.get(p), "???");
+				// START KGU#993 2021-10-03: Bugfix #993 constant and array parameters were handled badly
+				//String type = transformType(_paramTypes.get(p), "???");
+				boolean isConst = false;
+				String pType = _paramTypes.get(p);
+				if (pType != null && pType.startsWith("const ")) {
+					pType = pType.substring("const ".length());
+					isConst = true;
+				}
+				String type = transformType(pType, "???");
+				// END KGU#993 2021-10-03
 				// END KGU#800 2020-02-15
 				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				//if (p == 0) {
@@ -1517,7 +1526,10 @@ public class OberonGenerator extends Generator {
 				// END KGU#140 2017-01-31
 						paramList += ": " + lastType + "; ";
 						// START KGU#332 2017-01-31: Enh. #335 Improved type support
-						if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+						// START KGU#993 2021-10-03: Bugfix #993 constant arrays must not be passed as VAR
+						//if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+						if (type.contains("ARRAY") && !isConst && !_paramNames.get(p).trim().startsWith("VAR ")) {
+						// END KGU#993 2021-10-03
 							paramList += "VAR ";
 						}
 						// END KGU#332 2017-01-31
@@ -1894,6 +1906,9 @@ public class OberonGenerator extends Generator {
 	protected boolean generateConstDefs(Root _root, String _indent, StringList _complexConsts, boolean _sectionBegun) {
 		if (!_root.constants.isEmpty()) {
 			String indentPlus1 = _indent + this.getIndent();
+			// START KGU#993 2021-10-03: Bugfix #993 - We must not re-define constant parameters!
+			StringList params = _root.getParameterNames();
+			// END KGU#993 2021-10-03
 			// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #836
 			String glob = "";
 			if (topLevel && _root.isInclude() && this.importedLibRoots == null) {
@@ -1906,7 +1921,10 @@ public class OberonGenerator extends Generator {
 				String constName = constEntry.getKey();
 				// We must make sure that the constant hasn't been included from a diagram
 				// already handled at top level.
-				if (wasDefHandled(_root, constName, true)) {
+				// START KGU#993 2021-10-03: Bugfix #993 - skip constant parameters as well
+				//if (wasDefHandled(_root, constName, true)) {
+				if (params.contains(constName) || wasDefHandled(_root, constName, true)) {
+				// END KGU#993 2021-10-03
 					continue;
 				}
 				// START KGU#452 2019-11-17: Enh. #739 Skip enumerator values - they are to be handled in a type definition

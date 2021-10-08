@@ -571,13 +571,17 @@ Menu.hint26.4.text=Ahora puedes p.ej. exportar tu diagrama como imágen: → Men
 Menu.error27.text=Algunos valores comparativos @c (p.ej. «%») no parecen constantes integrales.
 Menu.error28.text=!Valores comparativos (%) ocurren varias veces o en más de un ramo del elemento @c!
 Menu.error29.text=El tipo de la expresión de selección «%» es estructurado, pues no sirve para @c.
+Menu.error30_1.text=¡Hay %1 paréntesis izquierdas más que paréntesis derechas en linea %2, '%3' había esperado!
+Menu.error30_2.text=¡Hay (por lo menos) un '%1' más que paréntesis derechos en línea %2!
+Menu.error30_3.text=¡Encontrado un '%1' donde '%3' debería estar esperado en línea %2!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
 AnalyserPreferences.contentPanel.tab.0=Algorítmico
-AnalyserPreferences.contentPanel.tab.1=Nombres y convenciones
-AnalyserPreferences.contentPanel.tab.2=Consejos y guías
+AnalyserPreferences.contentPanel.tab.1=Sintaxis general
+AnalyserPreferences.contentPanel.tab.2=Nombres y convenciones
+AnalyserPreferences.contentPanel.tab.3=Consejos y guías
 AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
 AnalyserPreferences.checkboxes.2.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
 AnalyserPreferences.checkboxes.3.text=Comprobar si hay variables no inicializadas.
@@ -607,6 +611,7 @@ AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mund
 AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son constantes integrales.
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
 AnalyserPreferences.checkboxes.29.text=Comprobar que el valor de selectión en elementos @c no es de un tipo estructurado.
+AnalyserPreferences.checkboxes.30.text=Comprobar el equilibrio de los paréntesis y que sean anidados coréctamente.
 AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 

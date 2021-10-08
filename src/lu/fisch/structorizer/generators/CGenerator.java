@@ -109,6 +109,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-10-16      Bugfix #873: Type definition handling was compromised by bugfix #808
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig             2021-10-01      Bugfix #989: No expression translation in EXIT elements to C, C++, etc.
+ *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
+ *                                              Bugfix #993: Wrong handling of constant parameters
  *
  ******************************************************************************************************
  *
@@ -393,6 +396,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected int insertPrototype(Root _root, String _indent, boolean _withComment, int _atLine)
 	{
+		final String CONST_PREFIX = "const ";
 		int lines = 0;	// Result value = number of inserted lines
 		String fnHeader = "int main(void)";
 		boolean returnsArray = false;
@@ -402,8 +406,14 @@ public class CGenerator extends Generator {
 			StringList paramNames = new StringList();
 			StringList paramTypes = new StringList();
 			_root.collectParameters(paramNames, paramTypes, null);
+			// START KGU#990 2021-10-02: Bugfix #990 _root is not necessarily the current Root
+			StringList vars = _root.getVarNames();
+			// END KGU#990 2021-10-02
 			fnHeader = transformTypeWithLookup(_root.getResultType(),
-					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+					// START KGU#990 2021-10-02: Bugfix #990 These values could be from a different root
+					//((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+					((_root.returnsValue == Boolean.TRUE || vars.contains("result", false) || vars.contains(fnName)) ? "int" : "void"));
+					// END KGU#990 2021-10-02
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
 			returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
 			if (returnsArray) {
@@ -416,9 +426,19 @@ public class CGenerator extends Generator {
 				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
 				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
 				//		_paramNames.get(p)).trim();
+				// START KGU#993 2021-10-03: Bugfix #993 wrong handling of constant parameters
+				//fnHeader += transformArrayDeclaration(
+				//		transformTypeWithLookup(paramTypes.get(p), "???").trim(),
+				//		paramNames.get(p));
+				String pType = paramTypes.get(p);
+				if (pType != null && pType.startsWith(CONST_PREFIX)) {
+					fnHeader += CONST_PREFIX;
+					pType = pType.substring(CONST_PREFIX.length());
+				}
 				fnHeader += transformArrayDeclaration(
-						transformTypeWithLookup(paramTypes.get(p), "???").trim(),
+						transformTypeWithLookup(pType, "???").trim(),
 						paramNames.get(p));
+				// END KGU#993 2021-10-03
 				// END KGU#140 2017-01-31
 			}
 			// START KGU#800 2020-02-15: Issue #814
@@ -897,7 +917,11 @@ public class CGenerator extends Generator {
 	// START KGU#332 2017-01-27: Enh. #335
 	/**
 	 * States whether constant definitions or variable declarations may occur anywhere in
-	 * the code or only at block beginning
+	 * the code or only at block beginning.<b/>
+	 * Note that this option only applies to explicit declarations in e.g. Instruction or
+	 * Call elements; in case of a mere first assignment somewhere we could not be sure that
+	 * a declaration in this place would cover all occurrences (e.g., if introduced in
+	 * several branches of an Alternative or Case element).
 	 * @return true if declarations may be mixed among instructions
 	 */
 	protected boolean isInternalDeclarationAllowed()
@@ -2090,18 +2114,28 @@ public class CGenerator extends Generator {
 				//if (line.matches(preReturnMatch))
 				if (_jump.isReturn())
 				{
-					addCode("return " + line.substring(preReturn.length()).trim() + ";",
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
+					//addCode("return " + line.substring(preReturn.length()).trim() + ";",
+					addCode("return " + transform(line.substring(preReturn.length()).trim()) + ";",
+					// END KGU#989 2021-10-01
 							_indent, isDisabled);
 				}
 				//else if (line.matches(preExitMatch))
 				else if (_jump.isExit())
 				{
-					appendExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
+					//appendExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
+					appendExitInstr(transform(line.substring(preExit.length()).trim()), _indent, isDisabled);
+					// END KGU#989 2021-10-01
 				}
 				// START KGU#686 2019-03-20: Enh. #56 Throw has to be implemented
 				else if (_jump.isThrow() && this.getTryCatchLevel() != TryCatchSupportLevel.TC_NO_TRY) {
-					this.generateThrowWith(line.substring(
-							CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim(), _indent, isDisabled);
+					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
+					//this.generateThrowWith(line.substring(
+					//		CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim(), _indent, isDisabled);
+					this.generateThrowWith(transform(line.substring(
+							CodeParser.getKeywordOrDefault("preThrow", "throw").length()).trim()), _indent, isDisabled);
+					// END KGU#989 2021-10-01
 				}
 				// END KGU#686 2019-03-20
 				// Has it already been matched with a loop? Then syntax must have been okay...
@@ -2517,9 +2551,17 @@ public class CGenerator extends Generator {
 		// END KGU#676 2019-03-30
 		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
+		// START KGU#993 2021-10-03: Bugfix #993 constant parameters must not be defined here again!
+		StringList parNames = _root.getParameterNames();
+		// END KGU#993 2021-10-03
 		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
 		for (String constName: _root.constants.keySet()) {
-			appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());			
+			// START KGU#993 2021-10-03: Bugfix #993 constant parameters must not be defined here again!
+			//appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());
+			if (!parNames.contains(constName)) {
+				appendDeclaration(_root, constName, _indent, _force || !this.isInternalDeclarationAllowed());
+			}
+			// END KGU#993 2021-10-03
 		}
 		// END KGU#375 2017-04-12
 		// START KGU#388 2017-09-26: Enh. #423 Place the necessary type definitions here
