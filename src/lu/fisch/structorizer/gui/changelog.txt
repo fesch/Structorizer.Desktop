@@ -21,7 +21,7 @@ Known issues:
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
 
-Current development version 3.32-02 (2021-10-09)
+Current development version 3.32-02 (2021-10-10)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -35,6 +35,7 @@ Current development version 3.32-02 (2021-10-09)
       were not correctly exported to Pascal, Oberon, C, and other languages <2>
 - 01: Bugfix #995: Unjustified Analyser warnings about dubious initialization
       and missing line numbers in case of multi-line instruction warnings <2>
+- 02: Bugfix #988: Structorizer.exe (in Windows zip package) config updated <2>
 - 02: Bugfix #997: Inconsistent handling of blank sequences in FOR control
       phrases (e.g. string literals could get compromised) <2>
 - 02: Enh. #967: Generator for ARM code introduced <Alessandro Simonetta et al.>
