@@ -41,10 +41,12 @@ package lu.fisch.structorizer.generators;
 *      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
 *      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
 *      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
-*      Kay Gürtzig     2021-05-02      Mechanisms to support EXIT instructions, subroutines, CALLs added
+*      Kay Gürtzig     2021-05-02      Mechanisms added to support EXIT instructions, subroutines, CALLs
 *      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
 *      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
 *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
+*      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
+*                                      code revisions in the variable and statement detection.
 *
 ******************************************************************************************************
 *
@@ -85,29 +87,38 @@ public class ArmGenerator extends Generator {
     private static final String numberPattern = "-?[0-9]+";
     private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
     private static final String assignmentOperators = "(<-|:=)";
+    private static final String relationOperators = "(==|!=|<|>|<=|>=|=)";
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
 
     private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
     private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
-    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
-    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
-    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
-    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s)\\[(%s|%s|%s)( *\\+ *%s)?] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
-    private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
+    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
+    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    // START KGU#968 2021-10-11: Issue #967 it can hardly make sense to have a number on the left-hand side
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) +(%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    // END KGU#968 2021-10-11
     private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
+    // FIXME KGU#968: Why isn't an empty string allowed? Why are only identifier characters supported as content?
     private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
+    // START KGU#968 2021-10-11: Issue #967 Single quotes shall also be supported (preferrably even!)
+    //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *(\"[\\w]\"|'[\\w]')", registerPattern, variablePattern, assignmentOperators));
+    // END KGU#968 2021-10-11
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
     //private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
+    private static final String comparisonPattern = String.format("(%s|%s)%s(%s|[0-9]+|%s|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
+            registerPattern1, variablePattern,
+            relationOperators,
+            registerPattern1, variablePattern);
     private static final Pattern conditionPattern = Pattern.compile(
-            String.format("\\((%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((&&|\\|\\|)(%s|%s)(==|!=|<|>|<=|>=|=)(%s|[0-9]+|%s|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)",
-                    registerPattern1, variablePattern,
-                    registerPattern1, variablePattern,
-                    registerPattern1, variablePattern,
-                    registerPattern1, variablePattern));
+            String.format("\\(%s((&&|\\|\\|)%s)*\\)",
+                    comparisonPattern, comparisonPattern));
     // END KGU#968 2021-05-02
     // START KGU#968 2021-10-05: Special support for [negated] registers or variables as conditions
     private static final Pattern atomicCondPattern = Pattern.compile(
@@ -216,7 +227,15 @@ public class ArmGenerator extends Generator {
     // END KGU#968 2021-05-02
 
     /**
-     * Stores the difference between GNU and Keil compilers
+     * Stores the difference between GNU and Keil compilers<br/>
+     * First index:<br/>
+     * [0] - Gnu phrases<br/>
+     * [1] - KEIL phrases<br/>
+     * Second index:<br/>
+     * [0] - label declaration postfix<br/>
+     * [1] - direct operand prefix in MOV instructions<br/>
+     * [2] - data area header<br/>
+     * [3] - text area header<br/>
      */
     private final String[][] difference = {
             {":", "#", ".data", ".text"},
@@ -285,6 +304,7 @@ public class ArmGenerator extends Generator {
         if (optionGnu instanceof Boolean) {
             gnuEnabled = (Boolean) optionGnu;
         }
+        // END KGU#968 2021-04-15
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
         String inputKeyword = CodeParser.getKeywordOrDefault("input", "input");
         String outputKeyword = CodeParser.getKeywordOrDefault("output", "output");
@@ -296,7 +316,6 @@ public class ArmGenerator extends Generator {
         this.isResultSet = varNames.contains("result", false);
         this.isFunctionNameSet = varNames.contains(procName);
         // END KGU#968 2021-04-24
-        // END KGU#968 2021-04-15
         // START KGU#705 2021-04-14: Enh. #738 (Direct code changes compromise codeMap)
         //if (topLevel && gnuEnabled) {
         //    code.add(difference[0][2]);
@@ -321,7 +340,16 @@ public class ArmGenerator extends Generator {
         // END KGU#705 2021-04-14
 
         for (Map.Entry<String, String> entry : mVariables.entrySet()) {
-            mVariables.put(entry.getKey(), "");
+            // START KGU#968 2021-10-11 Reserve all register names used as variables
+            //mVariables.put(entry.getKey(), "");
+            String reg = entry.getKey();
+            if (this.varNames.contains(reg, false)) {
+                mVariables.put(reg, USER_REGISTER_TAG);
+            }
+            else {
+                mVariables.put(reg, "");
+            }
+            // END KGU#968 2021-10-11
         }
         // START KGU#968 2021-05-02: EXITs, subroutines
         // Support for loop EXITs - map the ARM loop labels
@@ -340,7 +368,8 @@ public class ArmGenerator extends Generator {
             //}
         }
         if (_root.isSubroutine()) {
-        	addCode(procName + colon, "", false);
+            addCode(procName + colon, "", false);
+            // FIXME: Adhere to the GNU call standard 
             // Push all registers (FIXME: Could we reduce the register set to the actual needs?)
             addCode("STMFD SP!, {R0-R12}", getIndent(), false);
             // Now get the arguments from the stack
@@ -364,6 +393,7 @@ public class ArmGenerator extends Generator {
         // Add a return mechanism if the code does not end with return anyway
         if (_root.isSubroutine() && !this.alwaysReturns && i >= 0
                 && !code.get(i).trim().equals("MOVS PC, LR")) {
+            // FIXME: Adhere to the GNU call standard 
             // Provide the result value if this is a function
             String regResult = "";
             if (this.isFunctionNameSet) {
@@ -1335,6 +1365,7 @@ public class ArmGenerator extends Generator {
      * (should be an {@link Alternative}, {@link While}, or {@link Repeat} object)
      * and returns either {@code null} (in case the transformation failed) or a
      * multi-line instruction sequence as translation.
+     * 
      * @param _ele - The element the code for which is to be generated
      * @param prefix - an element-class-specific prefix for the error message
      * @param keys - a pair of keys for creating the jump labels
@@ -1569,7 +1600,7 @@ public class ArmGenerator extends Generator {
      * This method translates basic operations between variables and/or registers
      * EXAMPLE: R0 <- R1 + 1
      *
-     * @param line the string that contains the instruction to translate
+     * @param line - the instruction to translate as string
      */
     private void generateExpr(String line, boolean isDisabled) {
         String code = "%s %s, %s, %s";
@@ -1634,11 +1665,12 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method translates an array's address assignment to a register using indirizzo or address as keywords
+     * This method translates an array's address assignment to a register using
+     * indirizzo or address as keywords
      * EXAMPLE: R0 <- address(R1)
      *
-     * @param line       the string that contains the instruction to translate
-     * @param isDisabled whether this element or one of its ancestors is disabled
+     * @param line       - the instruction to translate as string
+     * @param isDisabled - whether this element or one of its ancestors is disabled
      */
     private void generateAddressAssignment(String line, boolean isDisabled) {
         line = line.replace(" ", "");
@@ -1653,10 +1685,12 @@ public class ArmGenerator extends Generator {
 
     /**
      * This method translates an alternative way of using arrays (this time with memory access) using memoria or memory as keywords
-     * EXAMPLE: R0 <- memory[R1] or memory[R0] <- R1
+     * EXAMPLES:<br/>
+     * R0 <- memory[R1]<br/>
+     * memory[R0] <- R1
      *
-     * @param line       the string that contains the instruction to translate
-     * @param isDisabled whether this element or one of its ancestors is disabled
+     * @param line       - the instruction to translate as string
+     * @param isDisabled - whether this element or one of its ancestors is disabled
      */
     private void generateMemoryAssignment(String line, boolean isDisabled) {
         String code = "%s %s, [%s]";
@@ -1709,7 +1743,7 @@ public class ArmGenerator extends Generator {
     private void generateString(String line, boolean isDisabled) {
 
         String[] split = line.split("<- ?|:= ?");
-        // FIXME: The string literal might contain escaped quotes!
+        // FIXME: The string literal might contain escaped quotes in future!
         split[1] = split[1].replace("\"", "");
         String c = "word %s<-{%s}";
         StringBuilder array = new StringBuilder();
@@ -2016,7 +2050,10 @@ public class ArmGenerator extends Generator {
                 String variable = item.substring(0, item.length() - 1);
                 // if it's a register we add it as not available and, if it's already assigned to a variable, we warn the user
                 if (variable.matches(registerPattern)) {
-                    if (mVariables.get(variable).equals("")) {
+                    // START KGU#968 2021-10-11: Bugfix #967 case matters here! (Caused NullPointerExceptions)
+                    variable = variable.toUpperCase();
+                    // END KGU#968 2021-10-11
+                    if ("".equals(mVariables.get(variable))) {
                         mVariables.put(variable, USER_REGISTER_TAG);
                     } else if (!mVariables.get(variable).equals(USER_REGISTER_TAG)) {
                         appendComment(String.format("Register: %s is already assigned to variable: %s. Be careful!\n", variable, mVariables.get(variable)), getIndent());
@@ -2024,7 +2061,7 @@ public class ArmGenerator extends Generator {
                 }
 
                 // if it's not a register and it's not empty and it's not in the reservedWords list we add it to the arraylist
-                if (!variable.matches(registerPattern) && !variable.equals("") && !Arrays.asList(reservedWords).contains(variable) && !variable.matches(hexNumberPattern)) {
+                else if (!variable.equals("") && !Arrays.asList(reservedWords).contains(variable) && !variable.matches(hexNumberPattern)) {
                     stringPositions.add(new Tuple<>(variable, i - 2));
                 }
                 item = new StringBuilder(split[i]);
@@ -2057,11 +2094,11 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method returns the register assigned to variable
+     * This method returns the register assigned to the given variable
      *
-     * @param variable - the string that contains the variable name
-     * @return the register assigned to the variable or an empty string if the
-     * set of variables is exhausted
+     * @param variable - the variable name
+     * @return name of the register assigned to the variable, or an empty string
+     *         if the set of variables is exhausted
      */
     private String getRegister(String variable) {
         String register = "";
