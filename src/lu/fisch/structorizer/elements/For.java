@@ -69,6 +69,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-21      Enh. #739 Enum types considered in type compatibility check for FOR-IN lists
  *      Kay Gürtzig     2021-01-22      Result value for setStepConst(String) introduced
  *      Kay Gürtzig     2021-02-01      Bugfix #923: Type retrieval for value lists was too weak
+ *      Kay Gürtzig     2021-10-09      Bugfix #997: Inconsistent blank handling between forms and text
  *
  ******************************************************************************************************
  *
@@ -1010,17 +1011,23 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
-		String forClause = CodeParser.getKeyword("preFor").trim() + " " +
-				_counter + asgnmtOpr + _start + " " +
-				CodeParser.getKeyword("postFor").trim() + " " + _end;
+		String forClause = CodeParser.getKeyword("preFor").trim() + " "
+				// START KGU#998 2021-10-09: Bugfix #997 redundant spaces tended to spoil comparison
+				//+ _counter + asgnmtOpr + _start + " "
+				//+ CodeParser.getKeyword("postFor").trim() + " " + _end;
+				+ _counter.trim() + asgnmtOpr + _start.trim() + " "
+				+ CodeParser.getKeyword("postFor").trim() + " " + _end.trim();
+				// END KGU#998 2021-10-09
 		if (_step != 1 || _forceStep)
 		{
 			forClause = forClause + " " + CodeParser.getKeyword("stepFor").trim() + " " +
 					Integer.toString(_step);
 		}
+		// START KGU#998 2021-10-09: Bugfix #997 This compromised expressions like length("a   b  c")
 		// Now get rid of multiple blanks
-		forClause = forClause.replace("  ", " ");
-		forClause = forClause.replace("  ", " ");
+		//forClause = forClause.replace("  ", " ");
+		//forClause = forClause.replace("  ", " ");
+		// END KGU#998 2021-10-09
 		return forClause;
 	}
 	
@@ -1070,12 +1077,13 @@ public class For extends Element implements ILoop {
 	
 	/**
 	 * Classifies the loop style based only on the congruence of the stored
-	 * text with the generated textes of the styles COUNTER and TRAVERSAL
-	 * (the latter being the code for FOR-IN loops).
-	 * You might also consider testing this.style (which just returns a cached
-	 * earlier classification) and this.isForInLoop(), which first checks the
-	 * cached classification and if this is FREETEXT also calls this method
-	 * in order to find out whether this complies with FOR-IN syntax.
+	 * text with the generated texts of the styles COUNTER and TRAVERSAL
+	 * (the latter being the code for FOR-IN loops).<br/>
+	 * You might also consider testing this.{@link #style} (which just returns
+	 * a cached earlier classification) and this.isForInLoop(), which first
+	 * checks the cached classification and if this is FREETEXT also calls
+	 * this method in order to find out whether this complies with FOR-IN
+	 * syntax.<br/>
 	 * Note that assignment operator differences will be tolerated.
 	 * @return One of the style codes COUNTER, TRAVERSAL, and FREETEXT
 	 */

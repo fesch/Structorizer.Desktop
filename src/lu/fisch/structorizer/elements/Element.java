@@ -252,6 +252,9 @@ import javax.swing.ImageIcon;
  */
 public abstract class Element {
 	
+	// START AS 2021-03-25: Enh. #967 (ARM code variant) - KGU 2021-04-15 disabled
+	//public static boolean ARM_GNU = false;
+	// END AS 2021-03-25
 	/** This enumeration type distinguishes drawing contexts for selection display */
 	// START KGU#906 2021-01-06: Enh. #905 need another context to suppress triangles
 	//public enum DrawingContext {DC_STRUCTORIZER, DC_ARRANGER};
@@ -295,7 +298,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 11700000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-01";
+	public static final String E_VERSION = "3.32-02";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -314,6 +317,7 @@ public abstract class Element {
 	" - BASIC: Jacek Dzieniewicz\n" +
 	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	" - Javascript: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - ARM code: Alessandro Simonetta <alessandro.simonetta@gmail.com>\n"+
 	" - PapDesigner: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"Import grammars and parsers written and maintained by\n"+
 	" - ANSI-C: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+

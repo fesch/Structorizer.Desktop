@@ -2157,8 +2157,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				else if (jump.isExit())
 				// END KGU#380 2017-04-14
 				{
-					// Doesn't return a regular result but we won't get to the end, so a default return is
-					// not required, we handle this as if a result would have been returned.
+					/* Doesn't return a regular result but we won't get to the end,
+					 * so a default return is not required, we handle this as if a
+					 * result would have been returned.*/
 					//surelyReturns = true;
 					return true;
 				}
@@ -3981,8 +3982,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#705 2019-09-23: Enh. #738
 	/**
-	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)} for live
-	 * code preview as there is no file selection etc. 
+	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)}
+	 * for live code preview as there is no file selection etc.<br/>
+	 * Plugin-specific options should already have been assigned, general export options
+	 * will be fetched from {@link Ini} here.
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool - {@link Arranger} or some other routine pool for subroutine analysis

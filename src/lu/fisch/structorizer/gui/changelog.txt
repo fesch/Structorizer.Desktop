@@ -20,8 +20,10 @@ Known issues:
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
+- ARM export is still experimental and relies on a specific and very restricted
+  syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-01 (2021-10-07)
+Current development version 3.32-02 (2021-10-12)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -35,6 +37,11 @@ Current development version 3.32-01 (2021-10-07)
       were not correctly exported to Pascal, Oberon, C, and other languages <2>
 - 01: Bugfix #995: Unjustified Analyser warnings about dubious initialization
       and missing line numbers in case of multi-line instruction warnings <2>
+- 02: Enh. #967: Generator for ARM code (prototype) introduced <Alessandro
+      Simonetta et al.>
+- 02: Bugfix #988: Structorizer.exe (in Windows zip package) config updated <2>
+- 02: Bugfix #997: Inconsistent handling of blank sequences in FOR control
+      phrases (e.g. string literals could get compromised) <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
