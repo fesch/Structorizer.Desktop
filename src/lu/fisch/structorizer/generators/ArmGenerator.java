@@ -1093,6 +1093,7 @@ public class ArmGenerator extends Generator {
             generateArrayExpr(newline, isDisabled);
             break;
         case ARRAY_ASSIGNMENT:
+            // FIXME: This will also replace the array name by a (possibly uninitialised) register
             newline = variablesToRegisters(line);
             generateArrayAssignment(newline, isDisabled);
             break;
@@ -1481,7 +1482,7 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method translates array assignments
+     * This method translates array element assignments
      * EXAMPLE: R0[0] <- 1
      *
      * @param line       - the string that contains the instruction to translate
@@ -1490,9 +1491,9 @@ public class ArmGenerator extends Generator {
     private void generateArrayAssignment(String line, boolean isDisabled) {
         String[] tokens = line.split("<-|:="); //R0[], R2
 
-        String expr = tokens[1];
+        String expr = tokens[1].trim();
         String[] arr = tokens[0].split("\\["); //R0, R1]
-        String arName = arr[0]; //R0
+        String arName = arr[0].trim(); //R0
 
         if (!arr[1].contains("R")) { //R0[1], R2
             int index = Integer.parseInt(arr[1].replace("]", "").replace(" ", ""));
@@ -1506,9 +1507,9 @@ public class ArmGenerator extends Generator {
             }
 
         } else if (arr[1].contains("R")) {
-            addCode("STR " + expr + ", " + "[" + arName + ", " + arr[1], getIndent(), isDisabled);
+            addCode("STR " + expr + ", " + "[" + arName + ", " + arr[1].trim(), getIndent(), isDisabled);
 
-        } else {
+        } else {	// FIXME Dead code
             appendComment("ERROR, no free register or no array type specified", "");
         }
     }
