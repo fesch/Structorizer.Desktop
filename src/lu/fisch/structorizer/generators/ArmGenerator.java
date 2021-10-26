@@ -47,6 +47,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
 *      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
 *                                      code revisions in the variable and statement detection.
+*      Kay Gürtzig     2021-10-26      Bugfix #1003: Undue memory reservation for all variables.
 *
 ******************************************************************************************************
 *
@@ -354,19 +355,20 @@ public class ArmGenerator extends Generator {
         // START KGU#968 2021-05-02: EXITs, subroutines
         // Support for loop EXITs - map the ARM loop labels
         this.breakLabels = new String[this.labelCount];
-        // Prepare the register mapping here based on this.varNames!
-        for (int i = 0; i < this.varNames.count(); i++) {
-            String varName = varNames.get(i);
-            if (topLevel && _root.isProgram()) {
-                // FIXME reserved size should be type-dependant! Think of arrays in particular!
-                insertCode(getIndent() + ".space 4", 1);
-                insertCode(varName + colon, 1);
-            }
-            // FIXME - we should reserve space on stack and a register for address operations 
-            //if (i < 12) {
-            //    getRegister(this.varNames.get(i));
-            //}
-        }
+        // START KGU#999 2021-10-26: Bugfix #1003 This was just a draft for an immature idea...
+        //for (int i = 0; i < this.varNames.count(); i++) {
+        //    String varName = varNames.get(i);
+        //    if (topLevel && _root.isProgram()) {
+        //        // FIXME reserved size should be type-dependant! Think of arrays in particular!
+        //        insertCode(getIndent() + ".space 4", 1);
+        //        insertCode(varName + colon, 1);
+        //    }
+        //    // FIXME - we should reserve space on stack and a register for address operations 
+        //    //if (i < 12) {
+        //    //    getRegister(this.varNames.get(i));
+        //    //}
+        //}
+        // END KGU#999 2021-10-26
         if (_root.isSubroutine()) {
             addCode(procName + colon, "", false);
             // FIXME: Adhere to the GNU call standard 
