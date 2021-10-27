@@ -47,7 +47,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
 *      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
 *                                      code revisions in the variable and statement detection.
-*      Kay Gürtzig     2021-10-26/27   Bugfix #1003: Undue memory reservation for all variables.
+*      Kay Gürtzig     2021-10-26/28   Bugfix #1003: Undue memory reservation for all variables.
 *                                      bugfix #1004: implicit address assignments for array element access,
 *                                      element type retrieval accomplished, name clashes with v_# variables avoided
 *
@@ -1584,88 +1584,26 @@ public class ArmGenerator extends Generator {
         String arName = arr[0].trim(); //R0
 
         String c = "";	// The code line to be produced
+        String opCode = "STR";
+        int dim = returnDim(arName);
+        if (dim == 0) {
+            opCode += "B";
+        }
         if (!arr[1].contains("R")) { //R0[1], R2
             int index = Integer.parseInt(arr[1].replace("]", "").replace(" ", ""));
-            int dim = returnDim(arName);
             if (dim >= 0) {
                 index = index * (1 << dim);
-                c = "STR " + expr + ", [" + arName + ", #" + index + "]";
+                c = opCode + " " + expr + ", [" + arName + ", #" + index + "]";
             } else {
                 appendComment("The array " + arName + " is not initialized", getIndent());
             }
 
         } else if (arr[1].contains("R")) {	// Redundant check
-            c = "STR " + expr + ", [" + arName + ", " + arr[1].trim();
+            c = opCode + " " + expr + ", [" + arName + ", " + arr[1].trim();
 
         } else {	// FIXME Dead code
             appendComment("ERROR, no free register or no array type specified", "");
         }
-        // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
-        if (!c.isEmpty()) {
-            String arNameOrig = mVariables.get(arName.toUpperCase());
-            if (arNameOrig != null && !arNameOrig.isEmpty() && !arNameOrig.equals(USER_REGISTER_TAG)) {
-                int rIndex = Integer.parseInt(arName.substring(1));
-                if (!addressAssigned[rIndex]) {
-                    if (gnuEnabled) {
-                        addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
-                    } else {
-                        // FIXME what about the type/size here?
-                        addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
-                    }
-                    addressAssigned[rIndex] = true;
-                }
-            }
-            addCode(c, getIndent(), isDisabled);
-        }
-        // END KGU#1000 2021-10-27
-    }
-
-    /**
-     * This method translates variable or register assignments from an array<br/>
-     * EXAMPLE: {@code R0 <- R1[0]}
-     *
-     * @param line       - the string that contains the instruction to translate
-     * @param isDisabled - whether this element or one of its ancestors is disabled
-     */
-    private void generateArrayExpr(String line, boolean isDisabled) {
-        line = line.replace(" ", "");
-        String[] tokens = line.split(assignmentOperators);
-        String expr = tokens[1];
-        String varName = tokens[0];
-        // Divide array name from expression
-        String arName = expr.split("\\[")[0];
-        String index = tokens[1].split("\\[")[1].replace("]", "");
-        String c = "LDR " + varName + ", [" + arName + ", ";
-        // Array element size (dual exponent)
-        int dim = returnDim(arName);
-        // if the array is initialized
-        if (dim > 0) {
-            // If the index is not a register
-            if (!index.startsWith("R") && !index.startsWith("r")) {
-                int ind = Integer.parseInt(index);
-                ind = ind * (1 << dim);
-                c += "#" + ind + "]";
-            }
-            // We use the register as index
-            else {
-                // FIXME No matter what the element size is?
-                c += index + "]";
-            }
-        }
-        // if we are in keil mode (?)
-        else if (dim == 0) {
-            // Add the hashtag if needed
-            if (!index.startsWith("R") && !index.startsWith("r")) {
-                c += "#";
-            }
-            c += index + "]";
-        }
-        // if the array is not initialized
-        else {
-            appendComment("The array is not initialized", getIndent());
-            c = "";
-        }
-
         if (!c.isEmpty()) {
             // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
             String arNameOrig = mVariables.get(arName.toUpperCase());
@@ -1683,6 +1621,75 @@ public class ArmGenerator extends Generator {
             }
             // END KGU#1000 2021-10-27
             addCode(c, getIndent(), isDisabled);
+        }
+    }
+
+    /**
+     * This method translates variable or register assignments from an array<br/>
+     * EXAMPLE: {@code R0 <- R1[0]}
+     *
+     * @param line       - the string that contains the instruction to translate
+     * @param isDisabled - whether this element or one of its ancestors is disabled
+     */
+    private void generateArrayExpr(String line, boolean isDisabled) {
+        line = line.replace(" ", "");
+        String[] tokens = line.split(assignmentOperators);
+        String expr = tokens[1];
+        String varName = tokens[0];
+        // Divide array name from expression
+        String arName = expr.split("\\[")[0];
+        String index = tokens[1].split("\\[")[1].replace("]", "");
+        String c = " " + varName + ", [" + arName + ", ";
+        // Array element size (dual exponent)
+        int dim = returnDim(arName);
+        String opCode = "LDR";
+        // if the array is initialized
+        if (dim > 0) {
+            // If the index is not a register
+            if (!index.startsWith("R") && !index.startsWith("r")) {
+                int ind = Integer.parseInt(index);
+                ind = ind * (1 << dim);
+                c += "#" + ind + "]";
+            }
+            // We use the register as index
+            else {
+                // FIXME No matter what the element size is?
+                c += index + "]";
+            }
+        }
+        // bytes as elements?
+        else if (dim == 0) {
+            opCode += "B";	// Make sure only a byte is transferred
+            // Add the hashtag if needed
+            if (!index.startsWith("R") && !index.startsWith("r")) {
+                c += "#";
+            }
+            c += index + "]";
+        }
+        // if the array is not initialized
+        else {
+            appendComment("The array is not initialized", getIndent());
+            c = "";
+        }
+
+        if (!c.isEmpty()) {
+            // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
+            //addCode(c, getIndent(), isDisabled);
+            String arNameOrig = mVariables.get(arName.toUpperCase());
+            if (arNameOrig != null && !arNameOrig.isEmpty() && !arNameOrig.equals(USER_REGISTER_TAG)) {
+                int rIndex = Integer.parseInt(arName.substring(1));
+                if (!addressAssigned[rIndex]) {
+                    if (gnuEnabled) {
+                        addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
+                    } else {
+                        // FIXME what about the type/size here?
+                        addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
+                    }
+                    addressAssigned[rIndex] = true;
+                }
+            }
+            addCode(opCode + c, getIndent(), isDisabled);
+            // END KGU#1000 2021-10-27
         }
     }
 
@@ -1961,6 +1968,18 @@ public class ArmGenerator extends Generator {
             addrPattern = "\tLDR " + register + ", =";
         }
         String declPattern = null;
+        /* Try the quicker way to get the array name, which may be the only one for
+         * an array that has not been declared with a register name, as the address
+         * assignment to a register is still to be created */
+        String arName = mVariables.get(register);
+        if (arName != null && !arName.isEmpty() && !arName.equals(USER_REGISTER_TAG)) {
+            if (gnuEnabled) {
+                declPattern = arName + ":";
+            }
+            else {
+                declPattern = arName + "\t";
+            }
+        }
         // END KGU#1000 2021-10-27
         for (int i = code.count() - 1; i >= 0; i--) {
             String line = code.get(i);
@@ -1979,10 +1998,10 @@ public class ArmGenerator extends Generator {
             //    type = line.split("\\.")[1].split(" ")[0];
             //    return type;
             //}
-            if (line.contains(addrPattern)) {
+            if (declPattern == null && line.contains(addrPattern)) {
                 StringList tokens = Element.splitLexically(line, true);
                 tokens.removeAll(" ");
-                String arName = tokens.get(tokens.count()-1);
+                arName = tokens.get(tokens.count()-1);
                 if (gnuEnabled) {
                     declPattern = arName + ":";
                 }
@@ -2018,8 +2037,8 @@ public class ArmGenerator extends Generator {
      * Retrieves the element size of the array associated to the
      * register with passed name.<br/>
      * Note: This is time-consuming as it scans the so far generated code
-     *
-     * @param - name of the register that represents the array
+     * 
+     * @param register - name of the register that represents the array
      * @return binary exponent of the array element size (in byte), or -1
      * (if no identifiable type was found, e.g. in Keil mode.)
      */
