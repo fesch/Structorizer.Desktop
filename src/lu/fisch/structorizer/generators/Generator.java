@@ -1010,7 +1010,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Appends the given String as single comment line to the exported code
+	 * Appends the given String as single comment line to the exported code.
+	 * (If the String contains newline characters then several comment lines
+	 * will be generated from it.)
 	 * 
 	 * @param _text - the text to be added as comment
 	 * @param _indent - indentation string

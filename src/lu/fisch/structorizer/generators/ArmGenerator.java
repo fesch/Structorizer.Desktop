@@ -47,9 +47,10 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
 *      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
 *                                      code revisions in the variable and statement detection.
-*      Kay Gürtzig     2021-10-26/28   Bugfix #1003: Undue memory reservation for all variables.
+*      Kay Gürtzig     2021-10-26/28   Bugfix #1003: Undue memory reservation for all variables;
 *                                      bugfix #1004: implicit address assignments for array element access,
-*                                      element type retrieval accomplished, name clashes with v_# variables avoided
+*                                      element type retrieval accomplished, name clashes with v_# variables avoided;
+*                                      bugfix #1005: Wrong implementation of FOR loops
 *
 ******************************************************************************************************
 *
@@ -197,6 +198,8 @@ public class ArmGenerator extends Generator {
 
     /** Marker string for directly named registers in {@link #mVariables} */
     private static final String USER_REGISTER_TAG = "ALREADY_USED_BY_THE_USER";
+    /** Marker string for temporarily occupied registers in {@link #mVariables} */
+    private static final String TEMP_REGISTER_TAG = "TEMPORARILY OCCUPIED!";
     
     /**
      * Flag set for registers R0 ... R12 whether they have already been assigned
@@ -653,73 +656,134 @@ public class ArmGenerator extends Generator {
             counterReg = variablesToRegisters(counterStr);
         }
         else {
-            mVariables.put(counterReg, USER_REGISTER_TAG);
+            // START KGU#1001 2021-10-28: Bugfix #1005 Register mapping must be available for body
+            //mVariables.put(counterReg, USER_REGISTER_TAG);
+            mVariables.put(counterReg, counterStr);
+            // END KGU#1001 2021-10-28
         }
         if (!counterReg.isEmpty()) {
             counterStr = counterReg;
         }
         // END KGU#968 2021-05-02
-        String c;
-        int counter = COUNTER;
+        int counter = COUNTER;	// label counter
         COUNTER++;
-        String operation = "";
 
         String endLabel = "end_" + counter;				// This loop's end label
         Integer labelRef = jumpTable.get(_for);
         if (labelRef != null && labelRef >= 0) {
             this.breakLabels[labelRef] = endLabel;
         }
+        // START KGU#1001 2021-10-28: Bugfix #1005: Handling of FOR-IN loop was completely defective
+        String access = null;
+        String valList = null;
+        String valListName = null;
+        String startValueStr = "#0";
+        String endValueStr = "";
+        String stepValueStr = "";
+        boolean startValueComplex = false;
+        boolean endValueComplex = true;	// We may not know the count
+        String op = "ADD";
+        String test = "BGT";
+        // END KGU#1001 2021-10-28
         if (_for.isForInLoop()) {
-            c = _for.getValueList();
+            valList = _for.getValueList();
             StringList items = this.extractForInListItems(_for);
             if (items != null) {
-                c = "[" + transform(items.concatenate(", "), false) + "]";
+                // START KGU#1001 2021-10-28: Bugfix #1005
+                //c = "[" + transform(items.concatenate(", "), false) + "]";
+                valList = getAvailableRegister();
+                String init = "word " + valList + " <- {" + transform(items.concatenate(", "), false) + "}";
+                this.generateArrayInitialization(init, isDisabled, _for);
+                mVariables.put(valList, TEMP_REGISTER_TAG);
+                endValueStr = "#" + Integer.toString((items.count()-1));
+                endValueComplex = false;
+                // END KGU#1001 2021-10-28
             }
+            // START KGU#1001 2021-10-28
+            //addCode(c, "", isDisabled);
+            // We need a new temporary register for counting
+            String auxCounter = getAvailableRegister();
+            if (!auxCounter.isEmpty()) {
+                mVariables.put(auxCounter, TEMP_REGISTER_TAG);
+                access = counterStr + " <- " + valList + "[" + auxCounter + "]";
+                counterStr = auxCounter;
+            }
+            else {
+                appendComment("No register available for auxiliary loop counter!", getIndent());
+            }
+            stepValueStr = "#1";	// We assume word as element type...
+            // END KGU#1001 2021-10-28
         } else {
-            String startValueStr = _for.getStartValue();
-            String endValueStr = _for.getEndValue();
-            String stepValueStr = _for.getStepString();
+            // START KGU#1001 2021-10-28: Bugix #1005 We don't cope with complex expressions
+            //String startValueStr = _for.getStartValue();
+            //String endValueStr = _for.getEndValue();
+            //String stepValueStr = _for.getStepString();
+            startValueStr = _for.getStartValue();
+            endValueStr = _for.getEndValue();
+            stepValueStr = _for.getStepString();
+            startValueComplex = !startValueStr.matches(registerVariableNumberHex);
+            endValueComplex = !endValueStr.matches(registerVariableNumberHex);
+            // END KGU#1001 2021-10-28
 
-            String op;
             // Understand if it's negative for or positive for
             if (stepValueStr.startsWith("-")) {
                 op = "SUB";
+                test = "BLT";
                 stepValueStr = stepValueStr.substring(1);
-            } else {
-                op = "ADD";
             }
 
             // Let's add the # if we need it
-            if (!startValueStr.startsWith("R")) {
+            // START KGU#1001 2021-10-28: Bugfix #1005 Too vague a test...
+            //if (!startValueStr.startsWith("R")) {
+            //    startValueStr = "#" + startValueStr;
+            //}
+            //if (!endValueStr.startsWith("R")) {
+            //    endValueStr = "#" + endValueStr;
+            //}
+            startValueStr = this.variablesToRegisters(startValueStr);
+            endValueStr = this.variablesToRegisters(endValueStr);
+            try {
+                Integer.parseInt(startValueStr);
                 startValueStr = "#" + startValueStr;
             }
-            if (!endValueStr.startsWith("R")) {
+            catch (NumberFormatException ex) {}
+            try {
+                Integer.parseInt(endValueStr);
                 endValueStr = "#" + endValueStr;
             }
+            catch (NumberFormatException ex) {}
+            // END KGU#1001 2021-10-28
 
             stepValueStr = "#" + stepValueStr;
 
-            //Write the code for the For
-            String mov = getIndent() + "MOV " + counterStr + " , " + startValueStr + "\n";
-            String cmp = "for_" + counter + colon + "\n" + getIndent() + "CMP " + counterStr + " ," + endValueStr + "\n";
-
-            String bge = getIndent() + "BGE end_" + counter;
-            operation = getIndent() + op + " " + counterStr + " , " + counterStr + ", " + stepValueStr;
-
-            // formatting a single string
-            c = mov + cmp + bge;
         }
-        // Adding the code
-        // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
-        //addCode(c, "", isDisabled);
-        String[] cSplit = c.split("\\n");
-        for (int i = 0; i < cSplit.length; i++) {
-            addCode(cSplit[i], "", isDisabled);
+        //Write the code for the For
+        // START KGU#1001 2021-10-28: Bugix #1005 We don't cope with complex expressions
+        if (startValueComplex) {
+            this.appendComment("WARNING: Start value expression too complex", getIndent());
         }
-        // END KGU#968 2021-04-25
+        // END KGU#1001 2021-10-28
+        addCode("MOV " + counterStr + ", " + startValueStr, getIndent(), isDisabled);
+        addCode("", "for_" + counter + colon, isDisabled);
+        // START KGU#1001 2021-10-28: Bugix #1005 We don't cope with complex expressions
+        if (endValueComplex) {
+            this.appendComment("WARNING: End value expression too complex", getIndent());
+        }
+        // END KGU#1001 2021-10-28
+        addCode("CMP " + counterStr + ", " + endValueStr, getIndent(), isDisabled);
+        // START KGU#1001 2021-10-28: Bugfix #1005 Wrong loop test
+        //addCode("BGE end_" + counter, getIndent(), isDisabled);
+        addCode(test + " end_" + counter, getIndent(), isDisabled);
+        
+        if (access != null) {
+            this.generateArrayExpr(access, isDisabled);
+        }
+        // END KGU#1001 2021-10-28
+        
         // Generate the code into the block
         generateCode(_for.q, "");
-        addCode(operation, "", isDisabled);
+        addCode(op + " " + counterStr + ", " + counterStr + ", " + stepValueStr,
+                getIndent(), isDisabled);
 
         // Adding the branch instruction and the label
         // START KGU#968 2021-05-02: Map the jumpTable entry to the end label
@@ -732,7 +796,7 @@ public class ArmGenerator extends Generator {
         //    code.replaceInElements("end_" + s + colon, "");
         //    code.replaceInElements("end_" + s, "end_" + counter);
         //}
-        addCode(getIndent() + "B for_" + counter, "", isDisabled);
+        addCode("B for_" + counter, getIndent(), isDisabled);
         String endLabelPlus = "end_" + (counter + 1);		// End label of the last nested loop
         int posEnd = code.count();
         // Check whether the end label would coincide with a nested end label
@@ -750,11 +814,24 @@ public class ArmGenerator extends Generator {
         } else {
             addCode(endLabel + colon, "", isDisabled);
         }
-        if (!counterReg.isEmpty() && USER_REGISTER_TAG.equals(mVariables.get(counterReg))) {
+        // START KGU#1001 2021-10-28: Bugfix #1005: Wrong handling of loop variable
+        //if (!counterReg.isEmpty() && USER_REGISTER_TAG.equals(mVariables.get(counterReg))) {
+        if (!counterReg.isEmpty() && mVariables.get(counterReg).equals(_for.getCounterVar())) {
+        // END KGU#1001 2021-10-28
             // Release the register
             mVariables.put(counterReg, "");
         }
         // END KGU#968 2021-05-02
+        // START KGU#1001 2021-10-28: Bugfix #1005: Wrong handling of FOR IN loops
+        if (!counterStr.isEmpty() && TEMP_REGISTER_TAG.equals(mVariables.get(counterStr))) {
+            // Release the register
+            mVariables.put(counterStr, "");
+        }
+        if (valListName != null && valListName.equals(mVariables.get(valList))) {
+            // Release the register
+            mVariables.put(valList, "");
+        }
+        // END KGU#1001 2021-10-28
     }
 
     @Override
@@ -1208,7 +1285,7 @@ public class ArmGenerator extends Generator {
                 if (exprs.count() > 1) {
                     String addrRegister = getAvailableRegister();
                     if (!addrRegister.isEmpty()) {
-                        mVariables.put(addrRegister, "TEMPORARILY OCCUPIED!");
+                        mVariables.put(addrRegister, TEMP_REGISTER_TAG);
                     }
                     addCode(String.format("LDR %s, =0xFF201000", addrRegister), getIndent(), isDisabled);
                     for (int i = 0; i < exprs.count() - 1; i++) {
@@ -1477,9 +1554,9 @@ public class ArmGenerator extends Generator {
      *
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
-     * @param elem       - the inducing Instruction (for code mapping purposes)
+     * @param elem       - the inducing Element (for code mapping purposes)
      */
-    private void generateArrayInitialization(String line, boolean isDisabled, Instruction elem) {
+    private void generateArrayInitialization(String line, boolean isDisabled, Element elem) {
 
         // START KGU#1000 2021-10-27: Bugfix #1004 way too simplistic tests
         //String[] tokens = line.split("<-|:=");
@@ -1598,16 +1675,26 @@ public class ArmGenerator extends Generator {
                 appendComment("The array " + arName + " is not initialized", getIndent());
             }
 
-        } else if (arr[1].contains("R")) {	// Redundant check
-            c = opCode + " " + expr + ", [" + arName + ", " + arr[1].trim();
+        } else /*if (arr[1].contains("R"))*/ {	// Redundant check
+            // START KGU#1000/KGU#1001 2021-10-28: Bugfix #1004, #1005
+            //c = opCode + " " + expr + ", [" + arName + ", " + arr[1].trim();
+            String index = arr[1].replace("]", "").trim();
+            if (dim > 0) {
+                // Get a temporary register and multiply the index
+                index = generateIndexAdjustment(index, dim, isDisabled);
+            }
+            // END KGU#1000/KGU#1001 2021-10-28
+            c = opCode + " " + expr + ", [" + arName + ", " + index + "]";
 
-        } else {	// FIXME Dead code
+        } /* else {	// FIXME Dead code
             appendComment("ERROR, no free register or no array type specified", "");
-        }
+        }*/
         if (!c.isEmpty()) {
             // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
             String arNameOrig = mVariables.get(arName.toUpperCase());
-            if (arNameOrig != null && !arNameOrig.isEmpty() && !arNameOrig.equals(USER_REGISTER_TAG)) {
+            if (arNameOrig != null && !arNameOrig.isEmpty()
+                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
                 if (!addressAssigned[rIndex]) {
                     if (gnuEnabled) {
@@ -1646,14 +1733,17 @@ public class ArmGenerator extends Generator {
         // if the array is initialized
         if (dim > 0) {
             // If the index is not a register
-            if (!index.startsWith("R") && !index.startsWith("r")) {
+            if (!index.matches(registerPattern0)) {
                 int ind = Integer.parseInt(index);
                 ind = ind * (1 << dim);
                 c += "#" + ind + "]";
             }
             // We use the register as index
             else {
-                // FIXME No matter what the element size is?
+                // START KGU#1000 2021-10-28: Bugfix #1004
+                // Get a temporary register and multiply the index
+                index = generateIndexAdjustment(index, dim, isDisabled);
+                // END KGU#1000 2021-10-28
                 c += index + "]";
             }
         }
@@ -1676,7 +1766,9 @@ public class ArmGenerator extends Generator {
             // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
             //addCode(c, getIndent(), isDisabled);
             String arNameOrig = mVariables.get(arName.toUpperCase());
-            if (arNameOrig != null && !arNameOrig.isEmpty() && !arNameOrig.equals(USER_REGISTER_TAG)) {
+            if (arNameOrig != null && !arNameOrig.isEmpty()
+                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
                 if (!addressAssigned[rIndex]) {
                     if (gnuEnabled) {
@@ -1898,6 +1990,8 @@ public class ArmGenerator extends Generator {
         generateArrayInitialization(String.format(c, split[0], array), isDisabled, elem);
     }
 
+    /*----START OF UTILITIES----*/
+
     /**
      * This method translates and splits and, or conditions
      *
@@ -1948,7 +2042,29 @@ public class ArmGenerator extends Generator {
         return c.toString();
     }
 
-    /*----START OF UTILITIES----*/
+    // START KGU#1000 2021-10-28: Inserted for bugfix #1004
+    /**
+     * Tries to insert an offset adjustment for the passed-in index register
+     * and an array element size 2^dim. This means to use an auxiliary register
+     * that obtains the value of {@code index * (1 << dim)}. If this fails then
+     * a comment is inserted.
+     * @param index - name of an index register
+     * @param dim   - {@code ld(element_size)}
+     * @param isDisabled - whether the inducing element is disabled
+     * @return the register name for the memory offset
+     */
+    private String generateIndexAdjustment(String index, int dim, boolean isDisabled) {
+        String tempReg = this.getAvailableRegister();
+        if (!tempReg.isEmpty()) {
+            addCode("MUL " + tempReg + ", " + index + ", #" + (1 << dim), getIndent(), isDisabled);
+            index = tempReg;
+        }
+        else {
+            appendComment("WARNING: " + index + " may need multiplying by " + (1 << dim) + "!", getIndent());
+        }
+        return index;
+    }
+    // END KGU#1000 2021-10-28
 
     /**
      * Retrieves the element type of the array associated to the register with
@@ -1972,7 +2088,9 @@ public class ArmGenerator extends Generator {
          * an array that has not been declared with a register name, as the address
          * assignment to a register is still to be created */
         String arName = mVariables.get(register);
-        if (arName != null && !arName.isEmpty() && !arName.equals(USER_REGISTER_TAG)) {
+        if (arName != null && !arName.isEmpty()
+                && !arName.equals(USER_REGISTER_TAG)
+                && !arName.equals(TEMP_REGISTER_TAG)) {
             if (gnuEnabled) {
                 declPattern = arName + ":";
             }
@@ -2060,18 +2178,20 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method checks if n is a power of two
+     * This method checks if n is a power of two (i.e. contains exactly one set bit).
      *
      * @param n initial value
      * @return boolean whether it's a power of two or not
      */
     private boolean isPowerOfTwo(int n) {
-        if (n == 0) {
-            return false;
-        }
-
-        double v = Math.log(n) / Math.log(2);
-        return (int) (Math.ceil(v)) == (int) (Math.floor(v));
+        // START KGU 2021-10-28: Gosh, what a waste!
+        //if (n == 0) {
+        //    return false;
+        //}
+        //double v = Math.log(n) / Math.log(2);
+        //return (int) (Math.ceil(v)) == (int) (Math.floor(v));
+        return n > 0 && (n & (n - 1)) == 0;	// part of Kernighan's algorithm to count bits
+        // END KGU 2021-10-28
     }
 
     /**
@@ -2180,7 +2300,7 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method replaces variables with registers
+     * This method replaces variables with already associated register names
      *
      * @param line - the string that contains the instruction to translate
      * @return the string with variables replaced with registers
@@ -2289,7 +2409,9 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method returns the register assigned to the given variable
+     * This method returns the register assigned to the given variable.
+     * If there hasn't been an associated register then a new association
+     * is attempted.
      *
      * @param variable - the variable name
      * @return name of the register assigned to the variable, or an empty string
