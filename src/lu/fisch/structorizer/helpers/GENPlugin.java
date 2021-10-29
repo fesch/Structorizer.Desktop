@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.helpers;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -34,10 +32,10 @@ import java.util.HashMap;
  *
  *      Author          Date            Description
  *      ------			----            -----------
- *      Bob Fisch       2008.04.12      First Issue
- *      Kay Gürtzig     2017.04.23      Enh. #231 configuration of reserved words in the target language
- *      Kay Gürtzig     2017.05.11      Enh. #354/#357: field for class-specific options added
- *      Kay Gürtzig     2017.06.20      Enh. #354/#357: Structure of options field modified, method getKey() added
+ *      Bob Fisch       2008-04-12      First Issue
+ *      Kay Gürtzig     2017-04-23      Enh. #231 configuration of reserved words in the target language
+ *      Kay Gürtzig     2017-05-11      Enh. #354/#357: field for class-specific options added
+ *      Kay Gürtzig     2017-06-20      Enh. #354/#357: Structure of options field modified, method getKey() added
  *
  ******************************************************************************************************
  *
@@ -45,6 +43,7 @@ import java.util.HashMap;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 import java.util.Vector;
 
 public class GENPlugin 

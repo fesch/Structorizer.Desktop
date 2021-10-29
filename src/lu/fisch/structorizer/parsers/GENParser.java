@@ -32,12 +32,13 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2008.04.12      First Issue
- *      Kay Gürtzig     2016.04.01      Type of field plugins specialized
- *      Kay Gürtzig     2017.04.23      Enh. #231: reserved words configuration moved to plugin file
- *      Kay Gürtzig     2017.06.20      Enh. #354,#357: Option retrieval added, #404: test with schema file (failed)
- *      Kay Gürtzig     2018.03.22      Issue #463: Standard logging mechanism instead of console messages
- *      Simon Sobisch   2018.09.17      Issue #595: Fix NullPointerException for missing/broken schema
+ *      Bob Fisch       2008-04-12      First Issue
+ *      Kay Gürtzig     2016-04-01      Type of field plugins specialized
+ *      Kay Gürtzig     2017-04-23      Enh. #231: reserved words configuration moved to plugin file
+ *      Kay Gürtzig     2017-06-20      Enh. #354,#357: Option retrieval added, #404: test with schema file (failed)
+ *      Kay Gürtzig     2018-03-22      Issue #463: Standard logging mechanism instead of console messages
+ *      Simon Sobisch   2018-09-17      Issue #595: Fix NullPointerException for missing/broken schema
+ *      Kay Gürtzig     2021-10-29      Issue #1004: default attribute in option specifications supported
  *
  ******************************************************************************************************
  *
@@ -157,6 +158,11 @@ public class GENParser extends DefaultHandler {
 				if (attributes.getIndex("help") != -1) {
 					option.put("help", attributes.getValue("help"));
 				}
+				// START KGU#1000 2021-10-29: Issue #1004 - we should support defaults here
+				if (attributes.getIndex("default") != -1) {
+					option.put("default", attributes.getValue("default"));
+				}
+				// END KGU#1000 2021-10-29
 				plugin.options.add(option);
 			}
 		}
