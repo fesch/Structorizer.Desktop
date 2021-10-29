@@ -54,6 +54,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2020-03-18      Internal bugfix KGU#827 in toString, getCommaText() - caused errors with null elements
  *      A. Simonetta    2021-03-25      Issue #967: New method replaceIfContains
  *      Kay Gürtzig     2021-04-09      Renamed method replaceIfContains to replaceInElements
+ *      Kay Gürtzig     2021-10-29      Method comments for all indexOf methods added.
  *
  ******************************************************************************************************
  *
@@ -549,7 +550,7 @@ public class StringList {
     // START KGU 2015-11-04: New, more performant and informative searchers
     /**
      * Returns the last element position of a string element exactly equal to
-     * {@code _string} or -1 if there is no such element in this.
+     * {@code _string} or -1 if there is no such string in this.
      *
      * @param _string - the search string (plain string, no regex!)
      * @return element index or -1
@@ -567,7 +568,8 @@ public class StringList {
 
     /**
      * Returns the last element position of a string element exactly equal to
-     * {@code _string} or -1 if there is no such element in this.
+     * {@code _string}, searching backwards from index {@code _backwardFrom},
+     * returns -1 if there is no such string in this range.
      *
      * @param _string - the search string (plain string, no regex!)
      * @param _backwardFrom - the index of the element from which (including!)
@@ -585,10 +587,43 @@ public class StringList {
         return this.strings.lastIndexOf(_string, _backwardFrom);
     }
 
+    /**
+     * Returns the last element position of a string element equal to
+     * {@code _string} or -1 if there is no such element in this.<br/>
+     * With {@code _matchCase = false}, the search will be case-ignorant.
+     *
+     * @param _string - the search string (plain string, no regex!)
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return element index or -1
+     * @see #indexOf(String)
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int lastIndexOf(String _string, boolean _matchCase) {
         return lastIndexOf(_string, 0, _matchCase);
     }
 
+    /**
+     * Returns the last element position of a string element equal to
+     * {@code _string}, searching backwards from index {@code _backwardFrom},
+     * returns -1 if there is no such string in this range.<br/>
+     * With {@code _matchCase = false}, the search will be case-ignorant.
+     *
+     * @param _string - the search string (plain string, no regex!)
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return element index or -1
+     * @see #indexOf(String)
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int lastIndexOf(String _string, int _backwardFrom, boolean _matchCase) {
         if (_matchCase) {
             return this.strings.lastIndexOf(_string, _backwardFrom);
@@ -603,18 +638,90 @@ public class StringList {
         return -1;
     }
 
+    /**
+     * Returns the index of the first occurrence of the specified string in
+     * this StringList, or returns -1 if the string is not found.
+     * 
+     * @param _string - String to search for
+     * @return the index of the first occurrence of {@code _string} from start;
+     *         {@code -1} if {@code _string} is not found.
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int indexOf(String _string) {
         return this.strings.indexOf(_string);
     }
 
+    /**
+     * Returns the index of the first occurrence of the specified string in
+     * this StringList, searching forwards from {@code _from} on, or returns
+     * -1 if the string is not found.
+     *
+     * @param _string - String to search for
+     * @param _from - index to start searching from
+     * @return the index of the first occurrence of {@code _string} from index
+     *         {@code _from} on; {@code -1} if {@code _string} is not found.
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @see #indexOf(String)
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int indexOf(String _string, int _from) {
         return this.strings.indexOf(_string, _from);
     }
 
+    /**
+     * Returns the index of the first occurrence of the specified string in
+     * this StringList, or returns -1 if the string is not found.<br/>
+     * With {@code _matchCase = false} the search will be case-ignorant.
+     *
+     * @param _string - String to search for
+     * @param _from - index to start searching from
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return the index of the first occurrence of {@code _string};
+     *         {@code -1} if {@code _string} is not found.
+     * @see #indexOf(String)
+     * @see #indexOf(String, int)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int indexOf(String _string, boolean _matchCase) {
         return indexOf(_string, 0, _matchCase);
     }
 
+    /**
+     * Returns the index of the first occurrence of the specified string in
+     * this StringList, searching forwards from {@code _from} on, or returns
+     * -1 if the string is not found.<br/>
+     * With {@code _matchCase = false} the search will be case-ignorant.
+     *
+     * @param _string - String to search for
+     * @param _from - index to start searching from
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return the index of the first occurrence of {@code _string} from index
+     *         {@code _from} on; {@code -1} if {@code _string} is not found.
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @see #indexOf(String)
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int)
+     * @see #indexOf(StringList, int, boolean)
+     * @see #lastIndexOf(String)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int indexOf(String _string, int _from, boolean _matchCase) {
         if (_matchCase) {
             return this.strings.indexOf(_string, _from);
@@ -629,6 +736,28 @@ public class StringList {
         return -1;
     }
 
+    /**
+     * Returns the index of the first occurrence of the specified StringList
+     * {@code _subList} as subsequence within this StringList, searching
+     * forwards from {@code _from} on, or returns -1 if {@code _subList}
+     * is not found.<br/>
+     * With {@code _matchCase = false} the search will be case-ignorant.
+     *
+     * @param _subList - Subsequence to search for
+     * @param _from - index to start searching from
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return the index of the first occurrence of {@code _subList} from index
+     *         {@code _from} on; {@code -1} if {@code _subList} is not found.
+     * @throws IndexOutOfBoundsException if the specified index is negative
+     * @see #indexOf(String)
+     * @see #indexOf(String, boolean)
+     * @see #indexOf(String, int)
+     * @see #indexOf(String, int, boolean)
+     * @see #lastIndexOf(String)
+     * @see #lastIndexOf(String, boolean)
+     * @see #lastIndexOf(String, int)
+     * @see #lastIndexOf(String, int, boolean)
+     */
     public int indexOf(StringList _subList, int _from, boolean _matchCase) {
         int foundAt = -1;
         int foundFirst = -1;
@@ -652,6 +781,13 @@ public class StringList {
         return foundAt;
     }
 
+    /**
+     * Checks whether the specified String {@code _string} is an element of
+     * this StringList.
+     * 
+     * @param _string - String to search for
+     * @return {@code true} if {@code _string} is contained, {@code false} otherwise
+     */
     public boolean contains(String _string) {
         // START KGU 2015-11-04: Just use the more performant and informative find method 
 //		boolean found = false;
@@ -667,6 +803,15 @@ public class StringList {
         // END KGU 2015-11-04
     }
 
+    /**
+     * Checks whether the specified String {@code _string} is an element of
+     * this StringList.<br/>
+     * With {@code _matchCase = false} the search will be case-ignorant.
+     * 
+     * @param _string - String to search for
+     * @param _matchCase - whether case is to play a role in comparison
+     * @return {@code true} if {@code _string} is contained, {@code false} otherwise
+     */
     public boolean contains(String _string, boolean _matchCase) {
         // START KGU 2015-11-04: Just use the more performant and informative find method 
 //		boolean found = false;

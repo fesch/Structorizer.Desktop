@@ -234,6 +234,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-09      Bugfix #977: Attempt of a workaround for a code preview problem
  *      Kay Gürtzig     2021-06-10/11   Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
  *      Kay Gürtzig     2021-09-18      Bugfix #983: Summoning a subroutine to an editor unduly turned it 'changed'
+ *      Kay Gürtzig     2021-10-29      Issue #1004: Export/import option dialogs now respect plugin-specific option defaults
  *
  ******************************************************************************************************
  *
@@ -8775,7 +8776,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				for (HashMap<String, String> optionSpec : plugin.options) {
 					String optKey = optionSpec.get("name");
 					propertyName = plugin.getKey() + "." + optKey;
-					optionValues.put(optKey, ini.getProperty(propertyName, ""));
+					// START KGU#1000 2021-10-29: Issue #1004 - support plugin-defined default values
+					//optionValues.put(optKey, ini.getProperty(propertyName, ""));
+					String dflt = "";
+					if (optionSpec.containsKey("default")) {
+						dflt = optionSpec.get("default");
+					}
+					optionValues.put(optKey, ini.getProperty(propertyName, dflt));
+					// END KGU#1000 2021-10-29
 				}
 				eod.generatorOptions.add(optionValues);
 				// END KGU#416 2017-06-20
@@ -8945,7 +8953,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (HashMap<String, String> optionSpec : plugin.options) {
 						String optKey = optionSpec.get("name");
 						String propertyName = plugin.getKey() + "." + optKey;
-						optionValues.put(optKey, ini.getProperty(propertyName, ""));
+						// START KGU#1000 2021-10-29: Issue #1004 - support plugin-defined default values
+						//optionValues.put(optKey, ini.getProperty(propertyName, ""));
+						String dflt = "";
+						if (optionSpec.containsKey("default")) {
+							dflt = optionSpec.get("default");
+						}
+						optionValues.put(optKey, ini.getProperty(propertyName, dflt));
+						// END KGU#1000 2021-10-29
 					}
 					iod.parserOptions.add(optionValues);
 				}
