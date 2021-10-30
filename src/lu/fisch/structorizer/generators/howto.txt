@@ -10,7 +10,7 @@ This is just a little file that explains
 WRITE A NEW CODE GENERATOR FOR STRUCTORIZER
 ===========================================
 Author:      Kay Gürtzig
-Last update: 2021-05-31
+Last update: 2021-10-30
 
 There are two possible approaches to add a new generator to Structorizer:
 You might start from scratch or copy an existing generator for a language
@@ -120,7 +120,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		overriding these methods you may start from a copy of them and
 		fill it with "flesh". Usually the first action of the method
 		will be to add the element comment to the code, using method
-		insertComment(Element element, String _indent); see sections 5
+		appendComment(Element element, String _indent); see sections 5
 		and beyond for helper methods and further customization
 		opportunities. You will have to respect several export options
 		explained in section 4. You will find a lot of examples in the
@@ -128,7 +128,7 @@ and accomplish the outcome step by step, consider more export options etc.
 	3.1	void generateCode(Instruction _inst, String _indent)
 		Is to generate the code for the given basic instruction element.
 		The code should be enclosed by the following construct:
-		if (!insertAsComment(_inst, _indent)) {
+		if (!appendAsComment(_inst, _indent)) {
 			// place actual generator code here
 		}
 		To translate the instruction you will now fetch the element text
@@ -176,17 +176,17 @@ and accomplish the outcome step by step, consider more export options etc.
 		To replace a non-supported FOR-IN list by an equivalent
 		algorithm structure may be tricky, but there are several
 		elaborate code examples in various Generator subclasses.
-	3.5	void generateCode(While _while, String _insert)
+	3.5	void generateCode(While _while, String _indent)
 		A specific support for exit jumps is provided by the jumpTable
 		inherited and prepared by the base Generator class. It may be
 		used to generate jump labels (see generateCode(Jump, String)).
-	3.6	void generateCode(Repeat _repeat, String _insert)
+	3.6	void generateCode(Repeat _repeat, String _indent)
 		A specific support for exit jumps is provided by the jumpTable
 		inherited and prepared by the base Generator class. It may be
-	3.7	void generateCode(Forever _forever, String _insert)
+	3.7	void generateCode(Forever _forever, String _indent)
 		A specific support for exit jumps is provided by the jumpTable
 		inherited and prepared by the base Generator class. It may be
-	3.8	void generateCode(Call _call, String _insert)
+	3.8	void generateCode(Call _call, String _indent)
 		Class Call offers classifying and identifying methods:
 		boolean Call.isAssignment(String line),
 		boolean Call.isProcedureCall(String line),
@@ -284,30 +284,27 @@ and accomplish the outcome step by step, consider more export options etc.
 		which obtains and manipulates a list of lexical tokens allowing
 		more precise manipulation than e.g. with regular expressions
 		or mere string replacements.
-	5.2	void insertComment(Element _ele, String _indent)
+	5.2	void appendComment(Element _ele, String _indent)
 		Just adds the element comment from the structogram with the given
 		indentation.
-	5.3	void insertComment(String _comment, String _indent)
+	5.3	void appendComment(String _comment, String _indent)
 		Inserts the given _comment string as comment to the code (with the
 		given indentation)
-	5.4	void insertBlockComment(StringList, _commentLines, String _indent,
+	5.4	void appendBlockComment(StringList, _commentLines, String _indent,
 			String _start, String _cont, String _end)
-		This inserts the _commentLines as a multi-line comment block
-		with indentation _indent, where _start is the opening delimiter
+		This adds the _commentLines as a multi-line comment block with
+		indentation _indent, where _start is the opening delimiter
 		(e.g. "/*" for C or "/**" for JavaDoc), _cont an optional
 		continuation marker for the beginnings of the intermediate comment
 		lines (e.g. " *"), and _end is the closing delimiter (e.g. "*/").
-	5.5	boolean insertAsComment(Element _ele, String _indent)
-		This inserts the instruction text as a comment if the respective
+	5.5	boolean appendAsComment(Element _ele, String _indent)
+		This adds the instruction text as a comment if the respective
 		export option (see section 4) requires so. The result is true in
 		this case (such that no further export activity is necessary for
 		this element) or false otherwise, meaning that a regular export
 		is to be done.
-	5.6	void code.add(String line)
-		The raw line export, the indentation must be prefix part of line,
-		a newline will automatically be added.
-	5.7	void addCode(String text, String _indent, boolean asComment)
-		Like code.add() but with separate indentation parameter (such that
+	5.6	void addCode(String text, String _indent, boolean asComment)
+		Adds the give text, using _indent as indentation string (such that
 		text shall NOT contain the indentation) and an integrated opportunity
 		to add the code in translated, but "outcommented" form. The last
 		argument should typically be set with the isDisabled() property of
@@ -315,6 +312,9 @@ and accomplish the outcome step by step, consider more export options etc.
 		element). The comment delimiters will be placed at the line beginnings
 		whereas the outcommented code itself will be properly indented within
 		the comment.
+	5.7	void code.add(String line)
+		Like addCode(...) but as raw line export, the indentation must be a
+		prefix part of line, a newline will automatically be added.
 	...
 	(TODO to be continued and explained)
 	
@@ -328,7 +328,9 @@ and accomplish the outcome step by step, consider more export options etc.
 	implementation as subroutine definitions of the target language
 	into a file with name "FileAPI.xxx.txt" where "xxx" is to be replaced
 	by the file name extension of your target language. Mark the code
-	range to be inserted into the export file with
+	range to be inserted into the export file with comment lines like
+	===== STRUCTORIZER FILE API START =====
+	===== STRUCTORIZER FILE API END =====
 	
 7.	Add the generator to the plugin configuration
 	Find the resource file generators.xml in the ...structorizer.gui
